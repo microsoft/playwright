@@ -17,8 +17,8 @@
 /* eslint-disable no-console */
 
 import path from 'path';
+import { msToString } from '@isomorphic/formatUtils';
 import { loadTrace } from './traceUtils';
-import { msToString } from '../../utils/isomorphic/formatUtils';
 
 export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean }) {
   const trace = await loadTrace();

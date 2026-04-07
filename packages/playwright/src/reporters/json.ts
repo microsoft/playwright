@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { MultiMap } from '@isomorphic/multimap';
-import { toPosixPath } from '@serverUtils/fileUtils';
+import { toPosixPath } from '@utils/fileUtils';
 
 import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile, CommonReporterOptions } from './base';
 import { getProjectId } from '../common/config';

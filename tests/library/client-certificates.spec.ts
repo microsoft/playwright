@@ -24,8 +24,8 @@ import { expect, playwrightTest as base } from '../config/browserTest';
 import type net from 'net';
 import type { BrowserContextOptions } from '../../packages/playwright-test';
 import { setupSocksForwardingServer } from '../config/proxy';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
-const { createHttpsServer, createHttp2Server } = serverUtils;
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
+const { createHttpsServer, createHttp2Server } = utils;
 
 type TestOptions = {
   startCCServer(options?: {

@@ -18,8 +18,8 @@ import { errors } from 'playwright-core';
 
 import { monotonicTime } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
-import { getPackageManagerExecCommand } from '@serverUtils/env';
-import { currentZone } from '@serverUtils/zones';
+import { getPackageManagerExecCommand } from '@utils/env';
+import { currentZone } from '@utils/zones';
 
 import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite, TestCase } from './test';

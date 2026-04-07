@@ -17,18 +17,18 @@
 import fs from 'fs';
 import path from 'path';
 
+import open from 'open';
+import { HttpServer } from '@utils/httpServer';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { isUnderTest } from '@utils/debug';
 import { libPath } from '../../../package';
-import { gracefullyProcessExitDoNotHang } from '../../../utils';
-import { isUnderTest } from '../../../utils';
-import { HttpServer } from '../../utils/httpServer';
-import { open } from '../../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../../launchApp';
 import { launchApp } from '../../launchApp';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 import { nullProgress } from '../../progress';
 
-import type { Transport } from '../../utils/httpServer';
+import type { Transport } from '@utils/httpServer';
 import type { BrowserType } from '../../browserType';
 import type { Page } from '../../page';
 import type http from 'http';

@@ -17,13 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import { yazl, yauzl } from 'playwright-core/lib/zipBundle';
-
+import * as yazl from 'yazl';
+import * as yauzl from 'yauzl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
-import { calculateSha1, createGuid } from '@serverUtils/crypto';
-import { SerializedFS } from '@serverUtils/fileUtils';
-import { getPlaywrightVersion } from '@serverUtils/userAgent';
+import { calculateSha1, createGuid } from '@utils/crypto';
+import { SerializedFS } from '@utils/fileUtils';
+import { getPlaywrightVersion } from '@utils/userAgent';
 
 import { filteredStackTrace } from '../util';
 

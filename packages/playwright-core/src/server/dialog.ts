@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils';
+import { assert } from '@isomorphic/assert';
 import { SdkObject } from './instrumentation';
 
 import type { Instrumentation } from './instrumentation';

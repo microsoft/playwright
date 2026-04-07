@@ -18,8 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
-import { minimatch } from 'playwright-core/lib/utilsBundle';
-
+import minimatch from 'minimatch';
 import { escapeRegExp } from '@isomorphic/stringUtils';
 
 import { createFileMatcher } from '../util';

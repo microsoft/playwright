@@ -18,10 +18,10 @@
 
 import path from 'path';
 
+import { wrapInASCIIBox } from '@utils/ascii';
+import { isLikelyNpxGlobal } from '@utils/env';
+import { assert } from '@isomorphic/assert';
 import { registry, writeDockerVersion } from '../server/registry';
-import { isLikelyNpxGlobal } from '../utils';
-import { assert } from '../utils';
-import { wrapInASCIIBox } from '../server/utils/ascii';
 
 import type { BrowserInfo } from '../server/registry';
 

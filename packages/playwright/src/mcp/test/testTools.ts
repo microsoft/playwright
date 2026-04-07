@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from 'playwright-core/lib/zodBundle';
+import * as z from 'zod';
 import ListModeReporter from '../../reporters/listModeReporter';
 import { defineTestTool } from './testTool';
 

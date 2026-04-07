@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, defaultReporter } from '../common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports } from '../common/configLoader';
 import { showHTMLReport } from '../reporters/html';

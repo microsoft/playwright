@@ -21,8 +21,8 @@ import path from 'path';
 import { registry } from 'playwright-core/lib/coreBundle';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { setPlaywrightTestProcessEnv } from '@serverUtils/env';
-import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
+import { setPlaywrightTestProcessEnv } from '@utils/env';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { loadConfig } from '../common/configLoader';
 import { FSWatcher } from './fsWatcher';

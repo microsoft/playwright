@@ -15,7 +15,7 @@
  */
 
 import { isRegExp } from '@isomorphic/rtti';
-import { formatMatcherMessage } from '@serverUtils/expectUtils';
+import { formatMatcherMessage } from '@utils/expectUtils';
 
 import { expectTypes } from '../util';
 

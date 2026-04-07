@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { eventsHelper } from '@serverUtils/eventsHelper';
+import { eventsHelper } from '@utils/eventsHelper';
 
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
@@ -25,7 +24,7 @@ import { serializeConfig } from '../common/ipc';
 import { addLocationAndSnippetToError } from '../reporters/internalReporter';
 import { serializeError } from '../util';
 
-import type { RegisteredListener } from '@serverUtils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { FailureTracker } from './failureTracker';
 import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';

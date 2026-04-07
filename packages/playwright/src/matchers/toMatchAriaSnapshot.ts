@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { escapeTemplateString, isString } from '@isomorphic/stringUtils';
-import { formatMatcherMessage, printReceivedStringContainExpectedSubstring } from '@serverUtils/expectUtils';
+import { formatMatcherMessage, printReceivedStringContainExpectedSubstring } from '@utils/expectUtils';
 
 import { expectTypes, fileExistsAsync } from '../util';
 import { currentTestInfo } from '../common/globals';

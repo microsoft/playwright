@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { Page, Worker } from '../page';
 import { Dispatcher } from './dispatcher';
 import { parseError, serializeError } from '../errors';
@@ -27,7 +28,6 @@ import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { DisposableDispatcher } from './disposableDispatcher';
 import { SdkObject } from '../instrumentation';
-import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { Recorder } from '../recorder';
 import { disposeAll } from '../disposable';
 import { VideoRecorder } from '../videoRecorder';
@@ -46,7 +46,7 @@ import type { InitScript } from '../page';
 import type { Disposable } from '../disposable';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
-import type { URLMatch } from '../../utils/isomorphic/urlMatch';
+import type { URLMatch } from '@isomorphic/urlMatch';
 import type { ScreencastFrame } from '../types';
 import type { ScreencastClient } from '../screencast';
 

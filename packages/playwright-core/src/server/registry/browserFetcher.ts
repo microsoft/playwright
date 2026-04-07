@@ -20,12 +20,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import ProgressBar from 'progress';
+import colors from 'colors/safe';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { debugLogger } from '@utils/debugLogger';
+import { getUserAgent } from '@utils/userAgent';
+import { existsAsync, removeFolders } from '@utils/fileUtils';
 import { libPath } from '../../package';
-import { debugLogger } from '../utils/debugLogger';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { getUserAgent } from '../utils/userAgent';
-import { progress as ProgressBar, colors } from '../../utilsBundle';
-import { existsAsync, removeFolders } from '../utils/fileUtils';
 
 import { browserDirectoryToMarkerFilePath } from '.';
 

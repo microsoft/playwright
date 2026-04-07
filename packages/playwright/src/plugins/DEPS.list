@@ -1,5 +1,7 @@
 [*]
 @isomorphic/**
-@serverUtils/**
+@utils/**
 ../common/
 ../util.ts
+node_modules/colors/safe
+node_modules/debug

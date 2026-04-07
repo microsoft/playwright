@@ -1,7 +1,7 @@
 [*]
 ../../package.ts
-../../utils/isomorphic/**
-../../server/utils/zipFile.ts
+@isomorphic/**
+@utils/**
 ./*.ts
 
 [traceSnapshot.ts]

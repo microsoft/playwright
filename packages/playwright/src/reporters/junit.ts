@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { getAsBooleanFromENV } from '@serverUtils/env';
+import { getAsBooleanFromENV } from '@utils/env';
 
 import { CommonReporterOptions, formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
 import { stripAnsiEscapes } from '../util';

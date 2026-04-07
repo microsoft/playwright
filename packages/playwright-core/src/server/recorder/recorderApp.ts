@@ -17,9 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
+import mime from 'mime';
+import { isUnderTest } from '@utils/debug';
 import { libPath } from '../../package';
-import { isUnderTest } from '../utils/debug';
-import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { nullProgress, ProgressController } from '../progress';

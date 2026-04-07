@@ -17,12 +17,11 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors, debug } from 'playwright-core/lib/utilsBundle';
+import { iso, utils } from 'playwright-core/lib/coreBundle';
+import { colors, debug, stoppable } from 'playwright-core/lib/utilsBundle';
 import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { resolveHook } from 'playwright/lib/transform/transform';
 import { removeDirAndLogToConsole } from 'playwright/lib/util';
-import { stoppable } from 'playwright/lib/utilsBundle';
 
 import { source as injectedSource } from './generated/indexSource';
 import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
@@ -40,7 +39,7 @@ import type { ComponentRegistry } from './viteUtils';
 const log = debug('pw:vite');
 
 let stoppableServer: any;
-const playwrightVersion = serverUtils.getPlaywrightVersion();
+const playwrightVersion = utils.getPlaywrightVersion();
 
 export function createPlugin(): TestRunnerPlugin {
   let configDir: string;
@@ -118,7 +117,7 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
   let buildInfo: BuildInfo;
 
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
-  const registerSourceHash = serverUtils.calculateSha1(registerSource);
+  const registerSourceHash = utils.calculateSha1(registerSource);
 
   const { version: viteVersion, build, mergeConfig } = await import('vite');
 

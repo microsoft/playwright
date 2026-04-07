@@ -15,14 +15,14 @@
  */
 
 import { expect, playwrightTest as baseTest } from '../config/browserTest';
-import { remote, serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { remote, utils } from '../../packages/playwright-core/lib/coreBundle';
 const { PlaywrightServer } = remote;
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
 import type * as channels from '@protocol/channels';
 import { roundBox } from '../config/utils';
 
-const { createGuid } = serverUtils;
+const { createGuid } = utils;
 
 type BrowserWithReuse = Browser & { newContextForReuse: () => Promise<BrowserContext> };
 type Fixtures = {

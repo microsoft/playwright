@@ -17,9 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { colors, yaml } from 'playwright-core/lib/utilsBundle';
-
-import { mkdirIfNeeded } from '@serverUtils/fileUtils';
+import colors from 'colors/safe';
+import yaml from 'yaml';
+import { mkdirIfNeeded } from '@utils/fileUtils';
 
 import { FullConfigInternal } from '../common/config';
 import { defaultSeedFile, findSeedFile, seedFileContent, seedProject } from '../mcp/test/seed';

@@ -15,6 +15,15 @@
  * limitations under the License.
  */
 
+import {  isInvalidSelectorError } from '@isomorphic/selectorParser';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { eventsHelper } from '@utils/eventsHelper';
+import { LongStandingScope } from '@isomorphic/manualPromise';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import { assert } from '@isomorphic/assert';
+import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
+import { makeWaitForNextTask } from '@utils/task';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
 import { TimeoutError } from './errors';
@@ -27,11 +36,7 @@ import * as network from './network';
 import { Page, ariaSnapshotForFrame } from './page';
 import { isAbortError, nullProgress, ProgressController } from './progress';
 import * as types from './types';
-import { LongStandingScope, asLocator, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, renderTitleForCall } from '../utils';
 import { isSessionClosedError } from './protocolError';
-import { eventsHelper } from './utils/eventsHelper';
-import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { compressCallLog } from './callLog';
 
 import type { ConsoleMessage } from './console';
@@ -39,8 +44,8 @@ import type { SelectorInfo } from './frameSelectors';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
-import type { RegisteredListener } from './utils/eventsHelper';
-import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+import type { RegisteredListener } from '@utils/eventsHelper';
+import type { ParsedSelector } from '@isomorphic/selectorParser';
 import type * as channels from '@protocol/channels';
 
 type ContextData = {

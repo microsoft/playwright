@@ -19,15 +19,14 @@ import readline from 'readline';
 import { EventEmitter } from 'stream';
 
 import { remote } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
+import enquirer from 'enquirer';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { createGuid } from '@serverUtils/crypto';
-import { getPackageManagerExecCommand } from '@serverUtils/env';
-import { eventsHelper } from '@serverUtils/eventsHelper';
+import { createGuid } from '@utils/crypto';
+import { getPackageManagerExecCommand } from '@utils/env';
+import { eventsHelper } from '@utils/eventsHelper';
 
 import { separator, terminalScreen } from '../reporters/base';
-import { enquirer } from '../utilsBundle';
 import { TestServerDispatcher } from './testServer';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerConnection  } from '../isomorphic/testServerConnection';

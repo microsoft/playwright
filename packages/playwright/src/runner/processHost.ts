@@ -17,8 +17,7 @@
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
 
-import { debug } from 'playwright-core/lib/utilsBundle';
-
+import debug from 'debug';
 import { assert } from '@isomorphic/assert';
 import { timeOrigin } from '@isomorphic/time';
 

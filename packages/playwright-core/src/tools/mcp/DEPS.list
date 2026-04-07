@@ -3,14 +3,19 @@
 ../../
 ../utils/mcp/
 ../backend/
-../../utils/
-../../utils/isomorphic/
+../../utils/**
+@isomorphic/**
 ../../utilsBundle.ts
-../../mcpBundle.ts
 ../../server/
 ../../server/registry/
-../../server/utils/
+@utils/**
 ../../serverRegistry.ts
+node_modules/@modelcontextprotocol/sdk/server/index.js
+node_modules/commander
+node_modules/debug
+node_modules/dotenv
+node_modules/ini
+node_modules/ws
 
 [browserFactory.ts]
 ../../client/connect.ts

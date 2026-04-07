@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { isRegExp, isString } from '../../utils/isomorphic/rtti';
-import { colors } from '../../utilsBundle';
-
+import colors from 'colors/safe';
+import { isRegExp, isString } from '@isomorphic/rtti';
 import type { ExpectedTextValue } from '@protocol/channels';
 
 export interface InternalMatcherUtils {

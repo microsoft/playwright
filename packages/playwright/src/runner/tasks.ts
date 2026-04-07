@@ -18,11 +18,10 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
-import { debug } from 'playwright-core/lib/utilsBundle';
-
+import debug from 'debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
-import { removeFolders } from '@serverUtils/fileUtils';
+import { removeFolders } from '@utils/fileUtils';
 
 import { Dispatcher  } from './dispatcher';
 import { FailureTracker } from './failureTracker';

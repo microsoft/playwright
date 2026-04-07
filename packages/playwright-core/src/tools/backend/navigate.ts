@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
+import * as z from 'zod';
 import { defineTool, defineTabTool } from './tool';
 
 const navigate = defineTool({

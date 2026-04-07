@@ -130,11 +130,12 @@ test('android.launchServer should terminate WS connection when device gets disco
   let receivedConnection: WebSocket | undefined;
   forwardingServer.on('connection', connection => {
     // Pause the connection until we establish the actual connection to the browser server.
-    connection.pause();
+    // Someone is using non-existing api
+    (connection as any).pause();
     receivedConnection = connection;
     const actualConnection = new WebSocket(browserServer.wsEndpoint());
     // We need to wait for the actual connection to be established before resuming
-    actualConnection.on('open', () => connection.resume());
+    actualConnection.on('open', () => (connection as any).resume());
     actualConnection.on('message', message => connection.send(message));
     connection.on('message', message => actualConnection.send(message));
     connection.on('close', () => actualConnection.close());

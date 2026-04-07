@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { renderTitleForCall } from '../utils';
-import { debugLogger } from '../utils';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { debugLogger } from '@utils/debugLogger';
 import { Page } from './page';
 
 import type * as types from './types';

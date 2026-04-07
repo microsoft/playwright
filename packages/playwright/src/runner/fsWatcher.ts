@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { chokidar } from '../utilsBundle';
-
+import chokidar from 'chokidar';
 import type { FSWatcher as ChokidarWatcher } from 'chokidar';
 
 export type FSEvent = { event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir', file: string };

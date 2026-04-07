@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { ZipFile } from '../../server/utils/zipFile';
+import { ZipFile } from '@utils/zipFile';
 
 import type { TraceLoaderBackend } from '@isomorphic/trace/traceLoader';
 

@@ -17,9 +17,9 @@
 import fs from 'fs';
 import vm from 'vm';
 
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
+import * as z from 'zod';
+import { ManualPromise } from '@isomorphic/manualPromise';
 
-import { z } from '../../zodBundle';
 import { defineTabTool } from './tool';
 
 const codeSchema = z.object({

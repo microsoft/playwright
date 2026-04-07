@@ -21,9 +21,9 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { captureRawStack, stringifyStackFrames } from '@isomorphic/stackTrace';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { monotonicTime } from '@isomorphic/time';
-import { createGuid } from '@serverUtils/crypto';
-import { sanitizeForFilePath } from '@serverUtils/fileUtils';
-import { currentZone } from '@serverUtils/zones';
+import { createGuid } from '@utils/crypto';
+import { sanitizeForFilePath } from '@utils/fileUtils';
+import { currentZone } from '@utils/zones';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';

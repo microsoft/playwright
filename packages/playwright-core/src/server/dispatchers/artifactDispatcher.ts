@@ -16,9 +16,9 @@
 
 import fs from 'fs';
 
+import { mkdirIfNeeded } from '@utils/fileUtils';
 import { Dispatcher } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
-import { mkdirIfNeeded } from '../utils/fileUtils';
 
 import type { DispatcherScope } from './dispatcher';
 import type { Artifact } from '../artifact';

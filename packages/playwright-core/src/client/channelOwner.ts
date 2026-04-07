@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { stringifyStackFrames } from '@isomorphic/stackTrace';
 import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
-import { getMetainfo } from '../utils/isomorphic/protocolMetainfo';
 import { captureLibraryStackTrace } from './clientStackTrace';
-import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';

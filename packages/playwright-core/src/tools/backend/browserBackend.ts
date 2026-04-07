@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
+import debug from 'debug';
 import { Context } from './context';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
-import { debug } from '../../utilsBundle';
-
 import type { ContextConfig } from './context';
 import type * as playwright from '../../..';
 import type { Tool } from './tool';

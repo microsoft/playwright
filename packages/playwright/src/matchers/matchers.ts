@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
 import { asLocatorDescription } from '@isomorphic/locatorGenerators';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { isRegExp } from '@isomorphic/rtti';
 import { isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { constructURLBasedOnBaseURL, isURLPattern } from '@isomorphic/urlMatch';
-import { formatMatcherMessage, serializeExpectedTextValues } from '@serverUtils/expectUtils';
+import { formatMatcherMessage, serializeExpectedTextValues } from '@utils/expectUtils';
 
 import { expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
@@ -40,7 +39,7 @@ import type { TestStepInfoImpl } from '../worker/testInfo';
 import type { APIResponse, Locator, Frame, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 import type { ExpectMatcherUtils } from '../../types/test';
-import type { InternalMatcherUtils } from '@serverUtils/expectUtils';
+import type { InternalMatcherUtils } from '@utils/expectUtils';
 import type { URLPattern } from '@isomorphic/urlMatch';
 
 export type ExpectMatcherStateInternal = Omit<ExpectMatcherState, 'utils'> & {

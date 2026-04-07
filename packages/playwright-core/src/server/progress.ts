@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { assert } from '@isomorphic/assert';
+import { monotonicTime } from '@isomorphic/time';
+import { debugLogger } from '@utils/debugLogger';
 import { TimeoutError } from './errors';
-import { assert, monotonicTime, debugLogger } from '../utils';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { Progress } from '@protocol/progress';
 import type { CallMetadata, SdkObject } from './instrumentation';

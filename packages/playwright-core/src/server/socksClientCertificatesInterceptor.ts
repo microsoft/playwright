@@ -20,16 +20,17 @@ import net from 'net';
 import stream from 'stream';
 import tls from 'tls';
 
-import { SocksProxy } from './utils/socksProxy';
-import { escapeHTML, generateSelfSignedCertificate, rewriteErrorMessage } from '../utils';
+import { getProxyForUrl } from 'proxy-from-env';
+import { SocksProxy } from '@utils/socksProxy';
+import { createProxyAgent } from '@utils/network';
+import { debugLogger } from '@utils/debugLogger';
+import { createSocket } from '@utils/happyEyeballs';
+import { escapeHTML } from '@isomorphic/stringUtils';
+import { generateSelfSignedCertificate } from '@utils/crypto';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { verifyClientCertificates } from './browserContext';
-import { createProxyAgent } from './utils/network';
-import { debugLogger } from './utils/debugLogger';
-import { createSocket } from './utils/happyEyeballs';
-import { getProxyForUrl } from '../utilsBundle';
-
 import type * as types from './types';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from './utils/socksProxy';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '@utils/socksProxy';
 import type https from 'https';
 import type { Progress } from '@protocol/progress';
 

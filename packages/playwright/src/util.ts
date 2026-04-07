@@ -19,10 +19,11 @@ import path from 'path';
 import url from 'url';
 import util from 'util';
 
-import { debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
-
-import { calculateSha1 } from '@serverUtils/crypto';
-import { sanitizeForFilePath } from '@serverUtils/fileUtils';
+import debug from 'debug';
+import mime from 'mime';
+import minimatch from 'minimatch';
+import { calculateSha1 } from '@utils/crypto';
+import { sanitizeForFilePath } from '@utils/fileUtils';
 import { isRegExp } from '@isomorphic/rtti';
 import { parseStackFrame, stringifyStackFrames } from '@isomorphic/stackTrace';
 import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';

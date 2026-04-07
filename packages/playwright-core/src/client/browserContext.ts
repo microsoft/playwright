@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import { headersObjectToArray } from '@isomorphic/headers';
+import { urlMatchesEqual } from '@isomorphic/urlMatch';
+import { isRegExp, isString } from '@isomorphic/rtti';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { Artifact } from './artifact';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
@@ -38,15 +42,11 @@ import { WebError } from './webError';
 import { Worker } from './worker';
 import { TimeoutSettings } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
-import { headersObjectToArray } from '../utils/isomorphic/headers';
-import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
-import { isRegExp, isString } from '../utils/isomorphic/rtti';
-import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { BrowserContextOptions, Headers, SetStorageState, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { URLMatch } from '@isomorphic/urlMatch';
 import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';

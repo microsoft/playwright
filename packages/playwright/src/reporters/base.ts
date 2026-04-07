@@ -16,15 +16,14 @@
 
 import path from 'path';
 
-import { colors as realColors } from 'playwright-core/lib/utilsBundle';
-
+import realColors from 'colors/safe';
+import * as getEastAsianWidth from 'get-east-asian-width';
 import { noColors } from '@isomorphic/colors';
 import { msToString } from '@isomorphic/formatUtils';
 import { parseErrorStack } from '@isomorphic/stackTrace';
-import { getPackageManagerExecCommand } from '@serverUtils/env';
+import { getPackageManagerExecCommand } from '@utils/env';
 
 import { ansiRegex, resolveReporterOutputPath, stripAnsiEscapes } from '../util';
-import { getEastAsianWidth } from '../utilsBundle';
 
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';

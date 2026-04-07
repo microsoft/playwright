@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
+import { assert } from '@isomorphic/assert';
+import { headersObjectToArray } from '@isomorphic/headers';
+import { isString } from '@isomorphic/rtti';
 import { toClientCertificatesProtocol } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { RawHeaders } from './network';
 import { Tracing } from './tracing';
-import { assert } from '../utils/isomorphic/assert';
 import { mkdirIfNeeded } from './fileUtils';
-import { headersObjectToArray } from '../utils/isomorphic/headers';
-import { isString } from '../utils/isomorphic/rtti';
 import { TimeoutSettings } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
 import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState, TimeoutOptions } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
-import type { HeadersArray, NameValue } from '../utils/isomorphic/types';
+import type { HeadersArray, NameValue } from '@isomorphic/types';
 import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 import type * as fs from 'fs';

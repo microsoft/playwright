@@ -1,8 +1,8 @@
 [*]
 ../../
-../../utils/
+../../utils/**
 ../../registry/
 ../../../generated/
 ../../../package.ts
-../../../utils/
-../../../utilsBundle.ts
+../../../utils/**
+node_modules/open

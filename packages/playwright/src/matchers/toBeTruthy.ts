@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatMatcherMessage } from '@serverUtils/expectUtils';
+import { formatMatcherMessage } from '@utils/expectUtils';
 
 import { expectTypes } from '../util';
 

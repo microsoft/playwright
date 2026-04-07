@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
+import { program } from 'commander';
 import { tools } from '../coreBundle';
-import { program } from '../utilsBundle';
-
 tools.decorateCliDaemonProgram(program);
 void program.parseAsync();

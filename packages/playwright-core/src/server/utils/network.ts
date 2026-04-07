@@ -19,9 +19,11 @@ import http from 'http';
 import http2 from 'http2';
 import https from 'https';
 
-import { HttpsProxyAgent, SocksProxyAgent, getProxyForUrl } from '../../utilsBundle';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { SocksProxyAgent } from 'socks-proxy-agent';
+import { getProxyForUrl } from 'proxy-from-env';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import type net from 'net';
 import type { ProxySettings } from '../types';

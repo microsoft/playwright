@@ -14,28 +14,61 @@
  * limitations under the License.
  */
 
-export const colors: typeof import('../bundles/utils/node_modules/colors/safe') = require('./utilsBundleImpl').colors;
-export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
-export const diff: typeof import('../bundles/utils/node_modules/@types/diff') = require('./utilsBundleImpl').diff;
-export const dotenv: typeof import('../bundles/utils/node_modules/dotenv') = require('./utilsBundleImpl').dotenv;
-export const ini: typeof import('../bundles/utils/node_modules/@types/ini') = require('./utilsBundleImpl').ini;
-export const getProxyForUrl: typeof import('../bundles/utils/node_modules/@types/proxy-from-env').getProxyForUrl = require('./utilsBundleImpl').getProxyForUrl;
-export const HttpsProxyAgent: typeof import('../bundles/utils/node_modules/https-proxy-agent').HttpsProxyAgent = require('./utilsBundleImpl').HttpsProxyAgent;
-export const jpegjs: typeof import('../bundles/utils/node_modules/jpeg-js') = require('./utilsBundleImpl').jpegjs;
-export const lockfile: typeof import('../bundles/utils/node_modules/@types/proper-lockfile') = require('./utilsBundleImpl').lockfile;
-export const mime: typeof import('../bundles/utils/node_modules/@types/mime') = require('./utilsBundleImpl').mime;
-export const minimatch: typeof import('../bundles/utils/node_modules/@types/minimatch') = require('./utilsBundleImpl').minimatch;
-export const open: typeof import('../bundles/utils/node_modules/open') = require('./utilsBundleImpl').open;
-export const PNG: typeof import('../bundles/utils/node_modules/@types/pngjs').PNG = require('./utilsBundleImpl').PNG;
-export const program: typeof import('../bundles/utils/node_modules/commander').program = require('./utilsBundleImpl').program;
-export const ProgramOption: typeof import('../bundles/utils/node_modules/commander').Option = require('./utilsBundleImpl').ProgramOption;
-export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;
-export const SocksProxyAgent: typeof import('../bundles/utils/node_modules/socks-proxy-agent').SocksProxyAgent = require('./utilsBundleImpl').SocksProxyAgent;
-export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = require('./utilsBundleImpl').ws;
-export const wsServer: typeof import('../bundles/utils/node_modules/@types/ws').WebSocketServer = require('./utilsBundleImpl').wsServer;
-export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
-export const wsSender = require('./utilsBundleImpl').wsSender;
-export const yaml: typeof import('../bundles/utils/node_modules/yaml') = require('./utilsBundleImpl').yaml;
-export type { Range as YAMLRange, Scalar as YAMLScalar, YAMLError, YAMLMap, YAMLSeq } from '../bundles/utils/node_modules/yaml';
-export type { Command } from '../bundles/utils/node_modules/commander';
-export type { EventEmitter as WebSocketEventEmitter, RawData as WebSocketRawData, WebSocket, WebSocketServer } from '../bundles/utils/node_modules/@types/ws';
+// @ts-ignore
+const _impl = require('./utilsBundleImpl');
+
+export const colors: typeof import('colors/safe') = _impl.colors;
+export const debug: typeof import('debug') = _impl.debug;
+export const diff: typeof import('diff') = _impl.diff;
+export const dotenv: typeof import('dotenv') = _impl.dotenv;
+export const ini: typeof import('ini') = _impl.ini;
+export const getProxyForUrl: typeof import('proxy-from-env').getProxyForUrl = _impl.getProxyForUrl;
+export const HttpsProxyAgent: typeof import('https-proxy-agent').HttpsProxyAgent = _impl.HttpsProxyAgent;
+export const jpegjs: typeof import('jpeg-js') = _impl.jpegjs;
+export const lockfile: typeof import('proper-lockfile') = _impl.lockfile;
+export const mime: typeof import('mime') = _impl.mime;
+export const minimatch: typeof import('minimatch') = _impl.minimatch;
+export const open: typeof import('open') = _impl.open;
+export const PNG: typeof import('pngjs').PNG = _impl.PNG;
+export const program: typeof import('commander').program = _impl.program;
+export const ProgramOption: typeof import('commander').Option = _impl.ProgramOption;
+export const progress: typeof import('progress') = _impl.progress;
+export const SocksProxyAgent: typeof import('socks-proxy-agent').SocksProxyAgent = _impl.SocksProxyAgent;
+export const ws: typeof import('ws') = _impl.ws;
+export const wsServer: typeof import('ws').WebSocketServer = _impl.wsServer;
+export const wsReceiver = _impl.wsReceiver;
+export const wsSender = _impl.wsSender;
+export const yaml: typeof import('yaml') = _impl.yaml;
+export type { Range as YAMLRange, Scalar as YAMLScalar, YAMLError, YAMLMap, YAMLSeq } from 'yaml';
+export const json5: typeof import('json5') = _impl.json5;
+export const sourceMapSupport: typeof import('source-map-support') = _impl.sourceMapSupport;
+export const stoppable: typeof import('stoppable') = _impl.stoppable;
+export const enquirer: typeof import('enquirer') = _impl.enquirer;
+export const chokidar: typeof import('chokidar') = _impl.chokidar;
+export const getEastAsianWidth: typeof import('get-east-asian-width') = _impl.getEastAsianWidth;
+export type { RawSourceMap } from 'source-map';
+export type { Command } from 'commander';
+export type { RawData as WebSocketRawData, WebSocket, WebSocketServer } from 'ws';
+export type { EventEmitter as WebSocketEventEmitter } from 'events';
+
+export const yazl: typeof import('yazl') = _impl.yazl;
+export type { ZipFile } from 'yazl';
+export const yauzl: typeof import('yauzl') = _impl.yauzl;
+export type { Entry, ZipFile as UnzipFile } from 'yauzl';
+export const extract: typeof import('../bundles/utils/src/third_party/extract-zip') = _impl.extract;
+
+export const z: typeof import('zod') = _impl.z;
+export const zodToJsonSchema: (schema: any, options?: any) => any = _impl.zodToJsonSchema;
+export const Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client = _impl.Client;
+export const Server: typeof import('@modelcontextprotocol/sdk/server/index.js').Server = _impl.Server;
+export const SSEClientTransport: typeof import('@modelcontextprotocol/sdk/client/sse.js').SSEClientTransport = _impl.SSEClientTransport;
+export const SSEServerTransport: typeof import('@modelcontextprotocol/sdk/server/sse.js').SSEServerTransport = _impl.SSEServerTransport;
+export const StdioClientTransport: typeof import('@modelcontextprotocol/sdk/client/stdio.js').StdioClientTransport = _impl.StdioClientTransport;
+export const StdioServerTransport: typeof import('@modelcontextprotocol/sdk/server/stdio.js').StdioServerTransport = _impl.StdioServerTransport;
+export const StreamableHTTPServerTransport: typeof import('@modelcontextprotocol/sdk/server/streamableHttp.js').StreamableHTTPServerTransport = _impl.StreamableHTTPServerTransport;
+export const StreamableHTTPClientTransport: typeof import('@modelcontextprotocol/sdk/client/streamableHttp.js').StreamableHTTPClientTransport = _impl.StreamableHTTPClientTransport;
+export const CallToolRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').CallToolRequestSchema = _impl.CallToolRequestSchema;
+export const ListRootsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListRootsRequestSchema = _impl.ListRootsRequestSchema;
+export const ProgressNotificationSchema: typeof import('@modelcontextprotocol/sdk/types.js').ProgressNotificationSchema = _impl.ProgressNotificationSchema;
+export const ListToolsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListToolsRequestSchema = _impl.ListToolsRequestSchema;
+export const PingRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').PingRequestSchema = _impl.PingRequestSchema;

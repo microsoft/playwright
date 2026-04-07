@@ -17,8 +17,8 @@
 
 import fs from 'fs';
 
-import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
-import { mkdirIfNeeded } from '../utils/fileUtils';
+import { splitErrorMessage } from '@isomorphic/stackTrace';
+import { mkdirIfNeeded } from '@utils/fileUtils';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';

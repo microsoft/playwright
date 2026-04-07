@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+import debug from 'debug';
+import { createHttpServer, startHttpServer } from '@utils/network';
 import { playwright } from '../../inprocess';
-import { debug } from '../../utilsBundle';
-import { createHttpServer, startHttpServer } from '../../server/utils/network';
 import { CDPRelayServer } from './cdpRelay';
 
 import type * as playwrightTypes from '../../..';

@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 
 import { monotonicTime } from '@isomorphic/time';
-import { spawnAsync } from '@serverUtils/spawnAsync';
+import { spawnAsync } from '@utils/spawnAsync';
 
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';

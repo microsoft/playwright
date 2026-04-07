@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
+import { MultiMap } from '@isomorphic/multimap';
+import { assert } from '@isomorphic/assert';
 import { helper } from './helper';
-import { assert } from '../utils';
-import { MultiMap } from '../utils/isomorphic/multimap';
 
 import type * as dom from './dom';
 import type { Frame } from './frames';
 import type { Page } from './page';
 import type { Progress } from './progress';
 import type * as types from './types';
-import type { Rect } from '../utils/isomorphic/types';
-import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+import type { Rect } from '@isomorphic/types';
+import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 
 declare global {

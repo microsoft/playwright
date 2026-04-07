@@ -29,7 +29,7 @@ const packages = new Map();
 packages.set('web', packagesDir + '/web/src/');
 packages.set('injected', packagesDir + '/injected/src/');
 packages.set('isomorphic', packagesDir + '/playwright-core/src/utils/isomorphic/');
-packages.set('serverUtils', packagesDir + '/playwright-core/src/server/utils/');
+packages.set('utils', packagesDir + '/playwright-core/src/server/utils/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
 
 const peerDependencies = ['electron', 'react', 'react-dom', 'react-dom/client', '@zip.js/zip.js', 'zod', 'zod/v3'];
@@ -96,8 +96,21 @@ async function innerCheckDeps(root) {
   if (packageJSON) {
     for (const dep of peerDependencies)
       deps.delete(dep);
+    // Vendored packages live in `bundles/utils/node_modules/` and are bridged
+    // through utilsBundle. Per-file `node_modules/<pkg>` declarations in
+    // DEPS.list authorize their use; skip the package.json dep check for them.
+    const { VENDORED_PACKAGES } = require('./build/utilsBundleMapping');
+    for (const pkg of VENDORED_PACKAGES) {
+      const top = pkg.startsWith('@') ? pkg.split('/').slice(0, 2).join('/') : pkg.split('/')[0];
+      deps.delete(top);
+    }
     for (const dep of deps) {
-      const resolved = require.resolve(dep, { paths: [root] });
+      let resolved;
+      try {
+        resolved = require.resolve(dep, { paths: [root] });
+      } catch {
+        continue;
+      }
       if (dep === resolved || !resolved.includes('node_modules'))
         deps.delete(dep);
     }
@@ -169,6 +182,11 @@ async function innerCheckDeps(root) {
       else
         deps.add(importName.split('/')[0]);
 
+      // Per-folder explicit allow-list: `node_modules/<importName>` in DEPS.list
+      // declares the file may import that exact package specifier.
+      if (mergedDeps.includes('node_modules/' + importName))
+        return;
+
       if (!allowExternalImport(importName, packageJSON))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
@@ -199,6 +217,8 @@ async function innerCheckDeps(root) {
           group.push('***');
         else if (line === '"strict"')
           group.push('"strict"');
+        else if (line.startsWith('node_modules/'))
+          group.push(line);
         else if (line.startsWith('@'))
           group.push(line.replace(/@([\w-]+)\/(.*)/, (_, arg1, arg2) => packages.get(arg1) + arg2));
         else

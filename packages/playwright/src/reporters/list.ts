@@ -15,7 +15,7 @@
  */
 
 import { msToString } from '@isomorphic/formatUtils';
-import { getAsBooleanFromENV } from '@serverUtils/env';
+import { getAsBooleanFromENV } from '@utils/env';
 
 import { markErrorsAsReported, TerminalReporter, stepSuffix } from './base';
 import { stripAnsiEscapes } from '../util';

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ZipFile } from '@serverUtils/zipFile';
+import { ZipFile } from '@utils/zipFile';
 
 import {  currentBlobReportVersion } from './blob';
 import { Multiplexer } from './multiplexer';

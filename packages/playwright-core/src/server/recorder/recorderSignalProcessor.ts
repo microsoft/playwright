@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { isUnderTest } from '../utils/debug';
-import { monotonicTime } from '../../utils/isomorphic/time';
+import { monotonicTime } from '@isomorphic/time';
+import { isUnderTest } from '@utils/debug';
 import { generateFrameSelector } from './recorderUtils';
 import { nullProgress } from '../progress';
 

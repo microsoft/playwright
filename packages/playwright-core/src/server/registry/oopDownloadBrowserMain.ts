@@ -17,10 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { httpRequest } from '../utils/network';
-import { extract } from '../../zipBundle';
-import { removeFolders } from '../utils/fileUtils';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { httpRequest } from '@utils/network';
+import { removeFolders } from '@utils/fileUtils';
+import { extract } from '../../utilsBundle';
 
 export type DownloadParams = {
   title: string;

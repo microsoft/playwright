@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { removeFolders } from '@serverUtils/fileUtils';
+import { removeFolders } from '@utils/fileUtils';
 
 import { ProcessHost } from './processHost';
 import { stdioChunkToParams } from '../common/ipc';

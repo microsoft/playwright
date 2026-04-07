@@ -1,6 +1,6 @@
 [*]
-../../utils/
-../../utils/isomorphic/
+../../utils/**
+@isomorphic/**
 ../
 ../isomorphic/
 ../utils
