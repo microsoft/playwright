@@ -16,6 +16,7 @@
  */
 
 import fs from 'fs';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 import * as util from 'util';
@@ -1093,10 +1094,57 @@ export class Registry {
     return this._executables.filter(e => e.installType === 'download-by-default');
   }
 
-  systemBrowsers(): { channel: string; userDataDir: string }[] {
-    return this._executables
-        .filter(e => e.defaultUserDataDir && fs.existsSync(e.defaultUserDataDir))
-        .map(e => ({ channel: e.name, userDataDir: e.defaultUserDataDir! }));
+  async systemBrowsers(){
+    const results: { channel: string; userDataDir: string; running: boolean; devToolsPort?: number }[] = [];
+    await Promise.all(this._executables.map(async e => {
+      if (!e.defaultUserDataDir)
+        return;
+      const userDataDir = e.defaultUserDataDir!;
+      const exists = await fs.promises.access(userDataDir).then(() => true, () => false);
+      if (!exists)
+        return;
+      const running = await this._isUserDataDirInUse(userDataDir);
+      const devToolsPort = running ? await this._readDevToolsActivePort(userDataDir) : undefined;
+      results.push({ channel: e.name, userDataDir, running, devToolsPort });
+    }));
+    return results;
+  }
+
+  private async _readDevToolsActivePort(userDataDir: string): Promise<number | undefined> {
+    try {
+      const content = await fs.promises.readFile(path.join(userDataDir, 'DevToolsActivePort'), 'utf-8');
+      const port = parseInt(content.trim().split('\n')[0], 10);
+      if (isNaN(port))
+        return;
+      const isOpen = await new Promise<boolean>(resolve => {
+        const socket = net.createConnection(port, '127.0.0.1');
+        const timeout = setTimeout(() => { socket.destroy(); resolve(false); }, 1000);
+        socket.on('connect', () => { clearTimeout(timeout); socket.destroy(); resolve(true); });
+        socket.on('error', () => { clearTimeout(timeout); resolve(false); });
+      });
+      if (isOpen)
+        return port;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private async _isUserDataDirInUse(userDataDir: string): Promise<boolean> {
+    if (os.platform() === 'win32') {
+      const lockfile = path.join(userDataDir, 'lockfile');
+      return await fs.promises.open(lockfile, 'r+').then(handle => { handle.close(); return false; }, () => true);
+    }
+    const singletonLock = path.join(userDataDir, 'SingletonLock');
+    try {
+      const target = await fs.promises.readlink(singletonLock);
+      const pid = parseInt(target.split('-').pop()!, 10);
+      if (isNaN(pid))
+        return false;
+      process.kill(pid, 0); // 0 signal tests for existence of the process.
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private _dedupe(executables: Executable[]): ExecutableImpl[] {

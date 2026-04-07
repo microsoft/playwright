@@ -298,12 +298,39 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
 
   let count = 0;
   const runningSessions = new Set<string>();
+  const runningUserDataDirs = new Set<string>();
   const entries = registry.entryMap();
   const key = clientKey(clientInfo);
   for (const [workspaceKey, list] of entries) {
     if (!all && workspaceKey !== key)
       continue;
-    count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspaceKey) || '/'}:` : undefined, runningSessions);
+    count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspaceKey) || '/'}:` : undefined, runningSessions, runningUserDataDirs);
+  }
+
+  const { registry: browserRegistry } = await import('../../server/registry/index');
+  const systemBrowsers = await browserRegistry.systemBrowsers();
+  const runningSystemBrowsers = systemBrowsers.filter(b => b.running && !runningUserDataDirs.has(b.userDataDir));
+  if (runningSystemBrowsers.length) {
+    if (count)
+      console.log('');
+    console.log('### System browsers available to attach');
+    for (const browser of runningSystemBrowsers) {
+      const text: string[] = [];
+      text.push(`- ${browser.channel}:`);
+      text.push(`  - status: running`);
+      text.push(`  - browser-type: ${browser.channel}`);
+      text.push(`  - user-data-dir: ${browser.userDataDir}`); // TODO: escape spaces in path
+      text.push(`  - headed: true`);
+      if (browser.devToolsPort) {
+        text.push(`  - cdp-port: ${browser.devToolsPort}`);
+        text.push(`  - to connect, run: playwright-cli attach --cdp ws://localhost:${browser.devToolsPort}/devtools/browser --profile '${browser.userDataDir}' --headed`);
+      } else {
+        text.push(`  - cdp-port: unavailable`);
+        text.push(`  - to enable connecting, enable CDP under ${browser.channel === 'msedge' ? 'edge' : 'chrome'}://inspect/#remote-debugging`);
+      }
+      console.log(text.join('\n'));
+    }
+    count += runningSystemBrowsers.length;
   }
 
   // Filter out server entries that already have an attached session.
@@ -329,7 +356,7 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
     console.log('  (no browsers)');
 }
 
-async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], header?: string, runningSessions?: Set<string>) {
+async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], header?: string, runningSessions?: Set<string>, runningUserDataDirs?: Set<string>) {
   const running: Session[] = [];
   const stopped: Session[] = [];
 
@@ -338,6 +365,8 @@ async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], h
     if (canConnect) {
       running.push(session);
       runningSessions?.add(session.name);
+      if (session.config.browser?.userDataDir)
+        runningUserDataDirs?.add(session.config.browser.userDataDir);
     } else {
       if (session.config.cli.persistent)
         stopped.push(session);

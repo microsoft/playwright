@@ -104,11 +104,17 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
 
 async function createCDPBrowser(config: FullConfig): Promise<playwrightTypes.Browser> {
   testDebug('create browser (cdp)');
-  const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
-    headers: config.browser.cdpHeaders,
-    timeout: config.browser.cdpTimeout
-  });
-  return browser;
+  try {
+    const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
+      headers: config.browser.cdpHeaders,
+      timeout: config.browser.cdpTimeout
+    });
+    return browser;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Forbidden') && config.browser.cdpEndpoint?.includes('devtools/browser'))
+      throw new Error('Browser needs to be in foreground to connect via CDP.');
+    throw error;
+  }
 }
 
 async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
