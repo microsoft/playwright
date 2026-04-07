@@ -20,17 +20,17 @@ import path from 'path';
 import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
 import { startProfiling, stopProfiling } from '@serverUtils/profiler';
 
-import { builtInReporters } from './common/config';
-import { loadConfigFromFile, resolveConfigLocation } from './common/configLoader';
-import { terminalScreen } from './reporters/base';
-import { filterProjects } from './runner/projectUtils';
-import * as testServer from './runner/testServer';
-import { runWatchModeLoop } from './runner/watchMode';
-import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
-import { createErrorCollectingReporter } from './runner/reporters';
+import { builtInReporters } from '../common/config';
+import { loadConfigFromFile, resolveConfigLocation } from '../common/configLoader';
+import { terminalScreen } from '../reporters/base';
+import { filterProjects } from '../runner/projectUtils';
+import * as testServer from '../runner/testServer';
+import { runWatchModeLoop } from '../runner/watchMode';
+import { runAllTestsWithConfig, TestRunner } from '../runner/testRunner';
+import { createErrorCollectingReporter } from '../runner/reporters';
 
-import type { ConfigCLIOverrides } from './common/ipc';
-import type { ReporterDescription } from '../types/test';
+import type { ConfigCLIOverrides } from '../common/ipc';
+import type { ReporterDescription } from '../../types/test';
 
 export async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
@@ -107,11 +107,6 @@ export async function clearCache(opts: { [key: string]: any }) {
   const { status } = await runner.clearCache(createErrorCollectingReporter(terminalScreen));
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
-}
-
-export async function startDevServer(options: { [key: string]: any }) {
-  const runner = new TestRunner(resolveConfigLocation(options.config), {});
-  await runner.startDevServer(createErrorCollectingReporter(terminalScreen), 'in-process');
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {

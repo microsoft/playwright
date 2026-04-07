@@ -23,7 +23,4 @@ common/
 ./mcp/test/
 ./transform/babelBundle.ts
 
-[internalsForTest.ts]
-**
-
 [errorContext.ts]

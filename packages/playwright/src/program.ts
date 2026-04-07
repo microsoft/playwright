@@ -23,11 +23,8 @@ import { program } from 'playwright-core/lib/utilsBundle';
 
 import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import { runTests } from './testActions';
-import { clearCache } from './testActions';
-import { startDevServer } from './testActions';
-import { runTestServerAction } from './testActions';
-import { showReport, mergeReports } from './reportActions';
+import { runTests, clearCache, runTestServerAction } from './cli/testActions';
+import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
 import { loadConfigFromFile } from './common/configLoader';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
@@ -81,15 +78,6 @@ function addClearCacheCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
     await clearCache(opts);
-  });
-}
-
-function addDevServerCommand(program: Command) {
-  const command = program.command('dev-server', { hidden: true });
-  command.description('start dev server');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.action(async options => {
-    await startDevServer(options);
   });
 }
 
@@ -237,6 +225,5 @@ addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
 addTestMCPServerCommand(program);
-addDevServerCommand(program);
 addTestServerCommand(program);
 addInitAgentsCommand(program);

@@ -224,7 +224,9 @@ export function setExternalDependencies(filename: string, deps: string[]) {
 }
 
 export function fileDependenciesForTest() {
-  return fileDependencies;
+  return Object.fromEntries([...fileDependencies.entries()].map(entry => (
+    [path.basename(entry[0]), [...entry[1]].map(f => path.basename(f)).sort()]
+  )));
 }
 
 export function collectAffectedTestFiles(changedFile: string, testFileCollector: Set<string>) {
