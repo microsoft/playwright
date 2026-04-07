@@ -30,8 +30,10 @@ import { msToString } from '@isomorphic/formatUtils';
 import type { Entry } from '@trace/har';
 import { useTraceModel } from './traceModelContext';
 import { Expandable } from '@web/components/expandable';
+import { Toolbar } from '@web/components/toolbar';
 
 type RequestBody = { text: string, mimeType?: string } | null;
+type ResponseBody = { dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null;
 
 
 export const NetworkResourceDetails: React.FunctionComponent<{
@@ -49,9 +51,9 @@ export const NetworkResourceDetails: React.FunctionComponent<{
       const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
       if (resource.request.postData._sha1) {
         const response = await fetch(model.createRelativeUrl(`sha1/${resource.request.postData._sha1}`));
-        return { text: formatBody(await response.text(), requestContentType), mimeType: requestContentType };
+        return { text: await response.text(), mimeType: requestContentType };
       } else {
-        return { text: formatBody(resource.request.postData.text, requestContentType), mimeType: requestContentType };
+        return { text: resource.request.postData.text, mimeType: requestContentType };
       }
     } else {
       return null;
@@ -108,22 +110,37 @@ const CopyDropdown: React.FC<{
   );
 };
 
+const FormatToggleButton: React.FC<{
+  toggled: boolean;
+  error?: boolean;
+  onToggle: () => void;
+}> = ({ toggled, error, onToggle }) => {
+  return <ToolbarButton icon='json' title='Pretty print' toggled={toggled} errorBadge={error ? 'Formatting failed' : undefined} onClick={e => {
+    e.stopPropagation();
+    onToggle();
+  }}/>;
+};
+
 const ExpandableSection: React.FC<{
   title: string;
   showCount?: boolean,
   data?: { name: string, value: React.ReactNode }[],
   children?: React.ReactNode
+  titleChildren?: React.ReactNode;
   className?: string;
-}> = ({ title, data, showCount, children, className }) => {
+}> = ({ title, data, showCount, children, titleChildren, className }) => {
   const [expanded, setExpanded] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
   return <Expandable
     expanded={expanded}
     setExpanded={setExpanded}
     expandOnTitleClick
     title={
-      <span className='network-request-details-header'>{title}
-        {showCount && <span className='network-request-details-header-count'> × {data?.length ?? 0}</span>}
-      </span>
+      <>
+        <span className='network-request-details-header'>{title}
+          {showCount && <span className='network-request-details-header-count'> × {data?.length ?? 0}</span>}
+        </span>
+        { titleChildren }
+      </>
     }
     className={className}
   >
@@ -167,11 +184,21 @@ const PayloadTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
   requestBody: RequestBody,
 }> = ({ resource, requestBody }) => {
+  const [showFormatted, setShowFormatted] = useSetting('trace-viewer-network-details-show-formatted-payload', true);
+  const hasQueryString = resource.request.queryString.length > 0;
+  const hasRequestBody = !!(requestBody || resource.request.postData);
+  const formatResult = useFormattedBody(requestBody, showFormatted);
+
   return <div className='vbox network-request-details-tab'>
-    {resource.request.queryString.length === 0 && !requestBody && <em className='network-request-no-payload'>No payload for this request.</em>}
-    {resource.request.queryString.length > 0 && <ExpandableSection title='Query String Parameters' showCount data={resource.request.queryString}/>}
-    {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body'>
-      <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
+    {!hasQueryString && !hasRequestBody && <em className='network-request-no-payload'>No payload for this request.</em>}
+    {hasQueryString && <ExpandableSection title='Query String Parameters' showCount data={resource.request.queryString}/>}
+    {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body' titleChildren={
+      <>
+        <div style={{ margin: 'auto' }}></div>
+        <FormatToggleButton toggled={showFormatted} error={formatResult.error} onToggle={() => setShowFormatted(!showFormatted)} />
+      </>
+    }>
+      <CodeMirrorWrapper text={formatResult.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
     </ExpandableSection>}
   </div>;
 };
@@ -180,7 +207,7 @@ const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   const model = useTraceModel();
-  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null>(null);
+  const [responseBody, setResponseBody] = React.useState<ResponseBody>(null);
 
   React.useEffect(() => {
     const readResources = async  () => {
@@ -198,8 +225,7 @@ const ResponseTab: React.FunctionComponent<{
           const font = await response.arrayBuffer();
           setResponseBody({ font });
         } else {
-          const formattedBody = formatBody(await response.text(), resource.response.content.mimeType);
-          setResponseBody({ text: formattedBody, mimeType: resource.response.content.mimeType });
+          setResponseBody({ text: await response.text(), mimeType: resource.response.content.mimeType });
         }
       } else {
         setResponseBody(null);
@@ -209,11 +235,20 @@ const ResponseTab: React.FunctionComponent<{
     readResources();
   }, [resource, model]);
 
+  const [showFormattedResponse, setShowFormattedResponse] = useSetting('trace-viewer-network-details-show-formatted-response', true);
+  const formatResult = useFormattedBody(responseBody, showFormattedResponse);
+
   return <div className='vbox network-request-details-tab'>
     {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.font && <FontPreview font={responseBody.font} />}
     {responseBody && responseBody.dataUrl && <div><img draggable='false' src={responseBody.dataUrl} /></div>}
-    {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
+    {responseBody && responseBody.text !== undefined && <div className='vbox network-response-body'>
+      <CodeMirrorWrapper text={formatResult.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>
+      <Toolbar noShadow={true} noMinHeight={true} className='network-response-toolbar'>
+        <div style={{ margin: 'auto' }}></div>
+        <FormatToggleButton toggled={showFormattedResponse} error={formatResult.error} onToggle={() => setShowFormattedResponse(!showFormattedResponse)} />
+      </Toolbar>
+    </div>}
   </div>;
 };
 
@@ -289,32 +324,34 @@ function formatXml(xml: string, indent = '  ') {
   return lines.join('\n');
 }
 
-function formatBody(body: string | null, contentType: string): string {
-  if (body === null)
-    return 'Loading...';
+function formatBody(body: string, contentType?: string): string {
+  if (!body.trim() || !contentType)
+    return body;
 
-  const bodyStr = body;
-  if (bodyStr === '')
-    return '<Empty>';
+  if (isJsonMimeType(contentType))
+    return JSON.stringify(JSON.parse(body), null, 2);
 
-  if (isJsonMimeType(contentType)) {
-    try {
-      return JSON.stringify(JSON.parse(bodyStr), null, 2);
-    } catch (err) {
-      return bodyStr;
-    }
-  }
-
-  if (isXmlMimeType(contentType)) {
-    try {
-      return formatXml(bodyStr);
-    } catch {
-      return bodyStr;
-    }
-  }
+  if (isXmlMimeType(contentType))
+    return formatXml(body);
 
   if (contentType.includes('application/x-www-form-urlencoded'))
-    return decodeURIComponent(bodyStr);
+    return decodeURIComponent(body);
 
-  return bodyStr;
+  return body;
 }
+
+const useFormattedBody = (body: RequestBody | ResponseBody, showFormatted: boolean) => {
+  return React.useMemo(() => {
+    if (body?.text === undefined)
+      return { text: '' };
+
+    if (!showFormatted)
+      return { text: body.text };
+
+    try {
+      return { text: formatBody(body.text, body.mimeType) };
+    } catch {
+      return { text: body.text, error: true };
+    }
+  }, [body, showFormatted]);
+};

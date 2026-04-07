@@ -28,7 +28,7 @@
   background-color: var(--vscode-sideBar-background);
 }
 
-.toolbar:after {
+.toolbar:not(.no-shadow):after {
   content: '';
   display: block;
   position: absolute;
@@ -39,10 +39,6 @@
   right: -2px;
   box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px;
   z-index: 100;
-}
-
-.toolbar.no-shadow:after {
-  box-shadow: none;
 }
 
 .toolbar.no-min-height {
