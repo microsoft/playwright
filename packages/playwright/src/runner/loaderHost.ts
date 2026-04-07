@@ -56,7 +56,7 @@ export class OutOfProcessLoaderHost {
 
   constructor(config: FullConfigInternal) {
     this._config = config;
-    this._processHost = new ProcessHost(require.resolve('../loader/loaderMain.js'), 'loader', {});
+    this._processHost = new ProcessHost(require.resolve('../loader/loaderProcessEntry.js'), 'loader', {});
   }
 
   async start(errors: TestError[]) {

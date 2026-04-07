@@ -34,7 +34,7 @@ export class ProcessHost extends EventEmitter {
   private _didSendStop = false;
   private _processDidExit = false;
   private _didExitAndRanOnExit = false;
-  private _runnerScript: string;
+  private _entryScript: string;
   private _lastMessageId = 0;
   private _callbacks = new Map<number, { resolve: (result: any) => void, reject: (error: Error) => void }>();
   private _processName: string;
@@ -42,16 +42,16 @@ export class ProcessHost extends EventEmitter {
   private _extraEnv: Record<string, string | undefined>;
   private _requestHandlers = new Map<string, (params: any) => Promise<any>>();
 
-  constructor(runnerScript: string, processName: string, env: Record<string, string | undefined>) {
+  constructor(entryScript: string, processName: string, env: Record<string, string | undefined>) {
     super();
-    this._runnerScript = runnerScript;
+    this._entryScript = entryScript;
     this._processName = processName;
     this._extraEnv = env;
   }
 
   async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
     iso.assert(!this.process, 'Internal error: starting the same process twice');
-    this.process = child_process.fork(require.resolve('../common/process'), {
+    this.process = child_process.fork(this._entryScript, {
       // Note: we pass detached:false, so that workers are in the same process group.
       // This way Ctrl+C or a kill command can shutdown all workers in case they misbehave.
       // Otherwise user can end up with a bunch of workers stuck in a busy loop without self-destructing.
@@ -133,7 +133,6 @@ export class ProcessHost extends EventEmitter {
     this.send({
       method: '__init__', params: {
         processParams,
-        runnerScript: this._runnerScript,
         runnerParams
       }
     });
