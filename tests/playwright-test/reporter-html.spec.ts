@@ -226,6 +226,40 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       }
     });
 
+    test('should show slider dimensions in visual order', async ({ runInlineTest, page, showReport }) => {
+      const expected = createImage(201, 200, 255, 0, 0);
+      const actual = createImage(200, 200, 0, 255, 0);
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = { use: { viewport: { width: 200, height: 200 }} };
+        `,
+        'a.test.js-snapshots/expected-linux.png': expected,
+        'a.test.js-snapshots/expected-darwin.png': expected,
+        'a.test.js-snapshots/expected-win32.png': expected,
+        'actual.png': actual,
+        'a.test.js': `
+          import fs from 'fs';
+          import { test, expect } from '@playwright/test';
+          test('fails', async () => {
+            const screenshot = fs.readFileSync('actual.png');
+            await expect(screenshot).toMatchSnapshot('expected.png');
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'fails' }).click();
+      const imageDiff = page.getByTestId('test-results-image-diff').getByTestId('test-result-image-mismatch');
+      await imageDiff.getByText('Slider', { exact: true }).click();
+      await expect(imageDiff.getByTestId('test-result-image-mismatch-slider-size')).toHaveText(
+          /Actual\s*200\s*x\s*200\s*Expected\s*201\s*x\s*200/
+      );
+      await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
+      await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
+    });
+
     test('should include multiple image diffs', async ({ runInlineTest, page, showReport }) => {
       const IMG_WIDTH = 200;
       const IMG_HEIGHT = 200;
