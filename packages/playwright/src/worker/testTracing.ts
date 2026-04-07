@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { yazl, yauzl } from 'playwright-core/lib/zipBundle';
+
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@serverUtils/crypto';
@@ -186,7 +188,6 @@ export class TestTracing {
       return;
     }
 
-    const { yazl } = await import('playwright-core/lib/zipBundle');
     const zipFile = new yazl.ZipFile();
 
     if (!this._options?.attachments) {
@@ -351,7 +352,6 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
   }
 
   const mergePromise = new ManualPromise();
-  const { yazl, yauzl } = await import('playwright-core/lib/zipBundle');
   const zipFile = new yazl.ZipFile();
   const entryNames = new Set<string>();
   (zipFile as any as EventEmitter).on('error', error => mergePromise.reject(error));

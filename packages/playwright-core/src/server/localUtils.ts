@@ -25,6 +25,7 @@ import { ZipFile } from './utils/zipFile';
 import { serializeClientSideCallMetadata } from '../utils/isomorphic/trace/traceUtils';
 import { assert } from '../utils/isomorphic/assert';
 import { removeFolders } from './utils/fileUtils';
+import { yauzl, yazl } from '../zipBundle';
 
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
@@ -42,7 +43,6 @@ export type StackSession = {
 
 export async function zip(progress: Progress, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsZipParams): Promise<void> {
   const promise = new ManualPromise<void>();
-  const { yauzl, yazl } = await import('../zipBundle');
   const zipFile = new yazl.ZipFile();
   (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
 

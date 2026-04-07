@@ -40,7 +40,7 @@ export class BidiChromium extends BrowserType {
     // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
     // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
     // we load bidiOverCdp dynamically.
-    const bidiOverCdp = await import('./bidiOverCdp');
+    const bidiOverCdp = require('./bidiOverCdp');
     const bidiTransport = await bidiOverCdp.connectBidiOverCdp(transport);
     (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
     try {
