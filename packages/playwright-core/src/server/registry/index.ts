@@ -563,6 +563,7 @@ export interface Executable {
   title?: string,
   revision?: string,
   browserVersion?: string,
+  defaultUserDataDir?: string;
   executablePathOrDie(sdkLanguage: string): string;
   executablePath(): string | undefined;
   _validateHostRequirements(sdkLanguage: string): Promise<void>;
@@ -709,68 +710,119 @@ export class Registry {
       'linux': '/opt/google/chrome/chrome',
       'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       'win32': `\\Google\\Chrome\\Application\\chrome.exe`,
-    }, () => this._installChromiumChannel('chrome', {
-      'linux': 'reinstall_chrome_stable_linux.sh',
-      'darwin': 'reinstall_chrome_stable_mac.sh',
-      'win32': 'reinstall_chrome_stable_win.ps1',
-    })));
+    }, {
+      install: () => this._installChromiumChannel('chrome', {
+        'linux': 'reinstall_chrome_stable_linux.sh',
+        'darwin': 'reinstall_chrome_stable_mac.sh',
+        'win32': 'reinstall_chrome_stable_win.ps1',
+      }),
+      userDataDirs: {
+        'linux': '.config/google-chrome',
+        'darwin': 'Library/Application Support/Google/Chrome',
+        'win32': 'Google\\Chrome\\User Data',
+      },
+    }));
 
     this._executables.push(this._createChromiumChannel('chrome-beta', {
       'linux': '/opt/google/chrome-beta/chrome',
       'darwin': '/Applications/Google Chrome Beta.app/Contents/MacOS/Google Chrome Beta',
       'win32': `\\Google\\Chrome Beta\\Application\\chrome.exe`,
-    }, () => this._installChromiumChannel('chrome-beta', {
-      'linux': 'reinstall_chrome_beta_linux.sh',
-      'darwin': 'reinstall_chrome_beta_mac.sh',
-      'win32': 'reinstall_chrome_beta_win.ps1',
-    })));
+    }, {
+      install: () => this._installChromiumChannel('chrome-beta', {
+        'linux': 'reinstall_chrome_beta_linux.sh',
+        'darwin': 'reinstall_chrome_beta_mac.sh',
+        'win32': 'reinstall_chrome_beta_win.ps1',
+      }),
+      userDataDirs: {
+        'linux': '.config/google-chrome-beta',
+        'darwin': 'Library/Application Support/Google/Chrome Beta',
+        'win32': 'Google\\Chrome Beta\\User Data',
+      },
+    }));
 
     this._executables.push(this._createChromiumChannel('chrome-dev', {
       'linux': '/opt/google/chrome-unstable/chrome',
       'darwin': '/Applications/Google Chrome Dev.app/Contents/MacOS/Google Chrome Dev',
       'win32': `\\Google\\Chrome Dev\\Application\\chrome.exe`,
+    }, {
+      userDataDirs: {
+        'linux': '.config/google-chrome-unstable',
+        'darwin': 'Library/Application Support/Google/Chrome Dev',
+        'win32': 'Google\\Chrome Dev\\User Data',
+      },
     }));
 
     this._executables.push(this._createChromiumChannel('chrome-canary', {
       'linux': '/opt/google/chrome-canary/chrome',
       'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
       'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
+    }, {
+      userDataDirs: {
+        'darwin': 'Library/Application Support/Google/Chrome Canary',
+        'win32': 'Google\\Chrome SxS\\User Data',
+      },
     }));
 
     this._executables.push(this._createChromiumChannel('msedge', {
       'linux': '/opt/microsoft/msedge/msedge',
       'darwin': '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
       'win32': `\\Microsoft\\Edge\\Application\\msedge.exe`,
-    }, () => this._installMSEdgeChannel('msedge', {
-      'linux': 'reinstall_msedge_stable_linux.sh',
-      'darwin': 'reinstall_msedge_stable_mac.sh',
-      'win32': 'reinstall_msedge_stable_win.ps1',
-    })));
+    }, {
+      install: () => this._installMSEdgeChannel('msedge', {
+        'linux': 'reinstall_msedge_stable_linux.sh',
+        'darwin': 'reinstall_msedge_stable_mac.sh',
+        'win32': 'reinstall_msedge_stable_win.ps1',
+      }),
+      userDataDirs: {
+        'linux': '.config/microsoft-edge',
+        'darwin': 'Library/Application Support/Microsoft Edge',
+        'win32': 'Microsoft\\Edge\\User Data',
+      },
+    }));
 
     this._executables.push(this._createChromiumChannel('msedge-beta', {
       'linux': '/opt/microsoft/msedge-beta/msedge',
       'darwin': '/Applications/Microsoft Edge Beta.app/Contents/MacOS/Microsoft Edge Beta',
       'win32': `\\Microsoft\\Edge Beta\\Application\\msedge.exe`,
-    }, () => this._installMSEdgeChannel('msedge-beta', {
-      'darwin': 'reinstall_msedge_beta_mac.sh',
-      'linux': 'reinstall_msedge_beta_linux.sh',
-      'win32': 'reinstall_msedge_beta_win.ps1',
-    })));
+    }, {
+      install: () => this._installMSEdgeChannel('msedge-beta', {
+        'darwin': 'reinstall_msedge_beta_mac.sh',
+        'linux': 'reinstall_msedge_beta_linux.sh',
+        'win32': 'reinstall_msedge_beta_win.ps1',
+      }),
+      userDataDirs: {
+        'linux': '.config/microsoft-edge-beta',
+        'darwin': 'Library/Application Support/Microsoft Edge Beta',
+        'win32': 'Microsoft\\Edge Beta\\User Data',
+      },
+    }));
 
     this._executables.push(this._createChromiumChannel('msedge-dev', {
       'linux': '/opt/microsoft/msedge-dev/msedge',
       'darwin': '/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev',
       'win32': `\\Microsoft\\Edge Dev\\Application\\msedge.exe`,
-    }, () => this._installMSEdgeChannel('msedge-dev', {
-      'darwin': 'reinstall_msedge_dev_mac.sh',
-      'linux': 'reinstall_msedge_dev_linux.sh',
-      'win32': 'reinstall_msedge_dev_win.ps1',
-    })));
+    }, {
+      install: () => this._installMSEdgeChannel('msedge-dev', {
+        'darwin': 'reinstall_msedge_dev_mac.sh',
+        'linux': 'reinstall_msedge_dev_linux.sh',
+        'win32': 'reinstall_msedge_dev_win.ps1',
+      }),
+      userDataDirs: {
+        'linux': '.config/microsoft-edge-dev',
+        'darwin': 'Library/Application Support/Microsoft Edge Dev',
+        'win32': 'Microsoft\\Edge Dev\\User Data',
+      },
+    }));
 
     this._executables.push(this._createChromiumChannel('msedge-canary', {
       'linux': '',
       'darwin': '/Applications/Microsoft Edge Canary.app/Contents/MacOS/Microsoft Edge Canary',
       'win32': `\\Microsoft\\Edge SxS\\Application\\msedge.exe`,
+    }, {
+      userDataDirs: {
+        'darwin': 'Library/Application Support/Microsoft Edge Canary',
+        'win32': 'Microsoft\\Edge SxS\\User Data',
+      },
     }));
 
     this._executables.push(this._createBidiFirefoxChannel('moz-firefox', {
@@ -932,7 +984,9 @@ export class Registry {
     });
   }
 
-  private _createChromiumChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+  private _createChromiumChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>, options?: { install?: () => Promise<void>, userDataDirs?: Partial<Record<'linux' | 'darwin' | 'win32', string>> }): ExecutableImpl {
+    const install = options?.install;
+    const resolvedUserDataDir = this._resolveUserDataDir(options?.userDataDirs);
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
@@ -967,11 +1021,23 @@ export class Registry {
       directory: undefined,
       executablePath: () => executablePath('', false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
+      defaultUserDataDir: resolvedUserDataDir,
       installType: install ? 'install-script' : 'none',
       _validateHostRequirements: () => Promise.resolve(),
       _isHermeticInstallation: false,
       _install: install,
     };
+  }
+
+  private _resolveUserDataDir(userDataDirs?: Partial<Record<'linux' | 'darwin' | 'win32', string>>): string | undefined {
+    if (!userDataDirs)
+      return undefined;
+    const suffix = userDataDirs[process.platform as 'linux' | 'darwin' | 'win32'];
+    if (!suffix)
+      return undefined;
+    if (process.platform === 'win32')
+      return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), suffix);
+    return path.join(os.homedir(), suffix);
   }
 
   private _createBidiFirefoxChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
@@ -1025,6 +1091,12 @@ export class Registry {
 
   defaultExecutables(): Executable[] {
     return this._executables.filter(e => e.installType === 'download-by-default');
+  }
+
+  systemBrowsers(): { channel: string; userDataDir: string }[] {
+    return this._executables
+        .filter(e => e.defaultUserDataDir && fs.existsSync(e.defaultUserDataDir))
+        .map(e => ({ channel: e.name, userDataDir: e.defaultUserDataDir! }));
   }
 
   private _dedupe(executables: Executable[]): ExecutableImpl[] {
