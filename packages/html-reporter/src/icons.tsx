@@ -51,6 +51,12 @@ export const attachment = () => {
   </svg>;
 };
 
+export const indirectAttachment = () => {
+  return <svg aria-hidden='true' height='16' viewBox='0 0 16 16' version='1.1' width='16' data-view-component='true' className='octicon color-fg-muted indirect-attachment-indicator'>
+    <path fillRule='evenodd' d='M8 16A8 8 0 108 0a8 8 0 000 16zm0-3a5 5 0 100-10 5 5 0 000 10z'></path>
+  </svg>;
+};
+
 export const cross = () => {
   return <svg className='octicon color-text-danger' viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
     <path fillRule='evenodd' d='M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 01-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z'></path>
