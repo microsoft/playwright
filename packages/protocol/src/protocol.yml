@@ -2951,7 +2951,11 @@ Frame:
         selector: string?
         expression: string
         expressionArg: json?
-        pseudoElement: string?
+        pseudo:
+          type: enum?
+          literals:
+          - before
+          - after
         expectedText:
           type: array?
           items: ExpectedTextValue
@@ -4587,4 +4591,3 @@ JsonPipe:
     closed:
       parameters:
         reason: string?
-

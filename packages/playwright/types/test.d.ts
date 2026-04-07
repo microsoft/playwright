@@ -9201,9 +9201,9 @@ interface LocatorAssertions {
    */
   toHaveCSS(name: string, value: string|RegExp, options?: {
     /**
-     * Pseudo-element to read computed styles from, for example `'::before'` or `'::after'`.
+     * Pseudo-element to read computed styles from.
      */
-    pseudoElement?: string;
+    pseudo?: "before"|"after";
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
@@ -10375,4 +10375,3 @@ interface TestConfigWebServer {
    */
   url?: string;
 }
-

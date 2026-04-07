@@ -533,7 +533,7 @@ test.describe('toHaveCSS', () => {
       <div id=node></div>
     `);
     const locator = page.locator('#node');
-    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { pseudoElement: '::before' });
+    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { pseudo: 'before' });
   });
 
   test('custom css properties', async ({ page }) => {
