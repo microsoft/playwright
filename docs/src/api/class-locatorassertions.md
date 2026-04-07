@@ -1747,6 +1747,12 @@ CSS property name.
 
 CSS property value.
 
+### option: LocatorAssertions.toHaveCSS.pseudoElement
+* since: v1.60
+- `pseudoElement` <[string]>
+
+Pseudo-element to read computed styles from, for example `'::before'` or `'::after'`.
+
 ### option: LocatorAssertions.toHaveCSS.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 

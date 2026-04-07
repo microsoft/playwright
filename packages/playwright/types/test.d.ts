@@ -9201,6 +9201,11 @@ interface LocatorAssertions {
    */
   toHaveCSS(name: string, value: string|RegExp, options?: {
     /**
+     * Pseudo-element to read computed styles from, for example `'::before'` or `'::after'`.
+     */
+    pseudoElement?: string;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;

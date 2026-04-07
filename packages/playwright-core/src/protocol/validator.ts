@@ -2016,6 +2016,7 @@ scheme.FrameExpectParams = tObject({
   selector: tOptional(tString),
   expression: tString,
   expressionArg: tOptional(tAny),
+  pseudoElement: tOptional(tString),
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
   expectedNumber: tOptional(tFloat),
   expectedValue: tOptional(tType('SerializedArgument')),

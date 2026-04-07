@@ -3471,6 +3471,7 @@ export type FrameExpectParams = {
   selector?: string,
   expression: string,
   expressionArg?: any,
+  pseudoElement?: string,
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3481,6 +3482,7 @@ export type FrameExpectParams = {
 export type FrameExpectOptions = {
   selector?: string,
   expressionArg?: any,
+  pseudoElement?: string,
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,

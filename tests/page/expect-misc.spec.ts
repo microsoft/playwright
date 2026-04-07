@@ -522,6 +522,20 @@ test.describe('toHaveCSS', () => {
     await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)');
   });
 
+  test('should support pseudo element', async ({ page }) => {
+    await page.setContent(`
+      <style>
+        #node::before {
+          color: rgb(255, 0, 0);
+          content: "Text content";
+        }
+      </style>
+      <div id=node></div>
+    `);
+    const locator = page.locator('#node');
+    await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)', { pseudoElement: '::before' });
+  });
+
   test('custom css properties', async ({ page }) => {
     await page.setContent('<div id=node style="--custom-color-property:#FF00FF;">Text content</div>');
     const locator = page.locator('#node');
