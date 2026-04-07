@@ -757,6 +757,42 @@ test('should skip beforeEach hooks upon modifiers', async ({ runInlineTest }) =>
   expect(result.skipped).toBe(1);
 });
 
+test('test.abort should fail the test immediately', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('aborted', async () => {
+        test.abort('boom');
+        // Should not be reached.
+        expect(1).toBe(2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test aborted: boom');
+});
+
+test('test.abort from a fixture should fail the test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        guarded: async ({}, use) => {
+          test.abort('not allowed');
+          await use(1);
+        },
+      });
+      test('aborted from fixture', async ({ guarded }) => {
+        expect(guarded).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test aborted: not allowed');
+});
+
 test('test.slow should be idempotent', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

@@ -5532,6 +5532,29 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   }
 
   /**
+   * Aborts the currently running test by throwing an error. The test is immediately marked as failed and execution
+   * stops. This is useful from inside a fixture or a route handler when you have detected an unrecoverable misuse and
+   * want to fail the test right away.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('does not publish to shared page', async ({ page }) => {
+   *   await page.route('**\/publish', route => {
+   *     test.abort('Tests must not publish to the shared page. Use the `clone` option.');
+   *     return route.abort();
+   *   });
+   *   // ...
+   * });
+   * ```
+   *
+   * @param message Optional message describing the reason for the abort. It will be included in the failure error.
+   */
+  abort(message?: string): never;
+
+  /**
    * Marks a test as "slow". Slow test will be given triple the default timeout.
    *
    * Note that [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow)
