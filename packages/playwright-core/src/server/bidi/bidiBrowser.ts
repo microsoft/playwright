@@ -295,7 +295,7 @@ export class BidiBrowserContext extends BrowserContext {
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
     cookies = network.rewriteCookies(cookies);
-    const promises = cookies.map((c: channels.SetNetworkCookie) => {
+    const promises = cookies.map(async (c: channels.SetNetworkCookie) => {
       const cookie: bidi.Storage.PartialCookie = {
         name: c.name,
         value: { type: 'string', value: c.value },
@@ -306,8 +306,13 @@ export class BidiBrowserContext extends BrowserContext {
         sameSite: c.sameSite && toBidiSameSite(c.sameSite),
         expiry: (c.expires === -1 || c.expires === undefined) ? undefined : Math.round(c.expires),
       };
-      return this._browser._browserSession.send('storage.setCookie',
-          { cookie, partition: { type: 'storageKey', userContext: this._browserContextId, sourceOrigin: c.partitionKey } });
+      try {
+        return await this._browser._browserSession.send('storage.setCookie',
+            { cookie, partition: { type: 'storageKey', userContext: this._browserContextId, sourceOrigin: c.partitionKey } });
+      } catch (e) {
+        if (!e.message.startsWith('Protocol error (storage.setCookie): unable to set cookie'))
+          throw e;
+      }
     });
     await Promise.all(promises);
   }
