@@ -1,5 +1,4 @@
 library/agent-perform.spec.ts › retrieve a secret [timeout]
-library/browsercontext-add-cookies.spec.ts › should set cookies with SameSite attribute and no secure attribute [fail]
 library/browsercontext-basic.spec.ts › fetch with keepalive should throw when offline [fail]
 library/browsercontext-basic.spec.ts › should disable javascript [fail]
 library/browsercontext-basic.spec.ts › should emulate media in cross-process iframe [fail]
