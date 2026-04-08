@@ -27,13 +27,12 @@ import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
 import { loadConfigFromFile } from './common/configLoader';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
+import { packageJSON } from './package';
 
 export { program };
 
 import type { TraceMode } from '../types/test';
 import type { Command } from 'playwright-core/lib/utilsBundle';
-
-const packageJSON = require('../package.json');
 
 libCli.decorateProgram(program);
 

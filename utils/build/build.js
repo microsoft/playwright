@@ -669,6 +669,26 @@ function assertCoreBundleHasNoNodeModules() {
 
 steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
 
+// playwright/lib/transform/esmLoader2.js — bundled ESM loader registered by
+// common/esmLoaderHost.ts via node:module register. Same externalization
+// rules as the worker bundle.
+{
+  const playwrightSrc = filePath('packages/playwright/src');
+  steps.push(new EsbuildStep({
+    bundle: true,
+    entryPoints: [filePath('packages/playwright/src/transform/esmLoader.ts')],
+    outfile: filePath('packages/playwright/lib/esmLoaderBundle.js'),
+    sourcemap: withSourceMaps ? 'linked' : false,
+    platform: 'node',
+    format: 'cjs',
+    external: [
+      'playwright-core',
+      'playwright-core/*',
+    ],
+    plugins: [],
+  }, [playwrightSrc]));
+}
+
 // Build the Electron preload loader as a standalone CJS file. It runs inside
 // the Electron process (via `electron -r loader.js`) and must not depend on
 // coreBundle. `electron` is resolved at runtime by the Electron process.

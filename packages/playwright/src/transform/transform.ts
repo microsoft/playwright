@@ -23,6 +23,7 @@ import crypto from 'crypto';
 
 import sourceMapSupport from 'source-map-support';
 import { loadTsConfig } from './tsconfig-loader';
+import { packageJSON } from '../package';
 import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
 import { addHook } from './pirates';
@@ -33,7 +34,7 @@ import type { LoadedTsConfig } from './tsconfig-loader';
 import type { Matcher } from '../util';
 
 
-const version = require('../../package.json').version;
+const version = packageJSON.version;
 
 type ParsedTsConfigData = {
   pathsBase?: string;
@@ -237,7 +238,17 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
   transformData = new Map<string, any>();
-  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  // Pass `setTransformData` to plugins via plugin options instead of having
+  // them import it. The bundled esmLoader inlines its own copy of this file,
+  // so an import-based approach would close over the wrong `transformData`
+  // module-level variable. The closure here always references the bundle copy
+  // currently driving the transform.
+  const setTransformDataForPlugin = (key: string, value: any) => transformData.set(key, value);
+  const wrappedPrologue: BabelPlugin[] = pluginsPrologue.map(([name, opts]) => [
+    name,
+    { ...(opts || {}), setTransformData: setTransformDataForPlugin },
+  ]);
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, wrappedPrologue, pluginsEpilogue);
   if (!babelResult?.code)
     return { code: originalCode, serializedCache };
   const { code, map } = babelResult;

@@ -14,5 +14,13 @@
  * limitations under the License.
  */
 
-import { libPath } from '../package';
-export const expect: typeof import('../../bundles/expect/node_modules/expect/build').expect = require(libPath('common', 'expectBundleImpl')).expect;
+import path from 'path';
+
+// Use a dynamic path so esbuild does not statically resolve and inline
+// package.json into coreBundle.js.
+export const packageRoot = path.join(__dirname, '..');
+export const packageJSON = require(path.join(packageRoot, 'package.json'));
+
+export function libPath(...parts: string[]): string {
+  return path.join(packageRoot, 'lib', ...parts);
+}

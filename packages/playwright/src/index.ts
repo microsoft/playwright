@@ -28,6 +28,7 @@ import { setBoxedStackPrefixes } from '@utils/nodePlatform';
 import { currentZone } from '@utils/zones';
 import { buildErrorContext } from './errorContext';
 import { currentTestInfo } from './common/globals';
+import { packageRoot } from './package';
 import { rootTestType } from './common/testType';
 import { createCustomMessageHandler, runDaemonForContext } from './mcp/test/browserBackend';
 
@@ -46,7 +47,7 @@ import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracin
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
-setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
+setBoxedStackPrefixes([packageRoot]);
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
