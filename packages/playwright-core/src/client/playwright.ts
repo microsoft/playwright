@@ -23,6 +23,7 @@ import { TimeoutError } from './errors';
 import { APIRequest } from './fetch';
 import { Selectors } from './selectors';
 
+import type { ElectronApplication } from './electron';
 import type * as channels from '@protocol/channels';
 import type { LaunchOptions } from 'playwright-core';
 
@@ -41,6 +42,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   _defaultLaunchOptions?: LaunchOptions;
   _defaultContextTimeout?: number;
   _defaultContextNavigationTimeout?: number;
+  readonly _electronApps = new Set<ElectronApplication>();
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -75,7 +77,9 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   }
 
   _allContexts() {
-    return this._browserTypes().flatMap(type => [...type._contexts]);
+    const browserContexts = this._browserTypes().flatMap(type => [...type._contexts]);
+    const electronContexts = [...this._electronApps].map(app => app._context);
+    return [...browserContexts, ...electronContexts];
   }
 
   _allPages() {

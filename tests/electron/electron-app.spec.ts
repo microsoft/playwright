@@ -365,3 +365,30 @@ test('should save downloads to artifactsDir', async ({ launchElectronApp, electr
   // User-provided artifactsDir should not be cleaned up.
   expect(fs.existsSync(artifactsDir)).toBeTruthy();
 });
+
+test('should include electron pages in playwright._allPages()', async ({ playwright, electronApp, newWindow }) => {
+  const window = await newWindow();
+  await window.setContent('<h1>Hello Electron</h1>');
+  const allPages = (playwright as any)._allPages();
+  expect(allPages).toContain(window);
+});
+
+test('should include electron context in playwright._allContexts()', async ({ playwright, electronApp }) => {
+  const allContexts = (playwright as any)._allContexts();
+  expect(allContexts).toContain(electronApp.context());
+});
+
+test('should remove electron context from tracking on close', async ({ playwright, launchElectronApp }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const context = app.context();
+  expect((playwright as any)._allContexts()).toContain(context);
+  await app.close();
+  expect((playwright as any)._allContexts()).not.toContain(context);
+});
+
+test('should take screenshot of electron window', async ({ electronApp, newWindow }) => {
+  const window = await newWindow();
+  await window.setContent('<h1 style="color: red;">Screenshot Test</h1>');
+  const screenshot = await window.screenshot();
+  expect(screenshot.byteLength).toBeGreaterThan(0);
+});

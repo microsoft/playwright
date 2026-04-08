@@ -66,7 +66,11 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
     this._playwright.selectors._contextsForSelectors.add(app._context);
-    app.once(Events.ElectronApplication.Close, () => this._playwright.selectors._contextsForSelectors.delete(app._context));
+    this._playwright._electronApps.add(app);
+    app.once(Events.ElectronApplication.Close, () => {
+      this._playwright.selectors._contextsForSelectors.delete(app._context);
+      this._playwright._electronApps.delete(app);
+    });
     await app._context._initializeHarFromOptions(options.recordHar);
     app._context.tracing._tracesDir = options.tracesDir;
     return app;
