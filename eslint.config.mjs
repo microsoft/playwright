@@ -21,6 +21,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import stylistic from "@stylistic/eslint-plugin";
 import importRules from "eslint-plugin-import";
+import playwrightPlugin from "eslint-plugin-playwright";
 import progressPlugin from "./utils/eslint-plugin-progress/index.js";
 import { fixupConfigRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -494,6 +495,21 @@ export default [
     },
     rules: {
       ...noFloatingPromisesRules,
+    },
+  },
+  {
+    // Playwright-specific guardrails applied only to spec files.
+    // - no-wait-for-timeout: warn (93 existing hits → keep CI green while flagging tech debt)
+    // - valid-expect: error (catches missing await on expect() calls)
+    // - no-focused-test: error (blocks test.only from landing; backs up forbidOnly on CI)
+    files: ["tests/**/*.spec.ts", "tests/**/*.spec.js"],
+    plugins: {
+      playwright: playwrightPlugin,
+    },
+    rules: {
+      "playwright/no-wait-for-timeout": "warn",
+      "playwright/valid-expect": "error",
+      "playwright/no-focused-test": "error",
     },
   },
   ...reactBaseConfig.map((config) => ({

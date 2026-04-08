@@ -129,7 +129,7 @@ it('should work when serving from memory cache', async ({ contextFactory, server
 });
 
 function verifyTimingValue(value: number, previous: number) {
-  expect(value === -1 || value > 0 && value >= previous);
+  expect(value === -1 || value > 0 && value >= previous).toBeTruthy();
 }
 
 function verifyConnectionTimingConsistency(timing) {

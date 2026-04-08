@@ -542,12 +542,14 @@ test.describe(() => {
 
 
   test('toBeOK fail with invalid argument', async ({ page }) => {
+    // eslint-disable-next-line playwright/valid-expect
     const error = await (expect(page) as any).toBeOK().catch(e => e);
     expect(error.message).toContain('toBeOK can be only used with APIResponse object');
   });
 
   test('toBeOK fail with promise', async ({ page, server }) => {
     const res = page.request.get(server.EMPTY_PAGE);
+    // eslint-disable-next-line playwright/valid-expect
     const error = await (expect(res) as any).toBeOK().catch(e => e);
     expect(error.message).toContain('toBeOK can be only used with APIResponse object');
     await res;
