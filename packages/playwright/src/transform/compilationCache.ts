@@ -18,9 +18,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { utils } from 'playwright-core/lib/coreBundle';
+import { calculateSha1 } from '@utils/crypto';
 import sourceMapSupport from 'source-map-support';
 import { isWorkerProcess } from '../common/globals';
+import { packageRoot } from '../package';
 
 export type MemoryCache = {
   codePath: string;
@@ -176,7 +177,7 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
 
 function calculateFilePathHash(filePath: string): string {
   // Larger file path hash allows for fewer collisions compared to content, as we only check file path collision for deleting files
-  return utils.calculateSha1(filePath).substring(0, 10);
+  return calculateSha1(filePath).substring(0, 10);
 }
 
 function calculateCachePath(filePath: string, cacheFolderName: string, hashPrefix: string): string {
@@ -279,7 +280,7 @@ export function dependenciesForTestFile(filename: string): Set<string> {
 // This is only used in the dev mode, specifically excluding
 // files from packages/playwright*. In production mode, node_modules covers
 // that.
-const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
+const kPlaywrightInternalPrefix = packageRoot;
 
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))

@@ -4,7 +4,7 @@
 ../util.ts
 ../transform
 ../isomorphic/teleReceiver.ts
+../package.ts
 
 [testType.ts]
 ../matchers/expect.ts
-

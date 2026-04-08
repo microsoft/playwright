@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
+import { libPath } from '../package';
+
 import type { BabelFileResult, ParseResult } from '../../bundles/babel/node_modules/@types/babel__core';
-export const codeFrameColumns: typeof import('../../bundles/babel/node_modules/@types/babel__code-frame').codeFrameColumns = require('./babelBundleImpl').codeFrameColumns;
-export const declare: typeof import('../../bundles/babel/node_modules/@types/babel__helper-plugin-utils').declare = require('./babelBundleImpl').declare;
-export const types: typeof import('../../bundles/babel/node_modules/@types/babel__core').types = require('./babelBundleImpl').types;
-export const traverse: typeof import('../../bundles/babel/node_modules/@types/babel__traverse').default = require('./babelBundleImpl').traverse;
+const babelBundleImpl = require(libPath('transform', 'babelBundleImpl'));
+export const codeFrameColumns: typeof import('../../bundles/babel/node_modules/@types/babel__code-frame').codeFrameColumns = babelBundleImpl.codeFrameColumns;
+export const declare: typeof import('../../bundles/babel/node_modules/@types/babel__helper-plugin-utils').declare = babelBundleImpl.declare;
+export const types: typeof import('../../bundles/babel/node_modules/@types/babel__core').types = babelBundleImpl.types;
+export const traverse: typeof import('../../bundles/babel/node_modules/@types/babel__traverse').default = babelBundleImpl.traverse;
 export type BabelPlugin = [string, any?];
 export type BabelTransformFunction = (code: string, filename: string, isModule: boolean, pluginsPrefix: BabelPlugin[], pluginsSuffix: BabelPlugin[]) => BabelFileResult | null;
-export const babelTransform: BabelTransformFunction = require('./babelBundleImpl').babelTransform;
+export const babelTransform: BabelTransformFunction = babelBundleImpl.babelTransform;
 export type BabelParseFunction = (code: string, filename: string, isModule: boolean) => ParseResult;
-export const babelParse: BabelParseFunction = require('./babelBundleImpl').babelParse;
+export const babelParse: BabelParseFunction = babelBundleImpl.babelParse;
 export type { NodePath, PluginObj, types as T } from '../../bundles/babel/node_modules/@types/babel__core';
 export type { BabelAPI } from '../../bundles/babel/node_modules/@types/babel__helper-plugin-utils';

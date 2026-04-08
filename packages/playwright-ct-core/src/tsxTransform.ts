@@ -17,7 +17,6 @@
 import path from 'path';
 
 import { declare, traverse, types } from 'playwright/lib/transform/babelBundle';
-import { setTransformData } from 'playwright/lib/transform/transform';
 
 import type { BabelAPI, PluginObj, T } from 'playwright/lib/transform/babelBundle';
 const t: typeof T = types;
@@ -25,7 +24,11 @@ const t: typeof T = types;
 let jsxComponentNames: Set<string>;
 let importInfos: Map<string, ImportInfo>;
 
-export default declare((api: BabelAPI) => {
+type TsxTransformOptions = {
+  setTransformData: (key: string, value: any) => void;
+};
+
+export default declare((api: BabelAPI, options: TsxTransformOptions) => {
   api.assertVersion(7);
 
   const result: PluginObj = {
@@ -65,7 +68,7 @@ export default declare((api: BabelAPI) => {
                 )
             );
           }
-          setTransformData('playwright-ct-core', [...importInfos.values()]);
+          options.setTransformData('playwright-ct-core', [...importInfos.values()]);
         }
       },
 

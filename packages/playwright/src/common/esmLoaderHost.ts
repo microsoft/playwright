@@ -41,7 +41,7 @@ export function registerESMLoader() {
 
   const { port1, port2 } = new MessageChannel();
   // register will wait until the loader is initialized.
-  register(url.pathToFileURL(require.resolve('../transform/esmLoader')), {
+  register(url.pathToFileURL(require.resolve('../esmLoaderBundle.js')), {
     data: { port: port2 },
     transferList: [port2],
   });
