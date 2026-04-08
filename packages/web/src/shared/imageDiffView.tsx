@@ -149,7 +149,7 @@ export const ImageDiffSlider: React.FC<{
   const sameSize = expectedImage.naturalWidth === actualImage.naturalWidth && expectedImage.naturalHeight === actualImage.naturalHeight;
 
   return <div style={{ flex: 'none', display: 'flex', alignItems: 'center', flexDirection: 'column', userSelect: 'none' }}>
-    {!hideSize && <div data-testid='test-result-image-mismatch-slider-size' style={{ margin: 5 }}>
+    {!hideSize && <div style={{ margin: 5 }}>
       {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>Actual </span>}
       {!sameSize && <span>{actualImage.naturalWidth}</span>}
       {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>x</span>}
