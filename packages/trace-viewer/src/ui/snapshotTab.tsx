@@ -188,8 +188,8 @@ export const SnapshotView: React.FunctionComponent<{
       iteration={loadingRef.current.iteration} />
     <SnapshotWrapper snapshotInfo={snapshotInfo}>
       <div className='snapshot-switcher'>
-        <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
-        <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
+        <iframe ref={iframeRef0} name='snapshot' title='DOM Snapshot' sandbox='allow-same-origin allow-scripts' className={clsx(loadingRef.current.visibleIframe === 0 && 'snapshot-visible')}></iframe>
+        <iframe ref={iframeRef1} name='snapshot' title='DOM Snapshot' sandbox='allow-same-origin allow-scripts' className={clsx(loadingRef.current.visibleIframe === 1 && 'snapshot-visible')}></iframe>
       </div>
     </SnapshotWrapper>
   </div>;
