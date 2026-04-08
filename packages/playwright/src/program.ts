@@ -17,13 +17,19 @@
 /* eslint-disable no-console */
 
 import 'playwright-core/lib/bootstrap';
-import { libCli, serverUtils } from 'playwright-core/lib/coreBundle';
-import { program } from 'playwright-core/lib/utilsBundle';
+
+import { libCli, tools } from 'playwright-core/lib/coreBundle';
+import { program } from 'commander';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
+import { runTests, clearCache, runTestServerAction } from './cli/testActions';
+import { showReport, mergeReports } from './cli/reportActions';
+import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
+import { loadConfigFromFile } from './common/configLoader';
+import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 
 export { program };
 
-import type { tools } from 'playwright-core/lib/coreBundle';
 import type { TraceMode } from '../types/test';
 import type { Command } from 'playwright-core/lib/utilsBundle';
 
@@ -48,11 +54,10 @@ function addTestCommand(program: Command) {
   });
   command.action(async (args, opts) => {
     try {
-      const { runTests } = await import('./testActions');
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
-      serverUtils.gracefullyProcessExitDoNotHang(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   });
   command.addHelpText('afterAll', `
@@ -71,18 +76,7 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const { clearCache } = await import('./testActions');
     await clearCache(opts);
-  });
-}
-
-function addDevServerCommand(program: Command) {
-  const command = program.command('dev-server', { hidden: true });
-  command.description('start dev server');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.action(async options => {
-    const { startDevServer } = await import('./testActions');
-    await startDevServer(options);
   });
 }
 
@@ -93,7 +87,6 @@ function addTestServerCommand(program: Command) {
   command.option('--host <host>', 'Host to start the server on', 'localhost');
   command.option('--port <port>', 'Port to start the server on', '0');
   command.action(async opts => {
-    const { runTestServerAction } = await import('./testActions');
     await runTestServerAction(opts);
   });
 }
@@ -102,7 +95,6 @@ function addShowReportCommand(program: Command) {
   const command = program.command('show-report [report]');
   command.description('show HTML report');
   command.action(async (report, options) => {
-    const { showReport } = await import('./reportActions');
     await showReport(report, options.host, +options.port);
   });
   command.option('--host <host>', 'Host to serve report on', 'localhost');
@@ -121,11 +113,10 @@ function addMergeReportsCommand(program: Command) {
   command.description('merge multiple blob reports (for sharded tests) into a single report');
   command.action(async (dir, options) => {
     try {
-      const { mergeReports } = await import('./reportActions');
       await mergeReports(dir, options);
     } catch (e) {
       console.error(e);
-      serverUtils.gracefullyProcessExitDoNotHang(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
@@ -146,8 +137,6 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
-    const { tools } = await import('playwright-core/lib/coreBundle');
-    const { TestServerBackend, testServerBackendTools } = await import('./mcp/test/testBackend');
     tools.setupExitWatchdog();
     const factory: tools.ServerBackendFactory = {
       name: 'Playwright Test Runner',
@@ -172,8 +161,6 @@ function addInitAgentsCommand(program: Command) {
   command.option('--project <project>', 'Project to use for seed test');
   command.option('--prompts', 'Whether to include prompts in the agent initialization');
   command.action(async opts => {
-    const { loadConfigFromFile } = await import('./common/configLoader');
-    const { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } = await import('./agents/generateAgents');
     const config = await loadConfigFromFile(opts.config);
     if (opts.loop === 'opencode') {
       await OpencodeGenerator.init(config, opts.project, opts.prompts);
@@ -237,6 +224,5 @@ addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
 addTestMCPServerCommand(program);
-addDevServerCommand(program);
 addTestServerCommand(program);
 addInitAgentsCommand(program);

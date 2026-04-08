@@ -15,7 +15,7 @@
  */
 
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
-import { serverUtils, iso } from '../../packages/playwright-core/lib/coreBundle';
+import { utils, iso } from '../../packages/playwright-core/lib/coreBundle';
 
 import type { iso as isoType } from '../../packages/playwright-core/lib/coreBundle';
 import type { Locator, Frame, Page } from 'playwright-core';
@@ -106,7 +106,7 @@ export function suppressCertificateWarning() {
 }
 
 export async function parseTraceRaw(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], actionObjects: ActionTraceEvent[], stacks: Map<string, StackFrame[]> }> {
-  const zipFS = new serverUtils.ZipFile(file);
+  const zipFS = new utils.ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));
@@ -176,7 +176,7 @@ export async function parseTrace(file: string): Promise<{ snapshots: SnapshotSto
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
-  const zipFS = new serverUtils.ZipFile(file);
+  const zipFS = new utils.ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));

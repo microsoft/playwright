@@ -1,6 +1,8 @@
 [*]
+@isomorphic/**
+@utils/**
 ../common/
 ../mcp/test/browserBackend.ts
 ../util.ts
-../utilsBundle.ts
 ../worker/testInfo.ts
+node_modules/colors/safe

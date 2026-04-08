@@ -16,10 +16,10 @@
 
 import path from 'path';
 import fs from 'fs';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { TMP_WORKSPACES } from './npmTest';
 
-const { spawnAsync, removeFolders } = serverUtils;
+const { spawnAsync, removeFolders } = utils;
 
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
 

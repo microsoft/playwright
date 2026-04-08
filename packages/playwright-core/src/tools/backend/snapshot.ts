@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-import { formatObject, formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
+import * as z from 'zod';
+import { formatObject, formatObjectOrVoid } from '@isomorphic/stringUtils';
 
 import { defineTabTool, defineTool } from './tool';
 

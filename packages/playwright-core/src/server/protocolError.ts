@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 
 export class ProtocolError extends Error {
   type: 'error' | 'closed' | 'crashed';

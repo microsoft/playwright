@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+import { debugLogger } from '@utils/debugLogger';
+import { WSServer } from '@utils/wsServer';
+import { Semaphore } from '@isomorphic/semaphore';
 import { PlaywrightConnection } from './playwrightConnection';
 import { WebSocketServerTransport } from './serverTransport';
-import { debugLogger } from '../server/utils/debugLogger';
 import { Browser } from '../server/browser';
-import { Semaphore } from '../utils';
-import { WSServer } from '../server/utils/wsServer';
 
 import type { PlaywrightInitializeResult } from './playwrightConnection';
 

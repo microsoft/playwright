@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { captureRawStack, parseStackFrame } from '../utils/isomorphic/stackTrace';
+import { captureRawStack, parseStackFrame } from '@isomorphic/stackTrace';
 
 import type { Platform } from './platform';
 import type { StackFrame } from '@isomorphic/stackTrace';

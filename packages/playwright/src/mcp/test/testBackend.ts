@@ -16,7 +16,7 @@
 
 import EventEmitter from 'events';
 
-import { z as zod } from 'playwright-core/lib/zodBundle';
+import * as zod from 'zod';
 import { tools } from 'playwright-core/lib/coreBundle';
 
 import { TestContext } from './testContext';

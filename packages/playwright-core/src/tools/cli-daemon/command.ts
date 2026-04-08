@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-
+import * as z from 'zod';
 import type zodType from 'zod';
 
 export type Category = 'core' | 'navigation' | 'keyboard' | 'mouse' | 'export' | 'storage' | 'tabs' | 'network' | 'devtools' | 'browsers' | 'config' | 'install';

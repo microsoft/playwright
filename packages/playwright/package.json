@@ -29,7 +29,6 @@
     "./lib/transform/compilationCache": "./lib/transform/compilationCache.js",
     "./lib/transform/esmLoader": "./lib/transform/esmLoader.js",
     "./lib/transform/transform": "./lib/transform/transform.js",
-    "./lib/internalsForTest": "./lib/internalsForTest.js",
     "./lib/plugins": "./lib/plugins/index.js",
     "./lib/runner/testRunner": "./lib/runner/testRunner.js",
     "./jsx-runtime": {
@@ -38,7 +37,6 @@
       "default": "./jsx-runtime.js"
     },
     "./lib/util": "./lib/util.js",
-    "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./types/test": {
       "types": "./types/test.d.ts"
     },

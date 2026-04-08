@@ -15,11 +15,11 @@
  */
 
 import { test, expect, writeFiles } from './fixtures';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import path from 'path';
 import fs from 'fs';
 
-const { spawnAsync } = serverUtils;
+const { spawnAsync } = utils;
 
 async function runInitAgents(options?: { args?: string[], cwd?: string }): Promise<{stdout: string, stderr: string, code: number | null, error?: Error}> {
   const result = await spawnAsync('npx', [

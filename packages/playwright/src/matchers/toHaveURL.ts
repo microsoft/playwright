@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { urlMatches } from '@isomorphic/urlMatch';
+import { formatMatcherMessage, printReceivedStringContainExpectedResult } from '@utils/expectUtils';
 
 import type { MatcherResult } from './matcherHint';
 import type { Page } from 'playwright-core';
@@ -39,7 +40,7 @@ export async function toHaveURLWithPredicate(
           if (options?.ignoreCase) {
             return (
               !this.isNot ===
-              iso.urlMatches(
+              urlMatches(
                   baseURL?.toLocaleLowerCase(),
                   lastCheckedURLString.toLocaleLowerCase(),
                   expected,
@@ -48,7 +49,7 @@ export async function toHaveURLWithPredicate(
           }
 
           return (
-            !this.isNot === iso.urlMatches(baseURL, lastCheckedURLString, expected)
+            !this.isNot === urlMatches(baseURL, lastCheckedURLString, expected)
           );
         },
         { timeout },
@@ -100,7 +101,7 @@ function toHaveURLMessage(
   } else {
     if (pass) {
       printedExpected = `Expected pattern: not ${state.utils.printExpected(expected)}`;
-      const formattedReceived = serverUtils.printReceivedStringContainExpectedResult(state.utils, receivedString, null);
+      const formattedReceived = printReceivedStringContainExpectedResult(state.utils, receivedString, null);
       printedReceived = `Received string: ${formattedReceived}`;
     } else {
       const labelExpected = `Expected ${typeof expected === 'string' ? 'string' : 'pattern'}`;
@@ -108,7 +109,7 @@ function toHaveURLMessage(
     }
   }
 
-  return serverUtils.formatMatcherMessage(state.utils, {
+  return formatMatcherMessage(state.utils, {
     isNot: state.isNot,
     promise: state.promise,
     matcherName,

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { getAsBooleanFromENV } from '@utils/env';
 
 import { CommonReporterOptions, formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
 import { stripAnsiEscapes } from '../util';
@@ -41,9 +41,9 @@ class JUnitReporter implements ReporterV2 {
   private includeRetries = false;
 
   constructor(options: JUnitReporterOptions & CommonReporterOptions) {
-    this.stripANSIControlSequences = serverUtils.getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
-    this.includeProjectInTestName = serverUtils.getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
-    this.includeRetries = serverUtils.getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
+    this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
+    this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
+    this.includeRetries = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }

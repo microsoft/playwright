@@ -20,9 +20,9 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { expect } from '@playwright/test';
-import { client, serverUtils } from '../../../packages/playwright-core/lib/coreBundle';
+import { client, utils } from '../../../packages/playwright-core/lib/coreBundle';
 
-const { nodePlatform } = serverUtils;
+const { nodePlatform } = utils;
 
 export const mustNotCall = (msg?: string) => {
   return function mustNotCall() {

@@ -1323,7 +1323,7 @@ it('fetch should not throw on long set-cookie value', async ({ context, server }
   expect(cookies.map(c => c.name)).toContain('bar');
 });
 
-it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux, channel }) => {
+it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux, channel, isBidi }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
@@ -1332,7 +1332,7 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
       });
       await page.request.get(server.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
-      if (browserName === 'chromium' && value === 'None')
+      if ((browserName === 'chromium' || isBidi) && value === 'None')
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl') && value === 'None')
         expect(cookie).toBeFalsy();

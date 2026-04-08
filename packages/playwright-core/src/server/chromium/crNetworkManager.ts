@@ -15,15 +15,16 @@
  * limitations under the License.
  */
 
-import { assert, headersArrayToObject, headersObjectToArray } from '../../utils';
-import { eventsHelper } from '../utils/eventsHelper';
+import { eventsHelper } from '@utils/eventsHelper';
+import { assert } from '@isomorphic/assert';
+import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import { helper } from '../helper';
 import * as network from '../network';
 import { isProtocolError, isSessionClosedError } from '../protocolError';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as contexts from '../browserContext';
 import type * as frames from '../frames';
 import type { Page } from '../page';

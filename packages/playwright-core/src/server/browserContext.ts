@@ -17,13 +17,13 @@
 
 import fs from 'fs';
 
-import { createGuid } from './utils/crypto';
-import { debugMode, isUnderTest } from './utils/debug';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { createGuid } from '@utils/crypto';
+import { debugMode, isUnderTest } from '@utils/debug';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
-import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
 import { EventMap, SdkObject } from './instrumentation';

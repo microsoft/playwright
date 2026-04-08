@@ -65,7 +65,7 @@ it('should add cookies with empty value', async ({ context, page, server }) => {
   expect(await page.evaluate(() => document.cookie)).toEqual('marker=');
 });
 
-it('should set cookies with SameSite attribute and no secure attribute', async ({ context, browserName, isWindows, isLinux, defaultSameSiteCookieValue, channel }) => {
+it('should set cookies with SameSite attribute and no secure attribute', async ({ context, browserName, isWindows, isLinux, defaultSameSiteCookieValue, channel, isBidi }) => {
   // Use domain instead of URL to ensure that the `secure` attribute is not set.
   await context.addCookies([{
     domain: 'foo.com',
@@ -101,7 +101,7 @@ it('should set cookies with SameSite attribute and no secure attribute', async (
     httpOnly: false,
     secure: false,
     sameSite: defaultSameSiteCookieValue,
-  }, ...(browserName === 'chromium' || (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl')) ? [] : [{
+  }, ...(browserName === 'chromium' || (browserName === 'webkit' && (isLinux || channel === 'webkit-wsl')) || isBidi ? [] : [{
     name: 'same-site-none',
     value: '1',
     domain: 'foo.com',

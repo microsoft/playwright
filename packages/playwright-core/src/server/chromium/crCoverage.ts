@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
-import { eventsHelper } from '../utils/eventsHelper';
+import { eventsHelper } from '@utils/eventsHelper';
+import { assert } from '@isomorphic/assert';
 import { raceUncancellableOperationWithCleanup } from '../progress';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 

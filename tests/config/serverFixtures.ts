@@ -18,10 +18,10 @@ import type { Fixtures } from '@playwright/test';
 import path from 'path';
 import { TestServer } from './testserver';
 import { TestProxy } from './proxy';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
-type SocksSocketRequestedPayload = serverUtils.SocksSocketRequestedPayload;
-const { SocksProxy } = serverUtils;
+type SocksSocketRequestedPayload = utils.SocksSocketRequestedPayload;
+const { SocksProxy } = utils;
 type SocksProxy = InstanceType<typeof SocksProxy>;
 
 export type ServerWorkerOptions = {

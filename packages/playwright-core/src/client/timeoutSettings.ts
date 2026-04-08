@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, DEFAULT_PLAYWRIGHT_TIMEOUT } from '../utils/isomorphic/time';
+import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, DEFAULT_PLAYWRIGHT_TIMEOUT } from '@isomorphic/time';
 
 import type { Platform } from './platform';
 

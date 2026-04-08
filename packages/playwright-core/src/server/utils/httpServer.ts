@@ -17,9 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { mime, wsServer } from '../../utilsBundle';
+import mime from 'mime';
+import { WebSocketServer as wsServer } from 'ws';
+import { assert } from '@isomorphic/assert';
 import { createGuid } from './crypto';
-import { assert } from '../../utils/isomorphic/assert';
 import { createHttpServer, startHttpServer } from './network';
 
 import type http from 'http';

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
-import { monotonicTime, quoteCSSAttributeValue  } from '../../utils';
-import { raceAgainstDeadline } from '../../utils/isomorphic/timeoutRunner';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { monotonicTime } from '@isomorphic/time';
+import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 import { Frame } from '../frames';
 
 import type { CallMetadata } from '../instrumentation';

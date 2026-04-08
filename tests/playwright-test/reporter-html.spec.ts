@@ -19,12 +19,12 @@ import path from 'path';
 import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
-import { iso, serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
 
-type HttpServer = serverUtils.HttpServer;
+type HttpServer = utils.HttpServer;
 
 const { msToString } = iso;
-const { spawnAsync } = serverUtils;
+const { spawnAsync } = utils;
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
@@ -1223,6 +1223,33 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(attachment).not.toBeInViewport();
       await page.getByLabel('step').getByTitle('reveal attachment').click();
       await expect(attachment).toBeInViewport();
+    });
+
+    test('parent step shows indirect attachment indicator', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({}, testInfo) => {
+            await test.step('outer', async () => {
+              await test.step('inner', async () => {
+                await testInfo.attach('attachment', { body: 'content', contentType: 'text/plain' });
+              });
+            });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      await page.getByRole('link', { name: 'passing' }).click();
+
+      // Collapsed parents show the indirect indicator.
+      await expect(page.getByLabel('outer').getByLabel('contains attachment')).toBeVisible();
+      // Expand outer; inner still shows the indicator (the attached leaf is below it).
+      await page.getByLabel('outer').click();
+      await expect(page.getByLabel('inner').getByLabel('contains attachment')).toBeVisible();
+      // The indirect indicator is non-interactive (no link/button role).
+      await expect(page.getByLabel('outer').getByLabel('contains attachment')).not.toHaveAttribute('href', /.+/);
     });
 
     test('step.attach have links', async ({ runInlineTest, page, showReport }) => {

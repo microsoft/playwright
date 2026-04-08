@@ -1,6 +1,7 @@
 [*]
+@isomorphic/**
+@utils/**
 ../util.ts
-../utilsBundle.ts
 ../transform
 ../isomorphic/teleReceiver.ts
 

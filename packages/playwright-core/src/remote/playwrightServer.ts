@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
+import { Semaphore } from '@isomorphic/semaphore';
+import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '@isomorphic/time';
+import { WSServer } from '@utils/wsServer';
+import { wrapInASCIIBox } from '@utils/ascii';
+import { getPlaywrightVersion } from '@utils/userAgent';
+import { SocksProxy } from '@utils/socksProxy';
+import { debugLogger } from '@utils/debugLogger';
+import { isUnderTest } from '@utils/debug';
 import { PlaywrightConnection, PlaywrightInitializeResult } from './playwrightConnection';
 import { WebSocketServerTransport } from './serverTransport';
 import { createPlaywright } from '../server/playwright';
-import { Semaphore } from '../utils/isomorphic/semaphore';
-import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '../utils/isomorphic/time';
-import { WSServer } from '../server/utils/wsServer';
-import { wrapInASCIIBox } from '../server/utils/ascii';
-import { getPlaywrightVersion } from '../server/utils/userAgent';
-import { debugLogger, isUnderTest } from '../utils';
-import { SocksProxy } from '../server/utils/socksProxy';
 import { Browser } from '../server/browser';
 import { nullProgress, ProgressController } from '../server/progress';
 

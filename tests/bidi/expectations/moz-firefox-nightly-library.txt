@@ -1,5 +1,4 @@
 library/agent-perform.spec.ts › retrieve a secret [timeout]
-library/browsercontext-add-cookies.spec.ts › should set cookies with SameSite attribute and no secure attribute [fail]
 library/browsercontext-basic.spec.ts › fetch with keepalive should throw when offline [fail]
 library/browsercontext-basic.spec.ts › should disable javascript [fail]
 library/browsercontext-basic.spec.ts › should emulate media in cross-process iframe [fail]
@@ -17,7 +16,6 @@ library/browsercontext-devtools.spec.ts › should close tab via close button [f
 library/browsercontext-devtools.spec.ts › should show no-pages placeholder when all tabs are closed [fail]
 library/browsercontext-devtools.spec.ts › should display screencast image [fail]
 library/browsercontext-events.spec.ts › console event should work with element handles [fail]
-library/browsercontext-fetch.spec.ts › should support set-cookie with SameSite and without Secure attribute over HTTP [fail]
 library/browsercontext-har.spec.ts › should change document URL after redirected navigation [fail]
 library/browsercontext-har.spec.ts › should change document URL after redirected navigation on click [timeout]
 library/browsercontext-har.spec.ts › should goBack to redirected navigation [fail]

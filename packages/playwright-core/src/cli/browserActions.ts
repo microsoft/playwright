@@ -20,10 +20,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import debug from 'debug';
+import dotenv from 'dotenv';
+import { program } from 'commander';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { playwright } from '../inprocess';
-import { gracefullyProcessExitDoNotHang, ManualPromise } from '../utils';
-import { debug, dotenv, program } from '../utilsBundle';
-
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
 import type { BrowserType } from '../client/browserType';

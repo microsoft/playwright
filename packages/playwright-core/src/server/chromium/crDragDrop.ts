@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+import { assert } from '@isomorphic/assert';
 import { toModifiersMask } from './crProtocolHelper';
-import { assert } from '../../utils';
 
 import type { CRPage } from './crPage';
 import type * as types from '../types';

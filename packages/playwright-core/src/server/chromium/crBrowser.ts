@@ -17,8 +17,8 @@
 
 import path from 'path';
 
-import { assert } from '../../utils/isomorphic/assert';
-import { createGuid } from '../utils/crypto';
+import { assert } from '@isomorphic/assert';
+import { createGuid } from '@utils/crypto';
 import { Artifact } from '../artifact';
 import { Browser } from '../browser';
 import { BrowserContext, verifyGeolocation } from '../browserContext';

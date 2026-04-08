@@ -17,10 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
-
-import { iso } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { diff } from 'playwright-core/lib/utilsBundle';
+import colors from 'colors/safe';
+import * as diff from 'diff';
+import { MultiMap } from '@isomorphic/multimap';
 
 import { filterProjects } from './projectUtils';
 import { babelParse, traverse, types } from '../transform/babelBundle';
@@ -42,7 +41,7 @@ type Replacement = {
   code: string;
 };
 
-const suggestedRebaselines = new iso.MultiMap<string, Replacement>();
+const suggestedRebaselines = new MultiMap<string, Replacement>();
 
 export function addSuggestedRebaseline(location: Location, suggestedRebaseline: string) {
   suggestedRebaselines.set(location.file, { location, code: suggestedRebaseline });

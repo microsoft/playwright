@@ -18,9 +18,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { utils } from 'playwright-core/lib/coreBundle';
+import sourceMapSupport from 'source-map-support';
 import { isWorkerProcess } from '../common/globals';
-import { sourceMapSupport } from '../utilsBundle';
 
 export type MemoryCache = {
   codePath: string;
@@ -176,7 +176,7 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
 
 function calculateFilePathHash(filePath: string): string {
   // Larger file path hash allows for fewer collisions compared to content, as we only check file path collision for deleting files
-  return serverUtils.calculateSha1(filePath).substring(0, 10);
+  return utils.calculateSha1(filePath).substring(0, 10);
 }
 
 function calculateCachePath(filePath: string, cacheFolderName: string, hashPrefix: string): string {
@@ -224,7 +224,9 @@ export function setExternalDependencies(filename: string, deps: string[]) {
 }
 
 export function fileDependenciesForTest() {
-  return fileDependencies;
+  return Object.fromEntries([...fileDependencies.entries()].map(entry => (
+    [path.basename(entry[0]), [...entry[1]].map(f => path.basename(f)).sort()]
+  )));
 }
 
 export function collectAffectedTestFiles(changedFile: string, testFileCollector: Set<string>) {

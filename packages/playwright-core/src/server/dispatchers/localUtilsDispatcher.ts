@@ -15,25 +15,25 @@
  */
 
 import net from 'net';
+import { resolveGlobToRegexPattern } from '@isomorphic/urlMatch';
+import { getUserAgent } from '@utils/userAgent';
+import { fetchData } from '@utils/network';
 import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../../server/instrumentation';
 import * as localUtils from '../localUtils';
-import { getUserAgent } from '../utils/userAgent';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { PipeTransport } from '../pipeTransport';
 import { Progress } from '../progress';
 import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';
-import { fetchData } from '../utils/network';
-import { resolveGlobToRegexPattern } from '../../utils/isomorphic/urlMatch';
 
 import type { HarBackend } from '../harBackend';
 import type { Playwright } from '../playwright';
 import type { RootDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import type * as http from 'http';
-import type { HTTPRequestParams } from '../utils/network';
+import type { HTTPRequestParams } from '@utils/network';
 
 export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;

@@ -17,23 +17,23 @@
 import fs from 'fs';
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
-import { builtInReporters } from './common/config';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { startProfiling, stopProfiling } from '@utils/profiler';
 
-const { gracefullyProcessExitDoNotHang } = serverUtils;
-import { loadConfigFromFile, resolveConfigLocation } from './common/configLoader';
-import { terminalScreen } from './reporters/base';
-import { filterProjects } from './runner/projectUtils';
-import * as testServer from './runner/testServer';
-import { runWatchModeLoop } from './runner/watchMode';
-import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
-import { createErrorCollectingReporter } from './runner/reporters';
+import { builtInReporters } from '../common/config';
+import { loadConfigFromFile, resolveConfigLocation } from '../common/configLoader';
+import { terminalScreen } from '../reporters/base';
+import { filterProjects } from '../runner/projectUtils';
+import * as testServer from '../runner/testServer';
+import { runWatchModeLoop } from '../runner/watchMode';
+import { runAllTestsWithConfig, TestRunner } from '../runner/testRunner';
+import { createErrorCollectingReporter } from '../runner/reporters';
 
-import type { ConfigCLIOverrides } from './common/ipc';
-import type { ReporterDescription } from '../types/test';
+import type { ConfigCLIOverrides } from '../common/ipc';
+import type { ReporterDescription } from '../../types/test';
 
 export async function runTests(args: string[], opts: { [key: string]: any }) {
-  await serverUtils.startProfiling();
+  await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
   const config = await loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
@@ -64,7 +64,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
       project: opts.project || undefined,
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
     });
-    await serverUtils.stopProfiling('runner');
+    await stopProfiling('runner');
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
@@ -82,14 +82,14 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
           grep: opts.grep
         }
     );
-    await serverUtils.stopProfiling('runner');
+    await stopProfiling('runner');
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
   }
 
   const status = await runAllTestsWithConfig(config);
-  await serverUtils.stopProfiling('runner');
+  await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }
@@ -107,11 +107,6 @@ export async function clearCache(opts: { [key: string]: any }) {
   const { status } = await runner.clearCache(createErrorCollectingReporter(terminalScreen));
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
-}
-
-export async function startDevServer(options: { [key: string]: any }) {
-  const runner = new TestRunner(resolveConfigLocation(options.config), {});
-  await runner.startDevServer(createErrorCollectingReporter(terminalScreen), 'in-process');
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {

@@ -17,16 +17,14 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors, debug } from 'playwright-core/lib/utilsBundle';
+import { iso, utils } from 'playwright-core/lib/coreBundle';
+import { colors, debug, stoppable } from 'playwright-core/lib/utilsBundle';
 import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { resolveHook } from 'playwright/lib/transform/transform';
 import { removeDirAndLogToConsole } from 'playwright/lib/util';
-import { stoppable } from 'playwright/lib/utilsBundle';
 
-import { runDevServer } from './devServer';
 import { source as injectedSource } from './generated/indexSource';
-import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
+import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
 
 import type http from 'http';
 import type { AddressInfo } from 'net';
@@ -41,7 +39,7 @@ import type { ComponentRegistry } from './viteUtils';
 const log = debug('pw:vite');
 
 let stoppableServer: any;
-const playwrightVersion = serverUtils.getPlaywrightVersion();
+const playwrightVersion = utils.getPlaywrightVersion();
 
 export function createPlugin(): TestRunnerPlugin {
   let configDir: string;
@@ -80,10 +78,6 @@ export function createPlugin(): TestRunnerPlugin {
       await buildBundle(config, configDir);
     },
 
-    startDevServer: async () => {
-      return await runDevServer(config);
-    },
-
     clearCache: async () => {
       const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
       const dirs = await resolveDirs(configDir, config);
@@ -110,19 +104,6 @@ type BuildInfo = {
 
 export async function buildBundle(config: FullConfig, configDir: string): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
   const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
-  {
-    // Detect a running dev server and use it if available.
-    const endpoint = resolveEndpoint(config);
-    const protocol = endpoint.https ? 'https:' : 'http:';
-    const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
-    if (await serverUtils.isURLAvailable(url, true)) {
-      // eslint-disable-next-line no-console
-      console.log(`Dev Server is already running at ${url.toString()}, using it.\n`);
-      process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
-      return null;
-    }
-  }
-
   const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
     // eslint-disable-next-line no-console
@@ -136,7 +117,7 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
   let buildInfo: BuildInfo;
 
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
-  const registerSourceHash = serverUtils.calculateSha1(registerSource);
+  const registerSourceHash = utils.calculateSha1(registerSource);
 
   const { version: viteVersion, build, mergeConfig } = await import('vite');
 

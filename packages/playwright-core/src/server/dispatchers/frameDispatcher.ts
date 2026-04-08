@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
+import yaml from 'yaml';
+import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
 import { Frame } from '../frames';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
-import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
-import { yaml } from '../../utilsBundle';
-
 import type { Progress } from '../progress';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';

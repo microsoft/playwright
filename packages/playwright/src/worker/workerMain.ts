@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import colors from 'colors/safe';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { removeFolders } from '@utils/fileUtils';
+import { gracefullyCloseAll } from '@utils/processLauncher';
 
 import { deserializeConfig } from '../common/configLoader';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
@@ -57,7 +59,7 @@ export class WorkerMain extends ProcessRunner {
   // Whether the worker was requested to stop.
   private _isStopped = false;
   // This promise resolves once the single "run test group" call finishes.
-  private _runFinished = new iso.ManualPromise<void>();
+  private _runFinished = new ManualPromise<void>();
   private _currentTest: TestInfoImpl | null = null;
   private _lastRunningTests: TestCase[] = [];
   private _totalRunningTests = 0;
@@ -65,7 +67,7 @@ export class WorkerMain extends ProcessRunner {
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
   private _activeSuites = new Map<Suite, TestAnnotation[]>();
-  private _resumePromise?: iso.ManualPromise<ipc.ResumePayload>;
+  private _resumePromise?: ManualPromise<ipc.ResumePayload>;
 
   constructor(params: ipc.WorkerInitParams) {
     super();
@@ -127,7 +129,7 @@ export class WorkerMain extends ProcessRunner {
       await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(() => {});
       // Close any other browsers launched in this process. This includes anything launched
       // manually in the test/hooks and internal browsers like Playwright Inspector.
-      await fakeTestInfo._runWithTimeout(runnable, () => serverUtils.gracefullyCloseAll()).catch(() => {});
+      await fakeTestInfo._runWithTimeout(runnable, () => gracefullyCloseAll()).catch(() => {});
       this._fatalErrors.push(...fakeTestInfo.errors);
     } catch (e) {
       this._fatalErrors.push(testInfoError(e));
@@ -216,7 +218,7 @@ export class WorkerMain extends ProcessRunner {
   }
 
   async runTestGroup(runPayload: ipc.RunPayload) {
-    this._runFinished = new iso.ManualPromise<void>();
+    this._runFinished = new ManualPromise<void>();
     const entries = new Map(runPayload.entries.map(e => [e.testId, e]));
     let fatalUnknownTestIds: string[] | undefined;
     try {
@@ -297,7 +299,7 @@ export class WorkerMain extends ProcessRunner {
       onStepEnd: payload => this.dispatchEvent('stepEnd', payload),
       onAttach: payload => this.dispatchEvent('attach', payload),
       onTestPaused: payload => {
-        this._resumePromise = new iso.ManualPromise();
+        this._resumePromise = new ManualPromise();
         this.dispatchEvent('testPaused', payload);
         return this._resumePromise;
       },
@@ -383,7 +385,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
 
-      await serverUtils.removeFolders([testInfo.outputDir]);
+      await removeFolders([testInfo.outputDir]);
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ title: 'Before Hooks', category: 'hook' }, async () => {
@@ -522,7 +524,7 @@ export class WorkerMain extends ProcessRunner {
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
-      await serverUtils.removeFolders([testInfo.outputDir]);
+      await removeFolders([testInfo.outputDir]);
   }
 
   private _collectHooksAndModifiers(suite: Suite, type: 'beforeAll' | 'beforeEach' | 'afterAll' | 'afterEach', testInfo: TestInfoImpl) {

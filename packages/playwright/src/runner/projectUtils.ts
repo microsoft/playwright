@@ -18,8 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
-import { iso } from 'playwright-core/lib/coreBundle';
-import { minimatch } from 'playwright-core/lib/utilsBundle';
+import minimatch from 'minimatch';
+import { escapeRegExp } from '@isomorphic/stringUtils';
 
 import { createFileMatcher } from '../util';
 
@@ -30,7 +30,7 @@ const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);
 
 function wildcardPatternToRegExp(pattern: string): RegExp {
-  return new RegExp('^' + pattern.split('*').map(iso.escapeRegExp).join('.*') + '$', 'ig');
+  return new RegExp('^' + pattern.split('*').map(escapeRegExp).join('.*') + '$', 'ig');
 }
 
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {

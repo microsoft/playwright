@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { removeFolders } from '@utils/fileUtils';
 
 import { ProcessHost } from './processHost';
 import { stdioChunkToParams } from '../common/ipc';
@@ -47,7 +47,7 @@ export class WorkerHost extends ProcessHost {
 
   constructor(testGroup: TestGroup, options: WorkerHostOptions) {
     const workerIndex = lastWorkerIndex++;
-    super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`, {
+    super(require.resolve('../worker/workerProcessEntry.js'), `worker-${workerIndex}`, {
       ...options.extraEnv,
       FORCE_COLOR: '1',
       DEBUG_COLORS: process.env.DEBUG_COLORS === undefined ? '1' : process.env.DEBUG_COLORS,
@@ -77,7 +77,7 @@ export class WorkerHost extends ProcessHost {
   }
 
   override async onExit() {
-    await serverUtils.removeFolders([this._params.artifactsDir]);
+    await removeFolders([this._params.artifactsDir]);
   }
 
   override async stop(didFail?: boolean) {

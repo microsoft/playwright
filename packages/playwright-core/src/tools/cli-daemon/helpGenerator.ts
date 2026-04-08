@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-
+import * as z from 'zod';
 import { commands } from './commands';
 
 import type zodType from 'zod';

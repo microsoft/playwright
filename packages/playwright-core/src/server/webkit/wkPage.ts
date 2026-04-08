@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
-import { headersArrayToObject } from '../../utils/isomorphic/headers';
-import { eventsHelper } from '../utils/eventsHelper';
-import { hostPlatform } from '../utils/hostPlatform';
-import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
-import { PNG, jpegjs } from '../../utilsBundle';
+import { PNG } from 'pngjs';
+import jpegjs from 'jpeg-js';
+import { headersArrayToObject } from '@isomorphic/headers';
+import { splitErrorMessage } from '@isomorphic/stackTrace';
+import { eventsHelper } from '@utils/eventsHelper';
+import { hostPlatform } from '@utils/hostPlatform';
+import { assert } from '@isomorphic/assert';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
@@ -40,7 +41,7 @@ import { nullProgress } from '../progress';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as frames from '../frames';
 import type { JSHandle } from '../javascript';
 import type { InitScript, PageDelegate } from '../page';

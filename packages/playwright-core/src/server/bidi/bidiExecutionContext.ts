@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
-import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue } from '@isomorphic/utilityScriptSerializers';
+import { assert } from '@isomorphic/assert';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import * as bidi from './third_party/bidiProtocol';

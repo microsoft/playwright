@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-import path from 'path';
+import { startProcessRunner } from '../common/process';
+import { create } from './workerMain';
 
-import { fileDependenciesForTest } from './transform/compilationCache';
-
-export function fileDependencies() {
-  return Object.fromEntries([...fileDependenciesForTest().entries()].map(entry => (
-    [path.basename(entry[0]), [...entry[1]].map(f => path.basename(f)).sort()]
-  )));
-}
+startProcessRunner(create);

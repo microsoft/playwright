@@ -19,7 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { baseTest } from './baseTest';
 import { RunServer, RemoteServer } from './remoteServer';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { isBidiChannel, parseHar } from '../config/utils';
 import { createSkipTestPredicate } from '../bidi/expectationUtil';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
@@ -28,7 +28,7 @@ import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'p
 import type { Log } from '../../packages/trace/src/har';
 import type { TestInfo } from '@playwright/test';
 
-const { removeFolders, hostPlatform } = serverUtils;
+const { removeFolders, hostPlatform } = utils;
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;

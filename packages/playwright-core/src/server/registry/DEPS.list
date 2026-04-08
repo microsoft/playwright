@@ -1,8 +1,9 @@
 [*]
 ../../package.ts
-../../utils/
-../../utils/isomorphic/
+../../utils/**
+@isomorphic/**
 ../../utilsBundle.ts
-../../zipBundle.ts
-../utils/
+../utils/**
 ./
+node_modules/colors/safe
+node_modules/progress

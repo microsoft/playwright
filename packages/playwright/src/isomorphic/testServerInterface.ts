@@ -56,16 +56,6 @@ export interface TestServerInterface {
     status: reporterTypes.FullResult['status']
   }>;
 
-  startDevServer(params: {}): Promise<{
-    report: ReportEntry[];
-    status: reporterTypes.FullResult['status']
-  }>;
-
-  stopDevServer(params: {}): Promise<{
-    report: ReportEntry[];
-    status: reporterTypes.FullResult['status']
-  }>;
-
   clearCache(params: {}): Promise<void>;
 
   listFiles(params: {

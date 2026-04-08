@@ -17,8 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { colors, yaml } from 'playwright-core/lib/utilsBundle';
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import colors from 'colors/safe';
+import yaml from 'yaml';
+import { mkdirIfNeeded } from '@utils/fileUtils';
+
 import { FullConfigInternal } from '../common/config';
 import { defaultSeedFile, findSeedFile, seedFileContent, seedProject } from '../mcp/test/seed';
 import { parseAgentSpec } from './agentParser';
@@ -317,7 +319,7 @@ export class VSCodeGenerator {
 
 async function writeFile(filePath: string, content: string, icon: string, description: string) {
   console.log(` ${icon} ${path.relative(process.cwd(), filePath)} ${colors.dim('- ' + description)}`);
-  await serverUtils.mkdirIfNeeded(filePath);
+  await mkdirIfNeeded(filePath);
   await fs.promises.writeFile(filePath, content, 'utf-8');
 }
 

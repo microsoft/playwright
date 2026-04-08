@@ -22,10 +22,10 @@ import { cliEntrypoint, test as base, writeFiles, removeFolders } from './playwr
 import type { Files, RunOptions } from './playwright-test-fixtures';
 import type { Browser, Page, TestInfo } from './stable-test-runner';
 import { chromium } from './stable-test-runner';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { inheritAndCleanEnv } from '../config/utils';
 
-const { createGuid } = serverUtils;
+const { createGuid } = utils;
 
 type Latch = {
   blockingCode: string;

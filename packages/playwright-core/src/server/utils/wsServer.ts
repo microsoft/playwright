@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { WebSocketServer as wsServer } from 'ws';
 import { createHttpServer } from './network';
-import { wsServer } from '../../utilsBundle';
 import { debugLogger } from './debugLogger';
 
 import type { WebSocket, WebSocketServer } from '../../utilsBundle';

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
+import { assert } from '@isomorphic/assert';
 import { Browser } from '../browser';
 import { BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';

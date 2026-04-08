@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { ZipFile } from '@utils/zipFile';
 
 import {  currentBlobReportVersion } from './blob';
 import { Multiplexer } from './multiplexer';
@@ -155,7 +155,7 @@ async function extractAndParseReports(dir: string, shardFiles: string[], interna
   for (const file of shardFiles) {
     const absolutePath = path.join(dir, file);
     printStatus(`extracting: ${relativeFilePath(absolutePath)}`);
-    const zipFile = new serverUtils.ZipFile(absolutePath);
+    const zipFile = new ZipFile(absolutePath);
     const entryNames = await zipFile.entries();
     for (const entryName of entryNames.sort()) {
       let reportFile = path.join(dir, entryName);

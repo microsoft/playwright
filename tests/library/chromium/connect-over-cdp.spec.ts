@@ -18,10 +18,10 @@
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
 import fs from 'fs';
-import { serverUtils, sever } from '../../../packages/playwright-core/lib/coreBundle';
+import { utils, sever } from '../../../packages/playwright-core/lib/coreBundle';
 import { suppressCertificateWarning } from '../../config/utils';
 
-const { getUserAgent } = serverUtils;
+const { getUserAgent } = utils;
 const { WebSocketTransport, nullProgress } = sever;
 type Frame = sever.Frame;
 

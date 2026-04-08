@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+import { assert } from '@isomorphic/assert';
+import { headersObjectToArray } from '@isomorphic/headers';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
-import { assert } from '../utils/isomorphic/assert';
-import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { connectToBrowser } from './connect';
 import { TimeoutSettings } from './timeoutSettings';
 
