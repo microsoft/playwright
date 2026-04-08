@@ -34,11 +34,9 @@ const snapshot = defineTabTool({
     type: 'readOnly',
   },
 
-  handle: async (tab, params, response) => {
-    const root = (params.ref || params.selector)
-      ? (await tab.refLocator({ ref: params.ref ?? '', selector: params.selector })).locator
-      : undefined;
-    response.setIncludeFullSnapshot(params.filename, root, params.depth);
+  handle: async (_tab, params, response) => {
+    const selector = params.ref ? `aria-ref=${params.ref}` : params.selector;
+    response.setIncludeFullSnapshot(params.filename, selector, params.depth);
   },
 });
 

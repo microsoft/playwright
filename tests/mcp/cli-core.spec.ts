@@ -290,7 +290,7 @@ test('partial snapshot by ref', { annotation: { type: 'issue', description: 'htt
   expect(partialSnapshot).toBe(`- button "Cancel" [ref=e3]`);
 
   const { output: missingRefError } = await cli('snapshot', 'e999');
-  expect(missingRefError).toContain(`Ref e999 not found in the current page snapshot.`);
+  expect(missingRefError).toContain(`"aria-ref=e999" does not match any element`);
 });
 
 test('snapshot depth', async ({ cli, server }) => {

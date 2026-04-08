@@ -309,7 +309,7 @@ test('snapshot by ref', { annotation: { type: 'issue', description: 'https://git
       ref: 'e999',
     }
   })).toHaveResponse({
-    error: expect.stringContaining(`Ref e999 not found in the current page snapshot. Try capturing new snapshot.`),
+    error: expect.stringContaining(`Selector "aria-ref=e999" does not match any element`),
     isError: true,
   });
 });
