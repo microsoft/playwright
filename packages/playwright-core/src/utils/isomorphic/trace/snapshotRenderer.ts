@@ -109,8 +109,13 @@ export class SnapshotRenderer {
         const isFrame = nodeName === 'IFRAME' || nodeName === 'FRAME';
         const isAnchor = nodeName === 'A';
         const isImg = nodeName === 'IMG';
+        const isMeta = nodeName === 'META';
         const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
         const isSourceInsidePictureWithCurrentSrc = nodeName === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
+        // For META, only allow a small whitelist of http-equiv directives so a malicious snapshot
+        // cannot navigate the snapshot iframe via e.g. <meta http-equiv="refresh"> or otherwise
+        // affect the trace viewer.
+        const hasUnsafeHttpEquiv = isMeta && attrs.some(a => a[0].toLowerCase() === 'http-equiv' && !kAllowedMetaHttpEquivs.has(a[1].trim().toLowerCase()));
         for (const [attr, value] of attrs) {
           let attrName = attr;
           if (isFrame && attr.toLowerCase() === 'src') {
@@ -126,6 +131,10 @@ export class SnapshotRenderer {
             // Disable actual <img src>, <img srcset>, <source src> and <source srcset> if
             // we will be using the currentSrc instead.
             attrName = '_' + attrName;
+          }
+          if (hasUnsafeHttpEquiv && (attr.toLowerCase() === 'http-equiv' || attr.toLowerCase() === 'content')) {
+            // Neutralize the META directive by renaming the attribute so the browser ignores it.
+            attrName = '_' + attr;
           }
           let attrValue = value;
           if (!isAnchor && (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute))
@@ -219,6 +228,10 @@ export class SnapshotRenderer {
 }
 
 const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
+
+// Whitelist of META http-equiv directives that are safe to render in the trace viewer.
+// Notably excludes 'refresh' (auto-navigation), 'set-cookie' and 'content-security-policy'.
+const kAllowedMetaHttpEquivs = new Set(['content-type', 'content-language', 'default-style', 'x-ua-compatible']);
 
 function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   if (!(snapshot as any)._nodes) {
