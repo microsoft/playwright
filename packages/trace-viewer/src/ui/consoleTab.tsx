@@ -47,6 +47,17 @@ type ConsoleTabModel = {
 
 const ConsoleListView = ListView<ConsoleEntry>;
 
+const ansiColours = {
+  log: {
+    bg: 'var(--vscode-editor-background)', fg: 'var(--vscode-editor-foreground)'
+  },
+  warning: {
+    fg: 'var(--vscode-list-warningForeground)', bg: 'var(--vscode-inputValidation-warningBackground)'
+  },
+  error: {
+    fg: 'var(--vscode-list-errorForeground)', bg: 'var(--vscode-inputValidation-errorBackground)'
+  }
+};
 
 export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined): ConsoleTabModel {
   const { entries } = React.useMemo(() => {
@@ -76,7 +87,8 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
     });
     for (const event of logEvents) {
       if (event.type === 'console') {
-        const body = event.args && event.args.length ? format(event.args) : formatAnsi(event.text);
+        const colours = event.messageType === 'error' ? ansiColours.error : event.messageType === 'warning' ? ansiColours.warning : ansiColours.log;
+        const body = event.args && event.args.length ? format(event.args, colours) : formatAnsi(event.text, colours);
         const url = event.location.url;
         const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
         const location = `${filename}:${event.location.lineNumber}`;
@@ -102,10 +114,11 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
       }
       if (event.type === 'stderr' || event.type === 'stdout') {
         let html = '';
+        const colours = event.type === 'stderr' ? ansiColours.error : ansiColours.log;
         if (event.text)
-          html = ansi2html(event.text.trim()) || '';
+          html = ansi2html(event.text.trim(), colours) || '';
         if (event.base64)
-          html = ansi2html(atob(event.base64).trim()) || '';
+          html = ansi2html(atob(event.base64).trim(), colours) || '';
 
         addEntry({
           nodeMessage: { html },
@@ -188,9 +201,9 @@ export const ConsoleTab: React.FunctionComponent<{
   </div>;
 };
 
-function format(args: { preview: string, value: any }[]): React.JSX.Element[] {
+function format(args: { preview: string, value: any }[], colours: { fg: string, bg: string }): React.JSX.Element[] {
   if (args.length === 1)
-    return formatAnsi(args[0].preview);
+    return formatAnsi(args[0].preview, colours);
 
   const hasMessageFormat = typeof args[0].value === 'string' && args[0].value.includes('%');
   const messageFormat = hasMessageFormat ? args[0].value as string : '';
@@ -237,9 +250,9 @@ function format(args: { preview: string, value: any }[]): React.JSX.Element[] {
   return formatted;
 }
 
-function formatAnsi(text: string): React.JSX.Element[] {
+function formatAnsi(text: string, colours: { fg: string, bg: string }): React.JSX.Element[] {
   // eslint-disable-next-line react/jsx-key
-  return [<span dangerouslySetInnerHTML={{ __html: ansi2html(text.trim()) }}></span>];
+  return [<span dangerouslySetInnerHTML={{ __html: ansi2html(text.trim(), colours) }}></span>];
 }
 
 function parseCSSStyle(cssFormat: string): Record<string, string | number> {
