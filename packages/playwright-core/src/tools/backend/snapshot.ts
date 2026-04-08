@@ -17,9 +17,9 @@
 import * as z from 'zod';
 import { formatObject, formatObjectOrVoid } from '@isomorphic/stringUtils';
 
-import { defineTabTool, defineTool } from './tool';
+import { defineTabTool } from './tool';
 
-const snapshot = defineTool({
+const snapshot = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_snapshot',
@@ -27,15 +27,18 @@ const snapshot = defineTool({
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
     inputSchema: z.object({
       filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
+      ref: z.string().optional().describe('Element reference from the previous page snapshot to capture a partial snapshot instead of the whole page'),
       selector: z.string().optional().describe('Element selector of the root element to capture a partial snapshot instead of the whole page'),
       depth: z.number().optional().describe('Limit the depth of the snapshot tree'),
     }),
     type: 'readOnly',
   },
 
-  handle: async (context, params, response) => {
-    await context.ensureTab();
-    response.setIncludeFullSnapshot(params.filename, params.selector, params.depth);
+  handle: async (tab, params, response) => {
+    const root = (params.ref || params.selector)
+      ? (await tab.refLocator({ ref: params.ref ?? '', selector: params.selector })).locator
+      : undefined;
+    response.setIncludeFullSnapshot(params.filename, root, params.depth);
   },
 });
 
