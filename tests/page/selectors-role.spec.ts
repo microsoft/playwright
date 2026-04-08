@@ -502,7 +502,7 @@ test('errors', async ({ page }) => {
   expect(e0.message).toContain(`Role must not be empty`);
 
   const e1 = await page.$('role=foo[sElected]').catch(e => e);
-  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "checked", "disabled", "expanded", "include-hidden", "level", "name", "pressed", "selected"`);
+  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "checked", "description", "disabled", "expanded", "include-hidden", "level", "name", "pressed", "selected"`);
 
   const e2 = await page.$('role=foo[bar . qux=true]').catch(e => e);
   expect(e2.message).toContain(`Unknown attribute "bar.qux"`);
