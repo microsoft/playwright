@@ -22,7 +22,7 @@ import { toPosixPath } from '@utils/fileUtils';
 
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { createTitleMatcher, errorWithFile, parseLocationArg } from '../util';
-import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
+import { buildProjectsClosure, collectFilesForProject } from './projectUtils';
 import {  createTestGroups, filterForShard } from './testGroups';
 import { cc, config as commonConfig, FullConfigInternal, suiteUtils, test as testNs, transform } from '../common';
 
@@ -34,14 +34,12 @@ import type { Matcher, TestCaseFilter } from '../util';
 
 
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean) {
-  const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<commonConfig.FullProjectInternal, string[]>();
-  const filteredProjects = filterProjects(config.projects, config.cliProjectFilter);
-  for (const project of filteredProjects) {
+  for (const project of testRun.filteredProjects) {
     const files = await collectFilesForProject(project, fsCache);
     allFilesForProject.set(project, files);
   }
@@ -50,12 +48,12 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const filesToRunByProject = new Map<commonConfig.FullProjectInternal, string[]>();
   for (const [project, files] of allFilesForProject) {
     const matchedFiles = files.filter(file => {
-      if (!config.loadFileFilters.length) {
+      if (!testRun.loadFileFilters.length) {
         // Avoid loading source maps.
         return true;
       }
       const hasMatchingSources = sourceMapSources(file, sourceMapCache).some(source => {
-        const matchesAllFileFilters = config.loadFileFilters.every(filter => filter(source));
+        const matchesAllFileFilters = testRun.loadFileFilters.every(filter => filter(source));
         return matchesAllFileFilters;
       });
       return hasMatchingSources;
@@ -68,7 +66,7 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const projectClosure = buildProjectsClosure([...filesToRunByProject.keys()]);
   for (const [project, type] of projectClosure) {
     if (type === 'dependency') {
-      const treatProjectAsEmpty = doNotRunTestsOutsideProjectFilter && !filteredProjects.includes(project);
+      const treatProjectAsEmpty = doNotRunTestsOutsideProjectFilter && !testRun.filteredProjects.includes(project);
       const files = treatProjectAsEmpty ? [] : allFilesForProject.get(project) || await collectFilesForProject(project, fsCache);
       filesToRunByProject.set(project, files);
     }
@@ -132,7 +130,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
       const projectSuite = createProjectSuite(project, fileSuites);
       projectSuites.set(project, projectSuite);
 
-      const filteredProjectSuite = filterProjectSuite(projectSuite, config.preOnlyTestFilters);
+      const filteredProjectSuite = filterProjectSuite(projectSuite, testRun.preOnlyTestFilters);
       filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
@@ -190,8 +188,8 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
-  if (config.postShardTestFilters.length)
-    suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => config.postShardTestFilters.every(filter => filter(test)));
+  if (testRun.postShardTestFilters.length)
+    suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testRun.postShardTestFilters.every(filter => filter(test)));
 
   const topLevelProjects = [];
   // Now prepend dependency projects without filtration.

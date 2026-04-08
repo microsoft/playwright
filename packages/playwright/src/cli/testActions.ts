@@ -28,25 +28,28 @@ import { runWatchModeLoop } from '../runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from '../runner/testRunner';
 import { createErrorCollectingReporter } from '../runner/reporters';
 import type { ReporterDescription } from '../../types/test';
+import type { TestRunOptions } from '../runner/tasks';
 
 export async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
   const config = await configLoader.loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
-  config.cliArgs = args;
-  config.cliGrep = opts.grep as string | undefined;
-  config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
-  config.cliGrepInvert = opts.grepInvert as string | undefined;
-  config.cliListOnly = !!opts.list;
-  config.cliProjectFilter = opts.project || undefined;
-  config.cliPassWithNoTests = !!opts.passWithNoTests;
-  config.cliLastFailed = !!opts.lastFailed;
-  config.cliTestList = opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined;
-  config.cliTestListInvert = opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined;
+  const options: TestRunOptions = {
+    locations: args.length ? args : undefined,
+    grep: opts.grep,
+    grepInvert: opts.grepInvert,
+    onlyChanged: opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged,
+    listMode: !!opts.list,
+    projectFilter: opts.project || undefined,
+    passWithNoTests: !!opts.passWithNoTests,
+    lastFailed: !!opts.lastFailed,
+    testList: opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined,
+    testListInvert: opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined,
+  };
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
-  filterProjects(config.projects, config.cliProjectFilter);
+  filterProjects(config.projects, options.projectFilter);
 
   if (opts.ui || opts.uiHost || opts.uiPort) {
     if (opts.onlyChanged)
@@ -85,7 +88,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
   }
 
-  const status = await runAllTestsWithConfig(config);
+  const status = await runAllTestsWithConfig(config, options);
   await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);

@@ -17,10 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { filterProjects } from './projectUtils';
-
 import type { FullResult, Suite } from '../../types/testReporter';
-import type { FullConfigInternal } from '../common';
+import type { config as commonConfig } from '../common';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 type LastRunInfo = {
@@ -29,26 +27,25 @@ type LastRunInfo = {
 };
 
 export class LastRunReporter implements ReporterV2 {
-  private _config: FullConfigInternal;
   private _lastRunFile: string | undefined;
   private _suite: Suite | undefined;
+  private _listMode: boolean;
 
-  constructor(config: FullConfigInternal) {
-    this._config = config;
-    const [project] = filterProjects(config.projects, config.cliProjectFilter);
+  constructor(filteredProjects: commonConfig.FullProjectInternal[], listMode?: boolean) {
+    this._listMode = !!listMode;
+    const [project] = filteredProjects;
     if (project)
       this._lastRunFile = path.join(project.project.outputDir, '.last-run.json');
   }
 
-  async filterLastFailed() {
+  async filterLastFailed(): Promise<string[]> {
     if (!this._lastRunFile)
-      return;
+      return [];
     try {
       const lastRunInfo = JSON.parse(await fs.promises.readFile(this._lastRunFile, 'utf8')) as LastRunInfo;
-      const failedTestIds = new Set(lastRunInfo.failedTests);
-      // Explicitly apply --last-failed filter after sharding.
-      this._config.postShardTestFilters.push(test => failedTestIds.has(test.id));
+      return lastRunInfo.failedTests;
     } catch {
+      return [];
     }
   }
 
@@ -65,7 +62,7 @@ export class LastRunReporter implements ReporterV2 {
   }
 
   async onEnd(result: FullResult) {
-    if (!this._lastRunFile || this._config.cliListOnly)
+    if (!this._lastRunFile || this._listMode)
       return;
     const lastRunInfo: LastRunInfo = {
       status: result.status,

@@ -21,8 +21,7 @@ import colors from 'colors/safe';
 import * as diff from 'diff';
 import { MultiMap } from '@isomorphic/multimap';
 
-import { filterProjects } from './projectUtils';
-import { babel, FullConfigInternal } from '../common';
+import { babel, config as commonConfig, FullConfigInternal } from '../common';
 
 import type { InternalReporter } from '../reporters/internalReporter';
 import type { T } from '../transform/babelBundle';
@@ -50,12 +49,12 @@ export function clearSuggestedRebaselines() {
   suggestedRebaselines.clear();
 }
 
-export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter) {
+export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter, filteredProjects: commonConfig.FullProjectInternal[]) {
   if (config.config.updateSnapshots === 'none')
     return;
   if (!suggestedRebaselines.size)
     return;
-  const [project] = filterProjects(config.projects, config.cliProjectFilter);
+  const [project] = filteredProjects;
   if (!project)
     return;
 

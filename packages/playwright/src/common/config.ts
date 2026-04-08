@@ -23,7 +23,6 @@ import { getPackageJsonPath, mergeObjects, takeFirst } from '../util';
 
 import type { Config, Fixtures, Metadata, Project, ReporterDescription } from '../../types/test';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { Matcher, TestCaseFilter } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { Location } from '../../types/testReporter';
 import type { FullConfig, FullProject } from '../../types/testReporter';
@@ -50,19 +49,6 @@ export class FullConfigInternal {
   readonly singleTSConfigPath?: string;
   readonly captureGitInfo: Config['captureGitInfo'];
   readonly failOnFlakyTests: boolean;
-  cliArgs: string[] = [];
-  cliGrep: string | undefined;
-  cliGrepInvert: string | undefined;
-  cliOnlyChanged: string | undefined;
-  cliProjectFilter?: string[];
-  cliListOnly = false;
-  cliPassWithNoTests?: boolean;
-  cliLastFailed?: boolean;
-  cliTestList?: string;
-  cliTestListInvert?: string;
-  loadFileFilters: Matcher[] = [];
-  preOnlyTestFilters: TestCaseFilter[] = [];
-  postShardTestFilters: TestCaseFilter[] = [];
   defineConfigWasUsed = false;
 
   globalSetups: string[] = [];
