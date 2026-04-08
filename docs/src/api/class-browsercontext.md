@@ -569,7 +569,8 @@ The default browser context cannot be closed.
 
 ## async method: BrowserContext.cookies
 * since: v1.8
-- returns: <[Array]<[Object=BrowserContextCookiesResult]>>
+- returns: <[Array]<[Object]>>
+  - alias-csharp: BrowserContextCookiesResult
   - `name` <[string]>
   - `value` <[string]>
   - `domain` <[string]>

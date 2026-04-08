@@ -483,27 +483,32 @@ class Type {
   /**
    * @param {string} expression
    * @param {!Array<!Member>=} properties
+   * @param {!Object<string, string>=} langAliases
    * @return {Type}
    */
-  static parse(expression, properties = []) {
+  static parse(expression, properties = [], langAliases = {}) {
     expression = expression.replace(/\\\(/g, '(').replace(/\\\)/g, ')');
     const type = Type.fromParsedType(parseTypeExpression(expression));
     type.expression = expression;
     if (type.name === 'number')
       throw new Error('Number types should be either int or float, not number in: ' + expression);
-    if (!properties.length)
+    const hasAliases = Object.keys(langAliases).length > 0;
+    if (!properties.length && !hasAliases)
       return type;
     const types = [];
     type._collectAllTypes(types);
     let success = false;
     for (const t of types) {
       if (t.name === 'Object') {
-        t.properties = properties;
+        if (properties.length)
+          t.properties = properties;
+        if (hasAliases)
+          t.langAliases = { ...langAliases };
         success = true;
       }
     }
     if (!success)
-      throw new Error('Nested properties given, but there are no objects in type expression: ' + expression);
+      throw new Error('Nested properties or aliases given, but there are no objects in type expression: ' + expression);
     return type;
   }
 
@@ -545,13 +550,6 @@ class Type {
       return type;
     }
 
-    const stripped = parsedType.name.replace(/^\[/, '').replace(/\]$/, '');
-    const eqIndex = stripped.indexOf('=');
-    if (eqIndex !== -1) {
-      const type = new Type(stripped.substring(0, eqIndex));
-      type.structName = stripped.substring(eqIndex + 1);
-      return type;
-    }
     return new Type(parsedType.name);
   }
 
@@ -573,8 +571,8 @@ class Type {
     this.templates = undefined;
     /** @type {string | undefined} */
     this.expression = undefined;
-    /** @type {string | undefined} */
-    this.structName = undefined;
+    /** @type {Object<string, string> | undefined} */
+    this.langAliases = undefined;
   }
 
   visit(visitor) {
@@ -597,7 +595,8 @@ class Type {
     if (this.templates)
       type.templates = this.templates.map(type => type.clone());
     type.expression = this.expression;
-    type.structName = this.structName;
+    if (this.langAliases)
+      type.langAliases = { ...this.langAliases };
     return type;
   }
 
