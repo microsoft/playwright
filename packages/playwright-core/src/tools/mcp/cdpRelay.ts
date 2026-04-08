@@ -67,6 +67,9 @@ type TabSession = {
   tabId: number;
   sessionId: string;
   targetInfo: any;
+  // Child CDP sessionIds (workers, oopifs, ...) belonging to this tab,
+  // tracked via Target.attachedToTarget / Target.detachedFromTarget events.
+  childSessions: Set<string>;
 };
 
 export class CDPRelayServer {
@@ -79,13 +82,10 @@ export class CDPRelayServer {
   private _wss: WebSocketServer;
   private _playwrightConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
-  // sessionId → TabSession (sessions known to the Playwright client).
-  private _tabSessions = new Map<string, TabSession>();
-  private _tabIdToSessionId = new Map<number, string>();
-  // Maps a child CDP sessionId (e.g. for a worker, oopif) to the tabId that
-  // owns it. Populated by observing Target.attachedToTarget events from the
-  // extension and used by _forwardToExtension to route subsequent commands.
-  private _childSessionToTabId = new Map<string, number>();
+  // The single source of truth for connected tabs, keyed by tabId.
+  // We linearly search this map for sessionId / child session lookups — only
+  // a handful of tabs are ever connected, so the extra index maps are unwanted.
+  private _tabSessions = new Map<number, TabSession>();
   private _nextSessionId: number = 1;
   private _extensionConnectionPromise!: ManualPromise<void>;
 
@@ -228,11 +228,25 @@ export class CDPRelayServer {
 
   private _resetExtensionConnection() {
     this._tabSessions.clear();
-    this._tabIdToSessionId.clear();
-    this._childSessionToTabId.clear();
     this._extensionConnection = null;
     this._extensionConnectionPromise = new ManualPromise();
     void this._extensionConnectionPromise.catch(logUnhandledError);
+  }
+
+  private _findTabSessionBySessionId(sessionId: string): TabSession | undefined {
+    for (const session of this._tabSessions.values()) {
+      if (session.sessionId === sessionId)
+        return session;
+    }
+    return undefined;
+  }
+
+  private _findTabSessionByChildSessionId(childSessionId: string): TabSession | undefined {
+    for (const session of this._tabSessions.values()) {
+      if (session.childSessions.has(childSessionId))
+        return session;
+    }
+    return undefined;
   }
 
   private _closePlaywrightConnection(reason: string) {
@@ -264,8 +278,8 @@ export class CDPRelayServer {
         const [source, cdpMethod, cdpParams] = params as ExtensionEvents['chrome.debugger.onEvent']['params'];
         if (source.tabId === undefined)
           return;
-        const tabSessionId = this._tabIdToSessionId.get(source.tabId);
-        if (!tabSessionId)
+        const tabSession = this._tabSessions.get(source.tabId);
+        if (!tabSession)
           return;
         // Track child CDP sessions so we can route subsequent commands for
         // them to the correct tab. Target.attachedToTarget introduces a new
@@ -273,12 +287,12 @@ export class CDPRelayServer {
         // releases it.
         const childSessionId = (cdpParams as { sessionId?: string } | undefined)?.sessionId;
         if (cdpMethod === 'Target.attachedToTarget' && childSessionId)
-          this._childSessionToTabId.set(childSessionId, source.tabId);
+          tabSession.childSessions.add(childSessionId);
         else if (cdpMethod === 'Target.detachedFromTarget' && childSessionId)
-          this._childSessionToTabId.delete(childSessionId);
+          tabSession.childSessions.delete(childSessionId);
         // Top-level CDP events for the tab use the tab's relay sessionId.
         // Child CDP sessions (workers, oopifs) keep their own sessionId.
-        const sessionId = source.sessionId || tabSessionId;
+        const sessionId = source.sessionId || tabSession.sessionId;
         this._sendToPlaywright({
           sessionId,
           method: cdpMethod,
@@ -308,8 +322,9 @@ export class CDPRelayServer {
   }
 
   private async _attachTab(tabId: number): Promise<TabSession> {
-    if (this._tabIdToSessionId.has(tabId))
-      return this._tabSessions.get(this._tabIdToSessionId.get(tabId)!)!;
+    const existing = this._tabSessions.get(tabId);
+    if (existing)
+      return existing;
     if (!this._extensionConnection)
       throw new Error('Extension not connected');
     await this._extensionConnection.send('chrome.debugger.attach', [{ tabId }, '1.3']);
@@ -319,9 +334,8 @@ export class CDPRelayServer {
     ]);
     const targetInfo = result?.targetInfo;
     const sessionId = `pw-tab-${this._nextSessionId++}`;
-    const tabSession: TabSession = { tabId, sessionId, targetInfo };
-    this._tabSessions.set(sessionId, tabSession);
-    this._tabIdToSessionId.set(tabId, sessionId);
+    const tabSession: TabSession = { tabId, sessionId, targetInfo, childSessions: new Set() };
+    this._tabSessions.set(tabId, tabSession);
     debugLogger(`Attached tab ${tabId} as session ${sessionId}`);
     this._sendToPlaywright({
       method: 'Target.attachedToTarget',
@@ -335,20 +349,14 @@ export class CDPRelayServer {
   }
 
   private _detachTab(tabId: number): void {
-    const sessionId = this._tabIdToSessionId.get(tabId);
-    if (!sessionId)
+    const tabSession = this._tabSessions.get(tabId);
+    if (!tabSession)
       return;
-    this._tabIdToSessionId.delete(tabId);
-    this._tabSessions.delete(sessionId);
-    // Drop any child CDP sessions that belonged to this tab.
-    for (const [childSessionId, childTabId] of this._childSessionToTabId) {
-      if (childTabId === tabId)
-        this._childSessionToTabId.delete(childSessionId);
-    }
-    debugLogger(`Detached tab ${tabId} (session ${sessionId})`);
+    this._tabSessions.delete(tabId);
+    debugLogger(`Detached tab ${tabId} (session ${tabSession.sessionId})`);
     this._sendToPlaywright({
       method: 'Target.detachedFromTarget',
-      params: { sessionId },
+      params: { sessionId: tabSession.sessionId },
     });
   }
 
@@ -403,7 +411,7 @@ export class CDPRelayServer {
       case 'Target.getTargetInfo': {
         if (!sessionId)
           return undefined;
-        return this._tabSessions.get(sessionId)?.targetInfo;
+        return this._findTabSessionBySessionId(sessionId)?.targetInfo;
       }
     }
     if (!sessionId)
@@ -414,23 +422,20 @@ export class CDPRelayServer {
   private async _forwardToExtension(method: string, params: any, sessionId: string): Promise<any> {
     if (!this._extensionConnection)
       throw new Error('Extension not connected');
-    // Resolve the relay sessionId to a tabId. There are three cases:
+    // Resolve the sessionId to a tab session. Two cases:
     // 1. sessionId is a relay-level tab session (pw-tab-N) → strip and route by tabId.
     // 2. sessionId is a child CDP session (worker, oopif) → route to its owning tab,
     //    keep the sessionId so the extension forwards it to chrome.debugger.
-    // 3. No sessionId → there is no tab context to pick from, error out.
-    let tabId: number | undefined;
+    let tabSession = this._findTabSessionBySessionId(sessionId);
     let cdpSessionId: string | undefined;
-    if (this._tabSessions.has(sessionId)) {
-      tabId = this._tabSessions.get(sessionId)!.tabId;
-    } else if (this._childSessionToTabId.has(sessionId)) {
-      tabId = this._childSessionToTabId.get(sessionId);
+    if (!tabSession) {
+      tabSession = this._findTabSessionByChildSessionId(sessionId);
       cdpSessionId = sessionId;
     }
-    if (tabId === undefined)
+    if (!tabSession)
       throw new Error(`No tab found for sessionId: ${sessionId}`);
     return await this._extensionConnection.send('chrome.debugger.sendCommand', [
-      { tabId, sessionId: cdpSessionId },
+      { tabId: tabSession.tabId, sessionId: cdpSessionId },
       method,
       params,
     ]);
