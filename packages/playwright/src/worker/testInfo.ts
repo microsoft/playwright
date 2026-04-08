@@ -171,10 +171,6 @@ export class TestInfoImpl implements TestInfo {
     return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
   }
 
-  static _defaultDeadlineForMatcher(timeout: number): { deadline: any; timeoutMessage: any; } {
-    return { deadline: (timeout ? monotonicTime() + timeout : 0), timeoutMessage: `Timeout ${timeout}ms exceeded while waiting on the predicate` };
-  }
-
   constructor(
     configInternal: FullConfigInternal,
     projectInternal: FullProjectInternal,

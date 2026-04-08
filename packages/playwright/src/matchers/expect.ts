@@ -23,6 +23,7 @@ import { currentZone } from '@utils/zones';
 import { ExpectError, isJestError } from './matcherHint';
 import {
   computeMatcherTitleSuffix,
+  defaultDeadlineForMatcher,
   toBeAttached,
   toBeChecked,
   toBeDisabled,
@@ -57,7 +58,7 @@ import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 import {
   expect as expectLibrary,
-} from '../common/expectBundle';
+} from './expectBundle';
 import { currentTestInfo } from '../common/globals';
 import { filteredStackTrace } from '../util';
 import { TestInfoImpl } from '../worker/testInfo';
@@ -366,7 +367,7 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
   const testInfo = currentTestInfo();
   const poll = info.poll!;
   const timeout = poll.timeout ?? info.timeout ?? testInfo?._projectInternal?.expect?.timeout ?? defaultExpectTimeout;
-  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : defaultDeadlineForMatcher(timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
     if (testInfo && currentTestInfo() !== testInfo)

@@ -267,7 +267,7 @@ bundles.push({
 
 bundles.push({
   modulePath: 'packages/playwright/bundles/expect',
-  outdir: 'packages/playwright/lib/common',
+  outdir: 'packages/playwright/lib/matchers',
   entryPoints: ['src/expectBundleImpl.ts'],
 });
 
@@ -580,7 +580,7 @@ for (const pkg of workspace.packages()) {
   // playwright-client is built as a bundle.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  if (pkg.name === 'playwright-core')
+  if (pkg.name === 'playwright-core' || pkg.name === 'playwright')
     continue;
 
   steps.push(new EsbuildStep({
@@ -669,7 +669,7 @@ function assertCoreBundleHasNoNodeModules() {
 
 steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
 
-// playwright/lib/transform/esmLoader2.js — bundled ESM loader registered by
+// playwright/lib/transform/esmLoader.js — bundled ESM loader registered by
 // common/esmLoaderHost.ts via node:module register. Same externalization
 // rules as the worker bundle.
 {
@@ -688,6 +688,48 @@ steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
     plugins: [],
   }, [playwrightSrc]));
 }
+
+// Build playwright entry points (per-file), excluding matchers/* which is
+// produced by the bundle step below.
+steps.push(new EsbuildStep({
+  entryPoints: [
+    filePath('packages/playwright/src/*.ts'),
+    filePath('packages/playwright/src/agents/**/*.ts'),
+    filePath('packages/playwright/src/cli/**/*.ts'),
+    filePath('packages/playwright/src/common/**/*.ts'),
+    filePath('packages/playwright/src/isomorphic/**/*.ts'),
+    filePath('packages/playwright/src/loader/**/*.ts'),
+    filePath('packages/playwright/src/mcp/**/*.ts'),
+    filePath('packages/playwright/src/plugins/**/*.ts'),
+    filePath('packages/playwright/src/reporters/**/*.ts'),
+    filePath('packages/playwright/src/runner/**/*.ts'),
+    filePath('packages/playwright/src/transform/**/*.ts'),
+    filePath('packages/playwright/src/worker/**/*.ts'),
+  ],
+  outdir: filePath('packages/playwright/lib'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  plugins: [dynamicImportToRequirePlugin],
+}));
+
+// playwright/lib/matchers/expect.js — bundled jest expect facade.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright/src/matchers/expect.ts')],
+  outfile: filePath('packages/playwright/lib/matchers/expect.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+    'playwright-core',
+    'playwright-core/*',
+    '../common/*',
+    '../util',
+    '../package',
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [filePath('packages/playwright/src')]));
 
 // Build the Electron preload loader as a standalone CJS file. It runs inside
 // the Electron process (via `electron -r loader.js`) and must not depend on

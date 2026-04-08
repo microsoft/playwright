@@ -6,3 +6,4 @@
 ../util.ts
 ../worker/testInfo.ts
 node_modules/colors/safe
+../package.ts
