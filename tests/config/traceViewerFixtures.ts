@@ -119,26 +119,32 @@ class TraceViewerPage {
     await this.page.getByRole('tab', { name }).click();
   }
 
+  @step
   async showErrorsTab() {
     await this.page.getByRole('tab', { name: 'Errors' }).click();
   }
 
+  @step
   async showConsoleTab() {
     await this.page.getByRole('tab', { name: 'Console' }).click();
   }
 
+  @step
   async showSourceTab() {
     await this.page.getByRole('tab', { name: 'Source' }).click();
   }
 
+  @step
   async showNetworkTab() {
     await this.page.getByRole('tab', { name: 'Network' }).click();
   }
 
+  @step
   async showMetadataTab() {
     await this.page.getByRole('tab', { name: 'Metadata' }).click();
   }
 
+  @step
   async showSettings() {
     await this.page.getByRole('button', { name: 'Settings' }).click();
   }
