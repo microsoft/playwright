@@ -17,9 +17,9 @@
 import { z } from '../../zodBundle';
 import { formatObject, formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
 
-import { defineTabTool, defineTool } from './tool';
+import { defineTabTool } from './tool';
 
-const snapshot = defineTool({
+const snapshot = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_snapshot',
@@ -34,7 +34,7 @@ const snapshot = defineTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params, response) => {
+  handle: async (_tab, params, response) => {
     const selector = params.ref ? `aria-ref=${params.ref}` : params.selector;
     response.setIncludeFullSnapshot(params.filename, selector, params.depth);
   },
