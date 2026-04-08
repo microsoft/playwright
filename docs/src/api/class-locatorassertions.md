@@ -1749,7 +1749,7 @@ CSS property value.
 
 ### option: LocatorAssertions.toHaveCSS.pseudo
 * since: v1.60
-- `pseudo` <"before"|"after">
+- `pseudo` <[PseudoElement]<"before"|"after">>
 
 Pseudo-element to read computed styles from.
 
