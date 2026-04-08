@@ -82,12 +82,10 @@ export class CDPRelayServer {
   private _wss: WebSocketServer;
   private _playwrightConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
-  // The single source of truth for connected tabs, keyed by tabId.
-  // We linearly search this map for sessionId / child session lookups — only
-  // a handful of tabs are ever connected, so the extra index maps are unwanted.
+  private _extensionConnectionPromise!: ManualPromise<void>;
+
   private _tabSessions = new Map<number, TabSession>();
   private _nextSessionId: number = 1;
-  private _extensionConnectionPromise!: ManualPromise<void>;
 
   constructor(server: http.Server, browserChannel: string, userDataDir?: string, executablePath?: string) {
     this._wsHost = addressToString(server.address(), { protocol: 'ws' });
