@@ -15,4 +15,4 @@
  */
 
 import { libPath } from '../package';
-export const expect: typeof import('../../bundles/expect/node_modules/expect/build').expect = require(libPath('common', 'expectBundleImpl')).expect;
+export const expect: typeof import('../../bundles/expect/node_modules/expect/build').expect = require(libPath('matchers', 'expectBundleImpl')).expect;
