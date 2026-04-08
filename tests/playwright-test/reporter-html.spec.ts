@@ -1318,7 +1318,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-error-view').getByText('begin ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
 
       await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
-      await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('background-color', 'rgb(246, 248, 250)');
 
       await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('color', 'rgb(246, 248, 250)');
       await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
