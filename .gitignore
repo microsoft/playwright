@@ -6,7 +6,8 @@ node_modules/
 .DS_Store
 *.swp
 *.pyc
-/.vscode
+/.vscode/*
+!/.vscode/extensions.json
 .mono
 .idea
 yarn.lock

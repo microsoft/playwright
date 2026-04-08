@@ -30,6 +30,8 @@
     "test-mcp": "playwright test --config=tests/mcp/playwright.config.ts",
     "ctest-mcp": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome",
     "eslint": "eslint --cache",
+    "format": "eslint --fix packages/ tests/",
+    "test:debug": "PWTEST_TRACE=1 PWDEBUG=console playwright test --config=tests/library/playwright.config.ts --project=chromium-library",
     "tsc": "tsc -p .",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ && npm run lint-tests && npm run test-types && npm run lint-packages",

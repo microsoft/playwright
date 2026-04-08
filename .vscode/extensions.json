@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    // Playwright Test runner integration: UI mode, run/debug tests from sidebar
+    "ms-playwright.playwright",
+    // ESLint — required for @stylistic rules and playwright/no-wait-for-timeout warnings
+    "dbaeumer.vscode-eslint"
+  ],
+  "unwantedRecommendations": [
+    // Prettier conflicts with the @stylistic ESLint config used by this project.
+    // Formatting is enforced via `npm run eslint -- --fix` instead.
+    "esbenp.prettier-vscode"
+  ]
+}
