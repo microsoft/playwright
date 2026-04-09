@@ -47,7 +47,7 @@ test('should list tests', async ({ runUITest }) => {
         ◯ fails
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -114,7 +114,7 @@ test('should list all tests from projects with clashing names', async ({ runUITe
           ◯ two
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] bar" [expanded]:
         - group:
@@ -140,7 +140,7 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
         - group:
@@ -156,7 +156,7 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -164,7 +164,7 @@ test('should traverse up/down', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] fails"
           - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot();
+  await expect(page).toMatchAriaSnapshot();
 
   await page.keyboard.press('ArrowDown');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -173,7 +173,7 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails <=
       ► ◯ suite
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -181,7 +181,7 @@ test('should traverse up/down', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] fails" [selected]
           - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot();
+  await expect(page).toMatchAriaSnapshot();
 
   await page.keyboard.press('ArrowUp');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -190,7 +190,7 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -198,7 +198,7 @@ test('should traverse up/down', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] fails"
           - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot();
+  await expect(page).toMatchAriaSnapshot();
 });
 
 test('should expand / collapse groups', async ({ runUITest }) => {
@@ -214,7 +214,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
           ◯ inner passes
           ◯ inner fails
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -233,7 +233,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite <=
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -249,7 +249,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
         ◯ passes
         ◯ fails
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
         - group:
@@ -261,7 +261,7 @@ test('should expand / collapse groups', async ({ runUITest }) => {
   await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts <=
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [selected] [expanded=false]
   `);
@@ -290,7 +290,7 @@ test('should merge folder trees', async ({ runUITest }) => {
     ▼ ◯ in-a.test.ts
         ◯ passes
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] b" [expanded]:
         - group:
@@ -326,7 +326,7 @@ test('should list parametrized tests', async ({ runUITest }) => {
           ◯ test DE
           ◯ test LT
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -362,7 +362,7 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
           ◯ test DE
           ◯ test LT
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -393,7 +393,7 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
           ◯ test FR
           ◯ test LT
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -417,7 +417,7 @@ test('should collapse all', async ({ runUITest }) => {
           ◯ inner passes
           ◯ inner fails
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -433,7 +433,7 @@ test('should collapse all', async ({ runUITest }) => {
   await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded=false]
   `);
@@ -463,7 +463,7 @@ test('should expand all', {
         ◯ passes
         ◯ fails
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -566,7 +566,7 @@ test('should resolve title conflicts', async ({ runUITest }) => {
           ◯ bar
           ◯ bar 2
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -617,7 +617,7 @@ test('should merge files', async ({ runUITest }) => {
         ◯ second
         ◯ fifth
   `);
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] <anonymous>" [expanded]:
         - group:
