@@ -15,7 +15,7 @@
  */
 
 import * as z from 'zod';
-import ListModeReporter from '../../reporters/listModeReporter';
+import { ListModeReporter } from '../../runner';
 import { defineTestTool } from './testTool';
 
 export const listTests = defineTestTool({

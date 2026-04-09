@@ -26,9 +26,11 @@ import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { configLoader, ipc } from '../common';
 import ListReporter from '../reporters/list';
-import { createReporterForTestServer } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
 import { TestRunner, TestRunnerEvent } from './testRunner';
+import UIModeReporter from './uiModeReporter';
+import { loadReporter } from './loadUtils';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { Transport } from '@utils/httpServer';
 import type * as reporterTypes from '../../types/testReporter';
@@ -93,7 +95,7 @@ export type RunTestsParams = {
 
 export class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
-  private _serializer = require.resolve('./uiModeReporter');
+  private _serializer: string | undefined;
   private _closeOnDisconnect = false;
   private _testRunner: TestRunner;
   private _globalSetupReport: ReportEntry[] | undefined;
@@ -129,7 +131,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
     // Note: this method can be called multiple times, for example from a new connection after UI mode reload.
-    this._serializer = params.serializer || require.resolve('./uiModeReporter');
+    this._serializer = params.serializer;
     this._closeOnDisconnect = !!params.closeOnDisconnect;
     await this._testRunner.initialize({
       ...params,
@@ -327,4 +329,11 @@ function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): Stdi
   if (chunk instanceof Uint8Array)
     return { type, buffer: chunk.toString('base64') };
   return { type, text: chunk };
+}
+
+async function createReporterForTestServer(file: string | undefined, messageSink: (message: any) => void): Promise<ReporterV2> {
+  const reporterConstructor = file ? await loadReporter(null, file) : UIModeReporter;
+  return wrapReporterAsV2(new reporterConstructor({
+    _send: messageSink,
+  }));
 }

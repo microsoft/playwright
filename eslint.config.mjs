@@ -60,7 +60,6 @@ const ignores = [
   "test-results/",
   "tests/assets/",
   "tests/components/",
-  "tests/config/ghaMarkdownReporter.ts",
   "tests/installation/fixture-scripts/",
   "tests/third_party/",
   "utils/",

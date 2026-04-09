@@ -624,7 +624,7 @@ test.describe('baseURL with plugins', () => {
         });
       `,
       'playwright.config.ts': `
-        import { webServer } from 'playwright/lib/plugins';
+        import { webServer } from 'playwright/lib/runner';
         module.exports = {
           _plugins: [
             webServer({
@@ -649,7 +649,7 @@ test.describe('baseURL with plugins', () => {
         });
       `,
       'playwright.config.ts': `
-        import { webServer } from 'playwright/lib/plugins';
+        import { webServer } from 'playwright/lib/runner';
         module.exports = {
           webServer: {
             command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',

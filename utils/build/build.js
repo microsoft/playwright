@@ -753,15 +753,7 @@ steps.push(new EsbuildStep({
     filePath('packages/playwright/src/*.ts'),
     filePath('packages/playwright/src/agents/**/*.ts'),
     filePath('packages/playwright/src/cli/**/*.ts'),
-    filePath('packages/playwright/src/common/**/*.ts'),
-    filePath('packages/playwright/src/isomorphic/**/*.ts'),
-    filePath('packages/playwright/src/loader/**/*.ts'),
     filePath('packages/playwright/src/mcp/**/*.ts'),
-    filePath('packages/playwright/src/plugins/**/*.ts'),
-    filePath('packages/playwright/src/reporters/**/*.ts'),
-    filePath('packages/playwright/src/runner/**/*.ts'),
-    filePath('packages/playwright/src/transform/**/*.ts'),
-    filePath('packages/playwright/src/worker/**/*.ts'),
   ],
   outdir: filePath('packages/playwright/lib'),
   sourcemap: withSourceMaps ? 'linked' : false,
@@ -787,10 +779,7 @@ steps.push(new EsbuildStep({
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
 
-// playwright/lib/common/index.js — bundled common barrel. Inlines all of
-// common/* and transform/* (the barrel re-exports both). Externalizes
-// sibling lib/ files so state-holding singletons (currentTestInfo, config,
-// compilation cache) live exactly once at runtime.
+// playwright/lib/common/index.js — bundled common barrel.
 steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/common/index.ts')],
@@ -805,6 +794,70 @@ steps.push(new EsbuildStep({
     '../package',
     '../utils',
     '../matchers/expect',
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [filePath('packages/playwright/src')]));
+
+// playwright/lib/runner/index.js — bundled runner barrel.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright/src/runner/index.ts')],
+  outfile: filePath('packages/playwright/lib/runner/index.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+    'playwright-core',
+    'playwright-core/*',
+    '../common',
+    '../globals',
+    '../package',
+    '../util',
+    '../matchers/expect',
+    '../loader/loaderProcessEntry.js',
+    '../worker/workerProcessEntry.js',
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [filePath('packages/playwright/src')]));
+
+// playwright/lib/loader/loaderProcessEntry.js — bundled loader process
+// entry. Output sits at the same depth as the source so '../X' externals
+// resolve to lib/X.js naturally.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright/src/loader/loaderProcessEntry.ts')],
+  outfile: filePath('packages/playwright/lib/loader/loaderProcessEntry.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+    'playwright-core',
+    'playwright-core/*',
+    '../common',
+    '../globals',
+    '../package',
+    '../util',
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [filePath('packages/playwright/src')]));
+
+// playwright/lib/worker/workerProcessEntry.js — bundled worker process
+// entry. Output sits at the same depth as the source so '../X' externals
+// resolve to lib/X.js naturally.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright/src/worker/workerProcessEntry.ts')],
+  outfile: filePath('packages/playwright/lib/worker/workerProcessEntry.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+    'playwright-core',
+    'playwright-core/*',
+    '../common',
+    '../globals',
+    '../package',
+    '../utils',
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
