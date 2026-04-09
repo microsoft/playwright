@@ -273,6 +273,9 @@ export class FrameTree {
     frame._lastCommittedNavigationId = navigationId;
     frame._url = url;
     this.emit(FrameTree.Events.NavigationCommitted, frame);
+    // Run new-document init scripts after the commit so they observe the committed URL
+    // and are reported after Page.navigationCommitted on the protocol.
+    frame._evaluateScriptsToEvaluateOnNewDocument();
     if (frame === this._mainFrame)
       this.forcePageReady();
   }
@@ -555,21 +558,28 @@ class Frame {
       if (name)
         this._createIsolatedContext(name);
       const executionContext = this._worldNameToContext.get(name);
-      // Add bindings before evaluating scripts.
+      // Install bindings eagerly; init scripts run once the document commits.
       for (const [name, script] of world._bindings)
         executionContext.addBinding(name, script);
-      for (const script of world._scriptsToEvaluateOnNewDocument)
-        executionContext.evaluateScriptSafely(script);
     }
 
     const url = this.domWindow().location?.href;
-    if (url === 'about:blank' && !this._url) {
+    if (url === 'about:blank' && !this._url && !this._pendingNavigationId) {
       // Sometimes FrameTree is created too early, before the location has been set.
-      this._url = url;
-      this._frameTree.emit(FrameTree.Events.NavigationCommitted, this);
+      this._frameTree._frameNavigationCommitted(this, url);
     }
 
     this._updateJavaScriptDisabled();
+  }
+
+  _evaluateScriptsToEvaluateOnNewDocument() {
+    for (const [name, world] of this._frameTree._isolatedWorlds) {
+      const executionContext = this._worldNameToContext.get(name);
+      if (!executionContext)
+        continue;
+      for (const script of world._scriptsToEvaluateOnNewDocument)
+        executionContext.evaluateScriptSafely(script);
+    }
   }
 
   _updateJavaScriptDisabled() {
@@ -680,5 +690,3 @@ function channelId(channel) {
   }
   return helper.generateId();
 }
-
-
