@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
+import * as z from 'zod';
 import { declareCommand } from './command';
 
 import type { AnyCommandSchema } from './command';
@@ -345,14 +345,14 @@ const snapshot = declareCommand({
   description: 'Capture page snapshot to obtain element ref',
   category: 'core',
   args: z.object({
-    element: z.string().optional().describe('Element selector of the root element to capture a partial snapshot instead of the whole page'),
+    element: z.string().optional().describe('Element reference from the previous page snapshot, or a unique element selector for the root element to capture a partial snapshot instead of the whole page'),
   }),
   options: z.object({
     filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
     depth: numberArg.optional().describe('Limit snapshot depth, unlimited by default.'),
   }),
   toolName: 'browser_snapshot',
-  toolParams: ({ filename, element, depth }) => ({ filename, selector: element, depth }),
+  toolParams: ({ filename, element, depth }) => ({ filename, ...asRef(element), depth }),
 });
 
 const evaluate = declareCommand({

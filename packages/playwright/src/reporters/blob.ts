@@ -18,9 +18,12 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-
-import { mime } from 'playwright-core/lib/utilsBundle';
+import mime from 'mime';
+import * as yazl from 'yazl';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { calculateSha1, createGuid } from '@utils/crypto';
+import { removeFolders, sanitizeForFilePath } from '@utils/fileUtils';
+import { getUserAgent } from '@utils/userAgent';
 
 import { resolveOutputFile, CommonReporterOptions } from './base';
 import { TeleReporterEmitter } from './teleEmitter';
@@ -44,13 +47,13 @@ export class BlobReporter extends TeleReporterEmitter {
     this._options = options;
     if (this._options.fileName && !this._options.fileName.endsWith('.zip'))
       throw new Error(`Blob report file name must end with .zip extension: ${this._options.fileName}`);
-    this._salt = serverUtils.createGuid();
+    this._salt = createGuid();
   }
 
   override onConfigure(config: FullConfig) {
     const metadata: BlobReportMetadata = {
       version: currentBlobReportVersion,
-      userAgent: serverUtils.getUserAgent(),
+      userAgent: getUserAgent(),
       // TODO: remove after some time, recommend config.tag instead.
       name: process.env.PWTEST_BOT_NAME,
       shard: config.shard ?? undefined,
@@ -75,9 +78,8 @@ export class BlobReporter extends TeleReporterEmitter {
 
     const zipFileName = await this._prepareOutputFile();
 
-    const { yazl } = await import('playwright-core/lib/zipBundle');
     const zipFile = new yazl.ZipFile();
-    const zipFinishPromise = new iso.ManualPromise<undefined>();
+    const zipFinishPromise = new ManualPromise<undefined>();
     const finishPromise = zipFinishPromise.catch(e => {
       throw new Error(`Failed to write report ${zipFileName}: ` + e.message);
     });
@@ -110,7 +112,7 @@ export class BlobReporter extends TeleReporterEmitter {
       }
     })!;
     if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
-      await serverUtils.removeFolders([outputDir!]);
+      await removeFolders([outputDir!]);
     await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
     return outputFile;
   }
@@ -118,7 +120,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private _defaultReportName(config: FullConfig) {
     let reportName = 'report';
     if (this._options._commandHash)
-      reportName += '-' + serverUtils.sanitizeForFilePath(this._options._commandHash);
+      reportName += '-' + sanitizeForFilePath(this._options._commandHash);
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       reportName = `${reportName}-${paddedNumber}`;
@@ -131,7 +133,7 @@ export class BlobReporter extends TeleReporterEmitter {
       if (!attachment.path)
         return attachment;
       // Add run guid to avoid clashes between shards.
-      const sha1 = serverUtils.calculateSha1(attachment.path + this._salt);
+      const sha1 = calculateSha1(attachment.path + this._salt);
       const extension = mime.getExtension(attachment.contentType) || 'dat';
       const newPath = `resources/${sha1}.${extension}`;
       this._attachments.push({ originalPath: attachment.path, zipEntryPath: newPath });

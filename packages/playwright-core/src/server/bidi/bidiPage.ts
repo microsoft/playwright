@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { debugLogger } from '../utils/debugLogger';
-import { eventsHelper } from '../utils/eventsHelper';
+import { debugLogger } from '@utils/debugLogger';
+import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as js from '../javascript';
@@ -29,7 +29,7 @@ import * as bidi from './third_party/bidiProtocol';
 import { nullProgress } from '../progress';
 
 import * as network from '../network';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
@@ -294,7 +294,8 @@ export class BidiPage implements PageDelegate {
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
     const type = entry.method === 'warn' ? 'warning' : entry.method;
-    this._page.addConsoleMessage(null, type, entry.args.map(arg => createHandle(context, arg)), location, undefined, params.timestamp);
+    const text = (entry.method === 'timeLog' || entry.method === 'timeEnd') && entry.text ? entry.text : undefined;
+    this._page.addConsoleMessage(null, type, entry.args.map(arg => createHandle(context, arg)), location, text, params.timestamp);
   }
 
   private async _onFileDialogOpened(params: bidi.Input.FileDialogInfo) {

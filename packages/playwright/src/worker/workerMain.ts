@@ -14,41 +14,35 @@
  * limitations under the License.
  */
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import colors from 'colors/safe';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { removeFolders } from '@utils/fileUtils';
+import { gracefullyCloseAll } from '@utils/processLauncher';
 
-import { deserializeConfig } from '../common/configLoader';
-import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
-import { stdioChunkToParams } from '../common/ipc';
+import { configLoader, fixtures, ipc, poolBuilder, ProcessRunner, suiteUtils, testLoader } from '../common';
+import * as globals from '../globals';
 import { debugTest, relativeFilePath } from '../util';
 import { FixtureRunner } from './fixtureRunner';
 import { TestSkipError, TestInfoImpl, emtpyTestInfoCallbacks } from './testInfo';
 import { testInfoError } from './util';
-import { inheritFixtureNames } from '../common/fixtures';
-import { PoolBuilder } from '../common/poolBuilder';
-import { ProcessRunner } from '../common/process';
-import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
-import { loadTestFile } from '../common/testLoader';
 
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type * as ipc from '../common/ipc';
-import type { Suite, TestCase } from '../common/test';
+import type { config as commonConfig, FullConfigInternal, test as testNs } from '../common';
 import type { TestAnnotation } from '../../types/test';
 
 export class WorkerMain extends ProcessRunner {
   private _params: ipc.WorkerInitParams;
   private _config!: FullConfigInternal;
-  private _project!: FullProjectInternal;
-  private _poolBuilder!: PoolBuilder;
+  private _project!: commonConfig.FullProjectInternal;
+  private _poolBuilder!: poolBuilder.PoolBuilder;
   private _fixtureRunner: FixtureRunner;
 
   // Accumulated fatal errors that cannot be attributed to a test.
   private _fatalErrors: ipc.TestInfoErrorImpl[] = [];
   // Whether we should skip running remaining tests in this suite because
   // of a setup error, usually beforeAll hook.
-  private _skipRemainingTestsInSuite: Suite | undefined;
+  private _skipRemainingTestsInSuite: testNs.Suite | undefined;
   // The stage of the full cleanup. Once "finished", we can safely stop running anything.
   private _didRunFullCleanup = false;
   // Whether the worker was stopped due to an unhandled error in a test marked with test.fail().
@@ -57,21 +51,21 @@ export class WorkerMain extends ProcessRunner {
   // Whether the worker was requested to stop.
   private _isStopped = false;
   // This promise resolves once the single "run test group" call finishes.
-  private _runFinished = new iso.ManualPromise<void>();
+  private _runFinished = new ManualPromise<void>();
   private _currentTest: TestInfoImpl | null = null;
-  private _lastRunningTests: TestCase[] = [];
+  private _lastRunningTests: testNs.TestCase[] = [];
   private _totalRunningTests = 0;
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
-  private _activeSuites = new Map<Suite, TestAnnotation[]>();
-  private _resumePromise?: iso.ManualPromise<ipc.ResumePayload>;
+  private _activeSuites = new Map<testNs.Suite, TestAnnotation[]>();
+  private _resumePromise?: ManualPromise<ipc.ResumePayload>;
 
   constructor(params: ipc.WorkerInitParams) {
     super();
     process.env.TEST_WORKER_INDEX = String(params.workerIndex);
     process.env.TEST_PARALLEL_INDEX = String(params.parallelIndex);
-    setIsWorkerProcess();
+    globals.setIsWorkerProcess();
 
     this._params = params;
     this._fixtureRunner = new FixtureRunner();
@@ -84,7 +78,7 @@ export class WorkerMain extends ProcessRunner {
     process.on('uncaughtException', error => this.unhandledError(error));
     // eslint-disable-next-line no-restricted-properties
     process.stdout.write = (chunk: string | Buffer, cb?: any) => {
-      this.dispatchEvent('stdOut', stdioChunkToParams(chunk));
+      this.dispatchEvent('stdOut', ipc.stdioChunkToParams(chunk));
       this._currentTest?._tracing.appendStdioToTrace('stdout', chunk);
       if (typeof cb === 'function')
         process.nextTick(cb);
@@ -94,7 +88,7 @@ export class WorkerMain extends ProcessRunner {
     if (!process.env.PW_RUNNER_DEBUG) {
       // eslint-disable-next-line no-restricted-properties
       process.stderr.write = (chunk: string | Buffer, cb?: any) => {
-        this.dispatchEvent('stdErr', stdioChunkToParams(chunk));
+        this.dispatchEvent('stdErr', ipc.stdioChunkToParams(chunk));
         this._currentTest?._tracing.appendStdioToTrace('stderr', chunk);
         if (typeof cb === 'function')
           process.nextTick(cb);
@@ -127,7 +121,7 @@ export class WorkerMain extends ProcessRunner {
       await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(() => {});
       // Close any other browsers launched in this process. This includes anything launched
       // manually in the test/hooks and internal browsers like Playwright Inspector.
-      await fakeTestInfo._runWithTimeout(runnable, () => serverUtils.gracefullyCloseAll()).catch(() => {});
+      await fakeTestInfo._runWithTimeout(runnable, () => gracefullyCloseAll()).catch(() => {});
       this._fatalErrors.push(...fakeTestInfo.errors);
     } catch (e) {
       this._fatalErrors.push(testInfoError(e));
@@ -205,27 +199,27 @@ export class WorkerMain extends ProcessRunner {
     if (this._config)
       return;
 
-    const config = await deserializeConfig(this._params.config);
+    const config = await configLoader.deserializeConfig(this._params.config);
     const project = config.projects.find(p => p.id === this._params.projectId);
     if (!project)
       throw new Error(`Project "${this._params.projectId}" not found in the worker process. Make sure project name does not change.`);
     this._config = config;
     this._project = project;
-    this._poolBuilder = PoolBuilder.createForWorker(this._project);
+    this._poolBuilder = poolBuilder.PoolBuilder.createForWorker(this._project);
     this._fixtureRunner.workerFixtureTimeout = this._project.project.timeout;
   }
 
   async runTestGroup(runPayload: ipc.RunPayload) {
-    this._runFinished = new iso.ManualPromise<void>();
+    this._runFinished = new ManualPromise<void>();
     const entries = new Map(runPayload.entries.map(e => [e.testId, e]));
     let fatalUnknownTestIds: string[] | undefined;
     try {
       await this._loadIfNeeded();
-      const fileSuite = await loadTestFile(runPayload.file, this._config);
-      const suite = bindFileSuiteToProject(this._project, fileSuite);
+      const fileSuite = await testLoader.loadTestFile(runPayload.file, this._config);
+      const suite = suiteUtils.bindFileSuiteToProject(this._project, fileSuite);
       if (this._params.repeatEachIndex)
-        applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);
-      filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
+        suiteUtils.applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);
+      suiteUtils.filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       const tests = suite.allTests();
 
       // Collect test IDs that were not found in the worker
@@ -291,13 +285,13 @@ export class WorkerMain extends ProcessRunner {
     this._resumePromise?.resolve(payload);
   }
 
-  private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
+  private async _runTest(test: testNs.TestCase, retry: number, nextTest: testNs.TestCase | undefined) {
     const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry, {
       onStepBegin: payload => this.dispatchEvent('stepBegin', payload),
       onStepEnd: payload => this.dispatchEvent('stepEnd', payload),
       onAttach: payload => this.dispatchEvent('attach', payload),
       onTestPaused: payload => {
-        this._resumePromise = new iso.ManualPromise();
+        this._resumePromise = new ManualPromise();
         this.dispatchEvent('testPaused', payload);
         return this._resumePromise;
       },
@@ -338,7 +332,7 @@ export class WorkerMain extends ProcessRunner {
     }
 
     this._currentTest = testInfo;
-    setCurrentTestInfo(testInfo);
+    globals.setCurrentTestInfo(testInfo);
     this.dispatchEvent('testBegin', buildTestBeginPayload(testInfo));
 
     const isSkipped = testInfo.expectedStatus === 'skipped';
@@ -383,7 +377,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
 
-      await serverUtils.removeFolders([testInfo.outputDir]);
+      await removeFolders([testInfo.outputDir]);
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStep({ title: 'Before Hooks', category: 'hook' }, async () => {
@@ -516,16 +510,16 @@ export class WorkerMain extends ProcessRunner {
     testInfo.duration = (testInfo._timeoutManager.defaultSlot().elapsed + afterHooksSlot.elapsed) | 0;
 
     this._currentTest = null;
-    setCurrentTestInfo(null);
+    globals.setCurrentTestInfo(null);
     this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
-      await serverUtils.removeFolders([testInfo.outputDir]);
+      await removeFolders([testInfo.outputDir]);
   }
 
-  private _collectHooksAndModifiers(suite: Suite, type: 'beforeAll' | 'beforeEach' | 'afterAll' | 'afterEach', testInfo: TestInfoImpl) {
+  private _collectHooksAndModifiers(suite: testNs.Suite, type: 'beforeAll' | 'beforeEach' | 'afterAll' | 'afterEach', testInfo: TestInfoImpl) {
     type Runnable = { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll' | 'fixme' | 'skip' | 'slow' | 'fail', fn: Function, title: string, location: Location };
     const runnables: Runnable[] = [];
     for (const modifier of suite._modifiers) {
@@ -536,7 +530,7 @@ export class WorkerMain extends ProcessRunner {
         const result = await modifier.fn(fixtures);
         testInfo._modifier(modifier.type, modifier.location, [!!result, modifier.description]);
       };
-      inheritFixtureNames(modifier.fn, fn);
+      fixtures.inheritFixtureNames(modifier.fn, fn);
       runnables.push({
         title: `${modifier.type} modifier`,
         location: modifier.location,
@@ -549,7 +543,7 @@ export class WorkerMain extends ProcessRunner {
     return runnables;
   }
 
-  private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
+  private async _runBeforeAllHooksForSuite(suite: testNs.Suite, testInfo: TestInfoImpl) {
     if (this._activeSuites.has(suite))
       return;
     const extraAnnotations: TestAnnotation[] = [];
@@ -557,7 +551,7 @@ export class WorkerMain extends ProcessRunner {
     await this._runAllHooksForSuite(suite, testInfo, 'beforeAll', extraAnnotations);
   }
 
-  private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: TestAnnotation[]) {
+  private async _runAllHooksForSuite(suite: testNs.Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: TestAnnotation[]) {
     // Always run all the hooks, and capture the first error.
     let firstError: Error | undefined;
     for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
@@ -597,14 +591,14 @@ export class WorkerMain extends ProcessRunner {
       throw firstError;
   }
 
-  private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
+  private async _runAfterAllHooksForSuite(suite: testNs.Suite, testInfo: TestInfoImpl) {
     if (!this._activeSuites.has(suite))
       return;
     this._activeSuites.delete(suite);
     await this._runAllHooksForSuite(suite, testInfo, 'afterAll');
   }
 
-  private async _runEachHooksForSuites(suites: Suite[], type: 'beforeEach' | 'afterEach', testInfo: TestInfoImpl, slot?: TimeSlot) {
+  private async _runEachHooksForSuites(suites: testNs.Suite[], type: 'beforeEach' | 'afterEach', testInfo: TestInfoImpl, slot?: TimeSlot) {
     // Always run all the hooks, unless one of the times out, and capture the first error.
     let firstError: Error | undefined;
     const hooks = suites.map(suite => this._collectHooksAndModifiers(suite, type, testInfo)).flat();
@@ -650,15 +644,15 @@ function buildTestEndPayload(testInfo: TestInfoImpl): ipc.TestEndPayload {
   };
 }
 
-function getSuites(test: TestCase | undefined): Suite[] {
-  const suites: Suite[] = [];
-  for (let suite: Suite | undefined = test?.parent; suite; suite = suite.parent)
+function getSuites(test: testNs.TestCase | undefined): testNs.Suite[] {
+  const suites: testNs.Suite[] = [];
+  for (let suite: testNs.Suite | undefined = test?.parent; suite; suite = suite.parent)
     suites.push(suite);
   suites.reverse();  // Put root suite first.
   return suites;
 }
 
-function formatTestTitle(test: TestCase, projectName: string) {
+function formatTestTitle(test: testNs.TestCase, projectName: string) {
   // file, ...describes, test
   const [, ...titles] = test.titlePath();
   const location = `${relativeFilePath(test.location.file)}:${test.location.line}:${test.location.column}`;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { TimeoutError } from './errors';
-import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { ChannelOwner } from './channelOwner';
 import type * as channels from '@protocol/channels';

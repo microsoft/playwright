@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { webColors } from '../utils/isomorphic/colors';
+import { webColors } from '@isomorphic/colors';
 
 import type * as fs from 'fs';
 import type * as path from 'path';

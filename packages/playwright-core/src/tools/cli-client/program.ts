@@ -238,8 +238,8 @@ async function runInitWorkspace(args: MinimistArgs) {
 
 async function installBrowser() {
   const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
-  const { libCli } = await import('../../coreBundle.js');
-  const { program } = await import('../../utilsBundle.js');
+  const { libCli } = require('../../coreBundle.js') as typeof import('../../coreBundle');
+  const { program } = require('../../utilsBundle.js') as typeof import('../../utilsBundle');
   if (!program.version())
     libCli.decorateProgram(program);
   program.parse(argv);

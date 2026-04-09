@@ -18,9 +18,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { tools } from 'playwright-core/lib/coreBundle';
-import { debug } from 'playwright-core/lib/utilsBundle';
+import debug from 'debug';
+import { noColors } from '@isomorphic/colors';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { escapeRegExp } from '@isomorphic/stringUtils';
+import { toPosixPath } from '@utils/fileUtils';
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
@@ -28,11 +31,11 @@ import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
-import { resolveConfigLocation } from '../../common/configLoader';
+import { configLoader } from '../../common';
 
+import type { ConfigLocation } from '../../common';
 import type { TerminalScreen } from '../../reporters/base';
 import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
-import type { ConfigLocation } from '../../common/config';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
 
 export type SeedFile = {
@@ -62,7 +65,7 @@ export class GeneratorJournal {
     const result: string[] = [];
     result.push(`# Plan`);
     result.push(this._plan);
-    result.push(`# Seed file: ${serverUtils.toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
+    result.push(`# Seed file: ${toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
     result.push('```ts');
     result.push(this._seed.content);
     result.push('```');
@@ -97,7 +100,7 @@ export class TestContext {
   constructor(clientInfo: tools.ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._clientInfo = clientInfo;
 
-    this._configLocation = resolveConfigLocation(configPath || clientInfo.cwd);
+    this._configLocation = configLoader.resolveConfigLocation(configPath || clientInfo.cwd);
     this.rootPath = clientInfo.cwd || this._configLocation.configDir;
 
     if (options?.headless !== undefined)
@@ -128,7 +131,7 @@ export class TestContext {
 
     const testRunner = new TestRunner(this._configLocation, {});
     await testRunner.initialize({});
-    const testPaused = new iso.ManualPromise<void>();
+    const testPaused = new ManualPromise<void>();
     const testRunnerAndScreen: TestRunnerAndScreen = {
       ...createScreen(),
       testRunner,
@@ -180,7 +183,7 @@ export class TestContext {
   async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
     const result = await this.runTestsWithGlobalSetupAndPossiblePause({
       headed: this.computedHeaded,
-      locations: ['/' + iso.escapeRegExp(seedFile) + '/'],
+      locations: ['/' + escapeRegExp(seedFile) + '/'],
       projects: [projectName],
       timeout: 0,
       workers: 1,
@@ -276,7 +279,7 @@ export function createScreen() {
   const screen = {
     ...terminalScreen,
     isTTY: false,
-    colors: iso.noColors,
+    colors: noColors,
     stdout: stdout as unknown as NodeJS.WriteStream,
     stderr: stderr as unknown as NodeJS.WriteStream,
   };

@@ -18,7 +18,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { getPackageJsonPath, mergeObjects } from '../util';
+import { packageJSON } from '../package';
+import { getPackageJsonPath, mergeObjects, takeFirst } from '../util';
 
 import type { Config, Fixtures, Metadata, Project, ReporterDescription } from '../../types/test';
 import type { TestRunnerPluginRegistration } from '../plugins';
@@ -117,7 +118,7 @@ export class FullConfigInternal {
       tags: globalTags,
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),
       updateSourceMethod: takeFirst(configCLIOverrides.updateSourceMethod, userConfig.updateSourceMethod, 'patch'),
-      version: require('../../package.json').version,
+      version: packageJSON.version,
       workers: resolveWorkers(takeFirst((configCLIOverrides.debug || configCLIOverrides.pause) ? 1 : undefined, configCLIOverrides.workers, userConfig.workers, '50%')),
       webServer: null,
     };
@@ -213,14 +214,6 @@ export class FullProjectInternal {
     if (configCLIOverrides.debug && this.workers)
       this.workers = 1;
   }
-}
-
-export function takeFirst<T>(...args: (T | undefined)[]): T {
-  for (const arg of args) {
-    if (arg !== undefined)
-      return arg;
-  }
-  return undefined as any as T;
 }
 
 function pathResolve(baseDir: string, relative: string | undefined): string | undefined {

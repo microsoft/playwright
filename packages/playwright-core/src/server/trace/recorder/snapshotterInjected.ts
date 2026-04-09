@@ -371,8 +371,13 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         }
         if (removeNoScript && nodeName === 'NOSCRIPT')
           return;
-        if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')
-          return;
+        if (nodeName === 'META') {
+          const httpEquiv = (node as HTMLMetaElement).httpEquiv.toLowerCase();
+          // Drop META directives that can navigate, set cookies, or otherwise
+          // affect the trace viewer when the recorded snapshot is rendered.
+          if (httpEquiv === 'content-security-policy' || httpEquiv === 'refresh' || httpEquiv === 'set-cookie')
+            return;
+        }
         // Skip iframes which are inside document's head as they are not visible.
         // See https://github.com/microsoft/playwright/issues/12005.
         if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && headNesting)

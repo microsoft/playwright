@@ -16,12 +16,11 @@
 
 import fs from 'fs';
 
-import { iso } from 'playwright-core/lib/coreBundle';
+import { monotonicTime } from '@isomorphic/time';
 
 import { internalScreen, prepareErrorStack, relativeFilePath } from './base';
 import { Multiplexer } from './multiplexer';
-import { Suite } from '../common/test';
-import { codeFrameColumns } from '../transform/babelBundle';
+import { babel, test as testNs } from '../common';
 import { wrapReporterAsV2 } from './reporterV2';
 
 import type { AnyReporter, ReporterV2 } from './reporterV2';
@@ -46,11 +45,11 @@ export class InternalReporter implements ReporterV2 {
   onConfigure(config: FullConfig) {
     this._config = config;
     this._startTime = new Date();
-    this._monotonicStartTime = iso.monotonicTime();
+    this._monotonicStartTime = monotonicTime();
     this._reporter.onConfigure?.(config);
   }
 
-  onBegin(suite: Suite) {
+  onBegin(suite: testNs.Suite) {
     this._didBegin = true;
     this._reporter.onBegin?.(suite);
   }
@@ -80,12 +79,12 @@ export class InternalReporter implements ReporterV2 {
   async onEnd(result: { status: FullResult['status'] }) {
     if (!this._didBegin) {
       // onBegin was not reported, emit it.
-      this.onBegin(new Suite('', 'root'));
+      this.onBegin(new testNs.Suite('', 'root'));
     }
     return await this._reporter.onEnd?.({
       ...result,
       startTime: this._startTime!,
-      duration: iso.monotonicTime() - this._monotonicStartTime!,
+      duration: monotonicTime() - this._monotonicStartTime!,
     });
   }
 
@@ -135,7 +134,7 @@ export function addLocationAndSnippetToError(config: FullConfig, error: TestErro
   try {
     const tokens = [];
     const source = fs.readFileSync(location.file, 'utf8');
-    const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
+    const codeFrame = babel.codeFrameColumns(source, { start: location }, { highlightCode: true });
     // Convert /var/folders to /private/var/folders on Mac.
     if (!file || fs.realpathSync(file) !== location.file) {
       tokens.push(internalScreen.colors.gray(`   at `) + `${relativeFilePath(internalScreen, config, location.file)}:${location.line}`);

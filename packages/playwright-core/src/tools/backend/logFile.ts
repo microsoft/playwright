@@ -17,8 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { debug } from '../../utilsBundle';
-
+import debug from 'debug';
 import type { Context } from './context';
 
 export type LogChunk = {

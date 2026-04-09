@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import { chokidar } from './utilsBundle';
-
-import type { FSWatcher } from 'chokidar';
+import chokidar from 'chokidar';
+import type { FSWatcher as ChokidarWatcher } from 'chokidar';
 
 export type FSEvent = { event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir', file: string };
 
-export class Watcher {
+export class FSWatcher {
   private _onChange: (events: FSEvent[]) => void;
   private _watchedPaths: string[] = [];
   private _ignoredFolders: string[] = [];
   private _collector: FSEvent[] = [];
-  private _fsWatcher: FSWatcher | undefined;
+  private _fsWatcher: ChokidarWatcher | undefined;
   private _throttleTimer: NodeJS.Timeout | undefined;
 
   constructor(onChange: (events: FSEvent[]) => void) {

@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import { assert } from '@isomorphic/assert';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
+import { urlMatches } from '@isomorphic/urlMatch';
 import { EventEmitter } from './eventEmitter';
 import { ChannelOwner } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
@@ -25,9 +28,6 @@ import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
-import { assert } from '../utils/isomorphic/assert';
-import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
-import { urlMatches } from '../utils/isomorphic/urlMatch';
 import { TimeoutSettings } from './timeoutSettings';
 
 import type { LocatorOptions } from './locator';
@@ -35,8 +35,8 @@ import type { Page } from './page';
 import type { FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { ByRoleOptions } from '@isomorphic/locatorUtils';
+import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
 
 export type WaitForNavigationOptions = {

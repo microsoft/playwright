@@ -18,9 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
+import dotenv from 'dotenv';
 import { playwright } from '../../inprocess';
-import { dotenv } from '../../utilsBundle';
-
 import { configFromIniFile } from './configIni';
 
 import type * as playwrightTypes from '../../..';

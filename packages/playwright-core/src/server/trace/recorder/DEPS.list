@@ -2,9 +2,8 @@
 ../../
 ../../har/
 ../../../protocol/
-../../../utilsBundle.ts
-../../../utils/isomorphic/
-../../../zipBundle.ts
+@isomorphic/**
 ../../dispatchers/dispatcher.ts
 ../../utils
 ../common/
+node_modules/mime

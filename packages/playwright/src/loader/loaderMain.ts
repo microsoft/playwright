@@ -14,45 +14,38 @@
  * limitations under the License.
  */
 
-import { deserializeConfig } from '../common/configLoader';
-import { incorporateCompilationCache } from '../common/esmLoaderHost';
-import { PoolBuilder } from '../common/poolBuilder';
-import { ProcessRunner } from '../common/process';
-import { loadTestFile } from '../common/testLoader';
-import { serializeCompilationCache } from '../transform/compilationCache';
+import { cc, configLoader, esm, FullConfigInternal, ipc, poolBuilder, ProcessRunner, testLoader } from '../common';
 
 import type { TestError } from '../../types/testReporter';
-import type { FullConfigInternal } from '../common/config';
-import type { SerializedConfig } from '../common/ipc';
 
 export class LoaderMain extends ProcessRunner {
-  private _serializedConfig: SerializedConfig;
+  private _serializedConfig: ipc.SerializedConfig;
   private _configPromise: Promise<FullConfigInternal> | undefined;
-  private _poolBuilder = PoolBuilder.createForLoader();
+  private _poolBuilder = poolBuilder.PoolBuilder.createForLoader();
 
-  constructor(serializedConfig: SerializedConfig) {
+  constructor(serializedConfig: ipc.SerializedConfig) {
     super();
     this._serializedConfig = serializedConfig;
   }
 
   private _config(): Promise<FullConfigInternal> {
     if (!this._configPromise)
-      this._configPromise = deserializeConfig(this._serializedConfig);
+      this._configPromise = configLoader.deserializeConfig(this._serializedConfig);
     return this._configPromise;
   }
 
   async loadTestFile(params: { file: string }) {
     const testErrors: TestError[] = [];
     const config = await this._config();
-    const fileSuite = await loadTestFile(params.file, config, testErrors);
+    const fileSuite = await testLoader.loadTestFile(params.file, config, testErrors);
     this._poolBuilder.buildPools(fileSuite);
     return { fileSuite: fileSuite._deepSerialize(), testErrors };
   }
 
   async getCompilationCacheFromLoader() {
-    await incorporateCompilationCache();
-    return serializeCompilationCache();
+    await esm.incorporateCompilationCache();
+    return cc.serializeCompilationCache();
   }
 }
 
-export const create = (config: SerializedConfig) => new LoaderMain(config);
+export const create = (config: ipc.SerializedConfig) => new LoaderMain(config);

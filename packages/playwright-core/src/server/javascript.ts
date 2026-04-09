@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { LongStandingScope } from '@isomorphic/manualPromise';
+import { isUnderTest } from '@utils/debug';
 import { SdkObject } from './instrumentation';
 import * as rawUtilityScriptSource from '../generated/utilityScriptSource';
-import { isUnderTest } from '../utils';
-import { serializeAsCallArgument } from '../utils/isomorphic/utilityScriptSerializers';
-import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
 import type * as dom from './dom';
 import type { Progress } from '@protocol/progress';

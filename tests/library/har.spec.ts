@@ -22,8 +22,8 @@ import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
 import { TestServer } from '../config/testserver';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
-const { createHttp2Server } = serverUtils;
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
+const { createHttp2Server } = utils;
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');

@@ -16,6 +16,8 @@
 
 import fs from 'fs';
 
+import { makeSocketPath } from '@utils/fileUtils';
+import { createGuid } from '@utils/crypto';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Download } from './download';
 import { SdkObject } from './instrumentation';
@@ -24,16 +26,14 @@ import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
 import { BrowserInfo, serverRegistry } from '../serverRegistry';
-import { makeSocketPath } from './utils/fileUtils';
-import { createGuid } from '../utils';
 import { nullProgress } from './progress';
 
 import type * as types from './types';
 import type { ProxySettings } from './types';
-import type { RecentLogsCollector } from './utils/debugLogger';
+import type { RecentLogsCollector } from '@utils/debugLogger';
 import type * as channels from '@protocol/channels';
 import type { ChildProcess } from 'child_process';
-import type { Language } from '../utils';
+import type { Language } from '@isomorphic/locatorGenerators';
 import type { Progress } from './progress';
 import type * as playwright from '../..';
 

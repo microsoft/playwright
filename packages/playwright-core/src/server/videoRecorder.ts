@@ -16,9 +16,13 @@
 
 import path from 'path';
 
-import { assert, createGuid, debugLogger, mkdirIfNeeded, monotonicTime } from '../utils';
-import { launchProcess } from './utils/processLauncher';
-import { jpegjs } from '../utilsBundle';
+import jpegjs from 'jpeg-js';
+import { launchProcess } from '@utils/processLauncher';
+import { assert } from '@isomorphic/assert';
+import { createGuid } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
+import { mkdirIfNeeded } from '@utils/fileUtils';
+import { monotonicTime } from '@isomorphic/time';
 import { Artifact } from './artifact';
 import { registry } from './registry';
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { monotonicTime } from '../utils/isomorphic/time';
-import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { Browser } from './browser';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from './connection';

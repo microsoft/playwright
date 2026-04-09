@@ -1,6 +1,7 @@
 [*]
-../common/
-../mcp/test/browserBackend.ts
+@isomorphic/**
+@utils/**
+../globals.ts
+../package.ts
 ../util.ts
-../utilsBundle.ts
-../worker/testInfo.ts
+node_modules/colors/safe

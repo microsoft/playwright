@@ -16,11 +16,13 @@
 
 /* eslint-disable no-console */
 
-import { TraceLoader } from '../../utils/isomorphic/trace/traceLoader';
+import { TraceLoader } from '@isomorphic/trace/traceLoader';
+import { gracefullyCloseAll } from '@utils/processLauncher';
+import { HttpServer } from '@utils/httpServer';
+import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
 import { BrowserBackend } from '../backend/browserBackend';
 import { browserTools } from '../backend/tools';
 import { playwright } from '../../inprocess';
-import { gracefullyCloseAll, HttpServer, SnapshotServer } from '../../utils';
 import { parseCommand } from '../cli-daemon/command';
 import { minimist } from '../cli-client/minimist';
 import { commands } from '../cli-daemon/commands';

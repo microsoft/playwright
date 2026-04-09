@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import type { Size } from '../utils/isomorphic/types';
+import type { Size } from '@isomorphic/types';
 import type * as channels from '@protocol/channels';
-export type { HeadersArray, Point, Quad, Rect, Size } from '../utils/isomorphic/types';
+export type { HeadersArray, Point, Quad, Rect, Size } from '@isomorphic/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {

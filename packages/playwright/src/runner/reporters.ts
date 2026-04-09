@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import fs from 'fs';
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { calculateSha1 } from '@utils/crypto';
 
 import { loadReporter } from './loadUtils';
 import { formatError } from '../reporters/base';
@@ -32,12 +32,12 @@ import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { ReporterDescription } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
-import type { BuiltInReporter, FullConfigInternal } from '../common/config';
+import type { config as commonConfig, FullConfigInternal } from '../common';
 import type { CommonReporterOptions, Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
-  const defaultReporters: { [key in BuiltInReporter]: new(arg: any) => ReporterV2 } = {
+  const defaultReporters: { [key in commonConfig.BuiltInReporter]: new(arg: any) => ReporterV2 } = {
     blob: BlobReporter,
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
@@ -128,10 +128,10 @@ function computeCommandHash(config: FullConfigInternal) {
   if (config.config.tags.length)
     command.tags = config.config.tags.join(' ');
   if (config.cliTestList)
-    command.cliTestList = serverUtils.calculateSha1(fs.readFileSync(config.cliTestList));
+    command.cliTestList = calculateSha1(fs.readFileSync(config.cliTestList));
   if (config.cliTestListInvert)
-    command.cliTestListInvert = serverUtils.calculateSha1(fs.readFileSync(config.cliTestListInvert));
+    command.cliTestListInvert = calculateSha1(fs.readFileSync(config.cliTestListInvert));
   if (Object.keys(command).length)
-    parts.push(serverUtils.calculateSha1(JSON.stringify(command)).substring(0, 7));
+    parts.push(calculateSha1(JSON.stringify(command)).substring(0, 7));
   return parts.join('-');
 }

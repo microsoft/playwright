@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-
+import * as z from 'zod';
 import common from './common';
 import config from './config';
 import console from './console';

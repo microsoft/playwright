@@ -735,9 +735,6 @@ function textContributesInfo(node: aria.AriaNode, text: string): boolean {
   if (!node.name)
     return true;
 
-  if (node.name.length > text.length)
-    return false;
-
   // Figure out if text adds any value. "longestCommonSubstring" is expensive, so limit strings length.
   const substr = (text.length <= 200 && node.name.length <= 200) ? longestCommonSubstring(text, node.name) : '';
   let filtered = text;

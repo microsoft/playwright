@@ -69,3 +69,39 @@ export const wsSender = Sender;
 
 import yamlLibrary from 'yaml';
 export const yaml = yamlLibrary;
+
+import json5Library from 'json5';
+export const json5 = json5Library;
+
+import sourceMapSupportLibrary from 'source-map-support';
+export const sourceMapSupport = sourceMapSupportLibrary;
+
+import stoppableLibrary from 'stoppable';
+export const stoppable = stoppableLibrary;
+
+import enquirerLibrary from 'enquirer';
+export const enquirer = enquirerLibrary;
+
+import chokidarLibrary from 'chokidar';
+export const chokidar = chokidarLibrary;
+
+import * as getEastAsianWidthLibrary from 'get-east-asian-width';
+export const getEastAsianWidth = getEastAsianWidthLibrary;
+
+export * as yazl from 'yazl';
+export * as yauzl from 'yauzl';
+const extractZip = require('./third_party/extract-zip');
+export const extract = extractZip;
+
+export * as z from 'zod';
+
+export { Client } from '@modelcontextprotocol/sdk/client/index.js';
+export { Server } from '@modelcontextprotocol/sdk/server/index.js';
+export { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+export { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+export { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+export { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+export { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+export { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+export { CallToolRequestSchema, ListRootsRequestSchema, ListToolsRequestSchema, PingRequestSchema, ProgressNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
+export { zodToJsonSchema } from 'zod-to-json-schema';

@@ -15,6 +15,12 @@
  * limitations under the License.
  */
 
+import { assert } from '@isomorphic/assert';
+import { headersObjectToArray } from '@isomorphic/headers';
+import { trimStringWithEllipsis  } from '@isomorphic/stringUtils';
+import { urlMatches, urlMatchesEqual } from '@isomorphic/urlMatch';
+import { LongStandingScope } from '@isomorphic/manualPromise';
+import { isObject, isRegExp, isString } from '@isomorphic/rtti';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
@@ -35,13 +41,7 @@ import { Screencast } from './screencast';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { TimeoutSettings } from './timeoutSettings';
-import { assert } from '../utils/isomorphic/assert';
 import { mkdirIfNeeded } from './fileUtils';
-import { headersObjectToArray } from '../utils/isomorphic/headers';
-import { trimStringWithEllipsis  } from '../utils/isomorphic/stringUtils';
-import { urlMatches, urlMatchesEqual } from '../utils/isomorphic/urlMatch';
-import { LongStandingScope } from '../utils/isomorphic/manualPromise';
-import { isObject, isRegExp, isString } from '../utils/isomorphic/rtti';
 import { ConsoleMessage } from './consoleMessage';
 import type { BrowserContext } from './browserContext';
 import type { Clock } from './clock';
@@ -52,8 +52,8 @@ import type { RouteHandlerCallback, WebSocketRouteHandlerCallback } from './netw
 import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, TimeoutOptions, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { ByRoleOptions } from '@isomorphic/locatorUtils';
+import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {

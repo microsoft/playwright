@@ -19,11 +19,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { wrapInASCIIBox } from '@utils/ascii';
+import { hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
+import { spawnAsync } from '@utils/spawnAsync';
+import { getPlaywrightVersion } from '@utils/userAgent';
 import { deps } from './nativeDeps';
-import { wrapInASCIIBox } from '../utils/ascii';
-import { hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
-import { spawnAsync } from '../utils/spawnAsync';
-import { getPlaywrightVersion } from '../utils/userAgent';
 
 import { packageJSON, binPath } from '../../package';
 import { buildPlaywrightCLICommand, registry } from '.';

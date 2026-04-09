@@ -17,27 +17,27 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { mime } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
+import { getMimeTypeForPath } from '@isomorphic/mimeType';
+import { isString } from '@isomorphic/stringUtils';
+import { compareBuffersOrStrings, getComparator } from '@utils/comparators';
+import { callLogText, formatMatcherMessage } from '@utils/expectUtils';
 import { addSuffixToFilePath, expectTypes } from '../util';
-import { currentTestInfo } from '../common/globals';
+import * as globals from '../globals';
 
+import type { config } from '../common';
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
-import type { FullProjectInternal } from '../common/config';
 import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
-type Comparator = serverUtils.Comparator;
-type ImageComparatorOptions = serverUtils.ImageComparatorOptions;
+import type { Comparator, ImageComparatorOptions } from '@utils/comparators';
 
 type NameOrSegments = string | string[];
 
 type ImageMatcherResult = MatcherResult<string, string> & { diff?: string };
 
-type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<FullProjectInternal['expect']>['toHaveScreenshot']> & {
+type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<config.FullProjectInternal['expect']>['toHaveScreenshot']> & {
   _comparator?: string;
 };
 
@@ -139,8 +139,8 @@ class SnapshotHelper {
     this.locator = locator;
 
     this.updateSnapshots = testInfo.config.updateSnapshots;
-    this.mimeType = mime.getType(path.basename(this.expectedPath)) ?? 'application/octet-stream';
-    this.comparator = serverUtils.getComparator(this.mimeType);
+    this.mimeType = getMimeTypeForPath(path.basename(this.expectedPath)) ?? 'application/octet-stream';
+    this.comparator = getComparator(this.mimeType);
 
     this.testInfo = testInfo;
     this.state = state;
@@ -237,7 +237,7 @@ class SnapshotHelper {
     }
 
     if (log?.length)
-      output.push(serverUtils.callLogText(this.state.utils, log));
+      output.push(callLogText(this.state.utils, log));
     else
       output.push('');
 
@@ -255,7 +255,7 @@ export function toMatchSnapshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
 ): MatcherResult<NameOrSegments | { name?: NameOrSegments }, string> {
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
   if (received instanceof Promise)
@@ -282,7 +282,7 @@ export function toMatchSnapshot(
   const expected = fs.readFileSync(helper.expectedPath);
 
   if (helper.updateSnapshots === 'all') {
-    if (!serverUtils.compareBuffersOrStrings(received, expected))
+    if (!compareBuffersOrStrings(received, expected))
       return helper.handleMatching();
     writeFileSync(helper.expectedPath, received);
     /* eslint-disable no-console */
@@ -304,7 +304,7 @@ export function toMatchSnapshot(
   if (!result)
     return helper.handleMatching();
 
-  const header = serverUtils.formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toMatchSnapshot', receiver: iso.isString(received) ? 'string' : 'Buffer', expectation: 'expected' });
+  const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toMatchSnapshot', receiver: isString(received) ? 'string' : 'Buffer', expectation: 'expected' });
   return helper.handleDifferent(received, expected, undefined, result.diff, header, result.errorMessage, undefined, this._stepInfo);
 }
 
@@ -326,7 +326,7 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions = {},
   optOptions: ToHaveScreenshotOptions = {}
 ): Promise<MatcherResult<NameOrSegments | { name?: NameOrSegments }, string>> {
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
 
@@ -389,7 +389,7 @@ export async function toHaveScreenshot(
       // We tried re-generating new snapshot but failed.
       // This can be due to e.g. spinning animation, so we want to show it as a diff.
       if (errorMessage) {
-        const header = serverUtils.formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
+        const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
         return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log, this._stepInfo);
       }
 
@@ -414,7 +414,7 @@ export async function toHaveScreenshot(
 
     if (!errorMessage) {
       // Screenshot is matching, but is not necessarily the same as the expected.
-      if (helper.updateSnapshots === 'all' && actual && serverUtils.compareBuffersOrStrings(actual, expected)) {
+      if (helper.updateSnapshots === 'all' && actual && compareBuffersOrStrings(actual, expected)) {
         console.log(helper.expectedPath + ' is re-generated, writing actual.');
         return writeFiles(actual);
       }
@@ -424,12 +424,12 @@ export async function toHaveScreenshot(
     if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
       if (actual)
         return writeFiles(actual);
-      let header = serverUtils.formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
+      let header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
       header += '  Failed to re-generate expected.\n';
       return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
     }
 
-    const header = serverUtils.formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
+    const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
     return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
   } finally {
     await page.screencast.showOverlays();

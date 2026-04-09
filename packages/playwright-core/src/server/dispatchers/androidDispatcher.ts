@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { eventsHelper } from '@utils/eventsHelper';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { Dispatcher } from './dispatcher';
 import { AndroidDevice } from '../android/android';
-import { eventsHelper } from '../utils/eventsHelper';
 import { SdkObject } from '../instrumentation';
 
 import type { RootDispatcher } from './dispatcher';

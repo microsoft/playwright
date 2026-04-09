@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { Dispatcher } from './dispatcher';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { SdkObject } from '../instrumentation';
 
 import type { ArtifactDispatcher } from './artifactDispatcher';

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { Dispatcher } from './dispatcher';
 import { Debugger } from '../debugger';
-import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type * as channels from '@protocol/channels';

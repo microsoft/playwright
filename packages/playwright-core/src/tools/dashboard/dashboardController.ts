@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../server/utils/eventsHelper';
+import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 
 import type * as api from '../../..';
-import type { Transport } from '../../server/utils/httpServer';
+import type { Transport } from '@utils/httpServer';
 import type { DashboardChannel, DashboardChannelEvents, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor } from '../../serverRegistry';
 

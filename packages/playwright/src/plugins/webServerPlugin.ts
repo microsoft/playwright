@@ -16,13 +16,17 @@
 import net from 'net';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { debug } from 'playwright-core/lib/utilsBundle';
+import colors from 'colors/safe';
+import debug from 'debug';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { isURLAvailable } from '@utils/network';
+import { launchProcess } from '@utils/processLauncher';
 
 import type { TestRunnerPlugin } from '.';
 import type { FullConfig } from '../../types/testReporter';
-import type { FullConfigInternal } from '../common/config';
+import type { FullConfigInternal } from '../common';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type WebServerPluginOptions = {
@@ -55,7 +59,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
   private _reporter?: ReporterV2;
-  private _waitForStdioPromise: iso.ManualPromise | undefined;
+  private _waitForStdioPromise: ManualPromise | undefined;
 
   name = 'playwright:webserver';
 
@@ -101,7 +105,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       throw new Error('config.webServer.command cannot be empty');
 
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
-    const { launchedProcess, gracefullyClose } = await serverUtils.launchProcess({
+    const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
@@ -142,7 +146,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     debugWebServer(`Process started`);
 
     if (this._options.wait?.stdout || this._options.wait?.stderr)
-      this._waitForStdioPromise = new iso.ManualPromise();
+      this._waitForStdioPromise = new ManualPromise();
     const stdioWaitCollectors = {
       stdout: this._options.wait?.stdout ? '' : undefined,
       stderr: this._options.wait?.stderr ? '' : undefined,
@@ -189,13 +193,13 @@ export class WebServerPlugin implements TestRunnerPlugin {
     debugWebServer(`Waiting for availability...`);
     const launchTimeout = this._options.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
-    const deadline = iso.monotonicTime() + launchTimeout;
+    const deadline = monotonicTime() + launchTimeout;
 
     const racingPromises = [this._processExitedPromise];
     if (this._isAvailableCallback)
-      racingPromises.push(iso.raceAgainstDeadline(() => waitFor(this._isAvailableCallback!, cancellationToken), deadline));
+      racingPromises.push(raceAgainstDeadline(() => waitFor(this._isAvailableCallback!, cancellationToken), deadline));
     if (this._waitForStdioPromise)
-      racingPromises.push(iso.raceAgainstDeadline(() => this._waitForStdioPromise!, deadline));
+      racingPromises.push(raceAgainstDeadline(() => this._waitForStdioPromise!, deadline));
 
     const { timedOut } = await Promise.race(racingPromises);
     cancellationToken.canceled = true;
@@ -235,7 +239,7 @@ async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canc
 function getIsAvailableFunction(url: string, checkPortOnly: boolean, ignoreHTTPSErrors: boolean, onStdErr: ReporterV2['onStdErr']) {
   const urlObject = new URL(url);
   if (!checkPortOnly)
-    return () => serverUtils.isURLAvailable(urlObject, ignoreHTTPSErrors, debugWebServer, onStdErr);
+    return () => isURLAvailable(urlObject, ignoreHTTPSErrors, debugWebServer, onStdErr);
   const port = urlObject.port;
   return () => isPortUsed(+port);
 }

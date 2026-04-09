@@ -19,11 +19,12 @@ import os from 'os';
 import path from 'path';
 import * as readline from 'readline';
 
+import { wrapInASCIIBox } from '@utils/ascii';
+import { RecentLogsCollector } from '@utils/debugLogger';
+import { eventsHelper } from '@utils/eventsHelper';
+import { envArrayToObject, launchProcess } from '@utils/processLauncher';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { libPath } from '../../package';
-import { ManualPromise } from '../../utils';
-import { wrapInASCIIBox } from '../utils/ascii';
-import { RecentLogsCollector } from '../utils/debugLogger';
-import { eventsHelper } from '../utils/eventsHelper';
 import { validateBrowserContextOptions } from '../browserContext';
 import { CRBrowser } from '../chromium/crBrowser';
 import { CRConnection } from '../chromium/crConnection';
@@ -33,7 +34,6 @@ import { ConsoleMessage } from '../console';
 import { helper } from '../helper';
 import { SdkObject } from '../instrumentation';
 import * as js from '../javascript';
-import { envArrayToObject, launchProcess } from '../utils/processLauncher';
 import { WebSocketTransport } from '../transport';
 import { nullProgress } from '../progress';
 

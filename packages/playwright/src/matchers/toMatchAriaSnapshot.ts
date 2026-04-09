@@ -18,10 +18,11 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { escapeTemplateString, isString } from '@isomorphic/stringUtils';
+import { formatMatcherMessage, printReceivedStringContainExpectedSubstring } from '@utils/expectUtils';
 
 import { expectTypes, fileExistsAsync } from '../util';
-import { currentTestInfo } from '../common/globals';
+import * as globals from '../globals';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal, FrameEx, LocatorEx } from './matchers';
@@ -45,7 +46,7 @@ export async function toMatchAriaSnapshot(
   expectTypes(receiver, ['Page', 'Locator'], matcherName);
   const locator = (receiver as any)._apiName === 'Page' ? undefined : receiver as LocatorEx;
 
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   if (!testInfo)
     throw new Error(`${matcherName}() must be called during the test`);
 
@@ -57,7 +58,7 @@ export async function toMatchAriaSnapshot(
   let expected: string;
   let timeout: number;
   let expectedPath: string | undefined;
-  if (iso.isString(expectedParam)) {
+  if (isString(expectedParam)) {
     expected = expectedParam;
     timeout = options.timeout ?? this.timeout;
   } else {
@@ -101,13 +102,13 @@ export async function toMatchAriaSnapshot(
     if (errorMessage) {
       printedExpected = `Expected: ${this.isNot ? 'not ' : ''}${this.utils.printExpected(expected)}`;
     } else if (pass) {
-      const receivedString = serverUtils.printReceivedStringContainExpectedSubstring(this.utils, typedReceived.raw, typedReceived.raw.indexOf(expected), expected.length);
+      const receivedString = printReceivedStringContainExpectedSubstring(this.utils, typedReceived.raw, typedReceived.raw.indexOf(expected), expected.length);
       printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
       printedReceived = `Received: ${receivedString}`;
     } else {
       printedDiff = this.utils.printDiffOrStringify(expected, typedReceived.raw, 'Expected', 'Received', false);
     }
-    return serverUtils.formatMatcherMessage(this.utils, {
+    return formatMatcherMessage(this.utils, {
       isNot: this.isNot,
       promise: this.promise,
       matcherName,
@@ -145,7 +146,7 @@ export async function toMatchAriaSnapshot(
         }
         return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
       } else {
-        const suggestedRebaseline = `\`\n${iso.escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
+        const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
         if (updateSnapshots === 'missing') {
           const message = 'A snapshot is not provided, generating new baseline.';
           testInfo._hasNonRetriableError = true;

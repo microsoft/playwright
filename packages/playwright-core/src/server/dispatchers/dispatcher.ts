@@ -16,20 +16,22 @@
 
 import { EventEmitter } from 'events';
 
-import { eventsHelper } from '../utils/eventsHelper';
+import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { eventsHelper } from '@utils/eventsHelper';
+import { isUnderTest } from '@utils/debug';
+import { assert } from '@isomorphic/assert';
+import { monotonicTime } from '@isomorphic/time';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
-import { assert, monotonicTime, rewriteErrorMessage } from '../../utils';
-import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
-import { getMetainfo } from '../../utils/isomorphic/protocolMetainfo';
 import { Progress, ProgressController } from '../progress';
 
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { ValidatorContext } from '../../protocol/validator';
 import type * as channels from '@protocol/channels';
 

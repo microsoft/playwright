@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../utils';
+import { eventsHelper } from '@utils/eventsHelper';
 import { DebugController } from '../debugController';
 import { Dispatcher } from './dispatcher';
 
 import type { DispatcherConnection, RootDispatcher } from './dispatcher';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 

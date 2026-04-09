@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { mime } from '../utilsBundle';
-
+import mime from 'mime';
 import type * as channels from '@protocol/channels';
 
 export class MultipartFormData {

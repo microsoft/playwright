@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/isomorphic/assert';
+import { assert } from '@isomorphic/assert';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { parseEvaluationResultValue } from '@isomorphic/utilityScriptSerializers';
 import { getExceptionMessage, releaseObject } from './crProtocolHelper';
-import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
-import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import * as dom from '../dom';
 import { isSessionClosedError } from '../protocolError';

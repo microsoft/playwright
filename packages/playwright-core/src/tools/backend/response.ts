@@ -17,10 +17,11 @@
 import fs from 'fs';
 import path from 'path';
 
-import { debug } from '../../utilsBundle';
+import debug from 'debug';
 import { renderModalStates } from './tab';
 import { scaleImageToFitMessage } from './screenshot';
 
+import type * as playwright from '../../..';
 import type { TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context, FilenameTemplate } from './context';
@@ -47,7 +48,7 @@ export class Response {
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'explicit' = 'none';
   private _includeSnapshotFileName: string | undefined;
-  private _includeSnapshotSelector: string | undefined;
+  private _includeSnapshotRoot: playwright.Locator | undefined;
   private _includeSnapshotDepth: number | undefined;
   private _isClose: boolean = false;
 
@@ -134,11 +135,11 @@ export class Response {
     this._includeSnapshot = this._context.config.snapshot?.mode ?? 'full';
   }
 
-  setIncludeFullSnapshot(includeSnapshotFileName?: string, selector?: string, depth?: number) {
+  setIncludeFullSnapshot(includeSnapshotFileName?: string, root?: playwright.Locator, depth?: number) {
     this._includeSnapshot = 'explicit';
     this._includeSnapshotFileName = includeSnapshotFileName;
     this._includeSnapshotDepth = depth;
-    this._includeSnapshotSelector = selector;
+    this._includeSnapshotRoot = root;
   }
 
   private _redactSecrets(text: string): string {
@@ -213,7 +214,7 @@ export class Response {
       addSection('Ran Playwright code', this._code, 'js');
 
     // Render tab titles upon changes or when more than one tab.
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotSelector, this._includeSnapshotDepth, this._clientWorkspace) : undefined;
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._clientWorkspace) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)

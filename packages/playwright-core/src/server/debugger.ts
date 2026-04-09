@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { monotonicTime } from '@isomorphic/time';
 import { SdkObject } from './instrumentation';
-import { monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
-import { getMetainfo } from '../utils/isomorphic/protocolMetainfo';
 
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
 import type { Progress } from '@protocol/progress';

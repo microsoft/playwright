@@ -17,8 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
+import { isUnderTest } from '@utils/debug';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { wrapInASCIIBox } from '@utils/ascii';
 import { libPath } from '../package';
-import { isUnderTest, rewriteErrorMessage, wrapInASCIIBox } from '../utils';
 import { buildPlaywrightCLICommand, findChromiumChannelBestEffort } from './registry';
 import { registryDirectory } from './registry';
 import { nullProgress, ProgressController } from './progress';

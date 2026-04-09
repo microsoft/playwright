@@ -17,11 +17,12 @@
 import net from 'net';
 import fs from 'fs';
 
+import { debugLogger } from '@utils/debugLogger';
+import { decorateServer } from '@utils/network';
+import { Semaphore } from '@isomorphic/semaphore';
 import { PlaywrightConnection } from './playwrightConnection';
 import { SocketServerTransport } from './serverTransport';
-import { debugLogger } from '../server/utils/debugLogger';
 import { Browser } from '../server/browser';
-import { decorateServer, Semaphore } from '../utils';
 
 import type { PlaywrightInitializeResult } from './playwrightConnection';
 

@@ -24,10 +24,7 @@
     "./package.json": "./package.json",
     "./lib/bootstrap": "./lib/bootstrap.js",
     "./lib/coreBundle": "./lib/coreBundle.js",
-    "./lib/mcpBundle": "./lib/mcpBundle.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
-    "./lib/zipBundle": "./lib/zipBundle.js",
-    "./lib/zodBundle": "./lib/zodBundle.js",
     "./lib/tools/cli-client/program": "./lib/tools/cli-client/program.js"
   },
   "bin": {

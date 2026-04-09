@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
+import EventEmitter from 'events';
+
+import { createGuid } from '@utils/crypto';
+import { isUnderTest } from '@utils/debug';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { createPlaywright } from './server/playwright';
-import { createGuid } from './server/utils/crypto';
-import { isUnderTest } from './server/utils/debug';
 import { rewriteErrorMessage } from './utils/isomorphic/stackTrace';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from './utils/isomorphic/time';
-import { ws } from './utilsBundle';
 import * as validatorPrimitives from './protocol/validatorPrimitives';
 import { ProgressController } from './server/progress';
 
@@ -85,7 +86,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface
-    const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
+    const browserServer = new EventEmitter() as (BrowserServer & WebSocketEventEmitter);
     browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => browser.options.browserProcess.close();

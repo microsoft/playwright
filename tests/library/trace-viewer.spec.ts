@@ -19,7 +19,7 @@
 
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
-import extractZip from '../../packages/playwright-core/bundles/zip/src/third_party/extract-zip';
+import extractZip from '../../packages/playwright-core/bundles/utils/src/third_party/extract-zip';
 import fs from 'fs';
 import path from 'path';
 import type http from 'http';
@@ -2270,6 +2270,63 @@ test('should replace meta content attr that specifies charset', async ({ runAndT
   });
   const frame = await traceViewer.snapshotFrame('Set content');
   await expect.poll(() => frame.locator('body').evaluate(() => document.querySelector('meta')?.outerHTML.toLowerCase())).toBe('<meta http-equiv="content-type" content="text/html; charset=utf-8">');
+});
+
+test('should drop meta http-equiv refresh during recording', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    // Use a very large delay so the recorded page does not actually navigate before the snapshot is taken.
+    await page.setContent(`
+      <head>
+        <meta http-equiv="refresh" content="999999; url=https://example.com/evil">
+      </head>
+      <body><div>safe</div></body>
+    `);
+  });
+  const frame = await traceViewer.snapshotFrame('Set content');
+  await expect(frame.locator('div')).toHaveText('safe');
+  // Refresh META must be stripped from the snapshot, so the iframe is not navigated.
+  await expect.poll(() => frame.locator('head').evaluate(head => head.querySelector('meta[http-equiv]')?.outerHTML.toLowerCase() ?? '')).toBe('');
+  // The trace viewer top-level title and body must remain untouched.
+  await expect(traceViewer.page).toHaveTitle(/Playwright Trace Viewer/);
+  await expect(traceViewer.page.locator('body')).not.toHaveAttribute('data-pwned', /.*/);
+});
+
+test('should neutralize meta http-equiv refresh during rendering', async ({ runAndTrace, page, server }) => {
+  // Inject a META refresh directly via DOM manipulation that bypasses the
+  // recording-time strip (so this test specifically validates the renderer-side defense).
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => {
+      const meta = document.createElement('meta');
+      meta.setAttribute('http-equiv', 'refresh');
+      meta.setAttribute('content', '999999; url=https://example.com/evil');
+      document.head.appendChild(meta);
+      const div = document.createElement('div');
+      div.textContent = 'safe';
+      document.body.appendChild(div);
+    });
+  });
+  const frame = await traceViewer.snapshotFrame('Evaluate');
+  await expect(frame.locator('div')).toHaveText('safe');
+  // Even if a META refresh is in the recorded snapshot, the renderer must
+  // neutralize the http-equiv and content attributes so it has no effect.
+  await expect.poll(() => frame.locator('head').evaluate(head => !!head.querySelector('meta[http-equiv="refresh"]'))).toBe(false);
+  await expect(traceViewer.page).toHaveTitle(/Playwright Trace Viewer/);
+});
+
+test('snapshot iframes should be sandboxed', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<div>hello</div>');
+  });
+  await traceViewer.snapshotFrame('Set content');
+  const sandboxValues = await traceViewer.page.locator('iframe[name=snapshot]').evaluateAll(frames => frames.map(f => f.getAttribute('sandbox')));
+  for (const value of sandboxValues) {
+    expect(value).toBeTruthy();
+    expect(value).toContain('allow-same-origin');
+    expect(value).toContain('allow-scripts');
+  }
 });
 
 test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) => {

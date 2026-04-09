@@ -16,8 +16,8 @@
 
 import path from 'path';
 
+import { assert } from '@isomorphic/assert';
 import { Page } from './page';
-import { assert } from '../utils';
 import { Artifact } from './artifact';
 
 export class Download {

@@ -1,5 +1,9 @@
 [*]
-../../../mcpBundle.ts
-../../../zodBundle.ts
-../../../utilsBundle.ts
-../../../server/utils/network.ts
+@utils/network.ts
+node_modules/@modelcontextprotocol/sdk/server/index.js
+node_modules/@modelcontextprotocol/sdk/server/sse.js
+node_modules/@modelcontextprotocol/sdk/server/stdio.js
+node_modules/@modelcontextprotocol/sdk/server/streamableHttp.js
+node_modules/@modelcontextprotocol/sdk/types.js
+node_modules/debug
+node_modules/zod

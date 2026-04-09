@@ -14,20 +14,5 @@
  * limitations under the License.
  */
 
-import json5Library from 'json5';
-export const json5 = json5Library;
-
-import sourceMapSupportLibrary from 'source-map-support';
-export const sourceMapSupport = sourceMapSupportLibrary;
-
-import stoppableLibrary from 'stoppable';
-export const stoppable = stoppableLibrary;
-
-import enquirerLibrary from 'enquirer';
-export const enquirer = enquirerLibrary;
-
-import chokidarLibrary from 'chokidar';
-export const chokidar = chokidarLibrary;
-
-import * as getEastAsianWidthLibrary from 'get-east-asian-width';
-export const getEastAsianWidth = getEastAsianWidthLibrary;
+import { libPath } from '../package';
+export const expect: typeof import('../../bundles/expect/node_modules/expect/build').expect = require(libPath('matchers', 'expectBundleImpl')).expect;

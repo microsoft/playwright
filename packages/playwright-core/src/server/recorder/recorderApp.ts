@@ -17,9 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
+import mime from 'mime';
+import { isUnderTest } from '@utils/debug';
 import { libPath } from '../../package';
-import { isUnderTest } from '../utils/debug';
-import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { nullProgress, ProgressController } from '../progress';
@@ -205,7 +205,7 @@ export class RecorderApp {
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;
-    const { createPlaywright } = await import('../playwright');
+    const { createPlaywright } = require('../playwright') as typeof import('../playwright');
     const recorderPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
     const { context: appContext, page } = await launchApp(recorderPlaywright.chromium, {
       sdkLanguage,

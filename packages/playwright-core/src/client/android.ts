@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { isRegExp, isString } from '@isomorphic/rtti';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { EventEmitter } from './eventEmitter';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -21,9 +24,6 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
 import { TimeoutSettings } from './timeoutSettings';
-import { isRegExp, isString } from '../utils/isomorphic/rtti';
-import { monotonicTime } from '../utils/isomorphic/time';
-import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 import { connectToEndpoint } from './connect';
 
 import type { Page } from './page';

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import * as z from 'zod';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 
 import { defineTabTool } from './tool';
 import type * as playwright from '../../..';

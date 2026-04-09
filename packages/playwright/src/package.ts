@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-export * from './utils/isomorphic';
-export * from './server/utils';
+import path from 'path';
 
-export { colors } from './utilsBundle';
+// Use a dynamic path so esbuild does not statically resolve and inline
+// package.json into coreBundle.js.
+export const packageRoot = path.join(__dirname, '..');
+export const packageJSON = require(path.join(packageRoot, 'package.json'));
+
+export function libPath(...parts: string[]): string {
+  return path.join(packageRoot, 'lib', ...parts);
+}

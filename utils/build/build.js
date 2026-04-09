@@ -267,43 +267,18 @@ bundles.push({
 
 bundles.push({
   modulePath: 'packages/playwright/bundles/expect',
-  outdir: 'packages/playwright/lib/common',
+  outdir: 'packages/playwright/lib/matchers',
   entryPoints: ['src/expectBundleImpl.ts'],
-});
-
-bundles.push({
-  modulePath: 'packages/playwright/bundles/utils',
-  outdir: 'packages/playwright/lib',
-  entryPoints: ['src/utilsBundleImpl.ts'],
-  external: ['fsevents'],
 });
 
 bundles.push({
   modulePath: 'packages/playwright-core/bundles/utils',
   outfile: 'packages/playwright-core/lib/utilsBundleImpl/index.js',
   entryPoints: ['src/utilsBundleImpl.ts'],
-});
-
-bundles.push({
-  modulePath: 'packages/playwright-core/bundles/zip',
-  outdir: 'packages/playwright-core/lib',
-  entryPoints: ['src/zipBundleImpl.ts'],
-});
-
-bundles.push({
-  modulePath: 'packages/playwright-core/bundles/mcp',
-  outfile: 'packages/playwright-core/lib/mcpBundleImpl.js',
-  entryPoints: ['src/mcpBundleImpl.ts'],
-  external: ['express', '@anthropic-ai/sdk'],
+  external: ['fsevents', 'express', '@anthropic-ai/sdk'],
   alias: {
     'raw-body': 'raw-body.ts',
   },
-});
-
-bundles.push({
-  modulePath: 'packages/playwright-core/bundles/zod',
-  outfile: 'packages/playwright-core/lib/zodBundleImpl.js',
-  entryPoints: ['src/zodBundleImpl.ts'],
 });
 
 // @playwright/client
@@ -390,6 +365,10 @@ class EsbuildStep extends Step {
     super({ concurrent: false });
     this._options = options;
     this._watchPaths = watchPaths;
+    // For bundled outputs we always want a metafile so we can emit a
+    // sidecar .bundle.txt report next to each output.
+    if (options.bundle && !options.metafile)
+      options.metafile = true;
   }
 
   /** @override */
@@ -399,7 +378,8 @@ class EsbuildStep extends Step {
     } else {
       console.log('==== Running esbuild:', this._relativeEntryPoints().join(', '));
       const start = Date.now();
-      await build(this._options);
+      const result = await build(this._options);
+      this._writeBundleReport(result);
       console.log('==== Done in', Date.now() - start, 'ms');
     }
   }
@@ -428,7 +408,9 @@ class EsbuildStep extends Step {
       this._sourcesChanged = false;
       this._rebuilding = true;
       try {
-        await this._context?.rebuild();
+        const result = await this._context?.rebuild();
+        if (result)
+          this._writeBundleReport(result);
       } catch (e) {
         // Ignore. Esbuild inherits stderr and already logs nicely formatted errors
         // before throwing.
@@ -436,6 +418,56 @@ class EsbuildStep extends Step {
 
       this._rebuilding = false;
     } while (this._sourcesChanged);
+  }
+
+  /**
+   * @param {import('esbuild').BuildResult} result
+   */
+  _writeBundleReport(result) {
+    if (!this._options.bundle || !result.metafile)
+      return;
+    const { outputs } = result.metafile;
+    for (const [outFile, outInfo] of Object.entries(outputs)) {
+      if (outFile.endsWith('.map'))
+        continue;
+      const inputs = Object.keys(outInfo.inputs)
+          .filter(p => !p.startsWith('(disabled):'))
+          .sort();
+      const externals = new Set();
+      for (const [, meta] of Object.entries(outInfo.inputs)) {
+        // imports field is per-input via metafile.inputs, not outputs.
+      }
+      for (const inFile of inputs) {
+        const meta = result.metafile.inputs[inFile];
+        if (!meta) continue;
+        for (const imp of meta.imports || []) {
+          if (!imp.external)
+            continue;
+          if (imp.path.startsWith('node:'))
+            continue;
+          if (require('module').isBuiltin?.(imp.path) || require('module').builtinModules.includes(imp.path))
+            continue;
+          externals.add(imp.path);
+        }
+      }
+      const sortedExternals = [...externals].sort();
+      const lines = [];
+      lines.push(`# ${path.relative(ROOT, outFile)}`);
+      lines.push(`# size: ${(outInfo.bytes / 1024).toFixed(1)} KB`);
+      lines.push('');
+      lines.push(`## Inlined (${inputs.length})`);
+      for (const f of inputs)
+        lines.push(`  ${f}`);
+      lines.push('');
+      lines.push(`## External (${sortedExternals.length})`);
+      for (const e of sortedExternals)
+        lines.push(`  ${e}`);
+      lines.push('');
+      const reportPath = outFile + '.txt';
+      fs.writeFileSync(reportPath, lines.join('\n'));
+      const rel = path.relative(ROOT, outFile);
+      console.log(`     bundle: ${rel}  (${inputs.length} files, ${sortedExternals.length} external, ${(outInfo.bytes / 1024).toFixed(1)} KB)`);
+    }
   }
 
   _relativeEntryPoints() {
@@ -454,23 +486,146 @@ class CustomCallbackStep extends Step {
   }
 }
 
-// Plugin to convert dynamic import() of relative paths to require().
-// esbuild preserves dynamic import() even in CJS format, but we want
-// all local imports to use require() for consistency.
+// Single onLoad plugin that does two source-level rewrites:
+//
+// 1. `await import('./rel')` → `require('./rel')`. esbuild preserves dynamic
+//    import() even in CJS format; we want local imports to use require()
+//    uniformly.
+//
+// 2. `import { X } from '@isomorphic/foo'` / `'@utils/bar'` →
+//    `const { X } = require('playwright-core/lib/coreBundle').iso`
+//    (same for serverUtils). Per-file esbuild (bundle:false) can't follow
+//    path aliases to files outside the emitted tree, so we translate these
+//    at source-load time into coreBundle namespace access. Bundled outputs
+//    (transform/) use esbuild's `alias` option instead.
+//
+// Both rewrites must live in the SAME plugin because esbuild only runs one
+// onLoad handler per file; the first plugin that returns contents wins.
+//
+// 3. `import …  from '<vendored-pkg>'` (debug, mime, ws, …) →
+//    `const … = require('playwright-core/lib/utilsBundle').<key>` so that
+//    consumers can write idiomatic npm imports while the runtime still goes
+//    through the vendored utilsBundle. The mapping lives in
+//    utils/build/utilsBundleMapping.js.
+const { MAPPING: VENDORED_MAPPING, VENDORED_PACKAGES } = require('./utilsBundleMapping');
+
+const VENDORED_INVERSE_NAMED = {};
+for (const [pkg, def] of Object.entries(VENDORED_MAPPING)) {
+  VENDORED_INVERSE_NAMED[pkg] = {};
+  if (def.named) {
+    for (const [srcName, key] of Object.entries(def.named))
+      VENDORED_INVERSE_NAMED[pkg][srcName] = key;
+  }
+}
+
+const VENDORED_PKG_RE = new RegExp(
+    '^import\\s+(' +
+    '\\{[^}]*\\}|' +
+    '\\*\\s+as\\s+\\w+|' +
+    '\\w+(?:\\s*,\\s*\\{[^}]*\\})?' +
+    ')\\s+from\\s+\'(' +
+    [...VENDORED_PACKAGES].map(p => p.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')).join('|') +
+    ')\';?',
+    'gm'
+);
+
+function _utilsBundleSpecifier(filePath) {
+  const coreSrcMarker = `${path.sep}playwright-core${path.sep}src${path.sep}`;
+  const idx = filePath.indexOf(coreSrcMarker);
+  if (idx === -1)
+    return "'playwright-core/lib/utilsBundle'";
+  const coreSrcRoot = filePath.slice(0, idx + coreSrcMarker.length - 1);
+  let rel = path.relative(path.dirname(filePath), path.join(coreSrcRoot, 'utilsBundle'));
+  rel = rel.split(path.sep).join('/');
+  if (!rel.startsWith('.'))
+    rel = './' + rel;
+  return `'${rel}'`;
+}
+
+function _parseClause(clause) {
+  // Returns { default?: name, namespace?: name, named?: [{src, alias}] }
+  const out = {};
+  if (clause.startsWith('{')) {
+    out.named = _parseNamedList(clause);
+    return out;
+  }
+  if (clause.startsWith('*')) {
+    out.namespace = clause.match(/\*\s+as\s+(\w+)/)[1];
+    return out;
+  }
+  // default or "default, { named }"
+  const m = clause.match(/^(\w+)(?:\s*,\s*(\{[^}]*\}))?$/);
+  if (!m)
+    return null;
+  out.default = m[1];
+  if (m[2])
+    out.named = _parseNamedList(m[2]);
+  return out;
+}
+
+function _parseNamedList(braced) {
+  const inner = braced.replace(/^\s*\{|\}\s*$/g, '').trim();
+  if (!inner)
+    return [];
+  return inner.split(',').map(s => s.trim()).filter(Boolean).map(spec => {
+    const m = spec.match(/^(\w+)(?:\s+as\s+(\w+))?$/);
+    return { src: m[1], alias: m[2] || m[1] };
+  });
+}
+
+function _rewriteVendoredImports(filePath, contents) {
+  const bundleSpec = _utilsBundleSpecifier(filePath);
+  return contents.replace(VENDORED_PKG_RE, (full, clause, pkg) => {
+    const def = VENDORED_MAPPING[pkg];
+    const parsed = _parseClause(clause);
+    if (!parsed)
+      return full;
+    /** @type {string[]} */
+    const lines = [];
+    if (parsed.default && def.default)
+      lines.push(`const ${parsed.default} = require(${bundleSpec}).${def.default};`);
+    if (parsed.namespace && def.namespace)
+      lines.push(`const ${parsed.namespace} = require(${bundleSpec}).${def.namespace};`);
+    if (parsed.named && def.named) {
+      const renames = parsed.named.map(({ src, alias }) => {
+        const key = def.named[src];
+        if (!key)
+          return null;
+        return key === alias ? key : `${key}: ${alias}`;
+      }).filter(Boolean);
+      if (renames.length)
+        lines.push(`const { ${renames.join(', ')} } = require(${bundleSpec});`);
+    }
+    return lines.length ? lines.join('\n') : full;
+  });
+}
+
 const dynamicImportToRequirePlugin = {
   name: 'dynamic-import-to-require',
   setup(build) {
     build.onLoad({ filter: /\.ts$/ }, async (args) => {
-      const contents = await fs.promises.readFile(args.path, 'utf8');
-      if (!contents.includes('await import('))
+      let contents = await fs.promises.readFile(args.path, 'utf8');
+      const isPlaywrightSrc = args.path.includes(`${path.sep}playwright${path.sep}src${path.sep}`);
+      const hasAlias = isPlaywrightSrc && (contents.includes("'@isomorphic/") || contents.includes("'@utils/"));
+      let hasVendored = false;
+      for (const pkg of VENDORED_PACKAGES) {
+        if (contents.includes(`'${pkg}'`)) { hasVendored = true; break; }
+      }
+      if (!hasAlias && !hasVendored)
         return undefined;
-      return {
-        contents: contents.replace(
-            /\bawait import\((['"]\..*?['"])\)/g,
-            (_, specifier) => `require(${specifier})`
-        ),
-        loader: 'ts',
-      };
+      if (hasAlias) {
+        contents = contents.replace(
+            /import\s*\{([^}]*)\}\s*from\s*'@isomorphic\/[^']+';?/g,
+            (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').iso;`
+        );
+        contents = contents.replace(
+            /import\s*\{([^}]*)\}\s*from\s*'@utils\/[^']+';?/g,
+            (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').utils;`
+        );
+      }
+      if (hasVendored)
+        contents = _rewriteVendoredImports(args.path, contents);
+      return { contents, loader: 'ts' };
     });
   }
 };
@@ -482,7 +637,7 @@ for (const pkg of workspace.packages()) {
   // playwright-client is built as a bundle.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  if (pkg.name === 'playwright-core')
+  if (pkg.name === 'playwright-core' || pkg.name === 'playwright')
     continue;
 
   steps.push(new EsbuildStep({
@@ -515,14 +670,12 @@ steps.push(new EsbuildStep({
 
     // Bundle entry points otherwise inlined in coreBundle, figure this out.
     filePath('packages/playwright-core/src/utilsBundle.ts'),
-    filePath('packages/playwright-core/src/mcpBundle.ts'),
-    filePath('packages/playwright-core/src/zodBundle.ts'),
-    filePath('packages/playwright-core/src/zipBundle.ts'),
   ],
   outdir: filePath('packages/playwright-core/lib'),
   sourcemap: withSourceMaps ? 'linked' : false,
   platform: 'node',
   format: 'cjs',
+  plugins: [dynamicImportToRequirePlugin],
 }));
 
 const playwrightCoreSrc = filePath('packages/playwright-core/src');
@@ -538,9 +691,6 @@ steps.push(new EsbuildStep({
   external: [
     './utilsBundleImpl',
     './utilsBundleImpl/*',
-    './mcpBundleImpl',
-    './zodBundleImpl',
-    './zipBundleImpl',
     '../../api.json',
     './help.json',
     // TODO: await import plugin is incompatible with esbuild, remove it
@@ -575,6 +725,89 @@ function assertCoreBundleHasNoNodeModules() {
 }
 
 steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
+
+// playwright/lib/transform/esmLoader.js — bundled ESM loader registered by
+// common/esmLoaderHost.ts via node:module register. Same externalization
+// rules as the worker bundle.
+{
+  const playwrightSrc = filePath('packages/playwright/src');
+  steps.push(new EsbuildStep({
+    bundle: true,
+    entryPoints: [filePath('packages/playwright/src/transform/esmLoader.ts')],
+    outfile: filePath('packages/playwright/lib/esmLoaderBundle.js'),
+    sourcemap: withSourceMaps ? 'linked' : false,
+    platform: 'node',
+    format: 'cjs',
+    external: [
+      'playwright-core',
+      'playwright-core/*',
+    ],
+    plugins: [],
+  }, [playwrightSrc]));
+}
+
+// Build playwright entry points (per-file), excluding matchers/* and
+// common/* + transform/* — all of those are produced by bundle steps below.
+steps.push(new EsbuildStep({
+  entryPoints: [
+    filePath('packages/playwright/src/*.ts'),
+    filePath('packages/playwright/src/agents/**/*.ts'),
+    filePath('packages/playwright/src/cli/**/*.ts'),
+    filePath('packages/playwright/src/common/**/*.ts'),
+    filePath('packages/playwright/src/isomorphic/**/*.ts'),
+    filePath('packages/playwright/src/loader/**/*.ts'),
+    filePath('packages/playwright/src/mcp/**/*.ts'),
+    filePath('packages/playwright/src/plugins/**/*.ts'),
+    filePath('packages/playwright/src/reporters/**/*.ts'),
+    filePath('packages/playwright/src/runner/**/*.ts'),
+    filePath('packages/playwright/src/transform/**/*.ts'),
+    filePath('packages/playwright/src/worker/**/*.ts'),
+  ],
+  outdir: filePath('packages/playwright/lib'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  plugins: [dynamicImportToRequirePlugin],
+}));
+
+// playwright/lib/matchers/expect.js — bundled jest expect facade.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright/src/matchers/expect.ts')],
+  outfile: filePath('packages/playwright/lib/matchers/expect.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+    'playwright-core',
+    'playwright-core/*',
+    '../globals',
+    '../package',
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [filePath('packages/playwright/src')]));
+
+// playwright/lib/common/index.js — bundled common barrel. Inlines all of
+// common/* and transform/* (the barrel re-exports both). Externalizes
+// sibling lib/ files so state-holding singletons (currentTestInfo, config,
+// compilation cache) live exactly once at runtime.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright/src/common/index.ts')],
+  outfile: filePath('packages/playwright/lib/common/index.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+    'playwright-core',
+    'playwright-core/*',
+    '../globals',
+    '../package',
+    '../utils',
+    '../matchers/expect',
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [filePath('packages/playwright/src')]));
 
 // Build the Electron preload loader as a standalone CJS file. It runs inside
 // the Electron process (via `electron -r loader.js`) and must not depend on

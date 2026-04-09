@@ -17,17 +17,17 @@
 import fs from 'fs';
 import path from 'path';
 
-import { debug } from '../../utilsBundle';
-import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import debug from 'debug';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { disposeAll } from '@utils/disposable';
+import { eventsHelper } from '@utils/eventsHelper';
 import { playwright } from '../../inprocess';
 
 import { Tab } from './tab';
-import { disposeAll } from '../../server/utils/disposable';
-import { eventsHelper } from '../../server/utils/eventsHelper';
 
 import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
-import type { Disposable } from '../../server/utils/disposable';
+import type { Disposable } from '@utils/disposable';
 import type { ToolCapability } from './tool';
 
 const testDebug = debug('pw:mcp:test');

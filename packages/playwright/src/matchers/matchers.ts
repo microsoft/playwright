@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import colors from 'colors/safe';
+import { asLocatorDescription } from '@isomorphic/locatorGenerators';
+import { isTextualMimeType } from '@isomorphic/mimeType';
+import { isRegExp } from '@isomorphic/rtti';
+import { isString } from '@isomorphic/stringUtils';
+import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { constructURLBasedOnBaseURL, isURLPattern } from '@isomorphic/urlMatch';
+import { formatMatcherMessage, serializeExpectedTextValues } from '@utils/expectUtils';
+import { monotonicTime } from '@isomorphic/index';
 
 import { expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
@@ -23,19 +30,17 @@ import { toEqual } from './toEqual';
 import { toHaveURLWithPredicate } from './toHaveURL';
 import { toMatchText } from './toMatchText';
 import { toHaveScreenshotStepTitle } from './toMatchSnapshot';
-import { takeFirst } from '../common/config';
-import { currentTestInfo } from '../common/globals';
-import { TestInfoImpl } from '../worker/testInfo';
+import * as globals from '../globals';
 import { MatcherResult } from './matcherHint';
+import { takeFirst } from '../util';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
 import type { APIResponse, Locator, Frame, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 import type { ExpectMatcherUtils } from '../../types/test';
-type InternalMatcherUtils = serverUtils.InternalMatcherUtils;
-type URLPattern = iso.URLPattern;
-const { serializeExpectedTextValues } = serverUtils;
+import type { InternalMatcherUtils } from '@utils/expectUtils';
+import type { URLPattern } from '@isomorphic/urlMatch';
 
 export type ExpectMatcherStateInternal = Omit<ExpectMatcherState, 'utils'> & {
   _stepInfo?: TestStepInfoImpl;
@@ -246,7 +251,7 @@ export function toHaveAttribute(
 ) {
   if (!options) {
     // Update params for the case toHaveAttribute(name, options);
-    if (typeof expected === 'object' && !iso.isRegExp(expected)) {
+    if (typeof expected === 'object' && !isRegExp(expected)) {
       options = expected;
       expected = undefined;
     }
@@ -288,14 +293,14 @@ export function toContainClass(
   options?: { timeout?: number },
 ) {
   if (Array.isArray(expected)) {
-    if (expected.some(e => iso.isRegExp(e)))
+    if (expected.some(e => isRegExp(e)))
       throw new Error(`"expected" argument in toContainClass cannot contain RegExp values`);
     return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues(expected);
       return await locator._expect('to.contain.class.array', { expectedText, isNot, timeout });
     }, expected, options);
   } else {
-    if (iso.isRegExp(expected))
+    if (isRegExp(expected))
       throw new Error(`"expected" argument in toContainClass cannot be a RegExp value`);
     return toMatchText.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout) => {
       const expectedText = serializeExpectedTextValues([expected]);
@@ -359,7 +364,7 @@ export function toHaveRole(
   expected: string,
   options?: { timeout?: number, ignoreCase?: boolean },
 ) {
-  if (!iso.isString(expected))
+  if (!isString(expected))
     throw new Error(`"role" argument in toHaveRole must be a string`);
   return toMatchText.call(this, 'toHaveRole', locator, 'Locator', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected]);
@@ -428,7 +433,7 @@ export function toHaveURL(
   expected: string | RegExp | URLPattern | ((url: URL) => boolean),
   options?: { ignoreCase?: boolean; timeout?: number },
 ) {
-  if (iso.isURLPattern(expected))
+  if (isURLPattern(expected))
     return toHaveURLWithPredicate.call(this, page, url => (expected as URLPattern).test(url.href), options);
 
   // Ports don't support predicates. Keep separate server and client codepaths
@@ -436,7 +441,7 @@ export function toHaveURL(
     return toHaveURLWithPredicate.call(this, page, expected, options);
 
   const baseURL = (page.context() as any)._options.baseURL;
-  expected = typeof expected === 'string' ? iso.constructURLBasedOnBaseURL(baseURL, expected) : expected;
+  expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
   return toMatchText.call(this, 'toHaveURL', page, 'Page', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
     return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout });
@@ -451,13 +456,13 @@ export async function toBeOK(
   expectTypes(response, ['APIResponse'], matcherName);
 
   const contentType = response.headers()['content-type'];
-  const isTextEncoding = contentType && iso.isTextualMimeType(contentType);
+  const isTextEncoding = contentType && isTextualMimeType(contentType);
   const [log, text] = (this.isNot === response.ok()) ? await Promise.all([
     response._fetchLog(),
     isTextEncoding ? response.text() : null
   ]) : [];
 
-  const message = () => serverUtils.formatMatcherMessage(this.utils, {
+  const message = () => formatMatcherMessage(this.utils, {
     isNot: this.isNot,
     promise: this.promise,
     matcherName,
@@ -478,13 +483,13 @@ export async function toPass(
     timeout?: number,
   } = {},
 ) {
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
   const intervals = takeFirst(options.intervals, testInfo?._projectInternal.expect?.toPass?.intervals, [100, 250, 500, 1000]);
 
-  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
-  const result = await iso.pollAgainstDeadline<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
+  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : defaultDeadlineForMatcher(timeout);
+  const result = await pollAgainstDeadline<Error|undefined>(async () => {
+    if (testInfo && globals.currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
     try {
       await callback();
@@ -513,9 +518,13 @@ export function computeMatcherTitleSuffix(matcherName: string, receiver: any, ar
   }
   if (receiver && typeof receiver === 'object' && (receiver as any)._apiName === 'Locator') {
     try {
-      return { long: ' ' + iso.asLocatorDescription('javascript', (receiver as LocatorEx)._selector) };
+      return { long: ' ' + asLocatorDescription('javascript', (receiver as LocatorEx)._selector) };
     } catch {
     }
   }
   return {};
+}
+
+export function defaultDeadlineForMatcher(timeout: number): { deadline: any; timeoutMessage: any; } {
+  return { deadline: (timeout ? monotonicTime() + timeout : 0), timeoutMessage: `Timeout ${timeout}ms exceeded while waiting on the predicate` };
 }

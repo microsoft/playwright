@@ -16,7 +16,7 @@
 
 export * as client from './client';
 export * as iso from './utils/isomorphic';
-export * as serverUtils from './server/utils';
+export * as utils from './server/utils/index';
 export * as libCli from './cli/program';
 export * as libCliTestStub from './cli/programWithTestStub';
 export * as inprocess from './inprocess';

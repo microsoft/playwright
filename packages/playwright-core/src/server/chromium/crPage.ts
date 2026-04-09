@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/isomorphic/assert';
-import { eventsHelper } from '../utils/eventsHelper';
-import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
+import { assert } from '@isomorphic/assert';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
@@ -40,7 +40,7 @@ import { nullProgress } from '../progress';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';

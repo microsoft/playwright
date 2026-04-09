@@ -173,6 +173,8 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
     only(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
   }
 
+  abort(message?: string): never;
+
   slow(): void;
   slow(condition: boolean, description?: string): void;
   slow(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;

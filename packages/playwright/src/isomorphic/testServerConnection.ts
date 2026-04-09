@@ -215,14 +215,6 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     return await this._sendMessage('runGlobalTeardown', params);
   }
 
-  async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
-    return await this._sendMessage('startDevServer', params);
-  }
-
-  async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
-    return await this._sendMessage('stopDevServer', params);
-  }
-
   async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
     return await this._sendMessage('clearCache', params);
   }

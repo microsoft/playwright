@@ -17,18 +17,18 @@
 import os from 'os';
 import path from 'path';
 
-import { wrapInASCIIBox } from '../utils/ascii';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { wrapInASCIIBox } from '@utils/ascii';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId, kShutdownSessionNewMessageId } from './bidiConnection';
 import { createProfile } from './third_party/firefoxPrefs';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type { RecentLogsCollector } from '../utils/debugLogger';
+import type { RecentLogsCollector } from '@utils/debugLogger';
 
 
 export class BidiFirefox extends BrowserType {

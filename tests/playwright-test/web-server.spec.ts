@@ -18,9 +18,9 @@ import type http from 'http';
 import path from 'path';
 import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
 import type { RunResult } from './playwright-test-fixtures';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
-const { createHttpServer } = serverUtils;
+const { createHttpServer } = utils;
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
 

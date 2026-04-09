@@ -16,12 +16,12 @@
 
 import os from 'os';
 
-import { wrapInASCIIBox } from '../utils/ascii';
+import { wrapInASCIIBox } from '@utils/ascii';
+import { RecentLogsCollector } from '@utils/debugLogger';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
-import { RecentLogsCollector } from '../utils/debugLogger';
 import { waitForReadyState } from '../chromium/chromium';
 import { shouldProxyLoopback } from '../chromium/crBrowser';
 
@@ -40,7 +40,7 @@ export class BidiChromium extends BrowserType {
     // Chrome doesn't support Bidi, we create Bidi over CDP which is used by Chrome driver.
     // bidiOverCdp depends on chromium-bidi which we only have in devDependencies, so
     // we load bidiOverCdp dynamically.
-    const bidiOverCdp = await import('./bidiOverCdp');
+    const bidiOverCdp = require('./bidiOverCdp');
     const bidiTransport = await bidiOverCdp.connectBidiOverCdp(transport);
     (transport as any)[kBidiOverCdpWrapper] = bidiTransport;
     try {

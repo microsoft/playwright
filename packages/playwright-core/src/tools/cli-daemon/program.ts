@@ -20,6 +20,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { getAsBooleanFromENV } from '@utils/env';
 import { libPath } from '../../package';
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
@@ -27,7 +28,6 @@ import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { registry as browserRegistry } from '../../server/registry/index';
-import { getAsBooleanFromENV } from '../../server/utils/env';
 import type { Command } from '../../utilsBundle';
 
 export function decorateProgram(program: Command) {

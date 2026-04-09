@@ -19,11 +19,11 @@ import path from 'path';
 import net from 'net';
 import http from 'http';
 
-import { playwright } from '../../inprocess';
+import { HttpServer } from '@utils/httpServer';
+import { makeSocketPath } from '@utils/fileUtils';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { libPath } from '../../package';
-import { HttpServer } from '../../server/utils/httpServer';
-import { makeSocketPath } from '../../server/utils/fileUtils';
-import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
+import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { CDPConnection, DashboardConnection } from './dashboardController';
 import { serverRegistry } from '../../serverRegistry';

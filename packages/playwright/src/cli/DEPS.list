@@ -1,0 +1,5 @@
+[*]
+../runner/
+../reporters/
+@utils/**
+../common/

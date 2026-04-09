@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { assert, headersArrayToObject, headersObjectToArray } from '../../utils';
+import { assert } from '@isomorphic/assert';
+import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import * as network from '../network';
 
 import type * as frames from '../frames';

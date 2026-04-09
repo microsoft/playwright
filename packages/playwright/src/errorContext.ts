@@ -17,7 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso } from 'playwright-core/lib/coreBundle';
+import { parseErrorStack } from '@isomorphic/stackTrace';
+import { stripAnsiEscapes } from '@isomorphic/stringUtils';
+
 import { relativeFilePath } from './util';
 
 import type { TestInfoError } from '../types/test';
@@ -57,7 +59,7 @@ export function buildErrorContext(options: {
       lines.push(
           '',
           '```',
-          iso.stripAnsiEscapes(error.message || ''),
+          stripAnsiEscapes(error.message || ''),
           '```',
       );
     }
@@ -95,7 +97,7 @@ function buildCodeFrame(error: TestInfoError, testLocation: { file: string; line
   if (!stack)
     return undefined;
 
-  const parsed = iso.parseErrorStack(stack, path.sep);
+  const parsed = parseErrorStack(stack, path.sep);
   const errorLocation = parsed.location;
   if (!errorLocation)
     return undefined;
@@ -114,7 +116,7 @@ function buildCodeFrame(error: TestInfoError, testLocation: { file: string; line
   const end = Math.min(sourceLines.length, errorLocation.line + linesBelow);
   const scope = sourceLines.slice(start, end);
   const lineNumberWidth = String(end).length;
-  const message = iso.stripAnsiEscapes(error.message || '').split('\n')[0] || undefined;
+  const message = stripAnsiEscapes(error.message || '').split('\n')[0] || undefined;
   const frame = scope.map((line, index) => `${(start + index + 1) === errorLocation.line ? '> ' : '  '}${(start + index + 1).toString().padEnd(lineNumberWidth, ' ')} | ${line}`);
   if (message)
     frame.splice(errorLocation.line - start, 0, `${' '.repeat(lineNumberWidth + 2)} | ${' '.repeat(Math.max(0, errorLocation.column - 2))} ^ ${message}`);

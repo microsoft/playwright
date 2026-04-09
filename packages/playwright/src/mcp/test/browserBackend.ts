@@ -15,7 +15,8 @@
  */
 
 import crypto from 'crypto';
-import { iso } from 'playwright-core/lib/coreBundle';
+
+import { stripAnsiEscapes } from '@isomorphic/stringUtils';
 
 import type { tools } from 'playwright-core/lib/coreBundle';
 import type * as playwright from '../../../index';
@@ -41,7 +42,7 @@ export function createCustomMessageHandler(testInfo: TestInfoImpl, context: play
 
   return async (data: BrowserMCPRequest): Promise<BrowserMCPResponse> => {
     if (!tools)
-      ({ tools } = await import('playwright-core/lib/coreBundle'));
+      ({ tools } = require('playwright-core/lib/coreBundle') as typeof import('playwright-core/lib/coreBundle'));
     const toolList = tools.filteredTools(config);
     if (data.initialize) {
       if (backend)
@@ -74,7 +75,7 @@ async function generatePausedMessage(tools: typeof import('playwright-core/lib/c
   if (testInfo.errors.length) {
     lines.push(`### Paused on error:`);
     for (const error of testInfo.errors)
-      lines.push(iso.stripAnsiEscapes(error.message || ''));
+      lines.push(stripAnsiEscapes(error.message || ''));
   } else {
     lines.push(`### Paused at end of test. ready for interaction`);
   }

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { iso } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { debug } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
+import debug from 'debug';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { monotonicTime } from '@isomorphic/time';
 
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';
@@ -45,13 +45,13 @@ export class TaskRunner<Context> {
     this._tasks.push(task);
   }
 
-  async run(context: Context, deadline: number, cancelPromise?: iso.ManualPromise<void>): Promise<FullResult['status']> {
+  async run(context: Context, deadline: number, cancelPromise?: ManualPromise<void>): Promise<FullResult['status']> {
     const { status, cleanup } = await this.runDeferCleanup(context, deadline, cancelPromise);
     const teardownStatus = await cleanup();
     return status === 'passed' ? teardownStatus : status;
   }
 
-  async runDeferCleanup(context: Context, deadline: number, cancelPromise = new iso.ManualPromise<void>()): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
+  async runDeferCleanup(context: Context, deadline: number, cancelPromise = new ManualPromise<void>()): Promise<{ status: FullResult['status'], cleanup: () => Promise<FullResult['status']> }> {
     const sigintWatcher = new SigIntWatcher();
     const timeoutWatcher = new TimeoutWatcher(deadline);
     const teardownRunner = new TaskRunner<Context>(this._reporter, this._globalTimeoutForError);
@@ -118,14 +118,14 @@ export class TaskRunner<Context> {
 
 class TimeoutWatcher {
   private _timedOut = false;
-  readonly promise = new iso.ManualPromise();
+  readonly promise = new ManualPromise();
   private _timer: NodeJS.Timeout | undefined;
 
   constructor(deadline: number) {
     if (!deadline)
       return;
 
-    if (deadline - iso.monotonicTime() <= 0) {
+    if (deadline - monotonicTime() <= 0) {
       this._timedOut = true;
       this.promise.resolve();
       return;
@@ -133,7 +133,7 @@ class TimeoutWatcher {
     this._timer = setTimeout(() => {
       this._timedOut = true;
       this.promise.resolve();
-    }, deadline - iso.monotonicTime());
+    }, deadline - monotonicTime());
   }
 
   timedOut(): boolean {

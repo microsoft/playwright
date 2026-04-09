@@ -275,3 +275,41 @@ test('snapshot depth', async ({ client, server }) => {
     - button "Button" [ref=e5]`,
   });
 });
+
+test('snapshot by ref', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/347' } }, async ({ client, server }) => {
+  server.setContent('/', `
+    <ul>
+      <li>text</li>
+      <li>
+        <button>Button</button>
+      </li>
+    </ul>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {
+      ref: 'e2',
+    }
+  })).toHaveResponse({
+    inlineSnapshot: `- list [ref=e2]:
+  - listitem [ref=e3]: text
+  - listitem [ref=e4]:
+    - button "Button" [ref=e5]`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {
+      ref: 'e999',
+    }
+  })).toHaveResponse({
+    error: expect.stringContaining(`Ref e999 not found in the current page snapshot. Try capturing new snapshot.`),
+    isError: true,
+  });
+});

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { asLocator } from '../utils';
-import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
+import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
+import { asLocator } from '@isomorphic/locatorGenerators';
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
 import type { InjectedScript } from '@injected/injectedScript';
 import type { JSHandle } from './javascript';
 import type * as types from './types';
-import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 
 export type SelectorInfo = {
