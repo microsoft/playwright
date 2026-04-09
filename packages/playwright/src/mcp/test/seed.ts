@@ -19,13 +19,13 @@ import path from 'path';
 
 import { mkdirIfNeeded } from '@utils/fileUtils';
 
-import { collectFilesForProject, findTopLevelProjects } from '../../runner/projectUtils';
+import { projectUtils } from '../../runner';
 
 import type { config, FullConfigInternal } from '../../common';
 
 export function seedProject(fullConfig: FullConfigInternal, projectName?: string) {
   if (!projectName)
-    return findTopLevelProjects(fullConfig)[0];
+    return projectUtils.findTopLevelProjects(fullConfig)[0];
   const project = fullConfig.projects.find(p => p.project.name === projectName);
   if (!project)
     throw new Error(`Project ${projectName} not found`);
@@ -33,7 +33,7 @@ export function seedProject(fullConfig: FullConfigInternal, projectName?: string
 }
 
 export async function findSeedFile(project: config.FullProjectInternal) {
-  const files = await collectFilesForProject(project);
+  const files = await projectUtils.collectFilesForProject(project);
   return files.find(file => path.basename(file).includes('seed'));
 }
 

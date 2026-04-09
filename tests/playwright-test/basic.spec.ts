@@ -63,7 +63,7 @@ test('should succeed', async ({ runInlineTest }) => {
 test('should report suite errors', async ({ runInlineTest }) => {
   const { exitCode, failed, output } = await runInlineTest({
     'suite-error.spec.ts': `
-      if (new Error().stack.includes('workerMain'))
+      if (new Error().stack.includes('workerProcess'))
         throw new Error('Suite error');
 
       import { test, expect } from '@playwright/test';

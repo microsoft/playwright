@@ -23,10 +23,7 @@
     "./lib/fsWatcher": "./lib/fsWatcher.js",
     "./lib/mcp/index": "./lib/mcp/index.js",
     "./lib/program": "./lib/program.js",
-    "./lib/reporters/base": "./lib/reporters/base.js",
-    "./lib/reporters/list": "./lib/reporters/list.js",
-    "./lib/plugins": "./lib/plugins/index.js",
-    "./lib/runner/testRunner": "./lib/runner/testRunner.js",
+    "./lib/runner": "./lib/runner/index.js",
     "./jsx-runtime": {
       "import": "./jsx-runtime.mjs",
       "require": "./jsx-runtime.js",

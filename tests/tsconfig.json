@@ -34,5 +34,5 @@
     "skipLibCheck": true,
   },
   "include": ["**/*.spec.js", "**/*.ts"],
-  "exclude": ["components/", "installation/fixture-scripts/", "packages/playwright-core/lib/", "config/ghaMarkdownReporter.ts"]
+  "exclude": ["components/", "installation/fixture-scripts/", "packages/playwright-core/lib/"]
 }

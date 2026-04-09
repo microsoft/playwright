@@ -25,17 +25,13 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { escapeRegExp } from '@isomorphic/stringUtils';
 import { toPosixPath } from '@utils/fileUtils';
 
-import { terminalScreen } from '../../reporters/base';
-import ListReporter from '../../reporters/list';
+import { base, ListReporter, testRunner } from '../../runner';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
-import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
 import { configLoader } from '../../common';
 
 import type { ConfigLocation } from '../../common';
-import type { TerminalScreen } from '../../reporters/base';
-import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
 
 export type SeedFile = {
@@ -80,8 +76,8 @@ ${step.code}
 }
 
 type TestRunnerAndScreen = {
-  testRunner: TestRunner;
-  screen: TerminalScreen;
+  testRunner: testRunner.TestRunner;
+  screen: base.TerminalScreen;
   claimStdio: () => void;
   releaseStdio: () => void;
   output: string[];
@@ -109,7 +105,7 @@ export class TestContext {
       this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY);
   }
 
-  existingTestRunner(): TestRunner | undefined {
+  existingTestRunner(): testRunner.TestRunner | undefined {
     return this._testRunnerAndScreen?.testRunner;
   }
 
@@ -129,17 +125,17 @@ export class TestContext {
   async createTestRunner() {
     await this._cleanupTestRunner();
 
-    const testRunner = new TestRunner(this._configLocation, {});
-    await testRunner.initialize({});
+    const runner = new testRunner.TestRunner(this._configLocation, {});
+    await runner.initialize({});
     const testPaused = new ManualPromise<void>();
     const testRunnerAndScreen: TestRunnerAndScreen = {
       ...createScreen(),
-      testRunner,
+      testRunner: runner,
       waitForTestPaused: () => testPaused,
     };
     this._testRunnerAndScreen = testRunnerAndScreen;
 
-    testRunner.on(TestRunnerEvent.TestPaused, params => {
+    runner.on(testRunner.TestRunnerEvent.TestPaused, params => {
       testRunnerAndScreen.sendMessageToPausedTest = params.sendMessage;
       testPaused.resolve();
     });
@@ -148,8 +144,8 @@ export class TestContext {
 
   async getOrCreateSeedFile(seedFile: string | undefined, projectName: string | undefined) {
     const configDir = this._configLocation.configDir;
-    const { testRunner } = await this.createTestRunner();
-    const config = await testRunner.loadConfig();
+    const { testRunner: runner } = await this.createTestRunner();
+    const config = await runner.loadConfig();
     const project = seedProject(config, projectName);
 
     if (!seedFile) {
@@ -180,7 +176,7 @@ export class TestContext {
     };
   }
 
-  async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
+  async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
     const result = await this.runTestsWithGlobalSetupAndPossiblePause({
       headed: this.computedHeaded,
       locations: ['/' + escapeRegExp(seedFile) + '/'],
@@ -198,27 +194,27 @@ export class TestContext {
     return result;
   }
 
-  async runTestsWithGlobalSetupAndPossiblePause(params: RunTestsParams): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
+  async runTestsWithGlobalSetupAndPossiblePause(params: testRunner.RunTestsParams): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
     const configDir = this._configLocation.configDir;
     const testRunnerAndScreen = await this.createTestRunner();
-    const { testRunner, screen, claimStdio, releaseStdio } = testRunnerAndScreen;
+    const { testRunner: runner, screen, claimStdio, releaseStdio } = testRunnerAndScreen;
 
     claimStdio();
     try {
       const setupReporter = new MCPListReporter({ configDir, screen, includeTestId: true });
-      const { status } = await testRunner.runGlobalSetup([setupReporter]);
+      const { status } = await runner.runGlobalSetup([setupReporter]);
       if (status !== 'passed')
         return { output: testRunnerAndScreen.output.join('\n'), status };
     } finally {
       releaseStdio();
     }
 
-    let status: FullResultStatus | 'paused' = 'passed';
+    let status: testRunner.FullResultStatus | 'paused' = 'passed';
 
     const cleanup = async () => {
       claimStdio();
       try {
-        const result = await testRunner.runGlobalTeardown();
+        const result = await runner.runGlobalTeardown();
         if (status === 'passed')
           status = result.status;
       } finally {
@@ -229,7 +225,7 @@ export class TestContext {
     try {
       const reporter = new MCPListReporter({ configDir, screen, includeTestId: true });
       status = await Promise.race([
-        testRunner.runTests(reporter, params).then(result => result.status),
+        runner.runTests(reporter, params).then(result => result.status),
         testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
       ]);
 
@@ -277,7 +273,7 @@ export function createScreen() {
   const stderr = new StringWriteStream(output, 'stderr');
 
   const screen = {
-    ...terminalScreen,
+    ...base.terminalScreen,
     isTTY: false,
     colors: noColors,
     stdout: stdout as unknown as NodeJS.WriteStream,
