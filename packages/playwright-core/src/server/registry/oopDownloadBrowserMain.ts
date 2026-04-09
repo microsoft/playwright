@@ -20,7 +20,7 @@ import path from 'path';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { httpRequest } from '@utils/network';
 import { removeFolders } from '@utils/fileUtils';
-import { extract } from '../../utilsBundle';
+import { extractZip } from '@utils/third_party/extractZip';
 
 export type DownloadParams = {
   title: string;
@@ -117,7 +117,7 @@ async function main(options: DownloadParams) {
   log(`removing existing browser directory if any`);
   await removeFolders([options.browserDirectory]);
   log(`extracting archive`);
-  await extract(options.zipPath, { dir: options.browserDirectory });
+  await extractZip(options.zipPath, { dir: options.browserDirectory });
   if (options.executablePath) {
     log(`fixing permissions at ${options.executablePath}`);
     await fs.promises.chmod(options.executablePath, 0o755);

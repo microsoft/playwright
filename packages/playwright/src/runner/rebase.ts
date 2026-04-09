@@ -21,7 +21,8 @@ import colors from 'colors/safe';
 import * as diff from 'diff';
 import { MultiMap } from '@isomorphic/multimap';
 
-import { babel, config as commonConfig, FullConfigInternal } from '../common';
+import { config as commonConfig, FullConfigInternal } from '../common';
+import * as babel from '../transform/babelBundle';
 
 import type { InternalReporter } from '../reporters/internalReporter';
 import type { T } from '../transform/babelBundle';

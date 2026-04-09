@@ -31,7 +31,7 @@ import { screenshot, pdf } from './browserActions';
 import { program as cliProgram } from '../tools/cli-client/program';
 
 import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
-import type { Command } from '../utilsBundle';
+import type { Command } from 'commander';
 
 export function decorateProgram(program: Command) {
 

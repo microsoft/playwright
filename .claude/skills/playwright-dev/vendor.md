@@ -1,190 +1,240 @@
-# Vendoring (Bundling) a New Dependency
+# Vendor Dependencies & Bundling
 
-Playwright vendors third-party npm packages by bundling them with esbuild into self-contained files.
-This isolates dependencies, prevents version conflicts, and keeps the published packages lean.
+Playwright ships a small number of node_modules inlined into a handful of
+pre-built "bundle" files under `lib/`. Everything else is either a source
+file compiled per-file, or loaded at runtime from one of the bundles. This
+doc covers how the bundling works, how to add or move a vendored package,
+and how the dependency checker enforces the contract.
 
-## Architecture Overview
+## The Bundles
 
-Each bundle lives under `packages/<package>/bundles/<name>/` and consists of three parts:
+### playwright-core
 
-1. **Bundle directory** (`bundles/<name>/`) — has its own `package.json` with the dependencies to vendor, plus a `src/<name>BundleImpl.ts` entry point that imports and re-exports them.
-2. **Build configuration** in `utils/build/build.js` — an esbuild entry that bundles the impl file into a single minified CJS file.
-3. **Wrapper file** (`src/<name>Bundle.ts`) — a thin typed wrapper that `require()`s the built bundle impl and re-exports symbols with TypeScript types.
+| Output | Entry | Purpose |
+|---|---|---|
+| `lib/utilsBundle.js` | `src/utilsBundle.ts` | Vendored npm packages (`debug`, `mime`, `ws`, `yauzl`, `yazl`, `@modelcontextprotocol/sdk`, `graceful-fs`, …). The single home for third-party runtime code in playwright-core. |
+| `lib/coreBundle.js` | `src/coreBundle.ts` | Re-exports of playwright-core's own modules (`client`, `iso`, `utils`, `cli`, `server`, `registry`, …) as namespaces. Inlines almost all playwright-core source except `utilsBundle`. |
+| `lib/server/electron/loader.js` | `src/server/electron/loader.ts` | Tiny Electron preload shim. |
 
-Data flow:
-```
-bundles/<name>/package.json          (declares npm deps)
-  → npm ci → node_modules/
-bundles/<name>/src/<name>BundleImpl.ts  (imports from node_modules, re-exports)
-  → esbuild (bundle + minify) →
-lib/<name>BundleImpl.js              (single self-contained file)
-  ←
-src/<name>Bundle.ts                  (typed wrapper, require('./...BundleImpl'))
-  → esbuild (normal compile) →
-lib/<name>Bundle.js                  (used by application code)
-```
+The `dynamicImportToRequirePlugin` in `utils/build/build.js` rewrites
+vendored npm imports at **bundle time**. For example, a playwright-core
+source file containing
 
-## Step-by-Step: Adding a New Bundle
-
-### Decide which package it belongs to
-
-- `packages/playwright-core/bundles/` — for core browser automation deps (networking, compression, protocols, etc.)
-- `packages/playwright/bundles/` — for test runner deps (assertion libs, transpilers, file watchers, etc.)
-
-### 1. Create the bundle directory
-
-```
-packages/<package>/bundles/<name>/
-├── package.json
-└── src/
-    └── <name>BundleImpl.ts
+```ts
+import debug from 'debug';
 ```
 
-### 2. Create `package.json`
+gets rewritten to
 
-Minimal private package with only the deps you want to bundle:
-
-```json
-{
-  "name": "<name>-bundle",
-  "version": "0.0.1",
-  "private": true,
-  "dependencies": {
-    "some-lib": "^1.2.3"
-  },
-  "devDependencies": {
-    "@types/some-lib": "^1.2.0"
-  }
-}
+```js
+const debug = require('./utilsBundle').debug;
 ```
 
-Then run `npm install` inside the bundle directory to generate `package-lock.json`.
+before the bundler sees it — so the vendored package never gets inlined
+into `coreBundle.js`. The mapping from npm package name to utilsBundle
+export key lives in `utils/build/utilsBundleMapping.js`.
 
-### 3. Create `src/<name>BundleImpl.ts`
+### playwright
 
-This is the esbuild entry point. Import from `node_modules` and re-export:
+| Output | Entry | Purpose |
+|---|---|---|
+| `lib/transform/babelBundle.js` | `src/transform/babelBundle.ts` | Wraps `@babel/core`, `@babel/traverse`, `@babel/code-frame`, plugins. Shared by every consumer that needs babel. |
+| `lib/transform/esmLoader.js` | `src/transform/esmLoader.ts` | Node ESM loader registered via `node:module.register()`. Output sits next to `babelBundle.js` so its `./babelBundle` sibling require resolves correctly. |
+| `lib/common/index.js` | `src/common/index.ts` | Barrel of `common/*` + `transform/*` (compilationCache, test, configLoader, fixtures, globals, …). State-holding singletons (currentTestInfo, memoryCache, …) live here. |
+| `lib/runner/index.js` | `src/runner/index.ts` | Barrel of `runner/*` + `reporters/*` + `plugins/*`. |
+| `lib/matchers/expect.js` | `src/matchers/expect.ts` | Jest-style matchers with `expect` inlined. |
+| `lib/worker/workerProcessEntry.js` | `src/worker/workerProcessEntry.ts` | Entry point spawned per test worker. |
+| `lib/loader/loaderProcessEntry.js` | `src/loader/loaderProcessEntry.ts` | Entry point for the test file loader sub-process. |
+| `lib/runner/uiModeReporter.js` | `src/runner/uiModeReporter.ts` | Loaded by `require.resolve` from testServer; passed to child workers as a file path. |
 
-```typescript
-// For default exports:
-import someLibrary from 'some-lib';
-export const someLib = someLibrary;
+The `common` and `runner` bundles externalize `../transform/babelBundle`
+(among other things) so babel code is not duplicated across them. The
+`lib/transform/transform.ts` module uses `libPath('transform', 'babelBundle')`
+(absolute path via `package.ts` root) to load the babel bundle at runtime,
+so it works regardless of which bundle has inlined it.
 
-// For named exports:
-export { SomeClass } from 'some-lib';
+### Per-file emits (no bundle)
 
-// For namespace imports:
-import * as someLibrary from 'some-lib';
-export const someLib = someLibrary;
+Files outside the bundled entries are compiled 1:1 by esbuild and land
+under `lib/` mirroring their source layout. The per-file step in
+`utils/build/build.js` lists the specific directories for the
+`playwright` package (`cli/`, `agents/`, `mcp/`, root `*.ts`, and a few
+targeted files like `runner/uiModeReporter.ts`). Other packages
+(`playwright-test`, `html-reporter`, `trace-viewer`, …) are compiled by
+the generic per-package loop.
 
-// For vendored/third-party code that can't be bundled:
-const custom = require('./third_party/custom');
-export const customThing = custom;
+## Bundle Sidecars
+
+Every bundled output has two sidecar files next to it:
+
+- **`<bundle>.js.txt`** — human-readable report listing inlined files
+  (sorted by path, with per-file KB sizes), externals, and total bytes.
+  Written by `utils/build/bundle_report.js`.
+- **`<bundle>.js.LICENSE`** — third-party license texts for every npm
+  package whose source got inlined. Populated from `license-checker`,
+  memoized once per build invocation. Consumed by the top-level
+  `ThirdPartyNotices.txt` files, which just point readers at the
+  per-bundle sidecars.
+
+Both sidecars are included in the published npm package (controlled by
+`packages/*/.npmignore`).
+
+## Adding a Vendored NPM Dependency
+
+Three pieces need to line up when adding a new npm package that you want
+inlined into `utilsBundle` (i.e., loaded through `require('./utilsBundle').<key>`):
+
+1. **Install the package.** Add it to the root `package.json`
+   `devDependencies`. The monorepo root is where esbuild resolves modules
+   from; the workspace root's `node_modules/<pkg>` is what gets inlined
+   into `utilsBundle.js`.
+
+2. **Export it from `src/utilsBundle.ts`.** Pick one of:
+   ```ts
+   import fooLibrary from 'foo';
+   export const foo = fooLibrary;             // default
+
+   import * as fooLibrary from 'foo';
+   export const foo = fooLibrary;             // namespace
+
+   export { namedSymbol } from 'foo';         // named
+   ```
+   Type-only exports (`export type { X } from 'foo'`) are valid and
+   don't affect runtime.
+
+3. **Add a mapping entry to `utils/build/utilsBundleMapping.js`**:
+   ```js
+   'foo': { default: 'foo' },
+   // or:
+   'foo': { namespace: 'foo' },
+   // or:
+   'foo': { named: { namedSymbol: 'fooNamedSymbol' } },
+   ```
+   - `default` — matches `import foo from 'foo'` and rewrites to
+     `require('./utilsBundle').foo`.
+   - `namespace` — matches `import * as foo from 'foo'`.
+   - `named` — matches `import { namedSymbol } from 'foo'` and rewrites
+     to `const { fooNamedSymbol: namedSymbol } = require('./utilsBundle')`.
+   - Multiple forms can coexist in one entry (see `yauzl`).
+   - The map key is the exact npm specifier as written in source
+     (including subpaths like `'@babel/core'` or `'colors/safe'`).
+
+4. **Update DEPS.list.** The file or its enclosing folder's `DEPS.list`
+   must authorize `node_modules/<pkg>` — otherwise `npm run flint`'s
+   `check_deps` step complains about the disallowed external dependency.
+   If the DEPS.list authorizes it, the package.json-dependencies check
+   also gets skipped for that file.
+
+5. **Run `npm run flint`.** It runs `check_deps`, `tsc`, `eslint`, and
+   `doc` in parallel. A missing mapping typically surfaces as `node_modules/`
+   references leaking into `coreBundle.js` — the build fails hard via
+   `assertCoreBundleHasNoNodeModules()`.
+
+## In-tree Third-Party Helpers
+
+Some vendored code isn't a published npm package but lives in-tree at
+`packages/playwright-core/src/server/utils/third_party/` (e.g.
+`extractZip.ts`, `lockfile.ts`). These are TypeScript files, not
+node_modules. They're exposed to callers via two different routes:
+
+- **Through `coreBundle.utils`.** Re-exported from
+  `src/server/utils/index.ts` via `export * from './third_party/extractZip'`
+  etc. Callers import via the `@utils/*` path alias:
+  ```ts
+  import { extractZip } from '@utils/third_party/extractZip';
+  ```
+  The alias is rewritten at bundle time to
+  `require('playwright-core/lib/coreBundle').utils.extractZip`.
+- **Transitive npm deps via utilsBundle.** When a third_party TS file
+  imports an npm package (e.g., `lockfile.ts` imports `graceful-fs`,
+  `retry`, `signal-exit`), those are still rewritten through
+  `utilsBundle` — so the mapping in `utilsBundleMapping.js` must list
+  them too.
+
+## DEPS.list
+
+Every directory under `packages/*/src/` has a `DEPS.list` constraining
+its imports. Three kinds of entries:
+
+| Syntax | Meaning |
+|---|---|
+| `./somefile.ts`, `@isomorphic/**` | Relative or alias source import allowed |
+| `node_modules/<pkg>` | npm package import allowed (exact specifier match) |
+| `"strict"` | No other DEPS inherited; only what's listed is allowed |
+
+Section headers `[filename.ts]` scope rules to a single file. The
+top-level `[*]` (or no header) applies to everything in the folder plus
+subfolders that don't have their own DEPS.list.
+
+A DEPS.list entry of `node_modules/<pkg>` now shortcuts both layers of
+the check: the "disallowed external dependency" error AND the
+"dependencies not declared in package.json" report. The per-file
+allowlist is the contract — no need to also list the dep in
+`packages/<pkg>/package.json` if only one file uses it and it's
+authorized there.
+
+### check_deps.js
+
+`utils/check_deps.js` walks the TypeScript program, visits every
+`import` in `src/**`, and for each npm specifier:
+
+1. Skips if the source file's DEPS.list authorizes `node_modules/<specifier>`.
+2. Otherwise records the top-level package name along with the file
+   path that imported it.
+3. Subtracts `peerDependencies`, `VENDORED_PACKAGES` (from
+   `utilsBundleMapping.js`), and any package that resolves without
+   `node_modules/` (a core module or a local file).
+4. Subtracts packages listed in `packages/<pkg>/package.json`
+   `dependencies`.
+5. Anything left is reported with the specific file(s) that import it.
+
+The missing-dep error now includes file paths:
+```
+Dependencies are not declared in package.json:
+  expect
+    src/matchers/expect.ts
+  @babel/core
+    src/transform/babelBundle.ts
 ```
 
-### 4. Register the bundle in `utils/build/build.js`
+## Bundle-Level Externalization (onResolve plugins)
 
-Add an entry to the `bundles` array (around line 246):
+Two onResolve plugins in `utils/build/build.js` normalize relative
+imports to the sibling bundle at consumer output level:
 
-```javascript
-bundles.push({
-  modulePath: 'packages/<package>/bundles/<name>',
-  entryPoints: ['src/<name>BundleImpl.ts'],
-  // Use outdir for a single .js file alongside other lib files:
-  outdir: 'packages/<package>/lib',
-  // OR use outfile for output in a subdirectory (needed if bundle has non-JS assets):
-  // outfile: 'packages/<package>/lib/<name>BundleImpl/index.js',
+- **`externalizeUtilsBundlePlugin`** — matches any relative specifier
+  ending in `/utilsBundle` or `/utilsBundle.js` (at any depth: `./utilsBundle`,
+  `../utilsBundle`, `../../utilsBundle`) and marks it external with the
+  single spelling `./utilsBundle`. This only applies to the coreBundle
+  build because coreBundle inlines source files from all over
+  `playwright-core/src/` (different depths) and needs a single consistent
+  external specifier that resolves correctly at runtime from
+  `lib/coreBundle.js`.
+- The **babelBundle** case is handled differently — instead of a plugin,
+  consumers' source/output depths are aligned:
+  - `esmLoader` bundle output is placed at `lib/transform/esmLoader.js`
+    (same folder as `babelBundle.js`), so `./babelBundle` from
+    `transform.ts` resolves correctly.
+  - `common` and `runner` bundles declare `'../transform/babelBundle'`
+    as a static external; their outputs are at `lib/common/index.js` and
+    `lib/runner/index.js`, both at depth 1, so the source-relative
+    specifier resolves naturally.
+  - `transform.ts`'s own `require('./babelBundle')` was replaced with
+    `require(libPath('transform', 'babelBundle'))` — an absolute path
+    computed at runtime via `package.ts`, which works from any bundle.
 
-  // Optional: deps that should NOT be bundled (must be installed at runtime):
-  // external: ['express'],
+## Quick Reference
 
-  // Optional: redirect imports to custom implementations:
-  // alias: { 'some-module': 'custom-impl.ts' },
-});
-```
-
-**`outdir` vs `outfile`:**
-- `outdir` — output goes to `lib/<name>BundleImpl.js` (most bundles use this)
-- `outfile` — output goes to `lib/<name>BundleImpl/index.js` (use when you need to copy companion files like binaries next to the bundle)
-
-### 5. Create the typed wrapper `src/<name>Bundle.ts`
-
-This file lives in the main package source (NOT in the bundle directory). It provides TypeScript types while loading the bundled code at runtime:
-
-```typescript
-// packages/<package>/src/<name>Bundle.ts
-// (or src/subdir/<name>Bundle.ts if it belongs in a subdirectory)
-
-export const someLib: typeof import('../bundles/<name>/node_modules/some-lib')
-  = require('./<name>BundleImpl').someLib;
-
-export const SomeClass: typeof import('../bundles/<name>/node_modules/some-lib').SomeClass
-  = require('./<name>BundleImpl').SomeClass;
-
-// Re-export types if needed:
-export type { SomeType } from '../bundles/<name>/node_modules/some-lib';
-```
-
-The pattern is: `typeof import('../bundles/<name>/node_modules/...')` for the type, `require('./<name>BundleImpl').<export>` for the value.
-
-If the wrapper lives in a subdirectory (e.g. `src/common/<name>Bundle.ts`), adjust the `outdir` accordingly so the BundleImpl ends up next to the compiled wrapper:
-```javascript
-// in build.js
-outdir: 'packages/<package>/lib/common',
-```
-
-### 6. Build and verify
-
-```bash
-npm run build
-```
-
-Or if watch is running, it will pick up changes automatically.
-
-### 7. Use the bundle in application code
-
-Import from the wrapper file, never from the bundle directory or `node_modules` directly:
-
-```typescript
-import { someLib } from '../<name>Bundle';
-```
-
-## Existing Bundles Reference
-
-### playwright-core bundles
-
-| Bundle | Deps | Output |
-|--------|------|--------|
-| `utils` | colors, commander, debug, diff, dotenv, graceful-fs, https-proxy-agent, jpeg-js, mime, minimatch, open, pngjs, progress, proxy-from-env, socks-proxy-agent, ws, yaml | `lib/utilsBundleImpl/index.js` |
-| `zip` | yauzl, yazl, get-stream, debug | `lib/zipBundleImpl.js` |
-| `mcp` | @modelcontextprotocol/sdk, zod, zod-to-json-schema | `lib/mcpBundleImpl/index.js` |
-
-### playwright bundles
-
-| Bundle | Deps | Output |
-|--------|------|--------|
-| `utils` | chokidar, enquirer, json5, source-map-support, stoppable, unified, remark-parse | `lib/utilsBundleImpl.js` |
-| `babel` | ~30 @babel/* packages | `lib/transform/babelBundleImpl.js` |
-| `expect` | expect, jest-matcher-utils | `lib/common/expectBundleImpl.js` |
-
-## Advanced Patterns
-
-### Adding a dep to an existing bundle
-
-If the dep logically belongs with an existing bundle (e.g. a new utility lib → `utils` bundle):
-
-1. Add the dependency to the existing `bundles/<name>/package.json`
-2. Run `npm install` in that bundle directory
-3. Add the import/export to the existing `src/<name>BundleImpl.ts`
-4. Add the typed re-export to the existing `src/<name>Bundle.ts`
-
-### Vendored third-party code
-
-If a package can't be bundled by esbuild (e.g. it uses dynamic requires or has runtime file dependencies), place a modified copy in `bundles/<name>/src/third_party/` and require it from the BundleImpl. See `bundles/zip/src/third_party/extract-zip.js` for an example.
-
-### External dependencies
-
-Use `external: ['pkg']` in the build.js config when a dependency should NOT be bundled — e.g. optional peer deps that users install themselves. These must be available at runtime in the consumer's `node_modules`.
-
-### Module aliases
-
-Use `alias: { 'module-name': 'local-file.ts' }` to replace a dependency with a custom local implementation. The alias path is relative to the bundle's `modulePath`. See the `mcp` bundle's `raw-body` alias for an example.
+- To add a new vendored npm dep: root `package.json` → `utilsBundle.ts`
+  export → `utilsBundleMapping.js` entry → DEPS.list → `npm run flint`.
+- To add a new in-tree third-party helper: drop the `.ts` file under
+  `server/utils/third_party/`, re-export from `server/utils/index.ts`,
+  and use `@utils/third_party/<name>` at call sites.
+- To add a new bundle entry: add an `EsbuildStep` in
+  `utils/build/build.js`, pick output location so relative externals
+  line up with runtime layout, and list externals for every sibling
+  bundle the entry should not inline.
+- To expose a bundle file as a package subpath: add it to the
+  `exports` field in `packages/<pkg>/package.json`.
+- To check what's inside a bundle: read the `.js.txt` sidecar next to
+  the output.

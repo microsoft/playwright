@@ -24,7 +24,7 @@ import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
 import { packageJSON } from '../../package';
 
-import type { Command } from '../../utilsBundle';
+import type { Command } from 'commander';
 import type { ClientInfo } from '../utils/mcp/server';
 import type * as playwright from '../../..';
 

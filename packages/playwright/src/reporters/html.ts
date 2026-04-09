@@ -31,7 +31,7 @@ import { HttpServer } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
-import { babel } from '../common';
+import * as babel from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
@@ -39,7 +39,7 @@ import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAn
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { TransformCallback } from 'stream';
-import type { ZipFile } from 'playwright-core/lib/utilsBundle';
+import type { ZipFile } from 'yazl';
 
 type TestEntry = {
   testCase: TestCase;
@@ -266,7 +266,7 @@ class HtmlBuilder {
   private _options: HTMLReportOptions;
   private _doNotInlineAssets: boolean;
 
-  constructor(yazl: typeof import('playwright-core/lib/utilsBundle').yazl, config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
+  constructor(yazl: typeof import('yazl'), config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
     this._dataZipFile = new yazl.ZipFile();
     this._config = config;
     this._reportFolder = outputDir;

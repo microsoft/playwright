@@ -29,7 +29,7 @@ import { getEmbedderName } from '@utils/userAgent';
 import { canAccessFile, existsAsync, removeFolders } from '@utils/fileUtils';
 import { calculateSha1 } from '@utils/crypto';
 import { getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '@utils/env';
-import { lockfile } from '../../utilsBundle';
+import { lock } from '@utils/third_party/lockfile';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
@@ -1061,7 +1061,7 @@ export class Registry {
 
     let releaseLock;
     try {
-      releaseLock = await lockfile.lock(registryDirectory, {
+      releaseLock = await lock(registryDirectory, {
         retries: {
           // Retry 20 times during 10 minutes with
           // exponential back-off.

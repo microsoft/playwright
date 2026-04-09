@@ -24,7 +24,7 @@ import { Artifact } from '../artifact';
 import { HarTracer } from './harTracer';
 import type { BrowserContext } from '../browserContext';
 import type { HarTracerDelegate } from './harTracer';
-import type { ZipFile } from '../../utilsBundle';
+import type { ZipFile } from 'yazl';
 import type { Page } from '../page';
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';

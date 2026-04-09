@@ -3,3 +3,4 @@
 @utils/**
 ../package.ts
 node_modules/colors/safe
+node_modules/expect

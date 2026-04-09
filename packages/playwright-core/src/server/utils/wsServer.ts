@@ -18,7 +18,7 @@ import { WebSocketServer as wsServer } from 'ws';
 import { createHttpServer } from './network';
 import { debugLogger } from './debugLogger';
 
-import type { WebSocket, WebSocketServer } from '../../utilsBundle';
+import type { WebSocket, WebSocketServer } from 'ws';
 import type http from 'http';
 import type stream from 'stream';
 

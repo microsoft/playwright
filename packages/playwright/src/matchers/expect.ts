@@ -16,6 +16,9 @@
 
 import path from 'path';
 
+import {
+  expect as expectLibrary,
+} from 'expect';
 import { parseStackFrame, captureRawStack } from '@isomorphic/stackTrace';
 import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
@@ -57,9 +60,6 @@ import {
 } from './matchers';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
-import {
-  expect as expectLibrary,
-} from './expectBundle';
 
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
