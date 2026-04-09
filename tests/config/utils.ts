@@ -204,6 +204,11 @@ export async function rafraf(target: Page | Frame, count = 1) {
   }
 }
 
+export async function ensureSomeFrames(page: Page) {
+  await rafraf(page, 100);
+  await page.screenshot();
+}
+
 export function roundBox(box: BoundingBox): BoundingBox {
   return {
     x: Math.round(box.x),
