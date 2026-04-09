@@ -16,7 +16,7 @@
 
 import path from 'path';
 
-import { babel } from 'playwright/lib/common';
+import * as babel from 'playwright/lib/transform/babelBundle';
 
 const t: typeof babel.T = babel.types;
 

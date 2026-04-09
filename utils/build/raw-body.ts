@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// @ts-expect-error untyped module
+
 import bytes from 'bytes';
 import type { IncomingMessage } from 'node:http';
 
 export default function getRawBody(req: IncomingMessage, { limit, encoding }: { limit: string, encoding: BufferEncoding }) {
-  const limitNumber = bytes.parse(limit);
+  const limitNumber = bytes.parse(limit) as number;
   return new Promise<string>((resolve, reject) => {
     let received = 0;
 

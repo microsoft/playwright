@@ -15,7 +15,7 @@
  */
 
 import * as yauzl from 'yauzl';
-import type { Entry, UnzipFile } from '../../utilsBundle';
+import type { Entry, ZipFile as UnzipFile } from 'yauzl';
 
 export class ZipFile {
   private _fileName: string;

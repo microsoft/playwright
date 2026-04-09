@@ -35,6 +35,8 @@ export * from './userAgent';
 export * from './wsServer';
 export * from './zipFile';
 export * from './zones';
+export * from './third_party/extractZip';
+export * from './third_party/lockfile';
 export * from './image_tools/colorUtils';
 export * from './image_tools/compare';
 export * from './image_tools/imageChannel';

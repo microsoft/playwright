@@ -29,7 +29,7 @@ import { ProgressController } from './server/progress';
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
 import type { LaunchServerOptions, Logger } from './client/types';
 import type { ProtocolLogger } from './server/types';
-import type { WebSocketEventEmitter } from './utilsBundle';
+import type { EventEmitter as WebSocketEventEmitter } from 'events';
 import type { Browser } from './server/browser';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {

@@ -34,7 +34,7 @@ const MAPPING = {
   'chokidar': { default: 'chokidar' },
   'get-east-asian-width': { namespace: 'getEastAsianWidth' },
   'yazl': { namespace: 'yazl' },
-  'yauzl': { namespace: 'yauzl' },
+  'yauzl': { default: 'yauzl', namespace: 'yauzl' },
   'zod': { namespace: 'z' },
   'zod-to-json-schema': { named: { zodToJsonSchema: 'zodToJsonSchema' } },
   '@modelcontextprotocol/sdk/client/index.js': { named: { Client: 'Client' } },
@@ -54,6 +54,14 @@ const MAPPING = {
       ProgressNotificationSchema: 'ProgressNotificationSchema',
     },
   },
+  // Transitive deps of in-tree third_party extractZip.ts / lockfile.ts.
+  // Callers use `@utils/third_party/*` which routes through coreBundle.utils;
+  // their transitive imports of these npm packages need to stay external and
+  // come from utilsBundle just like any other vendored package.
+  'graceful-fs': { default: 'gracefulFs', namespace: 'gracefulFs' },
+  'retry': { default: 'retry' },
+  'signal-exit': { default: 'onExit' },
+  'get-stream': { default: 'getStream' },
 };
 
 const VENDORED_PACKAGES = new Set(Object.keys(MAPPING));

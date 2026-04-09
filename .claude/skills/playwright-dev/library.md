@@ -23,6 +23,8 @@ packages/playwright-core/src/
 
 Each directory has a `DEPS.list` constraining its imports. These are enforced by `npm run flint`.
 
+Entries can be relative paths, alias paths (`@isomorphic/**`, `@utils/**`), or `node_modules/<pkg>` to allow a specific npm package import. The `"strict"` marker disables inheritance from parent folders. Section headers like `[filename.ts]` scope rules to a single file.
+
 **client/** can import from:
 - `../protocol/` — validators and channel types
 - `../utils/isomorphic` — shared utilities
@@ -38,6 +40,8 @@ Each directory has a `DEPS.list` constraining its imports. These are enforced by
 - `../**` — all server modules
 
 **Key rule:** Client code NEVER imports server code. Server code NEVER imports client code. They communicate only through the protocol.
+
+**Vendored npm packages** (anything under `node_modules/`) go through `src/utilsBundle.ts` — a single bundled file that re-exports the vendored symbols. Adding a new dep or changing a DEPS.list entry for vendored code: see [vendor.md](vendor.md).
 
 ## Protocol Layer
 

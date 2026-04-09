@@ -23,7 +23,7 @@ import crypto from 'crypto';
 
 import sourceMapSupport from 'source-map-support';
 import { loadTsConfig } from './tsconfig-loader';
-import { packageJSON } from '../package';
+import { libPath, packageJSON } from '../package';
 import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
 import { addHook } from './pirates';
@@ -236,7 +236,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
-  const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
+  const { babelTransform }: { babelTransform: BabelTransformFunction } = require(libPath('transform', 'babelBundle'));
   transformData = new Map<string, any>();
   // Pass `setTransformData` to plugins via plugin options instead of having
   // them import it. The bundled esmLoader inlines its own copy of this file,

@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 
-import type { WebSocket } from '../utilsBundle';
+import type { WebSocket } from 'ws';
 import type net from 'net';
 
 export interface ServerTransport {

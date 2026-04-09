@@ -28,7 +28,7 @@ import { traceAttachments } from './traceAttachments';
 import { traceAttachment } from './traceAttachments';
 import { installSkill } from './installSkill';
 
-import type { Command } from '../../utilsBundle';
+import type { Command } from 'commander';
 
 export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) => void) {
   const traceCommand = program

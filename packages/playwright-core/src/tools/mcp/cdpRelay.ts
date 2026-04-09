@@ -43,7 +43,7 @@ import * as protocol from './protocol';
 
 import type websocket from 'ws';
 import type { ExtensionCommand, ExtensionEvents } from './protocol';
-import type { WebSocket, WebSocketServer } from '../../utilsBundle';
+import type { WebSocket, WebSocketServer } from 'ws';
 
 
 const debugLogger = debug('pw:mcp:relay');

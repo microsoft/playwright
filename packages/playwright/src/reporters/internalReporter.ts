@@ -20,7 +20,8 @@ import { monotonicTime } from '@isomorphic/time';
 
 import { internalScreen, prepareErrorStack, relativeFilePath } from './base';
 import { Multiplexer } from './multiplexer';
-import { babel, test as testNs } from '../common';
+import { test as testNs } from '../common';
+import * as babel from '../transform/babelBundle';
 import { wrapReporterAsV2 } from './reporterV2';
 
 import type { AnyReporter, ReporterV2 } from './reporterV2';

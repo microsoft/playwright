@@ -26,7 +26,7 @@ import { buildProjectsClosure, collectFilesForProject } from './projectUtils';
 import {  createTestGroups, filterForShard } from './testGroups';
 import { cc, config as commonConfig, FullConfigInternal, suiteUtils, test as testNs, transform } from '../common';
 
-import type { RawSourceMap } from 'playwright-core/lib/utilsBundle';
+import type { RawSourceMap } from 'source-map';
 import type { TestRun } from './tasks';
 import type { TestGroup } from './testGroups';
 import type { FullConfig, Reporter, TestError } from '../../types/testReporter';

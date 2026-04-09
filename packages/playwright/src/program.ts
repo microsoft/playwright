@@ -31,7 +31,7 @@ import { packageJSON } from './package';
 export { program };
 
 import type { TraceMode } from '../types/test';
-import type { Command } from 'playwright-core/lib/utilsBundle';
+import type { Command } from 'commander';
 
 libCli.decorateProgram(program);
 

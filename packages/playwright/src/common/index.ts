@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-export * as babel from '../transform/babelBundle';
 export * as cc from '../transform/compilationCache';
 export * as config from './config';
 export * as configLoader from './configLoader';
