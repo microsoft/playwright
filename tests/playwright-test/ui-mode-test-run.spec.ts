@@ -61,7 +61,7 @@ test('should run visible', async ({ runUITest }) => {
         ⊘ skipped
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
@@ -121,7 +121,7 @@ test('should run on hover', async ({ runUITest }) => {
         ◯ fails
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -150,7 +150,7 @@ test('should run on double click', async ({ runUITest }) => {
         ◯ fails
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -180,7 +180,7 @@ test('should run on Enter', async ({ runUITest }) => {
         ❌ fails <=
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
@@ -221,7 +221,7 @@ test('should run by project', async ({ runUITest }) => {
         ⊘ skipped
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
@@ -259,7 +259,7 @@ test('should run by project', async ({ runUITest }) => {
       ► ◯ skipped
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
@@ -292,7 +292,7 @@ test('should run by project', async ({ runUITest }) => {
       ► ❌ fails
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
@@ -326,7 +326,7 @@ test('should run by project', async ({ runUITest }) => {
       ► ⊘ skipped
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
@@ -377,7 +377,7 @@ test('should stop', async ({ runUITest }) => {
         🕦 test 3
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-loading] a.test.ts" [expanded]:
         - group:
@@ -400,7 +400,7 @@ test('should stop', async ({ runUITest }) => {
         ◯ test 3
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -438,7 +438,7 @@ test('should run folder', async ({ runUITest }) => {
         ◯ passes
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] folder-b" [expanded] [selected]:
         - group:
@@ -471,7 +471,7 @@ test('should show time', async ({ runUITest }) => {
         ⊘ skipped
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
@@ -515,7 +515,7 @@ test('should show test.fail as passing', async ({ runUITest }) => {
         ✅ should fail XXms
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
@@ -551,7 +551,7 @@ test('should ignore repeatEach', async ({ runUITest }) => {
         ✅ should pass
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
@@ -586,7 +586,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
         ✅ should pass
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
@@ -601,7 +601,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
         ✅ should pass
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
@@ -649,7 +649,7 @@ test('should show proper total when using deps', async ({ runUITest }) => {
         ◯ run @chromium
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -669,7 +669,7 @@ test('should show proper total when using deps', async ({ runUITest }) => {
         ✅ run @chromium <=
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
@@ -739,7 +739,7 @@ test('should respect --tsconfig option', {
         ✅ test
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
@@ -768,7 +768,7 @@ test('should respect --ignore-snapshots option', {
         ✅ snapshot
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:

@@ -710,7 +710,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   // Check that trace loads.
   await page.locator('.test-file-test').filter({ hasText: /failing 1/ }).getByRole('link', { name: 'View Trace' }).click();
   await expect(page).toHaveTitle('Playwright Trace Viewer');
-  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Expect "toBe" \\d+[hmsp]+/ [selected]
   `);
@@ -2290,7 +2290,7 @@ test('shard chart', async ({ runInlineTest, writeFiles, showReport, page, mergeR
 
   await page.getByRole('link', { name: 'Speedboard' }).click();
 
-  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button "Timeline"
     - region:
       - img:
