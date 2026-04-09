@@ -2196,7 +2196,7 @@ test('project filter in report name', async ({ runInlineTest }) => {
     const result = await runInlineTest(files, { shard: `1/2`, project: ['foo', 'b*r'], grep: 'smoke' });
     expect(result.exitCode).toBe(0);
     const reportFiles = await fs.promises.readdir(reportDir);
-    expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
+    expect(reportFiles.sort()).toEqual(['report-foo-b-r-c29b5fa-1.zip']);
   }
 
   {
