@@ -64,7 +64,14 @@ export class PlaywrightConnection {
     transport.on('message', async (message: string) => {
       await lock;
       const messageString = Buffer.from(message).toString();
-      const jsonMessage = JSON.parse(messageString);
+      let jsonMessage: any;
+      try {
+        jsonMessage = JSON.parse(messageString);
+      } catch (e) {
+        debugLogger.log('server', `[${this._id}] failed to parse message: ${e}`);
+        this.close({ code: 1007, reason: 'Malformed message' });
+        return;
+      }
       if (debugLogger.isEnabled('server:channel'))
         debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} ◀ RECV ${messageString}`);
       if (debugLogger.isEnabled('server:metadata'))
