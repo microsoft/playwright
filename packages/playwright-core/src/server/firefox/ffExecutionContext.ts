@@ -105,7 +105,7 @@ function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Pro
   if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
     return { result: { type: 'undefined', value: undefined } };
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
-    rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
+    throw rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
   if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
     throw new Error('Execution context was destroyed, most likely because of a navigation.');
   throw error;

@@ -100,9 +100,10 @@ function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
     throw new Error('Cannot serialize result: object reference chain is too long.');
   if (error.message.includes('Object couldn\'t be returned by value'))
     return { result: { type: 'undefined' } };
-
+  if (error.message.includes('Failed to convert response to JSON'))
+    throw rewriteErrorMessage(error, error.message + '. The serialized object may be too large.');
   if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
-    rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
+    throw rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
   if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
     throw new Error('Execution context was destroyed, most likely because of a navigation.');
   throw error;
