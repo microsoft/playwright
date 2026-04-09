@@ -32,7 +32,7 @@ await page.screencast.stop();
 ### option: Screencast.start.onFrame
 * since: v1.59
 - `onFrame` <[function]\([Object]\): [Promise]>
-  - alias-csharp: ScreencastFrame
+  - alias: ScreencastFrame
   - `data` <[Buffer]> JPEG-encoded frame data.
 
 Callback that receives JPEG-encoded frame data.
