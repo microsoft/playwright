@@ -242,7 +242,9 @@ Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) 
 
 ## async method: Locator.boundingBox
 * since: v1.14
-- returns: <[null]|[Object=LocatorBoundingBoxResult]>
+- returns: <[null]|[Object]>
+  - alias-csharp: LocatorBoundingBoxResult
+  - alias-java: BoundingBox
   - `x` <[float]> the x coordinate of the element in pixels.
   - `y` <[float]> the y coordinate of the element in pixels.
   - `width` <[float]> the width of the element in pixels.

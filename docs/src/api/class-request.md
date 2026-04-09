@@ -113,7 +113,9 @@ You can use [`method: Request.allHeaders`] for complete list of headers that inc
 
 ## async method: Request.headersArray
 * since: v1.15
-- returns: <[Array]<[Object=Header]>>
+- returns: <[Array]<[Object]>>
+  - alias-csharp: Header
+  - alias-java: HttpHeader
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.
 
@@ -310,7 +312,9 @@ Requests originated in a Service Worker do not have a [`method: Request.frame`] 
 
 ## async method: Request.sizes
 * since: v1.15
-- returns: <[Object=RequestSizesResult]>
+- returns: <[Object]>
+  - alias-csharp: RequestSizesResult
+  - alias-java: Sizes
   - `requestBodySize` <[int]> Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.
   - `requestHeadersSize` <[int]> Total number of bytes from the start of the HTTP request message until (and including) the double CRLF before the body.
   - `responseBodySize` <[int]> Size of the received response body (encoded) in bytes.
@@ -320,7 +324,9 @@ Returns resource size information for given request.
 
 ## method: Request.timing
 * since: v1.8
-- returns: <[Object=RequestTimingResult]>
+- returns: <[Object]>
+  - alias-csharp: RequestTimingResult
+  - alias-java: Timing
   - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
   - `domainLookupStart` <[float]> Time immediately before the browser starts the domain name lookup for the
     resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
