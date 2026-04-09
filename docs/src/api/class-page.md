@@ -1829,6 +1829,7 @@ Name of the function on the window object.
 ### param: Page.exposeBinding.callback
 * since: v1.8
 - `callback` <[function]>
+  - alias-java: BindingCallback
 
 Callback function that will be called in the Playwright's context.
 
@@ -2030,6 +2031,7 @@ Name of the function on the window object
 ### param: Page.exposeFunction.callback
 * since: v1.8
 - `callback` <[function]>
+  - alias-java: FunctionCallback
 
 Callback function which will be called in Playwright's context.
 
@@ -3005,6 +3007,7 @@ Paper margins, defaults to none.
 * since: v1.8
 * langs: csharp, java
 - `margin` <[Object]>
+  - alias-java: Margin
   - `top` ?<[string]> Top margin, accepts values labeled with units. Defaults to `0`.
   - `right` ?<[string]> Right margin, accepts values labeled with units. Defaults to `0`.
   - `bottom` ?<[string]> Bottom margin, accepts values labeled with units. Defaults to `0`.
@@ -4462,6 +4465,7 @@ Video object associated with this page. Can be used to access the video file whe
 * since: v1.8
 - returns: <[null]|[Object]>
   - alias-csharp: PageViewportSizeResult
+  - alias-java: ViewportSize
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 

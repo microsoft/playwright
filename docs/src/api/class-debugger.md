@@ -13,7 +13,9 @@ Emitted when the debugger pauses or resumes.
 * since: v1.59
 - returns: <[null]|[Object]>
   - alias-csharp: DebuggerPausedDetails
+  - alias-java: PausedDetails
   - `location` <[Object]>
+    - alias-java: Location
     - `file` <[string]>
     - `line` ?<[int]>
     - `column` ?<[int]>
@@ -48,6 +50,7 @@ Resumes script execution and pauses when an action originates from the given sou
 ### param: Debugger.runTo.location
 * since: v1.59
 - `location` <[Object]>
+  - alias-java: Location
   - `file` <[string]>
   - `line` ?<[int]>
   - `column` ?<[int]>

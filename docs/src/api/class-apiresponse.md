@@ -59,6 +59,7 @@ An object with all the response HTTP headers associated with this response.
 * since: v1.16
 - returns: <[Array]<[Object]>>
   - alias-csharp: Header
+  - alias-java: HttpHeader
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.
 

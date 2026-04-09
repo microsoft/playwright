@@ -110,6 +110,7 @@ await locator.ClickAsync();
 * since: v1.8
 - returns: <[null]|[Object]>
   - alias-csharp: ElementHandleBoundingBoxResult
+  - alias-java: BoundingBox
   - `x` <[float]> the x coordinate of the element in pixels.
   - `y` <[float]> the y coordinate of the element in pixels.
   - `width` <[float]> the width of the element in pixels.

@@ -497,18 +497,22 @@ class Type {
       return type;
     const types = [];
     type._collectAllTypes(types);
-    let success = false;
+    let assignedToObject = false;
     for (const t of types) {
       if (t.name === 'Object') {
         if (properties.length)
           t.properties = properties;
         if (hasAliases)
           t.langAliases = { ...langAliases };
-        success = true;
+        assignedToObject = true;
       }
     }
-    if (!success)
-      throw new Error('Nested properties or aliases given, but there are no objects in type expression: ' + expression);
+    if (!assignedToObject) {
+      if (properties.length)
+        throw new Error('Nested properties given, but there are no objects in type expression: ' + expression);
+      if (hasAliases)
+        type.langAliases = { ...langAliases };
+    }
     return type;
   }
 

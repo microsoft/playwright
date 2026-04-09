@@ -97,6 +97,7 @@ A selector to search for an element to drop onto. If there are multiple elements
 
 ## input-position
 - `position` <[Object]>
+  - alias-java: Position
   - `x` <[float]>
   - `y` <[float]>
 
@@ -128,6 +129,7 @@ Defaults to `left`.
 ## input-files
 - `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
   - alias-csharp: FilePayload
+  - alias-java: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -154,6 +156,7 @@ When set, this method only performs the [actionability](../actionability.md) che
 
 ## input-source-position
 - `sourcePosition` <[Object]>
+  - alias-java: Position
   - `x` <[float]>
   - `y` <[float]>
 
@@ -161,6 +164,7 @@ Clicks on the source element at this point relative to the top-left corner of th
 
 ## input-target-position
 - `targetPosition` <[Object]>
+  - alias-java: Position
   - `x` <[float]>
   - `y` <[float]>
 
@@ -236,6 +240,7 @@ Dangerous option; use with care. Defaults to `false`.
 
 ## browser-option-proxy
 - `proxy` <[Object]>
+  - alias-java: Proxy
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
     proxy.
@@ -332,6 +337,7 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
 * langs: js, java
   - alias-java: viewportSize
 - `viewport` <[null]|[Object]>
+  - alias-java: ViewportSize
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -365,6 +371,7 @@ It makes the execution of the tests non-deterministic.
   - alias-java: screenSize
   - alias-csharp: screenSize
 - `screen` <[Object]>
+  - alias-java: ScreenSize
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -595,6 +602,7 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 
 ## context-option-clientCertificates
 - `clientCertificates` <[Array]<[Object]>>
+  - alias-java: ClientCertificate
   - `origin` <[string]> Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
   - `certPath` ?<[path]> Path to the file with the certificate in PEM format.
   - `cert` ?<[Buffer]> Direct value of the certificate in PEM format.
@@ -649,6 +657,7 @@ for a list of supported timezone IDs. Defaults to the system timezone.
 
 ## context-option-geolocation
 - `geolocation` <[Object]>
+  - alias-java: Geolocation
   - `latitude` <[float]> Latitude between -90 and 90.
   - `longitude` <[float]> Longitude between -180 and 180.
   - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.
@@ -676,6 +685,7 @@ Whether to emulate network being offline. Defaults to `false`. Learn more about 
 
 ## context-option-httpcredentials
 - `httpCredentials` <[Object]>
+  - alias-java: HttpCredentials
   - `username` <[string]>
   - `password` <[string]>
   - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
@@ -833,6 +843,7 @@ not recorded. Make sure to call [`method: BrowserContext.close`] for videos to b
 * langs: csharp, java, python
   - alias-python: record_video_size
 - `recordVideoSize` <[Object]>
+  - alias-java: RecordVideoSize
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
@@ -842,6 +853,7 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 
 ## context-option-proxy
 - `proxy` <[Object]>
+  - alias-java: Proxy
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
   - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
@@ -889,6 +901,7 @@ Specifies whether to wait for already running handlers and what to do if they th
 ## select-options-values
 * langs: java, js, csharp
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
+  - alias-java: SelectOption
   - `value` ?<[string]> Matches by `option.value`. Optional.
   - `label` ?<[string]> Matches by `option.label`. Optional.
   - `index` ?<[int]> Matches by the index. Optional.
@@ -1293,6 +1306,7 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 
 ## screenshot-option-clip
 - `clip` <[Object]>
+  - alias-java: Clip
   - `x` <[float]> x-coordinate of top-left corner of clip area
   - `y` <[float]> y-coordinate of top-left corner of clip area
   - `width` <[float]> width of clipping area

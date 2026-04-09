@@ -70,6 +70,7 @@ Field name.
 * since: v1.44
 - `value` <[string]|[boolean]|[int]|[Path]|[Object]>
   - alias-csharp: FilePayload
+  - alias-java: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -139,6 +140,7 @@ Field name.
 * since: v1.18
 - `value` <[string]|[boolean]|[int]|[Path]|[Object]>
   - alias-csharp: FilePayload
+  - alias-java: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content

@@ -50,6 +50,7 @@ You can use [`method: Response.allHeaders`] for complete list of headers that in
 * since: v1.15
 - returns: <[Array]<[Object]>>
   - alias-csharp: Header
+  - alias-java: HttpHeader
   - `name` <[string]> Name of the header.
   - `value` <[string]> Value of the header.
 
@@ -121,6 +122,7 @@ Returns the matching [Request] object.
 * since: v1.13
 - returns: <[null]|[Object]>
   - alias-csharp: ResponseSecurityDetailsResult
+  - alias-java: SecurityDetails
   - `issuer` ?<[string]> Common Name component of the Issuer field.
     from the certificate. This should only be used for informational purposes. Optional.
   - `protocol` ?<[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
@@ -137,6 +139,7 @@ Returns SSL and other security information.
 * since: v1.13
 - returns: <[null]|[Object]>
   - alias-csharp: ResponseServerAddrResult
+  - alias-java: ServerAddr
   - `ipAddress` <[string]> IPv4 or IPV6 address of the server.
   - `port` <[int]>
 
