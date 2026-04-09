@@ -12,8 +12,7 @@ Emitted when the debugger pauses or resumes.
 ## method: Debugger.pausedDetails
 * since: v1.59
 - returns: <[null]|[Object]>
-  - alias-csharp: DebuggerPausedDetails
-  - alias-java: PausedDetails
+  - alias: DebuggerPausedDetails
   - `location` <[Object]>
     - alias-java: Location
     - `file` <[string]>
