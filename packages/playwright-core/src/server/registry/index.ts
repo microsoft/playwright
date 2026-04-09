@@ -172,6 +172,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-win64.zip'),
   },
   'chromium-headless-shell': {
@@ -203,6 +205,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
   },
   'chromium-tip-of-tree': {
@@ -234,6 +238,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-win64.zip'),
   },
   'chromium-tip-of-tree-headless-shell': {
@@ -265,6 +271,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
   },
   'firefox': {
@@ -296,6 +304,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
     'mac15': 'builds/firefox/%s/firefox-mac.zip',
     'mac15-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
+    'mac26': 'builds/firefox/%s/firefox-mac.zip',
+    'mac26-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -327,6 +337,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
     'mac15': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
     'mac15-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
+    'mac26': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
+    'mac26-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
@@ -358,6 +370,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/webkit/%s/webkit-mac-14-arm64.zip',
     'mac15': 'builds/webkit/%s/webkit-mac-15.zip',
     'mac15-arm64': 'builds/webkit/%s/webkit-mac-15-arm64.zip',
+    'mac26': 'builds/webkit/%s/webkit-mac-15.zip',
+    'mac26-arm64': 'builds/webkit/%s/webkit-mac-15-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
@@ -389,6 +403,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'mac15': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac15-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
+    'mac26': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac26-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
   'winldd': {
@@ -420,6 +436,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': undefined,
     'mac15': undefined,
     'mac15-arm64': undefined,
+    'mac26': undefined,
+    'mac26-arm64': undefined,
     'win64': 'builds/winldd/%s/winldd-win64.zip',
   },
   'android': {
@@ -451,6 +469,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/android/%s/android.zip',
     'mac15': 'builds/android/%s/android.zip',
     'mac15-arm64': 'builds/android/%s/android.zip',
+    'mac26': 'builds/android/%s/android.zip',
+    'mac26-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
 };
