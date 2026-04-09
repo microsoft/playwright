@@ -21,7 +21,8 @@ import { gracefullyCloseAll } from '@utils/processLauncher';
 
 import { configLoader, fixtures, ipc, poolBuilder, ProcessRunner, suiteUtils, testLoader } from '../common';
 import * as globals from '../globals';
-import { debugTest, relativeFilePath } from '../util';
+import { setExpectConfig } from '../matchers/expect';
+import { debugTest, filteredStackTrace, relativeFilePath } from '../util';
 import { FixtureRunner } from './fixtureRunner';
 import { TestSkipError, TestInfoImpl, emtpyTestInfoCallbacks } from './testInfo';
 import { testInfoError } from './util';
@@ -333,6 +334,17 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = testInfo;
     globals.setCurrentTestInfo(testInfo);
+    setExpectConfig({
+      testInfo,
+      filteredStackTrace,
+      ignoreSnapshots: testInfo._projectInternal.project.ignoreSnapshots,
+      updateSnapshots: testInfo.config.updateSnapshots,
+      timeout: testInfo._projectInternal.expect?.timeout,
+      toHaveScreenshot: testInfo._projectInternal.expect?.toHaveScreenshot,
+      toMatchSnapshot: testInfo._projectInternal.expect?.toMatchSnapshot,
+      toMatchAriaSnapshot: testInfo._projectInternal.expect?.toMatchAriaSnapshot,
+      toPass: testInfo._projectInternal.expect?.toPass,
+    });
     this.dispatchEvent('testBegin', buildTestBeginPayload(testInfo));
 
     const isSkipped = testInfo.expectedStatus === 'skipped';
@@ -511,6 +523,7 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = null;
     globals.setCurrentTestInfo(null);
+    setExpectConfig({ testInfo: null, filteredStackTrace, ignoreSnapshots: false, updateSnapshots: 'missing' });
     this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||

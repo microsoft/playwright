@@ -19,10 +19,10 @@ import fs from 'fs';
 import path from 'path';
 
 import { escapeTemplateString, isString } from '@isomorphic/stringUtils';
-import { formatMatcherMessage, printReceivedStringContainExpectedSubstring } from '@utils/expectUtils';
+import { existsAsync } from '@utils/fileUtils';
 
-import { expectTypes, fileExistsAsync } from '../util';
-import * as globals from '../globals';
+import { expectTypes, formatMatcherMessage, printReceivedStringContainExpectedSubstring } from './matcherHint';
+import { expectConfig } from './expect';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal, FrameEx, LocatorEx } from './matchers';
@@ -46,14 +46,14 @@ export async function toMatchAriaSnapshot(
   expectTypes(receiver, ['Page', 'Locator'], matcherName);
   const locator = (receiver as any)._apiName === 'Page' ? undefined : receiver as LocatorEx;
 
-  const testInfo = globals.currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`${matcherName}() must be called during the test`);
 
-  if (testInfo._projectInternal.project.ignoreSnapshots)
+  if (expectConfig().ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected: '' };
 
-  const updateSnapshots = testInfo.config.updateSnapshots;
+  const updateSnapshots = expectConfig().updateSnapshots;
 
   let expected: string;
   let timeout: number;
@@ -66,7 +66,7 @@ export async function toMatchAriaSnapshot(
     expectedPath = testInfo._resolveSnapshotPaths('aria', expectedParam?.name, 'updateSnapshotIndex').absoluteSnapshotPath;
     // in 1.51, we changed the default template to use .aria.yml extension
     // for backwards compatibility, we check for the legacy .yml extension
-    if (!(await fileExistsAsync(expectedPath)) && await fileExistsAsync(legacyPath))
+    if (!(await existsAsync(expectedPath)) && await existsAsync(legacyPath))
       expectedPath = legacyPath;
     expected = await fs.promises.readFile(expectedPath, 'utf8').catch(() => '');
     timeout = expectedParam?.timeout ?? this.timeout;
@@ -85,7 +85,7 @@ export async function toMatchAriaSnapshot(
 
   expected = unshift(expected);
 
-  const globalChildren = testInfo._projectInternal.expect?.toMatchAriaSnapshot?.children;
+  const globalChildren = expectConfig().toMatchAriaSnapshot?.children;
   if (globalChildren && !expected.match(/^- \/children:/m))
     expected = `- /children: ${globalChildren}\n` + expected;
 
@@ -137,8 +137,7 @@ export async function toMatchAriaSnapshot(
         const relativePath = path.relative(process.cwd(), expectedPath);
         if (updateSnapshots === 'missing') {
           const message = `A snapshot doesn't exist at ${relativePath}, writing actual.`;
-          testInfo._hasNonRetriableError = true;
-          testInfo._failWithError(new Error(message));
+          testInfo._failWithError(new Error(message), 'shouldNotRetry');
         } else {
           const message = `A snapshot is generated at ${relativePath}.`;
           /* eslint-disable no-console */
@@ -149,8 +148,7 @@ export async function toMatchAriaSnapshot(
         const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
         if (updateSnapshots === 'missing') {
           const message = 'A snapshot is not provided, generating new baseline.';
-          testInfo._hasNonRetriableError = true;
-          testInfo._failWithError(new Error(message));
+          testInfo._failWithError(new Error(message), 'shouldNotRetry');
         }
         // TODO: ideally, we should return "pass: true" here because this matcher passes
         // when regenerating baselines. However, we can only access suggestedRebaseline in case

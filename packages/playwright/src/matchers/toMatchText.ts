@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { formatMatcherMessage, printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from '@utils/expectUtils';
-
-import { expectTypes } from '../util';
+import { expectTypes, formatMatcherMessage, printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from './matcherHint';
 
 import type { MatcherResult } from './matcherHint';
 import type { Page, Locator } from 'playwright-core';
