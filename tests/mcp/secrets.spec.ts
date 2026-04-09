@@ -127,6 +127,29 @@ await page.getByRole('textbox', { name: 'Password' }).fill(process.env['X-PASSWO
   });
 });
 
+test('missing secrets file warns and continues', async ({ startClient, server }) => {
+  const nonExistentFile = test.info().outputPath('does-not-exist.env');
+
+  const { client, stderr } = await startClient({
+    args: ['--secrets', nonExistentFile],
+  });
+
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <body><p>hello world</p></body>
+    </html>
+  `, 'text/html');
+
+  // Server should still be running and functional
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(stderr()).toContain(`Warning: could not read secrets file '${nonExistentFile}'`);
+});
+
 test('empty secret value is ignored', async ({ startClient, server }) => {
   const secretsFile = test.info().outputPath('secrets.env');
   await fs.promises.writeFile(secretsFile, 'EMPTY_SECRET=\nX-PASSWORD=password123');

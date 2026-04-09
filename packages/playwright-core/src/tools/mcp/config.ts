@@ -466,7 +466,13 @@ export function commaSeparatedList(value: string | undefined): string[] | undefi
 export function dotenvFileLoader(value: string | undefined): Record<string, string> | undefined {
   if (!value)
     return undefined;
-  return dotenv.parse(fs.readFileSync(value, 'utf8'));
+  try {
+    return dotenv.parse(fs.readFileSync(value, 'utf8'));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(`Warning: could not read secrets file '${value}': ${(e as NodeJS.ErrnoException).message}`);
+    return undefined;
+  }
 }
 
 export function numberParser(value: string | undefined): number | undefined {
