@@ -16,10 +16,9 @@
 
 import path from 'path';
 
-import { declare, traverse, types } from 'playwright/lib/transform/babelBundle';
+import { babel } from 'playwright/lib/common';
 
-import type { BabelAPI, PluginObj, T } from 'playwright/lib/transform/babelBundle';
-const t: typeof T = types;
+const t: typeof babel.T = babel.types;
 
 let jsxComponentNames: Set<string>;
 let importInfos: Map<string, ImportInfo>;
@@ -28,10 +27,10 @@ type TsxTransformOptions = {
   setTransformData: (key: string, value: any) => void;
 };
 
-export default declare((api: BabelAPI, options: TsxTransformOptions) => {
+export default babel.declare((api: babel.BabelAPI, options: TsxTransformOptions) => {
   api.assertVersion(7);
 
-  const result: PluginObj = {
+  const result: babel.PluginObj = {
     name: 'playwright-debug-transform',
     visitor: {
       Program: {
@@ -130,9 +129,9 @@ export default declare((api: BabelAPI, options: TsxTransformOptions) => {
   return result;
 });
 
-function collectJsxComponentUsages(node: T.Node): Set<string> {
+function collectJsxComponentUsages(node: babel.T.Node): Set<string> {
   const names = new Set<string>();
-  traverse(node, {
+  babel.traverse(node, {
     enter: p => {
       // Treat JSX-everything as component usages.
       if (t.isJSXElement(p.node)) {
@@ -153,7 +152,7 @@ export type ImportInfo = {
   remoteName: string | undefined;
 };
 
-export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, filename: string): { localName: string, info: ImportInfo } {
+export function importInfo(importNode: babel.T.ImportDeclaration, specifier: babel.T.ImportSpecifier | babel.T.ImportDefaultSpecifier, filename: string): { localName: string, info: ImportInfo } {
   const importSource = importNode.source.value;
   const idPrefix = path.join(filename, '..', importSource).replace(/[^\w_\d]/g, '_');
 

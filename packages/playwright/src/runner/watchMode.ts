@@ -32,7 +32,7 @@ import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerConnection  } from '../isomorphic/testServerConnection';
 
 import type * as reporterTypes from '../../types/testReporter';
-import type { ConfigLocation } from '../common/config';
+import type { ConfigLocation } from '../common';
 import type { TestServerTransport } from '../isomorphic/testServerConnection';
 
 /* eslint-disable no-restricted-properties */

@@ -1,6 +1,6 @@
 [*]
 ../util.ts
-../common/globals.ts
+../globals.ts
 ../package.ts
 @utils/**
 node_modules/json5

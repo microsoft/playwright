@@ -18,7 +18,7 @@ import path from 'path';
 import util from 'util';
 
 import * as esmLoaderHost from './esmLoaderHost';
-import { isWorkerProcess, setCurrentlyLoadingFileSuite } from './globals';
+import { isWorkerProcess, setCurrentlyLoadingFileSuite } from '../globals';
 import { Suite } from './test';
 import { startCollectingFileDeps, stopCollectingFileDeps } from '../transform/compilationCache';
 import { requireOrImport } from '../transform/transform';

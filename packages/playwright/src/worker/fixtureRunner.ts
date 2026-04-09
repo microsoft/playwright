@@ -17,18 +17,17 @@
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 
-import { fixtureParameterNames } from '../common/fixtures';
+import { fixtures } from '../common';
 import { filterStackFile, formatLocation } from '../util';
 
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, RunnableDescription } from './timeoutManager';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { FixturePool, FixtureRegistration, FixtureScope } from '../common/fixtures';
 
 class Fixture {
   runner: FixtureRunner;
-  registration: FixtureRegistration;
+  registration: fixtures.FixtureRegistration;
   value: any;
   failed = false;
 
@@ -40,7 +39,7 @@ class Fixture {
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
-  constructor(runner: FixtureRunner, registration: FixtureRegistration) {
+  constructor(runner: FixtureRunner, registration: fixtures.FixtureRegistration) {
     this.runner = runner;
     this.registration = registration;
     this.value = null;
@@ -170,7 +169,7 @@ class Fixture {
     }
   }
 
-  _collectFixturesInTeardownOrder(scope: FixtureScope, collector: Set<Fixture>) {
+  _collectFixturesInTeardownOrder(scope: fixtures.FixtureScope, collector: Set<Fixture>) {
     if (this.registration.scope !== scope)
       return;
     for (const fixture of this._usages)
@@ -181,11 +180,11 @@ class Fixture {
 
 export class FixtureRunner {
   private testScopeClean = true;
-  pool: FixturePool | undefined;
+  pool: fixtures.FixturePool | undefined;
   instanceForId = new Map<string, Fixture>();
   workerFixtureTimeout = 0;
 
-  setPool(pool: FixturePool) {
+  setPool(pool: fixtures.FixturePool) {
     if (!this.testScopeClean)
       throw new Error('Did not teardown test scope');
     if (this.pool && pool.digest !== this.pool.digest) {
@@ -199,7 +198,7 @@ export class FixtureRunner {
     this.pool = pool;
   }
 
-  private _collectFixturesInSetupOrder(registration: FixtureRegistration, collector: Set<FixtureRegistration>) {
+  private _collectFixturesInSetupOrder(registration: fixtures.FixtureRegistration, collector: Set<fixtures.FixtureRegistration>) {
     if (collector.has(registration))
       return;
     for (const name of registration.deps) {
@@ -209,11 +208,11 @@ export class FixtureRunner {
     collector.add(registration);
   }
 
-  async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl, runnable: RunnableDescription) {
+  async teardownScope(scope: fixtures.FixtureScope, testInfo: TestInfoImpl, runnable: RunnableDescription) {
     // Teardown fixtures in the reverse order.
-    const fixtures = Array.from(this.instanceForId.values()).reverse();
+    const allFixtures = Array.from(this.instanceForId.values()).reverse();
     const collector = new Set<Fixture>();
-    for (const fixture of fixtures)
+    for (const fixture of allFixtures)
       fixture._collectFixturesInTeardownOrder(scope, collector);
     let firstError: Error | undefined;
     for (const fixture of collector) {
@@ -230,10 +229,10 @@ export class FixtureRunner {
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only', runnable: RunnableDescription): Promise<{ result: object } | null> {
-    const collector = new Set<FixtureRegistration>();
+    const collector = new Set<fixtures.FixtureRegistration>();
 
     // Collect automatic fixtures.
-    const auto: FixtureRegistration[] = [];
+    const auto: fixtures.FixtureRegistration[] = [];
     for (const registration of this.pool!.autoFixtures()) {
       let shouldRun = true;
       if (autoFixtures === 'all-hooks-only')
@@ -278,7 +277,7 @@ export class FixtureRunner {
     await testInfo._runWithTimeout(runnable, () => fn(params.result, testInfo));
   }
 
-  private async _setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfoImpl, runnable: RunnableDescription): Promise<Fixture> {
+  private async _setupFixtureForRegistration(registration: fixtures.FixtureRegistration, testInfo: TestInfoImpl, runnable: RunnableDescription): Promise<Fixture> {
     if (registration.scope === 'test')
       this.testScopeClean = false;
 
@@ -303,7 +302,7 @@ export class FixtureRunner {
 }
 
 function getRequiredFixtureNames(fn: Function, location?: Location) {
-  return fixtureParameterNames(fn, location ?? { file: '<unknown>', line: 1, column: 1 }, e => {
+  return fixtures.fixtureParameterNames(fn, location ?? { file: '<unknown>', line: 1, column: 1 }, e => {
     throw new Error(`${formatLocation(e.location!)}: ${e.message}`);
   });
 }

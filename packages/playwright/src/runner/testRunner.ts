@@ -24,22 +24,20 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { setPlaywrightTestProcessEnv } from '@utils/env';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
-import { loadConfig } from '../common/configLoader';
+import { cc, configLoader, FullConfigInternal, ipc } from '../common';
 import { FSWatcher } from './fsWatcher';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { internalScreen } from '../reporters/base';
 import { InternalReporter } from '../reporters/internalReporter';
-import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import { serializeError } from '../util';
 import { createErrorCollectingReporter, createReporters } from './reporters';
 import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, runTasks, runTasksDeferCleanup } from './tasks';
 import { LastRunReporter } from './lastRun';
 
 import type * as reporterTypes from '../../types/testReporter';
-import type { ConfigLocation, FullConfigInternal } from '../common/config';
-import type { ConfigCLIOverrides } from '../common/ipc';
+import type { ConfigLocation } from '../common';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
 import type { TestPausedParams } from './failureTracker';
@@ -90,7 +88,7 @@ export type FullResultStatus = reporterTypes.FullResult['status'];
 
 export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   readonly configLocation: ConfigLocation;
-  private _configCLIOverrides: ConfigCLIOverrides;
+  private _configCLIOverrides: ipc.ConfigCLIOverrides;
 
   private _watcher: FSWatcher;
   private _watchedProjectDirs = new Set<string>();
@@ -105,13 +103,13 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _populateDependenciesOnList = false;
   private _startingEnv: NodeJS.ProcessEnv = {};
 
-  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
     super();
     this.configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;
     this._watcher = new FSWatcher(events => {
       const collector = new Set<string>();
-      events.forEach(f => collectAffectedTestFiles(f.file, collector));
+      events.forEach(f => cc.collectAffectedTestFiles(f.file, collector));
       this.emit(TestRunnerEvent.TestFilesChanged, [...collector]);
     });
   }
@@ -232,7 +230,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     status: reporterTypes.FullResult['status'],
     config?: FullConfigInternal,
   }> {
-    const overrides: ConfigCLIOverrides = {
+    const overrides: ipc.ConfigCLIOverrides = {
       ...this._configCLIOverrides,
       repeatEach: 1,
       retries: 0,
@@ -289,7 +287,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   private async _innerRunTests(userReporter: AnyReporter, params: RunTestsParams): Promise<{ status: FullResultStatus }> {
     await this.stopTests();
-    const overrides: ConfigCLIOverrides = {
+    const overrides: ipc.ConfigCLIOverrides = {
       ...this._configCLIOverrides,
       repeatEach: 1,
       retries: 0,
@@ -349,7 +347,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     this._watchedTestDependencies = new Set();
     for (const fileName of fileNames) {
       this._watchedTestDependencies.add(fileName);
-      dependenciesForTestFile(fileName).forEach(file => this._watchedTestDependencies.add(file));
+      cc.dependenciesForTestFile(fileName).forEach(file => this._watchedTestDependencies.add(file));
     }
     await this._updateWatcher(true);
   }
@@ -366,7 +364,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     ]);
     if (status !== 'passed')
       return { errors: errorReporter.errors(), testFiles: [] };
-    return { testFiles: affectedTestFiles(files) };
+    return { testFiles: cc.affectedTestFiles(files) };
   }
 
   async stopTests() {
@@ -382,9 +380,9 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     await this.runGlobalTeardown();
   }
 
-  private async _loadConfig(overrides?: ConfigCLIOverrides): Promise<{ config: FullConfigInternal | null, error?: reporterTypes.TestError }> {
+  private async _loadConfig(overrides?: ipc.ConfigCLIOverrides): Promise<{ config: FullConfigInternal | null, error?: reporterTypes.TestError }> {
     try {
-      const config = await loadConfig(this.configLocation, overrides);
+      const config = await configLoader.loadConfig(this.configLocation, overrides);
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
         webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
@@ -399,7 +397,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     }
   }
 
-  private async _loadConfigOrReportError(reporter: InternalReporter, overrides?: ConfigCLIOverrides): Promise<FullConfigInternal | null> {
+  private async _loadConfigOrReportError(reporter: InternalReporter, overrides?: ipc.ConfigCLIOverrides): Promise<FullConfigInternal | null> {
     const { config, error } = await this._loadConfig(overrides);
     if (config)
       return config;

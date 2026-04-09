@@ -16,7 +16,7 @@
 
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-import type { Suite } from '../common/test';
+import type { test } from '../common';
 
 export class Multiplexer implements ReporterV2 {
   private _reporters: ReporterV2[];
@@ -34,7 +34,7 @@ export class Multiplexer implements ReporterV2 {
       wrap(() => reporter.onConfigure?.(config));
   }
 
-  onBegin(suite: Suite) {
+  onBegin(suite: test.Suite) {
     for (const reporter of this._reporters)
       wrap(() => reporter.onBegin?.(suite));
   }

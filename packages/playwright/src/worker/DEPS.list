@@ -1,8 +1,8 @@
 [*]
 @isomorphic/**
 @utils/**
+../globals.ts
 ../common/
-../transform/
 ../util.ts
 ../matchers/**
 ../isomorphic/util.ts

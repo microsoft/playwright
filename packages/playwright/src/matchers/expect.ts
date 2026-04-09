@@ -59,13 +59,12 @@ import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 import {
   expect as expectLibrary,
 } from './expectBundle';
-import { currentTestInfo } from '../common/globals';
+import * as globals from '../globals';
 import { filteredStackTrace } from '../util';
-import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
-import type { TestStepInfoImpl } from '../worker/testInfo';
+import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
 
 type ExpectMessage = string | { message?: string };
 
@@ -296,7 +295,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
     }
     return (...args: any[]) => {
-      const testInfo = currentTestInfo();
+      const testInfo = globals.currentTestInfo();
       setMatcherCallContext({ expectInfo: this._info, testInfo });
       if (!testInfo)
         return matcher.call(target, ...args);
@@ -364,13 +363,13 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 }
 
 async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, prefix: string[], ...args: any[]) {
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   const poll = info.poll!;
   const timeout = poll.timeout ?? info.timeout ?? testInfo?._projectInternal?.expect?.timeout ?? defaultExpectTimeout;
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : defaultDeadlineForMatcher(timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
+    if (testInfo && globals.currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
 
     const innerInfo: ExpectMetaInfo = {

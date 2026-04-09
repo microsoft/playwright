@@ -31,11 +31,11 @@ import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
-import { resolveConfigLocation } from '../../common/configLoader';
+import { configLoader } from '../../common';
 
+import type { ConfigLocation } from '../../common';
 import type { TerminalScreen } from '../../reporters/base';
 import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
-import type { ConfigLocation } from '../../common/config';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
 
 export type SeedFile = {
@@ -100,7 +100,7 @@ export class TestContext {
   constructor(clientInfo: tools.ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._clientInfo = clientInfo;
 
-    this._configLocation = resolveConfigLocation(configPath || clientInfo.cwd);
+    this._configLocation = configLoader.resolveConfigLocation(configPath || clientInfo.cwd);
     this.rootPath = clientInfo.cwd || this._configLocation.configDir;
 
     if (options?.headless !== undefined)

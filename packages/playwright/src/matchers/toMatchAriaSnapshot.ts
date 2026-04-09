@@ -22,7 +22,7 @@ import { escapeTemplateString, isString } from '@isomorphic/stringUtils';
 import { formatMatcherMessage, printReceivedStringContainExpectedSubstring } from '@utils/expectUtils';
 
 import { expectTypes, fileExistsAsync } from '../util';
-import { currentTestInfo } from '../common/globals';
+import * as globals from '../globals';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal, FrameEx, LocatorEx } from './matchers';
@@ -46,7 +46,7 @@ export async function toMatchAriaSnapshot(
   expectTypes(receiver, ['Page', 'Locator'], matcherName);
   const locator = (receiver as any)._apiName === 'Page' ? undefined : receiver as LocatorEx;
 
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   if (!testInfo)
     throw new Error(`${matcherName}() must be called during the test`);
 

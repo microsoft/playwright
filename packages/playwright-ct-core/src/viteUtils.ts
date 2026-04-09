@@ -17,8 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { getUserData } from 'playwright/lib/transform/compilationCache';
-import { resolveHook } from 'playwright/lib/transform/transform';
+import { cc, transform } from 'playwright/lib/common';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import type { ImportInfo } from './tsxTransform';
@@ -145,18 +144,18 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
 }
 
 export async function populateComponentsFromTests(componentRegistry: ComponentRegistry, componentsByImportingFile?: Map<string, string[]>) {
-  const importInfos: Map<string, ImportInfo[]> = await getUserData('playwright-ct-core');
+  const importInfos: Map<string, ImportInfo[]> = await cc.getUserData('playwright-ct-core');
   for (const [file, importList] of importInfos) {
     for (const importInfo of importList)
       componentRegistry.set(importInfo.id, importInfo);
     if (componentsByImportingFile)
-      componentsByImportingFile.set(file, importList.map(i => resolveHook(i.filename, i.importSource)).filter(Boolean) as string[]);
+      componentsByImportingFile.set(file, importList.map(i => transform.resolveHook(i.filename, i.importSource)).filter(Boolean) as string[]);
   }
 }
 
 export function hasJSComponents(components: ImportInfo[]): boolean {
   for (const component of components) {
-    const importPath = resolveHook(component.filename, component.importSource);
+    const importPath = transform.resolveHook(component.filename, component.importSource);
     const extname = importPath ? path.extname(importPath) : '';
     if (extname === '.js' || (importPath && !extname && fs.existsSync(importPath + '.js')))
       return true;
@@ -189,7 +188,7 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   lines.push(registerSource);
 
   for (const value of importInfos.values()) {
-    const importPath = resolveHook(value.filename, value.importSource) || value.importSource;
+    const importPath = transform.resolveHook(value.filename, value.importSource) || value.importSource;
     lines.push(`const ${value.id} = () => import('${importPath?.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 

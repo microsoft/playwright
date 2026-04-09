@@ -20,23 +20,20 @@ import path from 'path';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { startProfiling, stopProfiling } from '@utils/profiler';
 
-import { builtInReporters } from '../common/config';
-import { loadConfigFromFile, resolveConfigLocation } from '../common/configLoader';
+import { builtInReporters, configLoader, ipc } from '../common';
 import { terminalScreen } from '../reporters/base';
 import { filterProjects } from '../runner/projectUtils';
 import * as testServer from '../runner/testServer';
 import { runWatchModeLoop } from '../runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from '../runner/testRunner';
 import { createErrorCollectingReporter } from '../runner/reporters';
-
-import type { ConfigCLIOverrides } from '../common/ipc';
 import type { ReporterDescription } from '../../types/test';
 
 export async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
-  const config = await loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
+  const config = await configLoader.loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
@@ -75,7 +72,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
       throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
 
     const status = await runWatchModeLoop(
-        resolveConfigLocation(opts.config),
+        configLoader.resolveConfigLocation(opts.config),
         {
           projects: opts.project,
           files: args,
@@ -103,19 +100,19 @@ export async function runTestServerAction(opts: { [key: string]: any }) {
 }
 
 export async function clearCache(opts: { [key: string]: any }) {
-  const runner = new TestRunner(resolveConfigLocation(opts.config), {});
+  const runner = new TestRunner(configLoader.resolveConfigLocation(opts.config), {});
   const { status } = await runner.clearCache(createErrorCollectingReporter(terminalScreen));
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }
 
-function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
+function overridesFromOptions(options: { [key: string]: any }): ipc.ConfigCLIOverrides {
   if (options.ui) {
     options.debug = undefined;
     options.trace = undefined;
   }
 
-  const overrides: ConfigCLIOverrides = {
+  const overrides: ipc.ConfigCLIOverrides = {
     debug: options.debug,
     failOnFlakyTests: options.failOnFlakyTests ? true : undefined,
     forbidOnly: options.forbidOnly ? true : undefined,
@@ -172,7 +169,7 @@ function resolveReporterOption(reporter?: string): ReporterDescription[] | undef
   return reporter.split(',').map((r: string) => [resolveReporter(r)]);
 }
 
-function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
+function resolveShardOption(shard?: string): ipc.ConfigCLIOverrides['shard'] {
   if (!shard)
     return undefined;
 
@@ -200,7 +197,7 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
   return { current, total };
 }
 
-function resolveShardWeightsOption(): ConfigCLIOverrides['shardWeights'] {
+function resolveShardWeightsOption(): ipc.ConfigCLIOverrides['shardWeights'] {
   const shardWeights = process.env.PWTEST_SHARD_WEIGHTS;
   if (!shardWeights)
     return undefined;

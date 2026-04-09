@@ -15,8 +15,7 @@
  */
 
 import type { TestResult, TestError } from '../../types/testReporter';
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { Suite, TestCase } from '../common/test';
+import type { config as commonConfig, FullConfigInternal, test } from '../common';
 
 export type TestPausedParams = {
   errors: TestError[];
@@ -27,8 +26,8 @@ export class FailureTracker {
   private _config: FullConfigInternal;
   private _failureCount = 0;
   private _hasWorkerErrors = false;
-  private _rootSuite: Suite | undefined;
-  private _topLevelProjects: FullProjectInternal[] = [];
+  private _rootSuite: test.Suite | undefined;
+  private _topLevelProjects: commonConfig.FullProjectInternal[] = [];
   private _pauseOnError: boolean;
   private _pauseAtEnd: boolean;
   onTestPaused?: (params: TestPausedParams) => void;
@@ -39,12 +38,12 @@ export class FailureTracker {
     this._pauseAtEnd = !!options?.pauseAtEnd;
   }
 
-  onRootSuite(rootSuite: Suite, topLevelProjects: FullProjectInternal[]) {
+  onRootSuite(rootSuite: test.Suite, topLevelProjects: commonConfig.FullProjectInternal[]) {
     this._rootSuite = rootSuite;
     this._topLevelProjects = topLevelProjects;
   }
 
-  onTestEnd(test: TestCase, result: TestResult) {
+  onTestEnd(test: test.TestCase, result: TestResult) {
     // Test is considered failing after the last retry.
     if (test.outcome() === 'unexpected' && test.results.length > test.retries)
       ++this._failureCount;
@@ -58,7 +57,7 @@ export class FailureTracker {
     return this._pauseOnError;
   }
 
-  pauseAtEnd(inProject: FullProjectInternal) {
+  pauseAtEnd(inProject: commonConfig.FullProjectInternal) {
     return this._topLevelProjects.includes(inProject) && this._pauseAtEnd;
   }
 

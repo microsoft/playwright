@@ -29,14 +29,12 @@ import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutMana
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { wrapFunctionWithLocation } from '../transform/transform';
+import { transform } from '../common';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type * as ipc from '../common/ipc';
-import type { TestCase } from '../common/test';
+import type { config as commonConfig, FullConfigInternal, ipc, test as testNs } from '../common';
 import type { StackFrame } from '@protocol/channels';
 
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
@@ -98,7 +96,7 @@ export class TestInfoImpl implements TestInfo {
   private _interruptedPromise = new ManualPromise<void>();
   _lastStepId = 0;
   private readonly _requireFile: string;
-  readonly _projectInternal: FullProjectInternal;
+  readonly _projectInternal: commonConfig.FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
@@ -173,9 +171,9 @@ export class TestInfoImpl implements TestInfo {
 
   constructor(
     configInternal: FullConfigInternal,
-    projectInternal: FullProjectInternal,
+    projectInternal: commonConfig.FullProjectInternal,
     workerParams: ipc.WorkerInitParams,
-    test: TestCase | undefined,
+    test: testNs.TestCase | undefined,
     retry: number,
     callbacks: TestInfoCallbacks
   ) {
@@ -243,10 +241,10 @@ export class TestInfoImpl implements TestInfo {
 
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
 
-    this.skip = wrapFunctionWithLocation((location, ...args) => this._modifier('skip', location, args));
-    this.fixme = wrapFunctionWithLocation((location, ...args) => this._modifier('fixme', location, args));
-    this.fail = wrapFunctionWithLocation((location, ...args) => this._modifier('fail', location, args));
-    this.slow = wrapFunctionWithLocation((location, ...args) => this._modifier('slow', location, args));
+    this.skip = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('skip', location, args));
+    this.fixme = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('fixme', location, args));
+    this.fail = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('fail', location, args));
+    this.slow = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('slow', location, args));
   }
 
   _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, modifierArgs: [arg?: any, description?: string]) {
@@ -674,7 +672,7 @@ export class TestStepInfoImpl implements TestStepInfo {
     this._stepId = stepId;
     this._title = title;
     this._parentStep = parentStep;
-    this.skip = wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
+    this.skip = transform.wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
       // skip();
       // skip(condition: boolean, description: string);
       if (args.length > 0 && !args[0])

@@ -401,4 +401,12 @@ export async function removeDirAndLogToConsole(dir: string) {
   }
 }
 
+export function takeFirst<T>(...args: (T | undefined)[]): T {
+  for (const arg of args) {
+    if (arg !== undefined)
+      return arg;
+  }
+  return undefined as any as T;
+}
+
 export { ansiRegex, stripAnsiEscapes };
