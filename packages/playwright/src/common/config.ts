@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { packageJSON } from '../package';
-import { getPackageJsonPath, mergeObjects } from '../util';
+import { getPackageJsonPath, mergeObjects, takeFirst } from '../util';
 
 import type { Config, Fixtures, Metadata, Project, ReporterDescription } from '../../types/test';
 import type { TestRunnerPluginRegistration } from '../plugins';
@@ -214,14 +214,6 @@ export class FullProjectInternal {
     if (configCLIOverrides.debug && this.workers)
       this.workers = 1;
   }
-}
-
-export function takeFirst<T>(...args: (T | undefined)[]): T {
-  for (const arg of args) {
-    if (arg !== undefined)
-      return arg;
-  }
-  return undefined as any as T;
 }
 
 function pathResolve(baseDir: string, relative: string | undefined): string | undefined {

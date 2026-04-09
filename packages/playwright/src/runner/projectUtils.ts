@@ -23,7 +23,7 @@ import { escapeRegExp } from '@isomorphic/stringUtils';
 
 import { createFileMatcher } from '../util';
 
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { config as commonConfig, FullConfigInternal } from '../common';
 
 
 const readFileAsync = promisify(fs.readFile);
@@ -33,7 +33,7 @@ function wildcardPatternToRegExp(pattern: string): RegExp {
   return new RegExp('^' + pattern.split('*').map(escapeRegExp).join('.*') + '$', 'ig');
 }
 
-export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
+export function filterProjects(projects: commonConfig.FullProjectInternal[], projectNames?: string[]): commonConfig.FullProjectInternal[] {
   if (!projectNames)
     return [...projects];
 
@@ -78,8 +78,8 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
   return result;
 }
 
-export function buildTeardownToSetupsMap(projects: FullProjectInternal[]): Map<FullProjectInternal, FullProjectInternal[]> {
-  const result = new Map<FullProjectInternal, FullProjectInternal[]>();
+export function buildTeardownToSetupsMap(projects: commonConfig.FullProjectInternal[]): Map<commonConfig.FullProjectInternal, commonConfig.FullProjectInternal[]> {
+  const result = new Map<commonConfig.FullProjectInternal, commonConfig.FullProjectInternal[]>();
   for (const project of projects) {
     if (project.teardown) {
       const setups = result.get(project.teardown) || [];
@@ -90,9 +90,9 @@ export function buildTeardownToSetupsMap(projects: FullProjectInternal[]): Map<F
   return result;
 }
 
-export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?: (project: FullProjectInternal) => boolean): Map<FullProjectInternal, 'top-level' | 'dependency'> {
-  const result = new Map<FullProjectInternal, 'top-level' | 'dependency'>();
-  const visit = (depth: number, project: FullProjectInternal) => {
+export function buildProjectsClosure(projects: commonConfig.FullProjectInternal[], hasTests?: (project: commonConfig.FullProjectInternal) => boolean): Map<commonConfig.FullProjectInternal, 'top-level' | 'dependency'> {
+  const result = new Map<commonConfig.FullProjectInternal, 'top-level' | 'dependency'>();
+  const visit = (depth: number, project: commonConfig.FullProjectInternal) => {
     if (depth > 100) {
       const error = new Error('Circular dependency detected between projects.');
       error.stack = '';
@@ -115,19 +115,19 @@ export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?:
   return result;
 }
 
-export function findTopLevelProjects(config: FullConfigInternal): FullProjectInternal[] {
+export function findTopLevelProjects(config: FullConfigInternal): commonConfig.FullProjectInternal[] {
   const closure = buildProjectsClosure(config.projects);
   return [...closure].filter(entry => entry[1] === 'top-level').map(entry => entry[0]);
 }
 
-export function buildDependentProjects(forProjects: FullProjectInternal[], projects: FullProjectInternal[]): Set<FullProjectInternal> {
-  const reverseDeps = new Map<FullProjectInternal, FullProjectInternal[]>(projects.map(p => ([p, []])));
+export function buildDependentProjects(forProjects: commonConfig.FullProjectInternal[], projects: commonConfig.FullProjectInternal[]): Set<commonConfig.FullProjectInternal> {
+  const reverseDeps = new Map<commonConfig.FullProjectInternal, commonConfig.FullProjectInternal[]>(projects.map(p => ([p, []])));
   for (const project of projects) {
     for (const dep of project.deps)
       reverseDeps.get(dep)!.push(project);
   }
-  const result = new Set<FullProjectInternal>();
-  const visit = (depth: number, project: FullProjectInternal) => {
+  const result = new Set<commonConfig.FullProjectInternal>();
+  const visit = (depth: number, project: commonConfig.FullProjectInternal) => {
     if (depth > 100) {
       const error = new Error('Circular dependency detected between projects.');
       error.stack = '';
@@ -144,7 +144,7 @@ export function buildDependentProjects(forProjects: FullProjectInternal[], proje
   return result;
 }
 
-export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
+export async function collectFilesForProject(project: commonConfig.FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
   const extensions = new Set(['.js', '.ts', '.mjs', '.mts', '.cjs', '.cts', '.jsx', '.tsx', '.mjsx', '.mtsx', '.cjsx', '.ctsx']);
   const testFileExtension = (file: string) => extensions.has(path.extname(file));
   const allFiles = await cachedCollectFiles(project.project.testDir, project.respectGitIgnore, fsCache);

@@ -19,8 +19,7 @@ import path from 'path';
 
 import { iso, utils } from 'playwright-core/lib/coreBundle';
 import { colors, debug, stoppable } from 'playwright-core/lib/utilsBundle';
-import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
-import { resolveHook } from 'playwright/lib/transform/transform';
+import { cc, transform } from 'playwright/lib/common';
 import { removeDirAndLogToConsole } from 'playwright/lib/util';
 
 import { source as injectedSource } from './generated/indexSource';
@@ -177,7 +176,7 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
         for (const d of buildInfo.deps[component])
           deps.add(d);
       }
-      setExternalDependencies(importingFile, [...deps]);
+      cc.setExternalDependencies(importingFile, [...deps]);
     }
   }
 
@@ -255,7 +254,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 
     async writeBundle(this: PluginContext) {
       for (const importInfo of importInfos.values()) {
-        const importPath = resolveHook(importInfo.filename, importInfo.importSource);
+        const importPath = transform.resolveHook(importInfo.filename, importInfo.importSource);
         if (!importPath)
           continue;
         const deps = new Set<string>();

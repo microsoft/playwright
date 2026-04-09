@@ -21,8 +21,7 @@ import debug from 'debug';
 import { assert } from '@isomorphic/assert';
 import { timeOrigin } from '@isomorphic/time';
 
-import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
-import type { ProtocolRequest, ProtocolResponse } from '../common/process';
+import type { ipc, processRunner } from '../common';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -79,10 +78,10 @@ export class ProcessHost extends EventEmitter {
       if (debug.enabled('pw:test:protocol'))
         debug('pw:test:protocol')('◀ RECV ' + JSON.stringify(message));
       if (message.method === '__env_produced__') {
-        const producedEnv: EnvProducedPayload = message.params;
+        const producedEnv: ipc.EnvProducedPayload = message.params;
         this._producedEnv = Object.fromEntries(producedEnv.map(e => [e[0], e[1] ?? undefined]));
       } else if (message.method === '__dispatch__') {
-        const { id, error, method, params, result } = message.params as ProtocolResponse;
+        const { id, error, method, params, result } = message.params as processRunner.ProtocolResponse;
         if (id && this._callbacks.has(id)) {
           const { resolve, reject } = this._callbacks.get(id)!;
           this._callbacks.delete(id);
@@ -97,7 +96,7 @@ export class ProcessHost extends EventEmitter {
           this.emit(method!, params);
         }
       } else if (message.method === '__request__') {
-        const { id, method, params } = message.params as ProtocolRequest;
+        const { id, method, params } = message.params as processRunner.ProtocolRequest;
         const handler = this._requestHandlers.get(method);
         if (!handler) {
           this.send({ method: '__response__', params: { id, error: { message: 'Unknown method' } } });
@@ -126,7 +125,7 @@ export class ProcessHost extends EventEmitter {
     if (error)
       return error;
 
-    const processParams: ProcessInitParams = {
+    const processParams: ipc.ProcessInitParams = {
       processName: this._processName,
       timeOrigin: timeOrigin(),
     };

@@ -20,18 +20,17 @@ import path from 'path';
 import { removeFolders } from '@utils/fileUtils';
 
 import { ProcessHost } from './processHost';
-import { stdioChunkToParams } from '../common/ipc';
+import { ipc } from '../common';
 import { artifactsFolderName } from '../isomorphic/folders';
 
 import type { TestGroup } from './testGroups';
-import type { CustomMessageRequestPayload, CustomMessageResponsePayload, RunPayload, SerializedConfig, ResumePayload, WorkerInitParams } from '../common/ipc';
 
 
 let lastWorkerIndex = 0;
 
 type WorkerHostOptions = {
   parallelIndex: number;
-  config: SerializedConfig;
+  config: ipc.SerializedConfig;
   extraEnv: Record<string, string | undefined>;
   outputDir: string;
   pauseOnError: boolean;
@@ -42,7 +41,7 @@ export class WorkerHost extends ProcessHost {
   readonly parallelIndex: number;
   readonly workerIndex: number;
   private _hash: string;
-  private _params: WorkerInitParams;
+  private _params: ipc.WorkerInitParams;
   private _didFail = false;
 
   constructor(testGroup: TestGroup, options: WorkerHostOptions) {
@@ -71,8 +70,8 @@ export class WorkerHost extends ProcessHost {
   async start() {
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
     return await this.startRunner(this._params, {
-      onStdOut: chunk => this.emit('stdOut', stdioChunkToParams(chunk)),
-      onStdErr: chunk => this.emit('stdErr', stdioChunkToParams(chunk)),
+      onStdOut: chunk => this.emit('stdOut', ipc.stdioChunkToParams(chunk)),
+      onStdErr: chunk => this.emit('stdErr', ipc.stdioChunkToParams(chunk)),
     });
   }
 
@@ -86,15 +85,15 @@ export class WorkerHost extends ProcessHost {
     await super.stop();
   }
 
-  runTestGroup(runPayload: RunPayload) {
+  runTestGroup(runPayload: ipc.RunPayload) {
     this.sendMessageNoReply({ method: 'runTestGroup', params: runPayload });
   }
 
-  async sendCustomMessage(payload: CustomMessageRequestPayload) {
-    return await this.sendMessage({ method: 'customMessage', params: payload }) as CustomMessageResponsePayload;
+  async sendCustomMessage(payload: ipc.CustomMessageRequestPayload) {
+    return await this.sendMessage({ method: 'customMessage', params: payload }) as ipc.CustomMessageResponsePayload;
   }
 
-  sendResume(payload: ResumePayload) {
+  sendResume(payload: ipc.ResumePayload) {
     this.sendMessageNoReply({ method: 'resume', params: payload });
   }
 

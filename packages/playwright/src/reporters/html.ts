@@ -31,7 +31,7 @@ import { HttpServer } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
-import { codeFrameColumns } from '../transform/babelBundle';
+import { babel } from '../common';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
@@ -725,7 +725,7 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       continue;
     }
     const lines = source.split('\n').length;
-    const highlighted = codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
+    const highlighted = babel.codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
     const highlightedLines = highlighted.split('\n');
     const lineWithArrow = highlightedLines[highlightedLines.length - 1];
     for (const step of stepsInFile.get(file)) {
@@ -752,7 +752,7 @@ function createErrorCodeframe(message: string, location: Location) {
     return;
   }
 
-  return codeFrameColumns(
+  return babel.codeFrameColumns(
       source,
       {
         start: {

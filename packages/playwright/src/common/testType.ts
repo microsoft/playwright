@@ -21,7 +21,7 @@ import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { getPackageManagerExecCommand } from '@utils/env';
 import { currentZone } from '@utils/zones';
 
-import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from './globals';
+import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from '../globals';
 import { Suite, TestCase } from './test';
 import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';

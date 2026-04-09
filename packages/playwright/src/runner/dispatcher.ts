@@ -20,7 +20,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
-import { serializeConfig } from '../common/ipc';
+import { FullConfigInternal, ipc, test as testNs } from '../common';
 import { addLocationAndSnippetToError } from '../reporters/internalReporter';
 import { serializeError } from '../util';
 
@@ -29,10 +29,6 @@ import type { FailureTracker } from './failureTracker';
 import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
-import type { FullConfigInternal } from '../common/config';
-import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
-import type { Suite } from '../common/test';
-import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
@@ -136,7 +132,7 @@ export class Dispatcher {
     // 2. Start the worker if it is down.
     let startError;
     if (!worker) {
-      worker = this._createWorker(job, index, serializeConfig(this._config, true));
+      worker = this._createWorker(job, index, ipc.serializeConfig(this._config, true));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       startError = await worker.start();
@@ -216,7 +212,7 @@ export class Dispatcher {
     await this._finished;
   }
 
-  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
+  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: ipc.SerializedConfig) {
     const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
     const outputDir = projectConfig.project.outputDir;
     const worker = new WorkerHost(testGroup, {
@@ -227,7 +223,7 @@ export class Dispatcher {
       pauseOnError: this._failureTracker.pauseOnError(),
       pauseAtEnd: this._failureTracker.pauseAtEnd(projectConfig),
     });
-    const handleOutput = (params: TestOutputPayload) => {
+    const handleOutput = (params: ipc.TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
         // Note: we keep reading stdio from workers that are currently stopping after failure,
@@ -240,17 +236,17 @@ export class Dispatcher {
         return { chunk };
       return { chunk, test: currentlyRunning.test, result: currentlyRunning.result };
     };
-    worker.on('stdOut', (params: TestOutputPayload) => {
+    worker.on('stdOut', (params: ipc.TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stdout.push(chunk);
       this._reporter.onStdOut?.(chunk, test, result);
     });
-    worker.on('stdErr', (params: TestOutputPayload) => {
+    worker.on('stdErr', (params: ipc.TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stderr.push(chunk);
       this._reporter.onStdErr?.(chunk, test, result);
     });
-    worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
+    worker.on('teardownErrors', (params: ipc.TeardownErrorsPayload) => {
       this._failureTracker.onWorkerError();
       for (const error of params.fatalErrors)
         this._reporter.onError?.(error);
@@ -284,13 +280,13 @@ class JobDispatcher {
   private _failureTracker: FailureTracker;
   private _stopCallback: () => void;
   private _listeners: RegisteredListener[] = [];
-  private _failedTests = new Set<TestCase>();
-  private _failedWithNonRetriableError = new Set<TestCase|Suite>();
-  private _remainingByTestId = new Map<string, TestCase>();
-  private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
+  private _failedTests = new Set<testNs.TestCase>();
+  private _failedWithNonRetriableError = new Set<testNs.TestCase|testNs.Suite>();
+  private _remainingByTestId = new Map<string, testNs.TestCase>();
+  private _dataByTestId = new Map<string, { test: testNs.TestCase, result: TestResult, steps: Map<string, TestStep> }>();
   private _parallelIndex = 0;
   private _workerIndex = 0;
-  private _currentlyRunning: { test: TestCase, result: TestResult } | undefined;
+  private _currentlyRunning: { test: testNs.TestCase, result: TestResult } | undefined;
 
   constructor(job: TestGroup, config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker, stopCallback: () => void) {
     this.job = job;
@@ -301,7 +297,7 @@ class JobDispatcher {
     this._remainingByTestId = new Map(this.job.tests.map(e => [e.id, e]));
   }
 
-  private _onTestBegin(params: TestBeginPayload) {
+  private _onTestBegin(params: ipc.TestBeginPayload) {
     const test = this._remainingByTestId.get(params.testId);
     if (!test) {
       // TODO: this should never be the case, report an internal error?
@@ -316,7 +312,7 @@ class JobDispatcher {
     this._currentlyRunning = { test, result };
   }
 
-  private _onTestEnd(params: TestEndPayload) {
+  private _onTestEnd(params: ipc.TestEndPayload) {
     if (this._failureTracker.hasReachedMaxFailures()) {
       // Do not show more than one error to avoid confusion, but report
       // as interrupted to indicate that we did actually start the test.
@@ -348,15 +344,15 @@ class JobDispatcher {
     this._currentlyRunning = undefined;
   }
 
-  private _addNonretriableTestAndSerialModeParents(test: TestCase) {
+  private _addNonretriableTestAndSerialModeParents(test: testNs.TestCase) {
     this._failedWithNonRetriableError.add(test);
-    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
+    for (let parent: testNs.Suite | undefined = test.parent; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial')
         this._failedWithNonRetriableError.add(parent);
     }
   }
 
-  private _onStepBegin(params: StepBeginPayload) {
+  private _onStepBegin(params: ipc.StepBeginPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data) {
       // The test has finished, but steps are still coming. Just ignore them.
@@ -384,7 +380,7 @@ class JobDispatcher {
     this._reporter.onStepBegin?.(test, result, step);
   }
 
-  private _onStepEnd(params: StepEndPayload) {
+  private _onStepEnd(params: ipc.StepEndPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data) {
       // The test has finished, but steps are still coming. Just ignore them.
@@ -406,7 +402,7 @@ class JobDispatcher {
     this._reporter.onStepEnd?.(test, result, step);
   }
 
-  private _onAttach(params: AttachmentPayload) {
+  private _onAttach(params: ipc.AttachmentPayload) {
     const data = this._dataByTestId.get(params.testId)!;
     if (!data) {
       // The test has finished, but attachments are still coming. Just ignore them.
@@ -428,7 +424,7 @@ class JobDispatcher {
     }
   }
 
-  private _failTestWithErrors(test: TestCase, errors: TestError[]) {
+  private _failTestWithErrors(test: testNs.TestCase, errors: TestError[]) {
     const runData = this._dataByTestId.get(test.id);
     // There might be a single test that has started but has not finished yet.
     let result: TestResult;
@@ -464,7 +460,7 @@ class JobDispatcher {
     }
   }
 
-  private _onDone(params: DonePayload & { unexpectedExitError?: TestError }) {
+  private _onDone(params: ipc.DonePayload & { unexpectedExitError?: TestError }) {
     // We won't file remaining if:
     // - there are no remaining
     // - we are here not because something failed
@@ -502,16 +498,16 @@ class JobDispatcher {
         this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError]);
     }
 
-    const retryCandidates = new Set<TestCase>();
-    const serialSuitesWithFailures = new Set<Suite>();
+    const retryCandidates = new Set<testNs.TestCase>();
+    const serialSuitesWithFailures = new Set<testNs.Suite>();
 
     for (const failedTest of this._failedTests) {
       if (this._failedWithNonRetriableError.has(failedTest))
         continue;
       retryCandidates.add(failedTest);
 
-      let outermostSerialSuite: Suite | undefined;
-      for (let parent: Suite | undefined = failedTest.parent; parent; parent = parent.parent) {
+      let outermostSerialSuite: testNs.Suite | undefined;
+      for (let parent: testNs.Suite | undefined = failedTest.parent; parent; parent = parent.parent) {
         if (parent._parallelMode ===  'serial')
           outermostSerialSuite = parent;
       }
@@ -522,7 +518,7 @@ class JobDispatcher {
     // If we have failed tests that belong to a serial suite,
     // we should skip all future tests from the same serial suite.
     const testsBelongingToSomeSerialSuiteWithFailures = [...this._remainingByTestId.values()].filter(test => {
-      let parent: Suite | undefined = test.parent;
+      let parent: testNs.Suite | undefined = test.parent;
       while (parent && !serialSuitesWithFailures.has(parent))
         parent = parent.parent;
       return !!parent;
@@ -563,7 +559,7 @@ class JobDispatcher {
     this._parallelIndex = worker.parallelIndex;
     this._workerIndex = worker.workerIndex;
 
-    const runPayload: RunPayload = {
+    const runPayload: ipc.RunPayload = {
       file: this.job.requireFile,
       entries: this.job.tests.map(test => {
         return { testId: test.id, retry: test.results.length };
@@ -583,7 +579,7 @@ class JobDispatcher {
     ];
   }
 
-  private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+  private _onTestPaused(worker: WorkerHost, params: ipc.TestPausedPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
@@ -642,7 +638,7 @@ class JobDispatcher {
     return this._currentlyRunning;
   }
 
-  private _reportTestEnd(test: TestCase, result: TestResult) {
+  private _reportTestEnd(test: testNs.TestCase, result: TestResult) {
     this._reporter.onTestEnd?.(test, result);
     const hadMaxFailures = this._failureTracker.hasReachedMaxFailures();
     this._failureTracker.onTestEnd(test, result);
@@ -654,7 +650,7 @@ class JobDispatcher {
   }
 }
 
-function chunkFromParams(params: TestOutputPayload): string | Buffer {
+function chunkFromParams(params: ipc.TestOutputPayload): string | Buffer {
   if (typeof params.text === 'string')
     return params.text;
   return Buffer.from(params.buffer!, 'base64');

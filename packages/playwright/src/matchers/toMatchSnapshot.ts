@@ -22,13 +22,12 @@ import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { isString } from '@isomorphic/stringUtils';
 import { compareBuffersOrStrings, getComparator } from '@utils/comparators';
 import { callLogText, formatMatcherMessage } from '@utils/expectUtils';
-
 import { addSuffixToFilePath, expectTypes } from '../util';
-import { currentTestInfo } from '../common/globals';
+import * as globals from '../globals';
 
+import type { config } from '../common';
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
-import type { FullProjectInternal } from '../common/config';
 import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
@@ -38,7 +37,7 @@ type NameOrSegments = string | string[];
 
 type ImageMatcherResult = MatcherResult<string, string> & { diff?: string };
 
-type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<FullProjectInternal['expect']>['toHaveScreenshot']> & {
+type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<config.FullProjectInternal['expect']>['toHaveScreenshot']> & {
   _comparator?: string;
 };
 
@@ -256,7 +255,7 @@ export function toMatchSnapshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
 ): MatcherResult<NameOrSegments | { name?: NameOrSegments }, string> {
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
   if (received instanceof Promise)
@@ -327,7 +326,7 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions = {},
   optOptions: ToHaveScreenshotOptions = {}
 ): Promise<MatcherResult<NameOrSegments | { name?: NameOrSegments }, string>> {
-  const testInfo = currentTestInfo();
+  const testInfo = globals.currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
 

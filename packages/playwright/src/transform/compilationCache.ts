@@ -20,7 +20,7 @@ import path from 'path';
 
 import { calculateSha1 } from '@utils/crypto';
 import sourceMapSupport from 'source-map-support';
-import { isWorkerProcess } from '../common/globals';
+import { isWorkerProcess } from '../globals';
 import { packageRoot } from '../package';
 
 export type MemoryCache = {
