@@ -21,13 +21,13 @@ import { TLSSocket } from 'tls';
 import * as zlib from 'zlib';
 
 import { createGuid } from '@utils/crypto';
-import { getUserAgent } from '@utils/userAgent';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from '@utils/happyEyeballs';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
-import { createProxyAgent } from '@utils/network';
 import { eventsHelper } from '@utils/eventsHelper';
 import { monotonicTime } from '@isomorphic/time';
+import { createProxyAgent } from '@utils/network';
+import { getUserAgent } from './userAgent';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';

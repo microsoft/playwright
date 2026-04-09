@@ -3,7 +3,7 @@
 ../../
 ../utils/mcp/
 ../backend/
-../../utils/**
+@utils/**
 @isomorphic/**
 ../../utilsBundle.ts
 ../../server/

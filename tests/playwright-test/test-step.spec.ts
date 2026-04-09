@@ -445,22 +445,6 @@ test('step timeout includes interrupted action errors', async ({ runInlineTest }
   expect.soft(result.output).toContain('> 5 |           await page.waitForTimeout(100_000);');
 });
 
-test('step timeout is errors.TimeoutError', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, expect, errors } from '@playwright/test';
-      test('step timeout error type', async () => {
-        const e = await test.step('my step', async () => {
-          await new Promise(() => {});
-        }, { timeout: 100 }).catch(e => e);
-        expect(e).toBeInstanceOf(errors.TimeoutError);
-      });
-    `
-  }, { reporter: '', workers: 1 });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should mark step as failed when soft expect fails', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,

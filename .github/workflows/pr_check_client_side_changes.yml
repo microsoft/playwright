@@ -6,7 +6,7 @@ on:
     paths:
       - 'docs/src/api/**/*'
       - 'packages/playwright-core/src/client/**/*'
-      - 'packages/playwright-core/src/utils/isomorphic/**/*'
+      - 'packages/isomorphic/**/*'
       - 'packages/playwright/src/matchers/matchers.ts'
       - 'packages/protocol/src/protocol.yml'
 jobs:

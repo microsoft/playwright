@@ -5,7 +5,7 @@
 ../backend/
 ../mcp/
 ../../utilsBundle.ts
-../../utils/**
+@utils/**
 ../../server/registry/index.ts
 @utils/**
 ../../serverRegistry.ts

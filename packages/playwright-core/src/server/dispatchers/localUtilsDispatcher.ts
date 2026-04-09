@@ -16,10 +16,10 @@
 
 import net from 'net';
 import { resolveGlobToRegexPattern } from '@isomorphic/urlMatch';
-import { getUserAgent } from '@utils/userAgent';
-import { fetchData } from '@utils/network';
+import { fetchData } from '../utils';
+import { getUserAgent } from '../userAgent';
 import { Dispatcher } from './dispatcher';
-import { SdkObject } from '../../server/instrumentation';
+import { SdkObject } from '../instrumentation';
 import * as localUtils from '../localUtils';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';

@@ -1,9 +1,9 @@
 [*]
-../../package.ts
-../../utils/**
+@utils/**
 @isomorphic/**
 ../../utilsBundle.ts
-../utils/**
-./
+../../package.ts
+../utils.ts
+../userAgent.ts
 node_modules/colors/safe
 node_modules/progress

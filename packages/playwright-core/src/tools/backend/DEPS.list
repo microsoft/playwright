@@ -2,7 +2,7 @@
 ../../..
 ../..
 @utils/**
-../../utils/**
+@utils/**
 @isomorphic/**
 ../utils/**
 node_modules/@modelcontextprotocol/sdk/types.js

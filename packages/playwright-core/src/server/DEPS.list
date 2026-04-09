@@ -1,9 +1,10 @@
 [*]
+@isomorphic/**
+@utils/**
 ../generated/
 ../package.ts
 ../protocol/
 ../utils
-@isomorphic/**
 ../utilsBundle.ts
 ./
 ./codegen/
@@ -12,7 +13,6 @@
 ./recorder/
 ./registry/
 ./trace/recorder/tracing.ts
-./utils/
 node_modules/jpeg-js
 node_modules/mime
 node_modules/pngjs

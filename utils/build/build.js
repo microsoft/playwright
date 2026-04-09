@@ -590,6 +590,13 @@ const externalizeUtilsBundlePlugin = {
   name: 'externalize-utilsBundle',
   setup(build) {
     build.onResolve({ filter: /utilsBundle/ }, args => {
+      // Bare absolute specifier used by the dynamic-import-to-require
+      // plugin for source files that live OUTSIDE playwright-core/src
+      // (e.g., packages/utils/*.ts). These end up inlined into
+      // coreBundle.js, so the runtime path resolves correctly against
+      // lib/coreBundle.js's sibling lib/utilsBundle.js.
+      if (args.path === 'playwright-core/lib/utilsBundle')
+        return { path: './utilsBundle', external: true };
       if (!args.path.startsWith('.'))
         return;
       // Match `<depth>/utilsBundle` or `<depth>/utilsBundle.js` so
@@ -698,8 +705,6 @@ steps.push(new EsbuildStep({
   platform: 'node',
   format: 'cjs',
   external: [
-    'playwright-core',
-    'playwright-core/*',
     '../package',
   ],
   plugins: [dynamicImportToRequirePlugin],
@@ -718,6 +723,7 @@ steps.push(new EsbuildStep({
     'playwright-core/*',
     '../globals',
     '../package',
+    '../babelBundle',
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
@@ -915,7 +921,7 @@ onChanges.push({
     'packages/injected/src/**',
     'packages/playwright-core/src/third_party/**',
     'packages/playwright-ct-core/src/injected/**',
-    'packages/playwright-core/src/utils/isomorphic/**',
+    'packages/isomorphic/**',
     'utils/generate_injected_builtins.js',
     'utils/generate_injected.js',
   ],

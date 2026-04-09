@@ -1,5 +1,5 @@
 [*]
-@utils/network.ts
+@utils/**
 node_modules/@modelcontextprotocol/sdk/server/index.js
 node_modules/@modelcontextprotocol/sdk/server/sse.js
 node_modules/@modelcontextprotocol/sdk/server/stdio.js

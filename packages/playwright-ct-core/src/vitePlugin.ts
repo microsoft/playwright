@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso, utils } from 'playwright-core/lib/coreBundle';
+import { iso, utils, getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
 import { colors, debug, stoppable } from 'playwright-core/lib/utilsBundle';
 import { cc, transform } from 'playwright/lib/common';
 import { removeDirAndLogToConsole } from 'playwright/lib/util';
@@ -38,7 +38,7 @@ import type { ComponentRegistry } from './viteUtils';
 const log = debug('pw:vite');
 
 let stoppableServer: any;
-const playwrightVersion = utils.getPlaywrightVersion();
+const playwrightVersion = getPlaywrightVersion();
 
 export function createPlugin(): TestRunnerPlugin {
   let configDir: string;

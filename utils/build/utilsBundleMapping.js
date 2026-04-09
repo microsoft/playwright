@@ -13,7 +13,7 @@ const MAPPING = {
   'diff': { namespace: 'diff' },
   'dotenv': { default: 'dotenv' },
   'proxy-from-env': { named: { getProxyForUrl: 'getProxyForUrl' } },
-  'https-proxy-agent': { named: { HttpsProxyAgent: 'HttpsProxyAgent' } },
+  'https-proxy-agent': { default: 'httpProxyAgent', named: { HttpsProxyAgent: 'HttpsProxyAgent' } },
   'jpeg-js': { default: 'jpegjs' },
   'mime': { default: 'mime' },
   'minimatch': { default: 'minimatch' },
@@ -21,7 +21,7 @@ const MAPPING = {
   'pngjs': { named: { PNG: 'PNG' } },
   'commander': { named: { program: 'program', Option: 'ProgramOption' } },
   'progress': { default: 'progress' },
-  'socks-proxy-agent': { named: { SocksProxyAgent: 'SocksProxyAgent' } },
+  'socks-proxy-agent': { default: 'socksProxyAgent', named: { SocksProxyAgent: 'SocksProxyAgent' } },
   'ws': {
     default: 'ws',
     named: { WebSocketServer: 'wsServer' },

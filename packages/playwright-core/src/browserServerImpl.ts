@@ -18,11 +18,11 @@ import EventEmitter from 'events';
 
 import { createGuid } from '@utils/crypto';
 import { isUnderTest } from '@utils/debug';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '@isomorphic/time';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { createPlaywright } from './server/playwright';
-import { rewriteErrorMessage } from './utils/isomorphic/stackTrace';
-import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from './utils/isomorphic/time';
 import * as validatorPrimitives from './protocol/validatorPrimitives';
 import { ProgressController } from './server/progress';
 

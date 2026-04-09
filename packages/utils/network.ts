@@ -26,8 +26,13 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs';
 
 import type net from 'net';
-import type { ProxySettings } from '../types';
-import type { Progress } from '../progress';
+
+export type ProxySettings = {
+  server: string,
+  bypass?: string,
+  username?: string,
+  password?: string
+};
 
 export type HTTPRequestParams = {
   url: string,
@@ -92,29 +97,6 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   };
   request.end(params.data);
   return { cancel: e => cancelRequest(e) };
-}
-
-export async function fetchData(progress: Progress | undefined, params: HTTPRequestParams, onError?: (params: HTTPRequestParams, response: http.IncomingMessage) => Promise<Error>): Promise<string> {
-  const promise = new ManualPromise<string>();
-  const { cancel } = httpRequest(params, async response => {
-    if (response.statusCode !== 200) {
-      const error = onError ? await onError(params, response) : new Error(`fetch failed: server returned code ${response.statusCode}. URL: ${params.url}`);
-      promise.reject(error);
-      return;
-    }
-    let body = '';
-    response.on('data', (chunk: string) => body += chunk);
-    response.on('error', (error: any) => promise.reject(error));
-    response.on('end', () => promise.resolve(body));
-  }, error => promise.reject(error));
-  if (!progress)
-    return promise;
-  try {
-    return await progress.race(promise);
-  } catch (error) {
-    cancel(error);
-    throw error;
-  }
 }
 
 function shouldBypassProxy(url: URL, bypass?: string): boolean {

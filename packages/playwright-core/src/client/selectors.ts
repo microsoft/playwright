@@ -21,7 +21,7 @@ import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type { BrowserContext } from './browserContext';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 
 export class Selectors implements api.Selectors {
   private _platform: Platform;

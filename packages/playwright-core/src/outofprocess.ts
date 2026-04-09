@@ -19,9 +19,9 @@ import path from 'path';
 
 import { PipeTransport } from '@utils/pipeTransport';
 import { nodePlatform } from '@utils/nodePlatform';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { Connection } from './client/connection';
 import { packageRoot } from './package';
-import { ManualPromise } from './utils/isomorphic/manualPromise';
 
 import type { Playwright } from './client/playwright';
 
@@ -51,7 +51,7 @@ class PlaywrightClient {
     // eslint-disable-next-line no-restricted-properties
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
-    const connection = new Connection(nodePlatform);
+    const connection = new Connection(nodePlatform(packageRoot));
     const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));

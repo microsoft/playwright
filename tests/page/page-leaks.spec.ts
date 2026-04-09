@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { iso, sever } from '../../packages/playwright-core/lib/coreBundle';
-const { nullProgress } = sever;
+import { iso, server as coreServer } from '../../packages/playwright-core/lib/coreBundle';
+const { nullProgress } = coreServer;
 import { test, expect } from './pageTest';
 
 const { MultiMap } = iso;

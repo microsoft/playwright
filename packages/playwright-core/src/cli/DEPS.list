@@ -1,9 +1,10 @@
 [*]
+@isomorphic/**
+@utils/**
 ../inprocess.ts
 ../package.ts
 ../server/
 ../server/registry/
-@utils/**
 ../remote/
 ../utils/**
 ../utilsBundle.ts

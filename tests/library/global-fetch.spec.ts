@@ -16,11 +16,9 @@
 
 import os from 'os';
 import * as util from 'util';
-import { utils } from '../../packages/playwright-core/lib/coreBundle';
+import { getPlaywrightVersion } from '../../packages/playwright-core/lib/coreBundle';
 import { expect, playwrightTest as base } from '../config/browserTest';
 import { kTargetClosedErrorMessage } from '../config/errors';
-
-const { getPlaywrightVersion } = utils;
 
 const it = base.extend({
   context: async ({}, use) => {

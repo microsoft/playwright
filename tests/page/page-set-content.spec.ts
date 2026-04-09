@@ -16,8 +16,8 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { sever } from '../../packages/playwright-core/lib/coreBundle';
-const { nullProgress } = sever;
+import { server as coreServer } from '../../packages/playwright-core/lib/coreBundle';
+const { nullProgress } = coreServer;
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 

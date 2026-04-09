@@ -24,8 +24,8 @@ import ProgressBar from 'progress';
 import colors from 'colors/safe';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { debugLogger } from '@utils/debugLogger';
-import { getUserAgent } from '@utils/userAgent';
 import { existsAsync, removeFolders } from '@utils/fileUtils';
+import { getUserAgent } from '../userAgent';
 import { libPath } from '../../package';
 
 import { browserDirectoryToMarkerFilePath } from '.';

@@ -22,12 +22,12 @@ import tls from 'tls';
 
 import { getProxyForUrl } from 'proxy-from-env';
 import { SocksProxy } from '@utils/socksProxy';
-import { createProxyAgent } from '@utils/network';
 import { debugLogger } from '@utils/debugLogger';
 import { createSocket } from '@utils/happyEyeballs';
 import { escapeHTML } from '@isomorphic/stringUtils';
 import { generateSelfSignedCertificate } from '@utils/crypto';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { createProxyAgent } from '@utils/network';
 import { verifyClientCertificates } from './browserContext';
 import type * as types from './types';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '@utils/socksProxy';

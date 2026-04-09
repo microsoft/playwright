@@ -1,7 +1,8 @@
 [*]
+@isomorphic/**
+@utils/**
 ../
 ../../protocol/
-@isomorphic/**
 ../../utilsBundle.ts
 ../chromium/
 ../utils

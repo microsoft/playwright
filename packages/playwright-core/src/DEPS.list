@@ -17,6 +17,7 @@ server/
 
 [inprocess.ts]
 **
+@utils/**
 
 [outofprocess.ts]
 client/
