@@ -25,7 +25,7 @@ import { createGuid } from '@utils/crypto';
 import { sanitizeForFilePath } from '@utils/fileUtils';
 import { currentZone } from '@utils/zones';
 
-import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
+import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
@@ -160,13 +160,8 @@ export class TestInfoImpl implements TestInfo {
     // Ignored.
   }
 
-  _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
-    const startTime = monotonicTime();
-    const matcherDeadline = timeout ? startTime + timeout : kMaxDeadline;
-    const testDeadline = this._timeoutManager.currentSlotDeadline() - 250;
-    const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
-    const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
-    return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
+  _deadline(): { deadline: number, timeout: number } {
+    return { deadline: this._timeoutManager.currentSlotDeadline(), timeout: this.timeout };
   }
 
   constructor(
@@ -408,7 +403,9 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error | unknown) {
+  _failWithError(error: Error | unknown, shouldNotRetry?: 'shouldNotRetry') {
+    if (shouldNotRetry)
+      this._hasNonRetriableError = true;
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = testInfoError(error);

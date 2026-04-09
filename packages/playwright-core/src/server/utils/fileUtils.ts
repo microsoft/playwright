@@ -54,6 +54,12 @@ export async function copyFileAndMakeWritable(from: string, to: string) {
   await fs.promises.chmod(to, 0o664);
 }
 
+export function addSuffixToFilePath(filePath: string, suffix: string): string {
+  const ext = path.extname(filePath);
+  const base = filePath.substring(0, filePath.length - ext.length);
+  return base + suffix + ext;
+}
+
 export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }

@@ -21,14 +21,14 @@ import colors from 'colors/safe';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { isString } from '@isomorphic/stringUtils';
 import { compareBuffersOrStrings, getComparator } from '@utils/comparators';
-import { callLogText, formatMatcherMessage } from '@utils/expectUtils';
-import { addSuffixToFilePath, expectTypes } from '../util';
-import * as globals from '../globals';
+import { addSuffixToFilePath } from '@utils/fileUtils';
 
-import type { config } from '../common';
+import { callLogText, expectTypes, formatMatcherMessage } from './matcherHint';
+import { expectConfig } from './expect';
+
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
-import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
+import type { ExpectTestInfo, ExpectStepInfo } from './expect';
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Comparator, ImageComparatorOptions } from '@utils/comparators';
@@ -37,7 +37,11 @@ type NameOrSegments = string | string[];
 
 type ImageMatcherResult = MatcherResult<string, string> & { diff?: string };
 
-type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<config.FullProjectInternal['expect']>['toHaveScreenshot']> & {
+type ToHaveScreenshotConfigOptions = ImageComparatorOptions & {
+  animations?: 'allow' | 'disabled';
+  caret?: 'hide' | 'initial';
+  scale?: 'css' | 'device';
+  stylePath?: string | string[];
   _comparator?: string;
 };
 
@@ -67,7 +71,7 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
 // Keep in sync with above (end).
 
 class SnapshotHelper {
-  readonly testInfo: TestInfoImpl;
+  readonly testInfo: ExpectTestInfo;
   readonly name: string;
   readonly attachmentBaseName: string;
   readonly legacyExpectedPath: string;
@@ -86,7 +90,7 @@ class SnapshotHelper {
 
   constructor(
     state: ExpectMatcherStateInternal,
-    testInfo: TestInfoImpl,
+    testInfo: ExpectTestInfo,
     matcherName: 'toMatchSnapshot' | 'toHaveScreenshot',
     locator: Locator | undefined,
     anonymousSnapshotExtension: string | undefined,
@@ -138,7 +142,7 @@ class SnapshotHelper {
     this.matcherName = matcherName;
     this.locator = locator;
 
-    this.updateSnapshots = testInfo.config.updateSnapshots;
+    this.updateSnapshots = expectConfig().updateSnapshots;
     this.mimeType = getMimeTypeForPath(path.basename(this.expectedPath)) ?? 'application/octet-stream';
     this.comparator = getComparator(this.mimeType);
 
@@ -182,7 +186,7 @@ class SnapshotHelper {
     return this.createMatcherResult(message, true);
   }
 
-  handleMissing(actual: Buffer | string, step: TestStepInfoImpl | undefined): ImageMatcherResult {
+  handleMissing(actual: Buffer | string, step: ExpectStepInfo | undefined): ImageMatcherResult {
     const isWriteMissingMode = this.updateSnapshots !== 'none';
     if (isWriteMissingMode)
       writeFileSync(this.expectedPath, actual);
@@ -196,8 +200,7 @@ class SnapshotHelper {
       return this.createMatcherResult(message, true);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._hasNonRetriableError = true;
-      this.testInfo._failWithError(new Error(message));
+      this.testInfo._failWithError(new Error(message), 'shouldNotRetry');
       return this.createMatcherResult('', true);
     }
     return this.createMatcherResult(message, false);
@@ -211,7 +214,7 @@ class SnapshotHelper {
     header: string,
     diffError: string,
     log: string[] | undefined,
-    step: TestStepInfoImpl | undefined): ImageMatcherResult {
+    step: ExpectStepInfo | undefined): ImageMatcherResult {
     const output = [`${header}${indent(diffError, '  ')}`];
     if (this.name) {
       output.push('');
@@ -255,16 +258,16 @@ export function toMatchSnapshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
 ): MatcherResult<NameOrSegments | { name?: NameOrSegments }, string> {
-  const testInfo = globals.currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
   if (received instanceof Promise)
     throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
 
-  if (testInfo._projectInternal.project.ignoreSnapshots)
+  if (expectConfig().ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected: nameOrOptions };
 
-  const configOptions = testInfo._projectInternal.expect?.toMatchSnapshot || {};
+  const configOptions = expectConfig().toMatchSnapshot || {};
   const helper = new SnapshotHelper(
       this, testInfo, 'toMatchSnapshot', undefined, '.' + determineFileExtension(received),
       configOptions, nameOrOptions, optOptions);
@@ -326,16 +329,16 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions = {},
   optOptions: ToHaveScreenshotOptions = {}
 ): Promise<MatcherResult<NameOrSegments | { name?: NameOrSegments }, string>> {
-  const testInfo = globals.currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
 
-  if (testInfo._projectInternal.project.ignoreSnapshots)
+  if (expectConfig().ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toHaveScreenshot', expected: nameOrOptions };
 
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = (pageOrLocator as any)._apiName === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
-  const configOptions = testInfo._projectInternal.expect?.toHaveScreenshot || {};
+  const configOptions = expectConfig().toHaveScreenshot || {};
   const helper = new SnapshotHelper(this, testInfo, 'toHaveScreenshot', locator, undefined, configOptions, nameOrOptions, optOptions);
   if (!helper.expectedPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have '.png' extension`);

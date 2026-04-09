@@ -858,6 +858,7 @@ steps.push(new EsbuildStep({
     '../globals',
     '../package',
     '../utils',
+    '../matchers/expect',
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));

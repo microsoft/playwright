@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { formatMatcherMessage } from '@utils/expectUtils';
-
-import { expectTypes } from '../util';
+import { expectTypes, formatMatcherMessage } from './matcherHint';
 
 import type { MatcherResult } from './matcherHint';
 import type { Locator } from 'playwright-core';
