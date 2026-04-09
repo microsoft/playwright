@@ -230,13 +230,21 @@ class ApiParser {
   parseType(spec, since) {
     const arg = parseVariable(spec.text);
     const properties = [];
+    /** @type {Object<string, string>} */
+    const langAliases = {};
     for (const child of /** @type {MarkdownLiNode[]} */ (spec.children) || []) {
-      const { name, text } = parseVariable(/** @type {string} */(child.text));
+      const childText = /** @type {string} */(child.text);
+      const aliasMatch = childText.match(/^alias(?:-(\w+))?\s*:\s*(.*)$/);
+      if (aliasMatch) {
+        langAliases[aliasMatch[1] || 'default'] = aliasMatch[2].trim();
+        continue;
+      }
+      const { name, text } = parseVariable(childText);
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
       const childType = this.parseType(child, since);
       properties.push(docs.Member.createProperty({ langs: {}, since, deprecated: undefined, discouraged: undefined }, name, childType.type, comments, !childType.optional));
     }
-    const type = docs.Type.parse(arg.type, properties);
+    const type = docs.Type.parse(arg.type, properties, langAliases);
     return { type, optional: arg.optional };
   }
 }
