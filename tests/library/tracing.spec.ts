@@ -458,12 +458,12 @@ for (const params of [
 
     // Check all frame sizes.
     for (const frame of frames) {
-      expect(frame.width).toBe(params.width);
-      expect(frame.height).toBe(params.height);
+      expect.soft(frame.width).toBe(params.width);
+      expect.soft(frame.height).toBe(params.height);
       const buffer = resources.get('resources/' + frame.sha1);
       const image = jpegjs.decode(buffer);
-      expect(image.width).toBe(previewWidth);
-      expect(image.height).toBe(previewHeight);
+      expect.soft(image.width).toBe(previewWidth);
+      expect.soft(image.height).toBe(previewHeight);
     }
 
     const frame = frames[frames.length - 1]; // pick last frame.

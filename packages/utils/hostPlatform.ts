@@ -27,6 +27,7 @@ export type HostPlatform = 'win64' |
                            'mac13' | 'mac13-arm64' |
                            'mac14' | 'mac14-arm64' |
                            'mac15' | 'mac15-arm64' |
+                           'mac26' | 'mac26-arm64' |
                            'ubuntu18.04-x64' | 'ubuntu18.04-arm64' |
                            'ubuntu20.04-x64' | 'ubuntu20.04-arm64' |
                            'ubuntu22.04-x64' | 'ubuntu22.04-arm64' |
@@ -54,12 +55,17 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
       macVersion = 'mac10.14';
     } else if (ver[0] === 19) {
       macVersion = 'mac10.15';
-    } else {
-      // ver[0] >= 20
-      const LAST_STABLE_MACOS_MAJOR_VERSION = 15;
-      // Best-effort support for MacOS beta versions.
-      macVersion = 'mac' + Math.min(ver[0] - 9, LAST_STABLE_MACOS_MAJOR_VERSION);
+    } else if (ver[0] < 25) {
+      // Darwin 20..24 → macOS 11..15 (BigSur..Sequoia).
+      macVersion = 'mac' + (ver[0] - 9);
       // BigSur is the first version that might run on Apple Silicon.
+      if (os.cpus().some(cpu => cpu.model.includes('Apple')))
+        macVersion += '-arm64';
+    } else {
+      // Apple jumped from macOS 15 (Sequoia) to macOS 26 (Tahoe), so Darwin 25 = macOS 26.
+      // Best-effort support for MacOS beta versions.
+      const LAST_STABLE_MACOS_MAJOR_VERSION = 26;
+      macVersion = 'mac' + Math.min(ver[0] + 1, LAST_STABLE_MACOS_MAJOR_VERSION);
       if (os.cpus().some(cpu => cpu.model.includes('Apple')))
         macVersion += '-arm64';
     }
