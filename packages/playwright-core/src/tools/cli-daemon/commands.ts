@@ -265,7 +265,7 @@ const drag = declareCommand({
   toolParams: ({ startElement, endElement }) => {
     const start = asRef(startElement);
     const end = asRef(endElement);
-    return { startRef: start.ref, startSelector: start.selector, endRef: end.ref, endSelector: end.selector };
+    return { startElement, startRef: start.ref, startSelector: start.selector, endElement, endRef: end.ref, endSelector: end.selector };
   },
 });
 
