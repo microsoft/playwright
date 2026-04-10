@@ -19116,6 +19116,8 @@ export interface APIRequestContext {
     }>;
   }>;
 
+  tracing: Tracing;
+
   [Symbol.asyncDispose](): Promise<void>;
 }
 
@@ -22149,6 +22151,48 @@ export interface Tracing {
   }): Promise<void>;
 
   /**
+   * Start recording a HAR (HTTP Archive) of network activity in this context. The HAR file is written to disk when
+   * [tracing.stopHar()](https://playwright.dev/docs/api/class-tracing#tracing-stop-har) is called, or when the returned
+   * [Disposable](https://playwright.dev/docs/api/class-disposable) is disposed.
+   *
+   * Only one HAR recording can be active at a time per
+   * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await context.tracing.startHar('trace.har');
+   * const page = await context.newPage();
+   * await page.goto('https://playwright.dev');
+   * await context.tracing.stopHar();
+   * ```
+   *
+   * @param path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the HAR is saved as a zip
+   * archive with response bodies attached as separate files.
+   * @param options
+   */
+  startHar(path: string, options?: {
+    /**
+     * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+     * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+     * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+     * files and to `embed` for all other file extensions.
+     */
+    content?: "omit"|"embed"|"attach";
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     */
+    mode?: "full"|"minimal";
+
+    /**
+     * A glob or regex pattern to filter requests that are stored in the HAR. Defaults to none.
+     */
+    urlFilter?: string|RegExp;
+  }): Promise<Disposable>;
+
+  /**
    * Stop tracing.
    * @param options
    */
@@ -22173,6 +22217,12 @@ export interface Tracing {
      */
     path?: string;
   }): Promise<void>;
+
+  /**
+   * Stop HAR recording and save the HAR file to the path given to
+   * [tracing.startHar(path[, options])](https://playwright.dev/docs/api/class-tracing#tracing-start-har).
+   */
+  stopHar(): Promise<void>;
 }
 
 /**

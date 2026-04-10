@@ -914,3 +914,34 @@ it('should not hang on slow chunked response', async ({ browserName, browser, co
   expect(log.browser!.name).toBe(browserName);
   expect(log.browser!.version).toBe(browser.version());
 });
+
+it.describe('tracing.startHar', () => {
+  it('should record a HAR with options', async ({ contextFactory, server }, testInfo) => {
+    const context = await contextFactory();
+    const harPath = testInfo.outputPath('tracing.har');
+    await context.tracing.startHar(harPath, { mode: 'minimal', urlFilter: '**/one-style.css' });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/one-style.html');
+    await context.tracing.stopHar();
+    await context.close();
+
+    const log = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
+    const urls = log.entries.map(e => e.request.url);
+    expect(urls).toEqual([server.PREFIX + '/one-style.css']);
+    // Minimal mode drops body sizes.
+    expect(log.entries[0].request.bodySize).toBe(-1);
+  });
+
+  it('should record a zipped HAR for APIRequestContext', async ({ playwright, server }, testInfo) => {
+    const request = await playwright.request.newContext();
+    const harPath = testInfo.outputPath('tracing.har.zip');
+    await request.tracing.startHar(harPath, { content: 'attach' });
+    await request.get(server.PREFIX + '/simple.json');
+    await request.tracing.stopHar();
+    await request.dispose();
+
+    const resources = await parseHar(harPath);
+    const log = JSON.parse(resources.get('har.har')!.toString()).log as Log;
+    expect(log.entries.some(e => e.request.url === server.PREFIX + '/simple.json')).toBe(true);
+  });
+});

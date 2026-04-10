@@ -729,11 +729,11 @@ class ArtifactsRecorder {
   }
 
   async didCreateRequestContext(context: APIRequestContextImpl) {
-    await this._startTraceChunkOnContextCreation(context, context._tracing);
+    await this._startTraceChunkOnContextCreation(context, context.tracing);
   }
 
   async willCloseRequestContext(context: APIRequestContextImpl) {
-    await this._stopTracing(context, context._tracing);
+    await this._stopTracing(context, context.tracing);
   }
 
   async didFinishTestFunction() {
@@ -750,7 +750,7 @@ class ArtifactsRecorder {
     await Promise.all(leftoverContexts.map(async context => {
       await this._stopTracing(context, context.tracing);
     }).concat(leftoverApiRequests.map(async context => {
-      await this._stopTracing(context, context._tracing);
+      await this._stopTracing(context, context.tracing);
     })));
 
     await this._screenshotRecorder.persistTemporary();

@@ -19,9 +19,10 @@ import path from 'path';
 
 import * as yazl from 'yazl';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { createGuid } from '@utils/crypto';
 import { Artifact } from '../artifact';
 import { HarTracer } from './harTracer';
+
+import type { APIRequestContext } from '../fetch';
 import type { BrowserContext } from '../browserContext';
 import type { HarTracerDelegate } from './harTracer';
 import type { ZipFile } from 'yazl';
@@ -38,8 +39,8 @@ export class HarRecorder implements HarTracerDelegate {
   private _zipFile: ZipFile | null = null;
   private _writtenZipEntries = new Set<string>();
 
-  constructor(context: BrowserContext, page: Page | null, options: channels.RecordHarOptions) {
-    this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
+  constructor(context: BrowserContext | APIRequestContext, harFilePath: string, page: Page | null, options: channels.RecordHarOptions) {
+    this._artifact = new Artifact(context, harFilePath);
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
     const expectsZip = !!options.zip;
     const content = options.content || (expectsZip ? 'attach' : 'embed');
@@ -79,6 +80,8 @@ export class HarRecorder implements HarTracerDelegate {
     log.entries = this._entries;
 
     const harFileContent = jsonStringify({ log });
+
+    await fs.promises.mkdir(path.dirname(this._artifact.localPath()), { recursive: true });
 
     if (this._zipFile) {
       const result = new ManualPromise<void>();

@@ -1691,8 +1691,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   disableRecorder(params?: BrowserContextDisableRecorderParams, progress?: Progress): Promise<BrowserContextDisableRecorderResult>;
   exposeConsoleApi(params?: BrowserContextExposeConsoleApiParams, progress?: Progress): Promise<BrowserContextExposeConsoleApiResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, progress?: Progress): Promise<BrowserContextNewCDPSessionResult>;
-  harStart(params: BrowserContextHarStartParams, progress?: Progress): Promise<BrowserContextHarStartResult>;
-  harExport(params: BrowserContextHarExportParams, progress?: Progress): Promise<BrowserContextHarExportResult>;
   createTempFiles(params: BrowserContextCreateTempFilesParams, progress?: Progress): Promise<BrowserContextCreateTempFilesResult>;
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, progress?: Progress): Promise<BrowserContextUpdateSubscriptionResult>;
   clockFastForward(params: BrowserContextClockFastForwardParams, progress?: Progress): Promise<BrowserContextClockFastForwardResult>;
@@ -1999,25 +1997,6 @@ export type BrowserContextNewCDPSessionOptions = {
 };
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
-};
-export type BrowserContextHarStartParams = {
-  page?: PageChannel,
-  options: RecordHarOptions,
-};
-export type BrowserContextHarStartOptions = {
-  page?: PageChannel,
-};
-export type BrowserContextHarStartResult = {
-  harId: string,
-};
-export type BrowserContextHarExportParams = {
-  harId?: string,
-};
-export type BrowserContextHarExportOptions = {
-  harId?: string,
-};
-export type BrowserContextHarExportResult = {
-  artifact: ArtifactChannel,
 };
 export type BrowserContextCreateTempFilesParams = {
   rootDirName?: string,
@@ -4474,6 +4453,8 @@ export interface TracingChannel extends TracingEventTarget, Channel {
   tracingGroupEnd(params?: TracingTracingGroupEndParams, progress?: Progress): Promise<TracingTracingGroupEndResult>;
   tracingStopChunk(params: TracingTracingStopChunkParams, progress?: Progress): Promise<TracingTracingStopChunkResult>;
   tracingStop(params?: TracingTracingStopParams, progress?: Progress): Promise<TracingTracingStopResult>;
+  harStart(params: TracingHarStartParams, progress?: Progress): Promise<TracingHarStartResult>;
+  harExport(params: TracingHarExportParams, progress?: Progress): Promise<TracingHarExportResult>;
 }
 export type TracingTracingStartParams = {
   name?: string,
@@ -4531,6 +4512,25 @@ export type TracingTracingStopChunkResult = {
 export type TracingTracingStopParams = {};
 export type TracingTracingStopOptions = {};
 export type TracingTracingStopResult = void;
+export type TracingHarStartParams = {
+  page?: PageChannel,
+  options: RecordHarOptions,
+};
+export type TracingHarStartOptions = {
+  page?: PageChannel,
+};
+export type TracingHarStartResult = {
+  harId: string,
+};
+export type TracingHarExportParams = {
+  harId?: string,
+};
+export type TracingHarExportOptions = {
+  harId?: string,
+};
+export type TracingHarExportResult = {
+  artifact: ArtifactChannel,
+};
 
 export interface TracingEvents {
 }

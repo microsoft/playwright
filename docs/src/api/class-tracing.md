@@ -303,6 +303,75 @@ given name prefix inside the [`option: BrowserType.launch.tracesDir`] directory 
 To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stopChunk`] instead.
 
+## async method: Tracing.startHar
+* since: v1.60
+- returns: <[Disposable]>
+
+Start recording a HAR (HTTP Archive) of network activity in this context. The HAR file is written to disk when [`method: Tracing.stopHar`] is called, or when the returned [Disposable] is disposed.
+
+Only one HAR recording can be active at a time per [BrowserContext].
+
+**Usage**
+
+```js
+await context.tracing.startHar('trace.har');
+const page = await context.newPage();
+await page.goto('https://playwright.dev');
+await context.tracing.stopHar();
+```
+
+```java
+context.tracing().startHar(Paths.get("trace.har"));
+Page page = context.newPage();
+page.navigate("https://playwright.dev");
+context.tracing().stopHar();
+```
+
+```python async
+await context.tracing.start_har("trace.har")
+page = await context.new_page()
+await page.goto("https://playwright.dev")
+await context.tracing.stop_har()
+```
+
+```python sync
+context.tracing.start_har("trace.har")
+page = context.new_page()
+page.goto("https://playwright.dev")
+context.tracing.stop_har()
+```
+
+```csharp
+await context.Tracing.StartHarAsync("trace.har");
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://playwright.dev");
+await context.Tracing.StopHarAsync();
+```
+
+### param: Tracing.startHar.path
+* since: v1.60
+- `path` <[path]>
+
+Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the HAR is saved as a zip archive with response bodies attached as separate files.
+
+### option: Tracing.startHar.content
+* since: v1.60
+- `content` <[HarContentPolicy]<"omit"|"embed"|"attach">>
+
+Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
+
+### option: Tracing.startHar.mode
+* since: v1.60
+- `mode` <[HarMode]<"full"|"minimal">>
+
+When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+
+### option: Tracing.startHar.urlFilter
+* since: v1.60
+- `urlFilter` <[string]|[RegExp]>
+
+A glob or regex pattern to filter requests that are stored in the HAR. Defaults to none.
+
 ## async method: Tracing.group
 * since: v1.49
 - returns: <[Disposable]>
@@ -400,3 +469,8 @@ Stop the trace chunk. See [`method: Tracing.startChunk`] for more details about 
 - `path` <[path]>
 
 Export trace collected since the last [`method: Tracing.startChunk`] call into the file with the given path.
+
+## async method: Tracing.stopHar
+* since: v1.60
+
+Stop HAR recording and save the HAR file to the path given to [`method: Tracing.startHar`].
