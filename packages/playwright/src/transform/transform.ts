@@ -46,6 +46,7 @@ const cachedTSConfigs = new Map<string, ParsedTsConfigData[]>();
 export type TransformConfig = {
   babelPlugins: [string, any?][];
   external: string[];
+  jsxImportSource?: string;
 };
 
 let _transformConfig: TransformConfig = {
@@ -248,7 +249,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
     name,
     { ...(opts || {}), setTransformData: setTransformDataForPlugin },
   ]);
-  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, wrappedPrologue, pluginsEpilogue);
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, wrappedPrologue, pluginsEpilogue, _transformConfig.jsxImportSource);
   if (!babelResult?.code)
     return { code: originalCode, serializedCache };
   const { code, map } = babelResult;
