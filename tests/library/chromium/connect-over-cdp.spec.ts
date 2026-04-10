@@ -89,7 +89,11 @@ test('should cleanup artifacts dir after connectOverCDP disconnects due to ws cl
   expect(exists2).toBe(false);
 });
 
-test('should connectOverCDP and manage downloads in default context', async ({ browserType, mode, server }, testInfo) => {
+test('should connectOverCDP and manage downloads in an opted-in context', async ({ browserType, mode, server }, testInfo) => {
+  // Downloads from Playwright-created contexts still work normally when the caller opts
+  // in via `newContext({ acceptDownloads: true })`. The default context (shared with the
+  // attached browser) no longer intercepts downloads by default, to preserve the real
+  // user's download behavior — see test below for that guarantee.
   server.setRoute('/downloadWithFilename', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
@@ -105,7 +109,8 @@ test('should connectOverCDP and manage downloads in default context', async ({ b
     const browser = await browserType.connectOverCDP({
       endpointURL: `http://127.0.0.1:${port}/`,
     });
-    const page = await browser.contexts()[0].newPage();
+    const context = await browser.newContext({ acceptDownloads: true });
+    const page = await context.newPage();
     await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
 
     const [download] = await Promise.all([
@@ -120,6 +125,47 @@ test('should connectOverCDP and manage downloads in default context', async ({ b
     await download.saveAs(userPath);
     expect(fs.existsSync(userPath)).toBeTruthy();
     expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+    await context.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('should not override browser-default download behavior on the default context', async ({ browserType, mode, server }, testInfo) => {
+  // Regression guard: connectOverCDP must NOT send Browser.setDownloadBehavior for the
+  // default context it inherits from the attached browser. Previously it did, which
+  // globally hijacked the real user's download folder (downloads landed in a Playwright
+  // temp dir with UUID filenames — see chromium.ts comment in _connectOverCDPImpl).
+  server.setRoute('/downloadWithFilename', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+    res.end(`Hello world`);
+  });
+
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+
+  try {
+    const browser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const defaultContext = browser.contexts()[0];
+    const page = await defaultContext.newPage();
+    await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
+
+    // Playwright must NOT emit a 'download' event on the default context after the fix,
+    // because the default context's acceptDownloads is 'internal-browser-default' and
+    // Browser.setDownloadBehavior is never sent with eventsEnabled=true for it.
+    let sawDownloadEvent = false;
+    page.on('download', () => { sawDownloadEvent = true; });
+
+    await page.click('a');
+    // Give Chrome and Playwright a moment to deliver the event if it were going to fire.
+    await page.waitForTimeout(500);
+
+    expect(sawDownloadEvent).toBe(false);
   } finally {
     await browserServer.close();
   }

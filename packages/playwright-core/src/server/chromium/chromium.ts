@@ -112,7 +112,17 @@ export class Chromium extends BrowserType {
 
     try {
       const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
-      const persistent: types.BrowserContextOptions = { noDefaultViewport: true };
+      const persistent: types.BrowserContextOptions = {
+        noDefaultViewport: true,
+        // When attaching to an externally-launched browser via CDP, the user
+        // (not Playwright) owns the browser. Do not send
+        // Browser.setDownloadBehavior, which would hijack the real browser's
+        // download folder globally — including for tabs the user opened
+        // manually outside of automation. Callers that need automation-owned
+        // downloads can still opt in by passing acceptDownloads explicitly
+        // on a new BrowserContext.
+        acceptDownloads: 'internal-browser-default',
+      };
       const browserOptions: BrowserOptions = {
         slowMo: options.slowMo,
         name: 'chromium',
