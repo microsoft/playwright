@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
 import * as babel from '@babel/core';
 import traverseFunction from '@babel/traverse';
 
@@ -77,7 +75,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
   plugins.push([require('@babel/plugin-transform-react-jsx'), {
     throwIfNamespace: false,
     runtime: 'automatic',
-    importSource: 'playwright',
+    importSource: path.dirname(require.resolve('playwright')),
   }]);
 
   if (!isModule) {

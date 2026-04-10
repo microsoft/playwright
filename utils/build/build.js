@@ -714,7 +714,9 @@ steps.push(new EsbuildStep({
   format: 'cjs',
   external: [
     '../package',
+    'playwright',
   ],
+  logOverride: { 'require-resolve-not-external': 'silent' },
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
 
