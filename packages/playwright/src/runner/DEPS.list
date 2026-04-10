@@ -1,15 +1,12 @@
 [*]
 @isomorphic/**
 @utils/**
-../../types.ts
 ../common/
 ../reporters/
-../third_party/
 ../transform/
 ../plugins/
 ../util.ts
 ../isomorphic/
-../fsWatcher.ts
 node_modules/chokidar
 node_modules/colors/safe
 node_modules/debug

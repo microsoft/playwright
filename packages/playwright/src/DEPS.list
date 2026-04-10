@@ -2,7 +2,6 @@
 @isomorphic/**
 @utils/**
 common/
-./util.ts
 node_modules/commander
 node_modules/debug
 node_modules/mime
@@ -18,12 +17,6 @@ node_modules/minimatch
 **
 
 [index.ts]
-@testIsomorphic/**
-./prompt.ts
-./errorContext.ts
-./worker/testTracing.ts
-./mcp/sdk/
 ./mcp/test/
-./transform/babelBundle.ts
 
 [errorContext.ts]

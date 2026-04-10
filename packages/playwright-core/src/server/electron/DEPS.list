@@ -4,4 +4,3 @@
 @utils/**
 @isomorphic/**
 ../chromium/
-../utils

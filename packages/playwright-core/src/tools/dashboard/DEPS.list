@@ -1,7 +1,6 @@
 [*]
 ../../..
 ../../
-../../client/connect.ts
 ../../server/registry/index.ts
 @utils/**
 ../../serverRegistry.ts

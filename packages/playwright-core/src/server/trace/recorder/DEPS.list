@@ -3,8 +3,5 @@
 @utils/**
 ../../
 ../../har/
-../../../protocol/
 ../../dispatchers/dispatcher.ts
-../../utils
-../common/
 node_modules/mime
