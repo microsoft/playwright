@@ -77,7 +77,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
   plugins.push([require('@babel/plugin-transform-react-jsx'), {
     throwIfNamespace: false,
     runtime: 'automatic',
-    importSource: path.dirname(require.resolve('playwright')),
+    importSource: 'playwright',
   }]);
 
   if (!isModule) {

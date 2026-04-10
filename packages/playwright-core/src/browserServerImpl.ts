@@ -29,7 +29,6 @@ import { ProgressController } from './server/progress';
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
 import type { LaunchServerOptions, Logger } from './client/types';
 import type { ProtocolLogger } from './server/types';
-import type { EventEmitter as WebSocketEventEmitter } from 'events';
 import type { Browser } from './server/browser';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
@@ -86,7 +85,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface
-    const browserServer = new EventEmitter() as (BrowserServer & WebSocketEventEmitter);
+    const browserServer = new EventEmitter() as (BrowserServer & EventEmitter);
     browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => browser.options.browserProcess.close();

@@ -280,10 +280,18 @@ class EsbuildStep extends Step {
     super({ concurrent: false });
     this._options = options;
     this._watchPaths = watchPaths;
-    // For bundled outputs we always want a metafile so we can emit a
-    // sidecar .bundle.txt report next to each output.
-    if (options.bundle && !options.metafile)
-      options.metafile = true;
+    if (options.bundle) {
+      // For bundled outputs we always want a metafile so we can emit a
+      // sidecar report next to each output.
+      if (!options.metafile)
+        options.metafile = true;
+      // Suppress direct-eval warnings — Playwright intentionally uses eval
+      // in evaluate() callbacks that get stringified and sent to the browser.
+      if (!options.logOverride)
+        options.logOverride = {};
+      if (!options.logOverride['direct-eval'])
+        options.logOverride['direct-eval'] = 'silent';
+    }
   }
 
   /** @override */
@@ -743,6 +751,7 @@ steps.push(new EsbuildStep({
     '../package',
     '../utils',
     '../matchers/expect',
+    '../transform/esmLoader.js',
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
@@ -766,6 +775,7 @@ steps.push(new EsbuildStep({
     '../loader/loaderProcessEntry.js',
     '../worker/workerProcessEntry.js',
     '../transform/babelBundle',
+    '../transform/esmLoader',
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
@@ -787,6 +797,7 @@ steps.push(new EsbuildStep({
     '../globals',
     '../package',
     '../util',
+    '../transform/esmLoader',
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
@@ -809,6 +820,7 @@ steps.push(new EsbuildStep({
     '../package',
     '../utils',
     '../matchers/expect',
+    '../transform/esmLoader',
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
