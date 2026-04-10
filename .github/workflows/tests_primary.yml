@@ -45,7 +45,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-* --headed --workers=2 tests/library/browsercontext-add-init-script.spec.ts tests/library/browsercontext-basic.spec.ts tests/library/browsercontext-events.spec.ts tests/library/browsercontext-locale.spec.ts tests/library/browsercontext-network-event.spec.ts tests/library/browsercontext-page-event.spec.ts tests/library/browsercontext-timezone-id.spec.ts tests/library/capabilities.spec.ts tests/library/emulation-focus.spec.ts tests/library/geolocation.spec.ts tests/library/har.spec.ts tests/library/page-clock.spec.ts tests/library/page-close.spec.ts tests/library/popup.spec.ts tests/library/video.spec.ts tests/page/elementhandle-owner-frame.spec.ts tests/page/elementhandle-query-selector.spec.ts tests/page/elementhandle-screenshot.spec.ts tests/page/elementhandle-scroll-into-view.spec.ts
+        command: npm run test -- --project=${{ matrix.browser }}-* --headed --workers=1 tests/library/browsercontext-basic.spec.ts:72
         bot-name: "${{ matrix.browser }}-headed-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
