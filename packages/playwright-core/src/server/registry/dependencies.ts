@@ -106,10 +106,15 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   if (!dryRun)
     console.log(`Installing dependencies...`);  // eslint-disable-line no-console
   const commands: string[] = [];
-  commands.push('apt-get update');
-  commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
-    ...uniqueLibraries,
-  ].join(' '));
+  const isRhel = platform.startsWith('almalinux');
+  if (isRhel) {
+    commands.push(['dnf', 'install', '-y', ...uniqueLibraries].join(' '));
+  } else {
+    commands.push('apt-get update');
+    commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
+      ...uniqueLibraries,
+    ].join(' '));
+  }
   const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
   if (dryRun) {
     console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
@@ -208,7 +213,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
 
   const libraryToPackageNameMapping = deps[hostPlatform] ? {
     ...(deps[hostPlatform]?.lib2package || {}),
-    ...MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU,
+    ...(hostPlatform.startsWith('almalinux') ? {} : MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU),
   } : {};
   // Translate missing dependencies to package names to install with apt.
   for (const missingDep of missingDeps) {
@@ -220,6 +225,11 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   }
 
   const maybeSudo = process.getuid?.() && os.platform() !== 'win32' ? 'sudo ' : '';
+  const isRhel = hostPlatform.startsWith('almalinux');
+  const installDepsCommand = `${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`;
+  const packageManager = isRhel ? 'dnf' : 'apt';
+  const installPackageCommand = isRhel ? `${maybeSudo}dnf install ${[...missingPackages].join(' ')}` : `${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`;
+
   const dockerInfo = readDockerVersionSync();
   const errorLines = [
     `Host system is missing dependencies to run browsers.`,
@@ -240,11 +250,11 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       `- (recommended) use Docker image "${requiredDockerImage}"`,
       `- (alternative 1) run the following command inside Docker to install missing dependencies:`,
       ``,
-      `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
+      `    ${installDepsCommand}`,
       ``,
-      `- (alternative 2) use apt inside Docker:`,
+      `- (alternative 2) use ${packageManager} inside Docker:`,
       ``,
-      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      `    ${installPackageCommand}`,
       ``,
       `<3 Playwright Team`,
     ]);
@@ -254,10 +264,10 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     errorLines.push(...[
       `Please install them with the following command:`,
       ``,
-      `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
+      `    ${installDepsCommand}`,
       ``,
-      `Alternatively, use apt:`,
-      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      `Alternatively, use ${packageManager}:`,
+      `    ${installPackageCommand}`,
       ``,
       `<3 Playwright Team`,
     ]);

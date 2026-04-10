@@ -35,6 +35,7 @@ export type HostPlatform = 'win64' |
                            'debian11-x64' | 'debian11-arm64' |
                            'debian12-x64' | 'debian12-arm64' |
                            'debian13-x64' | 'debian13-arm64' |
+                           'almalinux10-x64' | 'almalinux10-arm64' |
                            '<unknown>';
 
 function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
@@ -116,6 +117,11 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
       // they never include a numeric version entry in /etc/os-release.
       if (distroInfo?.version === '')
         return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+    }
+    if (distroInfo?.id === 'almalinux') {
+      const major = parseInt(distroInfo.version, 10);
+      if (major >= 10)
+        return { hostPlatform: ('almalinux10' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: true };
     }
     return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
   }
