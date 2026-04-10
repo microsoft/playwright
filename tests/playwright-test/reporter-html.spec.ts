@@ -3251,6 +3251,25 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('example.spec.ts')).toBeVisible();
     });
 
+    test('should escape closing script tags when inlining assets', async ({ runInlineTest, showReport, page }, testInfo) => {
+      const result = await runInlineTest({
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      const reportFolder = testInfo.outputPath('playwright-report');
+      const html = fs.readFileSync(path.join(reportFolder, 'index.html'), 'utf-8');
+      expect(html).toContain('s.innerHTML="<script><\\/script>"');
+      expect(html).not.toContain('s.innerHTML="<script></script>"');
+
+      await showReport();
+      await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+      await expect(page.getByRole('link', { name: 'passes' })).toBeVisible();
+    });
+
     test('worker test list', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `

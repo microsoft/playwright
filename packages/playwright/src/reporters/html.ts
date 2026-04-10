@@ -209,6 +209,10 @@ function parseBooleanEnvVar(name: string): boolean | undefined {
   return undefined;
 }
 
+function escapeClosingScriptTag(text: string): string {
+  return text.replace(/<\/script/gi, '<\\/script');
+}
+
 function standaloneDefaultFolder(): string {
   return reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', process.cwd(), undefined);
 }
@@ -386,7 +390,7 @@ class HtmlBuilder {
         fs.promises.readFile(path.join(appFolder, 'report.js'), 'utf-8'),
         fs.promises.readFile(path.join(appFolder, 'report.css'), 'utf-8'),
       ]);
-      html = html.replace(/<script type="module"[^>]*><\/script>/, () => `<script type="module">${js}</script>`);
+      html = html.replace(/<script type="module"[^>]*><\/script>/, () => `<script type="module">${escapeClosingScriptTag(js)}</script>`);
       html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${css}</style>`);
       await fs.promises.writeFile(reportIndexFile, html);
     }
