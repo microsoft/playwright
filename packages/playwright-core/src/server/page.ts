@@ -996,7 +996,12 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.incrementalAriaSnapshot(node, { mode: 'ai', ...options });
+        const result = injected.incrementalAriaSnapshot(node, { mode: 'ai', ...options });
+        // If the ARIA tree is effectively empty (e.g. SPA hasn't hydrated yet),
+        // signal retry so the backoff loop waits for content to appear.
+        if (!result.full.trim())
+          return true;
+        return result;
       }, { refPrefix: frame.seq ? 'f' + frame.seq : '', track: options.track, doNotRenderActive: options.doNotRenderActive }));
       if (snapshotOrRetry === true)
         return continuePolling;

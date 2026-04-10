@@ -68,11 +68,18 @@ export class CDPRelayServer {
   private _wss: WebSocketServer;
   private _playwrightConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
-  private _connectedTabInfo: {
-    targetInfo: any;
-    // Page sessionId that should be used by this connection.
-    sessionId: string;
-  } | undefined;
+  /** Maps synthetic sessionId (e.g. 'pw-tab-1') → tab info. */
+  private _connectedTabs = new Map<string, { targetInfo: any; tabId: number; targetId: string }>();
+  /** Maps Chrome tabId → synthetic sessionId for quick lookup. */
+  private _tabIdToSessionId = new Map<number, string>();
+  /** The sessionId of the primary (first-attached) tab. */
+  private _primarySessionId: string | undefined;
+  /** Tabs currently being attached (async gap guard for tabClosed race). */
+  private _pendingTabAttach = new Set<number>();
+  /** Tabs that closed during the async attach gap — cleaned up after registration. */
+  private _closedDuringAttach = new Set<number>();
+  /** Internal URL prefixes to skip when auto-adopting new tabs. */
+  private static readonly INTERNAL_URL_PREFIXES = ['chrome-extension://', 'chrome://', 'about:'];
   private _nextSessionId: number = 1;
   private _extensionConnectionPromise!: ManualPromise<void>;
 
@@ -215,8 +222,12 @@ export class CDPRelayServer {
       this._playwrightConnection = null;
       // Keep extension connection alive so the next PW client can reconnect
       // (multi-agent flows: LoginAgent → AccountValidationAgent use the same relay).
-      // Reset connectedTabInfo so the next client re-attaches via Target.setAutoAttach.
-      this._connectedTabInfo = undefined;
+      // Reset tab maps so the next client re-attaches via Target.setAutoAttach.
+      this._connectedTabs.clear();
+      this._tabIdToSessionId.clear();
+      this._primarySessionId = undefined;
+      this._pendingTabAttach.clear();
+      this._closedDuringAttach.clear();
       this._playwrightFetchParams.clear();
       debugLogger('Playwright WebSocket closed, extension connection kept alive');
     });
@@ -233,7 +244,11 @@ export class CDPRelayServer {
   }
 
   private _resetExtensionConnection() {
-    this._connectedTabInfo = undefined;
+    this._connectedTabs.clear();
+    this._tabIdToSessionId.clear();
+    this._primarySessionId = undefined;
+    this._pendingTabAttach.clear();
+    this._closedDuringAttach.clear();
     this._extensionConnection = null;
     this._playwrightFetchParams.clear();
     this._extensionConnectionPromise = new ManualPromise();
@@ -266,7 +281,19 @@ export class CDPRelayServer {
   private _handleExtensionMessage<M extends keyof ExtensionEvents>(method: M, params: ExtensionEvents[M]['params']) {
     switch (method) {
       case 'forwardCDPEvent': {
-        const sessionId = params.sessionId || this._connectedTabInfo?.sessionId;
+        // Resolve sessionId: use tabId from extension to look up synthetic sessionId,
+        // fall back to child OOPIF sessionId, then primary sessionId.
+        let sessionId: string | undefined;
+        if (params.sessionId) {
+          // OOPIF child session — pass through as-is
+          sessionId = params.sessionId;
+        } else if (params.tabId !== undefined) {
+          // Tab-level event — map tabId to our synthetic sessionId
+          sessionId = this._tabIdToSessionId.get(params.tabId);
+        }
+        if (!sessionId)
+          sessionId = this._primarySessionId;
+
         const eventMethod = params.method;
 
         // Filter response-stage Fetch.requestPaused — handle internally for PDF detection.
@@ -304,7 +331,115 @@ export class CDPRelayServer {
         });
         break;
       }
+      case 'tabCreated': {
+        const tabId = params.tabId;
+        this._handleTabCreated(tabId, params.sourceTabId, params.url).catch((e: Error) => {
+          debugLogger(`Error handling tabCreated for tab ${tabId}: ${e.message}`);
+        });
+        break;
+      }
+      case 'tabClosed': {
+        this._handleTabClosed(params.tabId);
+        break;
+      }
     }
+  }
+
+  private async _handleTabCreated(tabId: number, sourceTabId?: number, url?: string): Promise<void> {
+    if (!this._extensionConnection) return;
+
+    // Skip if already registered (dedup against race with Phase 2 createTab)
+    if (this._tabIdToSessionId.has(tabId)) {
+      debugLogger(`Tab ${tabId} already registered, skipping`);
+      return;
+    }
+
+    debugLogger(`Tab created: ${tabId}${sourceTabId ? ` (source=${sourceTabId})` : ''}, attaching`);
+    this._pendingTabAttach.add(tabId);
+    let targetInfo: any;
+    try {
+      const result = await this._extensionConnection.send('attachToNewTab', { tabId });
+      targetInfo = result?.targetInfo;
+    } catch (e: any) {
+      // Tab may have closed before we could attach — ignore
+      debugLogger(`Failed to attach to new tab ${tabId}: ${e.message}`);
+      this._pendingTabAttach.delete(tabId);
+      this._closedDuringAttach.delete(tabId);
+      return;
+    }
+
+    if (!targetInfo) {
+      debugLogger(`No targetInfo for tab ${tabId}, ignoring`);
+      this._pendingTabAttach.delete(tabId);
+      this._closedDuringAttach.delete(tabId);
+      return;
+    }
+
+    // Filter internal URLs (chrome-extension://, chrome://, about:) —
+    // these are not automation targets.
+    const tabUrl: string = targetInfo.url ?? '';
+    if (CDPRelayServer.INTERNAL_URL_PREFIXES.some(prefix => tabUrl.startsWith(prefix))) {
+      debugLogger(`Tab ${tabId} has internal URL (${tabUrl}), detaching`);
+      this._pendingTabAttach.delete(tabId);
+      this._closedDuringAttach.delete(tabId);
+      this._extensionConnection?.send('forwardCDPCommand', {
+        tabId,
+        method: 'Target.detachFromTarget',
+        params: {},
+      }).catch(() => { /* best effort */ });
+      return;
+    }
+
+    // Enrich openerId from sourceTabId (provided by webNavigation.onCreatedNavigationTarget).
+    // This makes Playwright's page.waitForEvent('popup') work for noopener popups.
+    if (sourceTabId !== undefined && !targetInfo.openerId) {
+      for (const entry of this._connectedTabs.values()) {
+        if (entry.tabId === sourceTabId) {
+          targetInfo = { ...targetInfo, openerId: entry.targetId };
+          debugLogger(`Enriched openerId for tab ${tabId} from sourceTabId ${sourceTabId}`);
+          break;
+        }
+      }
+    }
+
+    // Check if the tab closed during the async attach gap
+    this._pendingTabAttach.delete(tabId);
+    if (this._closedDuringAttach.has(tabId)) {
+      debugLogger(`Tab ${tabId} closed during attach — skipping registration`);
+      this._closedDuringAttach.delete(tabId);
+      return;
+    }
+
+    // Register the tab — we own the entire Chrome window, so every tab is ours
+    await this._registerTab(tabId, targetInfo, url ?? `openerId=${targetInfo.openerId ?? 'none'}`);
+  }
+
+  private _handleTabClosed(tabId: number): void {
+    // If this tab is still being attached asynchronously, defer cleanup
+    if (this._pendingTabAttach.has(tabId)) {
+      debugLogger(`Tab ${tabId} closed during pending attach — deferring`);
+      this._closedDuringAttach.add(tabId);
+      return;
+    }
+
+    const sessionId = this._tabIdToSessionId.get(tabId);
+    if (!sessionId) return;
+
+    const entry = this._connectedTabs.get(sessionId);
+    const targetId = entry?.targetId;
+
+    debugLogger(`Tab ${tabId} closed (${sessionId}, targetId=${targetId})`);
+    this._connectedTabs.delete(sessionId);
+    this._tabIdToSessionId.delete(tabId);
+
+    // Synthesize Target.detachedFromTarget for Playwright.
+    // CRITICAL: must include targetId — Playwright's _onDetachedFromTarget looks up
+    // crPages by targetId. Without it, page.didClose() is never called and
+    // page.close() hangs forever awaiting _closedPromise.
+    this._sendToPlaywright({
+      method: 'Target.detachedFromTarget',
+      params: { sessionId, targetId },
+    });
   }
 
   private async _handlePlaywrightMessage(message: CDPCommand): Promise<void> {
@@ -335,23 +470,50 @@ export class CDPRelayServer {
       case 'Browser.setDownloadBehavior': {
         return { };
       }
+      case 'Target.closeTarget': {
+        // Playwright sends Target.closeTarget on the root session (no sessionId)
+        // with { targetId }. We need to find the matching tab and close it via
+        // chrome.tabs.remove instead of forwarding the raw CDP command (which
+        // would target the primary tab's debuggee and may not work).
+        const targetId = params?.targetId;
+        if (targetId) {
+          for (const [sid, entry] of this._connectedTabs.entries()) {
+            if (entry.targetId === targetId) {
+              debugLogger(`Target.closeTarget: closing tab ${entry.tabId} (${sid}) via extension`);
+              // Close via chrome.tabs.remove — this triggers onRemoved → tabClosed → _handleTabClosed
+              await this._extensionConnection!.send('forwardCDPCommand', {
+                tabId: entry.tabId,
+                method: 'Page.close',
+                params: {},
+              }).catch(() => { /* best effort — tab may already be closing */ });
+              return { };
+            }
+          }
+        }
+        debugLogger(`Target.closeTarget: targetId ${targetId} not found in tracked tabs`);
+        return { };
+      }
       case 'Target.setAutoAttach': {
         // Forward child session handling.
         if (sessionId)
           break;
         // Simulate auto-attach behavior with real target info
-        const { targetInfo } = await this._extensionConnection!.send('attachToTab', { });
-        this._connectedTabInfo = {
-          targetInfo,
-          sessionId: `pw-tab-${this._nextSessionId++}`,
-        };
+        const attachResult = await this._extensionConnection!.send('attachToTab', { });
+        const targetInfo = attachResult?.targetInfo;
+        const realTabId: number = attachResult?.tabId ?? 0;
+        const primarySessionId = `pw-tab-${this._nextSessionId++}`;
+        const targetId = targetInfo?.targetId ?? `tab-primary`;
+        this._connectedTabs.set(primarySessionId, { targetInfo, tabId: realTabId, targetId });
+        this._tabIdToSessionId.set(realTabId, primarySessionId);
+        this._primarySessionId = primarySessionId;
+
         debugLogger('Simulating auto-attach');
         this._sendToPlaywright({
           method: 'Target.attachedToTarget',
           params: {
-            sessionId: this._connectedTabInfo.sessionId,
+            sessionId: primarySessionId,
             targetInfo: {
-              ...this._connectedTabInfo.targetInfo,
+              ...targetInfo,
               attached: true,
             },
             waitingForDebugger: false
@@ -365,7 +527,7 @@ export class CDPRelayServer {
           try {
             await this._forwardToExtension('Fetch.enable', {
               patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
-            }, this._connectedTabInfo.sessionId);
+            }, primarySessionId);
             debugLogger('Proactive response-stage Fetch.enable succeeded');
           } catch (e) {
             debugLogger(`Proactive response-stage Fetch.enable failed: ${(e as Error).message}`);
@@ -374,7 +536,11 @@ export class CDPRelayServer {
         return { };
       }
       case 'Target.getTargetInfo': {
-        return this._connectedTabInfo?.targetInfo;
+        // Look up by sessionId if provided, otherwise return primary
+        const entry = sessionId ? this._connectedTabs.get(sessionId) : undefined;
+        if (entry) return entry.targetInfo;
+        const primaryEntry = this._primarySessionId ? this._connectedTabs.get(this._primarySessionId) : undefined;
+        return primaryEntry?.targetInfo;
       }
       case 'Fetch.enable': {
         const sessionKey = sessionId ?? '';
@@ -398,14 +564,88 @@ export class CDPRelayServer {
         return await this._forwardToExtension('Fetch.disable', params, sessionId);
       }
     }
+    // New-tab detection is handled entirely by chrome.tabs.onCreated → tabCreated events.
+    // The observational monkey-patch lets window.open() create real tabs, so there's no
+    // need to poll __sapotoOpenCalls after click/keypress events.
+
     return await this._forwardToExtension(method, params, sessionId);
+  }
+
+  /**
+   * Register a new tab with Playwright — synthesizes Target.attachedToTarget
+   * and optionally enables PDF interception. Shared by both pending-tab claiming
+   * and relay-created-tab registration to avoid duplicated logic.
+   */
+  private async _registerTab(tabId: number, targetInfo: any, debugLabel?: string): Promise<void> {
+    // Final dedup guard — prevent duplicate Target.attachedToTarget for the same tab
+    if (this._tabIdToSessionId.has(tabId)) {
+      debugLogger(`_registerTab: tab ${tabId} already registered as ${this._tabIdToSessionId.get(tabId)}, skipping`);
+      return;
+    }
+    targetInfo = this._ensureBrowserContextId(targetInfo);
+    const newSessionId = `pw-tab-${this._nextSessionId++}`;
+    const targetId = targetInfo.targetId ?? `tab-${tabId}`;
+    this._connectedTabs.set(newSessionId, { targetInfo, tabId, targetId });
+    this._tabIdToSessionId.set(tabId, newSessionId);
+
+    debugLogger(`Tab ${tabId} registered as ${newSessionId}${debugLabel ? ` for ${debugLabel}` : ''}`);
+
+    // Synthesize Target.attachedToTarget for Playwright
+    this._sendToPlaywright({
+      method: 'Target.attachedToTarget',
+      params: {
+        sessionId: newSessionId,
+        targetInfo: { ...targetInfo, attached: true },
+        waitingForDebugger: false,
+      },
+    });
+
+    // Proactive Fetch.enable for PDF interception on the new tab
+    if (this._pdfInterceptionEnabled) {
+      try {
+        await this._forwardToExtension('Fetch.enable', {
+          patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+        }, newSessionId);
+        debugLogger(`Proactive Fetch.enable for tab ${tabId} (${newSessionId})`);
+      } catch (e) {
+        debugLogger(`Fetch.enable failed for tab ${tabId}: ${(e as Error).message}`);
+      }
+    }
+  }
+
+  /**
+   * Ensure targetInfo has a browserContextId, falling back to the primary tab's value.
+   * Playwright hard-asserts this field (crBrowser.ts:166), but CDP may omit it.
+   */
+  private _ensureBrowserContextId(targetInfo: any): any {
+    if (targetInfo?.browserContextId)
+      return targetInfo;
+    if (this._primarySessionId) {
+      const primary = this._connectedTabs.get(this._primarySessionId);
+      if (primary?.targetInfo?.browserContextId)
+        return { ...targetInfo, browserContextId: primary.targetInfo.browserContextId };
+    }
+    return targetInfo;
   }
 
   private async _forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any> {
     if (!this._extensionConnection)
       throw new Error('Extension not connected');
-    // Top level sessionId is only passed between the relay and the client.
-    if (this._connectedTabInfo?.sessionId === sessionId)
+
+    const tabEntry = sessionId ? this._connectedTabs.get(sessionId) : undefined;
+    if (tabEntry) {
+      // Tab-level command: strip synthetic sessionId, route by tabId
+      return await this._extensionConnection.send('forwardCDPCommand', {
+        tabId: tabEntry.tabId,
+        method,
+        params,
+      });
+    }
+
+    // OOPIF child session or root — pass sessionId through as-is.
+    // For primary tab: sessionId won't be in _connectedTabs if it's an OOPIF child.
+    // Strip the primary synthetic sessionId (extension doesn't know about it).
+    if (sessionId === this._primarySessionId)
       sessionId = undefined;
     return await this._extensionConnection.send('forwardCDPCommand', { sessionId, method, params });
   }
@@ -464,12 +704,9 @@ export class CDPRelayServer {
     ];
 
     try {
-      const extSid = this._connectedTabInfo?.sessionId === sessionId ? undefined : sessionId;
-      await this._extensionConnection!.send('forwardCDPCommand', {
-        sessionId: extSid,
-        method: 'Fetch.continueResponse',
-        params: { requestId, responseCode: responseStatusCode, responseHeaders: newHeaders },
-      });
+      await this._forwardToExtension('Fetch.continueResponse', {
+        requestId, responseCode: responseStatusCode, responseHeaders: newHeaders,
+      }, sessionId);
     } catch (e) {
       debugLogger(`Error in continueResponse for PDF: ${(e as Error).message}`);
       // MUST continue to avoid hanging the request — fall back to unmodified response
@@ -478,12 +715,7 @@ export class CDPRelayServer {
   }
 
   private _continueFetchResponse(requestId: string, sessionId: string | undefined): void {
-    const extSid = this._connectedTabInfo?.sessionId === sessionId ? undefined : sessionId;
-    this._extensionConnection?.send('forwardCDPCommand', {
-      sessionId: extSid,
-      method: 'Fetch.continueResponse',
-      params: { requestId },
-    }).catch((e: Error) => {
+    this._forwardToExtension('Fetch.continueResponse', { requestId }, sessionId).catch((e: Error) => {
       debugLogger(`Error continuing fetch response: ${e.message}`);
     });
   }

@@ -16,16 +16,23 @@
 
 // Whenever the commands/events change, the version must be updated. The latest
 // extension version should be compatible with the old MCP clients.
-export const VERSION = 1;
+export const VERSION = 3;
 
 export type ExtensionCommand = {
   'attachToTab': {
     params: {};
   };
+  'attachToNewTab': {
+    params: { tabId: number };
+  };
+  'createTab': {
+    params: { url: string };
+  };
   'forwardCDPCommand': {
     params: {
       method: string,
-      sessionId?: string
+      sessionId?: string,
+      tabId?: number,
       params?: any,
     };
   };
@@ -35,8 +42,21 @@ export type ExtensionEvents = {
   'forwardCDPEvent': {
     params: {
       method: string,
-      sessionId?: string
+      sessionId?: string,
+      tabId?: number,
       params?: any,
     };
+  };
+  'tabCreated': {
+    params: {
+      tabId: number;
+      /** Source tab that triggered the popup (from webNavigation.onCreatedNavigationTarget). */
+      sourceTabId?: number;
+      /** Initial URL of the new tab (may differ from final URL after redirects). */
+      url?: string;
+    };
+  };
+  'tabClosed': {
+    params: { tabId: number };
   };
 };

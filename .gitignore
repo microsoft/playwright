@@ -44,3 +44,6 @@ test-results
 playwright.env
 /firefox/
 excalidraw.log
+*.png
+*.pdf
+invoice-page.yaml
