@@ -42,9 +42,9 @@ playwright-cli video-start recordings/checkout-test-run-42.webm
 When recording a video for the user or as a proof of work, it is best to create a code snippet and execute it with run-code.
 It allows pulling appropriate pauses between the actions and annotating the video. There are new Playwright APIs for that.
 
-1) Perform scenario using CLI and take note of all locators and actions. You'll need those locators to request thier bounding boxes for highlight.
+1) Perform scenario using CLI and take note of all locators and actions. You'll need those locators to request their bounding boxes for highlight.
 2) Create a file with the intended script for video (below). Use pressSequentially w/ delay for nice typing, make reasonable pauses.
-3) Use playwright-cli run-code --file your-script.js
+3) Use playwright-cli run-code --filename your-script.js
 
 **Important**: Overlays are `pointer-events: none` — they do not interfere with page interactions. You can safely keep sticky overlays visible while clicking, filling, or performing any actions on the page.
 
