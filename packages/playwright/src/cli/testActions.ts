@@ -41,6 +41,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
     lastFailed: !!opts.lastFailed,
     testList: opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined,
     testListInvert: opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined,
+    shardWeights: resolveShardWeightsOption(),
   };
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
@@ -124,7 +125,6 @@ function overridesFromOptions(options: { [key: string]: any }): ipc.ConfigCLIOve
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: resolveShardOption(options.shard),
-    shardWeights: resolveShardWeightsOption(),
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -195,7 +195,7 @@ function resolveShardOption(shard?: string): ipc.ConfigCLIOverrides['shard'] {
   return { current, total };
 }
 
-function resolveShardWeightsOption(): ipc.ConfigCLIOverrides['shardWeights'] {
+function resolveShardWeightsOption(): TestRunOptions['shardWeights'] {
   const shardWeights = process.env.PWTEST_SHARD_WEIGHTS;
   if (!shardWeights)
     return undefined;

@@ -37,12 +37,11 @@ import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobal
 import { LastRunReporter } from './lastRun';
 import { filterProjects } from './projectUtils';
 
-import type { TestRunOptions } from './tasks';
+import type { TestPausedParams, TestRunOptions } from './tasks';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation } from '../common';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
-import type { TestPausedParams } from './failureTracker';
 
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
@@ -296,7 +295,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       repeatEach: 1,
       retries: 0,
       timeout: params.timeout,
-      preserveOutputDir: true,
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
         ...this._configCLIOverrides.use,
@@ -325,6 +323,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       projectFilter: params.projects?.length ? params.projects : undefined,
       pauseOnError: params.pauseOnError,
       pauseAtEnd: params.pauseAtEnd,
+      preserveOutputDir: true,
+      onTestPaused: params => this.emit(TestRunnerEvent.TestPaused, params),
     };
 
     const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test', undefined, options);
@@ -340,7 +340,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: !!params.failOnLoadErrors, doNotRunDepsOutsideProjectFilter: params.doNotRunDepsOutsideProjectFilter }),
       ...createRunTestsTasks(config),
     ];
-    testRun.failureTracker.onTestPaused = params => this.emit(TestRunnerEvent.TestPaused, params);
     const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;

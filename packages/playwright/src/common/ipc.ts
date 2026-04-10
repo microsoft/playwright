@@ -30,15 +30,12 @@ export type ConfigCLIOverrides = {
   globalTimeout?: number;
   maxFailures?: number;
   outputDir?: string;
-  preserveOutputDir?: boolean;
   pause?: boolean;
   quiet?: boolean;
   repeatEach?: number;
   retries?: number;
   reporter?: ReporterDescription[];
-  additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
-  shardWeights?: number[];
   timeout?: number;
   tsconfig?: string;
   ignoreSnapshots?: boolean;
