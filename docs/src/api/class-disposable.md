@@ -1,6 +1,5 @@
 # class: Disposable
 * since: v1.59
-* langs: js
 
 [Disposable] is returned from various methods to allow undoing the corresponding action. For example,
 [`method: Page.addInitScript`] returns a [Disposable] that can be used to remove the init script.
