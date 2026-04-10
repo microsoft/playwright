@@ -6,14 +6,9 @@
 ../server/
 ../server/registry/
 ../remote/
-../utils/**
-../utilsBundle.ts
-../client/
 ../server/trace/viewer/
 ../tools/cli-client/program.ts
 ../tools/trace/traceCli.ts
-./browserActions.ts
-./installActions.ts
 ../bootstrap.ts
 node_modules/commander
 node_modules/debug

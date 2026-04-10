@@ -1,7 +1,6 @@
 [*]
 @utils/**
 @isomorphic/**
-../../utilsBundle.ts
 ../../package.ts
 ../utils.ts
 ../userAgent.ts

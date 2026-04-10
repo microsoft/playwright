@@ -1,8 +1,5 @@
 [*]
-../../package.ts
-../../utils
 @isomorphic/**
-../../utilsBundle.ts
 node_modules/colors/safe
 node_modules/debug
 node_modules/diff
@@ -12,10 +9,6 @@ node_modules/mime
 node_modules/pngjs
 node_modules/proxy-from-env
 node_modules/socks-proxy-agent
-node_modules/get-stream
-node_modules/graceful-fs
-node_modules/retry
-node_modules/signal-exit
 node_modules/ws
 node_modules/yauzl
 node_modules/yazl

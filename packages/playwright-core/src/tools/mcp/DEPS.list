@@ -5,12 +5,10 @@
 ../backend/
 @utils/**
 @isomorphic/**
-../../utilsBundle.ts
 ../../server/
 ../../server/registry/
 @utils/**
 ../../serverRegistry.ts
-node_modules/@modelcontextprotocol/sdk/server/index.js
 node_modules/commander
 node_modules/debug
 node_modules/dotenv
@@ -22,4 +20,3 @@ node_modules/ws
 ../utils/connect.ts
 
 [program.ts]
-../../cli/program.ts

@@ -1,7 +1,7 @@
 [*]
 @isomorphic/**
 @utils/**
-../common/**
+../common/
 ../isomorphic/**
 ../util.ts
 node_modules/colors/safe

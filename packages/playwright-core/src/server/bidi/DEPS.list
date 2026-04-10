@@ -2,8 +2,6 @@
 @utils/**
 @isomorphic/**
 ../
-../isomorphic/
-../utils
 ./third_party/
 
 [bidiOverCdp.ts]

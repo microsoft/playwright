@@ -4,9 +4,7 @@
 ../cli-client/registry.ts
 ../backend/
 ../mcp/
-../../utilsBundle.ts
 @utils/**
 ../../server/registry/index.ts
 @utils/**
-../../serverRegistry.ts
 node_modules/zod

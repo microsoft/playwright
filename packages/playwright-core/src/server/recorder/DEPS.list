@@ -4,8 +4,5 @@
 ../
 ../codegen/language.ts
 ../codegen/languages.ts
-../registry/**
-../../generated/pollingRecorderSource.ts
 ../../package.ts
-../../protocol/
 node_modules/mime

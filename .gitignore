@@ -6,6 +6,7 @@ node_modules/
 .DS_Store
 *.swp
 *.pyc
+DEPS.true
 /.vscode
 .mono
 .idea

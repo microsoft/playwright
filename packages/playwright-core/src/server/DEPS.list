@@ -4,11 +4,8 @@
 ../generated/
 ../package.ts
 ../protocol/
-../utils
-../utilsBundle.ts
 ./
 ./codegen/
-./isomorphic
 ./har/
 ./recorder/
 ./registry/
@@ -23,7 +20,6 @@ node_modules/yauzl
 node_modules/yazl
 
 [devtoolsController.ts]
-./chromium/
 
 [playwright.ts]
 ./android/

@@ -2,9 +2,7 @@
 @isomorphic/**
 @utils/**
 ../
-../../protocol/
 ../../utilsBundle.ts
 ../chromium/
-../utils
 ../registry/
 node_modules/debug
