@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
 import * as babel from '@babel/core';
 import traverseFunction from '@babel/traverse';
 
@@ -32,9 +30,9 @@ export type { NodePath, PluginObj, types as T } from '@babel/core';
 export type { BabelAPI } from '@babel/helper-plugin-utils';
 
 export type BabelPlugin = [string, any?];
-export type BabelTransformFunction = (code: string, filename: string, isModule: boolean, pluginsPrefix: BabelPlugin[], pluginsSuffix: BabelPlugin[]) => BabelFileResult | null;
+export type BabelTransformFunction = (code: string, filename: string, isModule: boolean, pluginsPrefix: BabelPlugin[], pluginsSuffix: BabelPlugin[], jsxImportSource?: string) => BabelFileResult | null;
 
-function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
+function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][], jsxImportSource?: string): TransformOptions {
   const plugins = [
     [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
   ];
@@ -77,7 +75,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
   plugins.push([require('@babel/plugin-transform-react-jsx'), {
     throwIfNamespace: false,
     runtime: 'automatic',
-    importSource: path.dirname(require.resolve('playwright')),
+    ...(jsxImportSource ? { importSource: jsxImportSource } : {}),
   }]);
 
   if (!isModule) {
@@ -126,14 +124,14 @@ function isTypeScript(filename: string) {
   return filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
 }
 
-export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult | null {
+export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][], jsxImportSource?: string): BabelFileResult | null {
   if (isTransforming)
     return null;
 
   // Prevent reentry while requiring plugins lazily.
   isTransforming = true;
   try {
-    const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsPrologue, pluginsEpilogue);
+    const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsPrologue, pluginsEpilogue, jsxImportSource);
     return babel.transform(code, { filename, ...options });
   } finally {
     isTransforming = false;
