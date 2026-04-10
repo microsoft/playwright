@@ -22,4 +22,4 @@ node_modules/yazl
 
 [comparators.ts]
 ./image_tools
-../../third_party/pixelmatch
+./third_party/pixelmatch

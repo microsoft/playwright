@@ -25,9 +25,8 @@ import colors from 'colors/safe';
 import { debugLogger } from './debugLogger';
 import { currentZone, emptyZone } from './zones';
 import { debugMode, isUnderTest } from './debug';
-import { packageRoot as coreDir } from '../../package';
 
-import type { Platform, Zone } from '../../client/platform';
+import type { Platform, Zone } from '@isomorphic/platform';
 import type { Zone as ZoneImpl } from './zones';
 import type * as channels from '@protocol/channels';
 
@@ -62,7 +61,7 @@ export function setBoxedStackPrefixes(prefixes: string[]) {
   boxedStackPrefixes = prefixes;
 }
 
-export const nodePlatform: Platform = {
+export const nodePlatform: (coreDir: string) => Platform = coreDir => ({
   name: 'node',
 
   boxedStackPrefixes: () => {
@@ -126,7 +125,7 @@ export const nodePlatform: Platform = {
     current: () => new NodeZone(currentZone()),
     empty: new NodeZone(emptyZone),
   }
-};
+});
 
 class ReadableStreamImpl extends Readable {
   private _channel: channels.StreamChannel;

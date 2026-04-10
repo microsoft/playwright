@@ -23,7 +23,7 @@
  */
 
 import type { EventEmitter as EventEmitterType } from 'events';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 
 type EventType = string | symbol;
 type Listener = (...args: any[]) => any;

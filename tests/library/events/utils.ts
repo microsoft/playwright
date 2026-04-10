@@ -51,6 +51,6 @@ export const mustCall = (fn?: Function, exact?: number) => {
 /** as any breaks long TS resolution chain that makes tests unhappy */
 export class EventEmitter extends (client as any).EventEmitter {
   constructor() {
-    super(nodePlatform);
+    super(nodePlatform(process.cwd()));
   }
 }

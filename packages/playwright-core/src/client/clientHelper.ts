@@ -17,7 +17,7 @@
 
 import { isString } from '@isomorphic/rtti';
 
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 
 export function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];

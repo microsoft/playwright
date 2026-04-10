@@ -17,8 +17,8 @@
 import { execSync } from 'child_process';
 import os from 'os';
 
-import { packageJSON } from '../../package';
-import { getLinuxDistributionInfoSync } from '../utils/linuxUtils';
+import { getLinuxDistributionInfoSync } from '@utils/linuxUtils';
+import { packageJSON } from '../package';
 
 let cachedUserAgent: string | undefined;
 

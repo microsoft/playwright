@@ -1,5 +1,5 @@
 [*]
-../../utils/**
+@utils/**
 @isomorphic/**
 ../
 ../isomorphic/

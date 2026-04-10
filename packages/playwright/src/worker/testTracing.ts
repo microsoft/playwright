@@ -22,8 +22,8 @@ import * as yauzl from 'yauzl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
-import { SerializedFS } from '@utils/fileUtils';
-import { getPlaywrightVersion } from '@utils/userAgent';
+import { SerializedFS } from '@utils/serializedFS';
+import { getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
 
 import { filteredStackTrace } from '../util';
 

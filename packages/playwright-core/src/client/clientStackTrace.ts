@@ -16,7 +16,7 @@
 
 import { captureRawStack, parseStackFrame } from '@isomorphic/stackTrace';
 
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type { StackFrame } from '@isomorphic/stackTrace';
 
 export function captureLibraryStackTrace(platform: Platform): { frames: StackFrame[], apiName: string } {

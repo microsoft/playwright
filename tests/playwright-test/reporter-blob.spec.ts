@@ -20,14 +20,13 @@ import path from 'path';
 import { html } from '../../packages/playwright/lib/runner';
 const { startHtmlReportServer } = html;
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
-import { extractZip } from '../../packages/playwright-core/src/server/utils/third_party/extractZip';
+import { extractZip } from '../../packages/utils/third_party/extractZip';
 import * as yazl from 'yazl';
-import { utils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils, getUserAgent } from '../../packages/playwright-core/lib/coreBundle';
 import { Readable } from 'stream';
 import type { FullResult, JSONReportTestResult } from '../../packages/playwright-test/reporter';
 
 type HttpServer = utils.HttpServer;
-const { getUserAgent } = utils;
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';

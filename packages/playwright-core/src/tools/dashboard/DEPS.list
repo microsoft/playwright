@@ -5,6 +5,6 @@
 ../../server/registry/index.ts
 @utils/**
 ../../serverRegistry.ts
-../../utils/**
+@utils/**
 ../cli-client/registry.ts
 ../utils/**

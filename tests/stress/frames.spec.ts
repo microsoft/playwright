@@ -15,12 +15,12 @@
  */
 
 import { contextTest as test, expect } from '../config/browserTest';
-import { sever } from '../../packages/playwright-core/lib/coreBundle';
+import { server as coreServer } from '../../packages/playwright-core/lib/coreBundle';
 
 test.slow();
 
 test('cycle frames', async ({ page, server }) => {
-  sever.setMaxDispatchersForTest(100);
+  coreServer.setMaxDispatchersForTest(100);
 
   const kFrameCount = 310;
 
@@ -47,7 +47,7 @@ test('cycle frames', async ({ page, server }) => {
   await promise;
   await page.waitForTimeout(500);
 
-  sever.setMaxDispatchersForTest(null);
+  coreServer.setMaxDispatchersForTest(null);
 });
 
 test('cycle handles', async ({ page, server }) => {

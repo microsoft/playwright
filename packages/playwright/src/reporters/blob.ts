@@ -23,7 +23,7 @@ import * as yazl from 'yazl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { calculateSha1, createGuid } from '@utils/crypto';
 import { removeFolders, sanitizeForFilePath } from '@utils/fileUtils';
-import { getUserAgent } from '@utils/userAgent';
+import { getUserAgent } from 'playwright-core/lib/coreBundle';
 
 import { resolveOutputFile, CommonReporterOptions } from './base';
 import { TeleReporterEmitter } from './teleEmitter';

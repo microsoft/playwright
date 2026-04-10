@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 
 // Keep in sync with the server.
 export const fileUploadSizeLimit = 50 * 1024 * 1024;
