@@ -96,10 +96,10 @@ const drag = defineTabTool({
     title: 'Drag mouse',
     description: 'Perform drag and drop between two elements',
     inputSchema: z.object({
-      startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
+      startElement: z.string().optional().describe('Human-readable source element description used to obtain the permission to interact with the element'),
       startRef: z.string().describe('Exact source element reference from the page snapshot'),
       startSelector: z.string().optional().describe('CSS or role selector for the source element, when ref is not available'),
-      endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
+      endElement: z.string().optional().describe('Human-readable target element description used to obtain the permission to interact with the element'),
       endRef: z.string().describe('Exact target element reference from the page snapshot'),
       endSelector: z.string().optional().describe('CSS or role selector for the target element, when ref is not available'),
     }),
