@@ -150,14 +150,14 @@ export const ImageDiffSlider: React.FC<{
 
   return <div style={{ flex: 'none', display: 'flex', alignItems: 'center', flexDirection: 'column', userSelect: 'none' }}>
     {!hideSize && <div style={{ margin: 5 }}>
-      {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>Expected </span>}
-      <span>{expectedImage.naturalWidth}</span>
-      <span style={{ flex: 'none', margin: '0 5px' }}>x</span>
-      <span>{expectedImage.naturalHeight}</span>
-      {!sameSize && <span style={{ flex: 'none', margin: '0 5px 0 15px' }}>Actual </span>}
+      {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>Actual </span>}
       {!sameSize && <span>{actualImage.naturalWidth}</span>}
       {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>x</span>}
       {!sameSize && <span>{actualImage.naturalHeight}</span>}
+      {!sameSize && <span style={{ flex: 'none', margin: '0 5px 0 15px' }}>{expectedTitle} </span>}
+      <span>{expectedImage.naturalWidth}</span>
+      <span style={{ flex: 'none', margin: '0 5px' }}>x</span>
+      <span>{expectedImage.naturalHeight}</span>
     </div>}
     <div style={{ position: 'relative', width: canvasWidth, height: canvasHeight, margin: 15, ...checkerboardStyle }}>
       <ResizeView
