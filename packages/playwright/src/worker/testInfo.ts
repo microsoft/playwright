@@ -322,8 +322,6 @@ export class TestInfoImpl implements TestInfo {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
           const error = testInfoError(result.error);
-          if (step.boxedStack)
-            error.stack = `${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
           step.error = error;
         }
 
@@ -410,8 +408,13 @@ export class TestInfoImpl implements TestInfo {
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = testInfoError(error);
     const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
-    if (step && step.boxedStack)
-      serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
+
+    if (step && step.boxedStack) {
+      const originalStack = (error as Error).stack || `${(error as Error).name}: ${(error as Error).message}`;
+      const stepStack = stringifyStackFrames(step.boxedStack).join('\n');
+
+      serialized.stack = `${originalStack}\n--- STEP ---\n${stepStack}`;
+    }
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
   }

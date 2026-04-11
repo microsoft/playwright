@@ -30,9 +30,10 @@ export type StackFrame = {
 
 export function captureRawStack(): RawStack {
   const stackTraceLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = 50;
-  const error = new Error();
-  const stack = error.stack || '';
+  Error.stackTraceLimit = 200;
+  const obj: { stack?: string } = {};
+  Error.captureStackTrace(obj);
+  const stack = obj.stack || '';
   Error.stackTraceLimit = stackTraceLimit;
   return stack.split('\n');
 }
@@ -107,11 +108,17 @@ export function parseStackFrame(text: string, pathSeparator: string, showInterna
 }
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
-  const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
+  const originalStack = e.stack || '';
+
   e.message = newMessage;
+
   const errorTitle = `${e.name}: ${e.message}`;
-  if (lines.length)
-    e.stack = `${errorTitle}\n${lines.join('\n')}`;
+
+  if (originalStack) {
+    const stackWithoutTitle = originalStack.split('\n').slice(1).join('\n');
+    e.stack = `${errorTitle}\n${stackWithoutTitle}`;
+  }
+
   return e;
 }
 
@@ -150,10 +157,16 @@ export function parseErrorStack(stack: string, pathSeparator: string, showIntern
     const frame = parseStackFrame(line, pathSeparator, showInternalStackFrames);
     if (!frame || !frame.file)
       continue;
-    if (belongsToNodeModules(frame.file, pathSeparator))
-      continue;
-    location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
-    break;
+    // Prefer non-node_modules frames
+    if (!belongsToNodeModules(frame.file, pathSeparator)) {
+      location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
+      break;
+    }
+
+    // fallback if only node_modules found
+    if (!location) {
+      location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
+    }
   }
   return { message, stackLines, location };
 }
