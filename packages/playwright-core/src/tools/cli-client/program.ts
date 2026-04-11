@@ -185,6 +185,8 @@ export async function program(options?: { embedderVersion?: string}) {
         stdio: 'ignore',
       });
       child.unref();
+      if (process.env.PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST)
+        console.log(`### Dashboard opened with pid ${child.pid}.`);
       return;
     }
     default: {
@@ -249,11 +251,16 @@ const daemonProcessPatterns = ['run-mcp-server', 'run-cli-server', 'cli-daemon',
 
 async function killAllDaemons(): Promise<void> {
   const platform = os.platform();
+  const pidFilterEnv = process.env.PLAYWRIGHT_KILL_ALL_PID_FILTER_FOR_TEST;
+  const pidFilter = pidFilterEnv ? new Set(pidFilterEnv.split(',').map(p => parseInt(p, 10)).filter(n => !isNaN(n))) : undefined;
   let killed = 0;
 
   try {
     if (platform === 'win32') {
-      const whereClause = daemonProcessPatterns.map(p => `$_.CommandLine -like '*${p}*'`).join(' -or ');
+      const clauses = [`(${daemonProcessPatterns.map(p => `$_.CommandLine -like '*${p}*'`).join(' -or ')})`];
+      if (pidFilter)
+        clauses.push(`(${[...pidFilter].map(p => `$_.ProcessId -eq ${p}`).join(' -or ')})`);
+      const whereClause = clauses.join(' -and ');
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
@@ -268,15 +275,18 @@ async function killAllDaemons(): Promise<void> {
         console.log(`Killed daemon process ${pid}`);
       killed = pids.length;
     } else {
-      const result = execSync('ps aux', { encoding: 'utf-8' });
+      const result = execSync('ps auxww', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
         if (daemonProcessPatterns.some(p => line.includes(p))) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {
+            const numericPid = parseInt(pid, 10);
+            if (pidFilter && !pidFilter.has(numericPid))
+              continue;
             try {
-              process.kill(parseInt(pid, 10), 'SIGKILL');
+              process.kill(numericPid, 'SIGKILL');
               console.log(`Killed daemon process ${pid}`);
               killed++;
             } catch {

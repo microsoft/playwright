@@ -121,10 +121,13 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       ({ snapshot, inlineSnapshot } = await loadSnapshot(cli.stdout));
     const attachments = loadAttachments(cli.stdout);
 
-    const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
-    const [, sessionName, pid] = matches ?? [];
-    if (sessionName && pid)
-      sessions.push({ name: sessionName, pid: +pid });
+    const browserMatches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
+    const [, sessionName, browserPid] = browserMatches ?? [];
+    if (sessionName && browserPid)
+      sessions.push({ name: sessionName, pid: +browserPid });
+    const dashboardMatches = cli.stdout.includes('### Dashboard') ? cli.stdout.match(/Dashboard opened with pid (\d+)\./) : undefined;
+    const dashboardPid = dashboardMatches?.[1];
+    const pid = browserPid ?? dashboardPid;
     return {
       exitCode: await cli.exitCode,
       output: cli.stdout.trim(),
