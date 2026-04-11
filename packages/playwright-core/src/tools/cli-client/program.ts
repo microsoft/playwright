@@ -245,16 +245,19 @@ async function installBrowser() {
   program.parse(argv);
 }
 
+const daemonProcessPatterns = ['run-mcp-server', 'run-cli-server', 'cli-daemon', 'cliDaemon.js', 'dashboardApp.js'];
+
 async function killAllDaemons(): Promise<void> {
   const platform = os.platform();
   let killed = 0;
 
   try {
     if (platform === 'win32') {
+      const whereClause = daemonProcessPatterns.map(p => `$_.CommandLine -like '*${p}*'`).join(' -or ');
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
-          + `| Where-Object { $_.CommandLine -like '*run-mcp-server*' -or $_.CommandLine -like '*run-cli-server*' -or $_.CommandLine -like '*cli-daemon*' -or $_.CommandLine -like '*dashboardApp.js*' } `
+          + `| Where-Object { ${whereClause} } `
           + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
           { encoding: 'utf-8' }
       );
@@ -268,7 +271,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync('ps aux', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
-        if (line.includes('run-mcp-server') || line.includes('run-cli-server') || line.includes('cli-daemon') || line.includes('dashboardApp.js')) {
+        if (daemonProcessPatterns.some(p => line.includes(p))) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {
