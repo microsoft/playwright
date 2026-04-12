@@ -26,7 +26,7 @@ import { SdkObject, createRootSdkObject } from './instrumentation';
 import { WebKit } from './webkit/webkit';
 
 import type { BrowserType } from './browserType';
-import type { Language } from '../utils';
+import type { Language } from '@isomorphic/locatorGenerators';
 import type { Browser } from './browser';
 import type { Page } from './page';
 

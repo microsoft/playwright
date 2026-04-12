@@ -20,16 +20,20 @@ import { Transform, pipeline } from 'stream';
 import { TLSSocket } from 'tls';
 import * as zlib from 'zlib';
 
-import { assert, constructURLBasedOnBaseURL, createProxyAgent, eventsHelper, monotonicTime  } from '../utils';
-import { createGuid } from './utils/crypto';
-import { getUserAgent } from './utils/userAgent';
+import { createGuid } from '@utils/crypto';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from '@utils/happyEyeballs';
+import { assert } from '@isomorphic/assert';
+import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
+import { eventsHelper } from '@utils/eventsHelper';
+import { monotonicTime } from '@isomorphic/time';
+import { createProxyAgent } from '@utils/network';
+import { getUserAgent } from './userAgent';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
 import { isAbortError } from './progress';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from './utils/happyEyeballs';
 import { Tracing } from './trace/recorder/tracing';
 
 import type { Playwright } from './playwright';
@@ -37,7 +41,7 @@ import type { Progress } from './progress';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import type { HTTPCredentials } from '../../types/types';
-import type { RegisteredListener } from '../utils';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
 import type { LookupAddress } from 'dns';
@@ -116,16 +120,18 @@ export abstract class APIRequestContext extends SdkObject {
     APIRequestContext.allInstances.add(this);
   }
 
-  protected _disposeImpl() {
-    APIRequestContext.allInstances.delete(this);
-    this.fetchResponses.clear();
-    this.fetchLog.clear();
-    this.emit(APIRequestContext.Events.Dispose);
+  abstract storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
+
+  fetchResponseBody(progress: Progress, fetchUid: string): Buffer | undefined {
+    return this.fetchResponses.get(fetchUid);
   }
 
-  disposeResponse(fetchUid: string) {
-    this.fetchResponses.delete(fetchUid);
-    this.fetchLog.delete(fetchUid);
+  fetchLogForUid(progress: Progress, fetchUid: string): string[] {
+    return this.fetchLog.get(fetchUid) || [];
+  }
+
+  disposeResponse(progress: Progress, fetchUid: string) {
+    this._disposeResponse(fetchUid);
   }
 
   abstract tracing(): Tracing;
@@ -133,9 +139,20 @@ export abstract class APIRequestContext extends SdkObject {
   abstract dispose(options: { reason?: string }): Promise<void>;
 
   abstract _defaultOptions(): FetchRequestOptions;
-  abstract _addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
-  abstract _cookies(url: URL): Promise<channels.NetworkCookie[]>;
-  abstract storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
+  abstract addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
+  abstract cookies(progress: Progress, url: URL): Promise<channels.NetworkCookie[]>;
+
+  protected _disposeImpl() {
+    APIRequestContext.allInstances.delete(this);
+    this.fetchResponses.clear();
+    this.fetchLog.clear();
+    this.emit(APIRequestContext.Events.Dispose);
+  }
+
+  _disposeResponse(fetchUid: string) {
+    this.fetchResponses.delete(fetchUid);
+    this.fetchLog.delete(fetchUid);
+  }
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();
@@ -246,7 +263,7 @@ export abstract class APIRequestContext extends SdkObject {
   private async _updateRequestCookieHeader(progress: Progress, url: URL, headers: HeadersObject) {
     if (getHeader(headers, 'cookie') !== undefined)
       return;
-    const contextCookies = await progress.race(this._cookies(url));
+    const contextCookies = await this.cookies(progress, url);
     // Browser context returns cookies with domain matching both .example.com and
     // example.com. Those without leading dot are only sent when domain is strictly
     // matching example.com, but not for sub.example.com.
@@ -299,6 +316,7 @@ export abstract class APIRequestContext extends SdkObject {
     this.emit(APIRequestContext.Events.Request, requestEvent);
 
     let destroyRequest: (() => void) | undefined;
+    progress.setAllowConcurrentOrNestedRaces(true);
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
@@ -359,11 +377,11 @@ export abstract class APIRequestContext extends SdkObject {
         const cookies = this._parseSetCookieHeader(response.url || url.toString(), response.headers['set-cookie']) ;
         if (cookies.length) {
           try {
-            await this._addCookies(cookies);
+            await this.addCookies(cookies);
           } catch (e) {
             // Cookie value is limited by 4096 characters in the browsers. If setCookies failed,
             // we try setting each cookie individually just in case only some of them are bad.
-            await Promise.all(cookies.map(c => this._addCookies([c]).catch(() => {})));
+            await Promise.all(cookies.map(c => this.addCookies([c]).catch(() => {})));
           }
         }
 
@@ -544,6 +562,8 @@ export abstract class APIRequestContext extends SdkObject {
     return progress.race(resultPromise).catch(error => {
       destroyRequest?.();
       throw error;
+    }).finally(() => {
+      progress.setAllowConcurrentOrNestedRaces(false);
     });
   }
 
@@ -605,12 +625,12 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     };
   }
 
-  async _addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
+  async addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
     await this._context.addCookies(cookies);
   }
 
-  async _cookies(url: URL): Promise<channels.NetworkCookie[]> {
-    return await this._context.cookies(url.toString());
+  async cookies(progress: Progress, url: URL): Promise<channels.NetworkCookie[]> {
+    return await this._context.cookies(progress, url.toString());
   }
 
   override async storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
@@ -662,11 +682,11 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._options;
   }
 
-  async _addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
+  async addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
     this._cookieStore.addCookies(cookies);
   }
 
-  async _cookies(url: URL): Promise<channels.NetworkCookie[]> {
+  async cookies(progress: Progress, url: URL): Promise<channels.NetworkCookie[]> {
     return this._cookieStore.cookies(url);
   }
 

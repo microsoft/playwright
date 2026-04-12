@@ -17,6 +17,7 @@
 import fs from 'fs';
 
 import { test, expect } from './trace-cli-fixtures';
+import path from 'path';
 
 test.skip(({ mcpBrowser }) => mcpBrowser !== 'chrome', 'Chrome-only');
 
@@ -108,6 +109,24 @@ test('trace request shows details', async ({ runTraceCli }) => {
   expect(stdout).toContain('Response headers');
 });
 
+test('trace request shows request and response body', async ({ traceCwd, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['requests', '--grep', 'feedback']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('feedback');
+  const ordinal = stdout.match(/^\s+(\d+)\.\s/m)![1];
+  const { stdout: requestOutput, exitCode: requestExitCode } = await runTraceCli(['request', ordinal]);
+  expect(requestExitCode).toBe(0);
+  expect(requestOutput).toContain('Request body');
+  const requestBodyPath = path.join('.playwright-cli', 'trace', 'resources', '60e4c013c41de11280ed8ba99dd94144124a0c35.txt');
+  expect(requestOutput).toContain(' ' + requestBodyPath);
+  expect(fs.readFileSync(path.join(traceCwd, requestBodyPath), 'utf-8')).toEqual('What a great product!');
+  expect(requestOutput).toContain('Response body');
+  expect(requestOutput).toContain('application/json');
+  const responseBodyPath = path.join('.playwright-cli', 'trace', 'resources', '030b61c2fb7042fb4fc0ef4287a4ae3c0d98ed68.json');
+  expect(requestOutput).toContain(' ' + responseBodyPath);
+  expect(fs.readFileSync(path.join(traceCwd, responseBodyPath), 'utf-8')).toEqual(JSON.stringify({ received: true }));
+});
+
 test('trace request with invalid ID', async ({ runTraceCli }) => {
   const { stderr, exitCode } = await runTraceCli(['request', '999999']);
   expect(exitCode).toBe(1);
@@ -182,6 +201,31 @@ test('trace close removes extracted trace', async ({ traceFile, runTraceCli }) =
   // Re-open for remaining tests.
   const { exitCode: exitCode3 } = await runTraceCli(['open', traceFile]);
   expect(exitCode3).toBe(0);
+});
+
+test('trace open with .trace file creates link', async ({ traceFile, traceCwd, runTraceCli }) => {
+  // Extract the zip using the CLI to get raw trace files.
+  const extractCwd = path.join(path.dirname(traceFile), 'extracted');
+  fs.mkdirSync(extractCwd, { recursive: true });
+  const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
+  const { execFileSync } = require('child_process');
+  execFileSync(process.execPath, [cliPath, 'trace', 'open', traceFile], { cwd: extractCwd });
+  const extractDir = path.join(extractCwd, '.playwright-cli', 'trace');
+
+  const traceEntries = fs.readdirSync(extractDir).filter((f: string) => f.endsWith('.trace'));
+  expect(traceEntries.length).toBeGreaterThan(0);
+  const dotTraceFile = path.join(extractDir, traceEntries[0]);
+  const { exitCode } = await runTraceCli(['open', dotTraceFile]);
+  expect(exitCode).toBe(0);
+
+  const linkFile = path.join(traceCwd, '.playwright-cli', 'trace', '.link');
+  expect(fs.existsSync(linkFile)).toBe(true);
+  expect(fs.readFileSync(linkFile, 'utf-8')).toBe(dotTraceFile);
+
+  const { stdout: actionsOutput, exitCode: actionsExitCode } = await runTraceCli(['actions']);
+  expect(actionsExitCode).toBe(0);
+  expect(actionsOutput).toContain('Navigate');
+  expect(actionsOutput).toContain('Click');
 });
 
 test('trace attachments lists attachments', async ({ runTraceCli }) => {

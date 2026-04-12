@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { isString } from '../../utils';
+import { isString } from '@isomorphic/stringUtils';
 import * as input from '../input';
 import { macEditingCommands } from '../macEditingCommands';
 
@@ -155,9 +155,9 @@ export class RawMouseImpl implements input.RawMouse {
   async wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
     if (this._page?.browserContext._options.isMobile)
       throw new Error('Mouse wheel is not supported in mobile WebKit');
-    await this._session!.send('Page.updateScrollingState');
+    await progress.race(this._session!.send('Page.updateScrollingState'));
     // Wheel events hit the compositor first, so wait one frame for it to be synced.
-    await progress.race(this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, { world: 'utility' }));
+    await this._page!.mainFrame().evaluateExpression(progress, `new Promise(requestAnimationFrame)`, { world: 'utility' });
     await progress.race(this._pageProxySession.send('Input.dispatchWheelEvent', {
       x,
       y,

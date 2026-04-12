@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
+import { assert } from '@isomorphic/assert';
 import { Browser } from '../browser';
-import { BrowserContext, calculateUserAgentEmulation, verifyGeolocation } from '../browserContext';
+import { BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
 import { ConnectionEvents, FFConnection  } from './ffConnection';
 import { FFPage } from './ffPage';
@@ -57,7 +57,7 @@ export class FFBrowser extends Browser {
     ];
     if (options.persistent) {
       browser._defaultContext = new FFBrowserContext(browser, undefined, options.persistent);
-      promises.push((browser._defaultContext as FFBrowserContext)._initialize());
+      promises.push(browser._defaultContext.initialize());
     }
     const proxy = options.originalLaunchOptions.proxyOverride || options.proxy;
     if (proxy)
@@ -94,7 +94,7 @@ export class FFBrowser extends Browser {
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this.session.send('Browser.createBrowserContext', { removeOnDetach: true });
     const context = new FFBrowserContext(this, browserContextId, options);
-    await context._initialize();
+    await context.initialize();
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -147,19 +147,19 @@ export class FFBrowser extends Browser {
     }
     if (!originPage)
       return;
-    this._downloadCreated(originPage, payload.uuid, payload.url, payload.suggestedFileName);
+    this.downloadCreated(originPage, payload.uuid, payload.url, payload.suggestedFileName);
   }
 
   _onDownloadFinished(payload: Protocol.Browser.downloadFinishedPayload) {
     const error = payload.canceled ? 'canceled' : payload.error;
-    this._downloadFinished(payload.uuid, error);
+    this.downloadFinished(payload.uuid, error);
   }
 
   _onDisconnect() {
     for (const ffPage of this._ffPages.values())
       ffPage.didClose();
     this._ffPages.clear();
-    this._didClose();
+    this.didClose();
   }
 }
 
@@ -170,11 +170,11 @@ export class FFBrowserContext extends BrowserContext {
     super(browser, options, browserContextId);
   }
 
-  override async _initialize() {
+  override async initialize() {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [
-      super._initialize(),
+      super.initialize(),
       this._updateInitScripts(),
     ];
     if (this._options.acceptDownloads !== 'internal-browser-default') {
@@ -189,11 +189,8 @@ export class FFBrowserContext extends BrowserContext {
     promises.push(this.doUpdateDefaultViewport());
     if (this._options.hasTouch)
       promises.push(this._browser.session.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
-    if (this._options.userAgent) {
+    if (this._options.userAgent)
       promises.push(this._browser.session.send('Browser.setUserAgentOverride', { browserContextId, userAgent: this._options.userAgent }));
-      const { navigatorPlatform } = calculateUserAgentEmulation(this._options);
-      promises.push(this._browser.session.send('Browser.setPlatformOverride', { browserContextId, platform: navigatorPlatform || null }));
-    }
     if (this._options.bypassCSP)
       promises.push(this._browser.session.send('Browser.setBypassCSP', { browserContextId, bypassCSP: true }));
     if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
@@ -207,7 +204,7 @@ export class FFBrowserContext extends BrowserContext {
     if (this._options.extraHTTPHeaders || this._options.locale)
       promises.push(this.doUpdateExtraHTTPHeaders());
     if (this._options.httpCredentials)
-      promises.push(this.setHTTPCredentials(this._options.httpCredentials));
+      promises.push(this.innerSetHTTPCredentials(this._options.httpCredentials));
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
@@ -318,8 +315,6 @@ export class FFBrowserContext extends BrowserContext {
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
     await this._browser.session.send('Browser.setUserAgentOverride', { browserContextId: this._browserContextId, userAgent: userAgent || null });
-    const { navigatorPlatform } = calculateUserAgentEmulation({ userAgent });
-    await this._browser.session.send('Browser.setPlatformOverride', { browserContextId: this._browserContextId, platform: navigatorPlatform || null });
   }
 
   async doUpdateOffline(): Promise<void> {
@@ -407,10 +402,10 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser.session.send('Browser.clearCache');
   }
 
-  async doClose(reason: string | undefined) {
+  async doClose(reason: string | undefined): Promise<void | 'close-browser'> {
     if (!this._browserContextId) {
       // Closing persistent context should close the browser.
-      await this._browser.close({ reason });
+      return 'close-browser';
     } else {
       await this._browser.session.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
       this._browser._contexts.delete(this._browserContextId);

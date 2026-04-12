@@ -216,6 +216,10 @@ function stepChildrenMatchFilter(step: TestStep, filterText: string): boolean {
   return step.steps.some(s => stepMatchesFilter(s, filterText) || stepChildrenMatchFilter(s, filterText));
 }
 
+function stepHasDescendantAttachments(step: TestStep): boolean {
+  return step.steps.some(s => s.attachments.length > 0 || stepHasDescendantAttachments(s));
+}
+
 const StepTreeItem: React.FC<{
   test: TestCase;
   result: TestResult;
@@ -265,6 +269,12 @@ const StepTreeItem: React.FC<{
       onClick={evt => { evt.stopPropagation(); }}>
       {icons.attachment()}
     </a>}
+    {step.attachments.length === 0 && stepHasDescendantAttachments(step) && <span
+      className='step-indirect-attachment-indicator'
+      title='contains attachment'
+      aria-label='contains attachment'>
+      {icons.indirectAttachment()}
+    </span>}
     <span className='step-duration'>{msToString(step.duration)}</span>
   </div>} loadChildren={step.steps.length || step.snippet ? () => {
     const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];

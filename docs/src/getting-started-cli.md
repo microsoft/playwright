@@ -280,10 +280,10 @@ The CLI also loads `.playwright/cli.config.json` automatically if present. The c
 Connect to your existing browser tabs instead of launching a new browser:
 
 ```bash
-playwright-cli open --extension
+playwright-cli attach --extension
 ```
 
-This requires the [Playwright MCP Bridge browser extension](https://github.com/user-attachments/packages/extension) to be installed.
+This requires the [Playwright MCP Bridge browser extension](https://github.com/microsoft/playwright-mcp/blob/main/packages/extension/README.md) to be installed.
 
 ## Quick Reference
 

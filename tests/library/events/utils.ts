@@ -20,8 +20,9 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { expect } from '@playwright/test';
-import { EventEmitter as OriginalEventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
-import { nodePlatform } from '../../../packages/playwright-core/lib/server/utils/nodePlatform';
+import { client, utils } from '../../../packages/playwright-core/lib/coreBundle';
+
+const { nodePlatform } = utils;
 
 export const mustNotCall = (msg?: string) => {
   return function mustNotCall() {
@@ -47,8 +48,9 @@ export const mustCall = (fn?: Function, exact?: number) => {
   };
 };
 
-export class EventEmitter extends OriginalEventEmitter {
+/** as any breaks long TS resolution chain that makes tests unhappy */
+export class EventEmitter extends (client as any).EventEmitter {
   constructor() {
-    super(nodePlatform);
+    super(nodePlatform(process.cwd()));
   }
 }

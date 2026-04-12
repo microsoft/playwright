@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { z } from 'playwright-core/lib/zodBundle';
+import * as z from 'zod';
 import { defineTestTool } from './testTool';
 
 export const setupPage = defineTestTool({

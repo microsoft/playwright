@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
+import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { stringifyStackFrames } from '@isomorphic/stackTrace';
 import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
-import { getMetainfo } from '../utils/isomorphic/protocolMetainfo';
 import { captureLibraryStackTrace } from './clientStackTrace';
-import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 import type { ValidatorContext } from '../protocol/validator';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type * as channels from '@protocol/channels';
 
 type Listener = (...args: any[]) => void;

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
+import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { monotonicTime } from '@isomorphic/time';
 import { SdkObject } from './instrumentation';
-import { monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
-import { getMetainfo } from '../utils/isomorphic/protocolMetainfo';
 
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
+import type { Progress } from '@protocol/progress';
 
 const symbol = Symbol('Debugger');
 
@@ -45,6 +46,35 @@ export class Debugger extends SdkObject implements InstrumentationListener {
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
     });
+  }
+
+  requestPause(progress: Progress) {
+    if (this.isPaused())
+      throw new Error('Debugger is already paused');
+    this.setPauseBeforeWaitingActions();
+    this.setPauseAt({ next: true });
+  }
+
+  doResume(progress: Progress) {
+    if (!this.isPaused())
+      throw new Error('Debugger is not paused');
+    this.resume();
+  }
+
+  next(progress: Progress) {
+    if (!this.isPaused())
+      throw new Error('Debugger is not paused');
+    this.setPauseBeforeWaitingActions();
+    this.setPauseAt({ next: true });
+    this.resume();
+  }
+
+  runTo(progress: Progress, location: { file: string, line?: number, column?: number }) {
+    if (!this.isPaused())
+      throw new Error('Debugger is not paused');
+    this.setPauseBeforeWaitingActions();
+    this.setPauseAt({ location });
+    this.resume();
   }
 
   async setMuted(muted: boolean) {

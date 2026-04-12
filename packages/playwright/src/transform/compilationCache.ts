@@ -18,9 +18,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { calculateSha1 } from 'playwright-core/lib/utils';
-import { isWorkerProcess } from '../common/globals';
-import { sourceMapSupport } from '../utilsBundle';
+import { calculateSha1 } from '@utils/crypto';
+import sourceMapSupport from 'source-map-support';
+import { isWorkerProcess } from '../globals';
+import { packageRoot } from '../package';
 
 export type MemoryCache = {
   codePath: string;
@@ -224,7 +225,9 @@ export function setExternalDependencies(filename: string, deps: string[]) {
 }
 
 export function fileDependenciesForTest() {
-  return fileDependencies;
+  return Object.fromEntries([...fileDependencies.entries()].map(entry => (
+    [path.basename(entry[0]), [...entry[1]].map(f => path.basename(f)).sort()]
+  )));
 }
 
 export function collectAffectedTestFiles(changedFile: string, testFileCollector: Set<string>) {
@@ -277,7 +280,7 @@ export function dependenciesForTestFile(filename: string): Set<string> {
 // This is only used in the dev mode, specifically excluding
 // files from packages/playwright*. In production mode, node_modules covers
 // that.
-const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
+const kPlaywrightInternalPrefix = packageRoot;
 
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))

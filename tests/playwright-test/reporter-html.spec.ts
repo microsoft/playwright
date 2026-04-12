@@ -18,10 +18,14 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
-import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
-import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
-import { msToString } from '../../packages/playwright-core/src/utils/isomorphic/formatUtils';
-const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
+import { html } from '../../packages/playwright/lib/runner';
+const { startHtmlReportServer } = html;
+import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
+
+type HttpServer = utils.HttpServer;
+
+const { msToString } = iso;
+const { spawnAsync } = utils;
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
@@ -1222,6 +1226,33 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(attachment).toBeInViewport();
     });
 
+    test('parent step shows indirect attachment indicator', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({}, testInfo) => {
+            await test.step('outer', async () => {
+              await test.step('inner', async () => {
+                await testInfo.attach('attachment', { body: 'content', contentType: 'text/plain' });
+              });
+            });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      await page.getByRole('link', { name: 'passing' }).click();
+
+      // Collapsed parents show the indirect indicator.
+      await expect(page.getByLabel('outer').getByLabel('contains attachment')).toBeVisible();
+      // Expand outer; inner still shows the indicator (the attached leaf is below it).
+      await page.getByLabel('outer').click();
+      await expect(page.getByLabel('inner').getByLabel('contains attachment')).toBeVisible();
+      // The indirect indicator is non-interactive (no link/button role).
+      await expect(page.getByLabel('outer').getByLabel('contains attachment')).not.toHaveAttribute('href', /.+/);
+    });
+
     test('step.attach have links', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
@@ -1288,7 +1319,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-error-view').getByText('begin ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
 
       await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
-      await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('background-color', 'rgb(246, 248, 250)');
 
       await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('color', 'rgb(246, 248, 250)');
       await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
@@ -1315,6 +1345,32 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByText('sample').nth(1).click();
       await expect(page.getByText('Before Hooks')).toBeVisible();
       await expect(page.getByText('ouch')).toBeHidden();
+    });
+
+    test('should show repeatEachIndex annotation when non-zero', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.spec.js': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}, testInfo) => {
+          });
+        `
+      }, { 'reporter': 'dot,html', 'repeat-each': 3 }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      await showReport();
+
+      // First repeat (index 0) should not show repeatEachIndex annotation.
+      await page.getByText('sample').first().click();
+      await expect(page.locator('.test-case-annotation')).toBeHidden();
+      await page.goBack();
+
+      // Second repeat (index 1) should show repeatEachIndex annotation.
+      await page.getByText('sample').nth(1).click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('repeatEachIndex: 1');
+      await page.goBack();
+
+      // Third repeat (index 2) should show repeatEachIndex annotation.
+      await page.getByText('sample').nth(2).click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('repeatEachIndex: 2');
     });
 
     test('should group similar / loop steps', async ({ runInlineTest, showReport, page }) => {
@@ -1768,7 +1824,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const result = await runInlineTest({
           'a.test.js': `
             const { expect, test } = require('@playwright/test');
-            test('pass', async ({}) => {
+            test('pass', { tag: '@smoke' }, async ({}) => {
               expect(1).toBe(1);
             });
           `,
@@ -1779,8 +1835,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
 
-        await expect(page.locator('.test-file-test .label')).toHaveCount(0);
-        await expect(page.locator('.label-row')).not.toBeVisible();
+        await expect(page.locator('.test-file-test .label')).toHaveCount(1);
       });
 
       test('testCaseView - after click test label and go back, testCaseView should be visible', async ({ runInlineTest, showReport, page }) => {
@@ -3044,7 +3099,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       const reportPath = path.join(test.info().outputPath(), 'playwright-report', 'index.html');
       await page.goto(url.pathToFileURL(reportPath).toString());
-      await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+      await expect(page).toMatchAriaSnapshot(`
         - button "tests/a/test.spec.ts"
         - button "tests/b/test.spec.ts"
       `);
@@ -3149,7 +3204,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(0);
       await showReport();
       await page.getByRole('link', { name: 'sample' }).click();
-      await expect(page.locator('body')).toMatchAriaSnapshot(`
+      await expect(page).toMatchAriaSnapshot(`
         - treeitem "Click Click me"
       `);
     });
@@ -3351,7 +3406,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await page.getByRole('link', { name: 'Speedboard' }).click();
         await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'true');
 
-        await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+        await expect(page).toMatchAriaSnapshot(`
           - button "Slowest Tests"
           - region:
             - list:
@@ -3375,7 +3430,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
                 - text: /bar/
         `);
         await page.getByText('foo').first().click();
-        await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+        await expect(page).toMatchAriaSnapshot(`
           - button "Slowest Tests"
         `);
 
@@ -3449,7 +3504,7 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('checkbox', { name: 'Merge files' }).click();
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button "<anonymous>" [expanded]
     - region:
       - list:

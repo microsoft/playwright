@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { LongStandingScope } from '@isomorphic/manualPromise';
 import { ChannelOwner } from './channelOwner';
 import { TargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
-import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 import { TimeoutSettings } from './timeoutSettings';
 import { Waiter } from './waiter';
 

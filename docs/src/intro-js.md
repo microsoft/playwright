@@ -304,7 +304,7 @@ pnpm exec playwright --version
 
 - Node.js: latest 20.x, 22.x or 24.x.
 - Windows 11+, Windows Server 2019+ or Windows Subsystem for Linux (WSL).
-- macOS 14 (Ventura) or later.
+- macOS 14 (Sonoma) or later.
 - Debian 12 / 13, Ubuntu 22.04 / 24.04 (x86-64 or arm64).
 
 ## What's next

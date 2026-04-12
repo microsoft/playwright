@@ -15,25 +15,25 @@
  */
 
 import net from 'net';
+import { resolveGlobToRegexPattern } from '@isomorphic/urlMatch';
+import { fetchData } from '../utils';
+import { getUserAgent } from '../userAgent';
 import { Dispatcher } from './dispatcher';
-import { SdkObject } from '../../server/instrumentation';
+import { SdkObject } from '../instrumentation';
 import * as localUtils from '../localUtils';
-import { getUserAgent } from '../utils/userAgent';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { PipeTransport } from '../pipeTransport';
 import { Progress } from '../progress';
 import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';
-import { fetchData } from '../utils/network';
-import { resolveGlobToRegexPattern } from '../../utils/isomorphic/urlMatch';
 
 import type { HarBackend } from '../harBackend';
 import type { Playwright } from '../playwright';
 import type { RootDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import type * as http from 'http';
-import type { HTTPRequestParams } from '../utils/network';
+import type { HTTPRequestParams } from '@utils/network';
 
 export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
@@ -85,11 +85,11 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
 
   async connect(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
     if (URL.canParse(params.endpoint))
-      return await this._connectOverWebSocket(params, progress);
-    return await this._connectOverPipe(params, progress);
+      return await this._connectOverWebSocket(progress, params);
+    return await progress.race(this._connectOverPipe(params));
   }
 
-  private async _connectOverWebSocket(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
+  private async _connectOverWebSocket(progress: Progress, params: channels.LocalUtilsConnectParams): Promise<channels.LocalUtilsConnectResult> {
     const wsHeaders = {
       'User-Agent': getUserAgent(),
       'x-playwright-proxy': params.exposeNetwork ?? '',
@@ -126,7 +126,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     return { pipe, headers: transport.headers };
   }
 
-  private async _connectOverPipe(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
+  private async _connectOverPipe(params: channels.LocalUtilsConnectParams): Promise<channels.LocalUtilsConnectResult> {
     const socket = await new Promise<net.Socket>((resolve, reject) => {
       const conn = net.connect(params.endpoint, () => resolve(conn));
       conn.on('error', reject);

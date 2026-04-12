@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { TimeoutError } from './errors';
-import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { ChannelOwner } from './channelOwner';
 import type * as channels from '@protocol/channels';
 import type { EventEmitter } from 'events';
-import type { Zone } from './platform';
+import type { Zone } from '@isomorphic/platform';
 
 export class Waiter {
   private _dispose: (() => void)[];

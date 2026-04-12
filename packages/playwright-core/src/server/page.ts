@@ -15,6 +15,16 @@
  * limitations under the License.
  */
 
+import { isInvalidSelectorError, stringifySelector } from '@isomorphic/selectorParser';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { parseEvaluationResultValue } from '@isomorphic/utilityScriptSerializers';
+import { getComparator } from '@utils/comparators';
+import { debugLogger } from '@utils/debugLogger';
+import { LongStandingScope } from '@isomorphic/manualPromise';
+import { assert } from '@isomorphic/assert';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { trimStringWithEllipsis } from '@isomorphic/stringUtils';
+import { asLocator } from '@isomorphic/locatorGenerators';
 import { BrowserContext } from './browserContext';
 import { DisposableObject } from './disposable';
 import { ConsoleMessage } from './console';
@@ -26,13 +36,6 @@ import * as input from './input';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
-import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis } from '../utils';
-import { asLocator } from '../utils';
-import { getComparator } from './utils/comparators';
-import { debugLogger } from './utils/debugLogger';
-import { isInvalidSelectorError, stringifySelector } from '../utils/isomorphic/selectorParser';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
-import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
 import { Overlay } from './overlay';
@@ -47,7 +50,7 @@ import type * as network from './network';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
-import type { ImageComparatorOptions } from './utils/comparators';
+import type { ImageComparatorOptions } from '@utils/comparators';
 import type * as channels from '@protocol/channels';
 import type { BindingPayload } from '@injected/bindingsController';
 import type { SelectorInfo } from './frameSelectors';
@@ -81,7 +84,7 @@ export interface PageDelegate {
   getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;  // Only called for frame owner elements.
   getOwnerFrame(handle: dom.ElementHandle): Promise<string | null>; // Returns frameId.
   getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null | 'error:notconnected'>;
-  setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void>;
+  setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void>;
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
@@ -276,11 +279,11 @@ export class Page extends SdkObject<PageEventMap> {
     this._emulatedSize = undefined;
     this._emulatedMedia = {};
     this._extraHTTPHeaders = undefined;
-    await Promise.all([
+    await progress.race(Promise.all([
       this.delegate.updateEmulatedViewportSize(),
       this.delegate.updateEmulateMedia(),
       this.delegate.updateExtraHTTPHeaders(),
-    ]);
+    ]));
 
     await this.delegate.resetForReuse(progress);
   }
@@ -320,7 +323,7 @@ export class Page extends SdkObject<PageEventMap> {
       handle.dispose();
       return;
     }
-    const fileChooser = new FileChooser(this, handle, multiple);
+    const fileChooser = new FileChooser(handle, multiple);
     this.emit(Page.Events.FileChooser, fileChooser);
   }
 
@@ -456,7 +459,7 @@ export class Page extends SdkObject<PageEventMap> {
       // so we should await it immediately.
       const [response] = await Promise.all([
         // Reload must be a new document, and should not be confused with a stray pushState.
-        this.mainFrame()._waitForNavigation(progress, true /* requiresNewDocument */, options),
+        this.mainFrame().waitForNavigation(progress, true /* requiresNewDocument */, options),
         progress.race(this.delegate.reload()),
       ]);
       return response;
@@ -468,7 +471,7 @@ export class Page extends SdkObject<PageEventMap> {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
+      const waitPromise = this.mainFrame().waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });
@@ -489,7 +492,7 @@ export class Page extends SdkObject<PageEventMap> {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
+      const waitPromise = this.mainFrame().waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });
@@ -505,8 +508,8 @@ export class Page extends SdkObject<PageEventMap> {
     });
   }
 
-  requestGC(): Promise<void> {
-    return this.delegate.requestGC();
+  requestGC(progress: Progress): Promise<void> {
+    return progress.race(this.delegate.requestGC());
   }
 
   registerLocatorHandler(selector: string, noWaitAfter: boolean | undefined) {
@@ -576,7 +579,13 @@ export class Page extends SdkObject<PageEventMap> {
             progress.log(`  locator handler has finished`);
           }
         });
-        await progress.race(this.openScope.race(promise)).finally(() => --this._locatorHandlerRunningCounter);
+        try {
+          progress.setAllowConcurrentOrNestedRaces(true);
+          await progress.race(this.openScope.race(promise));
+        } finally {
+          progress.setAllowConcurrentOrNestedRaces(false);
+          --this._locatorHandlerRunningCounter;
+        }
         progress.log(`  interception handler has finished, continuing`);
       }
     }
@@ -646,11 +655,15 @@ export class Page extends SdkObject<PageEventMap> {
     return contextOptions.viewport ? { viewport: contextOptions.viewport, screen: contextOptions.screen || contextOptions.viewport } : undefined;
   }
 
-  async bringToFront(): Promise<void> {
-    await this.delegate.bringToFront();
+  async bringToFront(progress: Progress): Promise<void> {
+    await progress.race(this.delegate.bringToFront());
   }
 
-  async addInitScript(source: string) {
+  async addInitScript(progress: Progress, source: string) {
+    return await progress.race(this._addInitScript(source));
+  }
+
+  private async _addInitScript(source: string) {
     const initScript = new InitScript(this, source);
     this.initScripts.push(initScript);
     try {
@@ -678,7 +691,7 @@ export class Page extends SdkObject<PageEventMap> {
       this.requestInterceptors.unshift(handler);
     else
       this.requestInterceptors.push(handler);
-    await this.delegate.updateRequestInterception();
+    await progress.race(this.delegate.updateRequestInterception());
   }
 
   async removeRequestInterceptor(handler: network.RouteHandler): Promise<void> {
@@ -692,9 +705,9 @@ export class Page extends SdkObject<PageEventMap> {
 
   async expectScreenshot(progress: Progress, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean }> {
     const locator = options.locator;
-    const rafrafScreenshot = locator ? async (timeout: number) => {
+    const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
-    } : async (timeout: number) => {
+    } : async (progress: Progress, timeout: number) => {
       await this.performActionPreChecks(progress);
       await this.mainFrame().rafrafTimeout(progress, timeout);
       return await this.screenshotter.screenshotPage(progress, options || {});
@@ -742,7 +755,7 @@ export class Page extends SdkObject<PageEventMap> {
         if (screenshotTimeout)
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
         previous = actual;
-        actual = await rafrafScreenshot(screenshotTimeout).catch(e => {
+        actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
           if (this.mainFrame().isNonRetriableError(e))
             throw e;
           progress.log(`failed to take screenshot - ` + e.message);
@@ -796,7 +809,11 @@ export class Page extends SdkObject<PageEventMap> {
     return await this.screenshotter.screenshotPage(progress, options);
   }
 
-  async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
+  async close(progress: Progress, options: { runBeforeUnload?: boolean, reason?: string } = {}) {
+    await progress.race(this._close(options));
+  }
+
+  private async _close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     if (this._closedState === 'closed')
       return;
 
@@ -851,7 +868,11 @@ export class Page extends SdkObject<PageEventMap> {
     }
   }
 
-  async setFileChooserInterceptedBy(enabled: boolean, by: any): Promise<void> {
+  async setFileChooserInterceptedBy(progress: Progress, enabled: boolean, by: any): Promise<void> {
+    await progress.race(this._setFileChooserInterceptedBy(enabled, by));
+  }
+
+  private async _setFileChooserInterceptedBy(enabled: boolean, by: any): Promise<void> {
     const wasIntercepted = this.fileChooserIntercepted();
     if (enabled)
       this._fileChooserInterceptedBy.add(by);
@@ -962,12 +983,12 @@ export class Worker extends SdkObject<WorkerEventMap> {
     this.openScope.close(new Error('Worker closed'));
   }
 
-  async evaluateExpression(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    return js.evaluateExpression(await this._executionContextPromise, expression, { returnByValue: true, isFunction }, arg);
+  async evaluateExpression(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    return progress.race(js.evaluateExpression(await this._executionContextPromise, expression, { returnByValue: true, isFunction }, arg));
   }
 
-  async evaluateExpressionHandle(expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
-    return js.evaluateExpression(await this._executionContextPromise, expression, { returnByValue: false, isFunction }, arg);
+  async evaluateExpressionHandle(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
+    return progress.race(js.evaluateExpression(await this._executionContextPromise, expression, { returnByValue: false, isFunction }, arg));
   }
 }
 
@@ -1048,9 +1069,9 @@ export class InitScript extends DisposableObject {
 
 export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
-  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
+  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
-      const context = await progress.race(frame._utilityContext());
+      const context = await progress.race(frame.utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
       const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, options) => {
         if (options.info) {
@@ -1085,12 +1106,14 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
 
   // Only fetch child snapshots for iframes that were actually rendered (not filtered by depth).
   const renderedIframeRefs = snapshot.iframeRefs.filter(ref => ref in snapshot.iframeDepths);
+  progress.setAllowConcurrentOrNestedRaces(true);
   const childSnapshotPromises = renderedIframeRefs.map(ref => {
     const iframeDepth = snapshot.iframeDepths[ref];
     const childDepth = options.depth ? options.depth - iframeDepth - 1 : undefined;
     return ariaSnapshotFrameRef(progress, frame, ref, { ...options, depth: childDepth });
   });
   const childSnapshots = await Promise.all(childSnapshotPromises);
+  progress.setAllowConcurrentOrNestedRaces(false);
 
   const full = [];
   let incremental: string[] | undefined;

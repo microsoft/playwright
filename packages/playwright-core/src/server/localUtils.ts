@@ -18,14 +18,15 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { calculateSha1 } from './utils/crypto';
+import * as yauzl from 'yauzl';
+import * as yazl from 'yazl';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { serializeClientSideCallMetadata } from '@isomorphic/trace/traceUtils';
+import { assert } from '@isomorphic/assert';
+import { calculateSha1 } from '@utils/crypto';
+import { ZipFile } from '@utils/zipFile';
+import { removeFolders } from '@utils/fileUtils';
 import { HarBackend } from './harBackend';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
-import { ZipFile } from './utils/zipFile';
-import { serializeClientSideCallMetadata } from '../utils/isomorphic/trace/traceUtils';
-import { assert } from '../utils/isomorphic/assert';
-import { removeFolders } from './utils/fileUtils';
-
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
 import type EventEmitter from 'events';
@@ -42,7 +43,6 @@ export type StackSession = {
 
 export async function zip(progress: Progress, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsZipParams): Promise<void> {
   const promise = new ManualPromise<void>();
-  const { yauzl, yazl } = await import('../zipBundle');
   const zipFile = new yazl.ZipFile();
   (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
 

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { fitToWidth } from 'packages/playwright/lib/reporters/base';
+import { base } from '../../packages/playwright/lib/runner';
+const { fitToWidth } = base;
 import { test, expect } from './playwright-test-fixtures';
 
 test('chinese characters', () => {

@@ -18,13 +18,20 @@ import fs from 'fs';
 import path from 'path';
 import { Transform } from 'stream';
 
-import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecCommand, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
-import { open } from 'playwright-core/lib/utilsBundle';
-import { mime } from 'playwright-core/lib/utilsBundle';
+import colors from 'colors/safe';
+import mime from 'mime';
+import open from 'open';
+import * as yazl from 'yazl';
+import { assert } from '@isomorphic/assert';
+import { MultiMap } from '@isomorphic/multimap';
+import { calculateSha1 } from '@utils/crypto';
+import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@utils/fileUtils';
+import { getPackageManagerExecCommand } from '@utils/env';
+import { HttpServer } from '@utils/httpServer';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
-import { codeFrameColumns } from '../transform/babelBundle';
+import * as babel from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
@@ -32,7 +39,7 @@ import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAn
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { TransformCallback } from 'stream';
-import type { ZipFile } from 'playwright-core/lib/zipBundle';
+import type { ZipFile } from 'yazl';
 
 type TestEntry = {
   testCase: TestCase;
@@ -145,7 +152,6 @@ class HtmlReporter implements ReporterV2 {
     const noCopyPrompt = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_COPY_PROMPT') ?? this._options.noCopyPrompt;
     const doNotInlineAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS') ?? this._options.doNotInlineAssets ?? false;
 
-    const { yazl } = await import('playwright-core/lib/zipBundle');
     const builder = new HtmlBuilder(yazl, this.config, this._outputFolder, this._attachmentsBaseURL, doNotInlineAssets, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
@@ -260,7 +266,7 @@ class HtmlBuilder {
   private _options: HTMLReportOptions;
   private _doNotInlineAssets: boolean;
 
-  constructor(yazl: typeof import('playwright-core/lib/zipBundle').yazl, config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
+  constructor(yazl: typeof import('yazl'), config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
     this._dataZipFile = new yazl.ZipFile();
     this._config = config;
     this._reportFolder = outputDir;
@@ -451,6 +457,7 @@ class HtmlBuilder {
         outcome: test.outcome(),
         path,
         results,
+        repeatEachIndex: test.repeatEachIndex || undefined, // Do not include zero.
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
       },
       testCaseSummary: {
@@ -464,6 +471,7 @@ class HtmlBuilder {
         outcome: test.outcome(),
         path,
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
+        repeatEachIndex: test.repeatEachIndex || undefined, // Do not include zero.
         results: results.map(result => {
           return {
             attachments: result.attachments.map(a => ({ name: a.name, contentType: a.contentType, path: a.path })),
@@ -717,7 +725,7 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       continue;
     }
     const lines = source.split('\n').length;
-    const highlighted = codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
+    const highlighted = babel.codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
     const highlightedLines = highlighted.split('\n');
     const lineWithArrow = highlightedLines[highlightedLines.length - 1];
     for (const step of stepsInFile.get(file)) {
@@ -744,7 +752,7 @@ function createErrorCodeframe(message: string, location: Location) {
     return;
   }
 
-  return codeFrameColumns(
+  return babel.codeFrameColumns(
       source,
       {
         start: {

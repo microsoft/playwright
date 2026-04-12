@@ -15,7 +15,10 @@
  */
 
 import 'playwright-core/lib/bootstrap';
-import { ManualPromise, setTimeOrigin, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { setTimeOrigin } from '@isomorphic/time';
+import { startProfiling, stopProfiling } from '@utils/profiler';
 
 import { serializeError } from '../util';
 
@@ -55,47 +58,48 @@ export class ProcessRunner {
 let gracefullyCloseCalled = false;
 let forceExitInitiated = false;
 
-sendMessageToParent({ method: 'ready' });
-
-process.on('disconnect', () => gracefullyCloseAndExit(true));
-process.on('SIGINT', () => {});
-process.on('SIGTERM', () => {});
-
 let processRunner: ProcessRunner | undefined;
 let processName: string | undefined;
 const startingEnv = { ...process.env };
 
-process.on('message', async (message: any) => {
-  if (message.method === '__init__') {
-    const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
-    void startProfiling();
-    setTimeOrigin(processParams.timeOrigin);
-    const { create } = require(runnerScript);
-    processRunner = create(runnerParams) as ProcessRunner;
-    processName = processParams.processName;
-    return;
-  }
-  if (message.method === '__stop__') {
-    const keys = new Set([...Object.keys(process.env), ...Object.keys(startingEnv)]);
-    const producedEnv: EnvProducedPayload = [...keys].filter(key => startingEnv[key] !== process.env[key]).map(key => [key, process.env[key] ?? null]);
-    sendMessageToParent({ method: '__env_produced__', params: producedEnv });
-    await gracefullyCloseAndExit(false);
-    return;
-  }
-  if (message.method === '__dispatch__') {
-    const { id, method, params } = message.params as ProtocolRequest;
-    try {
-      const result = await (processRunner as any)[method](params);
-      const response: ProtocolResponse = { id, result };
-      sendMessageToParent({ method: '__dispatch__', params: response });
-    } catch (e) {
-      const response: ProtocolResponse = { id, error: serializeError(e) };
-      sendMessageToParent({ method: '__dispatch__', params: response });
+export function startProcessRunner(create: (params: any) => ProcessRunner) {
+  sendMessageToParent({ method: 'ready' });
+
+  process.on('disconnect', () => gracefullyCloseAndExit(true));
+  process.on('SIGINT', () => {});
+  process.on('SIGTERM', () => {});
+
+  process.on('message', async (message: any) => {
+    if (message.method === '__init__') {
+      const { processParams, runnerParams } = message.params as { processParams: ProcessInitParams, runnerParams: any };
+      void startProfiling();
+      setTimeOrigin(processParams.timeOrigin);
+      processRunner = create(runnerParams);
+      processName = processParams.processName;
+      return;
     }
-  }
-  if (message.method === '__response__')
-    handleResponseFromParent(message.params as ProtocolResponse);
-});
+    if (message.method === '__stop__') {
+      const keys = new Set([...Object.keys(process.env), ...Object.keys(startingEnv)]);
+      const producedEnv: EnvProducedPayload = [...keys].filter(key => startingEnv[key] !== process.env[key]).map(key => [key, process.env[key] ?? null]);
+      sendMessageToParent({ method: '__env_produced__', params: producedEnv });
+      await gracefullyCloseAndExit(false);
+      return;
+    }
+    if (message.method === '__dispatch__') {
+      const { id, method, params } = message.params as ProtocolRequest;
+      try {
+        const result = await (processRunner as any)[method](params);
+        const response: ProtocolResponse = { id, result };
+        sendMessageToParent({ method: '__dispatch__', params: response });
+      } catch (e) {
+        const response: ProtocolResponse = { id, error: serializeError(e) };
+        sendMessageToParent({ method: '__dispatch__', params: response });
+      }
+    }
+    if (message.method === '__response__')
+      handleResponseFromParent(message.params as ProtocolResponse);
+  });
+}
 
 const kForceExitTimeout = +(process.env.PWTEST_FORCE_EXIT_TIMEOUT || 30000);
 

@@ -21,6 +21,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import stylistic from "@stylistic/eslint-plugin";
 import importRules from "eslint-plugin-import";
+import progressPlugin from "./utils/eslint-plugin-progress/index.js";
 import { fixupConfigRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
@@ -46,7 +47,7 @@ const ignores = [
   "**/playwright-report/",
   "examples",
   "packages/*/lib/",
-  "packages/playwright-core/bundles/zip/src/third_party/",
+  "packages/playwright-core/bundles/utils/src/third_party/",
   "packages/playwright-core/src/generated/*",
   "packages/playwright-core/src/third_party/",
   "packages/playwright-core/types/*",
@@ -356,15 +357,63 @@ export default [
     },
   },
   {
-    files: ["packages/playwright-core/src/tools/**/*.ts"],
+    files: ["packages/playwright-core/src/**/*.ts"],
+    ignores: [
+      "packages/playwright-core/src/entry/**",
+    ],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [{
-            group: ["**/client", "**/client/**"],
-            message: "tools/ must not import from client/",
+            group: ["**/coreBundle"],
+            message: "coreBundle can only be imported from entry/ files. Use direct imports instead.",
           }],
+        },
+      ],
+    },
+  },
+  {
+    files: ["packages/playwright-core/src/**/*.ts"],
+    ignores: [
+      "packages/playwright-core/src/package.ts",
+      "packages/playwright-core/src/cli/programWithTestStub.ts",
+    ],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "process",
+          property: "exit",
+          message:
+            "Please use gracefullyProcessExitDoNotHang function to exit the process.",
+        },
+        { object: "process", property: "stdout" },
+        { object: "process", property: "stderr" },
+        {
+          object: "require",
+          property: "resolve",
+          message: "Use libPath() from package.ts instead of require.resolve.",
+        },
+      ],
+    },
+  },
+  {
+    files: ["packages/playwright-core/src/tools/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/client", "**/client/**"],
+              message: "tools/ must not import from client/",
+            },
+            {
+              group: ["**/coreBundle"],
+              message: "coreBundle can only be imported from entry/ files. Use direct imports instead.",
+            },
+          ],
         },
       ],
       "no-restricted-syntax": [
@@ -378,7 +427,7 @@ export default [
   },
   {
     files: [
-      "packages/playwright-core/src/utils/**/*.ts",
+      "packages/isomorphic/**/*.ts",
     ],
     languageOptions: languageOptionsWithTsConfig,
     rules: {
@@ -418,6 +467,19 @@ export default [
       ],
       ...noFloatingPromisesRules,
       ...noBooleanCompareRules,
+    },
+  },
+  {
+    files: [
+      "packages/playwright-core/src/server/**/*.ts",
+      "packages/utils/**/*.ts",
+    ],
+    plugins: {
+      "progress": progressPlugin,
+    },
+    languageOptions: languageOptionsWithTsConfig,
+    rules: {
+      "progress/await-must-use-progress": "error",
     },
   },
   {

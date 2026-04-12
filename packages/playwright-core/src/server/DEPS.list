@@ -1,21 +1,25 @@
 [*]
+@isomorphic/**
+@utils/**
 ../generated/
+../package.ts
 ../protocol/
-../utils
-../utils/isomorphic/**
-../utilsBundle.ts
-../zipBundle.ts
 ./
 ./codegen/
-./isomorphic
 ./har/
 ./recorder/
 ./registry/
 ./trace/recorder/tracing.ts
-./utils/
+node_modules/jpeg-js
+node_modules/mime
+node_modules/pngjs
+node_modules/proxy-from-env
+node_modules/ws
+node_modules/yaml
+node_modules/yauzl
+node_modules/yazl
 
 [devtoolsController.ts]
-./chromium/
 
 [playwright.ts]
 ./android/

@@ -19,9 +19,10 @@ import path from 'path';
 
 import { test, expect } from '@playwright/test';
 
-import { resolveCLIConfigForCLI, resolveCLIConfigForMCP } from '../../packages/playwright-core/lib/tools/mcp/config';
-
+import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
+
+const { resolveCLIConfigForCLI, resolveCLIConfigForMCP } = tools;
 
 // Empty env to isolate tests from the host environment.
 const emptyEnv = {};
@@ -347,7 +348,7 @@ test.describe('resolveCLIConfigForCLI - isolated and userDataDir', () => {
   });
 
   test('not isolated when --attach is set', async ({}, testInfo) => {
-    const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { attach: 'ws://localhost:1234' });
+    const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { endpoint: 'ws://localhost:1234' });
     expect(config.browser.isolated).toBe(false);
   });
 

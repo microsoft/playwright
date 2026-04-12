@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import { asLocator } from '@isomorphic/locatorGenerators';
+import { escapeWithQuotes, toSnakeCase } from '@isomorphic/stringUtils';
 import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
-import { asLocator, escapeWithQuotes, toSnakeCase } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';

@@ -17,8 +17,8 @@
 
 import path from 'path';
 
-import { assert } from '../../utils/isomorphic/assert';
-import { createGuid } from '../utils/crypto';
+import { assert } from '@isomorphic/assert';
+import { createGuid } from '@utils/crypto';
 import { Artifact } from '../artifact';
 import { Browser } from '../browser';
 import { BrowserContext, verifyGeolocation } from '../browserContext';
@@ -91,7 +91,7 @@ export class CRBrowser extends Browser {
         // This can be removed after https://chromium-review.googlesource.com/c/chromium/src/+/2885888 lands in stable.
         await session.send('Target.getTargetInfo');
       }),
-      (browser._defaultContext as CRBrowserContext)._initialize(),
+      browser._defaultContext.initialize(),
     ]);
     await browser._waitForAllPagesToBeInitialized();
     return browser;
@@ -124,7 +124,7 @@ export class CRBrowser extends Browser {
       proxyBypassList,
     });
     const context = new CRBrowserContext(this, browserContextId, options);
-    await context._initialize();
+    await context.initialize();
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -233,7 +233,7 @@ export class CRBrowser extends Browser {
     for (const serviceWorker of this._serviceWorkers.values())
       serviceWorker.didClose();
     this._serviceWorkers.clear();
-    this._didClose();
+    this.didClose();
   }
 
   private _findOwningPage(frameId: string) {
@@ -261,14 +261,14 @@ export class CRBrowser extends Browser {
       originPage = page._opener._page.initializedOrUndefined();
     if (!originPage)
       return;
-    this._downloadCreated(originPage, payload.guid, payload.url, payload.suggestedFilename);
+    this.downloadCreated(originPage, payload.guid, payload.url, payload.suggestedFilename);
   }
 
   _onDownloadProgress(payload: any) {
     if (payload.state === 'completed')
-      this._downloadFinished(payload.guid, '');
+      this.downloadFinished(payload.guid, '');
     if (payload.state === 'canceled')
-      this._downloadFinished(payload.guid, this._closeReason || 'canceled');
+      this.downloadFinished(payload.guid, this._closeReason || 'canceled');
   }
 
   async _closePage(crPage: CRPage) {
@@ -344,12 +344,12 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
 
   constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._authenticateProxyViaCredentials();
+    this.authenticateProxyViaCredentials();
   }
 
-  override async _initialize() {
+  override async initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
-    const promises: Promise<any>[] = [super._initialize()];
+    const promises: Promise<any>[] = [super.initialize()];
     if (this._browser.options.name !== 'clank' && this._options.acceptDownloads !== 'internal-browser-default') {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads === 'accept' ? 'allowAndName' : 'deny',
@@ -546,7 +546,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       await page.exposePlaywrightBinding();
   }
 
-  async doClose(reason: string | undefined) {
+  async doClose(reason: string | undefined): Promise<void | 'close-browser'> {
     // Headful chrome cannot dispose browser context with opened 'beforeunload'
     // dialogs, so we should close all that are currently opened.
     // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
@@ -555,9 +555,11 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
 
     if (!this._browserContextId) {
       // Closing persistent context should close the browser.
-      await this._browser.close({ reason });
-      return;
+      return 'close-browser';
     }
+
+    // Ongoing downloads cause crashes in Edge, so cancel them first.
+    await Promise.all([...this._downloads].map(download => download.cancel().catch(() => {})));
 
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);

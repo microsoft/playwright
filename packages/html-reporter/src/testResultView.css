@@ -88,6 +88,17 @@
   margin-right: 0;
 }
 
+.step-indirect-attachment-indicator {
+  display: flex;
+  flex: none;
+  padding: 4px;
+  opacity: 0.5;
+}
+
+.step-indirect-attachment-indicator .octicon {
+  margin-right: 0;
+}
+
 .step-duration {
   flex: none;
   white-space: nowrap;

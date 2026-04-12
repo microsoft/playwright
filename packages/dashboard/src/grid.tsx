@@ -56,9 +56,10 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
       list.sort((a, b) => a.title.localeCompare(b.title));
 
     // Current workspace first, then alphabetical.
+    const currentWorkspace = clientInfo?.workspaceDir || 'Global';
     const entries = [...groups.entries()];
-    const current = entries.filter(([key]) => key === clientInfo?.workspaceDir);
-    const other = entries.filter(([key]) => key !== clientInfo?.workspaceDir).sort((a, b) => a[0].localeCompare(b[0]));
+    const current = entries.filter(([key]) => key === currentWorkspace);
+    const other = entries.filter(([key]) => key !== currentWorkspace).sort((a, b) => a[0].localeCompare(b[0]));
     return [...current, ...other];
   }, [sessions, clientInfo?.workspaceDir]);
 

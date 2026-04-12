@@ -16,11 +16,14 @@
 
 import path from 'path';
 
-import { getPackageManagerExecCommand, msToString as milliseconds, parseErrorStack } from 'playwright-core/lib/utils';
-import { colors as realColors, noColors } from 'playwright-core/lib/utils';
+import realColors from 'colors/safe';
+import * as getEastAsianWidth from 'get-east-asian-width';
+import { noColors } from '@isomorphic/colors';
+import { msToString } from '@isomorphic/formatUtils';
+import { parseErrorStack } from '@isomorphic/stackTrace';
+import { getPackageManagerExecCommand } from '@utils/env';
 
 import { ansiRegex, resolveReporterOutputPath, stripAnsiEscapes } from '../util';
-import { getEastAsianWidth } from '../utilsBundle';
 
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
@@ -259,7 +262,7 @@ export class TerminalReporter implements ReporterV2 {
     if (didNotRun)
       tokens.push(this.screen.colors.yellow(`  ${didNotRun} did not run`));
     if (expected)
-      tokens.push(this.screen.colors.green(`  ${expected} passed`) + this.screen.colors.dim(` (${milliseconds(this.result.duration)})`));
+      tokens.push(this.screen.colors.green(`  ${expected} passed`) + this.screen.colors.dim(` (${msToString(this.result.duration)})`));
     if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)
       tokens.push(this.screen.colors.red(`  ${fatalErrors.length === 1 ? '1 error was not a part of any test' : fatalErrors.length + ' errors were not a part of any test'}, see above for details`));
 
@@ -327,7 +330,7 @@ export class TerminalReporter implements ReporterV2 {
   private _printSlowTests() {
     const slowTests = this.getSlowTests();
     slowTests.forEach(([file, duration]) => {
-      this.writeLine(this.screen.colors.yellow('  Slow test file: ') + file + this.screen.colors.yellow(` (${milliseconds(duration)})`));
+      this.writeLine(this.screen.colors.yellow('  Slow test file: ') + file + this.screen.colors.yellow(` (${msToString(duration)})`));
     });
     if (slowTests.length)
       this.writeLine(this.screen.colors.yellow('  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel'));

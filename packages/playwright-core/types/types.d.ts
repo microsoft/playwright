@@ -9783,6 +9783,36 @@ export interface Browser {
   prependListener(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
+   * Binds the browser to a named pipe or web socket, making it available for other clients to connect to.
+   * @param title Title of the browser server, used for identification.
+   * @param options
+   */
+  bind(title: string, options?: {
+    /**
+     * Host to bind the web socket server to. When specified, a web socket server is created instead of a named pipe.
+     */
+    host?: string;
+
+    /**
+     * Additional metadata to associate with the browser server.
+     */
+    metadata?: { [key: string]: any; };
+
+    /**
+     * Port to bind the web socket server to. When specified, a web socket server is created instead of a named pipe. Use
+     * `0` to let the OS pick an available port.
+     */
+    port?: number;
+
+    /**
+     * Working directory associated with this browser server.
+     */
+    workspaceDir?: string;
+  }): Promise<{
+    endpoint: string;
+  }>;
+
+  /**
    * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
    */
   browserType(): BrowserType;
@@ -10197,7 +10227,7 @@ export interface Browser {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -10411,6 +10441,12 @@ export interface Browser {
    * Returns the buffer with trace data.
    */
   stopTracing(): Promise<Buffer>;
+
+  /**
+   * Unbinds the browser server previously bound with
+   * [browser.bind(title[, options])](https://playwright.dev/docs/api/class-browser#browser-bind).
+   */
+  unbind(): Promise<void>;
 
   /**
    * Returns the browser version.
@@ -15496,7 +15532,7 @@ export interface BrowserType<Unused = {}> {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -16226,9 +16262,35 @@ export interface Screencast {
     };
   }): Promise<Disposable>;
   /**
+   * Removes action decorations.
+   */
+  hideActions(): Promise<void>;
+
+  /**
    * Hides overlays without removing them.
    */
   hideOverlays(): Promise<void>;
+
+  /**
+   * Enables visual annotations on interacted elements. Returns a disposable that stops showing actions when disposed.
+   * @param options
+   */
+  showActions(options?: {
+    /**
+     * How long each annotation is displayed in milliseconds. Defaults to `500`.
+     */
+    duration?: number;
+
+    /**
+     * Font size of the action title in pixels. Defaults to `24`.
+     */
+    fontSize?: number;
+
+    /**
+     * Position of the action title overlay. Defaults to `"top-right"`.
+     */
+    position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+  }): Promise<Disposable>;
 
   /**
    * Shows a chapter overlay with a title and optional description, centered on the page with a blurred backdrop. Useful
@@ -17441,7 +17503,7 @@ export interface AndroidDevice {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -20049,7 +20111,7 @@ export interface Electron {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -23039,7 +23101,7 @@ export interface BrowserContextOptions {
     /**
      * If specified, enables visual annotations on interacted elements during video recording.
      */
-    annotate?: {
+    showActions?: {
       /**
        * How long each annotation is displayed in milliseconds. Defaults to `500`.
        */

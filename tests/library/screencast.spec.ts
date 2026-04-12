@@ -17,12 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 import { expect, browserTest as test } from '../config/browserTest';
-import { rafraf } from '../config/utils';
+import { ensureSomeFrames } from '../config/utils';
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { VideoPlayer } from './videoPlayer';
 
 test.skip(({ mode }) => mode !== 'default', 'screencast is not available in remote mode');
 test.skip(({ video }) => video === 'on', 'conflicts with built-in video recording');
+test.slow();
 
 test('screencast.start delivers frames via onFrame callback', async ({ browser, server, trace }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
@@ -34,7 +35,7 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
   await page.screencast.start({ onFrame: ({ data }) => frames.push(data), size });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   await page.screencast.stop();
 
   expect(frames.length).toBeGreaterThan(0);
@@ -85,7 +86,7 @@ test('start returns a disposable that stops screencast', async ({ browser, serve
   await page.screencast.start({ onFrame: ({ data }) => frames.push(data), size: { width: 500, height: 400 } });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   await page.screencast.stop();
 
   const frameCountAfterDispose = frames.length;
@@ -93,7 +94,7 @@ test('start returns a disposable that stops screencast', async ({ browser, serve
 
   // No more frames should arrive after dispose.
   await page.evaluate(() => document.body.style.backgroundColor = 'blue');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   expect(frames.length).toBe(frameCountAfterDispose);
 
   await context.close();
@@ -109,12 +110,12 @@ test('start/stop twice without path creates two files in artifactsDir', async ({
 
   await page.screencast.start({ path: testInfo.outputPath('video1.webm'), size });
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   await page.screencast.stop();
 
   await page.screencast.start({ path: testInfo.outputPath('video2.webm'), size });
   await page.evaluate(() => document.body.style.backgroundColor = 'blue');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   await page.screencast.stop();
 
   const videoFiles = fs.readdirSync(artifactsDir).filter(f => f.endsWith('.webm'));
@@ -137,7 +138,7 @@ test('start should work when recordVideo is set', async ({ browser }, testInfo) 
 
   await page.screencast.start({ path: path.join(manualDir, 'video.webm') });
   await page.evaluate(() => document.body.style.backgroundColor = 'blue');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   await page.screencast.stop();
   const videoFiles1 = fs.readdirSync(manualDir).filter(f => f.endsWith('.webm'));
   expect(videoFiles1).toHaveLength(1);
@@ -168,7 +169,7 @@ test('start should finish when page is closed', async ({ browser }, testInfo) =>
   const videoPath = testInfo.outputPath('video.webm');
   await page.screencast.start({ path: videoPath, size: { width: 800, height: 800 } });
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   await page.close();
   const error = await page.screencast.stop().catch(e => e);
   expect(error.message).toContain(kTargetClosedErrorMessage);
@@ -195,7 +196,7 @@ test('start dispose stops recording', async ({ browser }, testInfo) => {
   const videoPath = testInfo.outputPath('dispose-video.webm');
   const disposable = await page.screencast.start({ path: videoPath, size });
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await rafraf(page, 100);
+  await ensureSomeFrames(page);
   await disposable.dispose();
   expectRedFrames(videoPath, size);
   await context.close();

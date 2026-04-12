@@ -14,28 +14,107 @@
  * limitations under the License.
  */
 
-export const colors: typeof import('../bundles/utils/node_modules/colors/safe') = require('./utilsBundleImpl').colors;
-export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
-export const diff: typeof import('../bundles/utils/node_modules/@types/diff') = require('./utilsBundleImpl').diff;
-export const dotenv: typeof import('../bundles/utils/node_modules/dotenv') = require('./utilsBundleImpl').dotenv;
-export const ini: typeof import('../bundles/utils/node_modules/@types/ini') = require('./utilsBundleImpl').ini;
-export const getProxyForUrl: typeof import('../bundles/utils/node_modules/@types/proxy-from-env').getProxyForUrl = require('./utilsBundleImpl').getProxyForUrl;
-export const HttpsProxyAgent: typeof import('../bundles/utils/node_modules/https-proxy-agent').HttpsProxyAgent = require('./utilsBundleImpl').HttpsProxyAgent;
-export const jpegjs: typeof import('../bundles/utils/node_modules/jpeg-js') = require('./utilsBundleImpl').jpegjs;
-export const lockfile: typeof import('../bundles/utils/node_modules/@types/proper-lockfile') = require('./utilsBundleImpl').lockfile;
-export const mime: typeof import('../bundles/utils/node_modules/@types/mime') = require('./utilsBundleImpl').mime;
-export const minimatch: typeof import('../bundles/utils/node_modules/@types/minimatch') = require('./utilsBundleImpl').minimatch;
-export const open: typeof import('../bundles/utils/node_modules/open') = require('./utilsBundleImpl').open;
-export const PNG: typeof import('../bundles/utils/node_modules/@types/pngjs').PNG = require('./utilsBundleImpl').PNG;
-export const program: typeof import('../bundles/utils/node_modules/commander').program = require('./utilsBundleImpl').program;
-export const ProgramOption: typeof import('../bundles/utils/node_modules/commander').Option = require('./utilsBundleImpl').ProgramOption;
-export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;
-export const SocksProxyAgent: typeof import('../bundles/utils/node_modules/socks-proxy-agent').SocksProxyAgent = require('./utilsBundleImpl').SocksProxyAgent;
-export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = require('./utilsBundleImpl').ws;
-export const wsServer: typeof import('../bundles/utils/node_modules/@types/ws').WebSocketServer = require('./utilsBundleImpl').wsServer;
-export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
-export const wsSender = require('./utilsBundleImpl').wsSender;
-export const yaml: typeof import('../bundles/utils/node_modules/yaml') = require('./utilsBundleImpl').yaml;
-export type { Range as YAMLRange, Scalar as YAMLScalar, YAMLError, YAMLMap, YAMLSeq } from '../bundles/utils/node_modules/yaml';
-export type { Command } from '../bundles/utils/node_modules/commander';
-export type { EventEmitter as WebSocketEventEmitter, RawData as WebSocketRawData, WebSocket, WebSocketServer } from '../bundles/utils/node_modules/@types/ws';
+import colorsLibrary from 'colors/safe';
+export const colors = colorsLibrary;
+
+import debugLibrary from 'debug';
+export const debug = debugLibrary;
+
+import * as iniLibrary from 'ini';
+export const ini = iniLibrary;
+
+import * as diffLibrary from 'diff';
+export const diff = diffLibrary;
+
+import dotenvLibrary from 'dotenv';
+export const dotenv = dotenvLibrary;
+
+export { getProxyForUrl } from 'proxy-from-env';
+
+export { HttpsProxyAgent } from 'https-proxy-agent';
+
+import jpegLibrary from 'jpeg-js';
+export const jpegjs = jpegLibrary;
+
+import mimeLibrary from 'mime';
+export const mime = mimeLibrary;
+
+import minimatchLibrary from 'minimatch';
+export const minimatch = minimatchLibrary;
+
+import openLibrary from 'open';
+export const open = openLibrary;
+
+export { PNG } from 'pngjs';
+
+export { program } from 'commander';
+export { Option as ProgramOption } from 'commander';
+
+import progressLibrary from 'progress';
+export const progress = progressLibrary;
+
+export { SocksProxyAgent } from 'socks-proxy-agent';
+
+// @ts-ignore
+import wsLibrary, { WebSocketServer, Receiver, Sender } from 'ws';
+export const ws = wsLibrary;
+export const wsServer = WebSocketServer;
+export const wsReceiver = Receiver;
+export const wsSender = Sender;
+
+import yamlLibrary from 'yaml';
+export const yaml = yamlLibrary;
+
+import json5Library from 'json5';
+export const json5 = json5Library;
+
+import sourceMapSupportLibrary from 'source-map-support';
+export const sourceMapSupport = sourceMapSupportLibrary;
+
+import stoppableLibrary from 'stoppable';
+export const stoppable = stoppableLibrary;
+
+import enquirerLibrary from 'enquirer';
+export const enquirer = enquirerLibrary;
+
+import chokidarLibrary from 'chokidar';
+export const chokidar = chokidarLibrary;
+
+import * as getEastAsianWidthLibrary from 'get-east-asian-width';
+export const getEastAsianWidth = getEastAsianWidthLibrary;
+
+export * as yazl from 'yazl';
+export * as yauzl from 'yauzl';
+
+// @ts-expect-error untyped vendored module
+import * as gracefulFsLibrary from 'graceful-fs';
+export const gracefulFs = gracefulFsLibrary;
+
+import retryLibrary from 'retry';
+export const retry = retryLibrary;
+
+// @ts-expect-error untyped vendored module
+import onExitLibrary from 'signal-exit';
+export const onExit = onExitLibrary;
+
+import getStreamLibrary from 'get-stream';
+export const getStream = getStreamLibrary;
+
+import httpProxyAgentLibrary from 'https-proxy-agent';
+export const httpProxyAgent = httpProxyAgentLibrary;
+
+import socksProxyAgentLibrary from 'socks-proxy-agent';
+export const socksProxyAgent = socksProxyAgentLibrary;
+
+export * as z from 'zod';
+
+export { Client } from '@modelcontextprotocol/sdk/client/index.js';
+export { Server } from '@modelcontextprotocol/sdk/server/index.js';
+export { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+export { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+export { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+export { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+export { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+export { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+export { CallToolRequestSchema, ListRootsRequestSchema, ListToolsRequestSchema, PingRequestSchema, ProgressNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
+export { zodToJsonSchema } from 'zod-to-json-schema';

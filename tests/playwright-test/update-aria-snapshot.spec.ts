@@ -34,7 +34,7 @@ test('should update snapshot with the update-snapshots flag with multiple projec
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello</h1><h2>bye</h2>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+        await expect(page).toMatchAriaSnapshot(\`
           - heading "world"
         \`);
       });
@@ -50,7 +50,7 @@ test('should update snapshot with the update-snapshots flag with multiple projec
 @@ -3,7 +3,8 @@
        test('test', async ({ page }) => {
          await page.setContent(\`<h1>hello</h1><h2>bye</h2>\`);
-         await expect(page.locator('body')).toMatchAriaSnapshot(\`
+         await expect(page).toMatchAriaSnapshot(\`
 -          - heading "world"
 +          - heading "hello" [level=1]
 +          - heading "bye" [level=2]
@@ -79,7 +79,7 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
+        await expect(page).toMatchAriaSnapshot(\`\`);
       });
     `
   });
@@ -103,8 +103,8 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
        import { test, expect } from '@playwright/test';
        test('test', async ({ page }) => {
          await page.setContent(\`<h1>hello</h1>\`);
--        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
-+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+-        await expect(page).toMatchAriaSnapshot(\`\`);
++        await expect(page).toMatchAriaSnapshot(\`
 +          - heading "hello" [level=1]
 +        \`);
        });
@@ -124,8 +124,8 @@ test('should update multiple missing snapshots', async ({ runInlineTest }, testI
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
+        await expect(page).toMatchAriaSnapshot(\`\`);
+        await expect(page).toMatchAriaSnapshot(\`\`);
       });
     `
   });
@@ -148,12 +148,12 @@ test('should update multiple missing snapshots', async ({ runInlineTest }, testI
        import { test, expect } from '@playwright/test';
        test('test', async ({ page }) => {
          await page.setContent(\`<h1>hello</h1>\`);
--        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
--        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
-+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+-        await expect(page).toMatchAriaSnapshot(\`\`);
+-        await expect(page).toMatchAriaSnapshot(\`\`);
++        await expect(page).toMatchAriaSnapshot(\`
 +          - heading "hello" [level=1]
 +        \`);
-+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++        await expect(page).toMatchAriaSnapshot(\`
 +          - heading "hello" [level=1]
 +        \`);
        });
@@ -549,7 +549,7 @@ test.describe('update-snapshots all', () => {
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
           await page.setContent(\`<h1>hello</h1><h1>world</h1>\`);
-          await expect(page.locator('body')).toMatchAriaSnapshot(\`
+          await expect(page).toMatchAriaSnapshot(\`
             - heading "hello"
           \`);
         });
@@ -565,7 +565,7 @@ test.describe('update-snapshots all', () => {
 @@ -3,7 +3,8 @@
          test('test', async ({ page }) => {
            await page.setContent(\`<h1>hello</h1><h1>world</h1>\`);
-           await expect(page.locator('body')).toMatchAriaSnapshot(\`
+           await expect(page).toMatchAriaSnapshot(\`
 -            - heading "hello"
 +            - heading "hello" [level=1]
 +            - heading "world" [level=1]

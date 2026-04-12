@@ -173,9 +173,9 @@ Supported values: `chrome`, `firefox`, `webkit`, `msedge`.
 
 Playwright MCP supports three profile modes:
 
--   **Persistent (default)**: Login state and cookies are preserved between sessions. The profile is stored in `ms-playwright/mcp-{channel}-profile` in your platform's cache directory. Override with `--user-data-dir`.
+-   **Persistent (default)**: Login state and cookies are preserved between sessions. The profile is stored in `ms-playwright/mcp-{channel}-{workspace-hash}` in your platform's cache directory, so different projects get separate profiles automatically. Override with `--user-data-dir`.
 -   **Isolated**: Each session starts fresh. Pass `--isolated` to enable. You can load initial state with `--storage-state`.
--   **Browser extension**: Connect to your existing browser tabs with the [Playwright MCP Bridge extension](https://github.com/user-attachments/packages/extension). Pass `--extension` to enable.
+-   **Browser extension**: Connect to your existing browser tabs with the [Playwright MCP Bridge extension](https://github.com/microsoft/playwright-mcp/blob/main/packages/extension/README.md). Pass `--extension` to enable.
 
 ### Configuration file
 

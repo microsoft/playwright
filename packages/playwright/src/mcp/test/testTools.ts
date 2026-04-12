@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { z } from 'playwright-core/lib/zodBundle';
-import ListModeReporter from '../../reporters/listModeReporter';
+import * as z from 'zod';
+import { ListModeReporter } from '../../runner';
 import { defineTestTool } from './testTool';
 
 export const listTests = defineTestTool({

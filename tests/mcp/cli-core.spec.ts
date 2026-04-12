@@ -280,6 +280,19 @@ test('partial snapshot', async ({ cli, server }) => {
   expect(noMatchError).toContain(`"#target" does not match any element`);
 });
 
+test('partial snapshot by ref', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/347' } }, async ({ cli, server }) => {
+  server.setContent('/', `<button id=one>Submit</button><button id=two>Cancel</button>`, 'text/html');
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain('- button "Submit" [ref=e2]');
+  expect(snapshot).toContain('- button "Cancel" [ref=e3]');
+
+  const { inlineSnapshot: partialSnapshot } = await cli('snapshot', 'e3');
+  expect(partialSnapshot).toBe(`- button "Cancel" [ref=e3]`);
+
+  const { output: missingRefError } = await cli('snapshot', 'e999');
+  expect(missingRefError).toContain(`Ref e999 not found in the current page snapshot.`);
+});
+
 test('snapshot depth', async ({ cli, server }) => {
   server.setContent('/', `<ul><li><button id=one>Submit</button></li><li><button id=two>Cancel</button></li></ul>`, 'text/html');
   await cli('open', server.PREFIX);
@@ -295,4 +308,32 @@ test('snapshot depth', async ({ cli, server }) => {
     - button "Submit" [ref=e4]
   - listitem [ref=e5]:
     - button "Cancel" [ref=e6]`);
+});
+
+test('eval --raw', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { output } = await cli('eval', '--raw', '() => document.title');
+  expect(output).toBe('"Title"');
+});
+
+test('eval --raw with error', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { output } = await cli('eval', '--raw', '() => { throw new Error("my error") }');
+  expect(output).toContain('my error');
+  expect(output).not.toContain('##');
+});
+
+test('snapshot --raw', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('snapshot', '--raw');
+  expect(output).toBe('- button "Submit" [ref=e2]');
+});
+
+test('--raw on command without output', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('click', '--raw', 'e2');
+  expect(output).not.toContain('### ');
+  expect(output).not.toContain('Page URL');
 });

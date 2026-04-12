@@ -1,8 +1,8 @@
 [*]
+@isomorphic/**
+@utils/**
 ../
-../../protocol/
-../../utils/isomorphic/
 ../../utilsBundle.ts
 ../chromium/
-../utils
 ../registry/
+node_modules/debug

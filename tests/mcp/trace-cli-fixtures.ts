@@ -61,6 +61,8 @@ export const test = baseTest
           </html>
         `, 'text/html');
 
+        server.setContent('/feedback', JSON.stringify({ received: true }), 'application/json');
+
         // Navigate
         await page.goto(server.PREFIX);
 
@@ -76,6 +78,9 @@ export const test = baseTest
           console.warn('warning message');
           console.error('error message');
         });
+
+        // Fetch
+        await page.evaluate(() => fetch('/feedback', { method: 'POST', body: 'What a great product!' }).then(res => res.text()));
 
         // Navigate to another page
         await page.locator('a').click();

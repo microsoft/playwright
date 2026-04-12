@@ -17,8 +17,8 @@
 let install;
 
 try {
-  if (!require('playwright-core/lib/utils').isLikelyNpxGlobal())
-    install = require('playwright-core/lib/server').installBrowsersForNpmInstall;
+  if (!require('playwright-core/lib/coreBundle').utils.isLikelyNpxGlobal())
+    install = require('playwright-core/lib/coreBundle').registry.installBrowsersForNpmInstall;
 } catch (e) {
   // Dev build, don't install browsers by default.
 }

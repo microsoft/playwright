@@ -46,8 +46,8 @@ export const ProjectAndTagLabelsView: React.FC<{
   // We can have an empty project name if we have no projects specified in the config
   const hasProjectNames = projectNames.length > 0 && !!activeProjectName;
 
-  return (hasProjectNames || otherLabels.length > 0) && <span className='label-row' style={style ?? {}}>
-    <ProjectLink projectNames={projectNames} projectName={activeProjectName} />
+  return (hasProjectNames || otherLabels.length > 0) && <span className='label-row' style={style}>
+    {hasProjectNames && <ProjectLink projectNames={projectNames} projectName={activeProjectName} />}
     <LabelsClickView labels={otherLabels} />
   </span>;
 };

@@ -17,17 +17,17 @@
 import fs from 'fs';
 import path from 'path';
 
-import { debug } from '../../utilsBundle';
-import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
-import { selectors } from '../../..';
+import debug from 'debug';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { disposeAll } from '@utils/disposable';
+import { eventsHelper } from '@utils/eventsHelper';
+import { playwright } from '../../inprocess';
 
 import { Tab } from './tab';
-import { disposeAll } from '../../server/utils/disposable';
-import { eventsHelper } from '../../server/utils/eventsHelper';
 
-import type * as playwright from '../../..';
+import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
-import type { Disposable } from '../../server/utils/disposable';
+import type { Disposable } from '@utils/disposable';
 import type { ToolCapability } from './tool';
 
 const testDebug = debug('pw:mcp:test');
@@ -76,7 +76,7 @@ export type RouteEntry = {
   contentType?: string;
   addHeaders?: Record<string, string>;
   removeHeaders?: string[];
-  handler: (route: playwright.Route) => Promise<void>;
+  handler: (route: playwrightTypes.Route) => Promise<void>;
 };
 
 export type FilenameTemplate = {
@@ -92,8 +92,8 @@ export class Context {
   readonly config: ContextConfig;
   readonly sessionLog: SessionLog | undefined;
   readonly options: ContextOptions;
-  private _rawBrowserContext: playwright.BrowserContext;
-  private _browserContextPromise: Promise<playwright.BrowserContext> | undefined;
+  private _rawBrowserContext: playwrightTypes.BrowserContext;
+  private _browserContextPromise: Promise<playwrightTypes.BrowserContext> | undefined;
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
   private _routes: RouteEntry[] = [];
@@ -106,7 +106,7 @@ export class Context {
 
   private _runningToolName: string | undefined;
 
-  constructor(browserContext: playwright.BrowserContext, options: ContextOptions) {
+  constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
     this.config = options.config;
     this.sessionLog = options.sessionLog;
     this.options = options;
@@ -201,7 +201,7 @@ export class Context {
     return [...video.fileNames];
   }
 
-  private async _startPageVideo(page: playwright.Page) {
+  private async _startPageVideo(page: playwrightTypes.Page) {
     if (!this._video)
       return;
     const suffix = this._video.fileNames.length ? `-${this._video.fileNames.length}` : '';
@@ -214,7 +214,7 @@ export class Context {
     await page.screencast.start({ path: fileName, ...this._video.params });
   }
 
-  private _onPageCreated(page: playwright.Page) {
+  private _onPageCreated(page: playwrightTypes.Page) {
     const tab = new Tab(this, page, tab => this._onPageClosed(tab));
     this._tabs.push(tab);
     if (!this._currentTab)
@@ -268,7 +268,7 @@ export class Context {
     this._runningToolName = name;
   }
 
-  private async _setupRequestInterception(context: playwright.BrowserContext) {
+  private async _setupRequestInterception(context: playwrightTypes.BrowserContext) {
     if (this.config.network?.allowedOrigins?.length) {
       this._disposables.push(await context.route('**', route => route.abort('blockedbyclient')));
 
@@ -284,7 +284,7 @@ export class Context {
     }
   }
 
-  async ensureBrowserContext(): Promise<playwright.BrowserContext> {
+  async ensureBrowserContext(): Promise<playwrightTypes.BrowserContext> {
     if (this._browserContextPromise)
       return this._browserContextPromise;
     this._browserContextPromise = this._initializeBrowserContext();
@@ -293,7 +293,7 @@ export class Context {
 
   private async _initializeBrowserContext() {
     if (this.config.testIdAttribute)
-      selectors.setTestIdAttribute(this.config.testIdAttribute);
+      playwright.selectors.setTestIdAttribute(this.config.testIdAttribute);
     const browserContext = this._rawBrowserContext;
     await this._setupRequestInterception(browserContext);
 

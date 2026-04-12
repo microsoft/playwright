@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
-import { debug } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
+import debug from 'debug';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { monotonicTime } from '@isomorphic/time';
 
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';

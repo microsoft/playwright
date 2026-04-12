@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import { errors } from 'playwright-core';
-import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, currentZone } from 'playwright-core/lib/utils';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { getPackageManagerExecCommand } from '@utils/env';
+import { currentZone } from '@utils/zones';
 
-import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from './globals';
+import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from '../globals';
 import { Suite, TestCase } from './test';
 import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';
@@ -56,6 +58,7 @@ export class TestTypeImpl {
     test.skip = wrapFunctionWithLocation(this._modifier.bind(this, 'skip'));
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
+    test.abort = wrapFunctionWithLocation(this._abort.bind(this));
     test.fail.only = wrapFunctionWithLocation(this._createTest.bind(this, 'fail.only'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
@@ -241,6 +244,13 @@ export class TestTypeImpl {
     testInfo._modifier(type, location, modifierArgs as [any, any]);
   }
 
+  private _abort(location: Location, message?: string) {
+    const testInfo = currentTestInfo();
+    if (!testInfo)
+      throw new Error(`test.abort() can only be called inside a test or fixture`);
+    testInfo._abort(location, message);
+  }
+
   private _setTimeout(location: Location, timeout: number) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
@@ -282,7 +292,7 @@ export class TestTypeImpl {
           }
         }, options.timeout ? monotonicTime() + options.timeout : 0);
         if (result.timedOut)
-          throw new errors.TimeoutError(`Step timeout of ${options.timeout}ms exceeded.`);
+          throw new TimeoutError(`Step timeout of ${options.timeout}ms exceeded.`);
         step.complete({});
         return result.result;
       } catch (error) {
@@ -326,4 +336,11 @@ export function mergeTests(...tests: TestType<any, any>[]) {
     result = new TestTypeImpl([...result.fixtures, ...newFixtures]);
   }
   return result.test;
+}
+
+class TimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimeoutError';
+  }
 }

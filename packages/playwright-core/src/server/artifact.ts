@@ -16,10 +16,12 @@
 
 import fs from 'fs';
 
-import { assert } from '../utils';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { assert } from '@isomorphic/assert';
 import { TargetClosedError } from './errors';
 import { SdkObject } from './instrumentation';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
+
+import type { Progress } from '@protocol/progress';
 
 type SaveCallback = (localPath: string, error?: Error) => Promise<void>;
 type CancelCallback = () => Promise<void>;
@@ -32,7 +34,7 @@ export class Artifact extends SdkObject {
   private _saveCallbacks: SaveCallback[] = [];
   private _finished: boolean = false;
   private _deleted = false;
-  private _failureError: Error | undefined;
+  private _failureErrorValue: Error | undefined;
 
   constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string, cancelCallback?: CancelCallback) {
     super(parent, 'artifact');
@@ -41,30 +43,42 @@ export class Artifact extends SdkObject {
     this._cancelCallback = cancelCallback;
   }
 
-  finishedPromise() {
-    return this._finishedPromise;
+  async localPathAfterFinished(progress: Progress): Promise<string> {
+    return await progress.race(this._localPathAfterFinished());
+  }
+
+  async failureError(progress: Progress): Promise<string | null> {
+    return await progress.race(this._failureError());
+  }
+
+  async cancel(progress: Progress): Promise<void> {
+    return await progress.race(this._cancel());
+  }
+
+  async delete(progress: Progress): Promise<void> {
+    return await progress.race(this._delete());
   }
 
   localPath() {
     return this._localPath;
   }
 
-  async localPathAfterFinished(): Promise<string> {
+  private async _localPathAfterFinished(): Promise<string> {
     if (this._unaccessibleErrorMessage)
       throw new Error(this._unaccessibleErrorMessage);
     await this._finishedPromise;
-    if (this._failureError)
-      throw this._failureError;
+    if (this._failureErrorValue)
+      throw this._failureErrorValue;
     return this._localPath;
   }
 
-  saveAs(saveCallback: SaveCallback) {
+  saveAs(progress: Progress, saveCallback: SaveCallback) {
     if (this._unaccessibleErrorMessage)
       throw new Error(this._unaccessibleErrorMessage);
     if (this._deleted)
       throw new Error(`File already deleted. Save before deleting.`);
-    if (this._failureError)
-      throw this._failureError;
+    if (this._failureErrorValue)
+      throw this._failureErrorValue;
 
     if (this._finished) {
       saveCallback(this._localPath).catch(() => {});
@@ -73,22 +87,22 @@ export class Artifact extends SdkObject {
     this._saveCallbacks.push(saveCallback);
   }
 
-  async failureError(): Promise<string | null> {
+  async _failureError(): Promise<string | null> {
     if (this._unaccessibleErrorMessage)
       return this._unaccessibleErrorMessage;
     await this._finishedPromise;
-    return this._failureError?.message || null;
+    return this._failureErrorValue?.message || null;
   }
 
-  async cancel(): Promise<void> {
+  async _cancel(): Promise<void> {
     assert(this._cancelCallback !== undefined);
     return this._cancelCallback();
   }
 
-  async delete(): Promise<void> {
+  async _delete(): Promise<void> {
     if (this._unaccessibleErrorMessage)
       return;
-    const fileName = await this.localPathAfterFinished();
+    const fileName = await this._localPathAfterFinished();
     if (this._deleted)
       return;
     this._deleted = true;
@@ -111,7 +125,7 @@ export class Artifact extends SdkObject {
     if (this._finished)
       return;
     this._finished = true;
-    this._failureError = error;
+    this._failureErrorValue = error;
 
     if (error) {
       for (const callback of this._saveCallbacks)

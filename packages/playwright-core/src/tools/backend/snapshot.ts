@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-import { formatObject, formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
+import * as z from 'zod';
+import { formatObject, formatObjectOrVoid } from '@isomorphic/stringUtils';
 
-import { defineTabTool, defineTool } from './tool';
+import { defineTabTool } from './tool';
 
-const snapshot = defineTool({
+const snapshot = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_snapshot',
@@ -27,15 +27,18 @@ const snapshot = defineTool({
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
     inputSchema: z.object({
       filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
+      ref: z.string().optional().describe('Element reference from the previous page snapshot to capture a partial snapshot instead of the whole page'),
       selector: z.string().optional().describe('Element selector of the root element to capture a partial snapshot instead of the whole page'),
       depth: z.number().optional().describe('Limit the depth of the snapshot tree'),
     }),
     type: 'readOnly',
   },
 
-  handle: async (context, params, response) => {
-    await context.ensureTab();
-    response.setIncludeFullSnapshot(params.filename, params.selector, params.depth);
+  handle: async (tab, params, response) => {
+    const root = (params.ref || params.selector)
+      ? (await tab.refLocator({ ref: params.ref ?? '', selector: params.selector })).locator
+      : undefined;
+    response.setIncludeFullSnapshot(params.filename, root, params.depth);
   },
 });
 
@@ -93,10 +96,10 @@ const drag = defineTabTool({
     title: 'Drag mouse',
     description: 'Perform drag and drop between two elements',
     inputSchema: z.object({
-      startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
+      startElement: z.string().optional().describe('Human-readable source element description used to obtain the permission to interact with the element'),
       startRef: z.string().describe('Exact source element reference from the page snapshot'),
       startSelector: z.string().optional().describe('CSS or role selector for the source element, when ref is not available'),
-      endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
+      endElement: z.string().optional().describe('Human-readable target element description used to obtain the permission to interact with the element'),
       endRef: z.string().describe('Exact target element reference from the page snapshot'),
       endSelector: z.string().optional().describe('CSS or role selector for the target element, when ref is not available'),
     }),

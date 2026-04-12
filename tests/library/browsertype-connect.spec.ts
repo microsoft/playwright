@@ -19,13 +19,14 @@ import fs from 'fs';
 import type http from 'http';
 import type net from 'net';
 import * as path from 'path';
-import { getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/server/utils/userAgent';
+import { utils, getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/coreBundle';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
-import { parseTraceRaw, suppressCertificateWarning, rafraf } from '../config/utils';
+import { ensureSomeFrames, parseTraceRaw, suppressCertificateWarning } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
-import { createHttpServer } from '../../packages/playwright-core/lib/server/utils/network';
+
+const { createHttpServer } = utils;
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { RunServer } from '../config/remoteServer';
 
@@ -499,7 +500,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       });
       const page = await context.newPage();
       await page.evaluate(() => document.body.style.backgroundColor = 'red');
-      await rafraf(page, 100);
+      await ensureSomeFrames(page);
       await context.close();
 
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36685' });
@@ -520,7 +521,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       });
       const page = await context.newPage();
       await page.evaluate(() => document.body.style.backgroundColor = 'red');
-      await rafraf(page, 100);
+      await ensureSomeFrames(page);
       await context.close();
 
       const savedAsPath = testInfo.outputPath('my-video.webm');
@@ -540,7 +541,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       });
       const page = await context.newPage();
       await page.evaluate(() => document.body.style.backgroundColor = 'red');
-      await rafraf(page, 100);
+      await ensureSomeFrames(page);
       await context.close();
 
       expect(fs.existsSync(path.join(artifactsDir, (page as any)._guid + '.webm'))).toBeTruthy();
@@ -719,8 +720,10 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(await response.json()).toEqual({ 'foo': 'bar' });
     });
 
-    test('should upload large file', async ({ connect, startRemoteServer, server }, testInfo) => {
-      test.slow();
+    test('should upload large file', async ({ connect, startRemoteServer, server, isMac }, testInfo) => {
+      if (isMac)
+        test.setTimeout(test.info().timeout * 3);  // Extra slow!
+
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const context = await browser.newContext();

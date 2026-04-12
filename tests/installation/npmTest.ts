@@ -22,9 +22,10 @@ import debugLogger from 'debug';
 import { Registry }  from './registry';
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
-import { removeFolders } from '../../packages/playwright-core/lib/server/utils/fileUtils';
-import { spawnAsync } from '../../packages/playwright-core/lib/server/utils/spawnAsync';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import type { SpawnOptions } from 'child_process';
+
+const { removeFolders, spawnAsync } = utils;
 
 export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
 

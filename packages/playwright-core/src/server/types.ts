@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import type { HeadersArray, Point, Size } from '../utils/isomorphic/types';
-export type { HeadersArray, Point, Quad, Rect, Size } from '../utils/isomorphic/types';
+import type { HeadersArray, Point, Size } from '@isomorphic/types';
+export type { HeadersArray, Point, Quad, Rect, Size } from '@isomorphic/types';
 import type * as channels from '@protocol/channels';
+import type { ProxySettings } from '@utils/network';
 
 export type StrictOptions = {
   strict?: boolean,
@@ -43,19 +44,10 @@ export type PointerActionWaitOptions = CommonActionOptions & {
   trial?: boolean;
 };
 
-export type AnnotatePosition = 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
-
-export type AnnotateOptions = {
-  duration?: number,
-  position?: AnnotatePosition,
-  fontSize?: number,
-};
-
 export type VideoOptions = {
   width: number,
   height: number,
   outputFile: string,
-  annotate?: AnnotateOptions,
 };
 
 export type ScreencastFrame = {
@@ -110,13 +102,7 @@ export type DeviceDescriptor = {
   defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
 };
 export type Devices = { [name: string]: DeviceDescriptor };
-
-export type ProxySettings = {
-  server: string,
-  bypass?: string,
-  username?: string,
-  password?: string
-};
+export type { ProxySettings } from '@utils/network';
 
 export type KeyboardModifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 export type SmartKeyboardModifier = KeyboardModifier |  'ControlOrMeta';

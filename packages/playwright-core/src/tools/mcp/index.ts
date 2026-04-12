@@ -19,13 +19,12 @@ import { filteredTools } from '../backend/tools';
 import { createBrowser } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { createServer } from '../utils/mcp/server';
+import { packageJSON } from '../../package';
 
 import type { BrowserContext } from 'playwright';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { ClientInfo, ServerBackendFactory } from '../utils/mcp/server';
 import type { Config } from './config.d';
-
-const packageJSON = require('../../../package.json');
 
 export async function createConnection(userConfig: Config = {}, contextGetter?: () => Promise<BrowserContext>): Promise<Server> {
   const config = await resolveConfig(userConfig);

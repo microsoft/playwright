@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import { asLocator } from '@isomorphic/locatorGenerators';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
-import { asLocator, escapeWithQuotes } from '../../utils';
 
 import type { BrowserContextOptions } from '../../..';
 import type * as types from '../types';

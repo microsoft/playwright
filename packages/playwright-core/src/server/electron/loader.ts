@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-const { app } = require('electron');
-
-const { chromiumSwitches } = require('../chromium/chromiumSwitches');
+import { app } from 'electron';
+import { chromiumSwitches } from '../chromium/chromiumSwitches';
 
 // Always pass user arguments first, see https://github.com/microsoft/playwright/issues/16614 and
 // https://github.com/microsoft/playwright/issues/29198.

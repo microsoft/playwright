@@ -331,6 +331,7 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 ### param: BrowserContext.addCookies.cookies
 * since: v1.8
 - `cookies` <[Array]<[Object]>>
+  - alias-java: Cookie
   - `name` <[string]>
   - `value` <[string]>
   - `url` ?<[string]> Either `url` or both `domain` and `path` are required. Optional.
@@ -569,7 +570,9 @@ The default browser context cannot be closed.
 
 ## async method: BrowserContext.cookies
 * since: v1.8
-- returns: <[Array]<[Object=BrowserContextCookiesResult]>>
+- returns: <[Array]<[Object]>>
+  - alias-csharp: BrowserContextCookiesResult
+  - alias-java: Cookie
   - `name` <[string]>
   - `value` <[string]>
   - `domain` <[string]>
@@ -730,6 +733,7 @@ Name of the function on the window object.
 ### param: BrowserContext.exposeBinding.callback
 * since: v1.8
 - `callback` <[function]>
+  - alias-java: BindingCallback
 
 Callback function that will be called in the Playwright's context.
 
@@ -929,6 +933,7 @@ Name of the function on the window object.
 ### param: BrowserContext.exposeFunction.callback
 * since: v1.8
 - `callback` <[function]>
+  - alias-java: FunctionCallback
 
 Callback function that will be called in the Playwright's context.
 
@@ -1465,6 +1470,7 @@ its geolocation.
 ### param: BrowserContext.setGeolocation.geolocation
 * since: v1.8
 - `geolocation` <[null]|[Object]>
+  - alias-java: Geolocation
   - `latitude` <[float]> Latitude between -90 and 90.
   - `longitude` <[float]> Longitude between -180 and 180.
   - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.

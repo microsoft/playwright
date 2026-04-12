@@ -16,11 +16,15 @@
 
 import path from 'path';
 
-import { assert, createGuid, debugLogger, mkdirIfNeeded, monotonicTime } from '../utils';
-import { launchProcess } from './utils/processLauncher';
-import { jpegjs } from '../utilsBundle';
+import jpegjs from 'jpeg-js';
+import { launchProcess } from '@utils/processLauncher';
+import { assert } from '@isomorphic/assert';
+import { createGuid } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
+import { mkdirIfNeeded } from '@utils/fileUtils';
+import { monotonicTime } from '@isomorphic/time';
 import { Artifact } from './artifact';
-import { registry } from '.';
+import { registry } from './registry';
 
 import type * as types from './types';
 import type { ChildProcess } from 'child_process';
@@ -39,7 +43,7 @@ export class VideoRecorder {
     this._screencast = screencast;
   }
 
-  start(options: { fileName?: string, size?: { width: number, height: number }, annotate?: types.AnnotateOptions }) {
+  start(options: { fileName?: string, size?: { width: number, height: number } }) {
     assert(!this._artifact);
     // Do this first, it likes to throw.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._screencast.page.browserContext._browser.sdkLanguage());
@@ -50,7 +54,6 @@ export class VideoRecorder {
       gracefulClose: () => this.stop(),
       dispose: () => this.stop().catch(e => debugLogger.log('error', `Failed to stop video recorder: ${String(e)}`)),
       size: options.size,
-      annotate: options.annotate,
     };
 
     const { size } = this._screencast.addClient(this._client);
@@ -73,7 +76,7 @@ export class VideoRecorder {
     this._videoRecorder = undefined;
 
     this._screencast.removeClient(client);
-    await videoRecorder.stop();
+    await videoRecorder._stop();
     await artifact.reportFinished();
   }
 }
@@ -85,8 +88,10 @@ export function startAutomaticVideoRecording(page: Page) {
   if (!recordVideo)
     return;
   const recorder = new VideoRecorder(page.screencast);
+  if (page.browserContext._options.recordVideo?.showActions)
+    page.screencast.showActions(page.browserContext._options.recordVideo?.showActions);
   const dir = recordVideo.dir ?? page.browserContext._browser.options.artifactsDir;
-  const artifact = recorder.start({ size: recordVideo.size, annotate: recordVideo.annotate, fileName: path.join(dir, page.guid + '.webm') });
+  const artifact = recorder.start({ size: recordVideo.size, fileName: path.join(dir, page.guid + '.webm') });
   page.video = artifact;
 }
 
@@ -224,7 +229,7 @@ class FfmpegVideoRecorder {
     });
   }
 
-  async stop() {
+  async _stop() {
     // Only report the error on stop. This allows to make the constructor synchronous.
     const error = await this._launchPromise;
     if (error)

@@ -16,8 +16,8 @@
 
 import { serializeError } from '../util';
 
-import type { TestInfoErrorImpl } from '../common/ipc';
+import type { ipc } from '../common';
 
-export function testInfoError(error: Error | any): TestInfoErrorImpl {
+export function testInfoError(error: Error | any): ipc.TestInfoErrorImpl {
   return serializeError(error);
 }

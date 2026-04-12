@@ -1,4 +1,5 @@
 [*]
-../common/
-../util.ts
-../utilsBundle.ts
+@isomorphic/**
+@utils/**
+node_modules/colors/safe
+node_modules/debug

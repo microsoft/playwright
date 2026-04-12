@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { isError } from '@isomorphic/rtti';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
-import { isError } from '../utils/isomorphic/rtti';
 
 import type { SerializedError } from '@protocol/channels';
 

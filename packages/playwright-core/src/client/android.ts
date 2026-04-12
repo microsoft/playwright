@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { isRegExp, isString } from '@isomorphic/rtti';
+import { monotonicTime } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { EventEmitter } from './eventEmitter';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -21,16 +24,13 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
 import { TimeoutSettings } from './timeoutSettings';
-import { isRegExp, isString } from '../utils/isomorphic/rtti';
-import { monotonicTime } from '../utils/isomorphic/time';
-import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 import { connectToEndpoint } from './connect';
 
 import type { Page } from './page';
 import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type * as channels from '@protocol/channels';
 import type { Playwright } from './playwright';
 

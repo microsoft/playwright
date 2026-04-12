@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import fs from 'fs';
-import { calculateSha1 } from 'playwright-core/lib/utils';
+import { calculateSha1 } from '@utils/crypto';
 
 import { loadReporter } from './loadUtils';
 import { formatError } from '../reporters/base';
@@ -32,12 +32,13 @@ import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { ReporterDescription } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
-import type { BuiltInReporter, FullConfigInternal } from '../common/config';
+import type { config as commonConfig, FullConfigInternal } from '../common';
 import type { CommonReporterOptions, Screen } from '../reporters/base';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import type { TestRunOptions } from './tasks';
 
-export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', descriptions?: ReporterDescription[]): Promise<ReporterV2[]> {
-  const defaultReporters: { [key in BuiltInReporter]: new(arg: any) => ReporterV2 } = {
+export async function createReporters(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', descriptions?: ReporterDescription[], runOptions?: TestRunOptions): Promise<ReporterV2[]> {
+  const defaultReporters: { [key in commonConfig.BuiltInReporter]: new(arg: any) => ReporterV2 } = {
     blob: BlobReporter,
     dot: mode === 'list' ? ListModeReporter : DotReporter,
     line: mode === 'list' ? ListModeReporter : LineReporter,
@@ -50,12 +51,12 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
-  if (config.configCLIOverrides.additionalReporters)
-    descriptions = [...descriptions, ...config.configCLIOverrides.additionalReporters];
-  const runOptions = reporterOptions(config, mode);
+  if (runOptions?.additionalReporters)
+    descriptions = [...descriptions, ...runOptions.additionalReporters];
+  const reportOptions = reporterCommandOptions(config, mode, runOptions);
   for (const r of descriptions) {
     const [name, arg] = r;
-    const options = { ...runOptions, ...arg };
+    const options = { ...reportOptions, ...arg };
     if (name in defaultReporters) {
       reporters.push(new defaultReporters[name as keyof typeof defaultReporters](options));
     } else {
@@ -64,8 +65,13 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     }
   }
   if (process.env.PW_TEST_REPORTER) {
-    const reporterConstructor = await loadReporter(config, process.env.PW_TEST_REPORTER);
-    reporters.push(wrapReporterAsV2(new reporterConstructor(runOptions)));
+    const name = process.env.PW_TEST_REPORTER;
+    if (name in defaultReporters) {
+      reporters.push(new defaultReporters[name as keyof typeof defaultReporters](reportOptions));
+    } else {
+      const reporterConstructor = await loadReporter(config, name);
+      reporters.push(wrapReporterAsV2(new reporterConstructor(reportOptions)));
+    }
   }
 
   const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
@@ -78,13 +84,6 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
       reporters.unshift(!process.env.CI ? new LineReporter() : new DotReporter());
   }
   return reporters;
-}
-
-export async function createReporterForTestServer(file: string, messageSink: (message: any) => void): Promise<ReporterV2> {
-  const reporterConstructor = await loadReporter(null, file);
-  return wrapReporterAsV2(new reporterConstructor({
-    _send: messageSink,
-  }));
 }
 
 interface ErrorCollectingReporter extends ReporterV2 {
@@ -103,34 +102,34 @@ export function createErrorCollectingReporter(screen: Screen): ErrorCollectingRe
   };
 }
 
-function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge'): CommonReporterOptions {
+function reporterCommandOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', runOptions?: TestRunOptions): CommonReporterOptions {
   return {
     configDir: config.configDir,
     _mode: mode,
-    _commandHash: computeCommandHash(config),
+    _commandHash: computeCommandHash(config, runOptions),
   };
 }
 
-function computeCommandHash(config: FullConfigInternal) {
+function computeCommandHash(config: FullConfigInternal, runOptions?: TestRunOptions) {
   const parts = [];
   // Include project names for readability.
-  if (config.cliProjectFilter)
-    parts.push(...config.cliProjectFilter);
+  if (runOptions?.projectFilter)
+    parts.push(...runOptions.projectFilter);
   const command = {} as any;
-  if (config.cliArgs.length)
-    command.cliArgs = config.cliArgs;
-  if (config.cliGrep)
-    command.cliGrep = config.cliGrep;
-  if (config.cliGrepInvert)
-    command.cliGrepInvert = config.cliGrepInvert;
-  if (config.cliOnlyChanged)
-    command.cliOnlyChanged = config.cliOnlyChanged;
+  if (runOptions?.locations?.length)
+    command.locations = runOptions.locations;
+  if (runOptions?.grep)
+    command.grep = runOptions.grep;
+  if (runOptions?.grepInvert)
+    command.grepInvert = runOptions.grepInvert;
+  if (runOptions?.onlyChanged)
+    command.onlyChanged = runOptions.onlyChanged;
   if (config.config.tags.length)
     command.tags = config.config.tags.join(' ');
-  if (config.cliTestList)
-    command.cliTestList = calculateSha1(fs.readFileSync(config.cliTestList));
-  if (config.cliTestListInvert)
-    command.cliTestListInvert = calculateSha1(fs.readFileSync(config.cliTestListInvert));
+  if (runOptions?.testList)
+    command.testList = calculateSha1(fs.readFileSync(runOptions.testList));
+  if (runOptions?.testListInvert)
+    command.testListInvert = calculateSha1(fs.readFileSync(runOptions.testListInvert));
   if (Object.keys(command).length)
     parts.push(calculateSha1(JSON.stringify(command)).substring(0, 7));
   return parts.join('-');

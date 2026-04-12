@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import {
-  captureRawStack,
-  createGuid,
-  currentZone,
-  escapeWithQuotes,
-  isString,
-  pollAgainstDeadline } from 'playwright-core/lib/utils';
+  expect as expectLibrary,
+} from 'expect';
+import { parseStackFrame, captureRawStack } from '@isomorphic/stackTrace';
+import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
+import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { currentZone } from '@utils/zones';
 
 import { ExpectError, isJestError } from './matcherHint';
 import {
   computeMatcherTitleSuffix,
+  deadlineForMatcher,
   toBeAttached,
   toBeChecked,
   toBeDisabled,
@@ -57,16 +60,77 @@ import {
 } from './matchers';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
-import {
-  expect as expectLibrary,
-} from '../common/expectBundle';
-import { currentTestInfo } from '../common/globals';
-import { filteredStackTrace } from '../util';
-import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
-import type { TestStepInfoImpl } from '../worker/testInfo';
+import type { StackFrame } from '@protocol/channels';
+
+export interface ExpectStepInfo {
+  _attachToStep(attachment: { name: string; contentType: string; path?: string; body?: string | Buffer }): void;
+}
+
+export interface ExpectStep {
+  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  info: ExpectStepInfo;
+}
+
+export interface ExpectTestInfo {
+  _addStep(data: {
+    category: 'expect';
+    apiName: string;
+    title: string;
+    shortTitle: string;
+    params?: Record<string, any>;
+    infectParentStepsWithError?: boolean;
+  }): ExpectStep;
+  _deadline(): { deadline: number; timeout: number };
+  _failWithError(error: Error | unknown, shouldNotRetry?: 'shouldNotRetry'): void;
+  _resolveSnapshotPaths(kind: 'snapshot' | 'screenshot' | 'aria', name: string | string[] | undefined, updateSnapshotIndex: 'updateSnapshotIndex' | 'dontUpdateSnapshotIndex', anonymousExtension?: string): { absoluteSnapshotPath: string; relativeOutputPath: string };
+  _getOutputPath(...pathSegments: string[]): string;
+}
+
+export type ExpectConfig = {
+  testInfo: ExpectTestInfo | null;
+  filteredStackTrace: (rawStack: string[]) => StackFrame[];
+  ignoreSnapshots: boolean;
+  updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
+  timeout?: number;
+  toHaveScreenshot?: {
+    threshold?: number;
+    maxDiffPixels?: number;
+    maxDiffPixelRatio?: number;
+    animations?: 'allow' | 'disabled';
+    caret?: 'hide' | 'initial';
+    scale?: 'css' | 'device';
+    stylePath?: string | string[];
+    pathTemplate?: string;
+    _comparator?: string;
+  };
+  toMatchSnapshot?: {
+    threshold?: number;
+    maxDiffPixels?: number;
+    maxDiffPixelRatio?: number;
+  };
+  toMatchAriaSnapshot?: {
+    pathTemplate?: string;
+    children?: 'contain' | 'equal' | 'deep-equal';
+  };
+  toPass?: { timeout?: number; intervals?: number[] };
+};
+
+function unfilteredStackTrace(rawStack: string[]): StackFrame[] {
+  return rawStack.map(frame => parseStackFrame(frame, path.sep, !!process.env.PWDEBUGIMPL)).filter(f => !!f);
+}
+
+let _expectConfig: ExpectConfig = { testInfo: null, filteredStackTrace: unfilteredStackTrace, ignoreSnapshots: false, updateSnapshots: 'missing' };
+
+export function setExpectConfig(config: ExpectConfig) {
+  _expectConfig = config;
+}
+
+export function expectConfig(): ExpectConfig {
+  return _expectConfig;
+}
 
 type ExpectMessage = string | { message?: string };
 
@@ -79,6 +143,8 @@ const userMatchersSymbol = Symbol('userMatchers');
 function qualifiedMatcherName(qualifier: string[], matcherName: string) {
   return qualifier.join(':') + '$' + matcherName;
 }
+
+let lastExtendId = 0;
 
 function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Record<string, Function>) {
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
@@ -100,7 +166,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Reco
 
       if (property === 'extend') {
         return (matchers: any) => {
-          const qualifier = [...prefix, createGuid()];
+          const qualifier = [...prefix, String(++lastExtendId)];
 
           const wrappedMatchers: any = {};
           for (const [name, matcher] of Object.entries(matchers)) {
@@ -158,8 +224,8 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Reco
 // Rely on sync call sequence to seed each matcher call with the context.
 type MatcherCallContext = {
   expectInfo: ExpectMetaInfo;
-  testInfo: TestInfoImpl | null;
-  step?: TestStepInfoImpl;
+  testInfo: ExpectTestInfo | null;
+  step?: ExpectStepInfo;
 };
 
 let matcherCallContext: MatcherCallContext | undefined;
@@ -184,7 +250,7 @@ function wrapPlaywrightMatcherToPassNiceThis(matcher: any) {
   return function(this: any, ...args: any[]) {
     const { isNot, promise, utils } = this;
     const context = takeMatcherCallContext();
-    const timeout = context?.expectInfo.timeout ?? context?.testInfo?._projectInternal?.expect?.timeout ?? defaultExpectTimeout;
+    const timeout = context?.expectInfo.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
     const newThis: ExpectMatcherStateInternal = {
       isNot,
       promise,
@@ -297,7 +363,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
     }
     return (...args: any[]) => {
-      const testInfo = currentTestInfo();
+      const testInfo = expectConfig().testInfo;
       setMatcherCallContext({ expectInfo: this._info, testInfo });
       if (!testInfo)
         return matcher.call(target, ...args);
@@ -311,7 +377,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
-      const stackFrames = filteredStackTrace(captureRawStack());
+      const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
 
       // toPass and poll matchers can contain other steps, expects and API calls,
       // so they behave like a retriable step.
@@ -365,13 +431,13 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 }
 
 async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, prefix: string[], ...args: any[]) {
-  const testInfo = currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   const poll = info.poll!;
-  const timeout = poll.timeout ?? info.timeout ?? testInfo?._projectInternal?.expect?.timeout ?? defaultExpectTimeout;
-  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+  const timeout = poll.timeout ?? info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
+  const { deadline, timeoutMessage } = deadlineForMatcher(testInfo, timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
+    if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
 
     const innerInfo: ExpectMetaInfo = {

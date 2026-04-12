@@ -17,16 +17,18 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from '../../../utils';
-import { isUnderTest } from '../../../utils';
-import { HttpServer } from '../../utils/httpServer';
-import { open } from '../../../utilsBundle';
+import open from 'open';
+import { HttpServer } from '@utils/httpServer';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { isUnderTest } from '@utils/debug';
+import { libPath } from '../../../package';
 import { syncLocalStorageWithSettings } from '../../launchApp';
 import { launchApp } from '../../launchApp';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
+import { nullProgress } from '../../progress';
 
-import type { Transport } from '../../utils/httpServer';
+import type { Transport } from '@utils/httpServer';
 import type { BrowserType } from '../../browserType';
 import type { Page } from '../../page';
 import type http from 'http';
@@ -106,7 +108,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
       response.end();
       return true;
     }
-    const absolutePath = path.join(__dirname, '..', '..', '..', 'vite', 'traceViewer', ...relativePath.split('/'));
+    const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
     return server.serveFile(request, response, absolutePath);
   });
 
@@ -184,7 +186,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
 
   const controller = new ProgressController();
   await controller.run(async progress => {
-    await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+    await context._browser._defaultContext!.loadDefaultContextAsIs(progress);
 
     if (process.env.PWTEST_PRINT_WS_ENDPOINT) {
       // eslint-disable-next-line no-restricted-properties
@@ -192,10 +194,10 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     }
 
     if (!isUnderTest())
-      await syncLocalStorageWithSettings(page, 'traceviewer');
+      await progress.race(syncLocalStorageWithSettings(page, 'traceviewer'));
 
     if (isUnderTest())
-      page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
+      page.on('close', () => context.close(nullProgress, { reason: 'Trace viewer closed' }).catch(() => {}));
 
     await page.mainFrame().goto(progress, url);
   });

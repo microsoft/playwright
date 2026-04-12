@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { validate } from 'playwright-core/lib/utils';
+import { validate } from '@isomorphic/jsonSchema';
 
+import type { JsonSchema } from '@isomorphic/jsonSchema';
 import type { TestDetailsAnnotation } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { JsonSchema } from 'playwright-core/lib/utils';
 
 const testAnnotationSchema: JsonSchema = {
   type: 'object',

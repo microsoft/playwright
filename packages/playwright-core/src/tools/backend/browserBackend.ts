@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
+import debug from 'debug';
 import { Context } from './context';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
-import { debug } from '../../utilsBundle';
-
 import type { ContextConfig } from './context';
 import type * as playwright from '../../..';
 import type { Tool } from './tool';
@@ -62,8 +61,9 @@ export class BrowserBackend implements ServerBackend {
     // eslint-disable-next-line no-restricted-syntax
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments) as any;
     const cwd = rawArguments._meta?.cwd;
+    const raw = !!rawArguments._meta?.raw;
     const context = this._context!;
-    const response = new Response(context, name, parsedArguments, cwd);
+    const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw });
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult;
     try {

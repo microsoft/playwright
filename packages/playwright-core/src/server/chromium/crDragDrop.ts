@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+import { assert } from '@isomorphic/assert';
 import { toModifiersMask } from './crProtocolHelper';
-import { assert } from '../../utils';
 
 import type { CRPage } from './crPage';
 import type * as types from '../types';
@@ -52,7 +52,7 @@ export class DragManager {
     return true;
   }
 
-  async interceptDragCausedByMove(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: () => Promise<void>): Promise<void> {
+  async interceptDragCausedByMove(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: (progress: Progress) => Promise<void>): Promise<void> {
     this._lastPosition = { x, y };
     if (this._dragState) {
       await progress.race(this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
@@ -65,7 +65,7 @@ export class DragManager {
       return;
     }
     if (button !== 'left')
-      return moveCallback();
+      return moveCallback(progress);
 
     const client = this._crPage._mainFrameSession._client;
     let onDragIntercepted: (payload: Protocol.Input.dragInterceptedPayload) => void;
@@ -95,15 +95,15 @@ export class DragManager {
       let expectingDrag = false;
       await progress.race(this._crPage._page.safeNonStallingEvaluateInAllFrames(`(${setupDragListeners.toString()})()`, 'utility'));
       client.on('Input.dragIntercepted', onDragIntercepted!);
-      await client.send('Input.setInterceptDrags', { enabled: true });
+      await progress.race(client.send('Input.setInterceptDrags', { enabled: true }));
       try {
-        await progress.race(moveCallback());
-        expectingDrag = (await Promise.all(this._crPage._page.frames().map(async frame => {
+        await moveCallback(progress);
+        expectingDrag = (await progress.race(Promise.all(this._crPage._page.frames().map(async frame => {
           return frame.nonStallingEvaluateInExistingContext('window.__cleanupDrag?.()', 'utility').catch(() => false);
-        }))).some(x => x);
+        })))).some(x => x);
       } finally {
         client.off('Input.dragIntercepted', onDragIntercepted!);
-        await client.send('Input.setInterceptDrags', { enabled: false });
+        await progress.race(client.send('Input.setInterceptDrags', { enabled: false }));
       }
       this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
     } catch (error) {

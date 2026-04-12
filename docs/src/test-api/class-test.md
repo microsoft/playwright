@@ -1044,6 +1044,33 @@ An object containing fixtures and/or options. Learn more about [fixtures format]
 
 
 
+## method: Test.abort
+* since: v1.60
+
+Aborts the currently running test by throwing an error. The test is immediately marked as failed and execution stops. This is useful from inside a fixture or a route handler when you have detected an unrecoverable misuse and want to fail the test right away.
+
+**Usage**
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('does not publish to shared page', async ({ page }) => {
+  await page.route('**/publish', route => {
+    test.abort('Tests must not publish to the shared page. Use the `clone` option.');
+    return route.abort();
+  });
+  // ...
+});
+```
+
+### param: Test.abort.message
+* since: v1.60
+- `message` ?<[string]>
+
+Optional message describing the reason for the abort. It will be included in the failure error.
+
+
+
 ## method: Test.fail
 * since: v1.10
 

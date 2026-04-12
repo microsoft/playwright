@@ -17,12 +17,12 @@
 import { chromium } from 'playwright';
 
 import { test, expect } from './fixtures';
-import { isProfileLocked } from '../../packages/playwright-core/lib/tools/mcp/browserFactory';
+import { tools } from '../../packages/playwright-core/lib/coreBundle';
 
 test('isProfileLocked returns false for empty directory', async ({ mcpBrowser }, testInfo) => {
   test.skip(!['chromium', 'chrome', 'msedge'].includes(mcpBrowser!), 'Chromium-only');
   const dir = testInfo.outputPath('profile');
-  expect(isProfileLocked(dir)).toBe(false);
+  expect(tools.isProfileLocked(dir)).toBe(false);
 });
 
 test('isProfileLocked detects a real browser holding the profile', async ({ mcpBrowser }, testInfo) => {
@@ -33,7 +33,7 @@ test('isProfileLocked detects a real browser holding the profile', async ({ mcpB
     headless: true,
   });
   try {
-    expect(isProfileLocked(userDataDir)).toBe(true);
+    expect(tools.isProfileLocked(userDataDir)).toBe(true);
   } finally {
     await context.close();
   }
@@ -47,7 +47,7 @@ test('isProfileLocked returns false after browser closes', async ({ mcpBrowser }
     headless: true,
   });
   await context.close();
-  expect(isProfileLocked(userDataDir)).toBe(false);
+  expect(tools.isProfileLocked(userDataDir)).toBe(false);
 });
 
 test('locked profile produces actionable error on navigate', async ({ mcpBrowser, startClient, server }, testInfo) => {

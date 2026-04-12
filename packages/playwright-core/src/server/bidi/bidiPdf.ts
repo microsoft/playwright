@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
+import { assert } from '@isomorphic/assert';
 
 import type { BidiSession } from './bidiConnection';
 import type * as channels from '@protocol/channels';

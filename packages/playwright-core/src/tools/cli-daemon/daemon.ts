@@ -18,9 +18,9 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 
-import { decorateServer } from '../../server/utils/network';
-import { makeSocketPath } from '../../server/utils/fileUtils';
-import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
+import { decorateServer } from '@utils/network';
+import { makeSocketPath } from '@utils/fileUtils';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { BrowserBackend } from '../backend/browserBackend';
 import { browserTools } from '../backend/tools';
@@ -28,13 +28,12 @@ import { parseCommand } from './command';
 import { commands } from './commands';
 
 import { SocketConnection } from '../utils/socketConnection';
-import { createClientInfo } from '../cli-client/registry';
-
 import type * as playwright from '../../..';
 import type { SessionConfig, ClientInfo } from '../cli-client/registry';
 import type { CallToolRequest, CallToolResult } from '../backend/tool';
 import type { ContextConfig } from '../backend/context';
 import type { BrowserInfo } from '../../serverRegistry';
+import type { ClientInfo as McpClientInfo } from '../utils/mcp/server';
 
 async function socketExists(socketPath: string): Promise<boolean> {
   try {
@@ -50,9 +49,10 @@ export async function startCliDaemonServer(
   sessionName: string,
   browserContext: playwright.BrowserContext,
   browserInfo: BrowserInfo,
-  contextConfig: ContextConfig = {},
-  clientInfo = createClientInfo(),
-  options?: {
+  contextConfig: ContextConfig,
+  clientInfo: ClientInfo,
+  mcpClientInfo: McpClientInfo,
+  options: {
     persistent?: boolean,
     exitOnClose?: boolean,
   }
@@ -70,7 +70,7 @@ export async function startCliDaemonServer(
   }
 
   const backend = new BrowserBackend(contextConfig, browserContext, browserTools);
-  await backend.initialize({ cwd: process.cwd() });
+  await backend.initialize(mcpClientInfo);
 
   if (browserContext.isClosed())
     throw new Error('Browser context was closed before the daemon could start');
@@ -89,8 +89,7 @@ export async function startCliDaemonServer(
             await sendAck();
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
-          if (params.cwd)
-            toolParams._meta = { cwd: params.cwd };
+          toolParams._meta = { cwd: params.cwd, raw: params.raw };
           const response = await backend.callTool(toolName, toolParams);
           await connection.send({ id, result: formatResult(response) });
         } else {

@@ -32,6 +32,7 @@ await page.screencast.stop();
 ### option: Screencast.start.onFrame
 * since: v1.59
 - `onFrame` <[function]\([Object]\): [Promise]>
+  - alias: ScreencastFrame
   - `data` <[Buffer]> JPEG-encoded frame data.
 
 Callback that receives JPEG-encoded frame data.
@@ -51,7 +52,8 @@ The quality of the image, between 0-100.
 ### option: Screencast.start.size
 * since: v1.59
 * langs: js
-- `size` ?<[Object=ScreencastSize]>
+- `size` ?<[Object]>
+  - alias-csharp: ScreencastSize
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 
@@ -105,10 +107,39 @@ Optional description text displayed below the title.
 
 Duration in milliseconds after which the overlay is automatically removed. Defaults to `2000`.
 
+## async method: Screencast.showActions
+* since: v1.59
+- returns: <[Disposable]>
+
+Enables visual annotations on interacted elements. Returns a disposable that stops showing actions when disposed.
+
+### option: Screencast.showActions.duration
+* since: v1.59
+- `duration` ?<[float]>
+
+How long each annotation is displayed in milliseconds. Defaults to `500`.
+
+### option: Screencast.showActions.position
+* since: v1.59
+- `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">>
+
+Position of the action title overlay. Defaults to `"top-right"`.
+
+### option: Screencast.showActions.fontSize
+* since: v1.59
+- `fontSize` ?<[int]>
+
+Font size of the action title in pixels. Defaults to `24`.
+
 ## async method: Screencast.showOverlays
 * since: v1.59
 
 Shows overlays.
+
+## async method: Screencast.hideActions
+* since: v1.59
+
+Removes action decorations.
 
 ## async method: Screencast.hideOverlays
 * since: v1.59

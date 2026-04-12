@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { scaleImageToSize } from '../../utils/isomorphic/imageUtils';
-import { jpegjs, PNG } from '../../utilsBundle';
-import { formatObject } from '../../utils/isomorphic/stringUtils';
+import jpegjs from 'jpeg-js';
+import { PNG } from 'pngjs';
+import * as z from 'zod';
+import { formatObject } from '@isomorphic/stringUtils';
 
-import { z } from '../../zodBundle';
+import { scaleImageToSize } from '@isomorphic/imageUtils';
 import { defineTabTool } from './tool';
 
 import type * as playwright from '../../..';

@@ -17,31 +17,32 @@
 import EventEmitter from 'events';
 import fs from 'fs';
 
-import { isUnderTest } from '../utils';
+import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
+import { stringifySelector } from '@isomorphic/selectorParser';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { isUnderTest } from '@utils/debug';
+import { eventsHelper } from '@utils/eventsHelper';
+import { monotonicTime } from '@isomorphic/time';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
 import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
-import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
-import { stringifySelector } from '../utils/isomorphic/selectorParser';
-import { ProgressController } from './progress';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
+import { nullProgress, ProgressController } from './progress';
 
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
 import * as rawRecorderSource from './../generated/pollingRecorderSource';
-import { eventsHelper, monotonicTime } from './../utils';
 import { Frame } from './frames';
 import { Page } from './page';
 import { performAction } from './recorder/recorderRunner';
 
 import type { Language } from './codegen/types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
-import type { Point } from '../utils/isomorphic/types';
+import type { Point } from '@isomorphic/types';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { Progress } from './progress';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus, ElementInfo, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
-import type { RegisteredListener } from '../utils';
+import type { RegisteredListener } from '@utils/eventsHelper';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -195,7 +196,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderElementPicked', false, async ({ frame }, elementInfo: ElementInfo) => {
-        const selectorChain = await generateFrameSelector(frame);
+        const selectorChain = await generateFrameSelector(progress, frame);
         this.emit(RecorderEvent.ElementPicked, { selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
       });
 
@@ -227,13 +228,13 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       // Input actions that potentially lead to navigation are intercepted on the page and are
       // performed by the Playwright.
       await this._context.exposeBinding(progress, '__pw_recorderPerformAction', false,
-          (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(source.frame, action));
+          (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(progress, source.frame, action));
 
       // Other non-essential actions are simply being recorded.
       await this._context.exposeBinding(progress, '__pw_recorderRecordAction', false,
-          (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
+          (source: BindingSource, action: actions.Action) => this._recordAction(progress, source.frame, action));
 
-      await this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar });
+      await progress.race(this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar }));
     });
 
     if (this._debugger.isPaused())
@@ -248,7 +249,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this.onBeforeCall(pausedDetails.sdkObject, pausedDetails.metadata);
     this.emit(RecorderEvent.PausedStateChanged, this._debugger.isPaused());
     this._updateUserSources();
-    this.updateCallLog([...this._currentCallsMetadata.keys()]);
+    this._updateCallLog([...this._currentCallsMetadata.keys()]);
   }
 
   mode() {
@@ -267,14 +268,14 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       let pageToFocus = this._pickLocatorPage;
       if (!pageToFocus && this._context.pages().length === 1)
         pageToFocus = this._context.pages()[0];
-      pageToFocus?.bringToFront().catch(() => {});
+      pageToFocus?.bringToFront(nullProgress).catch(() => {});
     }
     await this._refreshOverlay();
   }
 
   async pickLocator(progress: Progress, page: Page): Promise<string> {
     if (this._mode !== 'none')
-      await this.setMode('none');
+      await progress.race(this.setMode('none'));
 
     const selectorPromise = new ManualPromise<string>();
     let recorderChangedState = false;
@@ -304,7 +305,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       eventsHelper.removeEventListeners(listeners);
       this._pickLocatorPage = undefined;
       if (!recorderChangedState)
-        await this.setMode('none');
+        await progress.race(this.setMode('none'));
     }
   }
 
@@ -406,7 +407,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
-    this.updateCallLog([metadata]);
+    this._updateCallLog([metadata]);
     if (isScreenshotCommand(metadata))
       this.hideHighlightedSelector();
     else if (metadata.params && metadata.params.selector)
@@ -419,7 +420,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._updateUserSources();
-    this.updateCallLog([metadata]);
+    this._updateCallLog([metadata]);
   }
 
   private _updateUserSources() {
@@ -449,10 +450,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   async onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): Promise<void> {
-    this.updateCallLog([metadata]);
+    this._updateCallLog([metadata]);
   }
 
-  updateCallLog(metadatas: CallMetadata[]) {
+  private _updateCallLog(metadatas: CallMetadata[]) {
     if (this._isRecording())
       return;
     const logs: CallLog[] = [];
@@ -548,11 +549,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     };
   }
 
-  private async _describeFrame(frame: Frame): Promise<actions.FrameDescription> {
+  private async _describeFrame(progress: Progress, frame: Frame): Promise<actions.FrameDescription> {
     return {
       pageGuid: frame._page.guid,
       pageAlias: this._pageAliases.get(frame._page)!,
-      framePath: await generateFrameSelector(frame),
+      framePath: await generateFrameSelector(progress, frame),
     };
   }
 
@@ -560,8 +561,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
-  private async _createActionInContext(frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {
-    const frameDescription = await this._describeFrame(frame);
+  private async _createActionInContext(progress: Progress, frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {
+    const frameDescription = await this._describeFrame(progress, frame);
     const actionInContext: actions.ActionInContext = {
       frame: frameDescription,
       action,
@@ -571,16 +572,16 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return actionInContext;
   }
 
-  private async _performAction(frame: Frame, action: actions.PerformOnRecordAction) {
-    const actionInContext = await this._createActionInContext(frame, action);
+  private async _performAction(progress: Progress, frame: Frame, action: actions.PerformOnRecordAction) {
+    const actionInContext = await this._createActionInContext(progress, frame, action);
     this._signalProcessor.addAction(actionInContext);
     if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
-      await performAction(this._pageAliases, actionInContext);
+      await performAction(progress, this._pageAliases, actionInContext);
     actionInContext.endTime = monotonicTime();
   }
 
-  private async _recordAction(frame: Frame, action: actions.Action) {
-    const actionInContext = await this._createActionInContext(frame, action);
+  private async _recordAction(progress: Progress, frame: Frame, action: actions.Action) {
+    const actionInContext = await this._createActionInContext(progress, frame, action);
     this._signalProcessor.addAction(actionInContext);
   }
 

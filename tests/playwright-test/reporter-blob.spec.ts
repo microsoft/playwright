@@ -17,14 +17,16 @@
 import * as fs from 'fs';
 import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
-import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
-import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
+import { html } from '../../packages/playwright/lib/runner';
+const { startHtmlReportServer } = html;
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
-import extractZip from '../../packages/playwright-core/bundles/zip/src/third_party/extract-zip';
-import * as yazl from '../../packages/playwright-core/bundles/zip/node_modules/yazl';
-import { getUserAgent } from '../../packages/playwright-core/lib/server/utils/userAgent';
+import { extractZip } from '../../packages/utils/third_party/extractZip';
+import * as yazl from 'yazl';
+import { utils, getUserAgent } from '../../packages/playwright-core/lib/coreBundle';
 import { Readable } from 'stream';
 import type { FullResult, JSONReportTestResult } from '../../packages/playwright-test/reporter';
+
+type HttpServer = utils.HttpServer;
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -708,7 +710,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   // Check that trace loads.
   await page.locator('.test-file-test').filter({ hasText: /failing 1/ }).getByRole('link', { name: 'View Trace' }).click();
   await expect(page).toHaveTitle('Playwright Trace Viewer');
-  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Expect "toBe" \\d+[hmsp]+/ [selected]
   `);
@@ -2194,7 +2196,7 @@ test('project filter in report name', async ({ runInlineTest }) => {
     const result = await runInlineTest(files, { shard: `1/2`, project: ['foo', 'b*r'], grep: 'smoke' });
     expect(result.exitCode).toBe(0);
     const reportFiles = await fs.promises.readdir(reportDir);
-    expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
+    expect(reportFiles.sort()).toEqual(['report-foo-b-r-c29b5fa-1.zip']);
   }
 
   {
@@ -2288,7 +2290,7 @@ test('shard chart', async ({ runInlineTest, writeFiles, showReport, page, mergeR
 
   await page.getByRole('link', { name: 'Speedboard' }).click();
 
-  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button "Timeline"
     - region:
       - img:

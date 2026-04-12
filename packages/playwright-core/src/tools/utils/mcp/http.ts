@@ -19,15 +19,16 @@ import net from 'net';
 import http from 'http';
 import crypto from 'crypto';
 
-import { debug } from '../../../utilsBundle';
-import * as mcpBundle from '../../../mcpBundle';
-import { createHttpServer, startHttpServer } from '../../../server/utils/network';
+import debug from 'debug';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { createHttpServer, startHttpServer } from '@utils/network';
 
 import * as mcpServer from './server';
 
 import type { ServerBackendFactory } from './server';
-import type { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import type { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import type { SSEServerTransport as SSEServerTransportType } from '@modelcontextprotocol/sdk/server/sse.js';
+import type { StreamableHTTPServerTransport as StreamableHTTPServerTransportType } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -95,7 +96,7 @@ async function installHttpTransport(httpServer: http.Server, serverBackendFactor
   return url;
 }
 
-async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.IncomingMessage, res: http.ServerResponse, url: URL, sessions: Map<string, SSEServerTransport>) {
+async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.IncomingMessage, res: http.ServerResponse, url: URL, sessions: Map<string, SSEServerTransportType>) {
   if (req.method === 'POST') {
     const sessionId = url.searchParams.get('sessionId');
     if (!sessionId) {
@@ -111,7 +112,7 @@ async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.I
 
     return await transport.handlePostMessage(req, res);
   } else if (req.method === 'GET') {
-    const transport = new mcpBundle.SSEServerTransport('/sse', res);
+    const transport = new SSEServerTransport('/sse', res);
     sessions.set(transport.sessionId, transport);
     testDebug(`create SSE session`);
     await mcpServer.connect(serverBackendFactory, transport, false);
@@ -126,7 +127,7 @@ async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.I
   res.end('Method not allowed');
 }
 
-async function handleStreamable(serverBackendFactory: ServerBackendFactory, req: http.IncomingMessage, res: http.ServerResponse, sessions: Map<string, StreamableHTTPServerTransport>) {
+async function handleStreamable(serverBackendFactory: ServerBackendFactory, req: http.IncomingMessage, res: http.ServerResponse, sessions: Map<string, StreamableHTTPServerTransportType>) {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
   if (sessionId) {
     const transport = sessions.get(sessionId);
@@ -139,7 +140,7 @@ async function handleStreamable(serverBackendFactory: ServerBackendFactory, req:
   }
 
   if (req.method === 'POST') {
-    const transport = new mcpBundle.StreamableHTTPServerTransport({
+    const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => crypto.randomUUID(),
       onsessioninitialized: async sessionId => {
         testDebug(`create http session`);

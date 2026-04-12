@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-import { ManualPromise,  eventsHelper } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
+import colors from 'colors/safe';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { eventsHelper } from '@utils/eventsHelper';
 
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
-import { serializeConfig } from '../common/ipc';
+import { ipc, test as testNs } from '../common';
 import { addLocationAndSnippetToError } from '../reporters/internalReporter';
 import { serializeError } from '../util';
 
-import type { FailureTracker } from './failureTracker';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { ProcessExitData } from './processHost';
+import type { TestRun } from './tasks';
 import type { TestGroup } from './testGroups';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
-import type { FullConfigInternal } from '../common/config';
-import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
-import type { Suite } from '../common/test';
-import type { TestCase } from '../common/test';
-import type { ReporterV2 } from '../reporters/reporterV2';
-import type { RegisteredListener } from 'playwright-core/lib/utils';
-
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
@@ -46,18 +41,14 @@ export class Dispatcher {
   private _finished = new ManualPromise<void>();
   private _isStopped = true;
 
-  private _config: FullConfigInternal;
-  private _reporter: ReporterV2;
-  private _failureTracker: FailureTracker;
+  private _testRun: TestRun;
 
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker) {
-    this._config = config;
-    this._reporter = reporter;
-    this._failureTracker = failureTracker;
-    for (const project of config.projects) {
+  constructor(testRun: TestRun) {
+    this._testRun = testRun;
+    for (const project of testRun.config.projects) {
       if (project.workers)
         this._workerLimitPerProjectId.set(project.id, project.workers);
     }
@@ -101,7 +92,7 @@ export class Dispatcher {
 
     // 3. Claim both the job and the worker slot.
     this._queue.splice(jobIndex, 1);
-    const jobDispatcher = new JobDispatcher(job, this._config, this._reporter, this._failureTracker, () => this.stop().catch(() => {}));
+    const jobDispatcher = new JobDispatcher(job, this._testRun, () => this.stop().catch(() => {}));
     this._workerSlots[workerIndex].jobDispatcher = jobDispatcher;
 
     // 4. Run the job. This is the only async operation.
@@ -136,7 +127,7 @@ export class Dispatcher {
     // 2. Start the worker if it is down.
     let startError;
     if (!worker) {
-      worker = this._createWorker(job, index, serializeConfig(this._config, true));
+      worker = this._createWorker(job, index, ipc.serializeConfig(this._testRun.config, true));
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       startError = await worker.start();
@@ -202,10 +193,10 @@ export class Dispatcher {
     this._isStopped = false;
     this._workerSlots = [];
     // 0. Stop right away if we have reached max failures.
-    if (this._failureTracker.hasReachedMaxFailures())
+    if (this._testRun.hasReachedMaxFailures())
       void this.stop();
     // 1. Allocate workers.
-    for (let i = 0; i < this._config.config.workers; i++)
+    for (let i = 0; i < this._testRun.config.config.workers; i++)
       this._workerSlots.push({});
     // 2. Schedule enough jobs.
     for (let i = 0; i < this._workerSlots.length; i++)
@@ -216,18 +207,18 @@ export class Dispatcher {
     await this._finished;
   }
 
-  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
-    const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
-    const outputDir = projectConfig.project.outputDir;
+  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: ipc.SerializedConfig) {
+    const project = this._testRun.config.projects.find(p => p.id === testGroup.projectId)!;
+    const pauseAtEnd = this._testRun.topLevelProjects.includes(project) && !!this._testRun.options.pauseAtEnd;
     const worker = new WorkerHost(testGroup, {
       parallelIndex,
       config: loaderData,
       extraEnv: this._extraEnvByProjectId.get(testGroup.projectId) || {},
-      outputDir,
-      pauseOnError: this._failureTracker.pauseOnError(),
-      pauseAtEnd: this._failureTracker.pauseAtEnd(projectConfig),
+      outputDir: project.project.outputDir,
+      pauseOnError: !!this._testRun.options.pauseOnError,
+      pauseAtEnd,
     });
-    const handleOutput = (params: TestOutputPayload) => {
+    const handleOutput = (params: ipc.TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
         // Note: we keep reading stdio from workers that are currently stopping after failure,
@@ -240,20 +231,20 @@ export class Dispatcher {
         return { chunk };
       return { chunk, test: currentlyRunning.test, result: currentlyRunning.result };
     };
-    worker.on('stdOut', (params: TestOutputPayload) => {
+    worker.on('stdOut', (params: ipc.TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stdout.push(chunk);
-      this._reporter.onStdOut?.(chunk, test, result);
+      this._testRun.reporter.onStdOut?.(chunk, test, result);
     });
-    worker.on('stdErr', (params: TestOutputPayload) => {
+    worker.on('stdErr', (params: ipc.TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
       result?.stderr.push(chunk);
-      this._reporter.onStdErr?.(chunk, test, result);
+      this._testRun.reporter.onStdErr?.(chunk, test, result);
     });
-    worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
-      this._failureTracker.onWorkerError();
+    worker.on('teardownErrors', (params: ipc.TeardownErrorsPayload) => {
+      this._testRun.hasWorkerErrors = true;
       for (const error of params.fatalErrors)
-        this._reporter.onError?.(error);
+        this._testRun.reporter.onError?.(error);
     });
     worker.on('exit', () => {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
@@ -279,29 +270,25 @@ class JobDispatcher {
   jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
 
   readonly job: TestGroup;
-  private _config: FullConfigInternal;
-  private _reporter: ReporterV2;
-  private _failureTracker: FailureTracker;
+  private _testRun: TestRun;
   private _stopCallback: () => void;
   private _listeners: RegisteredListener[] = [];
-  private _failedTests = new Set<TestCase>();
-  private _failedWithNonRetriableError = new Set<TestCase|Suite>();
-  private _remainingByTestId = new Map<string, TestCase>();
-  private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
+  private _failedTests = new Set<testNs.TestCase>();
+  private _failedWithNonRetriableError = new Set<testNs.TestCase|testNs.Suite>();
+  private _remainingByTestId = new Map<string, testNs.TestCase>();
+  private _dataByTestId = new Map<string, { test: testNs.TestCase, result: TestResult, steps: Map<string, TestStep> }>();
   private _parallelIndex = 0;
   private _workerIndex = 0;
-  private _currentlyRunning: { test: TestCase, result: TestResult } | undefined;
+  private _currentlyRunning: { test: testNs.TestCase, result: TestResult } | undefined;
 
-  constructor(job: TestGroup, config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker, stopCallback: () => void) {
+  constructor(job: TestGroup, testRun: TestRun, stopCallback: () => void) {
     this.job = job;
-    this._config = config;
-    this._reporter = reporter;
-    this._failureTracker = failureTracker;
+    this._testRun = testRun;
     this._stopCallback = stopCallback;
     this._remainingByTestId = new Map(this.job.tests.map(e => [e.id, e]));
   }
 
-  private _onTestBegin(params: TestBeginPayload) {
+  private _onTestBegin(params: ipc.TestBeginPayload) {
     const test = this._remainingByTestId.get(params.testId);
     if (!test) {
       // TODO: this should never be the case, report an internal error?
@@ -312,12 +299,12 @@ class JobDispatcher {
     result.parallelIndex = this._parallelIndex;
     result.workerIndex = this._workerIndex;
     result.startTime = new Date(params.startWallTime);
-    this._reporter.onTestBegin?.(test, result);
+    this._testRun.reporter.onTestBegin?.(test, result);
     this._currentlyRunning = { test, result };
   }
 
-  private _onTestEnd(params: TestEndPayload) {
-    if (this._failureTracker.hasReachedMaxFailures()) {
+  private _onTestEnd(params: ipc.TestEndPayload) {
+    if (this._testRun.hasReachedMaxFailures()) {
       // Do not show more than one error to avoid confusion, but report
       // as interrupted to indicate that we did actually start the test.
       params.status = 'interrupted';
@@ -348,15 +335,15 @@ class JobDispatcher {
     this._currentlyRunning = undefined;
   }
 
-  private _addNonretriableTestAndSerialModeParents(test: TestCase) {
+  private _addNonretriableTestAndSerialModeParents(test: testNs.TestCase) {
     this._failedWithNonRetriableError.add(test);
-    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
+    for (let parent: testNs.Suite | undefined = test.parent; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial')
         this._failedWithNonRetriableError.add(parent);
     }
   }
 
-  private _onStepBegin(params: StepBeginPayload) {
+  private _onStepBegin(params: ipc.StepBeginPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data) {
       // The test has finished, but steps are still coming. Just ignore them.
@@ -381,10 +368,10 @@ class JobDispatcher {
     };
     steps.set(params.stepId, step);
     (parentStep || result).steps.push(step);
-    this._reporter.onStepBegin?.(test, result, step);
+    this._testRun.reporter.onStepBegin?.(test, result, step);
   }
 
-  private _onStepEnd(params: StepEndPayload) {
+  private _onStepEnd(params: ipc.StepEndPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data) {
       // The test has finished, but steps are still coming. Just ignore them.
@@ -393,7 +380,7 @@ class JobDispatcher {
     const { result, steps, test } = data;
     const step = steps.get(params.stepId);
     if (!step) {
-      this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, test, result);
+      this._testRun.reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, test, result);
       return;
     }
     step.duration = params.wallTime - step.startTime.getTime();
@@ -403,10 +390,10 @@ class JobDispatcher {
       addSuggestedRebaseline(step.location!, params.suggestedRebaseline);
     step.annotations = params.annotations;
     steps.delete(params.stepId);
-    this._reporter.onStepEnd?.(test, result, step);
+    this._testRun.reporter.onStepEnd?.(test, result, step);
   }
 
-  private _onAttach(params: AttachmentPayload) {
+  private _onAttach(params: ipc.AttachmentPayload) {
     const data = this._dataByTestId.get(params.testId)!;
     if (!data) {
       // The test has finished, but attachments are still coming. Just ignore them.
@@ -424,11 +411,11 @@ class JobDispatcher {
       if (step)
         step.attachments.push(attachment);
       else
-        this._reporter.onStdErr?.('Internal error: step id not found: ' + params.stepId);
+        this._testRun.reporter.onStdErr?.('Internal error: step id not found: ' + params.stepId);
     }
   }
 
-  private _failTestWithErrors(test: TestCase, errors: TestError[]) {
+  private _failTestWithErrors(test: testNs.TestCase, errors: TestError[]) {
     const runData = this._dataByTestId.get(test.id);
     // There might be a single test that has started but has not finished yet.
     let result: TestResult;
@@ -436,7 +423,7 @@ class JobDispatcher {
       result = runData.result;
     } else {
       result = test._appendTestResult();
-      this._reporter.onTestBegin?.(test, result);
+      this._testRun.reporter.onTestBegin?.(test, result);
     }
     result.errors = [...errors];
     result.error = result.errors[0];
@@ -449,7 +436,7 @@ class JobDispatcher {
     for (const test of this._remainingByTestId.values()) {
       if (!testIds.has(test.id))
         continue;
-      if (!this._failureTracker.hasReachedMaxFailures()) {
+      if (!this._testRun.hasReachedMaxFailures()) {
         this._failTestWithErrors(test, errors);
         errors = []; // Only report errors for the first test.
       }
@@ -458,13 +445,13 @@ class JobDispatcher {
     if (errors.length) {
       // We had fatal errors after all tests have passed - most likely in some teardown.
       // Let's just fail the test run.
-      this._failureTracker.onWorkerError();
+      this._testRun.hasWorkerErrors = true;
       for (const error of errors)
-        this._reporter.onError?.(error);
+        this._testRun.reporter.onError?.(error);
     }
   }
 
-  private _onDone(params: DonePayload & { unexpectedExitError?: TestError }) {
+  private _onDone(params: ipc.DonePayload & { unexpectedExitError?: TestError }) {
     // We won't file remaining if:
     // - there are no remaining
     // - we are here not because something failed
@@ -502,16 +489,16 @@ class JobDispatcher {
         this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError]);
     }
 
-    const retryCandidates = new Set<TestCase>();
-    const serialSuitesWithFailures = new Set<Suite>();
+    const retryCandidates = new Set<testNs.TestCase>();
+    const serialSuitesWithFailures = new Set<testNs.Suite>();
 
     for (const failedTest of this._failedTests) {
       if (this._failedWithNonRetriableError.has(failedTest))
         continue;
       retryCandidates.add(failedTest);
 
-      let outermostSerialSuite: Suite | undefined;
-      for (let parent: Suite | undefined = failedTest.parent; parent; parent = parent.parent) {
+      let outermostSerialSuite: testNs.Suite | undefined;
+      for (let parent: testNs.Suite | undefined = failedTest.parent; parent; parent = parent.parent) {
         if (parent._parallelMode ===  'serial')
           outermostSerialSuite = parent;
       }
@@ -522,7 +509,7 @@ class JobDispatcher {
     // If we have failed tests that belong to a serial suite,
     // we should skip all future tests from the same serial suite.
     const testsBelongingToSomeSerialSuiteWithFailures = [...this._remainingByTestId.values()].filter(test => {
-      let parent: Suite | undefined = test.parent;
+      let parent: testNs.Suite | undefined = test.parent;
       while (parent && !serialSuitesWithFailures.has(parent))
         parent = parent.parent;
       return !!parent;
@@ -563,7 +550,7 @@ class JobDispatcher {
     this._parallelIndex = worker.parallelIndex;
     this._workerIndex = worker.workerIndex;
 
-    const runPayload: RunPayload = {
+    const runPayload: ipc.RunPayload = {
       file: this.job.requireFile,
       entries: this.job.tests.map(test => {
         return { testId: test.id, retry: test.results.length };
@@ -583,7 +570,7 @@ class JobDispatcher {
     ];
   }
 
-  private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+  private _onTestPaused(worker: WorkerHost, params: ipc.TestPausedPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
@@ -596,11 +583,11 @@ class JobDispatcher {
           throw new Error('Test has already stopped');
         const response = await worker.sendCustomMessage({ testId: test.id, request: message.request });
         if (response.error)
-          addLocationAndSnippetToError(this._config.config, response.error);
+          addLocationAndSnippetToError(this._testRun.config.config, response.error);
         return response;
       } catch (e) {
         const error = serializeError(e);
-        addLocationAndSnippetToError(this._config.config, error);
+        addLocationAndSnippetToError(this._testRun.config.config, error);
         return { response: undefined, error };
       }
     };
@@ -609,10 +596,10 @@ class JobDispatcher {
     result.errors = params.errors;
     result.error = result.errors[0];
 
-    void this._reporter.onTestPaused?.(test, result).then(() => {
+    void this._testRun.reporter.onTestPaused?.(test, result).then(() => {
       worker.sendResume({});
     });
-    this._failureTracker.onTestPaused?.({ ...params, sendMessage });
+    this._testRun.onTestPaused({ ...params, sendMessage });
   }
 
   skipWholeJob(): boolean {
@@ -624,10 +611,10 @@ class JobDispatcher {
     // with skipped tests mixed in-between non-skipped. This makes
     // for a better reporter experience.
     const allTestsSkipped = this.job.tests.every(test => test.expectedStatus === 'skipped');
-    if (allTestsSkipped && !this._failureTracker.hasReachedMaxFailures()) {
+    if (allTestsSkipped && !this._testRun.hasReachedMaxFailures()) {
       for (const test of this.job.tests) {
         const result = test._appendTestResult();
-        this._reporter.onTestBegin?.(test, result);
+        this._testRun.reporter.onTestBegin?.(test, result);
         result.status = 'skipped';
         // This must mirror _onTestEnd() above
         result.annotations = [...test.annotations];
@@ -642,19 +629,20 @@ class JobDispatcher {
     return this._currentlyRunning;
   }
 
-  private _reportTestEnd(test: TestCase, result: TestResult) {
-    this._reporter.onTestEnd?.(test, result);
-    const hadMaxFailures = this._failureTracker.hasReachedMaxFailures();
-    this._failureTracker.onTestEnd(test, result);
-    if (this._failureTracker.hasReachedMaxFailures()) {
+  private _reportTestEnd(test: testNs.TestCase, result: TestResult) {
+    this._testRun.reporter.onTestEnd?.(test, result);
+    const hadMaxFailures = this._testRun.hasReachedMaxFailures();
+    // Test is considered failing after the last retry.
+    if (test.outcome() === 'unexpected' && test.results.length > test.retries)
+      ++this._testRun.failedTestCount;
+    if (!hadMaxFailures && this._testRun.hasReachedMaxFailures()) {
       this._stopCallback();
-      if (!hadMaxFailures)
-        this._reporter.onError?.({ message: colors.red(`Testing stopped early after ${this._failureTracker.maxFailures()} maximum allowed failures.`) });
+      this._testRun.reporter.onError?.({ message: colors.red(`Testing stopped early after ${this._testRun.config.config.maxFailures} maximum allowed failures.`) });
     }
   }
 }
 
-function chunkFromParams(params: TestOutputPayload): string | Buffer {
+function chunkFromParams(params: ipc.TestOutputPayload): string | Buffer {
   if (typeof params.text === 'string')
     return params.text;
   return Buffer.from(params.buffer!, 'base64');

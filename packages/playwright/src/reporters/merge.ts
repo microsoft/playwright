@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ZipFile } from 'playwright-core/lib/utils';
+import { ZipFile } from '@utils/zipFile';
 
 import {  currentBlobReportVersion } from './blob';
 import { Multiplexer } from './multiplexer';
@@ -28,7 +28,7 @@ import { relativeFilePath } from '../util';
 
 import type { ReporterDescription, TestAnnotation } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
-import type { FullConfigInternal } from '../common/config';
+import type { FullConfigInternal } from '../common';
 import type { BlobReportMetadata, JsonAttachment, JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonOnConfigureEvent, JsonOnEndEvent, JsonOnProjectEvent, JsonProject, JsonSuite, JsonTestCase } from '../isomorphic/teleReceiver';
 import type * as blobV1 from './versions/blobV1';
 

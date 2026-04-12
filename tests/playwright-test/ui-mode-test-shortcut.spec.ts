@@ -49,7 +49,7 @@ test('should run tests', async ({ runUITest }) => {
         ✅ test 3
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -76,7 +76,7 @@ test('should stop tests', async ({ runUITest }) => {
         🕦 test 3
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-loading] a.test.ts" [expanded]:
         - group:

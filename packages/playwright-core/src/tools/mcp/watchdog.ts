@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { gracefullyCloseAll, gracefullyCloseSet } from '../../utils';
+import { gracefullyCloseAll, gracefullyCloseSet } from '@utils/processLauncher';
 import { testDebug } from './log';
 
 export function setupExitWatchdog() {

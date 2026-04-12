@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils';
-import { headersArrayToObject } from '../../utils/isomorphic/headers';
-import { eventsHelper } from '../utils/eventsHelper';
-import { hostPlatform } from '../utils/hostPlatform';
-import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
-import { PNG, jpegjs } from '../../utilsBundle';
-import { calculateUserAgentEmulation } from '../browserContext';
+import { PNG } from 'pngjs';
+import jpegjs from 'jpeg-js';
+import { headersArrayToObject } from '@isomorphic/headers';
+import { splitErrorMessage } from '@isomorphic/stackTrace';
+import { eventsHelper } from '@utils/eventsHelper';
+import { hostPlatform } from '@utils/hostPlatform';
+import { assert } from '@isomorphic/assert';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
@@ -37,10 +37,11 @@ import { WKWorkers } from './wkWorkers';
 import { translatePathToWSL } from './webkit';
 import { registry } from '../registry';
 import { startAutomaticVideoRecording } from '../videoRecorder';
+import { nullProgress } from '../progress';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as frames from '../frames';
 import type { JSHandle } from '../javascript';
 import type { InitScript, PageDelegate } from '../page';
@@ -196,7 +197,7 @@ export class WKPage implements PageDelegate {
     const bootstrapScript = this._calculateBootstrapScript();
     if (bootstrapScript.length)
       promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
-    this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript).catch(e => {}));
+    this._page.frames().map(frame => frame.evaluateExpression(nullProgress, bootstrapScript).catch(e => {}));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     const emulatedSize = this._page.emulatedSize();
@@ -487,7 +488,7 @@ export class WKPage implements PageDelegate {
       if (context.frame === frame) {
         this._contextIdToContext.delete(contextId);
         if (notifyFrame)
-          frame._contextDestroyed(context);
+          frame.contextDestroyed(context);
       }
     }
   }
@@ -506,7 +507,7 @@ export class WKPage implements PageDelegate {
       worldName = 'utility';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     if (worldName)
-      frame._contextCreated(worldName, context);
+      frame.contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -623,7 +624,7 @@ export class WKPage implements PageDelegate {
   private async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
     let handle;
     try {
-      const context = await this._page.frameManager.frame(event.frameId)!._mainContext();
+      const context = await this._page.frameManager.frame(event.frameId)!.mainContext();
       handle =  createHandle(context, event.element).asElement()!;
     } catch (e) {
       // During async processing, frame/context may go away. We should not throw.
@@ -697,8 +698,6 @@ export class WKPage implements PageDelegate {
   async updateUserAgent(): Promise<void> {
     const contextOptions = this._browserContext._options;
     this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });
-    const { navigatorPlatform } = calculateUserAgentEmulation(contextOptions);
-    this._updateState('Page.overridePlatform', navigatorPlatform ? { value: navigatorPlatform } : { });
   }
 
   async bringToFront(): Promise<void> {
@@ -849,8 +848,13 @@ export class WKPage implements PageDelegate {
   }
 
   private _toolbarHeight(): number {
-    if (this._page.browserContext._browser?.options.headful)
-      return hostPlatform === 'mac10.15' ? 55 : 59;
+    if (this._page.browserContext._browser?.options.headful) {
+      if (hostPlatform === 'mac10.15')
+        return 55;
+      if (hostPlatform === 'mac26-arm64' || hostPlatform === 'mac26')
+        return 69;
+      return 59;
+    }
     return 0;
   }
 
@@ -978,15 +982,15 @@ export class WKPage implements PageDelegate {
     ]);
   }
 
-  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
+  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const pageProxyId = this._pageProxySession.sessionId;
     const objectId = handle._objectId;
     if (this._browserContext._browser?.options.channel === 'webkit-wsl')
-      paths = await Promise.all(paths.map(path => translatePathToWSL(path)));
-    await Promise.all([
+      paths = await progress.race(Promise.all(paths.map(path => translatePathToWSL(path))));
+    await progress.race(Promise.all([
       this._pageProxySession.connection.browserSession.send('Playwright.grantFileReadAccess', { pageProxyId, paths }),
       this._session.send('DOM.setInputFiles', { objectId, paths })
-    ]);
+    ]));
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
@@ -1009,7 +1013,7 @@ export class WKPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const context = await parent._mainContext();
+    const context = await parent.mainContext();
     const result = await this._session.send('DOM.resolveNode', {
       frameId: frame._id,
       executionContextId: (context.delegate as WKExecutionContext)._contextId

@@ -125,6 +125,8 @@ function defaultProfilePreferences(
     'datareporting.healthreport.service.enabled': false,
     'datareporting.healthreport.service.firstRun': false,
     'datareporting.healthreport.uploadEnabled': false,
+    'datareporting.usage.uploadEnabled': false,
+    'telemetry.fog.test.localhost_port': -1,
 
     // Do not show datareporting policy notifications which can interfere with tests
     'datareporting.policy.dataSubmissionEnabled': false,

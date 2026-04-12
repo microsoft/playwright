@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { Dispatcher } from './dispatcher';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { SdkObject } from '../instrumentation';
 
 import type { ArtifactDispatcher } from './artifactDispatcher';
@@ -53,11 +53,13 @@ export class StreamDispatcher extends Dispatcher<StreamSdkObject, channels.Strea
       stream.on('readable', done);
       stream.on('end', done);
       stream.on('error', done);
-      await progress.race(readyPromise).finally(() => {
+      try {
+        await progress.race(readyPromise);
+      } finally {
         stream.off('readable', done);
         stream.off('end', done);
         stream.off('error', done);
-      });
+      }
     }
     const buffer = stream.read(Math.min(stream.readableLength, params.size || stream.readableLength));
     return { binary: buffer || Buffer.from('') };

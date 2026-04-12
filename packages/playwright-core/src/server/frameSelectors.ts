@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { asLocator } from '../utils';
-import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
+import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
+import { asLocator } from '@isomorphic/locatorGenerators';
 
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
 import type { InjectedScript } from '@injected/injectedScript';
 import type { JSHandle } from './javascript';
 import type * as types from './types';
-import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 
 export type SelectorInfo = {
@@ -62,7 +62,7 @@ export class FrameSelectors {
       handle.dispose();
       return null;
     }
-    return adoptIfNeeded(elementHandle, await resolved.frame._mainContext());
+    return adoptIfNeeded(elementHandle, await resolved.frame.mainContext());
   }
 
   async queryArrayInMainWorld(selector: string, scope?: ElementHandle): Promise<JSHandle<Element[]>> {
@@ -101,12 +101,12 @@ export class FrameSelectors {
       return elements;
     }, { info: resolved.info, scope: resolved.scope });
 
-    const properties = await arrayHandle.getProperties();
+    const properties = await arrayHandle.internalGetProperties();
     arrayHandle.dispose();
 
     // Note: adopting elements one by one may be slow. If we encounter the issue here,
     // we might introduce 'useMainContext' option or similar to speed things up.
-    const targetContext = await resolved.frame._mainContext();
+    const targetContext = await resolved.frame.mainContext();
     const result: Promise<ElementHandle<Element>>[] = [];
     for (const property of properties.values()) {
       const elementHandle = property.asElement() as ElementHandle<Element>;
@@ -148,7 +148,7 @@ export class FrameSelectors {
     for (let i = 0; i < frameChunks.length - 1; ++i) {
       const info = this._parseSelector(frameChunks[i], options);
       frame = this._jumpToAriaRefFrameIfNeeded(selector, info, frame);
-      const context = await frame._context(info.world);
+      const context = await frame.context(info.world);
       const injectedScript = await context.injectedScript();
       const handle = await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
         const element = injected.querySelector(info.parsed, scope || document, info.strict);
@@ -178,7 +178,7 @@ export class FrameSelectors {
     // Be careful, |this.frame| can be different from |resolved.frame|.
     if (!resolved)
       return;
-    const context = await resolved.frame._context(options?.mainWorld ? 'main' : resolved.info.world);
+    const context = await resolved.frame.context(options?.mainWorld ? 'main' : resolved.info.world);
     const injected = await context.injectedScript();
     return { injected, info: resolved.info, frame: resolved.frame, scope: resolved.scope };
   }

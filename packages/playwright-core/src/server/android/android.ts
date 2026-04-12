@@ -19,21 +19,21 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { PipeTransport } from '../utils/pipeTransport';
-import { createGuid } from '../utils/crypto';
-import { isUnderTest } from '../utils/debug';
-import { getPackageManagerExecCommand } from '../utils/env';
-import { makeWaitForNextTask } from '../utils/task';
-import { RecentLogsCollector } from '../utils/debugLogger';
-import { debug } from '../../utilsBundle';
+import debug from 'debug';
+import { PipeTransport } from '@utils/pipeTransport';
+import { createGuid } from '@utils/crypto';
+import { isUnderTest } from '@utils/debug';
+import { getPackageManagerExecCommand } from '@utils/env';
+import { makeWaitForNextTask } from '@utils/task';
+import { RecentLogsCollector } from '@utils/debugLogger';
+import { removeFolders } from '@utils/fileUtils';
+import { gracefullyCloseSet } from '@utils/processLauncher';
 import { wsReceiver, wsSender } from '../../utilsBundle';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { shouldProxyLoopback, CRBrowser } from '../chromium/crBrowser';
-import { removeFolders } from '../utils/fileUtils';
 import { helper } from '../helper';
 import { SdkObject } from '../instrumentation';
-import { gracefullyCloseSet } from '../utils/processLauncher';
 import { isAbortError, Progress, ProgressController, raceUncancellableOperationWithCleanup } from '../progress';
 import { registry } from '../registry';
 
@@ -138,13 +138,17 @@ export class AndroidDevice extends SdkObject {
       this._pollingWebViews = setTimeout(() => this._refreshWebViews()
           .then(poll)
           .catch(() => {
-            this.close().catch(() => {});
+            this._close().catch(() => {});
           }), 500);
     };
     poll();
   }
 
-  async shell(command: string): Promise<Buffer> {
+  async shell(progress: Progress, command: string): Promise<Buffer> {
+    return await progress.race(this._shell(command));
+  }
+
+  private async _shell(command: string): Promise<Buffer> {
     const result = await this._backend.runCommand(`shell:${command}`);
     await this._refreshWebViews();
     return result;
@@ -154,8 +158,8 @@ export class AndroidDevice extends SdkObject {
     return await this._open(progress, command);
   }
 
-  async screenshot(): Promise<Buffer> {
-    return await this._backend.runCommand(`shell:screencap -p`);
+  async screenshot(progress: Progress): Promise<Buffer> {
+    return await progress.race(this._backend.runCommand(`shell:screencap -p`));
   }
 
   private async _driver(): Promise<PipeTransport | undefined> {
@@ -170,13 +174,13 @@ export class AndroidDevice extends SdkObject {
 
   private async _installDriver(progress: Progress): Promise<PipeTransport> {
     debug('pw:android')('Stopping the old driver');
-    await progress.race(this.shell(`am force-stop com.microsoft.playwright.androiddriver`));
+    await progress.race(this._shell(`am force-stop com.microsoft.playwright.androiddriver`));
 
     // uninstall and install driver on every execution
     if (!this._options.omitDriverInstall) {
       debug('pw:android')('Uninstalling the old driver');
-      await progress.race(this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`));
-      await progress.race(this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`));
+      await this.shell(progress, `cmd package uninstall com.microsoft.playwright.androiddriver`);
+      await this.shell(progress, `cmd package uninstall com.microsoft.playwright.androiddriver.test`);
 
       debug('pw:android')('Installing the new driver');
       const executable = registry.findExecutable('android')!;
@@ -192,7 +196,7 @@ export class AndroidDevice extends SdkObject {
     }
 
     debug('pw:android')('Starting the new driver');
-    this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => debug('pw:android')(e));
+    this._shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => debug('pw:android')(e));
     const socket = await this._waitForLocalAbstract(progress, 'playwright_android_driver_socket');
     const transport = new PipeTransport(socket, socket, socket, 'be');
     transport.onmessage = message => {
@@ -226,7 +230,11 @@ export class AndroidDevice extends SdkObject {
     return socket;
   }
 
-  async send(method: string, params: any = {}): Promise<any> {
+  async send(progress: Progress, method: string, params: any = {}): Promise<any> {
+    return await progress.race(this._send(method, params));
+  }
+
+  private async _send(method: string, params: any = {}): Promise<any> {
     params = {
       ...params,
       // Patch the timeout in, just in case it's missing in one of the commands.
@@ -245,7 +253,11 @@ export class AndroidDevice extends SdkObject {
     return result;
   }
 
-  async close() {
+  async close(progress: Progress) {
+    await progress.race(this._close());
+  }
+
+  private async _close() {
     if (this._isClosed)
       return;
     this._isClosed = true;
@@ -264,7 +276,7 @@ export class AndroidDevice extends SdkObject {
 
   async launchBrowser(progress: Progress, pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
-    await this._backend.runCommand(`shell:am force-stop ${pkg}`);
+    await progress.race(this._backend.runCommand(`shell:am force-stop ${pkg}`));
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright_' + createGuid() + '_devtools_remote');
     const commandLine = this._defaultArgs(options, socketName).join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
@@ -276,7 +288,7 @@ export class AndroidDevice extends SdkObject {
       await progress.race(this._backend.runCommand(`shell:rm /data/local/tmp/chrome-command-line`));
       return browserContext;
     } catch (error) {
-      await browserContext.close({ reason: 'Failed to launch' }).catch(() => {});
+      await browserContext.close(progress, { reason: 'Failed to launch' }).catch(() => {});
       throw error;
     }
   }
@@ -353,7 +365,7 @@ export class AndroidDevice extends SdkObject {
 
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions));
       const defaultContext = browser._defaultContext!;
-      await defaultContext._loadDefaultContextAsIs(progress);
+      await defaultContext.loadDefaultContextAsIs(progress);
       return defaultContext;
     } catch (error) {
       socket.close();
@@ -382,21 +394,21 @@ export class AndroidDevice extends SdkObject {
 
   async push(progress: Progress, content: Buffer, path: string, mode = 0o644): Promise<void> {
     const socket = await this._open(progress, `sync:`);
-    const sendHeader = async (command: string, length: number) => {
+    const sendHeader = async (progress: Progress, command: string, length: number) => {
       const buffer = Buffer.alloc(command.length + 4);
       buffer.write(command, 0);
       buffer.writeUInt32LE(length, command.length);
       await progress.race(socket.write(buffer));
     };
-    const send = async (command: string, data: Buffer) => {
-      await sendHeader(command, data.length);
+    const send = async (progress: Progress, command: string, data: Buffer) => {
+      await sendHeader(progress, command, data.length);
       await progress.race(socket.write(data));
     };
-    await send('SEND', Buffer.from(`${path},${mode}`));
+    await send(progress, 'SEND', Buffer.from(`${path},${mode}`));
     const maxChunk = 65535;
     for (let i = 0; i < content.length; i += maxChunk)
-      await send('DATA', content.slice(i, i + maxChunk));
-    await sendHeader('DONE', (Date.now() / 1000) | 0);
+      await send(progress, 'DATA', content.slice(i, i + maxChunk));
+    await sendHeader(progress, 'DONE', (Date.now() / 1000) | 0);
     const result = await progress.race(new Promise<Buffer>(f => socket.once('data', f)));
     const code = result.slice(0, 4).toString();
     if (code !== 'OKAY')

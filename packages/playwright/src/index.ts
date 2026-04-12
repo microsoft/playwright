@@ -18,14 +18,21 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall, getActionGroup, escapeHTML } from 'playwright-core/lib/utils';
+import { asLocatorDescription } from '@isomorphic/locatorGenerators';
+import { getActionGroup, renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { escapeHTML } from '@isomorphic/stringUtils';
+import { jsonStringifyForceASCII } from '@utils/ascii';
+import { createGuid } from '@utils/crypto';
+import { debugMode } from '@utils/debug';
+import { setBoxedStackPrefixes } from '@utils/nodePlatform';
+import { currentZone } from '@utils/zones';
 import { buildErrorContext } from './errorContext';
-import { currentTestInfo } from './common/globals';
-import { rootTestType } from './common/testType';
+import { config, testType } from './common';
+import * as globals from './globals';
+import { packageRoot } from './package';
 import { createCustomMessageHandler, runDaemonForContext } from './mcp/test/browserBackend';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
-import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
@@ -37,9 +44,9 @@ import type { Page as PageImpl } from '../../playwright-core/src/client/page';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
 
 export { expect } from './matchers/expect';
-export const _baseTest: TestType<{}, {}> = rootTestType.test;
+export const _baseTest: TestType<{}, {}> = testType.rootTestType.test;
 
-setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
+setBoxedStackPrefixes([packageRoot]);
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -63,7 +70,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   playwright: PlaywrightImpl;
   _browserOptions: LaunchOptions;
-  _optionContextReuseMode: ContextReuseMode,
+  _optionContextReuseMode: config.ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
 };
@@ -101,7 +108,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
-  browser: [async ({ playwright, browserName, _browserOptions, connectOptions }, use) => {
+  browser: [async ({ playwright, browserName, _browserOptions, connectOptions }, use, workerInfo) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
 
@@ -121,6 +128,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
 
     const browser = await playwright[browserName].launch();
+    if (process.env.PLAYWRIGHT_DASHBOARD)
+      await browser.bind(`worker-${workerInfo.parallelIndex}`);
     await use(browser);
     await browser.close({ reason: 'Test ended.' });
   }, { scope: 'worker', timeout: 0 }],
@@ -259,7 +268,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const pausedContexts = new Set<BrowserContextImpl>();
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (data, channel) => {
-        const testInfo = currentTestInfo();
+        const testInfo = globals.currentTestInfo();
         // Some special calls do not get into steps.
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
@@ -305,7 +314,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
       onWillPause: ({ keepTestTimeout }) => {
         if (!keepTestTimeout)
-          currentTestInfo()?._setIgnoreTimeouts(true);
+          globals.currentTestInfo()?._setIgnoreTimeouts(true);
       },
       runBeforeCreateBrowserContext: async (options: BrowserContextOptions) => {
         for (const [key, value] of Object.entries(_combinedContextOptions)) {
@@ -332,7 +341,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         });
 
         await artifactsRecorder.didCreateBrowserContext(context);
-        const testInfo = currentTestInfo();
+        const testInfo = globals.currentTestInfo();
         if (testInfo)
           attachConnectedHeaderIfNeeded(testInfo, context.browser());
       },
@@ -372,12 +381,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           `If you would like to configure your page before each test, do that in beforeEach hook instead.`,
         ].join('\n'));
       }
-      const annotate = typeof video === 'string' ? undefined : video.annotate;
+      const show = typeof video === 'string' ? undefined : video.show;
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
           dir: tracing().artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
-          annotate: annotate?.action,
+          showActions: show?.actions,
         }
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
@@ -442,13 +451,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
-    const annotate = typeof video === 'string' ? undefined : video.annotate;
+    const show = typeof video === 'string' ? undefined : video.show;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
       testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
       await runDaemonForContext(testInfo, context);
-      await installScreencastTitleUpdater(testInfo, context, annotate?.test);
+      await installScreencastTitleUpdater(testInfo, context, show?.test);
       await use(context);
       await close();
       return;
@@ -457,7 +466,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
     testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
     await runDaemonForContext(testInfo, context);
-    await installScreencastTitleUpdater(testInfo, context, annotate?.test);
+    await installScreencastTitleUpdater(testInfo, context, show?.test);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -866,6 +875,5 @@ function tracing() {
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
 
-export { defineConfig } from './common/configLoader';
-export { mergeTests } from './common/testType';
+export { defineConfig, mergeTests } from './common';
 export { mergeExpects } from './matchers/expect';

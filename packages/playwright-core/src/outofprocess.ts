@@ -17,10 +17,11 @@
 import * as childProcess from 'child_process';
 import path from 'path';
 
+import { PipeTransport } from '@utils/pipeTransport';
+import { nodePlatform } from '@utils/nodePlatform';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { Connection } from './client/connection';
-import { PipeTransport } from './server/utils/pipeTransport';
-import { ManualPromise } from './utils/isomorphic/manualPromise';
-import { nodePlatform } from './server/utils/nodePlatform';
+import { packageRoot } from './package';
 
 import type { Playwright } from './client/playwright';
 
@@ -38,7 +39,7 @@ class PlaywrightClient {
   private _closePromise = new ManualPromise<void>();
 
   constructor(env: any) {
-    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'cli.js'), ['run-driver'], {
+    this._driverProcess = childProcess.fork(path.join(packageRoot, 'cli.js'), ['run-driver'], {
       stdio: 'pipe',
       detached: true,
       env: {
@@ -50,7 +51,7 @@ class PlaywrightClient {
     // eslint-disable-next-line no-restricted-properties
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
-    const connection = new Connection(nodePlatform);
+    const connection = new Connection(nodePlatform(packageRoot));
     const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));

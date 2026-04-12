@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { emptyPlatform } from '../../playwright-core/src/client/platform';
+import { emptyPlatform } from '@isomorphic/platform';
 
-import type { Platform } from '../../playwright-core/src/client/platform';
+import type { Platform } from '@isomorphic/platform';
 
 export const webPlatform: Platform = {
   ...emptyPlatform,

@@ -17,9 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { assert } from '../utils/isomorphic/assert';
-import { mime } from '../utilsBundle';
-
+import mime from 'mime';
+import { assert } from '@isomorphic/assert';
 import type { WritableStreamDispatcher } from './dispatchers/writableStreamDispatcher';
 import type { InputFilesItems } from './dom';
 import type { Frame } from './frames';

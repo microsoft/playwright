@@ -18,10 +18,11 @@
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
 import fs from 'fs';
-import { getUserAgent } from '../../../packages/playwright-core/lib/server/utils/userAgent';
-import { WebSocketTransport } from '../../../packages/playwright-core/lib/server/transport';
+import { getUserAgent, server as coreServer } from '../../../packages/playwright-core/lib/coreBundle';
 import { suppressCertificateWarning } from '../../config/utils';
-import type { Frame } from '../../../packages/playwright-core/lib/server/frames';
+
+const { WebSocketTransport, nullProgress } = coreServer;
+type Frame = coreServer.Frame;
 
 test.skip(({ mode }) => mode === 'service2');
 
@@ -591,13 +592,13 @@ test('should not reuse utility worlds between two clients', async ({ browserType
     expect(context1.pages().length).toBe(0);
     const page1 = await context1.newPage();
     const frameImpl1 = toImpl(page1.mainFrame()) as Frame;
-    await frameImpl1.evaluateExpression('window.foo = 42', { world: 'utility' });
+    await frameImpl1.evaluateExpression(nullProgress, 'window.foo = 42', { world: 'utility' });
 
     const browser2 = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
     const context2 = browser2.contexts()[0];
     const page2 = context2.pages()[0];
     const frameImpl2 = toImpl(page2.mainFrame()) as Frame;
-    const result = await frameImpl2.evaluateExpression('window.foo', { world: 'utility' });
+    const result = await frameImpl2.evaluateExpression(nullProgress, 'window.foo', { world: 'utility' });
 
     await browser1.close();
     await browser2.close();

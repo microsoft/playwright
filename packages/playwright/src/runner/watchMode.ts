@@ -18,18 +18,21 @@ import path from 'path';
 import readline from 'readline';
 import { EventEmitter } from 'stream';
 
-import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
-import { ManualPromise, createGuid, eventsHelper, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
+import { remote } from 'playwright-core/lib/coreBundle';
+import colors from 'colors/safe';
+import enquirer from 'enquirer';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { createGuid } from '@utils/crypto';
+import { getPackageManagerExecCommand } from '@utils/env';
+import { eventsHelper } from '@utils/eventsHelper';
 
 import { separator, terminalScreen } from '../reporters/base';
-import { enquirer } from '../utilsBundle';
 import { TestServerDispatcher } from './testServer';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { TestServerConnection  } from '../isomorphic/testServerConnection';
 
 import type * as reporterTypes from '../../types/testReporter';
-import type { ConfigLocation } from '../common/config';
+import type { ConfigLocation } from '../common';
 import type { TestServerTransport } from '../isomorphic/testServerConnection';
 
 /* eslint-disable no-restricted-properties */
@@ -368,7 +371,7 @@ Change settings
   });
 }
 
-let showBrowserServer: PlaywrightServer | undefined;
+let showBrowserServer: remote.PlaywrightServer | undefined;
 let connectWsEndpoint: string | undefined = undefined;
 let seq = 1;
 
@@ -419,7 +422,7 @@ ${colors.dim('Waiting for file changes. Press')} ${colors.bold('enter')} ${color
 
 async function toggleShowBrowser() {
   if (!showBrowserServer) {
-    showBrowserServer = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: 1 });
+    showBrowserServer = new remote.PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: 1 });
     connectWsEndpoint = await showBrowserServer.listen();
     process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('on')}\n`);
   } else {

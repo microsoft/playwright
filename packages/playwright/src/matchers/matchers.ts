@@ -14,29 +14,34 @@
  * limitations under the License.
  */
 
-import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, isURLPattern, pollAgainstDeadline, serializeExpectedTextValues, formatMatcherMessage } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
+import colors from 'colors/safe';
+import { asLocatorDescription } from '@isomorphic/locatorGenerators';
+import { isTextualMimeType } from '@isomorphic/mimeType';
+import { isRegExp } from '@isomorphic/rtti';
+import { isString } from '@isomorphic/stringUtils';
+import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { constructURLBasedOnBaseURL, isURLPattern } from '@isomorphic/urlMatch';
+import { serializeExpectedTextValues } from '@isomorphic/expectUtils';
+import { monotonicTime } from '@isomorphic/index';
 
-import { expectTypes } from '../util';
+import { expectTypes, formatMatcherMessage, MatcherResult } from './matcherHint';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toHaveURLWithPredicate } from './toHaveURL';
 import { toMatchText } from './toMatchText';
 import { toHaveScreenshotStepTitle } from './toMatchSnapshot';
-import { takeFirst } from '../common/config';
-import { currentTestInfo } from '../common/globals';
-import { TestInfoImpl } from '../worker/testInfo';
-import { MatcherResult } from './matcherHint';
+import { expectConfig } from './expect';
 
 import type { ExpectMatcherState } from '../../types/test';
-import type { TestStepInfoImpl } from '../worker/testInfo';
+import type { ExpectStepInfo, ExpectTestInfo } from './expect';
+import type { InternalMatcherUtils } from './matcherHint';
 import type { APIResponse, Locator, Frame, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 import type { ExpectMatcherUtils } from '../../types/test';
-import type { InternalMatcherUtils, URLPattern } from 'playwright-core/lib/utils';
+import type { URLPattern } from '@isomorphic/urlMatch';
 
 export type ExpectMatcherStateInternal = Omit<ExpectMatcherState, 'utils'> & {
-  _stepInfo?: TestStepInfoImpl;
+  _stepInfo?: ExpectStepInfo;
   utils: ExpectMatcherUtils & InternalMatcherUtils;
 };
 
@@ -476,13 +481,13 @@ export async function toPass(
     timeout?: number,
   } = {},
 ) {
-  const testInfo = currentTestInfo();
-  const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
-  const intervals = takeFirst(options.intervals, testInfo?._projectInternal.expect?.toPass?.intervals, [100, 250, 500, 1000]);
+  const testInfo = expectConfig().testInfo;
+  const timeout = options.timeout ?? expectConfig().toPass?.timeout ?? 0;
+  const intervals = options.intervals ?? expectConfig().toPass?.intervals ?? [100, 250, 500, 1000];
 
-  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+  const { deadline, timeoutMessage } = deadlineForMatcher(testInfo, timeout);
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
+    if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
     try {
       await callback();
@@ -509,11 +514,25 @@ export function computeMatcherTitleSuffix(matcherName: string, receiver: any, ar
     const title = toHaveScreenshotStepTitle(...args);
     return { short: title ? `(${title})` : '' };
   }
-  if (receiver && typeof receiver === 'object' && receiver.constructor?.name === 'Locator') {
+  if (receiver && typeof receiver === 'object' && (receiver as any)._apiName === 'Locator') {
     try {
       return { long: ' ' + asLocatorDescription('javascript', (receiver as LocatorEx)._selector) };
     } catch {
     }
   }
   return {};
+}
+
+export function deadlineForMatcher(testInfo: ExpectTestInfo | null, timeout: number): { deadline: number; timeoutMessage: string } {
+  const startTime = monotonicTime();
+  const matcherDeadline = timeout ? startTime + timeout : 0;
+  const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+  if (!testInfo)
+    return { deadline: matcherDeadline, timeoutMessage: matcherMessage };
+  const { deadline: testDeadline, timeout: testTimeout } = testInfo._deadline();
+  const effectiveTestDeadline = testDeadline - 250;
+  const testMessage = `Test timeout of ${testTimeout}ms exceeded`;
+  if (!matcherDeadline)
+    return { deadline: effectiveTestDeadline, timeoutMessage: testMessage };
+  return { deadline: Math.min(effectiveTestDeadline, matcherDeadline), timeoutMessage: effectiveTestDeadline < matcherDeadline ? testMessage : matcherMessage };
 }

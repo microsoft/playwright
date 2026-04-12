@@ -1,0 +1,4 @@
+[*]
+../coreBundle.ts
+../package.ts
+node_modules/commander

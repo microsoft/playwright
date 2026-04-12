@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { renderTitleForCall } from '../utils';
-import { debugLogger } from '../utils';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { debugLogger } from '@utils/debugLogger';
 import { Page } from './page';
 
 import type * as types from './types';
@@ -27,13 +27,20 @@ export type ScreencastClient = {
   dispose: () => void;
   size?: types.Size;
   quality?: number;
-  annotate?: types.AnnotateOptions;
+};
+
+type AnnotatePosition = 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
+
+type ActionOptions = {
+  duration?: number,
+  position?: AnnotatePosition,
+  fontSize?: number,
 };
 
 export class Screencast implements InstrumentationListener {
   readonly page: Page;
   private _clients = new Set<ScreencastClient>();
-  private _annotate: types.AnnotateOptions | undefined;
+  private _actions: ActionOptions | undefined;
   private _size: types.Size | undefined;
 
   constructor(page: Page) {
@@ -57,10 +64,16 @@ export class Screencast implements InstrumentationListener {
     this.page.instrumentation.removeListener(this);
   }
 
+  showActions(options: ActionOptions) {
+    this._actions = options;
+  }
+
+  hideActions() {
+    this._actions = undefined;
+  }
+
   addClient(client: ScreencastClient): { size: types.Size } {
     this._clients.add(client);
-    if (!this._annotate && client.annotate)
-      this._annotate = client.annotate;
     if (this._clients.size === 1)
       this._startScreencast(client.size, client.quality);
     return { size: this._size! };
@@ -72,11 +85,6 @@ export class Screencast implements InstrumentationListener {
     this._clients.delete(client);
     if (!this._clients.size)
       this._stopScreencast();
-    this._annotate = Array.from(this._clients).find(c => c.annotate)?.annotate;
-  }
-
-  size(): types.Size | undefined {
-    return this._size;
   }
 
   private _startScreencast(size: types.Size | undefined, quality: number | undefined) {
@@ -126,13 +134,13 @@ export class Screencast implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
-    if (!this._annotate)
+    if (!this._actions)
       return;
     metadata.annotate = true;
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (!this._annotate)
+    if (!this._actions)
       return;
 
     const page = sdkObject.attribution.page;
@@ -140,7 +148,7 @@ export class Screencast implements InstrumentationListener {
       return;
 
     const actionTitle = renderTitleForCall(metadata);
-    const utility = await page.mainFrame()._utilityContext();
+    const utility = await page.mainFrame().utilityContext();
 
     // Run this outside of the progress timer.
     await utility.evaluate(async options => {
@@ -150,12 +158,12 @@ export class Screencast implements InstrumentationListener {
       injected.setScreencastAnnotation(null);
     }, {
       injected: await utility.injectedScript(),
-      duration: this._annotate?.duration ?? 500,
+      duration: this._actions?.duration ?? 500,
       point: metadata.point,
       box: metadata.box,
       actionTitle,
-      position: this._annotate?.position,
-      fontSize: this._annotate?.fontSize,
+      position: this._actions?.position,
+      fontSize: this._actions?.fontSize,
     }).catch(e => debugLogger.log('error', e));
   }
 }

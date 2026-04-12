@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
+import { MultiMap } from '@isomorphic/multimap';
+import { assert } from '@isomorphic/assert';
 import { helper } from './helper';
-import { assert } from '../utils';
-import { MultiMap } from '../utils/isomorphic/multimap';
 
 import type * as dom from './dom';
 import type { Frame } from './frames';
 import type { Page } from './page';
 import type { Progress } from './progress';
 import type * as types from './types';
-import type { Rect } from '../utils/isomorphic/types';
-import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+import type { Rect } from '@isomorphic/types';
+import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 
 declare global {
@@ -202,7 +202,7 @@ export class Screenshotter {
 
   async screenshotPage(progress: Progress, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
-    return this._queue.postTask(async () => {
+    return this._queue._postTask(async () => {
       progress.log('taking page screenshot');
       const viewportSize = await this._originalViewportSize(progress);
       await this._preparePageForScreenshot(progress, this._page.mainFrame(), options.style, options.caret !== 'initial', options.animations === 'disabled');
@@ -225,7 +225,7 @@ export class Screenshotter {
 
   async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
-    return this._queue.postTask(async () => {
+    return this._queue._postTask(async () => {
       progress.log('taking element screenshot');
       const viewportSize = await this._originalViewportSize(progress);
 
@@ -233,7 +233,7 @@ export class Screenshotter {
       try {
         await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
 
-        const boundingBox = await progress.race(handle.boundingBox());
+        const boundingBox = await handle.boundingBox(progress);
         assert(boundingBox, 'Node is either not visible or not an HTMLElement');
         assert(boundingBox.width !== 0, 'Node has 0 width.');
         assert(boundingBox.height !== 0, 'Node has 0 height.');
@@ -250,7 +250,7 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
+  private async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     const syncAnimations = this._page.delegate.shouldToggleStyleSheetToSyncAnimations();
@@ -262,16 +262,16 @@ export class Screenshotter {
         progress.log('fonts loaded');
       }
     } catch (error) {
-      await this._restorePageAfterScreenshot();
+      await progress.race(this._restorePageAfterScreenshot());
       throw error;
     }
   }
 
-  async _restorePageAfterScreenshot() {
+  private async _restorePageAfterScreenshot() {
     await this._page.safeNonStallingEvaluateInAllFrames('window.__pwCleanupScreenshot && window.__pwCleanupScreenshot()', 'utility');
   }
 
-  async _maskElements(progress: Progress, options: ScreenshotOptions): Promise<() => Promise<void>> {
+  private async _maskElements(progress: Progress, options: ScreenshotOptions): Promise<() => Promise<void>> {
     if (!options.mask || !options.mask.length)
       return () => Promise.resolve();
 
@@ -309,9 +309,9 @@ export class Screenshotter {
     try {
       const quality = format === 'jpeg' ? options.quality ?? 80 : undefined;
       const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
-      await cleanupHighlight();
+      await progress.race(cleanupHighlight());
       if (shouldSetDefaultBackground)
-        await this._page.delegate.setBackgroundColor();
+        await progress.race(this._page.delegate.setBackgroundColor());
       if ((options as any).__testHookAfterScreenshot)
         await progress.race((options as any).__testHookAfterScreenshot());
       return buffer;
@@ -332,7 +332,7 @@ class TaskQueue {
     this._chain = Promise.resolve();
   }
 
-  postTask(task: () => any): Promise<any> {
+  _postTask(task: () => any): Promise<any> {
     const result = this._chain.then(task);
     this._chain = result.catch(() => {});
     return result;

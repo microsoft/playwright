@@ -20,26 +20,29 @@ import os from 'os';
 import path from 'path';
 import * as util from 'util';
 
-import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
-import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
+import { wrapInASCIIBox } from '@utils/ascii';
+import { debugLogger } from '@utils/debugLogger';
+import { shortPlatform, hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
+import { NET_DEFAULT_TIMEOUT } from '@utils/network';
+import { spawnAsync } from '@utils/spawnAsync';
+import { canAccessFile, existsAsync, removeFolders } from '@utils/fileUtils';
+import { calculateSha1 } from '@utils/crypto';
+import { getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '@utils/env';
+import { lock } from '@utils/third_party/lockfile';
+import { fetchData } from '../utils';
+import { getEmbedderName } from '../userAgent';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
-import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '../../utils';
-import { wrapInASCIIBox } from '../utils/ascii';
-import { debugLogger } from '../utils/debugLogger';
-import { shortPlatform, hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
-import { fetchData, NET_DEFAULT_TIMEOUT } from '../utils/network';
-import { spawnAsync } from '../utils/spawnAsync';
-import { getEmbedderName } from '../utils/userAgent';
-import { lockfile } from '../../utilsBundle';
-import { canAccessFile, existsAsync, removeFolders } from '../utils/fileUtils';
+import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
+import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
+import { packageRoot, binPath } from '../../package';
 
 import type { DependencyGroup } from './dependencies';
-import type { HostPlatform } from '../utils/hostPlatform';
+import type { HostPlatform } from '@utils/hostPlatform';
 
 export { writeDockerVersion } from './dependencies';
 
-const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
-const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
+const PACKAGE_PATH = packageRoot;
+const BIN_PATH = binPath;
 
 const PLAYWRIGHT_CDN_MIRRORS = [
   'https://cdn.playwright.dev/dbazure/download/playwright', // ESRP CDN
@@ -169,6 +172,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-win64.zip'),
   },
   'chromium-headless-shell': {
@@ -200,6 +205,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
   },
   'chromium-tip-of-tree': {
@@ -231,6 +238,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-win64.zip'),
   },
   'chromium-tip-of-tree-headless-shell': {
@@ -262,6 +271,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'mac15': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
     'mac15-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac26': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac26-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
     'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
   },
   'firefox': {
@@ -293,6 +304,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
     'mac15': 'builds/firefox/%s/firefox-mac.zip',
     'mac15-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
+    'mac26': 'builds/firefox/%s/firefox-mac.zip',
+    'mac26-arm64': 'builds/firefox/%s/firefox-mac-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -324,6 +337,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
     'mac15': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
     'mac15-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
+    'mac26': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
+    'mac26-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
@@ -355,6 +370,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/webkit/%s/webkit-mac-14-arm64.zip',
     'mac15': 'builds/webkit/%s/webkit-mac-15.zip',
     'mac15-arm64': 'builds/webkit/%s/webkit-mac-15-arm64.zip',
+    'mac26': 'builds/webkit/%s/webkit-mac-15.zip',
+    'mac26-arm64': 'builds/webkit/%s/webkit-mac-15-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
@@ -386,6 +403,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'mac15': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac15-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
+    'mac26': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac26-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
   'winldd': {
@@ -417,6 +436,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': undefined,
     'mac15': undefined,
     'mac15-arm64': undefined,
+    'mac26': undefined,
+    'mac26-arm64': undefined,
     'win64': 'builds/winldd/%s/winldd-win64.zip',
   },
   'android': {
@@ -448,6 +469,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/android/%s/android.zip',
     'mac15': 'builds/android/%s/android.zip',
     'mac15-arm64': 'builds/android/%s/android.zip',
+    'mac26': 'builds/android/%s/android.zip',
+    'mac26-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
 };
@@ -469,7 +492,7 @@ export const registryDirectory = (() => {
 
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
   if (envDefined === '0')
-    result = path.join(__dirname, '..', '..', '..', '.local-browsers');
+    result = path.join(packageRoot, '.local-browsers');
   else if (envDefined)
     result = envDefined;
   else
@@ -1059,7 +1082,7 @@ export class Registry {
 
     let releaseLock;
     try {
-      releaseLock = await lockfile.lock(registryDirectory, {
+      releaseLock = await lock(registryDirectory, {
         retries: {
           // Retry 20 times during 10 minutes with
           // exponential back-off.
@@ -1517,4 +1540,6 @@ function lowercaseAllKeys(json: any): any {
   return result;
 }
 
-export const registry = new Registry(require('../../../browsers.json'));
+export const registry = new Registry(require(path.join(packageRoot, 'browsers.json')));
+
+export { runOopDownloadBrowserMain } from './oopDownloadBrowserMain';

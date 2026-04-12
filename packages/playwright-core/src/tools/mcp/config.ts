@@ -18,12 +18,11 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { devices } from '../../..';
-import { dotenv } from '../../utilsBundle';
-
+import dotenv from 'dotenv';
+import { playwright } from '../../inprocess';
 import { configFromIniFile } from './configIni';
 
-import type * as playwright from '../../..';
+import type * as playwrightTypes from '../../..';
 import type { Config, ToolCapability } from './config.d';
 
 async function fileExistsAsync(resolved: string) {
@@ -47,6 +46,7 @@ export type CLIOptions = {
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
   device?: string;
+  endpoint?: string;
   extension?: boolean;
   executablePath?: string;
   grantPermissions?: string[];
@@ -138,6 +138,8 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   }
 
   const daemonOverrides = configFromCLIOptions({
+    endpoint: options.endpoint,
+    cdpEndpoint: options.cdp,
     config: options.config,
     browser: options.browser,
     headless: options.headed ? false : undefined,
@@ -145,7 +147,6 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     userDataDir: options.profile,
     snapshotMode: 'full',
   });
-  daemonOverrides.browser!.remoteEndpoint = options.attach;
 
   const envOverrides = configFromEnv(env);
   const configFile = daemonOverrides.configFile ?? envOverrides.configFile;
@@ -160,7 +161,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   result = mergeConfig(result, daemonOverrides);
 
   if (result.browser.isolated === undefined)
-    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.extension;
+    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
 
   if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint) {
     // No custom value provided, use the daemon data dir.
@@ -245,7 +246,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   }
 
   // Launch options
-  const launchOptions: playwright.LaunchOptions = {
+  const launchOptions: playwrightTypes.LaunchOptions = {
     channel,
     executablePath: cliOptions.executablePath,
     headless: cliOptions.headless,
@@ -268,7 +269,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     throw new Error('Device emulation is not supported with cdpEndpoint.');
 
   // Context options
-  const contextOptions: playwright.BrowserContextOptions = cliOptions.device ? devices[cliOptions.device] : {};
+  const contextOptions: playwrightTypes.BrowserContextOptions = cliOptions.device ? playwright.devices[cliOptions.device] : {};
   if (cliOptions.storageState)
     contextOptions.storageState = cliOptions.storageState;
 
@@ -299,6 +300,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       cdpTimeout: cliOptions.cdpTimeout,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
+      remoteEndpoint: cliOptions.endpoint,
     },
     extension: cliOptions.extension,
     server: {

@@ -17,7 +17,7 @@
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import { PNG } from 'playwright-core/lib/utilsBundle';
-import { registry } from '../../packages/playwright-core/lib/server';
+import { registry } from '../../packages/playwright-core/lib/coreBundle';
 
 export class VideoPlayer {
   fileName: string;
@@ -30,7 +30,7 @@ export class VideoPlayer {
 
   constructor(fileName: string) {
     this.fileName = fileName;
-    const ffmpeg = registry.findExecutable('ffmpeg')!.executablePathOrDie('javascript');
+    const ffmpeg = registry.registry.findExecutable('ffmpeg')!.executablePathOrDie('javascript');
     // Force output frame rate to 25 fps as otherwise it would produce one image per timebase unit
     // which is 1 / (25 * 1000).
     this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%04d.png`]).stderr.toString();

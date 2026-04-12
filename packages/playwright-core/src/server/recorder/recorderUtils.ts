@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
-import { monotonicTime, quoteCSSAttributeValue  } from '../../utils';
-import { raceAgainstDeadline } from '../../utils/isomorphic/timeoutRunner';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { monotonicTime } from '@isomorphic/time';
+import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 import { Frame } from '../frames';
 
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
+import type { Progress } from '@protocol/progress';
 
 export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
@@ -115,26 +117,28 @@ export function collapseActions(actions: actions.ActionInContext[]): actions.Act
   return result;
 }
 
-export async function generateFrameSelector(frame: Frame): Promise<string[]> {
+export async function generateFrameSelector(progress: Progress, frame: Frame): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
+  progress.setAllowConcurrentOrNestedRaces(true);
   while (frame) {
     const parent = frame.parentFrame();
     if (!parent)
       break;
-    selectorPromises.push(generateFrameSelectorInParent(parent, frame));
+    selectorPromises.push(generateFrameSelectorInParent(progress, parent, frame));
     frame = parent;
   }
   const result = await Promise.all(selectorPromises);
+  progress.setAllowConcurrentOrNestedRaces(false);
   return result.reverse();
 }
 
-async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promise<string> {
+async function generateFrameSelectorInParent(prgoress: Progress, parent: Frame, frame: Frame): Promise<string> {
   const result = await raceAgainstDeadline(async () => {
     try {
-      const frameElement = await frame.frameElement();
+      const frameElement = await frame.frameElement(prgoress);
       if (!frameElement || !parent)
         return;
-      const utility = await parent._utilityContext();
+      const utility = await parent.utilityContext();
       const injected = await utility.injectedScript();
       const selector = await injected.evaluate((injected, element) => {
         return injected.generateSelectorSimple(element as Element);

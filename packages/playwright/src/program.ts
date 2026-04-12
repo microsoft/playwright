@@ -17,18 +17,23 @@
 /* eslint-disable no-console */
 
 import 'playwright-core/lib/bootstrap';
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
-import { program } from 'playwright-core/lib/cli/program';
-import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
+import { libCli, tools } from 'playwright-core/lib/coreBundle';
+import { program } from 'commander';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { builtInReporters, config, configLoader } from './common';
+import { runTests, clearCache, runTestServerAction } from './cli/testActions';
+import { showReport, mergeReports } from './cli/reportActions';
+import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
+import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
+import { packageJSON } from './package';
 
-export { program } from 'playwright-core/lib/cli/program';
+export { program };
 
-import type { ServerBackendFactory } from 'playwright-core/lib/tools/exports';
 import type { TraceMode } from '../types/test';
-import type { Command } from 'playwright-core/lib/utilsBundle';
+import type { Command } from 'commander';
 
-const packageJSON = require('../package.json');
+libCli.decorateProgram(program);
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -47,7 +52,6 @@ function addTestCommand(program: Command) {
   });
   command.action(async (args, opts) => {
     try {
-      const { runTests } = await import('./testActions');
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
@@ -70,18 +74,7 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const { clearCache } = await import('./testActions');
     await clearCache(opts);
-  });
-}
-
-function addDevServerCommand(program: Command) {
-  const command = program.command('dev-server', { hidden: true });
-  command.description('start dev server');
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
-  command.action(async options => {
-    const { startDevServer } = await import('./testActions');
-    await startDevServer(options);
   });
 }
 
@@ -92,7 +85,6 @@ function addTestServerCommand(program: Command) {
   command.option('--host <host>', 'Host to start the server on', 'localhost');
   command.option('--port <port>', 'Port to start the server on', '0');
   command.action(async opts => {
-    const { runTestServerAction } = await import('./testActions');
     await runTestServerAction(opts);
   });
 }
@@ -101,7 +93,6 @@ function addShowReportCommand(program: Command) {
   const command = program.command('show-report [report]');
   command.description('show HTML report');
   command.action(async (report, options) => {
-    const { showReport } = await import('./reportActions');
     await showReport(report, options.host, +options.port);
   });
   command.option('--host <host>', 'Host to serve report on', 'localhost');
@@ -120,7 +111,6 @@ function addMergeReportsCommand(program: Command) {
   command.description('merge multiple blob reports (for sharded tests) into a single report');
   command.action(async (dir, options) => {
     try {
-      const { mergeReports } = await import('./reportActions');
       await mergeReports(dir, options);
     } catch (e) {
       console.error(e);
@@ -128,7 +118,7 @@ function addMergeReportsCommand(program: Command) {
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
-  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${config.defaultReporter}")`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -145,10 +135,8 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
-    const { start, setupExitWatchdog } = await import('playwright-core/lib/tools/exports');
-    const { TestServerBackend, testServerBackendTools } = await import('./mcp/test/testBackend');
-    setupExitWatchdog();
-    const factory: ServerBackendFactory = {
+    tools.setupExitWatchdog();
+    const factory: tools.ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
@@ -157,7 +145,7 @@ function addTestMCPServerCommand(program: Command) {
       disposed: async () => { }
     };
     // TODO: add all options from mcp.startHttpServer.
-    await start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
+    await tools.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
   });
 }
 
@@ -171,17 +159,15 @@ function addInitAgentsCommand(program: Command) {
   command.option('--project <project>', 'Project to use for seed test');
   command.option('--prompts', 'Whether to include prompts in the agent initialization');
   command.action(async opts => {
-    const { loadConfigFromFile } = await import('./common/configLoader');
-    const { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } = await import('./agents/generateAgents');
-    const config = await loadConfigFromFile(opts.config);
+    const loadedConfig = await configLoader.loadConfigFromFile(opts.config);
     if (opts.loop === 'opencode') {
-      await OpencodeGenerator.init(config, opts.project, opts.prompts);
+      await OpencodeGenerator.init(loadedConfig, opts.project, opts.prompts);
     } else if (opts.loop === 'vscode-legacy') {
-      await VSCodeGenerator.init(config, opts.project);
+      await VSCodeGenerator.init(loadedConfig, opts.project);
     } else if (opts.loop === 'claude') {
-      await ClaudeGenerator.init(config, opts.project, opts.prompts);
+      await ClaudeGenerator.init(loadedConfig, opts.project, opts.prompts);
     } else {
-      await CopilotGenerator.init(config, opts.project, opts.prompts);
+      await CopilotGenerator.init(loadedConfig, opts.project, opts.prompts);
       return;
     }
   });
@@ -213,13 +199,13 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--project <project-name...>', { description: `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)` }],
   ['--quiet', { description: `Suppress stdio` }],
   ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],
-  ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")` }],
+  ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${config.defaultReporter}")` }],
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
   ['--run-agents <mode>', { description: `Run agents to generate the code for page.perform`, choices: ['missing', 'all', 'none'], preset: 'none' }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
   ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--test-list-invert <file>', { description: `Path to a file containing a list of tests to skip. See https://playwright.dev/docs/test-cli for more details.` }],
-  ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})` }],
+  ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${config.defaultTimeout})` }],
   ['--trace <mode>', { description: `Force tracing mode`, choices: kTraceModes as string[] }],
   ['--tsconfig <path>', { description: `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)` }],
   ['--ui', { description: `Run tests in interactive UI mode` }],
@@ -236,6 +222,5 @@ addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
 addTestMCPServerCommand(program);
-addDevServerCommand(program);
 addTestServerCommand(program);
 addInitAgentsCommand(program);

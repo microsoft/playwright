@@ -17,10 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { httpRequest } from '../utils/network';
-import { extract } from '../../zipBundle';
-import { removeFolders } from '../utils/fileUtils';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { httpRequest } from '@utils/network';
+import { removeFolders } from '@utils/fileUtils';
+import { extractZip } from '@utils/third_party/extractZip';
 
 export type DownloadParams = {
   title: string;
@@ -117,7 +117,7 @@ async function main(options: DownloadParams) {
   log(`removing existing browser directory if any`);
   await removeFolders([options.browserDirectory]);
   log(`extracting archive`);
-  await extract(options.zipPath, { dir: options.browserDirectory });
+  await extractZip(options.zipPath, { dir: options.browserDirectory });
   if (options.executablePath) {
     log(`fixing permissions at ${options.executablePath}`);
     await fs.promises.chmod(options.executablePath, 0o755);
@@ -125,21 +125,23 @@ async function main(options: DownloadParams) {
   await fs.promises.writeFile(browserDirectoryToMarkerFilePath(options.browserDirectory), '');
 }
 
-process.on('message', async message => {
-  const { method, params } = message as any;
-  if (method === 'download') {
-    try {
-      await main(params);
-      // eslint-disable-next-line no-restricted-properties
-      process.exit(0);
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      // eslint-disable-next-line no-restricted-properties
-      process.exit(1);
+export function runOopDownloadBrowserMain() {
+  process.on('message', async message => {
+    const { method, params } = message as any;
+    if (method === 'download') {
+      try {
+        await main(params);
+        // eslint-disable-next-line no-restricted-properties
+        process.exit(0);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        // eslint-disable-next-line no-restricted-properties
+        process.exit(1);
+      }
     }
-  }
-});
+  });
 
-// eslint-disable-next-line no-restricted-properties
-process.on('disconnect', () => { process.exit(0); });
+  // eslint-disable-next-line no-restricted-properties
+  process.on('disconnect', () => { process.exit(0); });
+}

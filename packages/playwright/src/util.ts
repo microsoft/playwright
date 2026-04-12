@@ -19,13 +19,19 @@ import path from 'path';
 import url from 'url';
 import util from 'util';
 
-import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
-import { debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
+import debug from 'debug';
+import mime from 'mime';
+import minimatch from 'minimatch';
+import { calculateSha1 } from '@utils/crypto';
+import { sanitizeForFilePath } from '@utils/fileUtils';
+import { isRegExp } from '@isomorphic/rtti';
+import { parseStackFrame, stringifyStackFrames } from '@isomorphic/stackTrace';
+import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';
 
+import type { RawStack } from '@isomorphic/stackTrace';
 import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
 import type { StackFrame } from '@protocol/channels';
-import type { RawStack } from 'playwright-core/lib/utils';
 import type { TestCase } from './common/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
@@ -75,14 +81,6 @@ export function serializeError(error: Error | any): TestInfoErrorImpl {
 }
 
 export type Matcher = (value: string) => boolean;
-
-export type TestFileFilter = {
-  re?: RegExp;
-  exact?: string;
-  line: number | null;
-  column: number | null;
-};
-
 export type TestCaseFilter = (test: TestCase) => boolean;
 
 export function parseLocationArg(arg: string): { file: string, line: number | null, column: number | null } {
@@ -92,18 +90,6 @@ export function parseLocationArg(arg: string): { file: string, line: number | nu
     line: match ? parseInt(match[2], 10) : null,
     column: match?.[3] ? parseInt(match[3], 10) : null,
   };
-}
-
-export function createFileFiltersFromArguments(args: string[]): TestFileFilter[] {
-  return args.map(arg => {
-    const parsed = parseLocationArg(arg);
-    return { re: forceRegExp(parsed.file), line: parsed.line, column: parsed.column };
-  });
-}
-
-export function createFileMatcherFromArguments(args: string[]): Matcher {
-  const filters = createFileFiltersFromArguments(args);
-  return createFileMatcher(filters.map(filter => filter.re || filter.exact || ''));
 }
 
 export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {
@@ -187,12 +173,13 @@ export function errorWithFile(file: string, message: string) {
   return new Error(`${relativeFilePath(file)}: ${message}`);
 }
 
-export function expectTypes(receiver: any, types: string[], matcherName: string) {
-  if (typeof receiver !== 'object' || !types.includes(receiver.constructor.name)) {
+export function expectTypes(receiver: any, types: ('APIResponse' | 'Page' | 'Locator')[], matcherName: string) {
+  if (typeof receiver !== 'object' || !types.includes(receiver._apiName)) {
+    const receiverString = typeof receiver === 'object' && receiver !== null ? `${receiver.constructor.name} ${util.inspect(receiver)}` : String(receiver);
     const commaSeparated = types.slice();
     const lastType = commaSeparated.pop();
     const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
-    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}`);
+    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}, was called with ${receiverString}`);
   }
 }
 
@@ -414,4 +401,12 @@ export async function removeDirAndLogToConsole(dir: string) {
   }
 }
 
-export { ansiRegex, stripAnsiEscapes } from 'playwright-core/lib/utils';
+export function takeFirst<T>(...args: (T | undefined)[]): T {
+  for (const arg of args) {
+    if (arg !== undefined)
+      return arg;
+  }
+  return undefined as any as T;
+}
+
+export { ansiRegex, stripAnsiEscapes };

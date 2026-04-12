@@ -1,7 +1,9 @@
 [*]
-../../reporters
+@isomorphic/**
+@utils/**
 ../../runner
-../../transform
 ../../util
 ../../common
 ../../util.ts
+node_modules/debug
+node_modules/zod

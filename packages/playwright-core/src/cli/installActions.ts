@@ -18,12 +18,12 @@
 
 import path from 'path';
 
-import { registry, writeDockerVersion } from '../server';
-import { isLikelyNpxGlobal } from '../utils';
-import { assert } from '../utils';
-import { wrapInASCIIBox } from '../server/utils/ascii';
+import { wrapInASCIIBox } from '@utils/ascii';
+import { isLikelyNpxGlobal } from '@utils/env';
+import { assert } from '@isomorphic/assert';
+import { registry, writeDockerVersion } from '../server/registry';
 
-import type { BrowserInfo } from '../server';
+import type { BrowserInfo } from '../server/registry';
 
 function printInstalledBrowsers(browsers: BrowserInfo[]) {
   const browserPaths = new Set<string>();

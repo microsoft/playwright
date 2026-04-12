@@ -149,7 +149,8 @@ test('browser_console_messages default level', async ({ client, server }) => {
         console.warn("console.warn");
         console.error("console.error");
         setTimeout(() => { throw new Error("unhandled"); }, 0);
-        await fetch('/missing');
+        const response = await fetch('${server.PREFIX}/missing');
+        console.log("fetch status: " + response.status);
       }`,
     },
   });
@@ -182,7 +183,8 @@ test('browser_console_messages errors only', async ({ client, server }) => {
         console.warn("console.warn");
         console.error("console.error");
         setTimeout(() => { throw new Error("unhandled"); }, 0);
-        await fetch('/missing');
+        const response = await fetch('${server.PREFIX}/missing');
+        console.error("fetch status: " + response.status);
       }`,
     },
   });

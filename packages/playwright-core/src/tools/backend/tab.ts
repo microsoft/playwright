@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-import url from 'url';
-
 import { EventEmitter } from 'events';
-import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import { locatorOrSelectorAsSelector } from '../../utils/isomorphic/locatorParser';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { debug } from '../../utilsBundle';
-
-import { eventsHelper } from '../../server/utils/eventsHelper';
-import { disposeAll } from '../../server/utils/disposable';
+import debug from 'debug';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { eventsHelper } from '@utils/eventsHelper';
+import { disposeAll } from '@utils/disposable';
 import { waitForCompletion, eventWaiter } from './utils';
 import { LogFile } from './logFile';
 import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
 import { uploadFile } from './files';
 
-import type { Disposable } from '../../server/utils/disposable';
+import type { Disposable } from '@utils/disposable';
 import type { Context, ContextConfig } from './context';
 import type * as playwright from '../../..';
 
@@ -170,7 +167,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       this._requests.push(request);
     for (const initPage of this.context.config.browser?.initPage || []) {
       try {
-        const { default: func } = await import(url.pathToFileURL(initPage).href);
+        const { default: func } = require(initPage);
         await func({ page: this.page });
       } catch (e) {
         debug('pw:tools:error')(e);
@@ -293,6 +290,20 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this.page.waitForLoadState(state, options).catch(e => debug('pw:tools:error')(e));
   }
 
+  async checkUrlAndNavigate(url: string): Promise<string> {
+    try {
+      new URL(url);
+    } catch (e) {
+      if (url.startsWith('localhost'))
+        url = 'http://' + url;
+      else
+        url = 'https://' + url;
+    }
+    this.context.checkUrlAllowed(url);
+    await this.navigate(url);
+    return url;
+  }
+
   async navigate(url: string) {
     await this._initializedPromise;
 
@@ -372,12 +383,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(selector: string | undefined, depth: number | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const ariaSnapshot = selector
-        ? await this.page.locator(selector).ariaSnapshot({ mode: 'ai', depth })
+      const ariaSnapshot = root
+        ? await root.ariaSnapshot({ mode: 'ai', depth })
         : await this.page.ariaSnapshot({ mode: 'ai', depth });
       tabSnapshot = {
         ariaSnapshot,

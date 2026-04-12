@@ -17,9 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { TraceModel, buildActionTree } from '../../utils/isomorphic/trace/traceModel';
-import { TraceLoader } from '../../utils/isomorphic/trace/traceLoader';
-import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
+import { TraceModel, buildActionTree } from '@isomorphic/trace/traceModel';
+import { TraceLoader } from '@isomorphic/trace/traceLoader';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
 import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
@@ -68,15 +68,28 @@ export async function openTrace(traceFile: string) {
     throw new Error(`Trace file not found: ${filePath}`);
   await closeTrace();
   await fs.promises.mkdir(traceDir, { recursive: true });
-  await extractTrace(filePath, traceDir);
+  if (filePath.endsWith('.zip'))
+    await extractTrace(filePath, traceDir);
+  else
+    await fs.promises.writeFile(path.join(traceDir, '.link'), filePath, 'utf-8');
 }
 
 export async function loadTrace(): Promise<LoadedTrace> {
   const dir = ensureTraceOpen();
-  const backend = new DirTraceLoaderBackend(dir);
+  const linkFile = path.join(dir, '.link');
+  let traceDir: string;
+  let traceFile: string | undefined;
+  if (fs.existsSync(linkFile)) {
+    const tracePath = await fs.promises.readFile(linkFile, 'utf-8');
+    traceDir = path.dirname(tracePath);
+    traceFile = path.basename(tracePath);
+  } else {
+    traceDir = dir;
+  }
+  const backend = new DirTraceLoaderBackend(traceDir);
   const loader = new TraceLoader();
-  await loader.load(backend, () => undefined);
-  const model = new TraceModel(dir, loader.contextEntries);
+  await loader.load(backend, traceFile);
+  const model = new TraceModel(traceDir, loader.contextEntries);
   return new LoadedTrace(model, loader, buildOrdinalMap(model));
 }
 

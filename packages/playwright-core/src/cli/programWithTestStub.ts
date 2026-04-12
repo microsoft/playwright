@@ -16,10 +16,10 @@
 
 /* eslint-disable no-console */
 
-import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
-import { getPackageManager } from '../utils';
-import { program } from './program';
-export { program } from './program';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { getPackageManager } from '@utils/env';
+
+import type { Command } from 'commander';
 
 function printPlaywrightTestError(command: string) {
   const packages: string[] = [];
@@ -53,7 +53,8 @@ const kExternalPlaywrightTestCommands = [
   ['show-report', 'Show Playwright Test HTML report.'],
   ['merge-reports', 'Merge Playwright Test Blob reports'],
 ];
-function addExternalPlaywrightTestCommands() {
+
+function addExternalPlaywrightTestCommands(program: Command) {
   for (const [command, description] of kExternalPlaywrightTestCommands) {
     const playwrightTest = program.command(command)
         .allowUnknownOption(true)
@@ -66,5 +67,7 @@ function addExternalPlaywrightTestCommands() {
   }
 }
 
-if (!process.env.PW_LANG_NAME)
-  addExternalPlaywrightTestCommands();
+export function decorateProgram(program: Command) {
+  if (!process.env.PW_LANG_NAME)
+    addExternalPlaywrightTestCommands(program);
+}

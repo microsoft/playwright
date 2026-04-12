@@ -19,7 +19,7 @@
 
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
-import extractZip from '../../packages/playwright-core/bundles/zip/src/third_party/extract-zip';
+import { extractZip } from '../../packages/utils/third_party/extractZip';
 import fs from 'fs';
 import path from 'path';
 import type http from 'http';
@@ -30,6 +30,7 @@ import { parseTrace, rafraf, roundBox } from '../config/utils';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
+// NOTE: set PWTEST_DEBUG_TRACE_VIEWER=1 to record/attach traces for these tests.
 test.skip(({ trace }) => trace === 'on');
 test.skip(({ mode }) => mode.startsWith('service'));
 test.skip(process.env.PW_CLOCK === 'frozen');
@@ -556,8 +557,26 @@ test('should have network request overrides', async ({ page, server, runAndTrace
   await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
   await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/style.cssGETx-unknown.*aborted/]);
+  await expect(traceViewer.networkRequests).toContainText([/style.cssGETcanceledx-unknown.*aborted/]);
   await expect(traceViewer.networkRequests).not.toContainText([/continued/]);
+});
+
+test('should show canceled status for requests canceled by navigation', async ({ page, server, runAndTrace }) => {
+  server.setRoute('/slow', (_req, _res) => {
+    // Never respond so the request stays in-flight until navigation cancels it.
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/empty.html');
+    const requestPromise = page.waitForRequest(server.PREFIX + '/slow');
+    page.evaluate(url => fetch(url).catch(() => {}), server.PREFIX + '/slow').catch(() => {});
+    await requestPromise;
+    // Navigate away to cancel the in-flight request.
+    await page.goto(server.PREFIX + '/empty.html?navigated=1');
+  });
+  await traceViewer.showNetworkTab();
+  const slowRequest = traceViewer.networkRequests.filter({ hasText: 'slow' });
+  await expect(slowRequest).toContainText([/GETcanceled/]);
+  await expect(slowRequest).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
 test('should have network request overrides 2', async ({ page, server, runAndTrace }) => {
@@ -1419,10 +1438,10 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
     await frameTwo.setContent(`<div>HelloNameTwo</div>`);
     await page.evaluate('2+2');
   });
+  const snapshot = await traceViewer.snapshotFrame('Evaluate');
+
   await traceViewer.page.getByTitle('Pick locator').click();
   const cmWrapper = traceViewer.page.locator('.cm-wrapper').first();
-
-  const snapshot = await traceViewer.snapshotFrame('Evaluate');
 
   await snapshot.frameLocator('#frame1').getByText('Hello1').click();
   await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().getByText('Hello1')`);
@@ -2021,7 +2040,7 @@ test('should render locator descriptions', async ({ runAndTrace, page }) => {
     await page.locator('input').describe('custom').first().click();
   });
 
-  await expect(traceViewer.page.locator('body')).toMatchAriaSnapshot(`
+  await expect(traceViewer.page).toMatchAriaSnapshot(`
     - treeitem /Click.*custom/
     - treeitem /Click.*input.*first/
   `);
@@ -2067,7 +2086,7 @@ test('should filter actions', async ({ runAndTrace, page }) => {
   await expect(traceViewer.page.getByText('3 hidden', { exact: true })).toBeVisible();
 
   await traceViewer.page.getByRole('button', { name: 'Filter actions' }).click();
-  await expect(traceViewer.page.getByTestId('actions-filter-dialog')).toMatchAriaSnapshot(`
+  await expect(traceViewer.page).toMatchAriaSnapshot(`
     - dialog:
       - checkbox "Getters 1"
       - checkbox "Network routes 2"
@@ -2251,6 +2270,63 @@ test('should replace meta content attr that specifies charset', async ({ runAndT
   });
   const frame = await traceViewer.snapshotFrame('Set content');
   await expect.poll(() => frame.locator('body').evaluate(() => document.querySelector('meta')?.outerHTML.toLowerCase())).toBe('<meta http-equiv="content-type" content="text/html; charset=utf-8">');
+});
+
+test('should drop meta http-equiv refresh during recording', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    // Use a very large delay so the recorded page does not actually navigate before the snapshot is taken.
+    await page.setContent(`
+      <head>
+        <meta http-equiv="refresh" content="999999; url=https://example.com/evil">
+      </head>
+      <body><div>safe</div></body>
+    `);
+  });
+  const frame = await traceViewer.snapshotFrame('Set content');
+  await expect(frame.locator('div')).toHaveText('safe');
+  // Refresh META must be stripped from the snapshot, so the iframe is not navigated.
+  await expect.poll(() => frame.locator('head').evaluate(head => head.querySelector('meta[http-equiv]')?.outerHTML.toLowerCase() ?? '')).toBe('');
+  // The trace viewer top-level title and body must remain untouched.
+  await expect(traceViewer.page).toHaveTitle(/Playwright Trace Viewer/);
+  await expect(traceViewer.page.locator('body')).not.toHaveAttribute('data-pwned', /.*/);
+});
+
+test('should neutralize meta http-equiv refresh during rendering', async ({ runAndTrace, page, server }) => {
+  // Inject a META refresh directly via DOM manipulation that bypasses the
+  // recording-time strip (so this test specifically validates the renderer-side defense).
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => {
+      const meta = document.createElement('meta');
+      meta.setAttribute('http-equiv', 'refresh');
+      meta.setAttribute('content', '999999; url=https://example.com/evil');
+      document.head.appendChild(meta);
+      const div = document.createElement('div');
+      div.textContent = 'safe';
+      document.body.appendChild(div);
+    });
+  });
+  const frame = await traceViewer.snapshotFrame('Evaluate');
+  await expect(frame.locator('div')).toHaveText('safe');
+  // Even if a META refresh is in the recorded snapshot, the renderer must
+  // neutralize the http-equiv and content attributes so it has no effect.
+  await expect.poll(() => frame.locator('head').evaluate(head => !!head.querySelector('meta[http-equiv="refresh"]'))).toBe(false);
+  await expect(traceViewer.page).toHaveTitle(/Playwright Trace Viewer/);
+});
+
+test('snapshot iframes should be sandboxed', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<div>hello</div>');
+  });
+  await traceViewer.snapshotFrame('Set content');
+  const sandboxValues = await traceViewer.page.locator('iframe[name=snapshot]').evaluateAll(frames => frames.map(f => f.getAttribute('sandbox')));
+  for (const value of sandboxValues) {
+    expect(value).toBeTruthy();
+    expect(value).toContain('allow-same-origin');
+    expect(value).toContain('allow-scripts');
+  }
 });
 
 test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) => {

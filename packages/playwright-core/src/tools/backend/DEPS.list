@@ -1,9 +1,10 @@
 [*]
 ../../..
 ../..
-../../zodBundle.ts
-../../server/utils/
-../../utils/
-../../utils/isomorphic/
-../../utilsBundle.ts
-../utils/
+@utils/**
+@utils/**
+@isomorphic/**
+node_modules/debug
+node_modules/jpeg-js
+node_modules/pngjs
+node_modules/zod

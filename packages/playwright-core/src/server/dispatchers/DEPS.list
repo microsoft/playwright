@@ -1,8 +1,7 @@
 [*]
 ../../generated/
 ../../protocol/
-../../utils/
-../../utils/isomorphic
-../../utilsBundle.ts
-../../zipBundle.ts
+@utils/**
+@isomorphic/**
 ../**
+node_modules/yaml

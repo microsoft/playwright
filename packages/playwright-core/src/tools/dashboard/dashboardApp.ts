@@ -19,14 +19,16 @@ import path from 'path';
 import net from 'net';
 import http from 'http';
 
-import { chromium } from '../../..';
-import { HttpServer } from '../../server/utils/httpServer';
-import { makeSocketPath } from '../../server/utils/fileUtils';
-import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
+import { HttpServer } from '@utils/httpServer';
+import { makeSocketPath } from '@utils/fileUtils';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { libPath } from '../../package';
+import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { CDPConnection, DashboardConnection } from './dashboardController';
 import { serverRegistry } from '../../serverRegistry';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
+import { createClientInfo } from '../cli-client/registry';
 
 import type * as api from '../../..';
 import type { SessionStatus } from '../../../../dashboard/src/sessionModel';
@@ -85,7 +87,8 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
 
   if (apiPath === '/api/sessions/list' && request.method === 'GET') {
     const sessions = await loadBrowserDescriptorSessions(httpServer.wsGuid()!);
-    sendJSON(response, { sessions });
+    const clientInfo = createClientInfo();
+    sendJSON(response, { sessions, clientInfo });
     return;
   }
 
@@ -126,10 +129,9 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-async function openDashboardApp(): Promise<api.Page> {
+async function innerOpenDashboardApp(): Promise<api.Page> {
   const httpServer = new HttpServer();
-  const libDir = require.resolve('playwright-core/package.json');
-  const dashboardDir = path.join(path.dirname(libDir), 'lib/vite/dashboard');
+  const dashboardDir = libPath('vite', 'dashboard');
 
   httpServer.routePrefix('/api/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     handleApiRequest(httpServer, request, response).catch(e => {
@@ -183,7 +185,7 @@ async function openDashboardApp(): Promise<api.Page> {
 async function launchApp(appName: string) {
   const channel = findChromiumChannelBestEffort('javascript');
   const debugPort = parseInt(process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT!, 10) || undefined;
-  const context = await chromium.launchPersistentContext('', {
+  const context = await playwright.chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
     channel,
     headless: debugPort !== undefined,
@@ -213,7 +215,7 @@ async function launchApp(appName: string) {
     gracefullyProcessExitDoNotHang(0);
   });
 
-  const image = await fs.promises.readFile(path.join(__dirname, 'appIcon.png'));
+  const image = await fs.promises.readFile(libPath('tools', 'dashboard', 'appIcon.png'));
   // This is local Playwright, so I can access private methods.
   // eslint-disable-next-line no-restricted-syntax -- it is not essential, can regress.
   await (page as any)._setDockTile?.(image);
@@ -276,9 +278,13 @@ async function acquireSingleton(): Promise<net.Server> {
   });
 }
 
-async function main() {
+export async function openDashboardApp() {
   let server: net.Server | undefined;
   process.on('exit', () => server?.close());
+  process.on('unhandledRejection', error => {
+    // eslint-disable-next-line no-console
+    console.error('Unhandled promise rejection:', error);
+  });
   const underTest = !!process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT;
   if (!underTest) {
     try {
@@ -287,7 +293,7 @@ async function main() {
       return;
     }
   }
-  const page = await openDashboardApp();
+  const page = await innerOpenDashboardApp();
   server?.on('connection', socket => {
     socket.on('data', data => {
       if (data.toString() === 'bringToFront')
@@ -295,5 +301,3 @@ async function main() {
     });
   });
 }
-
-void main();

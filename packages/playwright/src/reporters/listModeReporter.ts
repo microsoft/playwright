@@ -19,7 +19,7 @@ import path from 'path';
 import { formatError, terminalScreen } from './base';
 
 import type { FullConfig, TestError } from '../../types/testReporter';
-import type { Suite } from '../common/test';
+import type { test } from '../common';
 import type { TerminalScreen } from './base';
 import type { ReporterV2 } from './reporterV2';
 
@@ -41,7 +41,7 @@ class ListModeReporter implements ReporterV2 {
     this.config = config;
   }
 
-  onBegin(suite: Suite): void {
+  onBegin(suite: test.Suite): void {
     this._writeLine(`Listing tests:`);
     const tests = suite.allTests();
     const files = new Set<string>();

@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
+import mime from 'mime';
+import { monotonicTime } from '@isomorphic/time';
+import { calculateSha1, createGuid } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
+import { eventsHelper } from '@utils/eventsHelper';
 import { frameSnapshotStreamer } from './snapshotterInjected';
-import { monotonicTime } from '../../../utils/isomorphic/time';
-import { calculateSha1, createGuid } from '../../utils/crypto';
-import { debugLogger } from '../../utils/debugLogger';
-import { eventsHelper } from '../../utils/eventsHelper';
-import { mime } from '../../../utilsBundle';
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
+import { nullProgress } from '../../progress';
 
 import type { SnapshotData } from './snapshotterInjected';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { Frame } from '../../frames';
 import type { InitScript } from '../../page';
 import type { FrameSnapshot } from '@trace/snapshot';
+import type { Progress } from '../../progress';
 
 export type SnapshotterBlob = {
   buffer: Buffer,
@@ -58,11 +60,11 @@ export class Snapshotter {
     return this._started;
   }
 
-  async start() {
+  async start(progress: Progress) {
     this._started = true;
     if (!this._initScript)
-      await this._initialize();
-    await this.reset();
+      await this._initialize(progress);
+    await progress.race(this.reset());
   }
 
   async reset() {
@@ -83,7 +85,7 @@ export class Snapshotter {
     }
   }
 
-  async _initialize() {
+  async _initialize(progress: Progress) {
     for (const page of this._context.pages())
       this._onPage(page);
     this._eventListeners = [
@@ -92,8 +94,8 @@ export class Snapshotter {
 
     const { javaScriptEnabled } = this._context._options;
     const initScriptSource = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", ${javaScriptEnabled || javaScriptEnabled === undefined})`;
-    this._initScript = await this._context.addInitScript(initScriptSource);
-    await this._context.safeNonStallingEvaluateInAllFrames(initScriptSource, 'main');
+    this._initScript = await this._context.addInitScript(progress, initScriptSource);
+    await progress.race(this._context.safeNonStallingEvaluateInAllFrames(initScriptSource, 'main'));
   }
 
   dispose() {
@@ -161,19 +163,18 @@ export class Snapshotter {
     this._eventListeners.push(eventsHelper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
   }
 
-  private async _annotateFrameHierarchy(frame: Frame) {
-    try {
-      const frameElement = await frame.frameElement();
+  private _annotateFrameHierarchy(frame: Frame) {
+    (async () => {
+      const frameElement = await frame.frameElement(nullProgress);
       const parent = frame.parentFrame();
       if (!parent)
         return;
-      const context = await parent._mainContext();
+      const context = await parent.mainContext();
       await context?.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
         (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
       }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid });
       frameElement.dispose();
-    } catch (e) {
-    }
+    })().catch(() => {});
   }
 }
 

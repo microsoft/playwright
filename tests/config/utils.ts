@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
+import { tools } from '../../packages/playwright-core/lib/coreBundle';
+import { utils, iso } from '../../packages/playwright-core/lib/coreBundle';
+
+import type { iso as isoType } from '../../packages/playwright-core/lib/coreBundle';
 import type { Locator, Frame, Page } from 'playwright-core';
-import { ZipFile } from '../../packages/playwright-core/lib/server/utils/zipFile';
 import type { StackFrame } from '../../packages/protocol/src/channels';
-import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/trace/traceUtils';
-import { TraceLoader } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceLoader';
-import { TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
 import type { ActionTraceEvent, TraceEvent } from '@trace/trace';
-import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
-import { DirTraceLoaderBackend, extractTrace } from '../../packages/playwright-core/lib/tools/trace/traceParser';
-import type { SnapshotStorage } from '../../packages/playwright-core/src/utils/isomorphic/trace/snapshotStorage';
+
+const { TraceLoader, TraceModel } = iso;
+type TraceModel = InstanceType<typeof TraceModel>;
+type SnapshotStorage = isoType.SnapshotStorage;
 
 export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
 
@@ -105,7 +106,7 @@ export function suppressCertificateWarning() {
 }
 
 export async function parseTraceRaw(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], actionObjects: ActionTraceEvent[], stacks: Map<string, StackFrame[]> }> {
-  const zipFS = new ZipFile(file);
+  const zipFS = new utils.ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));
@@ -150,7 +151,7 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
 
   const stacks: Map<string, StackFrame[]> = new Map();
   for (const stacksFile of [...resources.keys()].filter(name => name.endsWith('.stacks'))) {
-    for (const [key, value] of parseClientSideCallMetadata(JSON.parse(resources.get(stacksFile)!.toString())))
+    for (const [key, value] of iso.parseClientSideCallMetadata(JSON.parse(resources.get(stacksFile)!.toString())))
       stacks.set(key, value);
   }
 
@@ -159,7 +160,7 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   return {
     events,
     resources,
-    actions: actionObjects.map(a => renderTitleForCall({ ...a, type: a.class })),
+    actions: actionObjects.map(a => iso.renderTitleForCall({ ...a, type: a.class })),
     actionObjects,
     stacks,
   };
@@ -167,15 +168,15 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
 
 export async function parseTrace(file: string): Promise<{ snapshots: SnapshotStorage, model: TraceModel }> {
   const dir = file + '.extracted';
-  await extractTrace(file, dir);
-  const backend = new DirTraceLoaderBackend(dir);
+  await tools.extractTrace(file, dir);
+  const backend = new tools.DirTraceLoaderBackend(dir);
   const loader = new TraceLoader();
-  await loader.load(backend, () => {});
+  await loader.load(backend);
   return { model: new TraceModel(dir, loader.contextEntries), snapshots: loader.storage() };
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
-  const zipFS = new ZipFile(file);
+  const zipFS = new utils.ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));
@@ -201,6 +202,11 @@ export async function rafraf(target: Page | Frame, count = 1) {
       await new Promise(f => window.builtins.requestAnimationFrame(() => window.builtins.requestAnimationFrame(f)));
     });
   }
+}
+
+export async function ensureSomeFrames(page: Page) {
+  await rafraf(page, 100);
+  await page.screenshot();
 }
 
 export function roundBox(box: BoundingBox): BoundingBox {

@@ -19,15 +19,18 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { wrapInASCIIBox } from '@utils/ascii';
+import { RecentLogsCollector } from '@utils/debugLogger';
+import { removeFolders } from '@utils/fileUtils';
+import { gracefullyCloseSet } from '@utils/processLauncher';
+import { debugMode } from '@utils/debug';
+import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
+import { fetchData } from '../utils';
+import { getUserAgent } from '../userAgent';
 import { chromiumSwitches } from './chromiumSwitches';
 import { shouldProxyLoopback, CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
-import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
-import { wrapInASCIIBox } from '../utils/ascii';
-import { RecentLogsCollector } from '../utils/debugLogger';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { fetchData } from '../utils/network';
-import { getUserAgent } from '../utils/userAgent';
 import { validateBrowserContextOptions } from '../browserContext';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { helper } from '../helper';
@@ -35,10 +38,8 @@ import { registry } from '../registry';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
 import { Browser } from '../browser';
-import { removeFolders } from '../utils/fileUtils';
-import { gracefullyCloseSet } from '../utils/processLauncher';
 
-import type { HTTPRequestParams } from '../utils/network';
+import type { HTTPRequestParams } from '@utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { SdkObject } from '../instrumentation';
 import type { Progress } from '../progress';
@@ -132,7 +133,7 @@ export class Chromium extends BrowserType {
       browser.on(Browser.Events.Disconnected, doCleanup);
       return browser;
     } catch (error) {
-      await doClose().catch(() => {});
+      await progress.race(doClose().catch(() => {}));
       throw error;
     }
   }
@@ -190,7 +191,7 @@ export class Chromium extends BrowserType {
     transport.send(message);
   }
 
-  override async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
+  override async launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
     if (!hubUrl.endsWith('/'))
       hubUrl = hubUrl + '/';
 
@@ -289,7 +290,7 @@ export class Chromium extends BrowserType {
         headers: headersObjectToArray(headers),
       }, disconnectFromSelenium);
     } catch (e) {
-      await disconnectFromSelenium();
+      await progress.race(disconnectFromSelenium());
       throw e;
     }
   }

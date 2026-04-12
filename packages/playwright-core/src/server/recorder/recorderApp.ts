@@ -17,11 +17,12 @@
 import fs from 'fs';
 import path from 'path';
 
-import { isUnderTest } from '../utils/debug';
-import { mime } from '../../utilsBundle';
+import mime from 'mime';
+import { isUnderTest } from '@utils/debug';
+import { libPath } from '../../package';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
-import { ProgressController } from '../progress';
+import { nullProgress, ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
 import { languageSet } from '../codegen/languages';
 import { collapseActions, shouldMergeAction } from './recorderUtils';
@@ -94,7 +95,7 @@ export class RecorderApp {
         }
 
         const uri = route.request().url().substring('https://playwright/'.length);
-        const file = require.resolve('../../vite/recorder/' + uri);
+        const file = path.join(libPath('vite', 'recorder'), uri);
         fs.promises.readFile(file).then(buffer => {
           route.fulfill({
             status: 200,
@@ -111,7 +112,7 @@ export class RecorderApp {
 
       this._page.once('close', () => {
         this._recorder.close();
-        this._page.browserContext.close({ reason: 'Recorder window closed' }).catch(() => {});
+        this._page.browserContext.close(nullProgress, { reason: 'Recorder window closed' }).catch(() => {});
         delete (inspectedContext as any)[recorderAppSymbol];
       });
 
@@ -188,7 +189,7 @@ export class RecorderApp {
   }
 
   async close() {
-    await this._page.close();
+    await this._page.close(nullProgress);
   }
 
   static showInspectorNoReply(context: BrowserContext) {
@@ -204,7 +205,8 @@ export class RecorderApp {
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;
-    const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
+    const { createPlaywright } = require('../playwright') as typeof import('../playwright');
+    const recorderPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
     const { context: appContext, page } = await launchApp(recorderPlaywright.chromium, {
       sdkLanguage,
       windowSize: { width: 600, height: 600 },
@@ -221,7 +223,7 @@ export class RecorderApp {
     });
     const controller = new ProgressController();
     await controller.run(async progress => {
-      await appContext._browser._defaultContext!._loadDefaultContextAsIs(progress);
+      await appContext._browser._defaultContext!.loadDefaultContextAsIs(progress);
     });
 
     const appParams = {
@@ -254,7 +256,7 @@ export class RecorderApp {
 
     recorder.on(RecorderEvent.ContextClosed, () => {
       this._throttledOutputFile?.flush();
-      this._page.browserContext.close({ reason: 'Recorder window closed' }).catch(() => {});
+      this._page.browserContext.close(nullProgress, { reason: 'Recorder window closed' }).catch(() => {});
     });
 
     recorder.on(RecorderEvent.ModeChanged, (mode: Mode) => {
@@ -271,7 +273,7 @@ export class RecorderApp {
 
     recorder.on(RecorderEvent.ElementPicked, (elementInfo: ElementInfo, userGesture?: boolean) => {
       if (userGesture)
-        this._page.bringToFront();
+        this._page.bringToFront(nullProgress).catch(() => {});
       this._frontend.elementPicked({ elementInfo, userGesture });
     });
 
@@ -397,7 +399,7 @@ function createRecorderFrontend(page: Page): RecorderFrontend {
       if (typeof prop !== 'string')
         return undefined;
       return (params: any) => {
-        page.mainFrame().evaluateExpression(((event: { method: string, params?: any }) => {
+        page.mainFrame().evaluateExpression(nullProgress, ((event: { method: string, params?: any }) => {
           window.dispatch(event);
         }).toString(), { isFunction: true }, { method: prop, params }).catch(() => {});
       };

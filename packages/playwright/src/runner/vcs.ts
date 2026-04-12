@@ -17,7 +17,7 @@
 import childProcess from 'child_process';
 import path from 'path';
 
-import { affectedTestFiles } from '../transform/compilationCache';
+import { cc } from '../common';
 
 export async function detectChangedTestFiles(baseCommit: string, configDir: string): Promise<Set<string>> {
   function gitFileList(command: string) {
@@ -54,5 +54,5 @@ export async function detectChangedTestFiles(baseCommit: string, configDir: stri
   const [gitRoot] = gitFileList('rev-parse --show-toplevel');
   const trackedFilesWithChanges = gitFileList(`diff ${baseCommit} --name-only`).map(file => path.join(gitRoot, file));
 
-  return new Set(affectedTestFiles([...untrackedFiles, ...trackedFilesWithChanges]));
+  return new Set(cc.affectedTestFiles([...untrackedFiles, ...trackedFilesWithChanges]));
 }

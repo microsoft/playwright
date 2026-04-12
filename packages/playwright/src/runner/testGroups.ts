@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import type { Suite, TestCase } from '../common/test';
+import type { test } from '../common';
 
 export type TestGroup = {
   workerHash: string;
   requireFile: string;
   repeatEachIndex: number;
   projectId: string;
-  tests: TestCase[];
+  tests: test.TestCase[];
 };
 
-export function createTestGroups(projectSuite: Suite, expectedParallelism: number): TestGroup[] {
+export function createTestGroups(projectSuite: test.Suite, expectedParallelism: number): TestGroup[] {
   // This function groups tests that can be run together.
   // Tests cannot be run together when:
   // - They belong to different projects - requires different workers.
@@ -47,11 +47,11 @@ export function createTestGroups(projectSuite: Suite, expectedParallelism: numbe
     //   We'll divide them into equally-sized groups later.
     // - Tests belonging to serial suites inside parallel suites.
     //   These should run as a serial group, each group is independent, key === serial suite.
-    parallel: Map<Suite | TestCase, TestGroup>,
+    parallel: Map<test.Suite | test.TestCase, TestGroup>,
     parallelWithHooks: TestGroup,
   }>>();
 
-  const createGroup = (test: TestCase): TestGroup => {
+  const createGroup = (test: test.TestCase): TestGroup => {
     return {
       workerHash: test._workerHash,
       requireFile: test._requireFile,
@@ -79,9 +79,9 @@ export function createTestGroups(projectSuite: Suite, expectedParallelism: numbe
 
     // Note that a parallel suite cannot be inside a serial suite. This is enforced in TestType.
     let insideParallel = false;
-    let outerMostSequentialSuite: Suite | undefined;
+    let outerMostSequentialSuite: test.Suite | undefined;
     let hasAllHooks = false;
-    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
+    for (let parent: test.Suite | undefined = test.parent; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' || parent._parallelMode === 'default')
         outerMostSequentialSuite = parent;
       insideParallel = insideParallel || parent._parallelMode === 'parallel';

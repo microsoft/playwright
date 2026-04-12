@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
@@ -42,11 +43,10 @@ import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
-import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
 import type { ValidatorContext } from '../protocol/validator';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type * as channels from '@protocol/channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {

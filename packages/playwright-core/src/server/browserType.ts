@@ -18,21 +18,21 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { assert } from '@isomorphic/assert';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { DEFAULT_PLAYWRIGHT_TIMEOUT } from '@isomorphic/time';
+import { debugMode } from '@utils/debug';
+import { existsAsync } from '@utils/fileUtils';
+import { envArrayToObject, launchProcess } from '@utils/processLauncher';
+import { RecentLogsCollector } from '@utils/debugLogger';
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import { debugMode } from './utils/debug';
-import { assert } from '../utils/isomorphic/assert';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
-import { DEFAULT_PLAYWRIGHT_TIMEOUT } from '../utils/isomorphic/time';
-import { existsAsync } from './utils/fileUtils';
 import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import { PipeTransport } from './pipeTransport';
-import { envArrayToObject, launchProcess } from './utils/processLauncher';
 import { isProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { WebSocketTransport } from './transport';
-import { RecentLogsCollector } from './utils/debugLogger';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -67,7 +67,7 @@ export abstract class BrowserType extends SdkObject {
     options = this._validateLaunchOptions(options);
     const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
     if (seleniumHubUrl)
-      return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
+      return this.launchWithSeleniumHub(progress, seleniumHubUrl, options);
     return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupLog(e); });
   }
 
@@ -138,10 +138,10 @@ export abstract class BrowserType extends SdkObject {
       (browser as any)._userDataDirForTest = userDataDir;
       // We assume no control when using custom arguments, and do not prepare the default context in that case.
       if (persistent && !options.ignoreAllDefaultArgs)
-        await browser._defaultContext!._loadDefaultContext(progress);
+        await browser._defaultContext!.loadDefaultContext(progress);
       return browser;
     } catch (error) {
-      await browserProcess.close().catch(() => {});
+      await progress.race(browserProcess.close().catch(() => {}));
       throw error;
     }
   }
@@ -212,7 +212,7 @@ export abstract class BrowserType extends SdkObject {
     let transport: ConnectionTransport | undefined = undefined;
     let browserProcess: BrowserProcess | undefined = undefined;
     const exitPromise = new ManualPromise();
-    const { launchedProcess, gracefullyClose, kill } = await launchProcess({
+    const { launchedProcess, gracefullyClose, kill } = await progress.race(launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
       env: this.amendEnvironment(env, prepared.userDataDir, isPersistent, options),
@@ -241,7 +241,7 @@ export abstract class BrowserType extends SdkObject {
         if (browserProcess && browserProcess.onclose)
           browserProcess.onclose(exitCode, signal);
       },
-    });
+    }));
 
     async function closeOrKill(timeout: number): Promise<void> {
       let timer: NodeJS.Timeout;
@@ -280,7 +280,7 @@ export abstract class BrowserType extends SdkObject {
       }
       return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
     } catch (error) {
-      await closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {});
+      await progress.race(closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {}));
       throw error;
     }
   }
@@ -293,7 +293,7 @@ export abstract class BrowserType extends SdkObject {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
-  async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<Browser> {
+  async launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<Browser> {
     throw new Error('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
   }
 

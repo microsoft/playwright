@@ -176,12 +176,6 @@ export type Rect = {
   height: number,
 };
 
-export type AnnotateOptions = {
-  duration?: number,
-  position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-  fontSize?: number,
-};
-
 export type SerializedValue = {
   n?: number,
   b?: boolean,
@@ -1033,7 +1027,11 @@ export type BrowserTypeLaunchPersistentContextParams = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1117,7 +1115,11 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1191,13 +1193,17 @@ export type BrowserStartServerParams = {
   title: string,
   workspaceDir?: string,
   metadata?: any,
+  host?: string,
+  port?: number,
 };
 export type BrowserStartServerOptions = {
   workspaceDir?: string,
   metadata?: any,
+  host?: string,
+  port?: number,
 };
 export type BrowserStartServerResult = {
-  pipeName: string,
+  endpoint: string,
 };
 export type BrowserStopServerParams = {};
 export type BrowserStopServerOptions = {};
@@ -1269,7 +1275,11 @@ export type BrowserNewContextParams = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1338,7 +1348,11 @@ export type BrowserNewContextOptions = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1410,7 +1424,11 @@ export type BrowserNewContextForReuseParams = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1479,7 +1497,11 @@ export type BrowserNewContextForReuseOptions = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1615,7 +1637,11 @@ export type BrowserContextInitializer = {
         width: number,
         height: number,
       },
-      annotate?: AnnotateOptions,
+      showActions?: {
+        duration?: number,
+        position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+        fontSize?: number,
+      },
     },
     strictSelectors?: boolean,
     serviceWorkers?: 'allow' | 'block',
@@ -2165,10 +2191,12 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
-  overlayShow(params: PageOverlayShowParams, progress?: Progress): Promise<PageOverlayShowResult>;
-  overlayRemove(params: PageOverlayRemoveParams, progress?: Progress): Promise<PageOverlayRemoveResult>;
-  overlayChapter(params: PageOverlayChapterParams, progress?: Progress): Promise<PageOverlayChapterResult>;
-  overlaySetVisible(params: PageOverlaySetVisibleParams, progress?: Progress): Promise<PageOverlaySetVisibleResult>;
+  screencastShowOverlay(params: PageScreencastShowOverlayParams, progress?: Progress): Promise<PageScreencastShowOverlayResult>;
+  screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, progress?: Progress): Promise<PageScreencastRemoveOverlayResult>;
+  screencastChapter(params: PageScreencastChapterParams, progress?: Progress): Promise<PageScreencastChapterResult>;
+  screencastSetOverlayVisible(params: PageScreencastSetOverlayVisibleParams, progress?: Progress): Promise<PageScreencastSetOverlayVisibleResult>;
+  screencastShowActions(params: PageScreencastShowActionsParams, progress?: Progress): Promise<PageScreencastShowActionsResult>;
+  screencastHideActions(params?: PageScreencastHideActionsParams, progress?: Progress): Promise<PageScreencastHideActionsResult>;
   screencastStart(params: PageScreencastStartParams, progress?: Progress): Promise<PageScreencastStartResult>;
   screencastStop(params?: PageScreencastStopParams, progress?: Progress): Promise<PageScreencastStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
@@ -2686,40 +2714,54 @@ export type PagePickLocatorResult = {
 export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
-export type PageOverlayShowParams = {
+export type PageScreencastShowOverlayParams = {
   html: string,
   duration?: number,
 };
-export type PageOverlayShowOptions = {
+export type PageScreencastShowOverlayOptions = {
   duration?: number,
 };
-export type PageOverlayShowResult = {
+export type PageScreencastShowOverlayResult = {
   id: string,
 };
-export type PageOverlayRemoveParams = {
+export type PageScreencastRemoveOverlayParams = {
   id: string,
 };
-export type PageOverlayRemoveOptions = {
+export type PageScreencastRemoveOverlayOptions = {
 
 };
-export type PageOverlayRemoveResult = void;
-export type PageOverlayChapterParams = {
+export type PageScreencastRemoveOverlayResult = void;
+export type PageScreencastChapterParams = {
   title: string,
   description?: string,
   duration?: number,
 };
-export type PageOverlayChapterOptions = {
+export type PageScreencastChapterOptions = {
   description?: string,
   duration?: number,
 };
-export type PageOverlayChapterResult = void;
-export type PageOverlaySetVisibleParams = {
+export type PageScreencastChapterResult = void;
+export type PageScreencastSetOverlayVisibleParams = {
   visible: boolean,
 };
-export type PageOverlaySetVisibleOptions = {
+export type PageScreencastSetOverlayVisibleOptions = {
 
 };
-export type PageOverlaySetVisibleResult = void;
+export type PageScreencastSetOverlayVisibleResult = void;
+export type PageScreencastShowActionsParams = {
+  duration?: number,
+  position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+  fontSize?: number,
+};
+export type PageScreencastShowActionsOptions = {
+  duration?: number,
+  position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+  fontSize?: number,
+};
+export type PageScreencastShowActionsResult = void;
+export type PageScreencastHideActionsParams = {};
+export type PageScreencastHideActionsOptions = {};
+export type PageScreencastHideActionsResult = void;
 export type PageScreencastStartParams = {
   size?: {
     width: number,
@@ -2728,7 +2770,6 @@ export type PageScreencastStartParams = {
   quality?: number,
   sendFrames?: boolean,
   record?: boolean,
-  annotate?: AnnotateOptions,
 };
 export type PageScreencastStartOptions = {
   size?: {
@@ -2738,7 +2779,6 @@ export type PageScreencastStartOptions = {
   quality?: number,
   sendFrames?: boolean,
   record?: boolean,
-  annotate?: AnnotateOptions,
 };
 export type PageScreencastStartResult = {
   artifact?: ArtifactChannel,
@@ -4674,7 +4714,11 @@ export type ElectronLaunchParams = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   timezoneId?: string,
@@ -4712,7 +4756,11 @@ export type ElectronLaunchOptions = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   timezoneId?: string,
@@ -5101,7 +5149,11 @@ export type AndroidDeviceLaunchBrowserParams = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -5168,7 +5220,11 @@ export type AndroidDeviceLaunchBrowserOptions = {
       width: number,
       height: number,
     },
-    annotate?: AnnotateOptions,
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',

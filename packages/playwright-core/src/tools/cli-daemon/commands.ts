@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
+import * as z from 'zod';
 import { declareCommand } from './command';
 
 import type { AnyCommandSchema } from './command';
@@ -51,7 +51,6 @@ const open = declareCommand({
   options: z.object({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
-    extension: z.boolean().optional().describe('Connect to browser extension'),
     headed: z.boolean().optional().describe('Run browser in headed mode'),
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
@@ -65,11 +64,14 @@ const attach = declareCommand({
   description: 'Attach to a running Playwright browser',
   category: 'core',
   args: z.object({
-    name: z.string().describe('Name or endpoint of the browser to attach to'),
+    name: z.string().optional().describe('Bound browser name to attach to'),
   }),
   options: z.object({
+    cdp: z.string().optional().describe('Connect to an existing browser via CDP endpoint URL.'),
+    endpoint: z.string().optional().describe('Playwright browser server endpoint to attach to.'),
+    extension: z.union([z.boolean(), z.string()]).optional().describe('Connect to browser extension, optionally specify browser name (e.g. --extension=chrome)'),
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
-    session: z.string().optional().describe('Session name alias (defaults to the attach target name)'),
+    session: z.string().optional().describe('Session name (defaults to bound browser name or "default")'),
   }),
   toolName: 'browser_snapshot',
   toolParams: () => ({ filename: '<auto>' }),
@@ -263,7 +265,7 @@ const drag = declareCommand({
   toolParams: ({ startElement, endElement }) => {
     const start = asRef(startElement);
     const end = asRef(endElement);
-    return { startRef: start.ref, startSelector: start.selector, endRef: end.ref, endSelector: end.selector };
+    return { startElement, startRef: start.ref, startSelector: start.selector, endElement, endRef: end.ref, endSelector: end.selector };
   },
 });
 
@@ -343,14 +345,14 @@ const snapshot = declareCommand({
   description: 'Capture page snapshot to obtain element ref',
   category: 'core',
   args: z.object({
-    element: z.string().optional().describe('Element selector of the root element to capture a partial snapshot instead of the whole page'),
+    element: z.string().optional().describe('Element reference from the previous page snapshot, or a unique element selector for the root element to capture a partial snapshot instead of the whole page'),
   }),
   options: z.object({
     filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
     depth: numberArg.optional().describe('Limit snapshot depth, unlimited by default.'),
   }),
   toolName: 'browser_snapshot',
-  toolParams: ({ filename, element, depth }) => ({ filename, selector: element, depth }),
+  toolParams: ({ filename, element, depth }) => ({ filename, ...asRef(element), depth }),
 });
 
 const evaluate = declareCommand({
@@ -924,7 +926,7 @@ const install = declareCommand({
   category: 'install',
   args: z.object({}),
   options: z.object({
-    skills: z.string().optional().describe('Install skills to ".claude" (default) or ".agents" dir'),
+    skills: z.string().optional().describe('Install skills, possible values: claude (default), agents.'),
   }),
   toolName: '',
   toolParams: () => ({}),

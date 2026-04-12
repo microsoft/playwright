@@ -17,14 +17,14 @@
 import fs from 'fs';
 import path from 'path';
 
+import * as yazl from 'yazl';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { createGuid } from '@utils/crypto';
 import { Artifact } from '../artifact';
 import { HarTracer } from './harTracer';
-import { createGuid } from '../utils/crypto';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-
 import type { BrowserContext } from '../browserContext';
 import type { HarTracerDelegate } from './harTracer';
-import type { ZipFile } from '../../zipBundle';
+import type { ZipFile } from 'yazl';
 import type { Page } from '../page';
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
@@ -51,7 +51,6 @@ export class HarRecorder implements HarTracerDelegate {
       waitForContentOnStop: true,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
-    const { yazl } = require('../../zipBundle');
     this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
     this._tracer.start({ omitScripts: false });
   }

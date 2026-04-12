@@ -20,8 +20,8 @@ import { test, expect } from './fixtures';
 test('library can be used from CommonJS', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/456' } }, async ({}, testInfo) => {
   const file = testInfo.outputPath('main.cjs');
   await fs.writeFile(file, `
-    import('playwright-core/lib/tools/exports')
-      .then(playwrightMCP => playwrightMCP.createConnection())
+    import('playwright-core/lib/coreBundle')
+      .then(({ tools }) => tools.createConnection())
       .then(() => console.log('OK'));
  `);
   expect(child_process.execSync(`node ${file}`, { encoding: 'utf-8' })).toContain('OK');

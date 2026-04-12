@@ -20,11 +20,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { debugLogger } from '../utils/debugLogger';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { getUserAgent } from '../utils/userAgent';
-import { progress as ProgressBar, colors } from '../../utilsBundle';
-import { existsAsync, removeFolders } from '../utils/fileUtils';
+import ProgressBar from 'progress';
+import colors from 'colors/safe';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { debugLogger } from '@utils/debugLogger';
+import { existsAsync, removeFolders } from '@utils/fileUtils';
+import { getUserAgent } from '../userAgent';
+import { libPath } from '../../package';
 
 import { browserDirectoryToMarkerFilePath } from '.';
 
@@ -81,7 +83,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
  * https://github.com/microsoft/playwright/issues/17394
  */
 function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, socketTimeout: number): Promise<{ error: Error | null }> {
-  const cp = childProcess.fork(path.join(__dirname, 'oopDownloadBrowserMain.js'));
+  const cp = childProcess.fork(libPath('entry', 'oopBrowserDownload.js'));
   const promise = new ManualPromise<{ error: Error | null }>();
   const progress = getDownloadProgress();
   cp.on('message', (message: any) => {

@@ -22,6 +22,7 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import { libPath } from '../../package';
 import { compareSemver, SocketConnection } from '../utils/socketConnection';
 import { resolveSessionName } from './registry';
 
@@ -43,14 +44,14 @@ export class Session {
     return compareSemver(clientInfo.version, this.config.version) >= 0;
   }
 
-  async run(clientInfo: ClientInfo, args: MinimistArgs): Promise<{ text: string }> {
+  async run(clientInfo: ClientInfo, args: MinimistArgs, options?: { raw?: boolean }): Promise<{ text: string }> {
     if (!this.isCompatible(clientInfo))
       throw new Error(`Client is v${clientInfo.version}, session '${this.name}' is v${this.config.version}. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto restart the browser session.`);
 
     const { socket } = await this._connect();
     if (!socket)
       throw new Error(`Browser '${this.name}' is not open. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto start the browser session.`);
-    return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: process.cwd() });
+    return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: process.cwd(), raw: options?.raw });
   }
 
   async stop(quiet: boolean = false): Promise<void> {
@@ -122,7 +123,7 @@ export class Session {
   static async startDaemon(clientInfo: ClientInfo, cliArgs: MinimistArgs) {
     await fs.promises.mkdir(clientInfo.daemonProfilesDir, { recursive: true });
 
-    const cliPath = require.resolve('../cli-daemon/program.js');
+    const cliPath = libPath('entry', 'cliDaemon.js');
     const sessionName = resolveSessionName(cliArgs.session as string);
     const errLog = path.join(clientInfo.daemonProfilesDir, sessionName + '.err');
     const err = fs.openSync(errLog, 'w');
@@ -143,8 +144,10 @@ export class Session {
       args.push(`--profile=${cliArgs.profile}`);
     if (cliArgs.config)
       args.push(`--config=${cliArgs.config}`);
-    if (cliArgs.attach || process.env.PLAYWRIGHT_CLI_SESSION)
-      args.push(`--attach=${cliArgs.attach || process.env.PLAYWRIGHT_CLI_SESSION}`);
+    if (cliArgs.cdp)
+      args.push(`--cdp=${cliArgs.cdp}`);
+    if (cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION)
+      args.push(`--endpoint=${cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION}`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
@@ -196,8 +199,8 @@ export class Session {
     child.stdout!.destroy();
     child.unref();
 
-    if (cliArgs['attach']) {
-      console.log(`### Session \`${sessionName}\` created, attached to \`${cliArgs['attach']}\`.`);
+    if (cliArgs['endpoint']) {
+      console.log(`### Session \`${sessionName}\` created, attached to \`${cliArgs['endpoint']}\`.`);
       console.log(`Run commands with: playwright-cli --session=${sessionName} <command>`);
     } else {
       console.log(`### Browser \`${sessionName}\` opened with pid ${child.pid}.`);

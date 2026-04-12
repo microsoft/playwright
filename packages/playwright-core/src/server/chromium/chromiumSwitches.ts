@@ -45,6 +45,10 @@ const disabledFeatures = (assistantMode?: boolean) => [
   // Prevents downloading optimization hints on startup.
   'OptimizationHints',
   assistantMode ? 'AutomationControlled' : '',
+  // Disables forced sign-in in Edge.
+  'msForceBrowserSignIn',
+  // Disables updating the preferred version in LaunchServices preferences on mac.
+  'msEdgeUpdateLaunchServicesPreferredVersion',
 ].filter(Boolean);
 
 export const chromiumSwitches = (assistantMode?: boolean, channel?: string, android?: boolean) => [
@@ -60,6 +64,7 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string, andr
   '--no-default-browser-check',
   '--disable-default-apps',
   '--disable-dev-shm-usage',
+  '--disable-edgeupdater', // Disables Edge-specific updater on mac.
   '--disable-extensions',
   '--disable-features=' + disabledFeatures(assistantMode).join(','),
   process.env.PLAYWRIGHT_LEGACY_SCREENSHOT ? '' : '--enable-features=CDPScreenshotNewSurface',

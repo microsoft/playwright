@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
+import { asLocatorDescription, locatorCustomDescription } from '@isomorphic/locatorGenerators';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
+import { escapeForTextSelector } from '@isomorphic/stringUtils';
+import { isString } from '@isomorphic/rtti';
+import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
-import { asLocatorDescription, locatorCustomDescription } from '../utils/isomorphic/locatorGenerators';
-import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
-import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
-import { isString } from '../utils/isomorphic/rtti';
-import { monotonicTime } from '../utils/isomorphic/time';
 
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
+import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type * as channels from '@protocol/channels';
 
 
@@ -40,6 +40,7 @@ export type LocatorOptions = {
 export class Locator implements api.Locator {
   _frame: Frame;
   _selector: string;
+  _apiName = 'Locator';
 
   constructor(frame: Frame, selector: string, options?: LocatorOptions) {
     this._frame = frame;

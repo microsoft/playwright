@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { createGuid, debugLogger, escapeHTML } from '../utils';
+import { createGuid } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
+import { escapeHTML } from '@isomorphic/stringUtils';
 import { Page } from './page';
 
 export class Overlay {
@@ -47,7 +49,7 @@ export class Overlay {
   }
 
   private async _doAdd(id: string, html: string) {
-    const utility = await this._page.mainFrame()._utilityContext();
+    const utility = await this._page.mainFrame().utilityContext();
     await utility.evaluate(({ injected, html, id }) => {
       return injected.addUserOverlay(id, html);
     }, { injected: await utility.injectedScript(), html, id });
@@ -55,7 +57,7 @@ export class Overlay {
 
   async remove(id: string): Promise<void> {
     this._overlays.delete(id);
-    const utility = await this._page.mainFrame()._utilityContext();
+    const utility = await this._page.mainFrame().utilityContext();
     await utility.evaluate(({ injected, id }) => {
       injected.removeUserOverlay(id);
     }, { injected: await utility.injectedScript(), id }).catch(e => debugLogger.log('error', e));
@@ -116,7 +118,7 @@ export class Overlay {
     const id = await this.show(html);
     await new Promise(f => setTimeout(f, duration));
     // Trigger fade-out, then remove after animation completes.
-    const utility = await this._page.mainFrame()._utilityContext();
+    const utility = await this._page.mainFrame().utilityContext();
     await utility.evaluate(({ injected, id, fadeDuration }) => {
       const overlay = injected.getUserOverlay(id);
       const bg = overlay?.querySelector('#background');
@@ -130,7 +132,7 @@ export class Overlay {
   async setVisible(visible: boolean): Promise<void> {
     if (!this._overlays.size)
       return;
-    const utility = await this._page.mainFrame()._utilityContext();
+    const utility = await this._page.mainFrame().utilityContext();
     await utility.evaluate(({ injected, visible }) => {
       injected.setUserOverlaysVisible(visible);
     }, { injected: await utility.injectedScript(), visible }).catch(e => debugLogger.log('error', e));

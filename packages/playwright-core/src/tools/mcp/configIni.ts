@@ -16,8 +16,7 @@
 
 import fs from 'fs';
 
-import { ini } from '../../utilsBundle';
-
+import * as ini from 'ini';
 import type { Config } from './config.d';
 
 export function configFromIniFile(filePath: string): Config {

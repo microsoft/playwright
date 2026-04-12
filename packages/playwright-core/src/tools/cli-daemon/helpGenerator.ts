@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-
+import * as z from 'zod';
 import { commands } from './commands';
 
 import type zodType from 'zod';
@@ -105,6 +104,7 @@ export function generateHelp() {
 
   lines.push('\nGlobal options:');
   lines.push(formatWithGap('  --help [command]', 'print help'));
+  lines.push(formatWithGap('  --raw', 'output only the result value, without status and code'));
   lines.push(formatWithGap('  --version', 'print version'));
 
   return lines.join('\n');

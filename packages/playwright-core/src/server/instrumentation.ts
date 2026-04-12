@@ -16,8 +16,8 @@
 
 import { EventEmitter } from 'events';
 
-import { createGuid } from './utils/crypto';
-import { debugLogger } from './utils/debugLogger';
+import { createGuid } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
 
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -30,7 +30,7 @@ import type { Page } from './page';
 import type { Playwright } from './playwright';
 import type { CallMetadata } from '@protocol/callMetadata';
 export type { CallMetadata } from '@protocol/callMetadata';
-import type { LogName } from './utils/debugLogger';
+import type { LogName } from '@utils/debugLogger';
 
 export type Attribution = {
   playwright: Playwright;

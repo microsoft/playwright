@@ -20,10 +20,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import * as playwright from '../..';
-import { gracefullyProcessExitDoNotHang, ManualPromise } from '../utils';
-import { dotenv, program } from '../utilsBundle';
-
+import debug from 'debug';
+import dotenv from 'dotenv';
+import { program } from 'commander';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { playwright } from '../inprocess';
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
 import type { BrowserType } from '../client/browserType';
@@ -267,7 +269,7 @@ async function maybeSetupTestHooks(browser: Browser, closeBrowser: () => Promise
 
   // Make sure we exit abnormally when browser crashes.
   const logs: string[] = [];
-  require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+  debug.log = (...args: any[]) => {
     const line = require('util').format(...args) + '\n';
     logs.push(line);
     // eslint-disable-next-line no-restricted-properties

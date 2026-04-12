@@ -71,18 +71,18 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
   }
 
   async browserWindow(params: channels.ElectronApplicationBrowserWindowParams, progress: Progress): Promise<channels.ElectronApplicationBrowserWindowResult> {
-    const handle = await progress.race(this._object.browserWindow((params.page as PageDispatcher).page()));
+    const handle = await this._object.browserWindow(progress, (params.page as PageDispatcher).page());
     return { handle: JSHandleDispatcher.fromJSHandle(this, handle) };
   }
 
   async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams, progress: Progress): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
     const handle = await progress.race(this._object._nodeElectronHandlePromise);
-    return { value: serializeResult(await progress.race(handle.evaluateExpression(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)))) };
+    return { value: serializeResult(await handle.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
   }
 
   async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams, progress: Progress): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
     const handle = await progress.race(this._object._nodeElectronHandlePromise);
-    const result = await progress.race(handle.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)));
+    const result = await handle.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
     return { handle: JSHandleDispatcher.fromJSHandle(this, result) };
   }
 

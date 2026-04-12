@@ -15,17 +15,19 @@
  * limitations under the License.
  */
 
-import {  assert, eventsHelper } from '../../utils';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from '@utils/debugLogger';
+import { assert } from '@isomorphic/assert';
+import { eventsHelper } from '@utils/eventsHelper';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
 import { SdkObject } from '../instrumentation';
 
-import type { RegisteredListener } from '../../utils';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
-import type { RecentLogsCollector } from '../utils/debugLogger';
+import type { RecentLogsCollector } from '@utils/debugLogger';
 import type { ProtocolLogger } from '../types';
+import type { Progress } from '@protocol/progress';
 
 
 export const ConnectionEvents = {
@@ -213,16 +215,20 @@ export class CDPSession extends SdkObject {
     })];
   }
 
-  async send(method: string, params?: any) {
+  async send(progress: Progress, method: string, params?: any) {
+    return await progress.race(this._send(method, params));
+  }
+
+  async detach(progress: Progress) {
+    return await progress.race(this._session.detach());
+  }
+
+  private async _send(method: string, params?: any) {
     return await this._session.send(method as any, params);
   }
 
-  async detach() {
-    return await this._session.detach();
-  }
-
   async attachToTarget(targetId: string) {
-    const { sessionId } = await this.send('Target.attachToTarget', { targetId, flatten: true });
+    const { sessionId } = await this._send('Target.attachToTarget', { targetId, flatten: true });
     return new CDPSession(this._session, sessionId);
   }
 

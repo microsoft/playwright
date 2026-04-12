@@ -18,7 +18,7 @@ import type { BrowserContext } from './browserContext';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
 import type { Page } from './page';
-import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { URLMatch } from '@isomorphic/urlMatch';
 
 type HarNotFoundAction = 'abort' | 'fallback';
 

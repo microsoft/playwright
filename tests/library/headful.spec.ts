@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { compare } from 'playwright-core/lib/server/utils/image_tools/compare';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
+
+const { compare } = utils;
 
 it.skip(({ headless }) => headless, 'avoid popping windows in headless mode');
 it.skip(({ channel }) => channel === 'chromium-headless-shell' || channel === 'chromium-tip-of-tree-headless-shell', 'shell is never headed');

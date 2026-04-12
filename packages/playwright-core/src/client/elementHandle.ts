@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+import { assert } from '@isomorphic/assert';
+import { isString } from '@isomorphic/rtti';
+import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { Frame } from './frame';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
-import { assert } from '../utils/isomorphic/assert';
 import { fileUploadSizeLimit, mkdirIfNeeded } from './fileUtils';
-import { isString } from '../utils/isomorphic/rtti';
 import { WritableStream } from './writableStream';
-import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
 
 import type { BrowserContext } from './browserContext';
 import type { ChannelOwner } from './channelOwner';
@@ -28,7 +28,7 @@ import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type * as channels from '@protocol/channels';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {

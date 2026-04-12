@@ -10,11 +10,19 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### 🎬 Screencast
 
-New [`property: Page.screencast`] API provides a unified interface for capturing page content — both as video recordings and as real-time frame streams.
+New [`property: Page.screencast`] API provides a unified interface for capturing page content with:
+- Screencast recordings
+- Action annotations
+- Visual overlays
+- Real-time frame capture
+- Agentic video receipts
 
+<center>
 <img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-screencast-demo.gif" alt="Demo" width="500" height="313" />
+</center>
 
-**Video recording** — record video with precise start/stop control, as an alternative to the [`option: Browser.newContext.recordVideo`] option:
+
+**Screencast recording** — record video with precise start/stop control, as an alternative to the [`option: Browser.newContext.recordVideo`] option:
 
 ```js
 await page.screencast.start({ path: 'video.webm' });
@@ -22,25 +30,30 @@ await page.screencast.start({ path: 'video.webm' });
 await page.screencast.stop();
 ```
 
-**Real-time frame capture** — stream JPEG-encoded frames for custom processing like thumbnails, live previews, AI vision, and more:
-
-```js
-await page.screencast.start({
-  onFrame: ({ data }) => sendToVisionModel(data),
-  size: { width: 800, height: 600 },
-});
-```
-
 **Action annotations** — enable built-in visual annotations that highlight interacted elements and display action titles during recording:
 
 ```js
-await page.screencast.start({
-  path: 'video.webm',
-  annotate: { position: 'top-right' },
-});
+await page.screencast.showActions({ position: 'top-right' });
 ```
 
-The `annotate` option accepts `position` (`'top-left'`, `'top'`, `'top-right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'`), `duration` (ms per annotation), and `fontSize` (px).
+[`method: Screencast.showActions`] accepts `position` (`'top-left'`, `'top'`, `'top-right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'`), `duration` (ms per annotation), and `fontSize` (px). Returns a disposable to stop showing actions.
+
+Action annotations can also be enabled in test fixtures via the `video` option:
+
+```js
+// playwright.config.ts
+export default defineConfig({
+  use: {
+    video: {
+      mode: 'on',
+      show: {
+        actions: { position: 'top-left' },
+        test: { position: 'top-right' },
+      },
+    },
+  },
+});
+```
 
 **Visual overlays** — add chapter titles and custom HTML overlays on top of the page for richer narration:
 
@@ -53,13 +66,20 @@ await page.screencast.showChapter('Adding TODOs', {
 await page.screencast.showOverlay('<div style="color: red">Recording</div>');
 ```
 
-**Agentic video receipts** — coding agents can produce video evidence of their work. After completing a task, an agent can record a walkthrough video with rich annotations for human review:
+**Real-time frame capture** — stream JPEG-encoded frames for custom processing like thumbnails, live previews, AI vision, and more:
 
 ```js
 await page.screencast.start({
-  path: 'receipt.webm',
-  annotate: { position: 'top-right' },
+  onFrame: ({ data }) => sendToVisionModel(data),
+  size: { width: 800, height: 600 },
 });
+```
+
+**Agentic video receipts** — coding agents can produce video evidence of their work. After completing a task, an agent can record a walkthrough video with rich annotations for human review:
+
+```js
+await page.screencast.start({ path: 'receipt.webm' });
+await page.screencast.showActions({ position: 'top-right' });
 
 await page.screencast.showChapter('Verifying checkout flow', {
   description: 'Added coupon code support per ticket #1234',
@@ -79,9 +99,64 @@ await page.screencast.stop();
 
 The resulting video serves as a receipt: chapter titles provide context, action annotations highlight each interaction, and the visual walkthrough is faster to review than text logs.
 
-### 🤖 Agentic Tools
+### 🔗 Interoperability
 
-#### CLI debugger
+New [`method: Browser.bind`] API makes a launched browser available for `playwright-cli`, `@playwright/mcp`, and other clients to connect to.
+
+**Bind a browser** — start a browser and bind it so others can connect:
+
+```js
+const { endpoint } = await browser.bind('my-session', {
+  workspaceDir: '/my/project',
+});
+```
+
+**Connect from playwright-cli** — connect to the running browser from your favorite coding agent.
+
+```bash
+playwright-cli attach my-session
+playwright-cli -s my-session snapshot
+```
+
+**Connect from @playwright/mcp** — or point your MCP server to the running browser.
+
+```bash
+@playwright/mcp --endpoint=my-session
+```
+
+**Connect from a Playwright client** — use API to connect to the browser. Multiple clients at a time are supported!
+
+```js
+const browser = await chromium.connect(endpoint);
+```
+
+Pass `host` and `port` options to bind over WebSocket instead of a named pipe:
+
+```js
+const { endpoint } = await browser.bind('my-session', {
+  host: 'localhost',
+  port: 0,
+});
+// endpoint is a ws:// URL
+```
+
+Call [`method: Browser.unbind`] to stop accepting new connections.
+
+### 📊 Observability
+
+Run `playwright-cli show` to open the Dashboard that lists all the bound browsers, their statuses, and allows interacting with them:
+- See what your agent is doing on the background browsers
+- Click into the sessions for manual interventions
+- Open DevTools to inspect pages from the background browsers.
+
+<center>
+<img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-dashboard.png" alt="Demo" width="1169" height="835" />
+</center>
+
+- `playwright-cli` binds all of its browsers automatically, so you can see what your agents are doing.
+- Pass `PLAYWRIGHT_DASHBOARD=1` env variable to see all `@playwright/test` browsers in the dashboard.
+
+### 🐛 CLI debugger for agents
 
 Coding agents can now run `npx playwright test --debug=cli` to attach and debug tests over `playwright-cli` — perfect for automatically fixing tests in agentic workflows:
 
@@ -104,7 +179,7 @@ $ playwright-cli --session tw-87b59e step-over
 - Expect "toHaveTitle" at output/tests/example.spec.ts:7
 ```
 
-#### CLI trace analysis
+### 📋 CLI trace analysis for agents
 
 Coding agents can run `npx playwright trace` to explore [Playwright Trace](./trace-viewer.md) and understand failing or flaky tests from the command line:
 
@@ -162,7 +237,8 @@ await using page = await context.newPage();
 
 - [`property: Page.screencast`] provides video recording, real-time frame streaming, and overlay management.
 - Methods [`method: Screencast.start`] and [`method: Screencast.stop`] for recording and frame capture.
-- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual annotations.
+- Methods [`method: Screencast.showActions`] and [`method: Screencast.hideActions`] for action annotations.
+- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual overlays.
 - Methods [`method: Screencast.showOverlays`] and [`method: Screencast.hideOverlays`] for overlay visibility control.
 
 #### Storage, Console and Errors
@@ -197,14 +273,14 @@ await using page = await context.newPage();
 
 ### Browser Versions
 
-- Chromium 146.0.7680.31
+- Chromium 147.0.7727.15
 - Mozilla Firefox 148.0.2
-- WebKit 26.0
+- WebKit 26.4
 
 This version was also tested against the following stable channels:
 
-- Google Chrome 145
-- Microsoft Edge 145
+- Google Chrome 146
+- Microsoft Edge 146
 
 
 ## Version 1.58

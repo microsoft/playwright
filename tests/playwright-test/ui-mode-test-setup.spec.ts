@@ -154,7 +154,7 @@ test('should run setup and teardown projects (1)', async ({ runUITest }) => {
         ✅ test
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] setup.ts" [expanded]:
         - group:
@@ -203,7 +203,7 @@ test('should run setup and teardown projects (2)', async ({ runUITest }) => {
         ✅ test
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] teardown.ts" [expanded]:
         - group:
@@ -247,7 +247,7 @@ test('should run setup and teardown projects (3)', async ({ runUITest }) => {
         ✅ test
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] test.ts" [expanded]:
         - group:
@@ -293,7 +293,7 @@ test('should run part of the setup only', async ({ runUITest }) => {
         ◯ test
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-check] setup.ts" [expanded] [selected]:
         - button "Run"

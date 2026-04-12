@@ -16,8 +16,9 @@
 
 /* eslint-disable no-console */
 
+import path from 'path';
+import { msToString } from '@isomorphic/formatUtils';
 import { loadTrace } from './traceUtils';
-import { msToString } from '../../utils/isomorphic/formatUtils';
 
 export async function traceRequests(options: { grep?: string, method?: string, status?: string, failed?: boolean }) {
   const trace = await loadTrace();
@@ -115,8 +116,10 @@ export async function traceRequest(requestId: string) {
   // Request body
   if (r.request.postData) {
     console.log('\n  Request body');
-    console.log(`    type: ${r.request.postData.mimeType}`);
-    if (r.request.postData.text) {
+    const resource = r.request.postData._sha1 ?? r.request.postData._file;
+    if (resource) {
+      console.log(`    ${path.relative(process.cwd(), path.join(trace.model.traceUri, 'resources', resource))}`);
+    } else {
       const text = r.request.postData.text.length > 2000
         ? r.request.postData.text.substring(0, 2000) + '...'
         : r.request.postData.text;
@@ -129,6 +132,21 @@ export async function traceRequest(requestId: string) {
     console.log('\n  Response headers');
     for (const h of r.response.headers)
       console.log(`    ${h.name}: ${h.value}`);
+  }
+
+  // Response body
+  if (r.response.bodySize > 0) {
+    const resource = r.response.content._sha1 ?? r.response.content._file;
+    if (resource) {
+      console.log('\n  Response body');
+      console.log(`    ${path.relative(process.cwd(), path.join(trace.model.traceUri, 'resources', resource))}`);
+    } else if (r.response.content.text) {
+      const text = r.response.content.text.length > 2000
+        ? r.response.content.text.substring(0, 2000) + '...'
+        : r.response.content.text;
+      console.log('\n  Response body');
+      console.log(`    ${text}`);
+    }
   }
 
   // Security

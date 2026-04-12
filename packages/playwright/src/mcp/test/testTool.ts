@@ -17,10 +17,10 @@
 import type { z } from 'zod';
 import type { TestContext } from './testContext.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ToolSchema } from 'playwright-core/lib/tools/exports.js';
+import type { tools } from 'playwright-core/lib/coreBundle';
 
 export type TestTool<Input extends z.Schema = z.Schema> = {
-  schema: ToolSchema<Input>;
+  schema: tools.ToolSchema<Input>;
   handle: (context: TestContext, params: z.output<Input>) => Promise<CallToolResult>;
 };
 

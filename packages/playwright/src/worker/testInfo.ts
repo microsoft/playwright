@@ -17,20 +17,24 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes, ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { captureRawStack, stringifyStackFrames } from '@isomorphic/stackTrace';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { monotonicTime } from '@isomorphic/time';
+import { createGuid } from '@utils/crypto';
+import { sanitizeForFilePath } from '@utils/fileUtils';
+import { currentZone } from '@utils/zones';
 
-import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
+import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { wrapFunctionWithLocation } from '../transform/transform';
+import { transform } from '../common';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type * as ipc from '../common/ipc';
-import type { TestCase } from '../common/test';
+import type { config as commonConfig, FullConfigInternal, ipc, test as testNs } from '../common';
 import type { StackFrame } from '@protocol/channels';
 
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
@@ -92,7 +96,7 @@ export class TestInfoImpl implements TestInfo {
   private _interruptedPromise = new ManualPromise<void>();
   _lastStepId = 0;
   private readonly _requireFile: string;
-  readonly _projectInternal: FullProjectInternal;
+  readonly _projectInternal: commonConfig.FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
@@ -156,24 +160,15 @@ export class TestInfoImpl implements TestInfo {
     // Ignored.
   }
 
-  _deadlineForMatcher(timeout: number): { deadline: number, timeoutMessage: string } {
-    const startTime = monotonicTime();
-    const matcherDeadline = timeout ? startTime + timeout : kMaxDeadline;
-    const testDeadline = this._timeoutManager.currentSlotDeadline() - 250;
-    const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
-    const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
-    return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
-  }
-
-  static _defaultDeadlineForMatcher(timeout: number): { deadline: any; timeoutMessage: any; } {
-    return { deadline: (timeout ? monotonicTime() + timeout : 0), timeoutMessage: `Timeout ${timeout}ms exceeded while waiting on the predicate` };
+  _deadline(): { deadline: number, timeout: number } {
+    return { deadline: this._timeoutManager.currentSlotDeadline(), timeout: this.timeout };
   }
 
   constructor(
     configInternal: FullConfigInternal,
-    projectInternal: FullProjectInternal,
+    projectInternal: commonConfig.FullProjectInternal,
     workerParams: ipc.WorkerInitParams,
-    test: TestCase | undefined,
+    test: testNs.TestCase | undefined,
     retry: number,
     callbacks: TestInfoCallbacks
   ) {
@@ -241,10 +236,10 @@ export class TestInfoImpl implements TestInfo {
 
     this._tracing = new TestTracing(this, workerParams.artifactsDir);
 
-    this.skip = wrapFunctionWithLocation((location, ...args) => this._modifier('skip', location, args));
-    this.fixme = wrapFunctionWithLocation((location, ...args) => this._modifier('fixme', location, args));
-    this.fail = wrapFunctionWithLocation((location, ...args) => this._modifier('fail', location, args));
-    this.slow = wrapFunctionWithLocation((location, ...args) => this._modifier('slow', location, args));
+    this.skip = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('skip', location, args));
+    this.fixme = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('fixme', location, args));
+    this.fail = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('fail', location, args));
+    this.slow = transform.wrapFunctionWithLocation((location, ...args) => this._modifier('slow', location, args));
   }
 
   _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, modifierArgs: [arg?: any, description?: string]) {
@@ -394,6 +389,11 @@ export class TestInfoImpl implements TestInfo {
     return step;
   }
 
+  _abort(location: Location, message: string | undefined) {
+    this.annotations.push({ type: 'abort', description: message, location });
+    throw new TestAbortError('Test aborted' + (message ? ': ' + message : ''));
+  }
+
   _interrupt() {
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
     this._interruptedPromise.resolve();
@@ -403,7 +403,9 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error | unknown) {
+  _failWithError(error: Error | unknown, shouldNotRetry?: 'shouldNotRetry') {
+    if (shouldNotRetry)
+      this._hasNonRetriableError = true;
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = testInfoError(error);
@@ -667,7 +669,7 @@ export class TestStepInfoImpl implements TestStepInfo {
     this._stepId = stepId;
     this._title = title;
     this._parentStep = parentStep;
-    this.skip = wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
+    this.skip = transform.wrapFunctionWithLocation((location: Location, ...args: unknown[]) => {
       // skip();
       // skip(condition: boolean, description: string);
       if (args.length > 0 && !args[0])
@@ -707,6 +709,9 @@ export class TestStepInfoImpl implements TestStepInfo {
 }
 
 export class TestSkipError extends Error {
+}
+
+export class TestAbortError extends Error {
 }
 
 export class StepSkipError extends Error {

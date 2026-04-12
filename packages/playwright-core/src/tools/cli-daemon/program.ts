@@ -20,57 +20,69 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { getAsBooleanFromENV } from '@utils/env';
+import { libPath } from '../../package';
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
-import { program } from '../../utilsBundle';
 import { registry as browserRegistry } from '../../server/registry/index';
+import type { Command } from 'commander';
 
-program.argument('[session-name]', 'name of the session to create or connect to', 'default')
-    .option('--headed', 'run in headed mode (non-headless)')
-    .option('--extension', 'run with the extension')
-    .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
-    .option('--persistent', 'use a persistent browser context')
-    .option('--profile <path>', 'path to the user data dir')
-    .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
-    .option('--attach <name-or-endpoint>', 'attach to a running Playwright browser by name or endpoint')
-    .option('--init-workspace', 'initialize workspace')
-    .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
+export function decorateProgram(program: Command) {
+  program.argument('[session-name]', 'name of the session to create or connect to', 'default')
+      .option('--headed', 'run in headed mode (non-headless)')
+      .option('--extension', 'run with the extension')
+      .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
+      .option('--persistent', 'use a persistent browser context')
+      .option('--profile <path>', 'path to the user data dir')
+      .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
+      .option('--cdp <url>', 'connect to an existing browser via CDP endpoint URL')
+      .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
+      .option('--init-workspace', 'initialize workspace')
+      .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
 
-    .action(async (sessionName: string, options: any) => {
-      if (options.initWorkspace) {
-        await initWorkspace(options.initSkills);
-        return;
-      }
+      .action(async (sessionName: string, options: any) => {
+        if (options.initWorkspace) {
+          await initWorkspace(options.initSkills);
+          return;
+        }
 
-      setupExitWatchdog();
-      const clientInfo = createClientInfo();
-      const mcpConfig = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, sessionName, options);
-      const clientInfoEx = {
-        cwd: process.cwd(),
-        sessionName,
-        workspaceDir: clientInfo.workspaceDir,
-      };
+        setupExitWatchdog();
+        const clientInfo = createClientInfo();
+        const mcpConfig = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, sessionName, options);
+        const mcpClientInfo = {
+          cwd: process.cwd(),
+          clientName: guessClientName(),
+        };
 
-      try {
-        const { browser, browserInfo } = await createBrowserWithInfo(mcpConfig, clientInfoEx);
-        const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
-        if (!browserContext)
-          throw new Error('Error: unable to connect to a browser that does not have any contexts');
-        const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
-        const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, { persistent, exitOnClose: true });
-        console.log(`### Success\nDaemon listening on ${socketPath}`);
-        console.log('<EOF>');
-      } catch (error) {
-        const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
-        console.log(`### Error\n${message}`);
-        console.log('<EOF>');
-      }
-    });
+        try {
+          const { browser, browserInfo, canBind } = await createBrowserWithInfo(mcpConfig, mcpClientInfo);
+          if (canBind)
+            await browser.bind(sessionName, { workspaceDir: clientInfo.workspaceDir });
+          const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
+          if (!browserContext)
+            throw new Error('Error: unable to connect to a browser that does not have any contexts');
+          const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
+          const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true });
+          console.log(`### Success\nDaemon listening on ${socketPath}`);
+          console.log('<EOF>');
+        } catch (error) {
+          const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
+          console.log(`### Error\n${message}`);
+          console.log('<EOF>');
+        }
+      });
+}
 
-void program.parseAsync();
+function guessClientName(): string {
+  if (process.env.CLAUDECODE)
+    return 'Claude Code';
+  if (process.env.COPILOT_CLI)
+    return 'GitHub Copilot';
+  return 'playwright-cli';
+}
 
 function defaultConfigFile(): string {
   return path.resolve('.playwright', 'cli.config.json');
@@ -87,7 +99,7 @@ async function initWorkspace(initSkills: string | undefined) {
   console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
   if (initSkills) {
-    const skillSourceDir = path.join(__dirname, '../cli-client/skill');
+    const skillSourceDir = libPath('tools', 'cli-client', 'skill');
     const target = initSkills === 'agents' ? 'agents' : 'claude';
     const skillDestDir = path.join(cwd, `.${target}`, 'skills', 'playwright-cli');
     if (!fs.existsSync(skillSourceDir)) {
@@ -103,17 +115,16 @@ async function initWorkspace(initSkills: string | undefined) {
 }
 
 async function ensureConfiguredBrowserInstalled() {
+  if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'))
+    return;
   if (fs.existsSync(defaultConfigFile()) || fs.existsSync(globalConfigFile())) {
     // Config exists, ensure configured browser is installed
     const clientInfo = createClientInfo();
     const config = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, 'default', {});
     const browserName = config.browser.browserName;
     const channel = config.browser.launchOptions.channel;
-    if (!channel || channel.startsWith('chromium')) {
-      const executable = browserRegistry.findExecutable(channel ?? browserName);
-      if (executable && !fs.existsSync(executable.executablePath()!))
-        await browserRegistry.install([executable]);
-    }
+    if (!channel || channel.startsWith('chromium'))
+      await resolveAndInstall(channel ?? browserName);
   } else {
     const channel = await findOrInstallDefaultBrowser();
     if (channel !== 'chrome')
@@ -127,13 +138,17 @@ async function findOrInstallDefaultBrowser() {
     const executable = browserRegistry.findExecutable(channel);
     if (!executable?.executablePath())
       continue;
+    await resolveAndInstall('ffmpeg');
     console.log(`✅ Found ${channel}, will use it as the default browser.`);
     return channel;
   }
-  const chromiumExecutable = browserRegistry.findExecutable('chromium');
-  if (!fs.existsSync(chromiumExecutable?.executablePath()!))
-    await browserRegistry.install([chromiumExecutable]);
+  await resolveAndInstall('chromium');
   return 'chromium';
+}
+
+async function resolveAndInstall(nameOrChannel: string) {
+  const executables = browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' });
+  await browserRegistry.install(executables);
 }
 
 async function createDefaultConfig(channel: string) {

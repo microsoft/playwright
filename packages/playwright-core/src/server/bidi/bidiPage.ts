@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { debugLogger } from '../utils/debugLogger';
-import { eventsHelper } from '../utils/eventsHelper';
+import { debugLogger } from '@utils/debugLogger';
+import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as js from '../javascript';
@@ -26,9 +26,10 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
+import { nullProgress } from '../progress';
 
 import * as network from '../network';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
@@ -118,7 +119,7 @@ export class BidiPage implements PageDelegate {
       if (context.frame === frame) {
         this._contextIdToContext.delete(contextId);
         if (notifyFrame)
-          frame._contextDestroyed(context);
+          frame.contextDestroyed(context);
       }
     }
   }
@@ -151,7 +152,7 @@ export class BidiPage implements PageDelegate {
     }
     const delegate = new BidiExecutionContext(this._session, realmInfo);
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    frame._contextCreated(worldName, context);
+    frame.contextCreated(worldName, context);
     this._contextIdToContext.set(realmInfo.realm, context);
   }
 
@@ -175,7 +176,7 @@ export class BidiPage implements PageDelegate {
     const context = this._contextIdToContext.get(params.realm);
     if (context) {
       this._contextIdToContext.delete(params.realm);
-      context.frame._contextDestroyed(context);
+      context.frame.contextDestroyed(context);
       return true;
     }
     const existed = this._realmToWorkerContext.delete(params.realm);
@@ -254,13 +255,13 @@ export class BidiPage implements PageDelegate {
     if (!originPage)
       return;
 
-    this._browserContext._browser._downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename, event.suggestedFilename);
+    this._browserContext._browser.downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename, event.suggestedFilename);
   }
 
   private _onDownloadEnded(event: bidi.BrowsingContext.DownloadEndParams) {
     if (!event.navigation)
       return;
-    this._browserContext._browser._downloadFinished(event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
+    this._browserContext._browser.downloadFinished(event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
   }
 
   private _onLogEntryAdded(params: bidi.Log.Entry) {
@@ -295,7 +296,8 @@ export class BidiPage implements PageDelegate {
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
     const type = entry.method === 'warn' ? 'warning' : entry.method;
-    this._page.addConsoleMessage(null, type, entry.args.map(arg => createHandle(context, arg)), location, undefined, params.timestamp);
+    const text = (entry.method === 'timeLog' || entry.method === 'timeEnd') && entry.text ? entry.text : undefined;
+    this._page.addConsoleMessage(null, type, entry.args.map(arg => createHandle(context, arg)), location, text, params.timestamp);
   }
 
   private async _onFileDialogOpened(params: bidi.Input.FileDialogInfo) {
@@ -304,7 +306,7 @@ export class BidiPage implements PageDelegate {
     const frame = this._page.frameManager.frame(params.context);
     if (!frame)
       return;
-    const executionContext = await frame._mainContext();
+    const executionContext = await frame.mainContext();
     try {
       const handle = await toBidiExecutionContext(executionContext).remoteObjectForNodeId(executionContext, { sharedId: params.element.sharedId });
       await this._page._onFileChooserOpened(handle as dom.ElementHandle);
@@ -534,8 +536,8 @@ export class BidiPage implements PageDelegate {
   private async _framePosition(frame: frames.Frame): Promise<types.Point | null> {
     if (frame === this._page.mainFrame())
       return { x: 0, y: 0 };
-    const element = await frame.frameElement();
-    const box = await element.boundingBox();
+    const element = await frame.frameElement(nullProgress);
+    const box = await element.boundingBox(nullProgress);
     if (!box)
       return null;
     const style = await element.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe as Element), {}).catch(e => 'error:notconnected' as const);
@@ -600,13 +602,13 @@ export class BidiPage implements PageDelegate {
     return quads as types.Quad[];
   }
 
-  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
+  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const fromContext = toBidiExecutionContext(handle._context);
-    await this._session.send('input.setFiles', {
+    await progress.race(this._session.send('input.setFiles', {
       context: this._session.sessionId,
-      element: await fromContext.nodeIdForElementHandle(handle),
+      element: await progress.race(fromContext.nodeIdForElementHandle(handle)),
       files: paths,
-    });
+    }));
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
@@ -633,7 +635,7 @@ export class BidiPage implements PageDelegate {
     const node = await this._getFrameNode(frame);
     if (!node?.sharedId)
       throw new Error('Frame has been detached.');
-    const parentFrameExecutionContext = await parent._mainContext();
+    const parentFrameExecutionContext = await parent.mainContext();
     return await toBidiExecutionContext(parentFrameExecutionContext).remoteObjectForNodeId(parentFrameExecutionContext, { sharedId: node.sharedId });
   }
 

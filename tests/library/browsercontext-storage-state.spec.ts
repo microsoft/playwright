@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { attachFrame } from 'tests/config/utils';
+import { attachFrame } from '../config/utils';
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 
@@ -51,7 +51,9 @@ it('should capture local storage', async ({ contextFactory }) => {
   }]);
 });
 
-it('should set local storage', async ({ contextFactory }) => {
+it('should set local storage', async ({ contextFactory, channel }) => {
+  it.fixme(channel?.startsWith('msedge'), 'Network.clearBrowserCache sometimes stalls');
+
   const context = await contextFactory({
     storageState: {
       cookies: [],
@@ -114,7 +116,9 @@ it('should report good error if the url is not valid', async ({ contextFactory }
   expect(error.message).toContain('foo');
 });
 
-it('should round-trip through the file', async ({ contextFactory }, testInfo) => {
+it('should round-trip through the file', async ({ contextFactory, channel }, testInfo) => {
+  it.fixme(channel?.startsWith('msedge'), 'Network.clearBrowserCache sometimes stalls');
+
   const context = await contextFactory();
   const page1 = await context.newPage();
   await page1.route('**/*', route => {

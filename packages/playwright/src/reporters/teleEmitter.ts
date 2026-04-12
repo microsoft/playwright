@@ -16,7 +16,7 @@
 
 import path from 'path';
 
-import { createGuid } from 'playwright-core/lib/utils';
+import { createGuid } from '@utils/crypto';
 
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 

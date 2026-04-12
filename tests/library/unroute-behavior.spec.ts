@@ -16,7 +16,9 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 import type { Route } from '@playwright/test';
-import { ManualPromise } from '../../packages/playwright-core/lib/utils/isomorphic/manualPromise';
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
+
+const { ManualPromise } = iso;
 
 it('context.unroute should not wait for pending handlers to complete', async ({ page, context, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23781' });

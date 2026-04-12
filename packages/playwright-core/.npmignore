@@ -4,6 +4,8 @@
 
 # Include sources from lib, but not map files.
 !lib/**/*.js
+# Include bundle license sidecars.
+!lib/**/*.LICENSE
 # Include web assets for recorder, trace viewer, etc.
 !lib/**/*.css
 !lib/**/*.html
@@ -11,8 +13,8 @@
 !lib/**/*.svg
 !lib/**/*.ttf
 !lib/**/*.json
-!lib/**/skill/**/*.md
-!lib/utilsBundleImpl/xdg-open
+!lib/**/*.md
+!lib/xdg-open
 !lib/**/manifest.webmanifest
 # Exclude injected files. A preprocessed version of these is included via lib/generated.
 # See packages/injected/src/README.md.

@@ -15,15 +15,12 @@
  */
 
 import type { ElementHandle } from './dom';
-import type { Page } from './page';
 
 export class FileChooser {
-  private _page: Page;
   private _elementHandle: ElementHandle;
   private _isMultiple: boolean;
 
-  constructor(page: Page, elementHandle: ElementHandle, isMultiple: boolean) {
-    this._page = page;
+  constructor(elementHandle: ElementHandle, isMultiple: boolean) {
     this._elementHandle = elementHandle;
     this._isMultiple = isMultiple;
   }
@@ -34,9 +31,5 @@ export class FileChooser {
 
   isMultiple(): boolean {
     return this._isMultiple;
-  }
-
-  page(): Page {
-    return this._page;
   }
 }

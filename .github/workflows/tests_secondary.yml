@@ -54,11 +54,11 @@ jobs:
       matrix:
         # Intel: *-large
         # Arm64: *-xlarge
-        os: [macos-14-large, macos-14-xlarge, macos-15-large, macos-15-xlarge]
+        os: [macos-15-large, macos-15-xlarge, macos-26-large, macos-26-xlarge]
         browser: [chromium, firefox, webkit]
         include:
-          - os: macos-26-xlarge
-            browser: webkit
+        - os: macos-14-xlarge
+          browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
@@ -132,7 +132,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-24.04, macos-14-xlarge, windows-latest]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         include:
           # We have different binaries per Ubuntu version for WebKit.
           - browser: webkit
@@ -143,7 +143,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-* --headed
+        command: npm run test -- --project=${{ matrix.browser }}-* --headed --workers=2
         bot-name: "${{ matrix.browser }}-headed-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
@@ -231,7 +231,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-14-large, windows-latest]
+        # Note: we keep older versions here, assuming they are more likely to break with ToT builds.
+        os: [ubuntu-22.04, macos-15, windows-latest]
         headed: ['--headed', '']
         exclude:
           # Tested in tests_primary.yml already
