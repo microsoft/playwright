@@ -36,6 +36,7 @@ import type { TestCase } from './common/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
+const PLAYWRIGHT_SRC_INFIX = ['', 'playwright', 'packages', ''].join(path.sep);
 
 export function filterStackTrace(e: Error): { message: string, stack: string, cause?: ReturnType<typeof filterStackTrace> } {
   const name = e.name ? e.name + ': ' : '';
@@ -52,9 +53,13 @@ export function filterStackTrace(e: Error): { message: string, stack: string, ca
 }
 
 export function filterStackFile(file: string) {
-  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_TEST_PATH))
+  if (process.env.PWDEBUGIMPL)
+    return true;
+  if (file.startsWith(PLAYWRIGHT_TEST_PATH))
     return false;
-  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_CORE_PATH))
+  if (file.startsWith(PLAYWRIGHT_CORE_PATH))
+    return false;
+  if (file.includes(PLAYWRIGHT_SRC_INFIX))
     return false;
   return true;
 }

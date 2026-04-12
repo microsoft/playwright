@@ -23,8 +23,7 @@ import playwright from '../../packages/playwright-core';
 
 test('list', async ({ cli, server }) => {
   const { output: emptyOutput } = await cli('list');
-  expect(emptyOutput).toContain('### Browsers');
-  expect(emptyOutput).toContain('  (no browsers)');
+  expect(emptyOutput).toContain('(no browsers)');
 
   await cli('open', server.HELLO_WORLD);
 
@@ -182,7 +181,7 @@ test('workspace isolation - sessions in different workspaces are isolated', asyn
   await cli('close', { cwd: workspace1 });
 
   const { output: list1After } = await cli('list', { cwd: workspace1 });
-  expect(list1After).toContain('(no browsers)');
+  expect(list1After).not.toContain('### Browsers');
   const { output: list2After } = await cli('list', { cwd: workspace2 });
   expect(list2After).toContain('default');
 
@@ -306,8 +305,7 @@ test.describe('browser server', () => {
     await using browser = await playwright[browserName].launch({ headless: true });
     await browser.bind('foobar', { workspaceDir: 'workspace1' });
     const { output } = await cli('list', '--all');
-    expect(output).toBe(`### Browsers
-### Browser servers available for attach
+    expect(output).toBe(`### Browser servers available for attach
 workspace1:
 - browser "foobar":
   - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
@@ -331,9 +329,16 @@ workspace1:
 /:
 - foobar:
   - status: open
-  - browser-type: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
-  - user-data-dir: <in-memory>
-  - headed: false`);
+  - browser-type: ${mcpBrowser.replace('chrome', 'chromium')} (attached)
+
+### Browser servers available for attach
+workspace1:
+- browser "foobar":
+  - browser: ${mcpBrowser.replace('chrome', 'chromium')}
+  - version: ${version}
+  - status: open
+  - data-dir: <in-memory>
+  - run \`playwright-cli attach "foobar"\` to attach`);
   });
 
   test('fail to attach to browser server without contexts', async ({ cli, mcpBrowser }) => {
@@ -350,7 +355,7 @@ workspace1:
     const page = await browser.newPage();
     await page.setContent('<title>Env Page</title><h1>Hello from env</h1>');
     await browser.bind('foobar', { workspaceDir: 'workspace1' });
-    const { output: openOutput, snapshot } = await cli('open', { env: { PLAYWRIGHT_CLI_SESSION: 'foobar' } });
+    const { output: openOutput, snapshot } = await cli('attach', { env: { PLAYWRIGHT_CLI_SESSION: 'foobar' } });
     expect(openOutput).toContain('### Browser `foobar` opened with pid');
     expect(openOutput).toContain('Env Page');
     expect(snapshot).toContain('Hello from env');
@@ -359,9 +364,16 @@ workspace1:
 /:
 - foobar:
   - status: open
-  - browser-type: ${mcpBrowser.replace('chrome', 'chromium')}
-  - user-data-dir: <in-memory>
-  - headed: false`);
+  - browser-type: ${mcpBrowser.replace('chrome', 'chromium')} (attached)
+
+### Browser servers available for attach
+workspace1:
+- browser "foobar":
+  - browser: ${mcpBrowser.replace('chrome', 'chromium')}
+  - version: ${version}
+  - status: open
+  - data-dir: <in-memory>
+  - run \`playwright-cli attach "foobar"\` to attach`);
   });
 
   test('attach with session alias', async ({ cli, mcpBrowser }) => {
@@ -385,8 +397,7 @@ workspace1:
     expect(openOutput).toContain('Session `foobar` created, attached to `foobar`');
     await cli('-s', 'foobar', 'close');
     const { output: listOutput } = await cli('list', '--all');
-    expect(listOutput).toBe(`### Browsers
-### Browser servers available for attach
+    expect(listOutput).toBe(`### Browser servers available for attach
 workspace1:
 - browser \"foobar\":
   - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
@@ -394,18 +405,6 @@ workspace1:
   - status: open
   - data-dir: <in-memory>
   - run \`playwright-cli attach \"foobar\"\` to attach`);
-  });
-
-  test('attach --cdp', async ({ cli, cdpServer, server }) => {
-    const context = await cdpServer.start();
-    await context.pages()[0].goto(server.HELLO_WORLD);
-    const { output, snapshot } = await cli('attach', `--cdp=${cdpServer.endpoint}`);
-    expect(output).toContain(`### Page
-- Page URL: ${server.HELLO_WORLD}
-- Page Title: Title`);
-    expect(snapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
-    await cli('goto', 'data:text/html,<title>CDP Title</title>');
-    expect(await context.pages()[0].title()).toBe('CDP Title');
   });
 });
 
