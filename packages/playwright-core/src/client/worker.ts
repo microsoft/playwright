@@ -16,7 +16,8 @@
 
 import { LongStandingScope } from '@isomorphic/manualPromise';
 import { ChannelOwner } from './channelOwner';
-import { TargetClosedError } from './errors';
+import { ConsoleMessage } from './consoleMessage';
+import { isTargetClosedError, TargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { TimeoutSettings } from './timeoutSettings';
@@ -34,6 +35,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
   readonly _closedScope = new LongStandingScope();
+  private _closeReason: string | undefined;
 
   static fromNullable(worker: channels.WorkerChannel | undefined): Worker | null {
     return worker ? Worker.from(worker) : null;
@@ -48,6 +50,10 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     this._setEventToSubscriptionMapping(new Map<string, channels.WorkerUpdateSubscriptionParams['event']>([
       [Events.Worker.Console, 'console'],
     ]));
+    this._channel.on('console', event => {
+      // Note: we only receive console events here for workers from "chromium.connectToWorker".
+      this.emit(Events.Worker.Console, new ConsoleMessage(this._platform, event, null, this));
+    });
     this._channel.on('close', () => {
       if (this._page)
         this._page._workers.delete(this);
@@ -55,7 +61,13 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
         this._context._serviceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
-    this.once(Events.Worker.Close, () => this._closedScope.close(this._page?._closeErrorWithReason() || new TargetClosedError()));
+    this.once(Events.Worker.Close, () => this._closedScope.close(this._closeErrorWithReason()));
+  }
+
+  _closeErrorWithReason() {
+    if (this._closeReason)
+      return new TargetClosedError(this._closeReason);
+    return this._page?._closeErrorWithReason() || new TargetClosedError();
   }
 
   url(): string {
@@ -82,10 +94,21 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
       if (event !== Events.Worker.Close)
-        waiter.rejectOnEvent(this, Events.Worker.Close, () => new TargetClosedError());
+        waiter.rejectOnEvent(this, Events.Worker.Close, () => this._closeErrorWithReason());
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
     });
+  }
+
+  async disconnect(options: { reason?: string } = {}): Promise<void> {
+    this._closeReason = options.reason;
+    try {
+      await this._channel.disconnect(options);
+    } catch (e) {
+      if (isTargetClosedError(e))
+        return;
+      throw e;
+    }
   }
 }

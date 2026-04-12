@@ -44,6 +44,8 @@ import type { Frame } from '../frames';
 import type { RouteHandler } from '../network';
 import type { InitScript } from '../page';
 import type { Disposable } from '../disposable';
+import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
+import type { ConsoleMessage } from '../console';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '@isomorphic/urlMatch';
@@ -483,24 +485,40 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 }
 
 
-export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WorkerChannel {
+export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher | BrowserTypeDispatcher> implements channels.WorkerChannel {
   _type_Worker = true;
   _type_EventTarget = true;
 
   readonly _subscriptions = new Set<channels.WorkerUpdateSubscriptionParams['event']>();
 
-  static fromNullable(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
+  static fromNullable(scope: PageDispatcher | BrowserContextDispatcher | BrowserTypeDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
     if (!worker)
       return undefined;
     const result = scope.connection.existingDispatcher<WorkerDispatcher>(worker);
     return result || new WorkerDispatcher(scope, worker);
   }
 
-  constructor(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker) {
+  constructor(scope: PageDispatcher | BrowserContextDispatcher | BrowserTypeDispatcher, worker: Worker) {
     super(scope, worker, 'Worker', {
       url: worker.url
     });
+    this.addObjectListener(Worker.Events.Console, (message: ConsoleMessage) => {
+      if (!this._subscriptions.has('console'))
+        return;
+      this._dispatchEvent('console', {
+        type: message.type(),
+        text: message.text(),
+        args: message.args().map(a => JSHandleDispatcher.fromJSHandle(this, a)),
+        location: message.location(),
+        timestamp: message.timestamp(),
+      });
+    });
     this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
+  }
+
+  async disconnect(params: channels.WorkerDisconnectParams, progress: Progress): Promise<void> {
+    progress.metadata.potentiallyClosesScope = true;
+    await this._object.disconnect(progress, params);
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionResult> {

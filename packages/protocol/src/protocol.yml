@@ -1043,6 +1043,14 @@ BrowserType:
         browser: Browser
         defaultContext: BrowserContext?
 
+    connectToWorker:
+      title: Connect to worker
+      parameters:
+        endpoint: string
+        timeout: float
+      returns:
+        worker: Worker
+
 Browser:
   type: interface
 
@@ -3000,6 +3008,13 @@ Worker:
 
   commands:
 
+    disconnect:
+      title: Disconnect from worker
+      parameters:
+        reason: string?
+      flags:
+        pausesBeforeAction: true
+
     evaluateExpression:
       title: Evaluate
       parameters:
@@ -3028,6 +3043,10 @@ Worker:
         enabled: boolean
 
   events:
+
+    console:
+      parameters:
+        $mixin: ConsoleMessage
 
     close:
 

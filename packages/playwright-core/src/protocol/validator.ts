@@ -646,6 +646,13 @@ scheme.BrowserTypeConnectOverCDPTransportResult = tObject({
   browser: tChannel(['Browser']),
   defaultContext: tOptional(tChannel(['BrowserContext'])),
 });
+scheme.BrowserTypeConnectToWorkerParams = tObject({
+  endpoint: tString,
+  timeout: tFloat,
+});
+scheme.BrowserTypeConnectToWorkerResult = tObject({
+  worker: tChannel(['Worker']),
+});
 scheme.BrowserInitializer = tObject({
   version: tString,
   name: tString,
@@ -2033,7 +2040,22 @@ scheme.FrameExpectResult = tObject({
 scheme.WorkerInitializer = tObject({
   url: tString,
 });
+scheme.WorkerConsoleEvent = tObject({
+  type: tString,
+  text: tString,
+  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+  location: tObject({
+    url: tString,
+    lineNumber: tInt,
+    columnNumber: tInt,
+  }),
+  timestamp: tFloat,
+});
 scheme.WorkerCloseEvent = tOptional(tObject({}));
+scheme.WorkerDisconnectParams = tObject({
+  reason: tOptional(tString),
+});
+scheme.WorkerDisconnectResult = tOptional(tObject({}));
 scheme.WorkerEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
