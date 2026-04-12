@@ -35,7 +35,8 @@ playwright-cli goto https://playwright.dev
 playwright-cli type "search query"
 playwright-cli click e3
 playwright-cli dblclick e7
-playwright-cli fill e5 "user@example.com"
+# --submit presses Enter after filling the element
+playwright-cli fill e5 "user@example.com"  --submit
 playwright-cli drag e2 e8
 playwright-cli hover e4
 playwright-cli select e9 "option-value"
@@ -151,10 +152,12 @@ playwright-cli console
 playwright-cli console warning
 playwright-cli network
 playwright-cli run-code "async page => await page.context().grantPermissions(['geolocation'])"
+playwright-cli run-code --filename=script.js
 playwright-cli tracing-start
 playwright-cli tracing-stop
-playwright-cli video-start
-playwright-cli video-stop video.webm
+playwright-cli video-start video.webm
+playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
+playwright-cli video-stop
 ```
 
 ## Open parameters
@@ -206,8 +209,9 @@ playwright-cli snapshot --filename=after-click.yaml
 # snapshot an element instead of the whole page
 playwright-cli snapshot "#main"
 
-# limit snapshot depth for efficiency
+# limit snapshot depth for efficiency, take a partial snapshot afterwards
 playwright-cli snapshot --depth=4
+playwright-cli snapshot e34
 ```
 
 ## Targeting elements

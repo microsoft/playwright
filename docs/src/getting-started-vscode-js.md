@@ -1,6 +1,6 @@
 ---
 id: getting-started-vscode
-title: "Getting started - VS Code"
+title: "VS Code"
 ---
 
 import LiteYouTube from '@site/src/components/LiteYouTube';

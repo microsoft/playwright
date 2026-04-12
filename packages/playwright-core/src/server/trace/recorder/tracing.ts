@@ -19,9 +19,10 @@ import os from 'os';
 import path from 'path';
 
 import { Snapshotter } from './snapshotter';
-import { methodMetainfo } from '../../../utils/isomorphic/protocolMetainfo';
+import { getMetainfo } from '../../../utils/isomorphic/protocolMetainfo';
 import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
+import { ManualPromise } from '../../../utils/isomorphic/manualPromise';
 import { eventsHelper  } from '../../utils/eventsHelper';
 import { createGuid  } from '../../utils/crypto';
 import { getPlaywrightVersion } from '../../utils/userAgent';
@@ -51,7 +52,7 @@ import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { Progress } from '@protocol/progress';
 import type * as types from '../../types';
-import type { ScreencastListener } from '../../screencast';
+import type { Screencast, ScreencastClient } from '../../screencast';
 
 const version: trace.VERSION = 8;
 
@@ -82,7 +83,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
-  private _pageScreencastListeners = new Map<Page, ScreencastListener>();
+  private _pageTracingRecorders = new Map<Page, ScreencastTracingRecorder>();
   private _eventListeners: RegisteredListener[] = [];
   private _context: BrowserContext | APIRequestContext;
   // Note: state should only be touched inside API methods, but not inside trace operations.
@@ -280,15 +281,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   private _stopScreencast() {
     eventsHelper.removeEventListeners(this._screencastListeners);
-    if (!(this._context instanceof BrowserContext))
-      return;
-    for (const page of this._context.pages()) {
-      const listener = this._pageScreencastListeners.get(page);
-      if (listener) {
-        page.screencast.stopForTracing(listener);
-        this._pageScreencastListeners.delete(page);
-      }
-    }
+    for (const recorder of this._pageTracingRecorders.values())
+      recorder.dispose();
+    this._pageTracingRecorders.clear();
   }
 
   private _allocateNewTraceFile(state: RecordingState) {
@@ -436,8 +431,19 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._snapshotter?.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName).catch(() => {});
   }
 
-  private _shouldCaptureSnapshot(sdkObject: SdkObject, metadata: CallMetadata) {
-    return !!this._snapshotter?.started() && shouldCaptureSnapshot(metadata) && !!sdkObject.attribution.page;
+  private _shouldCaptureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'input') {
+    if (!sdkObject.attribution.page || !this._snapshotter?.started())
+      return;
+
+    const metainfo = getMetainfo(metadata);
+    if (!metainfo?.snapshot)
+      return false;
+
+    switch (phase) {
+      case 'before': return !metainfo.input || !!metainfo.isAutoWaiting;
+      case 'input': return !!metainfo.input;
+      case 'after': return true;
+    }
   }
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string) {
@@ -445,8 +451,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createBeforeActionTraceEvent(metadata, parentId ?? this._currentGroupId());
     if (!event)
       return Promise.resolve();
-    sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+    this._temporarilyDisableThrottling(sdkObject.attribution.page);
+    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'before'))
       event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
@@ -460,8 +466,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createInputActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+    this._temporarilyDisableThrottling(sdkObject.attribution.page);
+    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'input'))
       event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata);
@@ -487,8 +493,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+    this._temporarilyDisableThrottling(sdkObject.attribution.page);
+    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'after'))
       event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata);
@@ -605,9 +611,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._appendTraceEvent(event);
   }
 
+  private _temporarilyDisableThrottling(page: Page | undefined) {
+    if (page)
+      this._pageTracingRecorders.get(page)?.temporarilyDisableThrottling();
+  }
+
   private _startScreencastInPage(page: Page) {
     const prefix = page.guid;
-    const listener = (params: types.ScreencastFrame) => {
+    const onFrame = (params: types.ScreencastFrame) => {
       const suffix = Date.now();
       const sha1 = `${prefix}-${suffix}.jpeg`;
       const event: trace.ScreencastFrameTraceEvent = {
@@ -623,8 +634,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._appendResource(sha1, params.buffer);
       this._appendTraceEvent(event);
     };
-    this._pageScreencastListeners.set(page, listener);
-    page.screencast.startForTracing(listener);
+    this._pageTracingRecorders.set(page, new ScreencastTracingRecorder(page.screencast, onFrame));
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
@@ -665,11 +675,6 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
     return result;
   }
   return object;
-}
-
-function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
-  const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
-  return !!metainfo?.snapshot;
 }
 
 function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string): trace.BeforeActionTraceEvent | null {
@@ -723,4 +728,60 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     result: metadata.result,
     point: metadata.point,
   };
+}
+
+const throttledRate = 200;
+const unthrottleDuration = 500;
+
+class ScreencastTracingRecorder {
+  private _screencast: Screencast;
+  private _client: ScreencastClient;
+  private _unthrottledUntil = 0;
+  private _pendingAck: ManualPromise<void> | undefined;
+  private _timer: NodeJS.Timeout | undefined;
+
+  constructor(screencast: Screencast, onFrame: (frame: types.ScreencastFrame) => void) {
+    this._screencast = screencast;
+    this._client = {
+      onFrame: (frame: types.ScreencastFrame) => {
+        const time = monotonicTime();
+
+        if (time < this._unthrottledUntil) {
+          onFrame(frame);
+          return;
+        }
+
+        // We are throttling, but frames are coming => there is another client.
+        if (this._pendingAck)
+          return;
+
+        onFrame(frame);
+        this._pendingAck = new ManualPromise<void>();
+        this._timer = setTimeout(() => this._clearPendingAck(), throttledRate);
+        return this._pendingAck;
+      },
+      gracefulClose: () => this.dispose(),
+      dispose: () => this.dispose(),
+    };
+    this._screencast.addClient(this._client);
+  }
+
+  dispose() {
+    this._screencast.removeClient(this._client);
+    this._clearPendingAck();
+  }
+
+  temporarilyDisableThrottling() {
+    this._unthrottledUntil = monotonicTime() + unthrottleDuration;
+    this._clearPendingAck();
+  }
+
+  private _clearPendingAck() {
+    this._pendingAck?.resolve();
+    this._pendingAck = undefined;
+    if (this._timer) {
+      clearTimeout(this._timer);
+      this._timer = undefined;
+    }
+  }
 }

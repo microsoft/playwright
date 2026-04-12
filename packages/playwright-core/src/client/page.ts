@@ -281,7 +281,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  video(): Video {
+  video(): Video | null {
+    // Note: we are creating Video object lazily, because we do not know
+    // BrowserContextOptions when constructing the page - it is assigned
+    // too late during launchPersistentContext.
+    if (!this._browserContext._options.recordVideo)
+      return null;
     return this._video;
   }
 
@@ -669,7 +674,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.clearConsoleMessages();
   }
 
-  async consoleMessages(options?: { filter?: 'all' | 'sinceNavigation' }): Promise<ConsoleMessage[]> {
+  async consoleMessages(options?: { filter?: 'all' | 'since-navigation' }): Promise<ConsoleMessage[]> {
     const { messages } = await this._channel.consoleMessages({ filter: options?.filter });
     return messages.map(message => new ConsoleMessage(this._platform, message, this, null));
   }
@@ -678,7 +683,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.clearPageErrors();
   }
 
-  async pageErrors(options?: { filter?: 'all' | 'sinceNavigation' }): Promise<Error[]> {
+  async pageErrors(options?: { filter?: 'all' | 'since-navigation' }): Promise<Error[]> {
     const { errors } = await this._channel.pageErrors({ filter: options?.filter });
     return errors.map(error => parseError(error));
   }
@@ -851,8 +856,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async ariaSnapshot(options: TimeoutOptions & { format?: 'ai' | 'default', track?: string, mode?: 'full' | 'incremental', depth?: number } = {}): Promise<string> {
-    const result = await this._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), format: options.format, track: options.track, mode: options.mode, depth: options.depth });
+  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, _track?: string } = {}): Promise<string> {
+    const result = await this.mainFrame()._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), track: options._track, mode: options.mode, depth: options.depth });
     return result.snapshot;
   }
 

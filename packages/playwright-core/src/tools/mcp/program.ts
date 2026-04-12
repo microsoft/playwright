@@ -17,7 +17,7 @@
 import { ProgramOption } from '../../utilsBundle';
 
 import * as mcpServer from '../utils/mcp/server';
-import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './config';
+import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
 import { createBrowser } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
@@ -66,7 +66,7 @@ export function decorateMCPCommand(command: Command) {
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)
       .option('--shared-browser-context', 'reuse the same browser context between all connected HTTP clients.')
-      .option('--snapshot-mode <mode>', 'when taking snapshots for responses, specifies the mode to use. Can be "incremental", "full", or "none". Default is incremental.')
+      .option('--snapshot-mode <mode>', 'when taking snapshots for responses, specifies the mode to use. Can be "full" or "none". Default is "full".')
       .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
       .option('--test-id-attribute <attribute>', 'specify the attribute to use for test ids, defaults to "data-testid"')
       .option('--timeout-action <timeout>', 'specify action timeout in milliseconds, defaults to 5000ms', numberParser)
@@ -91,7 +91,7 @@ export function decorateMCPCommand(command: Command) {
         if (options.caps?.includes('tracing'))
           options.caps.push('devtools');
 
-        const config = await resolveCLIConfig(options);
+        const config = await resolveCLIConfigForMCP(options);
         const tools = filteredTools(config);
         if (config.extension) {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {

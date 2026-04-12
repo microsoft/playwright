@@ -5,6 +5,7 @@
 ../mcp/
 ../../utilsBundle.ts
 ../../utils/
-../../mcpBundle.ts
+../../zodBundle.ts
+../../server/registry/index.ts
 ../../server/utils/
 ../../serverRegistry.ts

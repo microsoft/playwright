@@ -15,10 +15,7 @@
  */
 
 import fs from 'fs';
-import path from 'path';
-import os from 'os';
 
-import { Artifact } from './artifact';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Download } from './download';
 import { SdkObject } from './instrumentation';
@@ -27,6 +24,7 @@ import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
 import { BrowserInfo, serverRegistry } from '../serverRegistry';
+import { makeSocketPath } from './utils/fileUtils';
 
 import type * as types from './types';
 import type { ProxySettings } from './types';
@@ -76,7 +74,6 @@ export abstract class Browser extends SdkObject {
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
-  readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
   _closeReason: string | undefined;
   _isCollocatedWithServer: boolean = true;
@@ -159,19 +156,6 @@ export abstract class Browser extends SdkObject {
       return;
     download.artifact.reportFinished(error ? new Error(error) : undefined);
     this._downloads.delete(uuid);
-  }
-
-  _videoStarted(page: Page, videoId: string, path: string) {
-    const artifact = new Artifact(page.browserContext, path);
-    page.video = artifact;
-    this._idToVideo.set(videoId, { context: page.browserContext, artifact });
-    return artifact;
-  }
-
-  _takeVideo(videoId: string): Artifact | undefined {
-    const video = this._idToVideo.get(videoId);
-    this._idToVideo.delete(videoId);
-    return video?.artifact;
   }
 
   async startServer(title: string, options: channels.BrowserStartServerOptions): Promise<{ pipeName: string }> {
@@ -257,12 +241,7 @@ export class BrowserServer {
   }
 
   private async _socketPath() {
-    const socketName = `${this._browser.guid.slice(0, 14)}.sock`;
-    if (process.platform === 'win32')
-      return `\\\\.\\pipe\\${socketName}`;
-    const socketsDir = process.env.PLAYWRIGHT_BROWSER_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright');
-    await fs.promises.mkdir(socketsDir, { recursive: true });
-    return path.join(socketsDir, socketName);
+    return makeSocketPath('browser', this._browser.guid.slice(0, 14));
   }
 }
 

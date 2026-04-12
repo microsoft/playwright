@@ -19,12 +19,10 @@ import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
 it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
-it.fixme(({ headless, isLinux }) => isLinux && !headless, 'Stray mouse events on Linux headed mess up the tests.');
-it.fixme(({ headless, isWindows, browserName }) => isWindows && !headless && browserName === 'webkit', 'WebKit win also send stray mouse events.');
+it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
+it.fixme(({ headless }) => !headless, 'Stray mouse events mess up the tests.');
 
 it.describe('Drag and drop', () => {
-  it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
-
   it('should work @smoke', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.hover('#source');

@@ -53,6 +53,11 @@ export class Keyboard {
     this._page = page;
   }
 
+  async apiDown(progress: Progress, key: string) {
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.down(progress, key);
+  }
+
   async down(progress: Progress, key: string) {
     const description = this._keyDescriptionForString(key);
     const autoRepeat = this._pressedKeys.has(description.code);
@@ -76,6 +81,11 @@ export class Keyboard {
     return description;
   }
 
+  async apiUp(progress: Progress, key: string) {
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.up(progress, key);
+  }
+
   async up(progress: Progress, key: string) {
     const description = this._keyDescriptionForString(key);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
@@ -84,8 +94,18 @@ export class Keyboard {
     await this._raw.keyup(progress, this._pressedModifiers, key, description);
   }
 
-  async insertText(progress: Progress, text: string) {
+  async apiInsertText(progress: Progress, text: string) {
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this._insertText(progress, text);
+  }
+
+  async _insertText(progress: Progress, text: string) {
     await this._raw.sendText(progress, text);
+  }
+
+  async apiType(progress: Progress, text: string, options?: { delay?: number }) {
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.type(progress, text, options);
   }
 
   async type(progress: Progress, text: string, options?: { delay?: number }) {
@@ -96,9 +116,14 @@ export class Keyboard {
       } else {
         if (delay)
           await progress.wait(delay);
-        await this.insertText(progress, char);
+        await this._insertText(progress, char);
       }
     }
+  }
+
+  async apiPress(progress: Progress, key: string, options: { delay?: number } = {}) {
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.press(progress, key, options);
   }
 
   async press(progress: Progress, key: string, options: { delay?: number } = {}) {
@@ -188,6 +213,12 @@ export class Mouse {
     return { x: this._x, y: this._y };
   }
 
+  async apiMove(progress: Progress, x: number, y: number, options: { steps?: number, forClick?: boolean } = {}) {
+    progress.metadata.point = { x, y };
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.move(progress, x, y, options);
+  }
+
   async move(progress: Progress, x: number, y: number, options: { steps?: number, forClick?: boolean } = {}) {
     const { steps = 1 } = options;
     const fromX = this._x;
@@ -201,6 +232,12 @@ export class Mouse {
     }
   }
 
+  async apiDown(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
+    progress.metadata.point = this.currentPoint();
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.down(progress, options);
+  }
+
   async down(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = button;
@@ -208,11 +245,23 @@ export class Mouse {
     await this._raw.down(progress, this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
   }
 
+  async apiUp(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
+    progress.metadata.point = this.currentPoint();
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.up(progress, options);
+  }
+
   async up(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = 'none';
     this._buttons.delete(button);
     await this._raw.up(progress, this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
+  }
+
+  async apiClick(progress: Progress, x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number, steps?: number } = {}) {
+    progress.metadata.point = { x, y };
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.click(progress, x, y, options);
   }
 
   async click(progress: Progress, x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number, steps?: number } = {}) {
@@ -241,7 +290,8 @@ export class Mouse {
     }
   }
 
-  async wheel(progress: Progress, deltaX: number, deltaY: number) {
+  async apiWheel(progress: Progress, deltaX: number, deltaY: number) {
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
     await this._raw.wheel(progress, this._x, this._y, this._buttons, this._keyboard._modifiers(), deltaX, deltaY);
   }
 }
@@ -319,9 +369,14 @@ export class Touchscreen {
     this._page = page;
   }
 
-  async tap(progress: Progress, x: number, y: number) {
+  async apiTap(progress: Progress, x: number, y: number) {
     if (!this._page.browserContext._options.hasTouch)
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
+    await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
+    await this.tap(progress, x, y);
+  }
+
+  async tap(progress: Progress, x: number, y: number) {
     await this._raw.tap(progress, x, y, this._page.keyboard._modifiers());
   }
 }

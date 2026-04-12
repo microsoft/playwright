@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { declareCommand } from './command';
 
 import type { AnyCommandSchema } from './command';
@@ -57,7 +57,7 @@ const open = declareCommand({
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
   }),
   toolName: ({ url }) => url ? 'browser_navigate' : 'browser_snapshot',
-  toolParams: ({ url }) => ({ url: url || 'about:blank' }),
+  toolParams: ({ url }) => url ? ({ url: url || 'about:blank' }) : { filename: '<auto>' },
 });
 
 const attach = declareCommand({
@@ -72,7 +72,7 @@ const attach = declareCommand({
     session: z.string().optional().describe('Session name alias (defaults to the attach target name)'),
   }),
   toolName: 'browser_snapshot',
-  toolParams: () => ({}),
+  toolParams: () => ({ filename: '<auto>' }),
 });
 
 const close = declareCommand({
@@ -361,8 +361,11 @@ const evaluate = declareCommand({
     func: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
     element: z.string().optional().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
+  options: z.object({
+    filename: z.string().optional().describe('Save evaluation result to a file instead of returning it in the response.'),
+  }),
   toolName: 'browser_evaluate',
-  toolParams: ({ func, element }) => ({ function: func, ...asRef(element) }),
+  toolParams: ({ func, element, filename }) => ({ function: func, filename, ...asRef(element) }),
 });
 
 const dialogAccept = declareCommand({
@@ -402,10 +405,13 @@ const runCode = declareCommand({
   description: 'Run Playwright code snippet',
   category: 'devtools',
   args: z.object({
-    code: z.string().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
+    code: z.string().optional().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
+  }),
+  options: z.object({
+    filename: z.string().optional().describe('Load code from the specified file.'),
   }),
   toolName: 'browser_run_code',
-  toolParams: ({ code }) => ({ code }),
+  toolParams: ({ code, filename }) => ({ code, filename }),
 });
 
 // Tabs
@@ -791,20 +797,40 @@ const videoStart = declareCommand({
   name: 'video-start',
   description: 'Start video recording',
   category: 'devtools',
-  args: z.object({}),
+  args: z.object({
+    filename: z.string().optional().describe('Filename to save the video.'),
+  }),
+  options: z.object({
+    size: z.string().optional().describe('Video frame size, e.g. "800x600". If not specified, the size of the recorded video will fit 800x800.'),
+  }),
   toolName: 'browser_start_video',
-  toolParams: () => ({}),
+  toolParams: ({ filename, size }) => {
+    const parsedSize = size ? size.split('x').map(Number) : undefined;
+    return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined };
+  }
 });
 
 const videoStop = declareCommand({
   name: 'video-stop',
   description: 'Stop video recording',
   category: 'devtools',
-  options: z.object({
-    filename: z.string().optional().describe('Filename to save the video.'),
-  }),
   toolName: 'browser_stop_video',
-  toolParams: ({ filename }) => ({ filename }),
+  toolParams: () => ({}),
+});
+
+const videoChapter = declareCommand({
+  name: 'video-chapter',
+  description: 'Add a chapter marker to the video recording',
+  category: 'devtools',
+  args: z.object({
+    title: z.string().describe('Chapter title.'),
+  }),
+  options: z.object({
+    description: z.string().optional().describe('Chapter description.'),
+    duration: numberArg.optional().describe('Duration in milliseconds to show the chapter card.'),
+  }),
+  toolName: 'browser_video_chapter',
+  toolParams: ({ title, description, duration }) => ({ title, description, duration }),
 });
 
 const devtoolsShow = declareCommand({
@@ -898,7 +924,7 @@ const install = declareCommand({
   category: 'install',
   args: z.object({}),
   options: z.object({
-    skills: z.boolean().optional().describe('Install skills for Claude / GitHub Copilot'),
+    skills: z.string().optional().describe('Install skills to ".claude" (default) or ".agents" dir'),
   }),
   toolName: '',
   toolParams: () => ({}),
@@ -1021,6 +1047,7 @@ const commandsArray: AnyCommandSchema[] = [
   tracingStop,
   videoStart,
   videoStop,
+  videoChapter,
   devtoolsShow,
   pauseAt,
   resume,

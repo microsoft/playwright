@@ -13,7 +13,6 @@ XPIDL_MODULE = 'jugglerscreencast'
 SOURCES += [
     'HeadlessWindowCapturer.cpp',
     'nsScreencastService.cpp',
-    'ScreencastEncoder.cpp',
 ]
 
 XPCOM_MANIFESTS += [
@@ -31,17 +30,6 @@ LOCAL_INCLUDES += [
 LOCAL_INCLUDES += [
     '/widget',
     '/widget/headless',
-]
-
-LOCAL_INCLUDES += [
-    '/third_party/aom/third_party/libwebm',
-]
-
-SOURCES += [
-    '/third_party/aom/third_party/libwebm/mkvmuxer/mkvmuxer.cc',
-    '/third_party/aom/third_party/libwebm/mkvmuxer/mkvmuxerutil.cc',
-    '/third_party/aom/third_party/libwebm/mkvmuxer/mkvwriter.cc',
-    'WebMFileWriter.cpp',
 ]
 
 include('/dom/media/webrtc/third_party_build/webrtc.mozbuild')

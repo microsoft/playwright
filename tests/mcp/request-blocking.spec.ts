@@ -20,27 +20,31 @@ import { test, expect } from './fixtures';
 const BLOCK_MESSAGE = /Blocked by Web Inspector|NS_ERROR_FAILURE|net::ERR_BLOCKED_BY_CLIENT/g;
 
 const fetchPage = async (client: Client, url: string) => {
-  const result = await client.callTool({
+  return await client.callTool({
     name: 'browser_navigate',
     arguments: {
       url,
     },
   });
+};
 
+const fetchPageText = async (client: Client, url: string) => {
+  const result = await fetchPage(client, url);
   return JSON.stringify(result, null, 2);
 };
 
 test('default to allow all', async ({ server, client }) => {
   server.setContent('/ppp', 'content:PPP', 'text/html');
-  const result = await fetchPage(client, server.PREFIX + '/ppp');
-  expect(result).toContain('content:PPP');
+  expect(await fetchPage(client, server.PREFIX + '/ppp')).toHaveResponse({
+    snapshot: expect.stringContaining('content:PPP'),
+  });
 });
 
 test('blocked works (hostname)', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--blocked-origins', 'microsoft.com;example.com;playwright.dev']
   });
-  const result = await fetchPage(client, 'https://example.com/');
+  const result = await fetchPageText(client, 'https://example.com/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -48,7 +52,7 @@ test('blocked works (origin)', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--blocked-origins', 'https://microsoft.com;https://example.com;https://playwright.dev']
   });
-  const result = await fetchPage(client, 'https://example.com/');
+  const result = await fetchPageText(client, 'https://example.com/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -57,8 +61,9 @@ test('allowed works (hostname)', async ({ server, startClient }) => {
   const { client } = await startClient({
     args: ['--allowed-origins', `microsoft.com;${new URL(server.PREFIX).host};playwright.dev`]
   });
-  const result = await fetchPage(client, server.PREFIX + '/ppp');
-  expect(result).toContain('content:PPP');
+  expect(await fetchPage(client, server.PREFIX + '/ppp')).toHaveResponse({
+    snapshot: expect.stringContaining('content:PPP'),
+  });
 });
 
 test('allowed works (origin)', async ({ server, startClient }) => {
@@ -66,8 +71,9 @@ test('allowed works (origin)', async ({ server, startClient }) => {
   const { client } = await startClient({
     args: ['--allowed-origins', `https://microsoft.com;${new URL(server.PREFIX).origin};https://playwright.dev`]
   });
-  const result = await fetchPage(client, server.PREFIX + '/ppp');
-  expect(result).toContain('content:PPP');
+  expect(await fetchPage(client, server.PREFIX + '/ppp')).toHaveResponse({
+    snapshot: expect.stringContaining('content:PPP'),
+  });
 });
 
 test('blocked takes precedence (hostname)', async ({ startClient }) => {
@@ -77,7 +83,7 @@ test('blocked takes precedence (hostname)', async ({ startClient }) => {
       '--allowed-origins', 'example.com',
     ],
   });
-  const result = await fetchPage(client, 'https://example.com/');
+  const result = await fetchPageText(client, 'https://example.com/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -88,7 +94,7 @@ test('blocked takes precedence (origin)', async ({ startClient }) => {
       '--allowed-origins', 'https://example.com',
     ],
   });
-  const result = await fetchPage(client, 'https://example.com/');
+  const result = await fetchPageText(client, 'https://example.com/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -96,7 +102,7 @@ test('allowed without blocked blocks all non-explicitly specified origins (hostn
   const { client } = await startClient({
     args: ['--allowed-origins', 'playwright.dev'],
   });
-  const result = await fetchPage(client, 'https://example.com/');
+  const result = await fetchPageText(client, 'https://example.com/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -104,7 +110,7 @@ test('allowed without blocked blocks all non-explicitly specified origins (origi
   const { client } = await startClient({
     args: ['--allowed-origins', 'https://playwright.dev'],
   });
-  const result = await fetchPage(client, 'https://example.com/');
+  const result = await fetchPageText(client, 'https://example.com/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -113,8 +119,9 @@ test('blocked without allowed allows non-explicitly specified origins (hostname)
   const { client } = await startClient({
     args: ['--blocked-origins', 'example.com'],
   });
-  const result = await fetchPage(client, server.PREFIX + '/ppp');
-  expect(result).toContain('content:PPP');
+  expect(await fetchPage(client, server.PREFIX + '/ppp')).toHaveResponse({
+    snapshot: expect.stringContaining('content:PPP'),
+  });
 });
 
 test('blocked without allowed allows non-explicitly specified origins (origin)', async ({ server, startClient }) => {
@@ -122,8 +129,9 @@ test('blocked without allowed allows non-explicitly specified origins (origin)',
   const { client } = await startClient({
     args: ['--blocked-origins', 'https://example.com'],
   });
-  const result = await fetchPage(client, server.PREFIX + '/ppp');
-  expect(result).toContain('content:PPP');
+  expect(await fetchPage(client, server.PREFIX + '/ppp')).toHaveResponse({
+    snapshot: expect.stringContaining('content:PPP'),
+  });
 });
 
 test('allowed works (wildcard port)', async ({ server, startClient }) => {
@@ -131,15 +139,16 @@ test('allowed works (wildcard port)', async ({ server, startClient }) => {
   const { client } = await startClient({
     args: ['--allowed-origins', 'http://localhost:*']
   });
-  const result = await fetchPage(client, server.PREFIX + '/ppp');
-  expect(result).toContain('content:PPP');
+  expect(await fetchPage(client, server.PREFIX + '/ppp')).toHaveResponse({
+    snapshot: expect.stringContaining('content:PPP'),
+  });
 });
 
 test('allowed blocks different hostname (wildcard port)', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--allowed-origins', 'http://localhost:*'],
   });
-  const result = await fetchPage(client, 'http://example.com/');
+  const result = await fetchPageText(client, 'http://example.com/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -147,7 +156,7 @@ test('allowed blocks different protocol (wildcard port)', async ({ startClient }
   const { client } = await startClient({
     args: ['--allowed-origins', 'http://localhost:*'],
   });
-  const result = await fetchPage(client, 'https://localhost:8080/');
+  const result = await fetchPageText(client, 'https://localhost:8080/');
   expect(result).toMatch(BLOCK_MESSAGE);
 });
 
@@ -156,6 +165,6 @@ test('blocked works (wildcard port)', async ({ server, startClient }) => {
   const { client } = await startClient({
     args: ['--blocked-origins', `http://${new URL(server.PREFIX).host.split(':')[0]}:*`]
   });
-  const result = await fetchPage(client, server.PREFIX + '/ppp');
+  const result = await fetchPageText(client, server.PREFIX + '/ppp');
   expect(result).toMatch(BLOCK_MESSAGE);
 });

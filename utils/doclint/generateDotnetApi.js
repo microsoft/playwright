@@ -86,6 +86,7 @@ classNameMap.set('Date', 'DateTime');
 classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
+classNameMap.set('Disposable', 'IAsyncDisposable');
 
 /**
  *
@@ -132,6 +133,8 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
   if (name === 'TimeoutException')
+    return;
+  if (name === 'IAsyncDisposable')
     return;
 
   const body = [];
@@ -323,7 +326,10 @@ function renderMember(member, parent, options, out) {
     renderMemberDoc(member, out);
     if (member.deprecated)
       out.push(`[System.Obsolete]`);
-    out.push(`event EventHandler<${type}> ${name};`);
+    if (type === 'void')
+      out.push(`event EventHandler ${name};`);
+    else
+      out.push(`event EventHandler<${type}> ${name};`);
     return;
   }
 
@@ -382,6 +388,11 @@ function getPropertyOverloads(type, member, name, parent) {
  * @param {*} parent
  */
 function generateNameDefault(member, name, t, parent) {
+  if (t.structName) {
+    registerModelType(t.structName, t);
+    return t.structName;
+  }
+
   if (!t.properties
     && !t.templates
     && !t.union
@@ -418,27 +429,6 @@ function generateNameDefault(member, name, t, parent) {
         if (attemptedName.endsWith('s')
           && !['properties', 'httpcredentials'].includes(attemptedName.toLowerCase()))
           attemptedName = attemptedName.substring(0, attemptedName.length - 1);
-
-        // For some of these we don't want to generate generic types.
-        // For some others we simply did not have the code that was deduping the names.
-        if (attemptedName === 'BoundingBox')
-          attemptedName = `${parent.name}BoundingBoxResult`;
-        if (attemptedName === 'BrowserContextCookie')
-          attemptedName = 'BrowserContextCookiesResult';
-        if (attemptedName === 'File' || (parent.name === 'FormData' && ['SetValue', 'AppendValue'].includes(attemptedName)))
-          attemptedName = `FilePayload`;
-        if (attemptedName === 'Size')
-          attemptedName = 'RequestSizesResult';
-        if (attemptedName === 'ViewportSize' && parent.name === 'Page')
-          attemptedName = 'PageViewportSizeResult';
-        if (attemptedName === 'SecurityDetail')
-          attemptedName = 'ResponseSecurityDetailsResult';
-        if (attemptedName === 'ServerAddr')
-          attemptedName = 'ResponseServerAddrResult';
-        if (attemptedName === 'Timing')
-          attemptedName = 'RequestTimingResult';
-        if (attemptedName === 'HeadersArray')
-          attemptedName = 'Header';
 
         const probableType = modelTypes.get(attemptedName);
         if ((probableType && typesDiffer(t, probableType))
@@ -839,6 +829,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
 function registerModelType(typeName, type) {
   if (['object', 'string', 'int', 'long'].includes(typeName))
     return;
+
   if (typeName.endsWith('Option'))
     return;
 

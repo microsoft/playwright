@@ -25,11 +25,13 @@ import type { ContextConfig } from './context';
 export class SessionLog {
   private _folder: string;
   private _file: string;
+  private _cwd: string;
   private _sessionFileQueue = Promise.resolve();
 
-  constructor(sessionFolder: string) {
+  constructor(sessionFolder: string, cwd: string) {
     this._folder = sessionFolder;
     this._file = path.join(this._folder, 'session.md');
+    this._cwd = cwd;
   }
 
   static async create(config: ContextConfig, cwd: string): Promise<SessionLog> {
@@ -37,11 +39,11 @@ export class SessionLog {
     await fs.promises.mkdir(sessionFolder, { recursive: true });
     // eslint-disable-next-line no-console
     console.error(`Session: ${sessionFolder}`);
-    return new SessionLog(sessionFolder);
+    return new SessionLog(sessionFolder, cwd);
   }
 
   logResponse(toolName: string, toolArgs: Record<string, any>, responseObject: any) {
-    const parsed = { ...parseResponse(responseObject), text: undefined };
+    const parsed = { ...parseResponse(responseObject, this._cwd), text: undefined };
     const lines: string[] = [''];
     lines.push(
         `### Tool call: ${toolName}`,

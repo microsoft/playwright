@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'playwright-core/lib/bootstrap';
 import { ManualPromise, setTimeOrigin, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { serializeError } from '../util';

@@ -61,7 +61,7 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
 \\{
   "code": "await page.goto\\('http://localhost:${server.PORT}'\\);",
   "page": "- Page URL: http://localhost:${server.PORT}/\\\\n- Page Title: Title",
-  "snapshot": "\\\`\\\`\\\`yaml\\\\n- button \\\\"Submit\\\\" \\[ref=e2\\]\\\\n\\\`\\\`\\\`"
+  "snapshot": "- button \\\\"Submit\\\\" \\[ref=e2\\]"
 \\}
 \\\`\\\`\\\`
 
@@ -78,7 +78,7 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
 \\{
   "code": "await page.getByRole\\('button', \\{ name: 'Submit' \\}\\).click\\(\\);",
   "page": "- Page URL: http://localhost:${server.PORT}/\\\\n- Page Title: Title",
-  "snapshot": "\\\`\\\`\\\`yaml\\\\n- <changed> button \\\\"Submit\\\\" \\[active\\] \\[ref=e2\\]\\\\n\\\`\\\`\\\`"
+  "snapshot": "- button \\\\"Submit\\\\" \\[active\\] \\[ref=e2\\]"
 \\}
 \\\`\\\`\\\`
 `.trim()));

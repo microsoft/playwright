@@ -107,6 +107,38 @@ it('custom user agent for download', async ({ server, contextFactory, browserVer
   expect(req.headers['user-agent']).toBe('MyCustomUA');
 });
 
+it('should override navigator.platform to match custom user agent', async ({ browser, server }) => {
+  {
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    expect.soft(await page.evaluate(() => navigator.platform)).toBe('Win32');
+    await context.close();
+  }
+
+  {
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    expect.soft(await page.evaluate(() => navigator.platform)).toBe('MacIntel');
+    await context.close();
+  }
+
+  {
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+    });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    expect.soft(await page.evaluate(() => navigator.platform)).toBe('Linux armv8l');
+    await context.close();
+  }
+});
+
 it('should work for navigator.userAgentData and sec-ch-ua headers', async ({ playwright, browserName, browser, server }) => {
   it.skip(browserName !== 'chromium', 'This API is Chromium-only');
 
@@ -139,6 +171,35 @@ it('should work for navigator.userAgentData and sec-ch-ua headers', async ({ pla
     expect.soft(await page.evaluate(() => (window.navigator as any).userAgentData.toJSON())).toEqual(
         expect.objectContaining({ mobile: true, platform: 'Android' })
     );
+    expect.soft(await page.evaluate(() => navigator.platform)).toBe('Linux armv8l');
+    await context.close();
+  }
+
+  {
+    const context = await browser.newContext(playwright.devices['Desktop Chrome']);
+    const page = await context.newPage();
+    const [request] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.goto(server.EMPTY_PAGE),
+    ]);
+    expect.soft(request.headers['sec-ch-ua-platform']).toBe(`"Windows"`);
+    expect.soft(await page.evaluate(() => (window.navigator as any).userAgentData.toJSON())).toEqual(
+        expect.objectContaining({ mobile: false, platform: 'Windows' })
+    );
+    expect.soft(await page.evaluate(() => navigator.platform)).toBe('Win32');
+    await context.close();
+  }
+
+  {
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    expect.soft(await page.evaluate(() => (window.navigator as any).userAgentData.toJSON())).toEqual(
+        expect.objectContaining({ platform: 'macOS' })
+    );
+    expect.soft(await page.evaluate(() => navigator.platform)).toBe('MacIntel');
     await context.close();
   }
 });

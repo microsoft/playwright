@@ -35,8 +35,9 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
-import { Screencast } from './screencast';
+import { Overlay } from './overlay';
 import { NonRecoverableDOMError } from './dom';
+import { Screencast } from './screencast';
 
 import type { Artifact } from './artifact';
 import type { BrowserContextEventMap } from './browserContext';
@@ -84,8 +85,8 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
-  startScreencast(options: { width: number, height: number, quality: number }): Promise<void>;
-  stopScreencast(): Promise<void>;
+  startScreencast(options: { width: number, height: number, quality: number }): void;
+  stopScreencast(): void;
 
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
@@ -194,6 +195,7 @@ export class Page extends SdkObject<PageEventMap> {
   private _locatorHandlerRunningCounter = 0;
   private _networkRequests: network.Request[] = [];
 
+  readonly overlay: Overlay;
   readonly screencast: Screencast;
   _closeReason: string | undefined;
 
@@ -207,6 +209,7 @@ export class Page extends SdkObject<PageEventMap> {
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
     this.screenshotter = new Screenshotter(this);
     this.frameManager = new frames.FrameManager(this);
+    this.overlay = new Overlay(this);
     this.screencast = new Screencast(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
@@ -284,7 +287,8 @@ export class Page extends SdkObject<PageEventMap> {
 
   _didClose() {
     this.frameManager.dispose();
-    this.screencast.stopFrameThrottler();
+    this.screencast.dispose();
+    this.overlay.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
@@ -296,7 +300,8 @@ export class Page extends SdkObject<PageEventMap> {
 
   _didCrash() {
     this.frameManager.dispose();
-    this.screencast.stopFrameThrottler();
+    this.screencast.dispose();
+    this.overlay.dispose();
     this.emit(Page.Events.Crash);
     this._crashed = true;
     this.instrumentation.onPageClose(this);
@@ -412,7 +417,7 @@ export class Page extends SdkObject<PageEventMap> {
     this._consoleMessages.length = 0;
   }
 
-  consoleMessages(filter?: 'all' | 'sinceNavigation') {
+  consoleMessages(filter?: 'all' | 'since-navigation') {
     if (filter === 'all')
       return this._consoleMessages;
     const marked = this._consoleMessages.findLastIndex(m => (m as any)[navigationMarkSymbol]);
@@ -438,7 +443,7 @@ export class Page extends SdkObject<PageEventMap> {
     this._pageErrors.length = 0;
   }
 
-  pageErrors(filter?: 'all' | 'sinceNavigation') {
+  pageErrors(filter?: 'all' | 'since-navigation') {
     if (filter === 'all')
       return this._pageErrors.map(e => e.error);
     const marked = this._pageErrors.findLastIndex(e => (e as any)[navigationMarkSymbol]);
@@ -794,9 +799,14 @@ export class Page extends SdkObject<PageEventMap> {
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     if (this._closedState === 'closed')
       return;
+
     if (options.reason)
       this._closeReason = options.reason;
     const runBeforeUnload = !!options.runBeforeUnload;
+
+    if (!runBeforeUnload)
+      await this.screencast.handlePageOrContextClose();
+
     if (this._closedState !== 'closing') {
       // If runBeforeUnload is true, we don't know if we will close, so don't modify the state
       if (!runBeforeUnload)
@@ -893,27 +903,6 @@ export class Page extends SdkObject<PageEventMap> {
 
   async hideHighlight() {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
-  }
-
-  async ariaSnapshot(progress: Progress, options: { format?: 'ai' | 'default', track?: string, mode?: 'full' | 'incremental', doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
-    if (options.selector && options.track)
-      throw new Error('Cannot specify both selector and track options');
-
-    let frame: frames.Frame;
-    let info: SelectorInfo | undefined;
-    if (options.selector) {
-      const resolved = await this.mainFrame().selectors.resolveInjectedForSelector(options.selector, { strict: true });
-      if (!resolved)
-        throw new Error(`Selector "${options.selector}" did not resolve to any element`);
-      frame = resolved.frame;
-      info = resolved.info;
-    } else {
-      frame = this.mainFrame();
-    }
-
-    const result = await ariaSnapshotForFrame(progress, frame, { ...options, info });
-    const snapshot = options.mode === 'incremental' && result.incremental !== undefined ? result.incremental.join('\n') : result.full.join('\n');
-    return { snapshot };
   }
 
   async setDockTile(image: Buffer) {
@@ -1057,7 +1046,7 @@ export class InitScript extends DisposableObject {
   }
 }
 
-async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
+export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
@@ -1075,7 +1064,7 @@ async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, opt
           return true;
         return injected.incrementalAriaSnapshot(node, options);
       }, {
-        format: options.format ?? 'default',
+        mode: options.mode ?? 'default',
         refPrefix: frame.seq ? 'f' + frame.seq : '',
         track: options.track,
         doNotRenderActive: options.doNotRenderActive,
@@ -1094,7 +1083,13 @@ async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, opt
     }
   });
 
-  const childSnapshotPromises = snapshot.iframeRefs.map(ref => ariaSnapshotFrameRef(progress, frame, ref, options));
+  // Only fetch child snapshots for iframes that were actually rendered (not filtered by depth).
+  const renderedIframeRefs = snapshot.iframeRefs.filter(ref => ref in snapshot.iframeDepths);
+  const childSnapshotPromises = renderedIframeRefs.map(ref => {
+    const iframeDepth = snapshot.iframeDepths[ref];
+    const childDepth = options.depth ? options.depth - iframeDepth - 1 : undefined;
+    return ariaSnapshotFrameRef(progress, frame, ref, { ...options, depth: childDepth });
+  });
   const childSnapshots = await Promise.all(childSnapshotPromises);
 
   const full = [];
@@ -1102,12 +1097,12 @@ async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, opt
 
   if (snapshot.incremental !== undefined) {
     incremental = snapshot.incremental.split('\n');
-    for (let i = 0; i < snapshot.iframeRefs.length; i++) {
+    for (let i = 0; i < renderedIframeRefs.length; i++) {
       const childSnapshot = childSnapshots[i];
       if (childSnapshot.incremental)
         incremental.push(...childSnapshot.incremental);
       else if (childSnapshot.full.length)
-        incremental.push('- <changed> iframe [ref=' + snapshot.iframeRefs[i] + ']:', ...childSnapshot.full.map(l => '  ' + l));
+        incremental.push('- <changed> iframe [ref=' + renderedIframeRefs[i] + ']:', ...childSnapshot.full.map(l => '  ' + l));
     }
   }
 
@@ -1120,7 +1115,7 @@ async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, opt
 
     const leadingSpace = match[1];
     const ref = match[2];
-    const childSnapshot = childSnapshots[snapshot.iframeRefs.indexOf(ref)] ?? { full: [] };
+    const childSnapshot = childSnapshots[renderedIframeRefs.indexOf(ref)] ?? { full: [] };
     full.push(childSnapshot.full.length ? line + ':' : line);
     full.push(...childSnapshot.full.map(l => leadingSpace + '  ' + l));
   }
@@ -1128,7 +1123,7 @@ async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, opt
   return { full, incremental };
 }
 
-async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, mode?: 'full' | 'incremental' }): Promise<{ full: string[], incremental?: string[] }> {
+async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, depth?: number }): Promise<{ full: string[], incremental?: string[] }> {
   const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
   const frameBodySelector = `${frameSelector} >> body`;
   const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));

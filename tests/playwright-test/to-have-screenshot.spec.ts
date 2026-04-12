@@ -1584,3 +1584,20 @@ test.describe('update-snapshots', () => {
     expect(comparePNGs(newBaseline, EXPECTED_SNAPSHOT)).not.toBe(null);
   });
 });
+
+test('should hide overlays during toHaveScreenshot', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    '__screenshots__/a.spec.js/snapshot.png': whiteImage,
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await page.screencast.showOverlay('<div style="position:absolute;inset:0;background:red"></div>');
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});

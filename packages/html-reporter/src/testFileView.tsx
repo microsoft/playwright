@@ -16,7 +16,7 @@
 
 import type { TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
-import { msToString } from './utils';
+import { msToString } from '@isomorphic/formatUtils';
 import { Chip } from './chip';
 import { Link, LinkBadge, testResultHref, TraceLink, useSearchParams } from './links';
 import { statusIcon } from './statusIcon';

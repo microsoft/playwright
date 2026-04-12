@@ -17,7 +17,8 @@
 import './callLog.css';
 import * as React from 'react';
 import type { CallLog } from './recorderTypes';
-import { clsx, msToString } from '@web/uiUtils';
+import { clsx } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 

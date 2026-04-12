@@ -15,7 +15,8 @@
 */
 
 import type { ActionTraceEvent } from '@trace/trace';
-import { clsx, msToString } from '@web/uiUtils';
+import { clsx } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import './actionList.css';
 import { stats, buildActionTree } from '@isomorphic/trace/traceModel';
@@ -26,7 +27,7 @@ import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trac
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
-import { methodMetainfo } from '@isomorphic/protocolMetainfo';
+import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 
 export interface ActionListProps {
@@ -162,7 +163,7 @@ export const renderAction = (
 };
 
 export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Language): { elements: React.ReactNode[], title: string } {
-  let titleFormat = action.title ?? methodMetainfo.get(action.class + '.' + action.method)?.title ?? action.method;
+  let titleFormat = action.title ?? getMetainfo({ type: action.class, method: action.method })?.title ?? action.method;
   titleFormat = titleFormat.replace(/\n/g, ' ');
 
   const elements: React.ReactNode[] = [];

@@ -1,3 +1,13 @@
 [*]
 ../../utils/isomorphic/**
 ../../server/utils/zipFile.ts
+./*.ts
+
+[traceSnapshot.ts]
+../../..
+../../utils
+../backend/browserBackend.ts
+../backend/tools.ts
+../cli-daemon/command.ts
+../cli-daemon/commands.ts
+../cli-client/minimist.ts

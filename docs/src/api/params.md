@@ -126,7 +126,7 @@ and Linux and to "Meta" on macOS.
 Defaults to `left`.
 
 ## input-files
-- `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
+- `files` <[path]|[Array]<[path]>|[Object=FilePayload]|[Array]<[Object=FilePayload]>>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -804,12 +804,16 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 ## context-option-recordvideo
 * langs: js
 - `recordVideo` <[Object]>
-  - `dir` <[path]> Path to the directory to put videos into.
-  - `size` ?<[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
+  - `dir` ?<[path]> Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see [`method: BrowserType.launch`] options).
+  - `size` ?<[Object=RecordVideoSize]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
     scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
     Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
+  - `annotate` ?<[Object=VideoAnnotation]> If specified, enables visual annotations on interacted elements during video recording.
+    - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
+    - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
+    - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.

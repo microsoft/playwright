@@ -50,11 +50,7 @@ function serializeClass(clazz) {
   const result = { name: clazz.name, spec: clazz.spec };
   if (clazz.extends)
     result.extends = clazz.extends;
-  result.langs = clazz.langs;
-  if (result.langs && result.langs.types) {
-    for (const key in result.langs.types)
-      result.langs.types[key] = serializeType(result.langs.types[key]);
-  }
+  serializeLangs(clazz, result);
   if (clazz.comment)
     result.comment = clazz.comment;
   if (clazz.since)
@@ -72,17 +68,38 @@ function serializeMember(member) {
   result.args = member.argsArray.map(serializeProperty);
   if (member.type)
     result.type = serializeType(member.type);
+  serializeLangs(member, result);
   return result;
+}
+
+/**
+ * @param {import('./documentation').Member | import('./documentation').Class} from
+ * @param {any} to
+ */
+function serializeLangs(from, to) {
+  if (!from.langs)
+    return;
+  to.langs = { ...from.langs };
+  sanitize(to.langs);
+  if (from.langs.overrides) {
+    for (const key in from.langs.overrides)
+      to.langs.overrides[key] = serializeMember(from.langs.overrides[key]);
+  }
+  if (from.langs.types) {
+    for (const key in from.langs.types)
+      to.langs.types[key] = serializeType(from.langs.types[key]);
+  }
 }
 
 /**
  * @param {import('./documentation').Member} arg
  */
 function serializeProperty(arg) {
-  const result = { ...arg, parent: undefined };
+  const result = { ...arg };
   sanitize(result);
   if (arg.type)
     result.type = serializeType(arg.type);
+  serializeLangs(arg, result);
   return result;
 }
 
@@ -94,6 +111,7 @@ function sanitize(result) {
   delete result.argsArray;
   delete result.clazz;
   delete result.enclosingMethod;
+  delete result.parent;
 }
 
 /**
@@ -102,6 +120,7 @@ function sanitize(result) {
 function serializeType(type) {
   /** @type {any} */
   const result = { ...type };
+  sanitize(result);
   if (type.properties)
     result.properties = type.properties.map(serializeProperty);
   if (type.union)

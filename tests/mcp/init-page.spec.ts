@@ -32,7 +32,7 @@ test('--init-page', async ({ startClient }) => {
     name: 'browser_snapshot',
     arguments: {},
   })).toHaveResponse({
-    snapshot: expect.stringContaining('Hello world'),
+    inlineSnapshot: expect.stringContaining('Hello world'),
   });
 });
 

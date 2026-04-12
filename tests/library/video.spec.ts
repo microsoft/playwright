@@ -14,77 +14,15 @@
  * limitations under the License.
  */
 
-import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
-import { registry } from '../../packages/playwright-core/lib/server';
+import { jpegjs } from 'playwright-core/lib/utilsBundle';
 import { expect, browserTest as it } from '../config/browserTest';
 import { parseTraceRaw, rafraf } from '../config/utils';
-import { kTargetClosedErrorMessage } from '../config/errors';
-
-export class VideoPlayer {
-  fileName: string;
-  output: string;
-  duration: number;
-  frames: number;
-  videoWidth: number;
-  videoHeight: number;
-  cache = new Map<number, any>();
-
-  constructor(fileName: string) {
-    this.fileName = fileName;
-    const ffmpeg = registry.findExecutable('ffmpeg')!.executablePathOrDie('javascript');
-    // Force output frame rate to 25 fps as otherwise it would produce one image per timebase unit
-    // which is 1 / (25 * 1000).
-    this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%04d.png`]).stderr.toString();
-
-    const lines = this.output.split('\n');
-    let framesLine = lines.find(l => l.startsWith('frame='))!;
-    if (!framesLine)
-      throw new Error(`No frame data in the output:\n${this.output}`);
-    framesLine = framesLine.substring(framesLine.lastIndexOf('frame='));
-    const framesMatch = framesLine.match(/frame=\s+(\d+)/);
-    const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
-    const resolutionMatch = streamLine.match(/, (\d+)x(\d+),/);
-    const durationMatch = lines.find(l => l.trim().startsWith('Duration'))!.match(/Duration: (\d+):(\d\d):(\d\d.\d\d)/);
-    this.duration = (((parseInt(durationMatch![1], 10) * 60) + parseInt(durationMatch![2], 10)) * 60 + parseFloat(durationMatch![3])) * 1000;
-    this.frames = parseInt(framesMatch![1], 10);
-    this.videoWidth = parseInt(resolutionMatch![1], 10);
-    this.videoHeight = parseInt(resolutionMatch![2], 10);
-  }
-
-  findFrame(framePredicate: (pixels: Buffer) => boolean, offset?: { x: number, y: number }): any |undefined {
-    for (let f = 1; f <= this.frames; ++f) {
-      const frame = this.frame(f, offset);
-      if (framePredicate(frame.data))
-        return frame;
-    }
-  }
-
-  seekLastFrame(offset?: { x: number, y: number }): any {
-    return this.frame(this.frames, offset);
-  }
-
-  frame(frame: number, offset = { x: 10, y: 10 }): any {
-    if (!this.cache.has(frame)) {
-      const gap = '0'.repeat(4 - String(frame).length);
-      const buffer = fs.readFileSync(`${this.fileName}-${gap}${frame}.png`);
-      this.cache.set(frame, PNG.sync.read(buffer));
-    }
-    const decoded = this.cache.get(frame);
-    const dst = new PNG({ width: 10, height: 10 });
-    PNG.bitblt(decoded, dst, offset.x, offset.y, 10, 10, 0, 0);
-    return dst;
-  }
-}
+import { VideoPlayer } from './videoPlayer';
 
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
-
-function isAlmostWhite({ r, g, b, alpha }: Pixel): boolean {
-  return r > 185 && g > 185 && b > 185 && alpha === 255;
-}
 
 function isAlmostRed({ r, g, b, alpha }: Pixel): boolean {
   return r > 185 && g < 70 && b < 70 && alpha === 255;
@@ -164,33 +102,17 @@ it.describe('screencast', () => {
   it.slow();
   it.skip(({ mode }) => mode !== 'default', 'video.path() is not available in remote mode');
 
+  it('should not have video by default', async ({ page }) => {
+    expect(page.video()).toBeNull();
+  });
+
   it('videoSize should require videosPath', async ({ browser }) => {
     const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
-    const videosPath = testInfo.outputPath('');
-    // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
-    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
-    const context = await browser.newContext({
-      videosPath,
-      viewport: size,
-      videoSize: size
-    });
-    const page = await context.newPage();
-
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    await context.close();
-
-    const videoFile = await page.video().path();
-    expectRedFrames(videoFile, size);
-  });
-
-  it('should throw without recordVideo.dir', async ({ browser }) => {
-    const error = await browser.newContext({ recordVideo: {} as any }).catch(e => e);
-    expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
+  it('should not throw without recordVideo.dir', async ({ browser }) => {
+    await browser.newContext({ recordVideo: {} });
   });
 
   it('should capture static page', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
@@ -673,6 +595,34 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
+  it('should close ffmpeg even if there were no frames', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39872' }
+  }, async ({ browserType }, testInfo) => {
+    const size = { width: 320, height: 240 };
+    const browser = await browserType.launch();
+
+    const videoDir = testInfo.outputPath('');
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: videoDir,
+        size,
+      },
+      viewport: size,
+    });
+
+    const page1 = await context.newPage();
+    await page1.close();
+
+    const page2 = await context.newPage();
+    await page2.close();
+
+    await context.close();
+    await browser.close();
+
+    const videoFiles = findVideos(videoDir);
+    expect(videoFiles.length).toBe(2);
+  });
+
   it('should not create video for internal pages', async ({ browser, server }, testInfo) => {
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value');
@@ -811,104 +761,6 @@ it.describe('screencast', () => {
       alpha: image.data.readUInt8(offset + 3),
     };
     expect(isAlmostRed(pixel)).toBe(true);
-  });
-
-  it('video.start/stop twice', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 800 };
-    const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
-
-    await page.video().start({ size });
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    const videoPath1 = await page.video().path();
-    expect(videoPath1).toBeDefined();
-    await page.video().stop();
-    expectRedFrames(videoPath1, size);
-
-    const videoPath3 = testInfo.outputPath('video3.webm');
-    await page.video().start({ size, path: videoPath3 });
-    await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
-    await rafraf(page, 100);
-    const videoPath2 = await page.video().path();
-    expect(videoPath2).toBeDefined();
-    expect(videoPath2).not.toEqual(videoPath1);
-    await page.video().stop();
-    const contents2 = fs.readFileSync(videoPath2).toString('base64');
-    const contents3 = fs.readFileSync(videoPath3).toString('base64');
-    expect(contents2 === contents3).toBeTruthy();
-    expectFrames(videoPath3, size, isAlmostGray);
-
-    await context.close();
-  });
-
-  it('video.start should fail when recordVideo is set, but stop should work', async ({ browser }, testInfo) => {
-    const context = await browser.newContext({
-      recordVideo: {
-        dir: testInfo.outputPath(''),
-      },
-    });
-    const page = await context.newPage();
-    const error = await page.video().start().catch(e => e);
-    expect(error.message).toContain('Video is already being recorded');
-    await page.video().stop();
-    await context.close();
-  });
-
-  it('video.start should fail when another recording is in progress', async ({ page, trace }) => {
-    it.skip(trace === 'on', 'trace=on has different screencast image configuration');
-    await page.video().start();
-    const error = await page.video().start().catch(e => e);
-    expect(error.message).toContain('Video is already being recorded');
-  });
-
-  it('video.stop should fail when no recording is in progress', async ({ browser }, testInfo) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    const error = await page.video().stop().catch(e => e);
-    expect(error.message).toContain('Video is not being recorded');
-    await context.close();
-  });
-
-  it('video.start should finish when page is closed', async ({ browser }, testInfo) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.video().start({ size: { width: 800, height: 800 } });
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    const videoPath = await page.video().path();
-    expect(videoPath).toBeDefined();
-    await page.close();
-    const error = await page.video().stop().catch(e => e);
-    expect(error.message).toContain(kTargetClosedErrorMessage);
-    const newPath = testInfo.outputPath('video.webm');
-    await page.video().saveAs(newPath);
-    expect(fs.existsSync(newPath)).toBeTruthy();
-    await context.close();
-  });
-
-  it('empty video', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 800 };
-    const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
-    const videoPath = testInfo.outputPath('empty-video.webm');
-    await page.video().start({ size, path: videoPath });
-    await page.video().stop();
-    await context.close();
-    expectFrames(videoPath, size, isAlmostWhite);
-  });
-
-  it('video.start dispose stops recording', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 800 };
-    const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
-    const videoPath = testInfo.outputPath('dispose-video.webm');
-    const disposable = await page.video().start({ size, path: videoPath });
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    await disposable.dispose();
-    expectRedFrames(videoPath, size);
-    await context.close();
   });
 
 });

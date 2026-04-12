@@ -17,7 +17,8 @@
 import type { TestAttachment, TestCase, TestCaseSummary, TestResult, TestStep } from './types';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
-import { formatUrl, msToString } from './utils';
+import { formatUrl } from './utils';
+import { msToString } from '@isomorphic/formatUtils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
 import { Anchor, AttachmentLink, generateTraceUrl, testResultHref, useSearchParams } from './links';
@@ -91,6 +92,9 @@ export const TestResultView: React.FC<{
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext };
   }, [result]);
 
+  const [stepFilterText, setStepFilterText] = React.useState('');
+  React.useEffect(() => setStepFilterText(''), [result]);
+
   const prompt = useAsyncMemo(async () => {
     if (report.json().options?.noCopyPrompt)
       return undefined;
@@ -133,7 +137,11 @@ export const TestResultView: React.FC<{
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0}/>)}
+      <form className='subnav-search step-filter' onSubmit={e => e.preventDefault()}>
+        {icons.search()}
+        <input className='form-control subnav-search-input input-contrast width-full' type='search' spellCheck={false} placeholder='Filter steps' aria-label='Filter steps' value={stepFilterText} onChange={e => setStepFilterText(e.target.value)} />
+      </form>
+      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0} filterText={stepFilterText}/>)}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
@@ -200,17 +208,52 @@ function pickDiffForError(error: string, diffs: ImageDiff[]): ImageDiff | undefi
   return diffs.find(diff => error.includes(diff.name));
 }
 
+function stepMatchesFilter(step: TestStep, filterText: string): boolean {
+  return step.title.toLowerCase().includes(filterText.toLowerCase());
+}
+
+function stepChildrenMatchFilter(step: TestStep, filterText: string): boolean {
+  return step.steps.some(s => stepMatchesFilter(s, filterText) || stepChildrenMatchFilter(s, filterText));
+}
+
 const StepTreeItem: React.FC<{
   test: TestCase;
   result: TestResult;
   step: TestStep;
   depth: number,
-}> = ({ test, step, result, depth }) => {
+  filterText?: string,
+}> = ({ test, step, result, depth, filterText }) => {
   const searchParams = useSearchParams();
+
+  let expandByDefault = false;
+  let title: React.ReactNode = <span>{step.title}</span>;
+
+  if (filterText) {
+    const matchesFilter = !!filterText && stepMatchesFilter(step, filterText);
+    const childrenMatchFilter = !!filterText && stepChildrenMatchFilter(step, filterText);
+    if (!matchesFilter && !childrenMatchFilter)
+      return null;
+    expandByDefault = childrenMatchFilter;
+    if (matchesFilter) {
+      const unmatched = step.title.toLowerCase().split(filterText.toLowerCase());
+      const parts: React.ReactNode[] = [];
+      let index = 0;
+      for (let i = 0; i < unmatched.length; i++) {
+        if (i) {
+          parts.push(<span key={i} className='step-title-highlight'>{step.title.substring(index, index + filterText.length)}</span>);
+          index += filterText.length;
+        }
+        parts.push(unmatched[i]);
+        index += unmatched[i].length;
+      }
+      title = parts;
+    }
+  }
+
   return <TreeItem title={<div aria-label={step.title} className='step-title-container'>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
     <span className='step-title-text'>
-      <span>{step.title}</span>
+      {title}
       {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
       {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
     </span>
@@ -225,9 +268,9 @@ const StepTreeItem: React.FC<{
     <span className='step-duration'>{msToString(step.duration)}</span>
   </div>} loadChildren={step.steps.length || step.snippet ? () => {
     const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
-    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
+    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} filterText={filterText} />);
     return snippet.concat(steps);
-  } : undefined} depth={depth}/>;
+  } : undefined} depth={depth} expandByDefault={expandByDefault}/>;
 };
 
 type WorkerLists = Map<number, { tests: TestCaseSummary[], runs: number[] }>;

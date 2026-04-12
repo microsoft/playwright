@@ -18,11 +18,12 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import type { TestChildProcess } from '../config/commonFixtures';
-import { cleanEnv, cliEntrypoint, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
+import { cliEntrypoint, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
 import type { Browser, Page, TestInfo } from './stable-test-runner';
 import { chromium } from './stable-test-runner';
 import { createGuid } from '../../packages/playwright-core/src/server/utils/crypto';
+import { inheritAndCleanEnv } from '../config/utils';
 
 type Latch = {
   blockingCode: string;
@@ -97,13 +98,13 @@ export const test = base
           const baseDir = await writeFiles(testInfo, files, true);
           testProcess = childProcess({
             command: ['node', cliEntrypoint, 'test', (options.useWeb ? '--ui-host=127.0.0.1' : '--ui'), '--workers=1', ...(options.additionalArgs || [])],
-            env: {
-              ...cleanEnv(env),
+            env: inheritAndCleanEnv({
+              ...env,
               PWTEST_UNDER_TEST: '1',
               PWTEST_CACHE_DIR: cacheDir,
               PWTEST_HEADED_FOR_TEST: headless ? '0' : '1',
               PWTEST_PRINT_WS_ENDPOINT: '1',
-            },
+            }),
             cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
           });
           let page: Page;

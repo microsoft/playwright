@@ -11,6 +11,7 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'microsoft/playwright'
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -35,6 +36,16 @@ jobs:
             git add .
             git commit -m "chore: update generated files after dependency update"
             git push origin HEAD:${{ github.head_ref }}
+            # Pushing with GITHUB_TOKEN does not retrigger workflow runs, see:
+            # https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs
+            # Close and reopen the PR to fire a pull_request reopened event, which
+            # retriggers infra.yml on the new commit.
+            gh pr close ${{ github.event.pull_request.number }}
+            # Remove labels after closing to avoid triggering bots that may rerun CI.
+            gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels -X DELETE
+            gh pr reopen ${{ github.event.pull_request.number }}
           else
             echo "No generated files changed, nothing to commit."
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

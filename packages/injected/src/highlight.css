@@ -107,6 +107,30 @@ x-pw-action-point {
   z-index: 2;
 }
 
+x-pw-title {
+  position: absolute;
+  backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 24px;
+  line-height: 1.4;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 3;
+}
+
+x-pw-user-overlays, x-pw-user-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes pw-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 x-pw-separator {
   height: 1px;
   margin: 6px 9px;

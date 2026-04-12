@@ -41,10 +41,6 @@ export function initialize(browsingContext, docShell) {
       docShell.bypassCSPEnabled = bypassCSP;
     },
 
-    locale: (locale) => {
-      docShell.languageOverride = locale;
-    },
-
     javaScriptDisabled: (javaScriptDisabled) => {
       data.frameTree.setJavaScriptDisabled(javaScriptDisabled);
     },

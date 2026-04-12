@@ -65,6 +65,10 @@
   min-width: 0;
 }
 
+.step-title-highlight {
+  background: var(--color-attention-subtle);
+}
+
 .step-spacer {
   flex: auto;
 }
@@ -100,6 +104,10 @@
   .test-result-counter {
     background: var(--color-scale-gray-3);
   }
+}
+
+.step-filter {
+  margin-bottom: 8px;
 }
 
 @media only screen and (max-width: 600px) {

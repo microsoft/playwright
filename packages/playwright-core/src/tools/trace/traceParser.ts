@@ -14,50 +14,71 @@
  * limitations under the License.
  */
 
-import url from 'url';
+import fs from 'fs';
+import path from 'path';
 import { ZipFile } from '../../server/utils/zipFile';
 
 import type { TraceLoaderBackend } from '@isomorphic/trace/traceLoader';
 
-export class ZipTraceLoaderBackend implements TraceLoaderBackend {
-  private _zipFile: ZipFile;
-  private _traceFile: string;
+export class DirTraceLoaderBackend implements TraceLoaderBackend {
+  private _dir: string;
 
-  constructor(traceFile: string) {
-    this._traceFile = traceFile;
-    this._zipFile = new ZipFile(traceFile);
+  constructor(dir: string) {
+    this._dir = dir;
   }
 
   isLive() {
     return false;
   }
 
-  traceURL() {
-    return url.pathToFileURL(this._traceFile).toString();
-  }
-
   async entryNames(): Promise<string[]> {
-    return await this._zipFile.entries();
+    const entries: string[] = [];
+    const walk = async (dir: string, prefix: string) => {
+      const items = await fs.promises.readdir(dir, { withFileTypes: true });
+      for (const item of items) {
+        if (item.isDirectory())
+          await walk(path.join(dir, item.name), prefix ? `${prefix}/${item.name}` : item.name);
+        else
+          entries.push(prefix ? `${prefix}/${item.name}` : item.name);
+      }
+    };
+    await walk(this._dir, '');
+    return entries;
   }
 
   async hasEntry(entryName: string): Promise<boolean> {
-    const entries = await this.entryNames();
-    return entries.includes(entryName);
+    try {
+      await fs.promises.access(path.join(this._dir, entryName));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async readText(entryName: string): Promise<string | undefined> {
     try {
-      const buffer = await this._zipFile.read(entryName);
-      return buffer.toString('utf-8');
+      return await fs.promises.readFile(path.join(this._dir, entryName), 'utf-8');
     } catch {
     }
   }
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
     try {
-      const buffer = await this._zipFile.read(entryName);
+      const buffer = await fs.promises.readFile(path.join(this._dir, entryName));
       return new Blob([new Uint8Array(buffer)]);
     } catch {
     }
   }
+}
+
+export async function extractTrace(traceFile: string, outDir: string): Promise<void> {
+  const zipFile = new ZipFile(traceFile);
+  const entries = await zipFile.entries();
+  for (const entry of entries) {
+    const outPath = path.join(outDir, entry);
+    await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
+    const buffer = await zipFile.read(entry);
+    await fs.promises.writeFile(outPath, buffer);
+  }
+  zipFile.close();
 }

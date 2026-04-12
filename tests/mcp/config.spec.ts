@@ -17,7 +17,6 @@
 import fs from 'node:fs';
 
 import { test, expect, parseResponse } from './fixtures';
-import { resolveCLIConfig } from '../../packages/playwright-core/lib/tools/mcp/config';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
@@ -103,19 +102,6 @@ test.describe(() => {
       page: expect.stringContaining(`Firefox`),
     });
   });
-});
-
-async function sandboxOption(cli: any) {
-  const config: any = await resolveCLIConfig(cli);
-  return config.browser.launchOptions.chromiumSandbox;
-}
-
-test('test sandbox configuration', async ({}) => {
-  expect(await sandboxOption({ browser: 'chromium' })).toBe(process.platform !== 'linux');
-  expect(await sandboxOption({ browser: 'chromium', sandbox: true })).toBe(true);
-  expect(await sandboxOption({ browser: 'chrome', sandbox: false })).toBe(false);
-  expect(await sandboxOption({ browser: 'chrome' })).toBe(true);
-  expect(await sandboxOption({ browser: 'msedge' })).toBe(true);
 });
 
 test('browser_get_config returns merged config from file, env and cli', async ({ startClient }) => {

@@ -36,26 +36,31 @@ const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
 await context.close();
 ```
 
-You can also specify video size. The video size defaults to the viewport size scaled down to fit 800x800. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
+You can also specify video size and annotation. The video size defaults to the viewport size scaled down to fit 800x800. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
 
-```js tab=js-test title="playwright.config.ts"
+When `annotate` is specified, each action will be visually highlighted in the video with the element outline and action title subtitle. The optional `duration` property controls how long each annotation is displayed (defaults to `500`ms).
+
+```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     video: {
       mode: 'on-first-retry',
-      size: { width: 640, height: 480 }
-    }
+      size: { width: 640, height: 480 },
+      annotate: {
+        action: {
+          duration: 500,
+          position: 'top-right',
+          fontSize: 14,
+        },
+        test: {
+          level: 'step',
+          position: 'top-left',
+          fontSize: 12,
+        }
+      },
+    },
   },
-});
-```
-
-```js tab=js-library
-const context = await browser.newContext({
-  recordVideo: {
-    dir: 'videos/',
-    size: { width: 640, height: 480 },
-  }
 });
 ```
 

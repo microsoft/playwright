@@ -554,7 +554,6 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     await this.dialogManager.closeBeforeUnloadDialogs();
 
     if (!this._browserContextId) {
-      await this.stopVideoRecording();
       // Closing persistent context should close the browser.
       await this._browser.close({ reason });
       return;
@@ -572,10 +571,6 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       serviceWorker.didClose();
       this._browser._serviceWorkers.delete(targetId);
     }
-  }
-
-  async stopVideoRecording() {
-    await Promise.all(this._crPages().map(crPage => crPage._page.screencast.stopVideoRecording()));
   }
 
   onClosePersistent() {

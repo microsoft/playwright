@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 
 import { defineTabTool } from './tool';
@@ -26,6 +26,7 @@ const evaluateSchema = z.object({
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
   selector: z.string().optional().describe('CSS or role selector for the target element, when "ref" is not available.'),
+  filename: z.string().optional().describe('Filename to save the result to. If not provided, result is returned as text.'),
 });
 
 const evaluate = defineTabTool({
@@ -55,7 +56,7 @@ const evaluate = defineTabTool({
       func.toString = () => params.function;
       const result = locator?.locator ? await locator?.locator.evaluate(func) : await tab.page.evaluate(func);
       const text = JSON.stringify(result, null, 2) || 'undefined';
-      response.addTextResult(text);
+      await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
     });
   },
 });

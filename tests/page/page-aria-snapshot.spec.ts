@@ -695,3 +695,56 @@ it('match values both against regex and string', async ({ page }) => {
       - /url: /auth?r=/
   `);
 });
+
+it('auto-waits the locator and does not include iframes', async ({ page }) => {
+  await page.setContent(`
+    <div>Hello</div>
+  `);
+
+  const snapshotPromise = page.locator('#target').ariaSnapshot();
+  await page.waitForTimeout(2000);
+  await page.setContent(`
+    <div id=target>
+      Hello
+      <iframe srcdoc="<ul><li>Item 1</li><li>Item 2</li></ul>"></iframe>
+    </div>
+  `);
+  expect(await snapshotPromise).toContainYaml(`
+    - text: Hello
+  `);
+});
+
+it('should limit depth', async ({ page }) => {
+  await page.setContent(`
+    <ul id=target>
+      <li>item2</li>
+      <li>
+        <ul>
+          <li>item3</li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  const snapshot = await page.locator('#target').ariaSnapshot({ depth: 1 });
+  expect(snapshot).toContainYaml(`
+    - list:
+      - listitem: item2
+      - listitem
+  `);
+});
+
+it('should snapshot a locator inside an iframe', async ({ page }) => {
+  await page.setContent(`
+    <h1>Main Page</h1>
+    <iframe srcdoc="<ul><li>Item 1</li><li>Item 2</li></ul>"></iframe>
+  `);
+
+  const list = page.frames()[1].locator('ul');
+  const snapshot = await list.ariaSnapshot();
+  expect(snapshot).toContainYaml(`
+    - list:
+      - listitem: Item 1
+      - listitem: Item 2
+  `);
+});

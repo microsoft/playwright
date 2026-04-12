@@ -7,4 +7,4 @@ When reviewing pull requests:
 - Keep each comment short — one or two sentences maximum.
 - Do not write long descriptions or summaries of what the code does.
 - Do not suggest refactors or improvements unrelated to the PR's stated goal.
-- Do not produce a review body or top-level summary. Leave the review body empty; put findings only in inline comments.
+- NEVER produce a review body or top-level PR overview comment. The review body MUST be empty. Put findings only in inline comments on specific lines.

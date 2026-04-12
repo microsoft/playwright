@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTabTool } from './tool';
 import { elementSchema } from './snapshot';
 
@@ -94,7 +94,7 @@ const type = defineTabTool({
     const { locator, resolved } = await tab.refLocator(params);
     const secret = tab.context.lookupSecret(params.text);
 
-    await tab.waitForCompletion(async () => {
+    const action = async () => {
       if (params.slowly) {
         response.setIncludeSnapshot();
         response.addCode(`await page.${resolved}.pressSequentially(${secret.code});`);
@@ -109,7 +109,12 @@ const type = defineTabTool({
         response.addCode(`await page.${resolved}.press('Enter');`);
         await locator.press('Enter', tab.actionTimeoutOptions);
       }
-    });
+    };
+
+    if (params.submit || params.slowly)
+      await tab.waitForCompletion(action);
+    else
+      await action();
   },
 });
 

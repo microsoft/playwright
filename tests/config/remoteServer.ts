@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import { inheritAndCleanEnv } from './utils';
 import type { BrowserType, Browser } from 'playwright-core';
 import type { CommonFixtures, TestChildProcess } from './commonFixtures';
 
@@ -35,10 +36,7 @@ export class RunServer implements PlaywrightServer {
       command.push(`--artifacts-dir=${options.artifactsDir}`);
     this._process = childProcess({
       command,
-      env: {
-        ...process.env,
-        ...options?.env,
-      },
+      env: inheritAndCleanEnv(options?.env),
     });
 
     let wsEndpointCallback: (value: string) => void;

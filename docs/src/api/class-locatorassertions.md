@@ -1104,7 +1104,7 @@ await expect(locator).toContainClass(['inactive', 'active', 'inactive']);
 ```
 
 ```java
-assertThat(page.locator(".list > .component")).containsClass(new String[] {"inactive", "active", "inactive"});
+assertThat(page.locator(".list > .component")).containsClass(Arrays.asList("inactive", "active", "inactive"));
 ```
 
 ```python async

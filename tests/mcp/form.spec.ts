@@ -106,18 +106,18 @@ await page.getByRole('checkbox', { name: 'Subscribe to newsletter' }).setChecked
     },
   });
   expect.soft(response).toHaveResponse({
-    snapshot: expect.stringMatching(/textbox "Name".*John Doe/),
+    inlineSnapshot: expect.stringMatching(/textbox "Name".*John Doe/),
   });
   expect.soft(response).toHaveResponse({
-    snapshot: expect.stringMatching(/textbox "Email".*john.doe@example.com/),
+    inlineSnapshot: expect.stringMatching(/textbox "Email".*john.doe@example.com/),
   });
   expect.soft(response).toHaveResponse({
-    snapshot: expect.stringMatching(/slider "Age".*"25"/),
+    inlineSnapshot: expect.stringMatching(/slider "Age".*"25"/),
   });
   expect.soft(response).toHaveResponse({
-    snapshot: expect.stringContaining('option \"United States\" [selected]'),
+    inlineSnapshot: expect.stringContaining('option \"United States\" [selected]'),
   });
   expect.soft(response).toHaveResponse({
-    snapshot: expect.stringContaining('checkbox \"Subscribe to newsletter\" [checked]'),
+    inlineSnapshot: expect.stringContaining('checkbox \"Subscribe to newsletter\" [checked]'),
   });
 });

@@ -136,6 +136,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return { element: ElementHandleDispatcher.from(this, await progress.race(this._frame.addStyleTag(params))) };
   }
 
+  async ariaSnapshot(params: channels.FrameAriaSnapshotParams, progress: Progress): Promise<channels.FrameAriaSnapshotResult> {
+    return await this._frame.ariaSnapshot(progress, params);
+  }
+
   async click(params: channels.FrameClickParams, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
     return await this._frame.click(progress, params.selector, params);

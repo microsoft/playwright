@@ -717,7 +717,6 @@ Brings page to front (activates tab).
 
 ## async method: Page.cancelPickLocator
 * since: v1.59
-* langs: js
 
 Cancels an ongoing [`method: Page.pickLocator`] call by deactivating pick locator mode.
 If no pick locator mode is active, this method is a no-op.
@@ -2702,10 +2701,10 @@ Returns up to (currently) 200 last console messages from this page. See [`event:
 
 ### option: Page.consoleMessages.filter
 * since: v1.59
-- `filter` <[ConsoleMessagesFilter]<"all"|"sinceNavigation">>
+- `filter` <[ConsoleMessagesFilter]<"all"|"since-navigation">>
 
 Controls which messages are returned:
-- `'sinceNavigation'` (default) — returns only messages logged after the last committed main-frame navigation.
+- `'since-navigation'` (default) — returns only messages logged after the last committed main-frame navigation.
 - `'all'` — returns all stored console messages.
 
 
@@ -2725,11 +2724,10 @@ Returns up to (currently) 200 last page errors from this page. See [`event: Page
 
 ### option: Page.pageErrors.filter
 * since: v1.59
-* langs: js
-- `filter` <[PageErrorsFilter]<"all"|"sinceNavigation">>
+- `filter` <[PageErrorsFilter]<"all"|"since-navigation">>
 
 Controls which errors are returned:
-- `'sinceNavigation'` (default) — returns only errors thrown after the last committed main-frame navigation.
+- `'since-navigation'` (default) — returns only errors thrown after the last committed main-frame navigation.
 - `'all'` — returns all stored page errors.
 
 
@@ -3036,7 +3034,6 @@ Whether or not to embed the document outline into the PDF. Defaults to `false`.
 
 ## async method: Page.pickLocator
 * since: v1.59
-* langs: js
 - returns: <[Locator]>
 
 Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
@@ -3047,6 +3044,26 @@ Once the user clicks an element, the mode is deactivated and the [Locator] for t
 ```js
 const locator = await page.pickLocator();
 console.log(locator);
+```
+
+```java
+Locator locator = page.pickLocator();
+System.out.println(locator);
+```
+
+```python async
+locator = await page.pick_locator()
+print(locator)
+```
+
+```python sync
+locator = page.pick_locator()
+print(locator)
+```
+
+```csharp
+var locator = await page.PickLocatorAsync();
+Console.WriteLine(locator);
 ```
 
 ## async method: Page.press
@@ -4217,32 +4234,17 @@ Page height in pixels.
 
 Captures the aria snapshot of the page. Read more about [aria snapshots](../aria-snapshots.md).
 
-### option: Page.ariaSnapshot.format
+### option: Page.ariaSnapshot.mode
 * since: v1.59
-- `format` <[AriaSnapshotFormat]<"ai"|"default">>
+- `mode` <[AriaSnapshotMode]<"ai"|"default">>
 
-When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to `"default"`.
+When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]` and snapshots of `<iframe>`s. Defaults to `"default"`.
 
 ### option: Page.ariaSnapshot.timeout = %%-input-timeout-%%
 * since: v1.59
 
 ### option: Page.ariaSnapshot.timeout = %%-input-timeout-js-%%
 * since: v1.59
-
-### option: Page.ariaSnapshot.track
-* since: v1.59
-- `track` <[string]>
-
-When specified, enables incremental snapshots. Subsequent calls with the same track name will
-track changes between calls.
-
-### option: Page.ariaSnapshot.mode
-* since: v1.59
-- `mode` <[AriaSnapshotContent]<"incremental"|"full">>
-
-When set to `"incremental"` and [`option: Page.ariaSnapshot.track`] is specified, returns an
-incremental snapshot containing only changes since the last call with the same track name.
-Defaults to `"full"`.
 
 ### option: Page.ariaSnapshot.depth
 * since: v1.59
@@ -4453,14 +4455,13 @@ Optional handler function to route the request.
 
 ## method: Page.video
 * since: v1.8
-- returns: <[Video]>
+- returns: <[null]|[Video]>
 
-Video object associated with this page. Can be used to control video recording with [`method: Video.start`]
-and [`method: Video.stop`], or to access the video file when using the `recordVideo` context option.
+Video object associated with this page. Can be used to access the video file when using the `recordVideo` context option.
 
 ## method: Page.viewportSize
 * since: v1.8
-- returns: <[null]|[Object]>
+- returns: <[null]|[Object=PageViewportSizeResult]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 

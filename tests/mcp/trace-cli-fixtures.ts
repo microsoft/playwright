@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'child_process';
 
 import { test as baseTest, expect } from './fixtures';
 import { chromium } from 'playwright-core';
@@ -24,6 +25,7 @@ export { expect };
 
 type TraceCliWorkerFixtures = {
   traceFile: string;
+  traceCwd: string;
 };
 
 type TraceCliFixtures = {
@@ -89,13 +91,24 @@ export const test = baseTest
 
         await fs.promises.rm(tmpDir, { recursive: true, force: true });
       }, { scope: 'worker' }],
+
+      traceCwd: [async ({ traceFile }, use, workerInfo) => {
+        // Create a working directory and open the trace once for all tests.
+        const cwd = path.join(workerInfo.project.outputDir, 'pw-trace-cwd-' + workerInfo.workerIndex);
+        await fs.promises.mkdir(cwd, { recursive: true });
+        const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
+        execFileSync(process.execPath, [cliPath, 'trace', 'open', traceFile], { cwd });
+        await use(cwd);
+        await fs.promises.rm(cwd, { recursive: true, force: true });
+      }, { scope: 'worker' }],
     })
     .extend<TraceCliFixtures>({
-      runTraceCli: async ({ childProcess }, use) => {
+      runTraceCli: async ({ childProcess, traceCwd }, use) => {
         await use(async (args: string[]) => {
           const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
           const child = childProcess({
             command: [process.execPath, cliPath, 'trace', ...args],
+            cwd: traceCwd,
           });
           await child.exited;
           return {

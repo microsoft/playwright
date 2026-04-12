@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect } from './fixtures';
+import fs from 'fs';
+
+import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
 test('browser_run_code', async ({ client, server }) => {
   server.setContent('/', `
@@ -26,15 +28,14 @@ test('browser_run_code', async ({ client, server }) => {
   });
 
   const code = 'async (page) => await page.getByRole("button", { name: "Submit" }).click()';
-  expect(await client.callTool({
+  const response = parseResponse(await client.callTool({
     name: 'browser_run_code',
     arguments: {
       code,
     },
-  })).toHaveResponse({
-    code: `await (${code})(page);`,
-    events: expect.stringContaining('- [LOG] Submit'),
-  });
+  }));
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Submit');
 });
 
 test('browser_run_code block', async ({ client, server }) => {
@@ -46,15 +47,19 @@ test('browser_run_code block', async ({ client, server }) => {
     arguments: { url: server.PREFIX },
   });
 
-  expect(await client.callTool({
+  const response = parseResponse(await client.callTool({
     name: 'browser_run_code',
     arguments: {
       code: 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); await page.getByRole("button", { name: "Submit" }).click(); }',
     },
-  })).toHaveResponse({
+  }));
+
+  expect(response).toEqual(expect.objectContaining({
     code: expect.stringContaining(`await page.getByRole(\"button\", { name: \"Submit\" }).click()`),
-    events: expect.stringMatching(/\[LOG\] Submit.*\n.*\[LOG\] Submit/),
-  });
+  }));
+
+  const content = await consoleEntries(response);
+  expect(content).toMatch(/\[LOG\] Submit.*\n.*\[LOG\] Submit/);
 });
 
 test('browser_run_code no-require', async ({ client, server }) => {
@@ -87,14 +92,60 @@ test('browser_run_code return value', async ({ client, server }) => {
   });
 
   const code = 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); return { message: "Hello, world!" }; await page.getByRole("banner").click(); }';
-  expect(await client.callTool({
+
+  const response = parseResponse(await client.callTool({
     name: 'browser_run_code',
     arguments: {
       code,
     },
-  })).toHaveResponse({
+  }));
+  expect(response).toEqual(expect.objectContaining({
     code: `await (${code})(page);`,
-    events: expect.stringContaining('- [LOG] Submit'),
     result: '{"message":"Hello, world!"}',
+  }));
+
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Submit');
+});
+
+test('browser_run_code with filename', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="console.log('Clicked')">Click</button>
+  `, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
   });
+
+  const code = 'async (page) => {\n  await page.getByRole("button", { name: "Click" }).click();\n}';
+  const filePath = test.info().outputPath('test-code.js');
+  await fs.promises.writeFile(filePath, code);
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_run_code',
+    arguments: { filename: 'test-code.js' },
+  }));
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Clicked');
+});
+
+test('browser_run_code with filename containing template literals', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="console.log('Done')">Submit</button>
+  `, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const code = 'async (page) => {\n  const title = `Page: ${await page.title()}`;\n  await page.getByRole("button", { name: "Submit" }).click();\n  return title;\n}';
+  const filePath = test.info().outputPath('template-code.js');
+  await fs.promises.writeFile(filePath, code);
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_run_code',
+    arguments: { filename: 'template-code.js' },
+  }));
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Done');
 });

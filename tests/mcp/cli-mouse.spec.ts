@@ -20,8 +20,8 @@ test('mousemove', async ({ cli, server }) => {
   server.setContent('/', eventsPage, 'text/html');
   await cli('open', server.PREFIX);
   await cli('mousemove', '45', '35');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain('mouse move 45 35');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain('mouse move 45 35');
 });
 
 test('mousedown mouseup', async ({ cli, server }) => {
@@ -30,9 +30,9 @@ test('mousedown mouseup', async ({ cli, server }) => {
   await cli('mousemove', '45', '35');
   await cli('mousedown');
   await cli('mouseup');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain('mouse down');
-  expect(snapshot).toContain('mouse up');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain('mouse down');
+  expect(inlineSnapshot).toContain('mouse up');
 });
 
 test('mousewheel', async ({ cli, server }) => {
@@ -45,5 +45,5 @@ test('mousewheel', async ({ cli, server }) => {
 
   await cli('mousewheel', '10', '5');
 
-  await expect.poll(() => cli('snapshot').then(result => result.snapshot)).toContain('wheel 10 5');
+  await expect.poll(() => cli('snapshot').then(result => result.inlineSnapshot)).toContain('wheel 10 5');
 });

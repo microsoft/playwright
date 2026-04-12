@@ -22,7 +22,6 @@ import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecComma
 import { colors } from 'playwright-core/lib/utils';
 import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import { yazl } from 'playwright-core/lib/zipBundle';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
@@ -32,8 +31,8 @@ import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './repor
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
-import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
+import type { ZipFile } from 'playwright-core/lib/zipBundle';
 
 type TestEntry = {
   testCase: TestCase;
@@ -142,21 +141,12 @@ class HtmlReporter implements ReporterV2 {
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
-    let noSnippets: boolean | undefined;
-    if (process.env.PLAYWRIGHT_HTML_NO_SNIPPETS === 'false' || process.env.PLAYWRIGHT_HTML_NO_SNIPPETS === '0')
-      noSnippets = false;
-    else if (process.env.PLAYWRIGHT_HTML_NO_SNIPPETS)
-      noSnippets = true;
-    noSnippets = noSnippets || this._options.noSnippets;
+    const noSnippets = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_SNIPPETS') ?? this._options.noSnippets;
+    const noCopyPrompt = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_COPY_PROMPT') ?? this._options.noCopyPrompt;
+    const doNotInlineAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS') ?? this._options.doNotInlineAssets ?? false;
 
-    let noCopyPrompt: boolean | undefined;
-    if (process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT === 'false' || process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT === '0')
-      noCopyPrompt = false;
-    else if (process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT)
-      noCopyPrompt = true;
-    noCopyPrompt = noCopyPrompt || this._options.noCopyPrompt;
-
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, {
+    const { yazl } = await import('playwright-core/lib/zipBundle');
+    const builder = new HtmlBuilder(yazl, this.config, this._outputFolder, this._attachmentsBaseURL, doNotInlineAssets, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
       noCopyPrompt,
@@ -202,6 +192,15 @@ function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
     return undefined;
   }
   return htmlOpenEnv;
+}
+
+function parseBooleanEnvVar(name: string): boolean | undefined {
+  const value = process.env[name];
+  if (value === 'false' || value === '0')
+    return false;
+  if (value)
+    return true;
+  return undefined;
 }
 
 function standaloneDefaultFolder(): string {
@@ -259,13 +258,15 @@ class HtmlBuilder {
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _options: HTMLReportOptions;
+  private _doNotInlineAssets: boolean;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, options: HTMLReportOptions) {
+  constructor(yazl: typeof import('playwright-core/lib/zipBundle').yazl, config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
+    this._dataZipFile = new yazl.ZipFile();
     this._config = config;
     this._reportFolder = outputDir;
     this._options = options;
+    this._doNotInlineAssets = doNotInlineAssets;
     fs.mkdirSync(this._reportFolder, { recursive: true });
-    this._dataZipFile = new yazl.ZipFile();
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
@@ -338,9 +339,7 @@ class HtmlBuilder {
       singleTestId = testFile.tests[0].testId;
     }
 
-    // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
-    await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
+    const reportIndexFile = await this._writeStaticAssets();
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -360,22 +359,44 @@ class HtmlBuilder {
       }
     }
 
-    await this._writeReportData(path.join(this._reportFolder, 'index.html'));
-
+    await this._writeReportData(reportIndexFile);
 
     return { ok, singleTestId };
   }
 
+  private async _writeStaticAssets() {
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
+    const reportIndexFile = path.join(this._reportFolder, 'index.html');
+    if (this._doNotInlineAssets) {
+      const html = await fs.promises.readFile(path.join(appFolder, 'index.html'), 'utf-8');
+      await Promise.all([
+        fs.promises.writeFile(reportIndexFile, html),
+        fs.promises.copyFile(path.join(appFolder, 'report.js'), path.join(this._reportFolder, 'report.js')),
+        fs.promises.copyFile(path.join(appFolder, 'report.css'), path.join(this._reportFolder, 'report.css')),
+      ]);
+    } else {
+      let html = await fs.promises.readFile(path.join(appFolder, 'index.html'), 'utf-8');
+      const [js, css] = await Promise.all([
+        fs.promises.readFile(path.join(appFolder, 'report.js'), 'utf-8'),
+        fs.promises.readFile(path.join(appFolder, 'report.css'), 'utf-8'),
+      ]);
+      html = html.replace(/<script type="module"[^>]*><\/script>/, () => `<script type="module">${js}</script>`);
+      html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${css}</style>`);
+      await fs.promises.writeFile(reportIndexFile, html);
+    }
+    return reportIndexFile;
+  }
+
   private async _writeReportData(filePath: string) {
-    fs.appendFileSync(filePath, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
+    fs.appendFileSync(filePath, '<template id="playwrightReportBase64">data:application/zip;base64,');
     await new Promise(f => {
-      this._dataZipFile!.end(undefined, () => {
-        this._dataZipFile!.outputStream
+      this._dataZipFile.end(undefined, () => {
+        this._dataZipFile.outputStream
             .pipe(new Base64Encoder())
             .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
       });
     });
-    fs.appendFileSync(filePath, '</script>');
+    fs.appendFileSync(filePath, '</template>');
   }
 
   private _addDataFile(fileName: string, data: any) {

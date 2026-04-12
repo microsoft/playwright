@@ -98,7 +98,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _onPageClose: (tab: Tab) => void;
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
-  private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
   private _consoleLog: LogFile;
   private _disposables: Disposable[];
@@ -253,9 +252,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _handleConsoleMessage(message: ConsoleMessage) {
     const wallTime = message.timestamp;
     this._addLogEntry({ type: 'console', wallTime, message });
-    const level = consoleLevelForMessageType(message.type);
-    if (level === 'error' || level === 'warning')
-      this._consoleLog.appendLine(wallTime, () => message.toString());
+    if (shouldIncludeMessage(this.context.config.console?.level, message.type))
+      this._consoleLog.appendLine(wallTime, message.toString());
   }
 
   private _addLogEntry(entry: EventEntry) {
@@ -326,8 +324,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async consoleMessageCount(): Promise<{ total: number, errors: number, warnings: number }> {
     await this._initializedPromise;
-    const messages = await this.page.consoleMessages({ filter: 'sinceNavigation' });
-    const pageErrors = await this.page.pageErrors({ filter: 'sinceNavigation' });
+    const messages = await this.page.consoleMessages({ filter: 'since-navigation' });
+    const pageErrors = await this.page.pageErrors({ filter: 'since-navigation' });
     let errors = pageErrors.length;
     let warnings = 0;
     for (const message of messages) {
@@ -342,14 +340,14 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   async consoleMessages(level: ConsoleMessageLevel, all?: boolean): Promise<ConsoleMessage[]> {
     await this._initializedPromise;
     const result: ConsoleMessage[] = [];
-    const messages = await this.page.consoleMessages({ filter: all ? 'all' : 'sinceNavigation' });
+    const messages = await this.page.consoleMessages({ filter: all ? 'all' : 'since-navigation' });
     for (const message of messages) {
       const cm = messageToConsoleMessage(message);
       if (shouldIncludeMessage(level, cm.type))
         result.push(cm);
     }
     if (shouldIncludeMessage(level, 'error')) {
-      const errors = await this.page.pageErrors({ filter: all ? 'all' : 'sinceNavigation' });
+      const errors = await this.page.pageErrors({ filter: all ? 'all' : 'since-navigation' });
       for (const error of errors)
         result.push(pageErrorToConsoleMessage(error));
     }
@@ -374,13 +372,13 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(selector: string | undefined, depth: number | undefined, relativeTo: string | undefined, mode: 'full' | 'incremental'): Promise<TabSnapshot> {
+  async captureSnapshot(selector: string | undefined, depth: number | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
       const ariaSnapshot = selector
-        ? await this.page.locator(selector).ariaSnapshot({ format: 'ai', depth })
-        : await this.page.ariaSnapshot({ format: 'ai', track: 'response', mode: this._needsFullSnapshot ? 'full' : mode, depth });
+        ? await this.page.locator(selector).ariaSnapshot({ mode: 'ai', depth })
+        : await this.page.ariaSnapshot({ mode: 'ai', depth });
       tabSnapshot = {
         ariaSnapshot,
         modalStates: [],
@@ -393,9 +391,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       this._recentEventEntries = [];
     }
 
-    // If we failed to capture a snapshot this time, make sure we do a full one next time,
-    // to avoid reporting deltas against un-reported snapshot.
-    this._needsFullSnapshot = !tabSnapshot;
     return tabSnapshot ?? {
       ariaSnapshot: '',
       modalStates,

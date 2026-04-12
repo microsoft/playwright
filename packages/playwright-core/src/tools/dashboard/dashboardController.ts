@@ -32,7 +32,6 @@ export class DashboardConnection implements Transport, DashboardChannel {
   private _lastFrameData: string | null = null;
   private _lastViewportSize: { width: number, height: number } | null = null;
   private _pageListeners: { dispose: () => Promise<void> }[] = [];
-  private _screencastSession: { dispose: () => Promise<void> } | null = null;
   private _contextListeners: { dispose: () => Promise<void> }[] = [];
   private _eventListeners = new Map<string, Set<Function>>();
 
@@ -180,8 +179,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
     if (this.selectedPage) {
       this._pageListeners.forEach(d => d.dispose());
       this._pageListeners = [];
-      await this._screencastSession?.dispose();
-      this._screencastSession = null;
+      await this.selectedPage.screencast.stop();
     }
 
     this.selectedPage = page;
@@ -203,11 +201,11 @@ export class DashboardConnection implements Transport, DashboardChannel {
         }),
     );
 
-    const preferredSize = { width: 1280, height: 800 };
-    this._screencastSession = await page.screencast.start(
-        ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
-        { preferredSize },
-    );
+    const size = { width: 1280, height: 800 };
+    await page.screencast.start({
+      onFrame: ({ data }: { data: Buffer }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
+      size,
+    });
   }
 
   private _deselectPage() {
@@ -215,8 +213,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
       return;
     this._pageListeners.forEach(d => d.dispose());
     this._pageListeners = [];
-    this._screencastSession?.dispose().catch(() => {});
-    this._screencastSession = null;
+    this.selectedPage.screencast.stop().catch(() => {});
     this.selectedPage = null;
     this._lastFrameData = null;
     this._lastViewportSize = null;

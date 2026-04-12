@@ -171,13 +171,13 @@ it('should propagate locale to workers', async ({ browser, browserName, server }
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   const [msg] = await Promise.all([
-    page.waitForEvent('console'),
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(Intl.NumberFormat().resolvedOptions().locale)'], { type: 'application/javascript' })))),
+    page.waitForEvent('console', e => e.text().startsWith('locale:')),
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log("locale:" + Intl.NumberFormat().resolvedOptions().locale)'], { type: 'application/javascript' })))),
   ]);
   if (browserName === 'webkit')
-    expect(msg.text()).toContain('ru'); // Webkit on Ubuntu is "ru-RU", and on other platforms is "ru"
+    expect(msg.text()).toContain('locale:ru'); // Webkit on Ubuntu is "ru-RU", and on other platforms is "ru"
   else
-    expect(msg.text()).toBe('ru-RU');
+    expect(msg.text()).toBe('locale:ru-RU');
   await context.close();
 });
 

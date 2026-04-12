@@ -86,7 +86,6 @@ export class ElectronApplication extends SdkObject {
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
     const appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._browserContext.setCustomCloseHandler(async () => {
-      await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
       this._nodeConnection.close();
@@ -164,7 +163,14 @@ export class Electron extends SdkObject {
         electronArguments.unshift('--no-sandbox');
     }
 
-    const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
+    let artifactsDir: string;
+    const tempDirectories: string[] = [];
+    if (options.artifactsDir) {
+      artifactsDir = options.artifactsDir;
+    } else {
+      artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
+      tempDirectories.push(artifactsDir);
+    }
     const browserLogsCollector = new RecentLogsCollector();
     const env = options.env ? envArrayToObject(options.env) : process.env;
 
@@ -216,7 +222,7 @@ export class Electron extends SdkObject {
       shell,
       stdio: 'pipe',
       cwd: options.cwd,
-      tempDirectories: [artifactsDir],
+      tempDirectories,
       attemptToGracefullyClose: () => app!.close(),
       handleSIGINT: true,
       handleSIGTERM: true,

@@ -21,8 +21,8 @@ test('press', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   await cli('click', 'e2');
   await cli('press', 'h');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toBe(`- textbox [active] [ref=e2]: h`);
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toBe(`- textbox [active] [ref=e2]: h`);
 });
 
 test('keydown keyup', async ({ cli, server }) => {
@@ -31,6 +31,6 @@ test('keydown keyup', async ({ cli, server }) => {
   await cli('click', 'e2');
   await cli('keydown', 'h');
   await cli('keyup', 'h');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toBe(`- textbox [active] [ref=e2]: h`);
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toBe(`- textbox [active] [ref=e2]: h`);
 });

@@ -22,7 +22,7 @@ import { getPackageJsonPath, mergeObjects } from '../util';
 
 import type { Config, Fixtures, Metadata, Project, ReporterDescription } from '../../types/test';
 import type { TestRunnerPluginRegistration } from '../plugins';
-import type { TestCaseFilter } from '../util';
+import type { Matcher, TestCaseFilter } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { Location } from '../../types/testReporter';
 import type { FullConfig, FullProject } from '../../types/testReporter';
@@ -59,6 +59,7 @@ export class FullConfigInternal {
   cliLastFailed?: boolean;
   cliTestList?: string;
   cliTestListInvert?: string;
+  loadFileFilters: Matcher[] = [];
   preOnlyTestFilters: TestCaseFilter[] = [];
   postShardTestFilters: TestCaseFilter[] = [];
   defineConfigWasUsed = false;
@@ -194,7 +195,7 @@ export class FullProjectInternal {
       testDir,
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
-      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/*.@(spec|test).{md,?(c|m)[jt]s?(x)}'),
+      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/*.@(spec|test).?(c|m)[jt]s?(x)'),
       timeout: takeFirst(configCLIOverrides.debug === 'inspector' ? 0 : undefined, configCLIOverrides.timeout, projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use, configCLIOverrides.use),
       dependencies: projectConfig.dependencies || [],

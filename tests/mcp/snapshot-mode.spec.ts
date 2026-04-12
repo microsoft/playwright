@@ -31,8 +31,7 @@ test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`
-- button "Button 1" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button "Button 1" [ref=e2]`),
   });
 
   await client.callTool({
@@ -49,52 +48,8 @@ test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`
-  - button "Button 1" [ref=e2]
+    inlineSnapshot: expect.stringContaining(`- button "Button 1" [ref=e2]
   - button "Button 2" [ref=e3]`),
-  });
-});
-
-test('should respect --snapshot-mode=incremental', async ({ startClient, server, mcpBrowser }) => {
-  test.fixme(mcpBrowser === 'webkit', 'Active handling?');
-  server.setContent('/', `<button>Button 1</button>`, 'text/html');
-
-  const { client } = await startClient({
-    args: ['--snapshot-mode=incremental'],
-  });
-
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: {
-      url: server.PREFIX,
-    },
-  })).toHaveResponse({
-    snapshot: expect.stringContaining(`
-- button "Button 1" [ref=e2]`),
-  });
-
-  await client.callTool({
-    name: 'browser_evaluate',
-    arguments: {
-      function: `async () => {
-        const button2 = document.createElement('button');
-        button2.textContent = 'Button 2';
-        document.body.appendChild(button2);
-      }`,
-    },
-  });
-
-  expect(await client.callTool({
-    name: 'browser_click',
-    arguments: {
-      element: 'Button 2',
-      ref: 'e3',
-    },
-  })).toHaveResponse({
-    snapshot: expect.stringContaining(`
-- <changed> generic [ref=e1]:
-  - ref=e2 [unchanged]
-  - button \"Button 2\" [active] [ref=e3]`),
   });
 });
 

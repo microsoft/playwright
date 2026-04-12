@@ -14,41 +14,18 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { Plugin, UserConfig } from 'vite';
+import type { Plugin } from 'vite';
 
 export function bundle(): Plugin {
-  let config: UserConfig;
   return {
     name: 'playwright-bundle',
-    config(c) {
-      config = c;
-    },
     transformIndexHtml: {
       handler(html, ctx) {
         if (!ctx || !ctx.bundle)
           return html;
-        html = html.replace(/(?=<!--)([\s\S]*?)-->/, '');
-        for (const [name, value] of Object.entries(ctx.bundle)) {
-          if (name.endsWith('.map'))
-            continue;
-          if ('code' in value)
-            html = html.replace(/<script type="module".*<\/script>/, () => `<script type="module">${value.code}</script>`);
-          else
-            html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${value.source}</style>`);
-        }
-        return html;
+        // Strip the license comment block.
+        return html.replace(/(?=<!--)([\s\S]*?)-->/, '');
       },
-    },
-    closeBundle: () => {
-      if (fs.existsSync(path.join(config.build!.outDir!, 'index.html'))) {
-        const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'vite', 'htmlReport');
-        fs.mkdirSync(targetDir, { recursive: true });
-        fs.copyFileSync(
-            path.join(config.build!.outDir!, 'index.html'),
-            path.join(targetDir, 'index.html'));
-      }
     },
   };
 }

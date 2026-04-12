@@ -22,7 +22,7 @@ import { TraceLoader } from '../../packages/playwright-core/src/utils/isomorphic
 import { TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
 import type { ActionTraceEvent, TraceEvent } from '@trace/trace';
 import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
-import { ZipTraceLoaderBackend } from '../../packages/playwright-core/lib/tools/trace/traceParser';
+import { DirTraceLoaderBackend, extractTrace } from '../../packages/playwright-core/lib/tools/trace/traceParser';
 import type { SnapshotStorage } from '../../packages/playwright-core/src/utils/isomorphic/trace/snapshotStorage';
 
 export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
@@ -166,10 +166,12 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
 }
 
 export async function parseTrace(file: string): Promise<{ snapshots: SnapshotStorage, model: TraceModel }> {
-  const backend = new ZipTraceLoaderBackend(file);
+  const dir = file + '.extracted';
+  await extractTrace(file, dir);
+  const backend = new DirTraceLoaderBackend(dir);
   const loader = new TraceLoader();
   await loader.load(backend, () => {});
-  return { model: new TraceModel(file, loader.contextEntries), snapshots: loader.storage() };
+  return { model: new TraceModel(dir, loader.contextEntries), snapshots: loader.storage() };
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
@@ -226,4 +228,36 @@ export function unshift(snapshot: string): string {
 const ansiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAnsi(str: string): string {
   return str.replace(ansiRegex, '');
+}
+
+export function inheritAndCleanEnv(env: NodeJS.ProcessEnv | undefined): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    // BEGIN: Reserved CI
+    CI: undefined,
+    BUILD_URL: undefined,
+    CI_COMMIT_SHA: undefined,
+    CI_JOB_URL: undefined,
+    CI_PROJECT_URL: undefined,
+    GITHUB_ACTIONS: undefined,
+    GITHUB_REPOSITORY: undefined,
+    GITHUB_RUN_ID: undefined,
+    GITHUB_SERVER_URL: undefined,
+    GITHUB_SHA: undefined,
+    GITHUB_EVENT_PATH: undefined,
+    // END: Reserved CI
+    PW_TEST_HTML_REPORT_OPEN: undefined,
+    PLAYWRIGHT_HTML_OPEN: undefined,
+    PW_TEST_DEBUG_REPORTERS: undefined,
+    PW_TEST_REPORTER: undefined,
+    PW_TEST_REPORTER_WS_ENDPOINT: undefined,
+    PW_TEST_SOURCE_TRANSFORM: undefined,
+    PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
+    PWTEST_BOT_NAME: undefined,
+    PWTEST_SHARD_WEIGHTS: undefined,
+    TEST_WORKER_INDEX: undefined,
+    TEST_PARALLEL_INDEX: undefined,
+    NODE_OPTIONS: undefined,
+    ...env,
+  };
 }

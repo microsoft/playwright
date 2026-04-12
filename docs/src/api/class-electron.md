@@ -140,5 +140,8 @@ Maximum time in milliseconds to wait for the application to start. Defaults to `
 ### option: Electron.launch.tracesDir = %%-browser-option-tracesdir-%%
 * since: v1.36
 
+### option: Electron.launch.artifactsDir = %%-browser-option-artifactsdir-%%
+* since: v1.59
+
 ### option: Electron.launch.chromiumSandbox = %%-browser-option-chromiumsandbox-%%
 * since: v1.59

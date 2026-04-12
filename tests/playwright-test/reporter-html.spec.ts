@@ -20,7 +20,7 @@ import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
-import { msToString } from '../../packages/web/src/uiUtils';
+import { msToString } from '../../packages/playwright-core/src/utils/isomorphic/formatUtils';
 const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
@@ -822,6 +822,54 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
+    test('should filter steps', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('has steps', async ({}) => {
+            await test.step('click button', async () => {});
+            await test.step('fill form', async () => {
+              await test.step('enter username', async () => {});
+              await test.step('enter password', async () => {});
+            });
+            await test.step('another form', async () => {
+              await test.step('fill username', async () => {});
+              await test.step('fill password', async () => {});
+            });
+            await test.step('submit form', async () => {});
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'has steps' }).click();
+
+      const filterInput = page.getByLabel('Filter steps');
+      await expect(filterInput).toBeVisible();
+
+      // filter matching a subset of steps
+      await filterInput.fill('fill');
+      await expect(page.locator('.tree-item-title', { hasText: 'fill form' })).toBeVisible();
+      await expect(page.locator('.tree-item-title', { hasText: 'click button' })).toBeHidden();
+      await expect(page.locator('.tree-item-title', { hasText: 'submit form' })).toBeHidden();
+      // matching parent is not auto-expanded when it has no matching children
+      await expect(page.locator('.tree-item-title', { hasText: 'enter username' })).toBeHidden();
+      await expect(page.locator('.tree-item-title', { hasText: 'enter password' })).toBeHidden();
+      // non-matching parent is auto-expanded when it has a matching child
+      await expect(page.locator('.tree-item-title', { hasText: 'fill username' })).toBeVisible();
+      await expect(page.locator('.tree-item-title', { hasText: 'fill password' })).toBeVisible();
+
+      // clear filter restores all steps collapsed
+      await filterInput.clear();
+      await expect(page.locator('.tree-item-title', { hasText: 'click button' })).toBeVisible();
+      await expect(page.locator('.tree-item-title', { hasText: 'submit form' })).toBeVisible();
+      // children are collapsed again after clearing the filter
+      await expect(page.locator('.tree-item-title', { hasText: 'fill username' })).toBeHidden();
+      await expect(page.locator('.tree-item-title', { hasText: 'fill password' })).toBeHidden();
+    });
+
     test('should show step snippets from non-root', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
@@ -1080,7 +1128,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('passing', async ({ page }, testInfo) => {
-            await testInfo.attach('screenshot', { body: await page.screenshot(), contentType: 'image/png' });
+            await testInfo.attach('screenshot', { body: Buffer.from('d'), contentType: 'image/png' });
             await testInfo.attach('some-pdf', { body: Buffer.from('foo'), contentType: 'application/pdf' });
             await testInfo.attach('madeup-contentType', { body: Buffer.from('bar'), contentType: 'madeup' });
 
@@ -1095,7 +1143,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'passing' }).click();
 
       const expectedAttachments = [
-        ['screenshot', 'screenshot.png', '7a33d5db6370b6de345e990751aa1f1da65ad675.png'],
+        ['screenshot', 'screenshot.png', '3c363836cf4e16666669a25da280a1865c2d2874.png'],
         ['some-pdf', 'some-pdf.pdf', '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf'],
         ['madeup-contentType', 'madeup-contentType.dat', '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat'],
         ['screenshot-that-already-has-an-extension-with-madeup.png', 'screenshot-that-already-has-an-extension-with-madeup.png', '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png'],
@@ -1114,7 +1162,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const files = await fs.promises.readdir(path.join(testInfo.outputPath('playwright-report'), 'data'));
       expect(new Set(files)).toEqual(new Set([
-        '7a33d5db6370b6de345e990751aa1f1da65ad675.png', // screenshot
+        '3c363836cf4e16666669a25da280a1865c2d2874.png', // screenshot
         '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf', // some-pdf
         '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat', // madeup-contentType
         '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png', // screenshot-that-already-has-an-extension-with-madeup.png
@@ -3120,6 +3168,32 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'fail without snippet' }).click();
       await expect(page.getByTestId('test-snippet')).not.toBeVisible();
+    });
+
+    test('should generate unpacked report with doNotInlineAssets', async ({ runInlineTest, showReport, page }, testInfo) => {
+      const result = await runInlineTest({
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS: '1' });
+      expect(result.exitCode).toBe(0);
+
+      const reportFolder = testInfo.outputPath('playwright-report');
+      expect(fs.existsSync(path.join(reportFolder, 'report.js'))).toBe(true);
+      expect(fs.existsSync(path.join(reportFolder, 'report.css'))).toBe(true);
+      const html = fs.readFileSync(path.join(reportFolder, 'index.html'), 'utf-8');
+      expect(html).toContain('src="./report.js"');
+      expect(html).toContain('href="./report.css"');
+      // Report data is stored in a <template> element (not a <script>), so no inline scripts or styles.
+      expect(html).toContain('<template id="playwrightReportBase64">');
+      expect(html).not.toMatch(/<script[^>]*>[^<\s]/);
+      expect(html).not.toMatch(/<style[\s>]/);
+
+      await showReport();
+      await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+      await page.getByRole('link', { name: 'passes' }).click();
+      await expect(page.getByText('example.spec.ts')).toBeVisible();
     });
 
     test('worker test list', async ({ runInlineTest, showReport, page }) => {

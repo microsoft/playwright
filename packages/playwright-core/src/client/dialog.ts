@@ -16,6 +16,7 @@
 
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';
+import { isTargetClosedError } from './errors';
 
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -56,6 +57,12 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
   }
 
   async dismiss() {
-    await this._channel.dismiss();
+    try {
+      await this._channel.dismiss();
+    } catch (e) {
+      if (isTargetClosedError(e))
+        return;
+      throw e;
+    }
   }
 }

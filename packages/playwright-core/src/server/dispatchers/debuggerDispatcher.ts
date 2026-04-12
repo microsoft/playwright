@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -40,20 +40,24 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
   }
 
   private _serializePausedDetails(): channels.DebuggerPausedStateChangedEvent['pausedDetails'] {
-    return this._object.pausedDetails().map(({ metadata, sdkObject }) => ({
+    const details = this._object.pausedDetails();
+    if (!details)
+      return undefined;
+    const { metadata } = details;
+    return {
       location: {
         file: metadata.location?.file ?? '<unknown>',
         line: metadata.location?.line,
         column: metadata.location?.column,
       },
       title: renderTitleForCall(metadata),
-    }));
+    };
   }
 
-  async pause(params: channels.DebuggerPauseParams, progress: Progress): Promise<void> {
+  async requestPause(params: channels.DebuggerRequestPauseParams, progress: Progress): Promise<void> {
     if (this._object.isPaused())
       throw new Error('Debugger is already paused');
-    this._object.setPauseBeforeInputActions();
+    this._object.setPauseBeforeWaitingActions();
     this._object.setPauseAt({ next: true });
   }
 
@@ -66,7 +70,7 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
   async next(params: channels.DebuggerNextParams, progress: Progress): Promise<void> {
     if (!this._object.isPaused())
       throw new Error('Debugger is not paused');
-    this._object.setPauseBeforeInputActions();
+    this._object.setPauseBeforeWaitingActions();
     this._object.setPauseAt({ next: true });
     this._object.resume();
   }
@@ -74,7 +78,7 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
   async runTo(params: channels.DebuggerRunToParams, progress: Progress): Promise<void> {
     if (!this._object.isPaused())
       throw new Error('Debugger is not paused');
-    this._object.setPauseBeforeInputActions();
+    this._object.setPauseBeforeWaitingActions();
     this._object.setPauseAt({ location: params.location });
     this._object.resume();
   }

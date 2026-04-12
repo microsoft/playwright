@@ -50,6 +50,11 @@ scheme.Rect = tObject({
   width: tFloat,
   height: tFloat,
 });
+scheme.AnnotateOptions = tObject({
+  duration: tOptional(tFloat),
+  position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+  fontSize: tOptional(tInt),
+});
 scheme.SerializedValue = tObject({
   n: tOptional(tFloat),
   b: tOptional(tBoolean),
@@ -252,7 +257,7 @@ scheme.APIResponse = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
-scheme.ConsoleMessagesFilter = tEnum(['all', 'sinceNavigation']);
+scheme.ConsoleMessagesFilter = tEnum(['all', 'since-navigation']);
 scheme.LocalUtilsInitializer = tObject({
   deviceDescriptors: tArray(tObject({
     name: tString,
@@ -606,11 +611,12 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -717,11 +723,12 @@ scheme.BrowserNewContextParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -788,11 +795,12 @@ scheme.BrowserNewContextForReuseParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -906,11 +914,12 @@ scheme.BrowserContextInitializer = tObject({
     contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
     baseURL: tOptional(tString),
     recordVideo: tOptional(tObject({
-      dir: tString,
+      dir: tOptional(tString),
       size: tOptional(tObject({
         width: tInt,
         height: tInt,
       })),
+      annotate: tOptional(tType('AnnotateOptions')),
     })),
     strictSelectors: tOptional(tBoolean),
     serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -1499,17 +1508,6 @@ scheme.PageRequestsParams = tOptional(tObject({}));
 scheme.PageRequestsResult = tObject({
   requests: tArray(tChannel(['Request'])),
 });
-scheme.PageAriaSnapshotParams = tObject({
-  format: tOptional(tEnum(['ai', 'default'])),
-  track: tOptional(tString),
-  mode: tOptional(tEnum(['full', 'incremental'])),
-  selector: tOptional(tString),
-  depth: tOptional(tInt),
-  timeout: tFloat,
-});
-scheme.PageAriaSnapshotResult = tObject({
-  snapshot: tString,
-});
 scheme.PageStartJSCoverageParams = tObject({
   resetOnNavigation: tOptional(tBoolean),
   reportAnonymousScripts: tOptional(tBoolean),
@@ -1555,26 +1553,42 @@ scheme.PagePickLocatorResult = tObject({
 });
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
-scheme.PageStartScreencastParams = tObject({
-  preferredSize: tOptional(tObject({
-    width: tInt,
-    height: tInt,
-  })),
+scheme.PageOverlayShowParams = tObject({
+  html: tString,
+  duration: tOptional(tFloat),
 });
-scheme.PageStartScreencastResult = tOptional(tObject({}));
-scheme.PageStopScreencastParams = tOptional(tObject({}));
-scheme.PageStopScreencastResult = tOptional(tObject({}));
-scheme.PageVideoStartParams = tObject({
+scheme.PageOverlayShowResult = tObject({
+  id: tString,
+});
+scheme.PageOverlayRemoveParams = tObject({
+  id: tString,
+});
+scheme.PageOverlayRemoveResult = tOptional(tObject({}));
+scheme.PageOverlayChapterParams = tObject({
+  title: tString,
+  description: tOptional(tString),
+  duration: tOptional(tFloat),
+});
+scheme.PageOverlayChapterResult = tOptional(tObject({}));
+scheme.PageOverlaySetVisibleParams = tObject({
+  visible: tBoolean,
+});
+scheme.PageOverlaySetVisibleResult = tOptional(tObject({}));
+scheme.PageScreencastStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
+  quality: tOptional(tInt),
+  sendFrames: tOptional(tBoolean),
+  record: tOptional(tBoolean),
+  annotate: tOptional(tType('AnnotateOptions')),
 });
-scheme.PageVideoStartResult = tObject({
-  artifact: tChannel(['Artifact']),
+scheme.PageScreencastStartResult = tObject({
+  artifact: tOptional(tChannel(['Artifact'])),
 });
-scheme.PageVideoStopParams = tOptional(tObject({}));
-scheme.PageVideoStopResult = tOptional(tObject({}));
+scheme.PageScreencastStopParams = tOptional(tObject({}));
+scheme.PageScreencastStopResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,
@@ -1635,6 +1649,16 @@ scheme.FrameAddStyleTagParams = tObject({
 });
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
+});
+scheme.FrameAriaSnapshotParams = tObject({
+  mode: tOptional(tEnum(['ai', 'default'])),
+  track: tOptional(tString),
+  selector: tOptional(tString),
+  depth: tOptional(tInt),
+  timeout: tFloat,
+});
+scheme.FrameAriaSnapshotResult = tObject({
+  snapshot: tString,
 });
 scheme.FrameBlurParams = tObject({
   selector: tString,
@@ -2499,17 +2523,18 @@ scheme.BindingCallResolveParams = tObject({
 scheme.BindingCallResolveResult = tOptional(tObject({}));
 scheme.DebuggerInitializer = tOptional(tObject({}));
 scheme.DebuggerPausedStateChangedEvent = tObject({
-  pausedDetails: tArray(tObject({
+  pausedDetails: tOptional(tObject({
     location: tObject({
       file: tString,
       line: tOptional(tInt),
       column: tOptional(tInt),
     }),
     title: tString,
+    stack: tOptional(tString),
   })),
 });
-scheme.DebuggerPauseParams = tOptional(tObject({}));
-scheme.DebuggerPauseResult = tOptional(tObject({}));
+scheme.DebuggerRequestPauseParams = tOptional(tObject({}));
+scheme.DebuggerRequestPauseResult = tOptional(tObject({}));
 scheme.DebuggerResumeParams = tOptional(tObject({}));
 scheme.DebuggerResumeResult = tOptional(tObject({}));
 scheme.DebuggerNextParams = tOptional(tObject({}));
@@ -2653,15 +2678,17 @@ scheme.ElectronLaunchParams = tObject({
   locale: tOptional(tString),
   offline: tOptional(tBoolean),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
   tracesDir: tOptional(tString),
+  artifactsDir: tOptional(tString),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
 });
@@ -2888,11 +2915,12 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
