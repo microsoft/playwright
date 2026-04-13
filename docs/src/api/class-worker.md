@@ -64,6 +64,19 @@ Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs
 
 Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
 
+## async method: Worker.disconnect
+* since: v1.60
+* langs: js
+
+Disconnects from a worker that was connected through [`method: BrowserType.connectToWorker`]. Calling this method on any other worker will throw.
+
+### option: Worker.disconnect.reason
+* since: v1.60
+- `reason` <[string]>
+
+The reason to be reported to the operations interrupted by the worker disconnect.
+
+
 ## async method: Worker.evaluate
 * since: v1.8
 - returns: <[Serializable]>

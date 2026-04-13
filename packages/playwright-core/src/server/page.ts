@@ -923,10 +923,12 @@ export class Page extends SdkObject<PageEventMap> {
 }
 
 export const WorkerEvent = {
+  Console: 'console',
   Close: 'close',
 } as const;
 
 export type WorkerEventMap = {
+  [WorkerEvent.Console]: [message: ConsoleMessage];
   [WorkerEvent.Close]: [worker: Worker];
 };
 
@@ -934,14 +936,18 @@ export class Worker extends SdkObject<WorkerEventMap> {
   static Events = WorkerEvent;
 
   readonly url: string;
+  private _onDisconnect?: () => Promise<void>;
   private _executionContextPromise = new ManualPromise<js.ExecutionContext>();
   private _workerScriptLoaded = false;
   existingExecutionContext: js.ExecutionContext | null = null;
   readonly openScope = new LongStandingScope();
+  _closeReason: string | undefined;
 
-  constructor(parent: SdkObject, url: string) {
+  constructor(parent: SdkObject, url: string, onDisconnect?: () => Promise<void>) {
     super(parent, 'worker');
+    this.attribution.worker = this;
     this.url = url;
+    this._onDisconnect = onDisconnect;
   }
 
   createExecutionContext(delegate: js.ExecutionContextDelegate) {
@@ -951,20 +957,18 @@ export class Worker extends SdkObject<WorkerEventMap> {
     return this.existingExecutionContext;
   }
 
+  destroyExecutionContext(errorMessage: string) {
+    if (this.existingExecutionContext)
+      this.existingExecutionContext.contextDestroyed(errorMessage);
+    this.existingExecutionContext = null;
+    this._workerScriptLoaded = false;
+    this._executionContextPromise = new ManualPromise<js.ExecutionContext>();
+  }
+
   workerScriptLoaded() {
     this._workerScriptLoaded = true;
     if (this.existingExecutionContext)
       this._executionContextPromise.resolve(this.existingExecutionContext);
-  }
-
-  protected _prepareContextForRestart() {
-    if (this.existingExecutionContext)
-      this.existingExecutionContext.contextDestroyed('Service worker restarted');
-    this.existingExecutionContext = null;
-    // Reset so createExecutionContext() waits for workerScriptLoaded() before resolving —
-    // mirroring initial startup and ensuring the script has run before evaluations proceed.
-    this._workerScriptLoaded = false;
-    this._executionContextPromise = new ManualPromise<js.ExecutionContext>();
   }
 
   didClose() {
@@ -980,6 +984,13 @@ export class Worker extends SdkObject<WorkerEventMap> {
 
   async evaluateExpressionHandle(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {
     return progress.race(js.evaluateExpression(await this._executionContextPromise, expression, { returnByValue: false, isFunction }, arg));
+  }
+
+  async disconnect(progress: Progress, options: { reason?: string } = {}) {
+    if (!this._onDisconnect)
+      throw new Error('Cannot disconnect from this worker');
+    this._closeReason = options.reason;
+    await progress.race(this._onDisconnect());
   }
 }
 

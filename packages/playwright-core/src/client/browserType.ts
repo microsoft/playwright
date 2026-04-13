@@ -22,6 +22,7 @@ import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { connectToBrowser } from './connect';
 import { TimeoutSettings } from './timeoutSettings';
+import { Worker } from './worker';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
@@ -162,6 +163,16 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (result.defaultContext)
       await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
     return browser;
+  }
+
+  async connectToWorker(endpoint: string, options: { timeout?: number } = {}): Promise<Worker>  {
+    if (this.name() !== 'chromium')
+      throw new Error('Connecting to workers is only supported in Chromium.');
+    const result = await this._channel.connectToWorker({
+      endpoint,
+      timeout: new TimeoutSettings(this._platform).timeout(options),
+    });
+    return Worker.from(result.worker);
   }
 
   async _connectOverCDPTransport(transport: /* ConnectionTransport */ any) {

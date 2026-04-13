@@ -30,7 +30,7 @@ import { fetchData } from '../utils';
 import { getUserAgent } from '../userAgent';
 import { chromiumSwitches } from './chromiumSwitches';
 import { shouldProxyLoopback, CRBrowser } from './crBrowser';
-import { kBrowserCloseMessageId } from './crConnection';
+import { ConnectionEvents, CRConnection, kBrowserCloseMessageId } from './crConnection';
 import { validateBrowserContextOptions } from '../browserContext';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { helper } from '../helper';
@@ -38,6 +38,10 @@ import { registry } from '../registry';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
 import { Browser } from '../browser';
+import { Worker } from '../page';
+import { CRExecutionContext, createHandle } from './crExecutionContext';
+import { ConsoleMessage } from '../console';
+import { toConsoleMessageLocation } from './crProtocolHelper';
 
 import type { HTTPRequestParams } from '@utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
@@ -153,6 +157,35 @@ export class Chromium extends BrowserType {
   override async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport) {
     const closeAndWait = async () => transport.close();
     return this._connectOverCDPImpl(progress, transport, closeAndWait, { isLocal: true });
+  }
+
+  override async connectToWorker(progress: Progress, endpoint: string) {
+    const wsEndpoint = await urlToWSEndpoint(progress, endpoint, {});
+    const transport = await WebSocketTransport.connect(progress, wsEndpoint);
+    try {
+      const connection = new CRConnection(this, transport, helper.debugProtocolLogger(), new RecentLogsCollector());
+      const session = connection.rootSession;
+      const worker = new Worker(this, '', () => transport.closeAndWait());
+      session.on('Runtime.executionContextCreated', event => {
+        worker.workerScriptLoaded();
+        worker.createExecutionContext(new CRExecutionContext(session, event.context));
+      });
+      session.on('Runtime.executionContextDestroyed', () => worker.destroyExecutionContext('Execution context was destroyed'));
+      session.on('Runtime.consoleAPICalled', event => {
+        if (!worker.existingExecutionContext)
+          return;
+        const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
+        const message = new ConsoleMessage(null, worker, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace), event.timestamp);
+        worker.emit(Worker.Events.Console, message);
+      });
+      connection.on(ConnectionEvents.Disconnected, () => worker.didClose());
+      session._sendMayFail('Runtime.enable');
+      session._sendMayFail('Runtime.runIfWaitingForDebugger');
+      return worker;
+    } catch (error) {
+      await progress.race(transport.closeAndWait().catch(() => {}));
+      throw error;
+    }
   }
 
   private _createDevTools() {

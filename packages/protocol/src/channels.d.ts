@@ -894,6 +894,7 @@ export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, progress?: Progress): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPResult>;
   connectOverCDPTransport(params: BrowserTypeConnectOverCDPTransportParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPTransportResult>;
+  connectToWorker(params: BrowserTypeConnectToWorkerParams, progress?: Progress): Promise<BrowserTypeConnectToWorkerResult>;
 }
 export type BrowserTypeLaunchParams = {
   channel?: string,
@@ -1156,6 +1157,16 @@ export type BrowserTypeConnectOverCDPTransportOptions = {
 export type BrowserTypeConnectOverCDPTransportResult = {
   browser: BrowserChannel,
   defaultContext?: BrowserContextChannel,
+};
+export type BrowserTypeConnectToWorkerParams = {
+  endpoint: string,
+  timeout: number,
+};
+export type BrowserTypeConnectToWorkerOptions = {
+
+};
+export type BrowserTypeConnectToWorkerResult = {
+  worker: WorkerChannel,
 };
 
 export interface BrowserTypeEvents {
@@ -3483,15 +3494,35 @@ export type WorkerInitializer = {
   url: string,
 };
 export interface WorkerEventTarget {
+  on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
 }
 export interface WorkerChannel extends WorkerEventTarget, EventTargetChannel {
   _type_Worker: boolean;
+  disconnect(params: WorkerDisconnectParams, progress?: Progress): Promise<WorkerDisconnectResult>;
   evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
   updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
 }
+export type WorkerConsoleEvent = {
+  type: string,
+  text: string,
+  args: JSHandleChannel[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
+  timestamp: number,
+};
 export type WorkerCloseEvent = {};
+export type WorkerDisconnectParams = {
+  reason?: string,
+};
+export type WorkerDisconnectOptions = {
+  reason?: string,
+};
+export type WorkerDisconnectResult = void;
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
@@ -3524,6 +3555,7 @@ export type WorkerUpdateSubscriptionOptions = {
 export type WorkerUpdateSubscriptionResult = void;
 
 export interface WorkerEvents {
+  'console': WorkerConsoleEvent;
   'close': WorkerCloseEvent;
 }
 

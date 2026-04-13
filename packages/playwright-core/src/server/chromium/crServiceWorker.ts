@@ -37,7 +37,7 @@ export class CRServiceWorker extends Worker {
     if (!process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK)
       this._networkManager = new CRNetworkManager(null, this);
 
-    session.on('Inspector.targetCrashed', () => this._prepareContextForRestart());
+    session.on('Inspector.targetCrashed', () => this.destroyExecutionContext('Service worker restarted'));
 
     session.on('Runtime.executionContextCreated', (event: Protocol.Runtime.executionContextCreatedPayload) => {
       this.createExecutionContext(new CRExecutionContext(session, event.context));
