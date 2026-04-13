@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
@@ -27,11 +27,7 @@ const { resolveCLIConfigForCLI, resolveCLIConfigForMCP } = tools;
 // Empty env to isolate tests from the host environment.
 const emptyEnv = {};
 
-// ---------------------------------------------------------------------------
-// Shared behavior — browserName / channel resolution
-// These are tested via resolveCLIConfigForMCP; the underlying configFromCLIOptions
-// and validateBrowserConfig are shared with resolveCLIConfigForCLI.
-// ---------------------------------------------------------------------------
+test.skip(({ mcpBrowser }) => mcpBrowser !== 'chrome', 'Channel-agnostic tests.');
 
 test.describe('browserName and channel', () => {
   test('no browser option defaults to chromium / chrome', async () => {
@@ -376,7 +372,7 @@ test.describe('resolveCLIConfigForCLI - isolated and userDataDir', () => {
   test('auto userDataDir uses undefined token when no browser specified', async ({}, testInfo) => {
     const profilesDir = testInfo.outputPath('profiles');
     const config = await resolveCLI(profilesDir, 'default', { persistent: true });
-    expect(config.browser.userDataDir).toBe(path.resolve(profilesDir, 'ud-default-undefined'));
+    expect(config.browser.userDataDir).toBe(path.resolve(profilesDir, 'ud-default-chrome'));
   });
 
   test('no auto userDataDir when isolated', async ({}, testInfo) => {

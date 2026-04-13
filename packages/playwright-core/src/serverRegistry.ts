@@ -75,7 +75,7 @@ class ServerRegistry {
       const entries = await Promise.all(promises);
       const descriptors = [];
       for (const entry of entries) {
-        if (!entry.canConnect && !entry.browser.userDataDir) {
+        if (!entry.canConnect) {
           await fs.promises.unlink(entry.file).catch(() => {});
           continue;
         }

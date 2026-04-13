@@ -67,7 +67,7 @@ export class Session {
   }
 
   async deleteData() {
-    await this.stop();
+    await this.stop(true);
 
     const dataDirs = await fs.promises.readdir(this._sessionFile.daemonDir).catch(() => []);
     const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
