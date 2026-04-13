@@ -413,8 +413,6 @@ function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
     launchOptions: {
       ...pickDefined(base.browser?.launchOptions),
       ...pickDefined(overrides.browser?.launchOptions),
-      // Assistant mode is not a part of the public API.
-      ...{ assistantMode: true },
     },
     contextOptions: {
       ...pickDefined(base.browser?.contextOptions),

@@ -74,7 +74,7 @@ export class Chromium extends BrowserType {
     return super.launch(progress, options, protocolLogger);
   }
 
-  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
+  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
     if (options.channel?.startsWith('bidi-'))
       return this._bidiChromium.launchPersistentContext(progress, userDataDir, options);
     return super.launchPersistentContext(progress, userDataDir, options);
@@ -343,10 +343,7 @@ export class Chromium extends BrowserType {
   override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    if (options.cdpPort !== undefined)
-      chromeArguments.push(`--remote-debugging-port=${options.cdpPort}`);
-    else
-      chromeArguments.push('--remote-debugging-pipe');
+    chromeArguments.push('--remote-debugging-pipe');
     if (isPersistent)
       chromeArguments.push('about:blank');
     else
@@ -363,7 +360,7 @@ export class Chromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const chromeArguments = [...chromiumSwitches(options.assistantMode, options.channel)];
+    const chromeArguments = [...chromiumSwitches()];
 
     // See https://issues.chromium.org/issues/40277080
     chromeArguments.push('--enable-unsafe-swiftshader');
@@ -418,7 +415,7 @@ export class Chromium extends BrowserType {
 }
 
 export async function waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
-  if (options.cdpPort === undefined && !options.args?.some(a => a.startsWith('--remote-debugging-port')))
+  if (!options.args?.some(a => a.startsWith('--remote-debugging-port')))
     return {};
 
   const result = new ManualPromise<{ wsEndpoint?: string }>();

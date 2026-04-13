@@ -631,11 +631,11 @@ test('should throw when connecting twice to an already running persistent contex
   test.skip(!!channel?.startsWith('msedge'), 'Edge does not print the ProcessSingleton line');
   const userDataDir = await createUserDataDir();
   const browser = await browserType.launchPersistentContext(userDataDir, {
-    cdpPort: 9222,
+    args: ['--remote-debugging-port=9222'],
   } as any);
   try {
     const error = await browserType.launchPersistentContext(userDataDir, {
-      cdpPort: 9223,
+      args: ['--remote-debugging-port=9223'],
     } as any).catch(e => e);
     expect(error.message).toContain('This usually means that the profile is already in use by another instance of Chromium.');
   } finally {

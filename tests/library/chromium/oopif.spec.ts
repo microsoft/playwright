@@ -371,13 +371,13 @@ it('should intercept response body from oopif', async function({ page, browser, 
   expect(await response.text()).toBeTruthy();
 });
 
-it('should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server, browserMajorVersion }) => {
+it('should allow to re-connect to OOPIFs with CDP when iframes were there already', async ({ browserType, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36095' });
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17656' });
-  it.skip(browserMajorVersion < 141, 'old chromium does not have TargetInfo.parentFrameId');
+  it.skip(!!process.env.PWTEST_CHANNEL, 'Test default channel only');
 
   const cdpPort = 10123 + it.info().parallelIndex * 4;
-  const hostBrowser = await browserType.launch({ cdpPort } as any);
+  const hostBrowser = await browserType.launch({ channel: 'chromium', args: ['--remote-debugging-port=' + cdpPort] });
   const hostPage = await hostBrowser.newPage();
   await hostPage.goto(server.PREFIX + '/dynamic-oopif.html');
 
