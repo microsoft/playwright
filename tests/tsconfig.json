@@ -13,7 +13,8 @@
       "@dashboard/*": ["packages/dashboard/src/*"],
       "@dvtools/*": ["packages/devtools/src/*"],
       "@injected/*": ["packages/injected/src/*"],
-      "@isomorphic/*": ["packages/playwright-core/src/utils/isomorphic/*"],
+      "@isomorphic/*": ["packages/isomorphic/*"],
+      "@utils/*": ["packages/utils/*"],
       "@testIsomorphic/*": ["packages/playwright/src/isomorphic/*"],
       "@protocol/*": ["packages/protocol/src/*"],
       "@recorder/*": ["packages/recorder/src/*"],
@@ -34,5 +35,5 @@
     "skipLibCheck": true,
   },
   "include": ["**/*.spec.js", "**/*.ts"],
-  "exclude": ["components/", "installation/fixture-scripts/", "packages/playwright-core/lib/", "config/ghaMarkdownReporter.ts"]
+  "exclude": ["components/", "installation/fixture-scripts/", "packages/playwright-core/lib/"]
 }

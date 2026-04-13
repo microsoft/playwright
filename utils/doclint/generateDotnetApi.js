@@ -389,9 +389,10 @@ function getPropertyOverloads(type, member, name, parent) {
  * @param {*} parent
  */
 function generateNameDefault(member, name, t, parent) {
-  if (t.structName) {
-    registerModelType(t.structName, t);
-    return t.structName;
+  const structName = t.langAliases?.csharp || t.langAliases?.default;
+  if (structName) {
+    registerModelType(structName, t);
+    return structName;
   }
 
   if (!t.properties

@@ -21,11 +21,11 @@ import colors from 'colors/safe';
 import yaml from 'yaml';
 import { mkdirIfNeeded } from '@utils/fileUtils';
 
-import { FullConfigInternal } from '../common/config';
 import { defaultSeedFile, findSeedFile, seedFileContent, seedProject } from '../mcp/test/seed';
 import { parseAgentSpec } from './agentParser';
 
 import type { AgentSpec } from './agentParser';
+import type { FullConfigInternal } from '../common';
 
 /* eslint-disable no-console */
 
@@ -35,8 +35,8 @@ async function loadAgentSpecs(): Promise<AgentSpec[]> {
 }
 
 export class ClaudeGenerator {
-  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
-    await initRepo(config, projectName, {
+  static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
+    await initRepo(fullConfig, projectName, {
       promptsFolder: prompts ? '.claude/prompts' : undefined,
     });
 
@@ -91,8 +91,8 @@ export class ClaudeGenerator {
 }
 
 export class OpencodeGenerator {
-  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
-    await initRepo(config, projectName, {
+  static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
+    await initRepo(fullConfig, projectName, {
       defaultAgentName: 'Build',
       promptsFolder: prompts ? '.opencode/prompts' : undefined
     });
@@ -156,9 +156,9 @@ export class OpencodeGenerator {
   }
 }
 export class CopilotGenerator {
-  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
+  static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
 
-    await initRepo(config, projectName, {
+    await initRepo(fullConfig, projectName, {
       defaultAgentName: 'agent',
       promptsFolder: prompts ? '.github/prompts' : undefined,
       promptSuffix: 'prompt'
@@ -228,8 +228,8 @@ export class CopilotGenerator {
 }
 
 export class VSCodeGenerator {
-  static async init(config: FullConfigInternal, projectName: string) {
-    await initRepo(config, projectName, {
+  static async init(fullConfig: FullConfigInternal, projectName: string) {
+    await initRepo(fullConfig, projectName, {
       promptsFolder: undefined
     });
     const agents = await loadAgentSpecs();
@@ -341,8 +341,8 @@ type RepoParams = {
   defaultAgentName?: string;
 };
 
-async function initRepo(config: FullConfigInternal, projectName: string, options: RepoParams) {
-  const project = seedProject(config, projectName);
+async function initRepo(fullConfig: FullConfigInternal, projectName: string, options: RepoParams) {
+  const project = seedProject(fullConfig, projectName);
   console.log(` 🎭 Using project "${project.project.name}" as a primary project`);
 
   if (!fs.existsSync('specs')) {

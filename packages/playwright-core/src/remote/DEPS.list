@@ -3,6 +3,4 @@
 ../server/android/
 ../server/dispatchers/
 @utils/**
-../utils/**
 @isomorphic/**
-../utilsBundle.ts

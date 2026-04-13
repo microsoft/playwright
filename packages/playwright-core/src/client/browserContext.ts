@@ -19,7 +19,6 @@ import { headersObjectToArray } from '@isomorphic/headers';
 import { urlMatchesEqual } from '@isomorphic/urlMatch';
 import { isRegExp, isString } from '@isomorphic/rtti';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
-import { Artifact } from './artifact';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';
@@ -47,7 +46,7 @@ import type { BrowserContextOptions, Headers, SetStorageState, StorageState, Wai
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 
@@ -76,7 +75,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly clock: Clock;
 
   readonly _serviceWorkers = new Set<Worker>();
-  private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
   private _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
@@ -179,7 +177,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!recordHar)
       return;
     const defaultContent = recordHar.path.endsWith('.zip') ? 'attach' : 'embed';
-    await this._recordIntoHAR(recordHar.path, null, {
+    await this.tracing._recordIntoHAR(recordHar.path, null, {
       url: recordHar.urlFilter,
       updateContent: recordHar.content ?? (recordHar.omitContent ? 'omit' : defaultContent),
       updateMode: recordHar.mode ?? 'full',
@@ -384,27 +382,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
-    const { harId } = await this._channel.harStart({
-      page: page?._channel,
-      options: {
-        zip: har.endsWith('.zip'),
-        content: options.updateContent ?? 'attach',
-        urlGlob: isString(options.url) ? options.url : undefined,
-        urlRegexSource: isRegExp(options.url) ? options.url.source : undefined,
-        urlRegexFlags: isRegExp(options.url) ? options.url.flags : undefined,
-        mode: options.updateMode ?? 'minimal',
-      },
-    });
-    this._harRecorders.set(harId, { path: har, content: options.updateContent ?? 'attach' });
-  }
-
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
     const localUtils = this._connection.localUtils();
     if (!localUtils)
       throw new Error('Route from har is not supported in thin clients');
     if (options.update) {
-      await this._recordIntoHAR(har, null, options);
+      await this.tracing._recordIntoHAR(har, null, options);
       return;
     }
     const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });
@@ -522,25 +505,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._closingStatus = 'closing';
     await this.request.dispose(options);
     await this._instrumentation.runBeforeCloseBrowserContext(this);
-    await this._wrapApiCall(async () => {
-      for (const [harId, harParams] of this._harRecorders) {
-        const har = await this._channel.harExport({ harId });
-        const artifact = Artifact.from(har.artifact);
-        // Server side will compress artifact if content is attach or if file is .zip.
-        const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
-        const needCompressed = harParams.path.endsWith('.zip');
-        if (isCompressed && !needCompressed) {
-          const localUtils = this._connection.localUtils();
-          if (!localUtils)
-            throw new Error('Uncompressed har is not supported in thin clients');
-          await artifact.saveAs(harParams.path + '.tmp');
-          await localUtils.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
-        } else {
-          await artifact.saveAs(harParams.path);
-        }
-        await artifact.delete();
-      }
-    }, { internal: true });
+    await this.tracing._exportAllHars();
     await this._channel.close(options);
     await this._closedPromise;
   }

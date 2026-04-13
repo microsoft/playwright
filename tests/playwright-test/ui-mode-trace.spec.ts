@@ -70,7 +70,7 @@ test('should work with non-existing rootDir and testDir outside of it', {
   });
 
   await page.getByText('example test').dblclick();
-  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - treeitem /Before Hooks/
     - treeitem /Set content/ [selected]
     - treeitem /After Hooks/
@@ -207,7 +207,7 @@ test('should show snapshots for steps', {
 
   await page.getByText('steps test').dblclick();
 
-  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks/
       - treeitem /first/
@@ -448,7 +448,7 @@ test('should work behind reverse proxy', { annotation: { type: 'issue', descript
 
   await page.getByText('trace test').dblclick();
 
-  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks/
       - treeitem /Set content/
@@ -557,7 +557,7 @@ test('should hide boxed fixtures and contents, reveal upon show all actions sett
   });
 
   await page.getByText('example').dblclick();
-  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks/
       - treeitem /Expect "toBeVisible"/
@@ -573,7 +573,7 @@ test('should hide boxed fixtures and contents, reveal upon show all actions sett
   await page.getByTestId('actions-tree').getByRole('treeitem', { name: 'Before Hooks' }).locator('.codicon-chevron-right').click();
   await page.getByTestId('actions-tree').getByRole('treeitem', { name: 'Fixture "fixture"' }).locator('.codicon-chevron-right').click();
 
-  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem /Before Hooks/:
         - group:
@@ -619,7 +619,7 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
   const actionsTree = page.getByTestId('actions-tree');
   await actionsTree.getByRole('treeitem', { name: 'step' }).click();
   await page.keyboard.press('ArrowRight');
-  await expect(actionsTree, 'attach() and top-level attachments.push calls are shown as actions').toMatchAriaSnapshot(`
+  await expect(page, 'attach() and top-level attachments.push calls are shown as actions').toMatchAriaSnapshot(`
     - tree:
       - treeitem /step/:
         - group:
@@ -655,7 +655,7 @@ test('skipped steps should have an indicator', async ({ runUITest }) => {
   const actionsTree = page.getByTestId('actions-tree');
   await actionsTree.getByRole('treeitem', { name: 'outer' }).click();
   await page.keyboard.press('ArrowRight');
-  await expect(actionsTree).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem /outer/ [expanded]:
         - group:
@@ -783,7 +783,7 @@ test('should partition action tree state by test', async ({ runUITest }) => {
   await actionsTree.getByRole('treeitem', { name: 'After Hooks' }).click();
   await page.keyboard.press('ArrowRight');
 
-  await expect(actionsTree).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - treeitem /After Hooks/ [expanded] [selected]:
       - group:
         - treeitem /Fixture \"page\"/
@@ -792,7 +792,7 @@ test('should partition action tree state by test', async ({ runUITest }) => {
 
   await page.getByTestId('test-tree').getByText('test2').click();
 
-  await expect(actionsTree).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - treeitem /Evaluate/ [selected]
     - treeitem /After Hooks/ [expanded=false]:
       - /children: equal
@@ -800,7 +800,7 @@ test('should partition action tree state by test', async ({ runUITest }) => {
 
   await page.getByTestId('test-tree').getByText('test1').click();
 
-  await expect(actionsTree).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - treeitem /Evaluate/ [selected=false]
     - treeitem /After Hooks/ [expanded] [selected]:
       - group:
@@ -818,12 +818,10 @@ test('should update state on subsequent run', async ({ runUITest, writeFiles }) 
       });
     `,
   });
-  const actionsTree = page.getByTestId('actions-tree');
-
   await page.getByTestId('test-tree').getByText('test1').click();
   await page.keyboard.press('Enter');
 
-  await expect(actionsTree).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - treeitem /Evaluate/ [selected]
   `);
 
@@ -839,7 +837,7 @@ test('should update state on subsequent run', async ({ runUITest, writeFiles }) 
 
   await page.keyboard.press('Enter');
 
-  await expect(actionsTree).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - treeitem /Expect \"toBe\"/
   `);
 });

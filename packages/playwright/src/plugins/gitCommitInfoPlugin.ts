@@ -21,7 +21,7 @@ import { spawnAsync } from '@utils/spawnAsync';
 
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
-import type { FullConfigInternal } from '../common/config';
+import type { FullConfigInternal } from '../common';
 import type { GitCommitInfo, CIInfo, MetadataWithCommitInfo } from '../isomorphic/types';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 3000;

@@ -19,13 +19,14 @@ import { AndroidServerLauncherImpl } from './androidServerImpl';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
 import { Connection } from './client/connection';
+import { packageRoot } from './package';
 
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import type { Language } from '@isomorphic/locatorGenerators';
 
-function createInProcessPlaywright(): PlaywrightAPI {
+export function createInProcessPlaywright(): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
-  const clientConnection = new Connection(nodePlatform);
+  const clientConnection = new Connection(nodePlatform(packageRoot));
   clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* local */);
 

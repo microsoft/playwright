@@ -23,6 +23,7 @@ import crypto from 'crypto';
 
 import sourceMapSupport from 'source-map-support';
 import { loadTsConfig } from './tsconfig-loader';
+import { libPath, packageJSON } from '../package';
 import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
 import { addHook } from './pirates';
@@ -33,7 +34,7 @@ import type { LoadedTsConfig } from './tsconfig-loader';
 import type { Matcher } from '../util';
 
 
-const version = require('../../package.json').version;
+const version = packageJSON.version;
 
 type ParsedTsConfigData = {
   pathsBase?: string;
@@ -45,6 +46,7 @@ const cachedTSConfigs = new Map<string, ParsedTsConfigData[]>();
 export type TransformConfig = {
   babelPlugins: [string, any?][];
   external: string[];
+  jsxImportSource?: string;
 };
 
 let _transformConfig: TransformConfig = {
@@ -235,9 +237,19 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
-  const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
+  const { babelTransform }: { babelTransform: BabelTransformFunction } = require(libPath('transform', 'babelBundle'));
   transformData = new Map<string, any>();
-  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  // Pass `setTransformData` to plugins via plugin options instead of having
+  // them import it. The bundled esmLoader inlines its own copy of this file,
+  // so an import-based approach would close over the wrong `transformData`
+  // module-level variable. The closure here always references the bundle copy
+  // currently driving the transform.
+  const setTransformDataForPlugin = (key: string, value: any) => transformData.set(key, value);
+  const wrappedPrologue: BabelPlugin[] = pluginsPrologue.map(([name, opts]) => [
+    name,
+    { ...(opts || {}), setTransformData: setTransformDataForPlugin },
+  ]);
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, wrappedPrologue, pluginsEpilogue, _transformConfig.jsxImportSource);
   if (!babelResult?.code)
     return { code: originalCode, serializedCache };
   const { code, map } = babelResult;

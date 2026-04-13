@@ -28,8 +28,8 @@ const packagesDir = path.resolve(path.join(__dirname, '..', 'packages'));
 const packages = new Map();
 packages.set('web', packagesDir + '/web/src/');
 packages.set('injected', packagesDir + '/injected/src/');
-packages.set('isomorphic', packagesDir + '/playwright-core/src/utils/isomorphic/');
-packages.set('utils', packagesDir + '/playwright-core/src/server/utils/');
+packages.set('isomorphic', packagesDir + '/isomorphic/');
+packages.set('utils', packagesDir + '/utils/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
 
 const peerDependencies = ['electron', 'react', 'react-dom', 'react-dom/client', '@zip.js/zip.js', 'zod', 'zod/v3'];
@@ -62,7 +62,8 @@ async function checkDeps() {
 
 async function innerCheckDeps(root) {
   console.log('Checking DEPS for ' + path.relative(packagesDir, root));
-  const deps = new Set();
+  /** @type {Map<string, Set<string>>} */
+  const deps = new Map();
   const src = path.join(root, 'src');
 
   let packageJSON;
@@ -104,7 +105,7 @@ async function innerCheckDeps(root) {
       const top = pkg.startsWith('@') ? pkg.split('/').slice(0, 2).join('/') : pkg.split('/')[0];
       deps.delete(top);
     }
-    for (const dep of deps) {
+    for (const dep of [...deps.keys()]) {
       let resolved;
       try {
         resolved = require.resolve(dep, { paths: [root] });
@@ -119,8 +120,11 @@ async function innerCheckDeps(root) {
 
     if (deps.size) {
       console.log('Dependencies are not declared in package.json:');
-      for (const dep of deps)
+      for (const [dep, files] of deps) {
         console.log(`  ${dep}`);
+        for (const file of files)
+          console.log(`    ${path.relative(root, file)}`);
+      }
       process.exit(1);
     }
   }
@@ -177,15 +181,19 @@ async function innerCheckDeps(root) {
             return;
       }
 
-      if (importName.startsWith('@'))
-        deps.add(importName.split('/').slice(0, 2).join('/'));
-      else
-        deps.add(importName.split('/')[0]);
-
       // Per-folder explicit allow-list: `node_modules/<importName>` in DEPS.list
-      // declares the file may import that exact package specifier.
+      // declares the file may import that exact package specifier. When a
+      // DEPS.list authorizes the dep, do NOT add it to the package.json
+      // dependency check either — the per-file allowlist is the contract.
       if (mergedDeps.includes('node_modules/' + importName))
         return;
+
+      const topLevel = importName.startsWith('@')
+          ? importName.split('/').slice(0, 2).join('/')
+          : importName.split('/')[0];
+      if (!deps.has(topLevel))
+        deps.set(topLevel, new Set());
+      deps.get(topLevel).add(fileName);
 
       if (!allowExternalImport(importName, packageJSON))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);

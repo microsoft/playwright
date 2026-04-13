@@ -1,12 +1,8 @@
 [*]
+@isomorphic/**
+@utils/**
 ../
 ../codegen/language.ts
 ../codegen/languages.ts
-../isomorphic/**
-../registry/**
-../utils/**
-../../generated/pollingRecorderSource.ts
 ../../package.ts
-../../protocol/
-../../utils/**
 node_modules/mime

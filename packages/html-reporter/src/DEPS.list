@@ -1,5 +1,4 @@
 [*]
-@playwright/experimental-ct-react
 @web/**
 @isomorphic/**
 

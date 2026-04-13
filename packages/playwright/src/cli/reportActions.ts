@@ -18,20 +18,18 @@ import fs from 'fs';
 import path from 'path';
 
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
-import { builtInReporters, defaultReporter } from '../common/config';
-import { loadConfigFromFile, loadEmptyConfigForMergeReports } from '../common/configLoader';
-import { showHTMLReport } from '../reporters/html';
-import { createMergedReport } from '../reporters/merge';
+import { builtInReporters, config as commonConfig, configLoader } from '../common';
+import { html, merge } from '../runner';
 
 import type { ReporterDescription } from '../../types/test';
 
 export async function showReport(report: string | undefined, host: string, port: number) {
-  await showHTMLReport(report, host, port);
+  await html.showHTMLReport(report, host, port);
 }
 
 export async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
   const configFile = opts.config;
-  const config = configFile ? await loadConfigFromFile(configFile) : await loadEmptyConfigForMergeReports();
+  const config = configFile ? await configLoader.loadConfigFromFile(configFile) : await configLoader.loadEmptyConfigForMergeReports();
 
   const dir = path.resolve(process.cwd(), reportDir || '');
   const dirStat = await fs.promises.stat(dir).catch(e => null);
@@ -43,9 +41,9 @@ export async function mergeReports(reportDir: string | undefined, opts: { [key: 
   if (!reporterDescriptions && configFile)
     reporterDescriptions = config.config.reporter;
   if (!reporterDescriptions)
-    reporterDescriptions = [[defaultReporter]];
+    reporterDescriptions = [[commonConfig.defaultReporter]];
   const rootDirOverride = configFile ? config.config.rootDir : undefined;
-  await createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
+  await merge.createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
   gracefullyProcessExitDoNotHang(0);
 }
 

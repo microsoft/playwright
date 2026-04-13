@@ -128,7 +128,8 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
   // 3. Load transform options from the playwright config.
   const babelPlugins = (userConfig as any)['@playwright/test']?.babelPlugins || [];
   const external = userConfig.build?.external || [];
-  setTransformConfig({ babelPlugins, external });
+  const jsxImportSource = path.dirname(require.resolve('playwright'));
+  setTransformConfig({ babelPlugins, external, jsxImportSource });
   if (!overrides?.tsconfig)
     setSingleTSConfig(fullConfig?.singleTSConfigPath);
 

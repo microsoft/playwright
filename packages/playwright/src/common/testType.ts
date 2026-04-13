@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import { errors } from 'playwright-core';
-
 import { monotonicTime } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { getPackageManagerExecCommand } from '@utils/env';
 import { currentZone } from '@utils/zones';
 
-import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from './globals';
+import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from '../globals';
 import { Suite, TestCase } from './test';
 import { expect } from '../matchers/expect';
 import { wrapFunctionWithLocation } from '../transform/transform';
@@ -294,7 +292,7 @@ export class TestTypeImpl {
           }
         }, options.timeout ? monotonicTime() + options.timeout : 0);
         if (result.timedOut)
-          throw new errors.TimeoutError(`Step timeout of ${options.timeout}ms exceeded.`);
+          throw new TimeoutError(`Step timeout of ${options.timeout}ms exceeded.`);
         step.complete({});
         return result.result;
       } catch (error) {
@@ -338,4 +336,11 @@ export function mergeTests(...tests: TestType<any, any>[]) {
     result = new TestTypeImpl([...result.fixtures, ...newFixtures]);
   }
   return result.test;
+}
+
+class TimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimeoutError';
+  }
 }

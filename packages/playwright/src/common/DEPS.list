@@ -3,8 +3,8 @@
 @utils/**
 ../util.ts
 ../transform
-../isomorphic/teleReceiver.ts
-
+../isomorphic
+../globals.ts
+../package.ts
 [testType.ts]
 ../matchers/expect.ts
-

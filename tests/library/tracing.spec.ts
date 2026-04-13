@@ -458,12 +458,12 @@ for (const params of [
 
     // Check all frame sizes.
     for (const frame of frames) {
-      expect(frame.width).toBe(params.width);
-      expect(frame.height).toBe(params.height);
+      expect.soft(frame.width).toBe(params.width);
+      expect.soft(frame.height).toBe(params.height);
       const buffer = resources.get('resources/' + frame.sha1);
       const image = jpegjs.decode(buffer);
-      expect(image.width).toBe(previewWidth);
-      expect(image.height).toBe(previewHeight);
+      expect.soft(image.width).toBe(previewWidth);
+      expect.soft(image.height).toBe(previewHeight);
     }
 
     const frame = frames[frames.length - 1]; // pick last frame.
@@ -633,11 +633,11 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
 });
 
 test('should record global request trace', async ({ request, context, server }, testInfo) => {
-  await (request as any)._tracing.start({ snapshots: true });
+  await request.tracing.start({ snapshots: true });
   const url = server.PREFIX + '/simple.json';
   await request.get(url);
   const tracePath = testInfo.outputPath('trace.zip');
-  await (request as any)._tracing.stop({ path: tracePath });
+  await request.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
   const actions = trace.events.filter(e => e.type === 'resource-snapshot');
@@ -661,8 +661,8 @@ test('should record global request trace', async ({ request, context, server }, 
 test('should store global request traces separately', async ({ request, server, playwright, browserName, mode }, testInfo) => {
   const request2 = await playwright.request.newContext();
   await Promise.all([
-    (request as any)._tracing.start({ snapshots: true }),
-    (request2 as any)._tracing.start({ snapshots: true })
+    request.tracing.start({ snapshots: true }),
+    request2.tracing.start({ snapshots: true })
   ]);
   const url = server.PREFIX + '/simple.json';
   await Promise.all([
@@ -672,8 +672,8 @@ test('should store global request traces separately', async ({ request, server, 
   const tracePath = testInfo.outputPath('trace.zip');
   const trace2Path = testInfo.outputPath('trace2.zip');
   await Promise.all([
-    (request as any)._tracing.stop({ path: tracePath }),
-    (request2 as any)._tracing.stop({ path: trace2Path })
+    request.tracing.stop({ path: tracePath }),
+    request2.tracing.stop({ path: trace2Path })
   ]);
   {
     const trace = await parseTraceRaw(tracePath);
@@ -697,13 +697,13 @@ test('should store global request traces separately', async ({ request, server, 
 
 test('should store postData for global request', async ({ request, server }, testInfo) => {
   testInfo.annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15031' });
-  await (request as any)._tracing.start({ snapshots: true });
+  await request.tracing.start({ snapshots: true });
   const url = server.PREFIX + '/simple.json';
   await request.post(url, {
     data: 'test'
   });
   const tracePath = testInfo.outputPath('trace.zip');
-  await (request as any)._tracing.stop({ path: tracePath });
+  await request.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
   const actions = trace.events.filter(e => e.type === 'resource-snapshot');

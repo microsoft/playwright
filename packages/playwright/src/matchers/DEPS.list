@@ -1,8 +1,5 @@
 [*]
 @isomorphic/**
 @utils/**
-../common/
-../mcp/test/browserBackend.ts
-../util.ts
-../worker/testInfo.ts
 node_modules/colors/safe
+node_modules/expect

@@ -22,12 +22,12 @@ import path from 'path';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { wrapInASCIIBox } from '@utils/ascii';
 import { RecentLogsCollector } from '@utils/debugLogger';
-import { fetchData } from '@utils/network';
-import { getUserAgent } from '@utils/userAgent';
 import { removeFolders } from '@utils/fileUtils';
 import { gracefullyCloseSet } from '@utils/processLauncher';
 import { debugMode } from '@utils/debug';
 import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
+import { fetchData } from '../utils';
+import { getUserAgent } from '../userAgent';
 import { chromiumSwitches } from './chromiumSwitches';
 import { shouldProxyLoopback, CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
@@ -90,8 +90,20 @@ export class Chromium extends BrowserType {
     else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
       headersMap['User-Agent'] = getUserAgent();
 
-    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
-    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap, followRedirects: true, debugLogHeader: 'x-playwright-debug-log' });
+    const channel = channelToUserDataDir.has(endpointURL) ? endpointURL : undefined;
+    if (channel)
+      endpointURL = await resolveChannelEndpoint(progress, endpointURL);
+
+    let wsEndpoint: string;
+    let chromeTransport: WebSocketTransport;
+    try {
+      wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
+      chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap, followRedirects: true, debugLogHeader: 'x-playwright-debug-log' });
+    } catch (e) {
+      if (channel)
+        throw new Error(`Could not connect to ${channel}.\n${remoteDebuggingHint(channel)}`);
+      throw e;
+    }
     const closeAndWait = async () => await chromeTransport.closeAndWait();
     return this._connectOverCDPImpl(progress, chromeTransport, closeAndWait, options, onClose);
   }
@@ -408,6 +420,31 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
   return JSON.parse(json).webSocketDebuggerUrl;
 }
 
+async function resolveChannelEndpoint(progress: Progress, channel: string): Promise<string> {
+  const dirs = channelToUserDataDir.get(channel)!;
+  const userDataDir = dirs[process.platform];
+  if (!userDataDir)
+    throw new Error(`Connecting to ${channel} by channel name is not supported on ${process.platform}.`);
+
+  const devToolsActivePortPath = path.join(userDataDir, 'DevToolsActivePort');
+  progress.log(`<ws preparing> reading ${devToolsActivePortPath}`);
+
+  const contents = await progress.race(fs.promises.readFile(devToolsActivePortPath, 'utf-8').catch(() => undefined));
+  if (!contents) {
+    throw new Error(
+        `Could not connect to ${channel}: DevToolsActivePort file not found at ${devToolsActivePortPath}.\n` +
+        remoteDebuggingHint(channel));
+  }
+
+  const port = parseInt(contents.trim(), 10);
+  if (isNaN(port))
+    throw new Error(`Could not connect to ${channel}: invalid DevToolsActivePort file at ${devToolsActivePortPath}.`);
+
+  const endpoint = `ws://localhost:${port}/devtools/browser`;
+  progress.log(`<ws preparing> resolved channel "${channel}" to ${endpoint}`);
+  return endpoint;
+}
+
 async function seleniumErrorHandler(params: HTTPRequestParams, response: http.IncomingMessage) {
   const body = await streamToString(response);
   let message = body;
@@ -443,3 +480,55 @@ function parseSeleniumRemoteParams(env: {name: string, value: string}, progress:
     progress.log(`<selenium> ignoring additional ${env.name} "${env.value}": ${e}`);
   }
 }
+
+function remoteDebuggingHint(channel: string): string {
+  return `Make sure ${channel} is running with remote debugging enabled. Navigate to
+
+        chrome://inspect/#remote-debugging
+
+and check "Allow remote debugging for this browser instance".
+`;
+}
+
+const channelToUserDataDir = new Map<string, Record<string, string>>([
+  ['chrome', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome', 'User Data'),
+  }],
+  ['chrome-beta', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome-beta'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Beta'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Beta', 'User Data'),
+  }],
+  ['chrome-dev', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome-unstable'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Dev'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Dev', 'User Data'),
+  }],
+  ['chrome-canary', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome-canary'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Canary'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome SxS', 'User Data'),
+  }],
+  ['msedge', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge', 'User Data'),
+  }],
+  ['msedge-beta', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-beta'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Beta'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Beta', 'User Data'),
+  }],
+  ['msedge-dev', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-dev'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Dev'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Dev', 'User Data'),
+  }],
+  ['msedge-canary', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-canary'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Canary'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge SxS', 'User Data'),
+  }],
+]);

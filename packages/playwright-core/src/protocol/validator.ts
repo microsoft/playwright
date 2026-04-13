@@ -1144,19 +1144,6 @@ scheme.BrowserContextNewCDPSessionParams = tObject({
 scheme.BrowserContextNewCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),
 });
-scheme.BrowserContextHarStartParams = tObject({
-  page: tOptional(tChannel(['Page'])),
-  options: tType('RecordHarOptions'),
-});
-scheme.BrowserContextHarStartResult = tObject({
-  harId: tString,
-});
-scheme.BrowserContextHarExportParams = tObject({
-  harId: tOptional(tString),
-});
-scheme.BrowserContextHarExportResult = tObject({
-  artifact: tChannel(['Artifact']),
-});
 scheme.BrowserContextCreateTempFilesParams = tObject({
   rootDirName: tOptional(tString),
   items: tArray(tObject({
@@ -2609,6 +2596,19 @@ scheme.TracingTracingStopChunkResult = tObject({
 });
 scheme.TracingTracingStopParams = tOptional(tObject({}));
 scheme.TracingTracingStopResult = tOptional(tObject({}));
+scheme.TracingHarStartParams = tObject({
+  page: tOptional(tChannel(['Page'])),
+  options: tType('RecordHarOptions'),
+});
+scheme.TracingHarStartResult = tObject({
+  harId: tString,
+});
+scheme.TracingHarExportParams = tObject({
+  harId: tOptional(tString),
+});
+scheme.TracingHarExportResult = tObject({
+  artifact: tChannel(['Artifact']),
+});
 scheme.ArtifactInitializer = tObject({
   absolutePath: tString,
 });

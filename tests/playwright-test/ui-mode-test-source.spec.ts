@@ -40,7 +40,7 @@ test('should show selected test in sources', async ({ runUITest }) => {
         ◯ third
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
@@ -103,7 +103,7 @@ test('should show top-level errors in file', async ({ runUITest }) => {
         ◯ third
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts"
       - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
@@ -138,7 +138,7 @@ test('should show syntax errors in file', async ({ runUITest }) => {
       ◯ a.test.ts
   `);
 
-  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts"
   `);

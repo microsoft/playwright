@@ -20,7 +20,6 @@ import path from 'path';
 import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from '../browserContext';
-import { ArtifactDispatcher } from './artifactDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DebuggerDispatcher } from './debuggerDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
@@ -365,18 +364,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       throw new Error(`CDP session must be initiated with either Page or Frame, not none or both`);
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this, await progress.race(crBrowserContext.newCDPSession((params.page ? params.page as PageDispatcher : params.frame as FrameDispatcher)._object))) };
-  }
-
-  async harStart(params: channels.BrowserContextHarStartParams, progress: Progress): Promise<channels.BrowserContextHarStartResult> {
-    const harId = this._context.harStart(params.page ? (params.page as PageDispatcher)._object : null, params.options);
-    return { harId };
-  }
-
-  async harExport(params: channels.BrowserContextHarExportParams, progress: Progress): Promise<channels.BrowserContextHarExportResult> {
-    const artifact = await this._context.harExport(progress, params.harId);
-    if (!artifact)
-      throw new Error('No HAR artifact. Ensure record.harPath is set.');
-    return { artifact: ArtifactDispatcher.from(this, artifact) };
   }
 
   async clockFastForward(params: channels.BrowserContextClockFastForwardParams, progress: Progress): Promise<channels.BrowserContextClockFastForwardResult> {

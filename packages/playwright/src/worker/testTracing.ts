@@ -22,14 +22,14 @@ import * as yauzl from 'yauzl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
-import { SerializedFS } from '@utils/fileUtils';
-import { getPlaywrightVersion } from '@utils/userAgent';
+import { SerializedFS } from '@utils/serializedFS';
+import { getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
 
 import { filteredStackTrace } from '../util';
 
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TraceMode } from '../../types/test';
-import type { TestInfoErrorImpl } from '../common/ipc';
+import type { ipc } from '../common';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
@@ -250,7 +250,7 @@ export class TestTracing {
     this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }
 
-  appendForError(error: TestInfoErrorImpl) {
+  appendForError(error: ipc.TestInfoErrorImpl) {
     const rawStack = error.stack?.split('\n') || [];
     const stack = rawStack ? filteredStackTrace(rawStack) : [];
     this._appendTraceEvent({
@@ -260,7 +260,7 @@ export class TestTracing {
     });
   }
 
-  _formatError(error: TestInfoErrorImpl) {
+  _formatError(error: ipc.TestInfoErrorImpl) {
     const parts: string[] = [error.message || String(error.value)];
     if (error.cause)
       parts.push('[cause]: ' + this._formatError(error.cause));

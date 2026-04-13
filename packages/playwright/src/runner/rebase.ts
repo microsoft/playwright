@@ -21,13 +21,12 @@ import colors from 'colors/safe';
 import * as diff from 'diff';
 import { MultiMap } from '@isomorphic/multimap';
 
-import { filterProjects } from './projectUtils';
-import { babelParse, traverse, types } from '../transform/babelBundle';
+import { config as commonConfig, FullConfigInternal } from '../common';
+import * as babel from '../transform/babelBundle';
 
-import type { FullConfigInternal } from '../common/config';
 import type { InternalReporter } from '../reporters/internalReporter';
 import type { T } from '../transform/babelBundle';
-const t: typeof T = types;
+const t: typeof T = babel.types;
 
 type Location = {
   file: string;
@@ -51,12 +50,12 @@ export function clearSuggestedRebaselines() {
   suggestedRebaselines.clear();
 }
 
-export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter) {
+export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter, filteredProjects: commonConfig.FullProjectInternal[]) {
   if (config.config.updateSnapshots === 'none')
     return;
   if (!suggestedRebaselines.size)
     return;
-  const [project] = filterProjects(config.projects, config.cliProjectFilter);
+  const [project] = filteredProjects;
   if (!project)
     return;
 
@@ -70,10 +69,10 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
     const source = await fs.promises.readFile(fileName, 'utf8');
     const lines = source.split('\n');
     const replacements = suggestedRebaselines.get(fileName);
-    const fileNode = babelParse(source, fileName, true);
+    const fileNode = babel.babelParse(source, fileName, true);
     const ranges: { start: number, end: number, oldText: string, newText: string }[] = [];
 
-    traverse(fileNode, {
+    babel.traverse(fileNode, {
       CallExpression: path => {
         const node = path.node;
         if (node.arguments.length < 1)

@@ -1,7 +1,6 @@
 [*]
 ../
 ../../package.ts
-../../utils/**
+@utils/**
 @isomorphic/**
 ../chromium/
-../utils

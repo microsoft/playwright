@@ -38,7 +38,7 @@ import type * as api from '../../types/types';
 import type { HeadersArray } from '@isomorphic/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
-import type { Platform, Zone } from './platform';
+import type { Platform, Zone } from '@isomorphic/platform';
 
 export type NetworkCookie = {
   name: string,

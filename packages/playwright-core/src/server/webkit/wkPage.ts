@@ -844,8 +844,13 @@ export class WKPage implements PageDelegate {
   }
 
   private _toolbarHeight(): number {
-    if (this._page.browserContext._browser?.options.headful)
-      return hostPlatform === 'mac10.15' ? 55 : 59;
+    if (this._page.browserContext._browser?.options.headful) {
+      if (hostPlatform === 'mac10.15')
+        return 55;
+      if (hostPlatform === 'mac26-arm64' || hostPlatform === 'mac26')
+        return 69;
+      return 59;
+    }
     return 0;
   }
 

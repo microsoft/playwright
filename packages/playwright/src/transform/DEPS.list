@@ -1,5 +1,12 @@
 [*]
 ../util.ts
-../common/globals.ts
+../globals.ts
+../package.ts
+@utils/**
+
 node_modules/json5
 node_modules/source-map-support
+
+[babelBundle.ts]
+node_modules/@babel/core
+node_modules/@babel/traverse

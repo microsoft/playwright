@@ -17,7 +17,7 @@
 // @ts-nocheck
 
 import { test as baseTest, expect } from './ui-mode-fixtures';
-import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
+import { TestServerConnection } from '../../packages/playwright/lib/runner';
 import { playwrightCtConfigText } from './playwright-test-fixtures';
 import ws from 'ws';
 import type { TestChildProcess } from '../config/commonFixtures';

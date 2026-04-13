@@ -2,10 +2,8 @@
 ../../..
 ../..
 @utils/**
-../../utils/**
+@utils/**
 @isomorphic/**
-../utils/**
-node_modules/@modelcontextprotocol/sdk/types.js
 node_modules/debug
 node_modules/jpeg-js
 node_modules/pngjs

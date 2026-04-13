@@ -28,7 +28,7 @@ import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type * as channels from '@protocol/channels';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {

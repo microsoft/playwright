@@ -19,7 +19,7 @@
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { getPackageManager } from '@utils/env';
 
-import type { Command } from '../utilsBundle';
+import type { Command } from 'commander';
 
 function printPlaywrightTestError(command: string) {
   const packages: string[] = [];

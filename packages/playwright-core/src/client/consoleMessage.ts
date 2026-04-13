@@ -17,7 +17,7 @@
 import { JSHandle } from './jsHandle';
 
 import type * as api from '../../types/types';
-import type { Platform } from './platform';
+import type { Platform } from '@isomorphic/platform';
 import type * as channels from '@protocol/channels';
 import type { Page } from './page';
 import type { Worker } from './worker';

@@ -20,6 +20,7 @@ import { nullProgress } from '../progress';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { APIRequestContextDispatcher } from './networkDispatchers';
+import type { PageDispatcher } from './pageDispatcher';
 import type { Tracing } from '../trace/recorder/tracing';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
@@ -62,6 +63,18 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
 
   async tracingStop(params: channels.TracingTracingStopParams, progress: Progress): Promise<channels.TracingTracingStopResult> {
     await this._object.stop(progress);
+  }
+
+  async harStart(params: channels.TracingHarStartParams, progress: Progress): Promise<channels.TracingHarStartResult> {
+    const harId = this._object.harStart(params.page ? (params.page as PageDispatcher)._object : null, params.options);
+    return { harId };
+  }
+
+  async harExport(params: channels.TracingHarExportParams, progress: Progress): Promise<channels.TracingHarExportResult> {
+    const artifact = await this._object.harExport(progress, params.harId);
+    if (!artifact)
+      throw new Error('No HAR artifact. Ensure record.harPath is set.');
+    return { artifact: ArtifactDispatcher.from(this, artifact) };
   }
 
   override _onDispose() {

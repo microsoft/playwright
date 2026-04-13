@@ -19,30 +19,30 @@ import path from 'path';
 
 import { mkdirIfNeeded } from '@utils/fileUtils';
 
-import { collectFilesForProject, findTopLevelProjects } from '../../runner/projectUtils';
+import { projectUtils } from '../../runner';
 
-import type { FullConfigInternal, FullProjectInternal } from '../../common/config';
+import type { config, FullConfigInternal } from '../../common';
 
-export function seedProject(config: FullConfigInternal, projectName?: string) {
+export function seedProject(fullConfig: FullConfigInternal, projectName?: string) {
   if (!projectName)
-    return findTopLevelProjects(config)[0];
-  const project = config.projects.find(p => p.project.name === projectName);
+    return projectUtils.findTopLevelProjects(fullConfig)[0];
+  const project = fullConfig.projects.find(p => p.project.name === projectName);
   if (!project)
     throw new Error(`Project ${projectName} not found`);
   return project;
 }
 
-export async function findSeedFile(project: FullProjectInternal) {
-  const files = await collectFilesForProject(project);
+export async function findSeedFile(project: config.FullProjectInternal) {
+  const files = await projectUtils.collectFilesForProject(project);
   return files.find(file => path.basename(file).includes('seed'));
 }
 
-export function defaultSeedFile(project: FullProjectInternal) {
+export function defaultSeedFile(project: config.FullProjectInternal) {
   const testDir = project.project.testDir;
   return path.resolve(testDir, 'seed.spec.ts');
 }
 
-export async function ensureSeedFile(project: FullProjectInternal) {
+export async function ensureSeedFile(project: config.FullProjectInternal) {
   const seedFile = await findSeedFile(project);
   if (seedFile)
     return seedFile;

@@ -21,6 +21,12 @@ test.describe.configure({
   retries: 1,
 });
 
+test('connect by channel name error', async ({ cli }) => {
+  const { error } = await cli('attach', '--cdp=chrome-canary');
+  expect(error).toContain('Could not connect to chrome-canary');
+  expect(error).toContain('chrome://inspect/#remote-debugging');
+});
+
 test('cdp server', async ({ cdpServer, cli, server }) => {
   const browserContext = await cdpServer.start();
   const [page] = browserContext.pages();

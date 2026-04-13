@@ -15,30 +15,31 @@
  */
 
 import util from 'util';
-
-import { sever } from 'playwright-core/lib/coreBundle';
 import debug from 'debug';
 import open from 'open';
+
+import { server as coreServer } from 'playwright-core/lib/coreBundle';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { isUnderTest } from '@utils/debug';
 import { HttpServer } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
-import { loadConfig, resolveConfigLocation } from '../common/configLoader';
+import { configLoader, ipc } from '../common';
 import ListReporter from '../reporters/list';
-import { createReporterForTestServer } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
 import { TestRunner, TestRunnerEvent } from './testRunner';
+import UIModeReporter from './uiModeReporter';
+import { loadReporter } from './loadUtils';
+import { wrapReporterAsV2 } from '../reporters/reporterV2';
 
 import type { Transport } from '@utils/httpServer';
 import type * as reporterTypes from '../../types/testReporter';
-import type { ConfigLocation } from '../common/config';
-import type { ConfigCLIOverrides } from '../common/ipc';
+import type { ConfigLocation } from '../common';
 import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
-type TraceViewerRedirectOptions = sever.TraceViewerRedirectOptions;
-type TraceViewerServerOptions = sever.TraceViewerServerOptions;
+type TraceViewerRedirectOptions = coreServer.TraceViewerRedirectOptions;
+type TraceViewerServerOptions = coreServer.TraceViewerServerOptions;
 
 const originalDebugLog = debug.log;
 // eslint-disable-next-line no-restricted-properties
@@ -50,17 +51,17 @@ const originalStdinIsTTY = process.stdin.isTTY;
 
 class TestServer {
   private _configLocation: ConfigLocation;
-  private _configCLIOverrides: ConfigCLIOverrides;
+  private _configCLIOverrides: ipc.ConfigCLIOverrides;
   private _dispatcher: TestServerDispatcher | undefined;
 
-  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
     this._configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;
   }
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
-    return await sever.startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
+    return await coreServer.startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
   }
 
   async stop() {
@@ -94,13 +95,13 @@ export type RunTestsParams = {
 
 export class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
-  private _serializer = require.resolve('./uiModeReporter');
+  private _serializer: string | undefined;
   private _closeOnDisconnect = false;
   private _testRunner: TestRunner;
   private _globalSetupReport: ReportEntry[] | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
-  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
     this._testRunner = new TestRunner(configLocation, configCLIOverrides);
     this.transport = {
       onconnect: () => {},
@@ -130,7 +131,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
     // Note: this method can be called multiple times, for example from a new connection after UI mode reload.
-    this._serializer = params.serializer || require.resolve('./uiModeReporter');
+    this._serializer = params.serializer;
     this._closeOnDisconnect = !!params.closeOnDisconnect;
     await this._testRunner.initialize({
       ...params,
@@ -259,15 +260,15 @@ export class TestServerDispatcher implements TestServerInterface {
   }
 }
 
-export async function runUIMode(configFile: string | undefined, configCLIOverrides: ConfigCLIOverrides, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status']> {
-  const configLocation = resolveConfigLocation(configFile);
+export async function runUIMode(configFile: string | undefined, configCLIOverrides: ipc.ConfigCLIOverrides, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status']> {
+  const configLocation = configLoader.resolveConfigLocation(configFile);
   return await innerRunTestServer(configLocation, configCLIOverrides, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
-    await sever.installRootRedirect(server, undefined, { ...options, webApp: 'uiMode.html' });
+    await coreServer.installRootRedirect(server, undefined, { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
-      await sever.openTraceInBrowser(server.urlPrefix('human-readable'));
+      await coreServer.openTraceInBrowser(server.urlPrefix('human-readable'));
     } else {
       const channel = await installedChromiumChannelForUI(configLocation, configCLIOverrides);
-      const page = await sever.openTraceViewerApp(server.urlPrefix('precise'), 'chromium', {
+      const page = await coreServer.openTraceViewerApp(server.urlPrefix('precise'), 'chromium', {
         headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
         persistentContextOptions: {
           handleSIGINT: false,
@@ -280,8 +281,8 @@ export async function runUIMode(configFile: string | undefined, configCLIOverrid
 }
 
 // Pick first channel that is used by one of the projects, to ensure it is installed on the machine.
-async function installedChromiumChannelForUI(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
-  const config = await loadConfig(configLocation, configCLIOverrides).catch(e => null);
+async function installedChromiumChannelForUI(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
+  const config = await configLoader.loadConfig(configLocation, configCLIOverrides).catch(e => null);
   if (!config)
     return undefined;
   if (config.projects.some(p => (!p.project.use.browserName || p.project.use.browserName === 'chromium') && !p.project.use.channel))
@@ -293,15 +294,15 @@ async function installedChromiumChannelForUI(configLocation: ConfigLocation, con
   return undefined;
 }
 
-export async function runTestServer(configFile: string | undefined, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status']> {
-  const configLocation = resolveConfigLocation(configFile);
+export async function runTestServer(configFile: string | undefined, configCLIOverrides: ipc.ConfigCLIOverrides, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status']> {
+  const configLocation = configLoader.resolveConfigLocation(configFile);
   return await innerRunTestServer(configLocation, configCLIOverrides, options, async server => {
     // eslint-disable-next-line no-console
     console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
-async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
+async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>) => Promise<void>): Promise<reporterTypes.FullResult['status']> {
   const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
@@ -328,4 +329,11 @@ function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): Stdi
   if (chunk instanceof Uint8Array)
     return { type, buffer: chunk.toString('base64') };
   return { type, text: chunk };
+}
+
+async function createReporterForTestServer(file: string | undefined, messageSink: (message: any) => void): Promise<ReporterV2> {
+  const reporterConstructor = file ? await loadReporter(null, file) : UIModeReporter;
+  return wrapReporterAsV2(new reporterConstructor({
+    _send: messageSink,
+  }));
 }

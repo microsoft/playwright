@@ -28,7 +28,7 @@ import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { registry as browserRegistry } from '../../server/registry/index';
-import type { Command } from '../../utilsBundle';
+import type { Command } from 'commander';
 
 export function decorateProgram(program: Command) {
   program.argument('[session-name]', 'name of the session to create or connect to', 'default')

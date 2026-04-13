@@ -18,18 +18,17 @@ import EventEmitter from 'events';
 
 import { createGuid } from '@utils/crypto';
 import { isUnderTest } from '@utils/debug';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '@isomorphic/time';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { createPlaywright } from './server/playwright';
-import { rewriteErrorMessage } from './utils/isomorphic/stackTrace';
-import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from './utils/isomorphic/time';
 import * as validatorPrimitives from './protocol/validatorPrimitives';
 import { ProgressController } from './server/progress';
 
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
 import type { LaunchServerOptions, Logger } from './client/types';
 import type { ProtocolLogger } from './server/types';
-import type { WebSocketEventEmitter } from './utilsBundle';
 import type { Browser } from './server/browser';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
@@ -86,7 +85,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface
-    const browserServer = new EventEmitter() as (BrowserServer & WebSocketEventEmitter);
+    const browserServer = new EventEmitter() as (BrowserServer & EventEmitter);
     browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => browser.options.browserProcess.close();

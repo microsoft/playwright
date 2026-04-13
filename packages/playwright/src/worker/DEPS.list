@@ -1,11 +1,10 @@
 [*]
 @isomorphic/**
 @utils/**
+../globals.ts
 ../common/
-../transform/
 ../util.ts
 ../matchers/**
-../isomorphic/util.ts
 node_modules/colors/safe
 node_modules/yauzl
 node_modules/yazl

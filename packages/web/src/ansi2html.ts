@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-export function ansi2html(text: string, defaultColors?: { bg: string, fg: string }): string {
+export function ansi2html(text: string, defaultColors: { bg: string, fg: string }): string {
   const regex = /(\x1b\[(\d+(;\d+)*)m)|([^\x1b]+)/g;
   const tokens: string[] = [];
   let match;
@@ -109,9 +109,8 @@ export function ansi2html(text: string, defaultColors?: { bg: string, fg: string
       const color = reverse ? bg : fg;
       if (color !== undefined)
         styleCopy['color'] = color;
-      const backgroundColor = reverse ? fg : bg;
-      if (backgroundColor !== undefined)
-        styleCopy['background-color'] = backgroundColor;
+      if (reverse && fg)
+        styleCopy['background-color'] = fg;
       tokens.push(`<span style="${styleBody(styleCopy)}">${escapeHTML(text)}</span>`);
     }
   }

@@ -280,6 +280,19 @@ test('partial snapshot', async ({ cli, server }) => {
   expect(noMatchError).toContain(`"#target" does not match any element`);
 });
 
+test('partial snapshot by ref', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/347' } }, async ({ cli, server }) => {
+  server.setContent('/', `<button id=one>Submit</button><button id=two>Cancel</button>`, 'text/html');
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain('- button "Submit" [ref=e2]');
+  expect(snapshot).toContain('- button "Cancel" [ref=e3]');
+
+  const { inlineSnapshot: partialSnapshot } = await cli('snapshot', 'e3');
+  expect(partialSnapshot).toBe(`- button "Cancel" [ref=e3]`);
+
+  const { output: missingRefError } = await cli('snapshot', 'e999');
+  expect(missingRefError).toContain(`Ref e999 not found in the current page snapshot.`);
+});
+
 test('snapshot depth', async ({ cli, server }) => {
   server.setContent('/', `<ul><li><button id=one>Submit</button></li><li><button id=two>Cancel</button></li></ul>`, 'text/html');
   await cli('open', server.PREFIX);

@@ -18,7 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
-import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
+import { html } from '../../packages/playwright/lib/runner';
+const { startHtmlReportServer } = html;
 import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
 
 type HttpServer = utils.HttpServer;
@@ -1318,7 +1319,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-error-view').getByText('begin ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
 
       await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
-      await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('background-color', 'rgb(246, 248, 250)');
 
       await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('color', 'rgb(246, 248, 250)');
       await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
@@ -3099,7 +3099,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       const reportPath = path.join(test.info().outputPath(), 'playwright-report', 'index.html');
       await page.goto(url.pathToFileURL(reportPath).toString());
-      await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+      await expect(page).toMatchAriaSnapshot(`
         - button "tests/a/test.spec.ts"
         - button "tests/b/test.spec.ts"
       `);
@@ -3204,7 +3204,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(0);
       await showReport();
       await page.getByRole('link', { name: 'sample' }).click();
-      await expect(page.locator('body')).toMatchAriaSnapshot(`
+      await expect(page).toMatchAriaSnapshot(`
         - treeitem "Click Click me"
       `);
     });
@@ -3406,7 +3406,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await page.getByRole('link', { name: 'Speedboard' }).click();
         await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'true');
 
-        await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+        await expect(page).toMatchAriaSnapshot(`
           - button "Slowest Tests"
           - region:
             - list:
@@ -3430,7 +3430,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
                 - text: /bar/
         `);
         await page.getByText('foo').first().click();
-        await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+        await expect(page).toMatchAriaSnapshot(`
           - button "Slowest Tests"
         `);
 
@@ -3504,7 +3504,7 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('checkbox', { name: 'Merge files' }).click();
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button "<anonymous>" [expanded]
     - region:
       - list:

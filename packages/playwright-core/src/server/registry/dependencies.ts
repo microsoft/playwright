@@ -22,7 +22,7 @@ import path from 'path';
 import { wrapInASCIIBox } from '@utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
 import { spawnAsync } from '@utils/spawnAsync';
-import { getPlaywrightVersion } from '@utils/userAgent';
+import { getPlaywrightVersion } from '../userAgent';
 import { deps } from './nativeDeps';
 
 import { packageJSON, binPath } from '../../package';

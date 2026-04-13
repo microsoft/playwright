@@ -27,12 +27,12 @@ import { debugMode } from '@utils/debug';
 import { setBoxedStackPrefixes } from '@utils/nodePlatform';
 import { currentZone } from '@utils/zones';
 import { buildErrorContext } from './errorContext';
-import { currentTestInfo } from './common/globals';
-import { rootTestType } from './common/testType';
+import { config, testType } from './common';
+import * as globals from './globals';
+import { packageRoot } from './package';
 import { createCustomMessageHandler, runDaemonForContext } from './mcp/test/browserBackend';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
-import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
@@ -44,9 +44,9 @@ import type { Page as PageImpl } from '../../playwright-core/src/client/page';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
 
 export { expect } from './matchers/expect';
-export const _baseTest: TestType<{}, {}> = rootTestType.test;
+export const _baseTest: TestType<{}, {}> = testType.rootTestType.test;
 
-setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
+setBoxedStackPrefixes([packageRoot]);
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -70,7 +70,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   playwright: PlaywrightImpl;
   _browserOptions: LaunchOptions;
-  _optionContextReuseMode: ContextReuseMode,
+  _optionContextReuseMode: config.ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
 };
@@ -268,7 +268,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const pausedContexts = new Set<BrowserContextImpl>();
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (data, channel) => {
-        const testInfo = currentTestInfo();
+        const testInfo = globals.currentTestInfo();
         // Some special calls do not get into steps.
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
@@ -314,7 +314,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
       onWillPause: ({ keepTestTimeout }) => {
         if (!keepTestTimeout)
-          currentTestInfo()?._setIgnoreTimeouts(true);
+          globals.currentTestInfo()?._setIgnoreTimeouts(true);
       },
       runBeforeCreateBrowserContext: async (options: BrowserContextOptions) => {
         for (const [key, value] of Object.entries(_combinedContextOptions)) {
@@ -341,7 +341,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         });
 
         await artifactsRecorder.didCreateBrowserContext(context);
-        const testInfo = currentTestInfo();
+        const testInfo = globals.currentTestInfo();
         if (testInfo)
           attachConnectedHeaderIfNeeded(testInfo, context.browser());
       },
@@ -729,11 +729,11 @@ class ArtifactsRecorder {
   }
 
   async didCreateRequestContext(context: APIRequestContextImpl) {
-    await this._startTraceChunkOnContextCreation(context, context._tracing);
+    await this._startTraceChunkOnContextCreation(context, context.tracing);
   }
 
   async willCloseRequestContext(context: APIRequestContextImpl) {
-    await this._stopTracing(context, context._tracing);
+    await this._stopTracing(context, context.tracing);
   }
 
   async didFinishTestFunction() {
@@ -750,7 +750,7 @@ class ArtifactsRecorder {
     await Promise.all(leftoverContexts.map(async context => {
       await this._stopTracing(context, context.tracing);
     }).concat(leftoverApiRequests.map(async context => {
-      await this._stopTracing(context, context._tracing);
+      await this._stopTracing(context, context.tracing);
     })));
 
     await this._screenshotRecorder.persistTemporary();
@@ -875,6 +875,5 @@ function tracing() {
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
 
-export { defineConfig } from './common/configLoader';
-export { mergeTests } from './common/testType';
+export { defineConfig, mergeTests } from './common';
 export { mergeExpects } from './matchers/expect';

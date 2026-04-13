@@ -21,19 +21,17 @@ import 'playwright-core/lib/bootstrap';
 import { libCli, tools } from 'playwright-core/lib/coreBundle';
 import { program } from 'commander';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
-import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
+import { builtInReporters, config, configLoader } from './common';
 import { runTests, clearCache, runTestServerAction } from './cli/testActions';
 import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
-import { loadConfigFromFile } from './common/configLoader';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
+import { packageJSON } from './package';
 
 export { program };
 
 import type { TraceMode } from '../types/test';
-import type { Command } from 'playwright-core/lib/utilsBundle';
-
-const packageJSON = require('../package.json');
+import type { Command } from 'commander';
 
 libCli.decorateProgram(program);
 
@@ -120,7 +118,7 @@ function addMergeReportsCommand(program: Command) {
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
-  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${config.defaultReporter}")`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -161,15 +159,15 @@ function addInitAgentsCommand(program: Command) {
   command.option('--project <project>', 'Project to use for seed test');
   command.option('--prompts', 'Whether to include prompts in the agent initialization');
   command.action(async opts => {
-    const config = await loadConfigFromFile(opts.config);
+    const loadedConfig = await configLoader.loadConfigFromFile(opts.config);
     if (opts.loop === 'opencode') {
-      await OpencodeGenerator.init(config, opts.project, opts.prompts);
+      await OpencodeGenerator.init(loadedConfig, opts.project, opts.prompts);
     } else if (opts.loop === 'vscode-legacy') {
-      await VSCodeGenerator.init(config, opts.project);
+      await VSCodeGenerator.init(loadedConfig, opts.project);
     } else if (opts.loop === 'claude') {
-      await ClaudeGenerator.init(config, opts.project, opts.prompts);
+      await ClaudeGenerator.init(loadedConfig, opts.project, opts.prompts);
     } else {
-      await CopilotGenerator.init(config, opts.project, opts.prompts);
+      await CopilotGenerator.init(loadedConfig, opts.project, opts.prompts);
       return;
     }
   });
@@ -201,13 +199,13 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--project <project-name...>', { description: `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)` }],
   ['--quiet', { description: `Suppress stdio` }],
   ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],
-  ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")` }],
+  ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${config.defaultReporter}")` }],
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
   ['--run-agents <mode>', { description: `Run agents to generate the code for page.perform`, choices: ['missing', 'all', 'none'], preset: 'none' }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
   ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--test-list-invert <file>', { description: `Path to a file containing a list of tests to skip. See https://playwright.dev/docs/test-cli for more details.` }],
-  ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})` }],
+  ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${config.defaultTimeout})` }],
   ['--trace <mode>', { description: `Force tracing mode`, choices: kTraceModes as string[] }],
   ['--tsconfig <path>', { description: `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)` }],
   ['--ui', { description: `Run tests in interactive UI mode` }],

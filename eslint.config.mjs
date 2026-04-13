@@ -60,7 +60,6 @@ const ignores = [
   "test-results/",
   "tests/assets/",
   "tests/components/",
-  "tests/config/ghaMarkdownReporter.ts",
   "tests/installation/fixture-scripts/",
   "tests/third_party/",
   "utils/",
@@ -428,7 +427,7 @@ export default [
   },
   {
     files: [
-      "packages/playwright-core/src/utils/**/*.ts",
+      "packages/isomorphic/**/*.ts",
     ],
     languageOptions: languageOptionsWithTsConfig,
     rules: {
@@ -473,6 +472,7 @@ export default [
   {
     files: [
       "packages/playwright-core/src/server/**/*.ts",
+      "packages/utils/**/*.ts",
     ],
     plugins: {
       "progress": progressPlugin,

@@ -24,13 +24,15 @@ import { monotonicTime } from '@isomorphic/time';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper  } from '@utils/eventsHelper';
 import { createGuid  } from '@utils/crypto';
-import { getPlaywrightVersion } from '@utils/userAgent';
-import { SerializedFS, removeFolders  } from '@utils/fileUtils';
+import { removeFolders  } from '@utils/fileUtils';
+import { SerializedFS  } from '@utils/serializedFS';
+import { getPlaywrightVersion } from '../../userAgent';
 import { Snapshotter } from './snapshotter';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
+import { HarRecorder } from '../../har/harRecorder';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
@@ -45,7 +47,7 @@ import type { Download } from '../../download';
 import type { APIRequestContext } from '../../fetch';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
-import type { StackFrame, TracingTracingStopChunkParams } from '@protocol/channels';
+import type { RecordHarOptions, StackFrame, TracingTracingStopChunkParams } from '@protocol/channels';
 import type * as har from '@trace/har';
 import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
@@ -94,6 +96,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _pendingHarEntries = new Set<har.Entry>();
   private _started = false;
+  readonly harRecorders = new Map<string, HarRecorder>();
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -347,7 +350,24 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   async flush() {
     this.abort();
+    for (const harRecorder of this.harRecorders.values())
+      await harRecorder.flush();
     await this._fs.syncAndGetError();
+  }
+
+  harStart(page: Page | null, options: RecordHarOptions): string {
+    const harId = createGuid();
+    const artifactsDir = this._context instanceof BrowserContext ? this._context._browser.options.artifactsDir : this._createTracesDirIfNeeded();
+    const harFilePath = path.join(artifactsDir, `${harId}.har`);
+    this.harRecorders.set(harId, new HarRecorder(this._context, harFilePath, page, options));
+    return harId;
+  }
+
+  async harExport(progress: Progress, harId: string | undefined): Promise<Artifact> {
+    const recorder = this.harRecorders.get(harId || '')!;
+    const artifact = await progress.race(recorder.export());
+    this.harRecorders.delete(harId || '');
+    return artifact;
   }
 
   private _closeAllGroups() {
