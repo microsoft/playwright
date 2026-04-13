@@ -158,22 +158,6 @@ export function parseErrorStack(stack: string, pathSeparator: string, showIntern
   return { message, stackLines, location };
 }
 
-export function errorLocationFromStack(error: Error | undefined, pathSeparator: string, showInternalStackFrames: boolean = false): {
-  url: string,
-  line: number,
-  column: number
-} {
-  const stack = error?.stack || '';
-  const frame = parseErrorStack(stack, pathSeparator, showInternalStackFrames).location;
-  if (!frame)
-    return { url: '', line: 0, column: 0 };
-  return {
-    url: frame.file,
-    line: Math.max(frame.line - 1, 0),
-    column: Math.max(frame.column - 1, 0),
-  };
-}
-
 function belongsToNodeModules(file: string, pathSeparator: string) {
   return file.includes(`${pathSeparator}node_modules${pathSeparator}`);
 }
