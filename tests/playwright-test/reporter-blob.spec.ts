@@ -17,9 +17,7 @@
 import * as fs from 'fs';
 import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
-import { html } from '../../packages/playwright/lib/runner';
-const { startHtmlReportServer } = html;
-import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
+import { expect as baseExpect, test as baseTest, stripAnsi, startHtmlReportServer } from './playwright-test-fixtures';
 import { extractZip } from '../../packages/utils/third_party/extractZip';
 import * as yazl from 'yazl';
 import { utils, getUserAgent } from '../../packages/playwright-core/lib/coreBundle';

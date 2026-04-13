@@ -17,9 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
-import { html } from '../../packages/playwright/lib/runner';
-const { startHtmlReportServer } = html;
+import { test as baseTest, expect as baseExpect, createImage, startHtmlReportServer } from './playwright-test-fixtures';
 import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
 
 type HttpServer = utils.HttpServer;

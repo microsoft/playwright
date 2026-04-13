@@ -27,8 +27,24 @@ import { serverFixtures } from '../config/serverFixtures';
 import type { TestInfo } from './stable-test-runner';
 import { expect } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { inheritAndCleanEnv } from '../config/utils';
 export { countTimes } from '../config/commonFixtures';
+
+export function startHtmlReportServer(folder: string): utils.HttpServer {
+  const server = new utils.HttpServer();
+  server.routePrefix('/', (request, response) => {
+    const parsed = new URL('http://localhost' + request.url);
+    let relativePath = parsed.pathname;
+    if (relativePath.startsWith('/trace/file'))
+      return server.serveFile(request, response, parsed.searchParams.get('path')!);
+    if (relativePath === '/')
+      relativePath = '/index.html';
+    const absolutePath = path.join(folder, ...relativePath.split('/'));
+    return server.serveFile(request, response, absolutePath);
+  });
+  return server;
+}
 
 type CliRunResult = {
   exitCode: number,
