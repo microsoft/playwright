@@ -299,7 +299,7 @@ export class AndroidDevice extends SdkObject {
       '--disable-fre',
       '--no-default-browser-check',
       `--remote-debugging-socket-name=${socketName}`,
-      ...chromiumSwitches(undefined, undefined, true),
+      ...chromiumSwitches({ android: true }),
       ...this._innerDefaultArgs(options)
     ];
     return chromeArguments;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export type Tab = { pageId: string; title: string; url: string; selected: boolean; inspectorUrl?: string };
+export type Tab = { pageId: string; title: string; url: string; selected: boolean };
 
 export type DashboardChannelEvents = {
   frame: { data: string; viewportWidth: number; viewportHeight: number };

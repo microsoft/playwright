@@ -25,7 +25,7 @@ import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
-import { CDPConnection, DashboardConnection } from './dashboardController';
+import { DashboardConnection } from './dashboardController';
 import { serverRegistry } from '../../serverRegistry';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { createClientInfo } from '../cli-client/registry';
@@ -147,21 +147,7 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
       throw new Error('Unsupported WebSocket URL: ' + url.toString());
     const browserDescriptor = serverRegistry.readDescriptor(guid);
 
-    const cdpPageId = url.searchParams.get('cdpPageId');
-    if (cdpPageId) {
-      const connection = browserGuidToDashboardConnection.get(guid);
-      if (!connection)
-        throw new Error('CDP connection not found for session: ' + guid);
-      const page = connection.pageForId(cdpPageId);
-      if (!page)
-        throw new Error('Page not found for page ID: ' + cdpPageId);
-      return new CDPConnection(page);
-    }
-
-    const cdpUrl = new URL(httpServer.urlPrefix('human-readable'));
-    cdpUrl.pathname = httpServer.wsGuid()!;
-    cdpUrl.searchParams.set('guid', guid);
-    const connection = new DashboardConnection(browserDescriptor, cdpUrl, () => browserGuidToDashboardConnection.delete(guid));
+    const connection = new DashboardConnection(browserDescriptor, () => browserGuidToDashboardConnection.delete(guid));
     browserGuidToDashboardConnection.set(guid, connection);
     return connection;
   });

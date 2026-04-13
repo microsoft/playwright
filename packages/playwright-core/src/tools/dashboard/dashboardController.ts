@@ -36,16 +36,14 @@ export class DashboardConnection implements Transport, DashboardChannel {
   private _eventListeners = new Map<string, Set<Function>>();
 
   private _browserDescriptor: BrowserDescriptor;
-  private _cdpUrl: URL;
   private _onclose: () => void;
 
   private _initPromise?: Promise<void>;
   private _context!: api.BrowserContext;
   private _browser?: api.Browser;
 
-  constructor(browserDescriptor: BrowserDescriptor, cdpUrl: URL, onclose: () => void) {
+  constructor(browserDescriptor: BrowserDescriptor, onclose: () => void) {
     this._browserDescriptor = browserDescriptor;
-    this._cdpUrl = cdpUrl;
     this._onclose = onclose;
   }
 
@@ -242,9 +240,6 @@ export class DashboardConnection implements Transport, DashboardChannel {
 
   private async _tabList(): Promise<Tab[]> {
     const pages = this._context.pages();
-    if (pages.length === 0)
-      return [];
-    const devtoolsUrl = await this._devtoolsUrl(pages[0]);
     return await Promise.all(pages.map(async page => {
       const title = await page.title();
       return {
@@ -252,39 +247,13 @@ export class DashboardConnection implements Transport, DashboardChannel {
         title,
         url: page.url(),
         selected: page === this.selectedPage,
-        inspectorUrl: devtoolsUrl ? await this._pageInspectorUrl(page, devtoolsUrl) : 'data:text/plain,Dashboard only supported in Chromium based browsers',
       };
     }));
-  }
-
-  pageForId(pageId: string) {
-    return this._context?.pages().find(p => this._pageId(p) === pageId);
   }
 
   private _pageId(p: api.Page): string {
     // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
     return (p as any)._guid;
-  }
-
-  private async _devtoolsUrl(page: api.Page) {
-    // eslint-disable-next-line no-restricted-syntax -- cdpPort is not in the public LaunchOptions type, fine if regresses.
-    const cdpPort = (this._browserDescriptor.browser.launchOptions as any).cdpPort;
-    if (cdpPort)
-      return new URL(`http://localhost:${cdpPort}/devtools/`);
-
-    const browserRevision = await getBrowserRevision(page);
-    if (!browserRevision)
-      return null;
-    return new URL(`https://chrome-devtools-frontend.appspot.com/serve_rev/${browserRevision}/`);
-  }
-
-  private async _pageInspectorUrl(page: api.Page, devtoolsUrl: URL): Promise<string | undefined> {
-    const inspector = new URL('./devtools_app.html', devtoolsUrl);
-    const cdp = new URL(this._cdpUrl);
-    cdp.searchParams.set('cdpPageId', this._pageId(page));
-    inspector.searchParams.set('ws', `${cdp.host}${cdp.pathname}${cdp.search}`);
-    const url = inspector.toString();
-    return url;
   }
 
   private _sendTabList() {
@@ -296,61 +265,5 @@ export class DashboardConnection implements Transport, DashboardChannel {
     this._lastFrameData = data;
     this._lastViewportSize = { width: viewportWidth, height: viewportHeight };
     this._emit('frame', { data, viewportWidth, viewportHeight });
-  }
-}
-
-async function getBrowserRevision(page: api.Page): Promise<string | null> {
-  try {
-    const session = await page.context().newCDPSession(page);
-    const version = await session.send('Browser.getVersion');
-    await session.detach();
-    return version.revision;
-  } catch (error) {
-    return null;
-  }
-}
-
-export class CDPConnection implements Transport {
-  sendEvent?: (method: string, params: any) => void;
-  close?: () => void;
-
-  private _page: api.Page;
-  private _rawSession: api.CDPSession | null = null;
-  private _rawSessionListeners: { dispose: () => Promise<void> }[] = [];
-  private _initializePromise: Promise<void> | undefined;
-
-  constructor(page: api.Page) {
-    this._page = page;
-  }
-
-  onconnect() {
-    this._initializePromise = this._initializeRawSession();
-  }
-
-  async dispatch(method: string, params: any): Promise<any> {
-    await this._initializePromise;
-    if (!this._rawSession)
-      throw new Error('CDP session is not initialized');
-    return await this._rawSession.send(method as Parameters<api.CDPSession['send']>[0], params);
-  }
-
-  onclose() {
-    this._rawSessionListeners.forEach(listener => listener.dispose());
-    this._rawSession?.detach().catch(() => {});
-    this._rawSession = null;
-    this._initializePromise = undefined;
-  }
-
-  private async _initializeRawSession() {
-    const session = await this._page.context().newCDPSession(this._page);
-    this._rawSession = session;
-    this._rawSessionListeners = [
-      eventsHelper.addEventListener(session, 'event', ({ method, params }) => {
-        this.sendEvent?.(method, params);
-      }),
-      eventsHelper.addEventListener(session, 'close', () => {
-        this.close?.();
-      }),
-    ];
   }
 }

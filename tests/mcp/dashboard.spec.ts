@@ -31,20 +31,6 @@ test('should show browser session chip', async ({ cli, server, openDashboard }) 
   await expect(chips).toHaveCount(1);
 });
 
-test('should show devtools sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
-  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'DevTools sidebar requires CDP, only available in Chromium');
-
-  await cli('open', server.EMPTY_PAGE);
-
-  const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
-
-  const devToolsButton = dashboard.locator('button.nav-btn[title="Chrome DevTools"]');
-  await expect(dashboard.locator('.inspector-frame')).not.toBeVisible();
-  await devToolsButton.click();
-  await expect(dashboard.locator('.inspector-frame')).toBeVisible();
-});
-
 test('should show current workspace sessions first', async ({ cli, server, openDashboard }) => {
   const wsA = test.info().outputPath('workspace-a');
   const wsB = test.info().outputPath('workspace-b');

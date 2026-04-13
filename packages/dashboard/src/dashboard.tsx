@@ -19,8 +19,7 @@ import './dashboard.css';
 import { navigate } from './index';
 import { DashboardClient } from './dashboardClient';
 import { asLocator } from '@isomorphic/locatorGenerators';
-import { SplitView } from '@web/components/splitView';
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon, PickLocatorIcon, InspectorPanelIcon } from './icons';
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon, PickLocatorIcon } from './icons';
 import { SettingsButton } from './settingsView';
 
 import type { DashboardClientChannel } from './dashboardClient';
@@ -43,7 +42,6 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
-  const [showInspector, setShowInspector] = React.useState(false);
   const [pickingTabId, setPickingTabId] = React.useState<string | null>(null);
   const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
 
@@ -103,7 +101,6 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       setChannel(undefined);
       setInteractive(false);
       setPickingTabId(null);
-      setShowInspector(false);
     };
 
     return () => {
@@ -272,7 +269,6 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             onClick={() => {
               channel?.cancelPickLocator();
               setPickingTabId(null);
-              setShowInspector(false);
               setInteractive(false);
             }}
           >
@@ -334,66 +330,40 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       >
         <PickLocatorIcon />
       </button>
-      {selectedTab?.inspectorUrl && (
-        <button
-          className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
-          title='Chrome DevTools'
-          aria-pressed={showInspector}
-          disabled={!channel}
-          onClick={() => {
-            setInteractive(true);
-            setShowInspector(!showInspector);
-          }}
-        >
-          <InspectorPanelIcon />
-        </button>
-      )}
     </div>
 
     {/* Viewport */}
     <div className='viewport-wrapper'>
-      <SplitView
-        orientation='horizontal'
-        sidebarSize={500}
-        minSidebarSize={300}
-        settingName='devtoolsInspector'
-        sidebarHidden={!showInspector || !selectedTab?.inspectorUrl}
-        main={<div className='viewport-main'>
-          <div
-            ref={screenRef}
-            className='screen'
-            tabIndex={0}
-            style={{ display: frame ? '' : 'none' }}
-            onMouseDown={onScreenMouseDown}
-            onMouseUp={onScreenMouseUp}
-            onMouseMove={onScreenMouseMove}
-            onWheel={onScreenWheel}
-            onKeyDown={onScreenKeyDown}
-            onKeyUp={onScreenKeyUp}
-            onContextMenu={e => e.preventDefault()}
-          >
-            <img
-              ref={displayRef}
-              id='display'
-              className='display'
-              alt='screencast'
-              src={frame ? 'data:image/jpeg;base64,' + frame.data : undefined}
-            />
-            {locatorToast
-              ? <div className='screen-toast visible'>Copied: <code>{locatorToast.text}</code></div>
-              : picking
-                ? <div className='screen-toast visible'>Click an element to pick its locator</div>
-                : null
-            }
-          </div>
-          {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
-        </div>}
-        sidebar={<iframe
-          className='inspector-frame'
-          src={selectedTab?.inspectorUrl || ''}
-          title='Chrome DevTools'
-        />}
-      />
+      <div className='viewport-main'>
+        <div
+          ref={screenRef}
+          className='screen'
+          tabIndex={0}
+          style={{ display: frame ? '' : 'none' }}
+          onMouseDown={onScreenMouseDown}
+          onMouseUp={onScreenMouseUp}
+          onMouseMove={onScreenMouseMove}
+          onWheel={onScreenWheel}
+          onKeyDown={onScreenKeyDown}
+          onKeyUp={onScreenKeyUp}
+          onContextMenu={e => e.preventDefault()}
+        >
+          <img
+            ref={displayRef}
+            id='display'
+            className='display'
+            alt='screencast'
+            src={frame ? 'data:image/jpeg;base64,' + frame.data : undefined}
+          />
+          {locatorToast
+            ? <div className='screen-toast visible'>Copied: <code>{locatorToast.text}</code></div>
+            : picking
+              ? <div className='screen-toast visible'>Click an element to pick its locator</div>
+              : null
+          }
+        </div>
+        {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
+      </div>
     </div>
   </div>);
 };
