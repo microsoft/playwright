@@ -67,8 +67,7 @@ test('install creates default config', async ({ cli, mcpBrowser }) => {
   expect(output).toContain(`Created default config for ${foundMatch?.[1]} at .playwright${path.sep}cli.config.json.`);
 
   if (mcpBrowser !== 'firefox' && mcpBrowser !== 'webkit') {
-    await cli('open');
-    const { output: config } = await cli('config-print');
+    const config = fs.readFileSync(test.info().outputPath('.playwright', 'cli.config.json'), 'utf-8');
     expect(config).toContain(`"channel": "${foundMatch?.[1]}"`);
   }
 });
