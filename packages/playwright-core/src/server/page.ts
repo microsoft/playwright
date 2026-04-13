@@ -428,10 +428,7 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   addPageError(error: Error, location: types.ConsoleMessageLocation) {
-    const pageError: PageError = {
-      error,
-      location,
-    };
+    const pageError: PageError = { error, location };
     this._pageErrors.push(pageError);
     ensureArrayLimit(this._pageErrors, 200); // Avoid unbounded memory growth.
 
