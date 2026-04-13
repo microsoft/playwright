@@ -1386,6 +1386,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Locator.getByRole.description = %%-locator-get-by-role-option-description-%%
+
 ## method: Locator.getByTestId
 * since: v1.27
 - returns: <[Locator]>

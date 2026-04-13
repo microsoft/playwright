@@ -2288,6 +2288,8 @@ Attribute name to get the value for.
 
 ### option: Page.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Page.getByRole.description = %%-locator-get-by-role-option-description-%%
+
 ## method: Page.getByTestId
 * since: v1.27
 - returns: <[Locator]>

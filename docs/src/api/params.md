@@ -1461,7 +1461,6 @@ Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-sele
 
 ## locator-get-by-role-option-list-v1.27
 - %%-locator-get-by-role-option-checked-%%
-- %%-locator-get-by-role-option-description-%%
 - %%-locator-get-by-role-option-disabled-%%
 - %%-locator-get-by-role-option-expanded-%%
 - %%-locator-get-by-role-option-includeHidden-%%

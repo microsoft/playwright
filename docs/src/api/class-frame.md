@@ -1039,6 +1039,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Frame.getByRole.description = %%-locator-get-by-role-option-description-%%
+
 ## method: Frame.getByTestId
 * since: v1.27
 - returns: <[Locator]>

@@ -27,9 +27,10 @@ type RoleEngineOptions = {
   role: string;
   description?: string | RegExp;
   descriptionOp?: Exclude<AttributeSelectorOperator, '<truthy>'>;
+  descriptionExact?: boolean;
   name?: string | RegExp;
   nameOp?: Exclude<AttributeSelectorOperator, '<truthy>'>;
-  exact?: boolean;
+  nameExact?: boolean;
   checked?: boolean | 'mixed';
   pressed?: boolean | 'mixed';
   selected?: boolean;
@@ -112,7 +113,7 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
           throw new Error(`"name" attribute must be a string or a regular expression`);
         options.name = attr.value;
         options.nameOp = attr.op;
-        options.exact = attr.caseSensitive;
+        options.nameExact = attr.caseSensitive;
         break;
       }
       case 'description': {
@@ -122,7 +123,7 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
           throw new Error(`"description" attribute must be a string or a regular expression`);
         options.description = attr.value;
         options.descriptionOp = attr.op;
-        options.exact = attr.caseSensitive;
+        options.descriptionExact = attr.caseSensitive;
         break;
       }
       case 'include-hidden': {
@@ -167,9 +168,9 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
       if (typeof options.name === 'string')
         options.name = normalizeWhiteSpace(options.name);
       // internal:role assumes that [name="foo"i] also means substring.
-      if (internal && !options.exact && options.nameOp === '=')
+      if (internal && !options.nameExact && options.nameOp === '=')
         options.nameOp = '*=';
-      if (!matchesAttributePart(accessibleName, { name: '', jsonPath: [], op: options.nameOp || '=', value: options.name, caseSensitive: !!options.exact }))
+      if (!matchesAttributePart(accessibleName, { name: '', jsonPath: [], op: options.nameOp || '=', value: options.name, caseSensitive: !!options.nameExact }))
         return;
     }
     if (options.description !== undefined) {
@@ -178,9 +179,9 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
       if (typeof options.description === 'string')
         options.description = normalizeWhiteSpace(options.description);
       // internal:role assumes that [description="foo"i] also means substring.
-      if (internal && !options.exact && options.descriptionOp === '=')
+      if (internal && !options.descriptionExact && options.descriptionOp === '=')
         options.descriptionOp = '*=';
-      if (!matchesAttributePart(accessibleDescription, { name: '', jsonPath: [], op: options.descriptionOp || '=', value: options.description, caseSensitive: !!options.exact }))
+      if (!matchesAttributePart(accessibleDescription, { name: '', jsonPath: [], op: options.descriptionOp || '=', value: options.description, caseSensitive: !!options.descriptionExact }))
         return;
     }
     result.push(element);

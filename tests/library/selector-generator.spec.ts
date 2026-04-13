@@ -531,6 +531,14 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'button')).toBe('internal:role=button[name=\"ariaLabel\"i]');
   });
 
+  it('should generate title selector', async ({ page }) => {
+    await page.setContent(`<div>
+      <button title="Send to" aria-description="High-Speed Parcel Delivery">Send</button>
+      <button aria-description="High-Speed Parcel Delivery">Send</button>
+    </div>`);
+    expect(await generate(page, 'button')).toBe('internal:attr=[title=\"Send to\"i]');
+  });
+
   it('should ignore empty role for candidate consideration', async ({ page }) => {
     await page.setContent(`<button role="" id="buttonId"></button>`);
     expect(await generate(page, 'button')).toBe('#buttonId');
