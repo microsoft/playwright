@@ -529,7 +529,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     if (!localUtils)
       throw new Error('Route from har is not supported in thin clients');
     if (options.update) {
-      await this._browserContext._recordIntoHAR(har, this, options);
+      await this._browserContext.tracing._recordIntoHAR(har, this, options);
       return;
     }
     const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });

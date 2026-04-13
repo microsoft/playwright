@@ -1442,21 +1442,6 @@ BrowserContext:
       returns:
         session: CDPSession
 
-    harStart:
-      internal: true
-      parameters:
-        page: Page?
-        options: RecordHarOptions
-      returns:
-        harId: string
-
-    harExport:
-      internal: true
-      parameters:
-        harId: string?
-      returns:
-        artifact: Artifact
-
     createTempFiles:
       internal: true
       parameters:
@@ -4022,6 +4007,21 @@ Tracing:
     tracingStop:
       title: Stop tracing
       group: configuration
+
+    harStart:
+      internal: true
+      parameters:
+        page: Page?
+        options: RecordHarOptions
+      returns:
+        harId: string
+
+    harExport:
+      internal: true
+      parameters:
+        harId: string?
+      returns:
+        artifact: Artifact
 
 
 Artifact:
