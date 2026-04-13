@@ -237,8 +237,7 @@ class StdinServer implements Transport {
       if (this._traceUrl)
         this._loadTrace(this._traceUrl);
     }
-    if (id !== undefined)
-      this.sendMessage?.(JSON.stringify({ id }));
+    this.sendMessage?.(JSON.stringify({ id }));
   }
 
   onclose() {

@@ -38,9 +38,9 @@ import type { TestServerTransport } from '../isomorphic/testServerConnection';
 /* eslint-disable no-restricted-properties */
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
-  public readonly _send: (data: string) => void;
+  public readonly _send: (message: string) => void;
 
-  constructor(send: (data: any) => void) {
+  constructor(send: (message: string) => void) {
     super();
     this._send = send;
   }
@@ -81,11 +81,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   let bufferMode = false;
 
   const testServerDispatcher = new TestServerDispatcher(configLocation, {});
-  const transport = new InMemoryTransport(
-      async data => {
-        testServerDispatcher.transport.onmessage(data);
-      }
-  );
+  const transport = new InMemoryTransport(message => testServerDispatcher.transport.onmessage(message));
   testServerDispatcher.transport.sendMessage = message => {
     transport.emit('message', message);
   };
