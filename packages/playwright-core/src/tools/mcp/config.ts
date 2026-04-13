@@ -163,17 +163,18 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   if (result.browser.isolated === undefined)
     result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
 
-  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint) {
-    // No custom value provided, use the daemon data dir.
-    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
-    result.browser.userDataDir = userDataDir;
-  }
-
   if (result.browser.launchOptions.headless === undefined)
     result.browser.launchOptions.headless = true;
 
   const browser = await validateBrowserConfig(result.browser);
+
+  if (!result.extension && !browser.isolated && !browser.userDataDir && !browser.remoteEndpoint && !browser.cdpEndpoint) {
+    // No custom value provided, use the daemon data dir.
+    const browserToken = browser.launchOptions?.channel ?? browser?.browserName;
+    const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
+    browser.userDataDir = userDataDir;
+  }
+
   return { ...result, browser, configFile, skillMode: true };
 }
 
