@@ -40,6 +40,7 @@ type BrowserWithInfo = {
   browser: playwrightTypes.Browser,
   browserInfo: BrowserInfo,
   canBind: boolean,
+  ownership: 'attached' | 'own',
 };
 
 export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
@@ -53,20 +54,25 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
 
   let browser: playwrightTypes.Browser;
   let canBind = false;
+  let ownership: 'attached' | 'own' = 'own';
   if (config.browser.cdpEndpoint) {
     browser = await createCDPBrowser(config);
     canBind = true;
+    ownership = 'attached';
   } else if (config.browser.isolated) {
     browser = await createIsolatedBrowser(config, clientInfo);
     canBind = true;
+    ownership = 'own';
   } else if (config.extension) {
     browser = await createExtensionBrowser(config, clientInfo.clientName);
+    ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);
     canBind = true;
+    ownership = 'own';
   }
 
-  return { browser, browserInfo: browserInfo(browser, config), canBind };
+  return { browser, browserInfo: browserInfo(browser, config), canBind, ownership };
 }
 
 export interface BrowserContextFactory {
@@ -125,6 +131,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
         userDataDir: descriptor.browser.userDataDir
       },
       canBind: false,
+      ownership: 'attached'
     };
   }
 
@@ -133,7 +140,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
   const browser = await connectToBrowser(playwrightObject, { endpoint });
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
-  return { browser, browserInfo: browserInfo(browser, config), canBind: false };
+  return { browser, browserInfo: browserInfo(browser, config), canBind: false, ownership: 'attached' };
 }
 
 async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
