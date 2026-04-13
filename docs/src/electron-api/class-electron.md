@@ -2,16 +2,17 @@
 * since: v1.9
 * langs: js
 
-Playwright has **experimental** support for Electron automation. You can access electron namespace via:
+Playwright has **experimental** support for Electron automation, shipped as a
+separate package:
 
-```js
-const { _electron } = require('playwright');
+```sh
+npm i -D @playwright/experimental-electron
 ```
 
 An example of the Electron automation script would be:
 
 ```js
-const { _electron: electron } = require('playwright');
+import { electron } from '@playwright/experimental-electron';
 
 (async () => {
   // Launch Electron app.
@@ -88,60 +89,6 @@ Specifies environment variables that will be visible to Electron. Defaults to `p
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the application to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-
-### option: Electron.launch.acceptdownloads = %%-context-option-acceptdownloads-%%
-* since: v1.12
-
-### option: Electron.launch.bypassCSP = %%-context-option-bypasscsp-%%
-* since: v1.12
-
-### option: Electron.launch.colorScheme = %%-context-option-colorscheme-%%
-* since: v1.12
-
-### option: Electron.launch.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
-* since: v1.12
-
-### option: Electron.launch.geolocation = %%-context-option-geolocation-%%
-* since: v1.12
-
-### option: Electron.launch.httpcredentials = %%-context-option-httpcredentials-%%
-* since: v1.12
-
-### option: Electron.launch.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
-* since: v1.12
-
-### option: Electron.launch.locale = %%-context-option-locale-%%
-* since: v1.12
-
-### option: Electron.launch.offline = %%-context-option-offline-%%
-* since: v1.12
-
-### option: Electron.launch.recordhar = %%-context-option-recordhar-%%
-* since: v1.12
-
-### option: Electron.launch.recordharpath = %%-context-option-recordhar-path-%%
-* since: v1.12
-
-### option: Electron.launch.recordHarOmitContent = %%-context-option-recordhar-omit-content-%%
-* since: v1.12
-
-### option: Electron.launch.recordvideo = %%-context-option-recordvideo-%%
-* since: v1.12
-
-### option: Electron.launch.recordvideodir = %%-context-option-recordvideo-dir-%%
-* since: v1.12
-
-### option: Electron.launch.recordvideosize = %%-context-option-recordvideo-size-%%
-* since: v1.12
-
-### option: Electron.launch.timezoneId = %%-context-option-timezoneid-%%
-* since: v1.12
-
-### option: Electron.launch.tracesDir = %%-browser-option-tracesdir-%%
-* since: v1.36
-
-### option: Electron.launch.artifactsDir = %%-browser-option-artifactsdir-%%
-* since: v1.59
 
 ### option: Electron.launch.chromiumSandbox = %%-browser-option-chromiumsandbox-%%
 * since: v1.59

@@ -1,0 +1,26 @@
+{
+  "name": "@playwright/experimental-electron",
+  "version": "1.60.0-next",
+  "description": "Playwright for Electron",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "dependencies": {
+    "playwright-core": "1.60.0-next"
+  }
+}

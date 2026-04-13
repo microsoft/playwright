@@ -15,8 +15,6 @@
  */
 
 import { electronTest as test, expect } from './electronTest';
-import fs from 'fs';
-import path from 'path';
 
 test.skip(({ trace }) => trace === 'on');
 
@@ -45,18 +43,4 @@ test('should support custom protocol', async ({ electronApp, newWindow, server, 
   const frame = await traceViewer.snapshotFrame('Click');
   await expect(frame.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
   await expect(frame.locator('button')).toHaveCSS('font-weight', '700');
-});
-
-test('should respect tracesDir and name', async ({ launchElectronApp, server }, testInfo) => {
-  const tracesDir = testInfo.outputPath('traces');
-  const electronApp = await launchElectronApp('electron-window-app.js', [], { tracesDir });
-
-  await electronApp.context().tracing.start({ name: 'name1', snapshots: true });
-  const page = await electronApp.firstWindow();
-  await page.goto(server.PREFIX + '/one-style.html');
-  await electronApp.context().tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
-  expect(fs.existsSync(path.join(tracesDir, 'name1.trace'))).toBe(true);
-  expect(fs.existsSync(path.join(tracesDir, 'name1.network'))).toBe(true);
-
-  await electronApp.close();
 });

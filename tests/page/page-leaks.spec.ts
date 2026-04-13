@@ -24,7 +24,7 @@ function leakedJSHandles(): string {
   const map = new MultiMap();
   for (const [h, e] of (globalThis as any).leakedJSHandles) {
     const name = `[${h.worldNameForTest()}] ${h.preview()}`;
-    if (name === '[main] UtilityScript' || name === '[utility] UtilityScript' || name === '[electron] UtilityScript' || name === '[main] InjectedScript' || name === '[utility] InjectedScript' || name === '[electron] ElectronModule')
+    if (name === '[main] UtilityScript' || name === '[utility] UtilityScript' || name === '[electron] UtilityScript' || name === '[worker] UtilityScript' || name === '[main] InjectedScript' || name === '[utility] InjectedScript' || name === '[electron] ElectronModule' || name === '[worker] ElectronModule')
       continue;
     map.set(e.stack, name);
   }

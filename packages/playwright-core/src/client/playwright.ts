@@ -18,7 +18,6 @@ import { Android } from './android';
 import { Browser } from './browser';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
-import { Electron } from './electron';
 import { TimeoutError } from './errors';
 import { APIRequest } from './fetch';
 import { Selectors } from './selectors';
@@ -28,7 +27,6 @@ import type { LaunchOptions } from 'playwright-core';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
-  readonly _electron: Electron;
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
@@ -53,8 +51,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
     this._android._playwright = this;
-    this._electron = Electron.from(initializer.electron);
-    this._electron._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors(this._connection._platform);
     this.errors = { TimeoutError };

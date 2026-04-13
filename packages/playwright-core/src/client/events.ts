@@ -94,10 +94,4 @@ export const Events = {
     Close: 'close',
     Console: 'console',
   },
-
-  ElectronApplication: {
-    Close: 'close',
-    Console: 'console',
-    Window: 'window',
-  },
 };
