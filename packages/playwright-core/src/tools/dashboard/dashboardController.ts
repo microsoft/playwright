@@ -25,7 +25,7 @@ import type { BrowserDescriptor } from '../../serverRegistry';
 export class DashboardConnection implements Transport, DashboardChannel {
   readonly version = 1;
 
-  sendEvent?: (method: string, params: any) => void;
+  sendMessage?: (message: string) => void;
   close?: () => void;
 
   selectedPage: api.Page | null = null;
@@ -63,7 +63,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
   }
 
   private _emit<K extends keyof DashboardChannelEvents>(event: K, params: DashboardChannelEvents[K]): void {
-    this.sendEvent?.(event, params);
+    this.sendMessage?.(JSON.stringify({ method: event, params }));
     const set = this._eventListeners.get(event);
     if (set) {
       for (const fn of set)
@@ -104,10 +104,16 @@ export class DashboardConnection implements Transport, DashboardChannel {
     this._browser?.close().catch(() => {});
   }
 
-  async dispatch(method: string, params: any): Promise<any> {
+  async onmessage(message: string) {
+    const { id, method, params } = JSON.parse(message);
     await this._initPromise;
-    // eslint-disable-next-line no-restricted-syntax
-    return (this as any)[method]?.(params);
+    try {
+      // eslint-disable-next-line no-restricted-syntax
+      const result = await (this as any)[method]?.(params);
+      this.sendMessage?.(JSON.stringify({ id, result }));
+    } catch (e) {
+      this.sendMessage?.(JSON.stringify({ id, error: String(e) }));
+    }
   }
 
   async selectTab(params: { pageId: string }) {
@@ -311,7 +317,7 @@ async function getBrowserRevision(page: api.Page): Promise<string | null> {
 }
 
 export class CDPConnection implements Transport {
-  sendEvent?: (method: string, params: any) => void;
+  sendMessage?: (message: string) => void;
   close?: () => void;
 
   private _page: api.Page;
@@ -327,11 +333,17 @@ export class CDPConnection implements Transport {
     this._initializePromise = this._initializeRawSession();
   }
 
-  async dispatch(method: string, params: any): Promise<any> {
+  async onmessage(message: string) {
+    const { id, method, params } = JSON.parse(message);
     await this._initializePromise;
     if (!this._rawSession)
       throw new Error('CDP session is not initialized');
-    return await this._rawSession.send(method as Parameters<api.CDPSession['send']>[0], params);
+    try {
+      const result = await this._rawSession.send(method as Parameters<api.CDPSession['send']>[0], params);
+      this.sendMessage?.(JSON.stringify({ id, result }));
+    } catch (e) {
+      this.sendMessage?.(JSON.stringify({ id, error: String(e) }));
+    }
   }
 
   onclose() {
@@ -346,7 +358,7 @@ export class CDPConnection implements Transport {
     this._rawSession = session;
     this._rawSessionListeners = [
       eventsHelper.addEventListener(session, 'event', ({ method, params }) => {
-        this.sendEvent?.(method, params);
+        this.sendMessage?.(JSON.stringify({ method, params }));
       }),
       eventsHelper.addEventListener(session, 'close', () => {
         this.close?.();

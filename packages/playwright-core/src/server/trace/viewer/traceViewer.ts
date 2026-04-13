@@ -231,23 +231,25 @@ class StdinServer implements Transport {
   onconnect() {
   }
 
-  async dispatch(method: string, params: any) {
+  onmessage(message: string) {
+    const { id, method } = JSON.parse(message);
     if (method === 'initialize') {
       if (this._traceUrl)
         this._loadTrace(this._traceUrl);
     }
+    this.sendMessage?.(JSON.stringify({ id }));
   }
 
   onclose() {
   }
 
-  sendEvent?: (method: string, params: any) => void;
+  sendMessage?: (message: string) => void;
   close?: () => void;
 
   private _loadTrace(traceUrl: string) {
     this._traceUrl = traceUrl;
     clearTimeout(this._pollTimer);
-    this.sendEvent?.('loadTraceRequested', { traceUrl });
+    this.sendMessage?.(JSON.stringify({ method: 'loadTraceRequested', params: { traceUrl } }));
   }
 
   private _pollLoadTrace(url: string) {
