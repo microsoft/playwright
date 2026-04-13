@@ -83,17 +83,11 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const testServerDispatcher = new TestServerDispatcher(configLocation, {});
   const transport = new InMemoryTransport(
       async data => {
-        const { id, method, params } = JSON.parse(data);
-        try {
-          const result = await testServerDispatcher.transport.dispatch(method, params);
-          transport.emit('message', JSON.stringify({ id, result }));
-        } catch (e) {
-          transport.emit('message', JSON.stringify({ id, error: String(e) }));
-        }
+        testServerDispatcher.transport.onmessage(data);
       }
   );
-  testServerDispatcher.transport.sendEvent = (method, params) => {
-    transport.emit('message', JSON.stringify({ method, params }));
+  testServerDispatcher.transport.sendMessage = message => {
+    transport.emit('message', message);
   };
   const testServerConnection = new TestServerConnection(transport);
   transport.emit('open');
