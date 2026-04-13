@@ -27,7 +27,7 @@ import { MultiMap } from '@isomorphic/multimap';
 import { calculateSha1 } from '@utils/crypto';
 import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@utils/fileUtils';
 import { getPackageManagerExecCommand } from '@utils/env';
-import { HttpServer } from '@utils/httpServer';
+import { serveFolder } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
@@ -222,7 +222,7 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
     gracefullyProcessExitDoNotHang(1);
     return;
   }
-  const server = startHtmlReportServer(folder);
+  const server = serveFolder(folder);
   await server.start({ port, host, preferredPort: port ? undefined : 9323 });
   let url = server.urlPrefix('human-readable');
   writeLine('');
@@ -232,26 +232,6 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   url = url.replace('0.0.0.0', 'localhost');
   await open(url, { wait: true }).catch(() => {});
   await new Promise(() => {});
-}
-
-export function startHtmlReportServer(folder: string): HttpServer {
-  const server = new HttpServer();
-  server.routePrefix('/', (request, response) => {
-    let relativePath = new URL('http://localhost' + request.url).pathname;
-    if (relativePath.startsWith('/trace/file')) {
-      const url = new URL('http://localhost' + request.url!);
-      try {
-        return server.serveFile(request, response, url.searchParams.get('path')!);
-      } catch (e) {
-        return false;
-      }
-    }
-    if (relativePath === '/')
-      relativePath = '/index.html';
-    const absolutePath = path.join(folder, ...relativePath.split('/'));
-    return server.serveFile(request, response, absolutePath);
-  });
-  return server;
 }
 
 type DataMap = Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>;
