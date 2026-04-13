@@ -127,8 +127,7 @@ async function ensureConfiguredBrowserInstalled() {
       await resolveAndInstall(channel ?? browserName);
   } else {
     const channel = await findOrInstallDefaultBrowser();
-    if (channel !== 'chrome')
-      await createDefaultConfig(channel);
+    await createDefaultConfig(channel);
   }
 }
 
@@ -152,12 +151,10 @@ async function resolveAndInstall(nameOrChannel: string) {
 }
 
 async function createDefaultConfig(channel: string) {
-  const config = {
-    browser: {
-      browserName: 'chromium',
-      launchOptions: { channel },
-    },
-  };
-  await fs.promises.writeFile(defaultConfigFile(), JSON.stringify(config, null, 2));
+  const templatePath = libPath('tools', 'cli-daemon', 'config.default.json');
+  let template = await fs.promises.readFile(templatePath, 'utf-8');
+  if (channel !== 'chrome')
+    template = template.replace(`// "channel": "chrome",`, `"channel": "${channel}",`);
+  await fs.promises.writeFile(defaultConfigFile(), template);
   console.log(`✅ Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
 }

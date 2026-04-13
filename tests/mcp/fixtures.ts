@@ -109,12 +109,15 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         if (mcpBrowser)
           args.push(`--browser=${mcpBrowser}`);
         if (options?.config) {
-          const configFile = testInfo.outputPath('config.json');
-          if (typeof options.config === 'object')
+          if (typeof options.config === 'object') {
+            const configFile = testInfo.outputPath('config.json');
             await fs.promises.writeFile(configFile, JSON.stringify(options.config, null, 2));
-          else if (typeof options.config === 'string')
+            args.push(`--config=${path.relative(configDir, configFile)}`);
+          } else if (typeof options.config === 'string') {
+            const configFile = testInfo.outputPath('config.ini');
             await fs.promises.writeFile(configFile, options.config.trim());
-          args.push(`--config=${path.relative(configDir, configFile)}`);
+            args.push(`--config=${path.relative(configDir, configFile)}`);
+          }
         }
         if (!options?.noTimeoutForTest)
           args.push('--timeout-action=10000');

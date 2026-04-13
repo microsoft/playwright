@@ -19,6 +19,7 @@ import path from 'path';
 import os from 'os';
 
 import dotenv from 'dotenv';
+import { json5 } from '../../utilsBundle';
 import { playwright } from '../../inprocess';
 import { configFromIniFile } from './configIni';
 
@@ -389,12 +390,9 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   if (configFile.endsWith('.ini'))
     return configFromIniFile(configFile);
 
-  try {
-    const data = await fs.promises.readFile(configFile, 'utf8');
-    return JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
-  } catch {
-    return configFromIniFile(configFile);
-  }
+  const data = await fs.promises.readFile(configFile, 'utf8');
+  const text = data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data;
+  return json5.parse(text);
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {

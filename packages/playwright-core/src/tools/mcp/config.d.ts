@@ -16,6 +16,10 @@
 
 import type * as playwright from '../../..';
 
+// This file contains type declarations for the MCP and CLI config. Please keep the following files in sync:
+// - ../cli-daemon/config.default.json - default config template that is copied to the user's config file upon workspace initialization
+// - configIni.ts - LonghandType type for parsing comes from here
+
 export type ToolCapability =
   'config' |
   'core' |

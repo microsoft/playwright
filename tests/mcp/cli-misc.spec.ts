@@ -60,10 +60,15 @@ test('install workspace w/--skills=agents', async ({ cli }, testInfo) => {
   expect(fs.existsSync(skillFile)).toBe(true);
 });
 
-test('install handles browser detection', async ({ cli }) => {
+test('install creates default config', async ({ cli, mcpBrowser }) => {
   const { output } = await cli('install');
   // Verify that one of the browser detection outcomes occurred
   const foundMatch = output.match(/Found ((?:chrome|msedge)[\w-]*), will use it as the default browser\./m);
-  if (foundMatch?.[1] !== 'chrome')
-    expect(output).toContain(`Created default config for ${foundMatch?.[1] ?? 'chromium'}.`);
+  expect(output).toContain(`Created default config for ${foundMatch?.[1]} at .playwright${path.sep}cli.config.json.`);
+
+  if (mcpBrowser !== 'firefox' && mcpBrowser !== 'webkit') {
+    await cli('open');
+    const { output: config } = await cli('config-print');
+    expect(config).toContain(`"channel": "${foundMatch?.[1]}"`);
+  }
 });

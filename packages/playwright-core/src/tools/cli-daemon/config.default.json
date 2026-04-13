@@ -1,0 +1,89 @@
+// Configuration for Playwright CLI and MCP.
+{
+  // The browser to use.
+  "browser": {
+    // The type of browser to use: "chromium", "firefox", or "webkit".
+    // "browserName": "chromium",
+
+    // Keep the browser profile in memory, do not save it to disk.
+    // "isolated": false,
+
+    // Path to a user data directory for browser profile persistence.
+    // "userDataDir": "/path/to/user-data-dir",
+
+    // Launch options passed to browserType.launchPersistentContext().
+    // See: https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context
+    "launchOptions": {
+      // "channel": "chrome",
+      // "headless": false,
+      // "executablePath": "/path/to/browser",
+    },
+
+    // Context options for the browser context.
+    "contextOptions": {
+      // "viewport": { "width": 1280, "height": 720 },
+    },
+
+    // Chrome DevTools Protocol endpoint to connect to an existing browser instance.
+    // "cdpEndpoint": "http://localhost:9222",
+
+    // Remote endpoint to connect to an existing Playwright server.
+    // "remoteEndpoint": "ws://localhost:3000",
+
+    // Paths to JavaScript files to add as initialization scripts.
+    // See https://github.com/microsoft/playwright-mcp#initial-state
+    // "initScript": [],
+
+    // Paths to TypeScript files to add as initialization scripts for Playwright page.
+    // See https://github.com/microsoft/playwright-mcp#initial-state
+    // "initPage": [],
+  },
+
+  // Connect to a running browser instance via the Playwright MCP Bridge extension.
+  // "extension": false,
+
+  // Secrets to redact from tool responses.
+  // "secrets": {},
+
+  // The directory to save output files.
+  // "outputDir": "./.playwright-cli",
+
+  "console": {
+    // Level of console messages to return: "error", "warning", "info", or "debug".
+    // "level": "info",
+  },
+
+  "network": {
+    // Origins to allow the browser to request. Default is to allow all.
+    // Formats: "https://example.com:8080", "http://localhost:*"
+    // "allowedOrigins": [],
+
+    // Origins to block. Overrides allowedOrigins for matching entries.
+    // "blockedOrigins": [],
+  },
+
+  // Attribute to use for test ids.
+  // "testIdAttribute": "data-testid",
+
+  "timeouts": {
+    // Default action timeout in ms.
+    // "action": 5000,
+
+    // Default navigation timeout in ms.
+    // "navigation": 60000,
+
+    // Default expect timeout in ms.
+    // "expect": 5000,
+  },
+
+  "snapshot": {
+    // Snapshot mode for responses: "full" or "none".
+    // "mode": "full",
+  },
+
+  // Enable to allow file access outside the workspace.
+  // "allowUnrestrictedFileAccess": false,
+
+  // Language for code generation: "typescript" or "none".
+  // "codegen": "typescript",
+}

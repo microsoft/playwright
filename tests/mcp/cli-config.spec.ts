@@ -144,3 +144,9 @@ test('project config overrides global config', async ({ cli, server }, testInfo)
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
   expect(output).toContain('1024x768');
 });
+
+test('config parsing error', async ({ cli }, testInfo) => {
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), `not a JSON file`);
+  const { error } = await cli('open');
+  expect(error).toContain(`invalid character 'o'`);
+});
