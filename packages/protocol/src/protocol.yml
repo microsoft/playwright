@@ -1030,6 +1030,7 @@ BrowserType:
         slowMo: float?
         timeout: float
         isLocal: boolean?
+        noDefaults: boolean?
       returns:
         browser: Browser
         defaultContext: BrowserContext?

@@ -22597,6 +22597,16 @@ export interface ConnectOverCDPOptions {
    * `0` to disable timeout.
    */
   timeout?: number;
+
+  /**
+   * When true, Playwright will not send default overrides to the browser on the default context. This includes
+   * `Browser.setDownloadBehavior`, `Emulation.setFocusEmulationEnabled`, and `Emulation.setEmulatedMedia`. Useful when
+   * attaching to a user's daily-driver browser where these overrides would interfere with existing browser state. New
+   * contexts created via
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) are not
+   * affected. Defaults to `false`.
+   */
+  noDefaults?: boolean;
 }
 
 export interface ConnectOptions {

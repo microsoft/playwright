@@ -63,6 +63,7 @@ export type BrowserOptions = {
   sdkLanguage?: Language;
   originalLaunchOptions: types.LaunchOptions;
   userDataDir?: string;
+  noDefaults?: boolean;
 };
 
 export abstract class Browser extends SdkObject {
