@@ -48,6 +48,13 @@ it('should select single option by label', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'].onChange)).toEqual(['indigo']);
 });
 
+it('should select single option by label with html whitespace', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/select.html');
+  await page.selectOption('select', { label: 'HTML' });
+  expect(await page.evaluate(() => window['result'].onInput)).toEqual(['html']);
+  expect(await page.evaluate(() => window['result'].onChange)).toEqual(['html']);
+});
+
 it('should select single option by handle', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/select.html');
   await page.selectOption('select', await page.$('[id=whiteOption]'));

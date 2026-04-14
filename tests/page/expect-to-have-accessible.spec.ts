@@ -29,6 +29,13 @@ test('toHaveAccessibleName', async ({ page }) => {
 
   await page.setContent(`<button>foo&nbsp;bar\nbaz</button>`);
   await expect(page.locator('button')).toHaveAccessibleName('foo bar baz');
+
+  await page.setContent(`
+    <select>
+      <option>&nbsp;HTML</option>
+    </select>
+  `);
+  await expect(page.locator('option')).toHaveAccessibleName('HTML');
 });
 
 test('toHaveAccessibleDescription', async ({ page }) => {

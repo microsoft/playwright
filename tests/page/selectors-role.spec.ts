@@ -497,6 +497,15 @@ test('should support name', async ({ page }) => {
   ]);
 });
 
+test('should support option name with html whitespace', async ({ page }) => {
+  await page.setContent(`
+    <select>
+      <option value="html">&nbsp;HTML</option>
+    </select>
+  `);
+  await expect(page.getByRole('option', { name: 'HTML' })).toHaveCount(1);
+});
+
 test('errors', async ({ page }) => {
   const e0 = await page.$('role=[bar]').catch(e => e);
   expect(e0.message).toContain(`Role must not be empty`);
