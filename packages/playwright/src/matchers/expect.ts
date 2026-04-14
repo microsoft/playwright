@@ -16,13 +16,13 @@
 
 import path from 'path';
 
-import {
-  expect as expectLibrary,
-} from 'expect';
 import { parseStackFrame, captureRawStack } from '@isomorphic/stackTrace';
 import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { currentZone } from '@utils/zones';
+import {
+  expect as expectLibrary,
+} from './expectLibrary';
 
 import { ExpectError, isJestError } from './matcherHint';
 import {
