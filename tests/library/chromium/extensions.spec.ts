@@ -56,28 +56,32 @@ it.describe('MV3', () => {
     const page = await context.newPage();
     const cdp = await context.newCDPSession(page);
 
-    let versionId: string | undefined;
-    let scopeURL: string | undefined;
-    let runningStatus: string | undefined;
-    cdp.on('ServiceWorker.workerVersionUpdated', ({ versions }: any) => {
-      const v = versions[0];
-      if (!v)
-        return;
-      versionId = v.versionId;
-      runningStatus = v.runningStatus;
-    });
-    cdp.on('ServiceWorker.workerRegistrationUpdated', ({ registrations }: any) => {
-      if (registrations.length)
-        scopeURL = registrations[0].scopeURL;
-    });
-    await cdp.send('ServiceWorker.enable');
-    await expect.poll(() => versionId && scopeURL, { timeout: 5000 }).toBeTruthy();
+    const waitForCdpEvent = <T>(event: string, predicate: (params: any) => T | undefined): Promise<T> => {
+      return new Promise<T>(resolve => {
+        const handler = (params: any) => {
+          const result = predicate(params);
+          if (result !== undefined) {
+            cdp.off(event as any, handler);
+            resolve(result);
+          }
+        };
+        cdp.on(event as any, handler);
+      });
+    };
 
+    const versionPromise = waitForCdpEvent('ServiceWorker.workerVersionUpdated', ({ versions }: any) => versions[0]?.versionId as string | undefined);
+    const scopePromise = waitForCdpEvent('ServiceWorker.workerRegistrationUpdated', ({ registrations }: any) => registrations[0]?.scopeURL as string | undefined);
+    await cdp.send('ServiceWorker.enable');
+    const versionId = await versionPromise;
+    const scopeURL = await scopePromise;
+
+    const stoppedPromise = waitForCdpEvent('ServiceWorker.workerVersionUpdated', ({ versions }: any) => versions[0]?.runningStatus === 'stopped' ? true : undefined);
     await cdp.send('ServiceWorker.stopWorker', { versionId });
-    // Wait for full stop before triggering restart.
-    await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('stopped');
+    await stoppedPromise;
+
+    const runningPromise = waitForCdpEvent('ServiceWorker.workerVersionUpdated', ({ versions }: any) => versions[0]?.runningStatus === 'running' ? true : undefined);
     await cdp.send('ServiceWorker.startWorker', { scopeURL });
-    await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('running');
+    await runningPromise;
 
     const startTime2 = await sw1.evaluate(() => (globalThis as any).startTime);
     expect(startTime2).toBeGreaterThan(startTime1);
