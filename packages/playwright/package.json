@@ -24,6 +24,7 @@
     "./lib/mcp/index": "./lib/mcp/index.js",
     "./lib/program": "./lib/program.js",
     "./lib/runner": "./lib/runner/index.js",
+    "./lib/isomorphic": "./lib/isomorphic/index.js",
     "./lib/transform/babelBundle": "./lib/transform/babelBundle.js",
     "./jsx-runtime": {
       "import": "./jsx-runtime.mjs",

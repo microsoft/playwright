@@ -781,6 +781,19 @@ steps.push(new EsbuildStep({
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
 
+// playwright/lib/isomorphic/index.js — bundled isomorphic barrel.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright/src/isomorphic/index.ts')],
+  outfile: filePath('packages/playwright/lib/isomorphic.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [filePath('packages/playwright/src')]));
+
 // playwright/lib/loader/loaderProcessEntry.js — bundled loader process
 // entry. Output sits at the same depth as the source so '../X' externals
 // resolve to lib/X.js naturally.

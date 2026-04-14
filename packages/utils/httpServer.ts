@@ -220,3 +220,23 @@ export class HttpServer {
     }
   }
 }
+
+export function serveFolder(folder: string): HttpServer {
+  const server = new HttpServer();
+  server.routePrefix('/', (request, response) => {
+    let relativePath = new URL('http://localhost' + request.url).pathname;
+    if (relativePath.startsWith('/trace/file')) {
+      const url = new URL('http://localhost' + request.url!);
+      try {
+        return server.serveFile(request, response, url.searchParams.get('path')!);
+      } catch (e) {
+        return false;
+      }
+    }
+    if (relativePath === '/')
+      relativePath = '/index.html';
+    const absolutePath = path.join(folder, ...relativePath.split('/'));
+    return server.serveFile(request, response, absolutePath);
+  });
+  return server;
+}

@@ -17,8 +17,6 @@
 import * as fs from 'fs';
 import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
-import { html } from '../../packages/playwright/lib/runner';
-const { startHtmlReportServer } = html;
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
 import { extractZip } from '../../packages/utils/third_party/extractZip';
 import * as yazl from 'yazl';
@@ -39,7 +37,7 @@ const test = baseTest.extend<{
     let server: HttpServer | undefined;
     await use(async (reportFolder?: string) => {
       reportFolder ??= test.info().outputPath('playwright-report');
-      server = startHtmlReportServer(reportFolder) as HttpServer;
+      server = utils.serveFolder(reportFolder);
       await server.start();
       await page.goto(server.urlPrefix('precise'));
     });
