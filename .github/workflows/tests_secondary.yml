@@ -20,7 +20,7 @@ env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-  DEBUG: pw:browser,pr:protocol
+  DEBUG: pw:browser,pw:protocol
 
 permissions:
   id-token: write   # This is required for OIDC login (azure/login) to succeed
