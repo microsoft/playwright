@@ -28,10 +28,10 @@ import type http from 'http';
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
 export type Transport = {
-  sendMessage?: (message: string) => void;
+  sendEvent?: (method: string, params: any) => void;
   close?: () => void;
   onconnect: () => void;
-  onmessage: (message: string) => void;
+  dispatch: (method: string, params: any) => Promise<any>;
   onclose: () => void;
 };
 
@@ -71,10 +71,18 @@ export class HttpServer {
     wss.on('connection', (ws, request) => {
       const url = new URL(request.url ?? '/', 'http://localhost');
       const transport = transportFactory(url);
-      transport.sendMessage = message => ws.send(message);
+      transport.sendEvent = (method, params) => ws.send(JSON.stringify({ method, params }));
       transport.close = () => ws.close();
       transport.onconnect();
-      ws.on('message', message => transport.onmessage(String(message)));
+      ws.on('message', async message => {
+        const { id, method, params } = JSON.parse(String(message));
+        try {
+          const result = await transport.dispatch(method, params);
+          ws.send(JSON.stringify({ id, result }));
+        } catch (e) {
+          ws.send(JSON.stringify({ id, error: String(e) }));
+        }
+      });
       ws.on('close', () => transport.onclose());
       ws.on('error', () => transport.onclose());
     });
