@@ -2528,6 +2528,7 @@ Frame:
       internal: true
       parameters:
         selector: string
+        style: string?
 
     hideHighlight:
       internal: true

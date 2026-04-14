@@ -12586,6 +12586,14 @@ export interface Locator {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
+   * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
+   * @param options
+   */
+  highlight(options?: {
+    style?: string | { [key: string]: string | number };
+  }): Promise<Disposable>;
+  /**
    * Returns a human-readable representation of the locator, using the
    * [locator.description()](https://playwright.dev/docs/api/class-locator#locator-description) if one exists;
    * otherwise, it generates a string based on the locator's selector.
@@ -13814,15 +13822,10 @@ export interface Locator {
 
   /**
    * Hide element highlight added with Highlight the corresponding element(s) on the screen. Useful for debugging, don't
-   * commit the code that uses [locator.highlight()](https://playwright.dev/docs/api/class-locator#locator-highlight).
+   * commit the code that uses
+   * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
    */
   hideHighlight(): Promise<void>;
-
-  /**
-   * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
-   * [locator.highlight()](https://playwright.dev/docs/api/class-locator#locator-highlight).
-   */
-  highlight(): Promise<Disposable>;
 
   /**
    * Hover over the matching element.

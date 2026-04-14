@@ -91,13 +91,15 @@ const highlight = defineTabTool({
     name: 'browser_highlight',
     title: 'Highlight element',
     description: 'Show a persistent highlight overlay around the element on the page.',
-    inputSchema: elementSchema,
+    inputSchema: elementSchema.extend({
+      style: z.string().optional().describe('Additional inline CSS applied to the highlight overlay, e.g. "outline: 2px dashed red".'),
+    }),
     type: 'readOnly',
   },
 
   handle: async (tab, params, response) => {
     const { locator, resolved } = await tab.refLocator(params);
-    await (await locator.normalize()).highlight();
+    await locator.highlight({ style: params.style });
     response.addTextResult(`Highlighted ${resolved}`);
   },
 });
@@ -114,7 +116,7 @@ const hideHighlight = defineTabTool({
 
   handle: async (tab, params, response) => {
     const { locator, resolved } = await tab.refLocator(params);
-    await (await locator.normalize()).hideHighlight();
+    await locator.hideHighlight();
     response.addTextResult(`Hid highlight for ${resolved}`);
   },
 });

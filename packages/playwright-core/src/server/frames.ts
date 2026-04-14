@@ -1319,13 +1319,13 @@ export class Frame extends SdkObject<FrameEventMap> {
     }, undefined, options, scope);
   }
 
-  async addHighlight(progress: Progress, selector: string) {
+  async addHighlight(progress: Progress, selector: string, style?: string) {
     const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector));
     if (!resolved)
       return;
-    return await progress.race(resolved.injected.evaluate((injected, { info }) => {
-      return injected.addHighlight(info.parsed);
-    }, { info: resolved.info }));
+    return await progress.race(resolved.injected.evaluate((injected, { info, style }) => {
+      return injected.addHighlight(info.parsed, style);
+    }, { info: resolved.info, style }));
   }
 
   async removeHighlight(progress: Progress, selector: string) {

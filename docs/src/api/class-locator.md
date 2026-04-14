@@ -1441,6 +1441,12 @@ Hide element highlight added with Highlight the corresponding element(s) on the 
 
 Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
 
+### option: Locator.highlight.style
+* since: v1.60
+- `style` <[string]>
+
+Additional inline CSS applied to the highlight overlay, e.g. `"outline: 2px dashed red"`.
+
 ## async method: Locator.hover
 * since: v1.14
 

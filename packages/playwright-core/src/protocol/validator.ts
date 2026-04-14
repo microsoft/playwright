@@ -1774,6 +1774,7 @@ scheme.FrameResolveSelectorResult = tObject({
 });
 scheme.FrameHighlightParams = tObject({
   selector: tString,
+  style: tOptional(tString),
 });
 scheme.FrameHighlightResult = tOptional(tObject({}));
 scheme.FrameHideHighlightParams = tObject({

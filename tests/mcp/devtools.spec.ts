@@ -58,8 +58,39 @@ test('browser_highlight', async ({ cdpServer, startClient, server }) => {
   const highlight = page.locator('x-pw-highlight');
   const tooltip = page.locator('x-pw-tooltip-line');
   await expect(highlight).toBeVisible();
-  await expect(tooltip).toHaveText(`getByRole('button', { name: 'Submit' })`);
+  await expect(tooltip).toHaveText(`locator('aria-ref=e2')`);
   expect(await highlight.boundingBox()).toEqual(await page.getByRole('button', { name: 'Submit' }).boundingBox());
+});
+
+test('browser_highlight with style', async ({ cdpServer, startClient, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  await client.callTool({ name: 'browser_snapshot' });
+
+  expect(await client.callTool({
+    name: 'browser_highlight',
+    arguments: {
+      element: 'Submit button',
+      ref: 'e2',
+      style: 'outline: 3px solid rgb(255, 0, 0); background-color: rgba(0, 255, 0, 0.25)',
+    },
+  })).toHaveResponse({
+    result: `Highlighted getByRole('button', { name: 'Submit' })`,
+  });
+
+  const highlight = page.locator('x-pw-highlight');
+  await expect(highlight).toBeVisible();
+  expect(await highlight.evaluate((el: HTMLElement) => ({
+    outline: el.style.outline,
+    backgroundColor: el.style.backgroundColor,
+  }))).toEqual({
+    outline: 'rgb(255, 0, 0) solid 3px',
+    backgroundColor: 'rgba(0, 255, 0, 0.25)',
+  });
 });
 
 test('browser_hide_highlight', async ({ cdpServer, startClient, server }) => {

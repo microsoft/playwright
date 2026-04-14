@@ -63,7 +63,7 @@ export class Highlight {
   private _injectedScript: InjectedScript;
   private _rafRequest: number | undefined;
   private _language: Language = 'javascript';
-  private _elementHighlightSelectors = new Map<string, ParsedSelector>();
+  private _elementHighlightSelectors = new Map<string, { selector: ParsedSelector, cssStyle?: string }>();
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -124,11 +124,9 @@ export class Highlight {
     this._language = language;
   }
 
-  addElementHighlight(selector: ParsedSelector) {
+  addElementHighlight(selector: ParsedSelector, cssStyle?: string) {
     const key = stringifySelector(selector);
-    if (this._elementHighlightSelectors.has(key))
-      return;
-    this._elementHighlightSelectors.set(key, selector);
+    this._elementHighlightSelectors.set(key, { selector, cssStyle });
     this._ensureElementHighlightRaf();
   }
 
@@ -150,13 +148,13 @@ export class Highlight {
       return;
     const tick = () => {
       const entries: HighlightEntry[] = [];
-      for (const selector of this._elementHighlightSelectors.values()) {
+      for (const { selector, cssStyle } of this._elementHighlightSelectors.values()) {
         const elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
         const locator = asLocator(this._language, stringifySelector(selector));
         const color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
         for (let i = 0; i < elements.length; ++i) {
           const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
-          entries.push({ element: elements[i], color, tooltipText: locator + suffix });
+          entries.push({ element: elements[i], color, tooltipText: locator + suffix, cssStyle });
         }
       }
       this.updateHighlight(entries);
@@ -411,6 +409,8 @@ export class Highlight {
       if (entries[i].element !== this._renderedEntries[i].targetElement)
         return false;
       if (entries[i].color !== this._renderedEntries[i].color)
+        return false;
+      if (entries[i].cssStyle !== this._renderedEntries[i].cssStyle)
         return false;
       const oldBox = this._renderedEntries[i].box;
       if (!oldBox)

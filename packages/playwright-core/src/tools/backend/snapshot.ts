@@ -19,16 +19,19 @@ import { formatObject, formatObjectOrVoid } from '@isomorphic/stringUtils';
 
 import { defineTabTool } from './tool';
 
+export const optionalElementSchema = z.object({
+  ref: z.string().optional().describe('Element reference from the previous page snapshot to capture a partial snapshot instead of the whole page'),
+  selector: z.string().optional().describe('Element selector of the root element to capture a partial snapshot instead of the whole page'),
+});
+
 const snapshot = defineTabTool({
   capability: 'core',
   schema: {
     name: 'browser_snapshot',
     title: 'Page snapshot',
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
-    inputSchema: z.object({
+    inputSchema: optionalElementSchema.extend({
       filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
-      ref: z.string().optional().describe('Element reference from the previous page snapshot to capture a partial snapshot instead of the whole page'),
-      selector: z.string().optional().describe('Element selector of the root element to capture a partial snapshot instead of the whole page'),
       depth: z.number().optional().describe('Limit the depth of the snapshot tree'),
     }),
     type: 'readOnly',
