@@ -1289,7 +1289,6 @@ BrowserContext:
       group: configuration
       parameters:
         name: string
-        needsHandle: boolean?
       returns:
         disposable: Disposable
 

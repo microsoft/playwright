@@ -1830,10 +1830,9 @@ export type BrowserContextCookiesResult = {
 };
 export type BrowserContextExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type BrowserContextExposeBindingResult = {
   disposable: DisposableChannel,

@@ -358,8 +358,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return DisposableObject.from((await this._channel.addInitScript({ source })).disposable);
   }
 
-  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<DisposableObject> {
-    const result = await this._channel.exposeBinding({ name, needsHandle: options.handle });
+  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any): Promise<DisposableObject> {
+    const result = await this._channel.exposeBinding({ name });
     this._bindings.set(name, callback);
     return DisposableObject.from(result.disposable);
   }
@@ -539,8 +539,6 @@ async function prepareStorageState(platform: Platform, storageState: string | Se
 }
 
 export async function prepareBrowserContextParams(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
-  if (options.videoSize && !options.videosPath)
-    throw new Error(`"videoSize" option requires "videosPath" to be specified`);
   if (options.extraHTTPHeaders)
     network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {
@@ -557,12 +555,6 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
     clientCertificates: await toClientCertificatesProtocol(platform, options.clientCertificates),
   };
-  if (!contextParams.recordVideo && options.videosPath) {
-    contextParams.recordVideo = {
-      dir: options.videosPath,
-      size: options.videoSize
-    };
-  }
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
     contextParams.recordVideo.dir = platform.path().resolve(contextParams.recordVideo.dir);
   return contextParams;

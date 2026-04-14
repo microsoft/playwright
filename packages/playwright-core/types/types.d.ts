@@ -884,7 +884,7 @@ export interface Page {
    * information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    *
    * See
-   * [browserContext.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
+   * [browserContext.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
    * for the context-wide version.
    *
    * **NOTE** Functions installed via
@@ -936,7 +936,7 @@ export interface Page {
    * information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    *
    * See
-   * [browserContext.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
+   * [browserContext.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
    * for the context-wide version.
    *
    * **NOTE** Functions installed via
@@ -8204,7 +8204,6 @@ export interface BrowserContext {
    *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
   /**
@@ -8252,7 +8251,6 @@ export interface BrowserContext {
    *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
 
@@ -10351,26 +10349,6 @@ export interface Browser {
      * Specific user agent to use in this context.
      */
     userAgent?: string;
-
-    /**
-     * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-page-option-record-video) instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-page-option-record-video) instead.
-     */
-    videosPath?: string;
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
@@ -15658,30 +15636,6 @@ export interface BrowserType<Unused = {}> {
     userAgent?: string;
 
     /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-record-video)
-     * instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-record-video)
-     * instead.
-     */
-    videosPath?: string;
-
-    /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
      * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
@@ -17610,30 +17564,6 @@ export interface AndroidDevice {
      * Specific user agent to use in this context.
      */
     userAgent?: string;
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-record-video)
-     * instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-record-video)
-     * instead.
-     */
-    videosPath?: string;
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
@@ -22724,12 +22654,6 @@ export interface ConnectOverCDPOptions {
   isLocal?: boolean;
 
   /**
-   * Logger sink for Playwright logging. Optional.
-   * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
-   */
-  logger?: Logger;
-
-  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
    * on. Defaults to 0.
    */
@@ -22764,12 +22688,6 @@ export interface ConnectOptions {
    * Additional HTTP headers to be sent with web socket connect request. Optional.
    */
   headers?: { [key: string]: string; };
-
-  /**
-   * Logger sink for Playwright logging. Optional.
-   * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
-   */
-  logger?: Logger;
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
@@ -23296,26 +23214,6 @@ export interface BrowserContextOptions {
    * Specific user agent to use in this context.
    */
   userAgent?: string;
-
-  /**
-   * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-record-video) instead.
-   */
-  videoSize?: {
-    /**
-     * Video frame width.
-     */
-    width: number;
-
-    /**
-     * Video frame height.
-     */
-    height: number;
-  };
-
-  /**
-   * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-record-video) instead.
-   */
-  videosPath?: string;
 
   /**
    * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
