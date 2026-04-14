@@ -167,6 +167,11 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
         ...Array.isArray(configIgnoreDefaultArgs) ? configIgnoreDefaultArgs : [],
       ],
   };
+  
+  // Ensure proxy from launchOptions is not overridden by contextOptions spread                                                                                               
+  if (config.browser.launchOptions.proxy)                                                                                                                                     
+    launchOptions.proxy = config.browser.launchOptions.proxy;
+  
   try {
     const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
     const browser = browserContext.browser()!;
