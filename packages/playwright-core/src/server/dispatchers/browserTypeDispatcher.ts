@@ -65,15 +65,6 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
     };
   }
 
-  async connectOverCDPTransport(params: channels.BrowserTypeConnectOverCDPTransportParams, progress: Progress): Promise<channels.BrowserTypeConnectOverCDPTransportResult> {
-    if (this._denyLaunch)
-      throw new Error(`Launching more browsers is not allowed.`);
-
-    const browser = await this._object.connectOverCDPTransport(progress, params.transport as any);
-    const browserDispatcher = new BrowserDispatcher(this, browser);
-    return { browser: browserDispatcher, defaultContext: browser._defaultContext ? BrowserContextDispatcher.from(browserDispatcher, browser._defaultContext) : undefined };
-  }
-
   async connectToWorker(params: channels.BrowserTypeConnectToWorkerParams, progress: Progress): Promise<channels.BrowserTypeConnectToWorkerResult> {
     if (this._denyLaunch)
       throw new Error(`Launching more browsers is not allowed.`);
