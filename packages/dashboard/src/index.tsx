@@ -51,7 +51,7 @@ const App: React.FC = () => {
       unsubscribe();
       model.stopPolling();
     };
-  }, [model]);
+  }, []);
 
   React.useEffect(() => {
     const onPopState = () => setSocketPath(parseHash());

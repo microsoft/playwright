@@ -43,6 +43,7 @@ export type EndpointInfo = {
 export type BrowserDescriptor = EndpointInfo & {
   playwrightVersion: string;
   playwrightLib: string;
+  playwrightDashboardBundle?: string; // optional for backward compatibility
   browser: BrowserInfo;
 };
 
@@ -93,6 +94,7 @@ class ServerRegistry {
     const descriptor: BrowserDescriptor = {
       playwrightVersion: packageVersion,
       playwrightLib: packageRoot,
+      playwrightDashboardBundle: path.join(packageRoot, 'lib', 'dashboardBundle.js'),
       title: endpoint.title,
       browser,
       endpoint: endpoint.endpoint,

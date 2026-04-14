@@ -21,7 +21,7 @@ import mime from 'mime';
 import { WebSocketServer as wsServer } from 'ws';
 import { assert } from '@isomorphic/assert';
 import { createGuid } from './crypto';
-import { createHttpServer, startHttpServer } from './network';
+import { createHttpServer, httpRequest, startHttpServer } from './network';
 
 import type http from 'http';
 
@@ -134,6 +134,19 @@ export class HttpServer {
     } catch (e) {
       return false;
     }
+  }
+
+  proxy(request: http.IncomingMessage, response: http.ServerResponse, targetUrl: string) {
+    httpRequest({
+      url: targetUrl,
+    }, upstreamResponse => {
+      response.writeHead(upstreamResponse.statusCode!, upstreamResponse.headers);
+      upstreamResponse.pipe(response);
+    }, error => {
+      response.statusCode = 500;
+      response.end(JSON.stringify({ error: error.message }));
+    });
+    return true;
   }
 
   private _serveFile(response: http.ServerResponse, absoluteFilePath: string) {

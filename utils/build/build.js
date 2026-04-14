@@ -570,6 +570,19 @@ steps.push(new EsbuildStep({
   format: 'cjs',
   plugins: [dynamicImportToRequirePlugin],
 }));
+steps.push(new EsbuildStep({
+  entryPoints: [
+    filePath('packages/playwright-client/src/dashboardBundle.ts'),
+  ],
+  outfile: filePath('packages/playwright-core/lib/dashboardBundle.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  bundle: true,
+  platform: 'browser',
+  format: 'esm',
+  minify: true,
+  metafile: true,
+  plugins: [dynamicImportToRequirePlugin],
+}));
 
 const playwrightCoreSrc = filePath('packages/playwright-core/src');
 

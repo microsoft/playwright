@@ -116,3 +116,19 @@ test('should pick locator from browser', async ({ cli, server, openDashboard }) 
     expect(text).toContain('Submit');
   }).toPass();
 });
+
+test('grid disable session chip for older playwright without bundle', async ({ cli, server, openDashboard }) => {
+  await cli('open', server.EMPTY_PAGE);
+
+  const registryDir = test.info().outputPath('registry');
+  const fileName = fs.readdirSync(registryDir)[0];
+  const file = path.join(registryDir, fileName);
+
+  const descriptor = JSON.parse(fs.readFileSync(file, 'utf-8'));
+  expect(descriptor.playwrightDashboardBundle).toBeTruthy();
+  descriptor.playwrightDashboardBundle = undefined;
+  fs.writeFileSync(file, JSON.stringify(descriptor, null, 2), 'utf-8');
+
+  const dashboard = await openDashboard();
+  await expect(dashboard.locator('.session-chip')).toContainText('Session on an older Playwright version');
+});

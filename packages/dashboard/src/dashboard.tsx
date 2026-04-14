@@ -17,14 +17,11 @@
 import React from 'react';
 import './dashboard.css';
 import { navigate } from './index';
-import { DashboardClient } from './dashboardClient';
-import { asLocator } from '@isomorphic/locatorGenerators';
 import { SplitView } from '@web/components/splitView';
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon, PickLocatorIcon, InspectorPanelIcon } from './icons';
 import { SettingsButton } from './settingsView';
 
-import type { DashboardClientChannel } from './dashboardClient';
-import type { Tab, DashboardChannelEvents } from './dashboardChannel';
+import type { Page, Browser } from 'playwright-core';
 
 function tabFavicon(url: string): string {
   try {
@@ -38,16 +35,102 @@ function tabFavicon(url: string): string {
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
 
+// @ts-ignore polyfill means all Buffer types are actually base64 strings.
+globalThis.Buffer = { from: v => v };
+
+export function useBrowser(wsUrl?: string): Browser | null {
+  // TODO: prevent multiple clients per URL
+  const [browser, setBrowser] = React.useState<Browser | null>(null);
+  React.useEffect(() => {
+    if (!wsUrl)
+      return;
+
+    const dashboardBundle = new URL(wsUrl, window.location.href);
+    dashboardBundle.pathname = '/dashboardBundle.js';
+    const ws = new WebSocket(wsUrl);
+    const transport = {
+      send: (message: string) => {
+        ws.send(message);
+      }
+    };
+    ws.onmessage = event => {
+      (transport as any).onmessage(event.data);
+    };
+
+    let browser: Browser;
+    let unmounted = false;
+    ws.onopen = async () => {
+      try {
+        const pwClient = await import(dashboardBundle.toString());
+        if (unmounted)
+          return;
+        browser = await pwClient.connect(transport) as Browser;
+        if (unmounted)
+          return;
+        setBrowser(browser);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    ws.onerror = error => {
+      (transport as any).onclose(`WebSocket error: ${error}`);
+      setBrowser(current => current === browser ? null : current);
+    };
+    ws.onclose = event => {
+      (transport as any).onclose(`WebSocket closed: ${event.reason}`);
+      setBrowser(current => current === browser ? null : current);
+    };
+
+    return () => {
+      unmounted = true;
+      ws.close();
+    };
+  }, [wsUrl]);
+  return browser;
+}
+
+function useTitles(browser: Browser | null) {
+  const [map, setMap] = React.useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    if (!browser)
+      return;
+
+    const disposables: (() => void)[] = [];
+    const subscribePage = (page: Page) => {
+      const listener = async () => {
+        const title = await page.title();
+        setMap(map => ({ ...map, [guid(page)]: title }));
+      };
+      page.on('framenavigated', listener);
+      disposables.push(() => page.off('framenavigated', listener));
+      void listener();
+    };
+
+    for (const context of browser.contexts()) {
+      for (const page of context.pages())
+        subscribePage(page);
+      context.on('page', subscribePage);
+    }
+
+    return () => disposables.forEach(f => f());
+  }, [browser]);
+
+  return map;
+}
+
 export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
+  const [selectedPage, setSelectedPage] = React.useState<Page | null>(null);
   const [interactive, setInteractive] = React.useState(false);
-  const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
-  const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
+  const [frame, setFrame] = React.useState<{ data: string, height?: number, width?: number }>();
   const [showInspector, setShowInspector] = React.useState(false);
   const [pickingTabId, setPickingTabId] = React.useState<string | null>(null);
   const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
 
-  const [channel, setChannel] = React.useState<DashboardClientChannel | undefined>();
+  const browser = useBrowser(wsUrl);
+  const titles = useTitles(browser);
+
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
   const tabbarRef = React.useRef<HTMLDivElement>(null);
@@ -55,65 +138,53 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const moveThrottleRef = React.useRef(0);
 
   React.useEffect(() => {
-    if (!wsUrl)
+    if (!selectedPage)
       return;
-    const channel = DashboardClient.create(wsUrl);
-
-    channel.onopen = () => {
-      setChannel(channel);
-      setInteractive(false);
-      setPickingTabId(null);
-    };
-
-    channel.on('tabs', params => {
-      setTabs(params.tabs);
-      const selected = params.tabs.find(t => t.selected);
-      if (selected)
-        setUrl(selected.url);
-    });
-
-    let resized = false;
-
-    channel.on('frame', params => {
-      setFrame(params);
-      const tabbar = tabbarRef.current;
-      const toolbar = toolbarRef.current;
-      if (!resized && tabbar && toolbar && params.viewportWidth && params.viewportHeight) {
-        resized = true;
-        const chromeHeight = tabbar.offsetHeight + toolbar.offsetHeight;
-        const extraW = window.outerWidth - window.innerWidth;
-        const extraH = window.outerHeight - window.innerHeight;
-        const targetW = Math.min(params.viewportWidth + extraW, screen.availWidth);
-        const targetH = Math.min(params.viewportHeight + chromeHeight + extraH, screen.availHeight);
-        window.resizeTo(targetW, targetH);
-      }
-    });
-
-    channel.on('elementPicked', params => {
-      const locator = asLocator('javascript', params.selector);
-      navigator.clipboard?.writeText(locator).catch(() => {});
-      setPickingTabId(null);
-      setLocatorToast(old => {
-        clearTimeout(old?.timer);
-        return { text: locator, timer: setTimeout(() => setLocatorToast(undefined), 3000) };
+    const onClose = () => {
+      setSelectedPage(page => {
+        if (page !== selectedPage)
+          return page;
+        return browser?.contexts().flatMap(c => c.pages())[0] ?? null;
       });
-    });
-
-    channel.onclose = () => {
-      setChannel(undefined);
-      setInteractive(false);
-      setPickingTabId(null);
-      setShowInspector(false);
     };
+    selectedPage.on('close', onClose);
+
+    const onFrameNavigate = () => {
+      const url = selectedPage.url();
+      setUrl(url === 'about:blank' ? '' : url);
+    };
+    selectedPage.on('framenavigated', onFrameNavigate);
+    onFrameNavigate();
 
     return () => {
-      channel.close();
+      selectedPage.off('close', onClose);
+      selectedPage.off('framenavigated', onFrameNavigate);
     };
-  }, [wsUrl]);
+  }, [selectedPage, browser]);
+
+  React.useEffect(() => {
+    setSelectedPage(page => page ?? browser?.contexts().flatMap(c => c.pages())?.[0] ?? null);
+  }, [browser]);
+
+  React.useEffect(() => {
+    if (!browser)
+      return;
+
+    const disposables: (() => void)[] = [];
+    for (const context of browser.contexts()) {
+      const populateSelectedPage = (page: Page) => setSelectedPage(current => current ?? page);
+      context.on('page', populateSelectedPage);
+      disposables.push(() => context.off('page', populateSelectedPage));
+    }
+
+    return () => {
+      disposables.forEach(f => f());
+    };
+  }, [browser]);
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
-    const vw = frame?.viewportWidth ?? 0;
-    const vh = frame?.viewportHeight ?? 0;
+    const vw = frame?.width ?? 0;
+    const vh = frame?.height ?? 0;
     if (!vw || !vh)
       return { x: 0, y: 0 };
     const display = displayRef.current;
@@ -142,15 +213,20 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     };
   }
 
-  function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
+  async function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
     const { x, y } = imgCoords(e);
-    channel?.[method]({ x, y, button: BUTTONS[e.button] || 'left' });
+    await selectedPage?.mouse.move(x, y);
+    const button = BUTTONS[e.button] || 'left';
+    if (method === 'mousedown')
+      await selectedPage?.mouse.down({ button });
+    else if (method === 'mouseup')
+      await selectedPage?.mouse.up({ button });
   }
 
   function onScreenMouseDown(e: React.MouseEvent) {
     e.preventDefault();
     screenRef.current?.focus();
-    if (!channel)
+    if (!browser)
       return;
     if (!interactive) {
       setInteractive(true);
@@ -174,34 +250,34 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       return;
     moveThrottleRef.current = now;
     const { x, y } = imgCoords(e);
-    channel?.mousemove({ x, y });
+    selectedPage?.mouse.move(x, y);
   }
 
   function onScreenWheel(e: React.WheelEvent) {
     if (!interactive)
       return;
     e.preventDefault();
-    channel?.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
+    selectedPage?.mouse.wheel(e.deltaX, e.deltaY);
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
     if (pickingTabId !== null && e.key === 'Escape') {
       e.preventDefault();
-      channel?.cancelPickLocator();
+      selectedPage?.cancelPickLocator();
       setPickingTabId(null);
       return;
     }
     if (!interactive)
       return;
     e.preventDefault();
-    channel?.keydown({ key: e.key });
+    selectedPage?.keyboard.down(e.key);
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
     if (!interactive)
       return;
     e.preventDefault();
-    channel?.keyup({ key: e.key });
+    selectedPage?.keyboard.up(e.key);
   }
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -210,20 +286,59 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       if (!/^https?:\/\//i.test(value))
         value = 'https://' + value;
       setUrl(value);
-      channel?.navigate({ url: value });
+      selectedPage?.goto(value);
       e.currentTarget.blur();
     }
   }
 
-  const selectedTab = tabs?.find(t => t.selected);
-  const picking = selectedTab?.pageId === pickingTabId;
+  const picking = guid(selectedPage) === pickingTabId;
+
+  React.useEffect(() => {
+    if (!selectedPage)
+      return;
+
+    const forceComposite = setTimeout(async () => {
+      const session = await selectedPage.context().newCDPSession(selectedPage);
+      await session.send('Page.captureScreenshot', { optimizeForSpeed: true, quality: 0, format: 'jpeg' });
+      await session.detach();
+    }, 100);
+
+    let resized = false;
+    void selectedPage.screencast.start({
+      onFrame: ({ data }) => {
+        clearTimeout(forceComposite);
+        const viewportWidth = selectedPage.viewportSize()?.width;
+        const viewportHeight = selectedPage.viewportSize()?.height;
+        setFrame({ data: (data as any as string), width: viewportWidth, height: viewportHeight });
+        const tabbar = tabbarRef.current;
+        const toolbar = toolbarRef.current;
+        if (!resized && tabbar && toolbar && viewportWidth && viewportHeight) {
+          resized = true;
+          const chromeHeight = tabbar.offsetHeight + toolbar.offsetHeight;
+          const extraW = window.outerWidth - window.innerWidth;
+          const extraH = window.outerHeight - window.innerHeight;
+          const targetW = Math.min(viewportWidth + extraW, screen.availWidth);
+          const targetH = Math.min(viewportHeight + chromeHeight + extraH, screen.availHeight);
+          window.resizeTo(targetW, targetH);
+        }
+      },
+      size: { width: 1280, height: 800 },
+    });
+
+    return () => {
+      void selectedPage?.screencast.stop().catch(() => {});
+    };
+  }, [selectedPage]);
+
+  const cdpUrl = new URL(wsUrl ?? '/', window.origin);
+  cdpUrl.searchParams.set('cdpPageId', guid(selectedPage) ?? '');
+
+  const supportsInspector = selectedPage?.context().browser()?.browserType().name() === 'chromium';
 
   let overlayText: string | undefined;
-  if (!channel)
-    overlayText = 'Disconnected';
-  else if (tabs === null)
+  if (browser === null)
     overlayText = 'Loading...';
-  else if (tabs.length === 0)
+  else if (browser.contexts().flatMap(c => c.pages()).length === 0)
     overlayText = 'No tabs open';
 
   return (<div className={'dashboard-view' + (interactive ? ' interactive' : '')}
@@ -235,23 +350,23 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         Sessions
       </a>
       <div id='tabstrip' className='tabstrip' role='tablist'>
-        {tabs?.map(tab => (
+        {browser?.contexts().flatMap(c => c.pages())?.map(page => (
           <div
-            key={tab.pageId}
-            className={'tab' + (tab.selected ? ' active' : '')}
+            key={guid(page)}
+            className={'tab' + (page === selectedPage ? ' active' : '')}
             role='tab'
-            aria-selected={tab.selected}
-            title={tab.url || ''}
-            onClick={() => channel?.selectTab({ pageId: tab.pageId })}
+            aria-selected={page === selectedPage}
+            title={titles[guid(page)] || page.url()}
+            onClick={() => setSelectedPage(page)}
           >
-            <span className='tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
-            <span className='tab-label'>{tab.title || 'New Tab'}</span>
+            <span className='tab-favicon' aria-hidden='true'>{tabFavicon(page.url())}</span>
+            <span className='tab-label'>{titles[guid(page)] || 'New Tab'}</span>
             <button
               className='tab-close'
               title='Close tab'
               onClick={e => {
                 e.stopPropagation();
-                channel?.closeTab({ pageId: tab.pageId });
+                page?.close({ reason: 'Closed in Dashboard' });
               }}
             >
               <CloseIcon />
@@ -259,18 +374,18 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
           </div>
         ))}
       </div>
-      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => channel?.newTab()}>
+      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => selectedPage?.context()?.newPage().then(p => setSelectedPage(p)).catch(console.error)}>
         <PlusIcon />
       </button>
       <div className='interactive-controls'>
         <div className={'segmented-control' + (interactive ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactive ? 'Interactive mode: page input is forwarded' : 'Read-only mode: page input is blocked'}>
           <button
             className={'segmented-control-option' + (!interactive ? ' active' : '')}
-            disabled={!channel}
+            disabled={!selectedPage}
             aria-pressed={!interactive}
             title='Read-only mode'
             onClick={() => {
-              channel?.cancelPickLocator();
+              selectedPage?.cancelPickLocator();
               setPickingTabId(null);
               setShowInspector(false);
               setInteractive(false);
@@ -280,7 +395,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
           </button>
           <button
             className={'segmented-control-option' + (interactive ? ' active' : '')}
-            disabled={!channel}
+            disabled={!selectedPage}
             aria-pressed={interactive}
             title='Interactive mode'
             onClick={() => setInteractive(true)}
@@ -294,13 +409,13 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     {/* Toolbar */}
     <div ref={toolbarRef} className='toolbar'>
-      <button className='nav-btn' title='Back' onClick={() => channel?.back()}>
+      <button className='nav-btn' title='Back' onClick={() => selectedPage?.goBack()}>
         <ChevronLeftIcon />
       </button>
-      <button className='nav-btn' title='Forward' onClick={() => channel?.forward()}>
+      <button className='nav-btn' title='Forward' onClick={() => selectedPage?.goForward()}>
         <ChevronRightIcon />
       </button>
-      <button className='nav-btn' title='Reload' onClick={() => channel?.reload()}>
+      <button className='nav-btn' title='Reload' onClick={() => selectedPage?.reload()}>
         <ReloadIcon />
       </button>
       <input
@@ -319,27 +434,35 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         className={'nav-btn' + (picking ? ' active-toggle' : '')}
         title='Pick locator'
         aria-pressed={picking}
-        disabled={!channel}
+        disabled={!selectedPage}
         onClick={() => {
           if (picking) {
-            channel?.cancelPickLocator();
+            selectedPage?.cancelPickLocator();
             setPickingTabId(null);
           } else {
             setInteractive(true);
-            setPickingTabId(selectedTab?.pageId ?? null);
+            setPickingTabId(guid(selectedPage) ?? null);
             screenRef.current?.focus();
-            channel?.pickLocator();
+            selectedPage?.pickLocator().then(locator => {
+              navigator.clipboard?.writeText(locator.toString()).catch(() => {});
+              setPickingTabId(null);
+              setLocatorToast(old => {
+                clearTimeout(old?.timer);
+                return { text: locator.toString(), timer: setTimeout(() => setLocatorToast(undefined), 3000) };
+              });
+            });
           }
         }}
       >
         <PickLocatorIcon />
       </button>
-      {selectedTab?.inspectorUrl && (
+      {/* Fix */}
+      {supportsInspector && (
         <button
           className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
           title='Chrome DevTools'
           aria-pressed={showInspector}
-          disabled={!channel}
+          disabled={!selectedPage}
           onClick={() => {
             setInteractive(true);
             setShowInspector(!showInspector);
@@ -357,7 +480,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         sidebarSize={500}
         minSidebarSize={300}
         settingName='devtoolsInspector'
-        sidebarHidden={!showInspector || !selectedTab?.inspectorUrl}
+        sidebarHidden={!showInspector || !supportsInspector}
         main={<div className='viewport-main'>
           <div
             ref={screenRef}
@@ -390,10 +513,14 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         </div>}
         sidebar={<iframe
           className='inspector-frame'
-          src={selectedTab?.inspectorUrl || ''}
+          src={selectedPage ? `/devtools/${guid(selectedPage?.context().browser())}/devtools_app.html?ws=${encodeURIComponent(cdpUrl.toString().replace('http://', ''))}` : undefined}
           title='Chrome DevTools'
         />}
       />
     </div>
   </div>);
 };
+
+function guid(object: Page | Browser | null): string {
+  return (object as any)?._guid;
+}

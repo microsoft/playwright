@@ -17,8 +17,8 @@
 import { debugLogger } from '@utils/debugLogger';
 import { WSServer } from '@utils/wsServer';
 import { Semaphore } from '@isomorphic/semaphore';
+import { WebSocketServerTransport } from '@utils/serverTransport';
 import { PlaywrightConnection } from './playwrightConnection';
-import { WebSocketServerTransport } from './serverTransport';
 import { Browser } from '../server/browser';
 
 import type { PlaywrightInitializeResult } from './playwrightConnection';

@@ -16,18 +16,19 @@
 
 import React from 'react';
 
-import type { DashboardClientChannel } from './dashboardClient';
+import type { Page } from 'playwright-core';
 
-export const Screencast: React.FC<{ channel: DashboardClientChannel }> = ({ channel }) => {
+export const Screencast: React.FC<{ page: Page }> = ({ page }) => {
   const [frameSrc, setFrameSrc] = React.useState('');
 
   React.useEffect(() => {
-    const listener = (params: { data: string }) => {
-      setFrameSrc('data:image/jpeg;base64,' + params.data);
+    void page.screencast.start({ onFrame: ({ data }) => {
+      setFrameSrc('data:image/jpeg;base64,' + data);
+    } });
+    return () => {
+      void page.screencast.stop().catch(() => {}); // if there are other screencast consumers at the same time, this will stop them too
     };
-    channel.on('frame', listener);
-    return () => channel.off('frame', listener);
-  }, [channel]);
+  }, [page]);
 
   if (!frameSrc)
     return <div className='screencast-placeholder'>Connecting...</div>;

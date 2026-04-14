@@ -25,7 +25,7 @@ import { DebugControllerDispatcher } from '../server/dispatchers/debugController
 import { PlaywrightDispatcherOptions } from '../server/dispatchers/playwrightDispatcher';
 
 import type { DispatcherScope, Playwright } from '../server';
-import type { ServerTransport } from './serverTransport';
+import type { ServerTransport } from '@utils/serverTransport';
 
 export interface PlaywrightInitializeResult extends PlaywrightDispatcherOptions {
   dispose?(): Promise<void>;

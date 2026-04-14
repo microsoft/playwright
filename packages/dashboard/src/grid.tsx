@@ -16,14 +16,14 @@
 
 import React from 'react';
 import './grid.css';
-import { DashboardClient } from './dashboardClient';
 import { navigate } from './index';
 import { Screencast } from './screencast';
 import { SettingsButton } from './settingsView';
 
 import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
-import type { Tab } from './dashboardChannel';
 import type { SessionModel, SessionStatus } from './sessionModel';
+import { useBrowser } from './dashboard';
+import type { Page } from 'playwright-core';
 
 export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   const [expandedWorkspaces, setExpandedWorkspaces] = React.useState<Set<string>>(new Set());
@@ -92,7 +92,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
               </div>
               {isExpanded && (
                 <div className='session-chips'>
-                  {entries.map(session => <SessionChip key={session.browser.guid} descriptor={session} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
+                  {entries.map(session => <SessionChip key={session.browser.guid} descriptor={session} wsUrl={session.wsUrl} model={model} />)}
                 </div>
               )}
             </div>
@@ -103,43 +103,51 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   </div>);
 };
 
-const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | undefined; visible: boolean; model: SessionModel }> = ({ descriptor, wsUrl, visible, model }) => {
-  const href = '#session=' + encodeURIComponent(descriptor.browser.guid);
-
-  const channel = React.useMemo(() => {
-    if (!wsUrl || !visible)
-      return undefined;
-    return DashboardClient.create(wsUrl);
-  }, [wsUrl, visible]);
-
-  const [selectedTab, setSelectedTab] = React.useState<Tab | undefined>();
+function useTitle(page: Page | undefined) {
+  const [title, setTitle] = React.useState<string>();
 
   React.useEffect(() => {
-    if (!channel)
+    if (!page)
       return;
-    const onTabs = (params: { tabs: Tab[] }) => {
-      setSelectedTab(params.tabs.find(t => t.selected));
+    const fetchTitle = async () => {
+      setTitle(await page.title());
     };
-    channel.tabs().then(onTabs);
-    channel.on('tabs', onTabs);
+    page.on('framenavigated', fetchTitle);
+    fetchTitle();
     return () => {
-      channel.off('tabs', onTabs);
-      channel.close();
+      page.off('framenavigated', fetchTitle);
     };
-  }, [channel]);
+  }, [page]);
 
-  const chipTitle = selectedTab ? `[${descriptor.title}] ${selectedTab.url} \u2014 ${selectedTab.title}` : descriptor.title;
+  return title;
+}
+
+const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | undefined; model: SessionModel }> = ({ descriptor, wsUrl, model }) => {
+  const href = '#session=' + encodeURIComponent(descriptor.browser.guid);
+
+  const browser = useBrowser(wsUrl);
+
+  const selectedPage = browser?.contexts().flatMap(c => c.pages())?.[0];
+  const pageTitle = useTitle(selectedPage);
+
+  const chipTitle = selectedPage ? `[${descriptor.title}] ${selectedPage.url()} \u2014 ${pageTitle ?? ''}` : descriptor.title;
+
+  let disableReason: string | undefined;
+  if (!wsUrl)
+    disableReason = 'Session closed';
+  else if (!descriptor.playwrightDashboardBundle)
+    disableReason = 'Session on an older Playwright version';
 
   return (
-    <a className={'session-chip' + (wsUrl ? '' : ' disconnected')} href={wsUrl ? href : undefined} title={chipTitle} onClick={e => {
+    <a className={'session-chip' + (disableReason ? ' disconnected' : '')} href={disableReason ? undefined : href} title={chipTitle} onClick={e => {
       e.preventDefault();
-      if (wsUrl)
+      if (!disableReason)
         navigate(href);
     }}>
       <div className='session-chip-header'>
         <div className={'session-status-dot ' + (wsUrl ? 'open' : 'closed')} />
         <span className='session-chip-name'>
-          {selectedTab ? <>[{descriptor.title}] {selectedTab.url} <span className='session-chip-title'>&mdash; {selectedTab.title}</span></> : descriptor.title}
+          {selectedPage ? <>[{descriptor.title}] {selectedPage.url()} <span className='session-chip-title'>&mdash; {pageTitle}</span></> : descriptor.title}
         </span>
         {wsUrl && (
           <button
@@ -176,8 +184,12 @@ const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | und
         )}
       </div>
       <div className='screencast-container'>
-        {channel && <Screencast channel={channel} />}
-        {!wsUrl && <div className='screencast-placeholder'>Session closed</div>}
+        {disableReason ?
+          <div className='screencast-placeholder'>{disableReason}</div>
+          : (
+            selectedPage && <Screencast page={selectedPage} />
+          )
+        }
       </div>
     </a>
   );

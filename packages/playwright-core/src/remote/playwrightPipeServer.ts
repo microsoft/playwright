@@ -20,8 +20,8 @@ import fs from 'fs';
 import { debugLogger } from '@utils/debugLogger';
 import { decorateServer } from '@utils/network';
 import { Semaphore } from '@isomorphic/semaphore';
+import { SocketServerTransport } from '@utils/serverTransport';
 import { PlaywrightConnection } from './playwrightConnection';
-import { SocketServerTransport } from './serverTransport';
 import { Browser } from '../server/browser';
 
 import type { PlaywrightInitializeResult } from './playwrightConnection';
