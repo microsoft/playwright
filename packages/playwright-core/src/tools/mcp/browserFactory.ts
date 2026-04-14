@@ -195,9 +195,10 @@ async function createUserDataDir(config: FullConfig, clientInfo: ClientInfo) {
 }
 
 async function injectCdpPort(browserConfig: FullConfig['browser']) {
-  if (browserConfig.browserName === 'chromium')
-    // eslint-disable-next-line no-restricted-syntax
-    (browserConfig.launchOptions as any).cdpPort = await findFreePort();
+  if (browserConfig.browserName === 'chromium') {
+    browserConfig.launchOptions.args = browserConfig.launchOptions.args ?? [];
+    browserConfig.launchOptions.args?.push(`--remote-debugging-port=${await findFreePort()}`);
+  }
 }
 
 async function findFreePort(): Promise<number> {

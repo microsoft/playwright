@@ -47,7 +47,7 @@ export class Firefox extends BrowserType {
     return super.launch(progress, options, protocolLogger);
   }
 
-  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
+  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
     if (options.channel?.startsWith('moz-'))
       return this._bidiFirefox.launchPersistentContext(progress, userDataDir, options);
     return super.launchPersistentContext(progress, userDataDir, options);

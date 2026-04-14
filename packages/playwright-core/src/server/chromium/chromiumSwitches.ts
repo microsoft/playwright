@@ -17,7 +17,7 @@
 
 // No dependencies as it is used from the Electron loader.
 
-const disabledFeatures = (assistantMode?: boolean) => [
+const disabledFeatures = [
   // See https://github.com/microsoft/playwright/issues/14047
   'AvoidUnnecessaryBeforeUnloadCheckSync',
   // See https://github.com/microsoft/playwright/issues/38568
@@ -44,14 +44,13 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'RenderDocument',
   // Prevents downloading optimization hints on startup.
   'OptimizationHints',
-  assistantMode ? 'AutomationControlled' : '',
   // Disables forced sign-in in Edge.
   'msForceBrowserSignIn',
   // Disables updating the preferred version in LaunchServices preferences on mac.
   'msEdgeUpdateLaunchServicesPreferredVersion',
 ].filter(Boolean);
 
-export const chromiumSwitches = (assistantMode?: boolean, channel?: string, android?: boolean) => [
+export const chromiumSwitches = (options?: { android?: boolean }) => [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--disable-background-timer-throttling',
@@ -66,7 +65,7 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string, andr
   '--disable-dev-shm-usage',
   '--disable-edgeupdater', // Disables Edge-specific updater on mac.
   '--disable-extensions',
-  '--disable-features=' + disabledFeatures(assistantMode).join(','),
+  '--disable-features=' + disabledFeatures.join(','),
   process.env.PLAYWRIGHT_LEGACY_SCREENSHOT ? '' : '--enable-features=CDPScreenshotNewSurface',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
@@ -88,12 +87,11 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string, andr
   '--unsafely-disable-devtools-self-xss-warnings',
   // Edge can potentially restart on Windows (msRelaunchNoCompatLayer) which looses its file descriptors (stdout/stderr) and CDP (3/4). Disable until fixed upstream.
   '--edge-skip-compat-layer-relaunch',
-  assistantMode ? '' : '--enable-automation',
   // This disables Chrome for Testing infobar that is visible in the persistent context.
   // The switch is ignored everywhere else, including Chromium/Chrome/Edge.
   '--disable-infobars',
   // Less annoying popups.
   '--disable-search-engine-choice-screen',
   // Prevents the "three dots" menu crash in IdentityManager::HasPrimaryAccount for ephemeral contexts.
-  android ? '' : '--disable-sync',
+  options?.android ? '' : '--disable-sync',
 ].filter(Boolean);

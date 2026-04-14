@@ -491,7 +491,6 @@ LaunchOptions:
     ignoreDefaultArgs:
       type: array?
       items: string
-    assistantMode: boolean?
     handleSIGINT: boolean?
     handleSIGTERM: boolean?
     handleSIGHUP: boolean?

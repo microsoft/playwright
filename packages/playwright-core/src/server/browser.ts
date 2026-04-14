@@ -59,7 +59,7 @@ export type BrowserOptions = {
   protocolLogger: types.ProtocolLogger,
   browserLogsCollector: RecentLogsCollector,
   slowMo?: number;
-  wsEndpoint?: string;  // Only there when connected over web socket.
+  wsEndpoint?: string;
   sdkLanguage?: Language;
   originalLaunchOptions: types.LaunchOptions;
   userDataDir?: string;
