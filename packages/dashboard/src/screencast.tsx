@@ -22,7 +22,13 @@ export const Screencast: React.FC<{ page: Page }> = ({ page }) => {
   const [frameSrc, setFrameSrc] = React.useState('');
 
   React.useEffect(() => {
+    const forceComposite = setTimeout(async () => {
+      const session = await page.context().newCDPSession(page);
+      await session.send('Page.captureScreenshot', { optimizeForSpeed: true, quality: 0, format: 'jpeg' });
+      await session.detach();
+    }, 100);
     void page.screencast.start({ onFrame: ({ data }) => {
+      clearTimeout(forceComposite);
       setFrameSrc('data:image/jpeg;base64,' + data);
     } });
     return () => {
