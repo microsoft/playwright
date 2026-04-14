@@ -3444,6 +3444,7 @@ export type FrameExpectParams = {
   selector?: string,
   expression: string,
   expressionArg?: any,
+  pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3454,6 +3455,7 @@ export type FrameExpectParams = {
 export type FrameExpectOptions = {
   selector?: string,
   expressionArg?: any,
+  pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,

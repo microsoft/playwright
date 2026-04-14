@@ -1999,6 +1999,7 @@ scheme.FrameExpectParams = tObject({
   selector: tOptional(tString),
   expression: tString,
   expressionArg: tOptional(tAny),
+  pseudo: tOptional(tEnum(['before', 'after'])),
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
   expectedNumber: tOptional(tFloat),
   expectedValue: tOptional(tType('SerializedArgument')),
