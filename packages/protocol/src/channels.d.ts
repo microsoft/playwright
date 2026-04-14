@@ -2283,10 +2283,9 @@ export type PageEmulateMediaOptions = {
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type PageExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type PageExposeBindingResult = {
   disposable: DisposableChannel,
@@ -4364,8 +4363,7 @@ export interface WebSocketEvents {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  args?: SerializedValue[],
-  handle?: JSHandleChannel,
+  args: SerializedValue[],
 };
 export interface BindingCallEventTarget {
 }

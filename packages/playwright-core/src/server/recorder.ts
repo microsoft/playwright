@@ -167,7 +167,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
     const controller = new ProgressController();
     await controller.run(async progress => {
-      await this._context.exposeBinding(progress, '__pw_recorderState', false, async source => {
+      await this._context.exposeBinding(progress, '__pw_recorderState', async source => {
         let actionSelector: string | undefined;
         let actionPoint: Point | undefined;
         const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
@@ -195,24 +195,24 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         return uiState;
       });
 
-      await this._context.exposeBinding(progress, '__pw_recorderElementPicked', false, async ({ frame }, elementInfo: ElementInfo) => {
+      await this._context.exposeBinding(progress, '__pw_recorderElementPicked', async ({ frame }, elementInfo: ElementInfo) => {
         const selectorChain = await generateFrameSelector(progress, frame);
         this.emit(RecorderEvent.ElementPicked, { selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
       });
 
-      await this._context.exposeBinding(progress, '__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
+      await this._context.exposeBinding(progress, '__pw_recorderSetMode', async ({ frame }, mode: Mode) => {
         if (frame.parentFrame())
           return;
         await this.setMode(mode);
       });
 
-      await this._context.exposeBinding(progress, '__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
+      await this._context.exposeBinding(progress, '__pw_recorderSetOverlayState', async ({ frame }, state: OverlayState) => {
         if (frame.parentFrame())
           return;
         this._overlayState = state;
       });
 
-      await this._context.exposeBinding(progress, '__pw_resume', false, () => {
+      await this._context.exposeBinding(progress, '__pw_resume', () => {
         this._debugger.resume();
       });
 
@@ -227,11 +227,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
       // Input actions that potentially lead to navigation are intercepted on the page and are
       // performed by the Playwright.
-      await this._context.exposeBinding(progress, '__pw_recorderPerformAction', false,
+      await this._context.exposeBinding(progress, '__pw_recorderPerformAction',
           (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(progress, source.frame, action));
 
       // Other non-essential actions are simply being recorded.
-      await this._context.exposeBinding(progress, '__pw_recorderRecordAction', false,
+      await this._context.exposeBinding(progress, '__pw_recorderRecordAction',
           (source: BindingSource, action: actions.Action) => this._recordAction(progress, source.frame, action));
 
       await progress.race(this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar }));

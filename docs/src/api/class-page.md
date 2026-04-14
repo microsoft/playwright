@@ -1833,14 +1833,6 @@ Name of the function on the window object.
 
 Callback function that will be called in the Playwright's context.
 
-### option: Page.exposeBinding.handle
-* since: v1.8
-* deprecated: This option will be removed in the future.
-- `handle` <[boolean]>
-
-Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
-supported. When passing by value, multiple arguments are supported.
-
 ## async method: Page.exposeFunction
 * since: v1.8
 - returns: <[Disposable]>

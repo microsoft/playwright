@@ -1686,7 +1686,6 @@ Page:
       group: configuration
       parameters:
         name: string
-        needsHandle: boolean?
       returns:
         disposable: Disposable
 
@@ -3881,9 +3880,8 @@ BindingCall:
     frame: Frame
     name: string
     args:
-      type: array?
+      type: array
       items: SerializedValue
-    handle: JSHandle?
 
   commands:
 

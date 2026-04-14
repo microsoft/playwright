@@ -170,7 +170,7 @@ export class RecorderApp {
       },
     };
 
-    await this._page.exposeBinding(progress, 'sendCommand', false, async (_, data: any) => {
+    await this._page.exposeBinding(progress, 'sendCommand', async (_, data: any) => {
       const { method, params } = data as { method: string; params: any };
       return await (dispatcher as any)[method].call(dispatcher, params);
     });

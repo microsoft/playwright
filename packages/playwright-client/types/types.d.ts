@@ -888,8 +888,8 @@ export interface Page {
    * for the context-wide version.
    *
    * **NOTE** Functions installed via
-   * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * survive navigations.
+   * [page.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-binding) survive
+   * navigations.
    *
    * **Usage**
    *
@@ -918,61 +918,8 @@ export interface Page {
    *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
-  /**
-   * The method adds a function called
-   * [`name`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-name) on the `window` object of
-   * every frame in this page. When called, the function executes
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) and returns a
-   * [Promise] which resolves to the return value of
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback). If the
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) returns a [Promise],
-   * it will be awaited.
-   *
-   * The first argument of the
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) function contains
-   * information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
-   *
-   * See
-   * [browserContext.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
-   * for the context-wide version.
-   *
-   * **NOTE** Functions installed via
-   * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * survive navigations.
-   *
-   * **Usage**
-   *
-   * An example of exposing page URL to all frames in a page:
-   *
-   * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-   *
-   * (async () => {
-   *   const browser = await webkit.launch({ headless: false });
-   *   const context = await browser.newContext();
-   *   const page = await context.newPage();
-   *   await page.exposeBinding('pageURL', ({ page }) => page.url());
-   *   await page.setContent(`
-   *     <script>
-   *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.pageURL();
-   *       }
-   *     </script>
-   *     <button onclick="onClick()">Click me</button>
-   *     <div></div>
-   *   `);
-   *   await page.click('button');
-   * })();
-   * ```
-   *
-   * @param name Name of the function on the window object.
-   * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
-   */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any): Promise<Disposable>;
 
   /**
    * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
@@ -8174,8 +8121,8 @@ export interface BrowserContext {
    * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
    * function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    *
-   * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * for page-only version.
+   * See [page.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-binding) for
+   * page-only version.
    *
    * **Usage**
    *
@@ -8205,54 +8152,7 @@ export interface BrowserContext {
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
-  /**
-   * The method adds a function called
-   * [`name`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-name) on the
-   * `window` object of every frame in every page in the context. When called, the function executes
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * and returns a [Promise] which resolves to the return value of
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback).
-   * If the
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * returns a [Promise], it will be awaited.
-   *
-   * The first argument of the
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
-   *
-   * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * for page-only version.
-   *
-   * **Usage**
-   *
-   * An example of exposing page URL to all frames in all pages in the context:
-   *
-   * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-   *
-   * (async () => {
-   *   const browser = await webkit.launch({ headless: false });
-   *   const context = await browser.newContext();
-   *   await context.exposeBinding('pageURL', ({ page }) => page.url());
-   *   const page = await context.newPage();
-   *   await page.setContent(`
-   *     <script>
-   *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.pageURL();
-   *       }
-   *     </script>
-   *     <button onclick="onClick()">Click me</button>
-   *     <div></div>
-   *   `);
-   *   await page.getByRole('button').click();
-   * })();
-   * ```
-   *
-   * @param name Name of the function on the window object.
-   * @param callback Callback function that will be called in the Playwright's context.
-   */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any): Promise<Disposable>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
