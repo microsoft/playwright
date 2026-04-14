@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-// Whenever the commands/events change, the version must be updated. The latest
-// extension version should be compatible with the old MCP clients.
-export const VERSION = 2;
+// The latest protocol version defined in this file. Bumped whenever the
+// commands/events change. The latest extension version should remain
+// compatible with older MCP clients.
+export const LATEST_VERSION = 2;
+
+// The protocol version used by default when PLAYWRIGHT_EXTENSION_PROTOCOL is
+// not set. May lag behind LATEST_VERSION while a new version is rolling out.
+export const DEFAULT_VERSION = 1;
 
 // Structural mirrors of @types/chrome shapes used over the wire. The extension
 // imports the real chrome.* types and they are structurally compatible.

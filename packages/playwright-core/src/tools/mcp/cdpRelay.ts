@@ -22,8 +22,8 @@
  * - /extension/guid - Extension connection
  *
  * Protocol version is controlled by PLAYWRIGHT_EXTENSION_PROTOCOL env variable:
- * - v1: single-tab, extension manages debugger attachment
- * - v2 (default): multi-tab, relay manages debugger via chrome.* APIs
+ * - v1 (default): single-tab, extension manages debugger attachment
+ * - v2: multi-tab, relay manages debugger via chrome.* APIs
  */
 
 import { spawn } from 'child_process';
@@ -77,7 +77,7 @@ export class CDPRelayServer {
     this._browserChannel = browserChannel;
     this._userDataDir = userDataDir;
     this._executablePath = executablePath;
-    this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.VERSION.toString(), 10);
+    this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.DEFAULT_VERSION.toString(), 10);
 
     const sendCommand = (method: string, params: any): Promise<any> => {
       if (!this._extensionConnection)
