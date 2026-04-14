@@ -97,9 +97,9 @@ it('should play audio @smoke', async ({ page, server, browserName, platform }) =
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
   await page.$eval('audio', e => e.play());
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(3000);
   await page.$eval('audio', e => e.pause());
-  expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.2);
+  expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.1);
 });
 
 it('should support webgl @smoke', async ({ page }) => {

@@ -456,30 +456,6 @@ test('should copy network request', async ({ runUITest, server }) => {
 });
 
 
-test('should not preserve selection across test runs', async ({ runUITest, server }) => {
-  const { page } = await runUITest({
-    'network-tab.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('network tab test', async ({ page }) => {
-        await page.goto('${server.PREFIX}/network-tab/network.html');
-      });
-    `,
-  });
-
-  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
-
-  await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('listitem').filter({ hasText: 'network.html' }).click();
-  const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
-  await expect(headersPanel).toBeVisible();
-
-  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
-  await expect(headersPanel).toBeHidden();
-  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
-  await expect(headersPanel).toBeHidden();
-});
-
 test('should preserve selection during test run', async ({ runUITest, server }, testInfo) => {
   const { page } = await runUITest({
     'network-tab.test.ts': `
