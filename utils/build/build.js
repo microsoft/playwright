@@ -278,7 +278,12 @@ class EsbuildStep extends Step {
   constructor(options, watchPaths = []) {
     // Starting esbuild steps in parallel showed longer overall time.
     super({ concurrent: false });
-    this._options = options;
+    options = {
+      sourcemap: withSourceMaps ? 'linked' : false,
+      platform: 'node',
+      format: 'cjs',
+      ...options,
+    };
     this._watchPaths = watchPaths;
     if (options.bundle) {
       // For bundled outputs we always want a metafile so we can emit a
@@ -292,6 +297,7 @@ class EsbuildStep extends Step {
       if (!options.logOverride['direct-eval'])
         options.logOverride['direct-eval'] = 'silent';
     }
+    this._options = options;
   }
 
   /** @override */
@@ -539,9 +545,6 @@ for (const pkg of workspace.packages()) {
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
     outdir: `${path.join(pkg.path, 'lib')}`,
-    sourcemap: withSourceMaps ? 'linked' : false,
-    platform: 'node',
-    format: 'cjs',
     plugins: [dynamicImportToRequirePlugin],
   }));
 }
@@ -565,9 +568,6 @@ steps.push(new EsbuildStep({
     filePath('packages/playwright-core/src/tools/utils/socketConnection.ts'),
   ],
   outdir: filePath('packages/playwright-core/lib'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   plugins: [dynamicImportToRequirePlugin],
 }));
 
@@ -578,55 +578,17 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright-core/src/utilsBundle.ts')],
   outfile: filePath('packages/playwright-core/lib/utilsBundle.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: ['fsevents', 'express', '@anthropic-ai/sdk'],
   alias: {
     'raw-body': filePath('utils/build/raw-body.ts'),
   },
 }, [filePath('packages/playwright-core/src/utilsBundle.ts'), filePath('utils/build/raw-body.ts')]));
 
-// Any import whose specifier ends with `/utilsBundle` (relative, any
-// depth — the dynamic-import-to-require plugin emits depth-based paths
-// like `./utilsBundle`, `../utilsBundle`, `../../utilsBundle` depending
-// on the source file) must be kept external and rewritten to the sibling
-// `./utilsBundle` at bundle output level, because the bundle file lives
-// at lib/coreBundle.js right next to lib/utilsBundle.js regardless of
-// where the original source lived.
-const externalizeUtilsBundlePlugin = {
-  name: 'externalize-utilsBundle',
-  setup(build) {
-    build.onResolve({ filter: /utilsBundle/ }, args => {
-      // Bare absolute specifier used by the dynamic-import-to-require
-      // plugin for source files that live OUTSIDE playwright-core/src
-      // (e.g., packages/utils/*.ts). These end up inlined into
-      // coreBundle.js, so the runtime path resolves correctly against
-      // lib/coreBundle.js's sibling lib/utilsBundle.js.
-      if (args.path === 'playwright-core/lib/utilsBundle')
-        return { path: './utilsBundle', external: true };
-      if (!args.path.startsWith('.'))
-        return;
-      // Match `<depth>/utilsBundle` or `<depth>/utilsBundle.js` so
-      // depth-based relative paths like ./utilsBundle, ../utilsBundle,
-      // ../../utilsBundle all normalize to a single external at the
-      // bundle output level. The `.js` suffix form is used by direct
-      // require() call sites (e.g. tools/cli-client/program.ts).
-      if (!/(^|\/)utilsBundle(\.js)?$/.test(args.path))
-        return;
-      return { path: './utilsBundle', external: true };
-    });
-  },
-};
-
 // Build playwright-core as a single bundle.
 steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright-core/src/coreBundle.ts')],
   outfile: filePath('packages/playwright-core/lib/coreBundle.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
     '../../api.json',
     './help.json',
@@ -637,7 +599,11 @@ steps.push(new EsbuildStep({
     'chromium-bidi/*',
     'mitt',
   ],
-  plugins: [externalizeUtilsBundlePlugin, dynamicImportToRequirePlugin],
+  plugins: [{
+    name: 'externalize-utilsBundle',
+    setup: build => build.onResolve({ filter: /utilsBundle/ },
+        () => ({ path: './utilsBundle', external: true })),
+  }, dynamicImportToRequirePlugin],
 }, [playwrightCoreSrc]));
 
 function assertCoreBundleHasNoNodeModules() {
@@ -673,9 +639,6 @@ steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
     bundle: true,
     entryPoints: [filePath('packages/playwright/src/transform/esmLoader.ts')],
     outfile: filePath('packages/playwright/lib/transform/esmLoader.js'),
-    sourcemap: withSourceMaps ? 'linked' : false,
-    platform: 'node',
-    format: 'cjs',
     external: [
       'playwright-core',
       'playwright-core/*',
@@ -696,9 +659,6 @@ steps.push(new EsbuildStep({
     filePath('packages/playwright/src/mcp/**/*.ts'),
   ],
   outdir: filePath('packages/playwright/lib'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   plugins: [dynamicImportToRequirePlugin],
 }));
 
@@ -709,9 +669,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/transform/babelBundle.ts')],
   outfile: filePath('packages/playwright/lib/transform/babelBundle.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
     '../package',
   ],
@@ -723,9 +680,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/matchers/expect.ts')],
   outfile: filePath('packages/playwright/lib/matchers/expect.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
     'playwright-core',
     'playwright-core/*',
@@ -741,9 +695,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/common/index.ts')],
   outfile: filePath('packages/playwright/lib/common/index.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
     'playwright-core',
     'playwright-core/*',
@@ -762,9 +713,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/runner/index.ts')],
   outfile: filePath('packages/playwright/lib/runner/index.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
     'playwright-core',
     'playwright-core/*',
@@ -786,9 +734,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/isomorphic/index.ts')],
   outfile: filePath('packages/playwright/lib/isomorphic.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
   ],
   plugins: [dynamicImportToRequirePlugin],
@@ -801,9 +746,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/loader/loaderProcessEntry.ts')],
   outfile: filePath('packages/playwright/lib/loader/loaderProcessEntry.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
     'playwright-core',
     'playwright-core/*',
@@ -823,9 +765,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright/src/worker/workerProcessEntry.ts')],
   outfile: filePath('packages/playwright/lib/worker/workerProcessEntry.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: [
     'playwright-core',
     'playwright-core/*',
@@ -846,9 +785,6 @@ steps.push(new EsbuildStep({
   bundle: true,
   entryPoints: [filePath('packages/playwright-core/src/server/electron/loader.ts')],
   outfile: filePath('packages/playwright-core/lib/server/electron/loader.js'),
-  sourcemap: withSourceMaps ? 'linked' : false,
-  platform: 'node',
-  format: 'cjs',
   external: ['electron'],
 }, [playwrightCoreSrc]));
 
