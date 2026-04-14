@@ -175,14 +175,4 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return Worker.from(result.worker);
   }
 
-  async _connectOverCDPTransport(transport: /* ConnectionTransport */ any) {
-    if (this.name() !== 'chromium')
-      throw new Error('Connecting over CDP is only supported in Chromium.');
-    const result = await this._channel.connectOverCDPTransport({ transport });
-    const browser = Browser.from(result.browser);
-    browser._connectToBrowserType(this, {}, undefined);
-    if (result.defaultContext)
-      await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
-    return browser;
-  }
 }

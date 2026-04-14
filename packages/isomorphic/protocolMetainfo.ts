@@ -52,7 +52,6 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['BrowserType.launch', { title: 'Launch browser', }],
   ['BrowserType.launchPersistentContext', { title: 'Launch persistent context', }],
   ['BrowserType.connectOverCDP', { title: 'Connect over CDP', }],
-  ['BrowserType.connectOverCDPTransport', { title: 'Connect over CDP transport', }],
   ['BrowserType.connectToWorker', { title: 'Connect to worker', }],
   ['Browser.startServer', { title: 'Start server', }],
   ['Browser.stopServer', { title: 'Stop server', }],

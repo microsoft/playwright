@@ -893,7 +893,6 @@ export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   launch(params: BrowserTypeLaunchParams, progress?: Progress): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, progress?: Progress): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPResult>;
-  connectOverCDPTransport(params: BrowserTypeConnectOverCDPTransportParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPTransportResult>;
   connectToWorker(params: BrowserTypeConnectToWorkerParams, progress?: Progress): Promise<BrowserTypeConnectToWorkerResult>;
 }
 export type BrowserTypeLaunchParams = {
@@ -1141,16 +1140,6 @@ export type BrowserTypeConnectOverCDPOptions = {
   isLocal?: boolean,
 };
 export type BrowserTypeConnectOverCDPResult = {
-  browser: BrowserChannel,
-  defaultContext?: BrowserContextChannel,
-};
-export type BrowserTypeConnectOverCDPTransportParams = {
-  transport: Binary,
-};
-export type BrowserTypeConnectOverCDPTransportOptions = {
-
-};
-export type BrowserTypeConnectOverCDPTransportResult = {
   browser: BrowserChannel,
   defaultContext?: BrowserContextChannel,
 };

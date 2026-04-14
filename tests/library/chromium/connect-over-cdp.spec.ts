@@ -21,7 +21,7 @@ import fs from 'fs';
 import { getUserAgent, server as coreServer } from '../../../packages/playwright-core/lib/coreBundle';
 import { suppressCertificateWarning } from '../../config/utils';
 
-const { WebSocketTransport, nullProgress } = coreServer;
+const { nullProgress } = coreServer;
 type Frame = coreServer.Frame;
 
 test.skip(({ mode }) => mode === 'service2');
@@ -642,35 +642,6 @@ test('should get title and URL of existing page', async ({ browserType, mode, se
   } finally {
     for (const browser of browsers)
       await browser.close();
-    await browserServer.close();
-  }
-});
-
-test('should connect over CDP using a ConnectionTransport', async ({ browserType, mode, server }, testInfo) => {
-  test.skip(mode !== 'default', '_connectOverCDPTransport is only available in-process');
-
-  const port = 9339 + testInfo.workerIndex;
-  const browserServer = await browserType.launch({
-    args: ['--remote-debugging-port=' + port]
-  });
-  try {
-    const json = await new Promise<string>((resolve, reject) => {
-      http.get(`http://127.0.0.1:${port}/json/version/`, resp => {
-        let data = '';
-        resp.on('data', chunk => data += chunk);
-        resp.on('end', () => resolve(data));
-      }).on('error', reject);
-    });
-    const wsEndpoint = JSON.parse(json).webSocketDebuggerUrl;
-    const transport = await WebSocketTransport.connect(undefined, wsEndpoint);
-    const cdpBrowser = await (browserType as any)._connectOverCDPTransport(transport);
-    const contexts = cdpBrowser.contexts();
-    expect(contexts.length).toBe(1);
-    const page = await contexts[0].newPage();
-    await page.goto(server.EMPTY_PAGE);
-    expect(page.url()).toBe(server.EMPTY_PAGE);
-    await cdpBrowser.close();
-  } finally {
     await browserServer.close();
   }
 });
