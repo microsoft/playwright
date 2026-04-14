@@ -105,14 +105,22 @@ export class TestServerDispatcher implements TestServerInterface {
     this._testRunner = new TestRunner(configLocation, configCLIOverrides);
     this.transport = {
       onconnect: () => {},
-      dispatch: (method, params) => (this as any)[method](params),
+      onmessage: async message => {
+        const { id, method, params } = JSON.parse(message);
+        try {
+          const result = await (this as any)[method](params);
+          this.transport.sendMessage?.(JSON.stringify({ id, result }));
+        } catch (e) {
+          this.transport.sendMessage?.(JSON.stringify({ id, error: String(e) }));
+        }
+      },
       onclose: () => {
         if (this._closeOnDisconnect)
           gracefullyProcessExitDoNotHang(0);
       },
     };
 
-    this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
+    this._dispatchEvent = (method, params) => this.transport.sendMessage?.(JSON.stringify({ method, params }));
     this._testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => this._dispatchEvent('testFilesChanged', { testFiles }));
     this._testRunner.on(TestRunnerEvent.TestPaused, params => this._dispatchEvent('testPaused', { errors: params.errors }));
   }

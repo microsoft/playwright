@@ -893,7 +893,7 @@ export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   launch(params: BrowserTypeLaunchParams, progress?: Progress): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, progress?: Progress): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPResult>;
-  connectOverCDPTransport(params: BrowserTypeConnectOverCDPTransportParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPTransportResult>;
+  connectToWorker(params: BrowserTypeConnectToWorkerParams, progress?: Progress): Promise<BrowserTypeConnectToWorkerResult>;
 }
 export type BrowserTypeLaunchParams = {
   channel?: string,
@@ -901,7 +901,6 @@ export type BrowserTypeLaunchParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -928,7 +927,6 @@ export type BrowserTypeLaunchOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -957,7 +955,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -1046,7 +1043,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   args?: string[],
   ignoreAllDefaultArgs?: boolean,
   ignoreDefaultArgs?: string[],
-  assistantMode?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -1147,15 +1143,15 @@ export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
   defaultContext?: BrowserContextChannel,
 };
-export type BrowserTypeConnectOverCDPTransportParams = {
-  transport: Binary,
+export type BrowserTypeConnectToWorkerParams = {
+  endpoint: string,
+  timeout: number,
 };
-export type BrowserTypeConnectOverCDPTransportOptions = {
+export type BrowserTypeConnectToWorkerOptions = {
 
 };
-export type BrowserTypeConnectOverCDPTransportResult = {
-  browser: BrowserChannel,
-  defaultContext?: BrowserContextChannel,
+export type BrowserTypeConnectToWorkerResult = {
+  worker: WorkerChannel,
 };
 
 export interface BrowserTypeEvents {
@@ -1691,8 +1687,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   disableRecorder(params?: BrowserContextDisableRecorderParams, progress?: Progress): Promise<BrowserContextDisableRecorderResult>;
   exposeConsoleApi(params?: BrowserContextExposeConsoleApiParams, progress?: Progress): Promise<BrowserContextExposeConsoleApiResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, progress?: Progress): Promise<BrowserContextNewCDPSessionResult>;
-  harStart(params: BrowserContextHarStartParams, progress?: Progress): Promise<BrowserContextHarStartResult>;
-  harExport(params: BrowserContextHarExportParams, progress?: Progress): Promise<BrowserContextHarExportResult>;
   createTempFiles(params: BrowserContextCreateTempFilesParams, progress?: Progress): Promise<BrowserContextCreateTempFilesResult>;
   updateSubscription(params: BrowserContextUpdateSubscriptionParams, progress?: Progress): Promise<BrowserContextUpdateSubscriptionResult>;
   clockFastForward(params: BrowserContextClockFastForwardParams, progress?: Progress): Promise<BrowserContextClockFastForwardResult>;
@@ -1830,10 +1824,9 @@ export type BrowserContextCookiesResult = {
 };
 export type BrowserContextExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type BrowserContextExposeBindingResult = {
   disposable: DisposableChannel,
@@ -2004,25 +1997,6 @@ export type BrowserContextNewCDPSessionOptions = {
 };
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
-};
-export type BrowserContextHarStartParams = {
-  page?: PageChannel,
-  options: RecordHarOptions,
-};
-export type BrowserContextHarStartOptions = {
-  page?: PageChannel,
-};
-export type BrowserContextHarStartResult = {
-  harId: string,
-};
-export type BrowserContextHarExportParams = {
-  harId?: string,
-};
-export type BrowserContextHarExportOptions = {
-  harId?: string,
-};
-export type BrowserContextHarExportResult = {
-  artifact: ArtifactChannel,
 };
 export type BrowserContextCreateTempFilesParams = {
   rootDirName?: string,
@@ -2303,10 +2277,9 @@ export type PageEmulateMediaOptions = {
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type PageExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type PageExposeBindingResult = {
   disposable: DisposableChannel,
@@ -3509,15 +3482,35 @@ export type WorkerInitializer = {
   url: string,
 };
 export interface WorkerEventTarget {
+  on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
 }
 export interface WorkerChannel extends WorkerEventTarget, EventTargetChannel {
   _type_Worker: boolean;
+  disconnect(params: WorkerDisconnectParams, progress?: Progress): Promise<WorkerDisconnectResult>;
   evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
   updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
 }
+export type WorkerConsoleEvent = {
+  type: string,
+  text: string,
+  args: JSHandleChannel[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
+  timestamp: number,
+};
 export type WorkerCloseEvent = {};
+export type WorkerDisconnectParams = {
+  reason?: string,
+};
+export type WorkerDisconnectOptions = {
+  reason?: string,
+};
+export type WorkerDisconnectResult = void;
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
@@ -3550,6 +3543,7 @@ export type WorkerUpdateSubscriptionOptions = {
 export type WorkerUpdateSubscriptionResult = void;
 
 export interface WorkerEvents {
+  'console': WorkerConsoleEvent;
   'close': WorkerCloseEvent;
 }
 
@@ -4363,8 +4357,7 @@ export interface WebSocketEvents {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  args?: SerializedValue[],
-  handle?: JSHandleChannel,
+  args: SerializedValue[],
 };
 export interface BindingCallEventTarget {
 }
@@ -4479,6 +4472,8 @@ export interface TracingChannel extends TracingEventTarget, Channel {
   tracingGroupEnd(params?: TracingTracingGroupEndParams, progress?: Progress): Promise<TracingTracingGroupEndResult>;
   tracingStopChunk(params: TracingTracingStopChunkParams, progress?: Progress): Promise<TracingTracingStopChunkResult>;
   tracingStop(params?: TracingTracingStopParams, progress?: Progress): Promise<TracingTracingStopResult>;
+  harStart(params: TracingHarStartParams, progress?: Progress): Promise<TracingHarStartResult>;
+  harExport(params: TracingHarExportParams, progress?: Progress): Promise<TracingHarExportResult>;
 }
 export type TracingTracingStartParams = {
   name?: string,
@@ -4536,6 +4531,25 @@ export type TracingTracingStopChunkResult = {
 export type TracingTracingStopParams = {};
 export type TracingTracingStopOptions = {};
 export type TracingTracingStopResult = void;
+export type TracingHarStartParams = {
+  page?: PageChannel,
+  options: RecordHarOptions,
+};
+export type TracingHarStartOptions = {
+  page?: PageChannel,
+};
+export type TracingHarStartResult = {
+  harId: string,
+};
+export type TracingHarExportParams = {
+  harId?: string,
+};
+export type TracingHarExportOptions = {
+  harId?: string,
+};
+export type TracingHarExportResult = {
+  artifact: ArtifactChannel,
+};
 
 export interface TracingEvents {
 }

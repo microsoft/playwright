@@ -884,12 +884,12 @@ export interface Page {
    * information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    *
    * See
-   * [browserContext.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
+   * [browserContext.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
    * for the context-wide version.
    *
    * **NOTE** Functions installed via
-   * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * survive navigations.
+   * [page.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-binding) survive
+   * navigations.
    *
    * **Usage**
    *
@@ -918,61 +918,8 @@ export interface Page {
    *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
-  /**
-   * The method adds a function called
-   * [`name`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-name) on the `window` object of
-   * every frame in this page. When called, the function executes
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) and returns a
-   * [Promise] which resolves to the return value of
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback). If the
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) returns a [Promise],
-   * it will be awaited.
-   *
-   * The first argument of the
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) function contains
-   * information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
-   *
-   * See
-   * [browserContext.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
-   * for the context-wide version.
-   *
-   * **NOTE** Functions installed via
-   * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * survive navigations.
-   *
-   * **Usage**
-   *
-   * An example of exposing page URL to all frames in a page:
-   *
-   * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-   *
-   * (async () => {
-   *   const browser = await webkit.launch({ headless: false });
-   *   const context = await browser.newContext();
-   *   const page = await context.newPage();
-   *   await page.exposeBinding('pageURL', ({ page }) => page.url());
-   *   await page.setContent(`
-   *     <script>
-   *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.pageURL();
-   *       }
-   *     </script>
-   *     <button onclick="onClick()">Click me</button>
-   *     <div></div>
-   *   `);
-   *   await page.click('button');
-   * })();
-   * ```
-   *
-   * @param name Name of the function on the window object.
-   * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
-   */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any): Promise<Disposable>;
 
   /**
    * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
@@ -8174,8 +8121,8 @@ export interface BrowserContext {
    * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
    * function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    *
-   * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * for page-only version.
+   * See [page.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-binding) for
+   * page-only version.
    *
    * **Usage**
    *
@@ -8204,57 +8151,8 @@ export interface BrowserContext {
    *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
-  /**
-   * The method adds a function called
-   * [`name`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-name) on the
-   * `window` object of every frame in every page in the context. When called, the function executes
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * and returns a [Promise] which resolves to the return value of
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback).
-   * If the
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * returns a [Promise], it will be awaited.
-   *
-   * The first argument of the
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
-   *
-   * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * for page-only version.
-   *
-   * **Usage**
-   *
-   * An example of exposing page URL to all frames in all pages in the context:
-   *
-   * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-   *
-   * (async () => {
-   *   const browser = await webkit.launch({ headless: false });
-   *   const context = await browser.newContext();
-   *   await context.exposeBinding('pageURL', ({ page }) => page.url());
-   *   const page = await context.newPage();
-   *   await page.setContent(`
-   *     <script>
-   *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.pageURL();
-   *       }
-   *     </script>
-   *     <button onclick="onClick()">Click me</button>
-   *     <div></div>
-   *   `);
-   *   await page.getByRole('button').click();
-   * })();
-   * ```
-   *
-   * @param name Name of the function on the window object.
-   * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
-   */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any): Promise<Disposable>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
@@ -10353,26 +10251,6 @@ export interface Browser {
     userAgent?: string;
 
     /**
-     * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-page-option-record-video) instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-page-option-record-video) instead.
-     */
-    videosPath?: string;
-
-    /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
      * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
@@ -10623,6 +10501,19 @@ export interface Worker {
    * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
    */
   prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Disconnects from a worker that was connected through
+   * [browserType.connectToWorker(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-to-worker).
+   * Calling this method on any other worker will throw.
+   * @param options
+   */
+  disconnect(options?: {
+    /**
+     * The reason to be reported to the operations interrupted by the worker disconnect.
+     */
+    reason?: string;
+  }): Promise<void>;
 
   url(): string;
 
@@ -15069,6 +14960,31 @@ export interface BrowserType<Unused = {}> {
    */
   connect(options: ConnectOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
+   * This method attaches Playwright to an existing JavaScript engine exposing Chrome DevTools Protocol, for example to
+   * a Node.js process or an Electron application.
+   *
+   * **NOTE** This is only supported on `chromium`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const worker = await playwright.chromium.connectToWorker('http://localhost:9229');
+   * const global = await worker.evaluate(() => globalThis);
+   * ```
+   *
+   * @param endpoint A CDP websocket endpoint or http url to connect to. For example `http://localhost:9229/` or
+   * `ws://127.0.0.1:9229/something`.
+   * @param options
+   */
+  connectToWorker(endpoint: string, options?: {
+    /**
+     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+     * `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<Worker>;
+
+  /**
    * A path where Playwright expects to find a bundled browser executable.
    */
   executablePath(): string;
@@ -15618,30 +15534,6 @@ export interface BrowserType<Unused = {}> {
      * Specific user agent to use in this context.
      */
     userAgent?: string;
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-record-video)
-     * instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-record-video)
-     * instead.
-     */
-    videosPath?: string;
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
@@ -17574,30 +17466,6 @@ export interface AndroidDevice {
     userAgent?: string;
 
     /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-record-video)
-     * instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-record-video)
-     * instead.
-     */
-    videosPath?: string;
-
-    /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
      * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
@@ -19115,6 +18983,8 @@ export interface APIRequestContext {
       }>;
     }>;
   }>;
+
+  tracing: Tracing;
 
   [Symbol.asyncDispose](): Promise<void>;
 }
@@ -22149,6 +22019,48 @@ export interface Tracing {
   }): Promise<void>;
 
   /**
+   * Start recording a HAR (HTTP Archive) of network activity in this context. The HAR file is written to disk when
+   * [tracing.stopHar()](https://playwright.dev/docs/api/class-tracing#tracing-stop-har) is called, or when the returned
+   * [Disposable](https://playwright.dev/docs/api/class-disposable) is disposed.
+   *
+   * Only one HAR recording can be active at a time per
+   * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await context.tracing.startHar('trace.har');
+   * const page = await context.newPage();
+   * await page.goto('https://playwright.dev');
+   * await context.tracing.stopHar();
+   * ```
+   *
+   * @param path Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the HAR is saved as a zip
+   * archive with response bodies attached as separate files.
+   * @param options
+   */
+  startHar(path: string, options?: {
+    /**
+     * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+     * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+     * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+     * files and to `embed` for all other file extensions.
+     */
+    content?: "omit"|"embed"|"attach";
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     */
+    mode?: "full"|"minimal";
+
+    /**
+     * A glob or regex pattern to filter requests that are stored in the HAR. Defaults to none.
+     */
+    urlFilter?: string|RegExp;
+  }): Promise<Disposable>;
+
+  /**
    * Stop tracing.
    * @param options
    */
@@ -22173,6 +22085,12 @@ export interface Tracing {
      */
     path?: string;
   }): Promise<void>;
+
+  /**
+   * Stop HAR recording and save the HAR file to the path given to
+   * [tracing.startHar(path[, options])](https://playwright.dev/docs/api/class-tracing#tracing-start-har).
+   */
+  stopHar(): Promise<void>;
 }
 
 /**
@@ -22653,12 +22571,6 @@ export interface ConnectOverCDPOptions {
   isLocal?: boolean;
 
   /**
-   * Logger sink for Playwright logging. Optional.
-   * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
-   */
-  logger?: Logger;
-
-  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
    * on. Defaults to 0.
    */
@@ -22693,12 +22605,6 @@ export interface ConnectOptions {
    * Additional HTTP headers to be sent with web socket connect request. Optional.
    */
   headers?: { [key: string]: string; };
-
-  /**
-   * Logger sink for Playwright logging. Optional.
-   * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
-   */
-  logger?: Logger;
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
@@ -23225,26 +23131,6 @@ export interface BrowserContextOptions {
    * Specific user agent to use in this context.
    */
   userAgent?: string;
-
-  /**
-   * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-record-video) instead.
-   */
-  videoSize?: {
-    /**
-     * Video frame width.
-     */
-    width: number;
-
-    /**
-     * Video frame height.
-     */
-    height: number;
-  };
-
-  /**
-   * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-record-video) instead.
-   */
-  videosPath?: string;
 
   /**
    * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent

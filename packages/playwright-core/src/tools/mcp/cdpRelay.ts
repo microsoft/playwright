@@ -15,11 +15,15 @@
  */
 
 /**
- * WebSocket server that bridges Playwright MCP and Chrome Extension
+ * WebSocket server that bridges Playwright MCP and Chrome Extension.
  *
  * Endpoints:
  * - /cdp/guid - Full CDP interface for Playwright MCP
- * - /extension/guid - Extension connection for chrome.debugger forwarding
+ * - /extension/guid - Extension connection
+ *
+ * Protocol version is controlled by PLAYWRIGHT_EXTENSION_PROTOCOL env variable:
+ * - v1 (default): single-tab, extension manages debugger attachment
+ * - v2: multi-tab, relay manages debugger via chrome.* APIs
  */
 
 import { spawn } from 'child_process';
@@ -33,10 +37,13 @@ import { registry } from '../../server/registry/index';
 
 import { addressToString } from '../utils/mcp/http';
 import { logUnhandledError } from './log';
+import { ExtensionProtocolV1 } from './cdpRelayV1';
+import { ExtensionProtocolV2 } from './cdpRelayV2';
 import * as protocol from './protocol';
 
 import type websocket from 'ws';
 import type { ExtensionCommand, ExtensionEvents } from './protocol';
+import type { CDPMessage, ExtensionProtocolHandler } from './cdpRelayHandler';
 import type { WebSocket, WebSocketServer } from 'ws';
 
 
@@ -49,14 +56,7 @@ type CDPCommand = {
   params?: any;
 };
 
-type CDPResponse = {
-  id?: number;
-  sessionId?: string;
-  method?: string;
-  params?: any;
-  result?: any;
-  error?: { code?: number; message: string };
-};
+type CDPResponse = CDPMessage;
 
 export class CDPRelayServer {
   private _wsHost: string;
@@ -68,12 +68,8 @@ export class CDPRelayServer {
   private _wss: WebSocketServer;
   private _playwrightConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
-  private _connectedTabInfo: {
-    targetInfo: any;
-    // Page sessionId that should be used by this connection.
-    sessionId: string;
-  } | undefined;
-  private _nextSessionId: number = 1;
+  private _protocolVersion: number;
+  private _handler: ExtensionProtocolHandler;
   private _extensionConnectionPromise!: ManualPromise<void>;
 
   constructor(server: http.Server, browserChannel: string, userDataDir?: string, executablePath?: string) {
@@ -81,6 +77,19 @@ export class CDPRelayServer {
     this._browserChannel = browserChannel;
     this._userDataDir = userDataDir;
     this._executablePath = executablePath;
+    this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.DEFAULT_VERSION.toString(), 10);
+
+    const sendCommand = (method: string, params: any): Promise<any> => {
+      if (!this._extensionConnection)
+        throw new Error('Extension not connected');
+      return this._extensionConnection.send(method as keyof ExtensionCommand, params);
+    };
+    const sendToPlaywright = (message: CDPResponse) => this._sendToPlaywright(message);
+
+    if (this._protocolVersion >= 2)
+      this._handler = new ExtensionProtocolV2(sendCommand, sendToPlaywright);
+    else
+      this._handler = new ExtensionProtocolV1(sendCommand, sendToPlaywright);
 
     const uuid = crypto.randomUUID();
     this._cdpPath = `/cdp/${uuid}`;
@@ -125,7 +134,7 @@ export class CDPRelayServer {
       version: undefined,
     };
     url.searchParams.set('client', JSON.stringify(client));
-    url.searchParams.set('protocolVersion', process.env.PWMCP_TEST_PROTOCOL_VERSION ?? protocol.VERSION.toString());
+    url.searchParams.set('protocolVersion', this._protocolVersion.toString());
     const token = process.env.PLAYWRIGHT_MCP_EXTENSION_TOKEN;
     if (token)
       url.searchParams.set('token', token);
@@ -214,7 +223,7 @@ export class CDPRelayServer {
   }
 
   private _resetExtensionConnection() {
-    this._connectedTabInfo = undefined;
+    this._handler.reset();
     this._extensionConnection = null;
     this._extensionConnectionPromise = new ManualPromise();
     void this._extensionConnectionPromise.catch(logUnhandledError);
@@ -239,21 +248,8 @@ export class CDPRelayServer {
       this._resetExtensionConnection();
       this._closePlaywrightConnection(`Extension disconnected: ${reason}`);
     };
-    this._extensionConnection.onmessage = this._handleExtensionMessage.bind(this);
+    this._extensionConnection.onmessage = (method, params) => this._handler.handleExtensionEvent(method, params);
     this._extensionConnectionPromise.resolve();
-  }
-
-  private _handleExtensionMessage<M extends keyof ExtensionEvents>(method: M, params: ExtensionEvents[M]['params']) {
-    switch (method) {
-      case 'forwardCDPEvent':
-        const sessionId = params.sessionId || this._connectedTabInfo?.sessionId;
-        this._sendToPlaywright({
-          sessionId,
-          method: params.method,
-          params: params.params
-        });
-        break;
-    }
   }
 
   private async _handlePlaywrightMessage(message: CDPCommand): Promise<void> {
@@ -284,44 +280,11 @@ export class CDPRelayServer {
       case 'Browser.setDownloadBehavior': {
         return { };
       }
-      case 'Target.setAutoAttach': {
-        // Forward child session handling.
-        if (sessionId)
-          break;
-        // Simulate auto-attach behavior with real target info
-        const { targetInfo } = await this._extensionConnection!.send('attachToTab', { });
-        this._connectedTabInfo = {
-          targetInfo,
-          sessionId: `pw-tab-${this._nextSessionId++}`,
-        };
-        debugLogger('Simulating auto-attach');
-        this._sendToPlaywright({
-          method: 'Target.attachedToTarget',
-          params: {
-            sessionId: this._connectedTabInfo.sessionId,
-            targetInfo: {
-              ...this._connectedTabInfo.targetInfo,
-              attached: true,
-            },
-            waitingForDebugger: false
-          }
-        });
-        return { };
-      }
-      case 'Target.getTargetInfo': {
-        return this._connectedTabInfo?.targetInfo;
-      }
     }
-    return await this._forwardToExtension(method, params, sessionId);
-  }
-
-  private async _forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any> {
-    if (!this._extensionConnection)
-      throw new Error('Extension not connected');
-    // Top level sessionId is only passed between the relay and the client.
-    if (this._connectedTabInfo?.sessionId === sessionId)
-      sessionId = undefined;
-    return await this._extensionConnection.send('forwardCDPCommand', { sessionId, method, params });
+    const handled = await this._handler.handleCDPCommand(method, params, sessionId);
+    if (handled)
+      return handled.result;
+    return await this._handler.forwardToExtension(method, params, sessionId);
   }
 
   private _sendToPlaywright(message: CDPResponse): void {

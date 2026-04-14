@@ -55,18 +55,8 @@ type OpenOptions = {
 };
 
 const globalOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions))[] = [
-  'cdp',
-  'endpoint',
-  'browser',
-  'config',
-  'extension',
-  'headed',
-  'help',
-  'persistent',
-  'profile',
   'raw',
   'session',
-  'version',
 ];
 
 const booleanOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions & { all?: boolean }))[] = [
@@ -143,7 +133,10 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     }
     case 'open': {
-      await startSession(sessionName, registry, clientInfo, args);
+      await startSession(sessionName, registry, clientInfo, args, 'open');
+      const newEntry = await registry.loadEntry(clientInfo, sessionName);
+      const params = args._.slice(1);
+      await runInSession(newEntry, clientInfo, { _: ['goto', ...(params.length ? params : ['about:blank'])] });
       return;
     }
     case 'attach': {
@@ -160,7 +153,9 @@ export async function program(options?: { embedderVersion?: string}) {
       }
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? sessionName;
       args.session = attachSessionName;
-      await startSession(attachSessionName, registry, clientInfo, args);
+      await startSession(attachSessionName, registry, clientInfo, args, 'attach');
+      const newEntry = await registry.loadEntry(clientInfo, attachSessionName);
+      await runInSession(newEntry, clientInfo, { _: ['snapshot'], filename: '<auto>' });
       return;
     }
     case 'close':
@@ -202,14 +197,11 @@ export async function program(options?: { embedderVersion?: string}) {
   }
 }
 
-async function startSession(sessionName: string, registry: Registry, clientInfo: ClientInfo, args: MinimistArgs) {
+async function startSession(sessionName: string, registry: Registry, clientInfo: ClientInfo, args: MinimistArgs, mode: 'open' | 'attach') {
   const entry = registry.entry(clientInfo, sessionName);
   if (entry)
     await new Session(entry).stop(true);
-
-  await Session.startDaemon(clientInfo, args);
-  const newEntry = await registry.loadEntry(clientInfo, sessionName);
-  await runInSession(newEntry, clientInfo, args);
+  await Session.startDaemon(clientInfo, args, mode);
 }
 
 async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: MinimistArgs) {
@@ -307,8 +299,6 @@ async function killAllDaemons(): Promise<void> {
 }
 
 async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boolean): Promise<void> {
-  console.log('### Browsers');
-
   let count = 0;
   const runningSessions = new Set<string>();
   const entries = registry.entryMap();
@@ -316,26 +306,19 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
   for (const [workspaceKey, list] of entries) {
     if (!all && workspaceKey !== key)
       continue;
+    if (count === 0)
+      console.log('### Browsers');
     count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspaceKey) || '/'}:` : undefined, runningSessions);
   }
 
   // Filter out server entries that already have an attached session.
   const serverEntries = await serverRegistry.list();
-  const filteredServerEntries = new Map<string, BrowserStatus[]>();
-  for (const [workspaceKey, list] of serverEntries) {
-    if (!all && workspaceKey !== key)
-      continue;
-    const unattached = list.filter(d => !runningSessions.has(d.title));
-    if (unattached.length)
-      filteredServerEntries.set(workspaceKey, unattached);
-  }
-
-  if (filteredServerEntries.size) {
+  if (serverEntries.size) {
     if (count)
       console.log('');
     console.log('### Browser servers available for attach');
   }
-  for (const [workspaceKey, list] of filteredServerEntries)
+  for (const [workspaceKey, list] of serverEntries)
     count += await gcAndPrintBrowserSessions(workspaceKey, list);
 
   if (!count)

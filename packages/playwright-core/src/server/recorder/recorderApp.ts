@@ -170,7 +170,7 @@ export class RecorderApp {
       },
     };
 
-    await this._page.exposeBinding(progress, 'sendCommand', false, async (_, data: any) => {
+    await this._page.exposeBinding(progress, 'sendCommand', async (_, data: any) => {
       const { method, params } = data as { method: string; params: any };
       return await (dispatcher as any)[method].call(dispatcher, params);
     });
@@ -214,7 +214,7 @@ export class RecorderApp {
       persistentContextOptions: {
         noDefaultViewport: true,
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
-        cdpPort: isUnderTest() ? 0 : undefined,
+        args: isUnderTest() ? ['--remote-debugging-port=0'] : undefined,
         handleSIGINT: params.handleSIGINT,
         executablePath: isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
         // Use the same channel as the inspected context to guarantee that the browser is installed.

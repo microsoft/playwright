@@ -62,8 +62,6 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   viewport?: Size | null;
   extraHTTPHeaders?: Headers;
   logger?: Logger;
-  videosPath?: string;
-  videoSize?: Size;
   storageState?: string | SetStorageState;
   har?: {
     path: string;
@@ -102,7 +100,6 @@ export type ConnectOptions = {
   exposeNetwork?: string;
   slowMo?: number;
   timeout?: number;
-  logger?: Logger;
 };
 export type LaunchServerOptions = LaunchOptions & {
   host?: string,

@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-import { base } from '../../packages/playwright/lib/runner';
-const { fitToWidth } = base;
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { test, expect } from './playwright-test-fixtures';
 
 test('chinese characters', () => {
-  expect(fitToWidth('你你好', 3)).toBe('…好');
-  expect(fitToWidth('你好你好', 4)).toBe('…好');
+  expect(utils.fitToWidth('你你好', 3)).toBe('…好');
+  expect(utils.fitToWidth('你好你好', 4)).toBe('…好');
 });
 
 test('surrogate pairs', () => {
-  expect(fitToWidth('🫣🤗', 2)).toBe('…');
-  expect(fitToWidth('🫣🤗', 3)).toBe('…🤗');
-  expect(fitToWidth('🚄🚄', 1)).toBe('…');
-  expect(fitToWidth('🚄🚄', 2)).toBe('…');
-  expect(fitToWidth('🚄🚄', 3)).toBe('…🚄');
-  expect(fitToWidth('🚄🚄', 4)).toBe('🚄🚄');
-  expect(fitToWidth('🧑‍🧑‍🧒🧑‍🧑‍🧒🧑‍🧑‍🧒', 4)).toBe('…🧑‍🧑‍🧒');
+  expect(utils.fitToWidth('🫣🤗', 2)).toBe('…');
+  expect(utils.fitToWidth('🫣🤗', 3)).toBe('…🤗');
+  expect(utils.fitToWidth('🚄🚄', 1)).toBe('…');
+  expect(utils.fitToWidth('🚄🚄', 2)).toBe('…');
+  expect(utils.fitToWidth('🚄🚄', 3)).toBe('…🚄');
+  expect(utils.fitToWidth('🚄🚄', 4)).toBe('🚄🚄');
+  expect(utils.fitToWidth('🧑‍🧑‍🧒🧑‍🧑‍🧒🧑‍🧑‍🧒', 4)).toBe('…🧑‍🧑‍🧒');
 });

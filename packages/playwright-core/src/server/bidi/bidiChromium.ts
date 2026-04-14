@@ -102,7 +102,7 @@ export class BidiChromium extends BrowserType {
   }
 
   override async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
-    return waitForReadyState({ ...options, cdpPort: 0 }, browserLogsCollector);
+    return waitForReadyState({ ...options, args: ['--remote-debugging-port=0'] }, browserLogsCollector);
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
@@ -114,7 +114,7 @@ export class BidiChromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const chromeArguments = [...chromiumSwitches(options.assistantMode)];
+    const chromeArguments = [...chromiumSwitches()];
 
     if (os.platform() === 'darwin') {
       // See https://issues.chromium.org/issues/40277080

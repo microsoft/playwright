@@ -31,6 +31,7 @@ export * from './profiler';
 export * from './serializedFS';
 export * from './socksProxy';
 export * from './spawnAsync';
+export * from './stringWidth';
 export * from './task';
 export * from './wsServer';
 export * from './zipFile';

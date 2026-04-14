@@ -105,7 +105,7 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
 
   const controller = new ProgressController();
   await controller.run(async progress => {
-    await page.exposeBinding(progress, '_saveSerializedSettings', false, (_, settings) => {
+    await page.exposeBinding(progress, '_saveSerializedSettings', (_, settings) => {
       fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
       fs.writeFileSync(settingsFile, settings);
     });

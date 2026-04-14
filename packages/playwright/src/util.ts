@@ -52,9 +52,11 @@ export function filterStackTrace(e: Error): { message: string, stack: string, ca
 }
 
 export function filterStackFile(file: string) {
-  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_TEST_PATH))
+  if (process.env.PWDEBUGIMPL)
+    return true;
+  if (file.startsWith(PLAYWRIGHT_TEST_PATH))
     return false;
-  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_CORE_PATH))
+  if (file.startsWith(PLAYWRIGHT_CORE_PATH))
     return false;
   return true;
 }

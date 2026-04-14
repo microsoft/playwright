@@ -36,6 +36,7 @@ import { WebSocketTransport } from './transport';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';
+import type { Worker } from './page';
 import type { Progress } from './progress';
 import type { BrowserName } from './registry';
 import type { ConnectionTransport } from './transport';
@@ -71,7 +72,7 @@ export abstract class BrowserType extends SdkObject {
     return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupLog(e); });
   }
 
-  async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
+  async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
     const launchOptions = this._validateLaunchOptions(options);
     // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
     let clientCertificatesProxy: ClientCertificatesProxy | undefined;
@@ -108,7 +109,7 @@ export abstract class BrowserType extends SdkObject {
   private async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const browserLogsCollector = new RecentLogsCollector();
-    const { browserProcess, userDataDir, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
+    const { browserProcess, userDataDir, artifactsDir, transport, wsEndpoint } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
     try {
       if ((options as any).__testHookBeforeCreateBrowser)
         await progress.race((options as any).__testHookBeforeCreateBrowser());
@@ -127,7 +128,7 @@ export abstract class BrowserType extends SdkObject {
         proxy: options.proxy,
         protocolLogger,
         browserLogsCollector,
-        wsEndpoint: transport instanceof WebSocketTransport ? transport.wsEndpoint : undefined,
+        wsEndpoint,
         originalLaunchOptions: options,
         userDataDir: persistent ? userDataDir : undefined,
       };
@@ -197,7 +198,7 @@ export abstract class BrowserType extends SdkObject {
     return { executable, browserArguments, userDataDir, artifactsDir, tempDirectories };
   }
 
-  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, browserLogsCollector: RecentLogsCollector, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, artifactsDir: string, userDataDir: string, transport: ConnectionTransport }> {
+  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, browserLogsCollector: RecentLogsCollector, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, artifactsDir: string, userDataDir: string, transport: ConnectionTransport, wsEndpoint?: string }> {
     const {
       handleSIGINT = true,
       handleSIGTERM = true,
@@ -272,13 +273,13 @@ export abstract class BrowserType extends SdkObject {
         const updatedLog = this.doRewriteStartupLog(log);
         throw new Error(`Failed to launch the browser process.\nBrowser logs:\n${updatedLog}`);
       }
-      if (options.cdpPort !== undefined || !this.supportsPipeTransport()) {
+      if (!this.supportsPipeTransport()) {
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
       } else {
         const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
         transport = new PipeTransport(stdio[3], stdio[4]);
       }
-      return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
+      return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport, wsEndpoint };
     } catch (error) {
       await progress.race(closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {}));
       throw error;
@@ -289,7 +290,7 @@ export abstract class BrowserType extends SdkObject {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
-  async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport): Promise<Browser> {
+  async connectToWorker(progress: Progress, endpoint: string): Promise<Worker> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 

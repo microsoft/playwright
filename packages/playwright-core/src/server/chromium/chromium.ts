@@ -30,7 +30,7 @@ import { fetchData } from '../utils';
 import { getUserAgent } from '../userAgent';
 import { chromiumSwitches } from './chromiumSwitches';
 import { shouldProxyLoopback, CRBrowser } from './crBrowser';
-import { kBrowserCloseMessageId } from './crConnection';
+import { ConnectionEvents, CRConnection, kBrowserCloseMessageId } from './crConnection';
 import { validateBrowserContextOptions } from '../browserContext';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { helper } from '../helper';
@@ -38,6 +38,10 @@ import { registry } from '../registry';
 import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
 import { Browser } from '../browser';
+import { Worker } from '../page';
+import { CRExecutionContext, createHandle } from './crExecutionContext';
+import { ConsoleMessage } from '../console';
+import { toConsoleMessageLocation } from './crProtocolHelper';
 
 import type { HTTPRequestParams } from '@utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
@@ -70,7 +74,7 @@ export class Chromium extends BrowserType {
     return super.launch(progress, options, protocolLogger);
   }
 
-  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { cdpPort?: number, internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
+  override async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
     if (options.channel?.startsWith('bidi-'))
       return this._bidiChromium.launchPersistentContext(progress, userDataDir, options);
     return super.launchPersistentContext(progress, userDataDir, options);
@@ -90,8 +94,20 @@ export class Chromium extends BrowserType {
     else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
       headersMap['User-Agent'] = getUserAgent();
 
-    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
-    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap, followRedirects: true, debugLogHeader: 'x-playwright-debug-log' });
+    const channel = channelToUserDataDir.has(endpointURL) ? endpointURL : undefined;
+    if (channel)
+      endpointURL = await resolveChannelEndpoint(progress, endpointURL);
+
+    let wsEndpoint: string;
+    let chromeTransport: WebSocketTransport;
+    try {
+      wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
+      chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap, followRedirects: true, debugLogHeader: 'x-playwright-debug-log' });
+    } catch (e) {
+      if (channel)
+        throw new Error(`Could not connect to ${channel}.\n${remoteDebuggingHint(channel)}`);
+      throw e;
+    }
     const closeAndWait = async () => await chromeTransport.closeAndWait();
     return this._connectOverCDPImpl(progress, chromeTransport, closeAndWait, options, onClose);
   }
@@ -138,9 +154,33 @@ export class Chromium extends BrowserType {
     }
   }
 
-  override async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport) {
-    const closeAndWait = async () => transport.close();
-    return this._connectOverCDPImpl(progress, transport, closeAndWait, { isLocal: true });
+  override async connectToWorker(progress: Progress, endpoint: string) {
+    const wsEndpoint = await urlToWSEndpoint(progress, endpoint, {});
+    const transport = await WebSocketTransport.connect(progress, wsEndpoint);
+    try {
+      const connection = new CRConnection(this, transport, helper.debugProtocolLogger(), new RecentLogsCollector());
+      const session = connection.rootSession;
+      const worker = new Worker(this, '', () => transport.closeAndWait());
+      session.on('Runtime.executionContextCreated', event => {
+        worker.workerScriptLoaded();
+        worker.createExecutionContext(new CRExecutionContext(session, event.context));
+      });
+      session.on('Runtime.executionContextDestroyed', () => worker.destroyExecutionContext('Execution context was destroyed'));
+      session.on('Runtime.consoleAPICalled', event => {
+        if (!worker.existingExecutionContext)
+          return;
+        const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
+        const message = new ConsoleMessage(null, worker, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace), event.timestamp);
+        worker.emit(Worker.Events.Console, message);
+      });
+      connection.on(ConnectionEvents.Disconnected, () => worker.didClose());
+      session._sendMayFail('Runtime.enable');
+      session._sendMayFail('Runtime.runIfWaitingForDebugger');
+      return worker;
+    } catch (error) {
+      await progress.race(transport.closeAndWait().catch(() => {}));
+      throw error;
+    }
   }
 
   private _createDevTools() {
@@ -298,10 +338,7 @@ export class Chromium extends BrowserType {
   override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    if (options.cdpPort !== undefined)
-      chromeArguments.push(`--remote-debugging-port=${options.cdpPort}`);
-    else
-      chromeArguments.push('--remote-debugging-pipe');
+    chromeArguments.push('--remote-debugging-pipe');
     if (isPersistent)
       chromeArguments.push('about:blank');
     else
@@ -318,7 +355,7 @@ export class Chromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const chromeArguments = [...chromiumSwitches(options.assistantMode, options.channel)];
+    const chromeArguments = [...chromiumSwitches()];
 
     // See https://issues.chromium.org/issues/40277080
     chromeArguments.push('--enable-unsafe-swiftshader');
@@ -373,7 +410,7 @@ export class Chromium extends BrowserType {
 }
 
 export async function waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
-  if (options.cdpPort === undefined && !options.args?.some(a => a.startsWith('--remote-debugging-port')))
+  if (!options.args?.some(a => a.startsWith('--remote-debugging-port')))
     return {};
 
   const result = new ManualPromise<{ wsEndpoint?: string }>();
@@ -406,6 +443,31 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
     `This does not look like a DevTools server, try connecting via ws://.`)
   );
   return JSON.parse(json).webSocketDebuggerUrl;
+}
+
+async function resolveChannelEndpoint(progress: Progress, channel: string): Promise<string> {
+  const dirs = channelToUserDataDir.get(channel)!;
+  const userDataDir = dirs[process.platform];
+  if (!userDataDir)
+    throw new Error(`Connecting to ${channel} by channel name is not supported on ${process.platform}.`);
+
+  const devToolsActivePortPath = path.join(userDataDir, 'DevToolsActivePort');
+  progress.log(`<ws preparing> reading ${devToolsActivePortPath}`);
+
+  const contents = await progress.race(fs.promises.readFile(devToolsActivePortPath, 'utf-8').catch(() => undefined));
+  if (!contents) {
+    throw new Error(
+        `Could not connect to ${channel}: DevToolsActivePort file not found at ${devToolsActivePortPath}.\n` +
+        remoteDebuggingHint(channel));
+  }
+
+  const port = parseInt(contents.trim(), 10);
+  if (isNaN(port))
+    throw new Error(`Could not connect to ${channel}: invalid DevToolsActivePort file at ${devToolsActivePortPath}.`);
+
+  const endpoint = `ws://localhost:${port}/devtools/browser`;
+  progress.log(`<ws preparing> resolved channel "${channel}" to ${endpoint}`);
+  return endpoint;
 }
 
 async function seleniumErrorHandler(params: HTTPRequestParams, response: http.IncomingMessage) {
@@ -443,3 +505,55 @@ function parseSeleniumRemoteParams(env: {name: string, value: string}, progress:
     progress.log(`<selenium> ignoring additional ${env.name} "${env.value}": ${e}`);
   }
 }
+
+function remoteDebuggingHint(channel: string): string {
+  return `Make sure ${channel} is running with remote debugging enabled. Navigate to
+
+        chrome://inspect/#remote-debugging
+
+and check "Allow remote debugging for this browser instance".
+`;
+}
+
+const channelToUserDataDir = new Map<string, Record<string, string>>([
+  ['chrome', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome', 'User Data'),
+  }],
+  ['chrome-beta', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome-beta'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Beta'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Beta', 'User Data'),
+  }],
+  ['chrome-dev', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome-unstable'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Dev'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Dev', 'User Data'),
+  }],
+  ['chrome-canary', {
+    'linux': path.join(os.homedir(), '.config', 'google-chrome-canary'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Canary'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome SxS', 'User Data'),
+  }],
+  ['msedge', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge', 'User Data'),
+  }],
+  ['msedge-beta', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-beta'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Beta'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Beta', 'User Data'),
+  }],
+  ['msedge-dev', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-dev'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Dev'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Dev', 'User Data'),
+  }],
+  ['msedge-canary', {
+    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-canary'),
+    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Canary'),
+    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge SxS', 'User Data'),
+  }],
+]);

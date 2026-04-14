@@ -21,6 +21,12 @@ test.describe.configure({
   retries: 1,
 });
 
+test('connect by channel name error', async ({ cli }) => {
+  const { error } = await cli('attach', '--cdp=chrome-canary');
+  expect(error).toContain('Could not connect to chrome-canary');
+  expect(error).toContain('chrome://inspect/#remote-debugging');
+});
+
 test('cdp server', async ({ cdpServer, cli, server }) => {
   const browserContext = await cdpServer.start();
   const [page] = browserContext.pages();
@@ -31,7 +37,17 @@ test('cdp server', async ({ cdpServer, cli, server }) => {
 browser.cdpEndpoint=${cdpServer.endpoint}
 browser.isolated=false
 `);
-  await cli('open', `--config=${configPath}`);
+  await cli('attach', `--config=${configPath}`);
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
+});
+
+test('attach via cdp', async ({ cdpServer, cli, server }) => {
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.HELLO_WORLD);
+
+  await cli('attach', `--cdp=${cdpServer.endpoint}`);
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
 });

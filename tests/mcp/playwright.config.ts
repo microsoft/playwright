@@ -21,6 +21,8 @@ import { defineConfig } from '@playwright/test';
 import type { TestOptions } from './fixtures';
 import type { ReporterDescription } from '@playwright/test';
 
+process.env.PWTEST_UNDER_TEST = '1';
+
 dotenv.config({ path: path.resolve(__dirname, '../../.env'), quiet: true });
 
 const rootTestDir = path.join(__dirname, '..');

@@ -491,7 +491,6 @@ LaunchOptions:
     ignoreDefaultArgs:
       type: array?
       items: string
-    assistantMode: boolean?
     handleSIGINT: boolean?
     handleSIGTERM: boolean?
     handleSIGHUP: boolean?
@@ -1035,13 +1034,13 @@ BrowserType:
         browser: Browser
         defaultContext: BrowserContext?
 
-    connectOverCDPTransport:
-      title: Connect over CDP transport
+    connectToWorker:
+      title: Connect to worker
       parameters:
-        transport: binary
+        endpoint: string
+        timeout: float
       returns:
-        browser: Browser
-        defaultContext: BrowserContext?
+        worker: Worker
 
 Browser:
   type: interface
@@ -1282,7 +1281,6 @@ BrowserContext:
       group: configuration
       parameters:
         name: string
-        needsHandle: boolean?
       returns:
         disposable: Disposable
 
@@ -1441,21 +1439,6 @@ BrowserContext:
         frame: Frame?
       returns:
         session: CDPSession
-
-    harStart:
-      internal: true
-      parameters:
-        page: Page?
-        options: RecordHarOptions
-      returns:
-        harId: string
-
-    harExport:
-      internal: true
-      parameters:
-        harId: string?
-      returns:
-        artifact: Artifact
 
     createTempFiles:
       internal: true
@@ -1701,7 +1684,6 @@ Page:
       group: configuration
       parameters:
         name: string
-        needsHandle: boolean?
       returns:
         disposable: Disposable
 
@@ -3006,6 +2988,13 @@ Worker:
 
   commands:
 
+    disconnect:
+      title: Disconnect from worker
+      parameters:
+        reason: string?
+      flags:
+        pausesBeforeAction: true
+
     evaluateExpression:
       title: Evaluate
       parameters:
@@ -3034,6 +3023,10 @@ Worker:
         enabled: boolean
 
   events:
+
+    console:
+      parameters:
+        $mixin: ConsoleMessage
 
     close:
 
@@ -3885,9 +3878,8 @@ BindingCall:
     frame: Frame
     name: string
     args:
-      type: array?
+      type: array
       items: SerializedValue
-    handle: JSHandle?
 
   commands:
 
@@ -4028,6 +4020,21 @@ Tracing:
     tracingStop:
       title: Stop tracing
       group: configuration
+
+    harStart:
+      internal: true
+      parameters:
+        page: Page?
+        options: RecordHarOptions
+      returns:
+        harId: string
+
+    harExport:
+      internal: true
+      parameters:
+        harId: string?
+      returns:
+        artifact: Artifact
 
 
 Artifact:
