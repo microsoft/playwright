@@ -1036,7 +1036,6 @@ scheme.BrowserContextCookiesResult = tObject({
 });
 scheme.BrowserContextExposeBindingParams = tObject({
   name: tString,
-  needsHandle: tOptional(tBoolean),
 });
 scheme.BrowserContextExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
@@ -1283,7 +1282,6 @@ scheme.PageEmulateMediaParams = tObject({
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
   name: tString,
-  needsHandle: tOptional(tBoolean),
 });
 scheme.PageExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
@@ -2525,8 +2523,7 @@ scheme.WebSocketCloseEvent = tOptional(tObject({}));
 scheme.BindingCallInitializer = tObject({
   frame: tChannel(['Frame']),
   name: tString,
-  args: tOptional(tArray(tType('SerializedValue'))),
-  handle: tOptional(tChannel(['ElementHandle', 'JSHandle'])),
+  args: tArray(tType('SerializedValue')),
 });
 scheme.BindingCallRejectParams = tObject({
   error: tType('SerializedError'),

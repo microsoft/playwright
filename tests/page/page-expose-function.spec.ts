@@ -16,7 +16,6 @@
  */
 
 import { test as it, expect } from './pageTest';
-import type { ElementHandle } from 'playwright-core';
 
 it('exposeBinding should work @smoke', async ({ page }) => {
   let bindingSource;
@@ -184,74 +183,10 @@ it('should work with complex objects', async ({ page, server }) => {
   expect(result.x).toBe(7);
 });
 
-it('exposeBindingHandle should work', async ({ page }) => {
-  let target;
-  await page.exposeBinding('logme', (source, t) => {
-    target = t;
-    return 17;
-  }, { handle: true });
-  const result = await page.evaluate(async function() {
-    return window['logme']({ foo: 42 });
-  });
-  expect(await target.evaluate(x => x.foo)).toBe(42);
-  expect(result).toEqual(17);
-});
-
-it('exposeBindingHandle should not throw during navigation', async ({ page, server }) => {
-  await page.exposeBinding('logme', (source, t) => {
-    return 17;
-  }, { handle: true });
-  await page.goto(server.EMPTY_PAGE);
-  await Promise.all([
-    page.evaluate(async url => {
-      window['logme']({ foo: 42 });
-      window.location.href = url;
-    }, server.PREFIX + '/one-style.html'),
-    page.waitForNavigation({ waitUntil: 'load' }),
-  ]);
-});
-
 it('should throw for duplicate registrations', async ({ page }) => {
   await page.exposeFunction('foo', () => {});
   const error = await page.exposeFunction('foo', () => {}).catch(e => e);
   expect(error.message).toContain('page.exposeFunction: Function "foo" has been already registered');
-});
-
-it('exposeBindingHandle should throw for multiple arguments', async ({ page }) => {
-  await page.exposeBinding('logme', (source, t) => {
-    return 17;
-  }, { handle: true });
-  expect(await page.evaluate(async function() {
-    return window['logme']({ foo: 42 });
-  })).toBe(17);
-  expect(await page.evaluate(async function() {
-    return window['logme']({ foo: 42 }, undefined, undefined);
-  })).toBe(17);
-  expect(await page.evaluate(async function() {
-    return window['logme'](undefined, undefined, undefined);
-  })).toBe(17);
-
-  const error = await page.evaluate(async function() {
-    return window['logme'](1, 2);
-  }).catch(e => e);
-  expect(error.message).toContain('exposeBindingHandle supports a single argument, 2 received');
-});
-
-it('exposeBinding(handle) should work with element handles', async ({ page }) => {
-  let cb;
-  const promise = new Promise(f => cb = f);
-  await page.exposeBinding('clicked', async (source, element: ElementHandle) => {
-    cb(await element.innerText().catch(e => e));
-  }, { handle: true });
-  await page.goto('about:blank');
-  await page.setContent(`
-    <script>
-      document.addEventListener('click', event => window.clicked(event.target));
-    </script>
-    <div id="a1">Click me</div>
-  `);
-  await page.click('#a1');
-  expect(await promise).toBe('Click me');
 });
 
 it('should work with setContent', async ({ page, server }) => {

@@ -1819,10 +1819,9 @@ export type BrowserContextCookiesResult = {
 };
 export type BrowserContextExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type BrowserContextExposeBindingResult = {
   disposable: DisposableChannel,
@@ -2273,10 +2272,9 @@ export type PageEmulateMediaOptions = {
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type PageExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type PageExposeBindingResult = {
   disposable: DisposableChannel,
@@ -4354,8 +4352,7 @@ export interface WebSocketEvents {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  args?: SerializedValue[],
-  handle?: JSHandleChannel,
+  args: SerializedValue[],
 };
 export interface BindingCallEventTarget {
 }

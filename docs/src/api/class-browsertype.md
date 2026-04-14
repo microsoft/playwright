@@ -114,14 +114,6 @@ Additional HTTP headers to be sent with web socket connect request. Optional.
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
-### option: BrowserType.connect.logger
-* since: v1.14
-* langs: js
-* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
-- `logger` <[Logger]>
-
-Logger sink for Playwright logging. Optional.
-
 ### option: BrowserType.connect.timeout
 * since: v1.10
 - `timeout` <[float]>
@@ -217,14 +209,6 @@ Additional HTTP headers to be sent with connect request. Optional.
 
 Tells Playwright that it runs on the same host as the CDP server. It will enable certain optimizations that rely upon
 the file system being the same between Playwright and the Browser.
-
-### option: BrowserType.connectOverCDP.logger
-* since: v1.14
-* langs: js
-* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
-- `logger` <[Logger]>
-
-Logger sink for Playwright logging. Optional.
 
 ### option: BrowserType.connectOverCDP.slowMo
 * since: v1.11

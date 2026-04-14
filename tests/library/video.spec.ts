@@ -106,11 +106,6 @@ it.describe('screencast', () => {
     expect(page.video()).toBeNull();
   });
 
-  it('videoSize should require videosPath', async ({ browser }) => {
-    const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);
-    expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
-  });
-
   it('should not throw without recordVideo.dir', async ({ browser }) => {
     await browser.newContext({ recordVideo: {} });
   });
