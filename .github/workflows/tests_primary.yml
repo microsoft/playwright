@@ -5,17 +5,6 @@ on:
     branches:
       - main
       - release-*
-  pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
-      - 'packages/playwright-core/src/server/bidi/**'
-      - 'packages/playwright-core/src/tools/**'
-      - 'tests/bidi/**'
-      - 'tests/mcp/**'
-    branches:
-      - main
-      - release-*
 
 concurrency:
   # For pull requests, cancel all currently-running jobs for this workflow
