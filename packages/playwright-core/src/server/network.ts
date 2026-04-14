@@ -215,7 +215,7 @@ export class Request extends SdkObject {
   }
 
   async rawRequestHeaders(progress: Progress): Promise<HeadersArray> {
-    return await progress.race(this._rawRequestHeaders());
+    return await progress.race(this._rawRequestHeadersOrProvisional());
   }
 
   async response(progress: Progress): Promise<Response | null> {
@@ -269,6 +269,16 @@ export class Request extends SdkObject {
 
   private async _rawRequestHeaders(): Promise<HeadersArray> {
     return this._overrides?.headers || this._rawRequestHeadersPromise;
+  }
+
+  private async _rawRequestHeadersOrProvisional(): Promise<HeadersArray> {
+    if (this._overrides?.headers)
+      return this._overrides.headers;
+    if (this._rawRequestHeadersPromise.isDone())
+      return await this._rawRequestHeadersPromise;
+    const response = await this._waitForResponse();
+    await response?.finished();
+    return this._rawRequestHeadersPromise.isDone() ? await this._rawRequestHeadersPromise : this._headers;
   }
 
   private _waitForResponse(): Promise<Response | null> {
@@ -327,7 +337,7 @@ export class Request extends SdkObject {
     headersSize += this.method().length;
     headersSize += (new URL(this.url())).pathname.length;
     headersSize += 8; // httpVersion
-    const headers = await this._rawRequestHeaders();
+    const headers = await this._rawRequestHeadersOrProvisional();
     for (const header of headers)
       headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     return headersSize;
@@ -551,7 +561,7 @@ export class Response extends SdkObject {
   }
 
   async rawResponseHeaders(progress: Progress): Promise<NameValue[]> {
-    return await progress.race(this._rawResponseHeadersPromise);
+    return await progress.race(this._rawResponseHeadersOrProvisional());
   }
 
   async httpVersion(progress: Progress): Promise<string> {
@@ -671,7 +681,7 @@ export class Response extends SdkObject {
   }
 
   async responseHeadersSize(): Promise<number> {
-    const availableSize = await this._responseHeadersSizePromise;
+    const availableSize = await this._responseHeadersSizeOrUnavailable();
     if (availableSize !== null)
       return availableSize;
 
@@ -680,11 +690,25 @@ export class Response extends SdkObject {
     headersSize += 8; // httpVersion;
     headersSize += 3; // statusCode;
     headersSize += this.statusText().length;
-    const headers = await this._rawResponseHeadersPromise;
+    const headers = await this._rawResponseHeadersOrProvisional();
     for (const header of headers)
       headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     headersSize += 2; // '\r\n'
     return headersSize;
+  }
+
+  private async _rawResponseHeadersOrProvisional(): Promise<NameValue[]> {
+    if (this._rawResponseHeadersPromise.isDone())
+      return await this._rawResponseHeadersPromise;
+    await this._finishedPromise;
+    return this._rawResponseHeadersPromise.isDone() ? await this._rawResponseHeadersPromise : this._headers;
+  }
+
+  private async _responseHeadersSizeOrUnavailable(): Promise<number | null> {
+    if (this._responseHeadersSizePromise.isDone())
+      return await this._responseHeadersSizePromise;
+    await this._finishedPromise;
+    return this._responseHeadersSizePromise.isDone() ? await this._responseHeadersSizePromise : null;
   }
 
   private async _sizes(): Promise<ResourceSizes> {

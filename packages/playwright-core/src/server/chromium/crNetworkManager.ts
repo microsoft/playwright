@@ -726,10 +726,11 @@ type RequestInfo = {
 //   - Network.requestWillBeSentExtraInfo and Network.responseReceivedExtraInfo are dispatched on
 //     another channel. Those channels are not associated, so events come in random order.
 //
-// This class will associate responses with the new headers. These extra info headers will become
-// available to client reliably upon requestfinished event only. It consumes CDP
+// This class will associate responses with the new headers while Chromium delivers them before the
+// request finishes. If extra info is still missing at requestfinished, header access falls back to
+// provisional values. It consumes CDP
 // signals on one end and processResponse(network.Response) signals on the other hands. It then makes
-// sure that responses have all the extra headers in place by the time request finishes.
+// sure that responses have Chromium extra headers in place whenever they arrive before finish.
 //
 // The shape of the instrumentation API is deliberately following the CDP, so that it
 // is clear what is called when and what this means to the tracker without extra
@@ -827,13 +828,7 @@ class ResponseExtraInfoTracker {
     if (!info.loadingFinished && !info.loadingFailed)
       return;
 
-    if (info.responses.length <= info.responseReceivedExtraInfo.length) {
-      // We have extra info for each response.
-      this._stopTracking(info.requestId);
-      return;
-    }
-
-    // We are not done yet.
+    this._stopTracking(info.requestId);
   }
 
   private _stopTracking(requestId: string) {
