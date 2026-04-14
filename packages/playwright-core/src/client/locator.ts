@@ -20,6 +20,7 @@ import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
+import { DisposableStub } from './disposable';
 
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
@@ -151,7 +152,12 @@ export class Locator implements api.Locator {
   }
 
   async highlight() {
-    return await this._frame._highlight(this._selector);
+    await this._frame._highlight(this._selector);
+    return new DisposableStub(() => this.hideHighlight());
+  }
+
+  async hideHighlight() {
+    await this._frame._hideHighlight(this._selector);
   }
 
   locator(selectorOrLocator: string | Locator, options?: Omit<LocatorOptions, 'visible'>): Locator {
@@ -311,6 +317,11 @@ export class Locator implements api.Locator {
   async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
     return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), { title: 'Screenshot', timeout: options.timeout });
+  }
+
+  async ariaRef(options: TimeoutOptions = {}): Promise<string | null> {
+    const { ref } = await this._frame._channel.ariaRef({ selector: this._selector, timeout: this._frame._timeout(options) });
+    return ref ?? null;
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number } = {}): Promise<string> {

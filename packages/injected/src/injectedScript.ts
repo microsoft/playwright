@@ -1313,12 +1313,14 @@ export class InjectedScript {
     return this._highlight;
   }
 
-  highlight(selector: ParsedSelector) {
-    if (!this._highlight) {
-      this._highlight = new Highlight(this);
-      this._highlight.install();
-    }
-    this._highlight.runHighlightOnRaf(selector);
+  addHighlight(selector: ParsedSelector) {
+    const highlight = this._ensureHighlight();
+    highlight.addElementHighlight(selector);
+  }
+
+  removeHighlight(selector: ParsedSelector) {
+    const highlight = this._ensureHighlight();
+    highlight.removeElementHighlight(selector);
   }
 
   setScreencastAnnotation(annotation: { point?: channels.Point, box?: channels.Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number } | null) {

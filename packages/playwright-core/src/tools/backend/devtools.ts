@@ -15,7 +15,8 @@
  */
 
 import * as z from 'zod';
-import { defineTool } from './tool';
+import { defineTabTool, defineTool } from './tool';
+import { elementSchema } from './snapshot';
 
 const resume = defineTool({
   capability: 'devtools',
@@ -64,4 +65,58 @@ const resume = defineTool({
   },
 });
 
-export default [resume];
+const pickLocator = defineTabTool({
+  capability: 'devtools',
+  schema: {
+    name: 'browser_pick_locator',
+    title: 'Pick element locator',
+    description: 'Wait for the user to pick an element in the browser and return its ref and locator.',
+    inputSchema: z.object({}),
+    type: 'readOnly',
+  },
+
+  handle: async (tab, params, response) => {
+    const locator = await tab.page.pickLocator();
+    // Regenerate aria refs so the picked element has an aria ref we can read below.
+    await tab.page.ariaSnapshot({ mode: 'ai' });
+    const ref = await locator.ariaRef();
+    const resolved = await locator.normalize();
+    response.addTextResult(`ref: ${ref ?? '(none)'}\nlocator: ${resolved.toString()}`);
+  },
+});
+
+const highlight = defineTabTool({
+  capability: 'devtools',
+  schema: {
+    name: 'browser_highlight',
+    title: 'Highlight element',
+    description: 'Show a persistent highlight overlay around the element on the page.',
+    inputSchema: elementSchema,
+    type: 'readOnly',
+  },
+
+  handle: async (tab, params, response) => {
+    const { locator, resolved } = await tab.refLocator(params);
+    await (await locator.normalize()).highlight();
+    response.addTextResult(`Highlighted ${resolved}`);
+  },
+});
+
+const hideHighlight = defineTabTool({
+  capability: 'devtools',
+  schema: {
+    name: 'browser_hide_highlight',
+    title: 'Hide element highlight',
+    description: 'Remove a highlight overlay previously added for the element.',
+    inputSchema: elementSchema,
+    type: 'readOnly',
+  },
+
+  handle: async (tab, params, response) => {
+    const { locator, resolved } = await tab.refLocator(params);
+    await (await locator.normalize()).hideHighlight();
+    response.addTextResult(`Hid highlight for ${resolved}`);
+  },
+});
+
+export default [resume, pickLocator, highlight, hideHighlight];

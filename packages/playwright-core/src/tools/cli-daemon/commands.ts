@@ -355,6 +355,29 @@ const snapshot = declareCommand({
   toolParams: ({ filename, element, depth }) => ({ filename, ...asRef(element), depth }),
 });
 
+const pick = declareCommand({
+  name: 'pick',
+  description: 'Wait for the user to pick an element in the browser and print its ref and locator',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_pick_locator',
+  toolParams: () => ({}),
+});
+
+const highlight = declareCommand({
+  name: 'highlight',
+  description: 'Show (or with --hide, remove) a highlight overlay for an element',
+  category: 'devtools',
+  args: z.object({
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+  }),
+  options: z.object({
+    hide: z.boolean().optional().describe('Hide a previously added highlight for this element'),
+  }),
+  toolName: ({ hide }) => hide ? 'browser_hide_highlight' : 'browser_highlight',
+  toolParams: ({ target }) => ({ ...asRef(target) }),
+});
+
 const evaluate = declareCommand({
   name: 'eval',
   description: 'Evaluate JavaScript expression on page or element',
@@ -1054,6 +1077,8 @@ const commandsArray: AnyCommandSchema[] = [
   pauseAt,
   resume,
   stepOver,
+  pick,
+  highlight,
 
   // session category
   sessionList,

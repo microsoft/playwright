@@ -1,0 +1,87 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { test, expect } from './fixtures';
+
+test.use({ mcpCaps: ['devtools'] });
+
+test('browser_pick_locator', async ({ cdpServer, startClient, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  await client.callTool({ name: 'browser_snapshot' });
+
+  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
+  const pickPromise = client.callTool({ name: 'browser_pick_locator' });
+  await scriptReady;
+
+  const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  expect(await pickPromise).toHaveResponse({
+    result: `ref: e2\nlocator: getByRole('button', { name: 'Submit' })`,
+  });
+});
+
+test('browser_highlight', async ({ cdpServer, startClient, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  await client.callTool({ name: 'browser_snapshot' });
+
+  expect(await client.callTool({
+    name: 'browser_highlight',
+    arguments: { element: 'Submit button', ref: 'e2' },
+  })).toHaveResponse({
+    result: `Highlighted getByRole('button', { name: 'Submit' })`,
+  });
+
+  const highlight = page.locator('x-pw-highlight');
+  const tooltip = page.locator('x-pw-tooltip-line');
+  await expect(highlight).toBeVisible();
+  await expect(tooltip).toHaveText(`getByRole('button', { name: 'Submit' })`);
+  expect(await highlight.boundingBox()).toEqual(await page.getByRole('button', { name: 'Submit' }).boundingBox());
+});
+
+test('browser_hide_highlight', async ({ cdpServer, startClient, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  await client.callTool({ name: 'browser_snapshot' });
+
+  await client.callTool({
+    name: 'browser_highlight',
+    arguments: { element: 'Submit button', ref: 'e2' },
+  });
+  await expect(page.locator('x-pw-highlight')).toBeVisible();
+
+  expect(await client.callTool({
+    name: 'browser_hide_highlight',
+    arguments: { element: 'Submit button', ref: 'e2' },
+  })).toHaveResponse({
+    result: `Hid highlight for getByRole('button', { name: 'Submit' })`,
+  });
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+});

@@ -2299,6 +2299,14 @@ Frame:
         snapshot: true
         pause: true
 
+    ariaRef:
+      internal: true
+      parameters:
+        selector: string
+        timeout: float
+      returns:
+        ref: string?
+
     ariaSnapshot:
       title: Aria snapshot
       group: getter
@@ -2517,8 +2525,12 @@ Frame:
         resolvedSelector: string
 
     highlight:
-      title: Highlight element
-      group: configuration
+      internal: true
+      parameters:
+        selector: string
+
+    hideHighlight:
+      internal: true
       parameters:
         selector: string
 
