@@ -267,8 +267,6 @@ function throwUnsupportedExpectMatcherError() {
   throw new Error('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
 }
 
-expectLibrary.setState({ expand: false });
-
 const customAsyncMatchers = {
   toBeAttached,
   toBeChecked,

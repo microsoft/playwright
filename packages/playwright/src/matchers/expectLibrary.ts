@@ -50,30 +50,29 @@ import type { MatcherHintOptions } from 'jest-matcher-utils';
 // Types
 // -----------------------------------------------------------------------------
 
-export type SyncExpectationResult = {
+type SyncExpectationResult = {
   pass: boolean;
   message(): string;
 };
 
-export type AsyncExpectationResult = Promise<SyncExpectationResult>;
+type AsyncExpectationResult = Promise<SyncExpectationResult>;
 
-export type ExpectationResult = SyncExpectationResult | AsyncExpectationResult;
+type ExpectationResult = SyncExpectationResult | AsyncExpectationResult;
 
-export type RawMatcherFn<Context extends MatcherContext = MatcherContext> = {
+type RawMatcherFn<Context extends MatcherContext = MatcherContext> = {
   (this: Context, actual: any, ...expected: Array<any>): ExpectationResult;
   [INTERNAL_MATCHER_FLAG]?: boolean;
 };
 
-export type MatchersObject = {
+type MatchersObject = {
   [name: string]: RawMatcherFn;
 };
 
-export type ThrowingMatcherFn = (...args: Array<any>) => any;
-export type PromiseMatcherFn = (...args: Array<any>) => Promise<any>;
+type ThrowingMatcherFn = (...args: Array<any>) => any;
+type PromiseMatcherFn = (...args: Array<any>) => Promise<any>;
 
-export interface MatcherUtils {
+interface MatcherUtils {
   customTesters: Array<Tester>;
-  dontThrow(): void;
   equals: EqualsFunction;
   utils: typeof matcherUtils & {
     iterableEquality: Tester;
@@ -81,18 +80,15 @@ export interface MatcherUtils {
   };
 }
 
-export interface MatcherState {
-  currentTestName?: string;
+interface MatcherState {
   error?: Error;
-  expand?: boolean;
   isNot?: boolean;
   promise?: string;
-  testPath?: string;
 }
 
-export type MatcherContext = MatcherUtils & Readonly<MatcherState>;
+type MatcherContext = MatcherUtils & Readonly<MatcherState>;
 
-export type AsymmetricMatcherInterface = {
+type AsymmetricMatcherInterface = {
   asymmetricMatch(other: unknown): boolean;
   toString(): string;
   getExpectedType?(): string;
@@ -144,30 +140,9 @@ function isPromise<T>(candidate: unknown): candidate is Promise<T> {
       && typeof (candidate as any).then === 'function';
 }
 
-const JEST_MATCHERS_OBJECT = Symbol.for('$$jest-matchers-object');
-export const INTERNAL_MATCHER_FLAG = Symbol.for('$$jest-internal-matcher');
+const INTERNAL_MATCHER_FLAG = Symbol.for('$$jest-internal-matcher');
 
-if (!Object.prototype.hasOwnProperty.call(globalThis, JEST_MATCHERS_OBJECT)) {
-  const defaultState: MatcherState = {};
-  Object.defineProperty(globalThis, JEST_MATCHERS_OBJECT, {
-    value: {
-      matchers: Object.create(null),
-      state: defaultState,
-    },
-  });
-}
-
-export const getState = <State extends MatcherState = MatcherState>(): State =>
-  (globalThis as any)[JEST_MATCHERS_OBJECT].state;
-
-export const setState = <State extends MatcherState = MatcherState>(
-  state: Partial<State>,
-): void => {
-  Object.assign((globalThis as any)[JEST_MATCHERS_OBJECT].state, state);
-};
-
-const getMatchers = (): MatchersObject =>
-  (globalThis as any)[JEST_MATCHERS_OBJECT].matchers;
+const allMatchers: MatchersObject = Object.create(null);
 
 const setMatchers = (
   matchers: MatchersObject,
@@ -237,7 +212,7 @@ const setMatchers = (
     }
   }
 
-  Object.assign((globalThis as any)[JEST_MATCHERS_OBJECT].matchers, matchers);
+  Object.assign(allMatchers, matchers);
 };
 
 // -----------------------------------------------------------------------------
@@ -270,7 +245,7 @@ function hasProperty(obj: object | null, property: string | symbol): boolean {
   return hasProperty(Object.getPrototypeOf(obj), property);
 }
 
-export abstract class AsymmetricMatcher<T> implements AsymmetricMatcherInterface {
+abstract class AsymmetricMatcher<T> implements AsymmetricMatcherInterface {
   $$typeof = Symbol.for('jest.asymmetricMatcher');
 
   constructor(
@@ -281,8 +256,6 @@ export abstract class AsymmetricMatcher<T> implements AsymmetricMatcherInterface
   protected getMatcherContext(): MatcherContext {
     return {
       customTesters: [],
-      dontThrow: () => {},
-      ...getState<MatcherState>(),
       equals,
       isNot: this.inverse,
       utils,
@@ -673,8 +646,6 @@ const RECEIVED_LABEL = 'Received';
 const EXPECTED_VALUE_LABEL = 'Expected value';
 const RECEIVED_VALUE_LABEL = 'Received value';
 
-const isExpand = (expand?: boolean): boolean => expand !== false;
-
 const toStrictEqualTesters = [
   iterableEquality,
   typeEquality,
@@ -724,7 +695,7 @@ const matchers: MatchersObject = {
               : `${DIM_COLOR(
                   `If it should pass with deep equality, replace "${matcherName}" with "${deepEqualityName}"`,
               )}\n\n`) +
-            printDiffOrStringify(expected, received, EXPECTED_LABEL, RECEIVED_LABEL, isExpand(this.expand))
+            printDiffOrStringify(expected, received, EXPECTED_LABEL, RECEIVED_LABEL, false)
         );
       };
 
@@ -1121,7 +1092,7 @@ const matchers: MatchersObject = {
       : () =>
         matcherHint(matcherName, undefined, undefined, options) +
           '\n\n' +
-          printDiffOrStringify(expected, received, EXPECTED_LABEL, RECEIVED_LABEL, isExpand(this.expand));
+          printDiffOrStringify(expected, received, EXPECTED_LABEL, RECEIVED_LABEL, false);
 
     return { actual: received, expected, message, name: matcherName, pass };
   },
@@ -1242,7 +1213,7 @@ const matchers: MatchersObject = {
                 receivedValue,
                 EXPECTED_VALUE_LABEL,
                 RECEIVED_VALUE_LABEL,
-                isExpand(this.expand),
+                false,
             )}`
             : `Received path: ${printReceived(
                 expectedPathType === 'array' || receivedPath.length === 0
@@ -1360,7 +1331,7 @@ const matchers: MatchersObject = {
               getObjectSubset(received, expected, this.customTesters),
               EXPECTED_LABEL,
               RECEIVED_LABEL,
-              isExpand(this.expand),
+              false,
           );
 
     return { message, pass };
@@ -1383,7 +1354,7 @@ const matchers: MatchersObject = {
       : () =>
         matcherHint(matcherName, undefined, undefined, options) +
           '\n\n' +
-          printDiffOrStringify(expected, received, EXPECTED_LABEL, RECEIVED_LABEL, isExpand(this.expand));
+          printDiffOrStringify(expected, received, EXPECTED_LABEL, RECEIVED_LABEL, false);
 
     return { actual: received, expected, message, name: matcherName, pass };
   },
@@ -1778,7 +1749,7 @@ function messageAndCause(error: Error) {
 // expect function (index.ts)
 // -----------------------------------------------------------------------------
 
-export class JestAssertionError extends Error {
+class JestAssertionError extends Error {
   matcherResult?: Omit<SyncExpectationResult, 'message'> & { message: string };
 }
 
@@ -1801,11 +1772,9 @@ type AsymmetricMatchers = {
 
 interface BaseExpect {
   extend(matchers: MatchersObject): void;
-  getState(): MatcherState;
-  setState(state: Partial<MatcherState>): void;
 }
 
-export type Expect = (<T = unknown>(actual: T) => any) &
+type Expect = (<T = unknown>(actual: T) => any) &
   BaseExpect &
   AsymmetricMatchers & {
     not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
@@ -1815,7 +1784,6 @@ export const expect: Expect = ((actual: any, ...rest: Array<any>) => {
   if (rest.length > 0)
     throw new Error('Expect takes at most one argument.');
 
-  const allMatchers = getMatchers();
   const expectation: any = {
     not: {},
     rejects: { not: {} },
@@ -1928,17 +1896,10 @@ const makeThrowingMatcher = (
   err?: JestAssertionError,
 ): ThrowingMatcherFn =>
   function throwingMatcher(this: void, ...args: Array<any>): any {
-    let throws = true;
-    const matcherUtilsThing: MatcherUtils = {
+    const matcherContext: MatcherContext = {
       customTesters: [],
-      dontThrow: () => (throws = false),
       equals,
       utils,
-    };
-
-    const matcherContext: MatcherContext = {
-      ...getState<MatcherState>(),
-      ...matcherUtilsThing,
       error: err,
       isNot,
       promise,
@@ -1967,9 +1928,7 @@ const makeThrowingMatcher = (
             Error.captureStackTrace(error, throwingMatcher);
         }
         error.matcherResult = { ...result, message };
-
-        if (throws)
-          throw error;
+        throw error;
       }
     };
 
@@ -2048,13 +2007,8 @@ const _validateResult = (result: any) => {
   }
 };
 
-expect.getState = getState;
-expect.setState = setState;
-
 // Register built-in matchers.
 setMatchers(matchers, true, expect);
 setMatchers(toThrowMatchers, true, expect);
-
-export default expect;
 
 // #endregion
