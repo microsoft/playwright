@@ -37,9 +37,6 @@ jobs:
         # Arm64: *-xlarge
         os: [macos-26-xlarge]
         browser: [webkit]
-        include:
-        - os: macos-14-xlarge
-          browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
@@ -60,10 +57,6 @@ jobs:
       matrix:
         browser: [webkit]
         os: [macos-latest]
-        include:
-          # We have different binaries per Ubuntu version for WebKit.
-          - browser: webkit
-            os: ubuntu-22.04
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
