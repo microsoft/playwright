@@ -317,6 +317,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.highlight({ selector });
   }
 
+  async _hideHighlight(selector: string) {
+    return await this._channel.hideHighlight({ selector });
+  }
+
   locator(selector: string, options?: LocatorOptions): Locator {
     return new Locator(this, selector, options);
   }

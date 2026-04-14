@@ -159,3 +159,60 @@ test('video-chapter', async ({ cli, server }) => {
   expect(output).toContain(`Chapter 'Introduction' added.`);
   await cli('video-stop');
 });
+
+test('pick', async ({ cdpServer, cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('snapshot');
+
+  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
+  const pickPromise = cli('pick');
+  await scriptReady;
+
+  const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  const { output } = await pickPromise;
+  expect(output).toContain(`ref: e2`);
+  expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
+});
+
+test('highlight', async ({ cdpServer, cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('snapshot');
+
+  const { output } = await cli('highlight', 'e2');
+  expect(output).toContain(`Highlighted getByRole('button', { name: 'Submit' })`);
+
+  const highlight = page.locator('x-pw-highlight');
+  const tooltip = page.locator('x-pw-tooltip-line');
+  await expect(highlight).toBeVisible();
+  await expect(tooltip).toHaveText(`getByRole('button', { name: 'Submit' })`);
+  expect(await highlight.boundingBox()).toEqual(await page.getByRole('button', { name: 'Submit' }).boundingBox());
+});
+
+test('highlight --hide', async ({ cdpServer, cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('snapshot');
+
+  await cli('highlight', 'e2');
+  await expect(page.locator('x-pw-highlight')).toBeVisible();
+
+  const { output } = await cli('highlight', 'e2', '--hide');
+  expect(output).toContain(`Hid highlight for getByRole('button', { name: 'Submit' })`);
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+});

@@ -1648,6 +1648,13 @@ scheme.FrameAddStyleTagParams = tObject({
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameAriaRefParams = tObject({
+  selector: tString,
+  timeout: tFloat,
+});
+scheme.FrameAriaRefResult = tObject({
+  ref: tOptional(tString),
+});
 scheme.FrameAriaSnapshotParams = tObject({
   mode: tOptional(tEnum(['ai', 'default'])),
   track: tOptional(tString),
@@ -1769,6 +1776,10 @@ scheme.FrameHighlightParams = tObject({
   selector: tString,
 });
 scheme.FrameHighlightResult = tOptional(tObject({}));
+scheme.FrameHideHighlightParams = tObject({
+  selector: tString,
+});
+scheme.FrameHideHighlightResult = tOptional(tObject({}));
 scheme.FrameGetAttributeParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),

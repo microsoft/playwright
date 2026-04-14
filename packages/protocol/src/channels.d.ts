@@ -2804,6 +2804,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, progress?: Progress): Promise<FrameEvalOnSelectorAllResult>;
   addScriptTag(params: FrameAddScriptTagParams, progress?: Progress): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, progress?: Progress): Promise<FrameAddStyleTagResult>;
+  ariaRef(params: FrameAriaRefParams, progress?: Progress): Promise<FrameAriaRefResult>;
   ariaSnapshot(params: FrameAriaSnapshotParams, progress?: Progress): Promise<FrameAriaSnapshotResult>;
   blur(params: FrameBlurParams, progress?: Progress): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, progress?: Progress): Promise<FrameCheckResult>;
@@ -2819,6 +2820,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   frameElement(params?: FrameFrameElementParams, progress?: Progress): Promise<FrameFrameElementResult>;
   resolveSelector(params: FrameResolveSelectorParams, progress?: Progress): Promise<FrameResolveSelectorResult>;
   highlight(params: FrameHighlightParams, progress?: Progress): Promise<FrameHighlightResult>;
+  hideHighlight(params: FrameHideHighlightParams, progress?: Progress): Promise<FrameHideHighlightResult>;
   getAttribute(params: FrameGetAttributeParams, progress?: Progress): Promise<FrameGetAttributeResult>;
   goto(params: FrameGotoParams, progress?: Progress): Promise<FrameGotoResult>;
   hover(params: FrameHoverParams, progress?: Progress): Promise<FrameHoverResult>;
@@ -2909,6 +2911,16 @@ export type FrameAddStyleTagOptions = {
 };
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
+};
+export type FrameAriaRefParams = {
+  selector: string,
+  timeout: number,
+};
+export type FrameAriaRefOptions = {
+
+};
+export type FrameAriaRefResult = {
+  ref?: string,
 };
 export type FrameAriaSnapshotParams = {
   mode?: 'ai' | 'default',
@@ -3100,6 +3112,13 @@ export type FrameHighlightOptions = {
 
 };
 export type FrameHighlightResult = void;
+export type FrameHideHighlightParams = {
+  selector: string,
+};
+export type FrameHideHighlightOptions = {
+
+};
+export type FrameHideHighlightResult = void;
 export type FrameGetAttributeParams = {
   selector: string,
   strict?: boolean,

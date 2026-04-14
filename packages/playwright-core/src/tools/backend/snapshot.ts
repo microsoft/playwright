@@ -166,7 +166,7 @@ const selectOption = defineTabTool({
   },
 });
 
-const pickLocator = defineTabTool({
+const generateLocator = defineTabTool({
   capability: 'testing',
   schema: {
     name: 'browser_generate_locator',
@@ -225,7 +225,7 @@ export default [
   drag,
   hover,
   selectOption,
-  pickLocator,
+  generateLocator,
   check,
   uncheck,
 ];
