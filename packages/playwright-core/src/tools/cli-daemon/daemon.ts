@@ -164,6 +164,7 @@ function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browse
     attached: options.ownership === 'attached' ? true : undefined,
     cli: { persistent: options.persistent },
     browser: {
+      guid: browserInfo.guid,
       browserName: browserInfo.browserName,
       launchOptions: browserInfo.launchOptions,
       userDataDir: browserInfo.userDataDir,

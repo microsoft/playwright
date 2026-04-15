@@ -38,8 +38,8 @@ function tabFavicon(url: string): string {
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
 
-export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
-  const [interactive, setInteractive] = React.useState(false);
+export const Dashboard: React.FC<{ wsUrl?: string, initialInteractive?: boolean }> = ({ wsUrl, initialInteractive }) => {
+  const [interactive, setInteractive] = React.useState(!!initialInteractive);
   const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
@@ -61,7 +61,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     channel.onopen = () => {
       setChannel(channel);
-      setInteractive(false);
+      setInteractive(!!initialInteractive);
       setPickingTabId(null);
     };
 

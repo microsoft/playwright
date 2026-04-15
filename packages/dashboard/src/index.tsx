@@ -30,19 +30,34 @@ export function navigate(hash: string) {
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 
-function parseHash(): string | undefined {
+type HashState = { guid?: string, interactive?: boolean };
+
+function parseHash(): HashState {
   const hash = window.location.hash;
-  const prefix = '#session=';
-  if (hash.startsWith(prefix))
-    return decodeURIComponent(hash.slice(prefix.length));
-  return undefined;
+  if (!hash.startsWith('#'))
+    return {};
+  const result: HashState = {};
+  for (const part of hash.slice(1).split('&')) {
+    if (part === 'interactive') {
+      result.interactive = true;
+      continue;
+    }
+    const eq = part.indexOf('=');
+    if (eq === -1)
+      continue;
+    const key = part.slice(0, eq);
+    const value = decodeURIComponent(part.slice(eq + 1));
+    if (key === 'session')
+      result.guid = value;
+  }
+  return result;
 }
 
 const model = new SessionModel();
 
 const App: React.FC = () => {
   const [, setRevision] = React.useState(0);
-  const [socketPath, setSocketPath] = React.useState<string | undefined>(parseHash);
+  const [hashState, setHashState] = React.useState<HashState>(parseHash);
 
   React.useEffect(() => {
     model.startPolling();
@@ -54,14 +69,18 @@ const App: React.FC = () => {
   }, [model]);
 
   React.useEffect(() => {
-    const onPopState = () => setSocketPath(parseHash());
+    const onPopState = () => setHashState(parseHash());
     window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
+    window.addEventListener('hashchange', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('hashchange', onPopState);
+    };
   }, []);
 
-  if (socketPath) {
-    const wsUrl = model.sessionByGuid(socketPath)?.wsUrl;
-    return <Dashboard wsUrl={wsUrl || undefined} />;
+  if (hashState.guid) {
+    const wsUrl = model.sessionByGuid(hashState.guid)?.wsUrl;
+    return <Dashboard key={hashState.guid} wsUrl={wsUrl || undefined} initialInteractive={hashState.interactive} />;
   }
   return <Grid model={model} />;
 };

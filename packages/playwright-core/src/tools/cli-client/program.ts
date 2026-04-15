@@ -174,14 +174,7 @@ export async function program(options?: { embedderVersion?: string}) {
       await installBrowser();
       return;
     case 'show': {
-      const daemonScript = libPath('entry', 'dashboardApp.js');
-      const child = spawn(process.execPath, [daemonScript], {
-        detached: true,
-        stdio: 'ignore',
-      });
-      child.unref();
-      if (process.env.PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST)
-        console.log(`### Dashboard opened with pid ${child.pid}.`);
+      spawnDashboardApp(registry.entry(clientInfo, sessionName)?.config.browser.guid, !!args.interactive);
       return;
     }
     default: {
@@ -192,9 +185,28 @@ export async function program(options?: { embedderVersion?: string}) {
         console.log(`  playwright-cli${sessionName !== 'default' ? ` -s=${sessionName}` : ''} open [params]`);
         process.exit(1);
       }
+      // Bring up the dashboard in interactive mode so the user sees the browser while picking.
+      if (commandName === 'pick')
+        spawnDashboardApp(entry.config.browser.guid, true);
       await runInSession(entry, clientInfo, args);
     }
   }
+}
+
+function spawnDashboardApp(guid: string | undefined, interactive: boolean) {
+  const daemonScript = libPath('entry', 'dashboardApp.js');
+  const spawnArgs = [daemonScript];
+  if (guid)
+    spawnArgs.push(guid);
+  if (interactive)
+    spawnArgs.push('--interactive');
+  const child = spawn(process.execPath, spawnArgs, {
+    detached: true,
+    stdio: 'ignore',
+  });
+  child.unref();
+  if (process.env.PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST)
+    console.log(`### Dashboard opened with pid ${child.pid}.`);
 }
 
 async function startSession(sessionName: string, registry: Registry, clientInfo: ClientInfo, args: MinimistArgs, mode: 'open' | 'attach') {

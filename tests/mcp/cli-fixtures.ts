@@ -29,7 +29,7 @@ import type { CommonFixtures } from '../config/commonFixtures';
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
   cliEnv: Record<string, string>,
-  openDashboard: (options?: { cwd?: string }) => Promise<Page>,
+  openDashboard: (options?: { cwd?: string, session?: string, interactive?: boolean }) => Promise<Page>,
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -45,9 +45,15 @@ export const test = baseTest.extend<{
   },
   openDashboard: async ({ cli, waitForPort, findFreePort }, use) => {
     const dashboards = [];
-    await use(async (options?: { cwd?: string }) => {
+    await use(async (options?: { cwd?: string, session?: string, interactive?: boolean }) => {
       const debugPort = await findFreePort();
-      await cli('show', { cwd: options?.cwd, env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(debugPort) } });
+      const args: string[] = [];
+      if (options?.session)
+        args.push(`-s=${options.session}`);
+      args.push('show');
+      if (options?.interactive)
+        args.push('--interactive');
+      await cli(...args, { cwd: options?.cwd, env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(debugPort) } });
       await waitForPort(debugPort);
       const browser = await chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`);
       const dashboard = browser.contexts()[0].pages()[0];

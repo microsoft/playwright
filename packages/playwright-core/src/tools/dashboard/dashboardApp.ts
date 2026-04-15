@@ -178,8 +178,25 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
   const url = httpServer.urlPrefix('human-readable');
 
   const { page } = await launchApp('dashboard');
-  await page.goto(url);
+  await page.goto(url + sessionHash(sessionGuidArg(), interactiveArg()));
   return page;
+}
+
+function sessionGuidArg(): string | undefined {
+  return process.argv[2] || undefined;
+}
+
+function interactiveArg(): boolean {
+  return process.argv.includes('--interactive');
+}
+
+function sessionHash(guid: string | undefined, interactive: boolean): string {
+  const parts: string[] = [];
+  if (guid)
+    parts.push('session=' + encodeURIComponent(guid));
+  if (interactive)
+    parts.push('interactive');
+  return parts.length ? '#' + parts.join('&') : '';
 }
 
 async function launchApp(appName: string) {
@@ -265,7 +282,7 @@ async function acquireSingleton(): Promise<net.Server> {
       if (err.code !== 'EADDRINUSE')
         return reject(err);
       const client = net.connect(socketPath, () => {
-        client.write('bringToFront');
+        client.write(JSON.stringify({ type: 'bringToFront', guid: sessionGuidArg(), interactive: interactiveArg() }));
         client.end();
         reject(new Error('already running'));
       });
@@ -295,9 +312,25 @@ export async function openDashboardApp() {
   }
   const page = await innerOpenDashboardApp();
   server?.on('connection', socket => {
-    socket.on('data', data => {
-      if (data.toString() === 'bringToFront')
-        page?.bringToFront().catch(() => {});
+    socket.on('data', async data => {
+      let message: { type?: string, guid?: string, interactive?: boolean };
+      try {
+        message = JSON.parse(data.toString());
+      } catch {
+        // Backwards-compatible: a plain "bringToFront" string from older callers.
+        message = { type: data.toString() };
+      }
+      if (message.type !== 'bringToFront')
+        return;
+      if (message.guid) {
+        await page.evaluate(({ guid, interactive }) => {
+          const parts = ['session=' + encodeURIComponent(guid)];
+          if (interactive)
+            parts.push('interactive');
+          window.location.hash = '#' + parts.join('&');
+        }, { guid: message.guid, interactive: !!message.interactive }).catch(() => {});
+      }
+      await page?.bringToFront().catch(() => {});
     });
   });
 }

@@ -27,8 +27,28 @@ test('should show browser session chip', async ({ cli, server, openDashboard }) 
   await cli('open', server.EMPTY_PAGE);
 
   const dashboard = await openDashboard();
+  await dashboard.locator('.tabbar-back').click();
   const chips = dashboard.locator('.session-chip');
   await expect(chips).toHaveCount(1);
+});
+
+test('show <session> selects the session', async ({ cli, server, openDashboard }) => {
+  await cli('-s=alpha', 'open', server.EMPTY_PAGE);
+  await cli('-s=beta', 'open', server.HELLO_WORLD);
+
+  const dashboard = await openDashboard({ session: 'beta' });
+  // Selecting a session navigates from the grid to the single-session view.
+  await expect(dashboard.locator('.session-chip')).toHaveCount(0);
+  await expect(dashboard.locator('.dashboard-view')).toBeVisible();
+  expect(new URL(dashboard.url()).hash).toMatch(/^#session=/);
+});
+
+test('show --interactive opens the dashboard in interactive mode', async ({ cli, server, openDashboard }) => {
+  await cli('open', server.EMPTY_PAGE);
+
+  const dashboard = await openDashboard({ session: 'default', interactive: true });
+  await expect(dashboard.locator('.dashboard-view')).toContainClass('interactive');
+  expect(new URL(dashboard.url()).hash).toContain('interactive');
 });
 
 test('should show devtools sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
@@ -37,7 +57,6 @@ test('should show devtools sidebar', async ({ cli, server, openDashboard, mcpBro
   await cli('open', server.EMPTY_PAGE);
 
   const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
 
   const devToolsButton = dashboard.locator('button.nav-btn[title="Chrome DevTools"]');
   await expect(dashboard.locator('.inspector-frame')).not.toBeVisible();
@@ -57,6 +76,7 @@ test('should show current workspace sessions first', async ({ cli, server, openD
 
   const checkOrder = async (first: string, second: string) => {
     const dashboard = await openDashboard({ cwd: first });
+    await dashboard.locator('.tabbar-back').click();
     const workspaceGroups = dashboard.locator('.workspace-group');
     await expect(workspaceGroups).toHaveCount(2);
 
@@ -86,7 +106,6 @@ test('should pick locator from browser', async ({ cli, server, openDashboard }) 
   await cli('open', server.PREFIX);
 
   const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
 
   const pickBtn = dashboard.locator('button.nav-btn[title="Pick locator"]');
   await pickBtn.click();

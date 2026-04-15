@@ -45,6 +45,7 @@ export type SessionConfig = {
   };
   workspaceDir?: string;
   browser: {
+    guid: string;
     browserName: string;
     launchOptions: playwright.LaunchOptions;
     userDataDir?: string;

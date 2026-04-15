@@ -16,6 +16,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import { chromium } from 'playwright-core';
+
 import { test, expect } from './cli-fixtures';
 
 test('console', async ({ cli, server }) => {
@@ -160,7 +162,7 @@ test('video-chapter', async ({ cli, server }) => {
   await cli('video-stop');
 });
 
-test('pick', async ({ cdpServer, cli, server }) => {
+test('pick', async ({ cdpServer, cli, server, findFreePort, waitForPort }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
   const browserContext = await cdpServer.start();
   const [page] = browserContext.pages();
@@ -169,8 +171,9 @@ test('pick', async ({ cdpServer, cli, server }) => {
   await cli('attach', `--cdp=${cdpServer.endpoint}`);
   await cli('snapshot');
 
+  const dashboardPort = await findFreePort();
   const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
-  const pickPromise = cli('pick');
+  const pickPromise = cli('pick', { env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(dashboardPort) } });
   await scriptReady;
 
   const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
@@ -179,6 +182,12 @@ test('pick', async ({ cdpServer, cli, server }) => {
   const { output } = await pickPromise;
   expect(output).toContain(`ref: e2`);
   expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
+
+  await waitForPort(dashboardPort);
+  const dashboardBrowser = await chromium.connectOverCDP(`http://127.0.0.1:${dashboardPort}`);
+  const dashboard = dashboardBrowser.contexts()[0].pages()[0];
+  expect(new URL(dashboard.url()).hash).toContain('interactive');
+  await dashboardBrowser.close();
 });
 
 test('highlight', async ({ cdpServer, cli, server }) => {

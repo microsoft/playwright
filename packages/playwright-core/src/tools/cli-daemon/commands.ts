@@ -854,6 +854,9 @@ const devtoolsShow = declareCommand({
   description: 'Show browser DevTools',
   category: 'devtools',
   args: z.object({}),
+  options: z.object({
+    interactive: z.boolean().optional().describe('Open the dashboard in interactive mode (page input is forwarded to the browser).'),
+  }),
   toolName: '',
   toolParams: () => ({}),
 });
