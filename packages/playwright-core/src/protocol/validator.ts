@@ -1544,6 +1544,8 @@ scheme.PagePickLocatorResult = tObject({
 });
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
+scheme.PageHideHighlightParams = tOptional(tObject({}));
+scheme.PageHideHighlightResult = tOptional(tObject({}));
 scheme.PageScreencastShowOverlayParams = tObject({
   html: tString,
   duration: tOptional(tFloat),

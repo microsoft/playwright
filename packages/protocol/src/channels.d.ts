@@ -2160,6 +2160,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
+  hideHighlight(params?: PageHideHighlightParams, progress?: Progress): Promise<PageHideHighlightResult>;
   screencastShowOverlay(params: PageScreencastShowOverlayParams, progress?: Progress): Promise<PageScreencastShowOverlayResult>;
   screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, progress?: Progress): Promise<PageScreencastRemoveOverlayResult>;
   screencastChapter(params: PageScreencastChapterParams, progress?: Progress): Promise<PageScreencastChapterResult>;
@@ -2682,6 +2683,9 @@ export type PagePickLocatorResult = {
 export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
+export type PageHideHighlightParams = {};
+export type PageHideHighlightOptions = {};
+export type PageHideHighlightResult = void;
 export type PageScreencastShowOverlayParams = {
   html: string,
   duration?: number,

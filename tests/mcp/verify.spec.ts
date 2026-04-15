@@ -255,7 +255,7 @@ test('browser_verify_list_visible', async ({ client, server }) => {
     name: 'browser_verify_list_visible',
     arguments: {
       element: 'Fruit list',
-      ref: 'e2',
+      target: 'e2',
       items: ['Apple', 'Banana', 'Cherry'],
     },
   })).toHaveResponse({
@@ -289,7 +289,7 @@ test('browser_verify_list_visible (partial items)', async ({ client, server }) =
     name: 'browser_verify_list_visible',
     arguments: {
       element: 'Fruit list',
-      ref: 'e2',
+      target: 'e2',
       items: ['Apple', 'Cherry'],
     },
   })).toHaveResponse({
@@ -320,7 +320,7 @@ test('browser_verify_list_visible (item not found)', async ({ client, server }) 
     name: 'browser_verify_list_visible',
     arguments: {
       element: 'Fruit list',
-      ref: 'e2',
+      target: 'e2',
       items: ['Apple', 'Cherry'],
     },
   })).toHaveResponse({
@@ -348,7 +348,7 @@ test('browser_verify_value (textbox)', async ({ client, server }) => {
     arguments: {
       type: 'textbox',
       element: 'Name textbox',
-      ref: 'e3',
+      target: 'e3',
       value: 'John Doe',
     },
   })).toHaveResponse({
@@ -361,7 +361,7 @@ test('browser_verify_value (textbox)', async ({ client, server }) => {
     arguments: {
       type: 'textbox',
       element: 'Email textbox',
-      ref: 'e4',
+      target: 'e4',
       value: 'john@example.com',
     },
   })).toHaveResponse({
@@ -388,7 +388,7 @@ test('browser_verify_value (textbox wrong value)', async ({ client, server }) =>
     arguments: {
       type: 'textbox',
       element: 'Name textbox',
-      ref: 'e3',
+      target: 'e3',
       value: 'Jane Smith',
     },
   })).toHaveResponse({
@@ -416,7 +416,7 @@ test('browser_verify_value (checkbox checked)', async ({ client, server }) => {
     arguments: {
       type: 'checkbox',
       element: 'Subscribe checkbox',
-      ref: 'e3',
+      target: 'e3',
       value: 'true',
     },
   })).toHaveResponse({
@@ -444,7 +444,7 @@ test('browser_verify_value (checkbox unchecked)', async ({ client, server }) => 
     arguments: {
       type: 'checkbox',
       element: 'Subscribe checkbox',
-      ref: 'e3',
+      target: 'e3',
       value: 'false',
     },
   })).toHaveResponse({
@@ -472,7 +472,7 @@ test('browser_verify_value (checkbox wrong value)', async ({ client, server }) =
     arguments: {
       type: 'checkbox',
       element: 'Subscribe checkbox',
-      ref: 'e3',
+      target: 'e3',
       value: 'false',
     },
   })).toHaveResponse({
@@ -502,7 +502,7 @@ test('browser_verify_value (radio checked)', async ({ client, server }) => {
     arguments: {
       type: 'radio',
       element: 'Color radio',
-      ref: 'e3',
+      target: 'e3',
       value: 'true',
     },
   })).toHaveResponse({
@@ -530,7 +530,7 @@ test('browser_verify_value (slider)', async ({ client, server }) => {
     arguments: {
       type: 'slider',
       element: 'Volume slider',
-      ref: 'e3',
+      target: 'e3',
       value: '75',
     },
   })).toHaveResponse({
@@ -561,7 +561,7 @@ test('browser_verify_value (combobox)', async ({ client, server }) => {
     arguments: {
       type: 'combobox',
       element: 'Country select',
-      ref: 'e3',
+      target: 'e3',
       value: 'United States',
     },
   })).toHaveResponse({

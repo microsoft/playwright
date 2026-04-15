@@ -37,7 +37,7 @@ test('browser_click', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
@@ -65,7 +65,7 @@ test('browser_click (double)', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Click me',
-      ref: 'e2',
+      target: 'e2',
       doubleClick: true,
     },
   })).toHaveResponse({
@@ -94,7 +94,7 @@ test('browser_click (right)', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Menu',
-      ref: 'e2',
+      target: 'e2',
       button: 'right',
     },
   });
@@ -130,7 +130,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
       name: 'browser_click',
       arguments: {
         element: 'Submit button',
-        ref: 'e2',
+        target: 'e2',
         modifiers: ['Control'],
       },
     })).toHaveResponse({
@@ -147,7 +147,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
       modifiers: ['Shift'],
     },
   })).toHaveResponse({
@@ -163,7 +163,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
       modifiers: ['Shift', 'Alt'],
     },
   })).toHaveResponse({
@@ -196,7 +196,7 @@ test('browser_click (test id attribute)', async ({ startClient, server, mcpBrows
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     code: `await page.getByTestId('submit').click();`,

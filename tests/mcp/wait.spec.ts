@@ -42,7 +42,7 @@ test('browser_wait_for(text)', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Click me',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -84,7 +84,7 @@ test('browser_wait_for(textGone)', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Click me',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 

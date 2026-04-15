@@ -63,31 +63,31 @@ test('browser_fill_form (textbox)', async ({ client, server }) => {
         {
           name: 'Name textbox',
           type: 'textbox',
-          ref: 'e4',
+          target: 'e4',
           value: 'John Doe'
         },
         {
           name: 'Email textbox',
           type: 'textbox',
-          ref: 'e6',
+          target: 'e6',
           value: 'john.doe@example.com'
         },
         {
           name: 'Age textbox',
           type: 'slider',
-          ref: 'e8',
+          target: 'e8',
           value: '25'
         },
         {
           name: 'Country select',
           type: 'combobox',
-          ref: 'e10',
+          target: 'e10',
           value: 'United States'
         },
         {
           name: 'Subscribe checkbox',
           type: 'checkbox',
-          ref: 'e12',
+          target: 'e12',
           value: 'true'
         },
       ]

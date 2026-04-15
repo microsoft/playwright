@@ -49,7 +49,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     modalState: expect.stringContaining(`- [File chooser]: can be handled by browser_file_upload`),
@@ -77,7 +77,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
       name: 'browser_click',
       arguments: {
         element: 'Textbox',
-        ref: 'e2',
+        target: 'e2',
       },
     });
 
@@ -91,7 +91,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
       name: 'browser_click',
       arguments: {
         element: 'Button',
-        ref: 'e3',
+        target: 'e3',
       },
     });
 
@@ -122,7 +122,7 @@ test('clicking on download link emits download', async ({ startClient, server },
     name: 'browser_click',
     arguments: {
       element: 'Download link',
-      ref: 'e2',
+      target: 'e2',
     },
   });
   const parsed = parseResponse(response);
@@ -186,7 +186,7 @@ test('file upload restricted to roots by default', async ({ startClient, server 
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -209,7 +209,7 @@ test('file upload restricted to roots by default', async ({ startClient, server 
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -249,7 +249,7 @@ test('file upload is restricted to cwd if no roots are configured', async ({ sta
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -272,7 +272,7 @@ test('file upload is restricted to cwd if no roots are configured', async ({ sta
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -318,7 +318,7 @@ test('file upload unrestricted when flag is set', async ({ startClient, server }
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 

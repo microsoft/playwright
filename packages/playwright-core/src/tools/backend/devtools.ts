@@ -16,7 +16,7 @@
 
 import * as z from 'zod';
 import { defineTabTool, defineTool } from './tool';
-import { elementSchema } from './snapshot';
+import { elementSchema, optionalElementSchema } from './snapshot';
 
 const resume = defineTool({
   capability: 'devtools',
@@ -98,9 +98,9 @@ const highlight = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const { locator, resolved } = await tab.refLocator(params);
+    const { locator } = await tab.targetLocator(params);
     await locator.highlight({ style: params.style });
-    response.addTextResult(`Highlighted ${resolved}`);
+    response.addTextResult(`Highlighted ${locator}`);
   },
 });
 
@@ -110,14 +110,21 @@ const hideHighlight = defineTabTool({
     name: 'browser_hide_highlight',
     title: 'Hide element highlight',
     description: 'Remove a highlight overlay previously added for the element.',
-    inputSchema: elementSchema,
+    inputSchema: optionalElementSchema.extend({
+      element: z.string().optional().describe('Human-readable element description used when adding the highlight; must match the value passed to browser_highlight.'),
+    }),
     type: 'readOnly',
   },
 
   handle: async (tab, params, response) => {
-    const { locator, resolved } = await tab.refLocator(params);
-    await locator.hideHighlight();
-    response.addTextResult(`Hid highlight for ${resolved}`);
+    if (params.target) {
+      const { locator } = await tab.targetLocator({ target: params.target, element: params.element });
+      await locator.hideHighlight();
+      response.addTextResult(`Hid highlight for ${locator}`);
+    } else {
+      await tab.page.hideHighlight();
+      response.addTextResult(`Hid page highlight`);
+    }
   },
 });
 

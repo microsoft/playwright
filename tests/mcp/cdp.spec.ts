@@ -43,10 +43,10 @@ test('cdp server reuse tab', async ({ cdpServer, startClient, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Hello, world!',
-      ref: 'f0',
+      target: 'f0',
     },
   })).toHaveResponse({
-    error: `Error: Ref f0 not found in the current page snapshot. Try capturing new snapshot.`,
+    error: `Error: "f0" does not match any elements.`,
     isError: true,
   });
 

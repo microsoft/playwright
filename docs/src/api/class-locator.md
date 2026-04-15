@@ -1443,6 +1443,19 @@ Highlight the corresponding element(s) on the screen. Useful for debugging, don'
 
 ### option: Locator.highlight.style
 * since: v1.60
+* langs: js
+- `style` <[string]|[Object]<[string], [any]>>
+
+Inline CSS applied to the highlight overlay, e.g.
+
+```js
+await locator.highlight('outline: 2px dashed red');
+await locator.highlight({ color: 'red' });
+```
+
+### option: Locator.highlight.style
+* since: v1.60
+* langs: java, python, csharp
 - `style` <[string]>
 
 Additional inline CSS applied to the highlight overlay, e.g. `"outline: 2px dashed red"`.

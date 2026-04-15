@@ -191,7 +191,7 @@ test('highlight', async ({ cdpServer, cli, server }) => {
   await cli('snapshot');
 
   const { output } = await cli('highlight', 'e2');
-  expect(output).toContain(`Highlighted getByRole('button', { name: 'Submit' })`);
+  expect(output).toContain(`Highlighted locator('aria-ref=e2')`);
 
   const highlight = page.locator('x-pw-highlight');
   const tooltip = page.locator('x-pw-tooltip-line');
@@ -213,7 +213,25 @@ test('highlight --hide', async ({ cdpServer, cli, server }) => {
   await expect(page.locator('x-pw-highlight')).toBeVisible();
 
   const { output } = await cli('highlight', 'e2', '--hide');
-  expect(output).toContain(`Hid highlight for getByRole('button', { name: 'Submit' })`);
+  expect(output).toContain(`Hid highlight for locator('aria-ref=e2')`);
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+});
+
+test('highlight --hide all', async ({ cdpServer, cli, server }) => {
+  server.setContent('/', `<button>Submit</button><a href="#">Go</a>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('snapshot');
+
+  await cli('highlight', 'e2');
+  await cli('highlight', 'e3');
+  await expect(page.locator('x-pw-highlight')).toHaveCount(2);
+
+  const { output } = await cli('highlight', '--hide');
+  expect(output).toContain('Hid page highlight');
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });
 
