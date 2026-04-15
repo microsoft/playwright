@@ -648,6 +648,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   async bringToFront(progress: Progress): Promise<void> {
     await progress.race(this.delegate.bringToFront());
+    this.emitOnContext(BrowserContext.Events.BringToFront, this);
   }
 
   async addInitScript(progress: Progress, source: string) {

@@ -1516,6 +1516,10 @@ BrowserContext:
       parameters:
         binding: BindingCall
 
+    bringToFront:
+      parameters:
+        page: Page
+
     console:
       parameters:
         $mixin: ConsoleMessage

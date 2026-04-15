@@ -39,6 +39,7 @@ export const Events = {
   },
 
   BrowserContext: {
+    BringToFront: 'bringtofront',
     Console: 'console',
     Close: 'close',
     Dialog: 'dialog',
