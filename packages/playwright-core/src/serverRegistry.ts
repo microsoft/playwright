@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'events';
 import fs from 'fs';
 import net from 'net';
 import path from 'path';
 import os from 'os';
+import chokidar from 'chokidar';
 
 import { packageJSON, packageRoot } from './package';
 
@@ -48,43 +50,76 @@ export type BrowserDescriptor = EndpointInfo & {
 
 export type BrowserStatus = BrowserDescriptor & { canConnect: boolean };
 
-type BrowserEntry = BrowserStatus & { file: string };
+export interface ServerRegistryEvents {
+  added: (descriptor: BrowserDescriptor) => void;
+  removed: (guid: string) => void;
+  changed: (descriptor: BrowserDescriptor) => void;
+}
 
-class ServerRegistry {
+class ServerRegistry extends EventEmitter {
+  private _descriptors = new Map<string, BrowserDescriptor>();
+  private _watcher: chokidar.FSWatcher | undefined;
+  private _watcherRefs = 0;
+  private _ready: Promise<void> | undefined;
+
+  override on<K extends keyof ServerRegistryEvents>(event: K, listener: ServerRegistryEvents[K]): this {
+    return super.on(event, listener as (...args: any[]) => void);
+  }
+
+  override off<K extends keyof ServerRegistryEvents>(event: K, listener: ServerRegistryEvents[K]): this {
+    return super.off(event, listener as (...args: any[]) => void);
+  }
+
+  watch(): () => void {
+    this._watcherRefs++;
+    if (!this._watcher)
+      this._startWatcher();
+    let disposed = false;
+    return () => {
+      if (disposed)
+        return;
+      disposed = true;
+      this._watcherRefs--;
+      if (this._watcherRefs === 0)
+        this._stopWatcher();
+    };
+  }
+
+  ready(): Promise<void> {
+    return this._ready ?? Promise.resolve();
+  }
+
   async list(): Promise<Map<string, BrowserStatus[]>> {
-    const files = await fs.promises.readdir(this._browsersDir()).catch(() => []);
-    const result = new Map<string, Promise<BrowserEntry>[]>();
-    for (const file of files) {
-      try {
-        const filePath = path.join(this._browsersDir(), file);
-        const content = await fs.promises.readFile(filePath, 'utf-8');
-        const descriptor: BrowserDescriptor = JSON.parse(content);
+    const ownWatcher = !this._watcher;
+    let dispose: (() => void) | undefined;
+    if (ownWatcher)
+      dispose = this.watch();
+    try {
+      await this._ready;
+      const statuses = await Promise.all(
+          [...this._descriptors.values()].map(async descriptor => {
+            const canConnect = await canConnectTo(descriptor);
+            return { descriptor, canConnect };
+          }),
+      );
+      const result = new Map<string, BrowserStatus[]>();
+      for (const { descriptor, canConnect } of statuses) {
+        if (!canConnect) {
+          await fs.promises.unlink(path.join(this._browsersDir(), descriptor.browser.guid)).catch(() => {});
+          continue;
+        }
         const key = descriptor.workspaceDir ?? '';
         let list = result.get(key);
         if (!list) {
           list = [];
           result.set(key, list);
         }
-        list.push(canConnect(descriptor).then(connectable => ({ ...descriptor, canConnect: connectable, file: filePath })));
-      } catch {
+        list.push({ ...descriptor, canConnect });
       }
+      return result;
+    } finally {
+      dispose?.();
     }
-
-    const resolvedResult = new Map<string, BrowserStatus[]>();
-    for (const [key, promises] of result) {
-      const entries = await Promise.all(promises);
-      const descriptors = [];
-      for (const entry of entries) {
-        if (!entry.canConnect) {
-          await fs.promises.unlink(entry.file).catch(() => {});
-          continue;
-        }
-        descriptors.push(entry);
-      }
-      if (descriptors.length)
-        resolvedResult.set(key, descriptors);
-    }
-    return resolvedResult;
   }
 
   async create(browser: BrowserInfo, endpoint: EndpointInfo) {
@@ -116,10 +151,12 @@ class ServerRegistry {
   }
 
   readDescriptor(guid: string): BrowserDescriptor {
+    const cached = this._descriptors.get(guid);
+    if (cached)
+      return cached;
     const filePath = path.join(this._browsersDir(), guid);
     const content = fs.readFileSync(filePath, 'utf-8');
-    const descriptor: BrowserDescriptor = JSON.parse(content);
-    return descriptor;
+    return JSON.parse(content);
   }
 
   async find(name: string): Promise<BrowserDescriptor | null> {
@@ -136,9 +173,54 @@ class ServerRegistry {
   private _browsersDir() {
     return process.env.PLAYWRIGHT_SERVER_REGISTRY || registryDirectory;
   }
+
+  private _startWatcher() {
+    const dir = this._browsersDir();
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+    }
+    const watcher = chokidar.watch(dir, {
+      ignoreInitial: false,
+      depth: 0,
+      awaitWriteFinish: { stabilityThreshold: 50, pollInterval: 20 },
+    });
+    this._watcher = watcher;
+    this._ready = new Promise<void>((resolve, reject) => {
+      watcher.once('ready', () => resolve());
+      watcher.once('error', reject);
+    });
+    watcher.on('add', file => this._onAddOrChange(file, 'added'));
+    watcher.on('change', file => this._onAddOrChange(file, 'changed'));
+    watcher.on('unlink', file => {
+      const guid = path.basename(file);
+      if (this._descriptors.delete(guid))
+        this.emit('removed', guid);
+    });
+  }
+
+  private _onAddOrChange(file: string, event: 'added' | 'changed') {
+    const guid = path.basename(file);
+    let descriptor: BrowserDescriptor;
+    try {
+      descriptor = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    } catch {
+      return;
+    }
+    this._descriptors.set(guid, descriptor);
+    this.emit(event, descriptor);
+  }
+
+  private _stopWatcher() {
+    const watcher = this._watcher;
+    this._watcher = undefined;
+    this._ready = undefined;
+    this._descriptors.clear();
+    void watcher?.close();
+  }
 }
 
-async function canConnect(descriptor: BrowserDescriptor): Promise<boolean> {
+async function canConnectTo(descriptor: BrowserDescriptor): Promise<boolean> {
   if (!descriptor.endpoint)
     return false;
   if (descriptor.endpoint.startsWith('ws://') || descriptor.endpoint.startsWith('wss://')) {

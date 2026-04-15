@@ -16,13 +16,12 @@
 
 import React from 'react';
 import './grid.css';
-import { DashboardClient } from './dashboardClient';
-import { navigate } from './index';
+import { navigate, DashboardClientContext } from './index';
 import { Screencast } from './screencast';
 import { SettingsButton } from './settingsView';
 
 import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
-import type { Tab } from './dashboardChannel';
+import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 import type { SessionModel, SessionStatus } from './sessionModel';
 
 export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
@@ -68,9 +67,8 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
       <SettingsButton />
     </div>
     <div className='grid-content'>
-      {model.loading && sessions.length === 0 && <div className='grid-loading'>Loading sessions...</div>}
-      {model.error && <div className='grid-error'>Error: {model.error}</div>}
-      {!model.loading && !model.error && sessions.length === 0 && <div className='grid-empty'>No sessions found.</div>}
+      {model.loading && <div className='grid-loading'>Loading sessions...</div>}
+      {!model.loading && sessions.length === 0 && <div className='grid-empty'>No sessions found.</div>}
 
       <div className='workspace-list'>
         {workspaceGroups.map(([workspace, entries], index) => {
@@ -92,7 +90,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
               </div>
               {isExpanded && (
                 <div className='session-chips'>
-                  {entries.map(session => <SessionChip key={session.browser.guid} descriptor={session} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
+                  {entries.map(session => <SessionChip key={session.browser.guid} descriptor={session} canConnect={session.canConnect} visible={isExpanded} model={model} />)}
                 </div>
               )}
             </div>
@@ -103,45 +101,43 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   </div>);
 };
 
-const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | undefined; visible: boolean; model: SessionModel }> = ({ descriptor, wsUrl, visible, model }) => {
+const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean; visible: boolean; model: SessionModel }> = ({ descriptor, canConnect, visible, model }) => {
   const href = '#session=' + encodeURIComponent(descriptor.browser.guid);
-
-  const channel = React.useMemo(() => {
-    if (!wsUrl || !visible)
-      return undefined;
-    return DashboardClient.create(wsUrl);
-  }, [wsUrl, visible]);
-
+  const client = React.useContext(DashboardClientContext);
+  const browser = descriptor.browser.guid;
+  const attached = canConnect && visible && !!client;
   const [selectedTab, setSelectedTab] = React.useState<Tab | undefined>();
 
   React.useEffect(() => {
-    if (!channel)
+    if (!attached || !client)
       return;
-    const onTabs = (params: { tabs: Tab[] }) => {
+    const onTabs = (params: DashboardChannelEvents['tabs']) => {
+      if (params.target.browser !== browser)
+        return;
       setSelectedTab(params.tabs.find(t => t.selected));
     };
-    channel.tabs().then(onTabs);
-    channel.on('tabs', onTabs);
+    client.on('tabs', onTabs);
+    client.attach({ browser }).catch(() => {});
     return () => {
-      channel.off('tabs', onTabs);
-      channel.close();
+      client.off('tabs', onTabs);
+      client.detach({ browser }).catch(() => {});
     };
-  }, [channel]);
+  }, [attached, client, browser]);
 
   const chipTitle = selectedTab ? `[${descriptor.title}] ${selectedTab.url} \u2014 ${selectedTab.title}` : descriptor.title;
 
   return (
-    <a className={'session-chip' + (wsUrl ? '' : ' disconnected')} href={wsUrl ? href : undefined} title={chipTitle} onClick={e => {
+    <a className={'session-chip' + (canConnect ? '' : ' disconnected')} href={canConnect ? href : undefined} title={chipTitle} onClick={e => {
       e.preventDefault();
-      if (wsUrl)
+      if (canConnect)
         navigate(href);
     }}>
       <div className='session-chip-header'>
-        <div className={'session-status-dot ' + (wsUrl ? 'open' : 'closed')} />
+        <div className={'session-status-dot ' + (canConnect ? 'open' : 'closed')} />
         <span className='session-chip-name'>
           {selectedTab ? <>[{descriptor.title}] {selectedTab.url} <span className='session-chip-title'>&mdash; {selectedTab.title}</span></> : descriptor.title}
         </span>
-        {wsUrl && (
+        {canConnect && (
           <button
             className='session-chip-action'
             title='Close session'
@@ -157,7 +153,7 @@ const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | und
             </svg>
           </button>
         )}
-        {!wsUrl && (
+        {!canConnect && (
           <button
             className='session-chip-action'
             title='Delete session data'
@@ -176,8 +172,8 @@ const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | und
         )}
       </div>
       <div className='screencast-container'>
-        {channel && <Screencast channel={channel} />}
-        {!wsUrl && <div className='screencast-placeholder'>Session closed</div>}
+        {attached && client && <Screencast client={client} browser={browser} />}
+        {!canConnect && <div className='screencast-placeholder'>Session closed</div>}
       </div>
     </a>
   );
