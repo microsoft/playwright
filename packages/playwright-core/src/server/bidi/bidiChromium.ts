@@ -22,7 +22,7 @@ import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
-import { waitForReadyState } from '../chromium/chromium';
+import { profileInUseError, waitForReadyState } from '../chromium/chromium';
 import { shouldProxyLoopback } from '../chromium/crBrowser';
 
 import type { BrowserOptions } from '../browser';
@@ -46,12 +46,9 @@ export class BidiChromium extends BrowserType {
     try {
       return BidiBrowser.connect(this.attribution.playwright, bidiTransport, options);
     } catch (e) {
-      if (browserLogsCollector.recentLogs().some(log => log.includes('Failed to create a ProcessSingleton for your profile directory.'))) {
-        throw new Error(
-            'Failed to create a ProcessSingleton for your profile directory. ' +
-            'This usually means that the profile is already in use by another instance of Chromium.'
-        );
-      }
+      const error = profileInUseError(browserLogsCollector.recentLogs());
+      if (error)
+        throw error;
       throw e;
     }
   }

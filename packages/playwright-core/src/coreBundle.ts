@@ -16,7 +16,7 @@
 
 export * as iso from '@isomorphic/index';
 export * as utils from '@utils/index';
-export * as client from './client';
+export { EventEmitter as clientEventEmitter } from './client/eventEmitter';
 export * as libCli from './cli/program';
 export * as libCliTestStub from './cli/programWithTestStub';
 export * as inprocess from './inprocess';

@@ -21,26 +21,43 @@ import { queryObjectCount } from '../config/queryObjects';
 test.describe.configure({ mode: 'serial' });
 test.skip(({ browserName }) => browserName !== 'chromium');
 
+const clientClass = {
+  Page: null as Function,
+  BrowserContext: null as Function,
+  Browser: null as Function,
+  Request: null as Function,
+  Response: null as Function,
+};
+
 for (let i = 0; i < 3; ++i) {
   test(`test #${i} to request page and context`, async ({ page, context }) => {
     // This test is here to create page instance
   });
 }
 
-test('test to request page and context', async ({ page, context }) => {
-  // This test is here to create page instance
+test('test to request page and context', async ({ page, context, server }) => {
+  clientClass.Page = page.constructor;
+  clientClass.BrowserContext = context.constructor;
+  clientClass.Browser = context.browser()!.constructor;
+  const [request, response] = await Promise.all([
+    page.waitForRequest(() => true),
+    page.waitForResponse(() => true),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  clientClass.Request = request.constructor;
+  clientClass.Response = response.constructor;
 });
 
 test('should not leak fixtures w/ page', async ({ page }) => {
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/page').Page)).toBe(1);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/browserContext').BrowserContext)).toBe(1);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/browser').Browser)).toBe(1);
+  expect(await queryObjectCount(clientClass.Page)).toBe(1);
+  expect(await queryObjectCount(clientClass.BrowserContext)).toBe(1);
+  expect(await queryObjectCount(clientClass.Browser)).toBe(1);
 });
 
 test('should not leak fixtures w/o page', async ({}) => {
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/page').Page)).toBe(0);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/browserContext').BrowserContext)).toBe(0);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/browser').Browser)).toBe(1);
+  expect(await queryObjectCount(clientClass.Page)).toBe(0);
+  expect(await queryObjectCount(clientClass.BrowserContext)).toBe(0);
+  expect(await queryObjectCount(clientClass.Browser)).toBe(1);
 });
 
 test('should not leak server-side objects', async ({ page }) => {
@@ -76,10 +93,10 @@ test('should not leak dispatchers after closing page', async ({ context, server 
   expect(await queryObjectCount(coreServer.RequestDispatcher)).toBe(0);
   expect(await queryObjectCount(coreServer.ResponseDispatcher)).toBe(0);
 
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/page').Page)).toBeLessThan(COUNT);
+  expect(await queryObjectCount(clientClass.Page)).toBeLessThan(COUNT);
   expect(await queryObjectCount(coreServer.Page)).toBe(0);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/network').Request)).toBe(0);
-  expect(await queryObjectCount(require('../../packages/playwright-core/lib/client/network').Response)).toBe(0);
+  expect(await queryObjectCount(clientClass.Request)).toBe(0);
+  expect(await queryObjectCount(clientClass.Response)).toBe(0);
 });
 
 test.describe(() => {
@@ -100,8 +117,8 @@ test.describe(() => {
     expect(e.message).toContain('The object has been collected to prevent unbounded heap growth.');
 
     const counts = [
-      { count: await queryObjectCount(require('../../packages/playwright-core/lib/client/network').Request), message: 'client.Request' },
-      { count: await queryObjectCount(require('../../packages/playwright-core/lib/client/network').Response), message: 'client.Response' },
+      { count: await queryObjectCount(clientClass.Request), message: 'client.Request' },
+      { count: await queryObjectCount(clientClass.Response), message: 'client.Response' },
       { count: await queryObjectCount(coreServer.Request), message: 'server.Request' },
       { count: await queryObjectCount(coreServer.Response), message: 'server.Response' },
       { count: await queryObjectCount(coreServer.RequestDispatcher), message: 'dispatchers.RequestDispatcher' },
