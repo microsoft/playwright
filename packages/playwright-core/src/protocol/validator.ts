@@ -941,6 +941,9 @@ scheme.BrowserContextInitializer = tObject({
 scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
+scheme.BrowserContextBringToFrontEvent = tObject({
+  page: tChannel(['Page']),
+});
 scheme.BrowserContextConsoleEvent = tObject({
   type: tString,
   text: tString,

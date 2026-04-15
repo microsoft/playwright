@@ -8226,6 +8226,13 @@ export interface BrowserContext {
   on(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
+   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
+   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  on(event: 'bringtofront', listener: (page: Page) => any): this;
+
+  /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
@@ -8365,6 +8372,11 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'bringtofront', listener: (page: Page) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
@@ -8416,6 +8428,13 @@ export interface BrowserContext {
    * This event is not emitted.
    */
   addListener(event: 'backgroundpage', listener: (page: Page) => any): this;
+
+  /**
+   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
+   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  addListener(event: 'bringtofront', listener: (page: Page) => any): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -8557,6 +8576,11 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'bringtofront', listener: (page: Page) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
@@ -8612,6 +8636,11 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  off(event: 'bringtofront', listener: (page: Page) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
@@ -8663,6 +8692,13 @@ export interface BrowserContext {
    * This event is not emitted.
    */
   prependListener(event: 'backgroundpage', listener: (page: Page) => any): this;
+
+  /**
+   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
+   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  prependListener(event: 'bringtofront', listener: (page: Page) => any): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -9452,6 +9488,13 @@ export interface BrowserContext {
    * This event is not emitted.
    */
   waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
+
+  /**
+   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
+   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  waitForEvent(event: 'bringtofront', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:

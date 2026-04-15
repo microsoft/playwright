@@ -45,6 +45,7 @@ import type * as types from './types';
 import type * as channels from '@protocol/channels';
 
 const BrowserContextEvent = {
+  BringToFront: 'bringtofront',
   Console: 'console',
   Close: 'close',
   Page: 'page',
@@ -65,6 +66,7 @@ const BrowserContextEvent = {
 } as const;
 
 export type BrowserContextEventMap = {
+  [BrowserContextEvent.BringToFront]: [page: Page];
   [BrowserContextEvent.Console]: [message: ConsoleMessage];
   [BrowserContextEvent.Close]: [];
   [BrowserContextEvent.Page]: [page: Page];
