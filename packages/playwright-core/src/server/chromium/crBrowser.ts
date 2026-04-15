@@ -29,6 +29,8 @@ import { CRConnection, ConnectionEvents } from './crConnection';
 import { CRPage } from './crPage';
 import { saveProtocolStream } from './crProtocolHelper';
 import { CRServiceWorker } from './crServiceWorker';
+import { isProtocolError } from '../protocolError';
+import { debugLogger } from '@utils/debugLogger';
 
 import type { InitScript, Worker } from '../page';
 import type { ConnectionTransport } from '../transport';
@@ -356,6 +358,11 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
         browserContextId: this._browserContextId,
         downloadPath: this._browser.options.downloadsPath,
         eventsEnabled: true,
+      }).catch((e: Error) => {
+        if (isProtocolError(e) && e.method === 'Browser.setDownloadBehavior')
+          debugLogger.log('browser', e.message);
+        else
+          throw e;
       }));
     }
     await Promise.all(promises);
