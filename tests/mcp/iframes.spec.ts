@@ -37,7 +37,7 @@ test('stitched aria frames', async ({ client }) => {
     name: 'browser_click',
     arguments: {
       element: 'World',
-      ref: 'f1e2',
+      target: 'f1e2',
     },
   })).toHaveResponse({
     code: `await page.locator('iframe').first().contentFrame().getByRole('button', { name: 'World' }).click();`,

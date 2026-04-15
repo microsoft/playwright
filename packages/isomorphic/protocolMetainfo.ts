@@ -146,6 +146,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Page.bringToFront', { title: 'Bring to front', }],
   ['Page.pickLocator', { title: 'Pick locator', group: 'configuration', }],
   ['Page.cancelPickLocator', { title: 'Cancel pick locator', group: 'configuration', }],
+  ['Page.hideHighlight', { title: 'Hide all element highlights', group: 'configuration', }],
   ['Page.screencastShowOverlay', { title: 'Show overlay', group: 'configuration', }],
   ['Page.screencastRemoveOverlay', { title: 'Remove overlay', group: 'configuration', }],
   ['Page.screencastChapter', { title: 'Show chapter overlay', group: 'configuration', }],

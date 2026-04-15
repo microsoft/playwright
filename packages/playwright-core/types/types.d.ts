@@ -3248,6 +3248,12 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
+   * Hide all locator highlight overlays previously added by
+   * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight) on this page.
+   */
+  hideHighlight(): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.hover([options])](https://playwright.dev/docs/api/class-locator#locator-hover) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *

@@ -97,7 +97,7 @@ test('recent console messages', async ({ client, server }, testInfo) => {
     name: 'browser_click',
     arguments: {
       element: 'Click me',
-      ref: 'e2',
+      target: 'e2',
     },
   }));
 
@@ -355,13 +355,13 @@ test('console log file appends on multiple snapshots', async ({ startClient, ser
   // Click button to generate console message
   await client.callTool({
     name: 'browser_click',
-    arguments: { element: 'Click me', ref: 'e2' },
+    arguments: { element: 'Click me', target: 'e2' },
   });
 
   // Click again
   await client.callTool({
     name: 'browser_click',
-    arguments: { element: 'Click me', ref: 'e2' },
+    arguments: { element: 'Click me', target: 'e2' },
   });
 
   // Verify only one log file exists (same page, appended)

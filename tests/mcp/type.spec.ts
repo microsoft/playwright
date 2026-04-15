@@ -36,7 +36,7 @@ test('browser_type', async ({ client, server }) => {
       name: 'browser_type',
       arguments: {
         element: 'textbox',
-        ref: 'e2',
+        target: 'e2',
         text: 'Hi!',
         submit: true,
       },
@@ -71,7 +71,7 @@ test('browser_type (slowly)', async ({ client, server }) => {
       name: 'browser_type',
       arguments: {
         element: 'textbox',
-        ref: 'e2',
+        target: 'e2',
         text: 'Hi!',
         slowly: true,
       },
@@ -117,7 +117,7 @@ test('browser_type (no submit)', async ({ client, server }) => {
       name: 'browser_type',
       arguments: {
         element: 'textbox',
-        ref: 'e2',
+        target: 'e2',
         text: 'Hi!',
       },
     });

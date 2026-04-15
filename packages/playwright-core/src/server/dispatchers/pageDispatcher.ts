@@ -360,6 +360,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       await progress.race(recorder.setMode('none'));
   }
 
+  async hideHighlight(params: channels.PageHideHighlightParams, progress: Progress): Promise<void> {
+    await progress.race(this._page.hideHighlight());
+  }
+
   async screencastShowOverlay(params: channels.PageScreencastShowOverlayParams): Promise<channels.PageScreencastShowOverlayResult> {
     const id = await this._page.overlay.show(params.html, params.duration);
     return { id };

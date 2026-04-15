@@ -49,7 +49,7 @@ test('browser_evaluate (element)', async ({ client, server }) => {
     arguments: {
       function: 'element => element.style.backgroundColor',
       element: 'body',
-      ref: 'e1',
+      target: 'e1',
     },
   })).toHaveResponse({
     result: `"red"`,

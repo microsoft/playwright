@@ -300,6 +300,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.cancelPickLocator({});
   }
 
+  async hideHighlight(): Promise<void> {
+    await this._channel.hideHighlight({});
+  }
+
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return await this._mainFrame.$(selector, options);
   }

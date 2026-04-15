@@ -75,3 +75,18 @@ test('hideHighlight removes a styled highlight', async ({ browser, server }) => 
 
   await context.close();
 });
+
+test('Page.hideHighlight clears all locator highlights', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.setContent(`<button>One</button><button>Two</button>`);
+
+  await page.getByRole('button', { name: 'One' }).highlight();
+  await page.getByRole('button', { name: 'Two' }).highlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(2);
+
+  await page.hideHighlight();
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+
+  await context.close();
+});

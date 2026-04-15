@@ -45,7 +45,7 @@ test('browser_route mocks response with JSON body', async ({ client, server }) =
   // Click the button to trigger the fetch
   await client.callTool({
     name: 'browser_click',
-    arguments: { element: 'Fetch button', ref: 'e2' },
+    arguments: { element: 'Fetch button', target: 'e2' },
   });
 
   // Wait for the mocked response to be rendered
@@ -84,7 +84,7 @@ test('browser_route mocks response with custom status', async ({ client, server 
 
   await client.callTool({
     name: 'browser_click',
-    arguments: { element: 'Fetch button', ref: 'e2' },
+    arguments: { element: 'Fetch button', target: 'e2' },
   });
 
   // Wait for the status to be rendered
@@ -129,7 +129,7 @@ test('browser_route modifies request headers', async ({ client, server }) => {
   const requestPromise = server.waitForRequest('/api/check');
   await client.callTool({
     name: 'browser_click',
-    arguments: { element: 'Fetch button', ref: 'e2' },
+    arguments: { element: 'Fetch button', target: 'e2' },
   });
 
   await requestPromise;

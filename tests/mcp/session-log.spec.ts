@@ -40,7 +40,7 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
@@ -70,7 +70,7 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
 \\\`\\\`\\\`json
 \\{
   "element": "Submit button",
-  "ref": "e2"
+  "target": "e2"
 \\}
 \\\`\\\`\\\`
 - Result

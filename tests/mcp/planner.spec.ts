@@ -57,7 +57,7 @@ test('planner_setup_page', async ({ startClient }) => {
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
       intent: 'Click on the "Submit" button',
     },
   })).toHaveResponse({

@@ -2095,6 +2095,10 @@ Page:
       title: Cancel pick locator
       group: configuration
 
+    hideHighlight:
+      title: Hide all element highlights
+      group: configuration
+
     screencastShowOverlay:
       title: Show overlay
       group: configuration

@@ -35,7 +35,7 @@ test('browser_network_requests', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Click me button',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -95,7 +95,7 @@ test('browser_network_requests includes request headers', async ({ client, serve
 
   await client.callTool({
     name: 'browser_click',
-    arguments: { element: 'Click me button', ref: 'e2' },
+    arguments: { element: 'Click me button', target: 'e2' },
   });
 
   {
@@ -134,7 +134,7 @@ test('browser_network_requests includes request payload', async ({ client, serve
     name: 'browser_click',
     arguments: {
       element: 'Click me button',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 

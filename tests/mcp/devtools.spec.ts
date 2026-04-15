@@ -50,9 +50,9 @@ test('browser_highlight', async ({ cdpServer, startClient, server }) => {
 
   expect(await client.callTool({
     name: 'browser_highlight',
-    arguments: { element: 'Submit button', ref: 'e2' },
+    arguments: { element: 'Submit button', target: 'e2' },
   })).toHaveResponse({
-    result: `Highlighted getByRole('button', { name: 'Submit' })`,
+    result: `Highlighted Submit button`,
   });
 
   const highlight = page.locator('x-pw-highlight');
@@ -75,11 +75,11 @@ test('browser_highlight with style', async ({ cdpServer, startClient, server }) 
     name: 'browser_highlight',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
       style: 'outline: 3px solid rgb(255, 0, 0); background-color: rgba(0, 255, 0, 0.25)',
     },
   })).toHaveResponse({
-    result: `Highlighted getByRole('button', { name: 'Submit' })`,
+    result: `Highlighted Submit button`,
   });
 
   const highlight = page.locator('x-pw-highlight');
@@ -104,15 +104,37 @@ test('browser_hide_highlight', async ({ cdpServer, startClient, server }) => {
 
   await client.callTool({
     name: 'browser_highlight',
-    arguments: { element: 'Submit button', ref: 'e2' },
+    arguments: { element: 'Submit button', target: 'e2' },
   });
   await expect(page.locator('x-pw-highlight')).toBeVisible();
 
   expect(await client.callTool({
     name: 'browser_hide_highlight',
-    arguments: { element: 'Submit button', ref: 'e2' },
+    arguments: { element: 'Submit button', target: 'e2' },
   })).toHaveResponse({
-    result: `Hid highlight for getByRole('button', { name: 'Submit' })`,
+    result: `Hid highlight for Submit button`,
+  });
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+});
+
+test('browser_hide_highlight all', async ({ cdpServer, startClient, server }) => {
+  server.setContent('/', `<button>Submit</button><a href="#">Go</a>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  await client.callTool({ name: 'browser_snapshot' });
+
+  await client.callTool({ name: 'browser_highlight', arguments: { element: 'Submit button', target: 'e2' } });
+  await client.callTool({ name: 'browser_highlight', arguments: { element: 'Go link', target: 'e3' } });
+  await expect(page.locator('x-pw-highlight')).toHaveCount(2);
+
+  expect(await client.callTool({
+    name: 'browser_hide_highlight',
+    arguments: {},
+  })).toHaveResponse({
+    result: 'Hid page highlight',
   });
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });

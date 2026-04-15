@@ -57,7 +57,7 @@ test('browser_take_screenshot (element)', async ({ startClient, server }, testIn
     name: 'browser_take_screenshot',
     arguments: {
       element: 'hello button',
-      ref: 'e1',
+      target: 'e1',
     },
   })).toEqual({
     content: [
@@ -365,7 +365,7 @@ test('browser_take_screenshot (fullPage with element should error)', async ({ st
     arguments: {
       fullPage: true,
       element: 'hello button',
-      ref: 'e1',
+      target: 'e1',
     },
   });
 

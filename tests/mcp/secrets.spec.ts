@@ -45,7 +45,7 @@ test('browser_type', async ({ startClient, server }) => {
       name: 'browser_type',
       arguments: {
         element: 'textbox',
-        ref: 'e2',
+        target: 'e2',
         text: 'X-PASSWORD',
         submit: true,
       },
@@ -103,13 +103,13 @@ test('browser_fill_form', async ({ startClient, server }) => {
         {
           name: 'Email textbox',
           type: 'textbox',
-          ref: 'e4',
+          target: 'e4',
           value: 'John Doe'
         },
         {
           name: 'Password textbox',
           type: 'textbox',
-          ref: 'e6',
+          target: 'e6',
           value: 'X-PASSWORD'
         },
       ]

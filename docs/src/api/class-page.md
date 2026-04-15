@@ -2451,6 +2451,11 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 Referer header value. If provided it will take preference over the referer header value set by
 [`method: Page.setExtraHTTPHeaders`].
 
+## async method: Page.hideHighlight
+* since: v1.60
+
+Hide all locator highlight overlays previously added by [`method: Locator.highlight`] on this page.
+
 ## async method: Page.hover
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.hover`] instead. Read more about [locators](../locators.md).
