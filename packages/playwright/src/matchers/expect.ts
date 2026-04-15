@@ -16,14 +16,43 @@
 
 import path from 'path';
 
+import { equals } from '@jest/expect-utils';
 import { parseStackFrame, captureRawStack } from '@isomorphic/stackTrace';
 import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { currentZone } from '@utils/zones';
 import {
-  expect as expectLibrary,
-} from './expectLibrary';
+  RECEIVED_COLOR,
+  matcherErrorMessage,
+  matcherHint,
+  printReceived,
+  printWithType,
+  stringify,
+} from 'jest-matcher-utils';
 
+import {
+  AsymmetricMatcher,
+  INTERNAL_MATCHER_FLAG,
+  any,
+  anything,
+  arrayContaining,
+  arrayNotContaining,
+  arrayOf,
+  closeTo,
+  createThrowMatcher,
+  isPromise,
+  matchers as builtinMatchers,
+  notArrayOf,
+  notCloseTo,
+  objectContaining,
+  objectNotContaining,
+  stringContaining,
+  stringMatching,
+  stringNotContaining,
+  stringNotMatching,
+  toThrowMatchers,
+  utils,
+} from './expectLibrary';
 import { ExpectError, isJestError } from './matcherHint';
 import {
   computeMatcherTitleSuffix,
@@ -61,6 +90,7 @@ import {
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 
+import type { ExpectationResult, MatcherContext, MatchersObject, RawMatcherFn, SyncExpectationResult } from './expectLibrary';
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
@@ -466,6 +496,350 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
     throw new Error(message);
   }
 }
+
+// #region
+// Based on https://github.com/jestjs/jest/tree/v30.2.0/packages/expect
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved.
+ *
+ * This source code is licensed under the MIT license found here
+ * https://github.com/jestjs/jest/blob/v30.2.0/LICENSE
+ */
+
+type ThrowingMatcherFn = (...args: Array<any>) => any;
+type PromiseMatcherFn = (...args: Array<any>) => Promise<any>;
+
+type AsymmetricMatchers = {
+  any(sample: unknown): AsymmetricMatcher<any>;
+  anything(): AsymmetricMatcher<any>;
+  arrayContaining(sample: Array<unknown>): AsymmetricMatcher<any>;
+  arrayOf(sample: unknown): AsymmetricMatcher<any>;
+  closeTo(sample: number, precision?: number): AsymmetricMatcher<any>;
+  objectContaining(sample: Record<string, unknown>): AsymmetricMatcher<any>;
+  stringContaining(sample: string): AsymmetricMatcher<any>;
+  stringMatching(sample: string | RegExp): AsymmetricMatcher<any>;
+};
+
+interface BaseExpect {
+  extend(matchers: MatchersObject): void;
+}
+
+type LibraryExpect = (<T = unknown>(actual: T) => any) &
+  BaseExpect &
+  AsymmetricMatchers & {
+    not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
+  };
+
+class JestAssertionError extends Error {
+  matcherResult?: Omit<SyncExpectationResult, 'message'> & { message: string };
+}
+
+const allMatchers: MatchersObject = Object.create(null);
+
+const setMatchers = (
+  matchers: MatchersObject,
+  isInternal: boolean,
+  expect: LibraryExpect,
+): void => {
+  for (const key of Object.keys(matchers)) {
+    const matcher = matchers[key];
+
+    if (typeof matcher !== 'function')
+      throw new TypeError(`expect.extend: \`${key}\` is not a valid matcher. Must be a function, is "${typeof matcher}"`);
+
+    Object.defineProperty(matcher, INTERNAL_MATCHER_FLAG, {
+      value: isInternal,
+    });
+
+    if (!isInternal) {
+      // expect is defined
+
+      class CustomMatcher extends AsymmetricMatcher<[unknown, ...Array<unknown>]> {
+        constructor(inverse = false, ...sample: [unknown, ...Array<unknown>]) {
+          super(sample, inverse);
+        }
+
+        asymmetricMatch(other: unknown) {
+          const { pass } = matcher.call(
+              this.getMatcherContext(),
+              other,
+              ...this.sample,
+          ) as SyncExpectationResult;
+
+          return this.inverse ? !pass : pass;
+        }
+
+        toString() {
+          return `${this.inverse ? 'not.' : ''}${key}`;
+        }
+
+        override getExpectedType() {
+          return 'any';
+        }
+
+        override toAsymmetricMatcher() {
+          return `${this.toString()}<${this.sample.map(String).join(', ')}>`;
+        }
+      }
+
+      Object.defineProperty(expect, key, {
+        configurable: true,
+        enumerable: true,
+        value: (...sample: [unknown, ...Array<unknown>]) =>
+          new CustomMatcher(false, ...sample),
+        writable: true,
+      });
+      Object.defineProperty(expect.not, key, {
+        configurable: true,
+        enumerable: true,
+        value: (...sample: [unknown, ...Array<unknown>]) =>
+          new CustomMatcher(true, ...sample),
+        writable: true,
+      });
+    }
+  }
+
+  Object.assign(allMatchers, matchers);
+};
+
+const getPromiseMatcher = (name: string) => {
+  if (name === 'toThrow')
+    return createThrowMatcher(name, true);
+  return null;
+};
+
+const expectLibrary: LibraryExpect = ((actual: any, ...rest: Array<any>) => {
+  if (rest.length > 0)
+    throw new Error('Expect takes at most one argument.');
+
+  const expectation: any = {
+    not: {},
+    rejects: { not: {} },
+    resolves: { not: {} },
+  };
+
+  const err = new JestAssertionError();
+
+  for (const name of Object.keys(allMatchers)) {
+    const matcher = allMatchers[name];
+    const promiseMatcher = getPromiseMatcher(name) || matcher;
+    expectation[name] = makeThrowingMatcher(matcher, false, '', actual);
+    expectation.not[name] = makeThrowingMatcher(matcher, true, '', actual);
+
+    expectation.resolves[name] = makeResolveMatcher(name, promiseMatcher, false, actual, err);
+    expectation.resolves.not[name] = makeResolveMatcher(name, promiseMatcher, true, actual, err);
+
+    expectation.rejects[name] = makeRejectMatcher(name, promiseMatcher, false, actual, err);
+    expectation.rejects.not[name] = makeRejectMatcher(name, promiseMatcher, true, actual, err);
+  }
+
+  return expectation;
+}) as LibraryExpect;
+
+const getMessage = (message?: () => string) =>
+  (message && message()) ||
+  RECEIVED_COLOR('No message was specified for this matcher.');
+
+const makeResolveMatcher =
+  (
+    matcherName: string,
+    matcher: RawMatcherFn,
+    isNot: boolean,
+    actual: Promise<any> | (() => Promise<any>),
+    outerErr: JestAssertionError,
+  ): PromiseMatcherFn =>
+    (...args: Array<any>) => {
+      const options = { isNot, promise: 'resolves' };
+
+      const actualWrapper: Promise<any> =
+        typeof actual === 'function' ? actual() : actual;
+
+      if (!isPromise(actualWrapper)) {
+        throw new JestAssertionError(
+            matcherErrorMessage(
+                matcherHint(matcherName, undefined, '', options),
+                `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
+                printWithType('Received', actual, printReceived),
+            ),
+        );
+      }
+
+      const innerErr = new JestAssertionError();
+
+      return actualWrapper.then(
+          result => makeThrowingMatcher(matcher, isNot, 'resolves', result, innerErr).apply(null, args),
+          error => {
+            outerErr.message =
+              `${matcherHint(matcherName, undefined, '', options)}\n\n` +
+          'Received promise rejected instead of resolved\n' +
+          `Rejected to value: ${printReceived(error)}`;
+            throw outerErr;
+          },
+      );
+    };
+
+const makeRejectMatcher =
+  (
+    matcherName: string,
+    matcher: RawMatcherFn,
+    isNot: boolean,
+    actual: Promise<any> | (() => Promise<any>),
+    outerErr: JestAssertionError,
+  ): PromiseMatcherFn =>
+    (...args: Array<any>) => {
+      const options = { isNot, promise: 'rejects' };
+
+      const actualWrapper: Promise<any> =
+        typeof actual === 'function' ? actual() : actual;
+
+      if (!isPromise(actualWrapper)) {
+        throw new JestAssertionError(
+            matcherErrorMessage(
+                matcherHint(matcherName, undefined, '', options),
+                `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
+                printWithType('Received', actual, printReceived),
+            ),
+        );
+      }
+
+      const innerErr = new JestAssertionError();
+
+      return actualWrapper.then(
+          result => {
+            outerErr.message =
+              `${matcherHint(matcherName, undefined, '', options)}\n\n` +
+          'Received promise resolved instead of rejected\n' +
+          `Resolved to value: ${printReceived(result)}`;
+            throw outerErr;
+          },
+          error => makeThrowingMatcher(matcher, isNot, 'rejects', error, innerErr).apply(null, args),
+      );
+    };
+
+const makeThrowingMatcher = (
+  matcher: RawMatcherFn,
+  isNot: boolean,
+  promise: string,
+  actual: any,
+  err?: JestAssertionError,
+): ThrowingMatcherFn =>
+  function throwingMatcher(this: void, ...args: Array<any>): any {
+    const matcherContext: MatcherContext = {
+      customTesters: [],
+      equals,
+      utils,
+      error: err,
+      isNot,
+      promise,
+    };
+
+    const processResult = (
+      result: SyncExpectationResult,
+      asyncError?: JestAssertionError,
+    ) => {
+      _validateResult(result);
+
+      if ((result.pass && isNot) || (!result.pass && !isNot)) {
+        const message = getMessage(result.message);
+        let error;
+
+        if (err) {
+          error = err;
+          error.message = message;
+        } else if (asyncError) {
+          error = asyncError;
+          error.message = message;
+        } else {
+          error = new JestAssertionError(message);
+
+          if (Error.captureStackTrace)
+            Error.captureStackTrace(error, throwingMatcher);
+        }
+        error.matcherResult = { ...result, message };
+        throw error;
+      }
+    };
+
+    const handleError = (error: Error) => {
+      if (
+        matcher[INTERNAL_MATCHER_FLAG] === true &&
+        !(error instanceof JestAssertionError) &&
+        error.name !== 'PrettyFormatPluginError' &&
+        Error.captureStackTrace
+      )
+        Error.captureStackTrace(error, throwingMatcher);
+      throw error;
+    };
+
+    let potentialResult: ExpectationResult;
+
+    try {
+      potentialResult =
+        matcher[INTERNAL_MATCHER_FLAG] === true
+          ? matcher.call(matcherContext, actual, ...args)
+          : (function __EXTERNAL_MATCHER_TRAP__() {
+            return matcher.call(matcherContext, actual, ...args);
+          })();
+
+      if (isPromise(potentialResult)) {
+        const asyncError = new JestAssertionError();
+        if (Error.captureStackTrace)
+          Error.captureStackTrace(asyncError, throwingMatcher);
+
+        return potentialResult
+            .then(aResult => processResult(aResult, asyncError))
+            .catch(handleError);
+      }
+      return processResult(potentialResult);
+    } catch (error: any) {
+      return handleError(error);
+    }
+  };
+
+expectLibrary.extend = (matchers: MatchersObject) => setMatchers(matchers, false, expectLibrary);
+
+expectLibrary.anything = anything;
+expectLibrary.any = any;
+
+expectLibrary.not = {
+  arrayContaining: arrayNotContaining,
+  arrayOf: notArrayOf,
+  closeTo: notCloseTo,
+  objectContaining: objectNotContaining,
+  stringContaining: stringNotContaining,
+  stringMatching: stringNotMatching,
+};
+
+expectLibrary.arrayContaining = arrayContaining;
+expectLibrary.arrayOf = arrayOf;
+expectLibrary.closeTo = closeTo;
+expectLibrary.objectContaining = objectContaining;
+expectLibrary.stringContaining = stringContaining;
+expectLibrary.stringMatching = stringMatching;
+
+const _validateResult = (result: any) => {
+  if (
+    typeof result !== 'object' ||
+    typeof result.pass !== 'boolean' ||
+    (result.message &&
+      typeof result.message !== 'string' &&
+      typeof result.message !== 'function')
+  ) {
+    throw new Error(
+        'Unexpected return from a matcher function.\n' +
+        'Matcher functions should ' +
+        'return an object in the following format:\n' +
+        '  {message?: string | function, pass: boolean}\n' +
+        `'${stringify(result)}' was returned`,
+    );
+  }
+};
+
+// Register built-in matchers.
+setMatchers(builtinMatchers, true, expectLibrary);
+setMatchers(toThrowMatchers, true, expectLibrary);
+
+// #endregion
 
 export const expect: Expect<{}> = createExpect({}, [], {}).extend(customMatchers as any);
 
