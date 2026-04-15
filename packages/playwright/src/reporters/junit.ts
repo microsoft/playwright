@@ -152,6 +152,7 @@ class JUnitReporter implements ReporterV2 {
         name: namePrefix + test.titlePath().slice(3).join(' › '),
         // filename
         classname: suiteName,
+        file: suiteName,
       },
       children: [],
     };
