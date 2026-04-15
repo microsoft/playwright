@@ -94,6 +94,7 @@ import type { ExpectationResult, MatcherContext, MatchersObject, RawMatcherFn, S
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
+import { monotonicTime } from '@isomorphic/time';
 
 export interface ExpectStepInfo {
   _attachToStep(attachment: { name: string; contentType: string; path?: string; body?: string | Buffer }): void;
@@ -164,91 +165,23 @@ export function expectConfig(): ExpectConfig {
 
 type ExpectMessage = string | { message?: string };
 
-function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[]): any {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(actual, info, prefix));
-}
+type PollGenerator = () => any;
 
-const userMatchersSymbol = Symbol('userMatchers');
-
-function qualifiedMatcherName(qualifier: string[], matcherName: string) {
-  return qualifier.join(':') + '$' + matcherName;
-}
-
-let lastExtendId = 0;
-
-function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Record<string, Function>) {
-  const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
-    apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
-      const [actual, messageOrOptions] = argumentsList;
-      const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
-      const newInfo = { ...info, message };
-      if (newInfo.poll) {
-        if (typeof actual !== 'function')
-          throw new Error('`expect.poll()` accepts only function as a first argument');
-        newInfo.poll.generator = actual as any;
-      }
-      return createMatchers(actual, newInfo, prefix);
-    },
-
-    get: function(target: any, property: string | typeof userMatchersSymbol) {
-      if (property === 'configure')
-        return configure;
-
-      if (property === 'extend') {
-        return (matchers: any) => {
-          const qualifier = [...prefix, String(++lastExtendId)];
-
-          const wrappedMatchers: any = {};
-          for (const [name, matcher] of Object.entries(matchers)) {
-            wrappedMatchers[name] = wrapPlaywrightMatcherToPassNiceThis(matcher);
-            const key = qualifiedMatcherName(qualifier, name);
-            wrappedMatchers[key] = wrappedMatchers[name];
-            Object.defineProperty(wrappedMatchers[key], 'name', { value: name });
-          }
-          expectLibrary.extend(wrappedMatchers);
-          return createExpect(info, qualifier, { ...userMatchers, ...matchers });
-        };
-      }
-
-      if (property === 'soft') {
-        return (actual: unknown, messageOrOptions?: ExpectMessage) => {
-          return configure({ soft: true })(actual, messageOrOptions) as any;
-        };
-      }
-
-      if (property === userMatchersSymbol)
-        return userMatchers;
-
-      if (property === 'poll') {
-        return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
-          const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
-          return configure({ _poll: poll })(actual, messageOrOptions) as any;
-        };
-      }
-      return (expectLibrary as any)[property];
-    },
-  });
-
-  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
-    const newInfo = { ...info };
-    if ('message' in configuration)
-      newInfo.message = configuration.message;
-    if ('timeout' in configuration)
-      newInfo.timeout = configuration.timeout;
-    if ('soft' in configuration)
-      newInfo.isSoft = configuration.soft;
-    if ('_poll' in configuration) {
-      newInfo.poll = configuration._poll ? { ...info.poll, generator: () => {} } : undefined;
-      if (typeof configuration._poll === 'object') {
-        newInfo.poll!.timeout = configuration._poll.timeout ?? newInfo.poll!.timeout;
-        newInfo.poll!.intervals = configuration._poll.intervals ?? newInfo.poll!.intervals;
-      }
-    }
-    return createExpect(newInfo, prefix, userMatchers);
+type ExpectMetaInfo = {
+  message?: string;
+  isNot?: boolean;
+  isSoft?: boolean;
+  poll?: {
+    timeout?: number;
+    intervals?: number[];
+    generator: PollGenerator;
   };
+  timeout?: number;
+  allMatchers: MatchersObject;
+  userMatchers: Record<string, Function>;
+};
 
-  return expectInstance;
-}
+const META_INFO = Symbol('expectMetaInfo');
 
 // Expect wraps matchers, so there is no way to pass this information to the raw Playwright matcher.
 // Rely on sync call sequence to seed each matcher call with the context.
@@ -276,6 +209,7 @@ function takeMatcherCallContext(): MatcherCallContext | undefined {
 
 const defaultExpectTimeout = 5000;
 
+// !!!
 function wrapPlaywrightMatcherToPassNiceThis(matcher: any) {
   return function(this: any, ...args: any[]) {
     const { isNot, promise, utils } = this;
@@ -336,129 +270,282 @@ const customMatchers = {
   toMatchSnapshot,
 };
 
-type Generator = () => any;
+function buildCustomAsymmetricMatcher(matcherName: string, matcher: RawMatcherFn) {
+  class CustomMatcher extends AsymmetricMatcher<[unknown, ...Array<unknown>]> {
+    constructor(inverse: boolean = false, ...sample: [unknown, ...Array<unknown>]) {
+      super(sample, inverse);
+    }
 
-type ExpectMetaInfo = {
-  message?: string;
-  isNot?: boolean;
-  isSoft?: boolean;
-  poll?: {
-    timeout?: number;
-    intervals?: number[];
-    generator: Generator;
-  };
-  timeout?: number;
-};
+    asymmetricMatch(other: unknown) {
+      const { pass } = matcher.call(
+          (this as any).getMatcherContext(),
+          other,
+          ...this.sample,
+      ) as SyncExpectationResult;
+      return this.inverse ? !pass : pass;
+    }
 
-class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
-  private _actual: any;
-  private _info: ExpectMetaInfo;
-  private _prefix: string[];
+    toString() {
+      return `${this.inverse ? 'not.' : ''}${matcherName}`;
+    }
 
-  constructor(actual: any, info: ExpectMetaInfo, prefix: string[]) {
-    this._actual = actual;
-    this._info = { ...info };
-    this._prefix = prefix;
+    override getExpectedType() {
+      return 'any';
+    }
+
+    override toAsymmetricMatcher() {
+      return `${this.toString()}<${this.sample.map(String).join(', ')}>`;
+    }
   }
-
-  get(target: Object, matcherName: string | symbol, receiver: any): any {
-    if (matcherName === 'toThrowError')
-      matcherName = 'toThrow';
-    let matcher = Reflect.get(target, matcherName, receiver);
-    if (typeof matcherName !== 'string')
-      return matcher;
-
-    let resolvedMatcherName = matcherName;
-    for (let i = this._prefix.length; i > 0; i--) {
-      const qualifiedName = qualifiedMatcherName(this._prefix.slice(0, i), matcherName);
-      if (Reflect.has(target, qualifiedName)) {
-        matcher = Reflect.get(target, qualifiedName, receiver);
-        resolvedMatcherName = qualifiedName;
-        break;
-      }
-    }
-
-    if (matcher === undefined)
-      throw new Error(`expect: Property '${matcherName}' not found.`);
-    if (typeof matcher !== 'function') {
-      if (matcherName === 'not')
-        this._info.isNot = !this._info.isNot;
-      return new Proxy(matcher, this);
-    }
-    if (this._info.poll) {
-      if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
-        throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
-    }
-    return (...args: any[]) => {
-      const testInfo = expectConfig().testInfo;
-      setMatcherCallContext({ expectInfo: this._info, testInfo });
-      if (!testInfo)
-        return matcher.call(target, ...args);
-
-      const customMessage = this._info.message || '';
-      const suffixes = computeMatcherTitleSuffix(matcherName, this._actual, args);
-      const defaultTitle = `${this._info.poll ? 'poll ' : ''}${this._info.isSoft ? 'soft ' : ''}${this._info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
-      const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
-      const longTitle = shortTitle + (suffixes.long || '');
-      const apiName = `expect${this._info.poll ? '.poll ' : ''}${this._info.isSoft ? '.soft ' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${suffixes.short || ''}`;
-
-      // This looks like it is unnecessary, but it isn't - we need to filter
-      // out all the frames that belong to the test runner from caught runtime errors.
-      const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
-
-      // toPass and poll matchers can contain other steps, expects and API calls,
-      // so they behave like a retriable step.
-      const stepInfo = {
-        category: 'expect' as const,
-        apiName,
-        title: longTitle,
-        shortTitle,
-        params: args[0] ? { expected: args[0] } : undefined,
-        infectParentStepsWithError: this._info.isSoft,
-      };
-
-      const step = testInfo._addStep(stepInfo);
-
-      const reportStepError = (e: Error | unknown) => {
-        const jestError = isJestError(e) ? e : null;
-        const expectError = jestError ? new ExpectError(jestError, customMessage, stackFrames) : undefined;
-        if (jestError?.matcherResult.suggestedRebaseline) {
-          // NOTE: this is a workaround for the fact that we can't pass the suggested rebaseline
-          // for passing matchers. See toMatchAriaSnapshot for a counterpart.
-          step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
-          return;
-        }
-
-        const error = expectError ?? e;
-        step.complete({ error });
-
-        if (this._info.isSoft)
-          testInfo._failWithError(error);
-        else
-          throw error;
-      };
-
-      const finalizer = () => {
-        step.complete({});
-      };
-
-      try {
-        setMatcherCallContext({ expectInfo: this._info, testInfo, step: step.info });
-        const callback = () => matcher.call(target, ...args);
-        const result = currentZone().with('stepZone', step).run(callback);
-        if (result instanceof Promise)
-          return result.then(finalizer).catch(reportStepError);
-        finalizer();
-        return result;
-      } catch (e) {
-        void reportStepError(e);
-      }
-    };
-  }
+  const positive = (...sample: [unknown, ...Array<unknown>]) => new CustomMatcher(false, ...sample);
+  const inverse = (...sample: [unknown, ...Array<unknown>]) => new CustomMatcher(true, ...sample);
+  return { positive, inverse };
 }
 
-async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, prefix: string[], ...args: any[]) {
+function createExpect(info: ExpectMetaInfo): Expect<{}> {
+  const expectFn: any = (actual: unknown, messageOrOptions?: ExpectMessage) => {
+    const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
+    const newInfo: ExpectMetaInfo = { ...info, message };
+    if (newInfo.poll) {
+      if (typeof actual !== 'function')
+        throw new Error('`expect.poll()` accepts only function as a first argument');
+      newInfo.poll = { ...newInfo.poll, generator: actual as PollGenerator };
+    }
+    return createMatchers(actual, newInfo);
+  };
+
+  Object.defineProperty(expectFn, META_INFO, { value: info });
+
+  expectFn.any = any;
+  expectFn.anything = anything;
+  expectFn.arrayContaining = arrayContaining;
+  expectFn.arrayOf = arrayOf;
+  expectFn.closeTo = closeTo;
+  expectFn.objectContaining = objectContaining;
+  expectFn.stringContaining = stringContaining;
+  expectFn.stringMatching = stringMatching;
+
+  const notAsymmetric: any = {
+    arrayContaining: arrayNotContaining,
+    arrayOf: notArrayOf,
+    closeTo: notCloseTo,
+    objectContaining: objectNotContaining,
+    stringContaining: stringNotContaining,
+    stringMatching: stringNotMatching,
+  };
+  expectFn.not = notAsymmetric;
+
+  for (const [name, matcher] of Object.entries(info.allMatchers)) {
+    if ((matcher as any)[INTERNAL_MATCHER_FLAG])
+      continue;
+    const { positive, inverse } = buildCustomAsymmetricMatcher(name, matcher);
+    expectFn[name] = positive;
+    notAsymmetric[name] = inverse;
+  }
+
+  expectFn.getState = () => ({});
+
+  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
+    const newInfo: ExpectMetaInfo = { ...info };
+    if ('message' in configuration)
+      newInfo.message = configuration.message;
+    if ('timeout' in configuration)
+      newInfo.timeout = configuration.timeout;
+    if ('soft' in configuration)
+      newInfo.isSoft = configuration.soft;
+    if ('_poll' in configuration) {
+      newInfo.poll = configuration._poll ? { ...info.poll, generator: () => {} } : undefined;
+      if (typeof configuration._poll === 'object') {
+        newInfo.poll!.timeout = configuration._poll.timeout ?? newInfo.poll!.timeout;
+        newInfo.poll!.intervals = configuration._poll.intervals ?? newInfo.poll!.intervals;
+      }
+    }
+    return createExpect(newInfo);
+  };
+  expectFn.configure = configure;
+
+  expectFn.soft = (actual: unknown, messageOrOptions?: ExpectMessage) => {
+    return configure({ soft: true })(actual, messageOrOptions) as any;
+  };
+
+  expectFn.poll = (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
+    const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
+    return configure({ _poll: poll })(actual, messageOrOptions) as any;
+  };
+
+  expectFn.extend = (matchers: MatchersObject) => {
+    const wrapped: MatchersObject = {};
+    for (const [name, m] of Object.entries(matchers)) {
+      if (typeof m !== 'function')
+        throw new TypeError(`expect.extend: \`${name}\` is not a valid matcher. Must be a function, is "${typeof m}"`);
+      const wrappedFn = wrapPlaywrightMatcherToPassNiceThis(m) as RawMatcherFn;
+      // !!!
+      Object.defineProperty(wrappedFn, INTERNAL_MATCHER_FLAG, { value: false });
+      wrapped[name] = wrappedFn;
+    }
+
+    // Legacy behavior: `expect.extend({...})` without capturing the return value
+    // must make the new matchers available on the same expect instance.
+    Object.assign(info.allMatchers, wrapped);
+    Object.assign(info.userMatchers, matchers);
+    for (const [name, matcher] of Object.entries(wrapped)) {
+      const { positive, inverse } = buildCustomAsymmetricMatcher(name, matcher);
+      expectFn[name] = positive;
+      notAsymmetric[name] = inverse;
+    }
+    // End of legacy behavior.
+
+    return createExpect({
+      ...info,
+      allMatchers: { ...info.allMatchers, ...wrapped },
+      userMatchers: { ...info.userMatchers, ...matchers },
+    });
+  };
+
+  return expectFn as Expect<{}>;
+}
+
+function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
+  const result: any = { not: {} };
+  if (!info.poll) {
+    result.resolves = { not: {} };
+    result.rejects = { not: {} };
+  } else {
+    const throwUnsupported = (name: 'resolves' | 'rejects') => {
+      throw new Error(`\`expect.poll()\` does not support "${name}" matcher.`);
+    };
+    Object.defineProperty(result, 'resolves', { get: () => throwUnsupported('resolves'), enumerable: true });
+    Object.defineProperty(result, 'rejects', { get: () => throwUnsupported('rejects'), enumerable: true });
+  }
+
+  const err = new JestAssertionError();
+  const notInfo: ExpectMetaInfo = { ...info, isNot: !info.isNot };
+
+  for (const name of Object.keys(info.allMatchers)) {
+    const matcher = info.allMatchers[name];
+    const promiseMatcher = getPromiseMatcher(name) || matcher;
+
+    result[name] = wrapMatcherCall(name, info, actual, makeThrowingMatcher(matcher, false, '', actual));
+    result.not[name] = wrapMatcherCall(name, notInfo, actual, makeThrowingMatcher(matcher, true, '', actual));
+
+    if (!info.poll) {
+      result.resolves[name] = wrapMatcherCall(name, info, actual, makeResolveMatcher(name, promiseMatcher, false, actual as any, err));
+      result.resolves.not[name] = wrapMatcherCall(name, notInfo, actual, makeResolveMatcher(name, promiseMatcher, true, actual as any, err));
+      result.rejects[name] = wrapMatcherCall(name, info, actual, makeRejectMatcher(name, promiseMatcher, false, actual as any, err));
+      result.rejects.not[name] = wrapMatcherCall(name, notInfo, actual, makeRejectMatcher(name, promiseMatcher, true, actual as any, err));
+    }
+  }
+
+  // toThrowError is a legacy alias for toThrow.
+  const aliasToThrow = (obj: any) => {
+    if (obj && Object.prototype.hasOwnProperty.call(obj, 'toThrow'))
+      obj.toThrowError = obj.toThrow;
+  };
+  aliasToThrow(result);
+  aliasToThrow(result.not);
+  if (!info.poll) {
+    aliasToThrow(result.resolves);
+    aliasToThrow(result.resolves.not);
+    aliasToThrow(result.rejects);
+    aliasToThrow(result.rejects.not);
+  }
+
+  result.not = wrapUnknownMatcherProxy(result.not);
+  if (!info.poll) {
+    result.resolves.not = wrapUnknownMatcherProxy(result.resolves.not);
+    result.resolves = wrapUnknownMatcherProxy(result.resolves);
+    result.rejects.not = wrapUnknownMatcherProxy(result.rejects.not);
+    result.rejects = wrapUnknownMatcherProxy(result.rejects);
+  }
+  return wrapUnknownMatcherProxy(result);
+}
+
+// !!!
+function wrapUnknownMatcherProxy(obj: any): any {
+  return new Proxy(obj, {
+    get(target, prop, receiver) {
+      if (typeof prop !== 'string' || prop in target)
+        return Reflect.get(target, prop, receiver);
+      throw new Error(`expect: Property '${prop}' not found.`);
+    },
+  });
+}
+
+function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcherImpl: (...args: any[]) => any) {
+  return (...args: any[]) => {
+    if (info.poll) {
+      if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
+        throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
+      matcherImpl = (...args: any[]) => pollMatcher(matcherName, info, ...args);
+    }
+
+    const testInfo = expectConfig().testInfo;
+    setMatcherCallContext({ expectInfo: info, testInfo });
+    if (!testInfo)
+      return matcherImpl(...args);
+
+    const customMessage = info.message || '';
+    const suffixes = computeMatcherTitleSuffix(matcherName, actual, args);
+    const defaultTitle = `${info.poll ? 'poll ' : ''}${info.isSoft ? 'soft ' : ''}${info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
+    const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
+    const longTitle = shortTitle + (suffixes.long || '');
+    const apiName = `expect${info.poll ? '.poll ' : ''}${info.isSoft ? '.soft ' : ''}${info.isNot ? '.not' : ''}.${matcherName}${suffixes.short || ''}`;
+
+    // This looks like it is unnecessary, but it isn't - we need to filter
+    // out all the frames that belong to the test runner from caught runtime errors.
+    const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
+
+    // toPass and poll matchers can contain other steps, expects and API calls,
+    // so they behave like a retriable step.
+    const stepInfo = {
+      category: 'expect' as const,
+      apiName,
+      title: longTitle,
+      shortTitle,
+      params: args[0] ? { expected: args[0] } : undefined,
+      infectParentStepsWithError: info.isSoft,
+    };
+
+    const step = testInfo._addStep(stepInfo);
+
+    const reportStepError = (e: Error | unknown) => {
+      const jestError = isJestError(e) ? e : null;
+      const expectError = jestError ? new ExpectError(jestError, customMessage, stackFrames) : undefined;
+      if (jestError?.matcherResult.suggestedRebaseline) {
+        // NOTE: this is a workaround for the fact that we can't pass the suggested rebaseline
+        // for passing matchers. See toMatchAriaSnapshot for a counterpart.
+        step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
+        return;
+      }
+
+      const error = expectError ?? e;
+      step.complete({ error });
+
+      if (info.isSoft)
+        testInfo._failWithError(error);
+      else
+        throw error;
+    };
+
+    const finalizer = () => {
+      step.complete({});
+    };
+
+    try {
+      setMatcherCallContext({ expectInfo: info, testInfo, step: step.info });
+      const callback = () => matcherImpl(...args);
+      const result = currentZone().with('stepZone', step).run(callback);
+      if (result instanceof Promise)
+        return result.then(finalizer).catch(reportStepError);
+      finalizer();
+      return result;
+    } catch (e) {
+      void reportStepError(e);
+    }
+  };
+}
+
+async function pollMatcher(matcherName: string, info: ExpectMetaInfo, ...args: any[]) {
   const testInfo = expectConfig().testInfo;
   const poll = info.poll!;
   const timeout = poll.timeout ?? info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
@@ -468,17 +555,23 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
     if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
 
+    // !!!
+    // Inner matchers run without poll and without soft (soft is outside of poll, not inside).
+    // Strip isNot here and route to the .not branch below so step title matches.
+    const effectiveIsNot = !!info.isNot;
     const innerInfo: ExpectMetaInfo = {
       ...info,
-      isSoft: false, // soft is outside of poll, not inside
+      isNot: false,
+      isSoft: false,
       poll: undefined,
     };
     const value = await poll.generator();
     try {
-      let matchers = createMatchers(value, innerInfo, prefix);
-      if (info.isNot)
-        matchers = matchers.not;
-      matchers[qualifiedMatcherName](...args);
+      const matchers = createMatchers(value, innerInfo);
+      if (effectiveIsNot)
+        matchers.not[matcherName](...args);
+      else
+        matchers[matcherName](...args);
       return { continuePolling: false, result: undefined };
     } catch (error) {
       return { continuePolling: true, result: error };
@@ -509,98 +602,9 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
 type ThrowingMatcherFn = (...args: Array<any>) => any;
 type PromiseMatcherFn = (...args: Array<any>) => Promise<any>;
 
-type AsymmetricMatchers = {
-  any(sample: unknown): AsymmetricMatcher<any>;
-  anything(): AsymmetricMatcher<any>;
-  arrayContaining(sample: Array<unknown>): AsymmetricMatcher<any>;
-  arrayOf(sample: unknown): AsymmetricMatcher<any>;
-  closeTo(sample: number, precision?: number): AsymmetricMatcher<any>;
-  objectContaining(sample: Record<string, unknown>): AsymmetricMatcher<any>;
-  stringContaining(sample: string): AsymmetricMatcher<any>;
-  stringMatching(sample: string | RegExp): AsymmetricMatcher<any>;
-};
-
-interface BaseExpect {
-  extend(matchers: MatchersObject): void;
-}
-
-type LibraryExpect = (<T = unknown>(actual: T) => any) &
-  BaseExpect &
-  AsymmetricMatchers & {
-    not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
-  };
-
 class JestAssertionError extends Error {
   matcherResult?: Omit<SyncExpectationResult, 'message'> & { message: string };
 }
-
-const allMatchers: MatchersObject = Object.create(null);
-
-const setMatchers = (
-  matchers: MatchersObject,
-  isInternal: boolean,
-  expect: LibraryExpect,
-): void => {
-  for (const key of Object.keys(matchers)) {
-    const matcher = matchers[key];
-
-    if (typeof matcher !== 'function')
-      throw new TypeError(`expect.extend: \`${key}\` is not a valid matcher. Must be a function, is "${typeof matcher}"`);
-
-    Object.defineProperty(matcher, INTERNAL_MATCHER_FLAG, {
-      value: isInternal,
-    });
-
-    if (!isInternal) {
-      // expect is defined
-
-      class CustomMatcher extends AsymmetricMatcher<[unknown, ...Array<unknown>]> {
-        constructor(inverse = false, ...sample: [unknown, ...Array<unknown>]) {
-          super(sample, inverse);
-        }
-
-        asymmetricMatch(other: unknown) {
-          const { pass } = matcher.call(
-              this.getMatcherContext(),
-              other,
-              ...this.sample,
-          ) as SyncExpectationResult;
-
-          return this.inverse ? !pass : pass;
-        }
-
-        toString() {
-          return `${this.inverse ? 'not.' : ''}${key}`;
-        }
-
-        override getExpectedType() {
-          return 'any';
-        }
-
-        override toAsymmetricMatcher() {
-          return `${this.toString()}<${this.sample.map(String).join(', ')}>`;
-        }
-      }
-
-      Object.defineProperty(expect, key, {
-        configurable: true,
-        enumerable: true,
-        value: (...sample: [unknown, ...Array<unknown>]) =>
-          new CustomMatcher(false, ...sample),
-        writable: true,
-      });
-      Object.defineProperty(expect.not, key, {
-        configurable: true,
-        enumerable: true,
-        value: (...sample: [unknown, ...Array<unknown>]) =>
-          new CustomMatcher(true, ...sample),
-        writable: true,
-      });
-    }
-  }
-
-  Object.assign(allMatchers, matchers);
-};
 
 const getPromiseMatcher = (name: string) => {
   if (name === 'toThrow')
@@ -608,113 +612,83 @@ const getPromiseMatcher = (name: string) => {
   return null;
 };
 
-const expectLibrary: LibraryExpect = ((actual: any, ...rest: Array<any>) => {
-  if (rest.length > 0)
-    throw new Error('Expect takes at most one argument.');
-
-  const expectation: any = {
-    not: {},
-    rejects: { not: {} },
-    resolves: { not: {} },
-  };
-
-  const err = new JestAssertionError();
-
-  for (const name of Object.keys(allMatchers)) {
-    const matcher = allMatchers[name];
-    const promiseMatcher = getPromiseMatcher(name) || matcher;
-    expectation[name] = makeThrowingMatcher(matcher, false, '', actual);
-    expectation.not[name] = makeThrowingMatcher(matcher, true, '', actual);
-
-    expectation.resolves[name] = makeResolveMatcher(name, promiseMatcher, false, actual, err);
-    expectation.resolves.not[name] = makeResolveMatcher(name, promiseMatcher, true, actual, err);
-
-    expectation.rejects[name] = makeRejectMatcher(name, promiseMatcher, false, actual, err);
-    expectation.rejects.not[name] = makeRejectMatcher(name, promiseMatcher, true, actual, err);
-  }
-
-  return expectation;
-}) as LibraryExpect;
-
 const getMessage = (message?: () => string) =>
   (message && message()) ||
   RECEIVED_COLOR('No message was specified for this matcher.');
 
-const makeResolveMatcher =
-  (
-    matcherName: string,
-    matcher: RawMatcherFn,
-    isNot: boolean,
-    actual: Promise<any> | (() => Promise<any>),
-    outerErr: JestAssertionError,
-  ): PromiseMatcherFn =>
-    (...args: Array<any>) => {
-      const options = { isNot, promise: 'resolves' };
+const makeResolveMatcher = (
+  matcherName: string,
+  matcher: RawMatcherFn,
+  isNot: boolean,
+  actual: Promise<any> | (() => Promise<any>),
+  outerErr: JestAssertionError,
+): PromiseMatcherFn =>
+  (...args: Array<any>) => {
+    const options = { isNot, promise: 'resolves' };
 
-      const actualWrapper: Promise<any> =
-        typeof actual === 'function' ? actual() : actual;
+    const actualWrapper: Promise<any> =
+      typeof actual === 'function' ? actual() : actual;
 
-      if (!isPromise(actualWrapper)) {
-        throw new JestAssertionError(
-            matcherErrorMessage(
-                matcherHint(matcherName, undefined, '', options),
-                `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
-                printWithType('Received', actual, printReceived),
-            ),
-        );
-      }
-
-      const innerErr = new JestAssertionError();
-
-      return actualWrapper.then(
-          result => makeThrowingMatcher(matcher, isNot, 'resolves', result, innerErr).apply(null, args),
-          error => {
-            outerErr.message =
-              `${matcherHint(matcherName, undefined, '', options)}\n\n` +
-          'Received promise rejected instead of resolved\n' +
-          `Rejected to value: ${printReceived(error)}`;
-            throw outerErr;
-          },
+    if (!isPromise(actualWrapper)) {
+      throw new JestAssertionError(
+          matcherErrorMessage(
+              matcherHint(matcherName, undefined, '', options),
+              `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
+              printWithType('Received', actual, printReceived),
+          ),
       );
-    };
+    }
 
-const makeRejectMatcher =
-  (
-    matcherName: string,
-    matcher: RawMatcherFn,
-    isNot: boolean,
-    actual: Promise<any> | (() => Promise<any>),
-    outerErr: JestAssertionError,
-  ): PromiseMatcherFn =>
-    (...args: Array<any>) => {
-      const options = { isNot, promise: 'rejects' };
+    const innerErr = new JestAssertionError();
 
-      const actualWrapper: Promise<any> =
-        typeof actual === 'function' ? actual() : actual;
+    return actualWrapper.then(
+        result => makeThrowingMatcher(matcher, isNot, 'resolves', result, innerErr).apply(null, args),
+        error => {
+          outerErr.message =
+            `${matcherHint(matcherName, undefined, '', options)}\n\n` +
+            'Received promise rejected instead of resolved\n' +
+            `Rejected to value: ${printReceived(error)}`;
+          throw outerErr;
+        },
+    );
+  };
 
-      if (!isPromise(actualWrapper)) {
-        throw new JestAssertionError(
-            matcherErrorMessage(
-                matcherHint(matcherName, undefined, '', options),
-                `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
-                printWithType('Received', actual, printReceived),
-            ),
-        );
-      }
+const makeRejectMatcher = (
+  matcherName: string,
+  matcher: RawMatcherFn,
+  isNot: boolean,
+  actual: Promise<any> | (() => Promise<any>),
+  outerErr: JestAssertionError,
+): PromiseMatcherFn =>
+  (...args: Array<any>) => {
+    const options = { isNot, promise: 'rejects' };
 
-      const innerErr = new JestAssertionError();
+    const actualWrapper: Promise<any> =
+      typeof actual === 'function' ? actual() : actual;
 
-      return actualWrapper.then(
-          result => {
-            outerErr.message =
-              `${matcherHint(matcherName, undefined, '', options)}\n\n` +
-          'Received promise resolved instead of rejected\n' +
-          `Resolved to value: ${printReceived(result)}`;
-            throw outerErr;
-          },
-          error => makeThrowingMatcher(matcher, isNot, 'rejects', error, innerErr).apply(null, args),
+    if (!isPromise(actualWrapper)) {
+      throw new JestAssertionError(
+          matcherErrorMessage(
+              matcherHint(matcherName, undefined, '', options),
+              `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
+              printWithType('Received', actual, printReceived),
+          ),
       );
-    };
+    }
+
+    const innerErr = new JestAssertionError();
+
+    return actualWrapper.then(
+        result => {
+          outerErr.message =
+            `${matcherHint(matcherName, undefined, '', options)}\n\n` +
+            'Received promise resolved instead of rejected\n' +
+            `Resolved to value: ${printReceived(result)}`;
+          throw outerErr;
+        },
+        error => makeThrowingMatcher(matcher, isNot, 'rejects', error, innerErr).apply(null, args),
+    );
+  };
 
 const makeThrowingMatcher = (
   matcher: RawMatcherFn,
@@ -796,27 +770,6 @@ const makeThrowingMatcher = (
     }
   };
 
-expectLibrary.extend = (matchers: MatchersObject) => setMatchers(matchers, false, expectLibrary);
-
-expectLibrary.anything = anything;
-expectLibrary.any = any;
-
-expectLibrary.not = {
-  arrayContaining: arrayNotContaining,
-  arrayOf: notArrayOf,
-  closeTo: notCloseTo,
-  objectContaining: objectNotContaining,
-  stringContaining: stringNotContaining,
-  stringMatching: stringNotMatching,
-};
-
-expectLibrary.arrayContaining = arrayContaining;
-expectLibrary.arrayOf = arrayOf;
-expectLibrary.closeTo = closeTo;
-expectLibrary.objectContaining = objectContaining;
-expectLibrary.stringContaining = stringContaining;
-expectLibrary.stringMatching = stringMatching;
-
 const _validateResult = (result: any) => {
   if (
     typeof result !== 'object' ||
@@ -835,21 +788,28 @@ const _validateResult = (result: any) => {
   }
 };
 
-// Register built-in matchers.
-setMatchers(builtinMatchers, true, expectLibrary);
-setMatchers(toThrowMatchers, true, expectLibrary);
-
 // #endregion
 
-export const expect: Expect<{}> = createExpect({}, [], {}).extend(customMatchers as any);
+// Stamp the vendored jest matchers as internal so makeThrowingMatcher handles them as built-ins.
+for (const m of Object.values(builtinMatchers))
+  Object.defineProperty(m, INTERNAL_MATCHER_FLAG, { value: true });
+for (const m of Object.values(toThrowMatchers))
+  Object.defineProperty(m, INTERNAL_MATCHER_FLAG, { value: true });
+
+const BASE_MATCHERS: MatchersObject = { ...builtinMatchers, ...toThrowMatchers };
+
+export const expect: Expect<{}> = createExpect({
+  allMatchers: { ...BASE_MATCHERS },
+  userMatchers: {},
+}).extend(customMatchers as any);
 
 export function mergeExpects(...expects: any[]) {
   let merged = expect;
   for (const e of expects) {
-    const internals = e[userMatchersSymbol];
-    if (!internals) // non-playwright expects mutate the global expect, so we don't need to do anything special
+    const info: ExpectMetaInfo | undefined = e[META_INFO];
+    if (!info) // non-playwright expects mutate the global expect, so we don't need to do anything special
       continue;
-    merged = merged.extend(internals);
+    merged = merged.extend(info.userMatchers as any) as typeof merged;
   }
   return merged;
 }
