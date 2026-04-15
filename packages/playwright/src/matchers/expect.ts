@@ -16,7 +16,6 @@
 
 import path from 'path';
 
-import { equals } from '@jest/expect-utils';
 import { parseStackFrame, captureRawStack } from '@isomorphic/stackTrace';
 import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
@@ -94,7 +93,6 @@ import type { ExpectationResult, MatcherContext, MatchersObject, RawMatcherFn, S
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
-import { monotonicTime } from '@isomorphic/time';
 
 export interface ExpectStepInfo {
   _attachToStep(attachment: { name: string; contentType: string; path?: string; body?: string | Buffer }): void;
@@ -208,24 +206,6 @@ function takeMatcherCallContext(): MatcherCallContext | undefined {
 }
 
 const defaultExpectTimeout = 5000;
-
-// !!!
-function wrapPlaywrightMatcherToPassNiceThis(matcher: any) {
-  return function(this: any, ...args: any[]) {
-    const { isNot, promise, utils } = this;
-    const context = takeMatcherCallContext();
-    const timeout = context?.expectInfo.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
-    const newThis: ExpectMatcherStateInternal = {
-      isNot,
-      promise,
-      utils,
-      timeout,
-      _stepInfo: context?.step,
-    };
-    (newThis as any).equals = throwUnsupportedExpectMatcherError;
-    return matcher.call(newThis, ...args);
-  };
-}
 
 function throwUnsupportedExpectMatcherError() {
   throw new Error('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
@@ -378,10 +358,10 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
     for (const [name, m] of Object.entries(matchers)) {
       if (typeof m !== 'function')
         throw new TypeError(`expect.extend: \`${name}\` is not a valid matcher. Must be a function, is "${typeof m}"`);
-      const wrappedFn = wrapPlaywrightMatcherToPassNiceThis(m) as RawMatcherFn;
-      // !!!
-      Object.defineProperty(wrappedFn, INTERNAL_MATCHER_FLAG, { value: false });
-      wrapped[name] = wrappedFn;
+      const fn = m as RawMatcherFn;
+      if (!Object.prototype.hasOwnProperty.call(fn, INTERNAL_MATCHER_FLAG))
+        Object.defineProperty(fn, INTERNAL_MATCHER_FLAG, { value: false });
+      wrapped[name] = fn;
     }
 
     // Legacy behavior: `expect.extend({...})` without capturing the return value
@@ -698,13 +678,18 @@ const makeThrowingMatcher = (
   err?: JestAssertionError,
 ): ThrowingMatcherFn =>
   function throwingMatcher(this: void, ...args: Array<any>): any {
-    const matcherContext: MatcherContext = {
+    const isInternal = matcher[INTERNAL_MATCHER_FLAG] === true;
+    const callContext = takeMatcherCallContext();
+    const timeout = callContext?.expectInfo.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
+    const matcherContext: MatcherContext & ExpectMatcherStateInternal = {
       customTesters: [],
-      equals,
+      isNot,
+      promise: promise as any,
       utils,
       error: err,
-      isNot,
-      promise,
+      timeout,
+      _stepInfo: callContext?.step,
+      equals: throwUnsupportedExpectMatcherError as any,
     };
 
     const processResult = (
@@ -736,7 +721,7 @@ const makeThrowingMatcher = (
 
     const handleError = (error: Error) => {
       if (
-        matcher[INTERNAL_MATCHER_FLAG] === true &&
+        isInternal &&
         !(error instanceof JestAssertionError) &&
         error.name !== 'PrettyFormatPluginError' &&
         Error.captureStackTrace
@@ -748,12 +733,11 @@ const makeThrowingMatcher = (
     let potentialResult: ExpectationResult;
 
     try {
-      potentialResult =
-        matcher[INTERNAL_MATCHER_FLAG] === true
-          ? matcher.call(matcherContext, actual, ...args)
-          : (function __EXTERNAL_MATCHER_TRAP__() {
-            return matcher.call(matcherContext, actual, ...args);
-          })();
+      potentialResult = isInternal
+        ? matcher.call(matcherContext, actual, ...args)
+        : (function __EXTERNAL_MATCHER_TRAP__() {
+          return matcher.call(matcherContext, actual, ...args);
+        })();
 
       if (isPromise(potentialResult)) {
         const asyncError = new JestAssertionError();
