@@ -56,7 +56,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [webkit]
-        os: [macos-latest]
+        os: [macos-15-xlarge]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
