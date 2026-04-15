@@ -29,16 +29,12 @@ const clientClass = {
   Response: null as Function,
 };
 
-for (let i = 0; i < 3; ++i) {
-  test(`test #${i} to request page and context`, async ({ page, context }) => {
-    // This test is here to create page instance
-  });
-}
-
-test('test to request page and context', async ({ page, context, server }) => {
+test.beforeAll(async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
   clientClass.Page = page.constructor;
   clientClass.BrowserContext = context.constructor;
-  clientClass.Browser = context.browser()!.constructor;
+  clientClass.Browser = browser.constructor;
   const [request, response] = await Promise.all([
     page.waitForRequest(() => true),
     page.waitForResponse(() => true),
@@ -46,6 +42,17 @@ test('test to request page and context', async ({ page, context, server }) => {
   ]);
   clientClass.Request = request.constructor;
   clientClass.Response = response.constructor;
+  await context.close();
+});
+
+for (let i = 0; i < 3; ++i) {
+  test(`test #${i} to request page and context`, async ({ page, context }) => {
+    // This test is here to create page instance
+  });
+}
+
+test('test to request page and context', async ({ page, context }) => {
+  // This test is here to create page instance
 });
 
 test('should not leak fixtures w/ page', async ({ page }) => {
