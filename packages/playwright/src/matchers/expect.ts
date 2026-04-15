@@ -430,25 +430,7 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
     aliasToThrow(result.rejects.not);
   }
 
-  result.not = wrapUnknownMatcherProxy(result.not);
-  if (!info.poll) {
-    result.resolves.not = wrapUnknownMatcherProxy(result.resolves.not);
-    result.resolves = wrapUnknownMatcherProxy(result.resolves);
-    result.rejects.not = wrapUnknownMatcherProxy(result.rejects.not);
-    result.rejects = wrapUnknownMatcherProxy(result.rejects);
-  }
-  return wrapUnknownMatcherProxy(result);
-}
-
-// !!!
-function wrapUnknownMatcherProxy(obj: any): any {
-  return new Proxy(obj, {
-    get(target, prop, receiver) {
-      if (typeof prop !== 'string' || prop in target)
-        return Reflect.get(target, prop, receiver);
-      throw new Error(`expect: Property '${prop}' not found.`);
-    },
-  });
+  return result;
 }
 
 function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcherImpl: (...args: any[]) => any) {
