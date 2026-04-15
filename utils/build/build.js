@@ -564,12 +564,19 @@ steps.push(new EsbuildStep({
     // CLI client tools, should be a separate bundle.
     filePath('packages/playwright-core/src/tools/cli-client/*.ts'),
     filePath('packages/playwright-core/src/package.ts'),
-    filePath('packages/playwright-core/src/serverRegistry.ts'),
     filePath('packages/playwright-core/src/tools/utils/socketConnection.ts'),
   ],
   outdir: filePath('packages/playwright-core/lib'),
   plugins: [dynamicImportToRequirePlugin],
 }));
+
+// playwright-core/lib/serverRegistry.js
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright-core/src/serverRegistry.js')],
+  outfile: filePath('packages/playwright-core/lib/serverRegistry.js'),
+  external: ['fsevents'],
+}, [filePath('packages/playwright-core/src/*')]));
 
 const playwrightCoreSrc = filePath('packages/playwright-core/src');
 

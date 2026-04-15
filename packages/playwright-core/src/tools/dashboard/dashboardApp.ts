@@ -26,145 +26,34 @@ import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { CDPConnection, DashboardConnection } from './dashboardController';
-import { serverRegistry } from '../../serverRegistry';
-import { connectToBrowserAcrossVersions } from '../utils/connect';
-import { createClientInfo } from '../cli-client/registry';
 
 import type * as api from '../../..';
-import type { SessionStatus } from '../../../../dashboard/src/sessionModel';
-
-function readBody(request: http.IncomingMessage): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    request.on('data', (chunk: Buffer) => chunks.push(chunk));
-    request.on('end', () => {
-      try {
-        const text = Buffer.concat(chunks).toString();
-        resolve(text ? JSON.parse(text) : {});
-      } catch (e) {
-        reject(e);
-      }
-    });
-    request.on('error', reject);
-  });
-}
-
-async function parseRequest(request: http.IncomingMessage): Promise<{ guid: string }> {
-  const body = await readBody(request);
-  if (!body.guid)
-    throw new Error('Dashboard app is too old, please close it and open again');
-  return { guid: body.guid };
-}
-
-function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
-  response.statusCode = statusCode;
-  response.setHeader('Content-Type', 'application/json');
-  response.end(JSON.stringify(data));
-}
-
-async function loadBrowserDescriptorSessions(wsPath: string): Promise<SessionStatus[]> {
-  const entriesByWorkspace = await serverRegistry.list();
-  const sessions: SessionStatus[] = [];
-  for (const [, entries] of entriesByWorkspace) {
-    for (const entry of entries) {
-      let wsUrl: string | undefined;
-      if (entry.canConnect) {
-        const url = new URL(wsPath, 'http://localhost');
-        url.searchParams.set('guid', entry.browser.guid);
-        wsUrl = url.pathname + url.search;
-      }
-      sessions.push({ ...entry, wsUrl });
-    }
-  }
-  return sessions;
-}
-
-const browserGuidToDashboardConnection = new Map<string, DashboardConnection>();
-
-async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMessage, response: http.ServerResponse) {
-  const url = new URL(request.url!,  httpServer.urlPrefix('human-readable'));
-  const apiPath = url.pathname;
-
-  if (apiPath === '/api/sessions/list' && request.method === 'GET') {
-    const sessions = await loadBrowserDescriptorSessions(httpServer.wsGuid()!);
-    const clientInfo = createClientInfo();
-    sendJSON(response, { sessions, clientInfo });
-    return;
-  }
-
-  if (apiPath === '/api/sessions/close' && request.method === 'POST') {
-    const { guid } = await parseRequest(request);
-    let browser: api.Browser;
-    try {
-      const browserDescriptor = serverRegistry.readDescriptor(guid);
-      browser = await connectToBrowserAcrossVersions(browserDescriptor);
-    } catch (e) {
-      sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
-      return;
-    }
-    try {
-      await Promise.all(browser.contexts().map(context => context.close()));
-      await browser.close();
-      sendJSON(response, { success: true });
-      return;
-    } catch (e) {
-      sendJSON(response, { error: 'Failed to close browser: ' + e.message }, 500);
-      return;
-    }
-  }
-
-  if (apiPath === '/api/sessions/delete-data' && request.method === 'POST') {
-    const { guid } = await parseRequest(request);
-    try {
-      await serverRegistry.deleteUserData(guid);
-    } catch (e) {
-      sendJSON(response, { error: 'Failed to delete session data: ' + e.message }, 500);
-      return;
-    }
-    sendJSON(response, { success: true });
-    return;
-  }
-
-  response.statusCode = 404;
-  response.end(JSON.stringify({ error: 'Not found' }));
-}
 
 async function innerOpenDashboardApp(): Promise<api.Page> {
   const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
 
-  httpServer.routePrefix('/api/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-    handleApiRequest(httpServer, request, response).catch(e => {
-      response.statusCode = 500;
-      response.end(JSON.stringify({ error: e.message }));
-    });
-    return true;
-  });
+  const connections = new Set<DashboardConnection>();
 
   httpServer.createWebSocket(url => {
-    const guid = url.searchParams.get('guid');
-    if (!guid)
-      throw new Error('Unsupported WebSocket URL: ' + url.toString());
-    const browserDescriptor = serverRegistry.readDescriptor(guid);
-
     const cdpPageId = url.searchParams.get('cdpPageId');
     if (cdpPageId) {
-      const connection = browserGuidToDashboardConnection.get(guid);
-      if (!connection)
-        throw new Error('CDP connection not found for session: ' + guid);
-      const page = connection.pageForId(cdpPageId);
-      if (!page)
-        throw new Error('Page not found for page ID: ' + cdpPageId);
-      return new CDPConnection(page);
+      for (const conn of connections) {
+        const page = conn.pageForId(cdpPageId);
+        if (page)
+          return new CDPConnection(page);
+      }
+      throw new Error('Page not found for cdpPageId: ' + cdpPageId);
     }
 
     const cdpUrl = new URL(httpServer.urlPrefix('human-readable'));
-    cdpUrl.pathname = httpServer.wsGuid()!;
-    cdpUrl.searchParams.set('guid', guid);
-    const connection = new DashboardConnection(browserDescriptor, cdpUrl, () => browserGuidToDashboardConnection.delete(guid));
-    browserGuidToDashboardConnection.set(guid, connection);
+    cdpUrl.pathname = '/ws';
+    let connection: DashboardConnection;
+    // eslint-disable-next-line prefer-const
+    connection = new DashboardConnection(cdpUrl, () => connections.delete(connection));
+    connections.add(connection);
     return connection;
-  });
+  }, 'ws');
 
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;

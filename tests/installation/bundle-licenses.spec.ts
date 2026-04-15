@@ -21,6 +21,7 @@ import { test, expect } from './npmTest';
 // these, something is broken with bundle generation or dependencies were silently removed.
 const EXPECTED: Record<string, Record<string, number>> = {
   'playwright-core': {
+    'lib/serverRegistry.js.LICENSE': 10,
     'lib/utilsBundle.js.LICENSE': 80,
   },
   'playwright': {

@@ -15,24 +15,37 @@
  */
 
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
-import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
+import type { BrowserDescriptor, BrowserStatus } from '../../playwright-core/src/serverRegistry';
 
-export type SessionStatus = BrowserDescriptor & {
-  wsUrl?: string;
-};
+export type SessionStatus = BrowserStatus;
 
 type Listener = () => void;
+
+type SessionsChannel = {
+  on(event: 'sessions', listener: (params: { sessions: SessionStatus[]; clientInfo: ClientInfo }) => void): void;
+  off(event: 'sessions', listener: (params: { sessions: SessionStatus[]; clientInfo: ClientInfo }) => void): void;
+  closeSession(params: { browser: string }): Promise<void>;
+  deleteSessionData(params: { browser: string }): Promise<void>;
+};
 
 export class SessionModel {
   sessions: SessionStatus[] = [];
   clientInfo: ClientInfo | undefined;
-  error: string | undefined;
   loading = true;
 
-  private _pollActive = false;
-  private _pollTimeout: ReturnType<typeof setTimeout> | undefined;
-  private _lastJson = '';
+  private _client: SessionsChannel;
   private _listeners = new Set<Listener>();
+  private _onSessions = (params: { sessions: SessionStatus[]; clientInfo: ClientInfo }) => {
+    this.sessions = params.sessions;
+    this.clientInfo = params.clientInfo;
+    this.loading = false;
+    this._notify();
+  };
+
+  constructor(client: SessionsChannel) {
+    this._client = client;
+    this._client.on('sessions', this._onSessions);
+  }
 
   subscribe(listener: Listener): () => void {
     this._listeners.add(listener);
@@ -44,79 +57,20 @@ export class SessionModel {
       listener();
   }
 
-  startPolling() {
-    if (this._pollActive)
-      return;
-    this._pollActive = true;
-    const poll = async () => {
-      await this._fetchSessions();
-      if (this._pollActive)
-        this._pollTimeout = setTimeout(poll, 3000);
-    };
-    void poll();
-  }
-
-  stopPolling() {
-    this._pollActive = false;
-    if (this._pollTimeout) {
-      clearTimeout(this._pollTimeout);
-      this._pollTimeout = undefined;
-    }
-  }
-
   sessionByGuid(guid: string): SessionStatus | undefined {
     return this.sessions.find(s => s.browser.guid === guid);
   }
 
-  private async _fetchSessions() {
-    try {
-      this.loading = true;
-      const response = await fetch('/api/sessions/list');
-      if (!response.ok)
-        throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      if (text !== this._lastJson) {
-        this._lastJson = text;
-        const data = JSON.parse(text);
-        this.sessions = data.sessions;
-        this.clientInfo = data.clientInfo;
-        this._notify();
-
-
-      }
-      this.error = undefined;
-    } catch (e: any) {
-      this.error = e.message;
-    } finally {
-      this.loading = false;
-    }
-    this._notify();
-  }
-
-  async fetchSessions() {
-    await this._fetchSessions();
-  }
-
   async closeSession(descriptor: BrowserDescriptor) {
-    await fetch('/api/sessions/close', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guid: descriptor.browser.guid }),
-    });
-    await this._fetchSessions();
+    await this._client.closeSession({ browser: descriptor.browser.guid });
   }
 
   async deleteSessionData(descriptor: BrowserDescriptor) {
-    await fetch('/api/sessions/delete-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guid: descriptor.browser.guid }),
-    });
-    await this._fetchSessions();
+    await this._client.deleteSessionData({ browser: descriptor.browser.guid });
   }
 
   dispose() {
-    this.stopPolling();
+    this._client.off('sessions', this._onSessions);
     this._listeners.clear();
   }
 }
