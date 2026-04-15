@@ -369,13 +369,14 @@ const highlight = declareCommand({
   description: 'Show (or with --hide, remove) a highlight overlay for an element',
   category: 'devtools',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    element: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
   options: z.object({
     hide: z.boolean().optional().describe('Hide a previously added highlight for this element'),
+    style: z.string().optional().describe('Additional inline CSS applied to the highlight overlay, e.g. "outline: 2px dashed red"'),
   }),
   toolName: ({ hide }) => hide ? 'browser_hide_highlight' : 'browser_highlight',
-  toolParams: ({ target }) => ({ ...asRef(target) }),
+  toolParams: ({ element, style }) => ({ ...asRef(element), style }),
 });
 
 const evaluate = declareCommand({

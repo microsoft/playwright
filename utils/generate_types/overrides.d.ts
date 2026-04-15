@@ -203,6 +203,9 @@ export interface Locator {
   elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+  highlight(options?: {
+    style?: string | { [key: string]: string | number };
+  }): Promise<Disposable>;
   toString(): string;
 }
 

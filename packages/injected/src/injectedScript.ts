@@ -1313,9 +1313,9 @@ export class InjectedScript {
     return this._highlight;
   }
 
-  addHighlight(selector: ParsedSelector) {
+  addHighlight(selector: ParsedSelector, style?: string) {
     const highlight = this._ensureHighlight();
-    highlight.addElementHighlight(selector);
+    highlight.addElementHighlight(selector, style);
   }
 
   removeHighlight(selector: ParsedSelector) {

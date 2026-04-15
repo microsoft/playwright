@@ -3107,9 +3107,10 @@ export type FrameResolveSelectorResult = {
 };
 export type FrameHighlightParams = {
   selector: string,
+  style?: string,
 };
 export type FrameHighlightOptions = {
-
+  style?: string,
 };
 export type FrameHighlightResult = void;
 export type FrameHideHighlightParams = {
