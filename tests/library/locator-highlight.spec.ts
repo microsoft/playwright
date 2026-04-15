@@ -18,7 +18,7 @@ import { expect, browserTest as test } from '../config/browserTest';
 
 test.skip(({ mode }) => mode !== 'default', 'Highlight overlay uses an open shadow root only in default mode');
 
-test('highlight should accept a CSS string style', async ({ browser, server }) => {
+test('highlight should accept a CSS string style', async ({ browser, server, browserName }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -31,13 +31,16 @@ test('highlight should accept a CSS string style', async ({ browser, server }) =
     outline: el.style.outline,
     backgroundColor: el.style.backgroundColor,
   }));
-  expect(style.outline).toBe('rgb(255, 0, 0) solid 3px');
+  if (browserName === 'chromium' || browserName === 'firefox')
+    expect(style.outline).toBe('rgb(255, 0, 0) solid 3px');
+  else
+    expect(style.outline).toBe('3px solid rgb(255, 0, 0)');
   expect(style.backgroundColor).toBe('rgba(0, 255, 0, 0.25)');
 
   await context.close();
 });
 
-test('highlight should accept an object style (JS only)', async ({ browser, server }) => {
+test('highlight should accept an object style (JS only)', async ({ browser, server, browserName }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -55,7 +58,10 @@ test('highlight should accept an object style (JS only)', async ({ browser, serv
     outline: el.style.outline,
     backgroundColor: el.style.backgroundColor,
   }));
-  expect(style.outline).toBe('rgb(0, 0, 255) dashed 2px');
+  if (browserName === 'chromium' || browserName === 'firefox')
+    expect(style.outline).toBe('rgb(0, 0, 255) dashed 2px');
+  else
+    expect(style.outline).toBe('2px dashed rgb(0, 0, 255)');
   expect(style.backgroundColor).toBe('rgba(255, 255, 0, 0.2)');
 
   await context.close();
