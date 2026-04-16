@@ -54,3 +54,7 @@ button {
 button:hover {
   color: var(--color-fg-default);
 }
+
+svg {
+  fill: none; /* override @web/common.css */
+}

@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
+import { execFile } from 'child_process';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
@@ -33,15 +37,16 @@ export class DashboardConnection implements Transport {
   close?: () => void;
 
   private _attached = new Map<string, AttachedBrowser>();
-  private _cdpUrl: URL;
   private _onclose: () => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
   private _visible = true;
 
-  constructor(cdpUrl: URL, onclose: () => void) {
-    this._cdpUrl = cdpUrl;
+  _recordingDir: string;
+
+  constructor(onclose: () => void) {
     this._onclose = onclose;
+    this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
   onconnect() {
@@ -118,6 +123,20 @@ export class DashboardConnection implements Transport {
     await Promise.all([...this._attached.values()].map(att => att.setScreencastActive(params.visible)));
   }
 
+  async reveal(params: { path: string }) {
+    switch (os.platform()) {
+      case 'darwin':
+        execFile('open', ['-R', params.path]);
+        break;
+      case 'win32':
+        execFile('explorer', ['/select,', params.path]);
+        break;
+      case 'linux':
+        execFile('xdg-open', [path.dirname(params.path)]);
+        break;
+    }
+  }
+
   visible(): boolean {
     return this._visible;
   }
@@ -129,10 +148,6 @@ export class DashboardConnection implements Transport {
         return page;
     }
     return undefined;
-  }
-
-  cdpUrl(): URL {
-    return this._cdpUrl;
   }
 
   emitSessions(sessions: BrowserStatus[]) {
@@ -150,10 +165,11 @@ export class DashboardConnection implements Transport {
     });
   }
 
-  emitElementPicked(att: AttachedBrowser, pageGuid: string, selector: string) {
+  emitElementPicked(att: AttachedBrowser, pageGuid: string, selector: string, ariaSnapshot?: string) {
     this.sendEvent?.('elementPicked', {
       target: { browser: att.browserGuid, context: att.contextGuid, page: pageGuid },
       selector,
+      ariaSnapshot,
     });
   }
 
@@ -192,6 +208,7 @@ class AttachedBrowser {
 
   private _selectedPage: api.Page | null = null;
   private _screencastRunning = false;
+  private _recordingPath: string | null = null;
   private _pageListeners: Disposable[] = [];
   private _contextListeners: Disposable[] = [];
 
@@ -231,6 +248,7 @@ class AttachedBrowser {
     if (this._selectedPage && this._screencastRunning)
       this._selectedPage.screencast.stop().catch(() => {});
     this._screencastRunning = false;
+    this._recordingPath = null;
     this._selectedPage = null;
   }
 
@@ -327,11 +345,40 @@ class AttachedBrowser {
     if (!page)
       return;
     const locator = await page.pickLocator();
-    this._owner.emitElementPicked(this, this._pageId(page), locator.toString());
+    this._owner.emitElementPicked(this, this._pageId(page), locator.toString(), await locator.ariaSnapshot());
   }
 
   async cancelPickLocator(params: { page: string }) {
     await this.pageForId(params.page)?.cancelPickLocator();
+  }
+
+  async startRecording(params: { page: string }) {
+    const page = this.pageForId(params.page);
+    if (!page)
+      return;
+    const artifactsDir = this._descriptor.browser.launchOptions.artifactsDir ?? this._owner._recordingDir;
+    this._recordingPath = path.join(artifactsDir, `recording-${Date.now()}.webm`);
+    if (page === this._selectedPage && this._screencastRunning)
+      await this._restartScreencast(page);
+  }
+
+  async stopRecording(params: { page: string }): Promise<{ path: string }> {
+    const path = this._recordingPath;
+    if (!path)
+      throw new Error('No recording in progress');
+    this._recordingPath = null;
+    const page = this.pageForId(params.page);
+    if (page && page === this._selectedPage && this._screencastRunning)
+      await this._restartScreencast(page);
+    return { path };
+  }
+
+  async screenshot(params: { page: string }): Promise<string> {
+    const page = this.pageForId(params.page);
+    if (!page)
+      throw new Error('No page selected');
+    const buffer = await page.screenshot({ type: 'png' });
+    return buffer.toString('base64');
   }
 
   private async _selectPage(page: api.Page) {
@@ -344,6 +391,7 @@ class AttachedBrowser {
       if (this._screencastRunning)
         await this._selectedPage.screencast.stop();
       this._screencastRunning = false;
+      this._recordingPath = null;
     }
 
     this._selectedPage = page;
@@ -373,7 +421,13 @@ class AttachedBrowser {
     await page.screencast.start({
       onFrame: ({ data }: { data: Buffer }) => this._writeFrame(page, data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
       size: { width: 1280, height: 800 },
+      ...(this._recordingPath ? { path: this._recordingPath } : {}),
     });
+  }
+
+  private async _restartScreencast(page: api.Page) {
+    await page.screencast.stop().catch(() => {});
+    await this._startScreencast(page);
   }
 
   private _deselectPage() {
@@ -384,6 +438,7 @@ class AttachedBrowser {
     if (this._screencastRunning)
       this._selectedPage.screencast.stop().catch(() => {});
     this._screencastRunning = false;
+    this._recordingPath = null;
     this._selectedPage = null;
   }
 
@@ -399,7 +454,6 @@ class AttachedBrowser {
     const pages = this._context.pages();
     if (pages.length === 0)
       return [];
-    const devtoolsUrl = await this._devtoolsUrl(pages[0]);
     return await Promise.all(pages.map(async page => {
       const title = await page.title();
       return {
@@ -409,7 +463,7 @@ class AttachedBrowser {
         title,
         url: page.url(),
         selected: page === this._selectedPage,
-        inspectorUrl: devtoolsUrl ? await this._pageInspectorUrl(page, devtoolsUrl) : 'data:text/plain,Dashboard only supported in Chromium based browsers',
+        faviconUrl: await this._faviconUrl(page),
       };
     }));
   }
@@ -419,79 +473,20 @@ class AttachedBrowser {
     return (p as any)._guid;
   }
 
-  private async _devtoolsUrl(page: api.Page): Promise<URL | null> {
-    // eslint-disable-next-line no-restricted-syntax -- cdpPort is not in the public LaunchOptions type, fine if regresses.
-    const cdpPort = (this._descriptor.browser.launchOptions as any).cdpPort;
-    if (cdpPort)
-      return new URL(`http://localhost:${cdpPort}/devtools/`);
-
-    const browserRevision = await getBrowserRevision(page);
-    if (!browserRevision)
-      return null;
-    return new URL(`https://chrome-devtools-frontend.appspot.com/serve_rev/${browserRevision}/`);
-  }
-
-  private async _pageInspectorUrl(page: api.Page, devtoolsUrl: URL): Promise<string | undefined> {
-    const inspector = new URL('./devtools_app.html', devtoolsUrl);
-    const cdp = new URL(this._owner.cdpUrl());
-    cdp.searchParams.set('cdpPageId', this._pageId(page));
-    inspector.searchParams.set('ws', `${cdp.host}${cdp.pathname}${cdp.search}`);
-    return inspector.toString();
-  }
-}
-
-async function getBrowserRevision(page: api.Page): Promise<string | null> {
-  try {
-    const session = await page.context().newCDPSession(page);
-    const version = await session.send('Browser.getVersion');
-    await session.detach();
-    return version.revision;
-  } catch (error) {
-    return null;
-  }
-}
-
-export class CDPConnection implements Transport {
-  sendEvent?: (method: string, params: any) => void;
-  close?: () => void;
-
-  private _page: api.Page;
-  private _rawSession: api.CDPSession | null = null;
-  private _rawSessionListeners: { dispose: () => Promise<void> }[] = [];
-  private _initializePromise: Promise<void> | undefined;
-
-  constructor(page: api.Page) {
-    this._page = page;
-  }
-
-  onconnect() {
-    this._initializePromise = this._initializeRawSession();
-  }
-
-  async dispatch(method: string, params: any): Promise<any> {
-    await this._initializePromise;
-    if (!this._rawSession)
-      throw new Error('CDP session is not initialized');
-    return await this._rawSession.send(method as Parameters<api.CDPSession['send']>[0], params);
-  }
-
-  onclose() {
-    this._rawSessionListeners.forEach(listener => listener.dispose());
-    this._rawSession?.detach().catch(() => {});
-    this._rawSession = null;
-    this._initializePromise = undefined;
-  }
-
-  private async _initializeRawSession() {
-    const session = await this._page.context().newCDPSession(this._page);
-    this._rawSession = session;
-    this._rawSessionListeners = [
-      eventsHelper.addEventListener(session, 'event', ({ method, params }) => {
-        this.sendEvent?.(method, params);
-      }),
-      eventsHelper.addEventListener(session, 'close', () => {
-        this.close?.();
-      }),
-    ];
+  private async _faviconUrl(page: api.Page): Promise<string | undefined> {
+    const url = await page.evaluate(async () => {
+      const response = await fetch(document.querySelector<HTMLLinkElement>('link[rel~="icon"]')?.href ?? '/favicon.ico');
+      if (!response.ok)
+        return undefined;
+      const blob = await response.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }).catch(() => undefined);
+    const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 3000));
+    return await Promise.race([url, timeout]);
   }
 }

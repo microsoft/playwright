@@ -4,6 +4,7 @@
 ../uiUtils.ts
 ../ansi2html.ts
 ../shared
+../../../isomorphic/**
 
 [expandable.spec.tsx]
 ***

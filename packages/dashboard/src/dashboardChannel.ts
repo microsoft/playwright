@@ -28,6 +28,7 @@ export type Tab = {
   title: string;
   url: string;
   selected: boolean;
+  faviconUrl?: string;
   inspectorUrl?: string;
 };
 
@@ -35,7 +36,7 @@ export type DashboardChannelEvents = {
   sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
   tabs: { target: ContextTarget; tabs: Tab[] };
   frame: { target: PageTarget; data: string; viewportWidth: number; viewportHeight: number };
-  elementPicked: { target: PageTarget; selector: string };
+  elementPicked: { target: PageTarget; selector: string; ariaSnapshot?: string };
   pickLocator: { target: PageTarget };
 };
 
@@ -65,6 +66,10 @@ export interface DashboardChannel {
   keyup(params: PageTarget & { key: string }): Promise<void>;
   pickLocator(params: PageTarget): Promise<void>;
   cancelPickLocator(params: PageTarget): Promise<void>;
+  startRecording(params: PageTarget): Promise<void>;
+  stopRecording(params: PageTarget): Promise<{ path: string }>;
+  screenshot(params: PageTarget): Promise<string>;
+  reveal(params: { path: string }): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

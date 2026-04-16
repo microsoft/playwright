@@ -127,7 +127,7 @@ const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean
   const chipTitle = selectedTab ? `[${descriptor.title}] ${selectedTab.url} \u2014 ${selectedTab.title}` : descriptor.title;
 
   return (
-    <a className={'session-chip' + (canConnect ? '' : ' disconnected')} href={canConnect ? href : undefined} title={chipTitle} onClick={e => {
+    <a className={'session-chip' + (canConnect ? '' : ' disconnected')} aria-disabled={!canConnect} href={canConnect ? href : undefined} title={chipTitle} onClick={e => {
       e.preventDefault();
       if (canConnect)
         navigate(href);

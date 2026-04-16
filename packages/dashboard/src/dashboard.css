@@ -16,9 +16,11 @@
 
 .dashboard-view {
   --interactive-orange: 238 134 12;
+  --annotate-blue: 54 116 209;
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   overflow: hidden;
 }
 
@@ -26,8 +28,8 @@
 .tabbar {
   display: flex;
   align-items: flex-end;
-  height: 38px;
-  min-height: 38px;
+  height: 39px;
+  min-height: 39px;
   padding: 0 4px;
   user-select: none;
   position: relative;
@@ -131,6 +133,14 @@
   height: 16px;
 }
 
+.interactive .toolbar .toolbar-button > .codicon {
+  color: var(--color-fg-on-emphasis);
+}
+
+.annotate .toolbar .toolbar-button > .codicon {
+  color: var(--color-fg-on-emphasis);
+}
+
 .tabstrip {
   display: flex;
   align-items: flex-end;
@@ -188,6 +198,11 @@
   color: var(--color-fg-on-emphasis);
 }
 
+.dashboard-view.annotate .tab.active {
+  background: rgb(var(--annotate-blue));
+  color: var(--color-fg-on-emphasis);
+}
+
 .tab-label {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -198,13 +213,16 @@
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  background: var(--color-fg-subtle);
-  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 9px;
   font-weight: 700;
+}
+
+.tab-favicon.placeholder {
+  background: var(--color-fg-subtle);
+  border-radius: 2px;
 }
 
 .tab-close {
@@ -369,7 +387,9 @@
   background: var(--color-canvas-overlay);
   padding: 0 8px;
   position: relative;
-  z-index: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--color-border-muted);
+  overflow: visible;
 }
 
 :root.light-mode .toolbar {
@@ -381,8 +401,18 @@
   color: var(--color-fg-on-emphasis);
 }
 
+.dashboard-view.annotate .toolbar {
+  background: rgb(var(--annotate-blue));
+  color: var(--color-fg-on-emphasis);
+}
+
 .dashboard-view.interactive .toolbar .nav-btn,
 .dashboard-view.interactive .toolbar .omnibox {
+  color: var(--color-fg-on-emphasis);
+}
+
+.dashboard-view.annotate .toolbar .nav-btn,
+.dashboard-view.annotate .toolbar .omnibox {
   color: var(--color-fg-on-emphasis);
 }
 
@@ -394,6 +424,17 @@
   color: var(--color-fg-on-emphasis);
 }
 :root.light-mode .dashboard-view.interactive .toolbar .omnibox::placeholder {
+  color: rgb(255 255 255 / 0.6);
+}
+
+:root.light-mode .dashboard-view.annotate .toolbar {
+  color: var(--color-fg-on-emphasis);
+}
+:root.light-mode .dashboard-view.annotate .toolbar .omnibox {
+  background: rgb(0 0 0 / 0.15);
+  color: var(--color-fg-on-emphasis);
+}
+:root.light-mode .dashboard-view.annotate .toolbar .omnibox::placeholder {
   color: rgb(255 255 255 / 0.6);
 }
 
@@ -411,12 +452,12 @@
   background: var(--color-neutral-muted);
 }
 
-.nav-btn:disabled {
+.nav-btn[aria-disabled] {
   color: var(--color-fg-subtle);
   cursor: default;
 }
 
-.nav-btn:disabled:hover {
+.nav-btn[aria-disabled]:hover {
   background: none;
 }
 
@@ -452,11 +493,47 @@
   background: var(--color-accent-muted);
 }
 
+.omnibox[aria-disabled] {
+  color: var(--color-fg-subtle);
+  cursor: default;
+}
+
+/* -- Interactive hint popover -- */
+.interactive-hint-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--color-canvas-overlay);
+  color: var(--color-fg-default);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  border: 1px solid var(--color-border-default);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 1000;
+  animation: hint-fade-in 150ms ease;
+}
+
+.interactive-hint-popover::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  right: 10px;
+  border: 5px solid transparent;
+  border-bottom-color: var(--color-canvas-overlay);
+}
+
+@keyframes hint-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* -- Viewport -- */
 .viewport-wrapper {
   flex: 1;
   display: flex;
-  background: #000;
   overflow: hidden;
   position: relative;
   min-height: 0;
@@ -477,21 +554,11 @@
   height: 100%;
 }
 
-.screen::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  box-shadow: inset 0 0 0 1px rgb(var(--interactive-orange) / 0.72), inset 0 0 26px rgb(var(--interactive-orange) / 0.42);
-  transition: opacity 180ms ease;
-}
-
 .display {
   display: block;
   width: 100%;
   height: 100%;
-  background: #000;
+  background: var(--color-canvas-subtle);
   object-fit: contain;
 }
 
@@ -508,7 +575,7 @@
   font-size: 14px;
   z-index: 10;
   pointer-events: none;
-  background: #000;
+  background: var(--color-canvas-subtle);
   color: var(--color-fg-subtle);
 }
 
@@ -569,40 +636,37 @@
   background: var(--color-accent-subtle);
 }
 
-/* -- Annotate mode (dashboard chrome) -- */
-.dashboard-view {
-  --annotate-blue: 54 116 209;
+.recording.toggled > .codicon {
+  animation: recording-pulse 1.5s ease-in-out infinite;
 }
 
-.segmented-control-3 {
-  padding: 2px;
+@keyframes recording-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
 }
 
-.segmented-control-3::before {
-  width: calc(33.333% - 2px);
-  transform: translateX(0);
+.recording-label {
+  display: inline-block;
+  margin-left: 5px;
+  white-space: nowrap;
+  animation: recording-label-slide-in 300ms ease both;
 }
 
-.segmented-control-3.interactive::before {
-  transform: translateX(100%);
-  background: rgb(var(--interactive-orange) / 0.95);
-}
-
-.segmented-control-3.annotate::before {
-  transform: translateX(200%);
-  background: rgb(var(--annotate-blue) / 0.95);
-}
-
-.segmented-control-3 .segmented-control-option {
-  width: 88px;
-}
-
-.dashboard-view.annotate .toolbar {
-  background: rgb(var(--annotate-blue));
-  color: var(--color-fg-on-emphasis);
-}
-
-.dashboard-view.annotate .toolbar .nav-btn,
-.dashboard-view.annotate .toolbar .omnibox {
-  color: var(--color-fg-on-emphasis);
+@keyframes recording-label-slide-in {
+  from {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+  }
+  to {
+    max-width: 100px;
+    opacity: 1;
+    overflow: hidden;
+  }
 }
