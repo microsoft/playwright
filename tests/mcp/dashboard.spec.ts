@@ -53,8 +53,6 @@ test('should show current workspace sessions first', async ({ cli, server, openD
     // Other workspace (second) should be second and collapsed.
     await expect(workspaceGroups.nth(1).locator('.workspace-path')).toContainText(second);
     await expect(workspaceGroups.nth(1).locator('.session-chips')).not.toBeVisible();
-
-    await dashboard.close();
   };
 
   await test.step('open dashboard in workspace A', async () => {

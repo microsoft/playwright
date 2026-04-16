@@ -47,6 +47,7 @@ export const test = baseTest.extend<{
       const serverProcess = childProcess({
         command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), 'show', '--port=0'],
         cwd: options?.cwd ?? testInfo.outputPath(),
+        env: inheritAndCleanEnv(cliEnv()),
       });
       await serverProcess.waitForOutput('Listening on ');
       await page.goto(serverProcess.output.match(/Listening on (http:\/\/\S+)/)![1]);
