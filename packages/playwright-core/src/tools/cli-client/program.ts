@@ -22,6 +22,7 @@ import { execSync, spawn } from 'child_process';
 import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
+import { listChannelSessions, remoteDebuggingHint } from './channelSessions';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
 import { libPath } from '../../package';
@@ -323,6 +324,25 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
 
   if (!count)
     console.log('  (no browsers)');
+
+  const channelSessions = await listChannelSessions();
+  if (channelSessions.length) {
+    console.log('');
+    console.log('### Browsers available to attach via CDP');
+    for (const session of channelSessions) {
+      const text: string[] = [];
+      text.push(`- ${session.channel}:`);
+      text.push(`  - data-dir: ${session.userDataDir}`);
+      if (session.endpoint) {
+        text.push(`  - endpoint: ${session.endpoint}`);
+        text.push(`  - run \`playwright-cli attach --cdp=${session.channel}\` to attach`);
+      } else {
+        text.push(`  - status: remote debugging not enabled`);
+        text.push(`  - ${remoteDebuggingHint(session.channel)}`);
+      }
+      console.log(text.join('\n'));
+    }
+  }
 }
 
 async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], header?: string, runningSessions?: Set<string>) {
