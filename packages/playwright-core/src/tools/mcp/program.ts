@@ -47,7 +47,7 @@ export function decorateMCPCommand(command: Command) {
       .option('--console-level <level>', 'level of console messages to return: "error", "warning", "info", "debug". Each level includes the messages of more severe levels.', enumParser.bind(null, '--console-level', ['error', 'warning', 'info', 'debug']))
       .option('--device <device>', 'device to emulate, for example: "iPhone 15"')
       .option('--executable-path <path>', 'path to the browser executable.')
-      .option('--extension', 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright MCP Bridge" browser extension to be installed.')
+      .option('--extension', 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright Extension" to be installed.')
       .option('--endpoint <endpoint>', 'Bound browser endpoint to connect to.')
       .option('--grant-permissions <permissions...>', 'List of permissions to grant to the browser context, for example "geolocation", "clipboard-read", "clipboard-write".', commaSeparatedList)
       .option('--headless', 'run browser in headless mode, headed by default')
