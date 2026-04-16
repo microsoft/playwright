@@ -19,13 +19,16 @@ import os from 'os';
 import fs from 'fs';
 import { execFile } from 'child_process';
 import { eventsHelper } from '@utils/eventsHelper';
+import { TraceLoader } from '@isomorphic/trace/traceLoader';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
 import { createClientInfo } from '../cli-client/registry';
+import { DirTraceLoaderBackend } from '../trace/traceParser';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
 import type { Tab } from '@dashboard/dashboardChannel';
+import type { ContextEntry } from '@isomorphic/trace/entries';
 import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
 
 type Disposable = { dispose: () => Promise<void> };
@@ -43,9 +46,11 @@ export class DashboardConnection implements Transport {
   private _visible = true;
 
   _recordingDir: string;
+  _traceMap: Map<string, TraceLoader>;
 
-  constructor(onclose: () => void) {
+  constructor(onclose: () => void, traceMap: Map<string, TraceLoader>) {
     this._onclose = onclose;
+    this._traceMap = traceMap;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -209,6 +214,7 @@ class AttachedBrowser {
   private _selectedPage: api.Page | null = null;
   private _screencastRunning = false;
   private _recordingPath: string | null = null;
+  private _tracingStarted = false;
   private _pageListeners: Disposable[] = [];
   private _contextListeners: Disposable[] = [];
 
@@ -249,7 +255,13 @@ class AttachedBrowser {
       this._selectedPage.screencast.stop().catch(() => {});
     this._screencastRunning = false;
     this._recordingPath = null;
+    if (this._tracingStarted)
+      this._context.tracing.stop().catch(() => {});
+    this._tracingStarted = false;
     this._selectedPage = null;
+    const tracesDir = this._descriptor.browser.launchOptions.tracesDir;
+    if (tracesDir)
+      this._owner._traceMap.delete(tracesDir);
   }
 
   async setScreencastActive(active: boolean) {
@@ -350,6 +362,28 @@ class AttachedBrowser {
 
   async cancelPickLocator(params: { page: string }) {
     await this.pageForId(params.page)?.cancelPickLocator();
+  }
+
+  async startTracing() {
+    if (this._tracingStarted)
+      return;
+    await this._context.tracing.start({
+      snapshots: true,
+      live: true,
+    });
+    this._tracingStarted = true;
+  }
+
+  async traceContextEntries(): Promise<{ contextEntries: ContextEntry[]; tracesDir: string }> {
+    const tracesDir = this._descriptor.browser.launchOptions.tracesDir;
+    if (!tracesDir)
+      throw new Error('Tracing requires launchOptions.tracesDir');
+    const backend = new DirTraceLoaderBackend(tracesDir);
+    const loader = new TraceLoader();
+    await loader.load(backend);
+    this._owner._traceMap.set(tracesDir, loader);
+    const contextEntries = loader.contextEntries.filter(entry => entry.contextId === this.contextGuid);
+    return { contextEntries, tracesDir };
   }
 
   async startRecording(params: { page: string }) {

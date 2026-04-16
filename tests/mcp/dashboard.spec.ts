@@ -109,3 +109,29 @@ test('daemon show: closing page exits the process', async ({ playwright, cli, fi
 
   await expect(() => expect(isAlive(pid)).toBe(false)).toPass();
 });
+
+test('should show console and network tabs in sidebar', async ({ cli, server, openDashboard }) => {
+  server.setContent('/dashboard-network-marker', JSON.stringify({ marker: 'dashboard-response-payload-marker' }), 'application/json');
+  await cli('open', server.PREFIX);
+
+  const dashboard = await openDashboard();
+  await dashboard.locator('.session-chip').click();
+  await dashboard.getByRole('button', { name: 'Show sidebar' }).click();
+
+  await cli('run-code', `async (page) => {
+    await page.evaluate(async () => {
+      console.log('dashboard-console-marker');
+      await fetch('${server.PREFIX}/dashboard-network-marker');
+    });
+  }`);
+
+  await dashboard.getByRole('tab', { name: 'Console' }).click();
+  await expect(dashboard.locator('.console-tab')).toContainText('dashboard-console-marker');
+
+  await dashboard.getByRole('tab', { name: 'Network' }).click();
+  await expect(dashboard.getByLabel('Network requests')).toContainText('dashboard-network-marker');
+
+  await dashboard.getByLabel('Network requests').getByText('dashboard-network-marker').click();
+  await dashboard.getByRole('tab', { name: 'Response' }).click();
+  await expect(dashboard.locator('.network-response-body')).toContainText('dashboard-response-payload-marker');
+});

@@ -59,7 +59,7 @@ const ansiColours = {
   }
 };
 
-export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined): ConsoleTabModel {
+export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined, pageId?: string): ConsoleTabModel {
   const { entries } = React.useMemo(() => {
     if (!model)
       return { entries: [] };
@@ -87,6 +87,8 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
     });
     for (const event of logEvents) {
       if (event.type === 'console') {
+        if (pageId && event.pageId !== pageId)
+          continue;
         const colours = event.messageType === 'error' ? ansiColours.error : event.messageType === 'warning' ? ansiColours.warning : ansiColours.log;
         const body = event.args && event.args.length ? format(event.args, colours) : formatAnsi(event.text, colours);
         const url = event.location.url;
@@ -105,6 +107,8 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
         });
       }
       if (event.type === 'event' && event.method === 'pageError') {
+        if (pageId && event.pageId !== pageId)
+          continue;
         addEntry({
           browserError: event.params.error,
           isError: true,
@@ -129,7 +133,7 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
       }
     }
     return { entries };
-  }, [model]);
+  }, [model, pageId]);
 
   const filteredEntries = React.useMemo(() => {
     if (!selectedTime)
