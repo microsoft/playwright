@@ -23,7 +23,7 @@ import { test as baseTest } from './fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
-import type { Page } from 'playwright-core';
+import type { Browser, Page } from 'playwright-core';
 import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
@@ -44,7 +44,7 @@ export const test = baseTest.extend<{
     await use(cliEnv());
   },
   openDashboard: async ({ cli, waitForPort, findFreePort }, use) => {
-    const dashboards = [];
+    const dashboards: { dashboard: Page, browser: Browser }[] = [];
     await use(async (options?: { cwd?: string }) => {
       const debugPort = await findFreePort();
       await cli('show', { cwd: options?.cwd, env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(debugPort) } });
@@ -57,6 +57,8 @@ export const test = baseTest.extend<{
     for (const { dashboard, browser } of dashboards) {
       if (!browser.isConnected())
         continue;
+      if (test.info().error)
+        await test.info().attach('dashboard', { body: await dashboard.ariaSnapshot({ mode: 'ai' }), contentType: 'text/yaml' });
       await Promise.all([
         // Closing the page should close the browser.
         new Promise(r => browser.on('disconnected', r)),
