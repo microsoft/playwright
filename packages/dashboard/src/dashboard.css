@@ -393,3 +393,20 @@
     overflow: hidden;
   }
 }
+
+/* -- Mobile adjustments -- */
+@media (max-width: 768px) {
+  .toolbar {
+    gap: 2px;
+    padding: 0 4px;
+  }
+
+  .nav-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .recording-label {
+    display: none;
+  }
+}

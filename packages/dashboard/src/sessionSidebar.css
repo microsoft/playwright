@@ -300,3 +300,15 @@
 .sidebar-tab-close:hover {
   background: var(--color-neutral-muted);
 }
+
+/* -- Mobile adjustments -- */
+@media (max-width: 768px) {
+  .session-browser-close {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .session-browser-icon {
+    display: none;
+  }
+}
