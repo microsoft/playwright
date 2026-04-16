@@ -181,10 +181,19 @@ export async function program(options?: { embedderVersion?: string}) {
         `--session=${sessionName}`,
         `--workspace=${clientInfo.workspaceDir ?? ''}`,
       ];
+      if (args.port !== undefined)
+        daemonArgs.push(`--port=${args.port}`);
+      if (args.host !== undefined)
+        daemonArgs.push(`--host=${args.host as string}`);
+      const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
-        detached: true,
-        stdio: 'ignore',
+        detached: !foreground,
+        stdio: foreground ? 'inherit' : 'ignore',
       });
+      if (foreground) {
+        await new Promise<void>(resolve => child.on('exit', () => resolve()));
+        return;
+      }
       child.unref();
       if (process.env.PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST)
         console.log(`### Dashboard opened with pid ${child.pid}.`);

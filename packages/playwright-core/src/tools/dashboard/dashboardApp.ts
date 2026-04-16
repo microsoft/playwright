@@ -32,12 +32,12 @@ import type * as api from '../../..';
 
 type RevealOptions = { sessionName?: string; workspaceDir?: string };
 
-async function innerOpenDashboardApp(initialReveal: RevealOptions): Promise<{ page: api.Page; reveal: (options: RevealOptions) => void }> {
+async function startDashboardServer(options: { port?: number; host?: string; reveal?: RevealOptions } = {}): Promise<{ url: string; reveal: (options: RevealOptions) => void }> {
   const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
 
   const connections = new Set<DashboardConnection>();
-  let currentReveal = initialReveal;
+  let currentReveal: RevealOptions = options.reveal ?? {};
 
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
@@ -57,20 +57,23 @@ async function innerOpenDashboardApp(initialReveal: RevealOptions): Promise<{ pa
       return false;
     return httpServer.serveFile(request, response, resolved);
   });
-  await httpServer.start();
-  const url = httpServer.urlPrefix('human-readable');
+  await httpServer.start({ port: options.port, host: options.host });
 
-  const { page } = await launchApp('dashboard');
-  await page.goto(url);
-
-  const reveal = (options: RevealOptions) => {
-    currentReveal = options;
-    if (!options.sessionName)
+  const reveal = (next: RevealOptions) => {
+    currentReveal = next;
+    if (!next.sessionName)
       return;
     for (const connection of connections)
-      connection.revealSession(options.sessionName, options.workspaceDir);
+      connection.revealSession(next.sessionName, next.workspaceDir);
   };
 
+  return { url: httpServer.urlPrefix('human-readable'), reveal };
+}
+
+async function innerOpenDashboardApp(initialReveal: RevealOptions): Promise<{ page: api.Page; reveal: (options: RevealOptions) => void }> {
+  const { url, reveal } = await startDashboardServer({ reveal: initialReveal });
+  const { page } = await launchApp('dashboard');
+  await page.goto(url);
   return { page, reveal };
 }
 
@@ -145,11 +148,18 @@ function dashboardSocketPath() {
   return makeSocketPath('dashboard', 'app');
 }
 
-function parseRevealArgs(): RevealOptions {
-  const args = minimist(process.argv.slice(2), { string: ['session', 'workspace'] });
+type OpenArgs = { reveal: RevealOptions; port?: number; host?: string };
+
+function parseOpenArgs(): OpenArgs {
+  const args = minimist(process.argv.slice(2), { string: ['session', 'workspace', 'host'] });
+  const portStr = args.port as string | undefined;
   return {
-    sessionName: (args.session as string) || undefined,
-    workspaceDir: (args.workspace as string) || undefined,
+    reveal: {
+      sessionName: (args.session as string) || undefined,
+      workspaceDir: (args.workspace as string) || undefined,
+    },
+    port: portStr !== undefined ? Number(portStr) : undefined,
+    host: (args.host as string) || undefined,
   };
 }
 
@@ -179,13 +189,19 @@ async function acquireSingleton(reveal: RevealOptions): Promise<net.Server> {
 }
 
 export async function openDashboardApp() {
-  const revealOptions = parseRevealArgs();
-  let server: net.Server | undefined;
-  process.on('exit', () => server?.close());
+  const { reveal: revealOptions, port, host } = parseOpenArgs();
   process.on('unhandledRejection', error => {
     // eslint-disable-next-line no-console
     console.error('Unhandled promise rejection:', error);
   });
+  if (port !== undefined) {
+    const { url } = await startDashboardServer({ port, host, reveal: revealOptions });
+    // eslint-disable-next-line no-console
+    console.log(`Listening on ${url}`);
+    return;
+  }
+  let server: net.Server | undefined;
+  process.on('exit', () => server?.close());
   const underTest = !!process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT;
   if (!underTest) {
     try {
