@@ -68,11 +68,11 @@ await context.CloseAsync();
 
 This event is not emitted.
 
-## event: BrowserContext.bringToFront
+## event: BrowserContext.pickLocator
 * since: v1.60
 - argument: <[Page]>
 
-Emitted when a client calls [`method: Page.bringToFront`] on a page in this context. The event is dispatched to all
+Emitted when a client calls [`method: Page.pickLocator`] on a page in this context. The event is dispatched to all
 clients connected to the context, including the one that initiated the call.
 
 ## property: BrowserContext.clock

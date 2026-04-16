@@ -39,9 +39,20 @@ const BUTTONS = ['left', 'middle', 'right'] as const;
 
 type Mode = 'readonly' | 'interactive' | 'annotate';
 
-export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
+export const Dashboard: React.FC<{
+  browser: string;
+  autoInteractive?: boolean;
+  onAutoInteractiveConsumed?: () => void;
+}> = ({ browser, autoInteractive, onAutoInteractiveConsumed }) => {
   const client = React.useContext(DashboardClientContext);
   const [mode, setMode] = React.useState<Mode>('readonly');
+
+  React.useEffect(() => {
+    if (!autoInteractive)
+      return;
+    setMode('interactive');
+    onAutoInteractiveConsumed?.();
+  }, [autoInteractive, onAutoInteractiveConsumed]);
   const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();

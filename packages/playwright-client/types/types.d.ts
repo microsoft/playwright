@@ -8226,13 +8226,6 @@ export interface BrowserContext {
   on(event: 'backgroundpage', listener: (page: Page) => any): this;
 
   /**
-   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
-   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  on(event: 'bringtofront', listener: (page: Page) => any): this;
-
-  /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
@@ -8313,6 +8306,13 @@ export interface BrowserContext {
   on(event: 'page', listener: (page: Page) => any): this;
 
   /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  on(event: 'picklocator', listener: (page: Page) => any): this;
+
+  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
    * only listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
@@ -8372,11 +8372,6 @@ export interface BrowserContext {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'bringtofront', listener: (page: Page) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
   once(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
@@ -8393,6 +8388,11 @@ export interface BrowserContext {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'page', listener: (page: Page) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -8428,13 +8428,6 @@ export interface BrowserContext {
    * This event is not emitted.
    */
   addListener(event: 'backgroundpage', listener: (page: Page) => any): this;
-
-  /**
-   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
-   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  addListener(event: 'bringtofront', listener: (page: Page) => any): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -8517,6 +8510,13 @@ export interface BrowserContext {
   addListener(event: 'page', listener: (page: Page) => any): this;
 
   /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  addListener(event: 'picklocator', listener: (page: Page) => any): this;
+
+  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
    * only listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
@@ -8576,11 +8576,6 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'bringtofront', listener: (page: Page) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   removeListener(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
@@ -8597,6 +8592,11 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   removeListener(event: 'page', listener: (page: Page) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -8636,11 +8636,6 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'bringtofront', listener: (page: Page) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   off(event: 'close', listener: (browserContext: BrowserContext) => any): this;
 
   /**
@@ -8657,6 +8652,11 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'page', listener: (page: Page) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -8692,13 +8692,6 @@ export interface BrowserContext {
    * This event is not emitted.
    */
   prependListener(event: 'backgroundpage', listener: (page: Page) => any): this;
-
-  /**
-   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
-   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  prependListener(event: 'bringtofront', listener: (page: Page) => any): this;
 
   /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -8779,6 +8772,13 @@ export interface BrowserContext {
    *
    */
   prependListener(event: 'page', listener: (page: Page) => any): this;
+
+  /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  prependListener(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -9490,13 +9490,6 @@ export interface BrowserContext {
   waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
-   * Emitted when a client calls [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front)
-   * on a page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  waitForEvent(event: 'bringtofront', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
-
-  /**
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
@@ -9575,6 +9568,13 @@ export interface BrowserContext {
    *
    */
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
+
+  /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  waitForEvent(event: 'picklocator', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
