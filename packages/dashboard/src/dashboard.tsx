@@ -36,9 +36,20 @@ function tabFavicon(url: string): string {
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
 
-export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
+export const Dashboard: React.FC<{
+  browser: string;
+  autoInteractive?: boolean;
+  onAutoInteractiveConsumed?: () => void;
+}> = ({ browser, autoInteractive, onAutoInteractiveConsumed }) => {
   const client = React.useContext(DashboardClientContext);
   const [interactive, setInteractive] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!autoInteractive)
+      return;
+    setInteractive(true);
+    onAutoInteractiveConsumed?.();
+  }, [autoInteractive, onAutoInteractiveConsumed]);
   const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();

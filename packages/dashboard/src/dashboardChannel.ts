@@ -36,6 +36,7 @@ export type DashboardChannelEvents = {
   tabs: { target: ContextTarget; tabs: Tab[] };
   frame: { target: PageTarget; data: string; viewportWidth: number; viewportHeight: number };
   elementPicked: { target: PageTarget; selector: string };
+  pickLocator: { target: PageTarget };
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';

@@ -1516,7 +1516,7 @@ BrowserContext:
       parameters:
         binding: BindingCall
 
-    bringToFront:
+    pickLocator:
       parameters:
         page: Page
 

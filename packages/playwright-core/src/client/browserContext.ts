@@ -149,7 +149,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
           dialog.dismiss().catch(() => {});
       }
     });
-    this._channel.on('bringToFront', ({ page }) => this.emit(Events.BrowserContext.BringToFront, Page.from(page)));
+    this._channel.on('pickLocator', ({ page }) => this.emit(Events.BrowserContext.PickLocator, Page.from(page)));
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
     this._channel.on('requestFinished', params => this._onRequestFinished(params));

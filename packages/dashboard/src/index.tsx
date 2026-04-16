@@ -24,6 +24,7 @@ import { Grid } from './grid';
 import { SessionModel } from './sessionModel';
 import { DashboardClient } from './dashboardClient';
 
+import type { DashboardChannelEvents } from './dashboardChannel';
 import type { DashboardClientChannel } from './dashboardClient';
 
 applyTheme();
@@ -54,6 +55,7 @@ if (document.hidden)
 const App: React.FC = () => {
   const [, setRevision] = React.useState(0);
   const [sessionGuid, setSessionGuid] = React.useState<string | undefined>(parseHash);
+  const [autoInteractiveBrowser, setAutoInteractiveBrowser] = React.useState<string | undefined>();
 
   React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), []);
 
@@ -63,8 +65,22 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
+  React.useEffect(() => {
+    const onPickLocator = (params: DashboardChannelEvents['pickLocator']) => {
+      setAutoInteractiveBrowser(params.target.browser);
+      if (parseHash() !== params.target.browser)
+        navigate('#session=' + encodeURIComponent(params.target.browser));
+    };
+    client.on('pickLocator', onPickLocator);
+    return () => client.off('pickLocator', onPickLocator);
+  }, []);
+
   const content = sessionGuid
-    ? <Dashboard browser={sessionGuid} />
+    ? <Dashboard
+      browser={sessionGuid}
+      autoInteractive={autoInteractiveBrowser === sessionGuid}
+      onAutoInteractiveConsumed={() => setAutoInteractiveBrowser(undefined)}
+    />
     : <Grid model={model} />;
 
   return <DashboardClientContext.Provider value={client}>{content}</DashboardClientContext.Provider>;

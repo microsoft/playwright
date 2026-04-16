@@ -157,6 +157,12 @@ export class DashboardConnection implements Transport {
     });
   }
 
+  emitPickLocator(att: AttachedBrowser, pageGuid: string) {
+    this.sendEvent?.('pickLocator', {
+      target: { browser: att.browserGuid, context: att.contextGuid, page: pageGuid },
+    });
+  }
+
   private _pushSessions = () => {
     if (this._pushSessionsScheduled)
       return;
@@ -204,6 +210,11 @@ class AttachedBrowser {
           this._pushTabs();
           if (!this._selectedPage)
             this._selectPage(page).catch(() => {});
+        }),
+        eventsHelper.addEventListener(this._context, 'picklocator', page => {
+          this._selectPage(page)
+              .then(() => this._owner.emitPickLocator(this, this._pageId(page)))
+              .catch(() => {});
         }),
     );
     const pages = this._context.pages();

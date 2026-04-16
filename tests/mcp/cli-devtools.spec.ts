@@ -181,6 +181,32 @@ test('pick', async ({ cdpServer, cli, server }) => {
   expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
 });
 
+test('pick activates dashboard session', async ({ cdpServer, cli, server, openDashboard }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.PREFIX);
+
+  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('snapshot');
+
+  const dashboard = await openDashboard();
+  await expect(dashboard.locator('.session-chip')).toHaveCount(1);
+
+  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
+  const pickPromise = cli('pick');
+  await scriptReady;
+
+  await expect(dashboard.locator('div.dashboard-view.interactive')).toBeVisible();
+
+  const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  const { output } = await pickPromise;
+  expect(output).toContain(`ref: e2`);
+  expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
+});
+
 test('highlight', async ({ cdpServer, cli, server }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
   const browserContext = await cdpServer.start();
