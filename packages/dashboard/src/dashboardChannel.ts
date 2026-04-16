@@ -16,11 +16,6 @@
 
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
 import type { SessionStatus } from './sessionModel';
-import type { ContextEntry } from '@isomorphic/trace/entries';
-
-export type BrowserTarget = { browser: string };
-export type ContextTarget = { browser: string; context: string };
-export type PageTarget = { browser: string; context: string; page: string };
 
 export type Tab = {
   browser: string;
@@ -35,44 +30,38 @@ export type Tab = {
 
 export type DashboardChannelEvents = {
   sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
-  tabs: { target: ContextTarget; tabs: Tab[] };
-  frame: { target: PageTarget; data: string; viewportWidth: number; viewportHeight: number };
-  elementPicked: { target: PageTarget; selector: string; ariaSnapshot?: string };
-  pickLocator: { target: PageTarget };
+  tabs: { tabs: Tab[] };
+  frame: { data: string; viewportWidth: number; viewportHeight: number };
+  elementPicked: { selector: string; ariaSnapshot?: string };
+  pickLocator: {};
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';
 
 export interface DashboardChannel {
-  attach(params: BrowserTarget): Promise<{ context: string }>;
-  detach(params: BrowserTarget): Promise<void>;
-  closeSession(params: BrowserTarget): Promise<void>;
-  deleteSessionData(params: BrowserTarget): Promise<void>;
+  selectTab(params: { browser: string; page: string }): Promise<void>;
+  closeTab(params: { browser: string; page: string }): Promise<void>;
+  newTab(params: { browser: string }): Promise<void>;
+  closeSession(params: { browser: string }): Promise<void>;
+  deleteSessionData(params: { browser: string }): Promise<void>;
   setVisible(params: { visible: boolean }): Promise<void>;
-
-  tabs(params: ContextTarget): Promise<{ tabs: Tab[] }>;
-  newTab(params: ContextTarget): Promise<{ page: string }>;
-
-  selectTab(params: PageTarget): Promise<void>;
-  closeTab(params: PageTarget): Promise<void>;
-  navigate(params: PageTarget & { url: string }): Promise<void>;
-  back(params: PageTarget): Promise<void>;
-  forward(params: PageTarget): Promise<void>;
-  reload(params: PageTarget): Promise<void>;
-  mousemove(params: PageTarget & { x: number; y: number }): Promise<void>;
-  mousedown(params: PageTarget & { x: number; y: number; button?: MouseButton }): Promise<void>;
-  mouseup(params: PageTarget & { x: number; y: number; button?: MouseButton }): Promise<void>;
-  wheel(params: PageTarget & { deltaX: number; deltaY: number }): Promise<void>;
-  keydown(params: PageTarget & { key: string }): Promise<void>;
-  keyup(params: PageTarget & { key: string }): Promise<void>;
-  pickLocator(params: PageTarget): Promise<void>;
-  cancelPickLocator(params: PageTarget): Promise<void>;
-  startTracing(params: BrowserTarget): Promise<void>;
-  traceContextEntries(params: BrowserTarget): Promise<{ contextEntries: ContextEntry[], tracesDir: string }>;
-  startRecording(params: PageTarget): Promise<void>;
-  stopRecording(params: PageTarget): Promise<{ path: string }>;
-  screenshot(params: PageTarget): Promise<string>;
   reveal(params: { path: string }): Promise<void>;
+
+  navigate(params: { url: string }): Promise<void>;
+  back(): Promise<void>;
+  forward(): Promise<void>;
+  reload(): Promise<void>;
+  mousemove(params: { x: number; y: number }): Promise<void>;
+  mousedown(params: { x: number; y: number; button?: MouseButton }): Promise<void>;
+  mouseup(params: { x: number; y: number; button?: MouseButton }): Promise<void>;
+  wheel(params: { deltaX: number; deltaY: number }): Promise<void>;
+  keydown(params: { key: string }): Promise<void>;
+  keyup(params: { key: string }): Promise<void>;
+  pickLocator(): Promise<void>;
+  cancelPickLocator(): Promise<void>;
+  startRecording(): Promise<void>;
+  stopRecording(): Promise<{ path: string }>;
+  screenshot(): Promise<string>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

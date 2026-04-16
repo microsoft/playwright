@@ -26,10 +26,9 @@ import type { SessionModel, SessionStatus } from './sessionModel';
 
 type SessionSidebarProps = {
   model: SessionModel;
-  activeBrowser?: string;
   onSelectTab: (tab: Tab) => void;
   onCloseTab: (tab: Tab) => void;
-  onNewTab: (browser: string, context: string) => void;
+  onNewTab: (browser: string) => void;
 };
 
 function tabFavicon(url: string): string {
@@ -52,43 +51,35 @@ function normalizeWorkspacePath(workspace: string): string {
   return workspace;
 }
 
-export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, activeBrowser, onSelectTab, onCloseTab, onNewTab }) => {
+export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectTab, onCloseTab, onNewTab }) => {
   const client = React.useContext(DashboardClientContext);
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const openSessions = React.useMemo(() => model.sessions.filter(session => session.canConnect), [model.sessions]);
   const clientInfo = model.clientInfo;
-  const [browserState, setBrowserState] = React.useState<Record<string, { context: string; tabs?: Tab[]; }>>({});
+  const [allTabs, setAllTabs] = React.useState<Tab[] | null>(null);
 
   React.useEffect(() => {
     if (!client)
       return;
-
-    const onTabs = (params: DashboardChannelEvents['tabs']) => {
-      setBrowserState(prev => ({
-        ...prev,
-        [params.target.browser]: {
-          context: params.target.context,
-          tabs: params.tabs,
-        },
-      }));
-    };
-
+    const onTabs = (params: DashboardChannelEvents['tabs']) => setAllTabs(params.tabs);
     client.on('tabs', onTabs);
-
-    for (const session of openSessions) {
-      void client.attach({ browser: session.browser.guid }).then(result => {
-        setBrowserState(prev => ({
-          ...prev,
-          [session.browser.guid]: {
-            ...prev[session.browser.guid],
-            context: result.context,
-          },
-        }));
-      }).catch(() => {});
-    }
-
     return () => client.off('tabs', onTabs);
-  }, [client, openSessions]);
+  }, [client]);
+
+  const tabsByBrowser = React.useMemo(() => {
+    const map = new Map<string, Tab[]>();
+    for (const tab of allTabs ?? []) {
+      let list = map.get(tab.browser);
+      if (!list) {
+        list = [];
+        map.set(tab.browser, list);
+      }
+      list.push(tab);
+    }
+    return map;
+  }, [allTabs]);
+
+  const activeBrowser = React.useMemo(() => allTabs?.find(t => t.selected)?.browser, [allTabs]);
 
   const workspaceGroups = React.useMemo(() => {
     const groups = new Map<string, SessionStatus[]>();
@@ -130,9 +121,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, activeBro
               const guid = session.browser.guid;
               const browserType = session.browser.browserName;
               const browserInitial = browserType ? browserType[0].toUpperCase() : '?';
-              const sessionState = browserState[guid];
-              const tabs = sessionState?.tabs;
-              const context = sessionState?.context;
+              const tabs = allTabs === null ? undefined : (tabsByBrowser.get(guid) ?? []);
               return <div key={guid} className='session-chip sidebar-session' role='listitem' title={session.title}>
                 <div className='sidebar-session-row'>
                   <div className='session-browser-icon-wrap' title={browserType}>
@@ -150,11 +139,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, activeBro
                       className='sidebar-session-new-tab'
                       icon='add'
                       title='New tab'
-                      onClick={() => {
-                        if (context)
-                          onNewTab(guid, context);
-                      }}
-                      disabled={!context}
+                      onClick={() => onNewTab(guid)}
                     />
                   </div>
                 </div>

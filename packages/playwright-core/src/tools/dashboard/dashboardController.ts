@@ -19,38 +19,41 @@ import os from 'os';
 import fs from 'fs';
 import { execFile } from 'child_process';
 import { eventsHelper } from '@utils/eventsHelper';
-import { TraceLoader } from '@isomorphic/trace/traceLoader';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
 import { createClientInfo } from '../cli-client/registry';
-import { DirTraceLoaderBackend } from '../trace/traceParser';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
 import type { Tab } from '@dashboard/dashboardChannel';
-import type { ContextEntry } from '@isomorphic/trace/entries';
 import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
 
 type Disposable = { dispose: () => Promise<void> };
 
-export class DashboardConnection implements Transport {
-  readonly version = 2;
+type BrowserSlot = {
+  guid: string;
+  contextGuid: string;
+  descriptor: BrowserDescriptor;
+  context: api.BrowserContext;
+  listeners: Disposable[];
+};
 
+export class DashboardConnection implements Transport {
   sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
-  private _attached = new Map<string, AttachedBrowser>();
+  private _browsers = new Map<string, BrowserSlot>();
+  private _attachedBrowser: AttachedBrowser | undefined;
   private _onclose: () => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
+  private _pushTabsScheduled = false;
   private _visible = true;
 
   _recordingDir: string;
-  _traceMap: Map<string, TraceLoader>;
 
-  constructor(onclose: () => void, traceMap: Map<string, TraceLoader>) {
+  constructor(onclose: () => void) {
     this._onclose = onclose;
-    this._traceMap = traceMap;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -68,9 +71,11 @@ export class DashboardConnection implements Transport {
     serverRegistry.off('changed', this._pushSessions);
     this._serverRegistryDispose?.();
     this._serverRegistryDispose = undefined;
-    for (const att of this._attached.values())
-      att.dispose();
-    this._attached.clear();
+    this._attachedBrowser?.dispose();
+    this._attachedBrowser = undefined;
+    for (const slot of this._browsers.values())
+      slot.listeners.forEach(d => d.dispose());
+    this._browsers.clear();
     this._onclose();
   }
 
@@ -79,31 +84,37 @@ export class DashboardConnection implements Transport {
     const handler = (this as any)[method];
     if (typeof handler === 'function')
       return handler.call(this, params);
-    const att = params?.browser ? this._attached.get(params.browser) : undefined;
+    const attached = this._attachedBrowser;
+    if (!attached)
+      return;
     // eslint-disable-next-line no-restricted-syntax
-    const onAtt = att ? (att as any)[method] : undefined;
+    const onAtt = (attached as any)[method];
     if (typeof onAtt === 'function')
-      return onAtt.call(att, params);
+      return onAtt.call(attached, params);
   }
 
-  async attach(params: { browser: string }): Promise<{ context: string }> {
-    if (this._attached.has(params.browser))
-      return { context: this._attached.get(params.browser)!.contextGuid };
-    const descriptor = serverRegistry.readDescriptor(params.browser);
-    const browser = await connectToBrowserAcrossVersions(descriptor);
-    const context = browser.contexts()[0];
-    const att = new AttachedBrowser(this, params.browser, descriptor, context);
-    this._attached.set(params.browser, att);
-    await att.init();
-    return { context: att.contextGuid };
+  async selectTab(params: { browser: string; page: string }) {
+    await this._switchAttachedTo(params.browser);
+    await this._attachedBrowser?.selectPageByGuid(params.page);
+    this._pushTabs();
   }
 
-  async detach(params: { browser: string }) {
-    const att = this._attached.get(params.browser);
-    if (att) {
-      this._attached.delete(params.browser);
-      att.dispose();
-    }
+  async newTab(params: { browser: string }) {
+    const slot = this._browsers.get(params.browser);
+    if (!slot)
+      return;
+    const page = await slot.context.newPage();
+    await this._switchAttachedTo(params.browser);
+    await this._attachedBrowser?.selectPage(page);
+    this._pushTabs();
+  }
+
+  async closeTab(params: { browser: string; page: string }) {
+    const slot = this._browsers.get(params.browser);
+    if (!slot)
+      return;
+    const page = slot.context.pages().find(p => pageId(p) === params.page);
+    await page?.close({ reason: 'Closed in Dashboard' });
   }
 
   async closeSession(params: { browser: string }) {
@@ -125,7 +136,7 @@ export class DashboardConnection implements Transport {
     if (this._visible === params.visible)
       return;
     this._visible = params.visible;
-    await Promise.all([...this._attached.values()].map(att => att.setScreencastActive(params.visible)));
+    await this._attachedBrowser?.setScreencastActive(params.visible);
   }
 
   async reveal(params: { path: string }) {
@@ -146,42 +157,73 @@ export class DashboardConnection implements Transport {
     return this._visible;
   }
 
-  pageForId(pageGuid: string): api.Page | undefined {
-    for (const att of this._attached.values()) {
-      const page = att.pageForId(pageGuid);
-      if (page)
-        return page;
-    }
-    return undefined;
-  }
-
   emitSessions(sessions: BrowserStatus[]) {
     this.sendEvent?.('sessions', { sessions, clientInfo: createClientInfo() });
   }
 
-  emitTabs(att: AttachedBrowser, tabs: Tab[]) {
-    this.sendEvent?.('tabs', { target: { browser: att.browserGuid, context: att.contextGuid }, tabs });
+  emitTabs(tabs: Tab[]) {
+    this.sendEvent?.('tabs', { tabs });
   }
 
-  emitFrame(att: AttachedBrowser, pageGuid: string, data: string, viewportWidth: number, viewportHeight: number) {
-    this.sendEvent?.('frame', {
-      target: { browser: att.browserGuid, context: att.contextGuid, page: pageGuid },
-      data, viewportWidth, viewportHeight,
+  emitFrame(data: string, viewportWidth: number, viewportHeight: number) {
+    this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
+  }
+
+  emitElementPicked(selector: string, ariaSnapshot?: string) {
+    this.sendEvent?.('elementPicked', { selector, ariaSnapshot });
+  }
+
+  emitPickLocator() {
+    this.sendEvent?.('pickLocator', {});
+  }
+
+  _pushTabs() {
+    if (this._pushTabsScheduled)
+      return;
+    this._pushTabsScheduled = true;
+    queueMicrotask(async () => {
+      this._pushTabsScheduled = false;
+      try {
+        const tabs = await this._aggregateTabs();
+        this.emitTabs(tabs);
+      } catch {
+        // best-effort
+      }
     });
   }
 
-  emitElementPicked(att: AttachedBrowser, pageGuid: string, selector: string, ariaSnapshot?: string) {
-    this.sendEvent?.('elementPicked', {
-      target: { browser: att.browserGuid, context: att.contextGuid, page: pageGuid },
-      selector,
-      ariaSnapshot,
-    });
+  private async _aggregateTabs(): Promise<Tab[]> {
+    const tasks: Promise<Tab>[] = [];
+    for (const slot of this._browsers.values()) {
+      const selectedPage = this._attachedBrowser?.browserGuid === slot.guid
+        ? this._attachedBrowser.selectedPage()
+        : null;
+      for (const page of slot.context.pages()) {
+        tasks.push((async () => ({
+          browser: slot.guid,
+          context: slot.contextGuid,
+          page: pageId(page),
+          title: await page.title().catch(() => ''),
+          url: page.url(),
+          selected: page === selectedPage,
+          faviconUrl: await faviconUrl(page),
+        }))());
+      }
+    }
+    return await Promise.all(tasks);
   }
 
-  emitPickLocator(att: AttachedBrowser, pageGuid: string) {
-    this.sendEvent?.('pickLocator', {
-      target: { browser: att.browserGuid, context: att.contextGuid, page: pageGuid },
-    });
+  private async _switchAttachedTo(guid: string) {
+    if (this._attachedBrowser?.browserGuid === guid)
+      return;
+    this._attachedBrowser?.dispose();
+    this._attachedBrowser = undefined;
+    const slot = this._browsers.get(guid);
+    if (!slot)
+      return;
+    const attached = new AttachedBrowser(this, slot);
+    await attached.init();
+    this._attachedBrowser = attached;
   }
 
   private _pushSessions = () => {
@@ -195,55 +237,101 @@ export class DashboardConnection implements Transport {
         const sessions: BrowserStatus[] = [];
         for (const list of byWs.values())
           sessions.push(...list);
+        await this._reconcile(sessions);
         this.emitSessions(sessions);
       } catch {
         // best-effort
       }
     });
   };
+
+  private async _reconcile(sessions: BrowserStatus[]) {
+    const connectable = new Map<string, BrowserStatus>();
+    for (const status of sessions) {
+      if (status.canConnect)
+        connectable.set(status.browser.guid, status);
+    }
+
+    for (const [guid, slot] of this._browsers) {
+      if (connectable.has(guid))
+        continue;
+      if (this._attachedBrowser?.browserGuid === guid) {
+        this._attachedBrowser.dispose();
+        this._attachedBrowser = undefined;
+      }
+      slot.listeners.forEach(d => d.dispose());
+      this._browsers.delete(guid);
+    }
+
+    for (const [guid, status] of connectable) {
+      if (this._browsers.has(guid))
+        continue;
+      try {
+        const browser = await connectToBrowserAcrossVersions(status);
+        if (this._browsers.has(guid))
+          continue;
+        const context = browser.contexts()[0];
+        if (!context)
+          continue;
+        const slot: BrowserSlot = {
+          guid,
+          // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+          contextGuid: (context as any)._guid,
+          descriptor: status,
+          context,
+          listeners: [],
+        };
+        slot.listeners.push(
+            eventsHelper.addEventListener(context, 'page', () => this._pushTabs()),
+            eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
+              this._onPickLocator(guid, page).catch(() => {});
+            }),
+        );
+        this._browsers.set(guid, slot);
+        this._pushTabs();
+      } catch {
+        // best-effort
+      }
+    }
+  }
+
+  private async _onPickLocator(guid: string, page: api.Page) {
+    await this._switchAttachedTo(guid);
+    await this._attachedBrowser?.selectPage(page);
+    this.emitPickLocator();
+  }
 }
 
 class AttachedBrowser {
-  readonly browserGuid: string;
-  readonly contextGuid: string;
-
   private _owner: DashboardConnection;
-  private _descriptor: BrowserDescriptor;
-  private _context: api.BrowserContext;
+  private _slot: BrowserSlot;
 
   private _selectedPage: api.Page | null = null;
   private _screencastRunning = false;
   private _recordingPath: string | null = null;
-  private _tracingStarted = false;
   private _pageListeners: Disposable[] = [];
   private _contextListeners: Disposable[] = [];
 
-  constructor(owner: DashboardConnection, browserGuid: string, descriptor: BrowserDescriptor, context: api.BrowserContext) {
+  constructor(owner: DashboardConnection, slot: BrowserSlot) {
     this._owner = owner;
-    this.browserGuid = browserGuid;
-    this._descriptor = descriptor;
-    this._context = context;
-    // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
-    this.contextGuid = (context as any)._guid;
+    this._slot = slot;
   }
+
+  get browserGuid(): string { return this._slot.guid; }
+  get contextGuid(): string { return this._slot.contextGuid; }
+  private get _context(): api.BrowserContext { return this._slot.context; }
+  private get _descriptor(): BrowserDescriptor { return this._slot.descriptor; }
 
   async init() {
     this._contextListeners.push(
         eventsHelper.addEventListener(this._context, 'page', page => {
-          this._pushTabs();
           if (!this._selectedPage)
             this._selectPage(page).catch(() => {});
-        }),
-        eventsHelper.addEventListener(this._context, 'picklocator', page => {
-          this._selectPage(page)
-              .then(() => this._owner.emitPickLocator(this, this._pageId(page)))
-              .catch(() => {});
         }),
     );
     const pages = this._context.pages();
     if (pages.length > 0)
       await this._selectPage(pages[0]);
-    this._pushTabs();
   }
 
   dispose() {
@@ -255,13 +343,12 @@ class AttachedBrowser {
       this._selectedPage.screencast.stop().catch(() => {});
     this._screencastRunning = false;
     this._recordingPath = null;
-    if (this._tracingStarted)
-      this._context.tracing.stop().catch(() => {});
-    this._tracingStarted = false;
     this._selectedPage = null;
-    const tracesDir = this._descriptor.browser.launchOptions.tracesDir;
-    if (tracesDir)
-      this._owner._traceMap.delete(tracesDir);
+    this._owner._pushTabs();
+  }
+
+  selectedPage(): api.Page | null {
+    return this._selectedPage;
   }
 
   async setScreencastActive(active: boolean) {
@@ -276,139 +363,100 @@ class AttachedBrowser {
     }
   }
 
-  pageForId(pageGuid: string): api.Page | undefined {
-    return this._context.pages().find(p => this._pageId(p) === pageGuid);
-  }
-
-  async tabs(): Promise<{ tabs: Tab[] }> {
-    return { tabs: await this._tabList() };
-  }
-
-  async newTab(): Promise<{ page: string }> {
-    const page = await this._context.newPage();
+  async selectPage(page: api.Page) {
     await this._selectPage(page);
-    return { page: this._pageId(page) };
   }
 
-  async selectTab(params: { page: string }) {
-    const page = this.pageForId(params.page);
+  async selectPageByGuid(guid: string) {
+    const page = this._context.pages().find(p => pageId(p) === guid);
     if (page)
       await this._selectPage(page);
   }
 
-  async closeTab(params: { page: string }) {
-    const page = this.pageForId(params.page);
-    if (page)
-      await page.close({ reason: 'Closed in Dashboard' });
-  }
-
-  async navigate(params: { page: string; url: string }) {
+  async navigate(params: { url: string }) {
     if (!params.url)
       return;
-    await this.pageForId(params.page)?.goto(params.url);
+    await this._selectedPage?.goto(params.url);
   }
 
-  async back(params: { page: string }) {
-    await this.pageForId(params.page)?.goBack();
+  async back() {
+    await this._selectedPage?.goBack();
   }
 
-  async forward(params: { page: string }) {
-    await this.pageForId(params.page)?.goForward();
+  async forward() {
+    await this._selectedPage?.goForward();
   }
 
-  async reload(params: { page: string }) {
-    await this.pageForId(params.page)?.reload();
+  async reload() {
+    await this._selectedPage?.reload();
   }
 
-  async mousemove(params: { page: string; x: number; y: number }) {
-    await this.pageForId(params.page)?.mouse.move(params.x, params.y);
+  async mousemove(params: { x: number; y: number }) {
+    await this._selectedPage?.mouse.move(params.x, params.y);
   }
 
-  async mousedown(params: { page: string; x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
-    const page = this.pageForId(params.page);
+  async mousedown(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
+    const page = this._selectedPage;
     if (!page)
       return;
     await page.mouse.move(params.x, params.y);
     await page.mouse.down({ button: params.button || 'left' });
   }
 
-  async mouseup(params: { page: string; x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
-    const page = this.pageForId(params.page);
+  async mouseup(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
+    const page = this._selectedPage;
     if (!page)
       return;
     await page.mouse.move(params.x, params.y);
     await page.mouse.up({ button: params.button || 'left' });
   }
 
-  async wheel(params: { page: string; deltaX: number; deltaY: number }) {
-    await this.pageForId(params.page)?.mouse.wheel(params.deltaX, params.deltaY);
+  async wheel(params: { deltaX: number; deltaY: number }) {
+    await this._selectedPage?.mouse.wheel(params.deltaX, params.deltaY);
   }
 
-  async keydown(params: { page: string; key: string }) {
-    await this.pageForId(params.page)?.keyboard.down(params.key);
+  async keydown(params: { key: string }) {
+    await this._selectedPage?.keyboard.down(params.key);
   }
 
-  async keyup(params: { page: string; key: string }) {
-    await this.pageForId(params.page)?.keyboard.up(params.key);
+  async keyup(params: { key: string }) {
+    await this._selectedPage?.keyboard.up(params.key);
   }
 
-  async pickLocator(params: { page: string }) {
-    const page = this.pageForId(params.page);
+  async pickLocator() {
+    const page = this._selectedPage;
     if (!page)
       return;
     const locator = await page.pickLocator();
-    this._owner.emitElementPicked(this, this._pageId(page), locator.toString(), await locator.ariaSnapshot());
+    this._owner.emitElementPicked(locator.toString(), await locator.ariaSnapshot());
   }
 
-  async cancelPickLocator(params: { page: string }) {
-    await this.pageForId(params.page)?.cancelPickLocator();
+  async cancelPickLocator() {
+    await this._selectedPage?.cancelPickLocator();
   }
 
-  async startTracing() {
-    if (this._tracingStarted)
-      return;
-    await this._context.tracing.start({
-      snapshots: true,
-      live: true,
-    });
-    this._tracingStarted = true;
-  }
-
-  async traceContextEntries(): Promise<{ contextEntries: ContextEntry[]; tracesDir: string }> {
-    const tracesDir = this._descriptor.browser.launchOptions.tracesDir;
-    if (!tracesDir)
-      throw new Error('Tracing requires launchOptions.tracesDir');
-    const backend = new DirTraceLoaderBackend(tracesDir);
-    const loader = new TraceLoader();
-    await loader.load(backend);
-    this._owner._traceMap.set(tracesDir, loader);
-    const contextEntries = loader.contextEntries.filter(entry => entry.contextId === this.contextGuid);
-    return { contextEntries, tracesDir };
-  }
-
-  async startRecording(params: { page: string }) {
-    const page = this.pageForId(params.page);
+  async startRecording() {
+    const page = this._selectedPage;
     if (!page)
       return;
     const artifactsDir = this._descriptor.browser.launchOptions.artifactsDir ?? this._owner._recordingDir;
     this._recordingPath = path.join(artifactsDir, `recording-${Date.now()}.webm`);
-    if (page === this._selectedPage && this._screencastRunning)
+    if (this._screencastRunning)
       await this._restartScreencast(page);
   }
 
-  async stopRecording(params: { page: string }): Promise<{ path: string }> {
-    const path = this._recordingPath;
-    if (!path)
+  async stopRecording(): Promise<{ path: string }> {
+    const p = this._recordingPath;
+    if (!p)
       throw new Error('No recording in progress');
     this._recordingPath = null;
-    const page = this.pageForId(params.page);
-    if (page && page === this._selectedPage && this._screencastRunning)
-      await this._restartScreencast(page);
-    return { path };
+    if (this._selectedPage && this._screencastRunning)
+      await this._restartScreencast(this._selectedPage);
+    return { path: p };
   }
 
-  async screenshot(params: { page: string }): Promise<string> {
-    const page = this.pageForId(params.page);
+  async screenshot(): Promise<string> {
+    const page = this._selectedPage;
     if (!page)
       throw new Error('No page selected');
     const buffer = await page.screenshot({ type: 'png' });
@@ -429,7 +477,7 @@ class AttachedBrowser {
     }
 
     this._selectedPage = page;
-    this._pushTabs();
+    this._owner._pushTabs();
 
     this._pageListeners.push(
         eventsHelper.addEventListener(page, 'close', () => {
@@ -437,11 +485,11 @@ class AttachedBrowser {
           const pages = page.context().pages();
           if (pages.length > 0)
             this._selectPage(pages[0]).catch(() => {});
-          this._pushTabs();
+          this._owner._pushTabs();
         }),
         eventsHelper.addEventListener(page, 'framenavigated', frame => {
           if (frame === page.mainFrame())
-            this._pushTabs();
+            this._owner._pushTabs();
         }),
     );
 
@@ -453,7 +501,7 @@ class AttachedBrowser {
 
   private async _startScreencast(page: api.Page) {
     await page.screencast.start({
-      onFrame: ({ data }: { data: Buffer }) => this._writeFrame(page, data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
+      onFrame: ({ data }: { data: Buffer }) => this._owner.emitFrame(data.toString('base64'), page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
       size: { width: 1280, height: 800 },
       ...(this._recordingPath ? { path: this._recordingPath } : {}),
     });
@@ -476,52 +524,26 @@ class AttachedBrowser {
     this._recordingPath = null;
     this._selectedPage = null;
   }
+}
 
-  private _pushTabs() {
-    this._tabList().then(tabs => this._owner.emitTabs(this, tabs)).catch(() => {});
-  }
+function pageId(p: api.Page): string {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+  return (p as any)._guid;
+}
 
-  private _writeFrame(page: api.Page, frame: Buffer, viewportWidth: number, viewportHeight: number) {
-    this._owner.emitFrame(this, this._pageId(page), frame.toString('base64'), viewportWidth, viewportHeight);
-  }
-
-  private async _tabList(): Promise<Tab[]> {
-    const pages = this._context.pages();
-    if (pages.length === 0)
-      return [];
-    return await Promise.all(pages.map(async page => {
-      const title = await page.title();
-      return {
-        browser: this.browserGuid,
-        context: this.contextGuid,
-        page: this._pageId(page),
-        title,
-        url: page.url(),
-        selected: page === this._selectedPage,
-        faviconUrl: await this._faviconUrl(page),
-      };
-    }));
-  }
-
-  private _pageId(p: api.Page): string {
-    // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
-    return (p as any)._guid;
-  }
-
-  private async _faviconUrl(page: api.Page): Promise<string | undefined> {
-    const url = await page.evaluate(async () => {
-      const response = await fetch(document.querySelector<HTMLLinkElement>('link[rel~="icon"]')?.href ?? '/favicon.ico');
-      if (!response.ok)
-        return undefined;
-      const blob = await response.blob();
-      return await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    }).catch(() => undefined);
-    const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 3000));
-    return await Promise.race([url, timeout]);
-  }
+async function faviconUrl(page: api.Page): Promise<string | undefined> {
+  const url = page.evaluate(async () => {
+    const response = await fetch(document.querySelector<HTMLLinkElement>('link[rel~="icon"]')?.href ?? '/favicon.ico');
+    if (!response.ok)
+      return undefined;
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }).catch(() => undefined);
+  const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 3000));
+  return await Promise.race([url, timeout]);
 }

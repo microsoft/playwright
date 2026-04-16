@@ -19,18 +19,16 @@ import React from 'react';
 import type { DashboardClientChannel } from './dashboardClient';
 import type { DashboardChannelEvents } from './dashboardChannel';
 
-export const Screencast: React.FC<{ client: DashboardClientChannel; browser: string }> = ({ client, browser }) => {
+export const Screencast: React.FC<{ client: DashboardClientChannel }> = ({ client }) => {
   const [frameSrc, setFrameSrc] = React.useState('');
 
   React.useEffect(() => {
     const listener = (params: DashboardChannelEvents['frame']) => {
-      if (params.target.browser !== browser)
-        return;
       setFrameSrc('data:image/jpeg;base64,' + params.data);
     };
     client.on('frame', listener);
     return () => client.off('frame', listener);
-  }, [client, browser]);
+  }, [client]);
 
   if (!frameSrc)
     return <div className='screencast-placeholder'>Connecting...</div>;
