@@ -22,12 +22,11 @@ import http from 'http';
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
-import { TraceLoader } from '@isomorphic/index';
+import { TraceLoader } from '@isomorphic/trace/traceLoader';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { DashboardConnection } from './dashboardController';
-import { DirTraceLoaderBackend } from '../trace/traceParser';
 
 import type * as api from '../../..';
 
@@ -35,12 +34,13 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
   const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
 
+  const traces = new Map<string, TraceLoader>();
   const connections = new Set<DashboardConnection>();
 
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(() => connections.delete(connection));
+    connection = new DashboardConnection(() => connections.delete(connection), traces);
     connections.add(connection);
     return connection;
   }, 'ws');
@@ -51,9 +51,10 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
     if (!tracesDir)
       throw new Error('Traces directory is missing');
     const sha1 = url.pathname.split('/sha1/')[1];
-    const loader = new TraceLoader();
-    loader.load(new DirTraceLoaderBackend(tracesDir)).then(async () => {
-      const blob = await loader.resourceForSha1(sha1);
+    const loader = traces.get(tracesDir);
+    if (!loader)
+      throw new Error('Trace is not loaded');
+    loader.resourceForSha1(sha1).then(async blob => {
       if (!blob) {
         response.statusCode = 404;
         response.end('Not found');

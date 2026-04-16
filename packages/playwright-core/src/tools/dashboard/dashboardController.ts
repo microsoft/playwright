@@ -46,9 +46,11 @@ export class DashboardConnection implements Transport {
   private _visible = true;
 
   _recordingDir: string;
+  _traceMap: Map<string, TraceLoader>;
 
-  constructor(onclose: () => void) {
+  constructor(onclose: () => void, traceMap: Map<string, TraceLoader>) {
     this._onclose = onclose;
+    this._traceMap = traceMap;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -257,6 +259,9 @@ class AttachedBrowser {
       this._context.tracing.stop().catch(() => {});
     this._tracingStarted = false;
     this._selectedPage = null;
+    const tracesDir = this._descriptor.browser.launchOptions.tracesDir;
+    if (tracesDir)
+      this._owner._traceMap.delete(tracesDir);
   }
 
   async setScreencastActive(active: boolean) {
@@ -376,6 +381,7 @@ class AttachedBrowser {
     const backend = new DirTraceLoaderBackend(tracesDir);
     const loader = new TraceLoader();
     await loader.load(backend);
+    this._owner._traceMap.set(tracesDir, loader);
     const contextEntries = loader.contextEntries.filter(entry => entry.contextId === this.contextGuid);
     return { contextEntries, tracesDir };
   }
