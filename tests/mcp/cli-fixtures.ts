@@ -94,6 +94,7 @@ export const test = baseTest.extend<{
 function cliEnv() {
   return {
     PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
+    PLAYWRIGHT_DASHBOARD_SETTINGS_FILE_FOR_TEST: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(test.info().project.outputDir, 'ds', String(test.info().parallelIndex)),
   };
