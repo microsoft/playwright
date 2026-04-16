@@ -16,6 +16,7 @@
 
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
 import type { SessionStatus } from './sessionModel';
+import type { ContextEntry } from '@isomorphic/trace/entries';
 
 export type BrowserTarget = { browser: string };
 export type ContextTarget = { browser: string; context: string };
@@ -66,6 +67,8 @@ export interface DashboardChannel {
   keyup(params: PageTarget & { key: string }): Promise<void>;
   pickLocator(params: PageTarget): Promise<void>;
   cancelPickLocator(params: PageTarget): Promise<void>;
+  startTracing(params: BrowserTarget): Promise<void>;
+  traceContextEntries(params: BrowserTarget): Promise<{ contextEntries: ContextEntry[], tracesDir: string }>;
   startRecording(params: PageTarget): Promise<void>;
   stopRecording(params: PageTarget): Promise<{ path: string }>;
   screenshot(params: PageTarget): Promise<string>;

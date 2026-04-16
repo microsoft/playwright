@@ -22,10 +22,12 @@ import http from 'http';
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { TraceLoader } from '@isomorphic/index';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { DashboardConnection } from './dashboardController';
+import { DirTraceLoaderBackend } from '../trace/traceParser';
 
 import type * as api from '../../..';
 
@@ -42,6 +44,31 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
     connections.add(connection);
     return connection;
   }, 'ws');
+
+  httpServer.routePrefix('/sha1/', (request: http.IncomingMessage, response: http.ServerResponse) => {
+    const url = new URL(request.url!, `http://${request.headers.host}`);
+    const tracesDir = url.searchParams.get('trace');
+    if (!tracesDir)
+      throw new Error('Traces directory is missing');
+    const sha1 = url.pathname.split('/sha1/')[1];
+    const loader = new TraceLoader();
+    loader.load(new DirTraceLoaderBackend(tracesDir)).then(async () => {
+      const blob = await loader.resourceForSha1(sha1);
+      if (!blob) {
+        response.statusCode = 404;
+        response.end('Not found');
+        return;
+      }
+      const buffer = await blob.arrayBuffer();
+      response.setHeader('Content-Type', blob.type);
+      response.end(Buffer.from(buffer));
+    }).catch(e => {
+      response.statusCode = 500;
+      response.setHeader('error', String(e));
+      response.end(String(e));
+    });
+    return true;
+  });
 
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
