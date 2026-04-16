@@ -2,17 +2,16 @@
 * since: v1.9
 * langs: js
 
-Playwright has **experimental** support for Electron automation, shipped as a
-separate package:
+Playwright supports Electron automation, shipped as a separate package:
 
 ```sh
-npm i -D @playwright/experimental-electron
+npm i -D @playwright/electron
 ```
 
 An example of the Electron automation script would be:
 
 ```js
-import { electron } from '@playwright/experimental-electron';
+import { electron } from '@playwright/electron';
 
 (async () => {
   // Launch Electron app.

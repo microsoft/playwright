@@ -1,5 +1,5 @@
 {
-  "name": "@playwright/experimental-electron",
+  "name": "@playwright/electron",
   "version": "1.60.0-next",
   "description": "Playwright for Electron",
   "repository": {

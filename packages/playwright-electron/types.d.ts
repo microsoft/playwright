@@ -342,12 +342,12 @@ export {};
 
 
 /**
- * Playwright has **experimental** support for Electron automation, shipped as a separate package:
+ * Playwright supports Electron automation, shipped as a separate package:
  *
  * An example of the Electron automation script would be:
  *
  * ```js
- * import { electron } from '@playwright/experimental-electron';
+ * import { electron } from '@playwright/electron';
  *
  * (async () => {
  *   // Launch Electron app.

@@ -215,7 +215,7 @@ const workspace = new Workspace(ROOT_PATH, [
     files: ['LICENSE'],
   }),
   new PWPackage({
-    name: '@playwright/experimental-electron',
+    name: '@playwright/electron',
     path: path.join(ROOT_PATH, 'packages', 'playwright-electron'),
     files: ['LICENSE'],
   }),

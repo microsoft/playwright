@@ -539,7 +539,7 @@ for (const pkg of workspace.packages()) {
   // playwright-client is built as a bundle.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  if (pkg.name === 'playwright-core' || pkg.name === 'playwright' || pkg.name === '@playwright/experimental-electron')
+  if (pkg.name === 'playwright-core' || pkg.name === 'playwright' || pkg.name === '@playwright/electron')
     continue;
 
   steps.push(new EsbuildStep({

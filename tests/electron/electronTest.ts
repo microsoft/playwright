@@ -19,8 +19,8 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import type { Page } from '@playwright/test';
-import type { ElectronApplication, Electron } from '@playwright/experimental-electron';
-import { electron } from '@playwright/experimental-electron';
+import type { ElectronApplication, Electron } from '@playwright/electron';
+import { electron } from '@playwright/electron';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
@@ -28,7 +28,7 @@ import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { inheritAndCleanEnv } from '../config/utils';
 
 export { expect } from '@playwright/test';
-export { selectors } from '@playwright/experimental-electron';
+export { selectors } from '@playwright/electron';
 
 const { removeFolders } = utils;
 

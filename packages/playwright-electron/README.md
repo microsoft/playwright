@@ -1,7 +1,21 @@
-> **BEWARE** This package is **EXPERIMENTAL** and does not respect semver.
+# 🎭 Playwright for Electron
+
+[![npm version](https://img.shields.io/npm/v/@playwright/electron.svg)](https://www.npmjs.com/package/@playwright/electron) [![Join Discord](https://img.shields.io/badge/join-discord-informational)](https://aka.ms/playwright/discord)
+
+## [Documentation](https://playwright.dev/docs/api/class-electron) | [API reference](https://playwright.dev/docs/api/class-electron)
+
+Drive [Electron](https://www.electronjs.org/) apps with the full Playwright API — evaluate in the main process, control each `BrowserWindow` as a Playwright [Page](https://playwright.dev/docs/api/class-page), use locators and assertions.
+
+## Install
+
+```bash
+npm i -D @playwright/electron
+```
+
+## Usage
 
 ```js
-import { electron } from '@playwright/experimental-electron';
+import { electron } from '@playwright/electron';
 
 const electronApp = await electron.launch({ args: ['main.js'] });
 const window = await electronApp.firstWindow();
