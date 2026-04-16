@@ -120,7 +120,6 @@ test('sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
   const sidebar = dashboard.getByRole('navigation', { name: 'Sessions' });
   await expect(sidebar).toMatchAriaSnapshot(`
 - heading "Sessions"
-- heading "${test.info().outputDir}"
 - list:
   - listitem:
     - text: default
@@ -132,7 +131,6 @@ test('sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
   await cli('open', '--session=foo', server.PREFIX);
   await expect(sidebar).toMatchAriaSnapshot(`
 - heading "Sessions"
-- heading "${test.info().outputDir}"
 - list:
   - listitem:
     - text: default
