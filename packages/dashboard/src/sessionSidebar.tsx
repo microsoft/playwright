@@ -18,7 +18,6 @@ import React from 'react';
 import './sessionSidebar.css';
 import { DashboardClientContext } from './index';
 import { SettingsButton } from './settingsView';
-import { useSetting } from '@web/uiUtils';
 import { ToolbarButton } from '@web/components/toolbarButton';
 
 import type { Tab, DashboardChannelEvents } from './dashboardChannel';
@@ -53,7 +52,6 @@ function normalizeWorkspacePath(workspace: string): string {
 
 export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectTab, onCloseTab, onNewTab }) => {
   const client = React.useContext(DashboardClientContext);
-  const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const openSessions = React.useMemo(() => model.sessions.filter(session => session.canConnect), [model.sessions]);
   const clientInfo = model.clientInfo;
   const [allTabs, setAllTabs] = React.useState<Tab[] | null>(null);
@@ -105,7 +103,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
   return <nav className='dashboard-shell-sidebar' aria-label='Sessions'>
     <div className='dashboard-shell-sidebar-header'>
       <h2 className='dashboard-shell-sidebar-title'>Sessions</h2>
-      <SettingsButton sidebarLocation={sidebarLocation} setSidebarLocation={setSidebarLocation} />
+      <SettingsButton />
     </div>
     <div className='dashboard-shell-sidebar-content'>
       {model.loading && <div className='sidebar-empty' role='status' aria-live='polite'>Loading sessions...</div>}
