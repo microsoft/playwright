@@ -11,6 +11,7 @@
          - .../lib/* means require dependency
       */
       "@dashboard/*": ["./packages/dashboard/src/*"],
+      "@trace-viewer/*": ["./packages/trace-viewer/src/*"],
       "@html-reporter/*": ["./packages/html-reporter/src/*"],
       "@injected/*": ["./packages/injected/src/*"],
       "@isomorphic/*": ["./packages/isomorphic/*"],

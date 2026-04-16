@@ -31,20 +31,6 @@ test('should show browser session chip', async ({ cli, server, openDashboard }) 
   await expect(chips).toHaveCount(1);
 });
 
-test('should show devtools sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
-  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'DevTools sidebar requires CDP, only available in Chromium');
-
-  await cli('open', server.EMPTY_PAGE);
-
-  const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
-
-  const devToolsButton = dashboard.locator('button.nav-btn[title="Chrome DevTools"]');
-  await expect(dashboard.locator('.inspector-frame')).not.toBeVisible();
-  await devToolsButton.click();
-  await expect(dashboard.locator('.inspector-frame')).toBeVisible();
-});
-
 test('should show current workspace sessions first', async ({ cli, server, openDashboard }) => {
   const wsA = test.info().outputPath('workspace-a');
   const wsB = test.info().outputPath('workspace-b');
@@ -88,31 +74,13 @@ test('should pick locator from browser', async ({ cli, server, openDashboard }) 
   const dashboard = await openDashboard();
   await dashboard.locator('.session-chip').click();
 
-  const pickBtn = dashboard.locator('button.nav-btn[title="Pick locator"]');
-  await pickBtn.click();
+  await dashboard.getByRole('button', { name: 'Show sidebar' }).click();
+  await dashboard.getByRole('button', { name: 'Pick locator' }).click();
 
   await expect(dashboard.locator('div.dashboard-view')).toContainClass('interactive');
 
-  // Intercept clipboard writes before clicking pick.
-  const copyPromise = dashboard.evaluate(() => {
-    if (!navigator.clipboard)
-      return 'no clipboard';
-    return new Promise<string>(f => {
-      const original = navigator.clipboard.writeText;
-      navigator.clipboard.writeText = text => {
-        f(text);
-        navigator.clipboard.writeText = original;
-        return navigator.clipboard.writeText(text);
-      };
-    });
-  }).catch(e => `Exception in eval: ${e}`);
-
   await expect(async () => {
-    await dashboard.locator('img#display').click({ position: { x: 50, y: 25 } });
-    const text = await Promise.race([
-      copyPromise,
-      new Promise<string>(f => setTimeout(() => f('timeout'), 1000))
-    ]);
-    expect(text).toContain('Submit');
+    await dashboard.locator('img#display').click({ position: { x: 500, y: 25 } });
+    await expect(dashboard.locator('.cm-wrapper').first()).toContainText(`getByRole('button', { name: 'Submit' })`);
   }).toPass();
 });

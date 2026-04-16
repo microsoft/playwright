@@ -17,6 +17,7 @@
 import React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import './colors.css';
+import '@web/common.css';
 import './common.css';
 import { applyTheme } from '@web/theme';
 import { Dashboard } from './dashboard';

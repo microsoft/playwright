@@ -25,7 +25,7 @@ import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
-import { CDPConnection, DashboardConnection } from './dashboardController';
+import { DashboardConnection } from './dashboardController';
 
 import type * as api from '../../..';
 
@@ -35,22 +35,10 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
 
   const connections = new Set<DashboardConnection>();
 
-  httpServer.createWebSocket(url => {
-    const cdpPageId = url.searchParams.get('cdpPageId');
-    if (cdpPageId) {
-      for (const conn of connections) {
-        const page = conn.pageForId(cdpPageId);
-        if (page)
-          return new CDPConnection(page);
-      }
-      throw new Error('Page not found for cdpPageId: ' + cdpPageId);
-    }
-
-    const cdpUrl = new URL(httpServer.urlPrefix('human-readable'));
-    cdpUrl.pathname = '/ws';
+  httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(cdpUrl, () => connections.delete(connection));
+    connection = new DashboardConnection(() => connections.delete(connection));
     connections.add(connection);
     return connection;
   }, 'ws');

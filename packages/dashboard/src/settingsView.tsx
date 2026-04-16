@@ -19,7 +19,14 @@ import './settingsView.css';
 import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
 import { GearIcon } from './icons';
 
-export const SettingsButton: React.FC = () => {
+type SidebarLocation = 'bottom' | 'right';
+
+type SettingsButtonProps = {
+  sidebarLocation?: SidebarLocation;
+  setSidebarLocation?: (location: SidebarLocation) => void;
+};
+
+export const SettingsButton: React.FC<SettingsButtonProps> = ({ sidebarLocation, setSidebarLocation }) => {
   const [open, setOpen] = React.useState(false);
   const [theme, setTheme] = useThemeSetting();
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -68,6 +75,25 @@ export const SettingsButton: React.FC = () => {
               ))}
             </div>
           </div>
+          {sidebarLocation && setSidebarLocation && (
+            <div className='setting-row'>
+              <span className='setting-label'>Inspector Dock</span>
+              <div className='setting-options'>
+                <div
+                  className={'setting-option' + (sidebarLocation === 'bottom' ? ' selected' : '')}
+                  onClick={() => { setSidebarLocation('bottom'); setOpen(false); }}
+                >
+                  Bottom
+                </div>
+                <div
+                  className={'setting-option' + (sidebarLocation === 'right' ? ' selected' : '')}
+                  onClick={() => { setSidebarLocation('right'); setOpen(false); }}
+                >
+                  Right
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
