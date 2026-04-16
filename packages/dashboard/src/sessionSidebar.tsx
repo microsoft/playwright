@@ -40,14 +40,19 @@ function tabFavicon(url: string): string {
   }
 }
 
-function normalizeWorkspacePath(workspace: string): string {
+function normalizeWorkspacePath(workspace: string, homeDir: string | undefined): string {
   if (!workspace || workspace === 'Global')
     return workspace;
-  if (workspace.startsWith('/') || workspace.startsWith('\\\\') || /^[A-Za-z]:[\\/]/.test(workspace))
-    return workspace;
-  if (workspace.includes('/'))
-    return '/' + workspace;
-  return workspace;
+  let normalized = workspace;
+  if (!workspace.startsWith('/') && !workspace.startsWith('\\\\') && !/^[A-Za-z]:[\\/]/.test(workspace) && workspace.includes('/'))
+    normalized = '/' + workspace;
+  if (homeDir) {
+    if (normalized === homeDir)
+      return '~';
+    if (normalized.startsWith(homeDir + '/') || normalized.startsWith(homeDir + '\\'))
+      return '~' + normalized.slice(homeDir.length);
+  }
+  return normalized;
 }
 
 export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectTab, onCloseTab, onNewTab }) => {
@@ -109,7 +114,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
       {model.loading && <div className='sidebar-empty' role='status' aria-live='polite'>Loading sessions...</div>}
       {!model.loading && openSessions.length === 0 && <div className='sidebar-empty' role='status' aria-live='polite'>No open sessions.</div>}
       {workspaceGroups.map(([workspace, entries]) => {
-        const workspacePath = normalizeWorkspacePath(workspace);
+        const workspacePath = normalizeWorkspacePath(workspace, clientInfo?.homeDir);
         return <section key={workspace} className='workspace-group'>
           <h3 className='workspace-header'>
             <span className='workspace-path-full' title={workspacePath}>{workspacePath}</span>

@@ -28,6 +28,7 @@ export type ClientInfo = {
   workspaceDirHash: string;
   daemonProfilesDir: string;
   workspaceDir: string | undefined;
+  homeDir: string;
 };
 
 export function clientKey(clientInfo: ClientInfo): string {
@@ -170,6 +171,7 @@ export function createClientInfo(): ClientInfo {
     workspaceDir,
     workspaceDirHash,
     daemonProfilesDir: daemonProfilesDir(workspaceDirHash),
+    homeDir: os.homedir(),
   };
 }
 
