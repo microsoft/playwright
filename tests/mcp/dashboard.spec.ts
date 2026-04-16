@@ -144,3 +144,14 @@ test('sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
         - button "New Tab ${server.PREFIX}/"
   `);
 });
+
+test('session switching', async ({ cli, server, openDashboard }) => {
+  await cli('open', server.PREFIX);
+
+  const dashboard = await openDashboard();
+  await dashboard.locator('.session-chip').click();
+
+  await cli('open', '--session=second', server.PREFIX);
+  await dashboard.getByRole('listitem', { name: 'second' }).getByRole('listitem').click();
+  await expect(dashboard.getByText('Loading...')).not.toBeVisible();
+});

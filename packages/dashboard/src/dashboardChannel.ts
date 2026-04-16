@@ -48,7 +48,7 @@ export interface DashboardChannel {
   detach(params: BrowserTarget): Promise<void>;
   closeSession(params: BrowserTarget): Promise<void>;
   deleteSessionData(params: BrowserTarget): Promise<void>;
-  setVisible(params: { visible: boolean }): Promise<void>;
+  setVisible(params: { browser?: string }): Promise<void>;
 
   tabs(params: ContextTarget): Promise<{ tabs: Tab[] }>;
   newTab(params: ContextTarget): Promise<{ page: string }>;

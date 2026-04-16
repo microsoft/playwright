@@ -49,11 +49,6 @@ export const DashboardClientContext = React.createContext<DashboardClientChannel
 const client = DashboardClient.create('/ws');
 const model = new SessionModel(client);
 
-const pushVisibility = () => client.setVisible({ visible: !document.hidden }).catch(() => {});
-document.addEventListener('visibilitychange', pushVisibility);
-if (document.hidden)
-  pushVisibility();
-
 const App: React.FC = () => {
   const [revision, setRevision] = React.useState(0);
   const [sessionGuid, setSessionGuid] = React.useState<string | undefined>(parseHash());
@@ -95,6 +90,19 @@ const App: React.FC = () => {
 
   const activeSession = sessionGuid ? model.sessionByGuid(sessionGuid) : undefined;
   const activeBrowser = activeSession?.canConnect ? activeSession.browser.guid : undefined;
+
+  React.useEffect(() => {
+    const pushVisibility = () => {
+      if (document.hidden)
+        client.setVisible({}).catch(() => {});
+      else if (activeBrowser)
+        client.setVisible({ browser: activeBrowser }).catch(() => {});
+    };
+    document.addEventListener('visibilitychange', pushVisibility);
+    if (document.hidden)
+      pushVisibility();
+    return () => document.removeEventListener('visibilitychange', pushVisibility);
+  }, [activeBrowser]);
 
   return <DashboardClientContext.Provider value={client}>
     <SplitView

@@ -142,6 +142,8 @@ export const Dashboard: React.FC<{
         setContext(result.context);
     }).catch(() => {});
 
+    client.setVisible({ browser }).catch(() => {});
+
     return () => {
       disposed = true;
       client.off('tabs', onTabs);

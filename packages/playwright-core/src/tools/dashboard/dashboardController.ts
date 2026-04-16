@@ -43,7 +43,7 @@ export class DashboardConnection implements Transport {
   private _onclose: () => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
-  private _visible = true;
+  private _activeBrowser: string | undefined;
 
   _recordingDir: string;
   _traceMap: Map<string, TraceLoader>;
@@ -68,6 +68,7 @@ export class DashboardConnection implements Transport {
     serverRegistry.off('changed', this._pushSessions);
     this._serverRegistryDispose?.();
     this._serverRegistryDispose = undefined;
+    this._activeBrowser = undefined;
     for (const att of this._attached.values())
       att.dispose();
     this._attached.clear();
@@ -99,6 +100,8 @@ export class DashboardConnection implements Transport {
   }
 
   async detach(params: { browser: string }) {
+    if (this._activeBrowser === params.browser)
+      this._activeBrowser = undefined;
     const att = this._attached.get(params.browser);
     if (att) {
       this._attached.delete(params.browser);
@@ -121,11 +124,16 @@ export class DashboardConnection implements Transport {
     await serverRegistry.deleteUserData(params.browser);
   }
 
-  async setVisible(params: { visible: boolean }) {
-    if (this._visible === params.visible)
+  async setVisible(params: { browser?: string }) {
+    if (this._activeBrowser === params.browser)
       return;
-    this._visible = params.visible;
-    await Promise.all([...this._attached.values()].map(att => att.setScreencastActive(params.visible)));
+    const oldAtt = this._activeBrowser ? this._attached.get(this._activeBrowser) : undefined;
+    this._activeBrowser = params.browser;
+    const newAtt = this._activeBrowser ? this._attached.get(this._activeBrowser) : undefined;
+    if (oldAtt)
+      await oldAtt.setScreencastActive(false);
+    if (newAtt)
+      await newAtt.setScreencastActive(true);
   }
 
   async reveal(params: { path: string }) {
@@ -142,8 +150,8 @@ export class DashboardConnection implements Transport {
     }
   }
 
-  visible(): boolean {
-    return this._visible;
+  isActive(browserGuid: string): boolean {
+    return this._activeBrowser === browserGuid;
   }
 
   pageForId(pageGuid: string): api.Page | undefined {
@@ -270,6 +278,7 @@ class AttachedBrowser {
     if (active && !this._screencastRunning) {
       this._screencastRunning = true;
       await this._startScreencast(this._selectedPage);
+      this._pushTabs();
     } else if (!active && this._screencastRunning) {
       this._screencastRunning = false;
       await this._selectedPage.screencast.stop().catch(() => {});
@@ -445,7 +454,7 @@ class AttachedBrowser {
         }),
     );
 
-    if (this._owner.visible()) {
+    if (this._owner.isActive(this.browserGuid)) {
       this._screencastRunning = true;
       await this._startScreencast(page);
     }
