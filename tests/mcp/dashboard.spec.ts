@@ -15,9 +15,19 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { test, expect } from './cli-fixtures';
+
+function displayPath(p: string): string {
+  const home = os.homedir();
+  if (p === home)
+    return '~';
+  if (p.startsWith(home + path.sep))
+    return '~' + p.slice(home.length);
+  return p;
+}
 
 test.beforeEach(({}, testInfo) => {
   process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
@@ -47,11 +57,11 @@ test('should show current workspace sessions first', async ({ cli, server, openD
     await expect(workspaceGroups).toHaveCount(2);
 
     // Current workspace (first) should be first.
-    await expect(workspaceGroups.nth(0).locator('.workspace-path-full')).toContainText(first);
+    await expect(workspaceGroups.nth(0).locator('.workspace-path-full')).toHaveText(displayPath(first));
     await expect(workspaceGroups.nth(0).locator('.session-chip')).toHaveCount(1);
 
     // Other workspace (second) should be second.
-    await expect(workspaceGroups.nth(1).locator('.workspace-path-full')).toContainText(second);
+    await expect(workspaceGroups.nth(1).locator('.workspace-path-full')).toHaveText(displayPath(second));
     await expect(workspaceGroups.nth(1).locator('.session-chip')).toHaveCount(1);
 
     await dashboard.close();
