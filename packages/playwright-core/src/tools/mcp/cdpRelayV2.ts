@@ -114,6 +114,14 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
         const tabSession = await this._attachTab(tab.id);
         return { result: { targetId: tabSession.targetInfo?.targetId } };
       }
+      case 'Target.closeTarget': {
+        const targetId = params?.targetId;
+        const tabSession = this._findTabSessionByTargetId(targetId);
+        if (!tabSession)
+          return { result: { success: false } };
+        await this._sendCommand('chrome.tabs.remove', [tabSession.tabId]);
+        return { result: { success: true } };
+      }
       case 'Target.getTargetInfo': {
         if (!sessionId)
           return { result: undefined };
@@ -180,7 +188,10 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
     this._tabSessions.delete(tabId);
     this._sendToPlaywright({
       method: 'Target.detachedFromTarget',
-      params: { sessionId: tabSession.sessionId },
+      params: {
+        sessionId: tabSession.sessionId,
+        targetId: tabSession.targetInfo?.targetId,
+      },
     });
   }
 
@@ -195,6 +206,16 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
   private _findTabSessionByChildSessionId(childSessionId: string): TabSession | undefined {
     for (const session of this._tabSessions.values()) {
       if (session.childSessions.has(childSessionId))
+        return session;
+    }
+    return undefined;
+  }
+
+  private _findTabSessionByTargetId(targetId: string | undefined): TabSession | undefined {
+    if (!targetId)
+      return undefined;
+    for (const session of this._tabSessions.values()) {
+      if (session.targetInfo?.targetId === targetId)
         return session;
     }
     return undefined;

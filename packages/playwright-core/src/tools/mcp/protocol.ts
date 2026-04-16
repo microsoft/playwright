@@ -70,6 +70,11 @@ export type ExtensionCommandV2 = {
     params: [createProperties: TabCreateProperties];
     result: Tab;
   };
+  // chrome.tabs.remove(tabIds)
+  'chrome.tabs.remove': {
+    params: [tabIds: number | number[]];
+    result: void;
+  };
   // Playwright-specific: ask the user to pick a tab via the connect UI.
   'extension.selectTab': {
     params: [];
