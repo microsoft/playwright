@@ -116,7 +116,7 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
       }
       case 'Target.closeTarget': {
         const targetId = params?.targetId;
-        const tabSession = this._findTabSessionByTargetId(targetId);
+        const tabSession = targetId ? this._findTabSession(s => s.targetInfo?.targetId === targetId) : undefined;
         if (!tabSession)
           return { result: { success: false } };
         await this._sendCommand('chrome.tabs.remove', [tabSession.tabId]);
@@ -125,7 +125,7 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
       case 'Target.getTargetInfo': {
         if (!sessionId)
           return { result: undefined };
-        return { result: this._findTabSessionBySessionId(sessionId)?.targetInfo };
+        return { result: this._findTabSession(s => s.sessionId === sessionId)?.targetInfo };
       }
     }
     return undefined;
@@ -138,10 +138,10 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
     // 1. sessionId is a relay-level tab session (pw-tab-N) → strip and route by tabId.
     // 2. sessionId is a child CDP session (worker, oopif) → route to its owning tab,
     //    keep the sessionId so the extension forwards it to chrome.debugger.
-    let tabSession = this._findTabSessionBySessionId(sessionId);
+    let tabSession = this._findTabSession(s => s.sessionId === sessionId);
     let cdpSessionId: string | undefined;
     if (!tabSession) {
-      tabSession = this._findTabSessionByChildSessionId(sessionId);
+      tabSession = this._findTabSession(s => s.childSessions.has(sessionId));
       cdpSessionId = sessionId;
     }
     if (!tabSession)
@@ -195,27 +195,9 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
     });
   }
 
-  private _findTabSessionBySessionId(sessionId: string): TabSession | undefined {
+  private _findTabSession(predicate: (session: TabSession) => boolean): TabSession | undefined {
     for (const session of this._tabSessions.values()) {
-      if (session.sessionId === sessionId)
-        return session;
-    }
-    return undefined;
-  }
-
-  private _findTabSessionByChildSessionId(childSessionId: string): TabSession | undefined {
-    for (const session of this._tabSessions.values()) {
-      if (session.childSessions.has(childSessionId))
-        return session;
-    }
-    return undefined;
-  }
-
-  private _findTabSessionByTargetId(targetId: string | undefined): TabSession | undefined {
-    if (!targetId)
-      return undefined;
-    for (const session of this._tabSessions.values()) {
-      if (session.targetInfo?.targetId === targetId)
+      if (predicate(session))
         return session;
     }
     return undefined;
