@@ -21,6 +21,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { SplitView } from '@web/components/splitView';
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon, PickLocatorIcon, InspectorPanelIcon } from './icons';
 import { SettingsButton } from './settingsView';
+import { Annotations, getImageLayout, clientToViewport } from './annotations';
 
 import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 
@@ -36,9 +37,11 @@ function tabFavicon(url: string): string {
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
 
+type Mode = 'readonly' | 'interactive' | 'annotate';
+
 export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
   const client = React.useContext(DashboardClientContext);
-  const [interactive, setInteractive] = React.useState(false);
+  const [mode, setMode] = React.useState<Mode>('readonly');
   const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
@@ -52,6 +55,12 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
   const tabbarRef = React.useRef<HTMLDivElement>(null);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const moveThrottleRef = React.useRef(0);
+  const modeRef = React.useRef<Mode>('readonly');
+
+  React.useEffect(() => { modeRef.current = mode; }, [mode]);
+
+  const interactive = mode === 'interactive';
+  const annotating = mode === 'annotate';
 
   React.useEffect(() => {
     if (!client)
@@ -69,6 +78,8 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
     };
     const onFrame = (params: DashboardChannelEvents['frame']) => {
       if (params.target.browser !== browser)
+        return;
+      if (modeRef.current === 'annotate')
         return;
       setFrame(params);
       const tabbar = tabbarRef.current;
@@ -113,7 +124,7 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
       setContext(undefined);
       setTabs(null);
       setFrame(undefined);
-      setInteractive(false);
+      setMode('readonly');
       setPickingPage(null);
       setShowInspector(false);
     };
@@ -128,32 +139,10 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
     const vw = frame?.viewportWidth ?? 0;
     const vh = frame?.viewportHeight ?? 0;
-    if (!vw || !vh)
+    const layout = getImageLayout(displayRef.current);
+    if (!vw || !vh || !layout)
       return { x: 0, y: 0 };
-    const display = displayRef.current;
-    if (!display)
-      return { x: 0, y: 0 };
-    const rect = display.getBoundingClientRect();
-    const imgAspect = display.naturalWidth / display.naturalHeight;
-    const elemAspect = rect.width / rect.height;
-    let renderW: number, renderH: number, offsetX: number, offsetY: number;
-    if (imgAspect > elemAspect) {
-      renderW = rect.width;
-      renderH = rect.width / imgAspect;
-      offsetX = 0;
-      offsetY = (rect.height - renderH) / 2;
-    } else {
-      renderH = rect.height;
-      renderW = rect.height * imgAspect;
-      offsetX = (rect.width - renderW) / 2;
-      offsetY = 0;
-    }
-    const fracX = (e.clientX - rect.left - offsetX) / renderW;
-    const fracY = (e.clientY - rect.top - offsetY) / renderH;
-    return {
-      x: Math.round(fracX * vw),
-      y: Math.round(fracY * vh),
-    };
+    return clientToViewport(layout, vw, vh, e.clientX, e.clientY);
   }
 
   function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
@@ -164,26 +153,28 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
   }
 
   function onScreenMouseDown(e: React.MouseEvent) {
+    if (annotating)
+      return;
     e.preventDefault();
     screenRef.current?.focus();
     if (!ready)
       return;
     if (!interactive) {
-      setInteractive(true);
+      setMode('interactive');
       return;
     }
     sendMouseEvent('mousedown', e);
   }
 
   function onScreenMouseUp(e: React.MouseEvent) {
-    if (!interactive)
+    if (annotating || !interactive)
       return;
     e.preventDefault();
     sendMouseEvent('mouseup', e);
   }
 
   function onScreenMouseMove(e: React.MouseEvent) {
-    if (!interactive || !pageTarget)
+    if (annotating || !interactive || !pageTarget)
       return;
     const now = Date.now();
     if (now - moveThrottleRef.current < 32)
@@ -194,13 +185,15 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
   }
 
   function onScreenWheel(e: React.WheelEvent) {
-    if (!interactive || !pageTarget)
+    if (annotating || !interactive || !pageTarget)
       return;
     e.preventDefault();
     client?.wheel({ ...pageTarget, deltaX: e.deltaX, deltaY: e.deltaY });
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
+    if (annotating)
+      return;
     if (pickingPage !== null && e.key === 'Escape') {
       e.preventDefault();
       if (pageTarget)
@@ -215,7 +208,7 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
-    if (!interactive || !pageTarget)
+    if (annotating || !interactive || !pageTarget)
       return;
     e.preventDefault();
     client?.keyup({ ...pageTarget, key: e.key });
@@ -243,7 +236,7 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
   else if (tabs.length === 0)
     overlayText = 'No tabs open';
 
-  return (<div className={'dashboard-view' + (interactive ? ' interactive' : '')}
+  return (<div className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '')}
   >
     {/* Tab bar */}
     <div ref={tabbarRef} className='tabbar'>
@@ -283,30 +276,50 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
         <PlusIcon />
       </button>
       <div className='interactive-controls'>
-        <div className={'segmented-control' + (interactive ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactive ? 'Interactive mode: page input is forwarded' : 'Read-only mode: page input is blocked'}>
+        <div
+          className={'segmented-control segmented-control-3' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '')}
+          role='group'
+          aria-label='Interaction mode'
+          title={annotating ? 'Annotate mode: draw rectangular regions and add comments' : interactive ? 'Interactive mode: page input is forwarded' : 'Read-only mode: page input is blocked'}
+        >
           <button
-            className={'segmented-control-option' + (!interactive ? ' active' : '')}
+            className={'segmented-control-option' + (mode === 'readonly' ? ' active' : '')}
             disabled={!ready}
-            aria-pressed={!interactive}
+            aria-pressed={mode === 'readonly'}
             title='Read-only mode'
             onClick={() => {
               if (pageTarget)
                 client?.cancelPickLocator(pageTarget);
               setPickingPage(null);
               setShowInspector(false);
-              setInteractive(false);
+              setMode('readonly');
             }}
           >
             Read-only
           </button>
           <button
-            className={'segmented-control-option' + (interactive ? ' active' : '')}
+            className={'segmented-control-option' + (mode === 'interactive' ? ' active' : '')}
             disabled={!ready}
-            aria-pressed={interactive}
+            aria-pressed={mode === 'interactive'}
             title='Interactive mode'
-            onClick={() => setInteractive(true)}
+            onClick={() => setMode('interactive')}
           >
             Interactive
+          </button>
+          <button
+            className={'segmented-control-option' + (mode === 'annotate' ? ' active' : '')}
+            disabled={!ready || !frame}
+            aria-pressed={mode === 'annotate'}
+            title='Annotate mode'
+            onClick={() => {
+              if (pageTarget)
+                client?.cancelPickLocator(pageTarget);
+              setPickingPage(null);
+              setShowInspector(false);
+              setMode('annotate');
+            }}
+          >
+            Annotate
           </button>
         </div>
         <SettingsButton />
@@ -348,7 +361,7 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
             client?.cancelPickLocator(pageTarget);
             setPickingPage(null);
           } else {
-            setInteractive(true);
+            setMode('interactive');
             setPickingPage(selectedTab?.page ?? null);
             screenRef.current?.focus();
             client?.pickLocator(pageTarget);
@@ -364,7 +377,7 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
           aria-pressed={showInspector}
           disabled={!ready}
           onClick={() => {
-            setInteractive(true);
+            setMode('interactive');
             setShowInspector(!showInspector);
           }}
         >
@@ -401,6 +414,13 @@ export const Dashboard: React.FC<{ browser: string }> = ({ browser }) => {
               className='display'
               alt='screencast'
               src={frame ? 'data:image/jpeg;base64,' + frame.data : undefined}
+            />
+            <Annotations
+              active={annotating}
+              displayRef={displayRef}
+              screenRef={screenRef}
+              viewportWidth={frame?.viewportWidth ?? 0}
+              viewportHeight={frame?.viewportHeight ?? 0}
             />
             {locatorToast
               ? <div className='screen-toast visible'>Copied: <code>{locatorToast.text}</code></div>
