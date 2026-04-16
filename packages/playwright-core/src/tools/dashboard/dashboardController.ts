@@ -45,6 +45,8 @@ export class DashboardConnection implements Transport {
   private _browsers = new Map<string, BrowserSlot>();
   private _attachedBrowser: AttachedBrowser | undefined;
   private _onclose: () => void;
+  private _onconnected?: () => void;
+  private _onAnnotationSubmit?: (base64Png: string) => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
@@ -53,8 +55,10 @@ export class DashboardConnection implements Transport {
 
   _recordingDir: string;
 
-  constructor(onclose: () => void) {
+  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string) => void) {
     this._onclose = onclose;
+    this._onconnected = onconnected;
+    this._onAnnotationSubmit = onAnnotationSubmit;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -64,6 +68,7 @@ export class DashboardConnection implements Transport {
     serverRegistry.on('removed', this._pushSessions);
     serverRegistry.on('changed', this._pushSessions);
     this._pushSessions();
+    this._onconnected?.();
   }
 
   onclose() {
@@ -159,6 +164,10 @@ export class DashboardConnection implements Transport {
     this._pushTabs();
   }
 
+  async submitAnnotation(params: { data: string }) {
+    this._onAnnotationSubmit?.(params.data);
+  }
+
   async reveal(params: { path: string }) {
     switch (os.platform()) {
       case 'darwin':
@@ -195,6 +204,10 @@ export class DashboardConnection implements Transport {
 
   emitPickLocator() {
     this.sendEvent?.('pickLocator', {});
+  }
+
+  emitAnnotate() {
+    this.sendEvent?.('annotate', {});
   }
 
   _pushTabs() {

@@ -854,6 +854,9 @@ const devtoolsShow = declareCommand({
   description: 'Show browser DevTools',
   category: 'devtools',
   args: z.object({}),
+  options: z.object({
+    annotate: z.boolean().optional().describe('Switch the dashboard into annotation mode.'),
+  }),
   toolName: '',
   toolParams: () => ({}),
 });

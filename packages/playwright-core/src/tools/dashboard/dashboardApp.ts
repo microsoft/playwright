@@ -32,19 +32,43 @@ import type * as api from '../../..';
 
 type RevealOptions = { sessionName?: string; workspaceDir?: string };
 
-async function innerOpenDashboardApp(initialReveal: RevealOptions): Promise<{ page: api.Page; reveal: (options: RevealOptions) => void }> {
+type DashboardState = {
+  reveal: (options: RevealOptions) => void;
+  triggerAnnotate: () => void;
+  registerAnnotateWaiter: (socket: net.Socket) => void;
+};
+
+async function innerOpenDashboardApp(initialReveal: RevealOptions): Promise<{ page: api.Page; state: DashboardState }> {
   const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
 
   const connections = new Set<DashboardConnection>();
   let currentReveal = initialReveal;
+  let pendingAnnotate = false;
+  const waitingSockets = new Set<net.Socket>();
+
+  const submitAnnotation = (base64Png: string) => {
+    if (waitingSockets.size === 0)
+      return;
+    const buffer = Buffer.from(base64Png, 'base64');
+    for (const socket of waitingSockets) {
+      socket.write(buffer);
+      socket.end();
+    }
+    waitingSockets.clear();
+  };
 
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(() => connections.delete(connection));
-    if (currentReveal.sessionName)
-      connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
+    connection = new DashboardConnection(() => connections.delete(connection), () => {
+      if (currentReveal.sessionName)
+        connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
+      if (pendingAnnotate) {
+        pendingAnnotate = false;
+        connection.emitAnnotate();
+      }
+    }, submitAnnotation);
     connections.add(connection);
     return connection;
   }, 'ws');
@@ -71,7 +95,23 @@ async function innerOpenDashboardApp(initialReveal: RevealOptions): Promise<{ pa
       connection.revealSession(options.sessionName, options.workspaceDir);
   };
 
-  return { page, reveal };
+  const triggerAnnotate = () => {
+    if (connections.size === 0) {
+      pendingAnnotate = true;
+      return;
+    }
+    for (const connection of connections)
+      connection.emitAnnotate();
+  };
+
+  const registerAnnotateWaiter = (socket: net.Socket) => {
+    waitingSockets.add(socket);
+    const cleanup = () => waitingSockets.delete(socket);
+    socket.on('close', cleanup);
+    socket.on('error', cleanup);
+  };
+
+  return { page, state: { reveal, triggerAnnotate, registerAnnotateWaiter } };
 }
 
 async function launchApp(appName: string) {
@@ -194,7 +234,7 @@ export async function openDashboardApp() {
       return;
     }
   }
-  const { page, reveal } = await innerOpenDashboardApp(revealOptions);
+  const { page, state } = await innerOpenDashboardApp(revealOptions);
   server?.on('connection', socket => {
     const chunks: Buffer[] = [];
     socket.on('data', data => chunks.push(data));
@@ -206,10 +246,18 @@ export async function openDashboardApp() {
       } catch {
         // no-op
       }
-      if (parsed?.command !== 'bringToFront')
+      if (!parsed?.command)
         return;
-      page?.bringToFront().catch(() => {});
-      reveal({ sessionName: parsed.sessionName, workspaceDir: parsed.workspaceDir });
+      const reveal = { sessionName: parsed.sessionName, workspaceDir: parsed.workspaceDir };
+      if (parsed.command === 'bringToFront') {
+        page?.bringToFront().catch(() => {});
+        state.reveal(reveal);
+      } else if (parsed.command === 'annotate') {
+        page?.bringToFront().catch(() => {});
+        state.reveal(reveal);
+        state.triggerAnnotate();
+        state.registerAnnotateWaiter(socket);
+      }
     });
   });
 }

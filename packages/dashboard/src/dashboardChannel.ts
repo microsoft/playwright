@@ -34,6 +34,7 @@ export type DashboardChannelEvents = {
   frame: { data: string; viewportWidth: number; viewportHeight: number };
   elementPicked: { selector: string; ariaSnapshot?: string };
   pickLocator: {};
+  annotate: {};
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';
@@ -62,6 +63,7 @@ export interface DashboardChannel {
   startRecording(): Promise<void>;
   stopRecording(): Promise<{ path: string }>;
   screenshot(): Promise<string>;
+  submitAnnotation(params: { data: string }): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
