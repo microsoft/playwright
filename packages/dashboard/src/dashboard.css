@@ -568,3 +568,41 @@
   color: var(--color-accent-fg);
   background: var(--color-accent-subtle);
 }
+
+/* -- Annotate mode (dashboard chrome) -- */
+.dashboard-view {
+  --annotate-blue: 54 116 209;
+}
+
+.segmented-control-3 {
+  padding: 2px;
+}
+
+.segmented-control-3::before {
+  width: calc(33.333% - 2px);
+  transform: translateX(0);
+}
+
+.segmented-control-3.interactive::before {
+  transform: translateX(100%);
+  background: rgb(var(--interactive-orange) / 0.95);
+}
+
+.segmented-control-3.annotate::before {
+  transform: translateX(200%);
+  background: rgb(var(--annotate-blue) / 0.95);
+}
+
+.segmented-control-3 .segmented-control-option {
+  width: 88px;
+}
+
+.dashboard-view.annotate .toolbar {
+  background: rgb(var(--annotate-blue));
+  color: var(--color-fg-on-emphasis);
+}
+
+.dashboard-view.annotate .toolbar .nav-btn,
+.dashboard-view.annotate .toolbar .omnibox {
+  color: var(--color-fg-on-emphasis);
+}
