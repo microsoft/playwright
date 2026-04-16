@@ -176,7 +176,12 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     case 'show': {
       const daemonScript = libPath('entry', 'dashboardApp.js');
-      const child = spawn(process.execPath, [daemonScript], {
+      const daemonArgs = [
+        daemonScript,
+        `--session=${sessionName}`,
+        `--workspace=${clientInfo.workspaceDir ?? ''}`,
+      ];
+      const child = spawn(process.execPath, daemonArgs, {
         detached: true,
         stdio: 'ignore',
       });

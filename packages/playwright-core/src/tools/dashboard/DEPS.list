@@ -5,6 +5,7 @@
 @isomorphic/**
 @utils/**
 ../../serverRegistry.ts
+../cli-client/minimist.ts
 ../cli-client/registry.ts
 ../trace/traceParser.ts
 ../utils/**
