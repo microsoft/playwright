@@ -15,19 +15,21 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import { test as baseTest } from './fixtures';
+import { test as baseTest, expect } from './fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
-import type { Page } from 'playwright-core';
+import type { Page, Browser } from 'playwright-core';
 import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
   cliEnv: Record<string, string>,
-  openDashboard: (options?: { cwd?: string, session?: string }) => Promise<Page>,
+  startDashboardServer: (options?: { cwd?: string, session?: string }) => Promise<Page>,
+  connectToDashboard: (bindTitle: string) => Promise<Browser>;
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -41,7 +43,7 @@ export const test = baseTest.extend<{
   cliEnv: async ({}, use) => {
     await use(cliEnv());
   },
-  openDashboard: async ({ childProcess, page }, use) => {
+  startDashboardServer: async ({ childProcess, page }, use) => {
     await use(async (options?: { cwd?: string, session?: string }) => {
       const testInfo = test.info();
       const showArgs = options?.session ? [`-s=${options.session}`, 'show'] : ['show'];
@@ -55,23 +57,34 @@ export const test = baseTest.extend<{
       return page;
     });
   },
+  connectToDashboard: async ({ cli, playwright }, use) => {
+    await use(async (bindTitle: string) => {
+      let endpoint = '';
+      await expect(async () => {
+        const { output } = await cli('list', '--all', '--json');
+        const { servers } = JSON.parse(output);
+        const server = servers.find(s => s.title === bindTitle);
+        endpoint = server.endpoint;
+      }).toPass();
+      return await playwright.chromium.connect(endpoint);
+    });
+  },
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
+    const pids: number[] = [];
 
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      return await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless }, sessions);
+      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless }, sessions);
+      if (result.pid !== undefined)
+        pids.push(result.pid);
+      return result;
     });
 
-    for (const session of sessions) {
-      await runCli(childProcess, ['--session=' + session.name, 'close'], {}, { mcpBrowser, mcpHeadless }, []).catch(e => {
-        if (!e.message.includes('is not running'))
-          throw e;
-      });
-      killProcessGroup(session.pid);
-    }
+    for (const pid of pids)
+      killProcessGroup(pid);
 
     const daemonDir = path.join(test.info().outputDir, 'daemon');
     const userDataDirs = await fs.promises.readdir(daemonDir).catch(() => []);
@@ -85,7 +98,7 @@ function cliEnv() {
     PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
     PLAYWRIGHT_DASHBOARD_SETTINGS_FILE_FOR_TEST: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    PLAYWRIGHT_SOCKETS_DIR: path.join(test.info().project.outputDir, 'ds', String(test.info().parallelIndex)),
+    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
     PLAYWRIGHT_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
   };
 }
@@ -101,6 +114,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
         ...cliEnv(),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+        PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST: '1',
         ...cliOptions.env,
       }),
     });

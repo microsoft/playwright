@@ -20,6 +20,8 @@ import { DashboardClientContext } from './index';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
 import { Annotations, getImageLayout, clientToViewport } from './annotations';
+
+import type { Annotation } from './annotations';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useMeasureForRef } from '@web/uiUtils';
 
@@ -70,6 +72,8 @@ export const Dashboard: React.FC = () => {
   const [recording, setRecording] = React.useState(false);
   const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
   const [flashTick, setFlashTick] = React.useState(0);
+  const [pendingAnnotate, setPendingAnnotate] = React.useState(false);
+  const [cliAnnotate, setCliAnnotate] = React.useState(false);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
@@ -129,6 +133,37 @@ export const Dashboard: React.FC = () => {
     };
   }, [flashTick, interactive]);
 
+  const hasFrame = !!frame;
+  React.useEffect(() => {
+    if (!pendingAnnotate || !hasFrame)
+      return;
+    setMode('annotate');
+    setCliAnnotate(true);
+    setPendingAnnotate(false);
+  }, [pendingAnnotate, hasFrame]);
+
+  React.useEffect(() => {
+    if (!annotating)
+      setCliAnnotate(false);
+  }, [annotating]);
+
+  const submitAnnotationToCli = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
+    if (!client)
+      return;
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+    const data = dataUrl.slice(dataUrl.indexOf(',') + 1);
+    await client.submitAnnotation({
+      data,
+      annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
+    });
+    setMode('readonly');
+  }, [client]);
+
   function flashInteractiveHint() {
     setFlashTick(tick => tick + 1);
   }
@@ -173,15 +208,18 @@ export const Dashboard: React.FC = () => {
       setMode('interactive');
       setPicking(true);
     };
+    const onAnnotate = () => setPendingAnnotate(true);
     client.on('tabs', onTabs);
     client.on('frame', onFrame);
     client.on('elementPicked', onElementPicked);
     client.on('pickLocator', onPickLocator);
+    client.on('annotate', onAnnotate);
     return () => {
       client.off('tabs', onTabs);
       client.off('frame', onFrame);
       client.off('elementPicked', onElementPicked);
       client.off('pickLocator', onPickLocator);
+      client.off('annotate', onAnnotate);
     };
   }, [client]);
 
@@ -458,6 +496,7 @@ export const Dashboard: React.FC = () => {
                 screenRef={screenRef}
                 viewportWidth={frame?.viewportWidth ?? 0}
                 viewportHeight={frame?.viewportHeight ?? 0}
+                onSubmit={cliAnnotate ? submitAnnotationToCli : undefined}
               />
             </div>
             {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
