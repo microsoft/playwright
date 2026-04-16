@@ -16,12 +16,11 @@
 
 import React from 'react';
 import './dashboard.css';
-import { navigate, DashboardClientContext } from './index';
+import { DashboardClientContext } from './index';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { TraceModel } from '@isomorphic/trace/traceModel';
 import { SplitView } from '@web/components/splitView';
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon } from './icons';
-import { SettingsButton } from './settingsView';
+import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
 import { Annotations, getImageLayout, clientToViewport } from './annotations';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { TabbedPaneTabModel, TabbedPane } from '@web/components/tabbedPane';
@@ -34,16 +33,6 @@ import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 import { HighlightedElement } from '@trace-viewer/ui/snapshotTab';
 import { TraceModelContext } from '@trace-viewer/ui/traceModelContext';
 
-function tabFavicon(url: string): string {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, '');
-    return host ? host[0].toUpperCase() : '';
-  } catch {
-    return '';
-  }
-}
-
 const BUTTONS = ['left', 'middle', 'right'] as const;
 type Mode = 'readonly' | 'interactive' | 'annotate';
 
@@ -52,7 +41,7 @@ export const Dashboard: React.FC<{
   autoInteractive?: boolean;
   onAutoInteractiveConsumed?: () => void;
 }> = ({ browser, autoInteractive, onAutoInteractiveConsumed }) => {
-  const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [sidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const client = React.useContext(DashboardClientContext);
   const [mode, setMode] = React.useState<Mode>('readonly');
   const [sidebarVisible, setSidebarVisible] = useSetting<boolean>('propertiesSidebarVisible', false);
@@ -77,7 +66,6 @@ export const Dashboard: React.FC<{
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
-  const tabbarRef = React.useRef<HTMLDivElement>(null);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const moveThrottleRef = React.useRef(0);
   const hintTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -125,11 +113,10 @@ export const Dashboard: React.FC<{
       if (modeRef.current === 'annotate')
         return;
       setFrame(params);
-      const tabbar = tabbarRef.current;
       const toolbar = toolbarRef.current;
-      if (!resized && tabbar && toolbar && params.viewportWidth && params.viewportHeight) {
+      if (!resized && toolbar && params.viewportWidth && params.viewportHeight) {
         resized = true;
-        const chromeHeight = tabbar.offsetHeight + toolbar.offsetHeight;
+        const chromeHeight = toolbar.offsetHeight;
         const extraW = window.outerWidth - window.innerWidth;
         const extraH = window.outerHeight - window.innerHeight;
         const targetW = Math.min(params.viewportWidth + extraW, screen.availWidth);
@@ -160,7 +147,6 @@ export const Dashboard: React.FC<{
       client.off('tabs', onTabs);
       client.off('frame', onFrame);
       client.off('elementPicked', onElementPicked);
-      client.detach({ browser }).catch(() => {});
       setContext(undefined);
       setTabs(null);
       setFrame(undefined);
@@ -379,48 +365,6 @@ export const Dashboard: React.FC<{
           minSidebarSize={300}
           settingName='devtoolsInspector'
           main={<div className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '')}>
-            {/* Tab bar */}
-            <div ref={tabbarRef} className='tabbar'>
-              <a className='tabbar-back' href='#' title='Back to sessions' onClick={e => { e.preventDefault(); navigate('#'); }}>
-                <ChevronLeftIcon />
-                Sessions
-              </a>
-              <div id='tabstrip' className='tabstrip' role='tablist'>
-                {tabs?.map(tab => (
-                  <div
-                    key={tab.page}
-                    className={'tab' + (tab.selected ? ' active' : '')}
-                    role='tab'
-                    aria-selected={tab.selected}
-                    title={tab.url || ''}
-                    onClick={() => client?.selectTab({ browser, context: tab.context, page: tab.page })}
-                  >
-                    {tab.faviconUrl
-                      ? <img className='tab-favicon' src={tab.faviconUrl} alt='' aria-hidden='true' />
-                      : <span className='tab-favicon placeholder' aria-hidden='true'>{tabFavicon(tab.url)}</span>}
-                    <span className='tab-label'>{tab.title || 'New Tab'}</span>
-                    <button
-                      className='tab-close'
-                      title='Close tab'
-                      onClick={e => {
-                        e.stopPropagation();
-                        client?.closeTab({ browser, context: tab.context, page: tab.page });
-                      }}
-                    >
-                      <CloseIcon />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => {
-                if (context)
-                  client?.newTab({ browser, context });
-              }}>
-                <PlusIcon />
-              </button>
-              <div className='interactive-controls' />
-            </div>
-
             {/* Toolbar */}
             <div ref={toolbarRef} className='toolbar'>
               <button className='nav-btn' title='Back' aria-disabled={!interactive || undefined} onClick={() => {
@@ -603,9 +547,6 @@ export const Dashboard: React.FC<{
             tabs={inspectorTabs}
             selectedTab={selectedSidebarTab}
             setSelectedTab={setSelectedSidebarTab}
-            rightToolbar={[
-              <SettingsButton key='settings' sidebarLocation={sidebarLocation} setSidebarLocation={setSidebarLocation} />,
-            ]}
             mode='default'
           />}
         />

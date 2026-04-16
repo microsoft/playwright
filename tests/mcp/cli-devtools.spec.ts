@@ -191,7 +191,7 @@ test('pick activates dashboard session', async ({ cdpServer, cli, server, openDa
   await cli('snapshot');
 
   const dashboard = await openDashboard();
-  await expect(dashboard.locator('.session-chip')).toHaveCount(1);
+  await expect(dashboard.locator('div.dashboard-view')).toBeVisible();
 
   const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
   const pickPromise = cli('pick');
