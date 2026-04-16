@@ -174,6 +174,12 @@ export async function program(options?: { embedderVersion?: string}) {
       await installBrowser();
       return;
     case 'show': {
+      if (args.port !== undefined) {
+        const { tools } = require('../../coreBundle.js') as typeof import('../../coreBundle');
+        const url = await tools.startDashboardServer({ port: Number(args.port), host: args.host as string | undefined });
+        console.log(`Listening on ${url}`);
+        return;
+      }
       const daemonScript = libPath('entry', 'dashboardApp.js');
       const child = spawn(process.execPath, [daemonScript], {
         detached: true,

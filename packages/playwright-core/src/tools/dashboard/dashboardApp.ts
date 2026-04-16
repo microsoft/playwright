@@ -29,7 +29,7 @@ import { DashboardConnection } from './dashboardController';
 
 import type * as api from '../../..';
 
-async function innerOpenDashboardApp(): Promise<api.Page> {
+export async function startDashboardServer(options: { port: number, host?: string }): Promise<string> {
   const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
 
@@ -51,9 +51,12 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
       return false;
     return httpServer.serveFile(request, response, resolved);
   });
-  await httpServer.start();
-  const url = httpServer.urlPrefix('human-readable');
+  await httpServer.start({ port: options.port, host: options.host ?? 'localhost' });
+  return httpServer.urlPrefix('human-readable');
+}
 
+async function innerOpenDashboardApp(): Promise<api.Page> {
+  const url = await startDashboardServer({ port: 0 });
   const { page } = await launchApp('dashboard');
   await page.goto(url);
   return page;

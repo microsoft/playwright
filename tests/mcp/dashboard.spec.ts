@@ -67,7 +67,7 @@ test('should show current workspace sessions first', async ({ cli, server, openD
 });
 
 test('should pick locator from browser', async ({ cli, server, openDashboard }) => {
-  server.setContent('/', '<button style="position:fixed;top:0;left:0;width:200px;height:100px">Submit</button>', 'text/html');
+  server.setContent('/', '<button style="position:fixed;inset:0;width:100vw;height:100vh">Submit</button>', 'text/html');
 
   await cli('open', server.PREFIX);
 
@@ -80,7 +80,32 @@ test('should pick locator from browser', async ({ cli, server, openDashboard }) 
   await expect(dashboard.locator('div.dashboard-view')).toContainClass('interactive');
 
   await expect(async () => {
-    await dashboard.locator('img#display').click({ position: { x: 500, y: 25 } });
+    await dashboard.locator('img#display').click();
     await expect(dashboard.locator('.cm-wrapper').first()).toContainText(`getByRole('button', { name: 'Submit' })`);
   }).toPass();
+});
+
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test('daemon show: closing page exits the process', async ({ playwright, cli, findFreePort, waitForPort }) => {
+  const cdpPort = await findFreePort();
+  const { exitCode, pid } = await cli('show', { env: { PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST: '1', PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(cdpPort) } });
+  expect(exitCode).toBe(0);
+  expect(pid).toBeDefined();
+  expect(isAlive(pid)).toBe(true);
+
+  await waitForPort(cdpPort);
+
+  const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
+  const page = browser.contexts()[0].pages()[0];
+  await page.close();
+
+  await expect(() => expect(isAlive(pid)).toBe(false)).toPass();
 });

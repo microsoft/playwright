@@ -30,7 +30,7 @@ export { decorateMCPCommand } from './mcp/program';
 export { program as cliProgram } from './cli-client/program';
 export { generateHelp, generateHelpJSON } from './cli-daemon/helpGenerator';
 export { decorateProgram as decorateCliDaemonProgram } from './cli-daemon/program';
-export { openDashboardApp } from './dashboard/dashboardApp';
+export { openDashboardApp, startDashboardServer } from './dashboard/dashboardApp';
 
 export type { ContextConfig } from './backend/context';
 export type { CallToolRequest, CallToolResult, Tool } from './backend/tool';
