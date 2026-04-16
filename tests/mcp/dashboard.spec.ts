@@ -145,7 +145,8 @@ test('sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
   `);
 });
 
-test('session switching', async ({ cli, server, openDashboard }) => {
+test('session switching', async ({ cli, server, openDashboard, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox', 'firefox has bug around context creation that breaks this test');
   await cli('open', server.PREFIX);
 
   const dashboard = await openDashboard();
