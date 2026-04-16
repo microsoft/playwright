@@ -20,6 +20,8 @@
 import { execSync, spawn } from 'child_process';
 
 import crypto from 'crypto';
+import fs from 'fs';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
@@ -175,13 +177,11 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     case 'show': {
       const daemonScript = libPath('entry', 'dashboardApp.js');
-      const child = spawn(process.execPath, [daemonScript], {
-        detached: true,
-        stdio: 'ignore',
-      });
-      child.unref();
-      if (process.env.PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST)
-        console.log(`### Dashboard opened with pid ${child.pid}.`);
+      if (args.annotate) {
+        await runAnnotate(daemonScript, sessionName);
+        return;
+      }
+      await runBringToFront(daemonScript, sessionName);
       return;
     }
     default: {
@@ -405,6 +405,72 @@ function validateFlags(args: MinimistArgs, command: { flags: Record<string, 'boo
     console.log(command.help);
     process.exit(1);
   }
+}
+
+function dashboardSocketPath(): string {
+  const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
+  if (process.platform === 'win32')
+    return `\\\\.\\pipe\\pw-${userNameHash}-dashboard-app`;
+  const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
+  return path.join(baseDir, 'dashboard', 'app.sock');
+}
+
+async function connectToDashboard(daemonScript: string, spawnDeadlineMs: number): Promise<net.Socket | undefined> {
+  const socketPath = dashboardSocketPath();
+  const tryConnect = () => new Promise<net.Socket | undefined>(resolve => {
+    const s = net.connect(socketPath);
+    const onError = () => { s.destroy(); resolve(undefined); };
+    s.once('connect', () => { s.off('error', onError); resolve(s); });
+    s.once('error', onError);
+  });
+  let socket = await tryConnect();
+  if (socket)
+    return socket;
+  const child = spawn(process.execPath, [daemonScript], { detached: true, stdio: 'ignore' });
+  child.unref();
+  const deadline = Date.now() + spawnDeadlineMs;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 200));
+    socket = await tryConnect();
+    if (socket)
+      return socket;
+  }
+  return undefined;
+}
+
+async function runBringToFront(daemonScript: string, sessionName: string): Promise<void> {
+  const socket = await connectToDashboard(daemonScript, 2000);
+  if (!socket)
+    return;
+  await new Promise<void>(resolve => socket.write(`bringToFront:${sessionName}`, () => {
+    socket.destroy();
+    resolve();
+  }));
+}
+
+async function runAnnotate(daemonScript: string, sessionName: string): Promise<void> {
+  const socket = await connectToDashboard(daemonScript, 15000);
+  if (!socket) {
+    console.error('Dashboard did not start in time.');
+    process.exit(1);
+  }
+  socket.write(`annotate:${sessionName}`);
+  const chunks: Buffer[] = [];
+  await new Promise<void>((resolve, reject) => {
+    socket.on('data', chunk => chunks.push(chunk));
+    socket.on('end', () => resolve());
+    socket.on('error', reject);
+  });
+  socket.destroy();
+  const buffer = Buffer.concat(chunks);
+  if (buffer.length === 0)
+    return;
+  const outputDir = path.resolve(process.cwd(), '.playwright-cli');
+  fs.mkdirSync(outputDir, { recursive: true });
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace(/Z$/, '');
+  const filePath = path.join(outputDir, `annotations-${timestamp}.png`);
+  fs.writeFileSync(filePath, buffer);
+  console.log(path.relative(process.cwd(), filePath));
 }
 
 export function calculateSha1(buffer: Buffer | string): string {

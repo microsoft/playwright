@@ -38,6 +38,8 @@ export const Dashboard: React.FC = () => {
   const [recording, setRecording] = React.useState(false);
   const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
   const [showInteractiveHint, setShowInteractiveHint] = React.useState(false);
+  const [pendingAnnotate, setPendingAnnotate] = React.useState(false);
+  const [cliAnnotate, setCliAnnotate] = React.useState(false);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
@@ -89,6 +91,32 @@ export const Dashboard: React.FC = () => {
     return () => clearTimeout(hintTimerRef.current);
   }, []);
 
+  React.useEffect(() => {
+    if (!pendingAnnotate || !frame)
+      return;
+    setMode('annotate');
+    setCliAnnotate(true);
+    setPendingAnnotate(false);
+  }, [pendingAnnotate, frame]);
+
+  React.useEffect(() => {
+    if (!annotating)
+      setCliAnnotate(false);
+  }, [annotating]);
+
+  const submitAnnotationToCli = React.useCallback(async (blob: Blob) => {
+    if (!client)
+      return;
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++)
+      binary += String.fromCharCode(bytes[i]);
+    const data = btoa(binary);
+    await client.submitAnnotation({ data });
+    setMode('readonly');
+  }, [client]);
+
   function flashInteractiveHint() {
     clearTimeout(hintTimerRef.current);
     setShowInteractiveHint(true);
@@ -135,15 +163,18 @@ export const Dashboard: React.FC = () => {
       setMode('interactive');
       setPicking(true);
     };
+    const onAnnotate = () => setPendingAnnotate(true);
     client.on('tabs', onTabs);
     client.on('frame', onFrame);
     client.on('elementPicked', onElementPicked);
     client.on('pickLocator', onPickLocator);
+    client.on('annotate', onAnnotate);
     return () => {
       client.off('tabs', onTabs);
       client.off('frame', onFrame);
       client.off('elementPicked', onElementPicked);
       client.off('pickLocator', onPickLocator);
+      client.off('annotate', onAnnotate);
     };
   }, [client]);
 
@@ -409,6 +440,7 @@ export const Dashboard: React.FC = () => {
                 screenRef={screenRef}
                 viewportWidth={frame?.viewportWidth ?? 0}
                 viewportHeight={frame?.viewportHeight ?? 0}
+                onSubmit={cliAnnotate ? submitAnnotationToCli : undefined}
               />
             </div>
             {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}

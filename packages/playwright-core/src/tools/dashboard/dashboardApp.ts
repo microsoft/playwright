@@ -29,16 +29,45 @@ import { DashboardConnection } from './dashboardController';
 
 import type * as api from '../../..';
 
-async function innerOpenDashboardApp(): Promise<api.Page> {
+type DashboardState = {
+  triggerAnnotate: () => void;
+  registerWaiter: (socket: net.Socket) => void;
+  revealSession: (sessionTitle: string) => void;
+};
+
+async function innerOpenDashboardApp(): Promise<{ page: api.Page, state: DashboardState }> {
   const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
 
   const connections = new Set<DashboardConnection>();
+  let pendingAnnotate = false;
+  let pendingRevealTitle: string | undefined;
+  const waitingSockets = new Set<net.Socket>();
+
+  const submitAnnotation = (base64Png: string) => {
+    if (waitingSockets.size === 0)
+      return;
+    const buffer = Buffer.from(base64Png, 'base64');
+    for (const socket of waitingSockets) {
+      socket.write(buffer);
+      socket.end();
+    }
+    waitingSockets.clear();
+  };
 
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(() => connections.delete(connection));
+    connection = new DashboardConnection(() => connections.delete(connection), () => {
+      if (pendingRevealTitle) {
+        connection.revealSessionByTitle(pendingRevealTitle);
+        pendingRevealTitle = undefined;
+      }
+      if (pendingAnnotate) {
+        pendingAnnotate = false;
+        connection.emitAnnotate();
+      }
+    }, submitAnnotation);
     connections.add(connection);
     return connection;
   }, 'ws');
@@ -56,7 +85,35 @@ async function innerOpenDashboardApp(): Promise<api.Page> {
 
   const { page } = await launchApp('dashboard');
   await page.goto(url);
-  return page;
+
+  const triggerAnnotate = () => {
+    if (connections.size === 0) {
+      pendingAnnotate = true;
+      return;
+    }
+    for (const connection of connections)
+      connection.emitAnnotate();
+  };
+
+  const registerWaiter = (socket: net.Socket) => {
+    waitingSockets.add(socket);
+    const cleanup = () => waitingSockets.delete(socket);
+    socket.on('close', cleanup);
+    socket.on('error', cleanup);
+  };
+
+  const revealSession = (sessionTitle: string) => {
+    if (!sessionTitle)
+      return;
+    if (connections.size === 0) {
+      pendingRevealTitle = sessionTitle;
+      return;
+    }
+    for (const connection of connections)
+      connection.revealSessionByTitle(sessionTitle);
+  };
+
+  return { page, state: { triggerAnnotate, registerWaiter, revealSession } };
 }
 
 async function launchApp(appName: string) {
@@ -170,11 +227,22 @@ export async function openDashboardApp() {
       return;
     }
   }
-  const page = await innerOpenDashboardApp();
+  const { page, state } = await innerOpenDashboardApp();
   server?.on('connection', socket => {
     socket.on('data', data => {
-      if (data.toString() === 'bringToFront')
+      const message = data.toString();
+      const colon = message.indexOf(':');
+      const action = colon === -1 ? message : message.slice(0, colon);
+      const sessionTitle = colon === -1 ? '' : message.slice(colon + 1);
+      if (action === 'bringToFront') {
         page?.bringToFront().catch(() => {});
+        state.revealSession(sessionTitle);
+      } else if (action === 'annotate') {
+        page?.bringToFront().catch(() => {});
+        state.revealSession(sessionTitle);
+        state.triggerAnnotate();
+        state.registerWaiter(socket);
+      }
     });
   });
 }

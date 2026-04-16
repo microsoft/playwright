@@ -45,6 +45,8 @@ export class DashboardConnection implements Transport {
   private _browsers = new Map<string, BrowserSlot>();
   private _attachedBrowser: AttachedBrowser | undefined;
   private _onclose: () => void;
+  private _onconnected?: () => void;
+  private _onAnnotationSubmit?: (base64Png: string) => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
@@ -52,8 +54,10 @@ export class DashboardConnection implements Transport {
 
   _recordingDir: string;
 
-  constructor(onclose: () => void) {
+  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string) => void) {
     this._onclose = onclose;
+    this._onconnected = onconnected;
+    this._onAnnotationSubmit = onAnnotationSubmit;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -63,6 +67,7 @@ export class DashboardConnection implements Transport {
     serverRegistry.on('removed', this._pushSessions);
     serverRegistry.on('changed', this._pushSessions);
     this._pushSessions();
+    this._onconnected?.();
   }
 
   onclose() {
@@ -139,6 +144,10 @@ export class DashboardConnection implements Transport {
     await this._attachedBrowser?.setScreencastActive(params.visible);
   }
 
+  async submitAnnotation(params: { data: string }) {
+    this._onAnnotationSubmit?.(params.data);
+  }
+
   async reveal(params: { path: string }) {
     switch (os.platform()) {
       case 'darwin':
@@ -175,6 +184,10 @@ export class DashboardConnection implements Transport {
 
   emitPickLocator() {
     this.sendEvent?.('pickLocator', {});
+  }
+
+  emitAnnotate() {
+    this.sendEvent?.('annotate', {});
   }
 
   _pushTabs() {
@@ -240,11 +253,37 @@ export class DashboardConnection implements Transport {
         await this._reconcile(sessions);
         this.emitSessions(sessions);
         this._pushTabs();
+        if (this._pendingRevealTitle)
+          this._tryRevealPendingSession();
       } catch {
         // best-effort
       }
     });
   };
+
+  private _pendingRevealTitle: string | undefined;
+
+  revealSessionByTitle(title: string) {
+    this._pendingRevealTitle = title;
+    this._tryRevealPendingSession();
+  }
+
+  private _tryRevealPendingSession() {
+    const title = this._pendingRevealTitle;
+    if (!title)
+      return;
+    let target: BrowserSlot | undefined;
+    for (const slot of this._browsers.values()) {
+      if (slot.descriptor.title === title) {
+        target = slot;
+        break;
+      }
+    }
+    if (!target)
+      return;
+    this._pendingRevealTitle = undefined;
+    void this._switchAttachedTo(target.guid).then(() => this._pushTabs());
+  }
 
   private async _reconcile(sessions: BrowserStatus[]) {
     const connectable = new Map<string, BrowserStatus>();
