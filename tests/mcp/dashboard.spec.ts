@@ -66,6 +66,15 @@ test('should show current workspace sessions first', async ({ cli, server, openD
   });
 });
 
+test('should activate session when show is called with -s', async ({ cli, server, openDashboard }) => {
+  await cli('-s=sessA', 'open', server.EMPTY_PAGE);
+  await cli('-s=sessB', 'open', server.EMPTY_PAGE);
+
+  const dashboard = await openDashboard({ session: 'sessB' });
+  const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
+  await expect(activeSession.locator('.session-chip-name')).toHaveText('sessB');
+});
+
 test('should pick locator from browser', async ({ cli, server, openDashboard }) => {
   server.setContent('/', '<button style="position:fixed;inset:0;width:100vw;height:100vh">Submit</button>', 'text/html');
 

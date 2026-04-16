@@ -49,6 +49,7 @@ export class DashboardConnection implements Transport {
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
   private _visible = true;
+  private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
 
   _recordingDir: string;
 
@@ -137,6 +138,25 @@ export class DashboardConnection implements Transport {
       return;
     this._visible = params.visible;
     await this._attachedBrowser?.setScreencastActive(params.visible);
+  }
+
+  revealSession(sessionName: string, workspaceDir?: string) {
+    this._pendingReveal = { sessionName, workspaceDir };
+    void this._tryRevealPending();
+  }
+
+  private async _tryRevealPending() {
+    const pending = this._pendingReveal;
+    if (!pending)
+      return;
+    const slot = [...this._browsers.values()].find(s =>
+      s.descriptor.title === pending.sessionName
+        && (pending.workspaceDir === undefined || s.descriptor.workspaceDir === pending.workspaceDir));
+    if (!slot)
+      return;
+    this._pendingReveal = undefined;
+    await this._switchAttachedTo(slot.guid);
+    this._pushTabs();
   }
 
   async reveal(params: { path: string }) {
@@ -238,6 +258,7 @@ export class DashboardConnection implements Transport {
         for (const list of byWs.values())
           sessions.push(...list);
         await this._reconcile(sessions);
+        await this._tryRevealPending();
         this.emitSessions(sessions);
         this._pushTabs();
       } catch {
