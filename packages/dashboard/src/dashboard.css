@@ -24,80 +24,41 @@
   overflow: hidden;
 }
 
-.dashboard-view.interactive .toolbar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 26%;
-  pointer-events: none;
-  background: linear-gradient(90deg,
-    rgb(var(--interactive-orange) / 0) 0%,
-    rgb(255 255 255 / 0.18) 45%,
-    rgb(var(--interactive-orange) / 0) 100%);
-  transform: translateX(140%);
-  animation: interactive-toolbar-shimmer-rtl 0.9s ease-out 1;
-  z-index: -1;
+/* -- Mode toggle buttons (interactive / annotate) -- */
+.toolbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.dashboard-view.interactive .segmented-control::after {
-  content: '';
-  position: absolute;
-  left: 25%;
-  top: 50%;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: rgb(var(--interactive-orange) / 0.38);
-  transform: translate(-50%, -50%) scale(0.35);
-  box-shadow: 0 0 0 0 rgb(var(--interactive-orange) / 0.52);
-  z-index: -1;
-  animation: interactive-track-radial 420ms cubic-bezier(0.12, 0.72, 0.22, 1) forwards;
-}
-
-.dashboard-view.interactive .segmented-control.interactive::after {
-  left: 75%;
-}
-
-@keyframes interactive-toolbar-shimmer-rtl {
-  0% {
-    opacity: 0;
-    transform: translateX(140%);
-  }
-  16% {
-    opacity: 0.9;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-420%);
-  }
-}
-
-@keyframes interactive-track-radial {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(0.52);
-    box-shadow: 0 0 0 0 rgb(var(--interactive-orange) / 0.65);
-  }
-  35% {
-    opacity: 0.78;
-    transform: translate(-50%, -50%) scale(0.92);
-    box-shadow: 0 0 0 34px rgb(var(--interactive-orange) / 0.3);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.14);
-    box-shadow: 0 0 0 74px rgb(var(--interactive-orange) / 0);
-  }
-}
-
-.interactive .toolbar .toolbar-button > .codicon {
+.mode-toggle.toolbar-button.toggled,
+.mode-toggle.toolbar-button.toggled > .codicon {
   color: var(--color-fg-on-emphasis);
 }
 
-.annotate .toolbar .toolbar-button > .codicon {
-  color: var(--color-fg-on-emphasis);
+.mode-toggle.toolbar-button.toggled.mode-interactive {
+  background: rgb(var(--interactive-orange));
+  box-shadow: 0 0 0 2px rgb(var(--interactive-orange) / 0.35);
+}
+
+.mode-toggle.toolbar-button.toggled.mode-annotate {
+  background: rgb(var(--annotate-blue));
+  box-shadow: 0 0 0 2px rgb(var(--annotate-blue) / 0.35);
+}
+
+.mode-toggle.flash {
+  animation: mode-toggle-flash 0.45s ease-in-out 4;
+}
+
+@keyframes mode-toggle-flash {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgb(var(--interactive-orange) / 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(var(--interactive-orange) / 0.6);
+    background: rgb(var(--interactive-orange) / 0.25);
+  }
 }
 
 /* -- Toolbar -- */
@@ -119,47 +80,45 @@
   background: var(--color-canvas-subtle);
 }
 
-.dashboard-view.interactive .toolbar {
-  background: rgb(var(--interactive-orange));
-  color: var(--color-fg-on-emphasis);
+/* -- Browser window / chrome (wraps the screencast to look like a browser) -- */
+/* width / height are set via inline style so the window tightly inscribes
+   the screencast aspect ratio instead of letting the image letterbox. */
+.browser-window {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  background: var(--color-canvas-default);
+  position: relative;
 }
 
-.dashboard-view.annotate .toolbar {
-  background: rgb(var(--annotate-blue));
-  color: var(--color-fg-on-emphasis);
+.browser-chrome {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  background: var(--color-canvas-overlay);
+  border-bottom: 1px solid var(--color-border-muted);
+  position: relative;
+  overflow: visible;
 }
 
-.dashboard-view.interactive .toolbar .nav-btn,
-.dashboard-view.interactive .toolbar .omnibox {
-  color: var(--color-fg-on-emphasis);
+:root.light-mode .browser-chrome {
+  background: var(--color-canvas-subtle);
 }
 
-.dashboard-view.annotate .toolbar .nav-btn,
-.dashboard-view.annotate .toolbar .omnibox {
-  color: var(--color-fg-on-emphasis);
+.omnibox-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 0;
 }
 
-:root.light-mode .dashboard-view.interactive .toolbar {
-  color: var(--color-fg-on-emphasis);
-}
-:root.light-mode .dashboard-view.interactive .toolbar .omnibox {
-  background: rgb(0 0 0 / 0.15);
-  color: var(--color-fg-on-emphasis);
-}
-:root.light-mode .dashboard-view.interactive .toolbar .omnibox::placeholder {
-  color: rgb(255 255 255 / 0.6);
-}
-
-:root.light-mode .dashboard-view.annotate .toolbar {
-  color: var(--color-fg-on-emphasis);
-}
-:root.light-mode .dashboard-view.annotate .toolbar .omnibox {
-  background: rgb(0 0 0 / 0.15);
-  color: var(--color-fg-on-emphasis);
-}
-:root.light-mode .dashboard-view.annotate .toolbar .omnibox::placeholder {
-  color: rgb(255 255 255 / 0.6);
-}
 
 .nav-btn {
   width: 32px;
@@ -221,38 +180,6 @@
   cursor: default;
 }
 
-/* -- Interactive hint popover -- */
-.interactive-hint-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: var(--color-canvas-overlay);
-  color: var(--color-fg-default);
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  white-space: nowrap;
-  border: 1px solid var(--color-border-default);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  pointer-events: none;
-  z-index: 1000;
-  animation: hint-fade-in 150ms ease;
-}
-
-.interactive-hint-popover::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  right: 10px;
-  border: 5px solid transparent;
-  border-bottom-color: var(--color-canvas-overlay);
-}
-
-@keyframes hint-fade-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* -- Viewport -- */
 .viewport-wrapper {
   flex: 1;
@@ -265,16 +192,19 @@
 .viewport-main {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
   min-width: 0;
+  min-height: 0;
 }
 
 .screen {
   position: relative;
   outline: none;
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: 100%;
 }
 
 .display {
@@ -283,10 +213,6 @@
   height: 100%;
   background: var(--color-canvas-subtle);
   object-fit: contain;
-}
-
-.dashboard-view.interactive .screen::after {
-  opacity: 1;
 }
 
 .screen-overlay {
@@ -352,11 +278,6 @@
   height: 100%;
   border: none;
   background: var(--color-canvas-default);
-}
-
-.nav-btn.active-toggle {
-  color: var(--color-accent-fg);
-  background: var(--color-accent-subtle);
 }
 
 .recording.toggled > .codicon {

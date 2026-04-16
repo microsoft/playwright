@@ -239,6 +239,7 @@ export class DashboardConnection implements Transport {
           sessions.push(...list);
         await this._reconcile(sessions);
         this.emitSessions(sessions);
+        this._pushTabs();
       } catch {
         // best-effort
       }
@@ -281,12 +282,27 @@ export class DashboardConnection implements Transport {
           context,
           listeners: [],
         };
+        const watchPage = (page: api.Page) => {
+          slot.listeners.push(
+              eventsHelper.addEventListener(page, 'load', () => this._pushTabs()),
+              eventsHelper.addEventListener(page, 'framenavigated', (frame: api.Frame) => {
+                if (frame === page.mainFrame())
+                  this._pushTabs();
+              }),
+              eventsHelper.addEventListener(page, 'close', () => this._pushTabs()),
+          );
+        };
         slot.listeners.push(
-            eventsHelper.addEventListener(context, 'page', () => this._pushTabs()),
+            eventsHelper.addEventListener(context, 'page', (page: api.Page) => {
+              watchPage(page);
+              this._pushTabs();
+            }),
             eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
               this._onPickLocator(guid, page).catch(() => {});
             }),
         );
+        for (const page of context.pages())
+          watchPage(page);
         this._browsers.set(guid, slot);
         this._pushTabs();
       } catch {
