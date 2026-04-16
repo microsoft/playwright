@@ -90,12 +90,21 @@ export class CDPRelayServer {
   private _playwrightFetchParams = new Map<string, { handleAuthRequests?: boolean; patterns: any[] }>();
   private _pdfInterceptionEnabled = true;
 
-  // Response-stage pattern for inline PDF interception.
-  // resourceType: 'Document' limits to navigation responses only (main_frame + sub_frame),
-  // avoiding pausing XHR/CSS/JS/images which would add latency on AJAX-heavy pages.
-  private static readonly RESPONSE_PDF_PATTERN = {
-    urlPattern: '*', requestStage: 'Response', resourceType: 'Document',
-  };
+  // Response-stage patterns for PDF interception.
+  // Document: navigation responses (main_frame + sub_frame) — inline PDFs.
+  // XHR/Fetch: script-initiated responses — PDF.js viewers load PDFs via fetch()/XHR.
+  private static readonly RESPONSE_PDF_PATTERNS: Array<{urlPattern: string; requestStage: string; resourceType?: string}> = [
+    { urlPattern: '*', requestStage: 'Response', resourceType: 'Document' },
+    { urlPattern: '*', requestStage: 'Response', resourceType: 'XHR' },
+    { urlPattern: '*', requestStage: 'Response', resourceType: 'Fetch' },
+  ];
+
+  /**
+   * Callback for captured PDF bodies (XHR/Fetch resources).
+   * Set by the consumer (cdpRelayBridge) to receive captured PDFs without
+   * round-tripping through the extension.
+   */
+  onPdfCaptured?: (params: { url: string; mimeType: string; bodyBase64: string; bodySize: number }) => void;
 
   constructor(server: http.Server, browserChannel: string, userDataDir?: string, executablePath?: string) {
     this._wsHost = addressToString(server.address(), { protocol: 'ws' });
@@ -315,7 +324,7 @@ export class CDPRelayServer {
           const childSessionId = params.params?.sessionId;
           if (childSessionId) {
             this._forwardToExtension('Fetch.enable', {
-              patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+              patterns: [...CDPRelayServer.RESPONSE_PDF_PATTERNS],
             }, childSessionId).catch((e: Error) => {
               debugLogger(`OOPIF Fetch.enable failed for session ${childSessionId}: ${e.message}`);
             });
@@ -526,7 +535,7 @@ export class CDPRelayServer {
         if (this._pdfInterceptionEnabled) {
           try {
             await this._forwardToExtension('Fetch.enable', {
-              patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+              patterns: [...CDPRelayServer.RESPONSE_PDF_PATTERNS],
             }, primarySessionId);
             debugLogger('Proactive response-stage Fetch.enable succeeded');
           } catch (e) {
@@ -558,7 +567,7 @@ export class CDPRelayServer {
         if (this._pdfInterceptionEnabled) {
           debugLogger('Fetch.disable → converting to response-only Fetch.enable for PDF interception');
           return await this._forwardToExtension('Fetch.enable', {
-            patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+            patterns: [...CDPRelayServer.RESPONSE_PDF_PATTERNS],
           }, sessionId);
         }
         return await this._forwardToExtension('Fetch.disable', params, sessionId);
@@ -604,7 +613,7 @@ export class CDPRelayServer {
     if (this._pdfInterceptionEnabled) {
       try {
         await this._forwardToExtension('Fetch.enable', {
-          patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+          patterns: [...CDPRelayServer.RESPONSE_PDF_PATTERNS],
         }, newSessionId);
         debugLogger(`Proactive Fetch.enable for tab ${tabId} (${newSessionId})`);
       } catch (e) {
@@ -657,12 +666,12 @@ export class CDPRelayServer {
     const pwPatterns = pwParams?.patterns ?? [];
     return {
       handleAuthRequests: pwParams?.handleAuthRequests,
-      patterns: [...pwPatterns, CDPRelayServer.RESPONSE_PDF_PATTERN],
+      patterns: [...pwPatterns, ...CDPRelayServer.RESPONSE_PDF_PATTERNS],
     };
   }
 
   private async _handleResponseStagePaused(eventParams: any, sessionId: string | undefined): Promise<void> {
-    const { requestId, request, responseStatusCode, responseHeaders, responseErrorReason } = eventParams;
+    const { requestId, request, responseStatusCode, responseHeaders, responseErrorReason, resourceType } = eventParams;
 
     // Error responses — continue immediately, nothing to intercept
     if (responseErrorReason) {
@@ -681,6 +690,13 @@ export class CDPRelayServer {
 
     if (!contentType.toLowerCase().includes('application/pdf')) {
       this._continueFetchResponse(requestId, sessionId);
+      return;
+    }
+
+    // XHR/Fetch PDFs: capture body and forward to desktop (Content-Disposition injection
+    // has no effect on script-initiated responses — they don't trigger downloads)
+    if (resourceType === 'XHR' || resourceType === 'Fetch') {
+      await this._captureAndForwardPdf(requestId, request?.url, responseStatusCode, responseHeaders, sessionId);
       return;
     }
 
@@ -710,6 +726,59 @@ export class CDPRelayServer {
     } catch (e) {
       debugLogger(`Error in continueResponse for PDF: ${(e as Error).message}`);
       // MUST continue to avoid hanging the request — fall back to unmodified response
+      this._continueFetchResponse(requestId, sessionId);
+    }
+  }
+
+  /**
+   * Capture the body of a PDF response from XHR/Fetch and forward to the desktop
+   * via the onPdfCaptured callback. Content-Disposition injection has no effect on
+   * script-initiated responses (they don't trigger downloads), so we must capture
+   * the body directly and hand it to the download pipeline.
+   */
+  private async _captureAndForwardPdf(
+    requestId: string,
+    url: string | undefined,
+    responseStatusCode: number | undefined,
+    responseHeaders: Array<{ name: string; value: string }> | undefined,
+    sessionId: string | undefined,
+  ): Promise<void> {
+    try {
+      const bodyResult = await this._forwardToExtension('Fetch.getResponseBody', { requestId }, sessionId) as {
+        body: string;
+        base64Encoded: boolean;
+      };
+
+      if (!bodyResult?.body) {
+        debugLogger(`PDF body capture: empty body for ${url ?? 'unknown'}`);
+        this._continueFetchResponse(requestId, sessionId);
+        return;
+      }
+
+      const bodyBase64 = bodyResult.base64Encoded
+        ? bodyResult.body
+        : Buffer.from(bodyResult.body, 'binary').toString('base64');
+
+      const bodySize = Math.ceil(bodyBase64.length * 0.75); // approximate decoded size
+
+      debugLogger(`PDF body capture: ${url ?? 'unknown'} (${(bodySize / 1024).toFixed(0)}KB)`);
+
+      // Forward captured PDF to the desktop via callback (set by cdpRelayBridge)
+      if (this.onPdfCaptured) {
+        this.onPdfCaptured({
+          url: url ?? 'unknown',
+          mimeType: 'application/pdf',
+          bodyBase64,
+          bodySize,
+        });
+      } else {
+        debugLogger('PDF body capture: no onPdfCaptured callback registered, dropping');
+      }
+
+      // Continue the response so the page receives the PDF normally
+      this._continueFetchResponse(requestId, sessionId);
+    } catch (e) {
+      debugLogger(`PDF body capture failed: ${(e as Error).message}`);
       this._continueFetchResponse(requestId, sessionId);
     }
   }
