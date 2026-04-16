@@ -97,6 +97,7 @@ function cliEnv() {
     PLAYWRIGHT_DASHBOARD_SETTINGS_FILE_FOR_TEST: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(test.info().project.outputDir, 'ds', String(test.info().parallelIndex)),
+    PLAYWRIGHT_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
   };
 }
 
