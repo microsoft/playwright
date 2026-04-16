@@ -105,8 +105,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this.addObjectListener(BrowserContext.Events.Page, page => {
       this._dispatchEvent('page', { page: PageDispatcher.from(this, page) });
     });
-    this.addObjectListener(BrowserContext.Events.BringToFront, page => {
-      this._dispatchEvent('bringToFront', { page: PageDispatcher.from(this, page) });
+    this.addObjectListener(BrowserContext.Events.PickLocator, page => {
+      this._dispatchEvent('pickLocator', { page: PageDispatcher.from(this, page) });
     });
     this.addObjectListener(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
