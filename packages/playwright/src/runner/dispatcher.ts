@@ -324,6 +324,7 @@ class JobDispatcher {
     result.status = params.status;
     result.annotations = params.annotations;
     test.annotations = [...params.annotations]; // last test result wins
+    test._tags = [...params.tags]; // last test result wins
     test.expectedStatus = params.expectedStatus;
     test.timeout = params.timeout;
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;

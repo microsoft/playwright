@@ -92,6 +92,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       testId: test.id,
       expectedStatus: test.expectedStatus,
       timeout: test.timeout,
+      tags: test.tags,
       annotations: []
     };
     this._sendNewAttachments(result, test.id);

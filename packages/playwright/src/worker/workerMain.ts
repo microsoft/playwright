@@ -653,6 +653,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl): ipc.TestEndPayload {
     hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
+    tags: testInfo.tags,
     timeout: testInfo.timeout,
   };
 }

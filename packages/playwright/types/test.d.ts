@@ -2606,7 +2606,14 @@ export interface TestInfo {
   /**
    * Tags that apply to the test. Learn more about [tags](https://playwright.dev/docs/test-annotations#tag-tests).
    *
-   * **NOTE** Any changes made to this list while the test is running will not be visible to test reporters.
+   * Tags added dynamically during the test run will be reported, but cannot be used with the `--grep` CLI option
+   * because tests are selected before the run starts.
+   *
+   * ```js
+   * test('my test', async ({ page }) => {
+   *   test.info().tags.push('@slow');
+   * });
+   * ```
    *
    */
   tags: Array<string>;

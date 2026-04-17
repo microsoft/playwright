@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './playwright-test-fixtures';
 
 test('should have correct tags', async ({ runInlineTest }) => {
@@ -181,6 +183,86 @@ test('should be included in testInfo if coming from describe or global tag', asy
     `,
   });
   expect(result.exitCode).toBe(0);
+});
+
+test('should report tags pushed during test execution', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onTestEnd(test, result) {
+          console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+        }
+        onError(error) {
+          console.log(error);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('dynamic tag', async ({}, testInfo) => {
+        testInfo.tags.push('@dynamic');
+      });
+      test('preserves static tag @inline', { tag: '@static' }, async ({}, testInfo) => {
+        testInfo.tags.push('@dynamic');
+      });
+      test('dedups overlap with title @inline', async ({}, testInfo) => {
+        testInfo.tags.push('@inline');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'title=dynamic tag, tags=@dynamic',
+    'title=preserves static tag @inline, tags=@inline,@static,@dynamic',
+    'title=dedups overlap with title @inline, tags=@inline',
+  ]);
+});
+
+test('dynamic tags flow through merged blob report', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'echo-reporter.js': `
+      import fs from 'fs';
+
+      class EchoReporter {
+        log = [];
+        onTestEnd(test) {
+          this.log.push(test.title + ' => ' + test.tags.join(','));
+        }
+        onEnd() {
+          this.log.sort();
+          fs.writeFileSync('log.txt', this.log.join('\\n'));
+        }
+      }
+      module.exports = EchoReporter;
+    `,
+    'playwright.config.js': `
+      module.exports = { reporter: [['blob']] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('dynamic only', async ({}, testInfo) => {
+        testInfo.tags.push('@runtime');
+      });
+      test('with static @inline', { tag: '@static' }, async ({}, testInfo) => {
+        testInfo.tags.push('@runtime');
+      });
+    `,
+  };
+  const result = await runInlineTest(files);
+  expect(result.exitCode).toBe(0);
+
+  const { exitCode } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('echo-reporter.js')] });
+  expect(exitCode).toBe(0);
+
+  const log = fs.readFileSync(test.info().outputPath('log.txt')).toString();
+  expect(log).toBe([
+    'dynamic only => @runtime',
+    'with static @inline => @inline,@static,@runtime',
+  ].join('\n'));
 });
 
 test('should not parse file names as tags', async ({ runInlineTest }) => {

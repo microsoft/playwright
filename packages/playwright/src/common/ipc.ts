@@ -111,6 +111,7 @@ export type TestEndPayload = {
   hasNonRetriableError: boolean;
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
+  tags: string[];
   timeout: number;
 };
 
