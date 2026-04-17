@@ -23,7 +23,7 @@ import { ElementHandle } from './elementHandle';
 import { DisposableStub } from './disposable';
 
 import type { Frame } from './frame';
-import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
@@ -124,6 +124,10 @@ export class Locator implements api.Locator {
       strict: true,
       ...options,
     });
+  }
+
+  async drop(payload: DropPayload, options: Omit<channels.FrameDropOptions, 'payloads' | 'localPaths' | 'streams' | 'data' | 'force' | 'trial'> & TimeoutOptions = {}) {
+    await this._frame._drop(this._selector, payload, { strict: true, ...options });
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {

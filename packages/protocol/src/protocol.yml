@@ -2421,6 +2421,42 @@ Frame:
         input: true
         isAutoWaiting: true
 
+    drop:
+      title: Drop files or data onto an element
+      parameters:
+        selector: string
+        strict: boolean?
+        position: Point?
+        # Only one of payloads, localPaths and streams may be present.
+        payloads:
+          type: array?
+          items:
+            type: object
+            properties:
+              name: string
+              mimeType: string?
+              buffer: binary
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        data:
+          type: array?
+          items:
+            type: object
+            properties:
+              mimeType: string
+              value: string
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
     dblclick:
       title: Double click
       parameters:

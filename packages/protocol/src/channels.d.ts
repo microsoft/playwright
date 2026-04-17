@@ -2813,6 +2813,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   click(params: FrameClickParams, progress?: Progress): Promise<FrameClickResult>;
   content(params?: FrameContentParams, progress?: Progress): Promise<FrameContentResult>;
   dragAndDrop(params: FrameDragAndDropParams, progress?: Progress): Promise<FrameDragAndDropResult>;
+  drop(params: FrameDropParams, progress?: Progress): Promise<FrameDropResult>;
   dblclick(params: FrameDblclickParams, progress?: Progress): Promise<FrameDblclickResult>;
   dispatchEvent(params: FrameDispatchEventParams, progress?: Progress): Promise<FrameDispatchEventResult>;
   evaluateExpression(params: FrameEvaluateExpressionParams, progress?: Progress): Promise<FrameEvaluateExpressionResult>;
@@ -3016,6 +3017,39 @@ export type FrameDragAndDropOptions = {
   steps?: number,
 };
 export type FrameDragAndDropResult = void;
+export type FrameDropParams = {
+  selector: string,
+  strict?: boolean,
+  position?: Point,
+  payloads?: {
+    name: string,
+    mimeType?: string,
+    buffer: Binary,
+  }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  data?: {
+    mimeType: string,
+    value: string,
+  }[],
+  timeout: number,
+};
+export type FrameDropOptions = {
+  strict?: boolean,
+  position?: Point,
+  payloads?: {
+    name: string,
+    mimeType?: string,
+    buffer: Binary,
+  }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  data?: {
+    mimeType: string,
+    value: string,
+  }[],
+};
+export type FrameDropResult = void;
 export type FrameDblclickParams = {
   selector: string,
   strict?: boolean,

@@ -1713,6 +1713,24 @@ scheme.FrameDragAndDropParams = tObject({
   steps: tOptional(tInt),
 });
 scheme.FrameDragAndDropResult = tOptional(tObject({}));
+scheme.FrameDropParams = tObject({
+  selector: tString,
+  strict: tOptional(tBoolean),
+  position: tOptional(tType('Point')),
+  payloads: tOptional(tArray(tObject({
+    name: tString,
+    mimeType: tOptional(tString),
+    buffer: tBinary,
+  }))),
+  localPaths: tOptional(tArray(tString)),
+  streams: tOptional(tArray(tChannel(['WritableStream']))),
+  data: tOptional(tArray(tObject({
+    mimeType: tString,
+    value: tString,
+  }))),
+  timeout: tFloat,
+});
+scheme.FrameDropResult = tOptional(tObject({}));
 scheme.FrameDblclickParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
