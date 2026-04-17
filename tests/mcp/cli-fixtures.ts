@@ -28,6 +28,7 @@ export { expect } from './fixtures';
 export const test = baseTest.extend<{
   cliEnv: Record<string, string>,
   openDashboard: (options?: { cwd?: string, session?: string }) => Promise<Page>,
+  openDashboardApp: (options?: { cwd?: string, session?: string }) => Promise<Page>,
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -54,6 +55,35 @@ export const test = baseTest.extend<{
       await page.goto(serverProcess.output.match(/Listening on (http:\/\/\S+)/)![1]);
       return page;
     });
+  },
+  openDashboardApp: async ({ cli, playwright, findFreePort, waitForPort }, use) => {
+    const dashboards: { dashboard: Page, browser: import('playwright-core').Browser }[] = [];
+    await use(async (options?: { cwd?: string, session?: string }) => {
+      const debugPort = await findFreePort();
+      const showArgs = options?.session ? [`-s=${options.session}`, 'show'] : ['show'];
+      await cli(...showArgs, {
+        cwd: options?.cwd,
+        env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(debugPort) },
+      });
+      await waitForPort(debugPort);
+      const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`);
+      const dashboard = browser.contexts()[0].pages()[0];
+      // Headless Chromium with `--app=` does not report display-mode: standalone,
+      // and CDP's Emulation.setEmulatedMedia doesn't honor display-mode features.
+      // Fake the signal so the client treats this as app mode.
+      await dashboard.addInitScript(() => { (window as any).__dashboardAppModeForTest = true; });
+      await dashboard.reload();
+      dashboards.push({ dashboard, browser });
+      return dashboard;
+    });
+    for (const { dashboard, browser } of dashboards) {
+      if (!browser.isConnected())
+        continue;
+      await Promise.all([
+        new Promise(r => browser.on('disconnected', r)),
+        dashboard.close(),
+      ]).catch(e => console.error('Error during dashboard close', e));
+    }
   },
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
@@ -84,6 +114,7 @@ function cliEnv() {
   return {
     PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
     PLAYWRIGHT_DASHBOARD_SETTINGS_FILE_FOR_TEST: test.info().outputPath('dashboard.settings.json'),
+    PLAYWRIGHT_DASHBOARD_DOWNLOADS_DIR_FOR_TEST: test.info().outputPath('dashboard-downloads'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(test.info().project.outputDir, 'ds', String(test.info().parallelIndex)),
     PLAYWRIGHT_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',

@@ -17,11 +17,13 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
 import { createClientInfo } from '../cli-client/registry';
+import { resolveDashboardDownloadsDir } from './dashboardDownloads';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
@@ -51,11 +53,13 @@ export class DashboardConnection implements Transport {
   private _visible = true;
   private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
 
-  _recordingDir: string;
+  _artifactDir: string;
+  _artifacts: Map<string, string>;
 
-  constructor(onclose: () => void) {
+  constructor(onclose: () => void, artifacts: Map<string, string>) {
     this._onclose = onclose;
-    this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
+    this._artifactDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-dashboard-'));
+    this._artifacts = artifacts;
   }
 
   onconnect() {
@@ -159,18 +163,21 @@ export class DashboardConnection implements Transport {
     this._pushTabs();
   }
 
-  async reveal(params: { path: string }) {
-    switch (os.platform()) {
-      case 'darwin':
-        execFile('open', ['-R', params.path]);
-        break;
-      case 'win32':
-        execFile('explorer', ['/select,', params.path]);
-        break;
-      case 'linux':
-        execFile('xdg-open', [path.dirname(params.path)]);
-        break;
-    }
+  async saveAndReveal(params: { id: string }) {
+    const source = this._artifacts.get(params.id);
+    if (!source)
+      throw new Error(`Unknown artifact id: ${params.id}`);
+    this._artifacts.delete(params.id);
+    const destination = path.join(resolveDashboardDownloadsDir(), path.basename(source));
+    // Rename avoids copying bytes when source and destination are on the same
+    // filesystem. On Linux, tmpdir and Downloads may be on different devices —
+    // rename fails with EXDEV, so fall back to copy + unlink.
+    await fs.promises.rename(source, destination).catch(async () => {
+      await fs.promises.copyFile(source, destination);
+      await fs.promises.unlink(source).catch(() => {});
+    });
+    if (!process.env.PLAYWRIGHT_DASHBOARD_DOWNLOADS_DIR_FOR_TEST)
+      revealInFinder(destination);
   }
 
   visible(): boolean {
@@ -357,7 +364,6 @@ class AttachedBrowser {
   get browserGuid(): string { return this._slot.guid; }
   get contextGuid(): string { return this._slot.contextGuid; }
   private get _context(): api.BrowserContext { return this._slot.context; }
-  private get _descriptor(): BrowserDescriptor { return this._slot.descriptor; }
 
   async init() {
     this._contextListeners.push(
@@ -476,28 +482,32 @@ class AttachedBrowser {
     const page = this._selectedPage;
     if (!page)
       return;
-    const artifactsDir = this._descriptor.browser.launchOptions.artifactsDir ?? this._owner._recordingDir;
-    this._recordingPath = path.join(artifactsDir, `recording-${Date.now()}.webm`);
+    this._recordingPath = path.join(this._owner._artifactDir, `playwright-recording-${Date.now()}.webm`);
     if (this._screencastRunning)
       await this._restartScreencast(page);
   }
 
-  async stopRecording(): Promise<{ path: string }> {
+  async stopRecording(): Promise<{ id: string }> {
     const p = this._recordingPath;
     if (!p)
       throw new Error('No recording in progress');
     this._recordingPath = null;
     if (this._selectedPage && this._screencastRunning)
       await this._restartScreencast(this._selectedPage);
-    return { path: p };
+    const id = crypto.randomUUID();
+    this._owner._artifacts.set(id, p);
+    return { id };
   }
 
-  async screenshot(): Promise<string> {
+  async screenshot(): Promise<{ id: string }> {
     const page = this._selectedPage;
     if (!page)
       throw new Error('No page selected');
-    const buffer = await page.screenshot({ type: 'png' });
-    return buffer.toString('base64');
+    const absolutePath = path.join(this._owner._artifactDir, `playwright-screenshot-${Date.now()}.png`);
+    await page.screenshot({ type: 'png', path: absolutePath });
+    const id = crypto.randomUUID();
+    this._owner._artifacts.set(id, absolutePath);
+    return { id };
   }
 
   private async _selectPage(page: api.Page) {
@@ -566,6 +576,20 @@ class AttachedBrowser {
 function pageId(p: api.Page): string {
   // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
   return (p as any)._guid;
+}
+
+function revealInFinder(target: string) {
+  switch (os.platform()) {
+    case 'darwin':
+      execFile('open', ['-R', target]);
+      break;
+    case 'win32':
+      execFile('explorer', ['/select,', target]);
+      break;
+    case 'linux':
+      execFile('xdg-open', [path.dirname(target)]);
+      break;
+  }
 }
 
 async function faviconUrl(page: api.Page): Promise<string | undefined> {
