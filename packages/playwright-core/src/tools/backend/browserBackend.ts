@@ -51,19 +51,20 @@ export class BrowserBackend implements ServerBackend {
   }
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}): Promise<mcpServer.CallToolResult> {
+    const json = !!rawArguments._meta?.json;
+    const formatError = (message: string): mcpServer.CallToolResult => ({
+      content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
+      isError: true,
+    });
     const tool = this._tools.find(tool => tool.schema.name === name)!;
-    if (!tool) {
-      return {
-        content: [{ type: 'text' as const, text: `### Error\nTool "${name}" not found` }],
-        isError: true,
-      };
-    }
+    if (!tool)
+      return formatError(`Tool "${name}" not found`);
     // eslint-disable-next-line no-restricted-syntax
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments) as any;
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
     const context = this._context!;
-    const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw });
+    const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw, json });
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult;
     try {
@@ -71,10 +72,7 @@ export class BrowserBackend implements ServerBackend {
       responseObject = await response.serialize();
       this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
-      return {
-        content: [{ type: 'text' as const, text: `### Error\n${String(error)}` }],
-        isError: true,
-      };
+      return formatError(String(error));
     } finally {
       context.setRunningTool(undefined);
     }
