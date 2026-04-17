@@ -326,6 +326,12 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
     count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspaceKey) || '/'}:` : undefined, runningSessions);
   }
 
+  if (!all) {
+    if (!count)
+      console.log('  (no browsers)');
+    return;
+  }
+
   // Filter out server entries that already have an attached session.
   const serverEntries = await serverRegistry.list();
   if (serverEntries.size) {
