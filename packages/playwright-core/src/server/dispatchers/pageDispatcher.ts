@@ -38,7 +38,6 @@ import type { BrowserContext } from '../browserContext';
 import type { CRCoverage } from '../chromium/crCoverage';
 import type { Download } from '../download';
 import type { FileChooser } from '../fileChooser';
-import type { JSHandle } from '../javascript';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { Frame } from '../frames';
 import type { RouteHandler } from '../network';
@@ -136,12 +135,12 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async exposeBinding(params: channels.PageExposeBindingParams, progress: Progress): Promise<channels.PageExposeBindingResult> {
-    const binding = await this._page.exposeBinding(progress, params.name, !!params.needsHandle, (source, ...args) => {
+    const binding = await this._page.exposeBinding(progress, params.name, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
       if (this._disposed)
         return;
-      const binding = new BindingCallDispatcher(this, params.name, !!params.needsHandle, source, args);
+      const binding = new BindingCallDispatcher(this, params.name, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
@@ -361,6 +360,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       await progress.race(recorder.setMode('none'));
   }
 
+  async hideHighlight(params: channels.PageHideHighlightParams, progress: Progress): Promise<void> {
+    await progress.race(this._page.hideHighlight());
+  }
+
   async screencastShowOverlay(params: channels.PageScreencastShowOverlayParams): Promise<channels.PageScreencastShowOverlayResult> {
     const id = await this._page.overlay.show(params.html, params.duration);
     return { id };
@@ -543,13 +546,12 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;
 
-  constructor(scope: PageDispatcher, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
+  constructor(scope: PageDispatcher, name: string, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
     const frameDispatcher = FrameDispatcher.from(scope.parentScope(), source.frame);
     super(scope, new SdkObject(scope._object, 'bindingCall'), 'BindingCall', {
       frame: frameDispatcher,
       name,
-      args: needsHandle ? undefined : args.map(serializeResult),
-      handle: needsHandle ? ElementHandleDispatcher.fromJSOrElementHandle(frameDispatcher, args[0] as JSHandle) : undefined,
+      args: args.map(serializeResult),
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

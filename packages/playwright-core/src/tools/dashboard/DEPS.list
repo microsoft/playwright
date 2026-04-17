@@ -2,8 +2,10 @@
 ../../..
 ../../
 ../../server/registry/index.ts
+@isomorphic/**
 @utils/**
 ../../serverRegistry.ts
-@utils/**
+../cli-client/minimist.ts
 ../cli-client/registry.ts
+../trace/traceParser.ts
 ../utils/**

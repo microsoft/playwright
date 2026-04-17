@@ -1833,14 +1833,6 @@ Name of the function on the window object.
 
 Callback function that will be called in the Playwright's context.
 
-### option: Page.exposeBinding.handle
-* since: v1.8
-* deprecated: This option will be removed in the future.
-- `handle` <[boolean]>
-
-Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
-supported. When passing by value, multiple arguments are supported.
-
 ## async method: Page.exposeFunction
 * since: v1.8
 - returns: <[Disposable]>
@@ -2458,6 +2450,11 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 Referer header value. If provided it will take preference over the referer header value set by
 [`method: Page.setExtraHTTPHeaders`].
+
+## async method: Page.hideHighlight
+* since: v1.60
+
+Hide all locator highlight overlays previously added by [`method: Locator.highlight`] on this page.
 
 ## async method: Page.hover
 * since: v1.8

@@ -39,6 +39,7 @@ export const Events = {
   },
 
   BrowserContext: {
+    PickLocator: 'picklocator',
     Console: 'console',
     Close: 'close',
     Dialog: 'dialog',

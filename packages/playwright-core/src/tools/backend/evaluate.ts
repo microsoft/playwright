@@ -18,14 +18,12 @@ import * as z from 'zod';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 
 import { defineTabTool } from './tool';
+import { optionalElementSchema } from './snapshot';
 
 import type { Tab } from './tab';
 
-const evaluateSchema = z.object({
+const evaluateSchema = optionalElementSchema.extend({
   function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
-  element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
-  ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
-  selector: z.string().optional().describe('CSS or role selector for the target element, when "ref" is not available.'),
   filename: z.string().optional().describe('Filename to save the result to. If not provided, result is returned as text.'),
 });
 
@@ -40,10 +38,10 @@ const evaluate = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    let locator: Awaited<ReturnType<Tab['refLocator']>> | undefined;
+    let locator: Awaited<ReturnType<Tab['targetLocator']>> | undefined;
     const expression = params.function;
-    if (params.ref)
-      locator = await tab.refLocator({ ref: params.ref, selector: params.selector, element: params.element || 'element' });
+    if (params.target)
+      locator = await tab.targetLocator({ target: params.target, element: params.element || 'element' });
 
     await tab.waitForCompletion(async () => {
       let evalResult: { result: unknown, isFunction: boolean };

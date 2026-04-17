@@ -45,6 +45,7 @@ import type * as types from './types';
 import type * as channels from '@protocol/channels';
 
 const BrowserContextEvent = {
+  PickLocator: 'picklocator',
   Console: 'console',
   Close: 'close',
   Page: 'page',
@@ -65,6 +66,7 @@ const BrowserContextEvent = {
 } as const;
 
 export type BrowserContextEventMap = {
+  [BrowserContextEvent.PickLocator]: [page: Page];
   [BrowserContextEvent.Console]: [message: ConsoleMessage];
   [BrowserContextEvent.Close]: [];
   [BrowserContextEvent.Page]: [page: Page];
@@ -354,7 +356,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     return this._playwrightBindingExposed !== undefined;
   }
 
-  async exposeBinding(progress: Progress, name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, forClient?: unknown): Promise<PageBinding> {
+  async exposeBinding(progress: Progress, name: string, playwrightBinding: frames.FunctionWithSource, forClient?: unknown): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
@@ -362,7 +364,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
     await progress.race(this.exposePlaywrightBindingIfNeeded());
-    const binding = new PageBinding(this, name, playwrightBinding, needsHandle);
+    const binding = new PageBinding(this, name, playwrightBinding);
     binding.forClient = forClient;
     this._pageBindings.set(name, binding);
     try {

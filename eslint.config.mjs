@@ -286,6 +286,8 @@ const reactFiles = [
   `packages/recorder/src/**/*.tsx`,
   `packages/trace-viewer/src/**/*.ts`,
   `packages/trace-viewer/src/**/*.tsx`,
+  `packages/dashboard/src/**/*.ts`,
+  `packages/dashboard/src/**/*.tsx`,
   `packages/web/src/**/*.ts`,
   `packages/web/src/**/*.tsx`,
 ];

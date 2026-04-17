@@ -801,7 +801,7 @@ export namespace Protocol {
     /**
      * Relevant layout information about the node. Things not in this list are not important to Web Inspector.
      */
-    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"event"|"slot-assigned"|"slot-filled";
+    export type LayoutFlag = "rendered"|"scrollable"|"flex"|"grid"|"subgrid"|"grid-lanes"|"event"|"slot-assigned"|"slot-filled";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */

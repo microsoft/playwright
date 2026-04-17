@@ -285,7 +285,7 @@ test('test_debug / evaluate (with element)', async ({ startClient }) => {
     arguments: {
       function: 'element => element.textContent',
       element: 'button',
-      ref: 'e2',
+      target: 'e2',
       intent: 'Get button text',
     },
   })).toHaveResponse({
@@ -305,7 +305,7 @@ test('test_debug / generate_locator', async ({ startClient }) => {
     name: 'browser_generate_locator',
     arguments: {
       element: 'button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     result: `getByRole('button', { name: 'Submit' })`,

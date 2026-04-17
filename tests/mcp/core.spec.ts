@@ -104,7 +104,7 @@ test('browser_select_option', async ({ client, server }) => {
     name: 'browser_select_option',
     arguments: {
       element: 'Select',
-      ref: 'e2',
+      target: 'e2',
       values: ['bar'],
     },
   })).toHaveResponse({
@@ -133,7 +133,7 @@ test('browser_select_option (multiple)', async ({ client, server }) => {
     name: 'browser_select_option',
     arguments: {
       element: 'Select',
-      ref: 'e2',
+      target: 'e2',
       values: ['bar', 'baz'],
     },
   })).toHaveResponse({
@@ -200,7 +200,7 @@ test('old locator error message', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button 1',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -208,7 +208,7 @@ test('old locator error message', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button 2',
-      ref: 'e3',
+      target: 'e3',
     },
   })).toHaveResponse({
     error: expect.stringContaining(`Ref e3 not found in the current page snapshot. Try capturing new snapshot.`),
@@ -294,7 +294,7 @@ test('snapshot by ref', { annotation: { type: 'issue', description: 'https://git
   expect(await client.callTool({
     name: 'browser_snapshot',
     arguments: {
-      ref: 'e2',
+      target: 'e2',
     }
   })).toHaveResponse({
     inlineSnapshot: `- list [ref=e2]:
@@ -306,7 +306,7 @@ test('snapshot by ref', { annotation: { type: 'issue', description: 'https://git
   expect(await client.callTool({
     name: 'browser_snapshot',
     arguments: {
-      ref: 'e999',
+      target: 'e999',
     }
   })).toHaveResponse({
     error: expect.stringContaining(`Ref e999 not found in the current page snapshot. Try capturing new snapshot.`),

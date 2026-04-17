@@ -135,6 +135,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return { element: ElementHandleDispatcher.from(this, await this._frame.addStyleTag(progress, params)) };
   }
 
+  async ariaRef(params: channels.FrameAriaRefParams, progress: Progress): Promise<channels.FrameAriaRefResult> {
+    return await this._frame.ariaRef(progress, params.selector);
+  }
+
   async ariaSnapshot(params: channels.FrameAriaSnapshotParams, progress: Progress): Promise<channels.FrameAriaSnapshotResult> {
     return await this._frame.ariaSnapshot(progress, params);
   }
@@ -261,7 +265,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async highlight(params: channels.FrameHighlightParams, progress: Progress): Promise<void> {
-    return await this._frame.highlight(progress, params.selector);
+    return await this._frame.addHighlight(progress, params.selector, params.style);
+  }
+
+  async hideHighlight(params: channels.FrameHideHighlightParams, progress: Progress): Promise<void> {
+    return await this._frame.removeHighlight(progress, params.selector);
   }
 
   async expect(params: channels.FrameExpectParams, progress: Progress): Promise<channels.FrameExpectResult> {

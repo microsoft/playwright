@@ -2,9 +2,13 @@
 "strict"
 ../../package.ts
 ../../serverRegistry.ts
+./channelSessions.ts
 ./minimist.ts
 ./session.ts
 ./registry.ts
+
+[channelSessions.ts]
+"strict"
 
 [session.ts]
 "strict"

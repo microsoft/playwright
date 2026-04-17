@@ -20,6 +20,7 @@ import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
+import { DisposableStub } from './disposable';
 
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
@@ -150,8 +151,14 @@ export class Locator implements api.Locator {
     return await this._frame._highlight(this._selector);
   }
 
-  async highlight() {
-    return await this._frame._highlight(this._selector);
+  async highlight(options: { style?: string | Record<string, string | number> } = {}) {
+    const style = typeof options.style === 'object' ? cssObjectToString(options.style) : options.style;
+    await this._frame._highlight(this._selector, style);
+    return new DisposableStub(() => this.hideHighlight());
+  }
+
+  async hideHighlight() {
+    await this._frame._hideHighlight(this._selector);
   }
 
   locator(selectorOrLocator: string | Locator, options?: Omit<LocatorOptions, 'visible'>): Locator {
@@ -313,6 +320,11 @@ export class Locator implements api.Locator {
     return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), { title: 'Screenshot', timeout: options.timeout });
   }
 
+  async ariaRef(options: TimeoutOptions = {}): Promise<string | null> {
+    const { ref } = await this._frame._channel.ariaRef({ selector: this._selector, timeout: this._frame._timeout(options) });
+    return ref ?? null;
+  }
+
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number } = {}): Promise<string> {
     const result = await this._frame._channel.ariaSnapshot({ timeout: this._frame._timeout(options), mode: options.mode, selector: this._selector, depth: options.depth });
     return result.snapshot;
@@ -470,4 +482,11 @@ export function testIdAttributeName(): string {
 
 export function setTestIdAttribute(attributeName: string) {
   _testIdAttributeName = attributeName;
+}
+
+function cssObjectToString(style: Record<string, string | number>): string {
+  return Object.entries(style).map(([key, value]) => {
+    const property = key.startsWith('--') ? key : key.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
+    return `${property}: ${value}`;
+  }).join('; ');
 }

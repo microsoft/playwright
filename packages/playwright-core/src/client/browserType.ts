@@ -129,10 +129,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   async _connect(params: ConnectOptions): Promise<Browser> {
-    const logger = params.logger;
     return await this._wrapApiCall(async () => {
       const browser = await connectToBrowser(this._playwright, { browserName: this.name(), ...params });
-      browser._connectToBrowserType(this, {}, logger);
+      browser._connectToBrowserType(this, {}, undefined);
       return browser;
     });
   }
@@ -159,7 +158,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       isLocal: params.isLocal,
     });
     const browser = Browser.from(result.browser);
-    browser._connectToBrowserType(this, {}, params.logger);
+    browser._connectToBrowserType(this, {}, undefined);
     if (result.defaultContext)
       await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
     return browser;
@@ -175,14 +174,4 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return Worker.from(result.worker);
   }
 
-  async _connectOverCDPTransport(transport: /* ConnectionTransport */ any) {
-    if (this.name() !== 'chromium')
-      throw new Error('Connecting over CDP is only supported in Chromium.');
-    const result = await this._channel.connectOverCDPTransport({ transport });
-    const browser = Browser.from(result.browser);
-    browser._connectToBrowserType(this, {}, undefined);
-    if (result.defaultContext)
-      await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
-    return browser;
-  }
 }

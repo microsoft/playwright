@@ -68,6 +68,13 @@ await context.CloseAsync();
 
 This event is not emitted.
 
+## event: BrowserContext.pickLocator
+* since: v1.60
+- argument: <[Page]>
+
+Emitted when a client calls [`method: Page.pickLocator`] on a page in this context. The event is dispatched to all
+clients connected to the context, including the one that initiated the call.
+
 ## property: BrowserContext.clock
 * since: v1.45
 - type: <[Clock]>
@@ -736,14 +743,6 @@ Name of the function on the window object.
   - alias-java: BindingCallback
 
 Callback function that will be called in the Playwright's context.
-
-### option: BrowserContext.exposeBinding.handle
-* since: v1.8
-* deprecated: This option will be removed in the future.
-- `handle` <[boolean]>
-
-Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
-supported. When passing by value, multiple arguments are supported.
 
 ## async method: BrowserContext.exposeFunction
 * since: v1.8

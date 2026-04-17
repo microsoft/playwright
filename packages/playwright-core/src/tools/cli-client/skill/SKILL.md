@@ -158,6 +158,16 @@ playwright-cli tracing-stop
 playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
+
+# wait for the user to pick an element in the browser, print its ref and locator
+playwright-cli pick
+
+# show a persistent highlight overlay for an element, optionally with a custom style
+playwright-cli highlight e5
+playwright-cli highlight e5 --style="outline: 3px dashed red"
+# hide a single element highlight, or all page highlights when no target is given
+playwright-cli highlight e5 --hide
+playwright-cli highlight --hide
 ```
 
 ## Raw output
@@ -335,6 +345,24 @@ playwright-cli tracing-start
 playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli tracing-stop
+playwright-cli close
+```
+
+## Example: Interactive element inspection
+
+Ask the user to point at an element in the browser, then keep it visible while you work on it:
+
+```bash
+playwright-cli open https://example.com
+# blocks until the user clicks an element; prints `ref: eN` and the locator
+playwright-cli pick
+# keep the picked element highlighted while iterating; style is optional
+playwright-cli highlight e5 --style="outline: 3px dashed red"
+playwright-cli highlight e7
+# ... inspect, generate code, etc. ...
+# hide a single highlight, or drop them all in one shot
+playwright-cli highlight e5 --hide
+playwright-cli highlight --hide
 playwright-cli close
 ```
 

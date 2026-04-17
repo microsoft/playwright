@@ -16,192 +16,222 @@
 
 import React from 'react';
 import './dashboard.css';
-import { navigate } from './index';
-import { DashboardClient } from './dashboardClient';
+import { DashboardClientContext } from './index';
 import { asLocator } from '@isomorphic/locatorGenerators';
-import { SplitView } from '@web/components/splitView';
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon, PickLocatorIcon, InspectorPanelIcon } from './icons';
-import { SettingsButton } from './settingsView';
+import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
+import { Annotations, getImageLayout, clientToViewport } from './annotations';
+import { ToolbarButton } from '@web/components/toolbarButton';
+import { useMeasureForRef } from '@web/uiUtils';
 
-import type { DashboardClientChannel } from './dashboardClient';
 import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 
-function tabFavicon(url: string): string {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, '');
-    return host ? host[0].toUpperCase() : '';
-  } catch {
-    return '';
-  }
-}
-
 const BUTTONS = ['left', 'middle', 'right'] as const;
+type Mode = 'readonly' | 'interactive' | 'annotate';
 
-export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
-  const [interactive, setInteractive] = React.useState(false);
+export const Dashboard: React.FC = () => {
+  const client = React.useContext(DashboardClientContext);
+  const [mode, setMode] = React.useState<Mode>('readonly');
   const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
-  const [showInspector, setShowInspector] = React.useState(false);
-  const [pickingTabId, setPickingTabId] = React.useState<string | null>(null);
-  const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
+  const [picking, setPicking] = React.useState(false);
+  const [recording, setRecording] = React.useState(false);
+  const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
+  const [showInteractiveHint, setShowInteractiveHint] = React.useState(false);
 
-  const [channel, setChannel] = React.useState<DashboardClientChannel | undefined>();
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
-  const tabbarRef = React.useRef<HTMLDivElement>(null);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const viewportMainRef = React.useRef<HTMLDivElement>(null);
+  const browserChromeRef = React.useRef<HTMLDivElement>(null);
   const moveThrottleRef = React.useRef(0);
+  const hintTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+  const modeRef = React.useRef<Mode>('readonly');
+
+  const aspect = frame && frame.viewportWidth && frame.viewportHeight
+    ? frame.viewportWidth / frame.viewportHeight
+    : null;
+
+  const [viewportRect] = useMeasureForRef(viewportMainRef);
+
+  const windowStyle = React.useMemo<React.CSSProperties | undefined>(() => {
+    const OUTER_MARGIN = 24;
+    const chromeHeight = browserChromeRef.current?.offsetHeight ?? 40;
+    const availW = viewportRect.width - OUTER_MARGIN;
+    const availH = viewportRect.height - OUTER_MARGIN;
+    if (availW <= 0 || availH <= 0)
+      return undefined;
+    if (aspect === null)
+      return { width: availW, height: availH };
+    const screenH = availH - chromeHeight;
+    let w = availW;
+    let h = w / aspect;
+    if (h > screenH) {
+      h = screenH;
+      w = h * aspect;
+    }
+    return { width: w, height: h + chromeHeight };
+  }, [viewportRect, aspect]);
 
   React.useEffect(() => {
-    if (!wsUrl)
+    modeRef.current = mode;
+  }, [mode]);
+
+  const interactive = mode === 'interactive';
+  const annotating = mode === 'annotate';
+
+  React.useEffect(() => {
+    if (interactive)
+      setShowInteractiveHint(false);
+  }, [interactive]);
+
+  React.useEffect(() => {
+    return () => clearTimeout(hintTimerRef.current);
+  }, []);
+
+  function flashInteractiveHint() {
+    clearTimeout(hintTimerRef.current);
+    setShowInteractiveHint(true);
+    hintTimerRef.current = setTimeout(() => setShowInteractiveHint(false), 2000);
+  }
+
+  const prevTabsRef = React.useRef<Tab[] | null>(null);
+
+  React.useEffect(() => {
+    if (!client)
       return;
-    const channel = DashboardClient.create(wsUrl);
-
-    channel.onopen = () => {
-      setChannel(channel);
-      setInteractive(false);
-      setPickingTabId(null);
-    };
-
-    channel.on('tabs', params => {
-      setTabs(params.tabs);
+    let resized = false;
+    const onTabs = (params: DashboardChannelEvents['tabs']) => {
+      const prev = prevTabsRef.current;
       const selected = params.tabs.find(t => t.selected);
+      if (prev && selected && !prev.some(t => t.page === selected.page))
+        setMode('interactive');
+      prevTabsRef.current = params.tabs;
+      setTabs(params.tabs);
       if (selected)
         setUrl(selected.url);
-    });
-
-    let resized = false;
-
-    channel.on('frame', params => {
+    };
+    const onFrame = (params: DashboardChannelEvents['frame']) => {
+      if (modeRef.current === 'annotate')
+        return;
       setFrame(params);
-      const tabbar = tabbarRef.current;
       const toolbar = toolbarRef.current;
-      if (!resized && tabbar && toolbar && params.viewportWidth && params.viewportHeight) {
+      if (!resized && toolbar && params.viewportWidth && params.viewportHeight) {
         resized = true;
-        const chromeHeight = tabbar.offsetHeight + toolbar.offsetHeight;
+        const chromeHeight = toolbar.offsetHeight;
         const extraW = window.outerWidth - window.innerWidth;
         const extraH = window.outerHeight - window.innerHeight;
         const targetW = Math.min(params.viewportWidth + extraW, screen.availWidth);
         const targetH = Math.min(params.viewportHeight + chromeHeight + extraH, screen.availHeight);
         window.resizeTo(targetW, targetH);
       }
-    });
-
-    channel.on('elementPicked', params => {
+    };
+    const onElementPicked = (params: DashboardChannelEvents['elementPicked']) => {
       const locator = asLocator('javascript', params.selector);
       navigator.clipboard?.writeText(locator).catch(() => {});
-      setPickingTabId(null);
-      setLocatorToast(old => {
-        clearTimeout(old?.timer);
-        return { text: locator, timer: setTimeout(() => setLocatorToast(undefined), 3000) };
-      });
-    });
-
-    channel.onclose = () => {
-      setChannel(undefined);
-      setInteractive(false);
-      setPickingTabId(null);
-      setShowInspector(false);
+      setPicking(false);
     };
-
+    const onPickLocator = () => {
+      setMode('interactive');
+      setPicking(true);
+    };
+    client.on('tabs', onTabs);
+    client.on('frame', onFrame);
+    client.on('elementPicked', onElementPicked);
+    client.on('pickLocator', onPickLocator);
     return () => {
-      channel.close();
+      client.off('tabs', onTabs);
+      client.off('frame', onFrame);
+      client.off('elementPicked', onElementPicked);
+      client.off('pickLocator', onPickLocator);
     };
-  }, [wsUrl]);
+  }, [client]);
+
+  const selectedTab = tabs?.find(t => t.selected);
+  const ready = !!client && !!selectedTab;
+
+  React.useEffect(() => {
+    setRecording(false);
+    setPicking(false);
+  }, [selectedTab?.page]);
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
     const vw = frame?.viewportWidth ?? 0;
     const vh = frame?.viewportHeight ?? 0;
     if (!vw || !vh)
       return { x: 0, y: 0 };
-    const display = displayRef.current;
-    if (!display)
+    const layout = getImageLayout(displayRef.current);
+    if (!layout)
       return { x: 0, y: 0 };
-    const rect = display.getBoundingClientRect();
-    const imgAspect = display.naturalWidth / display.naturalHeight;
-    const elemAspect = rect.width / rect.height;
-    let renderW: number, renderH: number, offsetX: number, offsetY: number;
-    if (imgAspect > elemAspect) {
-      renderW = rect.width;
-      renderH = rect.width / imgAspect;
-      offsetX = 0;
-      offsetY = (rect.height - renderH) / 2;
-    } else {
-      renderH = rect.height;
-      renderW = rect.height * imgAspect;
-      offsetX = (rect.width - renderW) / 2;
-      offsetY = 0;
-    }
-    const fracX = (e.clientX - rect.left - offsetX) / renderW;
-    const fracY = (e.clientY - rect.top - offsetY) / renderH;
-    return {
-      x: Math.round(fracX * vw),
-      y: Math.round(fracY * vh),
-    };
+    return clientToViewport(layout, vw, vh, e.clientX, e.clientY);
   }
 
   function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
+    if (!client)
+      return;
     const { x, y } = imgCoords(e);
-    channel?.[method]({ x, y, button: BUTTONS[e.button] || 'left' });
+    client[method]({ x, y, button: BUTTONS[e.button] || 'left' });
   }
 
   function onScreenMouseDown(e: React.MouseEvent) {
+    if (annotating)
+      return;
     e.preventDefault();
     screenRef.current?.focus();
-    if (!channel)
+    if (!ready)
       return;
     if (!interactive) {
-      setInteractive(true);
+      flashInteractiveHint();
       return;
     }
     sendMouseEvent('mousedown', e);
   }
 
   function onScreenMouseUp(e: React.MouseEvent) {
-    if (!interactive)
+    if (annotating || !interactive)
       return;
     e.preventDefault();
     sendMouseEvent('mouseup', e);
   }
 
   function onScreenMouseMove(e: React.MouseEvent) {
-    if (!interactive)
+    if (annotating || !interactive || !client)
       return;
     const now = Date.now();
     if (now - moveThrottleRef.current < 32)
       return;
     moveThrottleRef.current = now;
     const { x, y } = imgCoords(e);
-    channel?.mousemove({ x, y });
+    client.mousemove({ x, y });
   }
 
   function onScreenWheel(e: React.WheelEvent) {
-    if (!interactive)
+    if (annotating || !interactive || !client)
       return;
     e.preventDefault();
-    channel?.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
+    client.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
-    if (pickingTabId !== null && e.key === 'Escape') {
+    if (annotating)
+      return;
+    if (picking && e.key === 'Escape') {
       e.preventDefault();
-      channel?.cancelPickLocator();
-      setPickingTabId(null);
+      client?.cancelPickLocator();
+      setPicking(false);
       return;
     }
-    if (!interactive)
+    if (!interactive || !client)
       return;
     e.preventDefault();
-    channel?.keydown({ key: e.key });
+    client.keydown({ key: e.key });
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
-    if (!interactive)
+    if (annotating || !interactive || !client)
       return;
     e.preventDefault();
-    channel?.keyup({ key: e.key });
+    client.keyup({ key: e.key });
   }
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -210,190 +240,181 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       if (!/^https?:\/\//i.test(value))
         value = 'https://' + value;
       setUrl(value);
-      channel?.navigate({ url: value });
+      client?.navigate({ url: value });
       e.currentTarget.blur();
     }
   }
 
-  const selectedTab = tabs?.find(t => t.selected);
-  const picking = selectedTab?.pageId === pickingTabId;
-
   let overlayText: string | undefined;
-  if (!channel)
+  if (!client)
     overlayText = 'Disconnected';
-  else if (tabs === null)
-    overlayText = 'Loading...';
-  else if (tabs.length === 0)
-    overlayText = 'No tabs open';
+  else if (!selectedTab)
+    overlayText = 'Select a session';
 
-  return (<div className={'dashboard-view' + (interactive ? ' interactive' : '')}
-  >
-    {/* Tab bar */}
-    <div ref={tabbarRef} className='tabbar'>
-      <a className='tabbar-back' href='#' title='Back to sessions' onClick={e => { e.preventDefault(); navigate('#'); }}>
-        <ChevronLeftIcon />
-        Sessions
-      </a>
-      <div id='tabstrip' className='tabstrip' role='tablist'>
-        {tabs?.map(tab => (
-          <div
-            key={tab.pageId}
-            className={'tab' + (tab.selected ? ' active' : '')}
-            role='tab'
-            aria-selected={tab.selected}
-            title={tab.url || ''}
-            onClick={() => channel?.selectTab({ pageId: tab.pageId })}
-          >
-            <span className='tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
-            <span className='tab-label'>{tab.title || 'New Tab'}</span>
-            <button
-              className='tab-close'
-              title='Close tab'
-              onClick={e => {
-                e.stopPropagation();
-                channel?.closeTab({ pageId: tab.pageId });
-              }}
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        ))}
-      </div>
-      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => channel?.newTab()}>
-        <PlusIcon />
-      </button>
-      <div className='interactive-controls'>
-        <div className={'segmented-control' + (interactive ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactive ? 'Interactive mode: page input is forwarded' : 'Read-only mode: page input is blocked'}>
-          <button
-            className={'segmented-control-option' + (!interactive ? ' active' : '')}
-            disabled={!channel}
-            aria-pressed={!interactive}
-            title='Read-only mode'
-            onClick={() => {
-              channel?.cancelPickLocator();
-              setPickingTabId(null);
-              setShowInspector(false);
-              setInteractive(false);
-            }}
-          >
-            Read-only
-          </button>
-          <button
-            className={'segmented-control-option' + (interactive ? ' active' : '')}
-            disabled={!channel}
-            aria-pressed={interactive}
-            title='Interactive mode'
-            onClick={() => setInteractive(true)}
-          >
-            Interactive
-          </button>
-        </div>
-        <SettingsButton />
-      </div>
-    </div>
-
-    {/* Toolbar */}
-    <div ref={toolbarRef} className='toolbar'>
-      <button className='nav-btn' title='Back' onClick={() => channel?.back()}>
-        <ChevronLeftIcon />
-      </button>
-      <button className='nav-btn' title='Forward' onClick={() => channel?.forward()}>
-        <ChevronRightIcon />
-      </button>
-      <button className='nav-btn' title='Reload' onClick={() => channel?.reload()}>
-        <ReloadIcon />
-      </button>
-      <input
-        id='omnibox'
-        className='omnibox'
-        type='text'
-        placeholder='Search or enter URL'
-        spellCheck={false}
-        autoComplete='off'
-        value={url}
-        onChange={e => setUrl(e.target.value)}
-        onKeyDown={onOmniboxKeyDown}
-        onFocus={e => e.target.select()}
-      />
-      <button
-        className={'nav-btn' + (picking ? ' active-toggle' : '')}
-        title='Pick locator'
-        aria-pressed={picking}
-        disabled={!channel}
-        onClick={() => {
-          if (picking) {
-            channel?.cancelPickLocator();
-            setPickingTabId(null);
-          } else {
-            setInteractive(true);
-            setPickingTabId(selectedTab?.pageId ?? null);
-            screenRef.current?.focus();
-            channel?.pickLocator();
-          }
-        }}
-      >
-        <PickLocatorIcon />
-      </button>
-      {selectedTab?.inspectorUrl && (
-        <button
-          className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
-          title='Chrome DevTools'
-          aria-pressed={showInspector}
-          disabled={!channel}
+  return (
+    <div className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '')}>
+      {/* Toolbar */}
+      <div ref={toolbarRef} className='toolbar'>
+        <ToolbarButton
+          className={'mode-toggle mode-interactive' + (showInteractiveHint ? ' flash' : '')}
+          title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
+          icon='person'
+          toggled={interactive}
+          disabled={!ready}
           onClick={() => {
-            setInteractive(true);
-            setShowInspector(!showInspector);
+            client?.cancelPickLocator();
+            setPicking(false);
+            setMode(interactive ? 'readonly' : 'interactive');
           }}
-        >
-          <InspectorPanelIcon />
-        </button>
-      )}
-    </div>
+        />
+        <ToolbarButton
+          className='mode-toggle mode-annotate'
+          title={annotating ? 'Disable annotation mode' : 'Enable annotation mode'}
+          icon='comment-draft'
+          toggled={annotating}
+          disabled={!ready || !frame}
+          onClick={() => {
+            client?.cancelPickLocator();
+            setPicking(false);
+            setMode(annotating ? 'readonly' : 'annotate');
+          }}
+        />
+        <div className='toolbar-right'>
+          <ToolbarButton
+            className='recording'
+            title={recording ? 'Stop recording' : 'Record video'}
+            icon='record'
+            toggled={recording}
+            style={{ color: recording ? 'var(--color-scale-red-5)' : undefined }}
+            disabled={!ready}
+            onClick={async () => {
+              if (!client)
+                return;
+              if (recording) {
+                const { path } = await client.stopRecording();
+                await client.reveal({ path });
+                setRecording(false);
+              } else {
+                await client.startRecording();
+                setRecording(true);
+              }
+            }}>
+            {recording && <span className='recording-label'>Recording...</span>}
+          </ToolbarButton>
+          <ToolbarButton
+            className='screenshot'
+            title='Copy screenshot to clipboard'
+            icon={screenshotIcon}
+            disabled={!ready}
+            onClick={async () => {
+              if (!client)
+                return;
+              const screenshot = await client.screenshot();
+              const blob = await (await fetch('data:image/png;base64,' + screenshot)).blob();
+              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+              setScreenshotIcon('clippy');
+              setTimeout(() => setScreenshotIcon('device-camera'), 3000);
+            }}
+          />
+        </div>
+      </div>
 
-    {/* Viewport */}
-    <div className='viewport-wrapper'>
-      <SplitView
-        orientation='horizontal'
-        sidebarSize={500}
-        minSidebarSize={300}
-        settingName='devtoolsInspector'
-        sidebarHidden={!showInspector || !selectedTab?.inspectorUrl}
-        main={<div className='viewport-main'>
-          <div
-            ref={screenRef}
-            className='screen'
-            tabIndex={0}
-            style={{ display: frame ? '' : 'none' }}
-            onMouseDown={onScreenMouseDown}
-            onMouseUp={onScreenMouseUp}
-            onMouseMove={onScreenMouseMove}
-            onWheel={onScreenWheel}
-            onKeyDown={onScreenKeyDown}
-            onKeyUp={onScreenKeyUp}
-            onContextMenu={e => e.preventDefault()}
-          >
-            <img
-              ref={displayRef}
-              id='display'
-              className='display'
-              alt='screencast'
-              src={frame ? 'data:image/jpeg;base64,' + frame.data : undefined}
-            />
-            {locatorToast
-              ? <div className='screen-toast visible'>Copied: <code>{locatorToast.text}</code></div>
-              : picking
-                ? <div className='screen-toast visible'>Click an element to pick its locator</div>
-                : null
-            }
+      {/* Viewport */}
+      <div className='viewport-wrapper'>
+        <div ref={viewportMainRef} className='viewport-main'>
+          <div className='browser-window' style={windowStyle}>
+            <div ref={browserChromeRef} className='browser-chrome'>
+              <button className='nav-btn' title='Back' aria-disabled={!interactive || undefined} onClick={() => {
+                if (!interactive) {
+                  flashInteractiveHint();
+                  return;
+                }
+                client?.back();
+              }}>
+                <ChevronLeftIcon />
+              </button>
+              <button className='nav-btn' title='Forward' aria-disabled={!interactive || undefined} onClick={() => {
+                if (!interactive) {
+                  flashInteractiveHint();
+                  return;
+                }
+                client?.forward();
+              }}>
+                <ChevronRightIcon />
+              </button>
+              <button className='nav-btn' title='Reload' aria-disabled={!interactive || undefined} onClick={() => {
+                if (!interactive) {
+                  flashInteractiveHint();
+                  return;
+                }
+                client?.reload();
+              }}>
+                <ReloadIcon />
+              </button>
+              <div className='omnibox-wrap'>
+                <input
+                  id='omnibox'
+                  className='omnibox'
+                  type='text'
+                  placeholder='Search or enter URL'
+                  spellCheck={false}
+                  autoComplete='off'
+                  value={url}
+                  onChange={e => {
+                    if (!interactive)
+                      return;
+                    setUrl(e.target.value);
+                  }}
+                  onKeyDown={e => {
+                    if (!interactive)
+                      return;
+                    onOmniboxKeyDown(e);
+                  }}
+                  onFocus={e => {
+                    if (!interactive) {
+                      flashInteractiveHint();
+                      e.target.blur();
+                      return;
+                    }
+                    e.target.select();
+                  }}
+                  aria-disabled={!interactive || undefined}
+                  readOnly={!interactive}
+                />
+              </div>
+            </div>
+            <div
+              ref={screenRef}
+              className='screen'
+              tabIndex={0}
+              style={{ display: frame ? '' : 'none' }}
+              onMouseDown={onScreenMouseDown}
+              onMouseUp={onScreenMouseUp}
+              onMouseMove={onScreenMouseMove}
+              onWheel={onScreenWheel}
+              onKeyDown={onScreenKeyDown}
+              onKeyUp={onScreenKeyUp}
+              onContextMenu={e => e.preventDefault()}
+            >
+              <img
+                ref={displayRef}
+                id='display'
+                className='display'
+                alt='screencast'
+                src={frame ? 'data:image/jpeg;base64,' + frame.data : undefined}
+              />
+              <Annotations
+                active={annotating}
+                displayRef={displayRef}
+                screenRef={screenRef}
+                viewportWidth={frame?.viewportWidth ?? 0}
+                viewportHeight={frame?.viewportHeight ?? 0}
+              />
+            </div>
+            {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
           </div>
-          {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
-        </div>}
-        sidebar={<iframe
-          className='inspector-frame'
-          src={selectedTab?.inspectorUrl || ''}
-          title='Chrome DevTools'
-        />}
-      />
+        </div>
+      </div>
     </div>
-  </div>);
+  );
 };

@@ -893,7 +893,6 @@ export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   launch(params: BrowserTypeLaunchParams, progress?: Progress): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, progress?: Progress): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPResult>;
-  connectOverCDPTransport(params: BrowserTypeConnectOverCDPTransportParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPTransportResult>;
   connectToWorker(params: BrowserTypeConnectToWorkerParams, progress?: Progress): Promise<BrowserTypeConnectToWorkerResult>;
 }
 export type BrowserTypeLaunchParams = {
@@ -1141,16 +1140,6 @@ export type BrowserTypeConnectOverCDPOptions = {
   isLocal?: boolean,
 };
 export type BrowserTypeConnectOverCDPResult = {
-  browser: BrowserChannel,
-  defaultContext?: BrowserContextChannel,
-};
-export type BrowserTypeConnectOverCDPTransportParams = {
-  transport: Binary,
-};
-export type BrowserTypeConnectOverCDPTransportOptions = {
-
-};
-export type BrowserTypeConnectOverCDPTransportResult = {
   browser: BrowserChannel,
   defaultContext?: BrowserContextChannel,
 };
@@ -1658,6 +1647,7 @@ export type BrowserContextInitializer = {
 };
 export interface BrowserContextEventTarget {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
+  on(event: 'pickLocator', callback: (params: BrowserContextPickLocatorEvent) => void): this;
   on(event: 'console', callback: (params: BrowserContextConsoleEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'dialog', callback: (params: BrowserContextDialogEvent) => void): this;
@@ -1710,6 +1700,9 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
+};
+export type BrowserContextPickLocatorEvent = {
+  page: PageChannel,
 };
 export type BrowserContextConsoleEvent = {
   type: string,
@@ -1830,10 +1823,9 @@ export type BrowserContextCookiesResult = {
 };
 export type BrowserContextExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type BrowserContextExposeBindingResult = {
   disposable: DisposableChannel,
@@ -2087,6 +2079,7 @@ export type BrowserContextClockSetSystemTimeResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
+  'pickLocator': BrowserContextPickLocatorEvent;
   'console': BrowserContextConsoleEvent;
   'close': BrowserContextCloseEvent;
   'dialog': BrowserContextDialogEvent;
@@ -2172,6 +2165,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
+  hideHighlight(params?: PageHideHighlightParams, progress?: Progress): Promise<PageHideHighlightResult>;
   screencastShowOverlay(params: PageScreencastShowOverlayParams, progress?: Progress): Promise<PageScreencastShowOverlayResult>;
   screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, progress?: Progress): Promise<PageScreencastRemoveOverlayResult>;
   screencastChapter(params: PageScreencastChapterParams, progress?: Progress): Promise<PageScreencastChapterResult>;
@@ -2284,10 +2278,9 @@ export type PageEmulateMediaOptions = {
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
   name: string,
-  needsHandle?: boolean,
 };
 export type PageExposeBindingOptions = {
-  needsHandle?: boolean,
+
 };
 export type PageExposeBindingResult = {
   disposable: DisposableChannel,
@@ -2695,6 +2688,9 @@ export type PagePickLocatorResult = {
 export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
+export type PageHideHighlightParams = {};
+export type PageHideHighlightOptions = {};
+export type PageHideHighlightResult = void;
 export type PageScreencastShowOverlayParams = {
   html: string,
   duration?: number,
@@ -2817,6 +2813,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, progress?: Progress): Promise<FrameEvalOnSelectorAllResult>;
   addScriptTag(params: FrameAddScriptTagParams, progress?: Progress): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, progress?: Progress): Promise<FrameAddStyleTagResult>;
+  ariaRef(params: FrameAriaRefParams, progress?: Progress): Promise<FrameAriaRefResult>;
   ariaSnapshot(params: FrameAriaSnapshotParams, progress?: Progress): Promise<FrameAriaSnapshotResult>;
   blur(params: FrameBlurParams, progress?: Progress): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, progress?: Progress): Promise<FrameCheckResult>;
@@ -2832,6 +2829,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   frameElement(params?: FrameFrameElementParams, progress?: Progress): Promise<FrameFrameElementResult>;
   resolveSelector(params: FrameResolveSelectorParams, progress?: Progress): Promise<FrameResolveSelectorResult>;
   highlight(params: FrameHighlightParams, progress?: Progress): Promise<FrameHighlightResult>;
+  hideHighlight(params: FrameHideHighlightParams, progress?: Progress): Promise<FrameHideHighlightResult>;
   getAttribute(params: FrameGetAttributeParams, progress?: Progress): Promise<FrameGetAttributeResult>;
   goto(params: FrameGotoParams, progress?: Progress): Promise<FrameGotoResult>;
   hover(params: FrameHoverParams, progress?: Progress): Promise<FrameHoverResult>;
@@ -2922,6 +2920,16 @@ export type FrameAddStyleTagOptions = {
 };
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
+};
+export type FrameAriaRefParams = {
+  selector: string,
+  timeout: number,
+};
+export type FrameAriaRefOptions = {
+
+};
+export type FrameAriaRefResult = {
+  ref?: string,
 };
 export type FrameAriaSnapshotParams = {
   mode?: 'ai' | 'default',
@@ -3108,11 +3116,19 @@ export type FrameResolveSelectorResult = {
 };
 export type FrameHighlightParams = {
   selector: string,
+  style?: string,
 };
 export type FrameHighlightOptions = {
-
+  style?: string,
 };
 export type FrameHighlightResult = void;
+export type FrameHideHighlightParams = {
+  selector: string,
+};
+export type FrameHideHighlightOptions = {
+
+};
+export type FrameHideHighlightResult = void;
 export type FrameGetAttributeParams = {
   selector: string,
   strict?: boolean,
@@ -3457,6 +3473,7 @@ export type FrameExpectParams = {
   selector?: string,
   expression: string,
   expressionArg?: any,
+  pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3467,6 +3484,7 @@ export type FrameExpectParams = {
 export type FrameExpectOptions = {
   selector?: string,
   expressionArg?: any,
+  pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -4365,8 +4383,7 @@ export interface WebSocketEvents {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  args?: SerializedValue[],
-  handle?: JSHandleChannel,
+  args: SerializedValue[],
 };
 export interface BindingCallEventTarget {
 }

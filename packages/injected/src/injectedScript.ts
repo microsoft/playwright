@@ -786,16 +786,18 @@ export class InjectedScript {
     let remainingOptionsToSelect = optionsToSelect.slice();
     for (let index = 0; index < options.length; index++) {
       const option = options[index];
+      const normalizedOptionLabel = normalizeWhiteSpace(option.label);
       const filter = (optionToSelect: Node | { valueOrLabel?: string, value?: string, label?: string, index?: number }) => {
         if (optionToSelect instanceof Node)
           return option === optionToSelect;
+        const matchesLabel = (label: string) => label === option.label || normalizeWhiteSpace(label) === normalizedOptionLabel;
         let matches = true;
         if (optionToSelect.valueOrLabel !== undefined)
-          matches = matches && (optionToSelect.valueOrLabel === option.value || optionToSelect.valueOrLabel === option.label);
+          matches = matches && (optionToSelect.valueOrLabel === option.value || matchesLabel(optionToSelect.valueOrLabel));
         if (optionToSelect.value !== undefined)
           matches = matches && optionToSelect.value === option.value;
         if (optionToSelect.label !== undefined)
-          matches = matches && optionToSelect.label === option.label;
+          matches = matches && matchesLabel(optionToSelect.label);
         if (optionToSelect.index !== undefined)
           matches = matches && optionToSelect.index === index;
         return matches;
@@ -1313,12 +1315,14 @@ export class InjectedScript {
     return this._highlight;
   }
 
-  highlight(selector: ParsedSelector) {
-    if (!this._highlight) {
-      this._highlight = new Highlight(this);
-      this._highlight.install();
-    }
-    this._highlight.runHighlightOnRaf(selector);
+  addHighlight(selector: ParsedSelector, style?: string) {
+    const highlight = this._ensureHighlight();
+    highlight.addElementHighlight(selector, style);
+  }
+
+  removeHighlight(selector: ParsedSelector) {
+    const highlight = this._ensureHighlight();
+    highlight.removeElementHighlight(selector);
   }
 
   setScreencastAnnotation(annotation: { point?: channels.Point, box?: channels.Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number } | null) {
@@ -1612,7 +1616,7 @@ export class InjectedScript {
           matches: new ExpectedTextMatcher(options.expectedText[0]).matchesClassList(this, element.classList, /* partial */ expression === 'to.contain.class'),
         };
       } else if (expression === 'to.have.css') {
-        received = this.window.getComputedStyle(element).getPropertyValue(options.expressionArg);
+        received = this.window.getComputedStyle(element, options.pseudo ? `::${options.pseudo}` : undefined).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {

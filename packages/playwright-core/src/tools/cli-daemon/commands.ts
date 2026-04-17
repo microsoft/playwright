@@ -19,6 +19,8 @@ import { declareCommand } from './command';
 
 import type { AnyCommandSchema } from './command';
 
+const elementTargetDescription = 'Exact target element reference from the page snapshot, or a unique element selector';
+
 const numberArg = z.preprocess((val, ctx) => {
   const number = Number(val);
   if (Number.isNaN(number)) {
@@ -30,14 +32,6 @@ const numberArg = z.preprocess((val, ctx) => {
   }
   return number;
 }, z.number());
-
-function asRef(refOrSelector: string | undefined): { ref?: string, selector?: string } {
-  if (refOrSelector === undefined)
-    return {};
-  if (refOrSelector.match(/^(f\d+)?e\d+$/))
-    return { ref: refOrSelector };
-  return { ref: '', selector: refOrSelector };
-}
 
 // Navigation commands
 
@@ -228,14 +222,14 @@ const click = declareCommand({
   description: 'Perform click on a web page',
   category: 'core',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().describe(elementTargetDescription),
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
     modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
   }),
   toolName: 'browser_click',
-  toolParams: ({ target, button, modifiers }) => ({ ...asRef(target), button, modifiers }),
+  toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers }),
 });
 
 const doubleClick = declareCommand({
@@ -243,14 +237,14 @@ const doubleClick = declareCommand({
   description: 'Perform double click on a web page',
   category: 'core',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().describe(elementTargetDescription),
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
     modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
   }),
   toolName: 'browser_click',
-  toolParams: ({ target, button, modifiers }) => ({ ...asRef(target), button, modifiers, doubleClick: true }),
+  toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers, doubleClick: true }),
 });
 
 const drag = declareCommand({
@@ -258,15 +252,11 @@ const drag = declareCommand({
   description: 'Perform drag and drop between two elements',
   category: 'core',
   args: z.object({
-    startElement: z.string().describe('Exact source element reference from the page snapshot, or a unique element selector'),
-    endElement: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    startTarget: z.string().describe('Exact source element reference from the page snapshot, or a unique element selector'),
+    endTarget: z.string().describe(elementTargetDescription),
   }),
   toolName: 'browser_drag',
-  toolParams: ({ startElement, endElement }) => {
-    const start = asRef(startElement);
-    const end = asRef(endElement);
-    return { startElement, startRef: start.ref, startSelector: start.selector, endElement, endRef: end.ref, endSelector: end.selector };
-  },
+  toolParams: ({ startTarget, endTarget }) => ({ startTarget, endTarget }),
 });
 
 const fill = declareCommand({
@@ -274,14 +264,14 @@ const fill = declareCommand({
   description: 'Fill text into editable element',
   category: 'core',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().describe(elementTargetDescription),
     text: z.string().describe('Text to fill into the element'),
   }),
   options: z.object({
     submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
   }),
   toolName: 'browser_type',
-  toolParams: ({ target, text, submit }) => ({ ...asRef(target), text, submit }),
+  toolParams: ({ target, text, submit }) => ({ target, text, submit }),
 });
 
 const hover = declareCommand({
@@ -289,10 +279,10 @@ const hover = declareCommand({
   description: 'Hover over element on page',
   category: 'core',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().describe(elementTargetDescription),
   }),
   toolName: 'browser_hover',
-  toolParams: ({ target }) => ({ ...asRef(target) }),
+  toolParams: ({ target }) => ({ target }),
 });
 
 const select = declareCommand({
@@ -300,11 +290,11 @@ const select = declareCommand({
   description: 'Select an option in a dropdown',
   category: 'core',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().describe(elementTargetDescription),
     val: z.string().describe('Value to select in the dropdown'),
   }),
   toolName: 'browser_select_option',
-  toolParams: ({ target, val: value }) => ({ ...asRef(target), values: [value] }),
+  toolParams: ({ target, val: value }) => ({ target, values: [value] }),
 });
 
 const fileUpload = declareCommand({
@@ -323,10 +313,10 @@ const check = declareCommand({
   description: 'Check a checkbox or radio button',
   category: 'core',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().describe(elementTargetDescription),
   }),
   toolName: 'browser_check',
-  toolParams: ({ target }) => ({ ...asRef(target) }),
+  toolParams: ({ target }) => ({ target }),
 });
 
 const uncheck = declareCommand({
@@ -334,10 +324,10 @@ const uncheck = declareCommand({
   description: 'Uncheck a checkbox or radio button',
   category: 'core',
   args: z.object({
-    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().describe(elementTargetDescription),
   }),
   toolName: 'browser_uncheck',
-  toolParams: ({ target }) => ({ ...asRef(target) }),
+  toolParams: ({ target }) => ({ target }),
 });
 
 const snapshot = declareCommand({
@@ -345,14 +335,38 @@ const snapshot = declareCommand({
   description: 'Capture page snapshot to obtain element ref',
   category: 'core',
   args: z.object({
-    element: z.string().optional().describe('Element reference from the previous page snapshot, or a unique element selector for the root element to capture a partial snapshot instead of the whole page'),
+    target: z.string().optional().describe('Element reference from the previous page snapshot, or a unique element selector for the root element to capture a partial snapshot instead of the whole page'),
   }),
   options: z.object({
     filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
     depth: numberArg.optional().describe('Limit snapshot depth, unlimited by default.'),
   }),
   toolName: 'browser_snapshot',
-  toolParams: ({ filename, element, depth }) => ({ filename, ...asRef(element), depth }),
+  toolParams: ({ filename, target, depth }) => ({ filename, target, depth }),
+});
+
+const pick = declareCommand({
+  name: 'pick',
+  description: 'Wait for the user to pick an element in the browser and print its ref and locator',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_pick_locator',
+  toolParams: () => ({}),
+});
+
+const highlight = declareCommand({
+  name: 'highlight',
+  description: 'Show (or with --hide, remove) a highlight overlay for an element; `--hide` without a target hides all page highlights.',
+  category: 'devtools',
+  args: z.object({
+    target: z.string().optional().describe(elementTargetDescription),
+  }),
+  options: z.object({
+    hide: z.boolean().optional().describe('Hide a previously added highlight for this element, or all page highlights when no element is given'),
+    style: z.string().optional().describe('Additional inline CSS applied to the highlight overlay, e.g. "outline: 2px dashed red"'),
+  }),
+  toolName: ({ hide }) => hide ? 'browser_hide_highlight' : 'browser_highlight',
+  toolParams: ({ target, style }) => ({ target, style }),
 });
 
 const evaluate = declareCommand({
@@ -361,13 +375,13 @@ const evaluate = declareCommand({
   category: 'core',
   args: z.object({
     func: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
-    element: z.string().optional().describe('Exact target element reference from the page snapshot, or a unique element selector'),
+    target: z.string().optional().describe(elementTargetDescription),
   }),
   options: z.object({
     filename: z.string().optional().describe('Save evaluation result to a file instead of returning it in the response.'),
   }),
   toolName: 'browser_evaluate',
-  toolParams: ({ func, element, filename }) => ({ function: func, filename, ...asRef(element) }),
+  toolParams: ({ func, target, filename }) => ({ function: func, filename, target }),
 });
 
 const dialogAccept = declareCommand({
@@ -723,14 +737,14 @@ const screenshot = declareCommand({
   description: 'screenshot of the current page or element',
   category: 'export',
   args: z.object({
-    target: z.string().optional().describe('Exact target element reference from the page snapshot, or a unique element selector.'),
+    target: z.string().optional().describe(elementTargetDescription),
   }),
   options: z.object({
     filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified.'),
     ['full-page']: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport.'),
   }),
   toolName: 'browser_take_screenshot',
-  toolParams: ({ target, filename, ['full-page']: fullPage }) => ({ filename, ...asRef(target), fullPage }),
+  toolParams: ({ target, filename, ['full-page']: fullPage }) => ({ filename, target, fullPage }),
 });
 
 const pdfSave = declareCommand({
@@ -840,6 +854,10 @@ const devtoolsShow = declareCommand({
   description: 'Show browser DevTools',
   category: 'devtools',
   args: z.object({}),
+  options: z.object({
+    port: numberArg.optional().describe('Start as a blocking HTTP server on this port (use 0 for a random port)'),
+    host: z.string().optional().describe('Host to bind to when using --port (defaults to localhost)'),
+  }),
   toolName: '',
   toolParams: () => ({}),
 });
@@ -1054,6 +1072,8 @@ const commandsArray: AnyCommandSchema[] = [
   pauseAt,
   resume,
   stepOver,
+  pick,
+  highlight,
 
   // session category
   sessionList,

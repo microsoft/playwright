@@ -637,13 +637,6 @@ scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),
   defaultContext: tOptional(tChannel(['BrowserContext'])),
 });
-scheme.BrowserTypeConnectOverCDPTransportParams = tObject({
-  transport: tBinary,
-});
-scheme.BrowserTypeConnectOverCDPTransportResult = tObject({
-  browser: tChannel(['Browser']),
-  defaultContext: tOptional(tChannel(['BrowserContext'])),
-});
 scheme.BrowserTypeConnectToWorkerParams = tObject({
   endpoint: tString,
   timeout: tFloat,
@@ -948,6 +941,9 @@ scheme.BrowserContextInitializer = tObject({
 scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
+scheme.BrowserContextPickLocatorEvent = tObject({
+  page: tChannel(['Page']),
+});
 scheme.BrowserContextConsoleEvent = tObject({
   type: tString,
   text: tString,
@@ -1043,7 +1039,6 @@ scheme.BrowserContextCookiesResult = tObject({
 });
 scheme.BrowserContextExposeBindingParams = tObject({
   name: tString,
-  needsHandle: tOptional(tBoolean),
 });
 scheme.BrowserContextExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
@@ -1290,7 +1285,6 @@ scheme.PageEmulateMediaParams = tObject({
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
   name: tString,
-  needsHandle: tOptional(tBoolean),
 });
 scheme.PageExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
@@ -1553,6 +1547,8 @@ scheme.PagePickLocatorResult = tObject({
 });
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
+scheme.PageHideHighlightParams = tOptional(tObject({}));
+scheme.PageHideHighlightResult = tOptional(tObject({}));
 scheme.PageScreencastShowOverlayParams = tObject({
   html: tString,
   duration: tOptional(tFloat),
@@ -1656,6 +1652,13 @@ scheme.FrameAddStyleTagParams = tObject({
 });
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
+});
+scheme.FrameAriaRefParams = tObject({
+  selector: tString,
+  timeout: tFloat,
+});
+scheme.FrameAriaRefResult = tObject({
+  ref: tOptional(tString),
 });
 scheme.FrameAriaSnapshotParams = tObject({
   mode: tOptional(tEnum(['ai', 'default'])),
@@ -1776,8 +1779,13 @@ scheme.FrameResolveSelectorResult = tObject({
 });
 scheme.FrameHighlightParams = tObject({
   selector: tString,
+  style: tOptional(tString),
 });
 scheme.FrameHighlightResult = tOptional(tObject({}));
+scheme.FrameHideHighlightParams = tObject({
+  selector: tString,
+});
+scheme.FrameHideHighlightResult = tOptional(tObject({}));
 scheme.FrameGetAttributeParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -2008,6 +2016,7 @@ scheme.FrameExpectParams = tObject({
   selector: tOptional(tString),
   expression: tString,
   expressionArg: tOptional(tAny),
+  pseudo: tOptional(tEnum(['before', 'after'])),
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
   expectedNumber: tOptional(tFloat),
   expectedValue: tOptional(tType('SerializedArgument')),
@@ -2532,8 +2541,7 @@ scheme.WebSocketCloseEvent = tOptional(tObject({}));
 scheme.BindingCallInitializer = tObject({
   frame: tChannel(['Frame']),
   name: tString,
-  args: tOptional(tArray(tType('SerializedValue'))),
-  handle: tOptional(tChannel(['ElementHandle', 'JSHandle'])),
+  args: tArray(tType('SerializedValue')),
 });
 scheme.BindingCallRejectParams = tObject({
   error: tType('SerializedError'),

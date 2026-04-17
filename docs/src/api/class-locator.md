@@ -150,6 +150,21 @@ var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 
 Additional locator to match.
 
+## async method: Locator.ariaRef
+* since: v1.60
+* langs: js
+- returns: <[null]|[string]>
+
+Returns the aria ref (for example `e1`, `e2`) assigned to this element by the most recent aria snapshot, or `null`
+if no ref has been assigned yet. Call [`method: Locator.ariaSnapshot`] or [`method: Page.ariaSnapshot`] before this
+method to ensure a ref is available.
+
+### option: Locator.ariaRef.timeout = %%-input-timeout-%%
+* since: v1.60
+
+### option: Locator.ariaRef.timeout = %%-input-timeout-js-%%
+* since: v1.60
+
 ## async method: Locator.ariaSnapshot
 * since: v1.49
 - returns: <[string]>
@@ -1415,10 +1430,35 @@ Attribute name to get the value for.
 
 ### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
+## async method: Locator.hideHighlight
+* since: v1.60
+
+Hide element highlight added with Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
+
 ## async method: Locator.highlight
 * since: v1.20
+- returns: <[Disposable]>
 
 Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
+
+### option: Locator.highlight.style
+* since: v1.60
+* langs: js
+- `style` <[string]|[Object]<[string], [any]>>
+
+Inline CSS applied to the highlight overlay, e.g.
+
+```js
+await locator.highlight('outline: 2px dashed red');
+await locator.highlight({ color: 'red' });
+```
+
+### option: Locator.highlight.style
+* since: v1.60
+* langs: java, python, csharp
+- `style` <[string]>
+
+Additional inline CSS applied to the highlight overlay, e.g. `"outline: 2px dashed red"`.
 
 ## async method: Locator.hover
 * since: v1.14

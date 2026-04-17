@@ -29,6 +29,7 @@ export default defineConfig({
       '@isomorphic': path.resolve(__dirname, '../isomorphic'),
       '@protocol': path.resolve(__dirname, '../protocol/src'),
       '@web': path.resolve(__dirname, '../web/src'),
+      '@trace-viewer': path.resolve(__dirname, '../trace-viewer/src'),
     },
   },
   build: {

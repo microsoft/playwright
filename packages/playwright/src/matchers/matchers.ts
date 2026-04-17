@@ -318,17 +318,17 @@ export function toHaveCount(
   }, expected, options);
 }
 
-export function toHaveCSS(this: ExpectMatcherStateInternal, locator: LocatorEx, name: string, expected: string | RegExp, options?: { timeout?: number }): Promise<MatcherResult<any, any>>;
+export function toHaveCSS(this: ExpectMatcherStateInternal, locator: LocatorEx, name: string, expected: string | RegExp, options?: { timeout?: number, pseudo?: 'before' | 'after' }): Promise<MatcherResult<any, any>>;
 export function toHaveCSS(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   name: string,
   expected: string | RegExp,
-  options?: { timeout?: number },
+  options?: { timeout?: number, pseudo?: 'before' | 'after' },
 ) {
   return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
     const expectedText = serializeExpectedTextValues([expected]);
-    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
+    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, pseudo: options?.pseudo, timeout });
   }, expected, options);
 }
 

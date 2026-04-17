@@ -884,12 +884,12 @@ export interface Page {
    * information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    *
    * See
-   * [browserContext.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
+   * [browserContext.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
    * for the context-wide version.
    *
    * **NOTE** Functions installed via
-   * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * survive navigations.
+   * [page.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-binding) survive
+   * navigations.
    *
    * **Usage**
    *
@@ -918,61 +918,8 @@ export interface Page {
    *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
-  /**
-   * The method adds a function called
-   * [`name`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-name) on the `window` object of
-   * every frame in this page. When called, the function executes
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) and returns a
-   * [Promise] which resolves to the return value of
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback). If the
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) returns a [Promise],
-   * it will be awaited.
-   *
-   * The first argument of the
-   * [`callback`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-callback) function contains
-   * information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
-   *
-   * See
-   * [browserContext.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding)
-   * for the context-wide version.
-   *
-   * **NOTE** Functions installed via
-   * [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * survive navigations.
-   *
-   * **Usage**
-   *
-   * An example of exposing page URL to all frames in a page:
-   *
-   * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-   *
-   * (async () => {
-   *   const browser = await webkit.launch({ headless: false });
-   *   const context = await browser.newContext();
-   *   const page = await context.newPage();
-   *   await page.exposeBinding('pageURL', ({ page }) => page.url());
-   *   await page.setContent(`
-   *     <script>
-   *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.pageURL();
-   *       }
-   *     </script>
-   *     <button onclick="onClick()">Click me</button>
-   *     <div></div>
-   *   `);
-   *   await page.click('button');
-   * })();
-   * ```
-   *
-   * @param name Name of the function on the window object.
-   * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
-   */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any): Promise<Disposable>;
 
   /**
    * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
@@ -3299,6 +3246,12 @@ export interface Page {
      */
     waitUntil?: "load"|"domcontentloaded"|"networkidle"|"commit";
   }): Promise<null|Response>;
+
+  /**
+   * Hide all locator highlight overlays previously added by
+   * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight) on this page.
+   */
+  hideHighlight(): Promise<void>;
 
   /**
    * **NOTE** Use locator-based [locator.hover([options])](https://playwright.dev/docs/api/class-locator#locator-hover) instead.
@@ -8174,8 +8127,8 @@ export interface BrowserContext {
    * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
    * function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    *
-   * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * for page-only version.
+   * See [page.exposeBinding(name, callback)](https://playwright.dev/docs/api/class-page#page-expose-binding) for
+   * page-only version.
    *
    * **Usage**
    *
@@ -8204,57 +8157,8 @@ export interface BrowserContext {
    *
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
-  /**
-   * The method adds a function called
-   * [`name`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-name) on the
-   * `window` object of every frame in every page in the context. When called, the function executes
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * and returns a [Promise] which resolves to the return value of
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback).
-   * If the
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * returns a [Promise], it will be awaited.
-   *
-   * The first argument of the
-   * [`callback`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-callback)
-   * function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
-   *
-   * See [page.exposeBinding(name, callback[, options])](https://playwright.dev/docs/api/class-page#page-expose-binding)
-   * for page-only version.
-   *
-   * **Usage**
-   *
-   * An example of exposing page URL to all frames in all pages in the context:
-   *
-   * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-   *
-   * (async () => {
-   *   const browser = await webkit.launch({ headless: false });
-   *   const context = await browser.newContext();
-   *   await context.exposeBinding('pageURL', ({ page }) => page.url());
-   *   const page = await context.newPage();
-   *   await page.setContent(`
-   *     <script>
-   *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.pageURL();
-   *       }
-   *     </script>
-   *     <button onclick="onClick()">Click me</button>
-   *     <div></div>
-   *   `);
-   *   await page.getByRole('button').click();
-   * })();
-   * ```
-   *
-   * @param name Name of the function on the window object.
-   * @param callback Callback function that will be called in the Playwright's context.
-   * @param options
-   */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any): Promise<Disposable>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
@@ -8402,6 +8306,13 @@ export interface BrowserContext {
   on(event: 'page', listener: (page: Page) => any): this;
 
   /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  on(event: 'picklocator', listener: (page: Page) => any): this;
+
+  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
    * only listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
@@ -8477,6 +8388,11 @@ export interface BrowserContext {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'page', listener: (page: Page) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -8594,6 +8510,13 @@ export interface BrowserContext {
   addListener(event: 'page', listener: (page: Page) => any): this;
 
   /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  addListener(event: 'picklocator', listener: (page: Page) => any): this;
+
+  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
    * only listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
@@ -8673,6 +8596,11 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'picklocator', listener: (page: Page) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
@@ -8724,6 +8652,11 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'page', listener: (page: Page) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -8839,6 +8772,13 @@ export interface BrowserContext {
    *
    */
   prependListener(event: 'page', listener: (page: Page) => any): this;
+
+  /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  prependListener(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -9630,6 +9570,13 @@ export interface BrowserContext {
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
+   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
+   * page in this context. The event is dispatched to all clients connected to the context, including the one that
+   * initiated the call.
+   */
+  waitForEvent(event: 'picklocator', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
+
+  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
    * only listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
@@ -10351,26 +10298,6 @@ export interface Browser {
      * Specific user agent to use in this context.
      */
     userAgent?: string;
-
-    /**
-     * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-page-option-record-video) instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-page-option-record-video) instead.
-     */
-    videosPath?: string;
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
@@ -12708,6 +12635,14 @@ export interface Locator {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
+   * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
+   * @param options
+   */
+  highlight(options?: {
+    style?: string | { [key: string]: string | number };
+  }): Promise<Disposable>;
+  /**
    * Returns a human-readable representation of the locator, using the
    * [locator.description()](https://playwright.dev/docs/api/class-locator#locator-description) if one exists;
    * otherwise, it generates a string based on the locator's selector.
@@ -12785,6 +12720,24 @@ export interface Locator {
    * @param locator Additional locator to match.
    */
   and(locator: Locator): Locator;
+
+  /**
+   * Returns the aria ref (for example `e1`, `e2`) assigned to this element by the most recent aria snapshot, or `null`
+   * if no ref has been assigned yet. Call
+   * [locator.ariaSnapshot([options])](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot) or
+   * [page.ariaSnapshot([options])](https://playwright.dev/docs/api/class-page#page-aria-snapshot) before this method to
+   * ensure a ref is available.
+   * @param options
+   */
+  ariaRef(options?: {
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<null|string>;
 
   /**
    * Captures the aria snapshot of the given element. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots) and
@@ -13917,10 +13870,11 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
-   * [locator.highlight()](https://playwright.dev/docs/api/class-locator#locator-highlight).
+   * Hide element highlight added with Highlight the corresponding element(s) on the screen. Useful for debugging, don't
+   * commit the code that uses
+   * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
    */
-  highlight(): Promise<void>;
+  hideHighlight(): Promise<void>;
 
   /**
    * Hover over the matching element.
@@ -15656,30 +15610,6 @@ export interface BrowserType<Unused = {}> {
      * Specific user agent to use in this context.
      */
     userAgent?: string;
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-record-video)
-     * instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-record-video)
-     * instead.
-     */
-    videosPath?: string;
 
     /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
@@ -17612,30 +17542,6 @@ export interface AndroidDevice {
     userAgent?: string;
 
     /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-record-video)
-     * instead.
-     */
-    videoSize?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-
-    /**
-     * @deprecated Use
-     * [`recordVideo`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-record-video)
-     * instead.
-     */
-    videosPath?: string;
-
-    /**
      * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
      * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
      *
@@ -18357,27 +18263,24 @@ export interface APIRequest {
  * This API is used for the Web API testing. You can use it to trigger API endpoints, configure micro-services,
  * prepare environment or the service to your e2e test.
  *
- * Each Playwright browser context has associated with it
- * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) instance which shares cookie storage
- * with the browser context and can be accessed via
+ * Each Playwright browser context has an associated
+ * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext), accessible via
  * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
- * [page.request](https://playwright.dev/docs/api/class-page#page-request). It is also possible to create a new
- * APIRequestContext instance manually by calling
+ * [page.request](https://playwright.dev/docs/api/class-page#page-request) (these return the
+ *
+ * **same instance** — `page.request` is a shortcut for `page.context().request`). You can also create a standalone,
+ * isolated instance with
  * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context).
  *
  * **Cookie management**
  *
- * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) returned by
+ * The [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) returned by
  * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
- * [page.request](https://playwright.dev/docs/api/class-page#page-request) shares cookie storage with the
- * corresponding [BrowserContext](https://playwright.dev/docs/api/class-browsercontext). Each API request will have
- * `Cookie` header populated with the values from the browser context. If the API response contains `Set-Cookie`
- * header it will automatically update [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) cookies
- * and requests made from the page will pick them up. This means that if you log in using this API, your e2e test will
- * be logged in and vice versa.
  *
- * If you want API requests to not interfere with the browser cookies you should create a new
- * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) by calling
+ * [page.request](https://playwright.dev/docs/api/class-page#page-request) uses the same cookie jar as its
+ * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext):
+ *
+ * If you want API requests that do **not** share cookies with the browser, create an isolated context via
  * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context). Such
  * `APIRequestContext` object will have its own isolated cookie storage.
  */
@@ -22724,12 +22627,6 @@ export interface ConnectOverCDPOptions {
   isLocal?: boolean;
 
   /**
-   * Logger sink for Playwright logging. Optional.
-   * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
-   */
-  logger?: Logger;
-
-  /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
    * on. Defaults to 0.
    */
@@ -22764,12 +22661,6 @@ export interface ConnectOptions {
    * Additional HTTP headers to be sent with web socket connect request. Optional.
    */
   headers?: { [key: string]: string; };
-
-  /**
-   * Logger sink for Playwright logging. Optional.
-   * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
-   */
-  logger?: Logger;
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
@@ -23296,26 +23187,6 @@ export interface BrowserContextOptions {
    * Specific user agent to use in this context.
    */
   userAgent?: string;
-
-  /**
-   * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-record-video) instead.
-   */
-  videoSize?: {
-    /**
-     * Video frame width.
-     */
-    width: number;
-
-    /**
-     * Video frame height.
-     */
-    height: number;
-  };
-
-  /**
-   * @deprecated Use [`recordVideo`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-record-video) instead.
-   */
-  videosPath?: string;
 
   /**
    * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent

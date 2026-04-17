@@ -105,6 +105,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this.addObjectListener(BrowserContext.Events.Page, page => {
       this._dispatchEvent('page', { page: PageDispatcher.from(this, page) });
     });
+    this.addObjectListener(BrowserContext.Events.PickLocator, page => {
+      this._dispatchEvent('pickLocator', { page: PageDispatcher.from(this, page) });
+    });
     this.addObjectListener(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
@@ -232,13 +235,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async exposeBinding(params: channels.BrowserContextExposeBindingParams, progress: Progress): Promise<channels.BrowserContextExposeBindingResult> {
-    const binding = await this._context.exposeBinding(progress, params.name, !!params.needsHandle, (source, ...args) => {
+    const binding = await this._context.exposeBinding(progress, params.name, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
       if (this._disposed)
         return;
       const pageDispatcher = PageDispatcher.from(this, source.page);
-      const binding = new BindingCallDispatcher(pageDispatcher, params.name, !!params.needsHandle, source, args);
+      const binding = new BindingCallDispatcher(pageDispatcher, params.name, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });

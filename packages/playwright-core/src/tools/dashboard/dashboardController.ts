@@ -14,355 +14,573 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
+import { execFile } from 'child_process';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
+import { serverRegistry } from '../../serverRegistry';
+import { createClientInfo } from '../cli-client/registry';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
-import type { DashboardChannel, DashboardChannelEvents, Tab } from '@dashboard/dashboardChannel';
-import type { BrowserDescriptor } from '../../serverRegistry';
+import type { Tab } from '@dashboard/dashboardChannel';
+import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
 
-export class DashboardConnection implements Transport, DashboardChannel {
-  readonly version = 1;
+type Disposable = { dispose: () => Promise<void> };
 
-  sendMessage?: (message: string) => void;
+type BrowserSlot = {
+  guid: string;
+  contextGuid: string;
+  descriptor: BrowserDescriptor;
+  context: api.BrowserContext;
+  listeners: Disposable[];
+};
+
+export class DashboardConnection implements Transport {
+  sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
-  selectedPage: api.Page | null = null;
-  private _lastFrameData: string | null = null;
-  private _lastViewportSize: { width: number, height: number } | null = null;
-  private _pageListeners: { dispose: () => Promise<void> }[] = [];
-  private _contextListeners: { dispose: () => Promise<void> }[] = [];
-  private _eventListeners = new Map<string, Set<Function>>();
-
-  private _browserDescriptor: BrowserDescriptor;
-  private _cdpUrl: URL;
+  private _browsers = new Map<string, BrowserSlot>();
+  private _attachedBrowser: AttachedBrowser | undefined;
   private _onclose: () => void;
+  private _serverRegistryDispose?: () => void;
+  private _pushSessionsScheduled = false;
+  private _pushTabsScheduled = false;
+  private _visible = true;
+  private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
 
-  private _initPromise?: Promise<void>;
-  private _context!: api.BrowserContext;
-  private _browser?: api.Browser;
+  _recordingDir: string;
 
-  constructor(browserDescriptor: BrowserDescriptor, cdpUrl: URL, onclose: () => void) {
-    this._browserDescriptor = browserDescriptor;
-    this._cdpUrl = cdpUrl;
+  constructor(onclose: () => void) {
     this._onclose = onclose;
-  }
-
-  on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void {
-    let set = this._eventListeners.get(event);
-    if (!set) {
-      set = new Set();
-      this._eventListeners.set(event, set);
-    }
-    set.add(listener);
-  }
-
-  off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void {
-    this._eventListeners.get(event)?.delete(listener);
-  }
-
-  private _emit<K extends keyof DashboardChannelEvents>(event: K, params: DashboardChannelEvents[K]): void {
-    this.sendMessage?.(JSON.stringify({ method: event, params }));
-    const set = this._eventListeners.get(event);
-    if (set) {
-      for (const fn of set)
-        fn(params);
-    }
+    this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
   onconnect() {
-    this._initPromise = this._init();
-    this._initPromise.catch(() => this.close?.());
-  }
-
-  private async _init() {
-    this._browser = await connectToBrowserAcrossVersions(this._browserDescriptor);
-    this._context = this._browser.contexts()[0];
-
-    this._contextListeners.push(
-        eventsHelper.addEventListener(this._context, 'page', page => {
-          this._sendTabList();
-          if (!this.selectedPage)
-            this._selectPage(page);
-        }),
-    );
-
-    // Auto-select first page.
-    const pages = this._context.pages();
-    if (pages.length > 0)
-      this._selectPage(pages[0]);
-
-    this._sendCachedState();
+    this._serverRegistryDispose = serverRegistry.watch();
+    serverRegistry.on('added', this._pushSessions);
+    serverRegistry.on('removed', this._pushSessions);
+    serverRegistry.on('changed', this._pushSessions);
+    this._pushSessions();
   }
 
   onclose() {
-    this._deselectPage();
-    this._contextListeners.forEach(d => d.dispose());
-    this._contextListeners = [];
+    serverRegistry.off('added', this._pushSessions);
+    serverRegistry.off('removed', this._pushSessions);
+    serverRegistry.off('changed', this._pushSessions);
+    this._serverRegistryDispose?.();
+    this._serverRegistryDispose = undefined;
+    this._attachedBrowser?.dispose();
+    this._attachedBrowser = undefined;
+    for (const slot of this._browsers.values())
+      slot.listeners.forEach(d => d.dispose());
+    this._browsers.clear();
     this._onclose();
-    this._browser?.close().catch(() => {});
   }
 
-  async onmessage(message: string) {
-    const { id, method, params } = JSON.parse(message);
-    await this._initPromise;
+  async dispatch(method: string, params: any): Promise<any> {
+    // eslint-disable-next-line no-restricted-syntax
+    const handler = (this as any)[method];
+    if (typeof handler === 'function')
+      return handler.call(this, params);
+    const attached = this._attachedBrowser;
+    if (!attached)
+      return;
+    // eslint-disable-next-line no-restricted-syntax
+    const onAtt = (attached as any)[method];
+    if (typeof onAtt === 'function')
+      return onAtt.call(attached, params);
+  }
+
+  async selectTab(params: { browser: string; page: string }) {
+    await this._switchAttachedTo(params.browser);
+    await this._attachedBrowser?.selectPageByGuid(params.page);
+    this._pushTabs();
+  }
+
+  async newTab(params: { browser: string }) {
+    const slot = this._browsers.get(params.browser);
+    if (!slot)
+      return;
+    const page = await slot.context.newPage();
+    await this._switchAttachedTo(params.browser);
+    await this._attachedBrowser?.selectPage(page);
+    this._pushTabs();
+  }
+
+  async closeTab(params: { browser: string; page: string }) {
+    const slot = this._browsers.get(params.browser);
+    if (!slot)
+      return;
+    const page = slot.context.pages().find(p => pageId(p) === params.page);
+    await page?.close({ reason: 'Closed in Dashboard' });
+  }
+
+  async closeSession(params: { browser: string }) {
+    const descriptor = serverRegistry.readDescriptor(params.browser);
+    const browser = await connectToBrowserAcrossVersions(descriptor);
     try {
-      // eslint-disable-next-line no-restricted-syntax
-      const result = await (this as any)[method]?.(params);
-      this.sendMessage?.(JSON.stringify({ id, result }));
-    } catch (e) {
-      this.sendMessage?.(JSON.stringify({ id, error: String(e) }));
+      await Promise.all(browser.contexts().map(context => context.close()));
+      await browser.close();
+    } catch {
+      // best-effort
     }
   }
 
-  async selectTab(params: { pageId: string }) {
-    const page = this._context.pages().find(p => this._pageId(p) === params.pageId);
+  async deleteSessionData(params: { browser: string }) {
+    await serverRegistry.deleteUserData(params.browser);
+  }
+
+  async setVisible(params: { visible: boolean }) {
+    if (this._visible === params.visible)
+      return;
+    this._visible = params.visible;
+    await this._attachedBrowser?.setScreencastActive(params.visible);
+  }
+
+  revealSession(sessionName: string, workspaceDir?: string) {
+    this._pendingReveal = { sessionName, workspaceDir };
+    void this._tryRevealPending();
+  }
+
+  private async _tryRevealPending() {
+    const pending = this._pendingReveal;
+    if (!pending)
+      return;
+    const slot = [...this._browsers.values()].find(s =>
+      s.descriptor.title === pending.sessionName
+        && (pending.workspaceDir === undefined || s.descriptor.workspaceDir === pending.workspaceDir));
+    if (!slot)
+      return;
+    this._pendingReveal = undefined;
+    await this._switchAttachedTo(slot.guid);
+    this._pushTabs();
+  }
+
+  async reveal(params: { path: string }) {
+    switch (os.platform()) {
+      case 'darwin':
+        execFile('open', ['-R', params.path]);
+        break;
+      case 'win32':
+        execFile('explorer', ['/select,', params.path]);
+        break;
+      case 'linux':
+        execFile('xdg-open', [path.dirname(params.path)]);
+        break;
+    }
+  }
+
+  visible(): boolean {
+    return this._visible;
+  }
+
+  emitSessions(sessions: BrowserStatus[]) {
+    this.sendEvent?.('sessions', { sessions, clientInfo: createClientInfo() });
+  }
+
+  emitTabs(tabs: Tab[]) {
+    this.sendEvent?.('tabs', { tabs });
+  }
+
+  emitFrame(data: string, viewportWidth: number, viewportHeight: number) {
+    this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
+  }
+
+  emitElementPicked(selector: string, ariaSnapshot?: string) {
+    this.sendEvent?.('elementPicked', { selector, ariaSnapshot });
+  }
+
+  emitPickLocator() {
+    this.sendEvent?.('pickLocator', {});
+  }
+
+  _pushTabs() {
+    if (this._pushTabsScheduled)
+      return;
+    this._pushTabsScheduled = true;
+    queueMicrotask(async () => {
+      this._pushTabsScheduled = false;
+      try {
+        const tabs = await this._aggregateTabs();
+        this.emitTabs(tabs);
+      } catch {
+        // best-effort
+      }
+    });
+  }
+
+  private async _aggregateTabs(): Promise<Tab[]> {
+    const tasks: Promise<Tab>[] = [];
+    for (const slot of this._browsers.values()) {
+      const selectedPage = this._attachedBrowser?.browserGuid === slot.guid
+        ? this._attachedBrowser.selectedPage()
+        : null;
+      for (const page of slot.context.pages()) {
+        tasks.push((async () => ({
+          browser: slot.guid,
+          context: slot.contextGuid,
+          page: pageId(page),
+          title: await page.title().catch(() => ''),
+          url: page.url(),
+          selected: page === selectedPage,
+          faviconUrl: await faviconUrl(page),
+        }))());
+      }
+    }
+    return await Promise.all(tasks);
+  }
+
+  private async _switchAttachedTo(guid: string) {
+    if (this._attachedBrowser?.browserGuid === guid)
+      return;
+    this._attachedBrowser?.dispose();
+    this._attachedBrowser = undefined;
+    const slot = this._browsers.get(guid);
+    if (!slot)
+      return;
+    const attached = new AttachedBrowser(this, slot);
+    await attached.init();
+    this._attachedBrowser = attached;
+  }
+
+  private _pushSessions = () => {
+    if (this._pushSessionsScheduled)
+      return;
+    this._pushSessionsScheduled = true;
+    queueMicrotask(async () => {
+      this._pushSessionsScheduled = false;
+      try {
+        const byWs = await serverRegistry.list();
+        const sessions: BrowserStatus[] = [];
+        for (const list of byWs.values())
+          sessions.push(...list);
+        await this._reconcile(sessions);
+        await this._tryRevealPending();
+        this.emitSessions(sessions);
+        this._pushTabs();
+      } catch {
+        // best-effort
+      }
+    });
+  };
+
+  private async _reconcile(sessions: BrowserStatus[]) {
+    const connectable = new Map<string, BrowserStatus>();
+    for (const status of sessions) {
+      if (status.canConnect)
+        connectable.set(status.browser.guid, status);
+    }
+
+    for (const [guid, slot] of this._browsers) {
+      if (connectable.has(guid))
+        continue;
+      if (this._attachedBrowser?.browserGuid === guid) {
+        this._attachedBrowser.dispose();
+        this._attachedBrowser = undefined;
+      }
+      slot.listeners.forEach(d => d.dispose());
+      this._browsers.delete(guid);
+    }
+
+    for (const [guid, status] of connectable) {
+      if (this._browsers.has(guid))
+        continue;
+      try {
+        const browser = await connectToBrowserAcrossVersions(status);
+        if (this._browsers.has(guid))
+          continue;
+        const context = browser.contexts()[0];
+        if (!context)
+          continue;
+        const slot: BrowserSlot = {
+          guid,
+          // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+          contextGuid: (context as any)._guid,
+          descriptor: status,
+          context,
+          listeners: [],
+        };
+        const watchPage = (page: api.Page) => {
+          slot.listeners.push(
+              eventsHelper.addEventListener(page, 'load', () => this._pushTabs()),
+              eventsHelper.addEventListener(page, 'framenavigated', (frame: api.Frame) => {
+                if (frame === page.mainFrame())
+                  this._pushTabs();
+              }),
+              eventsHelper.addEventListener(page, 'close', () => this._pushTabs()),
+          );
+        };
+        slot.listeners.push(
+            eventsHelper.addEventListener(context, 'page', (page: api.Page) => {
+              watchPage(page);
+              this._pushTabs();
+            }),
+            eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
+              this._onPickLocator(guid, page).catch(() => {});
+            }),
+        );
+        for (const page of context.pages())
+          watchPage(page);
+        this._browsers.set(guid, slot);
+        this._pushTabs();
+      } catch {
+        // best-effort
+      }
+    }
+  }
+
+  private async _onPickLocator(guid: string, page: api.Page) {
+    await this._switchAttachedTo(guid);
+    await this._attachedBrowser?.selectPage(page);
+    this.emitPickLocator();
+  }
+}
+
+class AttachedBrowser {
+  private _owner: DashboardConnection;
+  private _slot: BrowserSlot;
+
+  private _selectedPage: api.Page | null = null;
+  private _screencastRunning = false;
+  private _recordingPath: string | null = null;
+  private _pageListeners: Disposable[] = [];
+  private _contextListeners: Disposable[] = [];
+
+  constructor(owner: DashboardConnection, slot: BrowserSlot) {
+    this._owner = owner;
+    this._slot = slot;
+  }
+
+  get browserGuid(): string { return this._slot.guid; }
+  get contextGuid(): string { return this._slot.contextGuid; }
+  private get _context(): api.BrowserContext { return this._slot.context; }
+  private get _descriptor(): BrowserDescriptor { return this._slot.descriptor; }
+
+  async init() {
+    this._contextListeners.push(
+        eventsHelper.addEventListener(this._context, 'page', page => {
+          if (!this._selectedPage)
+            this._selectPage(page).catch(() => {});
+        }),
+    );
+    const pages = this._context.pages();
+    if (pages.length > 0)
+      await this._selectPage(pages[0]);
+  }
+
+  dispose() {
+    this._contextListeners.forEach(d => d.dispose());
+    this._contextListeners = [];
+    this._pageListeners.forEach(d => d.dispose());
+    this._pageListeners = [];
+    if (this._selectedPage && this._screencastRunning)
+      this._selectedPage.screencast.stop().catch(() => {});
+    this._screencastRunning = false;
+    this._recordingPath = null;
+    this._selectedPage = null;
+    this._owner._pushTabs();
+  }
+
+  selectedPage(): api.Page | null {
+    return this._selectedPage;
+  }
+
+  async setScreencastActive(active: boolean) {
+    if (!this._selectedPage)
+      return;
+    if (active && !this._screencastRunning) {
+      this._screencastRunning = true;
+      await this._startScreencast(this._selectedPage);
+    } else if (!active && this._screencastRunning) {
+      this._screencastRunning = false;
+      await this._selectedPage.screencast.stop().catch(() => {});
+    }
+  }
+
+  async selectPage(page: api.Page) {
+    await this._selectPage(page);
+  }
+
+  async selectPageByGuid(guid: string) {
+    const page = this._context.pages().find(p => pageId(p) === guid);
     if (page)
       await this._selectPage(page);
   }
 
-  async closeTab(params: { pageId: string }) {
-    const page = this._context.pages().find(p => this._pageId(p) === params.pageId);
-    if (page)
-      await page.close({ reason: 'Closed in Dashboard' });
-  }
-
-  async newTab() {
-    const page = await this._context.newPage();
-    await this._selectPage(page);
-  }
-
   async navigate(params: { url: string }) {
-    if (!this.selectedPage || !params.url)
+    if (!params.url)
       return;
-    const page = this.selectedPage;
-    await page.goto(params.url);
+    await this._selectedPage?.goto(params.url);
   }
 
   async back() {
-    await this.selectedPage?.goBack();
+    await this._selectedPage?.goBack();
   }
 
   async forward() {
-    await this.selectedPage?.goForward();
+    await this._selectedPage?.goForward();
   }
 
   async reload() {
-    await this.selectedPage?.reload();
+    await this._selectedPage?.reload();
   }
 
   async mousemove(params: { x: number; y: number }) {
-    await this.selectedPage?.mouse.move(params.x, params.y);
+    await this._selectedPage?.mouse.move(params.x, params.y);
   }
 
-  async mousedown(params: { x: number; y: number; button?: 'left' | 'right' | 'middle' }) {
-    await this.selectedPage?.mouse.move(params.x, params.y);
-    await this.selectedPage?.mouse.down({ button: params.button || 'left' });
+  async mousedown(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
+    const page = this._selectedPage;
+    if (!page)
+      return;
+    await page.mouse.move(params.x, params.y);
+    await page.mouse.down({ button: params.button || 'left' });
   }
 
-  async mouseup(params: { x: number; y: number; button?: 'left' | 'right' | 'middle' }) {
-    await this.selectedPage?.mouse.move(params.x, params.y);
-    await this.selectedPage?.mouse.up({ button: params.button || 'left' });
+  async mouseup(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
+    const page = this._selectedPage;
+    if (!page)
+      return;
+    await page.mouse.move(params.x, params.y);
+    await page.mouse.up({ button: params.button || 'left' });
   }
 
   async wheel(params: { deltaX: number; deltaY: number }) {
-    await this.selectedPage?.mouse.wheel(params.deltaX, params.deltaY);
+    await this._selectedPage?.mouse.wheel(params.deltaX, params.deltaY);
   }
 
   async keydown(params: { key: string }) {
-    await this.selectedPage?.keyboard.down(params.key);
+    await this._selectedPage?.keyboard.down(params.key);
   }
 
   async keyup(params: { key: string }) {
-    await this.selectedPage?.keyboard.up(params.key);
+    await this._selectedPage?.keyboard.up(params.key);
+  }
+
+  async pickLocator() {
+    const page = this._selectedPage;
+    if (!page)
+      return;
+    const locator = await page.pickLocator();
+    this._owner.emitElementPicked(locator.toString(), await locator.ariaSnapshot());
+  }
+
+  async cancelPickLocator() {
+    await this._selectedPage?.cancelPickLocator();
+  }
+
+  async startRecording() {
+    const page = this._selectedPage;
+    if (!page)
+      return;
+    const artifactsDir = this._descriptor.browser.launchOptions.artifactsDir ?? this._owner._recordingDir;
+    this._recordingPath = path.join(artifactsDir, `recording-${Date.now()}.webm`);
+    if (this._screencastRunning)
+      await this._restartScreencast(page);
+  }
+
+  async stopRecording(): Promise<{ path: string }> {
+    const p = this._recordingPath;
+    if (!p)
+      throw new Error('No recording in progress');
+    this._recordingPath = null;
+    if (this._selectedPage && this._screencastRunning)
+      await this._restartScreencast(this._selectedPage);
+    return { path: p };
+  }
+
+  async screenshot(): Promise<string> {
+    const page = this._selectedPage;
+    if (!page)
+      throw new Error('No page selected');
+    const buffer = await page.screenshot({ type: 'png' });
+    return buffer.toString('base64');
   }
 
   private async _selectPage(page: api.Page) {
-    if (this.selectedPage === page)
+    if (this._selectedPage === page)
       return;
 
-    if (this.selectedPage) {
+    if (this._selectedPage) {
       this._pageListeners.forEach(d => d.dispose());
       this._pageListeners = [];
-      await this.selectedPage.screencast.stop();
+      if (this._screencastRunning)
+        await this._selectedPage.screencast.stop();
+      this._screencastRunning = false;
+      this._recordingPath = null;
     }
 
-    this.selectedPage = page;
-    this._lastFrameData = null;
-    this._lastViewportSize = null;
-    this._sendTabList();
+    this._selectedPage = page;
+    this._owner._pushTabs();
 
     this._pageListeners.push(
         eventsHelper.addEventListener(page, 'close', () => {
           this._deselectPage();
           const pages = page.context().pages();
           if (pages.length > 0)
-            this._selectPage(pages[0]);
-          this._sendTabList();
+            this._selectPage(pages[0]).catch(() => {});
+          this._owner._pushTabs();
         }),
         eventsHelper.addEventListener(page, 'framenavigated', frame => {
           if (frame === page.mainFrame())
-            this._sendTabList();
+            this._owner._pushTabs();
         }),
     );
 
-    const size = { width: 1280, height: 800 };
-    await page.screencast.start({
-      onFrame: ({ data }: { data: Buffer }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
-      size,
-    });
-  }
-
-  private _deselectPage() {
-    if (!this.selectedPage)
-      return;
-    this._pageListeners.forEach(d => d.dispose());
-    this._pageListeners = [];
-    this.selectedPage.screencast.stop().catch(() => {});
-    this.selectedPage = null;
-    this._lastFrameData = null;
-    this._lastViewportSize = null;
-  }
-
-  async pickLocator() {
-    if (!this.selectedPage)
-      return;
-    const locator = await this.selectedPage.pickLocator();
-    this._emit('elementPicked', { selector: locator.toString() });
-  }
-
-  async cancelPickLocator() {
-    await this.selectedPage?.cancelPickLocator();
-  }
-
-  private _sendCachedState() {
-    if (this._lastFrameData && this._lastViewportSize)
-      this._emit('frame', { data: this._lastFrameData, viewportWidth: this._lastViewportSize.width, viewportHeight: this._lastViewportSize.height });
-    this._sendTabList();
-  }
-
-  async tabs(): Promise<{ tabs: Tab[] }> {
-    return { tabs: await this._tabList() };
-  }
-
-  private async _tabList(): Promise<Tab[]> {
-    const pages = this._context.pages();
-    if (pages.length === 0)
-      return [];
-    const devtoolsUrl = await this._devtoolsUrl(pages[0]);
-    return await Promise.all(pages.map(async page => {
-      const title = await page.title();
-      return {
-        pageId: this._pageId(page),
-        title,
-        url: page.url(),
-        selected: page === this.selectedPage,
-        inspectorUrl: devtoolsUrl ? await this._pageInspectorUrl(page, devtoolsUrl) : 'data:text/plain,Dashboard only supported in Chromium based browsers',
-      };
-    }));
-  }
-
-  pageForId(pageId: string) {
-    return this._context?.pages().find(p => this._pageId(p) === pageId);
-  }
-
-  private _pageId(p: api.Page): string {
-    // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
-    return (p as any)._guid;
-  }
-
-  private async _devtoolsUrl(page: api.Page) {
-    // eslint-disable-next-line no-restricted-syntax -- cdpPort is not in the public LaunchOptions type, fine if regresses.
-    const cdpPort = (this._browserDescriptor.browser.launchOptions as any).cdpPort;
-    if (cdpPort)
-      return new URL(`http://localhost:${cdpPort}/devtools/`);
-
-    const browserRevision = await getBrowserRevision(page);
-    if (!browserRevision)
-      return null;
-    return new URL(`https://chrome-devtools-frontend.appspot.com/serve_rev/${browserRevision}/`);
-  }
-
-  private async _pageInspectorUrl(page: api.Page, devtoolsUrl: URL): Promise<string | undefined> {
-    const inspector = new URL('./devtools_app.html', devtoolsUrl);
-    const cdp = new URL(this._cdpUrl);
-    cdp.searchParams.set('cdpPageId', this._pageId(page));
-    inspector.searchParams.set('ws', `${cdp.host}${cdp.pathname}${cdp.search}`);
-    const url = inspector.toString();
-    return url;
-  }
-
-  private _sendTabList() {
-    this._tabList().then(tabs => this._emit('tabs', { tabs }));
-  }
-
-  private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {
-    const data = frame.toString('base64');
-    this._lastFrameData = data;
-    this._lastViewportSize = { width: viewportWidth, height: viewportHeight };
-    this._emit('frame', { data, viewportWidth, viewportHeight });
-  }
-}
-
-async function getBrowserRevision(page: api.Page): Promise<string | null> {
-  try {
-    const session = await page.context().newCDPSession(page);
-    const version = await session.send('Browser.getVersion');
-    await session.detach();
-    return version.revision;
-  } catch (error) {
-    return null;
-  }
-}
-
-export class CDPConnection implements Transport {
-  sendMessage?: (message: string) => void;
-  close?: () => void;
-
-  private _page: api.Page;
-  private _rawSession: api.CDPSession | null = null;
-  private _rawSessionListeners: { dispose: () => Promise<void> }[] = [];
-  private _initializePromise: Promise<void> | undefined;
-
-  constructor(page: api.Page) {
-    this._page = page;
-  }
-
-  onconnect() {
-    this._initializePromise = this._initializeRawSession();
-  }
-
-  async onmessage(message: string) {
-    const { id, method, params } = JSON.parse(message);
-    await this._initializePromise;
-    if (!this._rawSession)
-      throw new Error('CDP session is not initialized');
-    try {
-      const result = await this._rawSession.send(method as Parameters<api.CDPSession['send']>[0], params);
-      this.sendMessage?.(JSON.stringify({ id, result }));
-    } catch (e) {
-      this.sendMessage?.(JSON.stringify({ id, error: String(e) }));
+    if (this._owner.visible()) {
+      this._screencastRunning = true;
+      await this._startScreencast(page);
     }
   }
 
-  onclose() {
-    this._rawSessionListeners.forEach(listener => listener.dispose());
-    this._rawSession?.detach().catch(() => {});
-    this._rawSession = null;
-    this._initializePromise = undefined;
+  private async _startScreencast(page: api.Page) {
+    await page.screencast.start({
+      onFrame: ({ data }: { data: Buffer }) => this._owner.emitFrame(data.toString('base64'), page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
+      size: { width: 1280, height: 800 },
+      ...(this._recordingPath ? { path: this._recordingPath } : {}),
+    });
+    void page.screenshot().catch(() => {}); // TODO: this is necessary to trigger a first frame - should this be in screencast.start() implementation?
   }
 
-  private async _initializeRawSession() {
-    const session = await this._page.context().newCDPSession(this._page);
-    this._rawSession = session;
-    this._rawSessionListeners = [
-      eventsHelper.addEventListener(session, 'event', ({ method, params }) => {
-        this.sendMessage?.(JSON.stringify({ method, params }));
-      }),
-      eventsHelper.addEventListener(session, 'close', () => {
-        this.close?.();
-      }),
-    ];
+  private async _restartScreencast(page: api.Page) {
+    await page.screencast.stop().catch(() => {});
+    await this._startScreencast(page);
   }
+
+  private _deselectPage() {
+    if (!this._selectedPage)
+      return;
+    this._pageListeners.forEach(d => d.dispose());
+    this._pageListeners = [];
+    if (this._screencastRunning)
+      this._selectedPage.screencast.stop().catch(() => {});
+    this._screencastRunning = false;
+    this._recordingPath = null;
+    this._selectedPage = null;
+  }
+}
+
+function pageId(p: api.Page): string {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+  return (p as any)._guid;
+}
+
+async function faviconUrl(page: api.Page): Promise<string | undefined> {
+  const url = page.evaluate(async () => {
+    const response = await fetch(document.querySelector<HTMLLinkElement>('link[rel~="icon"]')?.href ?? '/favicon.ico');
+    if (!response.ok)
+      return undefined;
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }).catch(() => undefined);
+  const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 3000));
+  return await Promise.race([url, timeout]);
 }

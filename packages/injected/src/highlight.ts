@@ -63,6 +63,7 @@ export class Highlight {
   private _injectedScript: InjectedScript;
   private _rafRequest: number | undefined;
   private _language: Language = 'javascript';
+  private _elementHighlightSelectors = new Map<string, { selector: ParsedSelector, cssStyle?: string }>();
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -123,22 +124,51 @@ export class Highlight {
     this._language = language;
   }
 
-  runHighlightOnRaf(selector: ParsedSelector) {
+  addElementHighlight(selector: ParsedSelector, cssStyle?: string) {
+    const key = stringifySelector(selector);
+    this._elementHighlightSelectors.set(key, { selector, cssStyle });
+    this._ensureElementHighlightRaf();
+  }
+
+  removeElementHighlight(selector: ParsedSelector) {
+    const key = stringifySelector(selector);
+    if (!this._elementHighlightSelectors.delete(key))
+      return;
+    if (this._elementHighlightSelectors.size === 0) {
+      if (this._rafRequest) {
+        this._injectedScript.utils.builtins.cancelAnimationFrame(this._rafRequest);
+        this._rafRequest = undefined;
+      }
+      this.clearHighlight();
+    }
+  }
+
+  private _ensureElementHighlightRaf() {
     if (this._rafRequest)
-      this._injectedScript.utils.builtins.cancelAnimationFrame(this._rafRequest);
-    const elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
-    const locator = asLocator(this._language, stringifySelector(selector));
-    const color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
-    this.updateHighlight(elements.map((element, index) => {
-      const suffix = elements.length > 1 ? ` [${index + 1} of ${elements.length}]` : '';
-      return { element, color, tooltipText: locator + suffix };
-    }));
-    this._rafRequest = this._injectedScript.utils.builtins.requestAnimationFrame(() => this.runHighlightOnRaf(selector));
+      return;
+    const tick = () => {
+      const entries: HighlightEntry[] = [];
+      for (const { selector, cssStyle } of this._elementHighlightSelectors.values()) {
+        const elements = this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement);
+        const locator = asLocator(this._language, stringifySelector(selector));
+        const color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
+        for (let i = 0; i < elements.length; ++i) {
+          const suffix = elements.length > 1 ? ` [${i + 1} of ${elements.length}]` : '';
+          entries.push({ element: elements[i], color, tooltipText: locator + suffix, cssStyle });
+        }
+      }
+      this.updateHighlight(entries);
+      this._rafRequest = this._injectedScript.utils.builtins.requestAnimationFrame(tick);
+    };
+    this._rafRequest = this._injectedScript.utils.builtins.requestAnimationFrame(tick);
   }
 
   uninstall() {
-    if (this._rafRequest)
+    if (this._rafRequest) {
       this._injectedScript.utils.builtins.cancelAnimationFrame(this._rafRequest);
+      this._rafRequest = undefined;
+    }
+    this._elementHighlightSelectors.clear();
     this._glassPaneElement.remove();
   }
 
@@ -379,6 +409,8 @@ export class Highlight {
       if (entries[i].element !== this._renderedEntries[i].targetElement)
         return false;
       if (entries[i].color !== this._renderedEntries[i].color)
+        return false;
+      if (entries[i].cssStyle !== this._renderedEntries[i].cssStyle)
         return false;
       const oldBox = this._renderedEntries[i].box;
       if (!oldBox)

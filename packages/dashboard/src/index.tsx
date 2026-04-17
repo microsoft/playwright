@@ -17,53 +17,51 @@
 import React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import './colors.css';
+import '@web/common.css';
 import './common.css';
 import { applyTheme } from '@web/theme';
 import { Dashboard } from './dashboard';
-import { Grid } from './grid';
 import { SessionModel } from './sessionModel';
+import { DashboardClient } from './dashboardClient';
+import { SessionSidebar } from './sessionSidebar';
+import { SplitView } from '@web/components/splitView';
+
+import type { DashboardClientChannel } from './dashboardClient';
 
 applyTheme();
 
-export function navigate(hash: string) {
-  window.history.pushState(null, '', hash);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
+export const DashboardClientContext = React.createContext<DashboardClientChannel | undefined>(undefined);
 
-function parseHash(): string | undefined {
-  const hash = window.location.hash;
-  const prefix = '#session=';
-  if (hash.startsWith(prefix))
-    return decodeURIComponent(hash.slice(prefix.length));
-  return undefined;
-}
+const client = DashboardClient.create('/ws');
+const model = new SessionModel(client);
 
-const model = new SessionModel();
+const pushVisibility = () => client.setVisible({ visible: !document.hidden }).catch(() => {});
+document.addEventListener('visibilitychange', pushVisibility);
+if (document.hidden)
+  pushVisibility();
 
 const App: React.FC = () => {
   const [, setRevision] = React.useState(0);
-  const [socketPath, setSocketPath] = React.useState<string | undefined>(parseHash);
+  React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), []);
 
-  React.useEffect(() => {
-    model.startPolling();
-    const unsubscribe = model.subscribe(() => setRevision(r => r + 1));
-    return () => {
-      unsubscribe();
-      model.stopPolling();
-    };
-  }, [model]);
-
-  React.useEffect(() => {
-    const onPopState = () => setSocketPath(parseHash());
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
-
-  if (socketPath) {
-    const wsUrl = model.sessionByGuid(socketPath)?.wsUrl;
-    return <Dashboard wsUrl={wsUrl || undefined} />;
-  }
-  return <Grid model={model} />;
+  return <DashboardClientContext.Provider value={client}>
+    <SplitView
+      orientation='horizontal'
+      sidebarIsFirst
+      sidebarSize={320}
+      minSidebarSize={220}
+      settingName='dashboardSessionSidebar'
+      sidebar={<SessionSidebar
+        model={model}
+        onSelectTab={tab => { void client.selectTab({ browser: tab.browser, page: tab.page }); }}
+        onCloseTab={tab => { void client.closeTab({ browser: tab.browser, page: tab.page }); }}
+        onNewTab={browser => { void client.newTab({ browser }); }}
+      />}
+      main={<div className='dashboard-shell-main'>
+        <Dashboard />
+      </div>}
+    />
+  </DashboardClientContext.Provider>;
 };
 
-ReactDOM.createRoot(document.querySelector('#root')!).render(<App/>);
+ReactDOM.createRoot(document.querySelector('#root')!).render(<App />);

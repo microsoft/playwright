@@ -101,7 +101,7 @@ export type Config = {
   /**
    * Connect to a running browser instance (Edge/Chrome only). If specified, `browser`
    * config is ignored.
-   * Requires the "Playwright MCP Bridge" browser extension to be installed.
+   * Requires the "Playwright Extension" to be installed.
    */
   extension?: boolean;
 

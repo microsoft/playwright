@@ -15,9 +15,19 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { test, expect } from './cli-fixtures';
+
+function displayPath(p: string): string {
+  const home = os.homedir();
+  if (p === home)
+    return '~';
+  if (p.startsWith(home + path.sep))
+    return '~' + p.slice(home.length);
+  return p;
+}
 
 test.beforeEach(({}, testInfo) => {
   process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
@@ -29,20 +39,6 @@ test('should show browser session chip', async ({ cli, server, openDashboard }) 
   const dashboard = await openDashboard();
   const chips = dashboard.locator('.session-chip');
   await expect(chips).toHaveCount(1);
-});
-
-test('should show devtools sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
-  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'DevTools sidebar requires CDP, only available in Chromium');
-
-  await cli('open', server.EMPTY_PAGE);
-
-  const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
-
-  const devToolsButton = dashboard.locator('button.nav-btn[title="Chrome DevTools"]');
-  await expect(dashboard.locator('.inspector-frame')).not.toBeVisible();
-  await devToolsButton.click();
-  await expect(dashboard.locator('.inspector-frame')).toBeVisible();
 });
 
 test('should show current workspace sessions first', async ({ cli, server, openDashboard }) => {
@@ -60,15 +56,13 @@ test('should show current workspace sessions first', async ({ cli, server, openD
     const workspaceGroups = dashboard.locator('.workspace-group');
     await expect(workspaceGroups).toHaveCount(2);
 
-    // Current workspace (first) should be first and expanded.
-    await expect(workspaceGroups.nth(0).locator('.workspace-path')).toContainText(first);
-    await expect(workspaceGroups.nth(0).locator('.session-chips')).toBeVisible();
+    // Current workspace (first) should be first.
+    await expect(workspaceGroups.nth(0).locator('.workspace-path-full')).toHaveText(displayPath(first));
+    await expect(workspaceGroups.nth(0).locator('.session-chip')).toHaveCount(1);
 
-    // Other workspace (second) should be second and collapsed.
-    await expect(workspaceGroups.nth(1).locator('.workspace-path')).toContainText(second);
-    await expect(workspaceGroups.nth(1).locator('.session-chips')).not.toBeVisible();
-
-    await dashboard.close();
+    // Other workspace (second) should be second.
+    await expect(workspaceGroups.nth(1).locator('.workspace-path-full')).toHaveText(displayPath(second));
+    await expect(workspaceGroups.nth(1).locator('.session-chip')).toHaveCount(1);
   };
 
   await test.step('open dashboard in workspace A', async () => {
@@ -80,39 +74,60 @@ test('should show current workspace sessions first', async ({ cli, server, openD
   });
 });
 
+test('should activate session when show is called with -s', async ({ cli, server, openDashboard }) => {
+  await cli('-s=sessA', 'open', server.EMPTY_PAGE);
+  await cli('-s=sessB', 'open', server.EMPTY_PAGE);
+
+  const dashboard = await openDashboard({ session: 'sessB' });
+  const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
+  await expect(activeSession.locator('.session-chip-name')).toHaveText('sessB');
+});
+
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test('daemon show: closing page exits the process', async ({ playwright, cli, findFreePort, waitForPort }) => {
+  const cdpPort = await findFreePort();
+  const { exitCode, pid } = await cli('show', { env: { PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST: '1', PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(cdpPort) } });
+  expect(exitCode).toBe(0);
+  expect(pid).toBeDefined();
+  expect(isAlive(pid!)).toBe(true);
+
+  await waitForPort(cdpPort);
+
+  const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
+  const page = browser.contexts()[0].pages()[0];
+  await page.close();
+
+  await expect(() => expect(isAlive(pid!)).toBe(false)).toPass();
+});
+
 test('should pick locator from browser', async ({ cli, server, openDashboard }) => {
-  server.setContent('/', '<button style="position:fixed;top:0;left:0;width:200px;height:100px">Submit</button>', 'text/html');
+  server.setContent('/', '<button style="position:fixed;inset:0;width:100vw;height:100vh">Submit</button>', 'text/html');
 
   await cli('open', server.PREFIX);
 
   const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
+  await dashboard.locator('.sidebar-tab').first().click();
 
-  const pickBtn = dashboard.locator('button.nav-btn[title="Pick locator"]');
-  await pickBtn.click();
+  const pickPromise = cli('pick');
+  let done = false;
+  void pickPromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('div.dashboard-view')).toContainClass('interactive');
-
-  // Intercept clipboard writes before clicking pick.
-  const copyPromise = dashboard.evaluate(() => {
-    if (!navigator.clipboard)
-      return 'no clipboard';
-    return new Promise<string>(f => {
-      const original = navigator.clipboard.writeText;
-      navigator.clipboard.writeText = text => {
-        f(text);
-        navigator.clipboard.writeText = original;
-        return navigator.clipboard.writeText(text);
-      };
-    });
-  }).catch(e => `Exception in eval: ${e}`);
+  await expect(dashboard.locator('div.dashboard-view.interactive')).toBeVisible();
 
   await expect(async () => {
-    await dashboard.locator('img#display').click({ position: { x: 50, y: 25 } });
-    const text = await Promise.race([
-      copyPromise,
-      new Promise<string>(f => setTimeout(() => f('timeout'), 1000))
-    ]);
-    expect(text).toContain('Submit');
+    const box = await dashboard.locator('img#display').boundingBox();
+    await dashboard.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    expect(done).toBe(true);
   }).toPass();
+
+  const { output } = await pickPromise;
+  expect(output).toContain(`getByRole('button', { name: 'Submit' })`);
 });

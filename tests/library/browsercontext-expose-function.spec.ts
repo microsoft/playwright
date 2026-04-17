@@ -16,7 +16,6 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
-import type { JSHandle } from '@playwright/test';
 
 it('expose binding should work', async ({ context }) => {
   let bindingSource: any;
@@ -88,20 +87,6 @@ it('should be callable from-inside addInitScript', async ({ context, server }) =
   await page.addInitScript('window["woof"]("page")');
   await page.reload();
   await expect.poll(() => args).toEqual(['context', 'page']);
-});
-
-it('exposeBindingHandle should work', async ({ context }) => {
-  let target!: JSHandle<any>;
-  await context.exposeBinding('logme', (source, t) => {
-    target = t;
-    return 17;
-  }, { handle: true });
-  const page = await context.newPage();
-  const result = await page.evaluate(async function() {
-    return (window as any)['logme']({ foo: 42 });
-  });
-  expect(await target.evaluate(x => x.foo)).toBe(42);
-  expect(result).toEqual(17);
 });
 
 it('should work with CSP', async ({ page, context, server }) => {

@@ -87,7 +87,7 @@ test('generator_setup_page', async ({ startClient }) => {
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
       intent: 'Click submit button',
     },
   });
@@ -151,7 +151,7 @@ test('click after generator_log_action', async ({ startClient }) => {
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
       intent: 'Click submit button',
     },
   })).toHaveResponse({
@@ -304,7 +304,7 @@ test('should respect custom test id', async ({ startClient }) => {
     name: 'browser_click',
     arguments: {
       element: 'Submit button',
-      ref: 'e2',
+      target: 'e2',
       intent: 'Click submit button',
     },
   })).toHaveResponse({
