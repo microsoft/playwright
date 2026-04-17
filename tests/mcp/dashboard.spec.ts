@@ -131,3 +131,78 @@ test('should pick locator from browser', async ({ cli, server, openDashboard }) 
   const { output } = await pickPromise;
   expect(output).toContain(`getByRole('button', { name: 'Submit' })`);
 });
+
+async function installSaveFilePickerMock(page: import('playwright-core').Page): Promise<() => Promise<Buffer>> {
+  let captured: string | undefined;
+  let resolveCaptured: ((b64: string) => void) | undefined;
+  const waitForCapture = new Promise<string>(resolve => {
+    resolveCaptured = resolve;
+  });
+  await page.exposeBinding('__testCaptureBytes', (_, b64: string) => {
+    captured = b64;
+    resolveCaptured!(b64);
+  });
+  await page.addInitScript(() => {
+    (window as any).showSaveFilePicker = async () => ({
+      createWritable: async () => {
+        const chunks: Uint8Array[] = [];
+        return {
+          write: async (chunk: Blob | BufferSource) => {
+            const buf = chunk instanceof Blob
+              ? new Uint8Array(await chunk.arrayBuffer())
+              : new Uint8Array(chunk instanceof ArrayBuffer ? chunk : (chunk as ArrayBufferView).buffer);
+            chunks.push(buf);
+          },
+          close: async () => {
+            const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+            const merged = new Uint8Array(total);
+            let offset = 0;
+            for (const c of chunks) {
+              merged.set(c, offset);
+              offset += c.byteLength;
+            }
+            await (window as any).__testCaptureBytes((merged as any).toBase64());
+          },
+        };
+      },
+    });
+  });
+  return async () => {
+    const b64 = captured ?? await waitForCapture;
+    return Buffer.from(b64, 'base64');
+  };
+}
+
+test('screenshot writes PNG bytes to the chosen file', async ({ cli, server, page, openDashboard }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const awaitBytes = await installSaveFilePickerMock(page);
+
+  const dashboard = await openDashboard();
+  await dashboard.locator('.sidebar-tab').first().click();
+  await expect(dashboard.locator('img#display')).toBeVisible();
+  await expect(dashboard.locator('.screenshot')).toBeEnabled();
+
+  await dashboard.locator('.screenshot').click();
+
+  const bytes = await awaitBytes();
+  expect(bytes.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+});
+
+test('stop recording streams WebM bytes to the chosen file', async ({ cli, server, page, openDashboard }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const awaitBytes = await installSaveFilePickerMock(page);
+
+  const dashboard = await openDashboard();
+  await dashboard.locator('.sidebar-tab').first().click();
+  await expect(dashboard.locator('img#display')).toBeVisible();
+
+  const recordBtn = dashboard.locator('.recording');
+  await expect(recordBtn).toBeEnabled();
+  await recordBtn.click();
+  await expect(dashboard.locator('.recording-label')).toBeVisible();
+  await recordBtn.click();
+
+  const bytes = await awaitBytes();
+  // WebM files start with the EBML magic bytes.
+  expect(bytes.subarray(0, 4)).toEqual(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
+});

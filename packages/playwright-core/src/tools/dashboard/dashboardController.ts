@@ -17,6 +17,7 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
@@ -52,6 +53,7 @@ export class DashboardConnection implements Transport {
   private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
 
   _recordingDir: string;
+  _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
   constructor(onclose: () => void) {
     this._onclose = onclose;
@@ -74,6 +76,13 @@ export class DashboardConnection implements Transport {
     this._serverRegistryDispose = undefined;
     this._attachedBrowser?.dispose();
     this._attachedBrowser = undefined;
+    for (const stream of this._streams.values()) {
+      void stream.handle.close()
+          .catch(() => {})
+          .then(() => fs.promises.unlink(stream.path))
+          .catch(() => {});
+    }
+    this._streams.clear();
     for (const slot of this._browsers.values())
       slot.listeners.forEach(d => d.dispose());
     this._browsers.clear();
@@ -171,6 +180,21 @@ export class DashboardConnection implements Transport {
         execFile('xdg-open', [path.dirname(params.path)]);
         break;
     }
+  }
+
+  async readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }> {
+    const stream = this._streams.get(params.streamId);
+    if (!stream)
+      throw new Error(`Unknown stream: ${params.streamId}`);
+    const buffer = Buffer.alloc(256 * 1024);
+    const { bytesRead } = await stream.handle.read(buffer, 0, buffer.length);
+    if (bytesRead === 0) {
+      this._streams.delete(params.streamId);
+      await stream.handle.close().catch(() => {});
+      await fs.promises.unlink(stream.path).catch(() => {});
+      return { data: '', eof: true };
+    }
+    return { data: buffer.subarray(0, bytesRead).toString('base64'), eof: false };
   }
 
   visible(): boolean {
@@ -482,14 +506,17 @@ class AttachedBrowser {
       await this._restartScreencast(page);
   }
 
-  async stopRecording(): Promise<{ path: string }> {
+  async stopRecording(): Promise<{ streamId: string }> {
     const p = this._recordingPath;
     if (!p)
       throw new Error('No recording in progress');
     this._recordingPath = null;
     if (this._selectedPage && this._screencastRunning)
       await this._restartScreencast(this._selectedPage);
-    return { path: p };
+    const handle = await fs.promises.open(p, 'r');
+    const streamId = crypto.randomUUID();
+    this._owner._streams.set(streamId, { handle, path: p });
+    return { streamId };
   }
 
   async screenshot(): Promise<string> {
