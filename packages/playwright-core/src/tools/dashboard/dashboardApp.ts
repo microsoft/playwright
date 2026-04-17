@@ -79,20 +79,20 @@ async function innerOpenDashboardApp(initialReveal: RevealOptions): Promise<{ pa
 
 async function launchApp(appName: string) {
   const channel = findChromiumChannelBestEffort('javascript');
-  const debugPort = parseInt(process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT!, 10) || undefined;
   const context = await playwright.chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
     channel,
-    headless: debugPort !== undefined,
+    headless: !!process.env.PW_DASHBOARD_APP_BIND_TITLE,
     args: [
       '--app=data:text/html,',
       '--test-type=',
       `--window-size=1280,800`,
       `--window-position=100,100`,
-      ...(debugPort !== undefined ? [`--remote-debugging-port=${debugPort}`] : []),
     ],
     viewport: null,
   });
+  if (process.env.PW_DASHBOARD_APP_BIND_TITLE)
+    await context.browser()?.bind(process.env.PW_DASHBOARD_APP_BIND_TITLE, { workspaceDir: process.cwd() });
 
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.

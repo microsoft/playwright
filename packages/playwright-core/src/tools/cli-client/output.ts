@@ -22,6 +22,7 @@ import path from 'path';
 import { remoteDebuggingHint } from './channelSessions';
 
 import type { ChannelSession } from './channelSessions';
+import type { BrowserStatus } from '../../serverRegistry';
 
 export type ListedBrowser = {
   name: string;
@@ -36,19 +37,10 @@ export type ListedBrowser = {
   version: string;
 };
 
-export type ListedServer = {
-  workspace: string;
-  title: string;
-  browser: string;
-  playwrightVersion: string;
-  status: 'open' | 'closed';
-  userDataDir: string | null;
-};
-
 export type ListData = {
   all: boolean;
   browsers: ListedBrowser[];
-  servers?: ListedServer[];
+  servers?: BrowserStatus[];
   channelSessions?: ChannelSession[];
 };
 
@@ -145,12 +137,12 @@ export class TextOutput implements Output {
       if (count)
         console.log('');
       console.log('### Browser servers available for attach');
-      const serversByWorkspace = new Map<string, ListedServer[]>();
+      const serversByWorkspace = new Map<string, BrowserStatus[]>();
       for (const server of servers) {
-        let list = serversByWorkspace.get(server.workspace);
+        let list = serversByWorkspace.get(server.workspaceDir ?? '');
         if (!list) {
           list = [];
-          serversByWorkspace.set(server.workspace, list);
+          serversByWorkspace.set(server.workspaceDir ?? '', list);
         }
         list.push(server);
       }
@@ -356,13 +348,13 @@ function renderBrowser(browser: ListedBrowser): string {
   return lines.join('\n');
 }
 
-function renderServer(server: ListedServer): string {
+function renderServer(server: BrowserStatus): string {
   const lines = [`- browser "${server.title}":`];
-  lines.push(`  - browser: ${server.browser}`);
+  lines.push(`  - browser: ${server.browser.browserName}`);
   lines.push(`  - version: v${server.playwrightVersion}`);
-  lines.push(`  - status: ${server.status}`);
-  if (server.userDataDir)
-    lines.push(`  - data-dir: ${server.userDataDir}`);
+  lines.push(`  - status: ${server.canConnect ? 'open' : 'closed'}`);
+  if (server.browser.userDataDir)
+    lines.push(`  - data-dir: ${server.browser.userDataDir}`);
   else
     lines.push(`  - data-dir: <in-memory>`);
   lines.push(`  - run \`playwright-cli attach "${server.title}"\` to attach`);

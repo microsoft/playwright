@@ -29,7 +29,7 @@ import { libPath } from '../../package';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
 
-import type { ListData, ListedBrowser, ListedServer, Output } from './output';
+import type { ListData, ListedBrowser, Output } from './output';
 import type { ClientInfo, SessionFile } from './registry';
 import type { MinimistArgs } from './minimist';
 
@@ -340,19 +340,7 @@ async function collectList(registry: Registry, clientInfo: ClientInfo, all: bool
     return { all, browsers };
 
   const serverEntries = await serverRegistry.list();
-  const servers: ListedServer[] = [];
-  for (const [workspaceKey, list] of serverEntries) {
-    for (const descriptor of list) {
-      servers.push({
-        workspace: workspaceKey,
-        title: descriptor.title,
-        browser: descriptor.browser.browserName,
-        playwrightVersion: descriptor.playwrightVersion,
-        status: descriptor.canConnect ? 'open' : 'closed',
-        userDataDir: descriptor.browser.userDataDir ?? null,
-      });
-    }
-  }
+  const servers = [...serverEntries.values()].flat();
   return { all, browsers, servers, channelSessions: await listChannelSessions() };
 }
 
