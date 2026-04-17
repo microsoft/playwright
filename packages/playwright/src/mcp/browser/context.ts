@@ -128,9 +128,12 @@ export class Context {
    * localhost, 127.0.0.1.
    */
   private _isInternalUrl(url: string): boolean {
-    if (url.startsWith('file://')) return true;
-    if (url.startsWith('data:')) return true;
-    if (url.startsWith('chrome-extension://')) return true;
+    if (url.startsWith('file://'))
+      return true;
+    if (url.startsWith('data:'))
+      return true;
+    if (url.startsWith('chrome-extension://'))
+      return true;
     try {
       const parsed = new URL(url);
       if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')

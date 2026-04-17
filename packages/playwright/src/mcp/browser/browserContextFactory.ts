@@ -77,12 +77,15 @@ function stealthInitScript({ suppressFocus }: { suppressFocus: boolean }) {
   // --- Deferred print override ---
   const DEFERRED_TIMEOUT_MS = 2000;
   const deferred = function() {
+    // eslint-disable-next-line no-console
     console.log('[DeferredPrint] window.print() called — deferring for ' + DEFERRED_TIMEOUT_MS + 'ms at ' + window.location.href);
     setTimeout(() => {
       if (window.print !== deferred) {
+        // eslint-disable-next-line no-console
         console.log('[DeferredPrint] Electron override arrived — delegating window.print()');
         window.print();
       } else {
+        // eslint-disable-next-line no-console
         console.log('[DeferredPrint] Electron override never arrived — suppressing silently');
       }
     }, DEFERRED_TIMEOUT_MS);
@@ -95,32 +98,37 @@ function stealthInitScript({ suppressFocus }: { suppressFocus: boolean }) {
   Object.defineProperty(navigator, 'webdriver', { get: () => false, configurable: true });
 
   // --- Chrome stealth stubs ---
-  if ((window as any).__chromeStealth) return;
+  if ((window as any).__chromeStealth)
+    return;
   (window as any).__chromeStealth = true;
 
   // Native function masking
   const _toString = Function.prototype.toString;
   const _nativeMap = new WeakMap<Function, string>();
-  function _markNative(fn: Function, name: string) {
+  function _markNative<T extends Function>(fn: T, name: string): T {
     _nativeMap.set(fn, 'function ' + name + '() { [native code] }');
     return fn;
   }
   Function.prototype.toString = function() {
-    if (_nativeMap.has(this)) return _nativeMap.get(this)!;
+    if (_nativeMap.has(this))
+      return _nativeMap.get(this)!;
     return _toString.call(this);
   };
   _markNative(Function.prototype.toString, 'toString');
 
   // chrome.app stub
-  if (typeof chrome === 'undefined') (window as any).chrome = {};
-  if (!(chrome as any).app) {
+  const chrome: any = (window as any).chrome = (window as any).chrome || {};
+  if (!chrome.app) {
     const InstallState = { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' };
     const RunningState = { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' };
     const app = {
       isInstalled: false,
       getIsInstalled: _markNative(function getIsInstalled() { return false; }, 'getIsInstalled'),
       getDetails: _markNative(function getDetails() { return null; }, 'getDetails'),
-      installState: _markNative(function installState(cb?: (state: string) => void) { if (cb) cb(InstallState.NOT_INSTALLED); }, 'installState'),
+      installState: _markNative(function installState(cb?: (state: string) => void) {
+        if (cb)
+          cb(InstallState.NOT_INSTALLED);
+      }, 'installState'),
       runningState: _markNative(function runningState() { return RunningState.CANNOT_RUN; }, 'runningState'),
       InstallState,
       RunningState,
@@ -158,14 +166,14 @@ function stealthInitScript({ suppressFocus }: { suppressFocus: boolean }) {
   }
 
   // navigator.languages fix
-  if (navigator.languages && navigator.languages.length === 1) {
+  if (navigator.languages && navigator.languages.length === 1)
     Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'], configurable: true });
-  }
+
 
   // Notification.permission fix
-  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted')
     Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
-  }
+
 
   // --- Focus suppression (conditional) ---
   if (suppressFocus) {
@@ -173,9 +181,9 @@ function stealthInitScript({ suppressFocus }: { suppressFocus: boolean }) {
     window.focus = _markNative(function focus() { /* noop */ }, 'focus');
 
     // C2: Prevent native <select> picker
-    if ((HTMLSelectElement.prototype as any).showPicker) {
+    if ((HTMLSelectElement.prototype as any).showPicker)
       (HTMLSelectElement.prototype as any).showPicker = function() { /* noop */ };
-    }
+
     const _style = document.createElement('style');
     _style.textContent = 'select { pointer-events: none !important; }';
     (document.head || document.documentElement).appendChild(_style);
@@ -192,8 +200,10 @@ function stealthInitScript({ suppressFocus }: { suppressFocus: boolean }) {
       let _lastPrintTime = 0;
       window.print = _markNative(function print() {
         const _now = Date.now();
-        if (_now - _lastPrintTime < 1000) return;
+        if (_now - _lastPrintTime < 1000)
+          return;
         _lastPrintTime = _now;
+        // eslint-disable-next-line no-console
         console.log('[Print Capture] window.print() intercepted at ' + window.location.href);
       }, 'print');
     }
@@ -238,9 +248,9 @@ class BaseContextFactory implements BrowserContextFactory {
     // extension's content scripts (MAIN world, document_start) instead of CDP
     // Page.addScriptToEvaluateOnNewDocument. This eliminates the addScript CDP call.
     // In non-extension mode (Electron, standalone), we still need the CDP init script.
-    if (!this.config.extension) {
+    if (!this.config.extension)
       await browserContext.addInitScript(stealthInitScript, { suppressFocus: !!this.config.suppressFocus });
-    }
+
     return {
       browserContext,
       close: () => this._closeBrowserContext(browserContext, browser)
@@ -364,15 +374,15 @@ class PersistentContextFactory implements BrowserContextFactory {
           '--disable-extensions',
         ],
         assistantMode: true,
-        stealthMode: this.config.stealth !== false,
-      };
+        ...(this.config.stealth !== false ? { stealthMode: true } : {}),
+      } as any;
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
         await addInitScript(browserContext, this.config.browser.initScript);
         // CDP Stealth: In extension mode, content scripts deliver stealth patches.
-        if (!this.config.extension) {
+        if (!this.config.extension)
           await browserContext.addInitScript(stealthInitScript, { suppressFocus: !!this.config.suppressFocus });
-        }
+
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {

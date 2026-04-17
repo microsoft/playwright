@@ -1065,12 +1065,15 @@ class FrameSession {
     if (ua.includes('Macintosh')) {
       metadata.platform = 'macOS';
       const match = ua.match(/Mac OS X (\d+[_.\d]*)/);
-      if (match) metadata.platformVersion = match[1].replace(/_/g, '.');
-      if (!ua.includes('Intel')) metadata.architecture = 'arm';
+      if (match)
+        metadata.platformVersion = match[1].replace(/_/g, '.');
+      if (!ua.includes('Intel'))
+        metadata.architecture = 'arm';
     } else if (ua.includes('Windows')) {
       metadata.platform = 'Windows';
       const match = ua.match(/Windows NT (\d+[.\d]*)/);
-      if (match) metadata.platformVersion = match[1];
+      if (match)
+        metadata.platformVersion = match[1];
     } else if (ua.toLowerCase().includes('linux')) {
       metadata.platform = 'Linux';
     }
