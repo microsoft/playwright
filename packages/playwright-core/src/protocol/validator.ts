@@ -511,7 +511,6 @@ scheme.BrowserTypeLaunchParams = tObject({
   args: tOptional(tArray(tString)),
   ignoreAllDefaultArgs: tOptional(tBoolean),
   ignoreDefaultArgs: tOptional(tArray(tString)),
-  assistantMode: tOptional(tBoolean),
   handleSIGINT: tOptional(tBoolean),
   handleSIGTERM: tOptional(tBoolean),
   handleSIGHUP: tOptional(tBoolean),
@@ -541,7 +540,6 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   args: tOptional(tArray(tString)),
   ignoreAllDefaultArgs: tOptional(tBoolean),
   ignoreDefaultArgs: tOptional(tArray(tString)),
-  assistantMode: tOptional(tBoolean),
   handleSIGINT: tOptional(tBoolean),
   handleSIGTERM: tOptional(tBoolean),
   handleSIGHUP: tOptional(tBoolean),
@@ -639,12 +637,12 @@ scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),
   defaultContext: tOptional(tChannel(['BrowserContext'])),
 });
-scheme.BrowserTypeConnectOverCDPTransportParams = tObject({
-  transport: tBinary,
+scheme.BrowserTypeConnectToWorkerParams = tObject({
+  endpoint: tString,
+  timeout: tFloat,
 });
-scheme.BrowserTypeConnectOverCDPTransportResult = tObject({
-  browser: tChannel(['Browser']),
-  defaultContext: tOptional(tChannel(['BrowserContext'])),
+scheme.BrowserTypeConnectToWorkerResult = tObject({
+  worker: tChannel(['Worker']),
 });
 scheme.BrowserInitializer = tObject({
   version: tString,
@@ -1043,7 +1041,6 @@ scheme.BrowserContextCookiesResult = tObject({
 });
 scheme.BrowserContextExposeBindingParams = tObject({
   name: tString,
-  needsHandle: tOptional(tBoolean),
 });
 scheme.BrowserContextExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
@@ -1148,19 +1145,6 @@ scheme.BrowserContextNewCDPSessionParams = tObject({
 });
 scheme.BrowserContextNewCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),
-});
-scheme.BrowserContextHarStartParams = tObject({
-  page: tOptional(tChannel(['Page'])),
-  options: tType('RecordHarOptions'),
-});
-scheme.BrowserContextHarStartResult = tObject({
-  harId: tString,
-});
-scheme.BrowserContextHarExportParams = tObject({
-  harId: tOptional(tString),
-});
-scheme.BrowserContextHarExportResult = tObject({
-  artifact: tChannel(['Artifact']),
 });
 scheme.BrowserContextCreateTempFilesParams = tObject({
   rootDirName: tOptional(tString),
@@ -1303,7 +1287,6 @@ scheme.PageEmulateMediaParams = tObject({
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
   name: tString,
-  needsHandle: tOptional(tBoolean),
 });
 scheme.PageExposeBindingResult = tObject({
   disposable: tChannel(['Disposable']),
@@ -2038,7 +2021,22 @@ scheme.FrameExpectResult = tObject({
 scheme.WorkerInitializer = tObject({
   url: tString,
 });
+scheme.WorkerConsoleEvent = tObject({
+  type: tString,
+  text: tString,
+  args: tArray(tChannel(['ElementHandle', 'JSHandle'])),
+  location: tObject({
+    url: tString,
+    lineNumber: tInt,
+    columnNumber: tInt,
+  }),
+  timestamp: tFloat,
+});
 scheme.WorkerCloseEvent = tOptional(tObject({}));
+scheme.WorkerDisconnectParams = tObject({
+  reason: tOptional(tString),
+});
+scheme.WorkerDisconnectResult = tOptional(tObject({}));
 scheme.WorkerEvaluateExpressionParams = tObject({
   expression: tString,
   isFunction: tOptional(tBoolean),
@@ -2530,8 +2528,7 @@ scheme.WebSocketCloseEvent = tOptional(tObject({}));
 scheme.BindingCallInitializer = tObject({
   frame: tChannel(['Frame']),
   name: tString,
-  args: tOptional(tArray(tType('SerializedValue'))),
-  handle: tOptional(tChannel(['ElementHandle', 'JSHandle'])),
+  args: tArray(tType('SerializedValue')),
 });
 scheme.BindingCallRejectParams = tObject({
   error: tType('SerializedError'),
@@ -2614,6 +2611,19 @@ scheme.TracingTracingStopChunkResult = tObject({
 });
 scheme.TracingTracingStopParams = tOptional(tObject({}));
 scheme.TracingTracingStopResult = tOptional(tObject({}));
+scheme.TracingHarStartParams = tObject({
+  page: tOptional(tChannel(['Page'])),
+  options: tType('RecordHarOptions'),
+});
+scheme.TracingHarStartResult = tObject({
+  harId: tString,
+});
+scheme.TracingHarExportParams = tObject({
+  harId: tOptional(tString),
+});
+scheme.TracingHarExportResult = tObject({
+  artifact: tChannel(['Artifact']),
+});
 scheme.ArtifactInitializer = tObject({
   absolutePath: tString,
 });

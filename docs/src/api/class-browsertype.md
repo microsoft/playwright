@@ -114,14 +114,6 @@ Additional HTTP headers to be sent with web socket connect request. Optional.
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
-### option: BrowserType.connect.logger
-* since: v1.14
-* langs: js
-* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
-- `logger` <[Logger]>
-
-Logger sink for Playwright logging. Optional.
-
 ### option: BrowserType.connect.timeout
 * since: v1.10
 - `timeout` <[float]>
@@ -218,14 +210,6 @@ Additional HTTP headers to be sent with connect request. Optional.
 Tells Playwright that it runs on the same host as the CDP server. It will enable certain optimizations that rely upon
 the file system being the same between Playwright and the Browser.
 
-### option: BrowserType.connectOverCDP.logger
-* since: v1.14
-* langs: js
-* deprecated: The logs received by the logger are incomplete. Please use tracing instead.
-- `logger` <[Logger]>
-
-Logger sink for Playwright logging. Optional.
-
 ### option: BrowserType.connectOverCDP.slowMo
 * since: v1.11
 - `slowMo` <[float]>
@@ -239,6 +223,39 @@ can see what is going on. Defaults to 0.
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
+
+
+## async method: BrowserType.connectToWorker
+* since: v1.60
+* langs: js
+- returns: <[Worker]>
+
+This method attaches Playwright to an existing JavaScript engine exposing Chrome DevTools Protocol, for example to a Node.js process or an Electron application.
+
+:::note
+This is only supported on `chromium`.
+:::
+
+**Usage**
+
+```js
+const worker = await playwright.chromium.connectToWorker('http://localhost:9229');
+const global = await worker.evaluate(() => globalThis);
+```
+
+### param: BrowserType.connectToWorker.endpoint
+* since: v1.60
+- `endpoint` <[string]>
+
+A CDP websocket endpoint or http url to connect to. For example `http://localhost:9229/` or `ws://127.0.0.1:9229/something`.
+
+### option: BrowserType.connectToWorker.timeout
+* since: v1.60
+- `timeout` <[float]>
+
+Maximum time in milliseconds to wait for the connection to be established. Defaults to
+`30000` (30 seconds). Pass `0` to disable timeout.
+
 
 ## method: BrowserType.executablePath
 * since: v1.8

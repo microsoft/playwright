@@ -67,7 +67,7 @@ export class Session {
   }
 
   async deleteData() {
-    await this.stop();
+    await this.stop(true);
 
     const dataDirs = await fs.promises.readdir(this._sessionFile.daemonDir).catch(() => []);
     const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
@@ -120,7 +120,7 @@ export class Session {
     return false;
   }
 
-  static async startDaemon(clientInfo: ClientInfo, cliArgs: MinimistArgs) {
+  static async startDaemon(clientInfo: ClientInfo, cliArgs: MinimistArgs, mode: 'open' | 'attach') {
     await fs.promises.mkdir(clientInfo.daemonProfilesDir, { recursive: true });
 
     const cliPath = libPath('entry', 'cliDaemon.js');
@@ -146,8 +146,10 @@ export class Session {
       args.push(`--config=${cliArgs.config}`);
     if (cliArgs.cdp)
       args.push(`--cdp=${cliArgs.cdp}`);
-    if (cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION)
-      args.push(`--endpoint=${cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION}`);
+    if (cliArgs.endpoint)
+      args.push(`--endpoint=${cliArgs.endpoint}`);
+    else if (mode === 'attach' && process.env.PLAYWRIGHT_CLI_SESSION)
+      args.push(`--endpoint=${process.env.PLAYWRIGHT_CLI_SESSION}`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
@@ -228,13 +230,18 @@ export class Session {
 export function renderResolvedConfig(config: SessionConfig) {
   const channel = config.browser.launchOptions.channel ?? config.browser.browserName;
   const lines = [];
+  const isAttached = config.attached;
   if (channel)
-    lines.push(`  - browser-type: ${channel}`);
-  if (!config.cli.persistent)
-    lines.push(`  - user-data-dir: <in-memory>`);
-  else
-    lines.push(`  - user-data-dir: ${config.browser.userDataDir}`);
-  lines.push(`  - headed: ${!config.browser.launchOptions.headless}`);
+    lines.push(`  - browser-type: ${channel}${isAttached ? ' (attached)' : ''}`);
+
+  if (!isAttached) {
+    if (!config.cli.persistent)
+      lines.push(`  - user-data-dir: <in-memory>`);
+    else
+      lines.push(`  - user-data-dir: ${config.browser.userDataDir}`);
+    lines.push(`  - headed: ${!config.browser.launchOptions.headless}`);
+  }
+
   return lines;
 }
 

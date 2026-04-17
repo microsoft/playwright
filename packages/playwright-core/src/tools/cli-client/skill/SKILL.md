@@ -191,6 +191,13 @@ playwright-cli open --profile=/path/to/profile
 # Connect to browser via extension
 playwright-cli attach --extension
 
+# Connect to a running Chrome or Edge by channel name
+playwright-cli attach --cdp=chrome
+playwright-cli attach --cdp=msedge
+
+# Connect to a running browser via CDP endpoint
+playwright-cli attach --cdp=http://localhost:9222
+
 # Start with config file
 playwright-cli open --config=my-config.json
 

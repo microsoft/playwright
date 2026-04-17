@@ -18,8 +18,6 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
-import { html } from '../../packages/playwright/lib/runner';
-const { startHtmlReportServer } = html;
 import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
 
 type HttpServer = utils.HttpServer;
@@ -32,7 +30,7 @@ const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<vo
     let server: HttpServer | undefined;
     await use(async (reportFolder?: string) => {
       reportFolder ??=  testInfo.outputPath('playwright-report');
-      server = startHtmlReportServer(reportFolder) as HttpServer;
+      server = utils.serveFolder(reportFolder);
       await server.start();
       await page.goto(server.urlPrefix('precise'));
     });

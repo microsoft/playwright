@@ -751,18 +751,6 @@ Emulates `'prefers-contrast'` media feature, supported values are `'no-preferenc
 
 Logger sink for Playwright logging.
 
-## context-option-videospath
-* langs: js
-* deprecated: Use [`option: recordVideo`] instead.
-- `videosPath` <[path]>
-
-## context-option-videosize
-* langs: js
-* deprecated: Use [`option: recordVideo`] instead.
-- `videoSize` <[Object]>
-  - `width` <[int]> Video frame width.
-  - `height` <[int]> Video frame height.
-
 ## context-option-recordhar
 * langs: js
 - `recordHar` <[Object]>
@@ -1066,8 +1054,6 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-contrast-%%
 - %%-context-option-contrast-csharp-python-%%
 - %%-context-option-logger-%%
-- %%-context-option-videospath-%%
-- %%-context-option-videosize-%%
 - %%-context-option-recordhar-%%
 - %%-context-option-recordhar-path-%%
 - %%-context-option-recordhar-omit-content-%%

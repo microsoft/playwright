@@ -128,7 +128,6 @@ page/page-event-request.spec.ts › should not expose preflight OPTIONS request 
 page/page-event-request.spec.ts › should report navigation requests and responses handled by service worker with routing [fail]
 page/page-event-request.spec.ts › should report requests and responses handled by service worker [fail]
 page/page-event-request.spec.ts › should report requests and responses handled by service worker with routing [timeout]
-page/page-expose-function.spec.ts › exposeBinding(handle) should work with element handles [timeout]
 page/page-expose-function.spec.ts › should be callable from-inside addInitScript [timeout]
 page/page-expose-function.spec.ts › should not result in unhandled rejection [timeout]
 page/page-expose-function.spec.ts › should work on frames [flaky]

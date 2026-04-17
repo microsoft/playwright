@@ -155,9 +155,7 @@ export type NormalizedContinueOverrides = {
 export type EmulatedSize = { viewport: Size, screen: Size };
 
 export type LaunchOptions = Omit<channels.BrowserTypeLaunchParams, 'timeout'> & {
-  cdpPort?: number,
   proxyOverride?: ProxySettings,
-  assistantMode?: boolean,
   socksProxyPort?: number,
 };
 

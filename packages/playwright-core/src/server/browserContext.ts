@@ -18,13 +18,11 @@
 import fs from 'fs';
 
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
-import { createGuid } from '@utils/crypto';
 import { debugMode, isUnderTest } from '@utils/debug';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
-import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
 import { EventMap, SdkObject } from './instrumentation';
 import * as network from './network';
@@ -36,7 +34,6 @@ import { Tracing } from './trace/recorder/tracing';
 import * as rawStorageSource from '../generated/storageScriptSource';
 import { nullProgress } from './progress';
 
-import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
 import type { ConsoleMessage } from './console';
 import type { Download } from './download';
@@ -102,7 +99,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   readonly _browserContextId: string | undefined;
   private _selectors: Selectors;
   private _origins = new Set<string>();
-  readonly _harRecorders = new Map<string, HarRecorder>();
   readonly tracing: Tracing;
   readonly fetchRequest: BrowserContextAPIRequestContext;
   private _customCloseHandler?: () => Promise<any>;
@@ -359,7 +355,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     return this._playwrightBindingExposed !== undefined;
   }
 
-  async exposeBinding(progress: Progress, name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, forClient?: unknown): Promise<PageBinding> {
+  async exposeBinding(progress: Progress, name: string, playwrightBinding: frames.FunctionWithSource, forClient?: unknown): Promise<PageBinding> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
@@ -367,7 +363,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
     await progress.race(this.exposePlaywrightBindingIfNeeded());
-    const binding = new PageBinding(this, name, playwrightBinding, needsHandle);
+    const binding = new PageBinding(this, name, playwrightBinding);
     binding.forClient = forClient;
     this._pageBindings.set(name, binding);
     try {
@@ -545,8 +541,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      for (const harRecorder of this._harRecorders.values())
-        await progress.race(harRecorder.flush());
       await progress.race(this.tracing.flush());
       await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
 
@@ -712,17 +706,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
   async safeNonStallingEvaluateInAllFrames(expression: string, world: types.World, options: { throwOnJSErrors?: boolean } = {}) {
     await Promise.all(this.pages().map(page => page.safeNonStallingEvaluateInAllFrames(expression, world, options)));
-  }
-
-  harStart(page: Page | null, options: channels.RecordHarOptions): string {
-    const harId = createGuid();
-    this._harRecorders.set(harId, new HarRecorder(this, page, options));
-    return harId;
-  }
-
-  async harExport(progress: Progress, harId: string | undefined): Promise<Artifact> {
-    const recorder = this._harRecorders.get(harId || '')!;
-    return progress.race(recorder.export());
   }
 
   addRouteInFlight(route: network.Route) {

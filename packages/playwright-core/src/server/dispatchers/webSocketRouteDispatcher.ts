@@ -66,7 +66,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
       throw new Error('Another client is already routing WebSockets');
     if (!data) {
       data = { counter: 0, connection, binding: null as any };
-      data.binding = await context.exposeBinding(progress, kBindingName, false, (source, payload: ws.BindingPayload) => {
+      data.binding = await context.exposeBinding(progress, kBindingName, (source, payload: ws.BindingPayload) => {
         if (payload.type === 'onCreate') {
           const contextDispatcher = connection.existingDispatcher<BrowserContextDispatcher>(context);
           const pageDispatcher = contextDispatcher ? PageDispatcher.fromNullable(contextDispatcher, source.page) : undefined;

@@ -34,7 +34,7 @@ import { FileChooser } from './fileChooser';
 import { Frame, verifyLoadState } from './frame';
 import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
-import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
+import { assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { Request, Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
 import { Screencast } from './screencast';
@@ -348,8 +348,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return DisposableObject.from(result.disposable);
   }
 
-  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}) {
-    const result = await this._channel.exposeBinding({ name, needsHandle: options.handle });
+  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any) {
+    const result = await this._channel.exposeBinding({ name });
     this._bindings.set(name, callback);
     return DisposableObject.from(result.disposable);
   }
@@ -529,7 +529,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     if (!localUtils)
       throw new Error('Route from har is not supported in thin clients');
     if (options.update) {
-      await this._browserContext._recordIntoHAR(har, this, options);
+      await this._browserContext.tracing._recordIntoHAR(har, this, options);
       return;
     }
     const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });
@@ -884,11 +884,7 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
         page: frame._page!,
         frame
       };
-      let result: any;
-      if (this._initializer.handle)
-        result = await func(source, JSHandle.from(this._initializer.handle));
-      else
-        result = await func(source, ...this._initializer.args!.map(parseResult));
+      const result = await func(source, ...this._initializer.args.map(parseResult));
       this._channel.resolve({ result: serializeArgument(result) }).catch(() => {});
     } catch (e) {
       this._channel.reject({ error: serializeError(e) }).catch(() => {});

@@ -789,3 +789,30 @@ test('should report fixture teardown error after test error', async ({ runInline
   expect(result.output).toContain('Error from the fixture foo');
   expect(result.output).toContain('Error from the test');
 });
+
+test('should throw when overriding non-option fixture in config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          foo: 'overridden',
+          headless: true,
+          unknownThing: 'ignored',
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        foo: async ({}, use) => await use('original'),
+      });
+      test('works', async ({ foo }) => {
+        expect(foo).toBe('original');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Fixture "foo" cannot be overridden in the configuration "use" section. Only fixtures registered with { option: true } can be set in the config.');
+  expect(result.output).not.toContain('Fixture "headless"');
+  expect(result.output).not.toContain('Fixture "unknownThing"');
+});

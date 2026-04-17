@@ -39,6 +39,7 @@ export type SessionConfig = {
   version: string;
   timestamp: number;
   socketPath: string;
+  attached?: boolean;
   cli: {
     persistent?: boolean;
   };

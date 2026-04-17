@@ -896,3 +896,7 @@ Returns storage state for this request context, contains current cookies and loc
 - `indexedDB` ?<boolean>
 
 Set to `true` to include IndexedDB in the storage state snapshot.
+
+## property: APIRequestContext.tracing
+* since: v1.60
+- type: <[Tracing]>
