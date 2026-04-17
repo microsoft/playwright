@@ -57,13 +57,15 @@ export class Response {
   private _clientWorkspace: string;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
   private _raw: boolean;
+  private _json: boolean;
 
-  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean }) {
+  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean, json?: boolean }) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
     this._clientWorkspace = options?.relativeTo ?? context.options.cwd;
-    this._raw = options?.raw ?? false;
+    this._json = options?.json ?? false;
+    this._raw = this._json || (options?.raw ?? false);
   }
 
   private _computRelativeTo(fileName: string): string {
@@ -157,26 +159,47 @@ export class Response {
     const rawSections = ['Error', 'Result', 'Snapshot'] as const;
     const sections = this._raw ? allSections.filter(section => rawSections.includes(section.title as typeof rawSections[number])) : allSections;
 
-    const text: string[] = [];
-    for (const section of sections) {
-      if (!section.content.length)
-        continue;
-      if (!this._raw) {
-        text.push(`### ${section.title}`);
-        if (section.codeframe)
-          text.push(`\`\`\`${section.codeframe}`);
-        text.push(...section.content);
-        if (section.codeframe)
-          text.push('```');
-      } else {
-        text.push(...section.content);
+    let serializedText: string;
+    if (this._json) {
+      const payload: Record<string, unknown> = {};
+      const isError = sections.some(section => section.isError);
+      if (isError)
+        payload.isError = true;
+      for (const section of sections) {
+        if (!section.content.length)
+          continue;
+        const key = section.title.toLowerCase();
+        if (key === 'snapshot') {
+          const match = section.content[0]?.match(/^- \[Snapshot\]\(([^)]+)\)$/);
+          payload.snapshot = match ? { file: match[1] } : section.content.join('\n');
+        } else {
+          payload[key] = section.content.join('\n');
+        }
       }
+      serializedText = JSON.stringify(payload, null, 2);
+    } else {
+      const text: string[] = [];
+      for (const section of sections) {
+        if (!section.content.length)
+          continue;
+        if (!this._raw) {
+          text.push(`### ${section.title}`);
+          if (section.codeframe)
+            text.push(`\`\`\`${section.codeframe}`);
+          text.push(...section.content);
+          if (section.codeframe)
+            text.push('```');
+        } else {
+          text.push(...section.content);
+        }
+      }
+      serializedText = text.join('\n');
     }
 
     const content: (TextContent | ImageContent)[] = [
       {
         type: 'text',
-        text: sanitizeUnicode(this._redactSecrets(text.join('\n'))),
+        text: sanitizeUnicode(this._redactSecrets(serializedText)),
       }
     ];
 
