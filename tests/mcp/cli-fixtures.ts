@@ -70,9 +70,8 @@ export const test = baseTest.extend<{
       const dashboard = browser.contexts()[0].pages()[0];
       // Headless Chromium with `--app=` does not report display-mode: standalone,
       // and CDP's Emulation.setEmulatedMedia doesn't honor display-mode features.
-      // Fake the signal so the client treats this as app mode.
-      await dashboard.addInitScript(() => { (window as any).__dashboardAppModeForTest = true; });
-      await dashboard.reload();
+      // Set the test flag directly; downloadArtifact re-reads it on every click.
+      await dashboard.evaluate(() => { (window as any).__dashboardAppModeForTest = true; });
       dashboards.push({ dashboard, browser });
       return dashboard;
     });
