@@ -30,23 +30,23 @@ import msedgeDevSvg from './assets/browsers/msedge-dev.svg';
 // LaunchOptions.channel values accepted by Playwright.
 export const browserIconUrls: Record<string, string> = {
   // Open-source Chromium (plus the headless shell + chrome-for-testing variants).
-  chromium: chromiumSvg,
+  'chromium': chromiumSvg,
   'chromium-headless-shell': chromiumSvg,
   'chrome-for-testing': chromiumSvg,
   // Google Chrome stable + beta/dev share the stable icon.
-  chrome: chromeSvg,
+  'chrome': chromeSvg,
   'chrome-beta': chromeSvg,
   'chrome-dev': chromeSvg,
   'chrome-canary': chromeCanarySvg,
   // Firefox: stable (bundled + moz-firefox) + beta share the stable icon.
-  firefox: firefoxSvg,
+  'firefox': firefoxSvg,
   'moz-firefox': firefoxSvg,
   'moz-firefox-beta': firefoxSvg,
   'moz-firefox-nightly': firefoxNightlySvg,
   // Safari / WebKit.
-  webkit: webkitSvg,
+  'webkit': webkitSvg,
   // Microsoft Edge with its channel variants.
-  msedge: msedgeSvg,
+  'msedge': msedgeSvg,
   'msedge-beta': msedgeBetaSvg,
   'msedge-dev': msedgeDevSvg,
   'msedge-canary': msedgeSvg,
