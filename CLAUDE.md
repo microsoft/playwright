@@ -138,6 +138,8 @@ Never add "Generated with" in commit message.
 Never add test plan to PR description. Keep PR description short — a few bullet points at most.
 Branch naming for issue fixes: `fix-<issue-number>`
 
+**Never `git push` without an explicit instruction to push.** Applies even when a PR is already open for the branch — additional commits are immediately visible to reviewers. Commit locally, report what was committed, and wait. Only push when the user's message contains "push", "upload", "create PR", "ship it", or equivalent.
+
 ## Development Guides
 
 Detailed guides for common development tasks:
