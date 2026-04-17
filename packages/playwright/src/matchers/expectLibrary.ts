@@ -1354,6 +1354,7 @@ export const createThrowMatcher = (matcherName: string, fromPromise?: boolean): 
 
 export const toThrowMatchers: MatchersObject = {
   toThrow: createThrowMatcher('toThrow'),
+  toThrowError: createThrowMatcher('toThrowError'),
 };
 
 const toThrowExpectedRegExp = (

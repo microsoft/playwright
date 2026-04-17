@@ -416,20 +416,6 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
     }
   }
 
-  // toThrowError is a legacy alias for toThrow.
-  const aliasToThrow = (obj: any) => {
-    if (obj && Object.prototype.hasOwnProperty.call(obj, 'toThrow'))
-      obj.toThrowError = obj.toThrow;
-  };
-  aliasToThrow(result);
-  aliasToThrow(result.not);
-  if (!info.poll) {
-    aliasToThrow(result.resolves);
-    aliasToThrow(result.resolves.not);
-    aliasToThrow(result.rejects);
-    aliasToThrow(result.rejects.not);
-  }
-
   return result;
 }
 
