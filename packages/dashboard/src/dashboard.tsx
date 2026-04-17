@@ -36,8 +36,25 @@ export const Dashboard: React.FC = () => {
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
   const [picking, setPicking] = React.useState(false);
   const [recording, setRecording] = React.useState(false);
-  const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
+  const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'check'>('device-camera');
   const [flashTick, setFlashTick] = React.useState(0);
+
+  const downloadArtifact = React.useCallback(async (id: string) => {
+    const appMode = window.matchMedia('(display-mode: standalone)').matches
+      || (window as any).__dashboardAppModeForTest === true;
+    if (appMode)
+      return await client!.saveAndReveal({ id });
+
+    const a = document.createElement('a');
+    a.href = `/artifact/${encodeURIComponent(id)}`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    try {
+      a.click();
+    } finally {
+      a.remove();
+    }
+  }, [client]);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
@@ -298,9 +315,9 @@ export const Dashboard: React.FC = () => {
               if (!client)
                 return;
               if (recording) {
-                const { path } = await client.stopRecording();
-                await client.reveal({ path });
+                const { id } = await client.stopRecording();
                 setRecording(false);
+                await downloadArtifact(id);
               } else {
                 await client.startRecording();
                 setRecording(true);
@@ -310,16 +327,15 @@ export const Dashboard: React.FC = () => {
           </ToolbarButton>
           <ToolbarButton
             className='screenshot'
-            title='Copy screenshot to clipboard'
+            title='Take screenshot'
             icon={screenshotIcon}
             disabled={!ready}
             onClick={async () => {
               if (!client)
                 return;
-              const screenshot = await client.screenshot();
-              const blob = await (await fetch('data:image/png;base64,' + screenshot)).blob();
-              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-              setScreenshotIcon('clippy');
+              const { id } = await client.screenshot();
+              await downloadArtifact(id);
+              setScreenshotIcon('check');
               setTimeout(() => setScreenshotIcon('device-camera'), 3000);
             }}
           />

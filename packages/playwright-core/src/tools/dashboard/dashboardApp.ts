@@ -35,6 +35,7 @@ type RevealOptions = { sessionName?: string; workspaceDir?: string };
 async function startDashboardServer(options: { port?: number; host?: string; reveal?: RevealOptions } = {}): Promise<{ url: string; reveal: (options: RevealOptions) => void }> {
   const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
+  const artifacts = new Map<string, string>();
 
   const connections = new Set<DashboardConnection>();
   let currentReveal: RevealOptions = options.reveal ?? {};
@@ -42,12 +43,27 @@ async function startDashboardServer(options: { port?: number; host?: string; rev
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(() => connections.delete(connection));
+    connection = new DashboardConnection(() => connections.delete(connection), artifacts);
     if (currentReveal.sessionName)
       connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
     connections.add(connection);
     return connection;
   }, 'ws');
+
+  httpServer.routePrefix('/artifact/', (request: http.IncomingMessage, response: http.ServerResponse) => {
+    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
+    const id = decodeURIComponent(pathname.substring('/artifact/'.length));
+    const artifactPath = artifacts.get(id);
+    if (!artifactPath) {
+      response.statusCode = 404;
+      response.end();
+      return true;
+    }
+    // we're not deleting the artifact on purpose, so that the user can restart the download from the omnibox
+    return httpServer.serveFile(request, response, artifactPath, {
+      'Content-Disposition': `attachment; filename="${path.basename(artifactPath)}"`,
+    });
+  });
 
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
