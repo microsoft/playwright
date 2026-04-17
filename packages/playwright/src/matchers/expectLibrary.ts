@@ -1711,3 +1711,25 @@ export const validateMatcherResult = (result: any) => {
     );
   }
 };
+
+export function createExpectedPromiseMessage(matcherName: string, isNot: boolean, promise: 'resolves' | 'rejects', actual: unknown) {
+  return () => matcherErrorMessage(
+      matcherHint(matcherName, undefined, '', { isNot, promise }),
+      `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
+      printWithType('Received', actual, printReceived),
+  );
+}
+
+export function createExpectedToResolveMessage(matcherName: string, isNot: boolean, promise: 'resolves' | 'rejects', actual: unknown) {
+  return () =>
+    `${matcherHint(matcherName, undefined, '', { isNot, promise })}\n\n` +
+    'Received promise rejected instead of resolved\n' +
+    `Rejected to value: ${printReceived(actual)}`;
+}
+
+export function createExpectedToRejectMessage(matcherName: string, isNot: boolean, promise: 'resolves' | 'rejects', actual: unknown) {
+  return () =>
+    `${matcherHint(matcherName, undefined, '', { isNot, promise })}\n\n` +
+    'Received promise resolved instead of rejected\n' +
+    `Resolved to value: ${printReceived(actual)}`;
+}
