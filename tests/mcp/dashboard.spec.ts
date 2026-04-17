@@ -92,16 +92,22 @@ function isAlive(pid: number): boolean {
   }
 }
 
-test('daemon show: closing page exits the process', async ({ playwright, cli, findFreePort, waitForPort }) => {
-  const cdpPort = await findFreePort();
-  const { exitCode, pid } = await cli('show', { env: { PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST: '1', PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(cdpPort) } });
+test('daemon show: closing page exits the process', async ({ playwright, cli }) => {
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { exitCode, pid } = await cli('show', { env: { PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST: '1', PW_DASHBOARD_APP_BIND_TITLE: bindTitle } });
   expect(exitCode).toBe(0);
   expect(pid).toBeDefined();
   expect(isAlive(pid!)).toBe(true);
 
-  await waitForPort(cdpPort);
+  let endpoint = '';
+  await expect(async () => {
+    const { output } = await cli('list', '--all', '--json');
+    const { servers } = JSON.parse(output);
+    expect(servers[0].title).toBe(bindTitle);
+    endpoint = servers[0].endpoint;
+  }).toPass();
 
-  const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
+  const browser = await playwright.chromium.connect(endpoint);
   const page = browser.contexts()[0].pages()[0];
   await page.close();
 
