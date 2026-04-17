@@ -74,6 +74,9 @@ export class ExtensionProtocolV1 implements ExtensionProtocolHandler {
       case 'Target.getTargetInfo': {
         return { result: this._connectedTabInfo?.targetInfo };
       }
+      case 'Target.createTarget': {
+        throw new Error('Tab creation is not supported yet.');
+      }
     }
     return undefined;
   }
