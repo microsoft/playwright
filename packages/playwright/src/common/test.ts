@@ -55,7 +55,7 @@ export class Suite extends Base {
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
   _modifiers: Modifier[] = [];
-  _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
+  _parallelMode: 'none' | 'default' | 'serial' | 'parallel' | 'sequential' = 'none';
   _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
   readonly _type: 'root' | 'project' | 'file' | 'describe';

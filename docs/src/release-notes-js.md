@@ -3498,6 +3498,19 @@ test.describe.serial('group', () => {
 
 Learn more in the [documentation](./api/class-test#test-describe-serial).
 
+#### 🧵 Sequential mode with [`describe.sequential`](./api/class-test#test-describe-sequential)
+
+Declares a group of tests that should always be run serially, but continues to execute subsequent tests even if one of them fails. All tests in a group are retried together.
+
+```js
+test.describe.sequential('group', () => {
+  test('runs first', async ({ page }) => { /* ... */ });
+  test('runs second', async ({ page }) => { /* ... */ });
+});
+```
+
+Learn more in the [documentation](./api/class-test#test-describe-sequential).
+
 #### 🐾 Steps API with [`test.step`](./api/class-test#test-step)
 
 Split long tests into multiple steps using `test.step()` API:

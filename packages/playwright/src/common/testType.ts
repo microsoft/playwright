@@ -50,6 +50,8 @@ export class TestTypeImpl {
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
     test.describe.serial.only = wrapFunctionWithLocation(this._describe.bind(this, 'serial.only'));
+    test.describe.sequential = wrapFunctionWithLocation(this._describe.bind(this, 'sequential'));
+    test.describe.sequential.only = wrapFunctionWithLocation(this._describe.bind(this, 'sequential.only'));
     test.describe.skip = wrapFunctionWithLocation(this._describe.bind(this, 'skip'));
     test.beforeEach = wrapFunctionWithLocation(this._hook.bind(this, 'beforeEach'));
     test.afterEach = wrapFunctionWithLocation(this._hook.bind(this, 'afterEach'));
@@ -121,7 +123,7 @@ export class TestTypeImpl {
       test.annotations.push({ type: 'fail', location });
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'sequential' | 'sequential.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, 'test.describe()');
     if (!suite)
@@ -153,10 +155,12 @@ export class TestTypeImpl {
     child._tags.push(...validatedDetails.tags);
     suite._addSuite(child);
 
-    if (type === 'only' || type === 'serial.only' || type === 'parallel.only')
+    if (type === 'only' || type === 'serial.only' || type === 'parallel.only' || type === 'sequential.only')
       child._only = true;
     if (type === 'serial' || type === 'serial.only')
       child._parallelMode = 'serial';
+    if (type === 'sequential' || type === 'sequential.only')
+      child._parallelMode = 'sequential';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
     if (type === 'skip' || type === 'fixme')
@@ -167,6 +171,8 @@ export class TestTypeImpl {
         throw new Error('describe.parallel cannot be nested inside describe.serial');
       if (parent._parallelMode === 'default' && child._parallelMode === 'parallel')
         throw new Error('describe.parallel cannot be nested inside describe with default mode');
+      if (parent._parallelMode === 'sequential' && child._parallelMode === 'parallel')
+        throw new Error('describe.parallel cannot be nested inside describe.sequential');
     }
 
     setCurrentlyLoadingFileSuite(child);
@@ -186,7 +192,7 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
+  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial' | 'sequential', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)

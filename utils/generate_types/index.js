@@ -579,6 +579,8 @@ class TypesGenerator {
         'PlaywrightWorkerArgs.playwright',
         'PlaywrightWorkerOptions.defaultBrowserType',
         'Project',
+        'TestType.describe.sequential',
+        'TestType.describe.sequential.only',
       ]),
       doNotExportClassNames: assertionClasses,
     });

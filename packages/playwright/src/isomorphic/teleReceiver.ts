@@ -575,7 +575,7 @@ export class TeleSuite implements reporterTypes.Suite {
   _timeout: number | undefined;
   _retries: number | undefined;
   _project: TeleFullProject | undefined;
-  _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
+  _parallelMode: 'none' | 'default' | 'serial' | 'parallel' | 'sequential' = 'none';
   private readonly _type: 'root' | 'project' | 'file' | 'describe';
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {

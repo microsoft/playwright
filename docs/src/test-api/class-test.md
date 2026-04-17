@@ -493,6 +493,15 @@ Learn more about the execution modes [here](../test-parallel.md).
   test('runs second', async ({ page }) => {});
   ```
 
+* Running tests serially without skipping subsequent tests if one fails.
+
+  ```js
+  // Run tests one-by-one even when one fails.
+  test.describe.configure({ mode: 'sequential' });
+  test('runs first', async ({ page }) => {});
+  test('runs second', async ({ page }) => {});
+  ```
+
 * Configuring retries and timeout for each test.
 
   ```js
@@ -522,7 +531,7 @@ Learn more about the execution modes [here](../test-parallel.md).
 
 ### option: Test.describe.configure.mode
 * since: v1.10
-- `mode` <[TestMode]<"default"|"parallel"|"serial">>
+- `mode` <[TestMode]<"default"|"parallel"|"serial"|"sequential">>
 
 Execution mode. Learn more about the execution modes [here](../test-parallel.md).
 
@@ -858,6 +867,110 @@ See [`method: Test.describe`] for details description.
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe.serial.only`]. Any tests added in this callback will belong to the group.
+
+## method: Test.describe.sequential
+* since: v1.60
+* discouraged: See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+
+Declares a group of tests that should be run serially, but continues running subsequent tests even if one of them fails. All tests in the group are retried together.
+
+* `test.describe.sequential(title, callback)`
+* `test.describe.sequential(callback)`
+* `test.describe.sequential(title, details, callback)`
+
+**Usage**
+
+```js
+test.describe.sequential('group', () => {
+  test('runs first', async ({ page }) => {});
+  test('runs second', async ({ page }) => {});
+});
+```
+
+You can also omit the title.
+
+```js
+test.describe.sequential(() => {
+  // ...
+});
+```
+
+### param: Test.describe.sequential.title
+* since: v1.60
+- `title` ?<[string]>
+
+Group title.
+
+### param: Test.describe.sequential.details
+* since: v1.60
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
+### param: Test.describe.sequential.callback
+* since: v1.60
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe.sequential`]. Any tests added in this callback will belong to the group.
+
+## method: Test.describe.sequential.only
+* since: v1.60
+* discouraged: See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+
+Declares a focused group of tests that should be run serially, but continues running subsequent tests even if one of them fails. All tests in the group are retried together. If there are some focused tests or suites, all of them will be run but nothing else.
+
+:::note
+Using sequential is not recommended. It is usually better to make your tests isolated, so they can be run independently.
+:::
+
+* `test.describe.sequential.only(title, callback)`
+* `test.describe.sequential.only(title)`
+* `test.describe.sequential.only(title, details, callback)`
+
+**Usage**
+
+```js
+test.describe.sequential.only('group', () => {
+  test('runs first', async ({ page }) => {
+  });
+  test('runs second', async ({ page }) => {
+  });
+});
+```
+
+You can also omit the title.
+
+```js
+test.describe.sequential.only(() => {
+  // ...
+});
+```
+
+### param: Test.describe.sequential.only.title
+* since: v1.60
+- `title` <[string]>
+
+Group title.
+
+### param: Test.describe.sequential.only.details
+* since: v1.60
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for details description.
+
+### param: Test.describe.sequential.only.callback
+* since: v1.60
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe.sequential.only`]. Any tests added in this callback will belong to the group.
 
 
 

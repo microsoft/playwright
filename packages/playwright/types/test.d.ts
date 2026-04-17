@@ -3869,6 +3869,275 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
      * the preferred way of configuring the execution mode.
      *
+     * Declares a group of tests that should be run serially, but continues running subsequent tests even if one of them
+     * fails. All tests in the group are retried together.
+     * - `test.describe.sequential(title, callback)`
+     * - `test.describe.sequential(callback)`
+     * - `test.describe.sequential(title, details, callback)`
+     *
+     * **Usage**
+     *
+     * ```js
+     * test.describe.sequential('group', () => {
+     *   test('runs first', async ({ page }) => {});
+     *   test('runs second', async ({ page }) => {});
+     * });
+     * ```
+     *
+     * You can also omit the title.
+     *
+     * ```js
+     * test.describe.sequential(() => {
+     *   // ...
+     * });
+     * ```
+     *
+     * @param title Group title.
+     * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for
+     * details description.
+     * @param callback A callback that is run immediately when calling
+     * [test.describe.sequential([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-sequential).
+     * Any tests added in this callback will belong to the group.
+     */
+    sequential: {
+      /**
+       * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+       * the preferred way of configuring the execution mode.
+       *
+       * Declares a group of tests that should be run serially, but continues running subsequent tests even if one of them
+       * fails. All tests in the group are retried together.
+       * - `test.describe.sequential(title, callback)`
+       * - `test.describe.sequential(callback)`
+       * - `test.describe.sequential(title, details, callback)`
+       *
+       * **Usage**
+       *
+       * ```js
+       * test.describe.sequential('group', () => {
+       *   test('runs first', async ({ page }) => {});
+       *   test('runs second', async ({ page }) => {});
+       * });
+       * ```
+       *
+       * You can also omit the title.
+       *
+       * ```js
+       * test.describe.sequential(() => {
+       *   // ...
+       * });
+       * ```
+       *
+       * @param title Group title.
+       * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for
+       * details description.
+       * @param callback A callback that is run immediately when calling
+       * [test.describe.sequential([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-sequential).
+       * Any tests added in this callback will belong to the group.
+       */
+      (title: string, callback: () => void): void;
+      /**
+       * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+       * the preferred way of configuring the execution mode.
+       *
+       * Declares a group of tests that should be run serially, but continues running subsequent tests even if one of them
+       * fails. All tests in the group are retried together.
+       * - `test.describe.sequential(title, callback)`
+       * - `test.describe.sequential(callback)`
+       * - `test.describe.sequential(title, details, callback)`
+       *
+       * **Usage**
+       *
+       * ```js
+       * test.describe.sequential('group', () => {
+       *   test('runs first', async ({ page }) => {});
+       *   test('runs second', async ({ page }) => {});
+       * });
+       * ```
+       *
+       * You can also omit the title.
+       *
+       * ```js
+       * test.describe.sequential(() => {
+       *   // ...
+       * });
+       * ```
+       *
+       * @param title Group title.
+       * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for
+       * details description.
+       * @param callback A callback that is run immediately when calling
+       * [test.describe.sequential([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-sequential).
+       * Any tests added in this callback will belong to the group.
+       */
+      (callback: () => void): void;
+      /**
+       * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+       * the preferred way of configuring the execution mode.
+       *
+       * Declares a group of tests that should be run serially, but continues running subsequent tests even if one of them
+       * fails. All tests in the group are retried together.
+       * - `test.describe.sequential(title, callback)`
+       * - `test.describe.sequential(callback)`
+       * - `test.describe.sequential(title, details, callback)`
+       *
+       * **Usage**
+       *
+       * ```js
+       * test.describe.sequential('group', () => {
+       *   test('runs first', async ({ page }) => {});
+       *   test('runs second', async ({ page }) => {});
+       * });
+       * ```
+       *
+       * You can also omit the title.
+       *
+       * ```js
+       * test.describe.sequential(() => {
+       *   // ...
+       * });
+       * ```
+       *
+       * @param title Group title.
+       * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for
+       * details description.
+       * @param callback A callback that is run immediately when calling
+       * [test.describe.sequential([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-sequential).
+       * Any tests added in this callback will belong to the group.
+       */
+      (title: string, details: TestDetails, callback: () => void): void;
+
+      /**
+       * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+       * the preferred way of configuring the execution mode.
+       *
+       * Declares a focused group of tests that should be run serially, but continues running subsequent tests even if one
+       * of them fails. All tests in the group are retried together. If there are some focused tests or suites, all of them
+       * will be run but nothing else.
+       *
+       * **NOTE** Using sequential is not recommended. It is usually better to make your tests isolated, so they can be run
+       * independently.
+       *
+       * - `test.describe.sequential.only(title, callback)`
+       * - `test.describe.sequential.only(title)`
+       * - `test.describe.sequential.only(title, details, callback)`
+       *
+       * **Usage**
+       *
+       * ```js
+       * test.describe.sequential.only('group', () => {
+       *   test('runs first', async ({ page }) => {
+       *   });
+       *   test('runs second', async ({ page }) => {
+       *   });
+       * });
+       * ```
+       *
+       * You can also omit the title.
+       *
+       * ```js
+       * test.describe.sequential.only(() => {
+       *   // ...
+       * });
+       * ```
+       *
+       * @param title Group title.
+       * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for
+       * details description.
+       * @param callback A callback that is run immediately when calling
+       * [test.describe.sequential.only(title[, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-sequential-only).
+       * Any tests added in this callback will belong to the group.
+       */
+      only(title: string, callback: () => void): void;
+      /**
+       * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+       * the preferred way of configuring the execution mode.
+       *
+       * Declares a focused group of tests that should be run serially, but continues running subsequent tests even if one
+       * of them fails. All tests in the group are retried together. If there are some focused tests or suites, all of them
+       * will be run but nothing else.
+       *
+       * **NOTE** Using sequential is not recommended. It is usually better to make your tests isolated, so they can be run
+       * independently.
+       *
+       * - `test.describe.sequential.only(title, callback)`
+       * - `test.describe.sequential.only(title)`
+       * - `test.describe.sequential.only(title, details, callback)`
+       *
+       * **Usage**
+       *
+       * ```js
+       * test.describe.sequential.only('group', () => {
+       *   test('runs first', async ({ page }) => {
+       *   });
+       *   test('runs second', async ({ page }) => {
+       *   });
+       * });
+       * ```
+       *
+       * You can also omit the title.
+       *
+       * ```js
+       * test.describe.sequential.only(() => {
+       *   // ...
+       * });
+       * ```
+       *
+       * @param title Group title.
+       * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for
+       * details description.
+       * @param callback A callback that is run immediately when calling
+       * [test.describe.sequential.only(title[, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-sequential-only).
+       * Any tests added in this callback will belong to the group.
+       */
+      only(callback: () => void): void;
+      /**
+       * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+       * the preferred way of configuring the execution mode.
+       *
+       * Declares a focused group of tests that should be run serially, but continues running subsequent tests even if one
+       * of them fails. All tests in the group are retried together. If there are some focused tests or suites, all of them
+       * will be run but nothing else.
+       *
+       * **NOTE** Using sequential is not recommended. It is usually better to make your tests isolated, so they can be run
+       * independently.
+       *
+       * - `test.describe.sequential.only(title, callback)`
+       * - `test.describe.sequential.only(title)`
+       * - `test.describe.sequential.only(title, details, callback)`
+       *
+       * **Usage**
+       *
+       * ```js
+       * test.describe.sequential.only('group', () => {
+       *   test('runs first', async ({ page }) => {
+       *   });
+       *   test('runs second', async ({ page }) => {
+       *   });
+       * });
+       * ```
+       *
+       * You can also omit the title.
+       *
+       * ```js
+       * test.describe.sequential.only(() => {
+       *   // ...
+       * });
+       * ```
+       *
+       * @param title Group title.
+       * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for
+       * details description.
+       * @param callback A callback that is run immediately when calling
+       * [test.describe.sequential.only(title[, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-sequential-only).
+       * Any tests added in this callback will belong to the group.
+       */
+      only(title: string, details: TestDetails, callback: () => void): void;
+    };
+
+    /**
+     * **NOTE** See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+     * the preferred way of configuring the execution mode.
+     *
      * Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after
      * another, but using
      * [test.describe.parallel([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-parallel)
@@ -4177,6 +4446,15 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      *   test('runs second', async ({ page }) => {});
      *   ```
      *
+     * - Running tests serially without skipping subsequent tests if one fails.
+     *
+     *   ```js
+     *   // Run tests one-by-one even when one fails.
+     *   test.describe.configure({ mode: 'sequential' });
+     *   test('runs first', async ({ page }) => {});
+     *   test('runs second', async ({ page }) => {});
+     *   ```
+     *
      * - Configuring retries and timeout for each test.
      *
      *   ```js
@@ -4206,7 +4484,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
      *
      * @param options
      */
-    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: { mode?: 'default' | 'parallel' | 'serial' | 'sequential', retries?: number, timeout?: number }) => void;
   };
 
   /**

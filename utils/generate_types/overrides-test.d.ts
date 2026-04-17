@@ -137,6 +137,16 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
       only(title: string, details: TestDetails, callback: () => void): void;
     };
 
+    sequential: {
+      (title: string, callback: () => void): void;
+      (callback: () => void): void;
+      (title: string, details: TestDetails, callback: () => void): void;
+
+      only(title: string, callback: () => void): void;
+      only(callback: () => void): void;
+      only(title: string, details: TestDetails, callback: () => void): void;
+    };
+
     parallel: {
       (title: string, callback: () => void): void;
       (callback: () => void): void;
@@ -147,7 +157,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
       only(title: string, details: TestDetails, callback: () => void): void;
     };
 
-    configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
+    configure: (options: { mode?: 'default' | 'parallel' | 'serial' | 'sequential', retries?: number, timeout?: number }) => void;
   };
 
   skip(title: string, body: TestBody<TestArgs & WorkerArgs>): void;

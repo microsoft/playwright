@@ -338,7 +338,7 @@ class JobDispatcher {
   private _addNonretriableTestAndSerialModeParents(test: testNs.TestCase) {
     this._failedWithNonRetriableError.add(test);
     for (let parent: testNs.Suite | undefined = test.parent; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial')
+      if (parent._parallelMode === 'serial' || parent._parallelMode === 'sequential')
         this._failedWithNonRetriableError.add(parent);
     }
   }

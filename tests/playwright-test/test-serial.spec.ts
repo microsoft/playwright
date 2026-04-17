@@ -446,3 +446,44 @@ test('serial skip + fail is failed', async ({ runInlineTest }) => {
   expect(result.interrupted).toBe(0);
   expect(result.didNotRun).toBe(1);
 });
+
+test('test.describe.sequential should work', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe.sequential('sequential suite', () => {
+        test('test1', async ({}) => {
+          console.log('\\n%%test1');
+        });
+        test('test2', async ({}) => {
+          console.log('\\n%%test2');
+        });
+
+        test.describe('inner suite', () => {
+          test('test3', async ({}) => {
+            console.log('\\n%%test3');
+            expect(1).toBe(2);
+          });
+          test('test4', async ({}) => {
+            console.log('\\n%%test4');
+          });
+        });
+
+        test('test5', async ({}) => {
+          console.log('\\n%%test5');
+        });
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.didNotRun).toBe(0); // Tests should run even after failure
+  expect(result.outputLines).toEqual([
+    'test1',
+    'test2',
+    'test3',
+    'test4', // test4 should run even though test3 failed
+    'test5', // test5 should run even though test3 failed
+  ]);
+});

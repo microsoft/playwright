@@ -82,7 +82,7 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
     let outerMostSequentialSuite: test.Suite | undefined;
     let hasAllHooks = false;
     for (let parent: test.Suite | undefined = test.parent; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial' || parent._parallelMode === 'default')
+      if (parent._parallelMode === 'serial' || parent._parallelMode === 'default' || parent._parallelMode === 'sequential')
         outerMostSequentialSuite = parent;
       insideParallel = insideParallel || parent._parallelMode === 'parallel';
       hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
