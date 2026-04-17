@@ -67,7 +67,7 @@ Unhandled error that was thrown.
 Unhandled error that was thrown.
 
 ## method: WebError.location
-* since: v1.59
+* since: v1.60
 * langs: js, python
 - returns: <[Object]>
   - `url` <[string]> URL of the resource.
@@ -75,7 +75,7 @@ Unhandled error that was thrown.
   - `column` <[int]> 0-based column number in the resource.
 
 ## method: WebError.location
-* since: v1.59
+* since: v1.60
 * langs: csharp, java
 - returns: <[string]>
 
