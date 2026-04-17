@@ -57,6 +57,7 @@ async function globalSetup() {
       build('playwright-browser-webkit', '@playwright/browser-webkit'),
       build('playwright-ct-react', '@playwright/experimental-ct-react'),
       build('playwright-ct-core', '@playwright/experimental-ct-core'),
+      build('playwright-electron', '@playwright/electron'),
     ]);
 
     const buildPlaywrightTestPlugin = async () => {

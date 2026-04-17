@@ -30,8 +30,6 @@ export type InitializerTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceInitializer :
     T extends AndroidSocketChannel ? AndroidSocketInitializer :
     T extends AndroidChannel ? AndroidInitializer :
-    T extends ElectronApplicationChannel ? ElectronApplicationInitializer :
-    T extends ElectronChannel ? ElectronInitializer :
     T extends CDPSessionChannel ? CDPSessionInitializer :
     T extends WritableStreamChannel ? WritableStreamInitializer :
     T extends StreamChannel ? StreamInitializer :
@@ -69,8 +67,6 @@ export type EventsTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceEvents :
     T extends AndroidSocketChannel ? AndroidSocketEvents :
     T extends AndroidChannel ? AndroidEvents :
-    T extends ElectronApplicationChannel ? ElectronApplicationEvents :
-    T extends ElectronChannel ? ElectronEvents :
     T extends CDPSessionChannel ? CDPSessionEvents :
     T extends WritableStreamChannel ? WritableStreamEvents :
     T extends StreamChannel ? StreamEvents :
@@ -108,8 +104,6 @@ export type EventTargetTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceEventTarget :
     T extends AndroidSocketChannel ? AndroidSocketEventTarget :
     T extends AndroidChannel ? AndroidEventTarget :
-    T extends ElectronApplicationChannel ? ElectronApplicationEventTarget :
-    T extends ElectronChannel ? ElectronEventTarget :
     T extends CDPSessionChannel ? CDPSessionEventTarget :
     T extends WritableStreamChannel ? WritableStreamEventTarget :
     T extends StreamChannel ? StreamEventTarget :
@@ -619,7 +613,6 @@ export type PlaywrightInitializer = {
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
   android: AndroidChannel,
-  electron: ElectronChannel,
   utils?: LocalUtilsChannel,
   preLaunchedBrowser?: BrowserChannel,
   preConnectedAndroidDevice?: AndroidDeviceChannel,
@@ -4714,178 +4707,6 @@ export type CDPSessionDetachResult = void;
 export interface CDPSessionEvents {
   'event': CDPSessionEventEvent;
   'close': CDPSessionCloseEvent;
-}
-
-// ----------- Electron -----------
-export type ElectronInitializer = {};
-export interface ElectronEventTarget {
-}
-export interface ElectronChannel extends ElectronEventTarget, Channel {
-  _type_Electron: boolean;
-  launch(params: ElectronLaunchParams, progress?: Progress): Promise<ElectronLaunchResult>;
-}
-export type ElectronLaunchParams = {
-  executablePath?: string,
-  args?: string[],
-  chromiumSandbox?: boolean,
-  cwd?: string,
-  env?: NameValue[],
-  timeout: number,
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  extraHTTPHeaders?: NameValue[],
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
-  ignoreHTTPSErrors?: boolean,
-  locale?: string,
-  offline?: boolean,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  timezoneId?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-};
-export type ElectronLaunchOptions = {
-  executablePath?: string,
-  args?: string[],
-  chromiumSandbox?: boolean,
-  cwd?: string,
-  env?: NameValue[],
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  extraHTTPHeaders?: NameValue[],
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
-  ignoreHTTPSErrors?: boolean,
-  locale?: string,
-  offline?: boolean,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  timezoneId?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-};
-export type ElectronLaunchResult = {
-  electronApplication: ElectronApplicationChannel,
-};
-
-export interface ElectronEvents {
-}
-
-// ----------- ElectronApplication -----------
-export type ElectronApplicationInitializer = {
-  context: BrowserContextChannel,
-};
-export interface ElectronApplicationEventTarget {
-  on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
-  on(event: 'console', callback: (params: ElectronApplicationConsoleEvent) => void): this;
-}
-export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, EventTargetChannel {
-  _type_ElectronApplication: boolean;
-  browserWindow(params: ElectronApplicationBrowserWindowParams, progress?: Progress): Promise<ElectronApplicationBrowserWindowResult>;
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, progress?: Progress): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, progress?: Progress): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, progress?: Progress): Promise<ElectronApplicationUpdateSubscriptionResult>;
-}
-export type ElectronApplicationCloseEvent = {};
-export type ElectronApplicationConsoleEvent = {
-  type: string,
-  text: string,
-  args: JSHandleChannel[],
-  location: {
-    url: string,
-    lineNumber: number,
-    columnNumber: number,
-  },
-  timestamp: number,
-};
-export type ElectronApplicationBrowserWindowParams = {
-  page: PageChannel,
-};
-export type ElectronApplicationBrowserWindowOptions = {
-
-};
-export type ElectronApplicationBrowserWindowResult = {
-  handle: JSHandleChannel,
-};
-export type ElectronApplicationEvaluateExpressionParams = {
-  expression: string,
-  isFunction?: boolean,
-  arg: SerializedArgument,
-};
-export type ElectronApplicationEvaluateExpressionOptions = {
-  isFunction?: boolean,
-};
-export type ElectronApplicationEvaluateExpressionResult = {
-  value: SerializedValue,
-};
-export type ElectronApplicationEvaluateExpressionHandleParams = {
-  expression: string,
-  isFunction?: boolean,
-  arg: SerializedArgument,
-};
-export type ElectronApplicationEvaluateExpressionHandleOptions = {
-  isFunction?: boolean,
-};
-export type ElectronApplicationEvaluateExpressionHandleResult = {
-  handle: JSHandleChannel,
-};
-export type ElectronApplicationUpdateSubscriptionParams = {
-  event: 'console',
-  enabled: boolean,
-};
-export type ElectronApplicationUpdateSubscriptionOptions = {
-
-};
-export type ElectronApplicationUpdateSubscriptionResult = void;
-
-export interface ElectronApplicationEvents {
-  'close': ElectronApplicationCloseEvent;
-  'console': ElectronApplicationConsoleEvent;
 }
 
 // ----------- Android -----------

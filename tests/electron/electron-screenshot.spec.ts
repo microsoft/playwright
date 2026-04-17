@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-import playwright from './index.js';
+import fs from 'fs';
+import { electronTest as test, expect } from './electronTest';
 
-export const chromium = playwright.chromium;
-export const firefox = playwright.firefox;
-export const webkit = playwright.webkit;
-export const selectors = playwright.selectors;
-export const devices = playwright.devices;
-export const errors = playwright.errors;
-export const request = playwright.request;
-export const _android = playwright._android;
-export default playwright;
+test.use({ screenshot: 'on' });
+
+test.afterEach(async ({}, testInfo) => {
+  const screenshots = testInfo.attachments.filter(a => a.name === 'screenshot');
+  expect(screenshots).toHaveLength(1);
+  expect(fs.existsSync(screenshots[0].path!)).toBe(true);
+});
+
+test('should capture screenshot', async ({ page }) => {
+  await page.setContent('<h1>Electron</h1>');
+});

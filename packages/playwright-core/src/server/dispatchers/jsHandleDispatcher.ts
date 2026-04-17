@@ -19,13 +19,12 @@ import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
 
 import type * as js from '../javascript';
-import type { ElectronApplicationDispatcher } from './electronDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
 import type { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 
-export type JSHandleDispatcherParentScope = PageDispatcher | FrameDispatcher | WorkerDispatcher | ElectronApplicationDispatcher;
+export type JSHandleDispatcherParentScope = PageDispatcher | FrameDispatcher | WorkerDispatcher;
 
 export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScope = JSHandleDispatcherParentScope> extends Dispatcher<js.JSHandle, channels.JSHandleChannel, ParentScope> implements channels.JSHandleChannel {
   _type_JSHandle = true;
