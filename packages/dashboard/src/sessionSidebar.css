@@ -308,6 +308,6 @@
   font-size: 12px;
 }
 
-.sidebar-tab-close:hover {
+.sidebar-tab-close:not(:disabled):hover {
   background: var(--color-neutral-muted);
 }
