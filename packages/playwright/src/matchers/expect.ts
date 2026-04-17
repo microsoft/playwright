@@ -162,8 +162,6 @@ export function expectConfig(): ExpectConfig {
 
 type ExpectMessage = string | { message?: string };
 
-type PollGenerator = () => any;
-
 type ExpectMetaInfo = {
   message?: string;
   isNot?: boolean;
@@ -171,7 +169,6 @@ type ExpectMetaInfo = {
   poll?: {
     timeout?: number;
     intervals?: number[];
-    generator: PollGenerator;
   };
   timeout?: number;
   userMatchers: MatchersObject;
@@ -233,17 +230,7 @@ const promiseThrowMatchers: MatchersObject = {
 };
 
 function createExpect(info: ExpectMetaInfo): Expect<{}> {
-  const expectFn: any = (actual: unknown, messageOrOptions?: ExpectMessage) => {
-    const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
-    const newInfo: ExpectMetaInfo = { ...info, message };
-    if (newInfo.poll) {
-      if (typeof actual !== 'function')
-        throw new Error('`expect.poll()` accepts only function as a first argument');
-      newInfo.poll = { ...newInfo.poll, generator: actual as PollGenerator };
-    }
-    return createMatchers(actual, newInfo);
-  };
-
+  const expectFn: any = (actual: unknown, messageOrOptions?: ExpectMessage) => createMatchers(actual, info, messageOrOptions);
   Object.defineProperty(expectFn, META_INFO, { value: info });
 
   expectFn.any = any;
@@ -273,7 +260,7 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
 
   expectFn.getState = () => ({});
 
-  const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
+  expectFn.configure = (configuration: { message?: string, timeout?: number, soft?: boolean }) => {
     const newInfo: ExpectMetaInfo = { ...info };
     if ('message' in configuration)
       newInfo.message = configuration.message;
@@ -281,24 +268,16 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
       newInfo.timeout = configuration.timeout;
     if ('soft' in configuration)
       newInfo.isSoft = configuration.soft;
-    if ('_poll' in configuration) {
-      newInfo.poll = configuration._poll ? { ...info.poll, generator: () => {} } : undefined;
-      if (typeof configuration._poll === 'object') {
-        newInfo.poll!.timeout = configuration._poll.timeout ?? newInfo.poll!.timeout;
-        newInfo.poll!.intervals = configuration._poll.intervals ?? newInfo.poll!.intervals;
-      }
-    }
     return createExpect(newInfo);
   };
-  expectFn.configure = configure;
 
   expectFn.soft = (actual: unknown, messageOrOptions?: ExpectMessage) => {
-    return configure({ soft: true })(actual, messageOrOptions) as any;
+    return createMatchers(actual, { ... info, isSoft: true }, messageOrOptions);
   };
 
   expectFn.poll = (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
     const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
-    return configure({ _poll: poll })(actual, messageOrOptions) as any;
+    return createMatchers(actual, { ...info, poll: { timeout: poll.timeout, intervals: poll.intervals } }, messageOrOptions);
   };
 
   expectFn.extend = (matchers: MatchersObject) => {
@@ -326,42 +305,24 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
   return expectFn as Expect<{}>;
 }
 
-function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
-  const result: any = { not: {} };
-  if (!info.poll) {
-    result.resolves = { not: {} };
-    result.rejects = { not: {} };
-  } else {
-    const throwUnsupported = (name: 'resolves' | 'rejects') => {
-      throw new Error(`\`expect.poll()\` does not support "${name}" matcher.`);
-    };
-    Object.defineProperty(result, 'resolves', { get: () => throwUnsupported('resolves'), enumerable: true });
-    Object.defineProperty(result, 'rejects', { get: () => throwUnsupported('rejects'), enumerable: true });
-  }
-
+function createMatchers(actual: unknown, originalInfo: ExpectMetaInfo, messageOrOptions?: ExpectMessage): any {
+  const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || originalInfo.message;
+  const info = { ...originalInfo, message };
+  const result: any = { not: {}, resolves: { not: {} }, rejects: { not: {} } };
   const notInfo: ExpectMetaInfo = { ...info, isNot: !info.isNot };
-
-  const addMatcher = (name: string, matcher: RawMatcherFn) => {
-    result[name] = wrapMatcherCall(name, info, actual, matcher);
-    result.not[name] = wrapMatcherCall(name, notInfo, actual, matcher);
-    if (!info.poll) {
-      const promiseMatcher = promiseThrowMatchers[name] ?? matcher;
-      result.resolves[name] = wrapMatcherCall(name, info, actual, promiseMatcher, 'resolves');
-      result.resolves.not[name] = wrapMatcherCall(name, notInfo, actual, promiseMatcher, 'resolves');
-      result.rejects[name] = wrapMatcherCall(name, info, actual, promiseMatcher, 'rejects');
-      result.rejects.not[name] = wrapMatcherCall(name, notInfo, actual, promiseMatcher, 'rejects');
-    }
-  };
-
-  for (const [name, matcher] of Object.entries(allBuiltinMatchers))
-    addMatcher(name, matcher);
-  for (const [name, matcher] of Object.entries(info.userMatchers))
-    addMatcher(name, matcher);
-
+  for (const [name, matcher] of Object.entries({ ...allBuiltinMatchers, ...info.userMatchers })) {
+    result[name] = wrapMatcher(name, info, actual, matcher);
+    result.not[name] = wrapMatcher(name, notInfo, actual, matcher);
+    const promiseMatcher = promiseThrowMatchers[name] ?? matcher;
+    result.resolves[name] = wrapMatcher(name, info, actual, promiseMatcher, 'resolves');
+    result.resolves.not[name] = wrapMatcher(name, notInfo, actual, promiseMatcher, 'resolves');
+    result.rejects[name] = wrapMatcher(name, info, actual, promiseMatcher, 'rejects');
+    result.rejects.not[name] = wrapMatcher(name, notInfo, actual, promiseMatcher, 'rejects');
+  }
   return result;
 }
 
-function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcher: RawMatcherFn, promise?: 'resolves' | 'rejects') {
+function wrapMatcher(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcher: RawMatcherFn, promise?: 'resolves' | 'rejects') {
   return (...args: any[]) => {
     const testInfo = expectConfig().testInfo;
     const customMessage = info.message || '';
@@ -488,6 +449,8 @@ async function pollMatcher(
   promise: 'resolves' | 'rejects' | undefined,
   stepInfo: ExpectStepInfo | undefined,
 ): Promise<SyncExpectationResult> {
+  if (typeof actual !== 'function')
+    throw new Error('`expect.poll()` accepts only function as a first argument');
   if (promise || (customAsyncMatchers as any)[matcherName])
     throw new Error(`\`expect.poll()\` does not support "${promise ?? matcherName}" matcher.`);
 
@@ -500,7 +463,7 @@ async function pollMatcher(
     if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
 
-    const value = await poll.generator();
+    const value = await actual();
     const result = await invokeMatcher(matcherName, { ...info, poll: undefined }, matcher, value, args, undefined, stepInfo);
     if (result.pass === !info.isNot)
       return { continuePolling: false, result };
