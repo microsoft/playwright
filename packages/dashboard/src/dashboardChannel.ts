@@ -45,7 +45,7 @@ export interface DashboardChannel {
   closeSession(params: { browser: string }): Promise<void>;
   deleteSessionData(params: { browser: string }): Promise<void>;
   setVisible(params: { visible: boolean }): Promise<void>;
-  saveAndReveal(params: { id: string }): Promise<void>;
+  reveal(params: { path: string }): Promise<void>;
 
   navigate(params: { url: string }): Promise<void>;
   back(): Promise<void>;
@@ -60,8 +60,8 @@ export interface DashboardChannel {
   pickLocator(): Promise<void>;
   cancelPickLocator(): Promise<void>;
   startRecording(): Promise<void>;
-  stopRecording(): Promise<{ id: string }>;
-  screenshot(): Promise<{ id: string }>;
+  stopRecording(): Promise<{ path: string }>;
+  screenshot(): Promise<string>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
