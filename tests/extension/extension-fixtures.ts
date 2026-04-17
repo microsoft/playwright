@@ -50,7 +50,6 @@ type WorkerFixtures = {
   _protocolEnv: void;
 };
 
-export const extensionPublicKey = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwRsUUO4mmbCi4JpmrIoIw31iVW9+xUJRZ6nSzya17PQkaUPDxe1IpgM+vpd/xB6mJWlJSyE1Lj95c0sbomGfVY1M0zUeKbaRVcAb+/a6m59gNR+ubFlmTX0nK9/8fE2FpRB9D+4N5jyeIPQuASW/0oswI2/ijK7hH5NTRX8gWc/ROMSgUj7rKhTAgBrICt/NsStgDPsxRTPPJnhJ/ViJtM1P5KsSYswE987DPoFnpmkFpq8g1ae0eYbQfXy55ieaacC4QWyJPj3daU2kMfBQw7MXnnk0H/WDxouMOIHnd8MlQxpEMqAihj7KpuONH+MUhuj9HEQo4df6bSaIuQ0b4QIDAQAB';
 export const extensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
 export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOptions>({
@@ -67,13 +66,6 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
     const extensionDir = testInfo.outputPath('extension');
     const srcDir = path.resolve(__dirname, '../../packages/extension/dist');
     await fs.cp(srcDir, extensionDir, { recursive: true });
-    const manifestPath = path.join(extensionDir, 'manifest.json');
-    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-    // We don't hardcode the key in manifest, but for the tests we set the key field
-    // to ensure that locally installed extension has the same id as the one published
-    // in the store.
-    manifest.key = extensionPublicKey;
-    await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
     await use(extensionDir);
   },
 
@@ -137,10 +129,9 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
 export { expect };
 
 export const testWithOldExtensionVersion = test.extend({
-  pathToExtension: async ({ pathToExtension }, use, testInfo) => {
+  pathToExtension: async ({ pathToExtension }, use) => {
     const manifestPath = path.join(pathToExtension, 'manifest.json');
     const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-    manifest.key = extensionPublicKey;
     manifest.version = '0.0.1';
     await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
     await use(pathToExtension);

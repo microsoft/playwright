@@ -16,8 +16,6 @@ jobs:
         run: npm ci
       - name: Build extension
         run: npm run build-extension
-        env:
-          SET_EXTENSION_PUBLIC_KEY_IN_MANIFEST: 1
       - name: Package extension
         working-directory: ./packages/extension
         run: |
