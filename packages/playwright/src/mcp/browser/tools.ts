@@ -65,8 +65,8 @@ export const browserTools: Tool<any>[] = [
 
 export function filteredTools(config: FullConfig) {
   let tools = browserTools
-    .filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability))
-    .filter(tool => !tool.skillOnly);
+      .filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability))
+      .filter(tool => !tool.skillOnly);
   if (config.allowedTools?.length)
     tools = tools.filter(tool => config.allowedTools!.includes(tool.schema.name));
   return tools;

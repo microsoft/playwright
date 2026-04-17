@@ -80,6 +80,7 @@ export type CLIOptions = {
   keepBrowserAlive?: boolean;
   stealth?: boolean;
   suppressFocus?: boolean;
+  disableDownloads?: boolean;
   'allowed-tools'?: string[];
 };
 
@@ -317,6 +318,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     keepBrowserAlive: cliOptions.keepBrowserAlive,
     stealth: cliOptions.stealth,
     suppressFocus: cliOptions.suppressFocus,
+    disableDownloads: cliOptions.disableDownloads,
     allowedTools: cliOptions['allowed-tools'],
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
@@ -379,6 +381,7 @@ function configFromEnv(): Config {
   options.suppressFocus = envToBoolean(process.env.PLAYWRIGHT_MCP_SUPPRESS_FOCUS);
   options.keepBrowserAlive = envToBoolean(process.env.PLAYWRIGHT_MCP_KEEP_BROWSER_ALIVE);
   options.filterInternalUrls = envToBoolean(process.env.PLAYWRIGHT_MCP_FILTER_INTERNAL_URLS);
+  options.disableDownloads = envToBoolean(process.env.PLAYWRIGHT_MCP_DISABLE_DOWNLOADS);
   return configFromCLIOptions(options);
 }
 

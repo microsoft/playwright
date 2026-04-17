@@ -149,7 +149,7 @@ export class Response {
         headerTimeoutId = setTimeout(() => reject(new Error('Tab headers timed out — renderer may be stale')), snapshotTimeout);
       }),
     ]).finally(() => clearTimeout(headerTimeoutId))
-      .catch(() => this._context.tabs().map(() => ({ title: '', url: '', current: false, changed: false })));
+        .catch(() => this._context.tabs().map(() => ({ title: '', url: '', current: false, changed: false })));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1) {
         const content = addSection('Open tabs');
