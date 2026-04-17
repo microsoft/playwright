@@ -26,7 +26,6 @@ import {
   matcherHint,
   printReceived,
   printWithType,
-  stringify,
 } from 'jest-matcher-utils';
 
 import {
@@ -37,7 +36,9 @@ import {
   arrayNotContaining,
   arrayOf,
   closeTo,
-  createThrowMatcher,
+  getPromiseMatcher,
+  getMessage,
+  validateMatcherResult,
   isPromise,
   matchers as expectMatchers,
   notArrayOf,
@@ -51,7 +52,7 @@ import {
   toThrowMatchers,
   utils,
 } from './expectLibrary';
-import { ExpectError, isJestError } from './matcherHint';
+import { ExpectError } from './matcherHint';
 import {
   computeMatcherTitleSuffix,
   deadlineForMatcher,
@@ -88,7 +89,7 @@ import {
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 
-import type { ExpectationResult, MatcherContext, MatchersObject, RawMatcherFn, SyncExpectationResult } from './expectLibrary';
+import type { MatcherContext, MatchersObject, RawMatcherFn, SyncExpectationResult } from './expectLibrary';
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
@@ -178,30 +179,6 @@ type ExpectMetaInfo = {
 };
 
 const META_INFO = Symbol('expectMetaInfo');
-
-// Expect wraps matchers, so there is no way to pass this information to the raw Playwright matcher.
-// Rely on sync call sequence to seed each matcher call with the context.
-type MatcherCallContext = {
-  expectInfo: ExpectMetaInfo;
-  testInfo: ExpectTestInfo | null;
-  step?: ExpectStepInfo;
-};
-
-let matcherCallContext: MatcherCallContext | undefined;
-
-function setMatcherCallContext(context: MatcherCallContext) {
-  matcherCallContext = context;
-}
-
-function takeMatcherCallContext(): MatcherCallContext | undefined {
-  try {
-    return matcherCallContext;
-  } finally {
-    // Any subsequent matcher following the first is assumed to be an unsupported legacy asymmetric matcher.
-    // Lacking call context in these scenarios is not particularly important.
-    matcherCallContext = undefined;
-  }
-}
 
 const defaultExpectTimeout = 5000;
 
@@ -384,20 +361,19 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
     Object.defineProperty(result, 'rejects', { get: () => throwUnsupported('rejects'), enumerable: true });
   }
 
-  const err = new JestAssertionError();
   const notInfo: ExpectMetaInfo = { ...info, isNot: !info.isNot };
 
   const addMatcher = (name: string, matcher: RawMatcherFn) => {
     const promiseMatcher = getPromiseMatcher(name) || matcher;
 
-    result[name] = wrapMatcherCall(name, info, actual, makeThrowingMatcher(matcher, false, '', actual));
-    result.not[name] = wrapMatcherCall(name, notInfo, actual, makeThrowingMatcher(matcher, true, '', actual));
+    result[name] = wrapMatcherCall(name, info, actual, matcher);
+    result.not[name] = wrapMatcherCall(name, notInfo, actual, matcher);
 
     if (!info.poll) {
-      result.resolves[name] = wrapMatcherCall(name, info, actual, makeResolveMatcher(name, promiseMatcher, false, actual as any, err));
-      result.resolves.not[name] = wrapMatcherCall(name, notInfo, actual, makeResolveMatcher(name, promiseMatcher, true, actual as any, err));
-      result.rejects[name] = wrapMatcherCall(name, info, actual, makeRejectMatcher(name, promiseMatcher, false, actual as any, err));
-      result.rejects.not[name] = wrapMatcherCall(name, notInfo, actual, makeRejectMatcher(name, promiseMatcher, true, actual as any, err));
+      result.resolves[name] = wrapMatcherCall(name, info, actual, promiseMatcher, 'resolves');
+      result.resolves.not[name] = wrapMatcherCall(name, notInfo, actual, promiseMatcher, 'resolves');
+      result.rejects[name] = wrapMatcherCall(name, info, actual, promiseMatcher, 'rejects');
+      result.rejects.not[name] = wrapMatcherCall(name, notInfo, actual, promiseMatcher, 'rejects');
     }
   };
 
@@ -409,19 +385,9 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
   return result;
 }
 
-function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcherImpl: (...args: any[]) => any) {
+function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcher: RawMatcherFn, promise?: 'resolves' | 'rejects') {
   return (...args: any[]) => {
-    if (info.poll) {
-      if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
-        throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcherImpl = (...args: any[]) => pollMatcher(matcherName, info, ...args);
-    }
-
     const testInfo = expectConfig().testInfo;
-    setMatcherCallContext({ expectInfo: info, testInfo });
-    if (!testInfo)
-      return matcherImpl(...args);
-
     const customMessage = info.message || '';
     const suffixes = computeMatcherTitleSuffix(matcherName, actual, args);
     const defaultTitle = `${info.poll ? 'poll ' : ''}${info.isSoft ? 'soft ' : ''}${info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
@@ -435,7 +401,7 @@ function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unkn
 
     // toPass and poll matchers can contain other steps, expects and API calls,
     // so they behave like a retriable step.
-    const stepInfo = {
+    const stepData = {
       category: 'expect' as const,
       apiName,
       title: longTitle,
@@ -444,278 +410,143 @@ function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unkn
       infectParentStepsWithError: info.isSoft,
     };
 
-    const step = testInfo._addStep(stepInfo);
+    const step = testInfo?._addStep(stepData);
 
-    const reportStepError = (e: Error | unknown) => {
-      const jestError = isJestError(e) ? e : null;
-      const expectError = jestError ? new ExpectError(jestError, customMessage, stackFrames) : undefined;
-      if (jestError?.matcherResult.suggestedRebaseline) {
-        // NOTE: this is a workaround for the fact that we can't pass the suggested rebaseline
-        // for passing matchers. See toMatchAriaSnapshot for a counterpart.
-        step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
-        return;
-      }
-
-      const error = expectError ?? e;
-      step.complete({ error });
-
-      if (info.isSoft)
+    const reportStepError = (error: Error | unknown) => {
+      step?.complete({ error });
+      if (info.isSoft && testInfo)
         testInfo._failWithError(error);
       else
         throw error;
     };
 
-    const finalizer = () => {
-      step.complete({});
+    const finalizer = (result: SyncExpectationResult & { suggestedRebaseline?: string }) => {
+      validateMatcherResult(result);
+      if (result.pass === !!info.isNot) {
+        const withMessage = { ...result, name: matcherName, message: getMessage(result.message) };
+        reportStepError(new ExpectError(withMessage, customMessage, stackFrames));
+      } else {
+        step?.complete({ suggestedRebaseline: result.suggestedRebaseline });
+      }
     };
 
     try {
-      setMatcherCallContext({ expectInfo: info, testInfo, step: step.info });
-      const callback = () => matcherImpl(...args);
-      const result = currentZone().with('stepZone', step).run(callback);
+      const invoke = () => info.poll
+        ? pollMatcher(matcherName, info, matcher, actual, args, promise, step?.info)
+        : invokeMatcher(matcherName, info, matcher, actual, args, promise, step?.info);
+      const result = step ? currentZone().with('stepZone', step).run(invoke) : invoke();
       if (result instanceof Promise)
         return result.then(finalizer).catch(reportStepError);
-      finalizer();
-      return result;
+      finalizer(result);
     } catch (e) {
       void reportStepError(e);
     }
   };
 }
 
-async function pollMatcher(matcherName: string, info: ExpectMetaInfo, ...args: any[]) {
+function invokeMatcher(
+  matcherName: string,
+  info: ExpectMetaInfo,
+  matcher: RawMatcherFn,
+  actual: unknown,
+  args: any[],
+  promise: 'resolves' | 'rejects' | undefined,
+  stepInfo: ExpectStepInfo | undefined,
+): SyncExpectationResult | Promise<SyncExpectationResult> {
+  const isNot = !!info.isNot;
+  const matcherHintOptions = { isNot, promise: promise ?? '' };
+  const timeout = info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
+  const matcherContext: MatcherContext & ExpectMatcherStateInternal = {
+    customTesters: [],
+    isNot,
+    promise: promise ?? '',
+    utils,
+    timeout,
+    _stepInfo: stepInfo,
+    equals: throwUnsupportedExpectMatcherError as any,
+  };
+
+  if (promise) {
+    if (typeof actual === 'function')
+      actual = actual();
+
+    if (!isPromise(actual)) {
+      return {
+        pass: false,
+        message: () => matcherErrorMessage(
+            matcherHint(matcherName, undefined, '', matcherHintOptions),
+            `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
+            printWithType('Received', actual, printReceived),
+        ),
+      };
+    }
+
+    if (promise === 'resolves') {
+      return actual.then(
+          result => matcher.call(matcherContext, result, ...args),
+          error => ({
+            pass: false,
+            message: () => `${matcherHint(matcherName, undefined, '', matcherHintOptions)}\n\n` +
+              'Received promise rejected instead of resolved\n' +
+              `Rejected to value: ${printReceived(error)}`,
+          }),
+      );
+    }
+
+    return actual.then(
+        result => ({
+          pass: false,
+          message: () => `${matcherHint(matcherName, undefined, '', matcherHintOptions)}\n\n` +
+            'Received promise resolved instead of rejected\n' +
+            `Resolved to value: ${printReceived(result)}`,
+        }),
+        error => matcher.call(matcherContext, error, ...args),
+    );
+  }
+
+  return matcher.call(matcherContext, actual, ...args);
+}
+
+async function pollMatcher(
+  matcherName: string,
+  info: ExpectMetaInfo,
+  matcher: RawMatcherFn,
+  actual: unknown,
+  args: any[],
+  promise: 'resolves' | 'rejects' | undefined,
+  stepInfo: ExpectStepInfo | undefined,
+): Promise<SyncExpectationResult> {
+  if (promise || (customAsyncMatchers as any)[matcherName])
+    throw new Error(`\`expect.poll()\` does not support "${promise ?? matcherName}" matcher.`);
+
   const testInfo = expectConfig().testInfo;
   const poll = info.poll!;
   const timeout = poll.timeout ?? info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
   const { deadline, timeoutMessage } = deadlineForMatcher(testInfo, timeout);
 
-  const result = await pollAgainstDeadline<Error|undefined>(async () => {
+  const polled = await pollAgainstDeadline<SyncExpectationResult | undefined>(async () => {
     if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
 
-    // Inner matchers run without poll and without soft (soft is outside of poll, not inside).
-    // Strip isNot here and route to the .not branch below so step title matches.
-    const effectiveIsNot = !!info.isNot;
-    const innerInfo: ExpectMetaInfo = {
-      ...info,
-      isNot: false,
-      isSoft: false,
-      poll: undefined,
-    };
     const value = await poll.generator();
-    try {
-      const matchers = createMatchers(value, innerInfo);
-      if (effectiveIsNot)
-        matchers.not[matcherName](...args);
-      else
-        matchers[matcherName](...args);
-      return { continuePolling: false, result: undefined };
-    } catch (error) {
-      return { continuePolling: true, result: error };
-    }
+    const result = await invokeMatcher(matcherName, { ...info, poll: undefined }, matcher, value, args, undefined, stepInfo);
+    if (result.pass === !info.isNot)
+      return { continuePolling: false, result };
+    return { continuePolling: true, result };
   }, deadline, poll.intervals ?? [100, 250, 500, 1000]);
 
-  if (result.timedOut) {
-    const message = result.result ? [
-      result.result.message,
+  const result = polled.result ?? { pass: !!info.isNot, message: () => '' };
+  if (polled.timedOut) {
+    const message = polled.result ? [
+      getMessage(polled.result.message),
       '',
       `Call Log:`,
       `- ${timeoutMessage}`,
     ].join('\n') : timeoutMessage;
-
-    throw new Error(message);
+    result.message = () => message;
   }
+  return result;
 }
-
-// #region
-// Based on https://github.com/jestjs/jest/tree/v30.2.0/packages/expect
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved.
- *
- * This source code is licensed under the MIT license found here
- * https://github.com/jestjs/jest/blob/v30.2.0/LICENSE
- */
-
-type ThrowingMatcherFn = (...args: Array<any>) => any;
-type PromiseMatcherFn = (...args: Array<any>) => Promise<any>;
-
-class JestAssertionError extends Error {
-  matcherResult?: Omit<SyncExpectationResult, 'message'> & { message: string };
-}
-
-const getPromiseMatcher = (name: string) => {
-  if (name === 'toThrow')
-    return createThrowMatcher(name, true);
-  return null;
-};
-
-const getMessage = (message?: () => string) =>
-  (message && message()) ||
-  RECEIVED_COLOR('No message was specified for this matcher.');
-
-const makeResolveMatcher = (
-  matcherName: string,
-  matcher: RawMatcherFn,
-  isNot: boolean,
-  actual: Promise<any> | (() => Promise<any>),
-  outerErr: JestAssertionError,
-): PromiseMatcherFn =>
-  (...args: Array<any>) => {
-    const options = { isNot, promise: 'resolves' };
-
-    const actualWrapper: Promise<any> =
-      typeof actual === 'function' ? actual() : actual;
-
-    if (!isPromise(actualWrapper)) {
-      throw new JestAssertionError(
-          matcherErrorMessage(
-              matcherHint(matcherName, undefined, '', options),
-              `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
-              printWithType('Received', actual, printReceived),
-          ),
-      );
-    }
-
-    const innerErr = new JestAssertionError();
-
-    return actualWrapper.then(
-        result => makeThrowingMatcher(matcher, isNot, 'resolves', result, innerErr).apply(null, args),
-        error => {
-          outerErr.message =
-            `${matcherHint(matcherName, undefined, '', options)}\n\n` +
-            'Received promise rejected instead of resolved\n' +
-            `Rejected to value: ${printReceived(error)}`;
-          throw outerErr;
-        },
-    );
-  };
-
-const makeRejectMatcher = (
-  matcherName: string,
-  matcher: RawMatcherFn,
-  isNot: boolean,
-  actual: Promise<any> | (() => Promise<any>),
-  outerErr: JestAssertionError,
-): PromiseMatcherFn =>
-  (...args: Array<any>) => {
-    const options = { isNot, promise: 'rejects' };
-
-    const actualWrapper: Promise<any> =
-      typeof actual === 'function' ? actual() : actual;
-
-    if (!isPromise(actualWrapper)) {
-      throw new JestAssertionError(
-          matcherErrorMessage(
-              matcherHint(matcherName, undefined, '', options),
-              `${RECEIVED_COLOR('received')} value must be a promise or a function returning a promise`,
-              printWithType('Received', actual, printReceived),
-          ),
-      );
-    }
-
-    const innerErr = new JestAssertionError();
-
-    return actualWrapper.then(
-        result => {
-          outerErr.message =
-            `${matcherHint(matcherName, undefined, '', options)}\n\n` +
-            'Received promise resolved instead of rejected\n' +
-            `Resolved to value: ${printReceived(result)}`;
-          throw outerErr;
-        },
-        error => makeThrowingMatcher(matcher, isNot, 'rejects', error, innerErr).apply(null, args),
-    );
-  };
-
-const makeThrowingMatcher = (
-  matcher: RawMatcherFn,
-  isNot: boolean,
-  promise: string,
-  actual: any,
-  err?: JestAssertionError,
-): ThrowingMatcherFn =>
-  function throwingMatcher(this: void, ...args: Array<any>): any {
-    const callContext = takeMatcherCallContext();
-    const timeout = callContext?.expectInfo.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
-    const matcherContext: MatcherContext & ExpectMatcherStateInternal = {
-      customTesters: [],
-      isNot,
-      promise: promise as any,
-      utils,
-      error: err,
-      timeout,
-      _stepInfo: callContext?.step,
-      equals: throwUnsupportedExpectMatcherError as any,
-    };
-
-    const processResult = (
-      result: SyncExpectationResult,
-      asyncError?: JestAssertionError,
-    ) => {
-      _validateResult(result);
-
-      if ((result.pass && isNot) || (!result.pass && !isNot)) {
-        const message = getMessage(result.message);
-        let error;
-
-        if (err) {
-          error = err;
-          error.message = message;
-        } else if (asyncError) {
-          error = asyncError;
-          error.message = message;
-        } else {
-          error = new JestAssertionError(message);
-
-          if (Error.captureStackTrace)
-            Error.captureStackTrace(error, throwingMatcher);
-        }
-        error.matcherResult = { ...result, message };
-        throw error;
-      }
-    };
-
-    const handleError = (error: Error) => {
-      throw error;
-    };
-
-    try {
-      const potentialResult: ExpectationResult = matcher.call(matcherContext, actual, ...args);
-
-      if (isPromise(potentialResult)) {
-        const asyncError = new JestAssertionError();
-        if (Error.captureStackTrace)
-          Error.captureStackTrace(asyncError, throwingMatcher);
-
-        return potentialResult
-            .then(aResult => processResult(aResult, asyncError))
-            .catch(handleError);
-      }
-      return processResult(potentialResult);
-    } catch (error: any) {
-      return handleError(error);
-    }
-  };
-
-const _validateResult = (result: any) => {
-  if (
-    typeof result !== 'object' ||
-    typeof result.pass !== 'boolean' ||
-    (result.message &&
-      typeof result.message !== 'string' &&
-      typeof result.message !== 'function')
-  ) {
-    throw new Error(
-        'Unexpected return from a matcher function.\n' +
-        'Matcher functions should ' +
-        'return an object in the following format:\n' +
-        '  {message?: string | function, pass: boolean}\n' +
-        `'${stringify(result)}' was returned`,
-    );
-  }
-};
-
-// #endregion
 
 export const expect: Expect<{}> = createExpect({ userMatchers: {} });
 

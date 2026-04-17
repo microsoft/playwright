@@ -150,10 +150,7 @@ export async function toMatchAriaSnapshot(
           const message = 'A snapshot is not provided, generating new baseline.';
           testInfo._failWithError(new Error(message), 'shouldNotRetry');
         }
-        // TODO: ideally, we should return "pass: true" here because this matcher passes
-        // when regenerating baselines. However, we can only access suggestedRebaseline in case
-        // of an error, so we fail here and workaround it in the expect implementation.
-        return { pass: false, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
+        return { pass: true, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
       }
     }
   }

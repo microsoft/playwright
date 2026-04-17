@@ -1662,3 +1662,31 @@ function isObject(obj: unknown) {
 function messageAndCause(error: Error) {
   return error.cause === undefined ? 'message' : 'message and cause';
 }
+
+export const getPromiseMatcher = (name: string) => {
+  if (name === 'toThrow')
+    return createThrowMatcher(name, true);
+  return null;
+};
+
+export const getMessage = (message?: () => string) =>
+  (message && message()) ||
+  RECEIVED_COLOR('No message was specified for this matcher.');
+
+export const validateMatcherResult = (result: any) => {
+  if (
+    typeof result !== 'object' ||
+    typeof result.pass !== 'boolean' ||
+    (result.message &&
+      typeof result.message !== 'string' &&
+      typeof result.message !== 'function')
+  ) {
+    throw new Error(
+        'Unexpected return from a matcher function.\n' +
+        'Matcher functions should ' +
+        'return an object in the following format:\n' +
+        '  {message?: string | function, pass: boolean}\n' +
+        `'${stringify(result)}' was returned`,
+    );
+  }
+};
