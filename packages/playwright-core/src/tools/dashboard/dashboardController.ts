@@ -574,6 +574,8 @@ async function faviconUrl(page: api.Page): Promise<string | undefined> {
     if (!response.ok)
       return undefined;
     const blob = await response.blob();
+    if (!blob.type.startsWith('image/'))
+      return undefined;
     return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);

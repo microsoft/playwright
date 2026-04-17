@@ -15,3 +15,4 @@ See [CLAUDE.md](../../../CLAUDE.md) for monorepo structure, build/test/lint comm
 - [Vendor Dependencies & Bundling](vendor.md) — utilsBundle, coreBundle, babelBundle; adding vendored npm packages; DEPS.list; `check_deps`
 - [Updating WebKit Safari Version](webkit-safari-version.md) — update the Safari version string in the WebKit user-agent
 - [Bisecting Across Published Versions](bisect-published-versions.md) — reproduce regressions side-by-side from npm and diff `node_modules/playwright/lib/` between versions
+- [Dashboard](dashboard.md) - the UI powering the "playwright cli show" command, and how to work on it
