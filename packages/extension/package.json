@@ -1,0 +1,30 @@
+{
+  "name": "@playwright/extension",
+  "version": "0.1.0",
+  "description": "Playwright Browser Extension",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc --project . && tsc --project tsconfig.ui.json && vite build && vite build --config vite.sw.config.mts",
+    "watch": "tsc --watch --project . & tsc --watch --project tsconfig.ui.json & vite build --watch & vite build --watch --config vite.sw.config.mts",
+    "test": "playwright test",
+    "lint": "tsc --project .",
+    "clean": "rm -rf dist test-results"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.315",
+    "minimist": "^1.2.5",
+    "vite-plugin-static-copy": "^3.1.1"
+  }
+}

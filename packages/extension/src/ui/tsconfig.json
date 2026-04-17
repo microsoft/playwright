@@ -1,0 +1,4 @@
+// Help VSCode to find right tsconfig file.
+{
+    "extends": "../../tsconfig.ui.json"
+}
