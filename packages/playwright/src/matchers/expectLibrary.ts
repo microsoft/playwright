@@ -61,7 +61,6 @@ export type ExpectationResult = SyncExpectationResult | AsyncExpectationResult;
 
 export type RawMatcherFn<Context extends MatcherContext = MatcherContext> = {
   (this: Context, actual: any, ...expected: Array<any>): ExpectationResult;
-  [INTERNAL_MATCHER_FLAG]?: boolean;
 };
 
 export type MatchersObject = {
@@ -132,8 +131,6 @@ export function isPromise<T>(candidate: unknown): candidate is Promise<T> {
       && (typeof candidate === 'object' || typeof candidate === 'function')
       && typeof (candidate as any).then === 'function';
 }
-
-export const INTERNAL_MATCHER_FLAG = Symbol.for('$$jest-internal-matcher');
 
 // -----------------------------------------------------------------------------
 // Asymmetric matchers (asymmetricMatchers.ts)

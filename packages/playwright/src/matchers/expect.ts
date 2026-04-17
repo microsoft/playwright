@@ -31,7 +31,6 @@ import {
 
 import {
   AsymmetricMatcher,
-  INTERNAL_MATCHER_FLAG,
   any,
   anything,
   arrayContaining,
@@ -40,7 +39,7 @@ import {
   closeTo,
   createThrowMatcher,
   isPromise,
-  matchers as builtinMatchers,
+  matchers as expectMatchers,
   notArrayOf,
   notCloseTo,
   objectContaining,
@@ -175,8 +174,7 @@ type ExpectMetaInfo = {
     generator: PollGenerator;
   };
   timeout?: number;
-  allMatchers: MatchersObject;
-  userMatchers: Record<string, Function>;
+  userMatchers: MatchersObject;
 };
 
 const META_INFO = Symbol('expectMetaInfo');
@@ -245,10 +243,7 @@ const customAsyncMatchers = {
   toPass,
 };
 
-const customMatchers = {
-  ...customAsyncMatchers,
-  toMatchSnapshot,
-};
+const allBuiltinMatchers: MatchersObject = { ...expectMatchers, ...toThrowMatchers, ...customAsyncMatchers, toMatchSnapshot } as any;
 
 function buildCustomAsymmetricMatcher(matcherName: string, matcher: RawMatcherFn) {
   class CustomMatcher extends AsymmetricMatcher<[unknown, ...Array<unknown>]> {
@@ -315,9 +310,7 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
   };
   expectFn.not = notAsymmetric;
 
-  for (const [name, matcher] of Object.entries(info.allMatchers)) {
-    if ((matcher as any)[INTERNAL_MATCHER_FLAG])
-      continue;
+  for (const [name, matcher] of Object.entries(info.userMatchers)) {
     const { positive, inverse } = buildCustomAsymmetricMatcher(name, matcher);
     expectFn[name] = positive;
     notAsymmetric[name] = inverse;
@@ -354,21 +347,15 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
   };
 
   expectFn.extend = (matchers: MatchersObject) => {
-    const wrapped: MatchersObject = {};
     for (const [name, m] of Object.entries(matchers)) {
       if (typeof m !== 'function')
         throw new TypeError(`expect.extend: \`${name}\` is not a valid matcher. Must be a function, is "${typeof m}"`);
-      const fn = m as RawMatcherFn;
-      if (!Object.prototype.hasOwnProperty.call(fn, INTERNAL_MATCHER_FLAG))
-        Object.defineProperty(fn, INTERNAL_MATCHER_FLAG, { value: false });
-      wrapped[name] = fn;
     }
 
     // Legacy behavior: `expect.extend({...})` without capturing the return value
     // must make the new matchers available on the same expect instance.
-    Object.assign(info.allMatchers, wrapped);
     Object.assign(info.userMatchers, matchers);
-    for (const [name, matcher] of Object.entries(wrapped)) {
+    for (const [name, matcher] of Object.entries(matchers)) {
       const { positive, inverse } = buildCustomAsymmetricMatcher(name, matcher);
       expectFn[name] = positive;
       notAsymmetric[name] = inverse;
@@ -377,7 +364,6 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
 
     return createExpect({
       ...info,
-      allMatchers: { ...info.allMatchers, ...wrapped },
       userMatchers: { ...info.userMatchers, ...matchers },
     });
   };
@@ -401,8 +387,7 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
   const err = new JestAssertionError();
   const notInfo: ExpectMetaInfo = { ...info, isNot: !info.isNot };
 
-  for (const name of Object.keys(info.allMatchers)) {
-    const matcher = info.allMatchers[name];
+  const addMatcher = (name: string, matcher: RawMatcherFn) => {
     const promiseMatcher = getPromiseMatcher(name) || matcher;
 
     result[name] = wrapMatcherCall(name, info, actual, makeThrowingMatcher(matcher, false, '', actual));
@@ -414,7 +399,12 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
       result.rejects[name] = wrapMatcherCall(name, info, actual, makeRejectMatcher(name, promiseMatcher, false, actual as any, err));
       result.rejects.not[name] = wrapMatcherCall(name, notInfo, actual, makeRejectMatcher(name, promiseMatcher, true, actual as any, err));
     }
-  }
+  };
+
+  for (const [name, matcher] of Object.entries(allBuiltinMatchers))
+    addMatcher(name, matcher);
+  for (const [name, matcher] of Object.entries(info.userMatchers))
+    addMatcher(name, matcher);
 
   return result;
 }
@@ -503,7 +493,6 @@ async function pollMatcher(matcherName: string, info: ExpectMetaInfo, ...args: a
     if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
 
-    // !!!
     // Inner matchers run without poll and without soft (soft is outside of poll, not inside).
     // Strip isNot here and route to the .not branch below so step title matches.
     const effectiveIsNot = !!info.isNot;
@@ -646,7 +635,6 @@ const makeThrowingMatcher = (
   err?: JestAssertionError,
 ): ThrowingMatcherFn =>
   function throwingMatcher(this: void, ...args: Array<any>): any {
-    const isInternal = matcher[INTERNAL_MATCHER_FLAG] === true;
     const callContext = takeMatcherCallContext();
     const timeout = callContext?.expectInfo.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
     const matcherContext: MatcherContext & ExpectMatcherStateInternal = {
@@ -688,24 +676,11 @@ const makeThrowingMatcher = (
     };
 
     const handleError = (error: Error) => {
-      if (
-        isInternal &&
-        !(error instanceof JestAssertionError) &&
-        error.name !== 'PrettyFormatPluginError' &&
-        Error.captureStackTrace
-      )
-        Error.captureStackTrace(error, throwingMatcher);
       throw error;
     };
 
-    let potentialResult: ExpectationResult;
-
     try {
-      potentialResult = isInternal
-        ? matcher.call(matcherContext, actual, ...args)
-        : (function __EXTERNAL_MATCHER_TRAP__() {
-          return matcher.call(matcherContext, actual, ...args);
-        })();
+      const potentialResult: ExpectationResult = matcher.call(matcherContext, actual, ...args);
 
       if (isPromise(potentialResult)) {
         const asyncError = new JestAssertionError();
@@ -742,18 +717,7 @@ const _validateResult = (result: any) => {
 
 // #endregion
 
-// Stamp the vendored jest matchers as internal so makeThrowingMatcher handles them as built-ins.
-for (const m of Object.values(builtinMatchers))
-  Object.defineProperty(m, INTERNAL_MATCHER_FLAG, { value: true });
-for (const m of Object.values(toThrowMatchers))
-  Object.defineProperty(m, INTERNAL_MATCHER_FLAG, { value: true });
-
-const BASE_MATCHERS: MatchersObject = { ...builtinMatchers, ...toThrowMatchers };
-
-export const expect: Expect<{}> = createExpect({
-  allMatchers: { ...BASE_MATCHERS },
-  userMatchers: {},
-}).extend(customMatchers as any);
+export const expect: Expect<{}> = createExpect({ userMatchers: {} });
 
 export function mergeExpects(...expects: any[]) {
   let merged = expect;
