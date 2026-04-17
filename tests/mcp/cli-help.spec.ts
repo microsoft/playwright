@@ -16,8 +16,13 @@
 
 import { test, expect } from './cli-fixtures';
 
-test('prints help by default', async ({ cli }) => {
+test('prints help', async ({ cli }) => {
   const { output } = await cli('--help');
+  expect(output).toContain('Usage: playwright-cli <command>');
+});
+
+test('prints help by default', async ({ cli }) => {
+  const { output } = await cli();
   expect(output).toContain('Usage: playwright-cli <command>');
 });
 

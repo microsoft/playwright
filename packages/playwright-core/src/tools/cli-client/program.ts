@@ -88,11 +88,12 @@ export async function program(options?: { embedderVersion?: string}) {
   }
 
   const command = commandName && help.commands[commandName];
-  if (args.help || args.h) {
+  if (args.help || args.h || !commandName) {
     if (command) {
       console.log(command.help);
     } else {
       console.log('playwright-cli - run playwright mcp commands from terminal\n');
+      console.log(`Agent skill: ${path.relative(process.cwd(), libPath('tools', 'cli-client', 'skill', 'SKILL.md'))}\n`);
       console.log(help.global);
     }
     process.exit(0);
