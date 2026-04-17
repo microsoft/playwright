@@ -16,7 +16,7 @@
 
 import { test, expect, extensionId, startWithExtensionFlag } from './extension-fixtures';
 
-test('connect page is added to green Playwright group on relay connect', async ({ startExtensionClient, server }) => {
+test('connect page is not added to Playwright group', async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
   const connectPagePromise = browserContext.waitForEvent('page', page =>
@@ -26,26 +26,22 @@ test('connect page is added to green Playwright group on relay connect', async (
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
 
-  // Wait for the tab list to appear — this means connectToMCPRelay was processed
-  // by the background and _addTabToGroup has been called.
+  // Wait for the tab list to appear — this means connectToMCPRelay was processed.
   await expect(connectPage.locator('.tab-item').first()).toBeVisible();
 
-  const group = await connectPage.evaluate(async () => {
+  const groupId = await connectPage.evaluate(async () => {
     const chrome = (window as any).chrome;
     const tab = await chrome.tabs.getCurrent();
-    if (!tab || tab.groupId === -1)
-      return null;
-    const g = await chrome.tabGroups.get(tab.groupId);
-    return { color: g.color, title: g.title };
+    return tab?.groupId ?? -1;
   });
 
-  expect(group).toEqual({ color: 'green', title: 'Playwright' });
+  expect(groupId).toBe(-1);
 
-  await connectPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Connect' }).click();
+  await connectPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
   await navigatePromise;
 });
 
-test('connected tab is added to same Playwright group', async ({ browserWithExtension, startClient, server }) => {
+test('connected tab is added to green Playwright group', async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
 
   const page = await browserContext.newPage();
@@ -60,21 +56,19 @@ test('connected tab is added to same Playwright group', async ({ browserWithExte
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
 
-  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Connect' }).click();
+  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
   await navigatePromise;
 
-  const { connectGroupId, connectedGroupId } = await connectPage.evaluate(async () => {
-    const chrome = (window as any).chrome;
-    const connectTab = await chrome.tabs.getCurrent();
-    const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
-    return {
-      connectGroupId: connectTab?.groupId,
-      connectedGroupId: connectedTab?.groupId,
-    };
-  });
-
-  expect(connectGroupId).not.toBe(-1);
-  expect(connectedGroupId).toBe(connectGroupId);
+  await expect.poll(async () => {
+    return connectPage.evaluate(async () => {
+      const chrome = (window as any).chrome;
+      const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+      if (!connectedTab || connectedTab.groupId === -1)
+        return null;
+      const g = await chrome.tabGroups.get(connectedTab.groupId);
+      return { color: g.color, title: g.title };
+    });
+  }).toEqual({ color: 'green', title: 'Playwright' });
 });
 
 test('tab added to group gets auto-attached', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
@@ -99,15 +93,24 @@ test('tab added to group gets auto-attached', async ({ browserWithExtension, sta
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
 
-  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Connect' }).click();
+  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
   await navigatePromise;
+
+  // Wait for the connected tab to be added to the group.
+  await expect.poll(async () => {
+    return connectPage.evaluate(async () => {
+      const chrome = (window as any).chrome;
+      const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+      return connectedTab?.groupId ?? -1;
+    });
+  }).toBeGreaterThan(-1);
 
   // Drag the extra tab into the Playwright group — this should auto-attach it.
   await connectPage.evaluate(async (targetUrl: string) => {
     const chrome = (window as any).chrome;
-    const connectTab = await chrome.tabs.getCurrent();
+    const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
     const [extra] = await chrome.tabs.query({ url: targetUrl });
-    await chrome.tabs.group({ groupId: connectTab.groupId, tabIds: [extra.id] });
+    await chrome.tabs.group({ groupId: connectedTab.groupId, tabIds: [extra.id] });
   }, server.PREFIX + '/extra');
 
   await expect.poll(async () => {
@@ -134,7 +137,7 @@ test('tab removed from group gets auto-detached', async ({ browserWithExtension,
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
 
-  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Connect' }).click();
+  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
   await navigatePromise;
 
   // Create a second tab via the client — it will be attached and added to the group.
@@ -185,7 +188,7 @@ test('connected tab is removed from group on disconnect', async ({ browserWithEx
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
   const connectPage = await connectPagePromise;
 
-  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Connect' }).click();
+  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
   await navigatePromise;
 
   await client.close();

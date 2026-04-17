@@ -39,7 +39,7 @@ test('attach <url> --extension', async ({ browserWithExtension, cli, server }, t
   const confirmationPage = await confirmationPagePromise;
 
   // Click the Connect button
-  await confirmationPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Connect' }).click();
+  await confirmationPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
 
   {
     // Wait for the CLI command to complete

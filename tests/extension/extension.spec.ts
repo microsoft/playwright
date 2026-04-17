@@ -30,7 +30,7 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Connect' }).click();
+  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
@@ -104,7 +104,7 @@ test(`browser_run_code can evaluate in a web worker`, async ({ startExtensionCli
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Connect' }).click();
+  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
 
   await navigateResponse;
 
@@ -183,7 +183,7 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   const selectorPage = await confirmationPagePromise;
   expect(browserContext.pages()).toHaveLength(4);
 
-  await selectorPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Connect' }).click();
+  await selectorPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
 
   expect(await navigateResponse).toHaveResponse({
     inlineSnapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
@@ -224,7 +224,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Connect' }).click();
+  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),

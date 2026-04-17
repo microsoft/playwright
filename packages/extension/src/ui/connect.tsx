@@ -144,8 +144,6 @@ const ConnectApp: React.FC = () => {
       });
 
       if (response?.success) {
-        if (tab)
-          window.close();
         setStatus({ type: 'connected', message: `"${clientInfo}" connected.` });
       } else {
         setStatus({

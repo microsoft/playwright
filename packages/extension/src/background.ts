@@ -191,7 +191,7 @@ class TabShareExtension {
     const isConnected = this._connectedTabIds.has(tabId);
     if (inOurGroup && !isConnected)
       void this._activeConnection.attachTab(tabId);
-    else if (!inOurGroup && isConnected)
+    else if (this._groupId !== null && !inOurGroup && isConnected)
       void this._activeConnection.detachTab(tabId);
   }
 
