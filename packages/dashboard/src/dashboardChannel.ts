@@ -60,7 +60,8 @@ export interface DashboardChannel {
   pickLocator(): Promise<void>;
   cancelPickLocator(): Promise<void>;
   startRecording(): Promise<void>;
-  stopRecording(): Promise<{ path: string }>;
+  stopRecording(): Promise<{ streamId: string }>;
+  readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
   screenshot(): Promise<string>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

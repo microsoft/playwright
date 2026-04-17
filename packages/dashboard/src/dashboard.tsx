@@ -28,6 +28,22 @@ import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 const BUTTONS = ['left', 'middle', 'right'] as const;
 type Mode = 'readonly' | 'interactive' | 'annotate';
 
+async function pickSaveWritable(suggestedName: string, description: string, mime: string, extension: string): Promise<FileSystemWritableFileStream | null> {
+  try {
+    const handle = await (window as any).showSaveFilePicker({
+      suggestedName,
+      types: [{ description, accept: { [mime]: [extension] } }],
+    });
+    return await handle.createWritable();
+  } catch {
+    return null;
+  }
+}
+
+function base64ToBlob(base64: string, mime: string): Blob {
+  return new Blob([(Uint8Array as any).fromBase64(base64)], { type: mime });
+}
+
 function smartUrl(input: string): string {
   const value = input.trim();
   if (!value)
@@ -312,9 +328,18 @@ export const Dashboard: React.FC = () => {
               if (!client)
                 return;
               if (recording) {
-                const { path } = await client.stopRecording();
-                await client.reveal({ path });
+                const writable = await pickSaveWritable(`playwright-recording-${Date.now()}.webm`, 'WebM Video', 'video/webm', '.webm');
+                if (!writable)
+                  return;
                 setRecording(false);
+                const { streamId } = await client.stopRecording();
+                while (true) {
+                  const { data, eof } = await client.readStream({ streamId });
+                  if (eof)
+                    break;
+                  await writable.write(base64ToBlob(data, 'video/webm'));
+                }
+                await writable.close();
               } else {
                 await client.startRecording();
                 setRecording(true);
@@ -324,15 +349,18 @@ export const Dashboard: React.FC = () => {
           </ToolbarButton>
           <ToolbarButton
             className='screenshot'
-            title='Copy screenshot to clipboard'
+            title='Save screenshot'
             icon={screenshotIcon}
             disabled={!ready}
             onClick={async () => {
               if (!client)
                 return;
-              const screenshot = await client.screenshot();
-              const blob = await (await fetch('data:image/png;base64,' + screenshot)).blob();
-              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+              const writable = await pickSaveWritable(`playwright-screenshot-${Date.now()}.png`, 'PNG Image', 'image/png', '.png');
+              if (!writable)
+                return;
+              const data = await client.screenshot();
+              await writable.write(base64ToBlob(data, 'image/png'));
+              await writable.close();
               setScreenshotIcon('clippy');
               setTimeout(() => setScreenshotIcon('device-camera'), 3000);
             }}
