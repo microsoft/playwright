@@ -18,6 +18,7 @@ import React from 'react';
 import './sessionSidebar.css';
 import { DashboardClientContext } from './index';
 import { SettingsButton } from './settingsView';
+import { BrowserIcon } from './icons';
 import { ToolbarButton } from '@web/components/toolbarButton';
 
 import type { Tab, DashboardChannelEvents } from './dashboardChannel';
@@ -123,12 +124,14 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
             {entries.map(session => {
               const guid = session.browser.guid;
               const browserType = session.browser.browserName;
-              const browserInitial = browserType ? browserType[0].toUpperCase() : '?';
+              const channel = session.browser.launchOptions?.channel;
               const tabs = allTabs === null ? undefined : (tabsByBrowser.get(guid) ?? []);
               return <div key={guid} className='session-chip sidebar-session' role='listitem' title={session.title}>
                 <div className='sidebar-session-row'>
-                  <div className='session-browser-icon-wrap' title={browserType}>
-                    <span className='session-browser-icon' aria-hidden='true'>{browserInitial}</span>
+                  <div className='session-browser-icon-wrap' title={channel || browserType}>
+                    <span className='session-browser-icon' aria-hidden='true'>
+                      <BrowserIcon browserName={browserType} channel={channel} />
+                    </span>
                     <ToolbarButton
                       className='session-browser-close'
                       icon='close'

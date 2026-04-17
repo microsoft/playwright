@@ -16,6 +16,51 @@
 
 import React from 'react';
 
+import chromeSvg from './assets/browsers/chrome.svg';
+import chromeCanarySvg from './assets/browsers/chrome-canary.svg';
+import chromiumSvg from './assets/browsers/chromium.svg';
+import firefoxSvg from './assets/browsers/firefox.svg';
+import firefoxNightlySvg from './assets/browsers/firefox-nightly.svg';
+import webkitSvg from './assets/browsers/webkit.svg';
+import msedgeSvg from './assets/browsers/msedge.svg';
+import msedgeBetaSvg from './assets/browsers/msedge-beta.svg';
+import msedgeDevSvg from './assets/browsers/msedge-dev.svg';
+
+// Keys include both browserName values ('chromium' | 'firefox' | 'webkit') and
+// LaunchOptions.channel values accepted by Playwright.
+export const browserIconUrls: Record<string, string> = {
+  // Open-source Chromium (plus the headless shell + chrome-for-testing variants).
+  chromium: chromiumSvg,
+  'chromium-headless-shell': chromiumSvg,
+  'chrome-for-testing': chromiumSvg,
+  // Google Chrome stable + beta/dev share the stable icon.
+  chrome: chromeSvg,
+  'chrome-beta': chromeSvg,
+  'chrome-dev': chromeSvg,
+  'chrome-canary': chromeCanarySvg,
+  // Firefox: stable (bundled + moz-firefox) + beta share the stable icon.
+  firefox: firefoxSvg,
+  'moz-firefox': firefoxSvg,
+  'moz-firefox-beta': firefoxSvg,
+  'moz-firefox-nightly': firefoxNightlySvg,
+  // Safari / WebKit.
+  webkit: webkitSvg,
+  // Microsoft Edge with its channel variants.
+  msedge: msedgeSvg,
+  'msedge-beta': msedgeBetaSvg,
+  'msedge-dev': msedgeDevSvg,
+  'msedge-canary': msedgeSvg,
+};
+
+export const BrowserIcon: React.FC<{ browserName?: string, channel?: string }> = ({ browserName, channel }) => {
+  const key = channel && browserIconUrls[channel] ? channel : browserName;
+  const url = key ? browserIconUrls[key] : undefined;
+  if (url)
+    return <img className='browser-icon-img' src={url} alt='' aria-hidden='true' />;
+  const initial = browserName ? browserName[0].toUpperCase() : '?';
+  return <span className='browser-icon-fallback' aria-hidden='true'>{initial}</span>;
+};
+
 export const ChevronLeftIcon: React.FC = () => (
   <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
     <polyline points='15 18 9 12 15 6'/>
