@@ -41,7 +41,6 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
-  padding-right: 12px;
 }
 
 .status-banner {
@@ -74,7 +73,7 @@ body {
 
 /* Warning banner */
 .warning-banner {
-  margin: 0 12px 16px 12px;
+  margin: 0 0 16px 0;
   padding: 12px;
   background-color: #fff8e1;
   border: 1px solid #f0c674;
@@ -90,10 +89,9 @@ body {
 
 /* Buttons */
 .button-container {
-  margin-bottom: 16px;
   display: flex;
   justify-content: flex-end;
-  padding-right: 12px;
+  gap: 8px;
 }
 
 .button {
@@ -107,7 +105,6 @@ body {
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  margin-right: 8px;
   min-width: 90px;
 }
 
@@ -155,7 +152,7 @@ body {
 .tab-item {
   display: flex;
   align-items: center;
-  padding: 12px;
+  padding: 12px 0 12px 12px;
   margin-bottom: 8px;
   background-color: #ffffff;
   cursor: pointer;
@@ -224,7 +221,7 @@ body {
 /* Auth token section */
 .auth-token-section {
   margin: 16px 0;
-  padding: 16px;
+  padding: 12px;
   background-color: #f6f8fa;
   border-radius: 6px;
 }
