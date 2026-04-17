@@ -267,4 +267,12 @@ export type Config = {
    * Use for hidden/background agent runs on macOS.
    */
   suppressFocus?: boolean;
+
+  /**
+   * When true, skip Playwright's page.on('download') registration so the
+   * embedder's capture stack is the sole owner of downloads. Use when an
+   * external CDP Fetch pipeline already handles download capture and
+   * Playwright's saveAs() would create split ownership.
+   */
+  disableDownloads?: boolean;
 };
