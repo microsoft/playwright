@@ -59,16 +59,10 @@ async function startDashboardServer(options: { port?: number; host?: string; rev
       response.end();
       return true;
     }
-    artifacts.delete(id);
-    const served = httpServer.serveFile(request, response, artifactPath, {
+    // we're not deleting the artifact on purpose, so that the user can restart the download from the omnibox
+    return httpServer.serveFile(request, response, artifactPath, {
       'Content-Disposition': `attachment; filename="${path.basename(artifactPath)}"`,
     });
-    try {
-      fs.unlinkSync(artifactPath);
-    } catch {
-      // best-effort
-    }
-    return served;
   });
 
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
