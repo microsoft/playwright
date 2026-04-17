@@ -28,6 +28,22 @@ import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 const BUTTONS = ['left', 'middle', 'right'] as const;
 type Mode = 'readonly' | 'interactive' | 'annotate';
 
+function smartUrl(input: string): string {
+  const value = input.trim();
+  if (!value)
+    return value;
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value) || value.startsWith('about:') || value.startsWith('data:'))
+    return value;
+  const host = value.split(/[/?#]/, 1)[0];
+  const hasDot = host.includes('.');
+  const isLocalhost = /^localhost(:\d+)?$/i.test(host);
+  const hasPort = /:\d+$/.test(host);
+  const isIp = /^\d{1,3}(\.\d{1,3}){3}(:\d+)?$/.test(host);
+  if (hasDot || isLocalhost || hasPort || isIp)
+    return 'https://' + value;
+  return 'https://' + host + '.com' + value.slice(host.length);
+}
+
 export const Dashboard: React.FC = () => {
   const client = React.useContext(DashboardClientContext);
   const [mode, setMode] = React.useState<Mode>('readonly');
@@ -259,9 +275,7 @@ export const Dashboard: React.FC = () => {
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
-      let value = (e.target as HTMLInputElement).value.trim();
-      if (!/^https?:\/\//i.test(value))
-        value = 'https://' + value;
+      const value = smartUrl((e.target as HTMLInputElement).value);
       setUrl(value);
       client?.navigate({ url: value });
       e.currentTarget.blur();

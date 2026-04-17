@@ -154,17 +154,26 @@
   padding: 0 12px;
   font-size: 13px;
   font-family: inherit;
-  background: var(--color-canvas-default);
+  background: var(--color-canvas-inset);
   color: var(--color-fg-default);
-  border: 1px solid var(--color-border-muted);
+  border: 1px solid var(--color-border-default);
   border-radius: 16px;
   outline: none;
   min-width: 0;
 }
 
+:root.light-mode .omnibox {
+  background: var(--color-canvas-default);
+}
+
 .omnibox:focus {
   border-color: var(--color-accent-fg);
-  background: var(--color-canvas-subtle);
+  background: var(--color-canvas-default);
+  box-shadow: 0 0 0 2px var(--color-accent-muted);
+}
+
+:root.light-mode .omnibox:focus {
+  background: var(--color-canvas-default);
 }
 
 .omnibox::placeholder {
