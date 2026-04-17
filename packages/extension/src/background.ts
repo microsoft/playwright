@@ -94,13 +94,10 @@ class TabShareExtension {
       connection.onclose = () => {
         debugLog('Pending connection closed');
         const existed = this._pendingTabSelection.delete(selectorTabId);
-        if (existed) {
+        if (existed)
           chrome.tabs.sendMessage(selectorTabId, { type: 'pendingConnectionClosed' }).catch(() => {});
-          chrome.tabs.ungroup(selectorTabId).catch(() => {});
-        }
       };
       this._pendingTabSelection.set(selectorTabId, connection);
-      await this._addTabToGroup(selectorTabId);
       debugLog(`Connected to MCP relay`);
     } catch (error: any) {
       const message = `Failed to connect to MCP relay: ${error.message}`;
