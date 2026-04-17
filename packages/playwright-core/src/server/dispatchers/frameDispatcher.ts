@@ -156,6 +156,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return await this._frame.dragAndDrop(progress, params.source, params.target, params);
   }
 
+  async drop(params: channels.FrameDropParams, progress: Progress): Promise<void> {
+    return await this._frame.drop(progress, params.selector, params, params);
+  }
+
   async tap(params: channels.FrameTapParams, progress: Progress): Promise<void> {
     return await this._frame.tap(progress, params.selector, params);
   }

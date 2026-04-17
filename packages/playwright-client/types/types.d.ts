@@ -13387,6 +13387,97 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Simulate an external drag-and-drop of files or clipboard-like data onto this locator.
+   *
+   * **Details**
+   *
+   * Dispatches the native `dragenter`, `dragover`, and `drop` events at the center of the target element with a
+   * synthetic [DataTransfer] carrying the provided files and/or data entries. Works cross-browser by constructing the
+   * [DataTransfer] in the page context.
+   *
+   * If the target element's `dragover` listener does not call `preventDefault()`, the target is considered to have
+   * rejected the drop: Playwright dispatches `dragleave` and this method throws.
+   *
+   * **Usage**
+   *
+   * Drop a file buffer onto an upload area:
+   *
+   * ```js
+   * await page.locator('#dropzone').drop({
+   *   files: { name: 'note.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
+   * });
+   * ```
+   *
+   * Drop plain text and a URL together:
+   *
+   * ```js
+   * await page.locator('#dropzone').drop({
+   *   data: {
+   *     'text/plain': 'hello world',
+   *     'text/uri-list': 'https://example.com',
+   *   },
+   * });
+   * ```
+   *
+   * @param payload Data to drop onto the target. Provide `files` (file paths or in-memory buffers), `data` (a mime-type → string map
+   * for clipboard-like content such as `text/plain`, `text/html`, `text/uri-list`), or both.
+   * @param options
+   */
+  drop(payload: {
+    files?: string|Array<string>|{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }|Array<{
+      /**
+       * File name
+       */
+      name: string;
+
+      /**
+       * File type
+       */
+      mimeType: string;
+
+      /**
+       * File content
+       */
+      buffer: Buffer;
+    }>;
+
+    data?: { [key: string]: string; };
+  }, options?: {
+    /**
+     * A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of
+     * the element.
+     */
+    position?: {
+      x: number;
+
+      y: number;
+    };
+
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * **NOTE** Always prefer using [Locator](https://playwright.dev/docs/api/class-locator)s and web assertions over
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle)s because latter are inherently racy.
    *

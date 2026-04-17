@@ -1411,6 +1411,16 @@ export class Frame extends SdkObject<FrameEventMap> {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params, (progress, handle) => handle._setInputFiles(progress, inputFileItems)));
   }
 
+  async drop(progress: Progress, selector: string, params: Omit<channels.FrameDropParams, 'timeout' | 'selector'>, options: types.PointerActionWaitOptions): Promise<void> {
+    const hasFiles = !!(params.payloads?.length || params.localPaths?.length || params.streams?.length);
+    const hasData = !!params.data?.length;
+    if (!hasFiles && !hasData)
+      throw new Error('At least one of "files" or "data" must be provided.');
+    const inputFileItems = hasFiles ? await progress.race(prepareFilesForUpload(this, params)) : { filePayloads: undefined, localPaths: undefined };
+    const data = params.data ?? [];
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._drop(progress, inputFileItems, data, options)));
+  }
+
   async type(progress: Progress, selector: string, text: string, options: { delay?: number, noAutoWaiting?: boolean } & types.StrictOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._type(progress, text, options)));
   }

@@ -167,6 +167,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Frame.click', { title: 'Click', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],
   ['Frame.content', { title: 'Get content', snapshot: true, pause: true, }],
   ['Frame.dragAndDrop', { title: 'Drag and drop', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],
+  ['Frame.drop', { title: 'Drop files or data onto an element', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],
   ['Frame.dblclick', { title: 'Double click', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],
   ['Frame.dispatchEvent', { title: 'Dispatch "{type}"', slowMo: true, snapshot: true, pause: true, }],
   ['Frame.evaluateExpression', { title: 'Evaluate', snapshot: true, pause: true, }],
