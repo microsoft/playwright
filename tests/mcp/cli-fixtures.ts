@@ -72,7 +72,7 @@ export const test = baseTest.extend<{
       // and CDP's Emulation.setEmulatedMedia doesn't honor display-mode features.
       // Set the test flag directly; downloadArtifact re-reads it on every click.
       await dashboard.addInitScript(() => { (window as any).__dashboardAppModeForTest = true; });
-      await dashboard.evaluate(() => { (window as any).__dashboardAppModeForTest = true; });
+      await dashboard.evaluate(() => { (window as any).__dashboardAppModeForTest = true; }).catch(() => {});
       dashboards.push({ dashboard, browser });
       return dashboard;
     });
