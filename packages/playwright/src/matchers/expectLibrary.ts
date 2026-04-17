@@ -185,6 +185,38 @@ export abstract class AsymmetricMatcher<T> implements AsymmetricMatcherInterface
   toAsymmetricMatcher?(): string;
 }
 
+export function buildCustomAsymmetricMatcher(matcherName: string, matcher: RawMatcherFn) {
+  class CustomMatcher extends AsymmetricMatcher<[unknown, ...Array<unknown>]> {
+    constructor(inverse: boolean = false, ...sample: [unknown, ...Array<unknown>]) {
+      super(sample, inverse);
+    }
+
+    asymmetricMatch(other: unknown) {
+      const { pass } = matcher.call(
+          (this as any).getMatcherContext(),
+          other,
+          ...this.sample,
+      ) as SyncExpectationResult;
+      return this.inverse ? !pass : pass;
+    }
+
+    toString() {
+      return `${this.inverse ? 'not.' : ''}${matcherName}`;
+    }
+
+    override getExpectedType() {
+      return 'any';
+    }
+
+    override toAsymmetricMatcher() {
+      return `${this.toString()}<${this.sample.map(String).join(', ')}>`;
+    }
+  }
+  const positive = (...sample: [unknown, ...Array<unknown>]) => new CustomMatcher(false, ...sample);
+  const inverse = (...sample: [unknown, ...Array<unknown>]) => new CustomMatcher(true, ...sample);
+  return { positive, inverse };
+}
+
 class Any extends AsymmetricMatcher<any> {
   constructor(sample: unknown) {
     if (sample === undefined) {
@@ -1349,11 +1381,6 @@ export const createThrowMatcher = (matcherName: string, fromPromise?: boolean): 
     );
   };
 
-export const toThrowMatchers: MatchersObject = {
-  toThrow: createThrowMatcher('toThrow'),
-  toThrowError: createThrowMatcher('toThrowError'),
-};
-
 const toThrowExpectedRegExp = (
   matcherName: string,
   options: MatcherHintOptions,
@@ -1662,12 +1689,6 @@ function isObject(obj: unknown) {
 function messageAndCause(error: Error) {
   return error.cause === undefined ? 'message' : 'message and cause';
 }
-
-export const getPromiseMatcher = (name: string) => {
-  if (name === 'toThrow')
-    return createThrowMatcher(name, true);
-  return null;
-};
 
 export const getMessage = (message?: () => string) =>
   (message && message()) ||

@@ -29,14 +29,14 @@ import {
 } from 'jest-matcher-utils';
 
 import {
-  AsymmetricMatcher,
   any,
   anything,
   arrayContaining,
   arrayNotContaining,
   arrayOf,
+  buildCustomAsymmetricMatcher,
   closeTo,
-  getPromiseMatcher,
+  createThrowMatcher,
   getMessage,
   validateMatcherResult,
   isPromise,
@@ -49,7 +49,6 @@ import {
   stringMatching,
   stringNotContaining,
   stringNotMatching,
-  toThrowMatchers,
   utils,
 } from './expectLibrary';
 import { ExpectError } from './matcherHint';
@@ -220,39 +219,18 @@ const customAsyncMatchers = {
   toPass,
 };
 
-const allBuiltinMatchers: MatchersObject = { ...expectMatchers, ...toThrowMatchers, ...customAsyncMatchers, toMatchSnapshot } as any;
+const allBuiltinMatchers: MatchersObject = {
+  ...expectMatchers,
+  toThrow: createThrowMatcher('toThrow'),
+  toThrowError: createThrowMatcher('toThrowError'),
+  ...customAsyncMatchers,
+  toMatchSnapshot,
+} as any;
 
-function buildCustomAsymmetricMatcher(matcherName: string, matcher: RawMatcherFn) {
-  class CustomMatcher extends AsymmetricMatcher<[unknown, ...Array<unknown>]> {
-    constructor(inverse: boolean = false, ...sample: [unknown, ...Array<unknown>]) {
-      super(sample, inverse);
-    }
-
-    asymmetricMatch(other: unknown) {
-      const { pass } = matcher.call(
-          (this as any).getMatcherContext(),
-          other,
-          ...this.sample,
-      ) as SyncExpectationResult;
-      return this.inverse ? !pass : pass;
-    }
-
-    toString() {
-      return `${this.inverse ? 'not.' : ''}${matcherName}`;
-    }
-
-    override getExpectedType() {
-      return 'any';
-    }
-
-    override toAsymmetricMatcher() {
-      return `${this.toString()}<${this.sample.map(String).join(', ')}>`;
-    }
-  }
-  const positive = (...sample: [unknown, ...Array<unknown>]) => new CustomMatcher(false, ...sample);
-  const inverse = (...sample: [unknown, ...Array<unknown>]) => new CustomMatcher(true, ...sample);
-  return { positive, inverse };
-}
+const promiseThrowMatchers: MatchersObject = {
+  toThrow: createThrowMatcher('toThrow', true),
+  toThrowError: createThrowMatcher('toThrowError', true),
+};
 
 function createExpect(info: ExpectMetaInfo): Expect<{}> {
   const expectFn: any = (actual: unknown, messageOrOptions?: ExpectMessage) => {
@@ -364,12 +342,10 @@ function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
   const notInfo: ExpectMetaInfo = { ...info, isNot: !info.isNot };
 
   const addMatcher = (name: string, matcher: RawMatcherFn) => {
-    const promiseMatcher = getPromiseMatcher(name) || matcher;
-
     result[name] = wrapMatcherCall(name, info, actual, matcher);
     result.not[name] = wrapMatcherCall(name, notInfo, actual, matcher);
-
     if (!info.poll) {
+      const promiseMatcher = promiseThrowMatchers[name] ?? matcher;
       result.resolves[name] = wrapMatcherCall(name, info, actual, promiseMatcher, 'resolves');
       result.resolves.not[name] = wrapMatcherCall(name, notInfo, actual, promiseMatcher, 'resolves');
       result.rejects[name] = wrapMatcherCall(name, info, actual, promiseMatcher, 'rejects');
@@ -398,9 +374,6 @@ function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unkn
     // This looks like it is unnecessary, but it isn't - we need to filter
     // out all the frames that belong to the test runner from caught runtime errors.
     const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
-
-    // toPass and poll matchers can contain other steps, expects and API calls,
-    // so they behave like a retriable step.
     const stepData = {
       category: 'expect' as const,
       apiName,
@@ -409,7 +382,6 @@ function wrapMatcherCall(matcherName: string, info: ExpectMetaInfo, actual: unkn
       params: args[0] ? { expected: args[0] } : undefined,
       infectParentStepsWithError: info.isSoft,
     };
-
     const step = testInfo?._addStep(stepData);
 
     const reportStepError = (error: Error | unknown) => {
