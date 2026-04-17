@@ -44,7 +44,7 @@ it('should format number', async ({ browser, server }) => {
     await context.close();
   }
   {
-    const context = await browser.newContext({ locale: 'fr-CH' });
+    const context = await browser.newContext({ locale: 'fr-FR' });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     expect(await page.evaluate(() => (1000000.50).toLocaleString().replace(/\s/g, ' '))).toBe('1 000 000,5');
@@ -72,7 +72,7 @@ it('should format date', async ({ browser, server, browserName }) => {
 });
 
 it('should format number in popups', async ({ browser, server }) => {
-  const context = await browser.newContext({ locale: 'fr-CH' });
+  const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
