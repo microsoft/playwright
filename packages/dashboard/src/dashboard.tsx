@@ -37,15 +37,15 @@ export const Dashboard: React.FC = () => {
   const [picking, setPicking] = React.useState(false);
   const [recording, setRecording] = React.useState(false);
   const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
-  const [showInteractiveHint, setShowInteractiveHint] = React.useState(false);
+  const [flashTick, setFlashTick] = React.useState(0);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const viewportMainRef = React.useRef<HTMLDivElement>(null);
   const browserChromeRef = React.useRef<HTMLDivElement>(null);
+  const interactiveBtnRef = React.useRef<HTMLButtonElement>(null);
   const moveThrottleRef = React.useRef(0);
-  const hintTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
   const modeRef = React.useRef<Mode>('readonly');
 
   const aspect = frame && frame.viewportWidth && frame.viewportHeight
@@ -81,18 +81,24 @@ export const Dashboard: React.FC = () => {
   const annotating = mode === 'annotate';
 
   React.useEffect(() => {
-    if (interactive)
-      setShowInteractiveHint(false);
-  }, [interactive]);
-
-  React.useEffect(() => {
-    return () => clearTimeout(hintTimerRef.current);
-  }, []);
+    if (flashTick === 0 || interactive)
+      return;
+    const btn = interactiveBtnRef.current;
+    if (!btn)
+      return;
+    btn.classList.remove('flash');
+    // Force a reflow so that re-adding the class restarts the animation.
+    void btn.offsetWidth;
+    btn.classList.add('flash');
+    const timer = setTimeout(() => btn.classList.remove('flash'), 2000);
+    return () => {
+      clearTimeout(timer);
+      btn.classList.remove('flash');
+    };
+  }, [flashTick, interactive]);
 
   function flashInteractiveHint() {
-    clearTimeout(hintTimerRef.current);
-    setShowInteractiveHint(true);
-    hintTimerRef.current = setTimeout(() => setShowInteractiveHint(false), 2000);
+    setFlashTick(tick => tick + 1);
   }
 
   const prevTabsRef = React.useRef<Tab[] | null>(null);
@@ -256,7 +262,8 @@ export const Dashboard: React.FC = () => {
       {/* Toolbar */}
       <div ref={toolbarRef} className='toolbar'>
         <ToolbarButton
-          className={'mode-toggle mode-interactive' + (showInteractiveHint ? ' flash' : '')}
+          ref={interactiveBtnRef}
+          className='mode-toggle mode-interactive'
           title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
           icon='person'
           toggled={interactive}

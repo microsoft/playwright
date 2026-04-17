@@ -283,7 +283,7 @@
 
 .sidebar-tab-url {
   font-size: 11px;
-  color: var(--color-fg-subtle);
+  color: var(--color-fg-muted);
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -293,6 +293,15 @@
 .sidebar-tab-close {
   margin-left: auto;
   align-self: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.sidebar-tab:hover .sidebar-tab-close,
+.sidebar-tab-close:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .sidebar-tab-close .codicon {

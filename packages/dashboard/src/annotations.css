@@ -45,6 +45,16 @@
   cursor: default;
 }
 
+:root.dark-mode .annotation-toolbar {
+  border-color: var(--color-border-default);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+:root.dark-mode .annotate-action-btn {
+  background: var(--color-neutral-muted);
+  border-color: var(--color-border-default);
+}
+
 .annotate-action-btn {
   height: 26px;
   padding: 0 12px;
