@@ -24,6 +24,7 @@ import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
 import { makeWaitForNextTask } from '@utils/task';
 import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { monotonicTime } from '@isomorphic/time';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
 import { TimeoutError } from './errors';
@@ -1104,7 +1105,14 @@ export class Frame extends SdkObject<FrameEventMap> {
     timeouts = [0, ...timeouts];
     let timeoutIndex = 0;
     while (true) {
-      const timeout = timeouts[Math.min(timeoutIndex++, timeouts.length - 1)];
+      let timeout = timeouts[Math.min(timeoutIndex++, timeouts.length - 1)];
+      if (timeout && progress.deadline) {
+        // Clamp the sleep to the remaining budget (minus a small margin for the
+        // next action) so we don't sleep past the deadline and miss a final check
+        // for a state that changed during the sleep — https://github.com/microsoft/playwright/issues/40281
+        const remaining = progress.deadline - monotonicTime();
+        timeout = Math.min(timeout, Math.max(0, remaining - 100));
+      }
       if (timeout) {
         // Make sure we react immediately upon page close or frame detach.
         // We need this to show expected/received values in time.

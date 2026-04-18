@@ -94,6 +94,19 @@ test('should not throw when navigating during first locator handler check', asyn
   await promise;
 });
 
+test('should not miss element that appears between retries before the deadline', async ({ page }) => {
+  // Regression: retry schedule is [0, 100, 250, 500, 1000, ...] (cumulative check times
+  // 0, 100, 350, 850, 1850, 2850). With a timeout in (1850, 2849], the deadline fires
+  // mid-sleep and the loop aborts without ever seeing the element.
+  await page.setContent(`<div id="target" style="display:none">content</div>`);
+  await page.evaluate(() => {
+    setTimeout(() => {
+      document.getElementById('target')!.style.display = 'block';
+    }, 1900);
+  });
+  await expect(page.locator('#target')).toBeVisible({ timeout: 2500 });
+});
+
 test('should timeout during first locator handler check', async ({ page, server }) => {
   await page.addLocatorHandler(page.locator('div'), async locator => {});
   await page.setContent(`<div>hello</div><span>bye</span>`);
