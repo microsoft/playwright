@@ -222,8 +222,7 @@ async function acquireSingleton(reveal: RevealOptions): Promise<net.Server> {
         return reject(err);
       const client = net.connect(socketPath, () => {
         const message: DashboardCommand = { command: 'bringToFront', ...reveal };
-        client.write(JSON.stringify(message));
-        client.end();
+        client.end(JSON.stringify(message) + '\n');
         reject(new Error('already running'));
       });
       client.on('error', () => {
@@ -261,10 +260,8 @@ export async function openDashboardApp() {
   }
   const statePromise = innerOpenDashboardApp(args.reveal);
   server?.on('connection', socket => {
-    const chunks: Buffer[] = [];
-    socket.on('data', data => chunks.push(data));
-    socket.on('end', async () => {
-      const message = Buffer.concat(chunks).toString();
+    let buffer = '';
+    const processMessage = async (message: string) => {
       let parsed: DashboardCommand | undefined;
       try {
         parsed = JSON.parse(message);
@@ -284,6 +281,17 @@ export async function openDashboardApp() {
         dashboard.triggerAnnotate();
         dashboard.registerAnnotateWaiter(socket);
       }
+    };
+    socket.on('data', data => {
+      buffer += data.toString();
+      const newlineIndex = buffer.indexOf('\n');
+      if (newlineIndex !== -1)
+        processMessage(buffer.slice(0, newlineIndex));
+    });
+    // Support legacy callers that use socket.end(data) without newline.
+    socket.on('end', () => {
+      if (buffer.length > 0 && !buffer.includes('\n'))
+        processMessage(buffer);
     });
   });
   await statePromise;
@@ -314,7 +322,7 @@ async function runAnnotateClient(args: OpenArgs): Promise<void> {
     return;
   }
   const message: DashboardCommand = { command: 'annotate', ...args.reveal };
-  socket.end(JSON.stringify(message));
+  socket.write(JSON.stringify(message) + '\n');
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
     socket!.on('data', chunk => chunks.push(chunk));
