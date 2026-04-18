@@ -8,6 +8,16 @@
 
 // Based on https://github.com/jestjs/jest/tree/v30.2.0/packages/expect
 
+// - Files merged into one.
+// - Reformatted to follow the coding style.
+// - Removed spy matchers: toHaveBeenCalled, toHaveReturned, etc.
+// - Removed expect.assertions() and expect.hasAssertions() support.
+// - Removed global state, INTERNAL_MATCHER_FLAG, addCustomEqualityTesters.
+// - MatcherContext has only stubs for customTesters, getState and dontThrow.
+// - MatcherState has no expand, currentTestName, assertionCalls, etc.
+// - Extracted explicit buildCustomAsymmetricMatcher, createExpectedPromiseMessage,
+//   createExpectedToResolveMessage, createExpectedToRejectMessage from internals.
+
 import {
   arrayBufferEquality,
   equals,
