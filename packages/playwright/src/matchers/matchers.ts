@@ -33,7 +33,7 @@ import { toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import { expectConfig } from './expect';
 
 import type { ExpectMatcherState } from '../../types/test';
-import type { ExpectStepInfo, ExpectTestInfo } from './expect';
+import type { ExpectTestInfo } from './expect';
 import type { InternalMatcherUtils } from './matcherHint';
 import type { APIResponse, Locator, Frame, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
@@ -41,7 +41,6 @@ import type { ExpectMatcherUtils } from '../../types/test';
 import type { URLPattern } from '@isomorphic/urlMatch';
 
 export type ExpectMatcherStateInternal = Omit<ExpectMatcherState, 'utils'> & {
-  _stepInfo?: ExpectStepInfo;
   utils: ExpectMatcherUtils & InternalMatcherUtils;
 };
 

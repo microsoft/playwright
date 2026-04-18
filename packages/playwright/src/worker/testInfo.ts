@@ -54,7 +54,7 @@ interface TestStepData {
 }
 
 export interface TestStepInternal extends TestStepData {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  complete(result: { error?: Error | unknown, suggestedRebaseline?: string, attachments?: TestInfo['attachments'] }): void;
   info: TestStepInfoImpl;
   attachmentIndices: number[];
   stepId: string;
@@ -318,6 +318,10 @@ export class TestInfoImpl implements TestInfo {
           return;
 
         step.endWallTime = Date.now();
+        if (result.attachments) {
+          for (const attachment of result.attachments)
+            this._attach(attachment, stepId);
+        }
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
@@ -694,12 +698,8 @@ export class TestStepInfoImpl implements TestStepInfo {
     }
   }
 
-  _attachToStep(attachment: TestInfo['attachments'][0]): void {
-    this._testInfo._attach(attachment, this._stepId);
-  }
-
   async attach(name: string, options?: { body?: string | Buffer; contentType?: string; path?: string; }): Promise<void> {
-    this._attachToStep(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options));
+    this._testInfo._attach(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options), this._stepId);
   }
 
   get titlePath(): string[] {

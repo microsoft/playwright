@@ -84,19 +84,14 @@ import {
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 
-import type { MatcherContext, MatchersObject, RawMatcherFn, SyncExpectationResult } from './expectLibrary';
+import type { MatcherContext, MatchersObject, RawMatcherFn } from './expectLibrary';
+import type { MatcherAttachment, MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
 
-export interface ExpectStepInfo {
-  // !!! return attachments in MatcherResult instead and pass to step.complete()
-  _attachToStep(attachment: { name: string; contentType: string; path?: string; body?: string | Buffer }): void;
-}
-
 interface ExpectStep {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
-  info: ExpectStepInfo;
+  complete(result: { error?: Error | unknown, suggestedRebaseline?: string, attachments?: MatcherAttachment[] }): void;
 }
 
 export interface ExpectTestInfo {
@@ -342,34 +337,34 @@ function wrapMatcher(matcherName: string, info: ExpectMetaInfo, actual: unknown,
     };
     const step = testInfo?._addStep(stepData);
 
-    const reportStepError = (error: Error | unknown) => {
-      step?.complete({ error });
+    const reportStepError = (stepResult: Parameters<ExpectStep['complete']>[0]) => {
+      step?.complete(stepResult);
       if (info.isSoft && testInfo)
-        testInfo._failWithError(error);
+        testInfo._failWithError(stepResult.error);
       else
-        throw error;
+        throw stepResult.error;
     };
 
-    const finalizer = (result: SyncExpectationResult & { suggestedRebaseline?: string }) => {
+    const finalizer = (result: MatcherResult) => {
       validateMatcherResult(result);
       if (result.pass === !!info.isNot) {
-        const withMessage = { ...result, name: matcherName, message: getMessage(result.message) };
-        reportStepError(new ExpectError(withMessage, customMessage, stackFrames));
+        const error = new ExpectError({ ...result, name: matcherName, message: getMessage(result.message) }, customMessage, stackFrames);
+        reportStepError({ error, suggestedRebaseline: result.suggestedRebaseline, attachments: result.attachments });
       } else {
-        step?.complete({ suggestedRebaseline: result.suggestedRebaseline });
+        step?.complete({ suggestedRebaseline: result.suggestedRebaseline, attachments: result.attachments });
       }
     };
 
     try {
       const invoke = () => info.poll
-        ? invokePollMatcher(matcherName, info, matcher, actual, args, promise, step?.info)
-        : invokeMatcher(matcherName, info, matcher, actual, args, promise, step?.info);
+        ? invokePollMatcher(matcherName, info, matcher, actual, args, promise)
+        : invokeMatcher(matcherName, info, matcher, actual, args, promise);
       const result = step ? currentZone().with('stepZone', step).run(invoke) : invoke();
       if (result instanceof Promise)
-        return result.then(finalizer).catch(reportStepError);
+        return result.then(finalizer).catch(error => reportStepError({ error }));
       finalizer(result);
-    } catch (e) {
-      void reportStepError(e);
+    } catch (error) {
+      void reportStepError({ error });
     }
   };
 }
@@ -381,8 +376,7 @@ function invokeMatcher(
   actual: unknown,
   args: any[],
   promise: 'resolves' | 'rejects' | undefined,
-  stepInfo: ExpectStepInfo | undefined,
-): SyncExpectationResult | Promise<SyncExpectationResult> {
+): MatcherResult | Promise<MatcherResult> {
   const isNot = !!info.isNot;
   const timeout = info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
   const matcherContext: MatcherContext & ExpectMatcherStateInternal = {
@@ -391,12 +385,11 @@ function invokeMatcher(
     promise: promise ?? '',
     utils,
     timeout,
-    _stepInfo: stepInfo,
     equals: throwUnsupportedExpectMatcherError as any,
   };
 
   if (!promise)
-    return matcher.call(matcherContext, actual, ...args);
+    return matcher.call(matcherContext, actual, ...args) as MatcherResult | Promise<MatcherResult>;
 
   if (typeof actual === 'function')
     actual = actual();
@@ -405,13 +398,13 @@ function invokeMatcher(
 
   if (promise === 'resolves') {
     return actual.then(
-        result => matcher.call(matcherContext, result, ...args),
+        result => matcher.call(matcherContext, result, ...args) as MatcherResult | Promise<MatcherResult>,
         error => ({ pass: false, message: createExpectedToResolveMessage(matcherName, isNot, promise, error) }),
     );
   } else {
     return actual.then(
         result => ({ pass: false, message: createExpectedToRejectMessage(matcherName, isNot, promise, result) }),
-        error => matcher.call(matcherContext, error, ...args),
+        error => matcher.call(matcherContext, error, ...args) as MatcherResult | Promise<MatcherResult>,
     );
   }
 }
@@ -423,8 +416,7 @@ async function invokePollMatcher(
   actual: unknown,
   args: any[],
   promise: 'resolves' | 'rejects' | undefined,
-  stepInfo: ExpectStepInfo | undefined,
-): Promise<SyncExpectationResult> {
+): Promise<MatcherResult> {
   if (typeof actual !== 'function')
     throw new Error('`expect.poll()` accepts only function as a first argument');
   if (promise || (customAsyncMatchers as any)[matcherName])
@@ -435,11 +427,11 @@ async function invokePollMatcher(
   const timeout = poll.timeout ?? info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
   const { deadline, timeoutMessage } = deadlineForMatcher(testInfo, timeout);
 
-  const polled = await pollAgainstDeadline<SyncExpectationResult | undefined>(async () => {
+  const polled = await pollAgainstDeadline<MatcherResult<unknown, unknown> | undefined>(async () => {
     if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
     const value = await actual();
-    const result = await invokeMatcher(matcherName, { ...info, poll: undefined }, matcher, value, args, undefined, stepInfo);
+    const result = await invokeMatcher(matcherName, { ...info, poll: undefined }, matcher, value, args, undefined);
     if (result.pass === !info.isNot)
       return { continuePolling: false, result };
     return { continuePolling: true, result };

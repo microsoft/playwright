@@ -26,16 +26,14 @@ import { addSuffixToFilePath } from '@utils/fileUtils';
 import { callLogText, expectTypes, formatMatcherMessage } from './matcherHint';
 import { expectConfig } from './expect';
 
-import type { MatcherResult } from './matcherHint';
+import type { MatcherAttachment, MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
-import type { ExpectTestInfo, ExpectStepInfo } from './expect';
+import type { ExpectTestInfo } from './expect';
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Comparator, ImageComparatorOptions } from '@utils/comparators';
 
 type NameOrSegments = string | string[];
-
-type ImageMatcherResult = MatcherResult<string, string> & { diff?: string };
 
 type ToHaveScreenshotConfigOptions = ImageComparatorOptions & {
   animations?: 'allow' | 'disabled';
@@ -151,8 +149,8 @@ class SnapshotHelper {
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
-  createMatcherResult(message: string, pass: boolean, log?: string[]): ImageMatcherResult {
-    const unfiltered: ImageMatcherResult = {
+  createMatcherResult(message: string, pass: boolean, log?: string[], attachments?: MatcherAttachment[]): MatcherResult<string, string> {
+    const unfiltered: MatcherResult<string, string> = {
       name: this.matcherName,
       expected: this.expectedPath,
       actual: this.actualPath,
@@ -160,23 +158,24 @@ class SnapshotHelper {
       pass,
       message: () => message,
       log,
+      attachments,
     };
-    return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as ImageMatcherResult;
+    return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as MatcherResult<string, string>;
   }
 
-  handleMissingNegated(): ImageMatcherResult {
+  handleMissingNegated(): MatcherResult<string, string> {
     const isWriteMissingMode = this.updateSnapshots !== 'none';
     const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
     // NOTE: 'isNot' matcher implies inversed value.
     return this.createMatcherResult(message, true);
   }
 
-  handleDifferentNegated(): ImageMatcherResult {
+  handleDifferentNegated(): MatcherResult<string, string> {
     // NOTE: 'isNot' matcher implies inversed value.
     return this.createMatcherResult('', false);
   }
 
-  handleMatchingNegated(): ImageMatcherResult {
+  handleMatchingNegated(): MatcherResult<string, string> {
     const message = [
       colors.red(`${this.kind} comparison failed:`),
       '',
@@ -186,24 +185,25 @@ class SnapshotHelper {
     return this.createMatcherResult(message, true);
   }
 
-  handleMissing(actual: Buffer | string, step: ExpectStepInfo | undefined): ImageMatcherResult {
+  handleMissing(actual: Buffer | string): MatcherResult<string, string> {
+    const attachments: MatcherAttachment[] = [];
     const isWriteMissingMode = this.updateSnapshots !== 'none';
     if (isWriteMissingMode)
       writeFileSync(this.expectedPath, actual);
-    step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+    attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
     writeFileSync(this.actualPath, actual);
-    step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+    attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (this.updateSnapshots === 'all' || this.updateSnapshots === 'changed') {
       /* eslint-disable no-console */
       console.log(message);
-      return this.createMatcherResult(message, true);
+      return this.createMatcherResult(message, true, undefined, attachments);
     }
     if (this.updateSnapshots === 'missing') {
       this.testInfo._failWithError(new Error(message), 'shouldNotRetry');
-      return this.createMatcherResult('', true);
+      return this.createMatcherResult('', true, undefined, attachments);
     }
-    return this.createMatcherResult(message, false);
+    return this.createMatcherResult(message, false, undefined, attachments);
   }
 
   handleDifferent(
@@ -213,30 +213,30 @@ class SnapshotHelper {
     diff: Buffer | string | undefined,
     header: string,
     diffError: string,
-    log: string[] | undefined,
-    step: ExpectStepInfo | undefined): ImageMatcherResult {
+    log: string[] | undefined): MatcherResult<string, string> {
     const output = [`${header}${indent(diffError, '  ')}`];
     if (this.name) {
       output.push('');
       output.push(`  Snapshot: ${this.name}`);
     }
+    const attachments: MatcherAttachment[] = [];
     if (expected !== undefined) {
       // Copy the expectation inside the `test-results/` folder for backwards compatibility,
       // so that one can upload `test-results/` directory and have all the data inside.
       writeFileSync(this.legacyExpectedPath, expected);
-      step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
-      step?._attachToStep({ name: addSuffixToFilePath(this.attachmentBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
+      attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
     }
 
     if (log?.length)
@@ -244,10 +244,10 @@ class SnapshotHelper {
     else
       output.push('');
 
-    return this.createMatcherResult(output.join('\n'), false, log);
+    return this.createMatcherResult(output.join('\n'), false, log, attachments);
   }
 
-  handleMatching(): ImageMatcherResult {
+  handleMatching(): MatcherResult<string, string> {
     return this.createMatcherResult('', true);
   }
 }
@@ -280,7 +280,7 @@ export function toMatchSnapshot(
   }
 
   if (!fs.existsSync(helper.expectedPath))
-    return helper.handleMissing(received, this._stepInfo);
+    return helper.handleMissing(received);
 
   const expected = fs.readFileSync(helper.expectedPath);
 
@@ -308,7 +308,7 @@ export function toMatchSnapshot(
     return helper.handleMatching();
 
   const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toMatchSnapshot', receiver: isString(received) ? 'string' : 'Buffer', expectation: 'expected' });
-  return helper.handleDifferent(received, expected, undefined, result.diff, header, result.errorMessage, undefined, this._stepInfo);
+  return helper.handleDifferent(received, expected, undefined, result.diff, header, result.errorMessage, undefined);
 }
 
 export function toHaveScreenshotStepTitle(
@@ -393,11 +393,11 @@ export async function toHaveScreenshot(
       // This can be due to e.g. spinning animation, so we want to show it as a diff.
       if (errorMessage) {
         const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
-        return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log, this._stepInfo);
+        return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log);
       }
 
       // We successfully generated new screenshot.
-      return helper.handleMissing(actual!, this._stepInfo);
+      return helper.handleMissing(actual!);
     }
 
     // General case:
@@ -429,11 +429,11 @@ export async function toHaveScreenshot(
         return writeFiles(actual);
       let header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
       header += '  Failed to re-generate expected.\n';
-      return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
+      return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log);
     }
 
     const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
-    return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
+    return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log);
   } finally {
     await page.screencast.showOverlays();
   }

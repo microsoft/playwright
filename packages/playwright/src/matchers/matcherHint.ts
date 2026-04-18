@@ -20,18 +20,23 @@ import { stringifyStackFrames } from '@isomorphic/stackTrace';
 
 import type { StackFrame } from '@protocol/channels';
 
-export type MatcherResult<E, A> = {
-  name: string;
+export type MatcherAttachment = { name: string; contentType: string; path?: string; body?: string | Buffer };
+
+export type MatcherResult<E = unknown, A = unknown> = {
+  name?: string;
   expected?: E;
   message: () => string;
   pass: boolean;
   actual?: A;
+  diff?: string;
   log?: string[];
   timeout?: number;
   suggestedRebaseline?: string;
+  attachments?: MatcherAttachment[];
 };
 
-export type MatcherResultProperty = Omit<MatcherResult<unknown, unknown>, 'message'> & {
+export type MatcherResultProperty = Omit<MatcherResult, 'message' | 'name'> & {
+  name: string;
   message: string;
 };
 
