@@ -8,4 +8,5 @@
 ../cli-client/minimist.ts
 ../cli-client/registry.ts
 ../trace/traceParser.ts
+../trace/traceUtils.ts
 ../utils/**

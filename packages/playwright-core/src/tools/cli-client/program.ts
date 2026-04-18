@@ -187,6 +187,13 @@ export async function program(options?: { embedderVersion?: string}) {
         daemonArgs.push(`--port=${args.port}`);
       if (args.host !== undefined)
         daemonArgs.push(`--host=${args.host as string}`);
+      if (args.annotate) {
+        const dashboard = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
+        dashboard.unref();
+        const annotate = spawn(process.execPath, [...daemonArgs, '--annotate'], { stdio: 'inherit' });
+        await new Promise<void>(resolve => annotate.on('exit', () => resolve()));
+        return;
+      }
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,

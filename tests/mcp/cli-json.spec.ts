@@ -16,7 +16,7 @@
 
 import { test, expect } from './cli-fixtures';
 
-const SNAPSHOT_FILE = expect.stringMatching(/^\.playwright-cli\/page-[\dTZ:.-]+\.yml$/);
+const SNAPSHOT_FILE = expect.stringMatching(/^\.playwright-cli[\\/]page-[\dTZ:.-]+\.yml$/);
 
 test('output is pretty-printed', async ({ cli }) => {
   const { output } = await cli('--json', 'list');
@@ -81,7 +81,7 @@ test('open returns envelope with session, pid and snapshot file', async ({ cli, 
   });
 });
 
-test('list after open returns one browser entry', async ({ cli, server, mcpBrowser }) => {
+test('list after open returns one browser entry', async ({ cli, server, mcpBrowserNormalized }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('--json', 'list');
   expect(JSON.parse(output)).toEqual({
@@ -89,7 +89,7 @@ test('list after open returns one browser entry', async ({ cli, server, mcpBrows
       name: 'default',
       workspace: expect.any(String),
       status: 'open',
-      browserType: mcpBrowser,
+      browserType: mcpBrowserNormalized,
       userDataDir: null,
       headed: false,
       persistent: false,

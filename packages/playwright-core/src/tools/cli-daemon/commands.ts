@@ -857,6 +857,7 @@ const devtoolsShow = declareCommand({
   options: z.object({
     port: numberArg.optional().describe('Start as a blocking HTTP server on this port (use 0 for a random port)'),
     host: z.string().optional().describe('Host to bind to when using --port (defaults to localhost)'),
+    annotate: z.boolean().optional().describe('Switch the dashboard into annotation mode.'),
   }),
   toolName: '',
   toolParams: () => ({}),
