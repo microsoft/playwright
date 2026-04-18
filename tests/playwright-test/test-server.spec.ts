@@ -347,3 +347,17 @@ test('runGlobalSetup returns env', async ({ startTestServer, writeFiles }) => {
   expect(result2.env).toContainEqual(['MAGIC_BEFORE', null]);
   expect(result2.env).toContainEqual(['MAGIC_AFTER', '43']);
 });
+
+test('listens on 127.0.0.1 by default', async ({ startCLICommand, writeFiles }) => {
+  // 'localhost' resolution is ambiguous on dual-stack systems — some resolve
+  // to '::1' first, and IPv6 loopback has proven unreliable in certain
+  // environments (see https://github.com/microsoft/playwright/issues/40226).
+  // Default to IPv4 loopback so clients can always connect.
+  await writeFiles({ 'playwright.config.ts': `export default {};` });
+  const testServerProcess = await startCLICommand({}, 'test-server', []);
+  await testServerProcess.waitForOutput('Listening on');
+  const line = testServerProcess.output.split('\n').find(l => l.includes('Listening on'))!;
+  const wsEndpoint = line.split(' ')[2];
+  expect(wsEndpoint).toMatch(/^ws:\/\/127\.0\.0\.1:\d+\//);
+  await testServerProcess.kill();
+});

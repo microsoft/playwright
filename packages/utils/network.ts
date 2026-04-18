@@ -177,7 +177,10 @@ export function createHttp2Server(...args: any[]): http2.Http2SecureServer {
 }
 
 export async function startHttpServer(server: http.Server, options: { host?: string, port?: number }) {
-  const { host = 'localhost', port = 0 } = options;
+  // Prefer IPv4 loopback over 'localhost' to avoid ambiguous DNS resolution
+  // on dual-stack systems (some environments resolve 'localhost' to '::1'
+  // first and then fail to connect over IPv6 loopback).
+  const { host = '127.0.0.1', port = 0 } = options;
   const errorPromise = new ManualPromise();
   const errorListener = (error: Error) => errorPromise.reject(error);
   server.on('error', errorListener);
