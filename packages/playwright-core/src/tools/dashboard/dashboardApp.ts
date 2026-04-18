@@ -222,7 +222,8 @@ async function acquireSingleton(reveal: RevealOptions): Promise<net.Server> {
         return reject(err);
       const client = net.connect(socketPath, () => {
         const message: DashboardCommand = { command: 'bringToFront', ...reveal };
-        client.end(JSON.stringify(message) + '\n');
+        client.write(JSON.stringify(message));
+        client.end();
         reject(new Error('already running'));
       });
       client.on('error', () => {
