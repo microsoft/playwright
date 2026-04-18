@@ -167,7 +167,7 @@ export class Electron implements api.Electron {
       debuggerDisconnectPromise.then(() => worker.disconnect()).catch(() => {});
 
       const chromeMatch = await Promise.race([chromeMatchPromise, waitForXserverError]);
-      const browser = await chromium.connectOverCDP(chromeMatch[1], { timeout: progress.timeUntilDeadline() });
+      const browser = await chromium.connectOverCDP(chromeMatch[1], { timeout: progress.timeUntilDeadline(), isLocal: true });
 
       app = new ElectronApplication(worker, browser, launchedProcess);
       await progress.race(app._initialize());
