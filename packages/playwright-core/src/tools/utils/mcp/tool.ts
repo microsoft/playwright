@@ -28,10 +28,12 @@ export type ToolSchema<Input extends z.Schema> = {
 
 export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {
   const readOnly = tool.type === 'readOnly' || tool.type === 'assertion';
+  const jsonSchema = zod.toJSONSchema(tool.inputSchema);
+  delete jsonSchema.$schema;
   return {
     name: tool.name,
     description: tool.description,
-    inputSchema: zod.toJSONSchema(tool.inputSchema) as mcpServer.Tool['inputSchema'],
+    inputSchema: jsonSchema as mcpServer.Tool['inputSchema'],
     annotations: {
       title: tool.title,
       readOnlyHint: readOnly,
