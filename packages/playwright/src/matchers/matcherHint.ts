@@ -33,9 +33,11 @@ export type MatcherResult<E = unknown, A = unknown> = {
   timeout?: number;
   suggestedRebaseline?: string;
   attachments?: MatcherAttachment[];
+  softError?: Error | unknown;
+  shouldNotRetryTest?: boolean;
 };
 
-export type MatcherResultProperty = Omit<MatcherResult, 'message' | 'name'> & {
+export type MatcherResultProperty = Omit<MatcherResult, 'message' | 'name' | 'shouldNotRetryTest'> & {
   name: string;
   message: string;
 };

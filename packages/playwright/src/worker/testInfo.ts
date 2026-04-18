@@ -54,7 +54,7 @@ interface TestStepData {
 }
 
 export interface TestStepInternal extends TestStepData {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string, attachments?: TestInfo['attachments'] }): void;
+  complete(result: { error?: Error | unknown, softError?: Error | unknown, shouldNotRetryTest?: boolean, suggestedRebaseline?: string, attachments?: TestInfo['attachments'] }): void;
   info: TestStepInfoImpl;
   attachmentIndices: number[];
   stepId: string;
@@ -322,6 +322,10 @@ export class TestInfoImpl implements TestInfo {
           for (const attachment of result.attachments)
             this._attach(attachment, stepId);
         }
+        if (result.softError)
+          this._failWithError(result.softError);
+        if (result.shouldNotRetryTest)
+          this._hasNonRetriableError = true;
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
@@ -407,9 +411,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error | unknown, shouldNotRetry?: 'shouldNotRetry') {
-    if (shouldNotRetry)
-      this._hasNonRetriableError = true;
+  _failWithError(error: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = testInfoError(error);

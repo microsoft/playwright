@@ -91,7 +91,13 @@ import type { Expect } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';
 
 interface ExpectStep {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string, attachments?: MatcherAttachment[] }): void;
+  complete(result: {
+    error?: Error | unknown,
+    softError?: Error | unknown,
+    shouldNotRetryTest?: boolean,
+    suggestedRebaseline?: string,
+    attachments?: MatcherAttachment[],
+  }): void;
 }
 
 export interface ExpectTestInfo {
@@ -104,7 +110,6 @@ export interface ExpectTestInfo {
     infectParentStepsWithError?: boolean;
   }): ExpectStep;
   _deadline(): { deadline: number; timeout: number };
-  _failWithError(error: Error | unknown, shouldNotRetry?: 'shouldNotRetry'): void;
   _resolveSnapshotPaths(kind: 'snapshot' | 'screenshot' | 'aria', name: string | string[] | undefined, updateSnapshotIndex: 'updateSnapshotIndex' | 'dontUpdateSnapshotIndex', anonymousExtension?: string): { absoluteSnapshotPath: string; relativeOutputPath: string };
   _getOutputPath(...pathSegments: string[]): string;
 }
@@ -338,20 +343,21 @@ function wrapMatcher(matcherName: string, info: ExpectMetaInfo, actual: unknown,
     const step = testInfo?._addStep(stepData);
 
     const reportStepError = (stepResult: Parameters<ExpectStep['complete']>[0]) => {
-      step?.complete(stepResult);
-      if (info.isSoft && testInfo)
-        testInfo._failWithError(stepResult.error);
-      else
+      if (info.isSoft && step) {
+        step.complete({ ...stepResult, error: undefined, softError: stepResult.error });
+      } else {
+        step?.complete(stepResult);
         throw stepResult.error;
+      }
     };
 
     const finalizer = (result: MatcherResult) => {
       validateMatcherResult(result);
       if (result.pass === !!info.isNot) {
         const error = new ExpectError({ ...result, name: matcherName, message: getMessage(result.message) }, customMessage, stackFrames);
-        reportStepError({ error, suggestedRebaseline: result.suggestedRebaseline, attachments: result.attachments });
+        reportStepError({ ...result, error });
       } else {
-        step?.complete({ suggestedRebaseline: result.suggestedRebaseline, attachments: result.attachments });
+        step?.complete(result);
       }
     };
 
@@ -364,7 +370,7 @@ function wrapMatcher(matcherName: string, info: ExpectMetaInfo, actual: unknown,
         return result.then(finalizer).catch(error => reportStepError({ error }));
       finalizer(result);
     } catch (error) {
-      void reportStepError({ error });
+      reportStepError({ error });
     }
   };
 }

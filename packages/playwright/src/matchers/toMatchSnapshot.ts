@@ -200,8 +200,11 @@ class SnapshotHelper {
       return this.createMatcherResult(message, true, undefined, attachments);
     }
     if (this.updateSnapshots === 'missing') {
-      this.testInfo._failWithError(new Error(message), 'shouldNotRetry');
-      return this.createMatcherResult('', true, undefined, attachments);
+      return {
+        ...this.createMatcherResult('', true, undefined, attachments),
+        softError: new Error(message),
+        shouldNotRetryTest: true,
+      };
     }
     return this.createMatcherResult(message, false, undefined, attachments);
   }
