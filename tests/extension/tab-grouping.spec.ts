@@ -16,7 +16,7 @@
 
 import { test, expect, extensionId, startWithExtensionFlag } from './extension-fixtures';
 
-test('connect page is not added to Playwright group', async ({ startExtensionClient, server }) => {
+test('connect page is not in group before selection', async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
   const connectPagePromise = browserContext.waitForEvent('page', page =>
@@ -34,14 +34,13 @@ test('connect page is not added to Playwright group', async ({ startExtensionCli
     const tab = await chrome.tabs.getCurrent();
     return tab?.groupId ?? -1;
   });
-
   expect(groupId).toBe(-1);
 
   await connectPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
   await navigatePromise;
 });
 
-test('connected tab is added to green Playwright group', async ({ browserWithExtension, startClient, server }) => {
+test('connected tab and connect page are in green Playwright group', async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
 
   const page = await browserContext.newPage();
@@ -59,6 +58,7 @@ test('connected tab is added to green Playwright group', async ({ browserWithExt
   await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
   await navigatePromise;
 
+  // Connected tab should be in the Playwright group.
   await expect.poll(async () => {
     return connectPage.evaluate(async () => {
       const chrome = (window as any).chrome;
@@ -69,6 +69,16 @@ test('connected tab is added to green Playwright group', async ({ browserWithExt
       return { color: g.color, title: g.title };
     });
   }).toEqual({ color: 'green', title: 'Playwright' });
+
+  // Connect page should also be in the same group.
+  await expect.poll(async () => {
+    return connectPage.evaluate(async () => {
+      const chrome = (window as any).chrome;
+      const connectTab = await chrome.tabs.getCurrent();
+      const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+      return connectTab?.groupId === connectedTab?.groupId;
+    });
+  }).toBe(true);
 });
 
 test('tab added to group gets auto-attached', async ({ browserWithExtension, startClient, server, protocolVersion }) => {

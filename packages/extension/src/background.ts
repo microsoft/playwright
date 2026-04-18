@@ -38,6 +38,7 @@ class TabShareExtension {
   private _connectedTabIds: Set<number> = new Set();
   private _groupId: number | null = null;
   private _pendingTabSelection = new Map<number, RelayConnection>();
+  private _selectorTabId: number | undefined;
 
   constructor() {
     chrome.tabs.onRemoved.addListener(this._onTabRemoved.bind(this));
@@ -126,15 +127,19 @@ class TabShareExtension {
       this._activeConnection.onclose = () => {
         debugLog('MCP connection closed');
         this._activeConnection = undefined;
+        this._selectorTabId = undefined;
         const allTabIds = [...this._connectedTabIds];
         this._connectedTabIds.clear();
         allTabIds.map(id => this._updateBadge(id, { text: '' }));
-        chrome.tabs.ungroup(allTabIds).catch(() => {});
+        chrome.tabs.ungroup([...allTabIds, selectorTabId]).catch(() => {});
       };
       this._activeConnection.ontabattached = (newTabId: number) => {
         this._connectedTabIds.add(newTabId);
         void this._updateBadge(newTabId, { text: '✓', color: '#4CAF50', title: 'Connected to Playwright client' });
-        void this._addTabToGroup(newTabId);
+        void this._addTabToGroup(newTabId).then(() => {
+          if (this._selectorTabId)
+            return this._addTabToGroup(this._selectorTabId);
+        });
       };
       this._activeConnection.ontabdetached = (removedTabId: number) => {
         this._connectedTabIds.delete(removedTabId);
@@ -146,6 +151,7 @@ class TabShareExtension {
         chrome.tabs.update(tabId, { active: true }),
         chrome.windows.update(windowId, { focused: true }),
       ]);
+      this._selectorTabId = selectorTabId;
       debugLog(`Connected to Playwright client`);
     } catch (error: any) {
       this._connectedTabIds.clear();
@@ -182,6 +188,9 @@ class TabShareExtension {
       void this._updateBadge(tabId, { text: '✓', color: '#4CAF50', title: 'Connected to MCP client' });
 
     if (!this._activeConnection || changeInfo.groupId === undefined)
+      return;
+    // Ignore the selector tab — it is in the group for visual association only.
+    if (tabId === this._selectorTabId)
       return;
     // Ignore the extension's own UI tabs (connect/status pages) — those get added
     // to the group for visual grouping, not because they should be controlled.
