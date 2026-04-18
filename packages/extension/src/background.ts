@@ -37,6 +37,7 @@ class TabShareExtension {
   private _activeConnection: RelayConnection | undefined;
   private _connectedTabIds: Set<number> = new Set();
   private _groupId: number | null = null;
+  private _groupQueue: Promise<void> = Promise.resolve();
   private _pendingTabSelection = new Map<number, RelayConnection>();
   private _selectorTabId: number | undefined;
 
@@ -131,7 +132,8 @@ class TabShareExtension {
         const allTabIds = [...this._connectedTabIds];
         this._connectedTabIds.clear();
         allTabIds.map(id => this._updateBadge(id, { text: '' }));
-        chrome.tabs.ungroup([...allTabIds, selectorTabId]).catch(() => {});
+        if (allTabIds.length)
+          chrome.tabs.ungroup(allTabIds).catch(() => {});
       };
       this._activeConnection.ontabattached = (newTabId: number) => {
         this._connectedTabIds.add(newTabId);
@@ -187,20 +189,17 @@ class TabShareExtension {
     if (this._connectedTabIds.has(tabId))
       void this._updateBadge(tabId, { text: '✓', color: '#4CAF50', title: 'Connected to MCP client' });
 
-    if (!this._activeConnection || changeInfo.groupId === undefined)
+    if (!this._activeConnection || this._groupId === null || changeInfo.groupId === undefined)
       return;
-    // Ignore the selector tab — it is in the group for visual association only.
-    if (tabId === this._selectorTabId)
+    // Ignore extension UI tabs other than the selector tab — status pages etc.
+    // should not be auto-attached.
+    if (tabId !== this._selectorTabId && tab.url?.startsWith(chrome.runtime.getURL('')))
       return;
-    // Ignore the extension's own UI tabs (connect/status pages) — those get added
-    // to the group for visual grouping, not because they should be controlled.
-    if (tab.url?.startsWith(chrome.runtime.getURL('')))
-      return;
-    const inOurGroup = this._groupId !== null && changeInfo.groupId === this._groupId;
+    const inOurGroup = changeInfo.groupId === this._groupId;
     const isConnected = this._connectedTabIds.has(tabId);
     if (inOurGroup && !isConnected)
       void this._activeConnection.attachTab(tabId);
-    else if (this._groupId !== null && !inOurGroup && isConnected)
+    else if (!inOurGroup && isConnected)
       void this._activeConnection.detachTab(tabId);
   }
 
@@ -209,22 +208,26 @@ class TabShareExtension {
     return tabs.filter(tab => tab.url && !['chrome:', 'edge:', 'devtools:'].some(scheme => tab.url!.startsWith(scheme)));
   }
 
-  private async _addTabToGroup(tabId: number): Promise<void> {
-    try {
-      if (this._groupId !== null) {
-        try {
-          await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
-          await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
-          return;
-        } catch {
-          this._groupId = null;
+  private _addTabToGroup(tabId: number): Promise<void> {
+    const result = this._groupQueue.then(async () => {
+      try {
+        if (this._groupId !== null) {
+          try {
+            await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
+            await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
+            return;
+          } catch {
+            this._groupId = null;
+          }
         }
+        this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
+        await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
+      } catch (error: any) {
+        debugLog('Error adding tab to group:', error);
       }
-      this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
-      await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
-    } catch (error: any) {
-      debugLog('Error adding tab to group:', error);
-    }
+    });
+    this._groupQueue = result.catch(() => {});
+    return result;
   }
 
   private async _onActionClicked(): Promise<void> {
