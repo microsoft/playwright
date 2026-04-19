@@ -34,6 +34,22 @@ export interface BezierPathOptions {
   random?: () => number;
 }
 
+/**
+ * Generates a humanized cubic-Bezier mouse path from `from` to `to`.
+ *
+ * Contract:
+ * - Returns ≥1 step. If `from === to`, returns a single dwell step (20–60ms).
+ * - Otherwise returns `stepCount` steps where stepCount ∈ [minSteps, maxSteps].
+ * - Sum of all `dt` values lies in [minDurationMs, maxDurationMs] for every seed.
+ * - Final step's `dt` ≥ FINAL_DWELL_MIN (20ms) — gives downstream click a settle window.
+ * - Per-step `dt` ≥ PER_STEP_MIN (2ms) — keeps deltas plausible at the input layer.
+ * - Deterministic given a fixed `opts.random`.
+ *
+ * The interior duration is apportioned by ease-in-out weights then largest-
+ * remainder-rounded so the integer sum equals the integer budget exactly,
+ * which is why a literal "uniform per-step / max-clamp" scheme would not
+ * satisfy the duration bound for all seeds.
+ */
 export function generateBezierPath(
   from: { x: number; y: number },
   to: { x: number; y: number },
