@@ -202,6 +202,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       slowMo: params.slowMo,
       timeout: new TimeoutSettings(this._platform).timeout(params),
       isLocal: params.isLocal,
+      stealthMode: (params as any).stealthMode,
+      humanizeInput: (params as any).humanizeInput,
     });
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, params.logger);
