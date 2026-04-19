@@ -110,6 +110,13 @@ export type Config = {
    */
   stealth?: boolean;
 
+  /**
+   * Enable humanized input dispatch (bezier-curve mouse paths, jittered key timings).
+   * Increases naturalness at the cost of slower input. Default is false (off).
+   * Intended for VM mode where bot-detection avoidance matters more than speed.
+   */
+  humanizeInput?: boolean;
+
   server?: {
     /**
      * The port to listen on for SSE or MCP transport.

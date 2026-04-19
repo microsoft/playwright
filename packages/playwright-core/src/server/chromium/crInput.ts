@@ -18,6 +18,7 @@
 import { isString } from '../../utils';
 import * as input from '../input';
 import { macEditingCommands } from '../macEditingCommands';
+import { generateBezierPath } from './bezierInput';
 import { toButtonsMask, toModifiersMask } from './crProtocolHelper';
 
 import type * as types from '../types';
@@ -94,6 +95,11 @@ export class RawMouseImpl implements input.RawMouse {
   private _client: CRSession;
   private _page: CRPage;
   private _dragManager: DragManager;
+  // Lazy-init: null on first move so the initial dispatch doesn't draw a
+  // multi-hundred-pixel bezier from screen-origin (which would be a fingerprint
+  // tell more obvious than the straight-line dispatch we're trying to hide).
+  // Subsequent moves chain from the actual cursor position.
+  private _lastPos: { x: number; y: number } | null = null;
 
   constructor(page: CRPage, client: CRSession, dragManager: DragManager) {
     this._page = page;
@@ -102,17 +108,38 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    const actualMove = async () => {
-      await progress.race(this._client.send('Input.dispatchMouseEvent', {
+    // When humanizeInput is enabled, walk a generated bezier path instead of
+    // teleporting to (x, y). Total wall-clock per move: ~80–200ms (see
+    // bezierInput.ts contract). First move (no prior cursor pos) and mid-drag
+    // moves (buttons held) skip humanization to avoid drag-detection races.
+    const humanize = !!this._page._browserContext._browser.options.humanizeInput
+      && this._lastPos !== null
+      && buttons.size === 0;
+    const dispatchOne = (px: number, py: number) =>
+      progress.race(this._client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
         button,
         buttons: toButtonsMask(buttons),
-        x,
-        y,
+        x: px,
+        y: py,
         modifiers: toModifiersMask(modifiers),
         force: buttons.size > 0 ? 0.5 : 0,
       }));
+
+    const actualMove = async () => {
+      if (humanize) {
+        const path = generateBezierPath(this._lastPos!, { x, y });
+        for (const step of path) {
+          await dispatchOne(step.x, step.y);
+          if (step.dt > 0)
+            await new Promise(r => setTimeout(r, step.dt));
+        }
+      } else {
+        await dispatchOne(x, y);
+      }
+      this._lastPos = { x, y };
     };
+
     if (forClick) {
       // Avoid extra protocol calls related to drag and drop, because click relies on
       // move-down-up protocol commands being sent synchronously.
@@ -135,6 +162,7 @@ export class RawMouseImpl implements input.RawMouse {
       clickCount,
       force: buttons.size > 0 ? 0.5 : 0,
     }));
+    this._lastPos = { x, y };
   }
 
   async up(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
@@ -151,6 +179,7 @@ export class RawMouseImpl implements input.RawMouse {
       modifiers: toModifiersMask(modifiers),
       clickCount
     }));
+    this._lastPos = { x, y };
   }
 
   async wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
@@ -162,6 +191,7 @@ export class RawMouseImpl implements input.RawMouse {
       deltaX,
       deltaY,
     }));
+    this._lastPos = { x, y };
   }
 }
 

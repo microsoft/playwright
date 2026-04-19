@@ -480,6 +480,8 @@ LaunchOptions:
     chromiumSandbox: boolean?
     firefoxUserPrefs: json?
     cdpPort: int?
+    stealthMode: boolean?
+    humanizeInput: boolean?
 
 
 ContextOptions:
@@ -991,6 +993,8 @@ BrowserType:
         slowMo: float?
         timeout: float
         isLocal: boolean?
+        stealthMode: boolean?
+        humanizeInput: boolean?
       returns:
         browser: Browser
         defaultContext: BrowserContext?
