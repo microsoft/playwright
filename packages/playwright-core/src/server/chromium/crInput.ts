@@ -95,7 +95,11 @@ export class RawMouseImpl implements input.RawMouse {
   private _client: CRSession;
   private _page: CRPage;
   private _dragManager: DragManager;
-  private _lastPos: { x: number; y: number } = { x: 0, y: 0 };
+  // Lazy-init: null on first move so the initial dispatch doesn't draw a
+  // multi-hundred-pixel bezier from screen-origin (which would be a fingerprint
+  // tell more obvious than the straight-line dispatch we're trying to hide).
+  // Subsequent moves chain from the actual cursor position.
+  private _lastPos: { x: number; y: number } | null = null;
 
   constructor(page: CRPage, client: CRSession, dragManager: DragManager) {
     this._page = page;
@@ -104,7 +108,13 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    const humanize = !!(this._page._browserContext._browser.options as any).humanizeInput;
+    // When humanizeInput is enabled, walk a generated bezier path instead of
+    // teleporting to (x, y). Total wall-clock per move: ~80–200ms (see
+    // bezierInput.ts contract). First move (no prior cursor pos) and mid-drag
+    // moves (buttons held) skip humanization to avoid drag-detection races.
+    const humanize = !!this._page._browserContext._browser.options.humanizeInput
+      && this._lastPos !== null
+      && buttons.size === 0;
     const dispatchOne = (px: number, py: number) =>
       progress.race(this._client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
@@ -118,7 +128,7 @@ export class RawMouseImpl implements input.RawMouse {
 
     const actualMove = async () => {
       if (humanize) {
-        const path = generateBezierPath(this._lastPos, { x, y });
+        const path = generateBezierPath(this._lastPos!, { x, y });
         for (const step of path) {
           await dispatchOne(step.x, step.y);
           if (step.dt > 0)
