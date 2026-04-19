@@ -25,7 +25,7 @@ const EXPECTED: Record<string, Record<string, number>> = {
     'lib/utilsBundle.js.LICENSE': 80,
   },
   'playwright': {
-    'lib/matchers/expect.js.LICENSE': 30,
+    'lib/matchers/expect.js.LICENSE': 20,
     'lib/transform/esmLoader.js.LICENSE': 10,
     'lib/transform/babelBundle.js.LICENSE': 65,
   },

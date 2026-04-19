@@ -107,7 +107,6 @@ export interface ExpectTestInfo {
     title: string;
     shortTitle: string;
     params?: Record<string, any>;
-    infectParentStepsWithError?: boolean;
   }): ExpectStep;
   _deadline(): { deadline: number; timeout: number };
   _resolveSnapshotPaths(kind: 'snapshot' | 'screenshot' | 'aria', name: string | string[] | undefined, updateSnapshotIndex: 'updateSnapshotIndex' | 'dontUpdateSnapshotIndex', anonymousExtension?: string): { absoluteSnapshotPath: string; relativeOutputPath: string };
@@ -308,71 +307,72 @@ function createMatchers(actual: unknown, originalInfo: ExpectMetaInfo, messageOr
   const result: any = { not: {}, resolves: { not: {} }, rejects: { not: {} } };
   const notInfo: ExpectMetaInfo = { ...info, isNot: !info.isNot };
   for (const [name, matcher] of Object.entries({ ...allBuiltinMatchers, ...info.userMatchers })) {
-    result[name] = wrapMatcher(name, info, actual, matcher);
-    result.not[name] = wrapMatcher(name, notInfo, actual, matcher);
+    result[name] = createMatcher(name, info, actual, matcher);
+    result.not[name] = createMatcher(name, notInfo, actual, matcher);
     const promiseMatcher = promiseThrowMatchers[name] ?? matcher;
-    result.resolves[name] = wrapMatcher(name, info, actual, promiseMatcher, 'resolves');
-    result.resolves.not[name] = wrapMatcher(name, notInfo, actual, promiseMatcher, 'resolves');
-    result.rejects[name] = wrapMatcher(name, info, actual, promiseMatcher, 'rejects');
-    result.rejects.not[name] = wrapMatcher(name, notInfo, actual, promiseMatcher, 'rejects');
+    result.resolves[name] = createMatcher(name, info, actual, promiseMatcher, 'resolves');
+    result.resolves.not[name] = createMatcher(name, notInfo, actual, promiseMatcher, 'resolves');
+    result.rejects[name] = createMatcher(name, info, actual, promiseMatcher, 'rejects');
+    result.rejects.not[name] = createMatcher(name, notInfo, actual, promiseMatcher, 'rejects');
   }
   return result;
 }
 
-function wrapMatcher(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcher: RawMatcherFn, promise?: 'resolves' | 'rejects') {
-  return (...args: any[]) => {
-    const testInfo = expectConfig().testInfo;
-    const customMessage = info.message || '';
-    const suffixes = computeMatcherTitleSuffix(matcherName, actual, args);
-    const defaultTitle = `${info.poll ? 'poll ' : ''}${info.isSoft ? 'soft ' : ''}${info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
-    const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
-    const longTitle = shortTitle + (suffixes.long || '');
-    const apiName = `expect${info.poll ? '.poll ' : ''}${info.isSoft ? '.soft ' : ''}${info.isNot ? '.not' : ''}.${matcherName}${suffixes.short || ''}`;
+function createMatcher(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcher: RawMatcherFn, promise?: 'resolves' | 'rejects') {
+  return (...args: any[]) => callMatcherAsStep(matcherName, info, actual, matcher, args, promise);
+}
 
-    // This looks like it is unnecessary, but it isn't - we need to filter
-    // out all the frames that belong to the test runner from caught runtime errors.
-    const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
-    const stepData = {
-      category: 'expect' as const,
-      apiName,
-      title: longTitle,
-      shortTitle,
-      params: args[0] ? { expected: args[0] } : undefined,
-      infectParentStepsWithError: info.isSoft,
-    };
-    const step = testInfo?._addStep(stepData);
+function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: unknown, matcher: RawMatcherFn, args: any[], promise?: 'resolves' | 'rejects') {
+  const testInfo = expectConfig().testInfo;
+  const customMessage = info.message || '';
+  const suffixes = computeMatcherTitleSuffix(matcherName, actual, args);
+  const defaultTitle = `${info.poll ? 'poll ' : ''}${info.isSoft ? 'soft ' : ''}${info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
+  const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
+  const longTitle = shortTitle + (suffixes.long || '');
+  const apiName = `expect${info.poll ? '.poll ' : ''}${info.isSoft ? '.soft ' : ''}${info.isNot ? '.not' : ''}.${matcherName}${suffixes.short || ''}`;
 
-    const reportStepError = (stepResult: Parameters<ExpectStep['complete']>[0]) => {
-      if (info.isSoft && step) {
-        step.complete({ ...stepResult, error: undefined, softError: stepResult.error });
-      } else {
-        step?.complete(stepResult);
-        throw stepResult.error;
-      }
-    };
+  // This looks like it is unnecessary, but it isn't - we need to filter
+  // out all the frames that belong to the test runner from caught runtime errors.
+  const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
+  const stepData = {
+    category: 'expect' as const,
+    apiName,
+    title: longTitle,
+    shortTitle,
+    params: args[0] ? { expected: args[0] } : undefined,
+  };
+  const step = testInfo?._addStep(stepData);
 
-    const finalizer = (result: MatcherResult) => {
-      validateMatcherResult(result);
-      if (result.pass === !!info.isNot) {
-        const error = new ExpectError({ ...result, name: matcherName, message: getMessage(result.message) }, customMessage, stackFrames);
-        reportStepError({ ...result, error });
-      } else {
-        step?.complete(result);
-      }
-    };
-
-    try {
-      const invoke = () => info.poll
-        ? invokePollMatcher(matcherName, info, matcher, actual, args, promise)
-        : invokeMatcher(matcherName, info, matcher, actual, args, promise);
-      const result = step ? currentZone().with('stepZone', step).run(invoke) : invoke();
-      if (result instanceof Promise)
-        return result.then(finalizer).catch(error => reportStepError({ error }));
-      finalizer(result);
-    } catch (error) {
-      reportStepError({ error });
+  const handleError = (error: Error, result?: MatcherResult) => {
+    if (info.isSoft && step) {
+      step.complete({ ...result, error, softError: error });
+    } else {
+      step?.complete({ ...result, error });
+      throw error;
     }
   };
+
+  const finalizer = (result: MatcherResult) => {
+    validateMatcherResult(result);
+    if (result.pass === !!info.isNot) {
+      const error = new ExpectError({ ...result, name: matcherName, message: getMessage(result.message) }, customMessage, stackFrames);
+      handleError(error, result);
+    } else {
+      step?.complete(result);
+    }
+  };
+
+  try {
+    const invoke = () => info.poll
+      ? invokePollMatcher(matcherName, info, matcher, actual, args, promise)
+      : invokeMatcher(matcherName, info, matcher, actual, args, promise);
+    const result = step ? currentZone().with('stepZone', step).run(invoke) : invoke();
+    if (result instanceof Promise)
+      return result.then(finalizer, handleError);
+    finalizer(result);
+  } catch (error) {
+    handleError(error);
+  }
 }
 
 function invokeMatcher(
@@ -433,27 +433,27 @@ async function invokePollMatcher(
   const timeout = poll.timeout ?? info.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
   const { deadline, timeoutMessage } = deadlineForMatcher(testInfo, timeout);
 
-  const polled = await pollAgainstDeadline<MatcherResult<unknown, unknown> | undefined>(async () => {
+  const result = await pollAgainstDeadline<Error | undefined>(async () => {
     if (testInfo && expectConfig().testInfo !== testInfo)
       return { continuePolling: false, result: undefined };
     const value = await actual();
-    const result = await invokeMatcher(matcherName, { ...info, poll: undefined }, matcher, value, args, undefined);
-    if (result.pass === !info.isNot)
-      return { continuePolling: false, result };
-    return { continuePolling: true, result };
+    try {
+      await callMatcherAsStep(matcherName, { ...info, poll: undefined, isSoft: false }, value, matcher, args);
+      return { continuePolling: false, result: undefined };
+    } catch (error) {
+      return { continuePolling: true, result: error };
+    }
   }, deadline, poll.intervals ?? [100, 250, 500, 1000]);
-
-  const result = polled.result ?? { pass: !!info.isNot, message: () => '' };
-  if (polled.timedOut) {
-    const message = polled.result ? [
-      getMessage(polled.result.message),
+  if (result.timedOut) {
+    const message = result.result ? [
+      result.result.message,
       '',
       `Call Log:`,
       `- ${timeoutMessage}`,
     ].join('\n') : timeoutMessage;
-    result.message = () => message;
+    return { pass: !!info.isNot, message: () => message };
   }
-  return result;
+  return { pass: !info.isNot, message: () => '' };
 }
 
 export const expect: Expect<{}> = createExpect({ userMatchers: {} });

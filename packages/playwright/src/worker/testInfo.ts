@@ -46,7 +46,6 @@ interface TestStepData {
   location?: Location;
   apiName?: string;
   params?: Record<string, any>;
-  infectParentStepsWithError?: boolean;
   box?: boolean;
   // steps with any defined group are hidden from the report
   // 'internal' steps are hidden from the trace
@@ -62,6 +61,7 @@ export interface TestStepInternal extends TestStepData {
   steps: TestStepInternal[];
   endWallTime?: number;
   error?: ipc.TestInfoErrorImpl;
+  infectParentStepsWithError?: boolean;
 }
 
 type SnapshotNames = {
@@ -322,10 +322,6 @@ export class TestInfoImpl implements TestInfo {
           for (const attachment of result.attachments)
             this._attach(attachment, stepId);
         }
-        if (result.softError)
-          this._failWithError(result.softError);
-        if (result.shouldNotRetryTest)
-          this._hasNonRetriableError = true;
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
@@ -334,6 +330,12 @@ export class TestInfoImpl implements TestInfo {
             error.stack = `${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
           step.error = error;
         }
+        if (result.softError) {
+          step.infectParentStepsWithError = true;
+          this._failWithError(result.softError);
+        }
+        if (result.shouldNotRetryTest)
+          this._hasNonRetriableError = true;
 
         if (!step.error) {
           // Soft errors inside try/catch will make the test fail.
