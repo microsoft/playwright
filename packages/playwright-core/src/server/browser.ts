@@ -56,6 +56,7 @@ export type BrowserOptions = {
   sdkLanguage?: Language;
   originalLaunchOptions: types.LaunchOptions;
   stealthMode?: boolean;
+  humanizeInput?: boolean;
   suppressFocus?: boolean;
 };
 

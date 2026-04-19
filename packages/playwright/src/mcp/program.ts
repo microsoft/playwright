@@ -62,6 +62,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow" or "omit", Defaults to "allow".', enumParser.bind(null, '--image-responses', ['allow', 'omit']))
       .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
       .option('--no-stealth', 'disable CDP stealth optimizations (Log/Network domain skipping, Runtime rapid cycle). Useful for debugging.')
+      .option('--humanize-input <mode>', 'enable humanized input dispatch (bezier-curve mouse paths, jittered key timings). Can be "on" or "off". Default is "off".', enumParser.bind(null, '--humanize-input', ['on', 'off']))
       .option('--disable-downloads', 'disable Playwright download handling (capture stack owns downloads exclusively)')
       .option('--output-dir <path>', 'path to the directory for output files.')
       .option('--output-mode <mode>', 'whether to save snapshots, console messages, network logs to a file or to the standard output. Can be "file" or "stdout". Default is "stdout".', enumParser.bind(null, '--output-mode', ['file', 'stdout']))
@@ -94,6 +95,8 @@ export function decorateCommand(command: Command, version: string) {
         options.sandbox = options.sandbox === true ? undefined : false;
         // normalize --no-stealth: stealth = true => nothing passed (default on), stealth = false => --no-stealth was passed.
         options.stealth = options.stealth === false ? false : undefined;
+        // normalize --humanize-input=on|off: default off (undefined => false). 'on' => true, 'off' => false.
+        options.humanizeInput = (options.humanizeInput as unknown as string) === 'on' ? true : false;
 
         setupExitWatchdog();
 

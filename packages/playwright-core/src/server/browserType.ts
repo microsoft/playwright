@@ -130,6 +130,7 @@ export abstract class BrowserType extends SdkObject {
         wsEndpoint: transport instanceof WebSocketTransport ? transport.wsEndpoint : undefined,
         originalLaunchOptions: options,
         stealthMode: (options as any).stealthMode,
+        humanizeInput: (options as any).humanizeInput,
       };
       if (persistent)
         validateBrowserContextOptions(persistent, browserOptions);

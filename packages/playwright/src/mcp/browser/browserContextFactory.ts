@@ -314,6 +314,8 @@ class CdpContextFactory extends BaseContextFactory {
       ...(this.config.suppressFocus ? { suppressFocus: true } : {}),
       // CDP Stealth: thread stealthMode to BrowserOptions for crPage/crNetworkManager
       ...(this.config.stealth !== false ? { stealthMode: true } : {}),
+      // Humanized input: opt-in (default off) — threaded to BrowserOptions for RawMouseImpl/RawKeyboardImpl
+      ...(this.config.humanizeInput === true ? { humanizeInput: true } : {}),
     } as any);
   }
 
@@ -375,6 +377,7 @@ class PersistentContextFactory implements BrowserContextFactory {
         ],
         assistantMode: true,
         ...(this.config.stealth !== false ? { stealthMode: true } : {}),
+        ...(this.config.humanizeInput === true ? { humanizeInput: true } : {}),
       } as any;
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);

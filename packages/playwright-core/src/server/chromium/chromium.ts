@@ -122,6 +122,7 @@ export class Chromium extends BrowserType {
         tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
         stealthMode: (options as any).stealthMode,
+        humanizeInput: (options as any).humanizeInput,
         suppressFocus: (options as any).suppressFocus,
       };
       validateBrowserContextOptions(persistent, browserOptions);

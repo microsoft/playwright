@@ -79,6 +79,7 @@ export type CLIOptions = {
   filterInternalUrls?: boolean;
   keepBrowserAlive?: boolean;
   stealth?: boolean;
+  humanizeInput?: boolean;
   suppressFocus?: boolean;
   disableDownloads?: boolean;
   'allowed-tools'?: string[];
@@ -159,6 +160,7 @@ export type FullConfig = Config & {
   filterInternalUrls?: boolean;
   skillMode?: boolean;
   stealth: boolean;
+  humanizeInput?: boolean;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
@@ -317,6 +319,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     filterInternalUrls: cliOptions.filterInternalUrls,
     keepBrowserAlive: cliOptions.keepBrowserAlive,
     stealth: cliOptions.stealth,
+    humanizeInput: cliOptions.humanizeInput,
     suppressFocus: cliOptions.suppressFocus,
     disableDownloads: cliOptions.disableDownloads,
     allowedTools: cliOptions['allowed-tools'],
@@ -379,6 +382,7 @@ function configFromEnv(): Config {
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
   options.suppressFocus = envToBoolean(process.env.PLAYWRIGHT_MCP_SUPPRESS_FOCUS);
+  options.humanizeInput = envToBoolean(process.env.PLAYWRIGHT_MCP_HUMANIZE_INPUT);
   options.keepBrowserAlive = envToBoolean(process.env.PLAYWRIGHT_MCP_KEEP_BROWSER_ALIVE);
   options.filterInternalUrls = envToBoolean(process.env.PLAYWRIGHT_MCP_FILTER_INTERNAL_URLS);
   options.disableDownloads = envToBoolean(process.env.PLAYWRIGHT_MCP_DISABLE_DOWNLOADS);
