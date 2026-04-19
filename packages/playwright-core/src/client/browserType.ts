@@ -196,14 +196,23 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (this.name() !== 'chromium')
       throw new Error('Connecting over CDP is only supported in Chromium.');
     const headers = params.headers ? headersObjectToArray(params.headers) : undefined;
+    // connectOverCDP does NOT spread `params` (unlike the launch path), so each
+    // new channel field must be forwarded explicitly here. stealthMode +
+    // humanizeInput are internal-only options consumed by the chromium server
+    // (crPage / RawMouseImpl); they live behind a typed cast because they're
+    // intentionally absent from the public ConnectOverCDPOptions surface.
+    const internal = params as api.ConnectOverCDPOptions & {
+      stealthMode?: boolean;
+      humanizeInput?: boolean;
+    };
     const result = await this._channel.connectOverCDP({
       endpointURL,
       headers,
       slowMo: params.slowMo,
       timeout: new TimeoutSettings(this._platform).timeout(params),
       isLocal: params.isLocal,
-      stealthMode: (params as any).stealthMode,
-      humanizeInput: (params as any).humanizeInput,
+      stealthMode: internal.stealthMode,
+      humanizeInput: internal.humanizeInput,
     });
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, params.logger);
