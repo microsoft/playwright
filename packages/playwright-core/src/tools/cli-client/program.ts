@@ -180,13 +180,19 @@ export async function program(options?: { embedderVersion?: string}) {
       const daemonScript = libPath('entry', 'dashboardApp.js');
       const daemonArgs = [
         daemonScript,
-        `--session=${sessionName}`,
-        `--workspace=${clientInfo.workspaceDir ?? ''}`,
+        `--sessionName=${sessionName}`,
+        `--workspaceDir=${clientInfo.workspaceDir ?? ''}`,
       ];
       if (args.port !== undefined)
         daemonArgs.push(`--port=${args.port}`);
       if (args.host !== undefined)
         daemonArgs.push(`--host=${args.host as string}`);
+      if (args.kill) {
+        daemonArgs.push(`--kill`);
+        const child = spawn(process.execPath, daemonArgs, { stdio: 'ignore' });
+        await new Promise<void>(resolve => child.on('exit', () => resolve()));
+        return;
+      }
       if (args.annotate) {
         const dashboard = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
         dashboard.unref();
