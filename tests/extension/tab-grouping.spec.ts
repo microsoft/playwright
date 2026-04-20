@@ -129,6 +129,68 @@ test('tab added to group gets auto-attached', async ({ browserWithExtension, sta
   }).toContain('Extra');
 });
 
+test('chrome:// tab dragged into group is automatically ungrouped', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
+  test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
+
+  const browserContext = await browserWithExtension.launch();
+
+  const page = await browserContext.newPage();
+  await page.goto(server.HELLO_WORLD);
+
+  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+
+  const connectPagePromise = browserContext.waitForEvent('page', p =>
+    p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
+  );
+
+  const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+  const connectPage = await connectPagePromise;
+
+  await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
+  await navigatePromise;
+
+  // Wait for the connected tab to be added to the group.
+  await expect.poll(async () => {
+    return connectPage.evaluate(async () => {
+      const chrome = (window as any).chrome;
+      const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+      return connectedTab?.groupId ?? -1;
+    });
+  }).toBeGreaterThan(-1);
+
+  // Open a chrome:// tab.
+  const chromeTabId = await connectPage.evaluate(async () => {
+    const chrome = (window as any).chrome;
+    const tab = await chrome.tabs.create({ url: 'chrome://version/', active: false });
+    return tab.id as number;
+  });
+
+  // Wait for the chrome:// URL to actually load so tab.url is set.
+  await expect.poll(async () => {
+    return connectPage.evaluate(async (id: number) => {
+      const chrome = (window as any).chrome;
+      const tab = await chrome.tabs.get(id);
+      return tab.url || '';
+    }, chromeTabId);
+  }).toContain('chrome://version');
+
+  // Drag the chrome:// tab into the Playwright group.
+  await connectPage.evaluate(async (id: number) => {
+    const chrome = (window as any).chrome;
+    const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+    await chrome.tabs.group({ groupId: connectedTab.groupId, tabIds: [id] });
+  }, chromeTabId);
+
+  // The chrome:// tab should be automatically removed from the group.
+  await expect.poll(async () => {
+    return connectPage.evaluate(async (id: number) => {
+      const chrome = (window as any).chrome;
+      const tab = await chrome.tabs.get(id);
+      return tab.groupId;
+    }, chromeTabId);
+  }).toBe(-1);
+});
+
 test('tab removed from group gets auto-detached', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
   test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
 
