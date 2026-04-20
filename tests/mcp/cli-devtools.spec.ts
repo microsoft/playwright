@@ -207,6 +207,15 @@ test('pick activates dashboard session', async ({ cdpServer, cli, server, startD
   expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
 });
 
+test('generate-locator', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  await cli('snapshot');
+
+  const { output } = await cli('generate-locator', 'e2', '--raw');
+  expect(output).toContain(`getByRole('button', { name: 'Submit' })`);
+});
+
 test('highlight', async ({ cdpServer, cli, server }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
   const browserContext = await cdpServer.start();
