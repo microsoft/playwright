@@ -57,7 +57,9 @@ function smartUrl(input: string): string {
   const isLocalhost = /^localhost(:\d+)?$/i.test(host);
   const hasPort = /:\d+$/.test(host);
   const isIp = /^\d{1,3}(\.\d{1,3}){3}(:\d+)?$/.test(host);
-  if (hasDot || isLocalhost || hasPort || isIp)
+  if (isLocalhost || isIp || (hasPort && !hasDot))
+    return 'http://' + value;
+  if (hasDot || hasPort)
     return 'https://' + value;
   return 'https://' + host + '.com' + value.slice(host.length);
 }
