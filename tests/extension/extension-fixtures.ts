@@ -222,6 +222,6 @@ export async function connectAndNavigate(
   );
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: tabTitle }).getByRole('button', { name: 'Connect' }).click();
+  await selectorPage.locator('.tab-item', { hasText: tabTitle }).getByRole('button', { name: 'Allow & select' }).click();
   return await navigatePromise;
 }

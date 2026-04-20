@@ -36,7 +36,6 @@ const ConnectApp: React.FC = () => {
   const [showTabList, setShowTabList] = useState(true);
   const [clientInfo, setClientInfo] = useState('unknown');
   const [mcpRelayUrl, setMcpRelayUrl] = useState('');
-  const [newTab, setNewTab] = useState<boolean>(false);
 
   useEffect(() => {
     const runAsync = async () => {
@@ -104,12 +103,10 @@ const ConnectApp: React.FC = () => {
       await connectToMCPRelay(relayUrl, requestedVersion);
 
       // If this is a browser_navigate command, hide the tab list and show simple allow/reject
-      if (params.get('newTab') === 'true') {
-        setNewTab(true);
+      if (params.get('newTab') === 'true')
         setShowTabList(false);
-      } else {
+      else
         await loadTabs();
-      }
     };
     void runAsync();
   }, []);
@@ -183,20 +180,12 @@ const ConnectApp: React.FC = () => {
             <StatusBanner status={status} />
             {showButtons && (
               <div className='button-container'>
-                {newTab ? (
-                  <>
-                    <Button variant='primary' onClick={() => handleConnectToTab()}>
-                      Allow
-                    </Button>
-                    <Button variant='reject' onClick={() => handleReject('Connection rejected. This tab can be closed.')}>
-                      Reject
-                    </Button>
-                  </>
-                ) : (
-                  <Button variant='reject' onClick={() => handleReject('Connection rejected. This tab can be closed.')}>
-                    Reject
-                  </Button>
-                )}
+                <Button variant='primary' onClick={() => handleConnectToTab()}>
+                  Allow
+                </Button>
+                <Button variant='reject' onClick={() => handleReject('Connection rejected. This tab can be closed.')}>
+                  Reject
+                </Button>
               </div>
             )}
           </div>
@@ -218,7 +207,8 @@ const ConnectApp: React.FC = () => {
         {showTabList && (
           <div>
             <div className='tab-section-title'>
-              Select the default tab for this connection:
+              You can drag tabs into the Playwright group later to make them accessible to the client.
+              Optionally, select a tab to allow and immediately switch to it:
             </div>
             <div>
               {tabs.map(tab => (
@@ -227,7 +217,7 @@ const ConnectApp: React.FC = () => {
                   tab={tab}
                   button={
                     <Button variant='primary' onClick={() => handleConnectToTab(tab)}>
-                      Connect
+                      Allow &amp; select
                     </Button>
                   }
                 />
