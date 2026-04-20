@@ -20,7 +20,8 @@ import os from 'os';
 import path from 'path';
 
 import { wrapInASCIIBox } from '@utils/ascii';
-import { hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
+import { hostPlatform, isOfficiallySupportedPlatform, isRhelFamilyDistro } from '@utils/hostPlatform';
+import { getLinuxDistributionInfoSync } from '@utils/linuxUtils';
 import { spawnAsync } from '@utils/spawnAsync';
 import { getPlaywrightVersion } from '../userAgent';
 import { deps } from './nativeDeps';
@@ -92,8 +93,18 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>, dryRun: boolean) {
   const libraries: string[] = [];
   const platform = hostPlatform;
-  if (!isOfficiallySupportedPlatform)
-    console.warn(`BEWARE: your OS is not officially supported by Playwright; installing dependencies for ${platform} as a fallback.`); // eslint-disable-line no-console
+  if (!isOfficiallySupportedPlatform) {
+    if (platform === '<unknown>') {
+      // Provide an actionable message for RHEL 8 users who fell through to <unknown>.
+      const distroInfo = getLinuxDistributionInfoSync();
+      if (distroInfo && isRhelFamilyDistro(distroInfo) && parseInt(distroInfo.version, 10) < 9)
+        throw new Error('RHEL/Rocky Linux 8 and earlier are not supported by Playwright. Please upgrade to RHEL 9+ or use a supported platform.');
+    }
+    if (platform.startsWith('rhel'))
+      console.warn(`BEWARE: your OS is not officially supported by Playwright; installing dependencies for ${platform} on a best-effort basis.`); // eslint-disable-line no-console
+    else
+      console.warn(`BEWARE: your OS is not officially supported by Playwright; installing dependencies for ${platform} as a fallback.`); // eslint-disable-line no-console
+  }
   for (const target of targets) {
     const info = deps[platform];
     if (!info) {
@@ -105,12 +116,37 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   const uniqueLibraries = Array.from(new Set(libraries));
   if (!dryRun)
     console.log(`Installing dependencies...`);  // eslint-disable-line no-console
-  const commands: string[] = [];
-  commands.push('apt-get update');
-  commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
-    ...uniqueLibraries,
-  ].join(' '));
-  const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
+  if (platform.startsWith('rhel')) {
+    await installDependenciesLinuxRhel(uniqueLibraries, dryRun);
+  } else {
+    const commands: string[] = [];
+    commands.push('apt-get update');
+    commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
+      ...uniqueLibraries,
+    ].join(' '));
+    const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
+    if (dryRun) {
+      console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
+      return;
+    }
+    if (elevatedPermissions)
+      console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
+    const child = childProcess.spawn(command, args, { stdio: 'inherit' });
+    await new Promise<void>((resolve, reject) => {
+      child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
+      child.on('error', reject);
+    });
+  }
+}
+
+async function installDependenciesLinuxRhel(libraries: string[], dryRun: boolean) {
+  const dnfOrYum = await findDnfOrYum();
+  const weakDepsFlag = dnfOrYum === 'dnf' ? ' --setopt=install_weak_deps=False' : '';
+  const commands = [
+    `${dnfOrYum} install -y epel-release`,
+    `${dnfOrYum} install -y${weakDepsFlag} ${libraries.join(' ')}`,
+  ];
+  const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
   if (dryRun) {
     console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
     return;
@@ -119,9 +155,19 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
   const child = childProcess.spawn(command, args, { stdio: 'inherit' });
   await new Promise<void>((resolve, reject) => {
-    child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
+    child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}. Check that EPEL is accessible and that all required packages are available for your architecture.`)));
     child.on('error', reject);
   });
+}
+
+async function findDnfOrYum(): Promise<string> {
+  const dnfResult = await spawnAsync('which', ['dnf'], {});
+  if (dnfResult.code === 0)
+    return 'dnf';
+  const yumResult = await spawnAsync('which', ['yum'], {});
+  if (yumResult.code === 0)
+    return 'yum';
+  throw new Error("Neither 'dnf' nor 'yum' found on PATH. Please install one and retry.");
 }
 
 export async function validateDependenciesWindows(sdkLanguage: string, windowsExeAndDllDirectories: string[]) {
@@ -208,7 +254,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
 
   const libraryToPackageNameMapping = deps[hostPlatform] ? {
     ...(deps[hostPlatform]?.lib2package || {}),
-    ...MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU,
+    ...(hostPlatform.startsWith('rhel') ? {} : MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU),
   } : {};
   // Translate missing dependencies to package names to install with apt.
   for (const missingDep of missingDeps) {
@@ -220,6 +266,9 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   }
 
   const maybeSudo = process.getuid?.() && os.platform() !== 'win32' ? 'sudo ' : '';
+  const isRhel = hostPlatform.startsWith('rhel');
+  const pkgMgr = isRhel ? 'dnf' : 'apt';
+  const pkgInstallCmd = isRhel ? 'dnf install' : 'apt-get install';
   const dockerInfo = readDockerVersionSync();
   const errorLines = [
     `Host system is missing dependencies to run browsers.`,
@@ -242,9 +291,9 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
-      `- (alternative 2) use apt inside Docker:`,
+      `- (alternative 2) use ${pkgMgr} inside Docker:`,
       ``,
-      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      `    ${maybeSudo}${pkgInstallCmd} ${[...missingPackages].join('\\\n        ')}`,
       ``,
       `<3 Playwright Team`,
     ]);
@@ -256,8 +305,8 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
-      `Alternatively, use apt:`,
-      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      `Alternatively, use ${pkgMgr}:`,
+      `    ${maybeSudo}${pkgInstallCmd} ${[...missingPackages].join('\\\n        ')}`,
       ``,
       `<3 Playwright Team`,
     ]);

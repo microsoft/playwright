@@ -35,6 +35,7 @@ export type HostPlatform = 'win64' |
                            'debian11-x64' | 'debian11-arm64' |
                            'debian12-x64' | 'debian12-arm64' |
                            'debian13-x64' | 'debian13-arm64' |
+                           'rhel9-x64' | 'rhel9-arm64' |
                            '<unknown>';
 
 function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
@@ -74,57 +75,77 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
   if (platform === 'linux') {
     if (!['x64', 'arm64'].includes(os.arch()))
       return { hostPlatform: '<unknown>', isOfficiallySupportedPlatform: false };
-
-    const archSuffix = '-' + os.arch();
-    const distroInfo = getLinuxDistributionInfoSync();
-
-    // Pop!_OS is ubuntu-based and has the same versions.
-    // KDE Neon is ubuntu-based and has the same versions.
-    // TUXEDO OS is ubuntu-based and has the same versions.
-    if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon' || distroInfo?.id === 'tuxedo') {
-      const isUbuntu = distroInfo?.id === 'ubuntu';
-      const version = distroInfo?.version;
-      const major = parseInt(distroInfo.version, 10);
-      if (major < 20)
-        return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-      if (major < 22)
-        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '20.04' };
-      if (major < 24)
-        return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '22.04' };
-      if (major < 26)
-        return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '24.04' };
-      return { hostPlatform: ('ubuntu' + distroInfo.version + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-    }
-    // Linux Mint is ubuntu-based but does not have the same versions
-    if (distroInfo?.id === 'linuxmint') {
-      const mintMajor = parseInt(distroInfo.version, 10);
-      if (mintMajor <= 20)
-        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-      if (mintMajor === 21)
-        return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-      return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
-    }
-    if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
-      const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
-      if (distroInfo?.version === '11')
-        return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
-      if (distroInfo?.version === '12')
-        return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
-      if (distroInfo?.version === '13')
-        return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
-      // use most recent supported release for 'debian testing' and 'unstable'.
-      // they never include a numeric version entry in /etc/os-release.
-      if (distroInfo?.version === '')
-        return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
-    }
-    return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+    return calculateLinuxPlatform(getLinuxDistributionInfoSync(), os.arch() as LinuxArch);
   }
   if (platform === 'win32')
     return { hostPlatform: 'win64', isOfficiallySupportedPlatform: true };
   return { hostPlatform: '<unknown>', isOfficiallySupportedPlatform: false };
 }
 
+const RHEL_IDS = new Set(['rocky', 'rhel', 'almalinux', 'centos', 'ol']);
+
+export function isRhelFamilyDistro(distroInfo: { id: string, idLike: string }): boolean {
+  return RHEL_IDS.has(distroInfo.id) ||
+      (distroInfo.id !== 'fedora' && distroInfo.idLike.split(' ').some(id => RHEL_IDS.has(id)));
+}
+
+type LinuxArch = 'x64' | 'arm64';
+
 export const { hostPlatform, isOfficiallySupportedPlatform } = calculatePlatform();
+
+export function calculateLinuxPlatform(distroInfo: { id: string, version: string, idLike: string } | undefined, arch: LinuxArch): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
+  const archSuffix = '-' + arch;
+  // Pop!_OS is ubuntu-based and has the same versions.
+  // KDE Neon is ubuntu-based and has the same versions.
+  // TUXEDO OS is ubuntu-based and has the same versions.
+  if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop' || distroInfo?.id === 'neon' || distroInfo?.id === 'tuxedo') {
+    const isUbuntu = distroInfo?.id === 'ubuntu';
+    const version = distroInfo?.version;
+    const major = parseInt(distroInfo.version, 10);
+    if (major < 20)
+      return { hostPlatform: ('ubuntu18.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+    if (major < 22)
+      return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '20.04' };
+    if (major < 24)
+      return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '22.04' };
+    if (major < 26)
+      return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '24.04' };
+    return { hostPlatform: ('ubuntu' + distroInfo.version + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+  }
+  // Linux Mint is ubuntu-based but does not have the same versions
+  if (distroInfo?.id === 'linuxmint') {
+    const mintMajor = parseInt(distroInfo.version, 10);
+    if (mintMajor <= 20)
+      return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+    if (mintMajor === 21)
+      return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+    return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+  }
+  if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
+    const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
+    if (distroInfo?.version === '11')
+      return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+    if (distroInfo?.version === '12')
+      return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+    if (distroInfo?.version === '13')
+      return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+    // use most recent supported release for 'debian testing' and 'unstable'.
+    // they never include a numeric version entry in /etc/os-release.
+    if (distroInfo?.version === '')
+      return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
+  }
+  // RHEL-family: Rocky Linux, RHEL, AlmaLinux, CentOS Stream, Oracle Linux.
+  // Fedora is explicitly excluded — its packages are incompatible.
+  if (distroInfo && isRhelFamilyDistro(distroInfo)) {
+    const major = parseInt(distroInfo!.version, 10);
+    if (major >= 9)
+      return { hostPlatform: ('rhel9' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+    // RHEL 8 and earlier: fall through to <unknown> so the unsupported-platform
+    // warning fires. The RHEL 8 message is emitted by installDependenciesLinux.
+    return { hostPlatform: '<unknown>', isOfficiallySupportedPlatform: false };
+  }
+  return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+}
 
 export type ShortPlatform = 'mac-x64' | 'mac-arm64' | 'linux-x64' | 'linux-arm64' | 'win-x64' | '<unknown>';
 

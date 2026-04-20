@@ -32,5 +32,10 @@ cd "$(dirname "$0")"
 # image.
 node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
 
-docker run --platform linux/amd64 -v $PWD:/root/hostfolder --rm -it "$1" /root/hostfolder/inside_docker/process.sh "$2"
+IMAGE="$1"
+if [[ "$IMAGE" == *rocky* ]] || [[ "$IMAGE" == *rhel* ]] || [[ "$IMAGE" == *centos* ]] || [[ "$IMAGE" == *almalinux* ]] || [[ "$IMAGE" == *oraclelinux* ]]; then
+  docker run --platform linux/amd64 -v $PWD:/root/hostfolder --rm -it "$IMAGE" /root/hostfolder/inside_docker/process_rhel.sh "$2"
+else
+  docker run --platform linux/amd64 -v $PWD:/root/hostfolder --rm -it "$IMAGE" /root/hostfolder/inside_docker/process.sh "$2"
+fi
 

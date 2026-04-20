@@ -1,0 +1,44 @@
+name: RHEL / Rocky Linux 9 (community)
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    paths:
+      - packages/utils/hostPlatform.ts
+      - packages/utils/linuxUtils.ts
+      - packages/playwright-core/src/server/registry/nativeDeps.ts
+      - packages/playwright-core/src/server/registry/dependencies.ts
+      - packages/playwright-core/src/server/registry/index.ts
+
+jobs:
+  rhel9-chromium:
+    name: Rocky Linux 9 — Chromium smoke test
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:9
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Enable Node.js 20 module stream
+        run: |
+          dnf module enable -y nodejs:20
+          dnf install -y nodejs
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install OS-level Chromium dependencies
+        run: npx playwright install-deps chromium
+
+      - name: Install Chromium browser
+        run: npx playwright install chromium
+
+      - name: Chromium headless smoke test
+        run: node utils/linux-browser-dependencies/inside_docker/rhel9-smoke-test.js
