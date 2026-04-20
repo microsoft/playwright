@@ -17,7 +17,7 @@
 import os from 'os';
 import readline from 'readline';
 import { EventEmitter } from 'events';
-import { chromium } from 'playwright-core';
+import { chromium } from 'playwright/test';
 import debug from 'debug';
 
 import { launchProcess } from '@utils/processLauncher';
@@ -27,7 +27,7 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 
 import type { BrowserWindow } from 'electron';
-import type { Browser, BrowserContext, JSHandle, Page, Worker } from 'playwright-core';
+import type { Browser, BrowserContext, JSHandle, Page, Worker } from 'playwright/test';
 import type childProcess from 'child_process';
 import type * as api from '../types';
 

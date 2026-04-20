@@ -14,6 +14,4 @@
  * limitations under the License.
  */
 
-const { selectors } = require('playwright-core');
-const { electron } = require('./lib/electron');
-module.exports = { electron, selectors };
+module.exports = require('./lib/index');

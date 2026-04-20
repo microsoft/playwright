@@ -557,11 +557,11 @@ for (const pkg of workspace.packages()) {
   const electronPkg = filePath('packages/playwright-electron');
   steps.push(new EsbuildStep({
     bundle: true,
-    entryPoints: [path.join(electronPkg, 'src/electron.ts')],
-    outfile: path.join(electronPkg, 'lib/electron.js'),
+    entryPoints: [path.join(electronPkg, 'src/index.ts')],
+    outfile: path.join(electronPkg, 'lib/index.js'),
     external: [
-      'playwright-core',
-      'playwright-core/*',
+      'playwright',
+      'playwright/*',
       'electron',
       'electron/*',
       './loader',

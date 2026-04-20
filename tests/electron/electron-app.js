@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { app, protocol } = require('electron');
+const { app, protocol, BrowserWindow } = require('electron');
 const path = require('path');
 
 assert(process.env.PWTEST_ELECTRON_USER_DATA_DIR, 'PWTEST_ELECTRON_USER_DATA_DIR env var is not set');
@@ -12,4 +12,12 @@ app.whenReady().then(() => {
     const url = request.url.substring('vscode-file'.length + 3);
     callback({ path: path.join(__dirname, 'assets', url) });
   });
+  // Sandboxed windows share process with their window.open() children
+  // and can script them. We use that heavily in our tests.
+  const window = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: { sandbox: true },
+  });
+  window.loadURL('about:blank');
 });

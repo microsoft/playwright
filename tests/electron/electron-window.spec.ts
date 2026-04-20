@@ -16,35 +16,31 @@
 
 import { electronTest as test, expect } from './electronTest';
 
-test('should click the button', async ({ newWindow, server }) => {
-  const window = await newWindow();
-  await window.goto(server.PREFIX + '/input/button.html');
-  await window.click('button');
-  expect(await window.evaluate('result')).toBe('Clicked');
+test('should click the button', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-test('should check the box', async ({ newWindow }) => {
-  const window = await newWindow();
-  await window.setContent(`<input id='checkbox' type='checkbox'></input>`);
-  await window.check('input');
-  expect(await window.evaluate('checkbox.checked')).toBe(true);
+test('should check the box', async ({ page }) => {
+  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+  await page.check('input');
+  expect(await page.evaluate('checkbox.checked')).toBe(true);
 });
 
-test('should not check the checked box', async ({ newWindow }) => {
-  const window = await newWindow();
-  await window.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-  await window.check('input');
-  expect(await window.evaluate('checkbox.checked')).toBe(true);
+test('should not check the checked box', async ({ page }) => {
+  await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
+  await page.check('input');
+  expect(await page.evaluate('checkbox.checked')).toBe(true);
 });
 
-test('should type into a textarea', async ({ newWindow }) => {
-  const window = await newWindow();
-  await window.evaluate(() => {
+test('should type into a textarea', async ({ page }) => {
+  await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
     textarea.focus();
   });
   const text = 'Hello world. I am the text that was typed!';
-  await window.keyboard.type(text);
-  expect(await window.evaluate(() => document.querySelector('textarea').value)).toBe(text);
+  await page.keyboard.type(text);
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe(text);
 });
