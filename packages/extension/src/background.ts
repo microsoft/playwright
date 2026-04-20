@@ -36,6 +36,7 @@ type PageMessage = {
 const PLAYWRIGHT_GROUP_TITLE = 'Playwright';
 const PLAYWRIGHT_GROUP_COLOR = 'green';
 const NON_DEBUGGABLE_SCHEMES = ['chrome:', 'edge:', 'devtools:'];
+const CONNECTED_BADGE = { text: '✓', color: '#4CAF50', title: 'Connected to Playwright client' };
 
 function isNonDebuggableUrl(url: string | undefined): boolean {
   return !!url && NON_DEBUGGABLE_SCHEMES.some(s => url.startsWith(s));
@@ -155,7 +156,7 @@ class TabShareExtension {
       };
       this._activeConnection.ontabattached = (newTabId: number) => {
         this._connectedTabIds.add(newTabId);
-        void this._updateBadge(newTabId, { text: '✓', color: '#4CAF50', title: 'Connected to Playwright client' });
+        void this._updateBadge(newTabId, CONNECTED_BADGE);
         void this._reconcile();
       };
       this._activeConnection.ontabdetached = (removedTabId: number) => {
@@ -197,6 +198,11 @@ class TabShareExtension {
   }
 
   private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
+    // Chrome resets per-tab badge state on navigation, so re-apply it for
+    // connected tabs on any update.
+    if (this._connectedTabIds.has(tabId))
+      void this._updateBadge(tabId, CONNECTED_BADGE);
+
     if (!this._activeConnection || changeInfo.groupId === undefined || this._reconciling)
       return;
     const inOurGroup = this._groupId !== null && changeInfo.groupId === this._groupId;
