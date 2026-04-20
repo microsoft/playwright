@@ -45,7 +45,6 @@ class TabShareExtension {
   // skip handling them to avoid fighting the reconciler.
   private _reconciling = false;
   private _pendingTabSelection = new Map<number, RelayConnection>();
-  private _selectorTabId: number | undefined;
 
   constructor() {
     chrome.tabs.onRemoved.addListener(this._onTabRemoved.bind(this));
@@ -148,7 +147,6 @@ class TabShareExtension {
       this._activeConnection.setSelectedTab(tabId);
       this._activeConnection.onclose = () => {
         this._activeConnection = undefined;
-        this._selectorTabId = undefined;
         const allTabIds = [...this._connectedTabIds];
         this._connectedTabIds.clear();
         allTabIds.map(id => this._updateBadge(id, { text: '' }));
@@ -169,7 +167,6 @@ class TabShareExtension {
         chrome.tabs.update(tabId, { active: true }),
         chrome.windows.update(windowId, { focused: true }),
       ]);
-      this._selectorTabId = selectorTabId;
     } catch (error: any) {
       this._connectedTabIds.clear();
       debugLog(`Failed to connect tab ${tabId}:`, error.message);
@@ -204,7 +201,7 @@ class TabShareExtension {
     if (!this._activeConnection || changeInfo.groupId === undefined || this._reconciling)
       return;
     const inOurGroup = this._groupId !== null && changeInfo.groupId === this._groupId;
-    const isDesired = this._connectedTabIds.has(tabId) || tabId === this._selectorTabId;
+    const isDesired = this._connectedTabIds.has(tabId);
     // Non-debuggable schemes: skip attach, let the reconciler ungroup.
     const isNonDebuggable = tab.url && ['chrome:', 'edge:', 'devtools:'].some(s => tab.url!.startsWith(s));
     if (inOurGroup && !isDesired && !isNonDebuggable)
@@ -222,8 +219,8 @@ class TabShareExtension {
   }
 
   // Serialized reconcile that brings Chrome's Playwright group in line with
-  // the desired members (_connectedTabIds ∪ {_selectorTabId}). Retries with
-  // backoff on drag errors until the state matches.
+  // the desired members (_connectedTabIds). Retries with backoff on drag
+  // errors until the state matches.
   private _reconcile(): Promise<void> {
     const result = this._reconcileQueue.then(() => this._reconcileImpl());
     this._reconcileQueue = result.catch(() => {});
@@ -251,8 +248,6 @@ class TabShareExtension {
   // Performs a single reconcile pass. Returns true on success.
   private async _reconcileOnce(): Promise<boolean> {
     const desired = new Set(this._connectedTabIds);
-    if (this._selectorTabId !== undefined)
-      desired.add(this._selectorTabId);
 
     let actual = new Set<number>();
     if (this._groupId !== null) {

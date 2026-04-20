@@ -40,7 +40,7 @@ test('connect page is not in group before selection', async ({ startExtensionCli
   await navigatePromise;
 });
 
-test('connected tab and connect page are in green Playwright group', async ({ browserWithExtension, startClient, server }) => {
+test('connected tab is in green Playwright group, connect page is not', async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
 
   const page = await browserContext.newPage();
@@ -70,15 +70,13 @@ test('connected tab and connect page are in green Playwright group', async ({ br
     });
   }).toEqual({ color: 'green', title: 'Playwright' });
 
-  // Connect page should also be in the same group.
-  await expect.poll(async () => {
-    return connectPage.evaluate(async () => {
-      const chrome = (window as any).chrome;
-      const connectTab = await chrome.tabs.getCurrent();
-      const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
-      return connectTab?.groupId === connectedTab?.groupId;
-    });
-  }).toBe(true);
+  // Connect page itself should not be in any group.
+  const connectGroupId = await connectPage.evaluate(async () => {
+    const chrome = (window as any).chrome;
+    const connectTab = await chrome.tabs.getCurrent();
+    return connectTab?.groupId ?? -1;
+  });
+  expect(connectGroupId).toBe(-1);
 });
 
 test('tab added to group gets auto-attached', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
@@ -300,6 +298,8 @@ test('tab is re-added to Playwright group after reconnecting', async ({ browserW
   await expect.poll(async () => {
     return first.connectPage.evaluate(async () => {
       const chrome = (window as any).chrome;
+      if (!chrome?.tabs)
+        return null;
       const [tab] = await chrome.tabs.query({ title: 'Title' });
       return tab?.groupId ?? -1;
     });
@@ -312,6 +312,8 @@ test('tab is re-added to Playwright group after reconnecting', async ({ browserW
   await expect.poll(async () => {
     return second.connectPage.evaluate(async () => {
       const chrome = (window as any).chrome;
+      if (!chrome?.tabs)
+        return null;
       const [tab] = await chrome.tabs.query({ title: 'Title' });
       if (!tab || tab.groupId === -1)
         return null;
