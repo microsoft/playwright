@@ -27,6 +27,7 @@ import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
+  boundBrowser: Browser,
   cliEnv: Record<string, string>,
   startDashboardServer: (options?: { cwd?: string, session?: string }) => Promise<Page>,
   connectToDashboard: (bindTitle: string) => Promise<Browser>;
@@ -37,7 +38,8 @@ export const test = baseTest.extend<{
     inlineSnapshot?: string,
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
-    pid?: number,
+    daemonPid?: number,
+    dashboardPid?: number,
   }>;
 }>({
   cliEnv: async ({}, use) => {
@@ -70,27 +72,41 @@ export const test = baseTest.extend<{
     });
     await cli('show', '--kill');
   },
+
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
-    const sessions: { name: string, pid: number }[] = [];
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
-    const pids: number[] = [];
+    const allPids: number[] = [];
 
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless }, sessions);
-      if (result.pid !== undefined)
-        pids.push(result.pid);
+      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      if (result.daemonPid)
+        allPids.push(result.daemonPid);
+      if (result.dashboardPid)
+        allPids.push(result.dashboardPid);
       return result;
     });
 
-    for (const pid of pids)
+    for (const pid of allPids)
       killProcessGroup(pid);
 
     const daemonDir = path.join(test.info().outputDir, 'daemon');
     const userDataDirs = await fs.promises.readdir(daemonDir).catch(() => []);
     for (const dir of userDataDirs.filter(f => f.startsWith('ud-')))
       await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
+  },
+  boundBrowser: async ({ mcpBrowser, playwright }, use) => {
+    const browserName = mcpBrowser === 'chrome' ? 'chromium' : mcpBrowser;
+    const channel = mcpBrowser === 'chrome' ? 'chrome' : undefined;
+    const browser = await playwright[browserName].launch({ channel, headless: true });
+    for (const [name, value] of Object.entries(cliEnv()))
+      process.env[name] = value;
+    await browser.bind('default');
+    await use(browser);
+    for (const name of Object.keys(cliEnv()))
+      delete process.env[name];
+    await browser.close();
   },
 });
 
@@ -100,11 +116,11 @@ function cliEnv() {
     PLAYWRIGHT_DASHBOARD_SETTINGS_FILE_FOR_TEST: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
-    PLAYWRIGHT_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
+    PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
   };
 }
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string>, bindTitle?: string }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
   const stepTitle = `cli ${args.join(' ')}`;
   return await test.step(stepTitle, async () => {
     const testInfo = test.info();
@@ -115,7 +131,8 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
         ...cliEnv(),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
-        PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST: '1',
+        PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
+        PWTEST_DASHBOARD_APP_BIND_TITLE: cliOptions.bindTitle,
         ...cliOptions.env,
       }),
     });
@@ -130,12 +147,10 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
     const attachments = loadAttachments(cli.stdout);
 
     const browserMatches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
-    const [, sessionName, browserPid] = browserMatches ?? [];
-    if (sessionName && browserPid)
-      sessions.push({ name: sessionName, pid: +browserPid });
+    const [, , daemonPid] = browserMatches ?? [];
     const dashboardMatches = cli.stdout.includes('### Dashboard') ? cli.stdout.match(/Dashboard opened with pid (\d+)\./) : undefined;
     const dashboardPid = dashboardMatches?.[1];
-    const pid = browserPid ?? dashboardPid;
+
     return {
       exitCode: await cli.exitCode,
       output: cli.stdout.trim(),
@@ -143,7 +158,8 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       snapshot,
       inlineSnapshot,
       attachments,
-      pid: pid ? +pid : undefined,
+      daemonPid: daemonPid ? +daemonPid : undefined,
+      dashboardPid: dashboardPid ? +dashboardPid : undefined,
     };
   });
 }

@@ -160,13 +160,11 @@ test('video-chapter', async ({ cli, server }) => {
   await cli('video-stop');
 });
 
-test('pick', async ({ cdpServer, cli, server }) => {
-  server.setContent('/', `<button>Submit</button>`, 'text/html');
-  const browserContext = await cdpServer.start();
-  const [page] = browserContext.pages();
-  await page.goto(server.PREFIX);
+test('pick', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
 
-  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('attach', 'default');
   await cli('snapshot');
 
   const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
@@ -181,13 +179,11 @@ test('pick', async ({ cdpServer, cli, server }) => {
   expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
 });
 
-test('pick activates dashboard session', async ({ cdpServer, cli, server, startDashboardServer }) => {
-  server.setContent('/', `<button>Submit</button>`, 'text/html');
-  const browserContext = await cdpServer.start();
-  const [page] = browserContext.pages();
-  await page.goto(server.PREFIX);
+test('pick activates dashboard session', async ({ boundBrowser, cli, startDashboardServer }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
 
-  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('attach', 'default');
   await cli('snapshot');
 
   const dashboard = await startDashboardServer();
@@ -216,13 +212,11 @@ test('generate-locator', async ({ cli, server }) => {
   expect(output).toContain(`getByRole('button', { name: 'Submit' })`);
 });
 
-test('highlight', async ({ cdpServer, cli, server }) => {
-  server.setContent('/', `<button>Submit</button>`, 'text/html');
-  const browserContext = await cdpServer.start();
-  const [page] = browserContext.pages();
-  await page.goto(server.PREFIX);
+test('highlight', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
 
-  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('attach', 'default');
   await cli('snapshot');
 
   const { output } = await cli('highlight', 'e2');
@@ -235,13 +229,11 @@ test('highlight', async ({ cdpServer, cli, server }) => {
   expect(await highlight.boundingBox()).toEqual(await page.getByRole('button', { name: 'Submit' }).boundingBox());
 });
 
-test('highlight --hide', async ({ cdpServer, cli, server }) => {
-  server.setContent('/', `<button>Submit</button>`, 'text/html');
-  const browserContext = await cdpServer.start();
-  const [page] = browserContext.pages();
-  await page.goto(server.PREFIX);
+test('highlight --hide', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
 
-  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('attach', 'default');
   await cli('snapshot');
 
   await cli('highlight', 'e2');
@@ -252,13 +244,11 @@ test('highlight --hide', async ({ cdpServer, cli, server }) => {
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });
 
-test('highlight --hide all', async ({ cdpServer, cli, server }) => {
-  server.setContent('/', `<button>Submit</button><a href="#">Go</a>`, 'text/html');
-  const browserContext = await cdpServer.start();
-  const [page] = browserContext.pages();
-  await page.goto(server.PREFIX);
+test('highlight --hide all', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button><a href="#">Go</a>`);
 
-  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('attach', 'default');
   await cli('snapshot');
 
   await cli('highlight', 'e2');
@@ -270,13 +260,11 @@ test('highlight --hide all', async ({ cdpServer, cli, server }) => {
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });
 
-test('highlight --style', async ({ cdpServer, cli, server }) => {
-  server.setContent('/', `<button>Submit</button>`, 'text/html');
-  const browserContext = await cdpServer.start();
-  const [page] = browserContext.pages();
-  await page.goto(server.PREFIX);
+test('highlight --style', async ({ boundBrowser, cli, mcpBrowser }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
 
-  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  await cli('attach', 'default');
   await cli('snapshot');
 
   await cli('highlight', 'e2', '--style=outline: 3px solid rgb(255, 0, 0); background-color: rgba(0, 255, 0, 0.25)');
@@ -286,7 +274,10 @@ test('highlight --style', async ({ cdpServer, cli, server }) => {
   expect(await highlight.evaluate((el: HTMLElement) => ({
     outline: el.style.outline,
     backgroundColor: el.style.backgroundColor,
-  }))).toEqual({
+  }))).toEqual(mcpBrowser === 'webkit' ? {
+    outline: '3px solid rgb(255, 0, 0)',
+    backgroundColor: 'rgba(0, 255, 0, 0.25)',
+  } : {
     outline: 'rgb(255, 0, 0) solid 3px',
     backgroundColor: 'rgba(0, 255, 0, 0.25)',
   });

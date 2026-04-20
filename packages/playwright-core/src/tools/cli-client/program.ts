@@ -269,7 +269,7 @@ const daemonProcessPatterns = ['run-mcp-server', 'run-cli-server', 'cli-daemon',
 
 async function killAllDaemons(): Promise<number[]> {
   const platform = os.platform();
-  const pidFilterEnv = process.env.PLAYWRIGHT_KILL_ALL_PID_FILTER_FOR_TEST;
+  const pidFilterEnv = process.env.PWTEST_KILL_ALL_PID_FILTER_FOR_TEST;
   const pidFilter = pidFilterEnv ? new Set(pidFilterEnv.split(',').map(p => parseInt(p, 10)).filter(n => !isNaN(n))) : undefined;
   const killed: number[] = [];
 

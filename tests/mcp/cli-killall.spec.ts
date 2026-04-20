@@ -26,29 +26,29 @@ function isAlive(pid: number): boolean {
 }
 
 test('kill-all kills only filtered pid', async ({ cli, server }) => {
-  const { pid } = await cli('open', server.HELLO_WORLD);
-  expect(pid).toBeDefined();
-  expect(isAlive(pid!)).toBe(true);
+  const { daemonPid } = await cli('open', server.HELLO_WORLD);
+  expect(daemonPid).toBeDefined();
+  expect(isAlive(daemonPid)).toBe(true);
 
   const { output } = await cli('kill-all', {
-    env: { PLAYWRIGHT_KILL_ALL_PID_FILTER_FOR_TEST: String(pid) },
+    env: { PWTEST_KILL_ALL_PID_FILTER_FOR_TEST: String(daemonPid) },
   });
-  expect(output).toContain(`Killed daemon process ${pid}`);
+  expect(output).toContain(`Killed daemon process ${daemonPid}`);
   expect(output).toContain('Killed 1 daemon process.');
 
-  await expect.poll(() => isAlive(pid!)).toBe(false);
+  await expect.poll(() => isAlive(daemonPid)).toBe(false);
 });
 
 test('kill-all kills filtered dashboard pid', async ({ cli }) => {
-  const { pid } = await cli('show', { env: { PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST: '1' } });
-  expect(pid).toBeDefined();
-  await expect.poll(() => isAlive(pid!)).toBe(true);
+  const { dashboardPid } = await cli('show');
+  expect(dashboardPid).toBeDefined();
+  await expect.poll(() => isAlive(dashboardPid)).toBe(true);
 
   const { output } = await cli('kill-all', {
-    env: { PLAYWRIGHT_KILL_ALL_PID_FILTER_FOR_TEST: String(pid) },
+    env: { PWTEST_KILL_ALL_PID_FILTER_FOR_TEST: String(dashboardPid) },
   });
-  expect(output).toContain(`Killed daemon process ${pid}`);
+  expect(output).toContain(`Killed daemon process ${dashboardPid}`);
   expect(output).toContain('Killed 1 daemon process.');
 
-  await expect.poll(() => isAlive(pid!)).toBe(false);
+  await expect.poll(() => isAlive(dashboardPid)).toBe(false);
 });
