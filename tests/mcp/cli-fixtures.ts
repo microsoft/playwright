@@ -68,6 +68,7 @@ export const test = baseTest.extend<{
       }).toPass();
       return await playwright.chromium.connect(endpoint);
     });
+    await cli('show', '--kill');
   },
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
