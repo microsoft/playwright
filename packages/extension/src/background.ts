@@ -187,6 +187,12 @@ class TabShareExtension {
     const inOurGroup = changeInfo.groupId === this._groupId;
     const isConnected = this._connectedTabIds.has(tabId);
     debugLog(`Tab update: tabId=${tabId}, inOurGroup=${inOurGroup}, isConnected=${isConnected}`, changeInfo, tab);
+    // Tabs with these schemes cannot be debugged; ungroup them immediately to
+    // avoid an attach-then-fail round trip that would visibly flicker.
+    if (inOurGroup && !isConnected && tab.url && ['chrome:', 'edge:', 'devtools:'].some(s => tab.url!.startsWith(s))) {
+      void this._ungroupTab(tabId);
+      return;
+    }
     if (inOurGroup && !isConnected)
       void this._activeConnection.attachTab(tabId);
     else if (!inOurGroup && isConnected)
@@ -233,6 +239,18 @@ class TabShareExtension {
   private async _retryAfterDelay(tabId: number, retries: number): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 200));
     return this._addTabToGroupImpl(tabId, retries - 1);
+  }
+
+  private async _ungroupTab(tabId: number, retries = 30): Promise<void> {
+    try {
+      await chrome.tabs.ungroup(tabId);
+    } catch (e: any) {
+      if (this._isDragError(e) && retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        return this._ungroupTab(tabId, retries - 1);
+      }
+      debugLog('Error ungrouping tab:', e);
+    }
   }
 
   private async _onActionClicked(): Promise<void> {
