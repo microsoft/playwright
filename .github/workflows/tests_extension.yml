@@ -1,4 +1,4 @@
-name: Extension
+name: extension
 
 on:
   push:
@@ -24,6 +24,10 @@ on:
       - 'tests/extension/**'
       - '.github/workflows/tests_extension.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
@@ -45,5 +49,5 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npm run build-extension
-    - run: npx playwright install --with-deps
+    - run: npx playwright install --with-deps chromium
     - run: npm run test-extension
