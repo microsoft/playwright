@@ -16,15 +16,13 @@
 
 import React from 'react';
 
-import chromeSvg from './assets/browsers/chrome.svg';
-import chromeCanarySvg from './assets/browsers/chrome-canary.svg';
-import chromiumSvg from './assets/browsers/chromium.svg';
-import firefoxSvg from './assets/browsers/firefox.svg';
-import firefoxNightlySvg from './assets/browsers/firefox-nightly.svg';
-import webkitSvg from './assets/browsers/webkit.svg';
-import msedgeSvg from './assets/browsers/msedge.svg';
-import msedgeBetaSvg from './assets/browsers/msedge-beta.svg';
-import msedgeDevSvg from './assets/browsers/msedge-dev.svg';
+import chromeSvg from '@browser-logos/chrome/chrome.svg';
+import chromeCanarySvg from '@browser-logos/chrome-canary/chrome-canary.svg';
+import chromiumSvg from '@browser-logos/chromium/chromium.svg';
+import firefoxSvg from '@browser-logos/firefox/firefox.svg';
+import firefoxNightlySvg from '@browser-logos/firefox-nightly/firefox-nightly.svg';
+import safariSvg from '@browser-logos/safari/safari.svg';
+import edgeSvg from '@browser-logos/edge/edge.svg';
 
 // Keys include both browserName values ('chromium' | 'firefox' | 'webkit') and
 // LaunchOptions.channel values accepted by Playwright.
@@ -44,12 +42,12 @@ export const browserIconUrls: Record<string, string> = {
   'moz-firefox-beta': firefoxSvg,
   'moz-firefox-nightly': firefoxNightlySvg,
   // Safari / WebKit.
-  'webkit': webkitSvg,
-  // Microsoft Edge with its channel variants.
-  'msedge': msedgeSvg,
-  'msedge-beta': msedgeBetaSvg,
-  'msedge-dev': msedgeDevSvg,
-  'msedge-canary': msedgeSvg,
+  'webkit': safariSvg,
+  // Microsoft Edge — the @browser-logos packages only ship SVG for stable, so use it for all channels.
+  'msedge': edgeSvg,
+  'msedge-beta': edgeSvg,
+  'msedge-dev': edgeSvg,
+  'msedge-canary': edgeSvg,
 };
 
 export const BrowserIcon: React.FC<{ browserName?: string, channel?: string }> = ({ browserName, channel }) => {
