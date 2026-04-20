@@ -354,6 +354,17 @@ const pick = declareCommand({
   toolParams: () => ({}),
 });
 
+const generateLocator = declareCommand({
+  name: 'generate-locator',
+  description: 'Generate a Playwright locator for the given element',
+  category: 'devtools',
+  args: z.object({
+    target: z.string().describe(elementTargetDescription),
+  }),
+  toolName: 'browser_generate_locator',
+  toolParams: ({ target }) => ({ target }),
+});
+
 const highlight = declareCommand({
   name: 'highlight',
   description: 'Show (or with --hide, remove) a highlight overlay for an element; `--hide` without a target hides all page highlights.',
@@ -1074,6 +1085,7 @@ const commandsArray: AnyCommandSchema[] = [
   resume,
   stepOver,
   pick,
+  generateLocator,
   highlight,
 
   // session category
