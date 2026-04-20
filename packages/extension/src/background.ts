@@ -186,8 +186,8 @@ class TabShareExtension {
   }
 
   private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
-    // if (this._connectedTabIds.has(tabId))
-    //   void this._updateBadge(tabId, { text: '✓', color: '#4CAF50', title: 'Connected to MCP client' });
+    if (this._connectedTabIds.has(tabId))
+      void this._updateBadge(tabId, { text: '✓', color: '#4CAF50', title: 'Connected to MCP client' });
     if (!this._activeConnection || this._groupId === null || changeInfo.groupId === undefined)
       return;
     const inOurGroup = changeInfo.groupId === this._groupId;
