@@ -25,7 +25,7 @@ import type { Location } from '../../types/testReporter';
 export type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
 const kScopeOrder: FixtureScope[] = ['test', 'worker'];
-type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean | 'self' };
+type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean | 'self', tag?: string | string[] };
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 export type FixtureRegistration = {
   // Fixture registration location.
@@ -53,6 +53,8 @@ export type FixtureRegistration = {
   optionOverride?: boolean;
   // Do not generate the step for this fixture, consider it internal.
   box?: boolean | 'self';
+  // Tags to be inherited by tests that use this fixture, directly or transitively.
+  tag?: string[];
 };
 export type LoadError = {
   message: string;
@@ -113,8 +115,10 @@ export class FixturePool {
     for (const entry of Object.entries(fixtures)) {
       const name = entry[0];
       let value = entry[1];
-      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle?: string, box?: boolean | 'self' } | undefined;
+      let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle?: string, box?: boolean | 'self', tag?: string[] } | undefined;
       if (isFixtureTuple(value)) {
+        const rawTag = value[1].tag;
+        const tag: string[] | undefined = rawTag ? ([] as string[]).concat(rawTag) : undefined;
         options = {
           auto: value[1].auto ?? false,
           scope: value[1].scope || 'test',
@@ -122,6 +126,7 @@ export class FixturePool {
           timeout: value[1].timeout,
           customTitle: value[1].title,
           box: value[1].box,
+          tag,
         };
         value = value[0];
       }
@@ -139,7 +144,7 @@ export class FixturePool {
         }
       } else if (previous) {
         // Note: deliberately not inheriting "options.box" so that fixture override is visible by default.
-        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle };
+        options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle, tag: previous.tag };
       } else if (!options) {
         options = { auto: false, scope: 'test', option: false, timeout: undefined };
       }
@@ -162,8 +167,12 @@ export class FixturePool {
         fn = original.fn;
       }
 
+      for (const tag of options.tag ?? []) {
+        if (!tag.startsWith('@'))
+          this._addLoadError(`Fixture "${name}" tag "${tag}" must start with "@".`, location);
+      }
       const deps = fixtureParameterNames(fn, location, e => this._onLoadError(e));
-      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, box: options.box, deps, super: previous, optionOverride: isOptionsOverride };
+      const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, box: options.box, tag: options.tag, deps, super: previous, optionOverride: isOptionsOverride };
       registrationId(registration);
       this._registrations.set(name, registration);
     }
@@ -252,6 +261,31 @@ export class FixturePool {
 
   autoFixtures() {
     return [...this._registrations.values()].filter(r => r.auto !== false);
+  }
+
+  tagsForTest(directParams: string[]): string[] {
+    const tags = new Set<string>();
+    const visited = new Set<string>();
+
+    const collect = (name: string) => {
+      if (visited.has(name))
+        return;
+      visited.add(name);
+      const registration = this._registrations.get(name);
+      if (!registration)
+        return;
+      for (const tag of registration.tag ?? [])
+        tags.add(tag);
+      for (const dep of registration.deps)
+        collect(dep);
+    };
+
+    for (const registration of this.autoFixtures())
+      collect(registration.name);
+    for (const name of directParams)
+      collect(name);
+
+    return [...tags];
   }
 
   private _addLoadError(message: string, location: Location) {

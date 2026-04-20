@@ -779,6 +779,46 @@ export const test = base.extend({
 });
 ```
 
+## Fixture tags
+
+You can attach tags to a fixture so that every test using that fixture automatically inherits those tags. This lets you categorize tests through the fixtures they rely on rather than annotating each test individually.
+
+```js
+import { test as base } from '@playwright/test';
+
+export const test = base.extend({
+  apiFixture: [async ({}, use) => {
+    // ...
+    await use();
+  }, { tag: '@api' }],
+});
+```
+
+```js title="example.spec.ts"
+import { test } from './my-test';
+
+// Automatically tagged with '@api' because the fixture carries it.
+test('my test', async ({ apiFixture }) => {
+  // ...
+});
+```
+
+Tags propagate **transitively**: if fixture `A` depends on fixture `B` and `B` carries a tag, any test using `A` will also inherit that tag.
+
+You can specify multiple tags as an array:
+
+```js
+export const test = base.extend({
+  myFixture: [async ({}, use) => {
+    await use();
+  }, { tag: ['@smoke', '@regression'] }],
+});
+```
+
+[Automatic fixtures](#automatic-fixtures) propagate their tags to every test in the suite, even tests that don't explicitly list the fixture.
+
+Tags from fixtures are combined with tags declared directly on the test. Duplicate tags are deduplicated. All fixture tags must start with `@`. Fixture-inherited tags are visible in [`property: TestInfo.tags`] at runtime. Learn more about [tagging tests](./test-annotations.md#tag-tests).
+
 ## Adding global beforeEach/afterEach hooks
 
 [`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks run before/after each test declared in the same file and same [`method: Test.describe`] block (if any). If you want to declare hooks that run before/after each test globally, you can declare them as auto fixtures like this:

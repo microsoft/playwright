@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FixturePool } from './fixtures';
+import { FixturePool, fixtureParameterNames } from './fixtures';
 import { formatLocation } from '../util';
 
 import type { FullProjectInternal } from './config';
@@ -48,6 +48,11 @@ export class PoolBuilder {
         test._poolDigest = pool.digest;
       if (this._type === 'worker')
         test._pool = pool;
+      const directParams = fixtureParameterNames(test.fn, test.location, e => this._handleLoadError(e, testErrors));
+      for (const tag of pool.tagsForTest(directParams)) {
+        if (!test._tags.includes(tag))
+          test._tags.push(tag);
+      }
     });
   }
 

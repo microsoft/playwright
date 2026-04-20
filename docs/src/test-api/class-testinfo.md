@@ -215,7 +215,7 @@ Test function as passed to `test(title, testFunction)`.
 * since: v1.43
 - type: <[Array]<[string]>>
 
-Tags that apply to the test. Learn more about [tags](../test-annotations.md#tag-tests).
+Tags that apply to the test. Includes tags declared directly on the test or its enclosing describe blocks, tags extracted from the test title, and tags inherited from fixtures used by the test. Learn more about [tags](../test-annotations.md#tag-tests).
 
 :::note
 Any changes made to this list while the test is running will not be visible to test reporters.
