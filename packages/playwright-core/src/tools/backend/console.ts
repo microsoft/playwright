@@ -24,7 +24,7 @@ const console = defineTabTool({
     title: 'Get console messages',
     description: 'Returns all console messages',
     inputSchema: z.object({
-      level: z.enum(['error', 'warning', 'info', 'debug']).default('info').describe('Level of the console messages to return. Each level includes the messages of more severe levels. Defaults to "info".'),
+      level: z.enum(['error', 'warning', 'info', 'debug']).describe('Level of the console messages to return. Each level includes the messages of more severe levels. Defaults to "info".').default('info'),
       all: z.boolean().optional().describe('Return all console messages since the beginning of the session, not just since the last navigation. Defaults to false.'),
       filename: z.string().optional().describe('Filename to save the console messages to. If not provided, messages are returned as text.'),
     }),
