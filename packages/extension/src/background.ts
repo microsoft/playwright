@@ -46,7 +46,10 @@ class TabShareExtension {
     chrome.tabs.onUpdated.addListener(this._onTabUpdated.bind(this));
     chrome.runtime.onMessage.addListener(this._onMessage.bind(this));
     chrome.action.onClicked.addListener(this._onActionClicked.bind(this));
-    void this._cleanupStaleGroups();
+    // Kick off cleanup via the group queue so any concurrent _addTabToGroup
+    // call (from a new connection) waits for cleanup to finish instead of
+    // racing with it.
+    this._groupQueue = this._groupQueue.then(() => this._cleanupStaleGroups());
   }
 
   // Service worker restarts lose all connection state, so any existing
