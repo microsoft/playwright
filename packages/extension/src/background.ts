@@ -46,6 +46,23 @@ class TabShareExtension {
     chrome.tabs.onUpdated.addListener(this._onTabUpdated.bind(this));
     chrome.runtime.onMessage.addListener(this._onMessage.bind(this));
     chrome.action.onClicked.addListener(this._onActionClicked.bind(this));
+    void this._cleanupStaleGroups();
+  }
+
+  // Service worker restarts lose all connection state, so any existing
+  // Playwright groups are stale. Ungroup their tabs on startup.
+  private async _cleanupStaleGroups(): Promise<void> {
+    try {
+      const groups = await chrome.tabGroups.query({ title: 'Playwright' });
+      for (const group of groups) {
+        const tabs = await chrome.tabs.query({ groupId: group.id });
+        const tabIds = tabs.map(t => t.id).filter((id): id is number => id !== undefined);
+        if (tabIds.length)
+          await chrome.tabs.ungroup(tabIds).catch(() => {});
+      }
+    } catch (error: any) {
+      debugLog('Error cleaning up stale groups:', error);
+    }
   }
 
   // Promise-based message handling is not supported in Chrome: https://issues.chromium.org/issues/40753031
