@@ -226,7 +226,7 @@ export class RelayConnection {
     try {
       message = JSON.parse(event.data);
     } catch (error: any) {
-      debugLog('Error parsing message:', error);
+      debugLog(`Error parsing message ${event.data}:`, error);
       this._sendError(-32700, `Error parsing message: ${error.message}`);
       return;
     }
@@ -237,7 +237,7 @@ export class RelayConnection {
     try {
       response.result = await this._handleCommand(message);
     } catch (error: any) {
-      debugLog('Error handling command:', error);
+      debugLog(`Error handling command ${JSON.stringify(message)}:`, error);
       response.error = error.message;
     }
     this._sendMessage(response);
