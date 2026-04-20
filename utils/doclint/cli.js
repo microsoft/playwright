@@ -308,12 +308,25 @@ function writeAssumeNoop(name, content, dirtyFiles) {
 
 async function getBrowserVersions() {
   const names = ['chromium', 'firefox', 'webkit'];
-  const browsers = await Promise.all(names.map(name => playwright[name].launch()));
+  const settled = await Promise.allSettled(names.map(name =>
+    playwright[name].launch().then(async browser => {
+      const version = browser.version();
+      await browser.close();
+      return version;
+    })
+  ));
+  const browsersJSONPath = path.join(PROJECT_DIR, 'packages/playwright-core/browsers.json');
+  const browsersJSON = JSON.parse(fs.readFileSync(browsersJSONPath, 'utf8'));
   const result = {};
   for (let i = 0; i < names.length; i++) {
-    result[names[i]] = browsers[i].version();
+    if (settled[i].status === 'fulfilled') {
+      result[names[i]] = settled[i].value;
+    } else {
+      const entry = browsersJSON.browsers.find(b => b.name === names[i]);
+      result[names[i]] = entry?.browserVersion ?? 'unknown';
+      console.warn(`WARNING: Could not launch ${names[i]}, using browsers.json fallback: ${result[names[i]]}`); // eslint-disable-line no-console
+    }
   }
-  await Promise.all(browsers.map(browser => browser.close()));
   return result;
 }
 
