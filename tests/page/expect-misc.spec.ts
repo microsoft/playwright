@@ -640,11 +640,13 @@ test('toHaveText that does not match should not produce logs twice', async ({ pa
 test('strict mode violation error format', async ({ page }) => {
   await page.setContent('<div>a</div><div>b</div>');
   const error = await expect(page.locator('div')).toHaveText('foo').catch(e => e);
-  expect(stripAnsi(error.message)).toContain(`expect(locator).toHaveText(expected) failed
+  const message = stripAnsi(error.message);
+  expect(message).toContain(`expect(locator).toHaveText(expected) failed
 
 Locator: locator('div')
 Expected: "foo"
-Error: strict mode violation: locator('div') resolved to 2 elements:
+`);
+  expect(message).toContain(`Error: strict mode violation: locator('div') resolved to 2 elements:
     1) <div>a</div> aka getByText('a')
     2) <div>b</div> aka getByText('b')
 
