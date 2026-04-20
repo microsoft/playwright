@@ -215,15 +215,14 @@ async function acquireSingleton(reveal: RevealOptions): Promise<net.Server> {
     await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
-    const server = net.createServer({ allowHalfOpen: true });
+    const server = net.createServer();
     server.listen(socketPath, () => resolve(server));
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code !== 'EADDRINUSE')
         return reject(err);
       const client = net.connect(socketPath, () => {
         const message: DashboardCommand = { command: 'bringToFront', ...reveal };
-        client.write(JSON.stringify(message));
-        client.end();
+        client.write(JSON.stringify(message) + '\n');
         reject(new Error('already running'));
       });
       client.on('error', () => {
@@ -261,29 +260,37 @@ export async function openDashboardApp() {
   }
   const statePromise = innerOpenDashboardApp(args.reveal);
   server?.on('connection', socket => {
-    const chunks: Buffer[] = [];
-    socket.on('data', data => chunks.push(data));
-    socket.on('end', async () => {
-      const message = Buffer.concat(chunks).toString();
+    let buffer = '';
+    socket.on('data', data => {
+      buffer += data.toString();
+      const newlineIndex = buffer.indexOf('\n');
+      if (newlineIndex === -1)
+        return;
+      const line = buffer.slice(0, newlineIndex);
+      buffer = buffer.slice(newlineIndex + 1);
       let parsed: DashboardCommand | undefined;
       try {
-        parsed = JSON.parse(message);
+        parsed = JSON.parse(line);
       } catch {
         // no-op
       }
-      if (!parsed?.command)
+      if (!parsed?.command) {
+        socket.end();
         return;
-      const { page, server: dashboard } = await statePromise;
-      const revealTo = { sessionName: parsed.sessionName, workspaceDir: parsed.workspaceDir };
-      if (parsed.command === 'bringToFront') {
-        page?.bringToFront().catch(() => {});
-        dashboard.reveal(revealTo);
-      } else if (parsed.command === 'annotate') {
-        page?.bringToFront().catch(() => {});
-        dashboard.reveal(revealTo);
-        dashboard.triggerAnnotate();
-        dashboard.registerAnnotateWaiter(socket);
       }
+      void statePromise.then(({ page, server: dashboard }) => {
+        const revealTo = { sessionName: parsed.sessionName, workspaceDir: parsed.workspaceDir };
+        if (parsed.command === 'bringToFront') {
+          page?.bringToFront().catch(() => {});
+          dashboard.reveal(revealTo);
+          socket.end();
+        } else if (parsed.command === 'annotate') {
+          page?.bringToFront().catch(() => {});
+          dashboard.reveal(revealTo);
+          dashboard.triggerAnnotate();
+          dashboard.registerAnnotateWaiter(socket);
+        }
+      });
     });
   });
   await statePromise;
@@ -314,7 +321,7 @@ async function runAnnotateClient(args: OpenArgs): Promise<void> {
     return;
   }
   const message: DashboardCommand = { command: 'annotate', ...args.reveal };
-  socket.end(JSON.stringify(message));
+  socket.write(JSON.stringify(message) + '\n');
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
     socket!.on('data', chunk => chunks.push(chunk));
