@@ -125,6 +125,6 @@ test('should return relative paths when root is specified', async ({ startClient
     name: 'browser_take_screenshot',
     arguments: { filename: 'screenshot.png' },
   })).toHaveResponse({
-    result: expect.stringContaining(`[Screenshot of viewport](screenshot.png)`),
+    result: expect.stringContaining(`[Screenshot of viewport](./screenshot.png)`),
   });
 });
