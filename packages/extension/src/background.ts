@@ -84,7 +84,6 @@ class TabShareExtension {
 
   private async _connectToRelay(selectorTabId: number, mcpRelayUrl: string, protocolVersion: number): Promise<void> {
     try {
-      debugLog(`Connecting to relay at ${mcpRelayUrl} (protocol v${protocolVersion})`);
       const socket = new WebSocket(mcpRelayUrl);
       await new Promise<void>((resolve, reject) => {
         socket.onopen = () => resolve();
@@ -94,13 +93,11 @@ class TabShareExtension {
 
       const connection = new RelayConnection(socket, protocolVersion);
       connection.onclose = () => {
-        debugLog('Pending connection closed');
         const existed = this._pendingTabSelection.delete(selectorTabId);
         if (existed)
           chrome.tabs.sendMessage(selectorTabId, { type: 'pendingConnectionClosed' }).catch(() => {});
       };
       this._pendingTabSelection.set(selectorTabId, connection);
-      debugLog(`Connected to MCP relay`);
     } catch (error: any) {
       const message = `Failed to connect to MCP relay: ${error.message}`;
       debugLog(message);
@@ -110,7 +107,6 @@ class TabShareExtension {
 
   private async _connectTab(selectorTabId: number, tabId: number, windowId: number, mcpRelayUrl: string): Promise<void> {
     try {
-      debugLog(`Connecting tab ${tabId} to relay at ${mcpRelayUrl}`);
       try {
         this._activeConnection?.close('Another connection is requested');
       } catch (error: any) {
@@ -126,9 +122,9 @@ class TabShareExtension {
 
       this._activeConnection.setSelectedTab(tabId);
       this._activeConnection.onclose = () => {
-        debugLog('MCP connection closed');
         this._activeConnection = undefined;
         this._selectorTabId = undefined;
+        this._groupId = null;
         const allTabIds = [...this._connectedTabIds];
         this._connectedTabIds.clear();
         allTabIds.map(id => this._updateBadge(id, { text: '' }));
@@ -136,6 +132,7 @@ class TabShareExtension {
           chrome.tabs.ungroup(allTabIds).catch(() => {});
       };
       this._activeConnection.ontabattached = (newTabId: number) => {
+        debugLog(`ontabattached: ${newTabId}`);
         this._connectedTabIds.add(newTabId);
         void this._updateBadge(newTabId, { text: '✓', color: '#4CAF50', title: 'Connected to Playwright client' });
         void this._addTabToGroup(newTabId).then(() => {
@@ -154,7 +151,6 @@ class TabShareExtension {
         chrome.windows.update(windowId, { focused: true }),
       ]);
       this._selectorTabId = selectorTabId;
-      debugLog(`Connected to Playwright client`);
     } catch (error: any) {
       this._connectedTabIds.clear();
       debugLog(`Failed to connect tab ${tabId}:`, error.message);
@@ -186,12 +182,11 @@ class TabShareExtension {
   }
 
   private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
-    if (this._connectedTabIds.has(tabId))
-      void this._updateBadge(tabId, { text: '✓', color: '#4CAF50', title: 'Connected to MCP client' });
     if (!this._activeConnection || this._groupId === null || changeInfo.groupId === undefined)
       return;
     const inOurGroup = changeInfo.groupId === this._groupId;
     const isConnected = this._connectedTabIds.has(tabId);
+    debugLog(`Tab update: tabId=${tabId}, inOurGroup=${inOurGroup}, isConnected=${isConnected}`, changeInfo, tab);
     if (inOurGroup && !isConnected)
       void this._activeConnection.attachTab(tabId);
     else if (!inOurGroup && isConnected)

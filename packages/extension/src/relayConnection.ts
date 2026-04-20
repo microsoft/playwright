@@ -231,8 +231,6 @@ export class RelayConnection {
       return;
     }
 
-    debugLog('Received message:', message);
-
     const response: ProtocolResponse = {
       id: message.id,
     };
@@ -242,7 +240,6 @@ export class RelayConnection {
       debugLog('Error handling command:', error);
       response.error = error.message;
     }
-    debugLog('Sending response:', response);
     this._sendMessage(response);
   }
 

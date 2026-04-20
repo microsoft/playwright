@@ -211,3 +211,50 @@ test('connected tab is removed from group on disconnect', async ({ browserWithEx
     });
   }).toBe(-1);
 });
+
+test('tab is re-added to Playwright group after reconnecting', async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+
+  const page = await browserContext.newPage();
+  await page.goto(server.HELLO_WORLD);
+
+  const connect = async () => {
+    const client = await startWithExtensionFlag(browserWithExtension, startClient);
+    const connectPagePromise = browserContext.waitForEvent('page', p =>
+      p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
+    );
+    const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+    const connectPage = await connectPagePromise;
+    await connectPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
+    await navigatePromise;
+    return { client, connectPage };
+  };
+
+  // First connection.
+  const first = await connect();
+  await first.client.close();
+
+  // Wait for the tab to be ungrouped after disconnect.
+  await expect.poll(async () => {
+    return first.connectPage.evaluate(async () => {
+      const chrome = (window as any).chrome;
+      const [tab] = await chrome.tabs.query({ title: 'Title' });
+      return tab?.groupId ?? -1;
+    });
+  }).toBe(-1);
+
+  // Second connection.
+  const second = await connect();
+
+  // The tab must end up in a green Playwright group again.
+  await expect.poll(async () => {
+    return second.connectPage.evaluate(async () => {
+      const chrome = (window as any).chrome;
+      const [tab] = await chrome.tabs.query({ title: 'Title' });
+      if (!tab || tab.groupId === -1)
+        return null;
+      const g = await chrome.tabGroups.get(tab.groupId);
+      return { color: g.color, title: g.title };
+    });
+  }).toEqual({ color: 'green', title: 'Playwright' });
+});
