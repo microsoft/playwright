@@ -68,8 +68,13 @@ export class Response {
     this._raw = this._json || (options?.raw ?? false);
   }
 
-  private _computRelativeTo(fileName: string): string {
-    return path.relative(this._clientWorkspace, fileName);
+  private _computeRelativeTo(fileName: string): string {
+    const rel = path.relative(this._clientWorkspace, fileName);
+    // Prefix bare filenames with `./` so they're not mistaken for living in
+    // the auto-named `.playwright-cli/` artifact directory.
+    if (path.dirname(rel) === '.' && !rel.startsWith('.'))
+      return './' + rel;
+    return rel;
   }
 
   async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
@@ -78,7 +83,7 @@ export class Response {
       fileName = await this.resolveClientFilename(template.suggestedFilename);
     else
       fileName = await this._context.outputFile(template, { origin: 'llm' });
-    const relativeName = this._computRelativeTo(fileName);
+    const relativeName = this._computeRelativeTo(fileName);
     const printableLink = `- [${title}](${relativeName})`;
     return { fileName, relativeName, printableLink };
   }
@@ -113,7 +118,7 @@ export class Response {
   }
 
   addFileLink(title: string, fileName: string) {
-    const relativeName = this._computRelativeTo(fileName);
+    const relativeName = this._computeRelativeTo(fileName);
     this.addTextResult(`- [${title}](${relativeName})`);
   }
 
@@ -272,7 +277,7 @@ export class Response {
         if (event.type === 'download-start')
           text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);
         else if (event.type === 'download-finish')
-          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computRelativeTo(event.download.outputFile)}"`);
+          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computeRelativeTo(event.download.outputFile)}"`);
       }
     }
     if (text.length)
@@ -281,7 +286,7 @@ export class Response {
     const pausedDetails = this._context.debugger().pausedDetails();
     if (pausedDetails) {
       addSection('Paused', [
-        `- ${pausedDetails.title} at ${this._computRelativeTo(pausedDetails.location.file)}${pausedDetails.location.line ? ':' + pausedDetails.location.line : ''}`,
+        `- ${pausedDetails.title} at ${this._computeRelativeTo(pausedDetails.location.file)}${pausedDetails.location.line ? ':' + pausedDetails.location.line : ''}`,
         '- Use any tools to explore and interact, resume by calling resume/step-over/pause-at',
       ]);
     }
