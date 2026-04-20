@@ -1826,3 +1826,45 @@ fixture   |  Fixture "context"
 pw:api    |    Close context
 `);
 });
+
+test('should return all called files inside stack trace', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['./reporter']],
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test'
+      import { foo } from './b.model';
+
+      test('has title', async ({ page }) => {
+        await test.step('multiple check', async () => {
+          await Promise.all([
+            foo(page),
+            foo(page),
+          ])
+        })
+      });
+    `,
+    'b.model.ts': `
+        import test, { expect, Page } from "@playwright/test";
+
+        export const foo = async (page: Page) => {
+            await test.step('Check color', async () => {
+                await Promise.all([
+                    await test.step('check1', async () => expect(page.locator('body')).toHaveCSS('color', 'fffffff', { timeout: 50 })),
+                    await test.step('check2', async () => expect(page.locator('body')).toHaveCSS('color', 'fffffff', { timeout: 50 })),
+              ])
+            }); 
+        }
+    `,
+  }, { reporter: '', workers: 1 });
+
+  const message = result.results[0].errors[0].message;
+
+  expect(message).toMatch(new RegExp(`a.test.ts:6:20`));
+  expect(message).toMatch(new RegExp(`a.test.ts:8:16`));
+  expect(message).toMatch(new RegExp(`at foo (.*?)\/b\.model\.ts:5:24`));
+});

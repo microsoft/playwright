@@ -275,7 +275,8 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    await testInfo._onUserStepBegin?.(title);
+    if (testInfo._onUserStepBegin)
+      await testInfo._onUserStepBegin?.(title);
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await currentZone().with('stepZone', step).run(async () => {
       try {
@@ -299,7 +300,8 @@ export class TestTypeImpl {
         step.complete({ error });
         throw error;
       } finally {
-        await testInfo._onUserStepEnd?.();
+        if (testInfo._onUserStepEnd)
+          await testInfo._onUserStepEnd?.();
       }
     });
   }
