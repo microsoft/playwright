@@ -186,14 +186,9 @@ class TabShareExtension {
   }
 
   private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
-    if (this._connectedTabIds.has(tabId))
-      void this._updateBadge(tabId, { text: '✓', color: '#4CAF50', title: 'Connected to MCP client' });
-
+    // if (this._connectedTabIds.has(tabId))
+    //   void this._updateBadge(tabId, { text: '✓', color: '#4CAF50', title: 'Connected to MCP client' });
     if (!this._activeConnection || this._groupId === null || changeInfo.groupId === undefined)
-      return;
-    // Ignore extension UI tabs other than the selector tab — status pages etc.
-    // should not be auto-attached.
-    if (tabId !== this._selectorTabId && tab.url?.startsWith(chrome.runtime.getURL('')))
       return;
     const inOurGroup = changeInfo.groupId === this._groupId;
     const isConnected = this._connectedTabIds.has(tabId);
@@ -209,25 +204,40 @@ class TabShareExtension {
   }
 
   private _addTabToGroup(tabId: number): Promise<void> {
-    const result = this._groupQueue.then(async () => {
-      try {
-        if (this._groupId !== null) {
-          try {
-            await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
-            await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
-            return;
-          } catch {
-            this._groupId = null;
-          }
-        }
-        this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
-        await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
-      } catch (error: any) {
-        debugLog('Error adding tab to group:', error);
-      }
-    });
+    const result = this._groupQueue.then(() => this._addTabToGroupImpl(tabId));
     this._groupQueue = result.catch(() => {});
     return result;
+  }
+
+  private async _addTabToGroupImpl(tabId: number, retries = 3): Promise<void> {
+    try {
+      if (this._groupId !== null) {
+        try {
+          await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
+          await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
+          return;
+        } catch (e: any) {
+          if (this._isDragError(e) && retries > 0)
+            return this._retryAfterDelay(tabId, retries);
+          debugLog('Error adding tab to group:', e);
+        }
+      }
+      this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
+      await chrome.tabGroups.update(this._groupId, { color: 'green', title: 'Playwright' });
+    } catch (error: any) {
+      if (this._isDragError(error) && retries > 0)
+        return this._retryAfterDelay(tabId, retries);
+      debugLog('Error creating tab group:', error);
+    }
+  }
+
+  private _isDragError(e: any): boolean {
+    return e?.message?.includes('user may be dragging a tab');
+  }
+
+  private async _retryAfterDelay(tabId: number, retries: number): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return this._addTabToGroupImpl(tabId, retries - 1);
   }
 
   private async _onActionClicked(): Promise<void> {
