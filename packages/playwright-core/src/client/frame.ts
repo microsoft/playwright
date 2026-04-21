@@ -80,8 +80,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       }
       if (event.remove)
         this._loadStates.delete(event.remove);
-      if (!this._parentFrame && event.add === 'load' && this._page)
+      if (!this._parentFrame && event.add === 'load' && this._page) {
         this._page.emit(Events.Page.Load, this._page);
+        this._page.context().emit(Events.BrowserContext.PageLoad, this._page);
+      }
       if (!this._parentFrame && event.add === 'domcontentloaded' && this._page)
         this._page.emit(Events.Page.DOMContentLoaded, this._page);
     });
@@ -89,8 +91,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       this._url = event.url;
       this._name = event.name;
       this._eventEmitter.emit('navigated', event);
-      if (!event.error && this._page)
+      if (!event.error && this._page) {
         this._page.emit(Events.Page.FrameNavigated, this);
+        this._page.context().emit(Events.BrowserContext.FrameNavigated, this);
+      }
     });
   }
 

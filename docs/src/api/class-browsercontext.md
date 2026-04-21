@@ -198,6 +198,30 @@ Context.Dialog += async (_, dialog) =>
 When no [`event: Page.dialog`] or [`event: BrowserContext.dialog`] listeners are present, all dialogs are automatically dismissed.
 :::
 
+## event: BrowserContext.download
+* since: v1.60
+- argument: <[Download]>
+
+Emitted when attachment download started in any page belonging to this context. User can access basic file operations on downloaded content via the passed [Download] instance. See also [`event: Page.download`] to receive events about a specific page.
+
+## event: BrowserContext.frameAttached
+* since: v1.60
+- argument: <[Frame]>
+
+Emitted when a frame is attached in any page belonging to this context. See also [`event: Page.frameAttached`] to receive events about a specific page.
+
+## event: BrowserContext.frameDetached
+* since: v1.60
+- argument: <[Frame]>
+
+Emitted when a frame is detached in any page belonging to this context. See also [`event: Page.frameDetached`] to receive events about a specific page.
+
+## event: BrowserContext.frameNavigated
+* since: v1.60
+- argument: <[Frame]>
+
+Emitted when a frame is navigated to a new url in any page belonging to this context. See also [`event: Page.frameNavigated`] to receive events about navigations in a specific page.
+
 ## event: BrowserContext.page
 * since: v1.8
 - argument: <[Page]>
@@ -249,6 +273,18 @@ Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it in most
 cases).
 :::
+
+## event: BrowserContext.pageClose
+* since: v1.60
+- argument: <[Page]>
+
+Emitted when a page in this context is closed. See also [`event: Page.close`] to receive events about a specific page.
+
+## event: BrowserContext.pageLoad
+* since: v1.60
+- argument: <[Page]>
+
+Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched in any page belonging to this context. See also [`event: Page.load`] to receive events about a specific page.
 
 ## event: BrowserContext.webError
 * since: v1.38
