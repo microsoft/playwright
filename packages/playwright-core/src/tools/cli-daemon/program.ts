@@ -26,7 +26,8 @@ import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
-import { createClientInfo, guessClientName } from '../cli-client/registry';
+import { createClientInfo } from '../cli-client/registry';
+import { guessClientName } from '../cli-client/utils';
 import { registry as browserRegistry } from '../../server/registry/index';
 import type { Command } from 'commander';
 

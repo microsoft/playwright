@@ -196,18 +196,6 @@ export function explicitSessionName(sessionName?: string): string | undefined {
   return sessionName || process.env.PLAYWRIGHT_CLI_SESSION;
 }
 
-export function guessClientName(): string {
-  if (process.env.CLAUDECODE)
-    return 'Claude Code';
-  if (process.env.COPILOT_CLI)
-    return 'GitHub Copilot';
-  return 'playwright-cli';
-}
-
-export function isCodingAgent(): boolean {
-  return !!process.env.CLAUDECODE || !!process.env.COPILOT_CLI;
-}
-
 export function resolveSessionName(sessionName?: string): string {
   return explicitSessionName(sessionName) || 'default';
 }

@@ -6,6 +6,7 @@
 ./minimist.ts
 ./session.ts
 ./registry.ts
+./utils.ts
 
 [channelSessions.ts]
 "strict"
@@ -24,4 +25,7 @@
 ../../package.ts
 
 [minimist.ts]
+"strict"
+
+[utils.ts]
 "strict"
