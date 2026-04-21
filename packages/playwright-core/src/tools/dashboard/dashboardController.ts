@@ -250,11 +250,11 @@ export class DashboardConnection implements Transport {
   private async _aggregateTabs(): Promise<Tab[]> {
     const attachedPage = this._attachedPage?.page;
     const tasks: Promise<Tab>[] = [];
-    for (const slot of this._browsers.values()) {
-      for (const context of slot.browser.contexts()) {
+    for (const { browser } of this._browsers.values()) {
+      for (const context of browser.contexts()) {
         for (const page of context.pages()) {
           tasks.push((async () => ({
-            browser: browserId(slot),
+            browser: browserId(browser),
             context: contextId(context),
             page: pageId(page),
             title: await page.title().catch(() => ''),
@@ -349,15 +349,16 @@ export class DashboardConnection implements Transport {
         };
         this._browsers.set(guid, slot);
         for (const context of browser.contexts())
-          this._wireContext(slot, context);
+          this._wireContext(context);
       } catch {
         // best-effort
       }
     }
   }
 
-  private _wireContext(slot: BrowserSlot, context: api.BrowserContext) {
-    if (!this._browsers.has(browserId(slot)))
+  private _wireContext(context: api.BrowserContext) {
+    const slot = this._browsers.get(browserId(context.browser()!));
+    if (!slot)
       return;
     if (slot.contextListeners.has(context))
       return;
@@ -569,8 +570,9 @@ class AttachedPage {
   }
 }
 
-function browserId(slot: BrowserSlot): string {
-  return slot.descriptor.browser.guid;
+function browserId(browser: api.Browser): string {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+  return (browser as any)._guid;
 }
 
 function pageId(p: api.Page): string {
