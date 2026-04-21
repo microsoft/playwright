@@ -43,7 +43,13 @@ export const Events = {
     Console: 'console',
     Close: 'close',
     Dialog: 'dialog',
+    Download: 'download',
+    FrameAttached: 'frameattached',
+    FrameDetached: 'framedetached',
+    FrameNavigated: 'framenavigated',
     Page: 'page',
+    PageClose: 'pageclose',
+    PageLoad: 'pageload',
     // Can't use just 'error' due to node.js special treatment of error events.
     // @see https://nodejs.org/api/events.html#events_error_events
     WebError: 'weberror',
