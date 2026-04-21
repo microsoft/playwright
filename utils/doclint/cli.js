@@ -133,6 +133,7 @@ async function run() {
     const apiRoot = path.join(documentationRoot, 'api');
     const testApiRoot = path.join(documentationRoot, 'test-api');
     const testReporterApiRoot = path.join(documentationRoot, 'test-reporter-api');
+    const electronApiRoot = path.join(documentationRoot, 'electron-api');
     for (const lang of langs) {
       try {
         let documentation = parseApi(apiRoot);
@@ -141,6 +142,8 @@ async function run() {
             parseApi(testApiRoot, path.join(documentationRoot, 'api', 'params.md'))
           ).mergeWith(
             parseApi(testReporterApiRoot)
+          ).mergeWith(
+            parseApi(electronApiRoot, path.join(documentationRoot, 'api', 'params.md'))
           );
         }
         documentation.filterForLanguage(lang);
@@ -178,7 +181,7 @@ async function run() {
 
           // Standardise naming and remove the filter in the file name
           // Also, Internally (playwright.dev generator) we merge test-api and test-reporter-api into api.
-          const canonicalName = filePath.replace(/(-(js|python|csharp|java))+/, '').replace(/(\/|\\)(test-api|test-reporter-api)(\/|\\)/, `${path.sep}api${path.sep}`);
+          const canonicalName = filePath.replace(/(-(js|python|csharp|java))+/, '').replace(/(\/|\\)(test-api|test-reporter-api|electron-api)(\/|\\)/, `${path.sep}api${path.sep}`);
           mdSections.add(canonicalName);
 
           const data = fs.readFileSync(filePath, 'utf-8');
@@ -186,7 +189,7 @@ async function run() {
           // Validates code snippet groups.
           rootNode = docs.processCodeGroups(rootNode, lang, tabs => tabs.map(tab => tab.spec));
           // Renders links.
-          if (!filePath.startsWith(apiRoot) && !filePath.startsWith(testApiRoot) && !filePath.startsWith(testReporterApiRoot))
+          if (!filePath.startsWith(apiRoot) && !filePath.startsWith(testApiRoot) && !filePath.startsWith(testReporterApiRoot) && !filePath.startsWith(electronApiRoot))
             documentation.renderLinksInNodes(rootNode);
           // Validate links.
           {

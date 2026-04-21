@@ -23,6 +23,5 @@ export const selectors = playwright.selectors;
 export const devices = playwright.devices;
 export const errors = playwright.errors;
 export const request = playwright.request;
-export const _electron = playwright._electron;
 export const _android = playwright._android;
 export default playwright;

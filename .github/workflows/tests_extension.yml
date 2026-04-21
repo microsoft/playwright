@@ -1,0 +1,53 @@
+name: extension
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - 'packages/playwright-core/src/tools/**'
+      - '!packages/playwright-core/src/tools/dashboard/**'
+      - '!packages/playwright-core/src/tools/trace/**'
+      - 'packages/extension/**'
+      - 'tests/extension/**'
+      - '.github/workflows/tests_extension.yml'
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - 'packages/playwright-core/src/tools/**'
+      - '!packages/playwright-core/src/tools/dashboard/**'
+      - '!packages/playwright-core/src/tools/trace/**'
+      - 'packages/extension/**'
+      - 'tests/extension/**'
+      - '.github/workflows/tests_extension.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+  DEBUG: pw:mcp:error
+
+jobs:
+  test_extension:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 22
+    - run: npm ci
+    - run: npm run build
+    - run: npm run build-extension
+    - run: npx playwright install --with-deps chromium
+    - run: npm run test-extension

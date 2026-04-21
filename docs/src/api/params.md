@@ -134,6 +134,18 @@ Defaults to `left`.
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
 
+## drop-payload
+- `payload` <[Object]>
+  - `files` ?<[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
+    - `name` <[string]> File name
+    - `mimeType` <[string]> File type
+    - `buffer` <[Buffer]> File content
+  - `data` ?<[Object]<[string], [string]>>
+
+Data to drop onto the target. Provide `files` (file paths or in-memory buffers), `data`
+(a mime-type → string map for clipboard-like content such as `text/plain`, `text/html`,
+`text/uri-list`), or both.
+
 ## input-down-up-delay
 - `delay` <[float]>
 

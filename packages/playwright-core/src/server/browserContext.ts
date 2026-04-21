@@ -727,13 +727,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && !!options.isMobile)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
-  if (options.acceptDownloads === undefined && browserOptions.name !== 'electron')
+  if (options.acceptDownloads === undefined)
     options.acceptDownloads = 'accept';
-  // Electron requires explicit acceptDownloads: true since we wait for
-  // https://github.com/electron/electron/pull/41718 to be widely shipped.
-  // In 6-12 months, we can remove this check.
-  else if (options.acceptDownloads === undefined && browserOptions.name === 'electron')
-    options.acceptDownloads = 'internal-browser-default';
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   if (options.proxy)

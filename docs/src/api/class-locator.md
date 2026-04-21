@@ -922,6 +922,54 @@ Locator of the element to drag to.
 ### option: Locator.dragTo.steps = %%-input-drag-steps-%%
 * since: v1.57
 
+## async method: Locator.drop
+* since: v1.60
+
+Simulate an external drag-and-drop of files or clipboard-like data onto this locator.
+
+**Details**
+
+Dispatches the native `dragenter`, `dragover`, and `drop` events at the center of the
+target element with a synthetic [DataTransfer] carrying the provided files and/or data
+entries. Works cross-browser by constructing the [DataTransfer] in the page context.
+
+If the target element's `dragover` listener does not call `preventDefault()`, the target
+is considered to have rejected the drop: Playwright dispatches `dragleave` and this
+method throws.
+
+**Usage**
+
+Drop a file buffer onto an upload area:
+
+```js
+await page.locator('#dropzone').drop({
+  files: { name: 'note.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
+});
+```
+
+Drop plain text and a URL together:
+
+```js
+await page.locator('#dropzone').drop({
+  data: {
+    'text/plain': 'hello world',
+    'text/uri-list': 'https://example.com',
+  },
+});
+```
+
+### param: Locator.drop.payload = %%-drop-payload-%%
+* since: v1.60
+
+### option: Locator.drop.position = %%-input-position-%%
+* since: v1.60
+
+### option: Locator.drop.timeout = %%-input-timeout-%%
+* since: v1.60
+
+### option: Locator.drop.timeout = %%-input-timeout-js-%%
+* since: v1.60
+
 ## async method: Locator.elementHandle
 * since: v1.14
 * discouraged: Always prefer using [Locator]s and web assertions over [ElementHandle]s because latter are inherently racy.

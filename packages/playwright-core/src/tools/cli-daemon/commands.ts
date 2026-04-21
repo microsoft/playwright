@@ -354,6 +354,17 @@ const pick = declareCommand({
   toolParams: () => ({}),
 });
 
+const generateLocator = declareCommand({
+  name: 'generate-locator',
+  description: 'Generate a Playwright locator for the given element',
+  category: 'devtools',
+  args: z.object({
+    target: z.string().describe(elementTargetDescription),
+  }),
+  toolName: 'browser_generate_locator',
+  toolParams: ({ target }) => ({ target }),
+});
+
 const highlight = declareCommand({
   name: 'highlight',
   description: 'Show (or with --hide, remove) a highlight overlay for an element; `--hide` without a target hides all page highlights.',
@@ -857,6 +868,8 @@ const devtoolsShow = declareCommand({
   options: z.object({
     port: numberArg.optional().describe('Start as a blocking HTTP server on this port (use 0 for a random port)'),
     host: z.string().optional().describe('Host to bind to when using --port (defaults to localhost)'),
+    annotate: z.boolean().optional().describe('Switch the dashboard into annotation mode.'),
+    kill: z.boolean().optional().describe('Kill the dashboard daemon.'),
   }),
   toolName: '',
   toolParams: () => ({}),
@@ -1073,6 +1086,7 @@ const commandsArray: AnyCommandSchema[] = [
   resume,
   stepOver,
   pick,
+  generateLocator,
   highlight,
 
   // session category

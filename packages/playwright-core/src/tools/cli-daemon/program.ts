@@ -73,6 +73,10 @@ export function decorateProgram(program: Command) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
           console.log(`### Error\n${message}`);
           console.log('<EOF>');
+          // The cli-client never destroys our stdout pipe on the error path,
+          // so the libuv handle would keep the daemon alive forever.
+          // eslint-disable-next-line no-restricted-properties
+          process.exit(1);
         }
       });
 }

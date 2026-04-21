@@ -149,7 +149,7 @@ test('video-start-stop', async ({ cli, server }) => {
   const { output: tabCloseOutput } = await cli('tab-close');
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);
   const { output: videoStopOutput } = await cli('video-stop');
-  expect(videoStopOutput).toContain(`### Result\n- [Video](video.webm)\n- [Video](video-1.webm)`);
+  expect(videoStopOutput).toContain(`### Result\n- [Video](./video.webm)\n- [Video](./video-1.webm)`);
 });
 
 test('video-chapter', async ({ cli, server }) => {
@@ -181,7 +181,7 @@ test('pick', async ({ cdpServer, cli, server }) => {
   expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
 });
 
-test('pick activates dashboard session', async ({ cdpServer, cli, server, openDashboard }) => {
+test('pick activates dashboard session', async ({ cdpServer, cli, server, startDashboardServer }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
   const browserContext = await cdpServer.start();
   const [page] = browserContext.pages();
@@ -190,7 +190,7 @@ test('pick activates dashboard session', async ({ cdpServer, cli, server, openDa
   await cli('attach', `--cdp=${cdpServer.endpoint}`);
   await cli('snapshot');
 
-  const dashboard = await openDashboard();
+  const dashboard = await startDashboardServer();
   await expect(dashboard.locator('div.dashboard-view')).toBeVisible();
 
   const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
@@ -205,6 +205,15 @@ test('pick activates dashboard session', async ({ cdpServer, cli, server, openDa
   const { output } = await pickPromise;
   expect(output).toContain(`ref: e2`);
   expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
+});
+
+test('generate-locator', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  await cli('snapshot');
+
+  const { output } = await cli('generate-locator', 'e2', '--raw');
+  expect(output).toContain(`getByRole('button', { name: 'Submit' })`);
 });
 
 test('highlight', async ({ cdpServer, cli, server }) => {

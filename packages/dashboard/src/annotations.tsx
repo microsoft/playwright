@@ -118,12 +118,12 @@ export const Annotations: React.FC<{
   screenRef: React.RefObject<HTMLDivElement | null>;
   viewportWidth: number;
   viewportHeight: number;
-}> = ({ active, displayRef, screenRef, viewportWidth, viewportHeight }) => {
+  onSubmit?: (blob: Blob, annotations: Annotation[]) => Promise<void> | void;
+}> = ({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit }) => {
   const [annotations, setAnnotations] = React.useState<Annotation[]>([]);
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
   const [selection, setSelection] = React.useState<Selection>(null);
   const [drag, setDrag] = React.useState<DragState | null>(null);
-  const [submittedJson, setSubmittedJson] = React.useState<string | null>(null);
   const [, setTick] = React.useState(0);
   const forceRender = React.useCallback(() => setTick(t => t + 1), []);
   const layerRef = React.useRef<HTMLDivElement>(null);
@@ -283,10 +283,81 @@ export const Annotations: React.FC<{
     }
   }
 
-  function submitAnnotations() {
-    const json = JSON.stringify({ viewportWidth, viewportHeight, annotations }, null, 2);
-    console.log('Annotations:', json);
-    setSubmittedJson(json);
+  async function submitAnnotations() {
+    const img = displayRef.current;
+    if (!img || !img.naturalWidth || !img.naturalHeight || !viewportWidth || !viewportHeight)
+      return;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx)
+      return;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const sx = canvas.width / viewportWidth;
+    const sy = canvas.height / viewportHeight;
+    const blue = 'rgb(54, 116, 209)';
+    const fontSize = Math.max(11, Math.round(14 * sy));
+    ctx.font = `500 ${fontSize}px -apple-system, system-ui, sans-serif`;
+    ctx.textBaseline = 'middle';
+    for (const a of annotations) {
+      const x = a.x * sx;
+      const y = a.y * sy;
+      const w = a.width * sx;
+      const h = a.height * sy;
+      ctx.fillStyle = 'rgba(54, 116, 209, 0.12)';
+      ctx.fillRect(x, y, w, h);
+      ctx.lineWidth = Math.max(2, Math.round(2 * sy));
+      ctx.strokeStyle = blue;
+      ctx.strokeRect(x, y, w, h);
+      if (a.text) {
+        const padX = Math.max(4, Math.round(6 * sy));
+        const padY = Math.max(2, Math.round(3 * sy));
+        const metrics = ctx.measureText(a.text);
+        const labelW = metrics.width + padX * 2;
+        const labelH = fontSize + padY * 2;
+        const labelX = x - ctx.lineWidth / 2;
+        const labelY = y - labelH;
+        ctx.fillStyle = blue;
+        ctx.fillRect(labelX, labelY, labelW, labelH);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(a.text, labelX + padX, labelY + labelH / 2);
+      }
+    }
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob)
+      return;
+    if (onSubmit) {
+      await onSubmit(blob, annotations);
+      return;
+    }
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const suggestedName = `annotations-${stamp}.png`;
+    const picker = (window as any).showSaveFilePicker as undefined | ((opts: any) => Promise<any>);
+    if (picker) {
+      try {
+        const handle = await picker({
+          suggestedName,
+          startIn: 'downloads',
+          types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } catch (e: any) {
+        if (e?.name !== 'AbortError')
+          throw e;
+      }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = suggestedName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   if (!active)
@@ -325,7 +396,7 @@ export const Annotations: React.FC<{
           className='annotate-action-btn primary'
           onClick={submitAnnotations}
           disabled={annotations.length === 0}
-          title='Submit annotations'
+          title='Submit annotation'
         >
           Submit
         </button>
@@ -434,25 +505,6 @@ export const Annotations: React.FC<{
         );
       })()}
 
-      {submittedJson !== null && (
-        <div className='annotation-modal-backdrop' onMouseDown={e => { e.stopPropagation(); setSubmittedJson(null); }}>
-          <div className='annotation-modal' onMouseDown={e => e.stopPropagation()}>
-            <div className='annotation-modal-header'>
-              <span>Annotations JSON</span>
-              <button className='annotate-action-btn' onClick={() => setSubmittedJson(null)}>Close</button>
-            </div>
-            <textarea className='annotation-modal-text' readOnly value={submittedJson} />
-            <div className='annotation-modal-actions'>
-              <button
-                className='annotate-action-btn primary'
-                onClick={() => { navigator.clipboard?.writeText(submittedJson).catch(() => {}); }}
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -28,12 +28,15 @@ export type Tab = {
   inspectorUrl?: string;
 };
 
+export type AnnotationData = { x: number; y: number; width: number; height: number; text: string };
+
 export type DashboardChannelEvents = {
   sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
   tabs: { tabs: Tab[] };
   frame: { data: string; viewportWidth: number; viewportHeight: number };
   elementPicked: { selector: string; ariaSnapshot?: string };
   pickLocator: {};
+  annotate: {};
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';
@@ -60,8 +63,10 @@ export interface DashboardChannel {
   pickLocator(): Promise<void>;
   cancelPickLocator(): Promise<void>;
   startRecording(): Promise<void>;
-  stopRecording(): Promise<{ path: string }>;
+  stopRecording(): Promise<{ streamId: string }>;
+  readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
   screenshot(): Promise<string>;
+  submitAnnotation(params: { data: string; annotations: AnnotationData[] }): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

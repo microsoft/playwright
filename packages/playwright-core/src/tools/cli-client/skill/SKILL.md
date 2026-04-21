@@ -162,6 +162,9 @@ playwright-cli video-stop
 # wait for the user to pick an element in the browser, print its ref and locator
 playwright-cli pick
 
+# generate a Playwright locator for an element from its ref or selector
+playwright-cli generate-locator e5 --raw
+
 # show a persistent highlight overlay for an element, optionally with a custom style
 playwright-cli highlight e5
 playwright-cli highlight e5 --style="outline: 3px dashed red"
@@ -183,6 +186,11 @@ playwright-cli --raw snapshot > after.yml
 diff before.yml after.yml
 TOKEN=$(playwright-cli --raw cookie-get session_id)
 playwright-cli --raw localstorage-get theme
+```
+
+For structured output wrapping every reply as JSON, pass --json
+```bash
+playwright-cli list --json
 ```
 
 ## Open parameters

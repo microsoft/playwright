@@ -539,13 +539,41 @@ for (const pkg of workspace.packages()) {
   // playwright-client is built as a bundle.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  if (pkg.name === 'playwright-core' || pkg.name === 'playwright')
+  if (pkg.name === 'playwright-core' || pkg.name === 'playwright' || pkg.name === '@playwright/electron')
     continue;
 
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
     outdir: `${path.join(pkg.path, 'lib')}`,
     plugins: [dynamicImportToRequirePlugin],
+  }));
+}
+
+// playwright-electron/lib/electron.js — self-contained bundle that inlines
+// @utils/* and @isomorphic/* sources (via tsconfig paths) plus the `node_modules`
+// deps. playwright-core, electron, and the sibling loader.js are resolved at
+// runtime.
+{
+  const electronPkg = filePath('packages/playwright-electron');
+  steps.push(new EsbuildStep({
+    bundle: true,
+    entryPoints: [path.join(electronPkg, 'src/electron.ts')],
+    outfile: path.join(electronPkg, 'lib/electron.js'),
+    external: [
+      'playwright-core',
+      'playwright-core/*',
+      'electron',
+      'electron/*',
+      './loader',
+    ],
+  }, [filePath('packages/utils'), filePath('packages/isomorphic')]));
+
+  // loader.ts is preloaded inside the Electron main process via `-r` and is
+  // already self-contained (no @utils/@isomorphic imports). Compile it
+  // per-file so the output stays a thin shim.
+  steps.push(new EsbuildStep({
+    entryPoints: [path.join(electronPkg, 'src/loader.ts')],
+    outdir: path.join(electronPkg, 'lib'),
   }));
 }
 
@@ -606,6 +634,12 @@ steps.push(new EsbuildStep({
     'chromium-bidi/*',
     'mitt',
   ],
+  // HMR: baked-in flag that enables the dashboard Vite dev server in watch
+  // builds. In release builds it's `false` and esbuild dead-code-eliminates
+  // the whole dev-server branch (including the `import('vite')` call).
+  define: {
+    __PW_DASHBOARD_HMR__: String(!!watchMode),
+  },
   plugins: [{
     name: 'externalize-utilsBundle',
     setup: build => build.onResolve({ filter: /utilsBundle/ },
@@ -785,16 +819,6 @@ steps.push(new EsbuildStep({
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
 
-// Build the Electron preload loader as a standalone CJS file. It runs inside
-// the Electron process (via `electron -r loader.js`) and must not depend on
-// coreBundle. `electron` is resolved at runtime by the Electron process.
-steps.push(new EsbuildStep({
-  bundle: true,
-  entryPoints: [filePath('packages/playwright-core/src/server/electron/loader.ts')],
-  outfile: filePath('packages/playwright-core/lib/server/electron/loader.js'),
-  external: ['electron'],
-}, [playwrightCoreSrc]));
-
 function copyXdgOpen() {
   const outdir = filePath('packages/playwright-core/lib');
   if (!fs.existsSync(outdir))
@@ -858,7 +882,13 @@ steps.push(new ProgramStep({
 }));
 
 // Build/watch web packages.
-for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'dashboard']) {
+// HMR: in watch mode the dashboard is served by the embedded Vite dev server
+// in dashboardApp.ts, so skip its `vite build --watch` step. Set
+// PW_DASHBOARD_STATIC=1 to keep the watch-build for testing the bundled output.
+const hmrReplacesDashboardBuild = watchMode && process.env.PW_DASHBOARD_STATIC !== '1';
+const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard']
+    .filter(pkg => !(pkg === 'dashboard' && hmrReplacesDashboardBuild));
+for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
     command: 'npx',
     args: [
@@ -911,9 +941,11 @@ onChanges.push({
     'docs/src/api/',
     'docs/src/test-api/',
     'docs/src/test-reporter-api/',
+    'docs/src/electron-api/',
     'utils/generate_types/overrides.d.ts',
     'utils/generate_types/overrides-test.d.ts',
     'utils/generate_types/overrides-testReporter.d.ts',
+    'utils/generate_types/overrides-electron.d.ts',
     'utils/generate_types/exported.json',
     'packages/playwright-core/src/server/chromium/protocol.d.ts',
   ],

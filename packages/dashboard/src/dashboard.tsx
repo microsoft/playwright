@@ -16,10 +16,12 @@
 
 import React from 'react';
 import './dashboard.css';
-import { DashboardClientContext } from './index';
+import { DashboardClientContext } from './dashboardContext';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
 import { Annotations, getImageLayout, clientToViewport } from './annotations';
+
+import type { Annotation } from './annotations';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useMeasureForRef } from '@web/uiUtils';
 
@@ -27,6 +29,40 @@ import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
 type Mode = 'readonly' | 'interactive' | 'annotate';
+
+async function pickSaveWritable(suggestedName: string, description: string, mime: string, extension: string): Promise<FileSystemWritableFileStream | null> {
+  try {
+    const handle = await (window as any).showSaveFilePicker({
+      suggestedName,
+      types: [{ description, accept: { [mime]: [extension] } }],
+    });
+    return await handle.createWritable();
+  } catch {
+    return null;
+  }
+}
+
+function base64ToBlob(base64: string, mime: string): Blob {
+  return new Blob([(Uint8Array as any).fromBase64(base64)], { type: mime });
+}
+
+function smartUrl(input: string): string {
+  const value = input.trim();
+  if (!value)
+    return value;
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value) || value.startsWith('about:') || value.startsWith('data:'))
+    return value;
+  const host = value.split(/[/?#]/, 1)[0];
+  const hasDot = host.includes('.');
+  const isLocalhost = /^localhost(:\d+)?$/i.test(host);
+  const hasPort = /:\d+$/.test(host);
+  const isIp = /^\d{1,3}(\.\d{1,3}){3}(:\d+)?$/.test(host);
+  if (isLocalhost || isIp || (hasPort && !hasDot))
+    return 'http://' + value;
+  if (hasDot || hasPort)
+    return 'https://' + value;
+  return 'https://' + host + '.com' + value.slice(host.length);
+}
 
 export const Dashboard: React.FC = () => {
   const client = React.useContext(DashboardClientContext);
@@ -38,6 +74,8 @@ export const Dashboard: React.FC = () => {
   const [recording, setRecording] = React.useState(false);
   const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
   const [flashTick, setFlashTick] = React.useState(0);
+  const [pendingAnnotate, setPendingAnnotate] = React.useState(false);
+  const [cliAnnotate, setCliAnnotate] = React.useState(false);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
@@ -97,6 +135,37 @@ export const Dashboard: React.FC = () => {
     };
   }, [flashTick, interactive]);
 
+  const hasFrame = !!frame;
+  React.useEffect(() => {
+    if (!pendingAnnotate || !hasFrame)
+      return;
+    setMode('annotate');
+    setCliAnnotate(true);
+    setPendingAnnotate(false);
+  }, [pendingAnnotate, hasFrame]);
+
+  React.useEffect(() => {
+    if (!annotating)
+      setCliAnnotate(false);
+  }, [annotating]);
+
+  const submitAnnotationToCli = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
+    if (!client)
+      return;
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+    const data = dataUrl.slice(dataUrl.indexOf(',') + 1);
+    await client.submitAnnotation({
+      data,
+      annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
+    });
+    setMode('readonly');
+  }, [client]);
+
   function flashInteractiveHint() {
     setFlashTick(tick => tick + 1);
   }
@@ -141,15 +210,18 @@ export const Dashboard: React.FC = () => {
       setMode('interactive');
       setPicking(true);
     };
+    const onAnnotate = () => setPendingAnnotate(true);
     client.on('tabs', onTabs);
     client.on('frame', onFrame);
     client.on('elementPicked', onElementPicked);
     client.on('pickLocator', onPickLocator);
+    client.on('annotate', onAnnotate);
     return () => {
       client.off('tabs', onTabs);
       client.off('frame', onFrame);
       client.off('elementPicked', onElementPicked);
       client.off('pickLocator', onPickLocator);
+      client.off('annotate', onAnnotate);
     };
   }, [client]);
 
@@ -242,9 +314,7 @@ export const Dashboard: React.FC = () => {
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
-      let value = (e.target as HTMLInputElement).value.trim();
-      if (!/^https?:\/\//i.test(value))
-        value = 'https://' + value;
+      const value = smartUrl((e.target as HTMLInputElement).value);
       setUrl(value);
       client?.navigate({ url: value });
       e.currentTarget.blur();
@@ -298,9 +368,18 @@ export const Dashboard: React.FC = () => {
               if (!client)
                 return;
               if (recording) {
-                const { path } = await client.stopRecording();
-                await client.reveal({ path });
+                const writable = await pickSaveWritable(`playwright-recording-${Date.now()}.webm`, 'WebM Video', 'video/webm', '.webm');
+                if (!writable)
+                  return;
                 setRecording(false);
+                const { streamId } = await client.stopRecording();
+                while (true) {
+                  const { data, eof } = await client.readStream({ streamId });
+                  if (eof)
+                    break;
+                  await writable.write(base64ToBlob(data, 'video/webm'));
+                }
+                await writable.close();
               } else {
                 await client.startRecording();
                 setRecording(true);
@@ -310,15 +389,18 @@ export const Dashboard: React.FC = () => {
           </ToolbarButton>
           <ToolbarButton
             className='screenshot'
-            title='Copy screenshot to clipboard'
+            title='Save screenshot'
             icon={screenshotIcon}
             disabled={!ready}
             onClick={async () => {
               if (!client)
                 return;
-              const screenshot = await client.screenshot();
-              const blob = await (await fetch('data:image/png;base64,' + screenshot)).blob();
-              await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+              const writable = await pickSaveWritable(`playwright-screenshot-${Date.now()}.png`, 'PNG Image', 'image/png', '.png');
+              if (!writable)
+                return;
+              const data = await client.screenshot();
+              await writable.write(base64ToBlob(data, 'image/png'));
+              await writable.close();
               setScreenshotIcon('clippy');
               setTimeout(() => setScreenshotIcon('device-camera'), 3000);
             }}
@@ -416,6 +498,7 @@ export const Dashboard: React.FC = () => {
                 screenRef={screenRef}
                 viewportWidth={frame?.viewportWidth ?? 0}
                 viewportHeight={frame?.viewportHeight ?? 0}
+                onSubmit={cliAnnotate ? submitAnnotationToCli : undefined}
               />
             </div>
             {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}

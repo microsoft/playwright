@@ -1,0 +1,76 @@
+name: Publish Extension to Chrome Web Store
+on:
+  workflow_dispatch:
+
+jobs:
+  publish-extension-chrome-web-store:
+    runs-on: ubuntu-latest
+    environment: allow-publishing-extension-to-cws
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build extension
+        run: npm run build-extension
+      - name: Package extension
+        working-directory: ./packages/extension
+        run: |
+          cd dist
+          zip -r ../extension.zip .
+      - name: Get access token
+        id: auth
+        run: |
+          ACCESS_TOKEN=$(curl -s -X POST "https://oauth2.googleapis.com/token" \
+            -d "client_id=${{ secrets.CHROME_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.CHROME_CLIENT_SECRET }}" \
+            -d "refresh_token=${{ secrets.CHROME_REFRESH_TOKEN }}" \
+            -d "grant_type=refresh_token" | jq -r '.access_token')
+          if [ "$ACCESS_TOKEN" = "null" ] || [ -z "$ACCESS_TOKEN" ]; then
+            echo "Failed to obtain access token"
+            exit 1
+          fi
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "access_token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
+      - name: Upload to Chrome Web Store
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X PUT "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.access_token }}" \
+            -H "x-goog-api-version: 2" \
+            -T ./packages/extension/extension.zip)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "$BODY"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Upload failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          STATUS=$(echo "$BODY" | jq -r '.uploadState')
+          if [ "$STATUS" != "SUCCESS" ]; then
+            echo "Upload state: $STATUS"
+            exit 1
+          fi
+      - name: Publish to Chrome Web Store
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "https://www.googleapis.com/chromewebstore/v1.1/items/${{ secrets.CHROME_EXTENSION_ID }}/publish" \
+            -H "Authorization: Bearer ${{ steps.auth.outputs.access_token }}" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Length: 0")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "$BODY"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Publish failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          STATUS=$(echo "$BODY" | jq -r '.status[0]')
+          if [ "$STATUS" != "OK" ] && [ "$STATUS" != "PUBLISHED_WITH_FRICTION_WARNING" ]; then
+            echo "Publish status: $STATUS"
+            exit 1
+          fi
+          echo "Extension published successfully"

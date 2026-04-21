@@ -18,7 +18,9 @@ import { baseTest } from '../config/baseTest';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import type { ElectronApplication, Page, Electron } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import type { ElectronApplication, Electron } from '@playwright/electron';
+import { electron } from '@playwright/electron';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
@@ -26,6 +28,7 @@ import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { inheritAndCleanEnv } from '../config/utils';
 
 export { expect } from '@playwright/test';
+export { selectors } from '@playwright/electron';
 
 const { removeFolders } = utils;
 
@@ -58,16 +61,16 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
     await removeFolders(dirs);
   },
 
-  launchElectronApp: async ({ playwright, createUserDataDir }, use) => {
+  launchElectronApp: async ({ createUserDataDir }, use) => {
     // This env prevents 'Electron Security Policy' console message.
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
     const apps: ElectronApplication[] = [];
     await use(async (appFile: string, args: string[] = [], options?: Parameters<Electron['launch']>[0]) => {
       const userDataDir = await createUserDataDir();
-      const app = await playwright._electron.launch({
+      const app = await electron.launch({
         ...options,
         args: [path.join(__dirname, appFile), ...args],
-        env: inheritAndCleanEnv({ PWTEST_ELECTRON_USER_DATA_DIR: userDataDir }),
+        env: inheritAndCleanEnv({ ...options?.env, PWTEST_ELECTRON_USER_DATA_DIR: userDataDir }),
       });
       apps.push(app);
       return app;

@@ -44,16 +44,11 @@ test('kill-all kills filtered dashboard pid', async ({ cli }) => {
   expect(pid).toBeDefined();
   await expect.poll(() => isAlive(pid!)).toBe(true);
 
-  try {
-    const { output } = await cli('kill-all', {
-      env: { PLAYWRIGHT_KILL_ALL_PID_FILTER_FOR_TEST: String(pid) },
-    });
-    expect(output).toContain(`Killed daemon process ${pid}`);
-    expect(output).toContain('Killed 1 daemon process.');
+  const { output } = await cli('kill-all', {
+    env: { PLAYWRIGHT_KILL_ALL_PID_FILTER_FOR_TEST: String(pid) },
+  });
+  expect(output).toContain(`Killed daemon process ${pid}`);
+  expect(output).toContain('Killed 1 daemon process.');
 
-    await expect.poll(() => isAlive(pid!)).toBe(false);
-  } finally {
-    if (isAlive(pid!))
-      try { process.kill(pid!, 'SIGKILL'); } catch {}
-  }
+  await expect.poll(() => isAlive(pid!)).toBe(false);
 });

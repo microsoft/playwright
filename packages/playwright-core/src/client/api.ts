@@ -26,7 +26,6 @@ export { Debugger } from './debugger';
 export { Dialog } from './dialog';
 export type { Disposable } from './disposable';
 export { Download } from './download';
-export { Electron, ElectronApplication } from './electron';
 export { FrameLocator, Locator } from './locator';
 export { ElementHandle } from './elementHandle';
 export { FileChooser } from './fileChooser';

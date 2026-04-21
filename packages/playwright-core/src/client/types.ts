@@ -35,6 +35,10 @@ export type WaitForFunctionOptions = TimeoutOptions & { polling?: 'raf' | number
 export type SelectOption = { value?: string, label?: string, index?: number, valueOrLabel?: string };
 export type SelectOptionOptions = TimeoutOptions & { force?: boolean };
 export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
+export type DropPayload = {
+  files?: string | FilePayload | string[] | FilePayload[],
+  data?: { [mimeType: string]: string },
+};
 export type StorageState = {
   cookies: channels.NetworkCookie[],
   origins: (Omit<channels.OriginStorage, 'indexedDB'>)[],

@@ -4,9 +4,14 @@
 ../../serverRegistry.ts
 ./channelSessions.ts
 ./minimist.ts
+./output.ts
 ./session.ts
 ./registry.ts
 ./utils.ts
+
+[output.ts]
+"strict"
+./channelSessions.ts
 
 [channelSessions.ts]
 "strict"

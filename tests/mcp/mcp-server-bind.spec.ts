@@ -26,6 +26,6 @@ test('browser started by MCP is bound to server registry', async ({ startClient,
     arguments: { url: server.HELLO_WORLD },
   });
 
-  const { output } = await cli('list');
+  const { output } = await cli('list', '--all');
   expect(output).toContain('My Agent');
 });

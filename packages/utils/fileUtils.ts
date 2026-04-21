@@ -66,8 +66,11 @@ export function toPosixPath(aPath: string): string {
 
 export function makeSocketPath(domain: string, name: string): string {
   const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
-  if (process.platform === 'win32')
-    return `\\\\.\\pipe\\pw-${userNameHash}-${domain}-${name}`;
+  if (process.platform === 'win32') {
+    const socketsDir = process.env.PLAYWRIGHT_SOCKETS_DIR;
+    const suffix = socketsDir ? `-${calculateSha1(socketsDir).slice(0, 8)}` : '';
+    return `\\\\.\\pipe\\pw-${userNameHash}-${domain}-${name}${suffix}`;
+  }
   const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
   const dir = path.join(baseDir, domain);
   const result = path.join(dir, `${name}.sock`);

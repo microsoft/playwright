@@ -17,6 +17,7 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
@@ -25,7 +26,7 @@ import { createClientInfo } from '../cli-client/registry';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
-import type { Tab } from '@dashboard/dashboardChannel';
+import type { AnnotationData, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
 
 type Disposable = { dispose: () => Promise<void> };
@@ -45,6 +46,8 @@ export class DashboardConnection implements Transport {
   private _browsers = new Map<string, BrowserSlot>();
   private _attachedBrowser: AttachedBrowser | undefined;
   private _onclose: () => void;
+  private _onconnected?: () => void;
+  private _onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
@@ -52,9 +55,12 @@ export class DashboardConnection implements Transport {
   private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
 
   _recordingDir: string;
+  _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(onclose: () => void) {
+  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void) {
     this._onclose = onclose;
+    this._onconnected = onconnected;
+    this._onAnnotationSubmit = onAnnotationSubmit;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -64,6 +70,7 @@ export class DashboardConnection implements Transport {
     serverRegistry.on('removed', this._pushSessions);
     serverRegistry.on('changed', this._pushSessions);
     this._pushSessions();
+    this._onconnected?.();
   }
 
   onclose() {
@@ -74,6 +81,13 @@ export class DashboardConnection implements Transport {
     this._serverRegistryDispose = undefined;
     this._attachedBrowser?.dispose();
     this._attachedBrowser = undefined;
+    for (const stream of this._streams.values()) {
+      void stream.handle.close()
+          .catch(() => {})
+          .then(() => fs.promises.unlink(stream.path))
+          .catch(() => {});
+    }
+    this._streams.clear();
     for (const slot of this._browsers.values())
       slot.listeners.forEach(d => d.dispose());
     this._browsers.clear();
@@ -159,6 +173,10 @@ export class DashboardConnection implements Transport {
     this._pushTabs();
   }
 
+  async submitAnnotation(params: { data: string; annotations: AnnotationData[] }) {
+    this._onAnnotationSubmit?.(params.data, params.annotations);
+  }
+
   async reveal(params: { path: string }) {
     switch (os.platform()) {
       case 'darwin':
@@ -171,6 +189,21 @@ export class DashboardConnection implements Transport {
         execFile('xdg-open', [path.dirname(params.path)]);
         break;
     }
+  }
+
+  async readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }> {
+    const stream = this._streams.get(params.streamId);
+    if (!stream)
+      throw new Error(`Unknown stream: ${params.streamId}`);
+    const buffer = Buffer.alloc(256 * 1024);
+    const { bytesRead } = await stream.handle.read(buffer, 0, buffer.length);
+    if (bytesRead === 0) {
+      this._streams.delete(params.streamId);
+      await stream.handle.close().catch(() => {});
+      await fs.promises.unlink(stream.path).catch(() => {});
+      return { data: '', eof: true };
+    }
+    return { data: buffer.subarray(0, bytesRead).toString('base64'), eof: false };
   }
 
   visible(): boolean {
@@ -195,6 +228,10 @@ export class DashboardConnection implements Transport {
 
   emitPickLocator() {
     this.sendEvent?.('pickLocator', {});
+  }
+
+  emitAnnotate() {
+    this.sendEvent?.('annotate', {});
   }
 
   _pushTabs() {
@@ -255,8 +292,13 @@ export class DashboardConnection implements Transport {
       try {
         const byWs = await serverRegistry.list();
         const sessions: BrowserStatus[] = [];
-        for (const list of byWs.values())
-          sessions.push(...list);
+        for (const list of byWs.values()) {
+          for (const status of list) {
+            if (status.title.startsWith('--playwright-internal'))
+              continue;
+            sessions.push(status);
+          }
+        }
         await this._reconcile(sessions);
         await this._tryRevealPending();
         this.emitSessions(sessions);
@@ -482,14 +524,17 @@ class AttachedBrowser {
       await this._restartScreencast(page);
   }
 
-  async stopRecording(): Promise<{ path: string }> {
+  async stopRecording(): Promise<{ streamId: string }> {
     const p = this._recordingPath;
     if (!p)
       throw new Error('No recording in progress');
     this._recordingPath = null;
     if (this._selectedPage && this._screencastRunning)
       await this._restartScreencast(this._selectedPage);
-    return { path: p };
+    const handle = await fs.promises.open(p, 'r');
+    const streamId = crypto.randomUUID();
+    this._owner._streams.set(streamId, { handle, path: p });
+    return { streamId };
   }
 
   async screenshot(): Promise<string> {
