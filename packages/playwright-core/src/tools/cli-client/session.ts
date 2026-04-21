@@ -161,6 +161,8 @@ export class Session {
     process.on('SIGTERM', sigtermHandler);
 
     let outLog = '';
+    const rejectWithPid = (reject: (e: Error) => void, message: string) =>
+      reject(Object.assign(new Error(`Daemon pid=${child.pid}: ${message}`), { daemonPid: child.pid }));
     await new Promise<void>((resolve, reject) => {
       child.stdout!.on('data', data => {
         outLog += data.toString();
@@ -170,8 +172,7 @@ export class Session {
         const error = errorMatch ? errorMatch[1].trim() : undefined;
         if (error) {
           const errLogContent = fs.readFileSync(errLog, 'utf-8');
-          const message = error + (errLogContent ? '\n' + errLogContent : '');
-          reject(new Error(message));
+          rejectWithPid(reject, error + (errLogContent ? '\n' + errLogContent : ''));
         }
 
         const successMatch = outLog.match(/### Success\nDaemon listening on (.*)\n<EOF>/);
@@ -181,8 +182,7 @@ export class Session {
       child.on('close', code => {
         if (!signalled) {
           const errLogContent = fs.readFileSync(errLog, 'utf-8');
-          const message = `Daemon process exited with code ${code}` + (errLogContent ? '\n' + errLogContent : '');
-          reject(new Error(message));
+          rejectWithPid(reject, `Daemon process exited with code ${code}` + (errLogContent ? '\n' + errLogContent : ''));
         }
       });
     });

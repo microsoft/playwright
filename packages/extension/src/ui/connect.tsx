@@ -115,6 +115,9 @@ const ConnectApp: React.FC = () => {
     setShowButtons(false);
     setShowTabList(false);
     setStatus({ type: 'error', message });
+    // Ask the background to close the pending MCP relay connection so the
+    // client daemon sees a disconnect and exits.
+    chrome.runtime.sendMessage({ type: 'rejectConnection' }).catch(() => {});
   }, []);
 
   const connectToMCPRelay = useCallback(async (mcpRelayUrl: string, protocolVersion: number) => {

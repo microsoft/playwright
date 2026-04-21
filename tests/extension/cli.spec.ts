@@ -15,36 +15,67 @@
  */
 
 import fs from 'fs/promises';
-import { test, expect, extensionId } from './extension-fixtures';
+import { test as base, expect, extensionId } from './extension-fixtures';
 
-test('attach <url> --extension', async ({ browserWithExtension, cli, server }, testInfo) => {
-  const browserContext = await browserWithExtension.launch();
+import type { CliResult } from './extension-fixtures';
+import type { Page } from 'playwright';
 
-  // Write config file with userDataDir
-  const configPath = testInfo.outputPath('cli-config.json');
-  await fs.writeFile(configPath, JSON.stringify({
-    browser: {
-      userDataDir: browserWithExtension.userDataDir,
-    }
-  }, null, 2));
+const test = base.extend<{
+  startAttach: () => Promise<{ confirmationPage: Page, cliPromise: Promise<CliResult> }>,
+}>({
+  startAttach: async ({ browserWithExtension, cli }, use, testInfo) => {
+    await use(async () => {
+      await fs.writeFile(testInfo.outputPath('cli-config.json'), JSON.stringify({
+        browser: {
+          userDataDir: browserWithExtension.userDataDir,
+        }
+      }, null, 2));
+      const browserContext = await browserWithExtension.launch();
+      const confirmationPagePromise = browserContext.waitForEvent('page', page =>
+        page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
+      );
+      const cliPromise = cli('attach', '--extension', `--config=cli-config.json`);
+      const confirmationPage = await confirmationPagePromise;
+      return { confirmationPage, cliPromise };
+    });
+  },
+});
 
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  // Start the CLI command in the background
-  const cliPromise = cli('attach', '--extension', `--config=cli-config.json`);
+async function expectDaemonExited(cliPromise: Promise<CliResult>): Promise<void> {
+  const { error } = await cliPromise;
+  const pidMatch = error.match(/Daemon pid=(\d+)/);
+  expect(pidMatch, `expected daemon pid in cli error:\n${error}`).toBeTruthy();
+  const pid = parseInt(pidMatch![1], 10);
+  await expect.poll(() => isAlive(pid)).toBe(false);
+}
 
-  // Wait for the confirmation page to appear
-  const confirmationPage = await confirmationPagePromise;
+test('daemon exits when user rejects the extension connection', async ({ startAttach }) => {
+  const { confirmationPage, cliPromise } = await startAttach();
+  await confirmationPage.getByRole('button', { name: 'Reject' }).click();
+  await expectDaemonExited(cliPromise);
+});
 
-  // Click the Connect button
+test('daemon exits when user closes the connect tab', async ({ startAttach }) => {
+  const { confirmationPage, cliPromise } = await startAttach();
+  await confirmationPage.close();
+  await expectDaemonExited(cliPromise);
+});
+
+test('attach <url> --extension', async ({ startAttach, cli, server }) => {
+  const { confirmationPage, cliPromise } = await startAttach();
   await confirmationPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
 
   {
-    // Wait for the CLI command to complete
     const { output } = await cliPromise;
-    // Verify the output
     expect(output).toContain(`### Page`);
     expect(output).toContain(`- Page URL: chrome-extension://${extensionId}/connect.html?`);
     expect(output).toContain(`- Page Title: Welcome`);
@@ -52,7 +83,6 @@ test('attach <url> --extension', async ({ browserWithExtension, cli, server }, t
 
   {
     const { output } = await cli('goto', server.HELLO_WORLD);
-    // Verify the output
     expect(output).toContain(`### Page`);
     expect(output).toContain(`- Page URL: ${server.HELLO_WORLD}`);
     expect(output).toContain(`- Page Title: Title`);

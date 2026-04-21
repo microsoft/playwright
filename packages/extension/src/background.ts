@@ -31,6 +31,8 @@ type PageMessage = {
   type: 'getConnectionStatus';
 } | {
   type: 'disconnect';
+} | {
+  type: 'rejectConnection';
 };
 
 const PLAYWRIGHT_GROUP_TITLE = 'Playwright';
@@ -110,8 +112,17 @@ class TabShareExtension {
           sendResponse({ success: false, error: error.message });
         }
         return true;
+      case 'rejectConnection': {
+        const selectorTabId = sender.tab?.id;
+        const pending = selectorTabId !== undefined ? this._pendingTabSelection.get(selectorTabId) : undefined;
+        if (pending) {
+          this._pendingTabSelection.delete(selectorTabId!);
+          pending.close('Rejected by user');
+        }
+        sendResponse({ success: true });
+        return true;
+      }
     }
-    return false;
   }
 
   private async _connectToRelay(selectorTabId: number, mcpRelayUrl: string, protocolVersion: number): Promise<void> {
