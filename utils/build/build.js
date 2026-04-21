@@ -634,6 +634,12 @@ steps.push(new EsbuildStep({
     'chromium-bidi/*',
     'mitt',
   ],
+  // HMR: baked-in flag that enables the dashboard Vite dev server in watch
+  // builds. In release builds it's `false` and esbuild dead-code-eliminates
+  // the whole dev-server branch (including the `import('vite')` call).
+  define: {
+    __PW_DASHBOARD_HMR__: String(!!watchMode),
+  },
   plugins: [{
     name: 'externalize-utilsBundle',
     setup: build => build.onResolve({ filter: /utilsBundle/ },
@@ -876,7 +882,13 @@ steps.push(new ProgramStep({
 }));
 
 // Build/watch web packages.
-for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'dashboard']) {
+// HMR: in watch mode the dashboard is served by the embedded Vite dev server
+// in dashboardApp.ts, so skip its `vite build --watch` step. Set
+// PW_DASHBOARD_STATIC=1 to keep the watch-build for testing the bundled output.
+const hmrReplacesDashboardBuild = watchMode && process.env.PW_DASHBOARD_STATIC !== '1';
+const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard']
+    .filter(pkg => !(pkg === 'dashboard' && hmrReplacesDashboardBuild));
+for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
     command: 'npx',
     args: [
