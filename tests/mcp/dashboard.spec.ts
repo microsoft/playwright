@@ -41,6 +41,19 @@ test('should show browser session chip', async ({ cli, server, startDashboardSer
   await expect(chips).toHaveCount(1);
 });
 
+test('should show one row per context for a single browser', async ({ boundBrowser, server, startDashboardServer }) => {
+  const contextA = await boundBrowser.newContext();
+  const pageA = await contextA.newPage();
+  await pageA.goto(server.EMPTY_PAGE);
+  const contextB = await boundBrowser.newContext();
+  const pageB = await contextB.newPage();
+  await pageB.goto(server.EMPTY_PAGE);
+
+  const dashboard = await startDashboardServer();
+  const chips = dashboard.locator('.session-chip');
+  await expect(chips).toHaveCount(2);
+});
+
 test('should show current workspace sessions first', async ({ cli, server, startDashboardServer }) => {
   const wsA = test.info().outputPath('workspace-a');
   const wsB = test.info().outputPath('workspace-b');
