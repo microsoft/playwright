@@ -16,7 +16,7 @@
 
 import React from 'react';
 import './sessionSidebar.css';
-import { DashboardClientContext } from './index';
+import { DashboardClientContext } from './dashboardContext';
 import { SettingsButton } from './settingsView';
 import { ToolbarButton } from '@web/components/toolbarButton';
 

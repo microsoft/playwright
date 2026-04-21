@@ -16,7 +16,7 @@
 
 import React from 'react';
 import './dashboard.css';
-import { DashboardClientContext } from './index';
+import { DashboardClientContext } from './dashboardContext';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
 import { Annotations, getImageLayout, clientToViewport } from './annotations';

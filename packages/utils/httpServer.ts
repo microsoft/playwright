@@ -67,7 +67,18 @@ export class HttpServer {
   createWebSocket(transportFactory: (url: URL) => Transport, guid?: string) {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
-    const wss = new wsServer({ server: this._server, path: '/' + this._wsGuid });
+    // HMR begin: route upgrades manually with `noServer` so Vite HMR's upgrade
+    // listener on the same http.Server is not pre-empted. With `{ server, path }`
+    // the ws library aborts non-matching upgrades with 400.
+    const wsPath = '/' + this._wsGuid;
+    const wss = new wsServer({ noServer: true });
+    this._server.on('upgrade', (request, socket, head) => {
+      const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+      if (pathname !== wsPath)
+        return;
+      wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws, request));
+    });
+    // HMR end
     wss.on('connection', (ws, request) => {
       const url = new URL(request.url ?? '/', 'http://localhost');
       const transport = transportFactory(url);

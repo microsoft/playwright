@@ -32,6 +32,11 @@ import { DashboardConnection } from './dashboardController';
 import type * as api from '../../..';
 import type { AnnotationData } from '@dashboard/dashboardChannel';
 
+// HMR: build-time flag — `true` in watch builds, `false` in release. esbuild
+// replaces the identifier via `define`, so the static branch pays zero runtime
+// cost and the dev-server code (incl. `import('vite')`) is DCE'd in release.
+declare const __PW_DASHBOARD_HMR__: boolean;
+
 type DashboardServer = {
   url: string;
   reveal: (options: DashboardOptions) => void;
@@ -74,14 +79,14 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
     return connection;
   }, 'ws');
 
-  httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
-    const filePath = pathname === '/' ? 'index.html' : pathname.substring(1);
-    const resolved = path.join(dashboardDir, filePath);
-    if (!resolved.startsWith(dashboardDir))
-      return false;
-    return httpServer.serveFile(request, response, resolved);
-  });
+  // HMR: watch builds serve the dashboard through an embedded Vite dev server
+  // so edits to packages/dashboard/src/* reload live. Release builds always
+  // take the static branch (the dev-server arm is DCE'd). Set
+  // PW_DASHBOARD_STATIC=1 during watch to exercise the bundled output.
+  if (__PW_DASHBOARD_HMR__ && process.env.PW_DASHBOARD_STATIC !== '1')
+    await attachDashboardDevServer(httpServer);
+  else
+    attachDashboardStaticServer(httpServer, dashboardDir);
   await httpServer.start({ port: options.port, host: options.host });
 
   const reveal = (next: DashboardOptions) => {
@@ -110,6 +115,46 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
 
   return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter };
 }
+
+function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
+  httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
+    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
+    const filePath = pathname === '/' ? 'index.html' : pathname.substring(1);
+    const resolved = path.join(dashboardDir, filePath);
+    if (!resolved.startsWith(dashboardDir))
+      return false;
+    return httpServer.serveFile(request, response, resolved);
+  });
+}
+
+// HMR begin: dev-mode branch — wires a Vite dev server into HttpServer.
+async function attachDashboardDevServer(httpServer: HttpServer) {
+  const dashboardRoot = path.resolve(__dirname, '..', '..', 'dashboard');
+  const loadVite = new Function('return import("vite")') as () => Promise<typeof import('vite')>;
+  const vite = await loadVite();
+  const devServer = await vite.createServer({
+    root: dashboardRoot,
+    configFile: path.join(dashboardRoot, 'vite.config.ts'),
+    server: {
+      middlewareMode: true,
+      // HMR: dedicated path so this websocket does not collide with the
+      // dashboard IPC websocket HttpServer owns at /ws.
+      hmr: { path: '/__vite_hmr', server: httpServer.server() },
+    },
+    appType: 'spa',
+    clearScreen: false,
+  });
+  httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
+    devServer.middlewares(request, response, () => {
+      if (!response.headersSent) {
+        response.statusCode = 404;
+        response.end();
+      }
+    });
+    return true;
+  });
+}
+// HMR end
 
 async function innerOpenDashboardApp(options: DashboardOptions): Promise<{ page: api.Page; server: DashboardServer }> {
   const server = await startDashboardServer(options);

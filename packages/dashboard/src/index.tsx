@@ -21,16 +21,13 @@ import '@web/common.css';
 import './common.css';
 import { applyTheme } from '@web/theme';
 import { Dashboard } from './dashboard';
+import { DashboardClientContext } from './dashboardContext';
 import { SessionModel } from './sessionModel';
 import { DashboardClient } from './dashboardClient';
 import { SessionSidebar } from './sessionSidebar';
 import { SplitView } from '@web/components/splitView';
 
-import type { DashboardClientChannel } from './dashboardClient';
-
 applyTheme();
-
-export const DashboardClientContext = React.createContext<DashboardClientChannel | undefined>(undefined);
 
 const client = DashboardClient.create('/ws');
 const model = new SessionModel(client);
@@ -64,4 +61,9 @@ const App: React.FC = () => {
   </DashboardClientContext.Provider>;
 };
 
-ReactDOM.createRoot(document.querySelector('#root')!).render(<App />);
+// HMR begin: cache the root on the DOM node so re-running this module during
+// an HMR update reuses it instead of calling createRoot twice on the same container.
+const rootElement = document.querySelector('#root')! as HTMLElement & { __dashboardRoot?: ReactDOM.Root };
+const root = rootElement.__dashboardRoot ??= ReactDOM.createRoot(rootElement);
+root.render(<App />);
+// HMR end
