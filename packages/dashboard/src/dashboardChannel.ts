@@ -34,7 +34,7 @@ export type DashboardChannelEvents = {
   sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
   tabs: { tabs: Tab[] };
   frame: { data: string; viewportWidth: number; viewportHeight: number };
-  elementPicked: { selector: string; ariaSnapshot?: string };
+  elementPicked: {};
   pickLocator: {};
   annotate: {};
 };
@@ -60,7 +60,6 @@ export interface DashboardChannel {
   wheel(params: { deltaX: number; deltaY: number }): Promise<void>;
   keydown(params: { key: string }): Promise<void>;
   keyup(params: { key: string }): Promise<void>;
-  pickLocator(): Promise<void>;
   cancelPickLocator(): Promise<void>;
   startRecording(): Promise<void>;
   stopRecording(): Promise<{ streamId: string }>;

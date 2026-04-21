@@ -224,8 +224,8 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
   }
 
-  emitElementPicked(selector: string, ariaSnapshot?: string) {
-    this.sendEvent?.('elementPicked', { selector, ariaSnapshot });
+  emitElementPicked() {
+    this.sendEvent?.('elementPicked', {});
   }
 
   emitPickLocator() {
@@ -383,23 +383,23 @@ export class DashboardConnection implements Transport {
   }
 
   async startPickLocator(): Promise<void> {
-    const attached = this._attachedBrowser;
-    const page = attached?.selectedPage();
-    if (!attached || !page) {
+    const page = this._attachedBrowser?.selectedPage();
+    if (!page) {
       this._onPickLocatorSubmit?.({ ref: undefined, locator: '' });
       return;
     }
-    this.sendEvent?.('pickLocator', {});
+    this.emitPickLocator();
     try {
       const locator = await page.pickLocator();
       // Regenerate aria refs so the picked element has an aria ref we can read below.
       await page.ariaSnapshot({ mode: 'ai' });
       const ref = await locator.ariaRef();
       const resolved = await locator.normalize();
-      this.emitElementPicked(resolved.toString(), await locator.ariaSnapshot());
       this._onPickLocatorSubmit?.({ ref: ref ?? undefined, locator: resolved.toString() });
     } catch {
       this._onPickLocatorSubmit?.({ ref: undefined, locator: '' });
+    } finally {
+      this.emitElementPicked();
     }
   }
 }
@@ -523,14 +523,6 @@ class AttachedBrowser {
 
   async keyup(params: { key: string }) {
     await this._selectedPage?.keyboard.up(params.key);
-  }
-
-  async pickLocator() {
-    const page = this._selectedPage;
-    if (!page)
-      return;
-    const locator = await page.pickLocator();
-    this._owner.emitElementPicked(locator.toString(), await locator.ariaSnapshot());
   }
 
   async cancelPickLocator() {

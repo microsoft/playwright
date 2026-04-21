@@ -19,6 +19,7 @@ import path from 'path';
 import net from 'net';
 import http from 'http';
 
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
@@ -39,13 +40,12 @@ declare const __PW_DASHBOARD_HMR__: boolean;
 
 type PickLocatorResult = { ref: string | undefined; locator: string };
 
+type ElicitationKind = 'annotate' | 'pick-locator';
+
 type DashboardServer = {
   url: string;
   reveal: (options: DashboardOptions) => void;
-  triggerAnnotate: () => void;
-  registerAnnotateWaiter: (socket: net.Socket) => void;
-  triggerPickLocator: () => void;
-  registerPickLocatorWaiter: (socket: net.Socket) => void;
+  elicit: (kind: ElicitationKind, socket: net.Socket) => void;
 };
 
 async function startDashboardServer(options: DashboardOptions): Promise<DashboardServer> {
@@ -54,31 +54,15 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
 
   const connections = new Set<DashboardConnection>();
   let currentReveal: DashboardOptions = options;
-  let pendingAnnotate = false;
-  let pendingPickLocator = false;
-  const annotateWaiters = new Set<net.Socket>();
-  const pickLocatorWaiters = new Set<net.Socket>();
+  let currentWaiter: net.Socket | undefined;
+  let pendingConnection: ManualPromise<void> | undefined;
 
-  const submitAnnotation = (base64Png: string, annotations: AnnotationData[]) => {
-    if (annotateWaiters.size === 0)
+  const submit = (payload: string) => {
+    if (!currentWaiter)
       return;
-    const payload = JSON.stringify({ png: base64Png, annotations });
-    for (const socket of annotateWaiters) {
-      socket.write(payload);
-      socket.end();
-    }
-    annotateWaiters.clear();
-  };
-
-  const submitPickLocator = (result: PickLocatorResult) => {
-    if (pickLocatorWaiters.size === 0)
-      return;
-    const payload = JSON.stringify(result);
-    for (const socket of pickLocatorWaiters) {
-      socket.write(payload);
-      socket.end();
-    }
-    pickLocatorWaiters.clear();
+    currentWaiter.write(payload);
+    currentWaiter.end();
+    currentWaiter = undefined;
   };
 
   httpServer.createWebSocket(() => {
@@ -87,15 +71,9 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
     connection = new DashboardConnection(() => connections.delete(connection), () => {
       if (currentReveal.sessionName)
         connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
-      if (pendingAnnotate) {
-        pendingAnnotate = false;
-        connection.emitAnnotate();
-      }
-      if (pendingPickLocator) {
-        pendingPickLocator = false;
-        void connection.startPickLocator();
-      }
-    }, submitAnnotation, submitPickLocator);
+      pendingConnection?.resolve();
+      pendingConnection = undefined;
+    }, (base64Png, annotations) => submit(JSON.stringify({ png: base64Png, annotations })), result => submit(JSON.stringify(result)));
     connections.add(connection);
     return connection;
   }, 'ws');
@@ -118,39 +96,36 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
       connection.revealSession(next.sessionName, next.workspaceDir);
   };
 
-  const triggerAnnotate = () => {
-    if (connections.size === 0) {
-      pendingAnnotate = true;
-      return;
-    }
-    for (const connection of connections)
-      connection.emitAnnotate();
+  let queue: Promise<void> = Promise.resolve();
+  const elicit = (kind: ElicitationKind, socket: net.Socket) => {
+    let cancelled = false;
+    const onClosed = () => {
+      cancelled = true;
+      if (currentWaiter === socket)
+        currentWaiter = undefined;
+    };
+    socket.on('close', onClosed);
+    socket.on('error', onClosed);
+    queue = queue.then(async () => {
+      if (cancelled)
+        return;
+      if (connections.size === 0) {
+        pendingConnection ??= new ManualPromise();
+        await pendingConnection;
+      }
+      if (cancelled)
+        return;
+      currentWaiter = socket;
+      for (const connection of connections) {
+        if (kind === 'annotate')
+          connection.emitAnnotate();
+        else
+          void connection.startPickLocator();
+      }
+    });
   };
 
-  const registerAnnotateWaiter = (socket: net.Socket) => {
-    annotateWaiters.add(socket);
-    const cleanup = () => annotateWaiters.delete(socket);
-    socket.on('close', cleanup);
-    socket.on('error', cleanup);
-  };
-
-  const triggerPickLocator = () => {
-    if (connections.size === 0) {
-      pendingPickLocator = true;
-      return;
-    }
-    for (const connection of connections)
-      void connection.startPickLocator();
-  };
-
-  const registerPickLocatorWaiter = (socket: net.Socket) => {
-    pickLocatorWaiters.add(socket);
-    const cleanup = () => pickLocatorWaiters.delete(socket);
-    socket.on('close', cleanup);
-    socket.on('error', cleanup);
-  };
-
-  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter, triggerPickLocator, registerPickLocatorWaiter };
+  return { url: httpServer.urlPrefix('human-readable'), reveal, elicit };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
@@ -326,11 +301,17 @@ export async function openDashboardApp() {
     return;
   }
   if (options.annotate) {
-    await runAnnotateClient(options);
+    const result = await runElicitationClient<{ png: string; annotations: AnnotationData[] }>(options);
+    if (result)
+      await renderAnnotateOutput(result.png, result.annotations);
     return;
   }
   if (options.pickLocator) {
-    await runPickLocatorClient(options);
+    const result = await runElicitationClient<PickLocatorResult>(options);
+    if (result) {
+      // eslint-disable-next-line no-console
+      console.log(`ref: ${result.ref ?? '(none)'}\nlocator: ${result.locator}`);
+    }
     return;
   }
   process.on('unhandledRejection', error => {
@@ -372,16 +353,10 @@ export async function openDashboardApp() {
         return;
       }
       void statePromise.then(({ page, server: dashboard }) => {
-        if (parsed.annotate) {
+        if (parsed.annotate || parsed.pickLocator) {
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
-          dashboard.triggerAnnotate();
-          dashboard.registerAnnotateWaiter(socket);
-        } else if (parsed.pickLocator) {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          dashboard.registerPickLocatorWaiter(socket);
-          dashboard.triggerPickLocator();
+          dashboard.elicit(parsed.annotate ? 'annotate' : 'pick-locator', socket);
         } else if (parsed.kill) {
           socket.end();
           gracefullyProcessExitDoNotHang(0);
@@ -408,7 +383,7 @@ async function runKillClient(): Promise<void> {
   });
 }
 
-async function runAnnotateClient(options: DashboardOptions): Promise<void> {
+async function runElicitationClient<T>(options: DashboardOptions): Promise<T | undefined> {
   selfDestructOnParentGone();
 
   const socketPath = dashboardSocketPath();
@@ -443,7 +418,10 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   const text = Buffer.concat(chunks).toString();
   if (!text)
     return;
-  const { png, annotations } = JSON.parse(text) as { png: string; annotations: AnnotationData[] };
+  return JSON.parse(text) as T;
+}
+
+async function renderAnnotateOutput(png: string, annotations: AnnotationData[]): Promise<void> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filePath = await saveOutputFile(`annotations-${timestamp}.png`, Buffer.from(png, 'base64'));
   for (const a of annotations) {
@@ -452,46 +430,6 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   }
   // eslint-disable-next-line no-console
   console.log(`image available at: ${path.relative(process.cwd(), filePath)}`);
-}
-
-async function runPickLocatorClient(options: DashboardOptions): Promise<void> {
-  selfDestructOnParentGone();
-
-  const socketPath = dashboardSocketPath();
-  const tryConnect = () => new Promise<net.Socket | undefined>(resolve => {
-    const s = net.connect(socketPath);
-    const onError = () => { s.destroy(); resolve(undefined); };
-    s.once('connect', () => { s.off('error', onError); resolve(s); });
-    s.once('error', onError);
-  });
-  const deadline = Date.now() + 15000;
-  let socket: net.Socket | undefined;
-  while (Date.now() < deadline) {
-    socket = await tryConnect();
-    if (socket)
-      break;
-    await new Promise(r => setTimeout(r, 200));
-  }
-  if (!socket) {
-    // eslint-disable-next-line no-console
-    console.error('Dashboard did not start in time.');
-    gracefullyProcessExitDoNotHang(1);
-    return;
-  }
-  socket.write(JSON.stringify(options) + '\n');
-  const chunks: Buffer[] = [];
-  await new Promise<void>((resolve, reject) => {
-    socket!.on('data', chunk => chunks.push(chunk));
-    socket!.on('end', () => resolve());
-    socket!.on('error', reject);
-  });
-  socket.destroy();
-  const text = Buffer.concat(chunks).toString();
-  if (!text)
-    return;
-  const { ref, locator } = JSON.parse(text) as PickLocatorResult;
-  // eslint-disable-next-line no-console
-  console.log(`ref: ${ref ?? '(none)'}\nlocator: ${locator}`);
 }
 
 function selfDestructOnParentGone() {

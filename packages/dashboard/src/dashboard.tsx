@@ -17,7 +17,6 @@
 import React from 'react';
 import './dashboard.css';
 import { DashboardClientContext } from './dashboardContext';
-import { asLocator } from '@isomorphic/locatorGenerators';
 import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
 import { Annotations, getImageLayout, clientToViewport } from './annotations';
 
@@ -201,9 +200,7 @@ export const Dashboard: React.FC = () => {
         window.resizeTo(targetW, targetH);
       }
     };
-    const onElementPicked = (params: DashboardChannelEvents['elementPicked']) => {
-      const locator = asLocator('javascript', params.selector);
-      navigator.clipboard?.writeText(locator).catch(() => {});
+    const onElementPicked = () => {
       setPicking(false);
     };
     const onPickLocator = () => {
