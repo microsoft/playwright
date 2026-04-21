@@ -19,6 +19,7 @@ import os from 'os';
 import fs from 'fs';
 import crypto from 'crypto';
 import { execFile } from 'child_process';
+import { Disposable } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
@@ -29,19 +30,90 @@ import type { Transport } from '@utils/httpServer';
 import type { AnnotationData, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
 
-type Disposable = { dispose: () => Promise<void> };
-
-type BrowserSlot = {
-  descriptor: BrowserDescriptor;
-  browser: api.Browser;
-  contextListeners: Map<api.BrowserContext, Disposable[]>;
+type BrowserTrackerCallbacks = {
+  onTabsChanged: () => void;
+  onPickLocator: (page: api.Page) => void;
+  onContextClosed: (context: api.BrowserContext) => void;
 };
+
+class BrowserTracker {
+  readonly descriptor: BrowserDescriptor;
+  readonly browser: api.Browser;
+  private _callbacks: BrowserTrackerCallbacks;
+  private _contextListeners = new Map<api.BrowserContext, Disposable[]>();
+
+  static async create(descriptor: BrowserDescriptor, callbacks: BrowserTrackerCallbacks): Promise<BrowserTracker | undefined> {
+    try {
+      const browser = await connectToBrowserAcrossVersions(descriptor);
+      const slot = new BrowserTracker(descriptor, browser, callbacks);
+      for (const context of browser.contexts())
+        slot._wireContext(context);
+      return slot;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private constructor(descriptor: BrowserDescriptor, browser: api.Browser, callbacks: BrowserTrackerCallbacks) {
+    this.descriptor = descriptor;
+    this.browser = browser;
+    this._callbacks = callbacks;
+  }
+
+  contexts(): api.BrowserContext[] {
+    return this.browser.contexts();
+  }
+
+  dispose() {
+    for (const listeners of this._contextListeners.values())
+      listeners.forEach(d => d.dispose());
+    this._contextListeners.clear();
+  }
+
+  private _wireContext(context: api.BrowserContext) {
+    if (this._contextListeners.has(context))
+      return;
+    const listeners: Disposable[] = [];
+    this._contextListeners.set(context, listeners);
+    const watchPage = (page: api.Page) => {
+      listeners.push(
+          eventsHelper.addEventListener(page, 'load', () => this._callbacks.onTabsChanged()),
+          eventsHelper.addEventListener(page, 'framenavigated', (frame: api.Frame) => {
+            if (frame === page.mainFrame())
+              this._callbacks.onTabsChanged();
+          }),
+          eventsHelper.addEventListener(page, 'close', () => this._callbacks.onTabsChanged()),
+      );
+    };
+    listeners.push(
+        eventsHelper.addEventListener(context, 'page', (page: api.Page) => {
+          watchPage(page);
+          this._callbacks.onTabsChanged();
+        }),
+        eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
+          this._callbacks.onPickLocator(page);
+        }),
+        eventsHelper.addEventListener(context, 'close', () => {
+          const ls = this._contextListeners.get(context);
+          if (ls) {
+            ls.forEach(d => d.dispose());
+            this._contextListeners.delete(context);
+          }
+          this._callbacks.onContextClosed(context);
+          this._callbacks.onTabsChanged();
+        }),
+    );
+    for (const page of context.pages())
+      watchPage(page);
+    this._callbacks.onTabsChanged();
+  }
+}
 
 export class DashboardConnection implements Transport {
   sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
-  private _browsers = new Map<string, BrowserSlot>();
+  private _browsers = new Map<string, BrowserTracker>();
   private _attachedPage: AttachedPage | undefined;
   private _onclose: () => void;
   private _onconnected?: () => void;
@@ -86,8 +158,8 @@ export class DashboardConnection implements Transport {
           .catch(() => {});
     }
     this._streams.clear();
-    for (const slot of this._browsers.values())
-      this._disposeSlot(slot);
+    for (const tracker of this._browsers.values())
+      tracker.dispose();
     this._browsers.clear();
     this._onclose();
   }
@@ -331,86 +403,38 @@ export class DashboardConnection implements Transport {
         this._attachedPage.dispose();
         this._attachedPage = undefined;
       }
-      this._disposeSlot(slot);
+      slot.dispose();
       this._browsers.delete(guid);
     }
 
     for (const [guid, status] of connectable) {
       if (this._browsers.has(guid))
         continue;
-      try {
-        const browser = await connectToBrowserAcrossVersions(status);
-        if (this._browsers.has(guid))
-          continue;
-        const slot: BrowserSlot = {
-          descriptor: status,
-          browser,
-          contextListeners: new Map(),
-        };
-        this._browsers.set(guid, slot);
-        for (const context of browser.contexts())
-          this._wireContext(context);
-      } catch {
-        // best-effort
-      }
-    }
-  }
-
-  private _wireContext(context: api.BrowserContext) {
-    const slot = this._browsers.get(browserId(context.browser()!));
-    if (!slot)
-      return;
-    if (slot.contextListeners.has(context))
-      return;
-    const listeners: Disposable[] = [];
-    slot.contextListeners.set(context, listeners);
-    const watchPage = (page: api.Page) => {
-      listeners.push(
-          eventsHelper.addEventListener(page, 'load', () => this._pushTabs()),
-          eventsHelper.addEventListener(page, 'framenavigated', (frame: api.Frame) => {
-            if (frame === page.mainFrame())
-              this._pushTabs();
-          }),
-          eventsHelper.addEventListener(page, 'close', () => this._pushTabs()),
-      );
-    };
-    listeners.push(
-        eventsHelper.addEventListener(context, 'page', (page: api.Page) => {
-          watchPage(page);
-          this._pushTabs();
-        }),
-        eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
-          this._onPickLocator(page).catch(() => {});
-        }),
-        eventsHelper.addEventListener(context, 'close', () => {
-          const ls = slot.contextListeners.get(context);
-          if (ls) {
-            ls.forEach(d => d.dispose());
-            slot.contextListeners.delete(context);
-          }
-          if (this._attachedPage && this._attachedPage.page.context() === context) {
+      const slot = await BrowserTracker.create(status, {
+        onTabsChanged: () => this._pushTabs(),
+        onPickLocator: page => { this._onPickLocator(page).catch(() => {}); },
+        onContextClosed: context => {
+          if (this._attachedPage?.page.context() === context) {
             this._attachedPage.dispose();
             this._attachedPage = undefined;
           }
-          this._pushTabs();
-        }),
-    );
-    for (const page of context.pages())
-      watchPage(page);
-    this._pushTabs();
-  }
-
-  private _disposeSlot(slot: BrowserSlot) {
-    for (const listeners of slot.contextListeners.values())
-      listeners.forEach(d => d.dispose());
-    slot.contextListeners.clear();
+        },
+      });
+      if (!slot)
+        continue;
+      if (this._browsers.has(guid)) {
+        slot.dispose();
+        continue;
+      }
+      this._browsers.set(guid, slot);
+    }
   }
 
   private _findContext(params: { browser: string; context: string }): api.BrowserContext | undefined {
     const slot = this._browsers.get(params.browser);
     if (!slot)
       return undefined;
-    return slot.browser.contexts().find(c => contextId(c) === params.context);
+    return slot.contexts().find(c => contextId(c) === params.context);
   }
 
   private _findPage(params: { browser: string; context: string; page: string }): api.Page | undefined {
@@ -426,13 +450,13 @@ export class DashboardConnection implements Transport {
 
 class AttachedPage {
   private _owner: DashboardConnection;
-  private _slot: BrowserSlot;
+  private _slot: BrowserTracker;
   private _page: api.Page;
   private _listeners: Disposable[] = [];
   private _screencastRunning = false;
   private _recordingPath: string | null = null;
 
-  constructor(owner: DashboardConnection, slot: BrowserSlot, page: api.Page) {
+  constructor(owner: DashboardConnection, slot: BrowserTracker, page: api.Page) {
     this._owner = owner;
     this._slot = slot;
     this._page = page;
