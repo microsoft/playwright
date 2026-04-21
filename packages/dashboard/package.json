@@ -5,10 +5,13 @@
   "type": "module",
   "dependencies": {
     "@browser-logos/chrome": "2.0.0",
+    "@browser-logos/chrome-beta": "3.0.0",
     "@browser-logos/chrome-canary": "2.0.0",
+    "@browser-logos/chrome-dev": "3.0.0",
     "@browser-logos/chromium": "2.0.1",
     "@browser-logos/edge": "2.0.7",
     "@browser-logos/firefox": "3.0.10",
+    "@browser-logos/firefox-beta": "4.1.4",
     "@browser-logos/firefox-nightly": "3.0.6",
     "@browser-logos/safari": "2.1.0"
   }

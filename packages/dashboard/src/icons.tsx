@@ -17,9 +17,12 @@
 import React from 'react';
 
 import chromeSvg from '@browser-logos/chrome/chrome.svg';
+import chromeBetaSvg from '@browser-logos/chrome-beta/chrome-beta.svg';
 import chromeCanarySvg from '@browser-logos/chrome-canary/chrome-canary.svg';
+import chromeDevSvg from '@browser-logos/chrome-dev/chrome-dev.svg';
 import chromiumSvg from '@browser-logos/chromium/chromium.svg';
 import firefoxSvg from '@browser-logos/firefox/firefox.svg';
+import firefoxBetaSvg from '@browser-logos/firefox-beta/firefox-beta.svg';
 import firefoxNightlySvg from '@browser-logos/firefox-nightly/firefox-nightly.svg';
 import safariSvg from '@browser-logos/safari/safari.svg';
 import edgeSvg from '@browser-logos/edge/edge.svg';
@@ -31,15 +34,16 @@ export const browserIconUrls: Record<string, string> = {
   'chromium': chromiumSvg,
   'chromium-headless-shell': chromiumSvg,
   'chrome-for-testing': chromiumSvg,
-  // Google Chrome stable + beta/dev share the stable icon.
+  // Google Chrome stable + per-channel icons.
   'chrome': chromeSvg,
-  'chrome-beta': chromeSvg,
-  'chrome-dev': chromeSvg,
+  'chrome-beta': chromeBetaSvg,
+  'chrome-dev': chromeDevSvg,
   'chrome-canary': chromeCanarySvg,
-  // Firefox: stable (bundled + moz-firefox) + beta share the stable icon.
+  // Firefox: stable (bundled + moz-firefox) + dedicated beta/nightly icons.
   'firefox': firefoxSvg,
   'moz-firefox': firefoxSvg,
-  'moz-firefox-beta': firefoxSvg,
+  'firefox-beta': firefoxBetaSvg,
+  'moz-firefox-beta': firefoxBetaSvg,
   'moz-firefox-nightly': firefoxNightlySvg,
   // Safari / WebKit.
   'webkit': safariSvg,
