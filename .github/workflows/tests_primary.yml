@@ -9,9 +9,11 @@ on:
     paths-ignore:
       - 'browser_patches/**'
       - 'docs/**'
+      - 'packages/extension/**'
       - 'packages/playwright-core/src/server/bidi/**'
       - 'packages/playwright-core/src/tools/**'
       - 'tests/bidi/**'
+      - 'tests/extension/**'
       - 'tests/mcp/**'
     branches:
       - main
