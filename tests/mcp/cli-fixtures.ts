@@ -97,8 +97,8 @@ export const test = baseTest.extend<{
       await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
   },
   boundBrowser: async ({ mcpBrowser, playwright }, use) => {
-    const browserName = mcpBrowser === 'chrome' ? 'chromium' : mcpBrowser;
-    const channel = mcpBrowser === 'chrome' ? 'chrome' : undefined;
+    const browserName = (mcpBrowser === 'chrome' || mcpBrowser === 'msedge') ? 'chromium' : mcpBrowser;
+    const channel = (mcpBrowser === 'chrome' || mcpBrowser === 'msedge') ? mcpBrowser : undefined;
     const browser = await playwright[browserName].launch({ channel, headless: true });
     for (const [name, value] of Object.entries(cliEnv()))
       process.env[name] = value;
