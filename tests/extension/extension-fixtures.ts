@@ -59,6 +59,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
     // Default is 1.
     if (protocolVersion === 2)
       process.env.PLAYWRIGHT_EXTENSION_PROTOCOL = '2';
+    else
+      delete process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
     await use();
   }, { auto: true, scope: 'worker' }],
 
