@@ -308,6 +308,7 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server, is
   e.matcherResult.message = stripAnsi(e.matcherResult.message);
 
   expect.soft(e.matcherResult).toEqual({
+    attachments: [expect.any(Object), expect.any(Object), expect.any(Object)],
     actual: expect.stringContaining('screenshot-sanity-actual'),
     expected: expect.stringContaining('screenshot-sanity-'),
     diff: expect.stringContaining('screenshot-sanity-diff'),

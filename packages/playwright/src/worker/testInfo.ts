@@ -46,7 +46,6 @@ interface TestStepData {
   location?: Location;
   apiName?: string;
   params?: Record<string, any>;
-  infectParentStepsWithError?: boolean;
   box?: boolean;
   // steps with any defined group are hidden from the report
   // 'internal' steps are hidden from the trace
@@ -54,7 +53,7 @@ interface TestStepData {
 }
 
 export interface TestStepInternal extends TestStepData {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  complete(result: { error?: Error | unknown, softError?: Error | unknown, shouldNotRetryTest?: boolean, suggestedRebaseline?: string, attachments?: TestInfo['attachments'] }): void;
   info: TestStepInfoImpl;
   attachmentIndices: number[];
   stepId: string;
@@ -62,6 +61,7 @@ export interface TestStepInternal extends TestStepData {
   steps: TestStepInternal[];
   endWallTime?: number;
   error?: ipc.TestInfoErrorImpl;
+  infectParentStepsWithError?: boolean;
 }
 
 type SnapshotNames = {
@@ -318,6 +318,10 @@ export class TestInfoImpl implements TestInfo {
           return;
 
         step.endWallTime = Date.now();
+        if (result.attachments) {
+          for (const attachment of result.attachments)
+            this._attach(attachment, stepId);
+        }
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
@@ -326,6 +330,12 @@ export class TestInfoImpl implements TestInfo {
             error.stack = `${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
           step.error = error;
         }
+        if (result.softError) {
+          step.infectParentStepsWithError = true;
+          this._failWithError(result.softError);
+        }
+        if (result.shouldNotRetryTest)
+          this._hasNonRetriableError = true;
 
         if (!step.error) {
           // Soft errors inside try/catch will make the test fail.
@@ -403,9 +413,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error | unknown, shouldNotRetry?: 'shouldNotRetry') {
-    if (shouldNotRetry)
-      this._hasNonRetriableError = true;
+  _failWithError(error: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = testInfoError(error);
@@ -694,12 +702,8 @@ export class TestStepInfoImpl implements TestStepInfo {
     }
   }
 
-  _attachToStep(attachment: TestInfo['attachments'][0]): void {
-    this._testInfo._attach(attachment, this._stepId);
-  }
-
   async attach(name: string, options?: { body?: string | Buffer; contentType?: string; path?: string; }): Promise<void> {
-    this._attachToStep(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options));
+    this._testInfo._attach(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options), this._stepId);
   }
 
   get titlePath(): string[] {

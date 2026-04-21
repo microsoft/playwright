@@ -137,23 +137,19 @@ export async function toMatchAriaSnapshot(
         const relativePath = path.relative(process.cwd(), expectedPath);
         if (updateSnapshots === 'missing') {
           const message = `A snapshot doesn't exist at ${relativePath}, writing actual.`;
-          testInfo._failWithError(new Error(message), 'shouldNotRetry');
-        } else {
-          const message = `A snapshot is generated at ${relativePath}.`;
-          /* eslint-disable no-console */
-          console.log(message);
+          return { pass: true, message: () => '', name: 'toMatchAriaSnapshot', softError: new Error(message), shouldNotRetryTest: true };
         }
+        const message = `A snapshot is generated at ${relativePath}.`;
+        /* eslint-disable no-console */
+        console.log(message);
         return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
       } else {
         const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
         if (updateSnapshots === 'missing') {
           const message = 'A snapshot is not provided, generating new baseline.';
-          testInfo._failWithError(new Error(message), 'shouldNotRetry');
+          return { pass: true, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline, softError: new Error(message), shouldNotRetryTest: true };
         }
-        // TODO: ideally, we should return "pass: true" here because this matcher passes
-        // when regenerating baselines. However, we can only access suggestedRebaseline in case
-        // of an error, so we fail here and workaround it in the expect implementation.
-        return { pass: false, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
+        return { pass: true, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
       }
     }
   }

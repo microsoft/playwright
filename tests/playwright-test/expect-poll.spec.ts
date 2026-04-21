@@ -279,3 +279,29 @@ test('should show custom message', {
   expect(result.output).toContain('Expected: 2');
   expect(result.output).toContain('Received: 1');
 });
+
+test('should swallow matcher errors and predicate errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should poll async predicate', async () => {
+        let i = 0;
+        await test.expect.poll(async () => {
+          if (++i === 2)
+            return 'some foo text';
+          return undefined;
+        }).toContain('foo');
+      });
+      test('should poll async predicate with not', async () => {
+        let i = 0;
+        await test.expect.poll(async () => {
+          if (++i === 2)
+            return 'some bar text';
+          return undefined;
+        }).not.toContain('foo');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
