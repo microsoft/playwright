@@ -20,14 +20,14 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
-import { disposeAll } from '@utils/disposable';
+import { disposeAll } from '@isomorphic/disposable';
 import { waitForCompletion, eventWaiter } from './utils';
 import { LogFile } from './logFile';
 import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
 import { uploadFile } from './files';
 
-import type { Disposable } from '@utils/disposable';
+import type { Disposable } from '@isomorphic/disposable';
 import type { Context, ContextConfig } from './context';
 import type * as playwright from '../../..';
 
