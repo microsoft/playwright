@@ -19,7 +19,7 @@
 
 import path from 'path';
 
-import { playwrightExtensionInstallUrl, remoteDebuggingHint } from './channelSessions';
+import { playwrightExtensionInstallUrl } from './channelSessions';
 
 import type { ChannelSession } from './channelSessions';
 import type { BrowserStatus } from '../../serverRegistry';
@@ -160,7 +160,7 @@ export class TextOutput implements Output {
 
     if (channelSessions?.length) {
       console.log('');
-      console.log('### Discovered browsers');
+      console.log('### Browsers available to attach via CDP');
       for (const session of channelSessions)
         console.log(renderChannelSession(session));
     }
@@ -364,19 +364,13 @@ function renderServer(server: BrowserStatus): string {
 function renderChannelSession(session: ChannelSession): string {
   const lines = [`- ${session.channel}:`];
   lines.push(`  - data-dir: ${session.userDataDir}`);
-  if (session.extensionInstalled) {
-    lines.push(`  - extension: installed`);
-    lines.push(`  - run \`playwright-cli attach --extension=${session.channel}\` to attach`);
-  } else {
-    lines.push(`  - extension: not installed`);
-    lines.push(`  - install the Playwright MCP Bridge extension: ${playwrightExtensionInstallUrl}`);
-  }
-  if (session.endpoint) {
-    lines.push(`  - remote debugging: ${session.endpoint}`);
-    lines.push(`  - run \`playwright-cli attach --cdp=${session.channel}\` to attach`);
-  } else {
-    lines.push(`  - remote debugging: not enabled`);
-    lines.push(`  - ${remoteDebuggingHint(session.channel)}`);
-  }
+  if (session.extensionInstalled)
+    lines.push(`  - attach (extension): \`playwright-cli attach --extension=${session.channel}\``);
+  else
+    lines.push(`  - attach (extension): install at ${playwrightExtensionInstallUrl}`);
+  if (session.endpoint)
+    lines.push(`  - attach (remote debugging): \`playwright-cli attach --cdp=${session.channel}\``);
+  else
+    lines.push(`  - attach (remote debugging): enable at chrome://inspect/#remote-debugging`);
   return lines.join('\n');
 }

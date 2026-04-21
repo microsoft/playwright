@@ -55,10 +55,6 @@ async function hasPlaywrightExtension(userDataDir: string): Promise<boolean> {
   return await pathExists(path.join(userDataDir, 'Default', 'Extensions', playwrightExtensionId));
 }
 
-export function remoteDebuggingHint(channel: string): string {
-  return `to enable, launch ${channel}, navigate to chrome://inspect/#remote-debugging and check "Allow remote debugging for this browser instance"`;
-}
-
 async function pathExists(p: string): Promise<boolean> {
   try {
     await fs.promises.access(p);
