@@ -20,11 +20,13 @@ import { execSync, spawn } from 'child_process';
 
 import crypto from 'crypto';
 import os from 'os';
+import path from 'path';
 
 import { listChannelSessions } from './channelSessions';
 import { JsonOutput, TextOutput } from './output';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session } from './session';
+import { isCodingAgent } from './utils';
 import { libPath } from '../../package';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
@@ -92,8 +94,16 @@ export async function program(options?: { embedderVersion?: string}) {
   }
 
   const command = commandName && help.commands[commandName];
-  if (args.help || args.h) {
-    output.help(command ? command.help : 'playwright-cli - run playwright mcp commands from terminal\n\n' + help.global);
+  if (args.help || args.h || !commandName) {
+    if (command) {
+      output.help(command.help);
+    } else {
+      const lines = ['playwright-cli - run playwright mcp commands from terminal'];
+      if (isCodingAgent())
+        lines.push(`Agent skill: ${path.relative(process.cwd(), libPath('tools', 'cli-client', 'skill', 'SKILL.md'))}`);
+      lines.push(help.global);
+      output.help(lines.join('\n\n'));
+    }
     process.exit(0);
   }
 
