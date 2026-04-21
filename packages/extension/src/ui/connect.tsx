@@ -50,7 +50,7 @@ const ConnectApp: React.FC = () => {
       try {
         const host = new URL(relayUrl).hostname;
         if (host !== '127.0.0.1' && host !== '[::1]') {
-          handleReject(`MCP extension only allows loopback connections (127.0.0.1 or [::1]). Received host: ${host}`);
+          handleReject(`Playwright extension only allows loopback connections (127.0.0.1 or [::1]). Received host: ${host}`);
           return;
         }
       } catch (e) {
@@ -238,7 +238,7 @@ const VersionMismatchError: React.FC<{ extensionVersion: string }> = ({ extensio
   const chromeWebStoreUrl = 'https://chromewebstore.google.com/detail/playwright-mcp-bridge/mmlmfjhmonkocbjadbfplnigmagldckm';
   return (
     <div>
-      Playwright MCP version trying to connect requires newer extension version (current version: {extensionVersion}).{' '}
+      Playwright client trying to connect requires newer extension version (current version: {extensionVersion}).{' '}
       Update <a href={chromeWebStoreUrl} target='_blank' rel='noopener noreferrer'>Playwright Extension</a> from the Chrome Web Store to the latest version.{' '}
       See <a href={readmeUrl} target='_blank' rel='noopener noreferrer'>installation instructions</a> for more details.
     </div>

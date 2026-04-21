@@ -245,7 +245,7 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
   });
 
   const confirmationPage = await confirmationPagePromise;
-  await expect(confirmationPage.locator('.status-banner')).toContainText(`Playwright MCP version trying to connect requires newer extension version`);
+  await expect(confirmationPage.locator('.status-banner')).toContainText(`Playwright client trying to connect requires newer extension version`);
 
   expect(await navigateResponse).toHaveResponse({
     error: expect.stringContaining('Extension connection timeout.'),
