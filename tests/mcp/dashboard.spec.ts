@@ -41,6 +41,16 @@ test('should show browser session chip', async ({ cli, server, startDashboardSer
   await expect(chips).toHaveCount(1);
 });
 
+test('should show placeholder chip for browser with no contexts', async ({ boundBrowser, startDashboardServer }) => {
+  expect(boundBrowser.contexts()).toHaveLength(0);
+
+  const dashboard = await startDashboardServer();
+  const chips = dashboard.locator('.session-chip');
+  await expect(chips).toHaveCount(1);
+  await expect(chips.locator('.sidebar-tabs-empty')).toHaveText('No tabs open.');
+  await expect(chips.locator('.sidebar-session-new-tab')).toHaveCount(0);
+});
+
 test('should show one row per context for a single browser', async ({ boundBrowser, server, startDashboardServer }) => {
   const contextA = await boundBrowser.newContext();
   const pageA = await contextA.newPage();
