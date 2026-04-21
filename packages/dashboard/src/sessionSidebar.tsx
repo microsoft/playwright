@@ -28,7 +28,7 @@ type SessionSidebarProps = {
   model: SessionModel;
   onSelectTab: (tab: Tab) => void;
   onCloseTab: (tab: Tab) => void;
-  onNewTab: (browser: string) => void;
+  onNewTab: (browser: string, context: string) => void;
 };
 
 function tabFavicon(url: string): string {
@@ -70,20 +70,25 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
     return () => client.off('tabs', onTabs);
   }, [client]);
 
-  const tabsByBrowser = React.useMemo(() => {
-    const map = new Map<string, Tab[]>();
+  const tabsByBrowserAndContext = React.useMemo(() => {
+    const map = new Map<string, Map<string, Tab[]>>();
     for (const tab of allTabs ?? []) {
-      let list = map.get(tab.browser);
+      let byContext = map.get(tab.browser);
+      if (!byContext) {
+        byContext = new Map();
+        map.set(tab.browser, byContext);
+      }
+      let list = byContext.get(tab.context);
       if (!list) {
         list = [];
-        map.set(tab.browser, list);
+        byContext.set(tab.context, list);
       }
       list.push(tab);
     }
     return map;
   }, [allTabs]);
 
-  const activeBrowser = React.useMemo(() => allTabs?.find(t => t.selected)?.browser, [allTabs]);
+  const activeContext = React.useMemo(() => allTabs?.find(t => t.selected)?.context, [allTabs]);
 
   const workspaceGroups = React.useMemo(() => {
     const groups = new Map<string, SessionStatus[]>();
@@ -125,72 +130,81 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
               const guid = session.browser.guid;
               const browserType = session.browser.browserName;
               const channel = session.browser.launchOptions?.channel;
-              const tabs = allTabs === null ? undefined : (tabsByBrowser.get(guid) ?? []);
-              return <div key={guid} className='session-chip sidebar-session' role='listitem' title={session.title}>
-                <div className='sidebar-session-row'>
-                  <div className='session-browser-icon-wrap' title={channel || browserType}>
-                    <span className='session-browser-icon' aria-hidden='true'>
-                      <BrowserIcon browserName={browserType} channel={channel} />
-                    </span>
-                    <ToolbarButton
-                      className='session-browser-close'
-                      icon='close'
-                      title='Close session'
-                      onClick={() => void model.closeSession(session)}
-                    />
-                  </div>
-                  <span className='session-chip-name'>{session.title}</span>
-                  <div className='sidebar-session-row-actions'>
-                    <ToolbarButton
-                      className='sidebar-session-new-tab'
-                      icon='add'
-                      title='New tab'
-                      onClick={() => onNewTab(guid)}
-                    />
-                  </div>
-                </div>
-                <div className='sidebar-tab-list' role='list' aria-label={`${session.title} tabs`}>
-                  {tabs === undefined && <div className='sidebar-tabs-loading' role='status' aria-live='polite'>Loading tabs...</div>}
-                  {tabs?.length === 0 && <div className='sidebar-tabs-empty' role='status' aria-live='polite'>No tabs open.</div>}
-                  {tabs?.map(tab => <div
-                    key={tab.page}
-                    className={'sidebar-tab' + (guid === activeBrowser && tab.selected ? ' active' : '')}
-                    role='listitem'
-                  >
-                    <div
-                      className='sidebar-tab-select'
-                      role='button'
-                      tabIndex={0}
-                      aria-current={guid === activeBrowser && tab.selected ? 'page' : undefined}
-                      title={tab.url || tab.title}
-                      onClick={() => onSelectTab(tab)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          onSelectTab(tab);
-                        }
-                      }}
-                    >
-                      {tab.faviconUrl
-                        ? <img className='sidebar-tab-favicon' src={tab.faviconUrl} alt='' aria-hidden='true' />
-                        : <span className='sidebar-tab-favicon placeholder' aria-hidden='true'>{tabFavicon(tab.url)}</span>}
-                      <span className='sidebar-tab-text'>
-                        <span className='sidebar-tab-title'>{tab.title || 'New Tab'}</span>
-                        <span className='sidebar-tab-url'>{tab.url || 'about:blank'}</span>
+              const byContext = tabsByBrowserAndContext.get(guid);
+              const contextEntries = byContext ? [...byContext.entries()] : [];
+              const rows: { contextGuid: string | null; tabs: Tab[] | undefined }[] =
+                allTabs === null
+                  ? [{ contextGuid: null, tabs: undefined }]
+                  : contextEntries.length === 0
+                    ? [{ contextGuid: null, tabs: [] }]
+                    : contextEntries.map(([contextGuid, tabs]) => ({ contextGuid, tabs }));
+              return <React.Fragment key={guid}>
+                {rows.map((row, rowIdx) => <div key={row.contextGuid ?? `placeholder-${rowIdx}`} className='session-chip sidebar-session' role='listitem' title={session.title}>
+                  <div className='sidebar-session-row'>
+                    <div className='session-browser-icon-wrap' title={channel || browserType}>
+                      <span className='session-browser-icon' aria-hidden='true'>
+                        <BrowserIcon browserName={browserType} channel={channel} />
                       </span>
+                      <ToolbarButton
+                        className='session-browser-close'
+                        icon='close'
+                        title='Close session'
+                        onClick={() => void model.closeSession(session)}
+                      />
                     </div>
-                    <ToolbarButton
-                      className='sidebar-tab-close'
-                      icon='close'
-                      title='Close tab'
-                      onClick={e => {
-                        e.stopPropagation();
-                        onCloseTab(tab);
-                      }}
-                    />
-                  </div>)}
-                </div>
-              </div>;
+                    <span className='session-chip-name'>{session.title}</span>
+                    <div className='sidebar-session-row-actions'>
+                      {row.contextGuid && <ToolbarButton
+                        className='sidebar-session-new-tab'
+                        icon='add'
+                        title='New tab'
+                        onClick={() => onNewTab(guid, row.contextGuid!)}
+                      />}
+                    </div>
+                  </div>
+                  <div className='sidebar-tab-list' role='list' aria-label={`${session.title} tabs`}>
+                    {row.tabs === undefined && <div className='sidebar-tabs-loading' role='status' aria-live='polite'>Loading tabs...</div>}
+                    {row.tabs?.length === 0 && <div className='sidebar-tabs-empty' role='status' aria-live='polite'>No tabs open.</div>}
+                    {row.tabs?.map(tab => <div
+                      key={tab.page}
+                      className={'sidebar-tab' + (tab.context === activeContext && tab.selected ? ' active' : '')}
+                      role='listitem'
+                    >
+                      <div
+                        className='sidebar-tab-select'
+                        role='button'
+                        tabIndex={0}
+                        aria-current={tab.context === activeContext && tab.selected ? 'page' : undefined}
+                        title={tab.url || tab.title}
+                        onClick={() => onSelectTab(tab)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onSelectTab(tab);
+                          }
+                        }}
+                      >
+                        {tab.faviconUrl
+                          ? <img className='sidebar-tab-favicon' src={tab.faviconUrl} alt='' aria-hidden='true' />
+                          : <span className='sidebar-tab-favicon placeholder' aria-hidden='true'>{tabFavicon(tab.url)}</span>}
+                        <span className='sidebar-tab-text'>
+                          <span className='sidebar-tab-title'>{tab.title || 'New Tab'}</span>
+                          <span className='sidebar-tab-url'>{tab.url || 'about:blank'}</span>
+                        </span>
+                      </div>
+                      <ToolbarButton
+                        className='sidebar-tab-close'
+                        icon='close'
+                        title='Close tab'
+                        onClick={e => {
+                          e.stopPropagation();
+                          onCloseTab(tab);
+                        }}
+                      />
+                    </div>)}
+                  </div>
+                </div>)}
+              </React.Fragment>;
             })}
           </div>
         </section>;

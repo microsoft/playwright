@@ -42,9 +42,9 @@ export type DashboardChannelEvents = {
 export type MouseButton = 'left' | 'middle' | 'right';
 
 export interface DashboardChannel {
-  selectTab(params: { browser: string; page: string }): Promise<void>;
-  closeTab(params: { browser: string; page: string }): Promise<void>;
-  newTab(params: { browser: string }): Promise<void>;
+  selectTab(params: { browser: string; context: string; page: string }): Promise<void>;
+  closeTab(params: { browser: string; context: string; page: string }): Promise<void>;
+  newTab(params: { browser: string; context: string }): Promise<void>;
   closeSession(params: { browser: string }): Promise<void>;
   deleteSessionData(params: { browser: string }): Promise<void>;
   setVisible(params: { visible: boolean }): Promise<void>;
