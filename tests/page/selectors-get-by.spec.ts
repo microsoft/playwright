@@ -270,3 +270,85 @@ it('getByRole escaping', async ({ page }) => {
   expect.soft(await page.getByRole('button', { name: 'Click \\\\me', exact: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
   ]);
 });
+
+it('getByRole with description', async ({ page }) => {
+  await page.setContent(`
+    <div role="alert" aria-label="Upload successful" aria-description="File doc-2025.pdf was uploaded successfully">Alert 1</div>
+    <div role="alert" aria-label="Upload successful" aria-description="File report-2026.pdf was uploaded successfully">Alert 2</div>
+    <div role="alert" aria-label="Invalid file" aria-description="File demo.doc has an invalid file format">Alert 3</div>
+  `);
+
+  // description substring match (default)
+  expect.soft(await page.getByRole('alert', { description: 'doc-2025' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert 1',
+  ]);
+  expect.soft(await page.getByRole('alert', { description: 'report-2026' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert 2',
+  ]);
+
+  // description with name combined
+  expect.soft(await page.getByRole('alert', { name: 'Upload successful', description: 'doc-2025' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert 1',
+  ]);
+  expect.soft(await page.getByRole('alert', { name: 'Upload successful', description: 'report-2026' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert 2',
+  ]);
+  expect.soft(await page.getByRole('alert', { name: 'Invalid file', description: 'doc-2025' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+  ]);
+
+  // description exact match
+  expect.soft(await page.getByRole('alert', { description: 'doc-2025', exact: true }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+  ]);
+  expect.soft(await page.getByRole('alert', { description: 'File doc-2025.pdf was uploaded successfully', exact: true }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert 1',
+  ]);
+
+  // description regex match
+  expect.soft(await page.getByRole('alert', { description: /report-\d+/ }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert 2',
+  ]);
+  expect.soft(await page.getByRole('alert', { description: /uploaded successfully$/ }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert 1',
+    'Alert 2',
+  ]);
+});
+
+it('getByRole with description via aria-describedby', async ({ page }) => {
+  await page.setContent(`
+    <button aria-describedby="desc1">Submit</button>
+    <span id="desc1">Submits the form data</span>
+    <button aria-describedby="desc2">Submit</button>
+    <span id="desc2">Saves as draft</span>
+  `);
+
+  expect.soft(await page.getByRole('button', { name: 'Submit', description: 'form data' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Submit',
+  ]);
+  expect.soft(await page.getByRole('button', { name: 'Submit', description: 'draft' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Submit',
+  ]);
+});
+
+it('getByRole with description via title fallback', async ({ page }) => {
+  await page.setContent(`
+    <button title="Submits the form">Submit</button>
+    <button title="Resets the form">Reset</button>
+  `);
+
+  expect.soft(await page.getByRole('button', { description: 'Submits' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Submit',
+  ]);
+  expect.soft(await page.getByRole('button', { description: 'Resets' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Reset',
+  ]);
+});
+
+it('getByRole with description whitespace normalization', async ({ page }) => {
+  await page.setContent(`
+    <div role="alert" aria-description="File  doc-2025.pdf   was uploaded   successfully">Alert</div>
+  `);
+
+  expect.soft(await page.getByRole('alert', { description: '  doc-2025.pdf \n was  uploaded ' }).evaluateAll(els => els.map(e => e.textContent))).toEqual([
+    'Alert',
+  ]);
+});
