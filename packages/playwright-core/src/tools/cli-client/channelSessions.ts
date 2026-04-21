@@ -30,6 +30,8 @@ export type ChannelSession = {
 // and the hardcoded url in packages/playwright-core/src/tools/mcp/cdpRelay.ts.
 const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
+export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-mcp-bridge/${playwrightExtensionId}`;
+
 export async function listChannelSessions(): Promise<ChannelSession[]> {
   if (process.env.PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST)
     return [];

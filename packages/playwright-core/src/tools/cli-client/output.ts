@@ -19,7 +19,7 @@
 
 import path from 'path';
 
-import { remoteDebuggingHint } from './channelSessions';
+import { playwrightExtensionInstallUrl, remoteDebuggingHint } from './channelSessions';
 
 import type { ChannelSession } from './channelSessions';
 import type { BrowserStatus } from '../../serverRegistry';
@@ -158,17 +158,9 @@ export class TextOutput implements Output {
     if (!count)
       console.log('  (no browsers)');
 
-    const extensionChannels = channelSessions?.filter(s => s.extensionInstalled) ?? [];
-    if (extensionChannels.length) {
-      console.log('');
-      console.log('### Browsers available to attach via extension');
-      for (const session of extensionChannels)
-        console.log(renderExtensionChannel(session));
-    }
-
     if (channelSessions?.length) {
       console.log('');
-      console.log('### Browsers available to attach via CDP');
+      console.log('### Discovered browsers');
       for (const session of channelSessions)
         console.log(renderChannelSession(session));
     }
@@ -372,19 +364,19 @@ function renderServer(server: BrowserStatus): string {
 function renderChannelSession(session: ChannelSession): string {
   const lines = [`- ${session.channel}:`];
   lines.push(`  - data-dir: ${session.userDataDir}`);
+  if (session.extensionInstalled) {
+    lines.push(`  - extension: installed`);
+    lines.push(`  - run \`playwright-cli attach --extension=${session.channel}\` to attach`);
+  } else {
+    lines.push(`  - extension: not installed`);
+    lines.push(`  - install the Playwright MCP Bridge extension: ${playwrightExtensionInstallUrl}`);
+  }
   if (session.endpoint) {
-    lines.push(`  - endpoint: ${session.endpoint}`);
+    lines.push(`  - remote debugging: ${session.endpoint}`);
     lines.push(`  - run \`playwright-cli attach --cdp=${session.channel}\` to attach`);
   } else {
-    lines.push(`  - status: remote debugging not enabled`);
+    lines.push(`  - remote debugging: not enabled`);
     lines.push(`  - ${remoteDebuggingHint(session.channel)}`);
   }
-  return lines.join('\n');
-}
-
-function renderExtensionChannel(session: ChannelSession): string {
-  const lines = [`- ${session.channel}:`];
-  lines.push(`  - data-dir: ${session.userDataDir}`);
-  lines.push(`  - run \`playwright-cli attach --extension=${session.channel}\` to attach`);
   return lines.join('\n');
 }
