@@ -210,6 +210,13 @@ export async function program(options?: { embedderVersion?: string}) {
         await new Promise<void>(resolve => annotate.on('exit', () => resolve()));
         return;
       }
+      if (args['pick-locator']) {
+        const dashboard = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
+        dashboard.unref();
+        const pick = spawn(process.execPath, [...daemonArgs, '--pick-locator'], { stdio: 'inherit' });
+        await new Promise<void>(resolve => pick.on('exit', () => resolve()));
+        return;
+      }
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,

@@ -143,13 +143,10 @@ test('should capture annotations via show --annotate', async ({ connectToDashboa
   await dashboard.locator('.sidebar-tab').first().click();
 
   const annotatePromise = cli('show', '--annotate');
-  let done = false;
-  void annotatePromise.finally(() => { done = true; });
 
   await drawAndSubmitAnnotation(dashboard, 'hello');
 
   const { output, exitCode } = await annotatePromise;
-  expect(done).toBe(true);
   expect(exitCode).toBe(0);
   verifyAnnotateOutput(output, 'hello', test.info().outputDir);
 });
@@ -159,8 +156,6 @@ test('should start dashboard and annotate when no dashboard is running', async (
 
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
   const annotatePromise = cli('show', '--annotate', { bindTitle });
-  let done = false;
-  void annotatePromise.finally(() => { done = true; });
 
   const browser = await connectToDashboard(bindTitle);
   try {
@@ -171,9 +166,30 @@ test('should start dashboard and annotate when no dashboard is running', async (
   }
 
   const { output, exitCode } = await annotatePromise;
-  expect(done).toBe(true);
   expect(exitCode).toBe(0);
   verifyAnnotateOutput(output, 'hi', test.info().outputDir);
+});
+
+test('should pick locator via show --pick-locator', async ({ connectToDashboard, cli, server }) => {
+  server.setContent('/', '<button style="position:fixed;inset:0;width:100vw;height:100vh">Submit</button>', 'text/html');
+
+  await cli('open', server.PREFIX);
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+
+  const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.locator('.sidebar-tab').first().click();
+
+  const pickPromise = cli('show', '--pick-locator');
+
+  await expect(dashboard.locator('div.dashboard-view.interactive')).toBeVisible();
+  const box = await dashboard.locator('img#display').boundingBox();
+  await dashboard.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  const { output, exitCode } = await pickPromise;
+  expect(exitCode).toBe(0);
+  expect(output).toContain(`ref: e1\nlocator: getByRole('button', { name: 'Submit' })`);
 });
 
 test('should pick locator from browser', async ({ cli, server, startDashboardServer }) => {
@@ -185,16 +201,10 @@ test('should pick locator from browser', async ({ cli, server, startDashboardSer
   await dashboard.locator('.sidebar-tab').first().click();
 
   const pickPromise = cli('pick');
-  let done = false;
-  void pickPromise.finally(() => { done = true; });
 
   await expect(dashboard.locator('div.dashboard-view.interactive')).toBeVisible();
-
-  await expect(async () => {
-    const box = await dashboard.locator('img#display').boundingBox();
-    await dashboard.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    expect(done).toBe(true);
-  }).toPass();
+  const box = await dashboard.locator('img#display').boundingBox();
+  await dashboard.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
 
   const { output } = await pickPromise;
   expect(output).toContain(`getByRole('button', { name: 'Submit' })`);

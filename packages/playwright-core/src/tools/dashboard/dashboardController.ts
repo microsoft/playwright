@@ -48,6 +48,7 @@ export class DashboardConnection implements Transport {
   private _onclose: () => void;
   private _onconnected?: () => void;
   private _onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void;
+  private _onPickLocatorSubmit?: (result: { ref: string | undefined; locator: string }) => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
@@ -57,10 +58,11 @@ export class DashboardConnection implements Transport {
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void) {
+  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void, onPickLocatorSubmit?: (result: { ref: string | undefined; locator: string }) => void) {
     this._onclose = onclose;
     this._onconnected = onconnected;
     this._onAnnotationSubmit = onAnnotationSubmit;
+    this._onPickLocatorSubmit = onPickLocatorSubmit;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -378,6 +380,27 @@ export class DashboardConnection implements Transport {
     await this._switchAttachedTo(guid);
     await this._attachedBrowser?.selectPage(page);
     this.emitPickLocator();
+  }
+
+  async startPickLocator(): Promise<void> {
+    const attached = this._attachedBrowser;
+    const page = attached?.selectedPage();
+    if (!attached || !page) {
+      this._onPickLocatorSubmit?.({ ref: undefined, locator: '' });
+      return;
+    }
+    this.sendEvent?.('pickLocator', {});
+    try {
+      const locator = await page.pickLocator();
+      // Regenerate aria refs so the picked element has an aria ref we can read below.
+      await page.ariaSnapshot({ mode: 'ai' });
+      const ref = await locator.ariaRef();
+      const resolved = await locator.normalize();
+      this.emitElementPicked(resolved.toString(), await locator.ariaSnapshot());
+      this._onPickLocatorSubmit?.({ ref: ref ?? undefined, locator: resolved.toString() });
+    } catch {
+      this._onPickLocatorSubmit?.({ ref: undefined, locator: '' });
+    }
   }
 }
 
