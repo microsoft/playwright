@@ -618,3 +618,61 @@ test('should get title and URL of existing page', async ({ browserType, mode, se
     await browserServer.close();
   }
 });
+
+test('should skip default overrides with noDefaults', async ({ browserType, mode, server }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40158' });
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const browser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      noDefaults: true,
+    });
+    const defaultContext = browser.contexts()[0];
+    const page = await defaultContext.newPage();
+
+    // Browser.setDownloadBehavior was not sent, so no Playwright download event fires.
+    server.setRoute('/download', (req, res) => {
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+      res.end('Hello world');
+    });
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    let sawDownload = false;
+    page.on('download', () => { sawDownload = true; });
+    await page.click('a');
+    await page.waitForTimeout(500);
+    expect(sawDownload).toBe(false);
+
+    await browser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('noDefaults should not affect new contexts', async ({ browserType, mode, server }, testInfo) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40158' });
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const browser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      noDefaults: true,
+    });
+
+    // New contexts should still get normal Playwright defaults.
+    const newContext = await browser.newContext();
+    const page = await newContext.newPage();
+    const hasFocus = await page.evaluate(() => document.hasFocus());
+    expect(hasFocus).toBe(true);
+
+    await newContext.close();
+    await browser.close();
+  } finally {
+    await browserServer.close();
+  }
+});

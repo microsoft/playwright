@@ -1126,11 +1126,13 @@ export type BrowserTypeConnectOverCDPParams = {
   slowMo?: number,
   timeout: number,
   isLocal?: boolean,
+  noDefaults?: boolean,
 };
 export type BrowserTypeConnectOverCDPOptions = {
   headers?: NameValue[],
   slowMo?: number,
   isLocal?: boolean,
+  noDefaults?: boolean,
 };
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
