@@ -159,8 +159,8 @@ playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
 
-# wait for the user to pick an element in the browser, print its ref and locator
-playwright-cli pick
+# wait for the user to pick an element in the dashboard, print its ref and locator
+playwright-cli show --pick-locator
 
 # generate a Playwright locator for an element from its ref or selector
 playwright-cli generate-locator e5 --raw
@@ -362,8 +362,8 @@ Ask the user to point at an element in the browser, then keep it visible while y
 
 ```bash
 playwright-cli open https://example.com
-# blocks until the user clicks an element; prints `ref: eN` and the locator
-playwright-cli pick
+# opens the dashboard; blocks until the user clicks an element and prints `ref: eN` and the locator
+playwright-cli show --pick-locator
 # keep the picked element highlighted while iterating; style is optional
 playwright-cli highlight e5 --style="outline: 3px dashed red"
 playwright-cli highlight e7
