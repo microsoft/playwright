@@ -2,4 +2,8 @@
 @isomorphic/**
 @utils/**
 node_modules/colors/safe
-node_modules/expect
+
+[expectLibrary.ts]
+node_modules/@jest/expect-utils
+node_modules/jest-matcher-utils
+node_modules/jest-message-util

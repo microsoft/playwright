@@ -50,9 +50,9 @@ const App: React.FC = () => {
       settingName='dashboardSessionSidebar'
       sidebar={<SessionSidebar
         model={model}
-        onSelectTab={tab => { void client.selectTab({ browser: tab.browser, page: tab.page }); }}
-        onCloseTab={tab => { void client.closeTab({ browser: tab.browser, page: tab.page }); }}
-        onNewTab={browser => { void client.newTab({ browser }); }}
+        onSelectTab={tab => { void client.selectTab({ browser: tab.browser, context: tab.context, page: tab.page }); }}
+        onCloseTab={tab => { void client.closeTab({ browser: tab.browser, context: tab.context, page: tab.page }); }}
+        onNewTab={(browser, context) => { void client.newTab({ browser, context }); }}
       />}
       main={<div className='dashboard-shell-main'>
         <Dashboard />

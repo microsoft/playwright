@@ -18,9 +18,11 @@ import fs from 'fs';
 
 import { test as it, expect } from './pageTest';
 
+import type { Page } from 'playwright-core';
+
 it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
 
-async function setupDropzone(page: import('playwright-core').Page) {
+async function setupDropzone(page: Page) {
   await page.setContent(`
     <style>#dropzone { width: 300px; height: 200px; border: 2px dashed #888; }</style>
     <div id="dropzone"></div>
@@ -45,12 +47,16 @@ async function setupDropzone(page: import('playwright-core').Page) {
   `);
 }
 
+async function getDropInfo(page: Page) {
+  return await page.waitForFunction(() => (window as any).__dropInfo).then(h => h.jsonValue());
+}
+
 it('should drop a file payload', async ({ page }) => {
   await setupDropzone(page);
   await page.locator('#dropzone').drop({
     files: { name: 'note.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
   });
-  await expect.poll(() => page.evaluate(() => (window as any).__dropInfo)).toEqual({
+  expect(await getDropInfo(page)).toEqual({
     files: [{ name: 'note.txt', type: 'text/plain', size: 5, text: 'hello' }],
     data: {},
   });
@@ -64,7 +70,7 @@ it('should drop multiple file payloads', async ({ page }) => {
       { name: 'b.txt', mimeType: 'text/plain', buffer: Buffer.from('BB') },
     ],
   });
-  const info = await page.evaluate(() => (window as any).__dropInfo);
+  const info = await getDropInfo(page);
   expect(info.files.map((f: any) => [f.name, f.text])).toEqual([['a.txt', 'AAA'], ['b.txt', 'BB']]);
 });
 
@@ -73,7 +79,7 @@ it('should drop a file by local path', async ({ page }, testInfo) => {
   const filePath = testInfo.outputPath('hello.txt');
   await fs.promises.writeFile(filePath, 'path-content');
   await page.locator('#dropzone').drop({ files: filePath });
-  const info = await page.evaluate(() => (window as any).__dropInfo);
+  const info = await getDropInfo(page);
   expect(info.files).toHaveLength(1);
   expect(info.files[0].name).toBe('hello.txt');
   expect(info.files[0].text).toBe('path-content');
@@ -87,7 +93,7 @@ it('should drop clipboard-like data', async ({ page }) => {
       'text/uri-list': 'https://example.com',
     },
   });
-  const info = await page.evaluate(() => (window as any).__dropInfo);
+  const info = await getDropInfo(page);
   expect(info.files).toEqual([]);
   expect(info.data['text/plain']).toBe('hello world');
   expect(info.data['text/uri-list']).toBe('https://example.com');
@@ -99,7 +105,7 @@ it('should drop files and data together', async ({ page }) => {
     files: { name: 'mix.txt', mimeType: 'text/plain', buffer: Buffer.from('mix') },
     data: { 'text/plain': 'label' },
   });
-  const info = await page.evaluate(() => (window as any).__dropInfo);
+  const info = await getDropInfo(page);
   expect(info.files[0].text).toBe('mix');
   expect(info.data['text/plain']).toBe('label');
 });

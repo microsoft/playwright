@@ -1384,6 +1384,14 @@ An attribute that is usually set by `aria-checked` or native `<input type=checkb
 
 Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
 
+## locator-get-by-role-option-description
+* since: v1.60
+- `description` <[string]|[RegExp]>
+
+Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By default, matching is case-insensitive and searches for a substring, use [`option: exact`] to control this behavior.
+
+Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+
 ## locator-get-by-role-option-disabled
 * since: v1.27
 - `disabled` <[boolean]>
@@ -1431,7 +1439,7 @@ Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible
 * since: v1.28
 - `exact` <[boolean]>
 
-Whether [`option: name`] is matched exactly: case-sensitive and whole-string. Defaults to false. Ignored when [`option: name`] is a regular expression. Note that exact match still trims whitespace.
+Whether [`option: name`] and [`option: description`] are matched exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note that exact match still trims whitespace.
 
 ## locator-get-by-role-option-pressed
 * since: v1.27

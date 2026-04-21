@@ -29,6 +29,7 @@ type LocatorOptions = {
   attrs?: { name: string, value: string | boolean | number }[],
   exact?: boolean,
   name?: string | RegExp,
+  description?: string | RegExp,
   hasText?: string | RegExp,
   hasNotText?: string | RegExp,
 };
@@ -164,6 +165,9 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         if (attr.name === 'name') {
           options.exact = attr.caseSensitive;
           options.name = attr.value;
+        } else if (attr.name === 'description') {
+          options.exact = attr.caseSensitive;
+          options.description = attr.value;
         } else {
           if (attr.name === 'level' && typeof attr.value === 'string')
             attr.value = +attr.value;
@@ -317,13 +321,16 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `filter({ visible: ${body === 'true' ? 'true' : 'false'} })`;
       case 'role':
         const attrs: string[] = [];
-        if (isRegExp(options.name)) {
+        if (isRegExp(options.name))
           attrs.push(`name: ${this.regexToSourceString(options.name)}`);
-        } else if (typeof options.name === 'string') {
+        else if (typeof options.name === 'string')
           attrs.push(`name: ${this.quote(options.name)}`);
-          if (options.exact)
-            attrs.push(`exact: true`);
-        }
+        if (isRegExp(options.description))
+          attrs.push(`description: ${this.regexToSourceString(options.description)}`);
+        else if (typeof options.description === 'string')
+          attrs.push(`description: ${this.quote(options.description)}`);
+        if (options.exact && (typeof options.name === 'string' || typeof options.description === 'string'))
+          attrs.push(`exact: true`);
         for (const { name, value } of options.attrs!)
           attrs.push(`${name}: ${typeof value === 'string' ? this.quote(value) : value}`);
         const attrString = attrs.length ? `, { ${attrs.join(', ')} }` : '';
@@ -413,13 +420,16 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `filter(visible=${body === 'true' ? 'True' : 'False'})`;
       case 'role':
         const attrs: string[] = [];
-        if (isRegExp(options.name)) {
+        if (isRegExp(options.name))
           attrs.push(`name=${this.regexToString(options.name)}`);
-        } else if (typeof options.name === 'string') {
+        else if (typeof options.name === 'string')
           attrs.push(`name=${this.quote(options.name)}`);
-          if (options.exact)
-            attrs.push(`exact=True`);
-        }
+        if (isRegExp(options.description))
+          attrs.push(`description=${this.regexToString(options.description)}`);
+        else if (typeof options.description === 'string')
+          attrs.push(`description=${this.quote(options.description)}`);
+        if (options.exact && (typeof options.name === 'string' || typeof options.description === 'string'))
+          attrs.push(`exact=True`);
         for (const { name, value } of options.attrs!) {
           let valueString = typeof value === 'string' ? this.quote(value) : value;
           if (typeof value === 'boolean')
@@ -522,13 +532,16 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `filter(new ${clazz}.FilterOptions().setVisible(${body === 'true' ? 'true' : 'false'}))`;
       case 'role':
         const attrs: string[] = [];
-        if (isRegExp(options.name)) {
+        if (isRegExp(options.name))
           attrs.push(`.setName(${this.regexToString(options.name)})`);
-        } else if (typeof options.name === 'string') {
+        else if (typeof options.name === 'string')
           attrs.push(`.setName(${this.quote(options.name)})`);
-          if (options.exact)
-            attrs.push(`.setExact(true)`);
-        }
+        if (isRegExp(options.description))
+          attrs.push(`.setDescription(${this.regexToString(options.description)})`);
+        else if (typeof options.description === 'string')
+          attrs.push(`.setDescription(${this.quote(options.description)})`);
+        if (options.exact && (typeof options.name === 'string' || typeof options.description === 'string'))
+          attrs.push(`.setExact(true)`);
         for (const { name, value } of options.attrs!)
           attrs.push(`.set${toTitleCase(name)}(${typeof value === 'string' ? this.quote(value) : value})`);
         const attrString = attrs.length ? `, new ${clazz}.GetByRoleOptions()${attrs.join('')}` : '';
@@ -621,13 +634,16 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `Filter(new() { Visible = ${body === 'true' ? 'true' : 'false'} })`;
       case 'role':
         const attrs: string[] = [];
-        if (isRegExp(options.name)) {
+        if (isRegExp(options.name))
           attrs.push(`NameRegex = ${this.regexToString(options.name)}`);
-        } else if (typeof options.name === 'string') {
+        else if (typeof options.name === 'string')
           attrs.push(`Name = ${this.quote(options.name)}`);
-          if (options.exact)
-            attrs.push(`Exact = true`);
-        }
+        if (isRegExp(options.description))
+          attrs.push(`DescriptionRegex = ${this.regexToString(options.description)}`);
+        else if (typeof options.description === 'string')
+          attrs.push(`Description = ${this.quote(options.description)}`);
+        if (options.exact && (typeof options.name === 'string' || typeof options.description === 'string'))
+          attrs.push(`Exact = true`);
         for (const { name, value } of options.attrs!)
           attrs.push(`${toTitleCase(name)} = ${typeof value === 'string' ? this.quote(value) : value}`);
         const attrString = attrs.length ? `, new() { ${attrs.join(', ')} }` : '';

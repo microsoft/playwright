@@ -227,6 +227,30 @@ it('reverse engineer getByRole', async ({ page }) => {
     java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setChecked(true).setLevel(3).setPressed(false))`,
     csharp: `GetByRole(AriaRole.Button, new() { Checked = true, Level = 3, Pressed = false })`,
   });
+  expect.soft(generate(page.getByRole('alert', { name: 'Upload', description: 'doc.pdf' }))).toEqual({
+    javascript: `getByRole('alert', { name: 'Upload', description: 'doc.pdf' })`,
+    python: `get_by_role("alert", name="Upload", description="doc.pdf")`,
+    java: `getByRole(AriaRole.ALERT, new Page.GetByRoleOptions().setName("Upload").setDescription("doc.pdf"))`,
+    csharp: `GetByRole(AriaRole.Alert, new() { Name = "Upload", Description = "doc.pdf" })`,
+  });
+  expect.soft(generate(page.getByRole('alert', { description: 'doc.pdf' }))).toEqual({
+    javascript: `getByRole('alert', { description: 'doc.pdf' })`,
+    python: `get_by_role("alert", description="doc.pdf")`,
+    java: `getByRole(AriaRole.ALERT, new Page.GetByRoleOptions().setDescription("doc.pdf"))`,
+    csharp: `GetByRole(AriaRole.Alert, new() { Description = "doc.pdf" })`,
+  });
+  expect.soft(generate(page.getByRole('alert', { description: /doc\.pdf/ }))).toEqual({
+    javascript: `getByRole('alert', { description: /doc\\.pdf/ })`,
+    python: `get_by_role("alert", description=re.compile(r"doc\\.pdf"))`,
+    java: `getByRole(AriaRole.ALERT, new Page.GetByRoleOptions().setDescription(Pattern.compile("doc\\\\.pdf")))`,
+    csharp: `GetByRole(AriaRole.Alert, new() { DescriptionRegex = new Regex("doc\\\\.pdf") })`,
+  });
+  expect.soft(generate(page.getByRole('alert', { name: 'Upload', description: 'doc.pdf', exact: true }))).toEqual({
+    javascript: `getByRole('alert', { name: 'Upload', description: 'doc.pdf', exact: true })`,
+    python: `get_by_role("alert", name="Upload", description="doc.pdf", exact=True)`,
+    java: `getByRole(AriaRole.ALERT, new Page.GetByRoleOptions().setName("Upload").setDescription("doc.pdf").setExact(true))`,
+    csharp: `GetByRole(AriaRole.Alert, new() { Name = "Upload", Description = "doc.pdf", Exact = true })`,
+  });
 });
 
 it('reverse engineer ignore-case locators', async ({ page }) => {
