@@ -83,7 +83,7 @@ const StatusApp: React.FC = () => {
           </div>
         ) : (
           <div className='status-banner'>
-            No MCP clients are currently connected.
+            No clients are currently connected.
           </div>
         )}
         <AuthTokenSection />
