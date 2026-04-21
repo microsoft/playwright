@@ -74,7 +74,8 @@ test('should show current workspace sessions first', async ({ cli, server, start
   });
 });
 
-test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer }) => {
+test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox', 'race condition gonna be fixed through https://github.com/microsoft/playwright/pull/40315');
   await cli('-s=sessA', 'open', server.EMPTY_PAGE);
   await cli('-s=sessB', 'open', server.EMPTY_PAGE);
 
