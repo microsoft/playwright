@@ -24,7 +24,8 @@ import { monotonicTime } from './time';
 
 export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
   let timer: NodeJS.Timeout | undefined;
-  return Promise.race([
+  // Note: not including "await" here truncates the async stack inside cb(), so always include it.
+  return await Promise.race([
     cb().then(result => {
       return { result, timedOut: false };
     }),
