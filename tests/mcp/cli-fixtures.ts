@@ -113,7 +113,7 @@ export const test = baseTest.extend<{
 function cliEnv() {
   return {
     PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
-    PLAYWRIGHT_DASHBOARD_SETTINGS_FILE_FOR_TEST: test.info().outputPath('dashboard.settings.json'),
+    PWTEST_DASHBOARD_SETTINGS_FILE: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
