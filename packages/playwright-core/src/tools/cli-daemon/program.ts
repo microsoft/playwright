@@ -26,7 +26,7 @@ import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
-import { createClientInfo } from '../cli-client/registry';
+import { createClientInfo, guessClientName } from '../cli-client/registry';
 import { registry as browserRegistry } from '../../server/registry/index';
 import type { Command } from 'commander';
 
@@ -74,14 +74,6 @@ export function decorateProgram(program: Command) {
           console.log('<EOF>');
         }
       });
-}
-
-function guessClientName(): string {
-  if (process.env.CLAUDECODE)
-    return 'Claude Code';
-  if (process.env.COPILOT_CLI)
-    return 'GitHub Copilot';
-  return 'playwright-cli';
 }
 
 function defaultConfigFile(): string {

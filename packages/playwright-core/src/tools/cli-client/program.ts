@@ -23,7 +23,7 @@ import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
 import { listChannelSessions, remoteDebuggingHint } from './channelSessions';
-import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
+import { clientKey, createClientInfo, explicitSessionName, isCodingAgent, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
 import { libPath } from '../../package';
 import { serverRegistry } from '../../serverRegistry';
@@ -93,7 +93,8 @@ export async function program(options?: { embedderVersion?: string}) {
       console.log(command.help);
     } else {
       console.log('playwright-cli - run playwright mcp commands from terminal\n');
-      console.log(`Agent skill: ${path.relative(process.cwd(), libPath('tools', 'cli-client', 'skill', 'SKILL.md'))}\n`);
+      if (isCodingAgent())
+        console.log(`Agent skill: ${path.relative(process.cwd(), libPath('tools', 'cli-client', 'skill', 'SKILL.md'))}\n`);
       console.log(help.global);
     }
     process.exit(0);
