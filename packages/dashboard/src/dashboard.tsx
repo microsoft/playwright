@@ -19,7 +19,7 @@ import './dashboard.css';
 import { DashboardClientContext } from './dashboardContext';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
-import { Annotations, getImageLayout, clientToViewport } from './annotations';
+import { Annotations, getImageLayout, clientToViewport, saveAnnotationAsDownload } from './annotations';
 
 import type { Annotation } from './annotations';
 import { ToolbarButton } from '@web/components/toolbarButton';
@@ -74,7 +74,6 @@ export const Dashboard: React.FC = () => {
   const [recording, setRecording] = React.useState(false);
   const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
   const [flashTick, setFlashTick] = React.useState(0);
-  const [pendingAnnotate, setPendingAnnotate] = React.useState(false);
   const [cliAnnotate, setCliAnnotate] = React.useState(false);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
@@ -85,6 +84,8 @@ export const Dashboard: React.FC = () => {
   const interactiveBtnRef = React.useRef<HTMLButtonElement>(null);
   const moveThrottleRef = React.useRef(0);
   const modeRef = React.useRef<Mode>('readonly');
+  const cliAnnotateRef = React.useRef(false);
+  const cliAnnotateEnteredRef = React.useRef(false);
 
   const aspect = frame && frame.viewportWidth && frame.viewportHeight
     ? frame.viewportWidth / frame.viewportHeight
@@ -115,6 +116,22 @@ export const Dashboard: React.FC = () => {
     modeRef.current = mode;
   }, [mode]);
 
+  React.useEffect(() => {
+    if (!cliAnnotate) {
+      cliAnnotateEnteredRef.current = false;
+      return;
+    }
+    if (cliAnnotateEnteredRef.current || !frame)
+      return;
+    cliAnnotateEnteredRef.current = true;
+    setMode('annotate');
+  }, [cliAnnotate, frame]);
+
+  const updateCliAnnotate = React.useCallback((value: boolean) => {
+    cliAnnotateRef.current = value;
+    setCliAnnotate(value);
+  }, []);
+
   const interactive = mode === 'interactive';
   const annotating = mode === 'annotate';
 
@@ -135,23 +152,11 @@ export const Dashboard: React.FC = () => {
     };
   }, [flashTick, interactive]);
 
-  const hasFrame = !!frame;
-  React.useEffect(() => {
-    if (!pendingAnnotate || !hasFrame)
+  const onSubmitAnnotations = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
+    if (!client || !cliAnnotate) {
+      await saveAnnotationAsDownload(blob);
       return;
-    setMode('annotate');
-    setCliAnnotate(true);
-    setPendingAnnotate(false);
-  }, [pendingAnnotate, hasFrame]);
-
-  React.useEffect(() => {
-    if (!annotating)
-      setCliAnnotate(false);
-  }, [annotating]);
-
-  const submitAnnotationToCli = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
-    if (!client)
-      return;
+    }
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -163,8 +168,9 @@ export const Dashboard: React.FC = () => {
       data,
       annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
     });
+    updateCliAnnotate(false);
     setMode('readonly');
-  }, [client]);
+  }, [client, cliAnnotate, updateCliAnnotate]);
 
   function flashInteractiveHint() {
     setFlashTick(tick => tick + 1);
@@ -179,7 +185,7 @@ export const Dashboard: React.FC = () => {
     const onTabs = (params: DashboardChannelEvents['tabs']) => {
       const prev = prevTabsRef.current;
       const selected = params.tabs.find(t => t.selected);
-      if (prev && selected && !prev.some(t => t.page === selected.page))
+      if (prev && selected && !prev.some(t => t.page === selected.page) && !cliAnnotateRef.current)
         setMode('interactive');
       prevTabsRef.current = params.tabs;
       setTabs(params.tabs);
@@ -210,27 +216,44 @@ export const Dashboard: React.FC = () => {
       setMode('interactive');
       setPicking(true);
     };
-    const onAnnotate = () => setPendingAnnotate(true);
+    const onAnnotate = () => updateCliAnnotate(true);
+    const onCancelAnnotate = () => {
+      if (modeRef.current === 'annotate')
+        setMode('readonly');
+      updateCliAnnotate(false);
+    };
     client.on('tabs', onTabs);
     client.on('frame', onFrame);
     client.on('elementPicked', onElementPicked);
     client.on('pickLocator', onPickLocator);
     client.on('annotate', onAnnotate);
+    client.on('cancelAnnotate', onCancelAnnotate);
     return () => {
       client.off('tabs', onTabs);
       client.off('frame', onFrame);
       client.off('elementPicked', onElementPicked);
       client.off('pickLocator', onPickLocator);
       client.off('annotate', onAnnotate);
+      client.off('cancelAnnotate', onCancelAnnotate);
     };
   }, [client]);
 
   const selectedTab = tabs?.find(t => t.selected);
   const ready = !!client && !!selectedTab;
 
+  const prevSelectedPageRef = React.useRef<string | undefined>(undefined);
   React.useEffect(() => {
+    const prev = prevSelectedPageRef.current;
+    const current = selectedTab?.page;
+    prevSelectedPageRef.current = current;
     setRecording(false);
     setPicking(false);
+    if (!prev || !current || prev === current)
+      return;
+    setFrame(undefined);
+    cliAnnotateEnteredRef.current = false;
+    if (modeRef.current === 'annotate')
+      setMode('readonly');
   }, [selectedTab?.page]);
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
@@ -498,7 +521,7 @@ export const Dashboard: React.FC = () => {
                 screenRef={screenRef}
                 viewportWidth={frame?.viewportWidth ?? 0}
                 viewportHeight={frame?.viewportHeight ?? 0}
-                onSubmit={cliAnnotate ? submitAnnotationToCli : undefined}
+                onSubmit={onSubmitAnnotations}
               />
             </div>
             {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}

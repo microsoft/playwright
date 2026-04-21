@@ -345,15 +345,6 @@ const snapshot = declareCommand({
   toolParams: ({ filename, target, depth }) => ({ filename, target, depth }),
 });
 
-const pick = declareCommand({
-  name: 'pick',
-  description: 'Wait for the user to pick an element in the browser and print its ref and locator',
-  category: 'devtools',
-  args: z.object({}),
-  toolName: 'browser_pick_locator',
-  toolParams: () => ({}),
-});
-
 const generateLocator = declareCommand({
   name: 'generate-locator',
   description: 'Generate a Playwright locator for the given element',
@@ -1085,7 +1076,6 @@ const commandsArray: AnyCommandSchema[] = [
   pauseAt,
   resume,
   stepOver,
-  pick,
   generateLocator,
   highlight,
 
