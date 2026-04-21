@@ -218,7 +218,7 @@ export class TextOutput implements Output {
   }
 
   show(_session: string, pid: number | undefined): void {
-    if (process.env.PLAYWRIGHT_PRINT_DASHBOARD_PID_FOR_TEST)
+    if (process.env.PWTEST_PRINT_DASHBOARD_PID_FOR_TEST)
       console.log(`### Dashboard opened with pid ${pid}.`);
   }
 

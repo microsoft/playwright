@@ -240,7 +240,7 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   expect(sessionFilesAfterClose).toContain('session2.session');
   expect(sessionFilesAfterClose).toContain('session3.session');
 
-  killProcessGroup(session3.pid);
+  killProcessGroup(session3.daemonPid);
 
   const { output: listOne } = await cli('list', '--all', { cwd: workspace2 });
   expect(listOne).not.toContain('workspace1');

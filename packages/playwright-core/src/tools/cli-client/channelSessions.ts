@@ -26,7 +26,7 @@ export type ChannelSession = {
 };
 
 export async function listChannelSessions(): Promise<ChannelSession[]> {
-  if (process.env.PLAYWRIGHT_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST)
+  if (process.env.PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST)
     return [];
   const result: ChannelSession[] = [];
   for (const [channel, dirs] of channelToUserDataDir) {

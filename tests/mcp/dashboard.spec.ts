@@ -74,7 +74,8 @@ test('should show current workspace sessions first', async ({ cli, server, start
   });
 });
 
-test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer }) => {
+test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'firefox', 'race condition gonna be fixed through https://github.com/microsoft/playwright/pull/40315');
   await cli('-s=sessA', 'open', server.EMPTY_PAGE);
   await cli('-s=sessB', 'open', server.EMPTY_PAGE);
 
@@ -94,16 +95,16 @@ function isAlive(pid: number): boolean {
 
 test('daemon show: closing page exits the process', async ({ cli, connectToDashboard }) => {
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  const { exitCode, pid } = await cli('show', { env: { PW_DASHBOARD_APP_BIND_TITLE: bindTitle } });
+  const { exitCode, dashboardPid } = await cli('show', { bindTitle });
   expect(exitCode).toBe(0);
-  expect(pid).toBeDefined();
-  expect(isAlive(pid!)).toBe(true);
+  expect(dashboardPid).toBeDefined();
+  expect(isAlive(dashboardPid)).toBe(true);
 
   const browser = await connectToDashboard(bindTitle);
   const page = browser.contexts()[0].pages()[0];
   await page.close();
 
-  await expect(() => expect(isAlive(pid!)).toBe(false)).toPass();
+  await expect(() => expect(isAlive(dashboardPid)).toBe(false)).toPass();
 });
 
 async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page, text: string) {
@@ -135,7 +136,7 @@ function verifyAnnotateOutput(output: string, expectedText: string, outputDir: s
 test('should capture annotations via show --annotate', async ({ connectToDashboard, cli, server }) => {
   await cli('open', server.EMPTY_PAGE);
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  await cli('show', { env: { PW_DASHBOARD_APP_BIND_TITLE: bindTitle } });
+  await cli('show', { bindTitle });
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
@@ -157,7 +158,7 @@ test('should start dashboard and annotate when no dashboard is running', async (
   await cli('open', server.EMPTY_PAGE);
 
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  const annotatePromise = cli('show', '--annotate', { env: { PW_DASHBOARD_APP_BIND_TITLE: bindTitle } });
+  const annotatePromise = cli('show', '--annotate', { bindTitle });
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 

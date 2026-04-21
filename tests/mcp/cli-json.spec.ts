@@ -68,7 +68,7 @@ test('delete-data returns not-deleted when there is no session', async ({ cli })
 });
 
 test('kill-all returns zero killed when filter matches nothing', async ({ cli }) => {
-  const { output } = await cli('--json', 'kill-all', { env: { PLAYWRIGHT_KILL_ALL_PID_FILTER_FOR_TEST: '0' } });
+  const { output } = await cli('--json', 'kill-all', { env: { PWTEST_KILL_ALL_PID_FILTER_FOR_TEST: '0' } });
   expect(JSON.parse(output)).toEqual({ killed: 0, pids: [] });
 });
 

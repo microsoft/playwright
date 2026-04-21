@@ -168,7 +168,7 @@ async function launchApp(appName: string) {
   const context = await playwright.chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
     channel,
-    headless: !!process.env.PW_DASHBOARD_APP_BIND_TITLE,
+    headless: !!process.env.PWTEST_DASHBOARD_APP_BIND_TITLE,
     args: [
       '--app=data:text/html,',
       '--test-type=',
@@ -177,8 +177,8 @@ async function launchApp(appName: string) {
     ],
     viewport: null,
   });
-  if (process.env.PW_DASHBOARD_APP_BIND_TITLE)
-    await context.browser()?.bind(process.env.PW_DASHBOARD_APP_BIND_TITLE, { workspaceDir: process.cwd() });
+  if (process.env.PWTEST_DASHBOARD_APP_BIND_TITLE)
+    await context.browser()?.bind(process.env.PWTEST_DASHBOARD_APP_BIND_TITLE, { workspaceDir: process.cwd() });
 
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.
@@ -205,7 +205,7 @@ async function launchApp(appName: string) {
 }
 
 export async function syncLocalStorageWithSettings(page: api.Page, appName: string) {
-  const settingsFile = process.env.PLAYWRIGHT_DASHBOARD_SETTINGS_FILE_FOR_TEST ?? path.join(registryDirectory, '.settings', `${appName}.json`);
+  const settingsFile = process.env.PWTEST_DASHBOARD_SETTINGS_FILE ?? path.join(registryDirectory, '.settings', `${appName}.json`);
 
   await page.exposeBinding('_saveSerializedSettings', (_, settings) => {
     fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
