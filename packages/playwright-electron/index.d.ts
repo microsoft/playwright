@@ -39,7 +39,7 @@ export type PlaywrightWorkerOptions = BasePlaywrightWorkerOptions;
 
 export type TestType<T, W> = BaseTestType<
   PlaywrightTestOptions & PlaywrightTestArgs & T,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions & W,
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions & W
 >;
 export const test: TestType<{}, {}>;
 

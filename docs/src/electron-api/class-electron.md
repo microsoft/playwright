@@ -2,15 +2,32 @@
 * since: v1.9
 * langs: js
 
-Playwright supports Electron automation, shipped as a separate package:
+Playwright supports Electron automation, shipped as a separate package.
 
 ```sh
 npm i -D @playwright/electron
 ```
 
-An example of the Electron automation script would be:
+After installation, you can write a test or an automation script.
 
-```js
+```js tab=js-test
+import { test, expect } from '@playwright/electron';
+
+test.use({ appOptions: { args: ['main.js'] } });
+
+test('basic test', async ({ app, page }) => {
+  // Evaluate in the main Electron process.
+  const appPath = await app.evaluate(async ({ app }) => app.getAppPath());
+  console.log(appPath);
+
+  // Interact with the first window via the `page` fixture.
+  await expect(page).toHaveTitle(/My App/);
+  await page.click('text=Click me');
+  await expect(page.getByRole('heading')).toHaveText('Hello');
+});
+```
+
+```js tab=js-library
 import { electron } from '@playwright/electron';
 
 (async () => {
