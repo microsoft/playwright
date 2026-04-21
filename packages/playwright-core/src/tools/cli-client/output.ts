@@ -158,6 +158,14 @@ export class TextOutput implements Output {
     if (!count)
       console.log('  (no browsers)');
 
+    const extensionChannels = channelSessions?.filter(s => s.extensionInstalled) ?? [];
+    if (extensionChannels.length) {
+      console.log('');
+      console.log('### Browsers available to attach via extension');
+      for (const session of extensionChannels)
+        console.log(renderExtensionChannel(session));
+    }
+
     if (channelSessions?.length) {
       console.log('');
       console.log('### Browsers available to attach via CDP');
@@ -371,5 +379,12 @@ function renderChannelSession(session: ChannelSession): string {
     lines.push(`  - status: remote debugging not enabled`);
     lines.push(`  - ${remoteDebuggingHint(session.channel)}`);
   }
+  return lines.join('\n');
+}
+
+function renderExtensionChannel(session: ChannelSession): string {
+  const lines = [`- ${session.channel}:`];
+  lines.push(`  - data-dir: ${session.userDataDir}`);
+  lines.push(`  - run \`playwright-cli attach --extension=${session.channel}\` to attach`);
   return lines.join('\n');
 }

@@ -23,7 +23,12 @@ export type ChannelSession = {
   channel: string;
   userDataDir: string;
   endpoint?: string;
+  extensionInstalled: boolean;
 };
+
+// Keep in sync with the id declared via "key" in packages/extension/manifest.json
+// and the hardcoded url in packages/playwright-core/src/tools/mcp/cdpRelay.ts.
+const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
 export async function listChannelSessions(): Promise<ChannelSession[]> {
   if (process.env.PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST)
@@ -35,10 +40,17 @@ export async function listChannelSessions(): Promise<ChannelSession[]> {
       continue;
     if (!await pathExists(userDataDir))
       continue;
-    const endpoint = await readEndpoint(userDataDir);
-    result.push({ channel, userDataDir, endpoint });
+    const [endpoint, extensionInstalled] = await Promise.all([
+      readEndpoint(userDataDir),
+      hasPlaywrightExtension(userDataDir),
+    ]);
+    result.push({ channel, userDataDir, endpoint, extensionInstalled });
   }
   return result;
+}
+
+async function hasPlaywrightExtension(userDataDir: string): Promise<boolean> {
+  return await pathExists(path.join(userDataDir, 'Default', 'Extensions', playwrightExtensionId));
 }
 
 export function remoteDebuggingHint(channel: string): string {
