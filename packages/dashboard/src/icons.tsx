@@ -16,6 +16,53 @@
 
 import React from 'react';
 
+import chromeSvg from '@browser-logos/chrome/chrome.svg';
+import chromeBetaSvg from '@browser-logos/chrome-beta/chrome-beta.svg';
+import chromeCanarySvg from '@browser-logos/chrome-canary/chrome-canary.svg';
+import chromeDevSvg from '@browser-logos/chrome-dev/chrome-dev.svg';
+import chromiumSvg from '@browser-logos/chromium/chromium.svg';
+import firefoxSvg from '@browser-logos/firefox/firefox.svg';
+import firefoxBetaSvg from '@browser-logos/firefox-beta/firefox-beta.svg';
+import firefoxNightlySvg from '@browser-logos/firefox-nightly/firefox-nightly.svg';
+import safariSvg from '@browser-logos/safari/safari.svg';
+import edgeSvg from '@browser-logos/edge/edge.svg';
+
+// Keys include both browserName values ('chromium' | 'firefox' | 'webkit') and
+// LaunchOptions.channel values accepted by Playwright.
+export const browserIconUrls: Record<string, string> = {
+  // Open-source Chromium (plus the headless shell + chrome-for-testing variants).
+  'chromium': chromiumSvg,
+  'chromium-headless-shell': chromiumSvg,
+  'chrome-for-testing': chromiumSvg,
+  // Google Chrome stable + per-channel icons.
+  'chrome': chromeSvg,
+  'chrome-beta': chromeBetaSvg,
+  'chrome-dev': chromeDevSvg,
+  'chrome-canary': chromeCanarySvg,
+  // Firefox: stable (bundled + moz-firefox) + dedicated beta/nightly icons.
+  'firefox': firefoxSvg,
+  'moz-firefox': firefoxSvg,
+  'firefox-beta': firefoxBetaSvg,
+  'moz-firefox-beta': firefoxBetaSvg,
+  'moz-firefox-nightly': firefoxNightlySvg,
+  // Safari / WebKit.
+  'webkit': safariSvg,
+  // Microsoft Edge — the @browser-logos packages only ship SVG for stable, so use it for all channels.
+  'msedge': edgeSvg,
+  'msedge-beta': edgeSvg,
+  'msedge-dev': edgeSvg,
+  'msedge-canary': edgeSvg,
+};
+
+export const BrowserIcon: React.FC<{ browserName?: string, channel?: string }> = ({ browserName, channel }) => {
+  const key = channel && browserIconUrls[channel] ? channel : browserName;
+  const url = key ? browserIconUrls[key] : undefined;
+  if (url)
+    return <img className='browser-icon-img' src={url} alt='' aria-hidden='true' />;
+  const initial = browserName ? browserName[0].toUpperCase() : '?';
+  return <span className='browser-icon-fallback' aria-hidden='true'>{initial}</span>;
+};
+
 export const ChevronLeftIcon: React.FC = () => (
   <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
     <polyline points='15 18 9 12 15 6'/>
