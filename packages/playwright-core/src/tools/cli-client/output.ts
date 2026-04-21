@@ -19,7 +19,7 @@
 
 import path from 'path';
 
-import { remoteDebuggingHint } from './channelSessions';
+import { playwrightExtensionInstallUrl } from './channelSessions';
 
 import type { ChannelSession } from './channelSessions';
 import type { BrowserStatus } from '../../serverRegistry';
@@ -364,12 +364,15 @@ function renderServer(server: BrowserStatus): string {
 function renderChannelSession(session: ChannelSession): string {
   const lines = [`- ${session.channel}:`];
   lines.push(`  - data-dir: ${session.userDataDir}`);
+  if (session.extensionInstalled)
+    lines.push(`  - attach (extension): \`playwright-cli attach --extension=${session.channel}\``);
+  else
+    lines.push(`  - attach (extension): install at ${playwrightExtensionInstallUrl}`);
   if (session.endpoint) {
-    lines.push(`  - endpoint: ${session.endpoint}`);
-    lines.push(`  - run \`playwright-cli attach --cdp=${session.channel}\` to attach`);
+    lines.push(`  - attach (remote debugging): \`playwright-cli attach --cdp=${session.channel}\``);
   } else {
-    lines.push(`  - status: remote debugging not enabled`);
-    lines.push(`  - ${remoteDebuggingHint(session.channel)}`);
+    const inspectScheme = session.channel.startsWith('msedge') ? 'edge' : 'chrome';
+    lines.push(`  - attach (remote debugging): enable at ${inspectScheme}://inspect/#remote-debugging`);
   }
   return lines.join('\n');
 }
