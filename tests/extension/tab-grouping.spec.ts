@@ -146,8 +146,10 @@ test('tab added to group gets auto-attached', async ({ browserWithExtension, sta
   }).toContain('Extra');
 });
 
-test('chrome:// tab dragged into group is automatically ungrouped', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
+test('chrome:// tab dragged into group stays until it navigates to a debuggable URL', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
   test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
+
+  server.setContent('/second', '<title>Second</title><body>Second</body>', 'text/html');
 
   const browserContext = await browserWithExtension.launch();
 
@@ -168,7 +170,6 @@ test('chrome:// tab dragged into group is automatically ungrouped', async ({ bro
 
   const [sw] = browserContext.serviceWorkers();
 
-  // Wait for the connected tab to be added to the group.
   await expect.poll(async () => {
     return sw.evaluate(async () => {
       const chrome = (globalThis as any).chrome;
@@ -176,15 +177,18 @@ test('chrome:// tab dragged into group is automatically ungrouped', async ({ bro
       return connectedTab?.groupId ?? -1;
     });
   }).toBeGreaterThan(-1);
+  const groupId = await sw.evaluate(async () => {
+    const chrome = (globalThis as any).chrome;
+    const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
+    return connectedTab.groupId as number;
+  });
 
-  // Open a chrome:// tab.
+  // Open a chrome:// tab and drag it into the Playwright group.
   const chromeTabId = await sw.evaluate(async () => {
     const chrome = (globalThis as any).chrome;
     const tab = await chrome.tabs.create({ url: 'chrome://version/', active: false });
     return tab.id as number;
   });
-
-  // Wait for the chrome:// URL to actually load so tab.url is set.
   await expect.poll(async () => {
     return sw.evaluate(async (id: number) => {
       const chrome = (globalThis as any).chrome;
@@ -192,22 +196,34 @@ test('chrome:// tab dragged into group is automatically ungrouped', async ({ bro
       return tab.url || '';
     }, chromeTabId);
   }).toContain('chrome://version');
-
-  // Drag the chrome:// tab into the Playwright group.
-  await sw.evaluate(async (id: number) => {
+  await sw.evaluate(async ({ id, gid }: { id: number, gid: number }) => {
     const chrome = (globalThis as any).chrome;
-    const [connectedTab] = await chrome.tabs.query({ title: 'Title' });
-    await chrome.tabs.group({ groupId: connectedTab.groupId, tabIds: [id] });
-  }, chromeTabId);
+    await chrome.tabs.group({ groupId: gid, tabIds: [id] });
+  }, { id: chromeTabId, gid: groupId });
 
-  // The chrome:// tab should be automatically removed from the group.
+  // The chrome:// tab stays in the group without a debugger badge.
   await expect.poll(async () => {
     return sw.evaluate(async (id: number) => {
       const chrome = (globalThis as any).chrome;
       const tab = await chrome.tabs.get(id);
-      return tab.groupId;
+      const badge = await chrome.action.getBadgeText({ tabId: id });
+      return { groupId: tab.groupId, badge };
     }, chromeTabId);
-  }).toBe(-1);
+  }).toEqual({ groupId, badge: '' });
+
+  // Navigating to a debuggable URL attaches it and shows the badge.
+  await sw.evaluate(async ({ id, url }: { id: number, url: string }) => {
+    const chrome = (globalThis as any).chrome;
+    await chrome.tabs.update(id, { url });
+  }, { id: chromeTabId, url: server.PREFIX + '/second' });
+  await expect.poll(async () => {
+    return sw.evaluate(async (id: number) => {
+      const chrome = (globalThis as any).chrome;
+      const tab = await chrome.tabs.get(id);
+      const badge = await chrome.action.getBadgeText({ tabId: id });
+      return { groupId: tab.groupId, badge };
+    }, chromeTabId);
+  }).toEqual({ groupId, badge: '✓' });
 });
 
 test('tab removed from group gets auto-detached', async ({ browserWithExtension, startClient, server, protocolVersion }) => {
