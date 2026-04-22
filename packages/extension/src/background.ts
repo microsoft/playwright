@@ -111,6 +111,9 @@ class PlaywrightExtension {
         chrome.tabs.update(tabId, { active: true }),
         chrome.windows.update(windowId, { focused: true }),
       ]);
+
+      if (tabId !== selectorTabId)
+        await chrome.tabs.remove(selectorTabId).catch(() => {});
     } catch (error: any) {
       debugLog(`Failed to connect tab ${tabId}:`, error.message);
       throw error;

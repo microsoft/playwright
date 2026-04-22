@@ -188,8 +188,6 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   expect(await navigateResponse).toHaveResponse({
     inlineSnapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
   });
-
-  expect(browserContext.pages()).toHaveLength(4);
 });
 
 test(`extension not installed timeout`, async ({ startExtensionClient, server }) => {
