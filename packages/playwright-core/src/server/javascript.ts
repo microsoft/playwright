@@ -52,6 +52,7 @@ export interface ExecutionContextDelegate {
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle, values: any[], handles: JSHandle[]): Promise<any>;
   getProperties(object: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(handle: JSHandle): Promise<void>;
+  shouldPrependErrorPrefix(): boolean;
 }
 
 export class ExecutionContext extends SdkObject {

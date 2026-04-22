@@ -133,6 +133,10 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     });
   }
 
+  shouldPrependErrorPrefix(): boolean {
+    return false;
+  }
+
 
   async nodeIdForElementHandle(handle: dom.ElementHandle): Promise<bidi.Script.SharedReference> {
     const shared = await this._remoteValueForReference({ handle: handle._objectId });
