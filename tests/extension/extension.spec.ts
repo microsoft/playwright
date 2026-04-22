@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs/promises';
-import { test, testWithOldExtensionVersion, expect, extensionId, startWithExtensionFlag } from './extension-fixtures';
+import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
 
 test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
@@ -30,7 +30,7 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
+  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
@@ -104,7 +104,7 @@ test(`browser_run_code can evaluate in a web worker`, async ({ startExtensionCli
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
+  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
 
   await navigateResponse;
 
@@ -183,7 +183,7 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   const selectorPage = await confirmationPagePromise;
   expect(browserContext.pages()).toHaveLength(4);
 
-  await selectorPage.locator('.tab-item', { hasText: 'Title' }).getByRole('button', { name: 'Allow & select' }).click();
+  await clickAllowAndSelect(selectorPage, 'Title');
 
   expect(await navigateResponse).toHaveResponse({
     inlineSnapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
@@ -222,7 +222,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
+  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),

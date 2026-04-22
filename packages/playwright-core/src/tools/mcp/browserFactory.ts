@@ -16,7 +16,6 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
-import net from 'net';
 import path from 'path';
 
 import { playwright } from '../../inprocess';

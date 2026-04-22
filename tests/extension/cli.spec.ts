@@ -72,7 +72,7 @@ test('daemon exits when user closes the connect tab', async ({ startAttach }) =>
 
 test('attach <url> --extension', async ({ startAttach, cli, server }) => {
   const { confirmationPage, cliPromise } = await startAttach();
-  await confirmationPage.locator('.tab-item', { hasText: 'Welcome' }).getByRole('button', { name: 'Allow & select' }).click();
+  await confirmationPage.getByRole('button', { name: 'Allow', exact: true }).click();
 
   {
     const { output } = await cliPromise;

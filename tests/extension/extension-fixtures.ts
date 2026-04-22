@@ -20,9 +20,10 @@ import path from 'path';
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
 import { test as base, expect } from '../mcp/fixtures';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import type { BrowserContext } from 'playwright';
+import type { BrowserContext, Page } from 'playwright';
 import type { StartClient } from '../mcp/fixtures';
 
 export type BrowserWithExtension = {
@@ -213,17 +214,26 @@ export async function startWithExtensionFlag(browserWithExtension: BrowserWithEx
   return client;
 }
 
+// The connect page closes itself once a different tab is selected, which races
+// with the click — the request reaches the background while the page is being
+// torn down. Swallow the resulting "Target closed" error.
+export async function clickAllowAndSelect(connectPage: Page, tabTitle: RegExp | string): Promise<void> {
+  await connectPage.locator('.tab-item', { hasText: tabTitle }).getByRole('button', { name: 'Allow & select' }).click().catch(e => {
+    if (!e?.message?.includes(kTargetClosedErrorMessage))
+      throw e;
+  });
+}
+
 export async function connectAndNavigate(
   browserContext: BrowserContext,
   client: Client,
   url: string,
-  tabTitle: RegExp | string = 'Welcome',
 ): Promise<Awaited<ReturnType<Client['callTool']>>> {
   const confirmationPagePromise = browserContext.waitForEvent('page', page =>
     page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
   );
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.locator('.tab-item', { hasText: tabTitle }).getByRole('button', { name: 'Allow & select' }).click();
+  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
   return await navigatePromise;
 }

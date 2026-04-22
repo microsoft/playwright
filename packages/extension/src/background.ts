@@ -122,7 +122,7 @@ class PlaywrightExtension {
 
   private async _getTabs(): Promise<chrome.tabs.Tab[]> {
     const tabs = await chrome.tabs.query({});
-    return tabs.filter(tab => !isNonDebuggableUrl(tab.url));
+    return tabs.filter(tab => !isNonDebuggableUrl(tab.url) && !tab.url?.startsWith('chrome-extension:'));
   }
 
   private async _onActionClicked(): Promise<void> {
