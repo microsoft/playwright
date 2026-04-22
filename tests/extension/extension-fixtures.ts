@@ -93,10 +93,10 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
           ],
         });
 
-        // for manifest v3:
-        let [serviceWorker] = browserContext.serviceWorkers();
-        if (!serviceWorker)
-          serviceWorker = await browserContext.waitForEvent('serviceworker');
+        // MV3 service workers start lazily; wait for the extension's
+        // background to be ready so tests can reach `chrome.*` via it.
+        if (!browserContext.serviceWorkers().length)
+          await browserContext.waitForEvent('serviceworker');
 
         return browserContext;
       }
