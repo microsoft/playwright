@@ -34,15 +34,10 @@ type DashboardState = {
   // Server-driven session state.
   tabs: Tab[] | null;
   url: string;
-  // The latest frame received from the server. Always kept up to date,
-  // independent of mode, so we never drop frames that may be the only one
-  // we get from a static page.
+  // The latest frame received from the server. Cleared on page swap;
+  // the server is responsible for emitting a fresh frame for the new
+  // page (see _startScreencast).
   liveFrame: DashboardChannelEvents['frame'] | undefined;
-  // True when liveFrame is from a previous page (a tabs page-change has
-  // arrived but no FRAME for the new page has yet). We keep showing the
-  // stale frame for continuity but treat it as unsuitable for entering
-  // annotate mode (annotate would freeze the wrong page's image).
-  liveFrameStale: boolean;
   // Snapshot of the frame at the moment we entered annotate mode. The
   // <Annotations> overlay draws on this frozen image so the canvas does
   // not jump around as new live frames arrive.
@@ -79,7 +74,6 @@ const initialDashboardState: DashboardState = {
   tabs: null,
   url: '',
   liveFrame: undefined,
-  liveFrameStale: false,
   annotateFrame: undefined,
   cliAnnotatePending: false,
   annotateInitiator: null,
@@ -99,13 +93,10 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
       const pageChanged = !!oldSelected && !!newSelected && newSelected.page !== oldSelected.page;
       if (!pageChanged)
         return { ...state, tabs: action.tabs, url };
-      // Page swap. We deliberately do NOT clear liveFrame / annotateFrame
-      // here. The browser only emits a screencast frame when something
-      // changes, so a static new page may not produce one for a while —
-      // wiping the displayed frame would leave the dashboard blank
-      // indefinitely. Instead we keep showing the stale frame until a new
-      // FRAME arrives, which it will tag with the new page id so the
-      // reducer can refresh annotateFrame as needed.
+      // Page swap. Clear frames and rely on the server to emit a fresh
+      // frame for the new page (see _startScreencast which awaits a
+      // screenshot to force one). If we were annotating, mark pending so
+      // the next FRAME re-enters annotate with the new page's image.
       const wasAnnotateActive = state.mode === 'annotate' || state.cliAnnotatePending;
       const newTabIsBrandNew = !!state.tabs && !state.tabs.some(t => t.page === newSelected.page);
       let mode: Mode = state.mode;
@@ -118,12 +109,8 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         mode,
         picking: false,
         recording: false,
-        // The currently displayed liveFrame is from the previous page.
-        // Keep it on screen for visual continuity, but mark stale so
-        // annotate doesn't lock onto the wrong page's image.
-        liveFrameStale: true,
-        // If we were annotating, the existing annotateFrame is stale (from
-        // the previous page). Mark pending so the next FRAME refreshes it.
+        liveFrame: undefined,
+        annotateFrame: undefined,
         cliAnnotatePending: wasAnnotateActive,
       };
     }
@@ -133,14 +120,13 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         return {
           ...state,
           liveFrame,
-          liveFrameStale: false,
           annotateFrame: liveFrame,
           mode: 'annotate',
           cliAnnotatePending: false,
           annotateInitiator: state.annotateInitiator ?? 'cli',
         };
       }
-      return { ...state, liveFrame, liveFrameStale: false };
+      return { ...state, liveFrame };
     }
     case 'cliAnnotate': {
       if (state.mode === 'annotate') {
@@ -148,7 +134,7 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         // submit goes to the server.
         return { ...state, annotateInitiator: 'cli' };
       }
-      if (state.liveFrame && !state.liveFrameStale) {
+      if (state.liveFrame) {
         return {
           ...state,
           mode: 'annotate',
@@ -183,11 +169,10 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
           ...state,
           mode: 'readonly',
           annotateFrame: undefined,
-          cliAnnotatePending: false,
           annotateInitiator: null,
         };
       }
-      if (!state.liveFrame || state.liveFrameStale)
+      if (!state.liveFrame)
         return state;
       // Preserve a CLI initiator across mode toggles so that CLI annotate
       // sessions stay engaged when the user switches to interactive and
