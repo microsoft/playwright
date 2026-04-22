@@ -21,6 +21,10 @@ import type {
   PlaywrightWorkerOptions as BasePlaywrightWorkerOptions,
   PlaywrightTestConfig as BasePlaywrightTestConfig,
   TestType as BaseTestType,
+  BrowserContext,
+  Page,
+  Project,
+  Config,
 } from 'playwright/test';
 import type { Electron, ElectronApplication } from './types';
 
@@ -28,14 +32,16 @@ export * from './types';
 export { expect, devices, mergeExpects, mergeTests } from 'playwright/test';
 
 export type ElectronAppOptions = Parameters<Electron['launch']>[0];
-export type PlaywrightTestOptions = BasePlaywrightTestOptions & {
+export type PlaywrightTestOptions = Pick<BasePlaywrightTestOptions, 'testIdAttribute'> & {
   appOptions: ElectronAppOptions;
 };
-export type PlaywrightTestArgs = BasePlaywrightTestArgs & {
+export type PlaywrightTestArgs = Pick<BasePlaywrightTestArgs, 'request'> & {
   app: ElectronApplication;
+  context: BrowserContext;
+  page: Page;
 };
-export type PlaywrightWorkerArgs = Omit<BasePlaywrightWorkerArgs, 'browser'>;
-export type PlaywrightWorkerOptions = BasePlaywrightWorkerOptions;
+export type PlaywrightWorkerArgs = Pick<BasePlaywrightWorkerArgs, 'playwright'>;
+export type PlaywrightWorkerOptions = Pick<BasePlaywrightWorkerOptions, 'screenshot' | 'trace'>;
 
 export type TestType<T, W> = BaseTestType<
   PlaywrightTestOptions & PlaywrightTestArgs & T,
@@ -43,11 +49,13 @@ export type TestType<T, W> = BaseTestType<
 >;
 export const test: TestType<{}, {}>;
 
-export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig<T, W>, 'use'> & {
-  use?: BasePlaywrightTestConfig<T, W>['use'] & {
-    appOptions?: ElectronAppOptions;
-  };
+type ExcludeProps<A, B> = {
+  [K in Exclude<keyof A, keyof B>]: A[K];
 };
+type CustomProperties<T> = ExcludeProps<T, PlaywrightTestOptions & PlaywrightWorkerOptions & PlaywrightTestArgs & PlaywrightWorkerArgs>;
+export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
+export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
+
 export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
 export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;

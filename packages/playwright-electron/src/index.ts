@@ -14,22 +14,28 @@
  * limitations under the License.
  */
 
-import { test as baseTest } from 'playwright/test';
+// @ts-expect-error
+import { _utilityTest } from 'playwright/test';
+import { selectors } from 'playwright/test';
+
 import { electron } from './electron';
+export { expect, devices, defineConfig, mergeExpects, mergeTests } from 'playwright/test';
+export { electron, selectors };
 
-import type { Fixtures, Browser } from 'playwright/test';
-import type { PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '../index.d.ts';
+import type { BrowserContext, TestType } from '../index.d.ts';
 
-const fixtures: Fixtures<
-  PlaywrightTestArgs & PlaywrightTestOptions,
-  {},
-  PlaywrightTestArgs & Omit<PlaywrightTestOptions, 'appOptions'>,
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions & { browser: Browser }
-> = {
+const baseTest = _utilityTest as TestType<{
+  _decorateContext: (context: BrowserContext) => Promise<void>;
+}, {}>;
+
+export const test = baseTest.extend({
+  // @ts-expect-error
   appOptions: [{}, { option: true }],
 
-  app: async ({ appOptions }, use) => {
+  app: async ({ appOptions, testIdAttribute, _decorateContext }, use) => {
+    selectors.setTestIdAttribute(testIdAttribute);
     const app = await electron.launch(appOptions);
+    await _decorateContext(app.context());
     await use(app);
     await app.close();
   },
@@ -41,12 +47,4 @@ const fixtures: Fixtures<
   context: async ({ app }, use) => {
     await use(app.context());
   },
-
-  browser: [async ({}, use) => {
-    throw new Error('The "browser" fixture is not supported in @playwright/electron. Use "app" or "context" instead.');
-  }, { scope: 'worker' }],
-};
-
-export const test = baseTest.extend(fixtures);
-export { expect, devices, defineConfig, selectors, mergeExpects, mergeTests } from 'playwright/test';
-export { electron };
+});

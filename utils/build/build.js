@@ -549,9 +549,9 @@ for (const pkg of workspace.packages()) {
   }));
 }
 
-// playwright-electron/lib/electron.js — self-contained bundle that inlines
+// playwright-electron/lib/index.js — self-contained bundle that inlines
 // @utils/* and @isomorphic/* sources (via tsconfig paths) plus the `node_modules`
-// deps. playwright-core, electron, and the sibling loader.js are resolved at
+// deps. playwright, electron, and the sibling loader.js are resolved at
 // runtime.
 {
   const electronPkg = filePath('packages/playwright-electron');
