@@ -224,12 +224,6 @@ export async function clickAllowAndSelect(connectPage: Page, tabTitle: RegExp | 
   });
 }
 
-// Accepts the connection without selecting a different tab, so the connect
-// page itself becomes the connected tab.
-export async function clickAllow(connectPage: Page): Promise<void> {
-  await connectPage.getByRole('button', { name: 'Allow', exact: true }).click();
-}
-
 export async function connectAndNavigate(
   browserContext: BrowserContext,
   client: Client,
@@ -240,6 +234,6 @@ export async function connectAndNavigate(
   );
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
   const selectorPage = await confirmationPagePromise;
-  await clickAllow(selectorPage);
+  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
   return await navigatePromise;
 }
