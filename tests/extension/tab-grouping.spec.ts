@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, extensionId, clickAllow, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
+import { test, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
 
 test('connect page hides chrome-extension:// tabs from the selector', async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
@@ -55,7 +55,7 @@ test('connect page is not in group before selection', async ({ startExtensionCli
   });
   expect(groupId).toBe(-1);
 
-  await clickAllow(connectPage);
+  await connectPage.getByRole('button', { name: 'Allow', exact: true }).click();
   await navigatePromise;
 });
 

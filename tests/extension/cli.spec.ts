@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs/promises';
-import { test as base, expect, extensionId, clickAllow } from './extension-fixtures';
+import { test as base, expect, extensionId } from './extension-fixtures';
 
 import type { CliResult } from './extension-fixtures';
 import type { Page } from 'playwright';
@@ -72,7 +72,7 @@ test('daemon exits when user closes the connect tab', async ({ startAttach }) =>
 
 test('attach <url> --extension', async ({ startAttach, cli, server }) => {
   const { confirmationPage, cliPromise } = await startAttach();
-  await clickAllow(confirmationPage);
+  await confirmationPage.getByRole('button', { name: 'Allow', exact: true }).click();
 
   {
     const { output } = await cliPromise;
