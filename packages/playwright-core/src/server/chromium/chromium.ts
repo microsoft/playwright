@@ -166,6 +166,11 @@ export class Chromium extends BrowserType {
       const session = connection.rootSession;
       const worker = new Worker(this, '', () => transport.closeAndWait());
       session.on('Runtime.executionContextCreated', event => {
+        const isDefault = event.context.auxData?.isDefault as boolean | undefined;
+        if (isDefault === false) {
+          // Node.js sometimes creates internal contexts we are not interested in.
+          return;
+        }
         worker.workerScriptLoaded();
         worker.createExecutionContext(new CRExecutionContext(session, event.context));
       });
