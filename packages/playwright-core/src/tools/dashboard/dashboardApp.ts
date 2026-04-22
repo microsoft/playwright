@@ -106,9 +106,20 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
       connection.emitAnnotate();
   };
 
+  const notifyAnnotateEnded = () => {
+    pendingAnnotate = false;
+    for (const connection of connections)
+      connection.emitCancelAnnotate();
+  };
+
   const registerAnnotateWaiter = (socket: net.Socket) => {
     waitingSockets.add(socket);
-    const cleanup = () => waitingSockets.delete(socket);
+    const cleanup = () => {
+      if (!waitingSockets.delete(socket))
+        return;
+      if (waitingSockets.size === 0)
+        notifyAnnotateEnded();
+    };
     socket.on('close', cleanup);
     socket.on('error', cleanup);
   };
@@ -403,7 +414,7 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
     console.log(`{ x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
   }
   // eslint-disable-next-line no-console
-  console.log(`image available at: ${path.relative(process.cwd(), filePath)}`);
+  console.log(`image: ${path.relative(process.cwd(), filePath)}`);
 }
 
 function selfDestructOnParentGone() {

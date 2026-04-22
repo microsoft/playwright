@@ -37,6 +37,7 @@ export type DashboardChannelEvents = {
   elementPicked: { selector: string; ariaSnapshot?: string };
   pickLocator: {};
   annotate: {};
+  cancelAnnotate: {};
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';

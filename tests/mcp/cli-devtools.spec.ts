@@ -160,49 +160,6 @@ test('video-chapter', async ({ cli, server }) => {
   await cli('video-stop');
 });
 
-test('pick', async ({ boundBrowser, cli }) => {
-  const page = await boundBrowser.newPage();
-  await page.setContent(`<button>Submit</button>`);
-
-  await cli('attach', 'default');
-  await cli('snapshot');
-
-  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
-  const pickPromise = cli('pick');
-  await scriptReady;
-
-  const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-
-  const { output } = await pickPromise;
-  expect(output).toContain(`ref: e2`);
-  expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
-});
-
-test('pick activates dashboard session', async ({ boundBrowser, cli, startDashboardServer }) => {
-  const page = await boundBrowser.newPage();
-  await page.setContent(`<button>Submit</button>`);
-
-  await cli('attach', 'default');
-  await cli('snapshot');
-
-  const dashboard = await startDashboardServer();
-  await expect(dashboard.locator('div.dashboard-view')).toBeVisible();
-
-  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
-  const pickPromise = cli('pick');
-  await scriptReady;
-
-  await expect(dashboard.locator('div.dashboard-view.interactive')).toBeVisible();
-
-  const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-
-  const { output } = await pickPromise;
-  expect(output).toContain(`ref: e2`);
-  expect(output).toContain(`locator: getByRole('button', { name: 'Submit' })`);
-});
-
 test('generate-locator', async ({ cli, server }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
   await cli('open', server.PREFIX);

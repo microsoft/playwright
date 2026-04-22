@@ -73,38 +73,29 @@ class BrowserTracker {
   private _wireContext(context: api.BrowserContext) {
     if (this._contextListeners.has(context))
       return;
-    const listeners: Disposable[] = [];
+    const onTabsChanged = () => this._callbacks.onTabsChanged();
+    const listeners: Disposable[] = [
+      eventsHelper.addEventListener(context, 'page', onTabsChanged),
+      eventsHelper.addEventListener(context, 'pageload', onTabsChanged),
+      eventsHelper.addEventListener(context, 'pageclose', onTabsChanged),
+      eventsHelper.addEventListener(context, 'framenavigated', (frame: api.Frame) => {
+        if (frame === frame.page().mainFrame())
+          this._callbacks.onTabsChanged();
+      }),
+      eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
+        this._callbacks.onPickLocator(page);
+      }),
+      eventsHelper.addEventListener(context, 'close', () => {
+        const ls = this._contextListeners.get(context);
+        if (ls) {
+          ls.forEach(d => d.dispose());
+          this._contextListeners.delete(context);
+        }
+        this._callbacks.onContextClosed(context);
+        this._callbacks.onTabsChanged();
+      }),
+    ];
     this._contextListeners.set(context, listeners);
-    const watchPage = (page: api.Page) => {
-      listeners.push(
-          eventsHelper.addEventListener(page, 'load', () => this._callbacks.onTabsChanged()),
-          eventsHelper.addEventListener(page, 'framenavigated', (frame: api.Frame) => {
-            if (frame === page.mainFrame())
-              this._callbacks.onTabsChanged();
-          }),
-          eventsHelper.addEventListener(page, 'close', () => this._callbacks.onTabsChanged()),
-      );
-    };
-    listeners.push(
-        eventsHelper.addEventListener(context, 'page', (page: api.Page) => {
-          watchPage(page);
-          this._callbacks.onTabsChanged();
-        }),
-        eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
-          this._callbacks.onPickLocator(page);
-        }),
-        eventsHelper.addEventListener(context, 'close', () => {
-          const ls = this._contextListeners.get(context);
-          if (ls) {
-            ls.forEach(d => d.dispose());
-            this._contextListeners.delete(context);
-          }
-          this._callbacks.onContextClosed(context);
-          this._callbacks.onTabsChanged();
-        }),
-    );
-    for (const page of context.pages())
-      watchPage(page);
     this._callbacks.onTabsChanged();
   }
 }
@@ -304,6 +295,10 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('annotate', {});
   }
 
+  emitCancelAnnotate() {
+    this.sendEvent?.('cancelAnnotate', {});
+  }
+
   _pushTabs() {
     if (this._pushTabsScheduled)
       return;
@@ -344,14 +339,22 @@ export class DashboardConnection implements Transport {
     if (this._attachedPage?.page === page)
       return;
     this._attachedPage?.dispose();
-    this._attachedPage = undefined;
     const browser = page.context().browser();
     const slot = browser ? [...this._browsers.values()].find(s => s.browser === browser) : undefined;
-    if (!slot)
+    if (!slot) {
+      this._attachedPage = undefined;
       return;
+    }
     const attached = new AttachedPage(this, slot, page);
-    await attached.init();
     this._attachedPage = attached;
+    try {
+      await attached.init();
+    } catch (e) {
+      if (this._attachedPage === attached)
+        this._attachedPage = undefined;
+      attached.dispose();
+      throw e;
+    }
   }
 
   _handleAttachedPageClose(context: api.BrowserContext) {
@@ -455,6 +458,7 @@ class AttachedPage {
   private _listeners: Disposable[] = [];
   private _screencastRunning = false;
   private _recordingPath: string | null = null;
+  private _disposed = false;
 
   constructor(owner: DashboardConnection, slot: BrowserTracker, page: api.Page) {
     this._owner = owner;
@@ -483,6 +487,7 @@ class AttachedPage {
   }
 
   dispose() {
+    this._disposed = true;
     this._listeners.forEach(d => d.dispose());
     this._listeners = [];
     if (this._screencastRunning)
@@ -581,7 +586,12 @@ class AttachedPage {
 
   private async _startScreencast(page: api.Page) {
     await page.screencast.start({
-      onFrame: ({ data }: { data: Buffer }) => this._owner.emitFrame(data.toString('base64'), page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
+      onFrame: ({ data }: { data: Buffer }) => {
+        if (this._disposed)
+          return;
+        const vp = page.viewportSize();
+        this._owner.emitFrame(data.toString('base64'), vp?.width ?? 0, vp?.height ?? 0);
+      },
       size: { width: 1280, height: 800 },
       ...(this._recordingPath ? { path: this._recordingPath } : {}),
     });

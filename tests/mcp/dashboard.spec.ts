@@ -19,6 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { test, expect } from './cli-fixtures';
+import { inheritAndCleanEnv } from '../config/utils';
 
 function displayPath(p: string): string {
   const home = os.homedir();
@@ -149,8 +150,8 @@ async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page
 function verifyAnnotateOutput(output: string, expectedText: string, outputDir: string) {
   const lines = output.trim().split('\n');
   expect(lines[0]).toMatch(new RegExp(`^\\{ x: \\d+, y: \\d+, width: \\d+, height: \\d+ \\}: ${expectedText}$`));
-  expect(lines[lines.length - 1]).toMatch(/^image available at: \.playwright-cli[\\/]annotations-.*\.png$/);
-  const pngRel = lines[lines.length - 1].replace(/^image available at: /, '');
+  expect(lines[lines.length - 1]).toMatch(/^image: \.playwright-cli[\\/]annotations-.*\.png$/);
+  const pngRel = lines[lines.length - 1].replace(/^image: /, '');
   const pngPath = path.resolve(outputDir, pngRel);
   expect(fs.existsSync(pngPath)).toBe(true);
   expect(fs.statSync(pngPath).size).toBeGreaterThan(0);
@@ -199,28 +200,138 @@ test('should start dashboard and annotate when no dashboard is running', async (
   verifyAnnotateOutput(output, 'hi', test.info().outputDir);
 });
 
-test('should pick locator from browser', async ({ cli, server, startDashboardServer }) => {
-  server.setContent('/', '<button style="position:fixed;inset:0;width:100vw;height:100vh">Submit</button>', 'text/html');
+test('should keep CLI annotate engaged across mode switches', async ({ connectToDashboard, cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
 
-  await cli('open', server.PREFIX);
-
-  const dashboard = await startDashboardServer();
+  const dashboard = browser.contexts()[0].pages()[0];
   await dashboard.locator('.sidebar-tab').first().click();
 
-  const pickPromise = cli('pick');
+  const annotatePromise = cli('show', '--annotate');
   let done = false;
-  void pickPromise.finally(() => { done = true; });
+  void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('div.dashboard-view.interactive')).toBeVisible();
+  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
 
-  await expect(async () => {
-    const box = await dashboard.locator('img#display').boundingBox();
-    await dashboard.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    expect(done).toBe(true);
-  }).toPass();
+  await dashboard.locator('.mode-toggle.mode-interactive').click();
+  await expect(dashboard.locator('div.dashboard-view')).toHaveClass(/interactive/);
+  await expect(dashboard.locator('div.dashboard-view')).not.toHaveClass(/annotate/);
 
-  const { output } = await pickPromise;
-  expect(output).toContain(`getByRole('button', { name: 'Submit' })`);
+  const box = await dashboard.locator('img#display').boundingBox();
+  await dashboard.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  await dashboard.locator('.mode-toggle.mode-annotate').click();
+  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+
+  await drawAndSubmitAnnotation(dashboard, 'round-trip');
+
+  const { output, exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+  verifyAnnotateOutput(output, 'round-trip', test.info().outputDir);
+});
+
+test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate', async ({ connectToDashboard, cli, server }) => {
+  await cli('-s=first', 'open', server.EMPTY_PAGE);
+  await cli('-s=second', 'open', server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const annotatePromise = cli('-s=second', 'show', '--annotate', { bindTitle });
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+    const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
+    await expect(activeSession.locator('.session-chip-name')).toHaveText('second');
+    await drawAndSubmitAnnotation(dashboard, 'fresh');
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  const { exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+});
+
+test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
+  server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');
+  server.setContent('/green', '<html><head><style>html,body{margin:0;height:100vh;background:#00ff00}</style></head><body></body></html>', 'text/html');
+
+  await cli('-s=first', 'open', server.PREFIX + '/red');
+  await cli('-s=second', 'open', server.PREFIX + '/green');
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('-s=first', 'show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+  const dashboard = browser.contexts()[0].pages()[0];
+  await expect(dashboard.locator('#display')).toBeVisible();
+
+  const sampleCenter = () => dashboard.evaluate(() => {
+    const img = document.querySelector('#display') as HTMLImageElement | null;
+    if (!img || !img.naturalWidth)
+      return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, img.naturalWidth / 2, img.naturalHeight / 2, 1, 1, 0, 0, 1, 1);
+    const [r, g] = ctx.getImageData(0, 0, 1, 1).data;
+    return { r, g };
+  });
+
+  await expect.poll(async () => {
+    const c = await sampleCenter();
+    return !!(c && c.r > 200 && c.g < 50);
+  }, { timeout: 15000 }).toBe(true);
+
+  const annotatePromise = cli('-s=second', 'show', '--annotate');
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+  const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
+  await expect(activeSession.locator('.session-chip-name')).toHaveText('second');
+
+  await expect.poll(async () => {
+    const c = await sampleCenter();
+    return !!(c && c.g > 200 && c.r < 50);
+  }, { timeout: 15000 }).toBe(true);
+
+  await drawAndSubmitAnnotation(dashboard, 'session switch');
+  const { exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+});
+
+test('should disengage annotate mode when --annotate client disconnects', async ({ connectToDashboard, cli, childProcess, cliEnv, mcpBrowser, mcpHeadless, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+
+  const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.locator('.sidebar-tab').first().click();
+
+  const annotateClient = childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), 'show', '--annotate'],
+    cwd: test.info().outputPath(),
+    env: inheritAndCleanEnv({
+      ...cliEnv,
+      PLAYWRIGHT_MCP_BROWSER: mcpBrowser,
+      PLAYWRIGHT_MCP_HEADLESS: String(mcpHeadless),
+    }),
+  });
+
+  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+
+  await annotateClient.kill();
+
+  await expect(dashboard.locator('div.dashboard-view')).not.toHaveClass(/annotate/);
 });
 
 async function installSaveFilePickerMock(page: import('playwright-core').Page): Promise<() => Promise<Buffer>> {

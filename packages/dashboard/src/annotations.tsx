@@ -112,13 +112,43 @@ function viewportRectToScreenStyle(layout: ImageLayout, screenRect: DOMRect, vw:
   };
 }
 
+export async function saveAnnotationAsDownload(blob: Blob): Promise<void> {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const suggestedName = `annotations-${stamp}.png`;
+  const picker = (window as any).showSaveFilePicker as undefined | ((opts: any) => Promise<any>);
+  if (picker) {
+    try {
+      const handle = await picker({
+        suggestedName,
+        startIn: 'downloads',
+        types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    } catch (e: any) {
+      if (e?.name !== 'AbortError')
+        throw e;
+    }
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = suggestedName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export const Annotations: React.FC<{
   active: boolean;
   displayRef: React.RefObject<HTMLImageElement | null>;
   screenRef: React.RefObject<HTMLDivElement | null>;
   viewportWidth: number;
   viewportHeight: number;
-  onSubmit?: (blob: Blob, annotations: Annotation[]) => Promise<void> | void;
+  onSubmit: (blob: Blob, annotations: Annotation[]) => Promise<void> | void;
 }> = ({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit }) => {
   const [annotations, setAnnotations] = React.useState<Annotation[]>([]);
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
@@ -327,37 +357,10 @@ export const Annotations: React.FC<{
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
     if (!blob)
       return;
-    if (onSubmit) {
-      await onSubmit(blob, annotations);
-      return;
-    }
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const suggestedName = `annotations-${stamp}.png`;
-    const picker = (window as any).showSaveFilePicker as undefined | ((opts: any) => Promise<any>);
-    if (picker) {
-      try {
-        const handle = await picker({
-          suggestedName,
-          startIn: 'downloads',
-          types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }],
-        });
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-      } catch (e: any) {
-        if (e?.name !== 'AbortError')
-          throw e;
-      }
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = suggestedName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    await onSubmit(blob, annotations);
+    setAnnotations([]);
+    setSelection(null);
+    setDraft(null);
   }
 
   if (!active)

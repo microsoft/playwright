@@ -356,22 +356,13 @@ playwright-cli tracing-stop
 playwright-cli close
 ```
 
-## Example: Interactive element inspection
+## Example: Interactive session
 
-Ask the user to point at an element in the browser, then keep it visible while you work on it:
+Ask the user to annotate the UI. User can provide contextual tasks or ask contextual questions using annotations:
 
 ```bash
 playwright-cli open https://example.com
-# blocks until the user clicks an element; prints `ref: eN` and the locator
-playwright-cli pick
-# keep the picked element highlighted while iterating; style is optional
-playwright-cli highlight e5 --style="outline: 3px dashed red"
-playwright-cli highlight e7
-# ... inspect, generate code, etc. ...
-# hide a single highlight, or drop them all in one shot
-playwright-cli highlight e5 --hide
-playwright-cli highlight --hide
-playwright-cli close
+playwright-cli show --annotate
 ```
 
 ## Specific tasks
