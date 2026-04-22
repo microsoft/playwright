@@ -16,6 +16,25 @@
 
 import { test, expect, extensionId, startWithExtensionFlag } from './extension-fixtures';
 
+test('connect page hides chrome-extension:// tabs from the selector', async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+
+  const extraExtensionPage = await browserContext.newPage();
+  await extraExtensionPage.goto(`chrome-extension://${extensionId}/status.html`);
+
+  const client = await startWithExtensionFlag(browserWithExtension, startClient);
+
+  const connectPagePromise = browserContext.waitForEvent('page', p =>
+    p.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
+  );
+  client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } }).catch(() => {});
+
+  const connectPage = await connectPagePromise;
+  await expect(connectPage.locator('.tab-item').first()).toBeVisible();
+
+  await expect(connectPage.locator('.tab-item', { hasText: 'chrome-extension://' })).toHaveCount(0);
+});
+
 test('connect page is not in group before selection', async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
 
