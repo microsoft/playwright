@@ -18,12 +18,11 @@ import { electronTest as test, expect } from './electronTest';
 
 test.skip(({ trace }) => trace === 'on');
 
-test('should record trace', async ({ newWindow, server, runAndTrace }) => {
+test('should record trace', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
-    const window = await newWindow();
-    await window.goto(server.PREFIX + '/input/button.html');
-    await window.click('button');
-    expect(await window.evaluate('result')).toBe('Clicked');
+    await page.goto(server.PREFIX + '/input/button.html');
+    await page.click('button');
+    expect(await page.evaluate('result')).toBe('Clicked');
   });
   await expect(traceViewer.actionTitles).toHaveText([
     /Navigate/,
@@ -32,13 +31,12 @@ test('should record trace', async ({ newWindow, server, runAndTrace }) => {
   ]);
 });
 
-test('should support custom protocol', async ({ electronApp, newWindow, server, runAndTrace }) => {
-  const window = await newWindow();
-  await electronApp.evaluate(({ BrowserWindow }) => {
+test('should support custom protocol', async ({ app, page, runAndTrace }) => {
+  await app.evaluate(({ BrowserWindow }) => {
     void BrowserWindow.getAllWindows()[0].loadURL('vscode-file://index.html');
   });
   const traceViewer = await runAndTrace(async () => {
-    await window.click('button');
+    await page.click('button');
   });
   const frame = await traceViewer.snapshotFrame('Click');
   await expect(frame.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');

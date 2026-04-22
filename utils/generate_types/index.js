@@ -619,6 +619,7 @@ class TypesGenerator {
       documentation,
       doNotGenerate: new Set([
         ...coreDocumentation.classesArray.map(cls => cls.name),
+        'ElectronFixtures',
       ]),
     });
     return await generator.generateTypes(path.join(__dirname, 'overrides-electron.d.ts'));

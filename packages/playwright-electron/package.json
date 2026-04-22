@@ -21,6 +21,6 @@
     }
   },
   "dependencies": {
-    "playwright-core": "1.60.0-next"
+    "playwright": "1.60.0-next"
   }
 }

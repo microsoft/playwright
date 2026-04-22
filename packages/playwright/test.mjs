@@ -26,6 +26,7 @@ export const request = playwright.request;
 export const _electron = playwright._electron;
 export const _android = playwright._android;
 export const _baseTest = playwright._baseTest;
+export const _utilityTest = playwright._utilityTest;
 export const test = playwright.test;
 export const expect = playwright.expect;
 export const defineConfig = playwright.defineConfig;
