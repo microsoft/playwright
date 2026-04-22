@@ -35,6 +35,7 @@ import ws, { WebSocketServer as wsServer } from 'ws';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { registry } from '../../server/registry/index';
 
+import { playwrightExtensionId } from '../utils/extension';
 import { addressToString } from '../utils/mcp/http';
 import { logUnhandledError } from './log';
 import { ExtensionProtocolV1 } from './cdpRelayV1';
@@ -125,8 +126,7 @@ export class CDPRelayServer {
 
   private _connectBrowser(clientName: string) {
     const mcpRelayEndpoint = `${this._wsHost}${this._extensionPath}`;
-    // Need to specify "key" in the manifest.json to make the id stable when loading from file.
-    const url = new URL('chrome-extension://mmlmfjhmonkocbjadbfplnigmagldckm/connect.html');
+    const url = new URL(`chrome-extension://${playwrightExtensionId}/connect.html`);
     url.searchParams.set('mcpRelayUrl', mcpRelayEndpoint);
     const client = {
       name: clientName,

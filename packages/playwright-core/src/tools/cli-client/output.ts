@@ -19,7 +19,7 @@
 
 import path from 'path';
 
-import { playwrightExtensionInstallUrl } from './channelSessions';
+import { playwrightExtensionInstallUrl } from '../utils/extension';
 
 import type { ChannelSession } from './channelSessions';
 import type { BrowserStatus } from '../../serverRegistry';

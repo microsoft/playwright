@@ -19,18 +19,14 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 
+import { playwrightExtensionId } from '../utils/extension';
+
 export type ChannelSession = {
   channel: string;
   userDataDir: string;
   endpoint?: string;
   extensionInstalled: boolean;
 };
-
-// Keep in sync with the id declared via "key" in packages/extension/manifest.json
-// and the hardcoded url in packages/playwright-core/src/tools/mcp/cdpRelay.ts.
-const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
-
-export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-mcp-bridge/${playwrightExtensionId}`;
 
 export async function listChannelSessions(): Promise<ChannelSession[]> {
   if (process.env.PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST)
