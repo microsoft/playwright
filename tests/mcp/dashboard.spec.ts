@@ -310,7 +310,9 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
 });
 
 test('should snap annotation to underlying element while Shift held', async ({ connectToDashboard, cli, server }) => {
-  server.setContent('/snap', `<!doctype html><html><head><style>html,body{margin:0;height:100vh;background:#fff}#target{position:absolute;left:200px;top:150px;width:400px;height:200px;background:#36c;color:#fff;font-size:24px}</style></head><body><button id='target'>Submit Order</button></body></html>`, 'text/html');
+  server.setContent('/snap-child', `<!doctype html><html><head><style>html,body{margin:0;background:#fff}#target{position:absolute;left:50px;top:50px;width:300px;height:150px;background:#36c;color:#fff;font-size:24px}</style></head><body><button id='target'>Submit Order</button></body></html>`, 'text/html');
+  server.setContent('/snap-mid', `<!doctype html><html><head><style>html,body{margin:0;background:#fff}iframe{position:absolute;left:50px;top:50px;width:500px;height:300px;border:0}</style></head><body><iframe src='${server.CROSS_PROCESS_PREFIX}/snap-child'></iframe></body></html>`, 'text/html');
+  server.setContent('/snap', `<!doctype html><html><head><style>html,body{margin:0;height:100vh;background:#fff}iframe{position:absolute;left:100px;top:50px;width:700px;height:400px;border:0}</style></head><body><iframe src='/snap-mid'></iframe></body></html>`, 'text/html');
 
   await cli('open', server.PREFIX + '/snap');
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
@@ -325,10 +327,10 @@ test('should snap annotation to underlying element while Shift held', async ({ c
   await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
 
   const box = await dashboard.locator('img#display').boundingBox();
-  // Underlying page viewport is 1280x800; the target sits at (200,150)-(600,350).
-  // Center is (400, 250) in page coords.
+  // Underlying page viewport is 1280x800. Same-origin iframe at (100,50). Cross-origin iframe at (50,50)
+  // inside it. Button at (50,50) size (300,150) → center at inner (200,125) → page coords (400, 275).
   const centerX = box!.x + box!.width * (400 / 1280);
-  const centerY = box!.y + box!.height * (250 / 800);
+  const centerY = box!.y + box!.height * (275 / 800);
 
   await dashboard.mouse.move(centerX, centerY);
   await dashboard.keyboard.down('Shift');
@@ -342,7 +344,7 @@ test('should snap annotation to underlying element while Shift held', async ({ c
   await expect(dashboard.locator('.annotation-rect.snap-preview')).toHaveCount(0);
   const committed = dashboard.locator('.annotation-rect:not(.draft):not(.snap-preview)');
   await expect(committed).toHaveCount(1);
-  await expect(committed.locator('.annotation-label')).toHaveText(`getByRole('button', { name: 'Submit Order' })`);
+  await expect(committed.locator('.annotation-label')).toHaveText(`locator('iframe').contentFrame().locator('iframe').contentFrame().getByRole('button', { name: 'Submit Order' })`);
 });
 
 

@@ -591,46 +591,71 @@ class AttachedPage {
   }
 
   async inspectAt(params: { x: number; y: number }): Promise<{ bbox: { x: number; y: number; width: number; height: number }; locator: string } | null> {
-    const result = await this._page.evaluate(({ x, y }) => {
-      const el = document.elementFromPoint(x, y);
-      if (!el)
+    const allSelectors: string[] = [];
+    let frame = this._page.mainFrame();
+    let cx = params.x, cy = params.y;
+    let offsetX = 0, offsetY = 0;
+
+    for (let depth = 0; depth < 10; depth++) {
+      const result = await frame.evaluate(({ x, y }) => {
+        const xpath = (el: Element) => {
+          const parts: string[] = [];
+          for (let c: Element | null = el; c; c = c.parentElement) {
+            let i = 1;
+            for (let s = c.previousElementSibling; s; s = s.previousElementSibling) {
+              if (s.tagName === c.tagName)
+                i++;
+            }
+            parts.unshift(`${c.tagName.toLowerCase()}[${i}]`);
+          }
+          return 'xpath=/' + parts.join('/');
+        };
+
+        const selectors: string[] = [];
+        let doc: Document = document;
+        let lx = x, ly = y, ox = 0, oy = 0;
+        while (true) {
+          const el = doc.elementFromPoint(lx, ly);
+          if (!el)
+            return null;
+          selectors.push(xpath(el));
+          const r = el.getBoundingClientRect();
+          const bbox = { x: r.x + ox, y: r.y + oy, width: r.width, height: r.height };
+          if (el.tagName !== 'IFRAME' && el.tagName !== 'FRAME')
+            return { selectors, bbox, isFrame: false };
+          let childDoc: Document | null = null;
+          try { childDoc = (el as HTMLIFrameElement).contentDocument; } catch { /* cross-origin */ }
+          if (!childDoc)
+            return { selectors, bbox, isFrame: true };
+          ox += r.x; oy += r.y;
+          lx -= r.x; ly -= r.y;
+          doc = childDoc;
+        }
+      }, { x: cx, y: cy });
+
+      if (!result)
         return null;
-      const r = el.getBoundingClientRect();
-      const cssEscape = (s: string) => (window.CSS && window.CSS.escape) ? window.CSS.escape(s) : s;
-      const tokenFor = (node: Element): string => {
-        let token = node.tagName.toLowerCase();
-        if (node.id) {
-          token += '#' + cssEscape(node.id);
-          return token;
-        }
-        const classes = (node.getAttribute('class') || '').trim().split(/\s+/).filter(Boolean).slice(0, 2);
-        for (const c of classes)
-          token += '.' + cssEscape(c);
-        const parent = node.parentElement;
-        if (parent) {
-          const sameTag = Array.from(parent.children).filter(c => c.tagName === node.tagName);
-          if (sameTag.length > 1)
-            token += `:nth-of-type(${sameTag.indexOf(node) + 1})`;
-        }
-        return token;
-      };
-      const parts: string[] = [];
-      let current: Element | null = el;
-      while (current && current !== document.documentElement) {
-        parts.unshift(tokenFor(current));
-        if (current.id)
-          break;
-        current = current.parentElement;
+
+      allSelectors.push(...result.selectors);
+      const bbox = { x: result.bbox.x + offsetX, y: result.bbox.y + offsetY, width: result.bbox.width, height: result.bbox.height };
+
+      if (!result.isFrame) {
+        const normalized = await this._page.locator(allSelectors.join(' >> internal:control=enter-frame >> ')).normalize();
+        return { bbox, locator: normalized.toString() };
       }
-      return {
-        bbox: { x: r.x, y: r.y, width: r.width, height: r.height },
-        selector: parts.join(' > '),
-      };
-    }, params);
-    if (!result)
-      return null;
-    const normalized = await this._page.locator('css=' + result.selector).normalize();
-    return { bbox: result.bbox, locator: normalized.toString() };
+
+      // Cross-origin boundary: descend via Playwright's Frame API. Use the full chain emitted in this evaluate
+      // (may include same-origin iframe hops between this frame and the cross-origin iframe).
+      const iframeHandle = await frame.locator(result.selectors.join(' >> internal:control=enter-frame >> ')).elementHandle();
+      const childFrame = await iframeHandle?.contentFrame();
+      await iframeHandle?.dispose();
+      if (!childFrame)
+        return null;
+      frame = childFrame;
+      offsetX = bbox.x; offsetY = bbox.y;
+      cx -= result.bbox.x; cy -= result.bbox.y;
+    }
+    return null;
   }
 
   private async _startScreencast(page: api.Page) {
