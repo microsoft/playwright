@@ -269,6 +269,7 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   await cli('-s=first', 'show', { bindTitle });
   const browser = await connectToDashboard(bindTitle);
   const dashboard = browser.contexts()[0].pages()[0];
+  await expect(dashboard.locator('#display')).toBeVisible();
 
   const sampleCenter = () => dashboard.evaluate(() => {
     const img = document.querySelector('#display') as HTMLImageElement | null;
