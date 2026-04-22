@@ -105,11 +105,11 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   private _didCreateContext(context: BrowserContext) {
     context._browser = this;
     this._contexts.add(context);
-    this.emit(Events.Browser.Context, context);
     // Note: when connecting to a browser, initial contexts arrive before `browserType` is set,
     // and will be configured later in `_connectToBrowserType`.
     if (this._browserType)
       this._setupBrowserContext(context);
+    this.emit(Events.Browser.Context, context);
   }
 
   private _setupBrowserContext(context: BrowserContext) {
