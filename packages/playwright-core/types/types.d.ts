@@ -9975,6 +9975,11 @@ export interface Browser {
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
   /**
+   * Emitted when a new browser context is created.
+   */
+  on(event: 'context', listener: (browserContext: BrowserContext) => any): this;
+
+  /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
    * - Browser application is closed or crashed.
@@ -9985,7 +9990,17 @@ export interface Browser {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'context', listener: (browserContext: BrowserContext) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Emitted when a new browser context is created.
+   */
+  addListener(event: 'context', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
@@ -9998,12 +10013,27 @@ export interface Browser {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'context', listener: (browserContext: BrowserContext) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  off(event: 'context', listener: (browserContext: BrowserContext) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'disconnected', listener: (browser: Browser) => any): this;
+
+  /**
+   * Emitted when a new browser context is created.
+   */
+  prependListener(event: 'context', listener: (browserContext: BrowserContext) => any): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the

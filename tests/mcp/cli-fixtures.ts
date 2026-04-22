@@ -91,10 +91,22 @@ export const test = baseTest.extend<{
     for (const pid of allPids)
       killProcessGroup(pid);
 
-    const daemonDir = path.join(test.info().outputDir, 'daemon');
-    const userDataDirs = await fs.promises.readdir(daemonDir).catch(() => []);
-    for (const dir of userDataDirs.filter(f => f.startsWith('ud-')))
-      await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
+    const daemonDir = test.info().outputPath('daemon');
+    for (const dir of await fs.promises.readdir(daemonDir).catch<string[]>(() => [])) {
+      if (dir.startsWith('ud-')) {
+        await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
+        continue;
+      }
+      const workspacePath = path.join(daemonDir, dir);
+      for (const entry of await fs.promises.readdir(workspacePath).catch<string[]>(() => [])) {
+        if (!entry.endsWith('.err'))
+          continue;
+        const errPath = path.join(workspacePath, entry);
+        if ((await fs.promises.stat(errPath)).size === 0)
+          continue;
+        await test.info().attach(entry, { path: errPath, contentType: 'text/plain' });
+      }
+    }
   },
   boundBrowser: async ({ mcpBrowser, playwright }, use) => {
     const browserName = (mcpBrowser === 'chrome' || mcpBrowser === 'msedge') ? 'chromium' : mcpBrowser;
