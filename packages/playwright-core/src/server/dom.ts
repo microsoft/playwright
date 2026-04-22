@@ -987,7 +987,10 @@ function roundPoint(point: types.Point): types.Point {
 }
 
 function quadToRect(quad: types.Quad): types.Rect {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
   for (const point of quad) {
     minX = Math.min(minX, point.x);
     minY = Math.min(minY, point.y);

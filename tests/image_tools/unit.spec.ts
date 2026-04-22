@@ -45,7 +45,8 @@ test('colorDeltaE94 should work', async () => {
 });
 
 test('fast stats and naive computation should match', async () => {
-  const N = 13, M = 17;
+  const N = 13;
+  const M = 17;
   const png1 = randomPNG(N, M, 239);
   const png2 = randomPNG(N, M, 261);
   const [r1] = ImageChannel.intoRGB(png1.width, png1.height, png1.data);

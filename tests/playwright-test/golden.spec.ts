@@ -537,7 +537,8 @@ test('should compare binary', async ({ runInlineTest }) => {
 });
 
 test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
-  const width = 20, height = 20;
+  const width = 20;
+  const height = 20;
   const BAD_PIXELS = 120;
   const image1 = createWhiteImage(width, height);
   const image2 = paintBlackPixels(image1, BAD_PIXELS);
@@ -589,7 +590,8 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
 });
 
 test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
-  const width = 20, height = 20;
+  const width = 20;
+  const height = 20;
   const BAD_RATIO = 0.25;
   const BAD_PIXELS = Math.floor(width * height * BAD_RATIO);
   const image1 = createWhiteImage(width, height);
