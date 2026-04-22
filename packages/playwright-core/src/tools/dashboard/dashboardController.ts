@@ -590,11 +590,10 @@ class AttachedPage {
     return buffer.toString('base64');
   }
 
-  async inspectAt(params: { x: number; y: number }): Promise<{ bbox: { x: number; y: number; width: number; height: number }; locator: string } | null> {
-    const allSelectors: string[] = [];
+  async inspectAt(params: { x: number; y: number }): Promise<{ box: { x: number; y: number; width: number; height: number }; locator: string } | null> {
     let frame = this._page.mainFrame();
-    let cx = params.x, cy = params.y;
-    let offsetX = 0, offsetY = 0;
+    let offsetX = 0;
+    let offsetY = 0;
 
     for (let depth = 0; depth < 10; depth++) {
       const result = await frame.evaluate(({ x, y }) => {
@@ -611,49 +610,103 @@ class AttachedPage {
           return 'xpath=/' + parts.join('/');
         };
 
+        // Shadow-piercing hit test, mirroring the workarounds in InjectedScript.expectHitTarget.
+        const parentElementOrShadowHost = (e: Element) => {
+          if (e.parentElement)
+            return e.parentElement;
+          if (e.parentNode && e.parentNode.nodeType === 11 /* DOCUMENT_FRAGMENT_NODE */ && (e.parentNode as ShadowRoot).host)
+            return (e.parentNode as ShadowRoot).host;
+          return undefined;
+        };
+        const deepElementFromPoint = (root: Document | ShadowRoot, hx: number, hy: number): Element | null => {
+          const elements = root.elementsFromPoint(hx, hy);
+          const single = root.elementFromPoint(hx, hy);
+          if (single && elements[0] && parentElementOrShadowHost(single) === elements[0]) {
+            // Workaround a case where elementsFromPoint misses the inner-most element with display:contents.
+            // https://bugs.chromium.org/p/chromium/issues/detail?id=1342092
+            const style = single.ownerDocument.defaultView?.getComputedStyle(single);
+            if (style?.display === 'contents')
+              elements.unshift(single);
+          }
+          if (elements[0] && elements[0].shadowRoot === root && elements[1] === single) {
+            // Workaround webkit bug where first two elements are swapped:
+            // <host> / #shadow root / <target> -> elementsFromPoint produces [<host>, <target>] instead of [<target>, <host>].
+            elements.shift();
+          }
+          let el: Element | undefined = elements[0];
+          while (el && el.shadowRoot) {
+            const inner = deepElementFromPoint(el.shadowRoot, hx, hy);
+            if (!inner || inner === el)
+              break;
+            el = inner;
+          }
+          return el ?? null;
+        };
+
+        // Mirrors InjectedScript.describeIFrameStyle: the iframe's content origin sits at
+        // (border-left + padding-left, border-top + padding-top) inside its border-box.
+        const iframeBorderOf = (iframe: Element) => {
+          const s = iframe.ownerDocument.defaultView?.getComputedStyle(iframe);
+          if (!s)
+            return { left: 0, top: 0 };
+          return {
+            left: parseInt(s.borderLeftWidth || '0', 10) + parseInt(s.paddingLeft || '0', 10),
+            top: parseInt(s.borderTopWidth || '0', 10) + parseInt(s.paddingTop || '0', 10),
+          };
+        };
+
         const selectors: string[] = [];
-        let doc: Document = document;
-        let lx = x, ly = y, ox = 0, oy = 0;
+        let doc = document;
+        let lx = x;
+        let ly = y;
+        let ox = 0;
+        let oy = 0;
         while (true) {
-          const el = doc.elementFromPoint(lx, ly);
+          const el = deepElementFromPoint(doc, lx, ly);
           if (!el)
             return null;
           selectors.push(xpath(el));
           const r = el.getBoundingClientRect();
-          const bbox = { x: r.x + ox, y: r.y + oy, width: r.width, height: r.height };
-          if (el.tagName !== 'IFRAME' && el.tagName !== 'FRAME')
-            return { selectors, bbox, isFrame: false };
+          if (el.tagName !== 'IFRAME' && el.tagName !== 'FRAME') {
+            const box = { x: r.x + ox, y: r.y + oy, width: r.width, height: r.height };
+            return { selectors, isFrame: false as const, box };
+          }
+          const border = iframeBorderOf(el);
           let childDoc: Document | null = null;
           try { childDoc = (el as HTMLIFrameElement).contentDocument; } catch { /* cross-origin */ }
-          if (!childDoc)
-            return { selectors, bbox, isFrame: true };
-          ox += r.x; oy += r.y;
-          lx -= r.x; ly -= r.y;
+          if (!childDoc) {
+            // Cross-origin: bail. Outer code descends via Frame API and resumes inside the child frame.
+            return { selectors, isFrame: true as const, nextX: lx - r.x - border.left, nextY: ly - r.y - border.top };
+          }
+          // Same-origin: keep walking inside this evaluate.
+          ox += r.x + border.left;
+          oy += r.y + border.top;
+          lx -= r.x + border.left;
+          ly -= r.y + border.top;
           doc = childDoc;
         }
-      }, { x: cx, y: cy });
+      }, { x: params.x - offsetX, y: params.y - offsetY });
 
       if (!result)
         return null;
 
-      allSelectors.push(...result.selectors);
-      const bbox = { x: result.bbox.x + offsetX, y: result.bbox.y + offsetY, width: result.bbox.width, height: result.bbox.height };
+      const locator = frame.locator(result.selectors.join(' >> internal:control=enter-frame >> '));
 
       if (!result.isFrame) {
-        const normalized = await this._page.locator(allSelectors.join(' >> internal:control=enter-frame >> ')).normalize();
-        return { bbox, locator: normalized.toString() };
+        const normalized = await locator.normalize();
+        const box = { x: result.box.x + offsetX, y: result.box.y + offsetY, width: result.box.width, height: result.box.height };
+        return { box, locator: normalized.toString() };
       }
 
-      // Cross-origin boundary: descend via Playwright's Frame API. Use the full chain emitted in this evaluate
-      // (may include same-origin iframe hops between this frame and the cross-origin iframe).
-      const iframeHandle = await frame.locator(result.selectors.join(' >> internal:control=enter-frame >> ')).elementHandle();
-      const childFrame = await iframeHandle?.contentFrame();
-      await iframeHandle?.dispose();
+      // Cross-origin boundary: descend via Playwright's Frame API and continue inspection inside the child frame.
+      const handle = await locator.elementHandle();
+      const childFrame = await handle?.contentFrame();
+      await handle?.dispose();
       if (!childFrame)
         return null;
       frame = childFrame;
-      offsetX = bbox.x; offsetY = bbox.y;
-      cx -= result.bbox.x; cy -= result.bbox.y;
+      offsetX = params.x - result.nextX;
+      offsetY = params.y - result.nextY;
     }
     return null;
   }

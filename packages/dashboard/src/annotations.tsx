@@ -149,7 +149,7 @@ export const Annotations: React.FC<{
   viewportWidth: number;
   viewportHeight: number;
   onSubmit: (blob: Blob, annotations: Annotation[]) => Promise<void> | void;
-  inspectAt: (params: { x: number; y: number }) => Promise<{ bbox: Rect; locator: string } | null>;
+  inspectAt: (params: { x: number; y: number }) => Promise<{ box: Rect; locator: string } | null>;
 }> = ({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit, inspectAt }) => {
   const [annotations, setAnnotations] = React.useState<Annotation[]>([]);
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
@@ -204,7 +204,7 @@ export const Annotations: React.FC<{
     inspectInFlightRef.current = true;
     void inspectAt(vp).then(result => {
       if (seq === inspectSeqRef.current)
-        setSnapPreview(result ? { rect: result.bbox, locator: result.locator } : null);
+        setSnapPreview(result ? { rect: result.box, locator: result.locator } : null);
     }).catch(() => {
       if (seq === inspectSeqRef.current)
         setSnapPreview(null);
