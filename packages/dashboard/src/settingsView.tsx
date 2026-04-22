@@ -17,6 +17,7 @@
 import React from 'react';
 import './settingsView.css';
 import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
+import { ToolbarButton } from '@web/components/toolbarButton';
 import { GearIcon } from './icons';
 
 export const SettingsButton: React.FC = () => {
@@ -45,13 +46,14 @@ export const SettingsButton: React.FC = () => {
 
   return (
     <div ref={containerRef} className='settings-button-container'>
-      <button
-        className={'settings-gear-btn' + (open ? ' open' : '')}
+      <ToolbarButton
+        className='settings-gear-btn'
         title='Settings'
+        toggled={open}
         onClick={() => setOpen(!open)}
       >
         <GearIcon />
-      </button>
+      </ToolbarButton>
       {open && (
         <div className='settings-popup'>
           <div className='setting-row'>

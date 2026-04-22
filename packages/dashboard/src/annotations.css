@@ -27,27 +27,6 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgb(var(--annotate-blue) / 0.72), inset 0 0 26px rgb(var(--annotate-blue) / 0.28);
-}
-
-.annotation-toolbar {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  display: inline-flex;
-  gap: 6px;
-  padding: 6px;
-  background: var(--color-canvas-overlay);
-  border: 1px solid var(--color-border-muted);
-  border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 20;
-  cursor: default;
-}
-
-:root.dark-mode .annotation-toolbar {
-  border-color: var(--color-border-default);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
 }
 
 :root.dark-mode .annotate-action-btn {
@@ -77,16 +56,6 @@
 .annotate-action-btn:disabled {
   opacity: 0.5;
   cursor: default;
-}
-
-.annotate-action-btn.primary {
-  background: rgb(var(--annotate-blue));
-  color: #fff;
-  border-color: transparent;
-}
-
-.annotate-action-btn.primary:hover:not(:disabled) {
-  background: rgb(var(--annotate-blue) / 0.85);
 }
 
 .annotate-action-btn.danger {

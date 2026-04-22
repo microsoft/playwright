@@ -142,14 +142,71 @@ export async function saveAnnotationAsDownload(blob: Blob): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
-export const Annotations: React.FC<{
+export async function buildAnnotatedImage(
+  img: HTMLImageElement,
+  viewportWidth: number,
+  viewportHeight: number,
+  annotations: Annotation[],
+): Promise<Blob | null> {
+  if (!img.naturalWidth || !img.naturalHeight || !viewportWidth || !viewportHeight)
+    return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx)
+    return null;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const sx = canvas.width / viewportWidth;
+  const sy = canvas.height / viewportHeight;
+  const blue = 'rgb(54, 116, 209)';
+  const fontSize = Math.max(11, Math.round(14 * sy));
+  ctx.font = `500 ${fontSize}px -apple-system, system-ui, sans-serif`;
+  ctx.textBaseline = 'middle';
+  for (const a of annotations) {
+    const x = a.x * sx;
+    const y = a.y * sy;
+    const w = a.width * sx;
+    const h = a.height * sy;
+    ctx.fillStyle = 'rgba(54, 116, 209, 0.12)';
+    ctx.fillRect(x, y, w, h);
+    ctx.lineWidth = Math.max(2, Math.round(2 * sy));
+    ctx.strokeStyle = blue;
+    ctx.strokeRect(x, y, w, h);
+    if (a.text) {
+      const padX = Math.max(4, Math.round(6 * sy));
+      const padY = Math.max(2, Math.round(3 * sy));
+      const metrics = ctx.measureText(a.text);
+      const labelW = metrics.width + padX * 2;
+      const labelH = fontSize + padY * 2;
+      const labelX = x - ctx.lineWidth / 2;
+      const labelY = y - labelH;
+      ctx.fillStyle = blue;
+      ctx.fillRect(labelX, labelY, labelW, labelH);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(a.text, labelX + padX, labelY + labelH / 2);
+    }
+  }
+  return await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+export type AnnotationsHandle = {
+  clear(): void;
+  submit(): Promise<void>;
+  save(): Promise<void>;
+};
+
+type AnnotationsProps = {
   active: boolean;
   displayRef: React.RefObject<HTMLImageElement | null>;
   screenRef: React.RefObject<HTMLDivElement | null>;
   viewportWidth: number;
   viewportHeight: number;
   onSubmit: (blob: Blob, annotations: Annotation[]) => Promise<void> | void;
-}> = ({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit }) => {
+  onAnnotationsChange?: (count: number) => void;
+};
+
+export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>(({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit, onAnnotationsChange }, ref) => {
   const [annotations, setAnnotations] = React.useState<Annotation[]>([]);
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
   const [selection, setSelection] = React.useState<Selection>(null);
@@ -313,55 +370,38 @@ export const Annotations: React.FC<{
     }
   }
 
-  async function submitAnnotations() {
-    const img = displayRef.current;
-    if (!img || !img.naturalWidth || !img.naturalHeight || !viewportWidth || !viewportHeight)
-      return;
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx)
-      return;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const sx = canvas.width / viewportWidth;
-    const sy = canvas.height / viewportHeight;
-    const blue = 'rgb(54, 116, 209)';
-    const fontSize = Math.max(11, Math.round(14 * sy));
-    ctx.font = `500 ${fontSize}px -apple-system, system-ui, sans-serif`;
-    ctx.textBaseline = 'middle';
-    for (const a of annotations) {
-      const x = a.x * sx;
-      const y = a.y * sy;
-      const w = a.width * sx;
-      const h = a.height * sy;
-      ctx.fillStyle = 'rgba(54, 116, 209, 0.12)';
-      ctx.fillRect(x, y, w, h);
-      ctx.lineWidth = Math.max(2, Math.round(2 * sy));
-      ctx.strokeStyle = blue;
-      ctx.strokeRect(x, y, w, h);
-      if (a.text) {
-        const padX = Math.max(4, Math.round(6 * sy));
-        const padY = Math.max(2, Math.round(3 * sy));
-        const metrics = ctx.measureText(a.text);
-        const labelW = metrics.width + padX * 2;
-        const labelH = fontSize + padY * 2;
-        const labelX = x - ctx.lineWidth / 2;
-        const labelY = y - labelH;
-        ctx.fillStyle = blue;
-        ctx.fillRect(labelX, labelY, labelW, labelH);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(a.text, labelX + padX, labelY + labelH / 2);
-      }
-    }
-    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-    if (!blob)
-      return;
-    await onSubmit(blob, annotations);
-    setAnnotations([]);
-    setSelection(null);
-    setDraft(null);
-  }
+  React.useEffect(() => {
+    onAnnotationsChange?.(annotations.length);
+  }, [annotations.length, onAnnotationsChange]);
+
+  React.useImperativeHandle(ref, () => ({
+    clear: () => {
+      setAnnotations([]);
+      setDraft(null);
+      setSelection(null);
+    },
+    submit: async () => {
+      const img = displayRef.current;
+      if (!img)
+        return;
+      const blob = await buildAnnotatedImage(img, viewportWidth, viewportHeight, annotations);
+      if (!blob)
+        return;
+      await onSubmit(blob, annotations);
+      setAnnotations([]);
+      setSelection(null);
+      setDraft(null);
+    },
+    save: async () => {
+      const img = displayRef.current;
+      if (!img)
+        return;
+      const blob = await buildAnnotatedImage(img, viewportWidth, viewportHeight, annotations);
+      if (!blob)
+        return;
+      await saveAnnotationAsDownload(blob);
+    },
+  }), [displayRef, viewportWidth, viewportHeight, annotations, onSubmit]);
 
   if (!active)
     return null;
@@ -386,25 +426,6 @@ export const Annotations: React.FC<{
       onKeyDown={onLayerKeyDown}
       onContextMenu={e => e.preventDefault()}
     >
-      <div className='annotation-toolbar' onMouseDown={e => e.stopPropagation()}>
-        <button
-          className='annotate-action-btn'
-          onClick={() => { setAnnotations([]); setDraft(null); setSelection(null); }}
-          disabled={annotations.length === 0}
-          title='Remove all annotations'
-        >
-          Clear
-        </button>
-        <button
-          className='annotate-action-btn primary'
-          onClick={submitAnnotations}
-          disabled={annotations.length === 0}
-          title='Submit annotation'
-        >
-          Submit
-        </button>
-      </div>
-
       {annotations.map(a => {
         const style = mapRect(a);
         if (!style)
@@ -495,13 +516,13 @@ export const Annotations: React.FC<{
                   layerRef.current?.focus();
                 }}
               >
-                Delete
+                Discard
               </button>
               <button
                 className='annotate-action-btn'
                 onClick={closeEditor}
               >
-                Done
+                Add
               </button>
             </div>
           </div>
@@ -510,4 +531,5 @@ export const Annotations: React.FC<{
 
     </div>
   );
-};
+});
+Annotations.displayName = 'Annotations';

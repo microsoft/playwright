@@ -17,17 +17,24 @@
 import React from 'react';
 import './dashboard.css';
 import { DashboardClientContext } from './dashboardContext';
-import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
-import { Annotations, getImageLayout, clientToViewport, saveAnnotationAsDownload } from './annotations';
+import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, LockIcon, LockOpenIcon, ReloadIcon, ScreenshotRegionIcon } from './icons';
+import { Annotations, getImageLayout, clientToViewport } from './annotations';
 
-import type { Annotation } from './annotations';
-import { ToolbarButton } from '@web/components/toolbarButton';
+import type { Annotation, AnnotationsHandle } from './annotations';
+import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
 import { useMeasureForRef } from '@web/uiUtils';
 
 import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
 type Mode = 'readonly' | 'interactive' | 'annotate';
+
+// Recording mode is a separate, mode-replacing overlay similar to annotate.
+// While null, the normal toolbar is shown. When non-null, the recording
+// toolbar replaces it.
+type RecordingState =
+  | { phase: 'recording' }
+  | { phase: 'stopped'; blob: Blob; url: string };
 
 type DashboardState = {
   // Server-driven session state.
@@ -49,7 +56,7 @@ type DashboardState = {
   annotateInitiator: 'cli' | 'user' | null;
   // Interaction mode and ephemeral UI flags.
   mode: Mode;
-  recording: boolean;
+  recording: RecordingState | null;
 };
 
 type DashboardAction =
@@ -61,7 +68,9 @@ type DashboardAction =
   // User events
   | { type: 'toggleInteractive' }
   | { type: 'toggleAnnotate' }
-  | { type: 'setRecording'; recording: boolean }
+  | { type: 'startRecording' }
+  | { type: 'stoppedRecording'; blob: Blob; url: string }
+  | { type: 'exitRecording' }
   | { type: 'submitAnnotation' }
   | { type: 'setUrl'; url: string };
 
@@ -73,7 +82,7 @@ const initialDashboardState: DashboardState = {
   cliAnnotatePending: false,
   annotateInitiator: null,
   mode: 'readonly',
-  recording: false,
+  recording: null,
 };
 
 function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
@@ -101,7 +110,7 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         tabs: action.tabs,
         url,
         mode,
-        recording: false,
+        recording: null,
         liveFrame: undefined,
         annotateFrame: undefined,
         cliAnnotatePending: wasAnnotateActive,
@@ -175,8 +184,12 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         annotateInitiator: initiator,
       };
     }
-    case 'setRecording':
-      return { ...state, recording: action.recording };
+    case 'startRecording':
+      return { ...state, recording: { phase: 'recording' } };
+    case 'stoppedRecording':
+      return { ...state, recording: { phase: 'stopped', blob: action.blob, url: action.url } };
+    case 'exitRecording':
+      return { ...state, recording: null };
     case 'submitAnnotation':
       return {
         ...state,
@@ -230,30 +243,33 @@ export const Dashboard: React.FC = () => {
   const { tabs, url, mode, recording, liveFrame, annotateFrame, annotateInitiator } = state;
   const interactive = mode === 'interactive';
   const annotating = mode === 'annotate';
-  // While annotating, the on-screen image is the frozen snapshot so the
-  // user can draw on a stable picture even as the page keeps moving.
-  const frame = annotating ? annotateFrame : liveFrame;
 
-  const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
   const [flashTick, setFlashTick] = React.useState(0);
+  const [annotationCount, setAnnotationCount] = React.useState(0);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
+  const annotateViewRef = React.useRef<HTMLDivElement>(null);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const viewportMainRef = React.useRef<HTMLDivElement>(null);
   const browserChromeRef = React.useRef<HTMLDivElement>(null);
   const interactiveBtnRef = React.useRef<HTMLButtonElement>(null);
+  const annotationsRef = React.useRef<AnnotationsHandle>(null);
   const moveThrottleRef = React.useRef(0);
 
-  const aspect = frame && frame.viewportWidth && frame.viewportHeight
-    ? frame.viewportWidth / frame.viewportHeight
+  const aspect = liveFrame && liveFrame.viewportWidth && liveFrame.viewportHeight
+    ? liveFrame.viewportWidth / liveFrame.viewportHeight
     : null;
 
   const [viewportRect] = useMeasureForRef(viewportMainRef);
 
+  // Active recording hides the browser chrome so the viewport matches what's
+  // being captured (mirroring annotate mode's chrome-less frame).
+  const showBrowserChrome = recording?.phase !== 'recording';
+
   const windowStyle = React.useMemo<React.CSSProperties | undefined>(() => {
     const OUTER_MARGIN = 24;
-    const chromeHeight = browserChromeRef.current?.offsetHeight ?? 40;
+    const chromeHeight = showBrowserChrome ? (browserChromeRef.current?.offsetHeight ?? 40) : 0;
     const availW = viewportRect.width - OUTER_MARGIN;
     const availH = viewportRect.height - OUTER_MARGIN;
     if (availW <= 0 || availH <= 0)
@@ -268,10 +284,10 @@ export const Dashboard: React.FC = () => {
       w = h * aspect;
     }
     return { width: w, height: h + chromeHeight };
-  }, [viewportRect, aspect]);
+  }, [viewportRect, aspect, showBrowserChrome]);
 
   React.useEffect(() => {
-    if (flashTick === 0 || interactive)
+    if (flashTick === 0)
       return;
     const btn = interactiveBtnRef.current;
     if (!btn)
@@ -285,13 +301,16 @@ export const Dashboard: React.FC = () => {
       clearTimeout(timer);
       btn.classList.remove('flash');
     };
-  }, [flashTick, interactive]);
+  }, [flashTick]);
+
+  React.useEffect(() => {
+    if (interactive)
+      interactiveBtnRef.current?.classList.remove('flash');
+  }, [interactive]);
 
   const onSubmitAnnotations = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
-    if (!client || annotateInitiator !== 'cli') {
-      await saveAnnotationAsDownload(blob);
+    if (!client)
       return;
-    }
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -304,11 +323,61 @@ export const Dashboard: React.FC = () => {
       annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
     });
     dispatch({ type: 'submitAnnotation' });
-  }, [client, annotateInitiator]);
+  }, [client]);
 
   function flashInteractiveHint() {
     setFlashTick(tick => tick + 1);
   }
+
+  const onStartRecording = React.useCallback(async () => {
+    if (!client)
+      return;
+    await client.startRecording();
+    dispatch({ type: 'startRecording' });
+  }, [client]);
+
+  const onStopRecording = React.useCallback(async () => {
+    if (!client)
+      return;
+    const { streamId } = await client.stopRecording();
+    const chunks: Blob[] = [];
+    while (true) {
+      const { data, eof } = await client.readStream({ streamId });
+      if (data)
+        chunks.push(base64ToBlob(data, 'video/webm'));
+      if (eof)
+        break;
+    }
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    dispatch({ type: 'stoppedRecording', blob, url });
+  }, [client]);
+
+  const onSaveRecording = React.useCallback(async () => {
+    if (state.recording?.phase !== 'stopped')
+      return;
+    const writable = await pickSaveWritable(`playwright-recording-${Date.now()}.webm`, 'WebM Video', 'video/webm', '.webm');
+    if (!writable)
+      return;
+    await writable.write(state.recording.blob);
+    await writable.close();
+  }, [state.recording]);
+
+  const onExitRecording = React.useCallback(async () => {
+    if (state.recording?.phase === 'recording' && client) {
+      // Drain the stream without persisting; keeps the server clean.
+      const { streamId } = await client.stopRecording();
+      while (true) {
+        const { eof } = await client.readStream({ streamId });
+        if (eof)
+          break;
+      }
+    }
+    if (state.recording?.phase === 'stopped')
+      URL.revokeObjectURL(state.recording.url);
+    dispatch({ type: 'exitRecording' });
+  }, [state.recording, client]);
+
 
   React.useEffect(() => {
     if (!client)
@@ -348,8 +417,8 @@ export const Dashboard: React.FC = () => {
   const ready = !!client && !!selectedTab;
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
-    const vw = frame?.viewportWidth ?? 0;
-    const vh = frame?.viewportHeight ?? 0;
+    const vw = liveFrame?.viewportWidth ?? 0;
+    const vh = liveFrame?.viewportHeight ?? 0;
     if (!vw || !vh)
       return { x: 0, y: 0 };
     const layout = getImageLayout(displayRef.current);
@@ -436,177 +505,234 @@ export const Dashboard: React.FC = () => {
     overlayText = 'Select a session';
 
   return (
-    <div className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '')}>
+    <div className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '') + (recording ? ' recording' : '')}>
       {/* Toolbar */}
       <div ref={toolbarRef} className='toolbar'>
-        <ToolbarButton
-          ref={interactiveBtnRef}
-          className='mode-toggle mode-interactive'
-          title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
-          icon='person'
-          toggled={interactive}
-          disabled={!ready}
-          onClick={() => {
-            dispatch({ type: 'toggleInteractive' });
-          }}
-        />
-        <ToolbarButton
-          className='mode-toggle mode-annotate'
-          title={annotating ? 'Disable annotation mode' : 'Enable annotation mode'}
-          icon='comment-draft'
-          toggled={annotating}
-          disabled={!ready || !frame}
-          onClick={() => {
-            dispatch({ type: 'toggleAnnotate' });
-          }}
-        />
-        <div className='toolbar-right'>
-          <ToolbarButton
-            className='recording'
-            title={recording ? 'Stop recording' : 'Record video'}
-            icon='record'
-            toggled={recording}
-            style={{ color: recording ? 'var(--color-scale-red-5)' : undefined }}
-            disabled={!ready}
-            onClick={async () => {
-              if (!client)
-                return;
-              if (recording) {
-                const writable = await pickSaveWritable(`playwright-recording-${Date.now()}.webm`, 'WebM Video', 'video/webm', '.webm');
-                if (!writable)
-                  return;
-                dispatch({ type: 'setRecording', recording: false });
-                const { streamId } = await client.stopRecording();
-                while (true) {
-                  const { data, eof } = await client.readStream({ streamId });
-                  if (eof)
-                    break;
-                  await writable.write(base64ToBlob(data, 'video/webm'));
+        {annotating ? (
+          <>
+            {annotateInitiator === 'cli' && (
+              <>
+                <ToolbarButton
+                  className='annotate-toolbar-btn'
+                  title='Submit annotation'
+                  icon='check'
+                  disabled={annotationCount === 0}
+                  onClick={() => annotationsRef.current?.submit()}
+                />
+                <ToolbarSeparator />
+              </>
+            )}
+            <ToolbarButton
+              className='annotate-toolbar-btn'
+              title='Save annotated image'
+              onClick={() => annotationsRef.current?.save()}
+            >
+              <DownloadIcon />
+            </ToolbarButton>
+            <ToolbarButton
+              className='annotate-toolbar-btn'
+              title='Clear annotations'
+              icon='circle-slash'
+              disabled={annotationCount === 0}
+              onClick={() => annotationsRef.current?.clear()}
+            />
+            <div className='toolbar-right'>
+              <ToolbarButton
+                className='annotate-toolbar-btn'
+                title='Close annotation mode'
+                icon='close'
+                onClick={() => dispatch({ type: 'toggleAnnotate' })}
+              />
+            </div>
+          </>
+        ) : recording ? (
+          <>
+            <ToolbarButton
+              className='recording'
+              title={recording.phase === 'recording' ? 'Stop recording' : 'Start new recording'}
+              icon='record'
+              toggled={recording.phase === 'recording'}
+              style={{ color: recording.phase === 'recording' ? 'var(--color-scale-red-5)' : undefined }}
+              onClick={async () => {
+                if (recording.phase === 'recording') {
+                  await onStopRecording();
+                } else {
+                  URL.revokeObjectURL(recording.url);
+                  await onStartRecording();
                 }
-                await writable.close();
-              } else {
-                await client.startRecording();
-                dispatch({ type: 'setRecording', recording: true });
-              }
-            }}>
-            {recording && <span className='recording-label'>Recording...</span>}
-          </ToolbarButton>
-          <ToolbarButton
-            className='screenshot'
-            title='Save screenshot'
-            icon={screenshotIcon}
-            disabled={!ready}
-            onClick={async () => {
-              if (!client)
-                return;
-              const writable = await pickSaveWritable(`playwright-screenshot-${Date.now()}.png`, 'PNG Image', 'image/png', '.png');
-              if (!writable)
-                return;
-              const data = await client.screenshot();
-              await writable.write(base64ToBlob(data, 'image/png'));
-              await writable.close();
-              setScreenshotIcon('clippy');
-              setTimeout(() => setScreenshotIcon('device-camera'), 3000);
-            }}
-          />
-        </div>
+              }}>
+              {recording.phase === 'recording' && <span className='recording-label'>Recording...</span>}
+            </ToolbarButton>
+            <ToolbarButton
+              title='Save recording'
+              disabled={recording.phase !== 'stopped'}
+              onClick={onSaveRecording}
+            >
+              <DownloadIcon />
+            </ToolbarButton>
+            <div className='toolbar-right'>
+              <ToolbarButton
+                title='Close'
+                icon='close'
+                onClick={onExitRecording}
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <ToolbarButton
+              ref={interactiveBtnRef}
+              className='mode-toggle mode-interactive'
+              title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
+              toggled={interactive}
+              disabled={!ready}
+              onClick={() => {
+                dispatch({ type: 'toggleInteractive' });
+              }}
+            >
+              {interactive ? <LockOpenIcon /> : <LockIcon />}
+            </ToolbarButton>
+            <ToolbarSeparator />
+            <ToolbarButton
+              className='mode-toggle mode-annotate'
+              title='Enable annotation mode'
+              disabled={!ready || !liveFrame}
+              onClick={() => {
+                dispatch({ type: 'toggleAnnotate' });
+              }}
+            >
+              <ScreenshotRegionIcon />
+            </ToolbarButton>
+            <ToolbarButton
+              title='Record video'
+              icon='record'
+              disabled={!ready}
+              onClick={onStartRecording}
+            />
+          </>
+        )}
       </div>
 
       {/* Viewport */}
       <div className='viewport-wrapper'>
         <div ref={viewportMainRef} className='viewport-main'>
-          <div className='browser-window' style={windowStyle}>
-            <div ref={browserChromeRef} className='browser-chrome'>
-              <button className='nav-btn' title='Back' aria-disabled={!interactive || undefined} onClick={() => {
-                if (!interactive) {
-                  flashInteractiveHint();
-                  return;
-                }
-                client?.back();
-              }}>
-                <ChevronLeftIcon />
-              </button>
-              <button className='nav-btn' title='Forward' aria-disabled={!interactive || undefined} onClick={() => {
-                if (!interactive) {
-                  flashInteractiveHint();
-                  return;
-                }
-                client?.forward();
-              }}>
-                <ChevronRightIcon />
-              </button>
-              <button className='nav-btn' title='Reload' aria-disabled={!interactive || undefined} onClick={() => {
-                if (!interactive) {
-                  flashInteractiveHint();
-                  return;
-                }
-                client?.reload();
-              }}>
-                <ReloadIcon />
-              </button>
-              <div className='omnibox-wrap'>
-                <input
-                  id='omnibox'
-                  className='omnibox'
-                  type='text'
-                  placeholder='Search or enter URL'
-                  spellCheck={false}
-                  autoComplete='off'
-                  value={url}
-                  onChange={e => {
-                    if (!interactive)
-                      return;
-                    dispatch({ type: 'setUrl', url: e.target.value });
-                  }}
-                  onKeyDown={e => {
-                    if (!interactive)
-                      return;
-                    onOmniboxKeyDown(e);
-                  }}
-                  onFocus={e => {
-                    if (!interactive) {
-                      flashInteractiveHint();
-                      e.target.blur();
-                      return;
-                    }
-                    e.target.select();
-                  }}
-                  aria-disabled={!interactive || undefined}
-                  readOnly={!interactive}
-                />
-              </div>
-            </div>
-            <div
-              ref={screenRef}
-              className='screen'
-              tabIndex={0}
-              style={{ display: frame ? '' : 'none' }}
-              onMouseDown={onScreenMouseDown}
-              onMouseUp={onScreenMouseUp}
-              onMouseMove={onScreenMouseMove}
-              onWheel={onScreenWheel}
-              onKeyDown={onScreenKeyDown}
-              onKeyUp={onScreenKeyUp}
-              onContextMenu={e => e.preventDefault()}
-            >
+          {annotating && annotateFrame ? (
+            <div ref={annotateViewRef} className='annotate-view'>
               <img
                 ref={displayRef}
                 id='display'
-                className='display'
-                alt='screencast'
-                src={frame ? 'data:image/jpeg;base64,' + frame.data : undefined}
+                className='annotate-image'
+                alt='annotation'
+                src={'data:image/jpeg;base64,' + annotateFrame.data}
               />
               <Annotations
-                active={annotating}
+                ref={annotationsRef}
+                active={true}
                 displayRef={displayRef}
-                screenRef={screenRef}
-                viewportWidth={frame?.viewportWidth ?? 0}
-                viewportHeight={frame?.viewportHeight ?? 0}
+                screenRef={annotateViewRef}
+                viewportWidth={annotateFrame.viewportWidth ?? 0}
+                viewportHeight={annotateFrame.viewportHeight ?? 0}
                 onSubmit={onSubmitAnnotations}
+                onAnnotationsChange={setAnnotationCount}
               />
             </div>
-            {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
-          </div>
+          ) : recording?.phase === 'stopped' ? (
+            <div className='recording-view'>
+              <video
+                className='recording-video'
+                src={recording.url}
+                controls
+                autoPlay
+              />
+            </div>
+          ) : (
+            <div className='browser-window' style={windowStyle}>
+              {showBrowserChrome && (
+                <div ref={browserChromeRef} className='browser-chrome'>
+                  <button className='nav-btn' title='Back' aria-disabled={!interactive || undefined} onClick={() => {
+                    if (!interactive) {
+                      flashInteractiveHint();
+                      return;
+                    }
+                    client?.back();
+                  }}>
+                    <ChevronLeftIcon />
+                  </button>
+                  <button className='nav-btn' title='Forward' aria-disabled={!interactive || undefined} onClick={() => {
+                    if (!interactive) {
+                      flashInteractiveHint();
+                      return;
+                    }
+                    client?.forward();
+                  }}>
+                    <ChevronRightIcon />
+                  </button>
+                  <button className='nav-btn' title='Reload' aria-disabled={!interactive || undefined} onClick={() => {
+                    if (!interactive) {
+                      flashInteractiveHint();
+                      return;
+                    }
+                    client?.reload();
+                  }}>
+                    <ReloadIcon />
+                  </button>
+                  <div className='omnibox-wrap'>
+                    <input
+                      id='omnibox'
+                      className='omnibox'
+                      type='text'
+                      placeholder='Search or enter URL'
+                      spellCheck={false}
+                      autoComplete='off'
+                      value={url}
+                      onChange={e => {
+                        if (!interactive)
+                          return;
+                        dispatch({ type: 'setUrl', url: e.target.value });
+                      }}
+                      onKeyDown={e => {
+                        if (!interactive)
+                          return;
+                        onOmniboxKeyDown(e);
+                      }}
+                      onFocus={e => {
+                        if (!interactive) {
+                          flashInteractiveHint();
+                          e.target.blur();
+                          return;
+                        }
+                        e.target.select();
+                      }}
+                      aria-disabled={!interactive || undefined}
+                      readOnly={!interactive}
+                    />
+                  </div>
+                </div>
+              )}
+              <div
+                ref={screenRef}
+                className='screen'
+                tabIndex={0}
+                style={{ display: liveFrame ? '' : 'none' }}
+                onMouseDown={onScreenMouseDown}
+                onMouseUp={onScreenMouseUp}
+                onMouseMove={onScreenMouseMove}
+                onWheel={onScreenWheel}
+                onKeyDown={onScreenKeyDown}
+                onKeyUp={onScreenKeyUp}
+                onContextMenu={e => e.preventDefault()}
+              >
+                <img
+                  ref={displayRef}
+                  id='display'
+                  className='display'
+                  alt='screencast'
+                  src={liveFrame ? 'data:image/jpeg;base64,' + liveFrame.data : undefined}
+                />
+              </div>
+              {overlayText && <div className={'screen-overlay' + (liveFrame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
+            </div>
+          )}
         </div>
       </div>
     </div>

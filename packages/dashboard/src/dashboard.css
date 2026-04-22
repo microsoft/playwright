@@ -17,11 +17,35 @@
 .dashboard-view {
   --interactive-orange: 238 134 12;
   --annotate-blue: 54 116 209;
+  --recording-red: 239 68 68;
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
   overflow: hidden;
+  position: relative;
+}
+
+.dashboard-view.annotate::after,
+.dashboard-view.recording::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.dashboard-view.annotate::after {
+  box-shadow: inset 0 0 0 1px rgb(var(--annotate-blue) / 0.72), inset 0 0 8px rgb(var(--annotate-blue) / 0.28);
+}
+
+.dashboard-view.recording::after {
+  box-shadow: inset 0 0 0 1px rgb(var(--recording-red) / 0.72), inset 0 0 8px rgb(var(--recording-red) / 0.28);
+}
+
+.dashboard-view.annotate .toolbar,
+.dashboard-view.recording .toolbar {
+  background: none !important;
 }
 
 /* -- Mode toggle buttons (interactive / annotate) -- */
@@ -214,6 +238,34 @@
   flex: 1;
   min-height: 0;
   width: 100%;
+}
+
+.annotate-view, .recording-view {
+  position: relative;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.annotate-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  box-shadow: 0 0 0 1px var(--color-border-muted), 0 0 8px var(--color-border-muted);
+}
+
+.recording-video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #000;
+  box-shadow: 0 0 0 1px var(--color-border-muted), 0 0 8px var(--color-border-muted);
 }
 
 .display {
