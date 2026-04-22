@@ -32,7 +32,6 @@ import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
 
 type BrowserTrackerCallbacks = {
   onTabsChanged: () => void;
-  onPickLocator: (page: api.Page) => void;
   onContextClosed: (context: api.BrowserContext) => void;
 };
 
@@ -87,9 +86,6 @@ class BrowserTracker {
       eventsHelper.addEventListener(context, 'framenavigated', (frame: api.Frame) => {
         if (frame === frame.page().mainFrame())
           this._callbacks.onTabsChanged();
-      }),
-      eventsHelper.addEventListener(context, 'picklocator', (page: api.Page) => {
-        this._callbacks.onPickLocator(page);
       }),
       eventsHelper.addEventListener(context, 'close', () => {
         const ls = this._contextListeners.get(context);
@@ -289,14 +285,6 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
   }
 
-  emitElementPicked(selector: string, ariaSnapshot?: string) {
-    this.sendEvent?.('elementPicked', { selector, ariaSnapshot });
-  }
-
-  emitPickLocator() {
-    this.sendEvent?.('pickLocator', {});
-  }
-
   emitAnnotate() {
     this.sendEvent?.('annotate', {});
   }
@@ -421,7 +409,6 @@ export class DashboardConnection implements Transport {
         continue;
       const slot = await BrowserTracker.create(status, {
         onTabsChanged: () => this._pushTabs(),
-        onPickLocator: page => { this._onPickLocator(page).catch(() => {}); },
         onContextClosed: context => {
           if (this._attachedPage?.page.context() === context) {
             this._attachedPage.dispose();
@@ -449,11 +436,6 @@ export class DashboardConnection implements Transport {
   private _findPage(params: { browser: string; context: string; page: string }): api.Page | undefined {
     const context = this._findContext(params);
     return context?.pages().find(p => pageId(p) === params.page);
-  }
-
-  private async _onPickLocator(page: api.Page) {
-    await this._switchAttachedTo(page);
-    this.emitPickLocator();
   }
 }
 
@@ -554,15 +536,6 @@ class AttachedPage {
 
   async keyup(params: { key: string }) {
     await this._page.keyboard.up(params.key);
-  }
-
-  async pickLocator() {
-    const locator = await this._page.pickLocator();
-    this._owner.emitElementPicked(locator.toString(), await locator.ariaSnapshot());
-  }
-
-  async cancelPickLocator() {
-    await this._page.cancelPickLocator();
   }
 
   async startRecording() {

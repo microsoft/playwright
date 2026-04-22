@@ -65,26 +65,6 @@ const resume = defineTool({
   },
 });
 
-const pickLocator = defineTabTool({
-  capability: 'devtools',
-  schema: {
-    name: 'browser_pick_locator',
-    title: 'Pick element locator',
-    description: 'Wait for the user to pick an element in the browser and return its ref and locator.',
-    inputSchema: z.object({}),
-    type: 'readOnly',
-  },
-
-  handle: async (tab, params, response) => {
-    const locator = await tab.page.pickLocator();
-    // Regenerate aria refs so the picked element has an aria ref we can read below.
-    await tab.page.ariaSnapshot({ mode: 'ai' });
-    const ref = await locator.ariaRef();
-    const resolved = await locator.normalize();
-    response.addTextResult(`ref: ${ref ?? '(none)'}\nlocator: ${resolved.toString()}`);
-  },
-});
-
 const highlight = defineTabTool({
   capability: 'devtools',
   schema: {
@@ -128,4 +108,4 @@ const hideHighlight = defineTabTool({
   },
 });
 
-export default [resume, pickLocator, highlight, hideHighlight];
+export default [resume, highlight, hideHighlight];

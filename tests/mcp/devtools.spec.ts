@@ -18,25 +18,6 @@ import { test, expect } from './cli-fixtures';
 
 test.use({ mcpCaps: ['devtools'] });
 
-test('browser_pick_locator', async ({ boundBrowser, startClient }) => {
-  const page = await boundBrowser.newPage();
-  await page.setContent(`<button>Submit</button>`);
-
-  const { client } = await startClient({ args: [`--endpoint=default`] });
-  await client.callTool({ name: 'browser_snapshot' });
-
-  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
-  const pickPromise = client.callTool({ name: 'browser_pick_locator' });
-  await scriptReady;
-
-  const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
-  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-
-  expect(await pickPromise).toHaveResponse({
-    result: `ref: e2\nlocator: getByRole('button', { name: 'Submit' })`,
-  });
-});
-
 test('browser_highlight', async ({ boundBrowser, startClient }) => {
   const page = await boundBrowser.newPage();
   await page.setContent(`<button>Submit</button>`);

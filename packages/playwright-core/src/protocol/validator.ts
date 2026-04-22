@@ -939,9 +939,6 @@ scheme.BrowserContextInitializer = tObject({
 scheme.BrowserContextBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
 });
-scheme.BrowserContextPickLocatorEvent = tObject({
-  page: tChannel(['Page']),
-});
 scheme.BrowserContextConsoleEvent = tObject({
   type: tString,
   text: tString,
