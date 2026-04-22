@@ -120,11 +120,7 @@ export class ConnectedTabGroup {
   private _onTabAttached(tabId: number): void {
     this._attachedTabIds.add(tabId);
     void this._updateBadge(tabId, CONNECTED_BADGE);
-    // Tabs attached by the relay itself (popups, Target.createTarget) aren't
-    // in the group yet — pull them in. For the selected tab and drag-ins the
-    // group add happened first, so this is a no-op.
-    if (!this._groupTabIds.has(tabId))
-      void this._addTabToGroup(tabId);
+    void this._addTabToGroup(tabId);
   }
 
   // The debugger detached (drag-out, tab close, or external action). Clear the
@@ -144,7 +140,7 @@ export class ConnectedTabGroup {
     this._groupTabIds.clear();
     attachedIds.forEach(id => void this._updateBadge(id, { text: '' }));
     if (groupTabs.length) {
-      chrome.tabs.ungroup(groupTabs).catch(error => {
+      this._retryOnDrag(() => chrome.tabs.ungroup(groupTabs)).catch(error => {
         debugLog('Error ungrouping tabs on close:', error);
       });
     }
@@ -163,25 +159,45 @@ export class ConnectedTabGroup {
     }
   }
 
-  // Moves a tab into our Chrome tab group, creating it on first use. The
-  // resulting onUpdated event drives attach via _onTabGroupChanged; the manual
-  // call below covers the race where Chrome fires onUpdated for a group
-  // creation before `chrome.tabs.group` returns (and `_groupId` is set).
+  // Moves an already-attached tab into our Chrome tab group, creating it on
+  // first use. `_groupTabIds` is updated after the await so an onUpdated event
+  // that arrives concurrently (`_groupId` still null, wasInGroup still false)
+  // becomes a harmless no-op rather than taking the drag-out branch.
   private async _addTabToGroup(tabId: number): Promise<void> {
+    if (this._groupTabIds.has(tabId))
+      return;
     try {
-      if (this._groupId === null) {
-        this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
-        await chrome.tabGroups.update(this._groupId, { color: PLAYWRIGHT_GROUP_COLOR, title: PLAYWRIGHT_GROUP_TITLE });
-      } else {
-        await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
-      }
-      if (this._groupTabIds.has(tabId))
-        return;
-      const tab = await chrome.tabs.get(tabId).catch(() => undefined);
-      if (tab)
-        this._onTabGroupChanged(tabId, this._groupId, tab.url);
+      await this._retryOnDrag(async () => {
+        if (this._groupId === null) {
+          this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
+          await chrome.tabGroups.update(this._groupId, { color: PLAYWRIGHT_GROUP_COLOR, title: PLAYWRIGHT_GROUP_TITLE });
+        } else {
+          await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
+        }
+      });
+      this._groupTabIds.add(tabId);
     } catch (error: any) {
       debugLog('Error adding tab to group:', error);
     }
+  }
+
+  // Chrome throws "user may be dragging a tab" while a drag is in progress.
+  // Retry with backoff until it clears (or we give up).
+  private async _retryOnDrag(fn: () => Promise<void>): Promise<void> {
+    const delays = [0, 100, 200, 400, 800];
+    let lastError: unknown;
+    for (const delay of delays) {
+      if (delay)
+        await new Promise(resolve => setTimeout(resolve, delay));
+      try {
+        await fn();
+        return;
+      } catch (error: any) {
+        if (!error?.message?.includes('user may be dragging a tab'))
+          throw error;
+        lastError = error;
+      }
+    }
+    throw lastError;
   }
 }
