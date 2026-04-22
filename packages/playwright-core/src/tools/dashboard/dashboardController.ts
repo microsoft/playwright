@@ -113,7 +113,7 @@ export class DashboardConnection implements Transport {
   private _onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
-  private _pushTabsScheduled = false;
+  private _pushTabsPromise: Promise<void> | null = null;
   private _visible = true;
   private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
 
@@ -214,9 +214,9 @@ export class DashboardConnection implements Transport {
     await this._attachedPage?.setScreencastActive(params.visible);
   }
 
-  revealSession(sessionName: string, workspaceDir?: string) {
+  async revealSession(sessionName: string, workspaceDir?: string) {
     this._pendingReveal = { sessionName, workspaceDir };
-    void this._tryRevealPending();
+    await this._tryRevealPending();
   }
 
   private async _tryRevealPending() {
@@ -233,7 +233,6 @@ export class DashboardConnection implements Transport {
       return;
     this._pendingReveal = undefined;
     await this._switchAttachedTo(page);
-    this._pushTabs();
   }
 
   async submitAnnotation(params: { data: string; annotations: AnnotationData[] }) {
@@ -293,19 +292,19 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('cancelAnnotate', {});
   }
 
-  _pushTabs() {
-    if (this._pushTabsScheduled)
-      return;
-    this._pushTabsScheduled = true;
-    queueMicrotask(async () => {
-      this._pushTabsScheduled = false;
-      try {
-        const tabs = await this._aggregateTabs();
-        this.emitTabs(tabs);
-      } catch {
-        // best-effort
-      }
-    });
+  _pushTabs(): Promise<void> {
+    if (!this._pushTabsPromise) {
+      this._pushTabsPromise = new Promise<void>(resolve => queueMicrotask(async () => {
+        this._pushTabsPromise = null;
+        try {
+          const tabs = await this._aggregateTabs();
+          this.emitTabs(tabs);
+        } finally {
+          resolve();
+        }
+      }));
+    }
+    return this._pushTabsPromise;
   }
 
   private async _aggregateTabs(): Promise<Tab[]> {
@@ -341,6 +340,11 @@ export class DashboardConnection implements Transport {
     }
     const attached = new AttachedPage(this, slot, page);
     this._attachedPage = attached;
+    // Push tabs before starting the screencast so that the client sees
+    // the page change (tabs event) before the first frame arrives for
+    // the new page. Without this, the client may receive a frame for
+    // the new page while still thinking the old page is selected.
+    await this._pushTabs();
     try {
       await attached.init();
     } catch (e) {
