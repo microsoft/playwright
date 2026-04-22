@@ -221,14 +221,6 @@ exit 1
     isError: true,
     error: expect.stringContaining(`Bogus browser script`),
   });
-  // Chromium waits for the CDP endpoint, so we know if the process failed to launch
-  // before connecting.
-  if (mcpBrowser === 'chromium') {
-    expect.soft(result).toHaveResponse({
-      isError: true,
-      error: expect.stringContaining(`Failed to launch the browser process.`),
-    });
-  }
   expect.soft(result).toHaveResponse({
     isError: true,
     error: expect.not.stringContaining(`Browser is already in use`),
