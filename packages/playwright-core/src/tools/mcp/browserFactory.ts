@@ -92,7 +92,6 @@ function browserInfo(browser: playwrightTypes.Browser, config: FullConfig): Brow
 
 async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (isolated)');
-  await injectCdpPort(config.browser);
   const browserType = playwright[config.browser.browserName];
   const tracesDir = await computeTracesDir(config, clientInfo);
   const browser = await browserType.launch({
@@ -145,7 +144,6 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
 
 async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (persistent)');
-  await injectCdpPort(config.browser);
   const userDataDir = config.browser.userDataDir ?? await createUserDataDir(config, clientInfo);
   const tracesDir = await computeTracesDir(config, clientInfo);
 
@@ -192,24 +190,6 @@ async function createUserDataDir(config: FullConfig, clientInfo: ClientInfo) {
   const result = path.join(dir, `mcp-${browserToken}-${rootPathToken}`);
   await fs.promises.mkdir(result, { recursive: true });
   return result;
-}
-
-async function injectCdpPort(browserConfig: FullConfig['browser']) {
-  if (browserConfig.browserName === 'chromium') {
-    browserConfig.launchOptions.args = browserConfig.launchOptions.args ?? [];
-    browserConfig.launchOptions.args?.push(`--remote-debugging-port=${await findFreePort()}`);
-  }
-}
-
-async function findFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.listen(0, '127.0.0.1', () => {
-      const { port } = server.address() as net.AddressInfo;
-      server.close(() => resolve(port));
-    });
-    server.on('error', reject);
-  });
 }
 
 function createHash(data: string): string {
