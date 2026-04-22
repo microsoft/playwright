@@ -214,9 +214,9 @@ export class DashboardConnection implements Transport {
     await this._attachedPage?.setScreencastActive(params.visible);
   }
 
-  revealSession(sessionName: string, workspaceDir?: string) {
+  async revealSession(sessionName: string, workspaceDir?: string) {
     this._pendingReveal = { sessionName, workspaceDir };
-    void this._tryRevealPending();
+    await this._tryRevealPending();
   }
 
   private async _tryRevealPending() {
@@ -233,7 +233,6 @@ export class DashboardConnection implements Transport {
       return;
     this._pendingReveal = undefined;
     await this._switchAttachedTo(page);
-    this._pushTabs();
   }
 
   async submitAnnotation(params: { data: string; annotations: AnnotationData[] }) {
@@ -341,6 +340,12 @@ export class DashboardConnection implements Transport {
     }
     const attached = new AttachedPage(this, slot, page);
     this._attachedPage = attached;
+    // Push tabs before starting the screencast so that the client sees
+    // the page change (tabs event) before the first frame arrives for
+    // the new page. Without this, the client may receive a frame for
+    // the new page while still thinking the old page is selected.
+    const tabs = await this._aggregateTabs();
+    this.emitTabs(tabs);
     try {
       await attached.init();
     } catch (e) {

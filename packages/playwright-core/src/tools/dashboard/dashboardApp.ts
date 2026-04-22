@@ -39,7 +39,7 @@ declare const __PW_DASHBOARD_HMR__: boolean;
 
 type DashboardServer = {
   url: string;
-  reveal: (options: DashboardOptions) => void;
+  reveal: (options: DashboardOptions) => Promise<void>;
   triggerAnnotate: () => void;
   registerAnnotateWaiter: (socket: net.Socket) => void;
 };
@@ -67,9 +67,9 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(() => connections.delete(connection), () => {
+    connection = new DashboardConnection(() => connections.delete(connection), async () => {
       if (currentReveal.sessionName)
-        connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
+        await connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
       if (pendingAnnotate) {
         pendingAnnotate = false;
         connection.emitAnnotate();
@@ -89,12 +89,11 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
     attachDashboardStaticServer(httpServer, dashboardDir);
   await httpServer.start({ port: options.port, host: options.host });
 
-  const reveal = (next: DashboardOptions) => {
+  const reveal = async (next: DashboardOptions) => {
     currentReveal = next;
     if (!next.sessionName)
       return;
-    for (const connection of connections)
-      connection.revealSession(next.sessionName, next.workspaceDir);
+    await Promise.all([...connections].map(c => c.revealSession(next.sessionName!, next.workspaceDir)));
   };
 
   const triggerAnnotate = () => {
@@ -339,10 +338,10 @@ export async function openDashboardApp() {
         socket.end();
         return;
       }
-      void statePromise.then(({ page, server: dashboard }) => {
+      void statePromise.then(async ({ page, server: dashboard }) => {
         if (parsed.annotate) {
           page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
+          await dashboard.reveal(parsed);
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
         } else if (parsed.kill) {
