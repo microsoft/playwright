@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs/promises';
-import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
+import { test, testWithOldExtensionVersion, expect, extensionId, clickAllow, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
 
 test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
@@ -30,7 +30,7 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   });
 
   const selectorPage = await confirmationPagePromise;
-  await clickAllowAndSelect(selectorPage, 'Welcome');
+  await clickAllow(selectorPage);
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
@@ -104,7 +104,7 @@ test(`browser_run_code can evaluate in a web worker`, async ({ startExtensionCli
   });
 
   const selectorPage = await confirmationPagePromise;
-  await clickAllowAndSelect(selectorPage, 'Welcome');
+  await clickAllow(selectorPage);
 
   await navigateResponse;
 
@@ -222,7 +222,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   });
 
   const selectorPage = await confirmationPagePromise;
-  await clickAllowAndSelect(selectorPage, 'Welcome');
+  await clickAllow(selectorPage);
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
