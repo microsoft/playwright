@@ -28,7 +28,7 @@ type PageMessage = {
   type: 'connectToTab';
   tabId?: number;
   windowId?: number;
-  mcpRelayUrl: string;
+  clientName?: string;
 } | {
   type: 'getConnectionStatus';
 } | {
@@ -39,6 +39,7 @@ type PageMessage = {
 
 class PlaywrightExtension {
   private _activeGroup: ConnectedTabGroup | undefined;
+  private _activeClientName: string | undefined;
   private _pendingConnections = new PendingConnections();
   // Service worker restarts lose all connection state, so any existing
   // Playwright groups are stale. Connections wait on this before reconciling.
@@ -66,13 +67,14 @@ class PlaywrightExtension {
       case 'connectToTab':
         const tabId = message.tabId || sender.tab?.id!;
         const windowId = message.windowId || sender.tab?.windowId!;
-        this._connectTab(sender.tab!.id!, tabId, windowId).then(
+        this._connectTab(sender.tab!.id!, tabId, windowId, message.clientName).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true; // Return true to indicate that the response will be sent asynchronously
       case 'getConnectionStatus':
         sendResponse({
-          connectedTabIds: this._activeGroup?.connectedTabIds() ?? []
+          connectedTabIds: this._activeGroup?.connectedTabIds() ?? [],
+          clientName: this._activeClientName,
         });
         return false;
       case 'disconnect':
@@ -91,7 +93,7 @@ class PlaywrightExtension {
     }
   }
 
-  private async _connectTab(selectorTabId: number, tabId: number, windowId: number): Promise<void> {
+  private async _connectTab(selectorTabId: number, tabId: number, windowId: number, clientName: string | undefined): Promise<void> {
     try {
       await this._cleanupPromise;
       this._disconnect('Another connection is requested');
@@ -102,10 +104,13 @@ class PlaywrightExtension {
 
       const group = new ConnectedTabGroup(pending.connection, tabId);
       group.onclose = () => {
-        if (this._activeGroup === group)
+        if (this._activeGroup === group) {
           this._activeGroup = undefined;
+          this._activeClientName = undefined;
+        }
       };
       this._activeGroup = group;
+      this._activeClientName = clientName;
 
       await Promise.all([
         chrome.tabs.update(tabId, { active: true }),
@@ -137,6 +142,7 @@ class PlaywrightExtension {
   private _disconnect(reason: string) {
     this._activeGroup?.close(reason);
     this._activeGroup = undefined;
+    this._activeClientName = undefined;
   }
 }
 
