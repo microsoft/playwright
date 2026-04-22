@@ -159,7 +159,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
     const attachments = loadAttachments(cli.stdout);
 
     const browserMatches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
-    const [, , daemonPid] = browserMatches ?? [];
+    const daemonPid = browserMatches?.[2] ?? parseJsonPid(cli.stdout);
     const dashboardMatches = cli.stdout.includes('### Dashboard') ? cli.stdout.match(/Dashboard opened with pid (\d+)\./) : undefined;
     const dashboardPid = dashboardMatches?.[1];
 
@@ -174,6 +174,13 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       dashboardPid: dashboardPid ? +dashboardPid : undefined,
     };
   });
+}
+
+function parseJsonPid(stdout: string) {
+  try {
+    return JSON.parse(stdout).pid;
+  } catch {
+  }
 }
 
 function loadAttachments(output: string) {
