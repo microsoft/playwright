@@ -41,6 +41,7 @@ class BrowserTracker {
   readonly browser: api.Browser;
   private _callbacks: BrowserTrackerCallbacks;
   private _contextListeners = new Map<api.BrowserContext, Disposable[]>();
+  private _browserListeners: Disposable[] = [];
 
   static async create(descriptor: BrowserDescriptor, callbacks: BrowserTrackerCallbacks): Promise<BrowserTracker | undefined> {
     try {
@@ -48,6 +49,9 @@ class BrowserTracker {
       const slot = new BrowserTracker(descriptor, browser, callbacks);
       for (const context of browser.contexts())
         slot._wireContext(context);
+      slot._browserListeners.push(eventsHelper.addEventListener(browser, 'context', (context: api.BrowserContext) => {
+        slot._wireContext(context);
+      }));
       return slot;
     } catch {
       return undefined;
@@ -65,6 +69,8 @@ class BrowserTracker {
   }
 
   dispose() {
+    this._browserListeners.forEach(d => d.dispose());
+    this._browserListeners = [];
     for (const listeners of this._contextListeners.values())
       listeners.forEach(d => d.dispose());
     this._contextListeners.clear();

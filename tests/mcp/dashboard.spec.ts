@@ -55,12 +55,14 @@ test('should show one row per context for a single browser', async ({ boundBrows
   const contextA = await boundBrowser.newContext();
   const pageA = await contextA.newPage();
   await pageA.goto(server.EMPTY_PAGE);
-  const contextB = await boundBrowser.newContext();
-  const pageB = await contextB.newPage();
-  await pageB.goto(server.EMPTY_PAGE);
 
   const dashboard = await startDashboardServer();
   const chips = dashboard.locator('.session-chip');
+  await expect(chips).toHaveCount(1);
+
+  const contextB = await boundBrowser.newContext();
+  const pageB = await contextB.newPage();
+  await pageB.goto(server.EMPTY_PAGE);
   await expect(chips).toHaveCount(2);
 });
 
@@ -97,8 +99,7 @@ test('should show current workspace sessions first', async ({ cli, server, start
   });
 });
 
-test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer, mcpBrowser }) => {
-  test.fixme(mcpBrowser === 'firefox', 'race condition gonna be fixed through https://github.com/microsoft/playwright/pull/40315');
+test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer }) => {
   await cli('-s=sessA', 'open', server.EMPTY_PAGE);
   await cli('-s=sessB', 'open', server.EMPTY_PAGE);
 
