@@ -141,9 +141,9 @@ const ConnectApp: React.FC = () => {
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'connectToTab',
-        mcpRelayUrl,
         tabId: tab?.id,
         windowId: tab?.windowId,
+        clientName: clientInfo,
       });
 
       if (response?.success) {

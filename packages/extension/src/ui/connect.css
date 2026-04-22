@@ -140,6 +140,21 @@ body {
   border-color: #c73836;
 }
 
+/* Connection header */
+.connection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  margin-bottom: 16px;
+}
+
+.client-info {
+  font-size: 14px;
+  color: #1f2328;
+}
+
 /* Tab selection */
 .tab-section-title {
   padding-left: 12px;

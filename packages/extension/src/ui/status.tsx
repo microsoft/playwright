@@ -23,13 +23,14 @@ import { AuthTokenSection } from './authToken';
 
 const StatusApp: React.FC = () => {
   const [connectedTabs, setConnectedTabs] = useState<TabInfo[]>([]);
+  const [clientName, setClientName] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     void loadStatus();
   }, []);
 
   const loadStatus = async () => {
-    const { connectedTabIds } = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
+    const { connectedTabIds, clientName } = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
     const tabs: TabInfo[] = [];
     for (const tabId of (connectedTabIds as number[] ?? [])) {
       try {
@@ -46,6 +47,7 @@ const StatusApp: React.FC = () => {
       }
     }
     setConnectedTabs(tabs);
+    setClientName(clientName);
   };
 
   const openTab = async (tabId: number) => {
@@ -63,19 +65,22 @@ const StatusApp: React.FC = () => {
       <div className='content-wrapper'>
         {connectedTabs.length > 0 ? (
           <div>
+            <div className='connection-header'>
+              <div className='client-info'>
+                Connected to <strong>"{clientName || 'unknown'}"</strong>
+              </div>
+              <Button variant='primary' onClick={disconnect}>
+                Disconnect
+              </Button>
+            </div>
             <div className='tab-section-title'>
-              {connectedTabs.length === 1 ? 'Page connected to Playwright client:' : 'Pages connected to Playwright client:'}
+              {connectedTabs.length === 1 ? 'Accessible page:' : 'Accessible pages:'}
             </div>
             <div>
-              {connectedTabs.map((tab, index) => (
+              {connectedTabs.map(tab => (
                 <TabItem
                   key={tab.id}
                   tab={tab}
-                  button={index === 0 ? (
-                    <Button variant='primary' onClick={disconnect}>
-                      Disconnect
-                    </Button>
-                  ) : undefined}
                   onClick={() => openTab(tab.id)}
                 />
               ))}
@@ -83,7 +88,7 @@ const StatusApp: React.FC = () => {
           </div>
         ) : (
           <div className='status-banner'>
-            No clients are currently connected.
+            No clients are currently connected. You can connect from the Playwright CLI or MCP server by passing the --extension flag.
           </div>
         )}
         <AuthTokenSection />
