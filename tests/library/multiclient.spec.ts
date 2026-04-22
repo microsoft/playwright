@@ -16,7 +16,7 @@
 
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { expect, playwrightTest } from '../config/browserTest';
-import type { Browser, BrowserServer, ConnectOptions, Page } from 'playwright-core';
+import type { Browser, BrowserContext, BrowserServer, ConnectOptions, Page } from 'playwright-core';
 
 type ExtraFixtures = {
   remoteServer: BrowserServer;
@@ -91,6 +91,19 @@ test('should connect two clients', async ({ connect, remoteServer, server }) => 
 
   await expect(pageB1).toHaveURL(server.EMPTY_PAGE);
   await expect(pageB2).toHaveURL(server.PREFIX + '/frames/frame.html');
+});
+
+test('should fire context event on remote newContext', async ({ connect, remoteServer }) => {
+  const browserA = await connect(remoteServer.wsEndpoint());
+  const events: BrowserContext[] = [];
+  browserA.on('context', ctx => events.push(ctx));
+
+  const browserB = await connect(remoteServer.wsEndpoint());
+  const contextB = await browserB.newContext();
+
+  await expect.poll(() => events).toHaveLength(1);
+  expect(browserA.contexts()).toEqual([events[0]]);
+  expect(events[0]).not.toBe(contextB);
 });
 
 test('should have separate default timeouts', async ({ twoPages }) => {
