@@ -590,6 +590,49 @@ class AttachedPage {
     return buffer.toString('base64');
   }
 
+  async inspectAt(params: { x: number; y: number }): Promise<{ bbox: { x: number; y: number; width: number; height: number }; locator: string } | null> {
+    const result = await this._page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      if (!el)
+        return null;
+      const r = el.getBoundingClientRect();
+      const cssEscape = (s: string) => (window.CSS && window.CSS.escape) ? window.CSS.escape(s) : s;
+      const tokenFor = (node: Element): string => {
+        let token = node.tagName.toLowerCase();
+        if (node.id) {
+          token += '#' + cssEscape(node.id);
+          return token;
+        }
+        const classes = (node.getAttribute('class') || '').trim().split(/\s+/).filter(Boolean).slice(0, 2);
+        for (const c of classes)
+          token += '.' + cssEscape(c);
+        const parent = node.parentElement;
+        if (parent) {
+          const sameTag = Array.from(parent.children).filter(c => c.tagName === node.tagName);
+          if (sameTag.length > 1)
+            token += `:nth-of-type(${sameTag.indexOf(node) + 1})`;
+        }
+        return token;
+      };
+      const parts: string[] = [];
+      let current: Element | null = el;
+      while (current && current !== document.documentElement) {
+        parts.unshift(tokenFor(current));
+        if (current.id)
+          break;
+        current = current.parentElement;
+      }
+      return {
+        bbox: { x: r.x, y: r.y, width: r.width, height: r.height },
+        selector: parts.join(' > '),
+      };
+    }, params);
+    if (!result)
+      return null;
+    const normalized = await this._page.locator('css=' + result.selector).normalize();
+    return { bbox: result.bbox, locator: normalized.toString() };
+  }
+
   private async _startScreencast(page: api.Page) {
     await page.screencast.start({
       onFrame: ({ data }: { data: Buffer }) => {

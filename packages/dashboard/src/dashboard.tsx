@@ -635,6 +635,7 @@ export const Dashboard: React.FC = () => {
                 viewportWidth={frame?.viewportWidth ?? 0}
                 viewportHeight={frame?.viewportHeight ?? 0}
                 onSubmit={onSubmitAnnotations}
+                inspectAt={async params => await client?.inspectAt(params) ?? null}
               />
             </div>
             {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}

@@ -68,6 +68,7 @@ export interface DashboardChannel {
   readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
   screenshot(): Promise<string>;
   submitAnnotation(params: { data: string; annotations: AnnotationData[] }): Promise<void>;
+  inspectAt(params: { x: number; y: number }): Promise<{ bbox: { x: number; y: number; width: number; height: number }; locator: string } | null>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

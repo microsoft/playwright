@@ -125,6 +125,13 @@
   pointer-events: none;
 }
 
+.annotation-rect.snap-preview {
+  border-style: dashed;
+  border-color: rgb(var(--annotate-blue));
+  background: rgb(var(--annotate-blue) / 0.08);
+  pointer-events: none;
+}
+
 .annotation-handle {
   position: absolute;
   width: 10px;

@@ -149,7 +149,8 @@ export const Annotations: React.FC<{
   viewportWidth: number;
   viewportHeight: number;
   onSubmit: (blob: Blob, annotations: Annotation[]) => Promise<void> | void;
-}> = ({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit }) => {
+  inspectAt: (params: { x: number; y: number }) => Promise<{ bbox: Rect; locator: string } | null>;
+}> = ({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit, inspectAt }) => {
   const [annotations, setAnnotations] = React.useState<Annotation[]>([]);
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
   const [selection, setSelection] = React.useState<Selection>(null);
@@ -157,6 +158,12 @@ export const Annotations: React.FC<{
   const [, setTick] = React.useState(0);
   const forceRender = React.useCallback(() => setTick(t => t + 1), []);
   const layerRef = React.useRef<HTMLDivElement>(null);
+  const [shiftHeld, setShiftHeld] = React.useState(false);
+  const [snapPreview, setSnapPreview] = React.useState<{ rect: Rect; locator: string } | null>(null);
+  const lastCursorRef = React.useRef<{ x: number; y: number } | null>(null);
+  const inspectSeqRef = React.useRef(0);
+  const inspectInFlightRef = React.useRef(false);
+  const pendingInspectRef = React.useRef<{ x: number; y: number } | null>(null);
 
   const selectedId = selection?.id ?? null;
   const editingId = selection?.editing ? selection.id : null;
@@ -180,7 +187,68 @@ export const Annotations: React.FC<{
       layerRef.current?.focus();
     else
       setSelection(null);
+    if (!active) {
+      setShiftHeld(false);
+      setSnapPreview(null);
+      lastCursorRef.current = null;
+      pendingInspectRef.current = null;
+    }
   }, [active]);
+
+  const runInspect = React.useCallback((vp: { x: number; y: number }) => {
+    if (inspectInFlightRef.current) {
+      pendingInspectRef.current = vp;
+      return;
+    }
+    const seq = ++inspectSeqRef.current;
+    inspectInFlightRef.current = true;
+    void inspectAt(vp).then(result => {
+      if (seq === inspectSeqRef.current)
+        setSnapPreview(result ? { rect: result.bbox, locator: result.locator } : null);
+    }).catch(() => {
+      if (seq === inspectSeqRef.current)
+        setSnapPreview(null);
+    }).finally(() => {
+      inspectInFlightRef.current = false;
+      const next = pendingInspectRef.current;
+      pendingInspectRef.current = null;
+      if (next)
+        runInspect(next);
+    });
+  }, [inspectAt]);
+
+  React.useEffect(() => {
+    if (!active)
+      return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift' && !shiftHeld) {
+        setShiftHeld(true);
+        const last = lastCursorRef.current;
+        if (last)
+          runInspect(last);
+      }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setShiftHeld(false);
+        setSnapPreview(null);
+        pendingInspectRef.current = null;
+        inspectSeqRef.current++;
+      }
+    };
+    const onBlur = () => {
+      setShiftHeld(false);
+      setSnapPreview(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, [active, shiftHeld, runInspect]);
 
   React.useEffect(() => {
     if (!drag)
@@ -230,6 +298,16 @@ export const Annotations: React.FC<{
     const vp = imgCoords(e);
     if (!vp)
       return;
+    if (shiftHeld && snapPreview) {
+      e.preventDefault();
+      const id = newAnnotationId();
+      const { rect, locator } = snapPreview;
+      setAnnotations(prev => [...prev, { id, ...rect, text: locator }]);
+      setSelection({ id, editing: false });
+      return;
+    }
+    if (shiftHeld)
+      return;
     const hit = hitTestAnnotation(vp.x, vp.y);
     e.preventDefault();
     if (hit) {
@@ -242,9 +320,16 @@ export const Annotations: React.FC<{
   }
 
   function onLayerMouseMove(e: React.MouseEvent) {
+    const vp = imgCoords(e);
+    if (vp)
+      lastCursorRef.current = vp;
+    if (shiftHeld) {
+      if (vp)
+        runInspect(vp);
+      return;
+    }
     if (drag || !draft)
       return;
-    const vp = imgCoords(e);
     if (!vp)
       return;
     if (draft.x === vp.x && draft.y === vp.y)
@@ -448,6 +533,11 @@ export const Annotations: React.FC<{
       {draft && (() => {
         const style = mapRect(normalizeRect(draft));
         return style ? <div className='annotation-rect draft' style={style} /> : null;
+      })()}
+
+      {shiftHeld && snapPreview && (() => {
+        const style = mapRect(snapPreview.rect);
+        return style ? <div className='annotation-rect snap-preview' style={style} /> : null;
       })()}
 
       {editingAnnotation && (() => {

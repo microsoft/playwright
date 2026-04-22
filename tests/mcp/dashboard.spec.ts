@@ -309,6 +309,43 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   expect(exitCode).toBe(0);
 });
 
+test('should snap annotation to underlying element while Shift held', async ({ connectToDashboard, cli, server }) => {
+  server.setContent('/snap', `<!doctype html><html><head><style>html,body{margin:0;height:100vh;background:#fff}#target{position:absolute;left:200px;top:150px;width:400px;height:200px;background:#36c;color:#fff;font-size:24px}</style></head><body><button id='target'>Submit Order</button></body></html>`, 'text/html');
+
+  await cli('open', server.PREFIX + '/snap');
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+  const dashboard = browser.contexts()[0].pages()[0];
+
+  await dashboard.locator('.sidebar-tab').first().click();
+  await expect(dashboard.locator('#display')).toBeVisible();
+
+  await dashboard.locator('.mode-toggle.mode-annotate').click();
+  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+
+  const box = await dashboard.locator('img#display').boundingBox();
+  // Underlying page viewport is 1280x800; the target sits at (200,150)-(600,350).
+  // Center is (400, 250) in page coords.
+  const centerX = box!.x + box!.width * (400 / 1280);
+  const centerY = box!.y + box!.height * (250 / 800);
+
+  await dashboard.mouse.move(centerX, centerY);
+  await dashboard.keyboard.down('Shift');
+  await dashboard.mouse.move(centerX + 1, centerY + 1);
+  await expect(dashboard.locator('.annotation-rect.snap-preview')).toBeVisible();
+
+  await dashboard.mouse.down();
+  await dashboard.mouse.up();
+  await dashboard.keyboard.up('Shift');
+
+  await expect(dashboard.locator('.annotation-rect.snap-preview')).toHaveCount(0);
+  const committed = dashboard.locator('.annotation-rect:not(.draft):not(.snap-preview)');
+  await expect(committed).toHaveCount(1);
+  await expect(committed.locator('.annotation-label')).toHaveText(`getByRole('button', { name: 'Submit Order' })`);
+});
+
+
 test('should disengage annotate mode when --annotate client disconnects', async ({ connectToDashboard, cli, childProcess, cliEnv, mcpBrowser, mcpHeadless, server }) => {
   await cli('open', server.EMPTY_PAGE);
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
