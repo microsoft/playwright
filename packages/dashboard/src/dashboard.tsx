@@ -30,6 +30,180 @@ import type { Tab, DashboardChannelEvents } from './dashboardChannel';
 const BUTTONS = ['left', 'middle', 'right'] as const;
 type Mode = 'readonly' | 'interactive' | 'annotate';
 
+type DashboardState = {
+  // Server-driven session state.
+  tabs: Tab[] | null;
+  url: string;
+  // The latest frame received from the server. Cleared on page swap;
+  // the server is responsible for emitting a fresh frame for the new
+  // page (see _startScreencast).
+  liveFrame: DashboardChannelEvents['frame'] | undefined;
+  // Snapshot of the frame at the moment we entered annotate mode. The
+  // <Annotations> overlay draws on this frozen image so the canvas does
+  // not jump around as new live frames arrive.
+  annotateFrame: DashboardChannelEvents['frame'] | undefined;
+  // Server requested annotate but we have no fresh frame for the active
+  // page. The next FRAME action will enter annotate mode.
+  cliAnnotatePending: boolean;
+  // Whether the current annotate session was initiated by CLI or by the
+  // user. Determines whether submit goes to the server or saves locally.
+  annotateInitiator: 'cli' | 'user' | null;
+  // Interaction mode and ephemeral UI flags.
+  mode: Mode;
+  picking: boolean;
+  recording: boolean;
+};
+
+type DashboardAction =
+  // Server events
+  | { type: 'tabs'; tabs: Tab[] }
+  | { type: 'frame'; frame: DashboardChannelEvents['frame'] }
+  | { type: 'cliAnnotate' }
+  | { type: 'cliCancelAnnotate' }
+  | { type: 'pickLocator' }
+  | { type: 'elementPicked' }
+  // User events
+  | { type: 'toggleInteractive' }
+  | { type: 'toggleAnnotate' }
+  | { type: 'cancelPicking' }
+  | { type: 'setRecording'; recording: boolean }
+  | { type: 'submitAnnotation' }
+  | { type: 'setUrl'; url: string };
+
+const initialDashboardState: DashboardState = {
+  tabs: null,
+  url: '',
+  liveFrame: undefined,
+  annotateFrame: undefined,
+  cliAnnotatePending: false,
+  annotateInitiator: null,
+  mode: 'readonly',
+  picking: false,
+  recording: false,
+};
+
+function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
+  switch (action.type) {
+    case 'tabs': {
+      const newSelected = action.tabs.find(t => t.selected);
+      const oldSelected = state.tabs?.find(t => t.selected);
+      const url = newSelected ? newSelected.url : state.url;
+      // Page change = had a selected tab, now have a different selected
+      // tab. Initial selection (none -> some) is not a "change".
+      const pageChanged = !!oldSelected && !!newSelected && newSelected.page !== oldSelected.page;
+      if (!pageChanged)
+        return { ...state, tabs: action.tabs, url };
+      // Page swap. Clear frames and rely on the server to emit a fresh
+      // frame for the new page (see _startScreencast which awaits a
+      // screenshot to force one). If we were annotating, mark pending so
+      // the next FRAME re-enters annotate with the new page's image.
+      const wasAnnotateActive = state.mode === 'annotate' || state.cliAnnotatePending;
+      const newTabIsBrandNew = !!state.tabs && !state.tabs.some(t => t.page === newSelected.page);
+      let mode: Mode = state.mode;
+      if (!wasAnnotateActive && newTabIsBrandNew && state.tabs)
+        mode = 'interactive';
+      return {
+        ...state,
+        tabs: action.tabs,
+        url,
+        mode,
+        picking: false,
+        recording: false,
+        liveFrame: undefined,
+        annotateFrame: undefined,
+        cliAnnotatePending: wasAnnotateActive,
+      };
+    }
+    case 'frame': {
+      const liveFrame = action.frame;
+      if (state.cliAnnotatePending) {
+        return {
+          ...state,
+          liveFrame,
+          annotateFrame: liveFrame,
+          mode: 'annotate',
+          cliAnnotatePending: false,
+          annotateInitiator: state.annotateInitiator ?? 'cli',
+        };
+      }
+      return { ...state, liveFrame };
+    }
+    case 'cliAnnotate': {
+      if (state.mode === 'annotate') {
+        // Already annotating (user-initiated). Mark CLI as the source so
+        // submit goes to the server.
+        return { ...state, annotateInitiator: 'cli' };
+      }
+      if (state.liveFrame) {
+        return {
+          ...state,
+          mode: 'annotate',
+          annotateFrame: state.liveFrame,
+          cliAnnotatePending: false,
+          annotateInitiator: 'cli',
+        };
+      }
+      return { ...state, cliAnnotatePending: true, annotateInitiator: 'cli' };
+    }
+    case 'cliCancelAnnotate': {
+      const exitingAnnotate = state.mode === 'annotate';
+      return {
+        ...state,
+        mode: exitingAnnotate ? 'readonly' : state.mode,
+        annotateFrame: undefined,
+        cliAnnotatePending: false,
+        annotateInitiator: null,
+      };
+    }
+    case 'pickLocator':
+      return { ...state, mode: 'interactive', picking: true };
+    case 'elementPicked':
+      return { ...state, picking: false };
+    case 'toggleInteractive': {
+      const next: Mode = state.mode === 'interactive' ? 'readonly' : 'interactive';
+      return { ...state, mode: next, picking: false };
+    }
+    case 'toggleAnnotate': {
+      if (state.mode === 'annotate') {
+        return {
+          ...state,
+          mode: 'readonly',
+          annotateFrame: undefined,
+          annotateInitiator: null,
+        };
+      }
+      if (!state.liveFrame)
+        return state;
+      // Preserve a CLI initiator across mode toggles so that CLI annotate
+      // sessions stay engaged when the user switches to interactive and
+      // back. Only set 'user' if there was no prior CLI engagement.
+      const initiator: 'cli' | 'user' | null = state.annotateInitiator ?? 'user';
+      return {
+        ...state,
+        mode: 'annotate',
+        annotateFrame: state.liveFrame,
+        cliAnnotatePending: false,
+        annotateInitiator: initiator,
+        picking: false,
+      };
+    }
+    case 'cancelPicking':
+      return { ...state, picking: false };
+    case 'setRecording':
+      return { ...state, recording: action.recording };
+    case 'submitAnnotation':
+      return {
+        ...state,
+        mode: 'readonly',
+        annotateFrame: undefined,
+        cliAnnotatePending: false,
+        annotateInitiator: null,
+      };
+    case 'setUrl':
+      return { ...state, url: action.url };
+  }
+}
+
 async function pickSaveWritable(suggestedName: string, description: string, mime: string, extension: string): Promise<FileSystemWritableFileStream | null> {
   try {
     const handle = await (window as any).showSaveFilePicker({
@@ -66,15 +240,16 @@ function smartUrl(input: string): string {
 
 export const Dashboard: React.FC = () => {
   const client = React.useContext(DashboardClientContext);
-  const [mode, setMode] = React.useState<Mode>('readonly');
-  const [tabs, setTabs] = React.useState<Tab[] | null>(null);
-  const [url, setUrl] = React.useState('');
-  const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
-  const [picking, setPicking] = React.useState(false);
-  const [recording, setRecording] = React.useState(false);
+  const [state, dispatch] = React.useReducer(dashboardReducer, initialDashboardState);
+  const { tabs, url, mode, picking, recording, liveFrame, annotateFrame, annotateInitiator } = state;
+  const interactive = mode === 'interactive';
+  const annotating = mode === 'annotate';
+  // While annotating, the on-screen image is the frozen snapshot so the
+  // user can draw on a stable picture even as the page keeps moving.
+  const frame = annotating ? annotateFrame : liveFrame;
+
   const [screenshotIcon, setScreenshotIcon] = React.useState<'device-camera' | 'clippy'>('device-camera');
   const [flashTick, setFlashTick] = React.useState(0);
-  const [cliAnnotate, setCliAnnotate] = React.useState(false);
 
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
@@ -83,9 +258,6 @@ export const Dashboard: React.FC = () => {
   const browserChromeRef = React.useRef<HTMLDivElement>(null);
   const interactiveBtnRef = React.useRef<HTMLButtonElement>(null);
   const moveThrottleRef = React.useRef(0);
-  const modeRef = React.useRef<Mode>('readonly');
-  const cliAnnotateRef = React.useRef(false);
-  const cliAnnotateEnteredRef = React.useRef(false);
 
   const aspect = frame && frame.viewportWidth && frame.viewportHeight
     ? frame.viewportWidth / frame.viewportHeight
@@ -113,29 +285,6 @@ export const Dashboard: React.FC = () => {
   }, [viewportRect, aspect]);
 
   React.useEffect(() => {
-    modeRef.current = mode;
-  }, [mode]);
-
-  React.useEffect(() => {
-    if (!cliAnnotate) {
-      cliAnnotateEnteredRef.current = false;
-      return;
-    }
-    if (cliAnnotateEnteredRef.current || !frame)
-      return;
-    cliAnnotateEnteredRef.current = true;
-    setMode('annotate');
-  }, [cliAnnotate, frame]);
-
-  const updateCliAnnotate = React.useCallback((value: boolean) => {
-    cliAnnotateRef.current = value;
-    setCliAnnotate(value);
-  }, []);
-
-  const interactive = mode === 'interactive';
-  const annotating = mode === 'annotate';
-
-  React.useEffect(() => {
     if (flashTick === 0 || interactive)
       return;
     const btn = interactiveBtnRef.current;
@@ -153,7 +302,7 @@ export const Dashboard: React.FC = () => {
   }, [flashTick, interactive]);
 
   const onSubmitAnnotations = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
-    if (!client || !cliAnnotate) {
+    if (!client || annotateInitiator !== 'cli') {
       await saveAnnotationAsDownload(blob);
       return;
     }
@@ -168,34 +317,22 @@ export const Dashboard: React.FC = () => {
       data,
       annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
     });
-    updateCliAnnotate(false);
-    setMode('readonly');
-  }, [client, cliAnnotate, updateCliAnnotate]);
+    dispatch({ type: 'submitAnnotation' });
+  }, [client, annotateInitiator]);
 
   function flashInteractiveHint() {
     setFlashTick(tick => tick + 1);
   }
-
-  const prevTabsRef = React.useRef<Tab[] | null>(null);
 
   React.useEffect(() => {
     if (!client)
       return;
     let resized = false;
     const onTabs = (params: DashboardChannelEvents['tabs']) => {
-      const prev = prevTabsRef.current;
-      const selected = params.tabs.find(t => t.selected);
-      if (prev && selected && !prev.some(t => t.page === selected.page) && !cliAnnotateRef.current)
-        setMode('interactive');
-      prevTabsRef.current = params.tabs;
-      setTabs(params.tabs);
-      if (selected)
-        setUrl(selected.url);
+      dispatch({ type: 'tabs', tabs: params.tabs });
     };
     const onFrame = (params: DashboardChannelEvents['frame']) => {
-      if (modeRef.current === 'annotate')
-        return;
-      setFrame(params);
+      dispatch({ type: 'frame', frame: params });
       const toolbar = toolbarRef.current;
       if (!resized && toolbar && params.viewportWidth && params.viewportHeight) {
         resized = true;
@@ -210,18 +347,11 @@ export const Dashboard: React.FC = () => {
     const onElementPicked = (params: DashboardChannelEvents['elementPicked']) => {
       const locator = asLocator('javascript', params.selector);
       navigator.clipboard?.writeText(locator).catch(() => {});
-      setPicking(false);
+      dispatch({ type: 'elementPicked' });
     };
-    const onPickLocator = () => {
-      setMode('interactive');
-      setPicking(true);
-    };
-    const onAnnotate = () => updateCliAnnotate(true);
-    const onCancelAnnotate = () => {
-      if (modeRef.current === 'annotate')
-        setMode('readonly');
-      updateCliAnnotate(false);
-    };
+    const onPickLocator = () => dispatch({ type: 'pickLocator' });
+    const onAnnotate = () => dispatch({ type: 'cliAnnotate' });
+    const onCancelAnnotate = () => dispatch({ type: 'cliCancelAnnotate' });
     client.on('tabs', onTabs);
     client.on('frame', onFrame);
     client.on('elementPicked', onElementPicked);
@@ -240,21 +370,6 @@ export const Dashboard: React.FC = () => {
 
   const selectedTab = tabs?.find(t => t.selected);
   const ready = !!client && !!selectedTab;
-
-  const prevSelectedPageRef = React.useRef<string | undefined>(undefined);
-  React.useEffect(() => {
-    const prev = prevSelectedPageRef.current;
-    const current = selectedTab?.page;
-    prevSelectedPageRef.current = current;
-    setRecording(false);
-    setPicking(false);
-    if (!prev || !current || prev === current)
-      return;
-    setFrame(undefined);
-    cliAnnotateEnteredRef.current = false;
-    if (modeRef.current === 'annotate')
-      setMode('readonly');
-  }, [selectedTab?.page]);
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
     const vw = frame?.viewportWidth ?? 0;
@@ -319,7 +434,7 @@ export const Dashboard: React.FC = () => {
     if (picking && e.key === 'Escape') {
       e.preventDefault();
       client?.cancelPickLocator();
-      setPicking(false);
+      dispatch({ type: 'cancelPicking' });
       return;
     }
     if (!interactive || !client)
@@ -338,7 +453,7 @@ export const Dashboard: React.FC = () => {
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       const value = smartUrl((e.target as HTMLInputElement).value);
-      setUrl(value);
+      dispatch({ type: 'setUrl', url: value });
       client?.navigate({ url: value });
       e.currentTarget.blur();
     }
@@ -363,8 +478,7 @@ export const Dashboard: React.FC = () => {
           disabled={!ready}
           onClick={() => {
             client?.cancelPickLocator();
-            setPicking(false);
-            setMode(interactive ? 'readonly' : 'interactive');
+            dispatch({ type: 'toggleInteractive' });
           }}
         />
         <ToolbarButton
@@ -375,8 +489,7 @@ export const Dashboard: React.FC = () => {
           disabled={!ready || !frame}
           onClick={() => {
             client?.cancelPickLocator();
-            setPicking(false);
-            setMode(annotating ? 'readonly' : 'annotate');
+            dispatch({ type: 'toggleAnnotate' });
           }}
         />
         <div className='toolbar-right'>
@@ -394,7 +507,7 @@ export const Dashboard: React.FC = () => {
                 const writable = await pickSaveWritable(`playwright-recording-${Date.now()}.webm`, 'WebM Video', 'video/webm', '.webm');
                 if (!writable)
                   return;
-                setRecording(false);
+                dispatch({ type: 'setRecording', recording: false });
                 const { streamId } = await client.stopRecording();
                 while (true) {
                   const { data, eof } = await client.readStream({ streamId });
@@ -405,7 +518,7 @@ export const Dashboard: React.FC = () => {
                 await writable.close();
               } else {
                 await client.startRecording();
-                setRecording(true);
+                dispatch({ type: 'setRecording', recording: true });
               }
             }}>
             {recording && <span className='recording-label'>Recording...</span>}
@@ -475,7 +588,7 @@ export const Dashboard: React.FC = () => {
                   onChange={e => {
                     if (!interactive)
                       return;
-                    setUrl(e.target.value);
+                    dispatch({ type: 'setUrl', url: e.target.value });
                   }}
                   onKeyDown={e => {
                     if (!interactive)

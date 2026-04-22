@@ -601,7 +601,8 @@ class AttachedPage {
       size: { width: 1280, height: 800 },
       ...(this._recordingPath ? { path: this._recordingPath } : {}),
     });
-    void page.screenshot().catch(() => {}); // TODO: this is necessary to trigger a first frame - should this be in screencast.start() implementation?
+    // TODO: this is necessary to trigger a first frame - should this be in screencast.start() implementation?
+    await page.screenshot().catch(() => {});
   }
 
   private async _restartScreencast(page: api.Page) {
