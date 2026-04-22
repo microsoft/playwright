@@ -1642,7 +1642,6 @@ export type BrowserContextInitializer = {
 };
 export interface BrowserContextEventTarget {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
-  on(event: 'pickLocator', callback: (params: BrowserContextPickLocatorEvent) => void): this;
   on(event: 'console', callback: (params: BrowserContextConsoleEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'dialog', callback: (params: BrowserContextDialogEvent) => void): this;
@@ -1695,9 +1694,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
-};
-export type BrowserContextPickLocatorEvent = {
-  page: PageChannel,
 };
 export type BrowserContextConsoleEvent = {
   type: string,
@@ -2074,7 +2070,6 @@ export type BrowserContextClockSetSystemTimeResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
-  'pickLocator': BrowserContextPickLocatorEvent;
   'console': BrowserContextConsoleEvent;
   'close': BrowserContextCloseEvent;
   'dialog': BrowserContextDialogEvent;

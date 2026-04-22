@@ -1516,10 +1516,6 @@ BrowserContext:
       parameters:
         binding: BindingCall
 
-    pickLocator:
-      parameters:
-        page: Page
-
     console:
       parameters:
         $mixin: ConsoleMessage

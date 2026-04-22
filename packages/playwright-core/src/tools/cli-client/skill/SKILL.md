@@ -159,8 +159,8 @@ playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
 
-# wait for the user to pick an element in the browser, print its ref and locator
-playwright-cli pick
+# launch the dashboard with annotation prompt to ask the user for input
+playwright-cli show --annotate
 
 # generate a Playwright locator for an element from its ref or selector
 playwright-cli generate-locator e5 --raw

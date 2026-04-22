@@ -45,7 +45,6 @@ import type * as types from './types';
 import type * as channels from '@protocol/channels';
 
 const BrowserContextEvent = {
-  PickLocator: 'picklocator',
   Console: 'console',
   Close: 'close',
   Page: 'page',
@@ -66,7 +65,6 @@ const BrowserContextEvent = {
 } as const;
 
 export type BrowserContextEventMap = {
-  [BrowserContextEvent.PickLocator]: [page: Page];
   [BrowserContextEvent.Console]: [message: ConsoleMessage];
   [BrowserContextEvent.Close]: [];
   [BrowserContextEvent.Page]: [page: Page];

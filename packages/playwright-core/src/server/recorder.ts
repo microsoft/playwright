@@ -274,7 +274,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   async pickLocator(progress: Progress, page: Page): Promise<string> {
-    page.emitOnContext(BrowserContext.Events.PickLocator, page);
     if (this._mode !== 'none')
       await progress.race(this.setMode('none'));
 

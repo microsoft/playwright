@@ -8368,13 +8368,6 @@ export interface BrowserContext {
   on(event: 'pageload', listener: (page: Page) => any): this;
 
   /**
-   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
-   * page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  on(event: 'picklocator', listener: (page: Page) => any): this;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
    * only listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
@@ -8480,11 +8473,6 @@ export interface BrowserContext {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'pageload', listener: (page: Page) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -8646,13 +8634,6 @@ export interface BrowserContext {
   addListener(event: 'pageload', listener: (page: Page) => any): this;
 
   /**
-   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
-   * page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  addListener(event: 'picklocator', listener: (page: Page) => any): this;
-
-  /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
    * only listen for requests from a particular page, use
    * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
@@ -8762,11 +8743,6 @@ export interface BrowserContext {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'picklocator', listener: (page: Page) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   removeListener(event: 'request', listener: (request: Request) => any): this;
 
   /**
@@ -8848,11 +8824,6 @@ export interface BrowserContext {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'pageload', listener: (page: Page) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -9012,13 +8983,6 @@ export interface BrowserContext {
    * page.
    */
   prependListener(event: 'pageload', listener: (page: Page) => any): this;
-
-  /**
-   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
-   * page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  prependListener(event: 'picklocator', listener: (page: Page) => any): this;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To
@@ -9852,13 +9816,6 @@ export interface BrowserContext {
    * page.
    */
   waitForEvent(event: 'pageload', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
-
-  /**
-   * Emitted when a client calls [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) on a
-   * page in this context. The event is dispatched to all clients connected to the context, including the one that
-   * initiated the call.
-   */
-  waitForEvent(event: 'picklocator', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
 
   /**
    * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To

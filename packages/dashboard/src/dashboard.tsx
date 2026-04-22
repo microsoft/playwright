@@ -17,7 +17,6 @@
 import React from 'react';
 import './dashboard.css';
 import { DashboardClientContext } from './dashboardContext';
-import { asLocator } from '@isomorphic/locatorGenerators';
 import { ChevronLeftIcon, ChevronRightIcon, ReloadIcon } from './icons';
 import { Annotations, getImageLayout, clientToViewport, saveAnnotationAsDownload } from './annotations';
 
@@ -50,7 +49,6 @@ type DashboardState = {
   annotateInitiator: 'cli' | 'user' | null;
   // Interaction mode and ephemeral UI flags.
   mode: Mode;
-  picking: boolean;
   recording: boolean;
 };
 
@@ -60,12 +58,9 @@ type DashboardAction =
   | { type: 'frame'; frame: DashboardChannelEvents['frame'] }
   | { type: 'cliAnnotate' }
   | { type: 'cliCancelAnnotate' }
-  | { type: 'pickLocator' }
-  | { type: 'elementPicked' }
   // User events
   | { type: 'toggleInteractive' }
   | { type: 'toggleAnnotate' }
-  | { type: 'cancelPicking' }
   | { type: 'setRecording'; recording: boolean }
   | { type: 'submitAnnotation' }
   | { type: 'setUrl'; url: string };
@@ -78,7 +73,6 @@ const initialDashboardState: DashboardState = {
   cliAnnotatePending: false,
   annotateInitiator: null,
   mode: 'readonly',
-  picking: false,
   recording: false,
 };
 
@@ -107,7 +101,6 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         tabs: action.tabs,
         url,
         mode,
-        picking: false,
         recording: false,
         liveFrame: undefined,
         annotateFrame: undefined,
@@ -155,13 +148,9 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         annotateInitiator: null,
       };
     }
-    case 'pickLocator':
-      return { ...state, mode: 'interactive', picking: true };
-    case 'elementPicked':
-      return { ...state, picking: false };
     case 'toggleInteractive': {
       const next: Mode = state.mode === 'interactive' ? 'readonly' : 'interactive';
-      return { ...state, mode: next, picking: false };
+      return { ...state, mode: next };
     }
     case 'toggleAnnotate': {
       if (state.mode === 'annotate') {
@@ -184,11 +173,8 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         annotateFrame: state.liveFrame,
         cliAnnotatePending: false,
         annotateInitiator: initiator,
-        picking: false,
       };
     }
-    case 'cancelPicking':
-      return { ...state, picking: false };
     case 'setRecording':
       return { ...state, recording: action.recording };
     case 'submitAnnotation':
@@ -241,7 +227,7 @@ function smartUrl(input: string): string {
 export const Dashboard: React.FC = () => {
   const client = React.useContext(DashboardClientContext);
   const [state, dispatch] = React.useReducer(dashboardReducer, initialDashboardState);
-  const { tabs, url, mode, picking, recording, liveFrame, annotateFrame, annotateInitiator } = state;
+  const { tabs, url, mode, recording, liveFrame, annotateFrame, annotateInitiator } = state;
   const interactive = mode === 'interactive';
   const annotating = mode === 'annotate';
   // While annotating, the on-screen image is the frozen snapshot so the
@@ -344,25 +330,15 @@ export const Dashboard: React.FC = () => {
         window.resizeTo(targetW, targetH);
       }
     };
-    const onElementPicked = (params: DashboardChannelEvents['elementPicked']) => {
-      const locator = asLocator('javascript', params.selector);
-      navigator.clipboard?.writeText(locator).catch(() => {});
-      dispatch({ type: 'elementPicked' });
-    };
-    const onPickLocator = () => dispatch({ type: 'pickLocator' });
     const onAnnotate = () => dispatch({ type: 'cliAnnotate' });
     const onCancelAnnotate = () => dispatch({ type: 'cliCancelAnnotate' });
     client.on('tabs', onTabs);
     client.on('frame', onFrame);
-    client.on('elementPicked', onElementPicked);
-    client.on('pickLocator', onPickLocator);
     client.on('annotate', onAnnotate);
     client.on('cancelAnnotate', onCancelAnnotate);
     return () => {
       client.off('tabs', onTabs);
       client.off('frame', onFrame);
-      client.off('elementPicked', onElementPicked);
-      client.off('pickLocator', onPickLocator);
       client.off('annotate', onAnnotate);
       client.off('cancelAnnotate', onCancelAnnotate);
     };
@@ -431,12 +407,6 @@ export const Dashboard: React.FC = () => {
   function onScreenKeyDown(e: React.KeyboardEvent) {
     if (annotating)
       return;
-    if (picking && e.key === 'Escape') {
-      e.preventDefault();
-      client?.cancelPickLocator();
-      dispatch({ type: 'cancelPicking' });
-      return;
-    }
     if (!interactive || !client)
       return;
     e.preventDefault();
@@ -477,7 +447,6 @@ export const Dashboard: React.FC = () => {
           toggled={interactive}
           disabled={!ready}
           onClick={() => {
-            client?.cancelPickLocator();
             dispatch({ type: 'toggleInteractive' });
           }}
         />
@@ -488,7 +457,6 @@ export const Dashboard: React.FC = () => {
           toggled={annotating}
           disabled={!ready || !frame}
           onClick={() => {
-            client?.cancelPickLocator();
             dispatch({ type: 'toggleAnnotate' });
           }}
         />
