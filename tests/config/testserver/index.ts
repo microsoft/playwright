@@ -196,7 +196,8 @@ export class TestServer {
     let promise = this._requestSubscribers.get(path);
     if (promise)
       return promise;
-    let fulfill, reject;
+    let fulfill;
+    let reject;
     promise = new Promise((f, r) => {
       fulfill = f;
       reject = r;

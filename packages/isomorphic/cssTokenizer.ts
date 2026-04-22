@@ -489,7 +489,9 @@ export function tokenize(str1: string): CSSTokenInterface[] {
         repr += stringFromCode(code);
       }
     }
-    const c1 = next(1), c2 = next(2), c3 = next(3);
+    const c1 = next(1);
+    const c2 = next(2);
+    const c3 = next(3);
     if ((c1 === 0x45 || c1 === 0x65) && digit(c2)) {
       consume();
       repr += stringFromCode(code);

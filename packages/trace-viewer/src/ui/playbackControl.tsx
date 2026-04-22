@@ -87,7 +87,8 @@ export function usePlayback(
   const scrubberRef = React.useRef<HTMLDivElement>(null);
 
   const actionIndexAtTime = React.useCallback((t: number): number => {
-    let lo = 0, hi = actions.length - 1;
+    let lo = 0;
+    let hi = actions.length - 1;
     while (lo < hi) {
       const mid = (lo + hi + 1) >> 1;
       if (actions[mid].startTime <= t)

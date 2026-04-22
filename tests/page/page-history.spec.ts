@@ -279,7 +279,8 @@ it('regression test for issue 20791', async ({ page, server }) => {
 });
 
 it('should reload proper page', async ({ page, server }) => {
-  let mainRequest = 0, popupRequest = 0;
+  let mainRequest = 0;
+  let popupRequest = 0;
   server.setRoute('/main.html', (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     res.end(`<!doctype html><h1>main: ${++mainRequest}</h1>`);

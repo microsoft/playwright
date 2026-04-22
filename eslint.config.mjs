@@ -109,6 +109,7 @@ export const baseRules = {
   "new-parens": 2,
   "arrow-parens": [2, "as-needed"],
   "prefer-const": 2,
+  "one-var": [2, "never"],
   "quote-props": [2, "consistent"],
   "nonblock-statement-body-position": [2, "below"],
 

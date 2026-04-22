@@ -322,7 +322,8 @@ it('should dispatch mouse move after context menu was opened', async ({ page, br
       window.addEventListener('contextmenu', x, false);
     });
   });
-  const CX = 100, CY = 100;
+  const CX = 100;
+  const CY = 100;
   await page.mouse.move(CX, CY);
   await page.mouse.down({ button: 'right' });
   await page.evaluate(() => window['contextMenuPromise']);
