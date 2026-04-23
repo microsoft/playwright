@@ -32,7 +32,8 @@ import type { AnnotationData, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
 
 type BrowserTrackerCallbacks = {
-  onTabsChanged: () => void;
+  onPageNavigated: (page: api.Page) => void;
+  onPageClosed: (page: api.Page) => void;
   onContextClosed: (context: api.BrowserContext) => void;
 };
 
@@ -79,14 +80,13 @@ class BrowserTracker {
   private _wireContext(context: api.BrowserContext) {
     if (this._contextListeners.has(context))
       return;
-    const onTabsChanged = () => this._callbacks.onTabsChanged();
     const listeners: Disposable[] = [
-      eventsHelper.addEventListener(context, 'page', onTabsChanged),
-      eventsHelper.addEventListener(context, 'pageload', onTabsChanged),
-      eventsHelper.addEventListener(context, 'pageclose', onTabsChanged),
+      eventsHelper.addEventListener(context, 'page', (page: api.Page) => this._callbacks.onPageNavigated(page)),
+      eventsHelper.addEventListener(context, 'pageload', (page: api.Page) => this._callbacks.onPageNavigated(page)),
+      eventsHelper.addEventListener(context, 'pageclose', (page: api.Page) => this._callbacks.onPageClosed(page)),
       eventsHelper.addEventListener(context, 'framenavigated', (frame: api.Frame) => {
         if (frame === frame.page().mainFrame())
-          this._callbacks.onTabsChanged();
+          this._callbacks.onPageNavigated(frame.page());
       }),
       eventsHelper.addEventListener(context, 'close', () => {
         const ls = this._contextListeners.get(context);
@@ -95,11 +95,11 @@ class BrowserTracker {
           this._contextListeners.delete(context);
         }
         this._callbacks.onContextClosed(context);
-        this._callbacks.onTabsChanged();
       }),
     ];
     this._contextListeners.set(context, listeners);
-    this._callbacks.onTabsChanged();
+    for (const page of context.pages())
+      this._callbacks.onPageNavigated(page);
   }
 }
 
@@ -116,9 +116,7 @@ export class DashboardConnection implements Transport {
   private _pushSessionsRunning = false;
   private _pushSessionsNext?: Promise<void>;
   private _pushSessionsResolveNext?: () => void;
-  private _pushTabsRunning = false;
-  private _pushTabsNext?: Promise<void>;
-  private _pushTabsResolveNext?: () => void;
+  private _tabDetails = new Map<api.Page, { title: string; faviconUrl: string | undefined }>();
   private _pendingSwitchPage?: api.Page;
   private _switchPromise?: Promise<void>;
   private _visible = true;
@@ -182,7 +180,7 @@ export class DashboardConnection implements Transport {
     const page = this._findPage(params);
     if (page)
       await this._switchAttachedTo(page);
-    await this._pushTabs();
+    this._emitTabs();
   }
 
   async newTab(params: { browser: string; context: string }) {
@@ -191,7 +189,7 @@ export class DashboardConnection implements Transport {
       return;
     const page = await context.newPage();
     await this._switchAttachedTo(page);
-    await this._pushTabs();
+    this._emitTabs();
   }
 
   async closeTab(params: { browser: string; context: string; page: string }) {
@@ -251,7 +249,7 @@ export class DashboardConnection implements Transport {
       const page = slot?.browser.contexts().flatMap(c => c.pages())[0];
       if (page) {
         await this._switchAttachedTo(page);
-        await this._pushTabs();
+        this._emitTabs();
         return;
       }
       // Page not ready yet; wait for the next sessions update or supersede.
@@ -315,56 +313,46 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('cancelAnnotate', {});
   }
 
-  _pushTabs(): Promise<void> {
-    if (!this._pushTabsNext) {
-      this._pushTabsNext = new Promise<void>(resolve => {
-        this._pushTabsResolveNext = resolve;
-      });
-      if (!this._pushTabsRunning)
-        queueMicrotask(() => void this._runPushTabs());
-    }
-    return this._pushTabsNext;
-  }
-
-  private async _runPushTabs() {
-    this._pushTabsRunning = true;
-    try {
-      while (this._pushTabsResolveNext) {
-        const resolve = this._pushTabsResolveNext;
-        this._pushTabsNext = undefined;
-        this._pushTabsResolveNext = undefined;
-        try {
-          const tabs = await this._aggregateTabs();
-          this.emitTabs(tabs);
-        } catch {
-          // best-effort
-        }
-        resolve();
-      }
-    } finally {
-      this._pushTabsRunning = false;
-    }
-  }
-
-  private async _aggregateTabs(): Promise<Tab[]> {
+  _emitTabs(): void {
+    const seen = new Set<api.Page>();
+    const tabs: Tab[] = [];
     const attachedPage = this._attachedPage?.page;
-    const tasks: Promise<Tab>[] = [];
     for (const { browser } of this._browsers.values()) {
       for (const context of browser.contexts()) {
         for (const page of context.pages()) {
-          tasks.push((async () => ({
+          seen.add(page);
+          const cached = this._tabDetails.get(page);
+          tabs.push({
             browser: browserId(browser),
             context: contextId(context),
             page: pageId(page),
-            title: await withTimeout(page.title().catch(() => ''), 2000, ''),
+            title: cached?.title,
             url: page.url(),
             selected: page === attachedPage,
-            faviconUrl: await faviconUrl(page),
-          }))());
+            faviconUrl: cached?.faviconUrl,
+          });
         }
       }
     }
-    return await Promise.all(tasks);
+    // Prune cache entries for pages no longer present.
+    for (const page of this._tabDetails.keys()) {
+      if (!seen.has(page))
+        this._tabDetails.delete(page);
+    }
+    this.emitTabs(tabs);
+  }
+
+  private async _updateDetails(page: api.Page): Promise<void> {
+    try {
+      const [title, favicon] = await Promise.all([
+        withTimeout(page.title().catch(() => ''), 2000, ''),
+        faviconUrl(page),
+      ]);
+      this._tabDetails.set(page, { title, faviconUrl: favicon });
+      this._emitTabs();
+    } catch {
+      // best-effort
+    }
   }
 
   private _switchAttachedTo(page: api.Page): Promise<void> {
@@ -417,7 +405,7 @@ export class DashboardConnection implements Transport {
       if (next)
         await this._switchAttachedTo(next);
     }
-    await this._pushTabs();
+    this._emitTabs();
   }
 
   private _pushSessions = (): Promise<void> => {
@@ -454,7 +442,7 @@ export class DashboardConnection implements Transport {
           this.emitSessions(sessions);
           await this._reconcile(sessions);
           this._signalSessionsChanged();
-          void this._pushTabs();
+          this._emitTabs();
         } catch {
           // best-effort
         }
@@ -493,12 +481,17 @@ export class DashboardConnection implements Transport {
       if (this._browsers.has(guid))
         continue;
       const slot = await BrowserTracker.create(status, {
-        onTabsChanged: () => { void this._pushTabs(); },
+        onPageNavigated: page => void this._updateDetails(page),
+        onPageClosed: page => {
+          this._tabDetails.delete(page);
+          this._emitTabs();
+        },
         onContextClosed: context => {
           if (this._attachedPage?.page.context() === context) {
             this._attachedPage.dispose();
             this._attachedPage = undefined;
           }
+          this._emitTabs();
         },
       });
       if (!slot)
@@ -547,12 +540,8 @@ class AttachedPage {
         eventsHelper.addEventListener(this._page, 'close', () => {
           void this._owner._handleAttachedPageClose(this._page.context());
         }),
-        eventsHelper.addEventListener(this._page, 'framenavigated', (frame: api.Frame) => {
-          if (frame === this._page.mainFrame())
-            void this._owner._pushTabs();
-        }),
     );
-    await this._owner._pushTabs();
+    this._owner._emitTabs();
     if (this._owner.visible()) {
       this._screencastRunning = true;
       await this._startScreencast(this._page);

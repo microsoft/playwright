@@ -21,7 +21,7 @@ export type Tab = {
   browser: string;
   context: string;
   page: string;
-  title: string;
+  title?: string;
   url: string;
   selected: boolean;
   faviconUrl?: string;
