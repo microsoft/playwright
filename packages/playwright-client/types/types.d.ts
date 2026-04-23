@@ -2052,6 +2052,11 @@ export interface Page {
    */
   ariaSnapshot(options?: {
     /**
+     * When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
+     */
+    boxes?: boolean;
+
+    /**
      * When specified, limits the depth of the snapshot.
      */
     depth?: number;
@@ -13057,6 +13062,11 @@ export interface Locator {
    * @param options
    */
   ariaSnapshot(options?: {
+    /**
+     * When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
+     */
+    boxes?: boolean;
+
     /**
      * When specified, limits the depth of the snapshot.
      */

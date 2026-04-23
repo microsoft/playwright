@@ -2324,6 +2324,7 @@ Frame:
         track: string?
         selector: string?
         depth: int?
+        boxes: boolean?
         timeout: float
       returns:
         snapshot: string

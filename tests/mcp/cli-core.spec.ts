@@ -310,6 +310,20 @@ test('snapshot depth', async ({ cli, server }) => {
     - button "Cancel" [ref=e6]`);
 });
 
+test('snapshot --boxes', async ({ cli, server }) => {
+  server.setContent('/', `
+    <style>body { margin: 0; }</style>
+    <button style="position:absolute;left:100px;top:50px;width:80px;height:40px;margin:0;padding:0;border:0;">click</button>
+  `, 'text/html');
+  await cli('open', server.PREFIX);
+
+  const { inlineSnapshot } = await cli('snapshot', '--boxes');
+  expect(inlineSnapshot).toContain(`- button "click" [ref=e1] [box=100,50,80,40]`);
+
+  const { inlineSnapshot: plain } = await cli('snapshot');
+  expect(plain).not.toMatch(/\[box=/);
+});
+
 test('eval --raw', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('eval', '--raw', '() => document.title');

@@ -748,3 +748,29 @@ it('should snapshot a locator inside an iframe', async ({ page }) => {
       - listitem: Item 2
   `);
 });
+
+it('should snapshot with box from page', async ({ page }) => {
+  await page.setContent(`
+    <button style="position:absolute;left:100px;top:50px;width:80px;height:40px;margin:0;padding:0;border:0;">click</button>
+  `);
+
+  const snapshot = await page.ariaSnapshot({ boxes: true });
+  expect(snapshot).toBe(`- button "click" [box=100,50,80,40]`);
+});
+
+it('should snapshot with box from locator', async ({ page }) => {
+  await page.setContent(`
+    <div style="position:absolute;left:10px;top:20px;width:200px;height:100px;">
+      <button style="position:absolute;left:5px;top:5px;width:60px;height:30px;margin:0;padding:0;border:0;">ok</button>
+    </div>
+  `);
+
+  const snapshot = await page.locator('div').ariaSnapshot({ boxes: true });
+  expect(snapshot).toBe(`- button "ok" [box=15,25,60,30]`);
+});
+
+it('should not include box when option is omitted', async ({ page }) => {
+  await page.setContent(`<button>click</button>`);
+  const snapshot = await page.ariaSnapshot();
+  expect(snapshot).not.toMatch(/\[box=/);
+});

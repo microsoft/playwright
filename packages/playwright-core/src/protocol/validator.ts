@@ -1660,6 +1660,7 @@ scheme.FrameAriaSnapshotParams = tObject({
   track: tOptional(tString),
   selector: tOptional(tString),
   depth: tOptional(tInt),
+  boxes: tOptional(tBoolean),
   timeout: tFloat,
 });
 scheme.FrameAriaSnapshotResult = tObject({

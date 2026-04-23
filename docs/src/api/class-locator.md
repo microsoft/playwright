@@ -244,6 +244,12 @@ When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to
 
 When specified, limits the depth of the snapshot.
 
+### option: Locator.ariaSnapshot.boxes
+* since: v1.60
+- `boxes` <[boolean]>
+
+When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
+
 ## async method: Locator.blur
 * since: v1.28
 

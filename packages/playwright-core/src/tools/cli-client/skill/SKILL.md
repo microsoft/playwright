@@ -256,6 +256,9 @@ playwright-cli snapshot "#main"
 # limit snapshot depth for efficiency, take a partial snapshot afterwards
 playwright-cli snapshot --depth=4
 playwright-cli snapshot e34
+
+# include each element's bounding box as [box=x,y,width,height]
+playwright-cli snapshot --boxes
 ```
 
 ## Targeting elements

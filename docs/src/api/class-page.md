@@ -4253,6 +4253,12 @@ When set to `"ai"`, returns a snapshot optimized for AI consumption: including e
 
 When specified, limits the depth of the snapshot.
 
+### option: Page.ariaSnapshot.boxes
+* since: v1.60
+- `boxes` <[boolean]>
+
+When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
+
 ## async method: Page.tap
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).

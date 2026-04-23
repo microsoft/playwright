@@ -383,13 +383,13 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
       const ariaSnapshot = root
-        ? await root.ariaSnapshot({ mode: 'ai', depth })
-        : await this.page.ariaSnapshot({ mode: 'ai', depth });
+        ? await root.ariaSnapshot({ mode: 'ai', depth, boxes })
+        : await this.page.ariaSnapshot({ mode: 'ai', depth, boxes });
       tabSnapshot = {
         ariaSnapshot,
         modalStates: [],
