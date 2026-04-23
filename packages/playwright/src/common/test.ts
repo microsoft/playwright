@@ -303,12 +303,10 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     this.parent._collectTagTitlePath(path);
     path.push(this.title);
     const titleTags = path.join(' ').match(/@[\S]+/g) || [];
-    // Deduplicate: a tag appearing in both a describe title and the test title
-    // (or via test.tag()) should only appear once in the final list.
-    return [...new Set([
+    return [
       ...titleTags,
       ...this._tags,
-    ])];
+    ];
   }
 
   _serialize(): any {

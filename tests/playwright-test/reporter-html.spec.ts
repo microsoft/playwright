@@ -2617,6 +2617,27 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.header-title')).toHaveText('Test passed -- @call @call-details @e2e @regression #VQ457');
         await expect(page.locator('.label')).toHaveText(['firefox', 'Monitoring', 'call', 'call-details', 'e2e', 'regression']);
       });
+
+      test('should not show duplicate labels when tag appears in both describe and test title', async ({ runInlineTest, showReport, page }) => {
+        // Regression test for https://github.com/microsoft/playwright/issues/40368
+        const result = await runInlineTest({
+          'a.test.js': `
+            const { test } = require('@playwright/test');
+            test.describe('@saas tests', () => {
+              test('@saas create workflow', () => {});
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(1);
+
+        await showReport();
+
+        // @saas is in both the describe title and the test title — should appear only once as a label
+        await expect(page.locator('.test-file-test .label')).toHaveCount(1);
+        await expect(page.locator('.test-file-test .label')).toHaveText(['saas']);
+      });
     });
 
     test('should list tests in the right order', async ({ runInlineTest, showReport, page }) => {
