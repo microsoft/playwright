@@ -552,7 +552,7 @@ class AttachedPage {
             void this._owner._pushTabs();
         }),
     );
-    void this._owner._pushTabs();
+    await this._owner._pushTabs();
     if (this._owner.visible()) {
       this._screencastRunning = true;
       await this._startScreencast(this._page);
