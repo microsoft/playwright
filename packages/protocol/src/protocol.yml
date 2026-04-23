@@ -3002,7 +3002,11 @@ Frame:
         timeout: float
       returns:
         matches: boolean
-        received: SerializedValue?
+        received:
+          type: object?
+          properties:
+            value: SerializedValue?
+            ariaSnapshot: string?
         timedOut: boolean?
         errorMessage: string?
         log:

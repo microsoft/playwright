@@ -20,6 +20,7 @@ import { expectTypes, formatMatcherMessage } from './matcherHint';
 
 import type { MatcherResult } from './matcherHint';
 import type { Locator } from 'playwright-core';
+import type { ExpectResult } from 'playwright-core/lib/client/frame';
 import type { ExpectMatcherStateInternal } from './matchers';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
@@ -31,7 +32,7 @@ export async function toEqual<T>(
   matcherName: string,
   locator: Locator,
   receiverType: 'Locator',
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }>,
+  query: (isNot: boolean, timeout: number) => Promise<ExpectResult>,
   expected: T,
   options: { timeout?: number, contains?: boolean } = {},
 ): Promise<MatcherResult<any, any>> {
@@ -40,6 +41,7 @@ export async function toEqual<T>(
   const timeout = options.timeout ?? this.timeout;
 
   const { matches: pass, received, log, timedOut, errorMessage } = await query(!!this.isNot, timeout);
+  const receivedValue = received?.value;
 
   if (pass === !this.isNot) {
     return {
@@ -55,12 +57,12 @@ export async function toEqual<T>(
   let printedDiff: string | undefined;
   if (pass) {
     printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
-    printedReceived = errorMessage ? '' : `Received: ${this.utils.printReceived(received)}`;
+    printedReceived = errorMessage ? '' : `Received: ${this.utils.printReceived(receivedValue)}`;
   } else if (errorMessage) {
     printedExpected = `Expected: ${this.utils.printExpected(expected)}`;
-  } else if (Array.isArray(expected) && Array.isArray(received)) {
+  } else if (Array.isArray(expected) && Array.isArray(receivedValue)) {
     const normalizedExpected = expected.map((exp, index) => {
-      const rec = received[index];
+      const rec = receivedValue[index];
       if (isRegExp(exp))
         return exp.test(rec) ? rec : exp;
 
@@ -68,7 +70,7 @@ export async function toEqual<T>(
     });
     printedDiff = this.utils.printDiffOrStringify(
         normalizedExpected,
-        received,
+        receivedValue,
         EXPECTED_LABEL,
         RECEIVED_LABEL,
         false,
@@ -76,7 +78,7 @@ export async function toEqual<T>(
   } else {
     printedDiff = this.utils.printDiffOrStringify(
         expected,
-        received,
+        receivedValue,
         EXPECTED_LABEL,
         RECEIVED_LABEL,
         false,
@@ -96,6 +98,7 @@ export async function toEqual<T>(
       printedDiff,
       errorMessage,
       log,
+      ariaSnapshot: received?.ariaSnapshot,
     });
   };
 
@@ -103,7 +106,7 @@ export async function toEqual<T>(
   // could access them, for example in order to display a custom visual diff,
   // or create a different error message
   return {
-    actual: received,
+    actual: receivedValue,
     expected, message,
     name: matcherName,
     pass,

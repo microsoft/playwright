@@ -93,7 +93,7 @@ export async function toMatchAriaSnapshot(
   const { matches: pass, received, log, timedOut, errorMessage } = locator ?
     await (locator as LocatorEx)._expect('to.match.aria', expectParams) :
     await ((receiver as Page).mainFrame() as FrameEx)._expect('to.match.aria', expectParams);
-  const typedReceived = received as MatcherReceived;
+  const typedReceived = received?.value as MatcherReceived;
 
   const message = () => {
     let printedExpected: string | undefined;
@@ -159,7 +159,7 @@ export async function toMatchAriaSnapshot(
     expected,
     message,
     pass,
-    actual: received,
+    actual: typedReceived?.raw,
     log,
     timeout: timedOut ? timeout : undefined,
   };
