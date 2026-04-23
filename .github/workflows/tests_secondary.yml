@@ -6,18 +6,6 @@ on:
       - main
       - release-*
   pull_request:
-    paths:
-      - 'packages/**'
-      - '!packages/extension/**'
-      - '!packages/playwright-core/src/server/bidi/**'
-      - 'tests/**'
-      - '!tests/bidi/**'
-      - '!tests/extension/**'
-      - 'utils/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/actions/**'
-      - '.github/workflows/tests_secondary.yml'
     types: [ labeled ]
     branches:
       - main
