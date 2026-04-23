@@ -38,6 +38,9 @@ playwright-cli dblclick e7
 # --submit presses Enter after filling the element
 playwright-cli fill e5 "user@example.com"  --submit
 playwright-cli drag e2 e8
+# drop files or data onto an element (from outside the page)
+playwright-cli drop e4 --path=./image.png
+playwright-cli drop e4 --data="text/plain=hello world"
 playwright-cli hover e4
 playwright-cli select e9 "option-value"
 playwright-cli upload ./document.pdf
