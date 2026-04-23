@@ -379,7 +379,7 @@ export async function outputFile(options: ContextOptions, fileName: string, flag
 
 async function checkFile(options: ContextOptions, resolvedFilename: string, flags: { origin: 'code' | 'llm' }) {
   // Trust code and unrestricted file access.
-  if (flags.origin === 'code' || options.config.allowUnrestrictedFileAccess)
+  if (flags.origin === 'code' || options.config.allowUnrestrictedFileAccess || options.config.skillMode)
     return;
 
   // Trust llm to use valid characters in file names.
