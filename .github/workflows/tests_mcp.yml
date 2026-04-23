@@ -8,7 +8,6 @@ on:
   pull_request:
     paths:
       - 'packages/playwright/**'
-      - 'packages/playwright-client/**'
       - 'packages/playwright-core/**'
       - '!packages/playwright-core/src/server/bidi/**'
       - '!packages/playwright-core/src/tools/dashboard/**'
