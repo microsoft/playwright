@@ -247,6 +247,17 @@ test.describe('merge order', () => {
     const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
     expect(config.browser.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
   });
+
+  test('config file userDataDir preserved when cli does not provide userDataDir', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    const userDataDir = testInfo.outputPath('my-user-data');
+    const fileConfig: Config = {
+      browser: { userDataDir },
+    };
+    await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv) as any;
+    expect(config.browser.userDataDir).toBe(userDataDir);
+  });
 });
 
 // ---------------------------------------------------------------------------

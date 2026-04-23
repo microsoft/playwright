@@ -215,6 +215,13 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
     else
       browser.contextOptions.viewport = null;
   }
+
+  if (browserName === 'chromium') {
+    browser.launchOptions.args = browser.launchOptions.args ?? [];
+    if (!browser.launchOptions.args.some(a => a.includes('--disable-blink-features')))
+      browser.launchOptions.args.push(`--disable-blink-features=AutomationControlled`);
+  }
+
   return { ...browser, browserName };
 }
 
