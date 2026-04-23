@@ -339,6 +339,7 @@ export async function openDashboardApp() {
             if (result)
               socket.write(JSON.stringify(result));
           } else if (parsed.kill) {
+            socket.end();
             gracefullyProcessExitDoNotHang(0);
           } else {
             page?.bringToFront().catch(() => {});
