@@ -16,7 +16,6 @@
 
 import React from 'react';
 import './dashboard.css';
-import { DashboardClientContext } from './dashboardContext';
 import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, LockIcon, LockOpenIcon, ReloadIcon, ScreenshotRegionIcon } from './icons';
 import { Annotations, getImageLayout, clientToViewport } from './annotations';
 
@@ -24,184 +23,9 @@ import type { Annotation, AnnotationsHandle } from './annotations';
 import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
 import { useMeasureForRef } from '@web/uiUtils';
 
-import type { Tab, DashboardChannelEvents } from './dashboardChannel';
+import type { DashboardModel } from './dashboardModel';
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
-type Mode = 'readonly' | 'interactive' | 'annotate';
-
-// Recording mode is a separate, mode-replacing overlay similar to annotate.
-// While null, the normal toolbar is shown. When non-null, the recording
-// toolbar replaces it.
-type RecordingState =
-  | { phase: 'recording' }
-  | { phase: 'stopped'; blob: Blob; url: string };
-
-type DashboardState = {
-  // Server-driven session state.
-  tabs: Tab[] | null;
-  url: string;
-  // The latest frame received from the server. Cleared on page swap;
-  // the server is responsible for emitting a fresh frame for the new
-  // page (see _startScreencast).
-  liveFrame: DashboardChannelEvents['frame'] | undefined;
-  // Snapshot of the frame at the moment we entered annotate mode. The
-  // <Annotations> overlay draws on this frozen image so the canvas does
-  // not jump around as new live frames arrive.
-  annotateFrame: DashboardChannelEvents['frame'] | undefined;
-  // Server requested annotate but we have no fresh frame for the active
-  // page. The next FRAME action will enter annotate mode.
-  cliAnnotatePending: boolean;
-  // Whether the current annotate session was initiated by CLI or by the
-  // user. Determines whether submit goes to the server or saves locally.
-  annotateInitiator: 'cli' | 'user' | null;
-  // Interaction mode and ephemeral UI flags.
-  mode: Mode;
-  recording: RecordingState | null;
-};
-
-type DashboardAction =
-  // Server events
-  | { type: 'tabs'; tabs: Tab[] }
-  | { type: 'frame'; frame: DashboardChannelEvents['frame'] }
-  | { type: 'cliAnnotate' }
-  | { type: 'cliCancelAnnotate' }
-  // User events
-  | { type: 'toggleInteractive' }
-  | { type: 'toggleAnnotate' }
-  | { type: 'startRecording' }
-  | { type: 'stoppedRecording'; blob: Blob; url: string }
-  | { type: 'exitRecording' }
-  | { type: 'submitAnnotation' }
-  | { type: 'setUrl'; url: string };
-
-const initialDashboardState: DashboardState = {
-  tabs: null,
-  url: '',
-  liveFrame: undefined,
-  annotateFrame: undefined,
-  cliAnnotatePending: false,
-  annotateInitiator: null,
-  mode: 'readonly',
-  recording: null,
-};
-
-function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
-  switch (action.type) {
-    case 'tabs': {
-      const newSelected = action.tabs.find(t => t.selected);
-      const oldSelected = state.tabs?.find(t => t.selected);
-      const url = newSelected ? newSelected.url : state.url;
-      // Page change = had a selected tab, now have a different selected
-      // tab. Initial selection (none -> some) is not a "change".
-      const pageChanged = !!oldSelected && !!newSelected && newSelected.page !== oldSelected.page;
-      if (!pageChanged)
-        return { ...state, tabs: action.tabs, url };
-      // Page swap. Clear frames and rely on the server to emit a fresh
-      // frame for the new page (see _startScreencast which awaits a
-      // screenshot to force one). If we were annotating, mark pending so
-      // the next FRAME re-enters annotate with the new page's image.
-      const wasAnnotateActive = state.mode === 'annotate' || state.cliAnnotatePending;
-      const newTabIsBrandNew = !!state.tabs && !state.tabs.some(t => t.page === newSelected.page);
-      let mode: Mode = state.mode;
-      if (!wasAnnotateActive && newTabIsBrandNew && state.tabs)
-        mode = 'interactive';
-      return {
-        ...state,
-        tabs: action.tabs,
-        url,
-        mode,
-        recording: null,
-        liveFrame: undefined,
-        annotateFrame: undefined,
-        cliAnnotatePending: wasAnnotateActive,
-      };
-    }
-    case 'frame': {
-      const liveFrame = action.frame;
-      if (state.cliAnnotatePending) {
-        return {
-          ...state,
-          liveFrame,
-          annotateFrame: liveFrame,
-          mode: 'annotate',
-          cliAnnotatePending: false,
-          annotateInitiator: state.annotateInitiator ?? 'cli',
-        };
-      }
-      return { ...state, liveFrame };
-    }
-    case 'cliAnnotate': {
-      if (state.mode === 'annotate') {
-        // Already annotating (user-initiated). Mark CLI as the source so
-        // submit goes to the server.
-        return { ...state, annotateInitiator: 'cli' };
-      }
-      if (state.liveFrame) {
-        return {
-          ...state,
-          mode: 'annotate',
-          annotateFrame: state.liveFrame,
-          cliAnnotatePending: false,
-          annotateInitiator: 'cli',
-        };
-      }
-      return { ...state, cliAnnotatePending: true, annotateInitiator: 'cli' };
-    }
-    case 'cliCancelAnnotate': {
-      const exitingAnnotate = state.mode === 'annotate';
-      return {
-        ...state,
-        mode: exitingAnnotate ? 'readonly' : state.mode,
-        annotateFrame: undefined,
-        cliAnnotatePending: false,
-        annotateInitiator: null,
-      };
-    }
-    case 'toggleInteractive': {
-      const next: Mode = state.mode === 'interactive' ? 'readonly' : 'interactive';
-      return { ...state, mode: next };
-    }
-    case 'toggleAnnotate': {
-      if (state.mode === 'annotate') {
-        return {
-          ...state,
-          mode: 'readonly',
-          annotateFrame: undefined,
-          annotateInitiator: null,
-        };
-      }
-      if (!state.liveFrame)
-        return state;
-      // Preserve a CLI initiator across mode toggles so that CLI annotate
-      // sessions stay engaged when the user switches to interactive and
-      // back. Only set 'user' if there was no prior CLI engagement.
-      const initiator: 'cli' | 'user' | null = state.annotateInitiator ?? 'user';
-      return {
-        ...state,
-        mode: 'annotate',
-        annotateFrame: state.liveFrame,
-        cliAnnotatePending: false,
-        annotateInitiator: initiator,
-      };
-    }
-    case 'startRecording':
-      return { ...state, recording: { phase: 'recording' } };
-    case 'stoppedRecording':
-      return { ...state, recording: { phase: 'stopped', blob: action.blob, url: action.url } };
-    case 'exitRecording':
-      return { ...state, recording: null };
-    case 'submitAnnotation':
-      return {
-        ...state,
-        mode: 'readonly',
-        annotateFrame: undefined,
-        cliAnnotatePending: false,
-        annotateInitiator: null,
-      };
-    case 'setUrl':
-      return { ...state, url: action.url };
-  }
-}
 
 async function pickSaveWritable(suggestedName: string, description: string, mime: string, extension: string): Promise<FileSystemWritableFileStream | null> {
   try {
@@ -213,10 +37,6 @@ async function pickSaveWritable(suggestedName: string, description: string, mime
   } catch {
     return null;
   }
-}
-
-function base64ToBlob(base64: string, mime: string): Blob {
-  return new Blob([(Uint8Array as any).fromBase64(base64)], { type: mime });
 }
 
 function smartUrl(input: string): string {
@@ -237,10 +57,15 @@ function smartUrl(input: string): string {
   return 'https://' + host + '.com' + value.slice(host.length);
 }
 
-export const Dashboard: React.FC = () => {
-  const client = React.useContext(DashboardClientContext);
-  const [state, dispatch] = React.useReducer(dashboardReducer, initialDashboardState);
-  const { tabs, url, mode, recording, liveFrame, annotateFrame, annotateInitiator } = state;
+type DashboardProps = {
+  model: DashboardModel;
+};
+
+export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
+  const [, setRevision] = React.useState(0);
+  React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), [model]);
+
+  const { tabs, mode, recording, liveFrame, annotateFrame, annotateInitiator, pendingAnnotate } = model.state;
   const interactive = mode === 'interactive';
   const annotating = mode === 'annotate';
 
@@ -309,8 +134,6 @@ export const Dashboard: React.FC = () => {
   }, [interactive]);
 
   const onSubmitAnnotations = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
-    if (!client)
-      return;
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -318,103 +141,25 @@ export const Dashboard: React.FC = () => {
       reader.readAsDataURL(blob);
     });
     const data = dataUrl.slice(dataUrl.indexOf(',') + 1);
-    await client.submitAnnotation({
-      data,
-      annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
-    });
-    dispatch({ type: 'submitAnnotation' });
-  }, [client]);
+    await model.submitAnnotation(data, annotations);
+  }, [model]);
 
   function flashInteractiveHint() {
     setFlashTick(tick => tick + 1);
   }
 
-  const onStartRecording = React.useCallback(async () => {
-    if (!client)
-      return;
-    await client.startRecording();
-    dispatch({ type: 'startRecording' });
-  }, [client]);
-
-  const onStopRecording = React.useCallback(async () => {
-    if (!client)
-      return;
-    const { streamId } = await client.stopRecording();
-    const chunks: Blob[] = [];
-    while (true) {
-      const { data, eof } = await client.readStream({ streamId });
-      if (data)
-        chunks.push(base64ToBlob(data, 'video/webm'));
-      if (eof)
-        break;
-    }
-    const blob = new Blob(chunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    dispatch({ type: 'stoppedRecording', blob, url });
-  }, [client]);
-
   const onSaveRecording = React.useCallback(async () => {
-    if (state.recording?.phase !== 'stopped')
+    if (recording?.phase !== 'stopped')
       return;
     const writable = await pickSaveWritable(`playwright-recording-${Date.now()}.webm`, 'WebM Video', 'video/webm', '.webm');
     if (!writable)
       return;
-    await writable.write(state.recording.blob);
+    await writable.write(recording.blob);
     await writable.close();
-  }, [state.recording]);
-
-  const onExitRecording = React.useCallback(async () => {
-    if (state.recording?.phase === 'recording' && client) {
-      // Drain the stream without persisting; keeps the server clean.
-      const { streamId } = await client.stopRecording();
-      while (true) {
-        const { eof } = await client.readStream({ streamId });
-        if (eof)
-          break;
-      }
-    }
-    if (state.recording?.phase === 'stopped')
-      URL.revokeObjectURL(state.recording.url);
-    dispatch({ type: 'exitRecording' });
-  }, [state.recording, client]);
-
-
-  React.useEffect(() => {
-    if (!client)
-      return;
-    let resized = false;
-    const onTabs = (params: DashboardChannelEvents['tabs']) => {
-      dispatch({ type: 'tabs', tabs: params.tabs });
-    };
-    const onFrame = (params: DashboardChannelEvents['frame']) => {
-      dispatch({ type: 'frame', frame: params });
-      const toolbar = toolbarRef.current;
-      if (!resized && toolbar && params.viewportWidth && params.viewportHeight) {
-        resized = true;
-        const chromeHeight = toolbar.offsetHeight;
-        const extraW = window.outerWidth - window.innerWidth;
-        const extraH = window.outerHeight - window.innerHeight;
-        const targetW = Math.min(params.viewportWidth + extraW, screen.availWidth);
-        const targetH = Math.min(params.viewportHeight + chromeHeight + extraH, screen.availHeight);
-        window.resizeTo(targetW, targetH);
-      }
-    };
-    const onAnnotate = () => dispatch({ type: 'cliAnnotate' });
-    const onCancelAnnotate = () => dispatch({ type: 'cliCancelAnnotate' });
-    client.on('tabs', onTabs);
-    client.on('frame', onFrame);
-    client.on('annotate', onAnnotate);
-    client.on('cancelAnnotate', onCancelAnnotate);
-    return () => {
-      client.off('tabs', onTabs);
-      client.off('frame', onFrame);
-      client.off('annotate', onAnnotate);
-      client.off('cancelAnnotate', onCancelAnnotate);
-    };
-  }, [client]);
+  }, [recording]);
 
   const selectedTab = tabs?.find(t => t.selected);
-  const ready = !!client && !!selectedTab;
+  const ready = !!selectedTab;
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
     const vw = liveFrame?.viewportWidth ?? 0;
@@ -428,10 +173,8 @@ export const Dashboard: React.FC = () => {
   }
 
   function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
-    if (!client)
-      return;
     const { x, y } = imgCoords(e);
-    client[method]({ x, y, button: BUTTONS[e.button] || 'left' });
+    model[method](x, y, BUTTONS[e.button] || 'left');
   }
 
   function onScreenMouseDown(e: React.MouseEvent) {
@@ -456,53 +199,46 @@ export const Dashboard: React.FC = () => {
   }
 
   function onScreenMouseMove(e: React.MouseEvent) {
-    if (annotating || !interactive || !client)
+    if (annotating || !interactive)
       return;
     const now = Date.now();
     if (now - moveThrottleRef.current < 32)
       return;
     moveThrottleRef.current = now;
     const { x, y } = imgCoords(e);
-    client.mousemove({ x, y });
+    model.mousemove(x, y);
   }
 
   function onScreenWheel(e: React.WheelEvent) {
-    if (annotating || !interactive || !client)
+    if (annotating || !interactive)
       return;
     e.preventDefault();
-    client.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
+    model.wheel(e.deltaX, e.deltaY);
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
-    if (annotating)
-      return;
-    if (!interactive || !client)
+    if (annotating || !interactive)
       return;
     e.preventDefault();
-    client.keydown({ key: e.key });
+    model.keydown(e.key);
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
-    if (annotating || !interactive || !client)
+    if (annotating || !interactive)
       return;
     e.preventDefault();
-    client.keyup({ key: e.key });
+    model.keyup(e.key);
   }
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       const value = smartUrl((e.target as HTMLInputElement).value);
-      dispatch({ type: 'setUrl', url: value });
-      client?.navigate({ url: value });
+      model.navigate(value);
       e.currentTarget.blur();
     }
   }
 
-  let overlayText: string | undefined;
-  if (!client)
-    overlayText = 'Disconnected';
-  else if (!selectedTab)
-    overlayText = 'Select a session';
+  const overlayText = selectedTab ? undefined : 'Select a session';
 
   return (
     <div className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '') + (recording ? ' recording' : '')}>
@@ -541,7 +277,7 @@ export const Dashboard: React.FC = () => {
                 className='annotate-toolbar-btn'
                 title='Close annotation mode'
                 icon='close'
-                onClick={() => dispatch({ type: 'toggleAnnotate' })}
+                onClick={() => model.completeAnnotation()}
               />
             </div>
           </>
@@ -553,12 +289,12 @@ export const Dashboard: React.FC = () => {
               icon='record'
               toggled={recording.phase === 'recording'}
               style={{ color: recording.phase === 'recording' ? 'var(--color-scale-red-5)' : undefined }}
-              onClick={async () => {
+              onClick={() => {
                 if (recording.phase === 'recording') {
-                  await onStopRecording();
+                  model.stopRecording();
                 } else {
-                  URL.revokeObjectURL(recording.url);
-                  await onStartRecording();
+                  URL.revokeObjectURL(recording.blobUrl);
+                  model.startRecording();
                 }
               }}>
               {recording.phase === 'recording' && <span className='recording-label'>Recording...</span>}
@@ -574,7 +310,7 @@ export const Dashboard: React.FC = () => {
               <ToolbarButton
                 title='Close'
                 icon='close'
-                onClick={onExitRecording}
+                onClick={() => model.discardRecording()}
               />
             </div>
           </>
@@ -586,9 +322,7 @@ export const Dashboard: React.FC = () => {
               title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
               toggled={interactive}
               disabled={!ready}
-              onClick={() => {
-                dispatch({ type: 'toggleInteractive' });
-              }}
+              onClick={() => model.toggleInteractive()}
             >
               {interactive ? <LockOpenIcon /> : <LockIcon />}
             </ToolbarButton>
@@ -596,9 +330,12 @@ export const Dashboard: React.FC = () => {
             <ToolbarButton
               className='mode-toggle mode-annotate'
               title='Enable annotation mode'
-              disabled={!ready || !liveFrame}
+              disabled={!ready}
               onClick={() => {
-                dispatch({ type: 'toggleAnnotate' });
+                if (pendingAnnotate)
+                  model.cancelAnnotate();
+                else
+                  model.enterAnnotate('user');
               }}
             >
               <ScreenshotRegionIcon />
@@ -607,7 +344,7 @@ export const Dashboard: React.FC = () => {
               title='Record video'
               icon='record'
               disabled={!ready}
-              onClick={onStartRecording}
+              onClick={() => model.startRecording()}
             />
           </>
         )}
@@ -623,7 +360,7 @@ export const Dashboard: React.FC = () => {
                 id='display'
                 className='annotate-image'
                 alt='annotation'
-                src={'data:image/jpeg;base64,' + annotateFrame.data}
+                src={'data:image/png;base64,' + annotateFrame.data}
               />
               <Annotations
                 ref={annotationsRef}
@@ -640,7 +377,7 @@ export const Dashboard: React.FC = () => {
             <div className='recording-view'>
               <video
                 className='recording-video'
-                src={recording.url}
+                src={recording.blobUrl}
                 controls
                 autoPlay
               />
@@ -654,7 +391,7 @@ export const Dashboard: React.FC = () => {
                       flashInteractiveHint();
                       return;
                     }
-                    client?.back();
+                    model.back();
                   }}>
                     <ChevronLeftIcon />
                   </button>
@@ -663,7 +400,7 @@ export const Dashboard: React.FC = () => {
                       flashInteractiveHint();
                       return;
                     }
-                    client?.forward();
+                    model.forward();
                   }}>
                     <ChevronRightIcon />
                   </button>
@@ -672,7 +409,7 @@ export const Dashboard: React.FC = () => {
                       flashInteractiveHint();
                       return;
                     }
-                    client?.reload();
+                    model.reload();
                   }}>
                     <ReloadIcon />
                   </button>
@@ -684,12 +421,8 @@ export const Dashboard: React.FC = () => {
                       placeholder='Search or enter URL'
                       spellCheck={false}
                       autoComplete='off'
-                      value={url}
-                      onChange={e => {
-                        if (!interactive)
-                          return;
-                        dispatch({ type: 'setUrl', url: e.target.value });
-                      }}
+                      value={selectedTab?.url}
+                      onChange={() => {}}
                       onKeyDown={e => {
                         if (!interactive)
                           return;

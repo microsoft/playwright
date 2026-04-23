@@ -16,19 +16,15 @@
 
 import React from 'react';
 import './sessionSidebar.css';
-import { DashboardClientContext } from './dashboardContext';
 import { SettingsButton } from './settingsView';
 import { BrowserIcon } from './icons';
 import { ToolbarButton } from '@web/components/toolbarButton';
 
-import type { Tab, DashboardChannelEvents } from './dashboardChannel';
-import type { SessionModel, SessionStatus } from './sessionModel';
+import type { SessionStatus, Tab } from './dashboardChannel';
+import type { DashboardModel } from './dashboardModel';
 
 type SessionSidebarProps = {
-  model: SessionModel;
-  onSelectTab: (tab: Tab) => void;
-  onCloseTab: (tab: Tab) => void;
-  onNewTab: (browser: string, context: string) => void;
+  model: DashboardModel;
 };
 
 function tabFavicon(url: string): string {
@@ -56,19 +52,9 @@ function normalizeWorkspacePath(workspace: string, homeDir: string | undefined):
   return normalized;
 }
 
-export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectTab, onCloseTab, onNewTab }) => {
-  const client = React.useContext(DashboardClientContext);
-  const openSessions = React.useMemo(() => model.sessions.filter(session => session.canConnect), [model.sessions]);
-  const clientInfo = model.clientInfo;
-  const [allTabs, setAllTabs] = React.useState<Tab[] | null>(null);
-
-  React.useEffect(() => {
-    if (!client)
-      return;
-    const onTabs = (params: DashboardChannelEvents['tabs']) => setAllTabs(params.tabs);
-    client.on('tabs', onTabs);
-    return () => client.off('tabs', onTabs);
-  }, [client]);
+export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model }) => {
+  const { sessions, clientInfo, loadingSessions, tabs: allTabs } = model.state;
+  const openSessions = React.useMemo(() => sessions.filter(session => session.canConnect), [sessions]);
 
   const tabsByBrowserAndContext = React.useMemo(() => {
     const map = new Map<string, Map<string, Tab[]>>();
@@ -117,8 +103,8 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
       <SettingsButton />
     </div>
     <div className='dashboard-shell-sidebar-content'>
-      {model.loading && <div className='sidebar-empty' role='status' aria-live='polite'>Loading sessions...</div>}
-      {!model.loading && openSessions.length === 0 && <div className='sidebar-empty' role='status' aria-live='polite'>No open sessions.</div>}
+      {loadingSessions && <div className='sidebar-empty' role='status' aria-live='polite'>Loading sessions...</div>}
+      {!loadingSessions && openSessions.length === 0 && <div className='sidebar-empty' role='status' aria-live='polite'>No open sessions.</div>}
       {workspaceGroups.map(([workspace, entries]) => {
         const workspacePath = normalizeWorkspacePath(workspace, clientInfo?.homeDir);
         return <section key={workspace} className='workspace-group'>
@@ -149,7 +135,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
                         className='session-browser-close'
                         icon='close'
                         title='Close session'
-                        onClick={() => void model.closeSession(session)}
+                        onClick={() => model.closeSession(session)}
                       />
                     </div>
                     <span className='session-chip-name'>{session.title}</span>
@@ -158,7 +144,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
                         className='sidebar-session-new-tab'
                         icon='add'
                         title='New tab'
-                        onClick={() => onNewTab(guid, row.contextGuid!)}
+                        onClick={() => model.newTab(guid, row.contextGuid!)}
                       />}
                     </div>
                   </div>
@@ -176,11 +162,11 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
                         tabIndex={0}
                         aria-current={tab.context === activeContext && tab.selected ? 'page' : undefined}
                         title={tab.url || tab.title}
-                        onClick={() => onSelectTab(tab)}
+                        onClick={() => model.selectTab(tab)}
                         onKeyDown={e => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            onSelectTab(tab);
+                            model.selectTab(tab);
                           }
                         }}
                       >
@@ -198,7 +184,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
                         title='Close tab'
                         onClick={e => {
                           e.stopPropagation();
-                          onCloseTab(tab);
+                          model.closeTab(tab);
                         }}
                       />
                     </div>)}

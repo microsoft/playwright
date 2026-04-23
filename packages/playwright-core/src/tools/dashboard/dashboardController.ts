@@ -110,7 +110,7 @@ export class DashboardConnection implements Transport {
   private _attachedPage: AttachedPage | undefined;
   private _onclose: () => void;
   private _onconnected?: () => void;
-  private _onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void;
+  private _onAnnotationSubmit?: (base64Png: string | undefined, annotations: AnnotationData[]) => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
@@ -120,7 +120,7 @@ export class DashboardConnection implements Transport {
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void) {
+  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string | undefined, annotations: AnnotationData[]) => void) {
     this._onclose = onclose;
     this._onconnected = onconnected;
     this._onAnnotationSubmit = onAnnotationSubmit;
@@ -236,7 +236,7 @@ export class DashboardConnection implements Transport {
     this._pushTabs();
   }
 
-  async submitAnnotation(params: { data: string; annotations: AnnotationData[] }) {
+  async submitAnnotation(params: { data: string | undefined; annotations: AnnotationData[] }) {
     this._onAnnotationSubmit?.(params.data, params.annotations);
   }
 
@@ -558,9 +558,14 @@ class AttachedPage {
     return { streamId };
   }
 
-  async screenshot(): Promise<string> {
+  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number }> {
     const buffer = await this._page.screenshot({ type: 'png' });
-    return buffer.toString('base64');
+    const vp = this._page.viewportSize();
+    return {
+      data: buffer.toString('base64'),
+      viewportWidth: vp?.width ?? 0,
+      viewportHeight: vp?.height ?? 0,
+    };
   }
 
   private async _startScreencast(page: api.Page) {

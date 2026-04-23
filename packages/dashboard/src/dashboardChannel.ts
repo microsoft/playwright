@@ -15,7 +15,9 @@
  */
 
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
-import type { SessionStatus } from './sessionModel';
+import type { BrowserStatus } from '../../playwright-core/src/serverRegistry';
+
+export type SessionStatus = BrowserStatus;
 
 export type Tab = {
   browser: string;
@@ -62,8 +64,8 @@ export interface DashboardChannel {
   startRecording(): Promise<void>;
   stopRecording(): Promise<{ streamId: string }>;
   readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
-  screenshot(): Promise<string>;
-  submitAnnotation(params: { data: string; annotations: AnnotationData[] }): Promise<void>;
+  screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number }>;
+  submitAnnotation(params: { data: string | undefined; annotations: AnnotationData[] }): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
