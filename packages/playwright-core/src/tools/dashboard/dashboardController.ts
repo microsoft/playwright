@@ -112,8 +112,14 @@ export class DashboardConnection implements Transport {
   private _onconnected?: () => void;
   private _onAnnotationSubmit?: (base64Png: string, annotations: AnnotationData[]) => void;
   private _serverRegistryDispose?: () => void;
-  private _pushSessionsScheduled = false;
-  private _pushTabsScheduled = false;
+  private _pushSessionsRunning = false;
+  private _pushSessionsNext?: Promise<void>;
+  private _pushSessionsResolveNext?: () => void;
+  private _pushTabsRunning = false;
+  private _pushTabsNext?: Promise<void>;
+  private _pushTabsResolveNext?: () => void;
+  private _pendingSwitchPage?: api.Page;
+  private _switchPromise?: Promise<void>;
   private _visible = true;
   private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
 
@@ -132,11 +138,11 @@ export class DashboardConnection implements Transport {
     serverRegistry.on('added', this._pushSessions);
     serverRegistry.on('removed', this._pushSessions);
     serverRegistry.on('changed', this._pushSessions);
-    this._pushSessions();
+    void this._pushSessions();
     this._onconnected?.();
   }
 
-  onclose() {
+  async onclose() {
     serverRegistry.off('added', this._pushSessions);
     serverRegistry.off('removed', this._pushSessions);
     serverRegistry.off('changed', this._pushSessions);
@@ -144,16 +150,13 @@ export class DashboardConnection implements Transport {
     this._serverRegistryDispose = undefined;
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
-    for (const stream of this._streams.values()) {
-      void stream.handle.close()
-          .catch(() => {})
-          .then(() => fs.promises.unlink(stream.path))
-          .catch(() => {});
-    }
+    const streams = [...this._streams.values()];
     this._streams.clear();
+    await Promise.all(streams.map(closeAndUnlink));
     for (const tracker of this._browsers.values())
       tracker.dispose();
     this._browsers.clear();
+    await fs.promises.rm(this._recordingDir, { recursive: true, force: true }).catch(() => {});
     this._onclose();
   }
 
@@ -175,7 +178,7 @@ export class DashboardConnection implements Transport {
     const page = this._findPage(params);
     if (page)
       await this._switchAttachedTo(page);
-    this._pushTabs();
+    await this._pushTabs();
   }
 
   async newTab(params: { browser: string; context: string }) {
@@ -184,7 +187,7 @@ export class DashboardConnection implements Transport {
       return;
     const page = await context.newPage();
     await this._switchAttachedTo(page);
-    this._pushTabs();
+    await this._pushTabs();
   }
 
   async closeTab(params: { browser: string; context: string; page: string }) {
@@ -193,9 +196,8 @@ export class DashboardConnection implements Transport {
   }
 
   async closeSession(params: { browser: string }) {
-    const descriptor = serverRegistry.readDescriptor(params.browser);
-    const browser = await connectToBrowserAcrossVersions(descriptor);
     try {
+      const browser = this._browsers.get(params.browser)?.browser ?? await connectToBrowserAcrossVersions(serverRegistry.readDescriptor(params.browser));
       await Promise.all(browser.contexts().map(context => context.close()));
       await browser.close();
     } catch {
@@ -233,7 +235,7 @@ export class DashboardConnection implements Transport {
       return;
     this._pendingReveal = undefined;
     await this._switchAttachedTo(page);
-    this._pushTabs();
+    await this._pushTabs();
   }
 
   async submitAnnotation(params: { data: string; annotations: AnnotationData[] }) {
@@ -262,8 +264,7 @@ export class DashboardConnection implements Transport {
     const { bytesRead } = await stream.handle.read(buffer, 0, buffer.length);
     if (bytesRead === 0) {
       this._streams.delete(params.streamId);
-      await stream.handle.close().catch(() => {});
-      await fs.promises.unlink(stream.path).catch(() => {});
+      await closeAndUnlink(stream);
       return { data: '', eof: true };
     }
     return { data: buffer.subarray(0, bytesRead).toString('base64'), eof: false };
@@ -293,19 +294,35 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('cancelAnnotate', {});
   }
 
-  _pushTabs() {
-    if (this._pushTabsScheduled)
-      return;
-    this._pushTabsScheduled = true;
-    queueMicrotask(async () => {
-      this._pushTabsScheduled = false;
-      try {
-        const tabs = await this._aggregateTabs();
-        this.emitTabs(tabs);
-      } catch {
-        // best-effort
+  _pushTabs(): Promise<void> {
+    if (!this._pushTabsNext) {
+      this._pushTabsNext = new Promise<void>(resolve => {
+        this._pushTabsResolveNext = resolve;
+      });
+      if (!this._pushTabsRunning)
+        queueMicrotask(() => void this._runPushTabs());
+    }
+    return this._pushTabsNext;
+  }
+
+  private async _runPushTabs() {
+    this._pushTabsRunning = true;
+    try {
+      while (this._pushTabsResolveNext) {
+        const resolve = this._pushTabsResolveNext;
+        this._pushTabsNext = undefined;
+        this._pushTabsResolveNext = undefined;
+        try {
+          const tabs = await this._aggregateTabs();
+          this.emitTabs(tabs);
+        } catch {
+          // best-effort
+        }
+        resolve();
       }
-    });
+    } finally {
+      this._pushTabsRunning = false;
+    }
   }
 
   private async _aggregateTabs(): Promise<Tab[]> {
@@ -318,7 +335,7 @@ export class DashboardConnection implements Transport {
             browser: browserId(browser),
             context: contextId(context),
             page: pageId(page),
-            title: await page.title().catch(() => ''),
+            title: await withTimeout(page.title().catch(() => ''), 2000, ''),
             url: page.url(),
             selected: page === attachedPage,
             faviconUrl: await faviconUrl(page),
@@ -329,7 +346,27 @@ export class DashboardConnection implements Transport {
     return await Promise.all(tasks);
   }
 
-  private async _switchAttachedTo(page: api.Page) {
+  private _switchAttachedTo(page: api.Page): Promise<void> {
+    // Latest-wins: all in-flight callers share the same promise, which
+    // resolves once the loop drains. If new calls arrive during a switch,
+    // only the most recent target runs next.
+    this._pendingSwitchPage = page;
+    if (this._switchPromise)
+      return this._switchPromise;
+    return this._switchPromise = (async () => {
+      try {
+        while (this._pendingSwitchPage) {
+          const target = this._pendingSwitchPage;
+          this._pendingSwitchPage = undefined;
+          await this._doSwitchAttachedTo(target);
+        }
+      } finally {
+        this._switchPromise = undefined;
+      }
+    })();
+  }
+
+  private async _doSwitchAttachedTo(page: api.Page) {
     if (this._attachedPage?.page === page)
       return;
     this._attachedPage?.dispose();
@@ -354,37 +391,58 @@ export class DashboardConnection implements Transport {
   _handleAttachedPageClose(context: api.BrowserContext) {
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
-    const next = context.pages()[0];
-    if (next)
-      void this._switchAttachedTo(next);
-    this._pushTabs();
+    if (!context.isClosed()) {
+      const next = context.pages()[0];
+      if (next)
+        void this._switchAttachedTo(next);
+    }
+    void this._pushTabs();
   }
 
-  private _pushSessions = () => {
-    if (this._pushSessionsScheduled)
-      return;
-    this._pushSessionsScheduled = true;
-    queueMicrotask(async () => {
-      this._pushSessionsScheduled = false;
-      try {
-        const byWs = await serverRegistry.list();
-        const sessions: BrowserStatus[] = [];
-        for (const list of byWs.values()) {
-          for (const status of list) {
-            if (status.title.startsWith('--playwright-internal'))
-              continue;
-            sessions.push(status);
-          }
-        }
-        await this._reconcile(sessions);
-        await this._tryRevealPending();
-        this.emitSessions(sessions);
-        this._pushTabs();
-      } catch {
-        // best-effort
-      }
-    });
+  private _pushSessions = (): Promise<void> => {
+    if (!this._pushSessionsNext) {
+      this._pushSessionsNext = new Promise<void>(resolve => {
+        this._pushSessionsResolveNext = resolve;
+      });
+      if (!this._pushSessionsRunning)
+        queueMicrotask(() => void this._runPushSessions());
+    }
+    return this._pushSessionsNext;
   };
+
+  private async _runPushSessions() {
+    this._pushSessionsRunning = true;
+    try {
+      while (this._pushSessionsResolveNext) {
+        const resolve = this._pushSessionsResolveNext;
+        this._pushSessionsNext = undefined;
+        this._pushSessionsResolveNext = undefined;
+        try {
+          const byWs = await serverRegistry.list();
+          const sessions: BrowserStatus[] = [];
+          for (const list of byWs.values()) {
+            for (const status of list) {
+              if (status.title.startsWith('--playwright-internal'))
+                continue;
+              sessions.push(status);
+            }
+          }
+          // Emit sessions before _reconcile so the UI doesn't have to wait
+          // for a slow BrowserTracker.create (WebSocket connect) to see
+          // registry changes.
+          this.emitSessions(sessions);
+          await this._reconcile(sessions);
+          await this._tryRevealPending();
+          void this._pushTabs();
+        } catch {
+          // best-effort
+        }
+        resolve();
+      }
+    } finally {
+      this._pushSessionsRunning = false;
+    }
+  }
 
   private async _reconcile(sessions: BrowserStatus[]) {
     const connectable = new Map<string, BrowserStatus>();
@@ -408,7 +466,7 @@ export class DashboardConnection implements Transport {
       if (this._browsers.has(guid))
         continue;
       const slot = await BrowserTracker.create(status, {
-        onTabsChanged: () => this._pushTabs(),
+        onTabsChanged: () => { void this._pushTabs(); },
         onContextClosed: context => {
           if (this._attachedPage?.page.context() === context) {
             this._attachedPage.dispose();
@@ -464,10 +522,10 @@ class AttachedPage {
         }),
         eventsHelper.addEventListener(this._page, 'framenavigated', (frame: api.Frame) => {
           if (frame === this._page.mainFrame())
-            this._owner._pushTabs();
+            void this._owner._pushTabs();
         }),
     );
-    this._owner._pushTabs();
+    void this._owner._pushTabs();
     if (this._owner.visible()) {
       this._screencastRunning = true;
       await this._startScreencast(this._page);
@@ -614,6 +672,29 @@ async function faviconUrl(page: api.Page): Promise<string | undefined> {
       reader.readAsDataURL(blob);
     });
   }).catch(() => undefined);
-  const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 3000));
-  return await Promise.race([url, timeout]);
+  return withTimeout(url, 3000, undefined);
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<T>(resolve => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer)
+      clearTimeout(timer);
+  });
+}
+
+async function closeAndUnlink(stream: { handle: fs.promises.FileHandle; path: string }): Promise<void> {
+  try {
+    await stream.handle.close();
+  } catch {
+    // best-effort
+  }
+  try {
+    await fs.promises.unlink(stream.path);
+  } catch {
+    // best-effort
+  }
 }
