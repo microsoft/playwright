@@ -4197,6 +4197,7 @@ export interface RouteEvents {
 // ----------- WebSocketRoute -----------
 export type WebSocketRouteInitializer = {
   url: string,
+  protocols: string[],
 };
 export interface WebSocketRouteEventTarget {
   on(event: 'messageFromPage', callback: (params: WebSocketRouteMessageFromPageEvent) => void): this;

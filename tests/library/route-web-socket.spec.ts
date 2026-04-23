@@ -578,3 +578,37 @@ test('should work with baseURL', async ({ contextFactory, server }) => {
     `message: data=echo origin=ws://${server.HOST} lastEventId=`,
   ]);
 });
+
+test('should expose protocols to the route handler', async ({ page, server }) => {
+  const routes: WebSocketRoute[] = [];
+  await page.routeWebSocket(/.*/, ws => {
+    routes.push(ws);
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(({ host }) => {
+    (window as any).wsNone = new WebSocket('ws://' + host + '/ws-none');
+    (window as any).wsString = new WebSocket('ws://' + host + '/ws-string', 'chat.v1');
+    (window as any).wsArray = new WebSocket('ws://' + host + '/ws-array', ['chat.v2', 'chat.v1']);
+  }, { host: server.HOST });
+
+  await expect.poll(() => routes.length).toBe(3);
+
+  const byUrl = new Map(routes.map(r => [new URL(r.url()).pathname, r] as const));
+  expect(byUrl.get('/ws-none')!.protocols()).toEqual([]);
+  expect(byUrl.get('/ws-string')!.protocols()).toEqual(['chat.v1']);
+  expect(byUrl.get('/ws-array')!.protocols()).toEqual(['chat.v2', 'chat.v1']);
+});
+
+test('should expose protocols on server-side route', async ({ page, server }) => {
+  const { promise, resolve } = withResolvers<{ page: WebSocketRoute, server: WebSocketRoute }>();
+  await page.routeWebSocket(/.*/, ws => {
+    const serverRoute = ws.connectToServer();
+    resolve({ page: ws, server: serverRoute });
+  });
+
+  await setupWS(page, server, 'blob', ['chat.v2', 'chat.v1']);
+  const { page: pageRoute, server: serverRoute } = await promise;
+  expect(pageRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
+  expect(serverRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
+});

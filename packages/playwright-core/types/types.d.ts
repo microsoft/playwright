@@ -16539,6 +16539,27 @@ export interface WebSocketRoute {
   connectToServer(): WebSocketRoute;
 
   /**
+   * The list of WebSocket subprotocols requested by the page, as passed via the second argument to the
+   * [`WebSocket` constructor](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/WebSocket). Corresponds to the
+   * `Sec-WebSocket-Protocol` request header.
+   *
+   * Returns an empty array if no protocols were specified.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.routeWebSocket('wss://example.com/ws', ws => {
+   *   if (ws.protocols().includes('chat.v2'))
+   *     ws.onMessage(message => ws.send(JSON.stringify({ version: 2, echo: message })));
+   *   else
+   *     ws.close({ code: 1002, reason: 'Unsupported protocol' });
+   * });
+   * ```
+   *
+   */
+  protocols(): Array<string>;
+
+  /**
    * Sends a message to the WebSocket. When called on the original WebSocket, sends the message to the page. When called
    * on the result of
    * [webSocketRoute.connectToServer()](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-connect-to-server),
