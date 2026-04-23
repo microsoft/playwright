@@ -409,15 +409,15 @@ export class DashboardConnection implements Transport {
     }
   }
 
-  _handleAttachedPageClose(context: api.BrowserContext) {
+  async _handleAttachedPageClose(context: api.BrowserContext) {
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
     if (!context.isClosed()) {
       const next = context.pages()[0];
       if (next)
-        void this._switchAttachedTo(next);
+        await this._switchAttachedTo(next);
     }
-    void this._pushTabs();
+    await this._pushTabs();
   }
 
   private _pushSessions = (): Promise<void> => {
@@ -545,7 +545,7 @@ class AttachedPage {
   async init() {
     this._listeners.push(
         eventsHelper.addEventListener(this._page, 'close', () => {
-          this._owner._handleAttachedPageClose(this._page.context());
+          void this._owner._handleAttachedPageClose(this._page.context());
         }),
         eventsHelper.addEventListener(this._page, 'framenavigated', (frame: api.Frame) => {
           if (frame === this._page.mainFrame())
