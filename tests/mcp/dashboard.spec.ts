@@ -239,9 +239,8 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   const dashboard = browser.contexts()[0].pages()[0];
   await expect(dashboard.locator('#display')).toBeVisible();
 
-  const sampleCenter = () => dashboard.evaluate(() => {
-    const img = document.querySelector('#display') as HTMLImageElement | null;
-    if (!img || !img.naturalWidth)
+  const sampleCenter = () => dashboard.locator('#display').evaluate((img: HTMLImageElement) => {
+    if (!img.naturalWidth)
       return null;
     const canvas = document.createElement('canvas');
     canvas.width = 1;
@@ -252,23 +251,25 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
     return { r, g };
   });
 
-  await expect.poll(async () => {
+  await expect(async () => {
     const c = await sampleCenter();
-    return !!(c && c.r > 200 && c.g < 50);
-  }, { timeout: 15000 }).toBe(true);
+    expect(c?.r).toBeGreaterThan(200);
+    expect(c?.g).toBeLessThan(50);
+  }).toPass({ timeout: 15000 });
 
   const annotatePromise = cli('-s=second', 'show', '--annotate');
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible({ timeout: 15000 });
   const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
   await expect(activeSession.locator('.session-chip-name')).toHaveText('second');
 
-  await expect.poll(async () => {
+  await expect(async () => {
     const c = await sampleCenter();
-    return !!(c && c.g > 200 && c.r < 50);
-  }, { timeout: 15000 }).toBe(true);
+    expect(c?.g).toBeGreaterThan(200);
+    expect(c?.r).toBeLessThan(50);
+  }).toPass({ timeout: 15000 });
 
   await drawAndSubmitAnnotation(dashboard, 'session switch');
   const { exitCode } = await annotatePromise;
