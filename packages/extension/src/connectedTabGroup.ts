@@ -50,9 +50,6 @@ export class ConnectedTabGroup {
   private _connection: RelayConnection;
   private _groupId: number | null = null;
   private _groupTabIds: Set<number> = new Set();
-  // Subset of `_groupTabIds` the debugger is actually attached to; drives the
-  // badge. A chrome:// tab can sit in the group without being attached.
-  private _attachedTabIds: Set<number> = new Set();
   private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
   private _onTabRemovedListener: (tabId: number) => void;
 
@@ -82,43 +79,41 @@ export class ConnectedTabGroup {
 
   private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): void {
     if (changeInfo.groupId !== undefined)
-      this._onTabGroupChanged(tabId, changeInfo.groupId, tab.url);
+      this._onTabGroupChanged(tabId, tab);
     if (changeInfo.url === undefined)
       return;
     // Chrome resets per-tab badge state on navigation, so re-apply it.
-    if (this._attachedTabIds.has(tabId))
+    if (this._connection.attachedTabs.has(tabId))
       void this._updateBadge(tabId, CONNECTED_BADGE);
     else if (this._groupTabIds.has(tabId) && !isNonDebuggableUrl(changeInfo.url))
-      void this._connection.attachTab(tabId);
+      this._connection.attachTab(tab);
   }
 
   // Single entry point for group membership changes, whether the user dragged
   // or we grouped the tab ourselves. Attaches on entry (if debuggable) and
   // detaches on exit; a chrome:// tab stays in the group until it navigates
   // (handled in _onTabUpdated).
-  private _onTabGroupChanged(tabId: number, newGroupId: number, url: string | undefined): void {
-    const inOurGroup = this._groupId !== null && newGroupId === this._groupId;
+  private _onTabGroupChanged(tabId: number, tab: chrome.tabs.Tab): void {
+    const inOurGroup = this._groupId !== null && tab.groupId === this._groupId;
     const wasInGroup = this._groupTabIds.has(tabId);
     if (inOurGroup === wasInGroup)
       return;
     if (inOurGroup) {
       this._groupTabIds.add(tabId);
-      if (!isNonDebuggableUrl(url))
-        void this._connection.attachTab(tabId);
+      if (!isNonDebuggableUrl(tab.url))
+        this._connection.attachTab(tab);
     } else {
       this._groupTabIds.delete(tabId);
-      if (this._attachedTabIds.has(tabId))
-        void this._connection.detachTab(tabId);
+      if (this._connection.attachedTabs.has(tabId))
+        this._connection.detachTab(tabId);
     }
   }
 
   private _onTabRemoved(tabId: number): void {
     this._groupTabIds.delete(tabId);
-    this._attachedTabIds.delete(tabId);
   }
 
   private _onTabAttached(tabId: number): void {
-    this._attachedTabIds.add(tabId);
     void this._updateBadge(tabId, CONNECTED_BADGE);
     void this._addTabToGroup(tabId);
   }
@@ -127,18 +122,14 @@ export class ConnectedTabGroup {
   // badge but leave the tab in the group — the user's intent is still there,
   // and a subsequent navigation will re-attach via _onTabUpdated.
   private _onTabDetached(tabId: number): void {
-    this._attachedTabIds.delete(tabId);
     void this._updateBadge(tabId, { text: '' });
   }
 
   private _onConnectionClose(): void {
     chrome.tabs.onUpdated.removeListener(this._onTabUpdatedListener);
     chrome.tabs.onRemoved.removeListener(this._onTabRemovedListener);
-    const attachedIds = [...this._attachedTabIds];
     const groupTabs = [...this._groupTabIds];
-    this._attachedTabIds.clear();
     this._groupTabIds.clear();
-    attachedIds.forEach(id => void this._updateBadge(id, { text: '' }));
     if (groupTabs.length) {
       this._retryOnDrag(() => chrome.tabs.ungroup(groupTabs)).catch(error => {
         debugLog('Error ungrouping tabs on close:', error);

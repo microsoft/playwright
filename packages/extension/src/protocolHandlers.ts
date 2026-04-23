@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { debugLog } from './relayConnection';
-
 export type ProtocolCommand = {
   id: number;
   method: string;
@@ -42,7 +40,7 @@ export interface ProtocolHandler {
   forwardChromeEvent(fullMethod: string, args: any[]): void;
   // The UI added a tab to the Playwright group. Handler tells the relay the
   // tab is now available; the relay attaches via the usual command path.
-  onUserAttachRequest(tabId: number): Promise<void>;
+  onUserAttachRequest(tab: chrome.tabs.Tab): void;
   // The UI removed a tab. RelayConnection has already detached the debugger
   // and called notifyTabDetached; the handler only sends the wire-level
   // detach notification (if the protocol has one).
@@ -96,7 +94,7 @@ export class ProtocolV1Handler implements ProtocolHandler {
     });
   }
 
-  async onUserAttachRequest(_tabId: number): Promise<void> {
+  onUserAttachRequest(_tab: chrome.tabs.Tab): void {
     // v1 is single-tab by design; dragging extra tabs into the group is a no-op.
   }
 
@@ -148,15 +146,10 @@ export class ProtocolV2Handler implements ProtocolHandler {
     this._context.sendMessage({ method: fullMethod, params: args });
   }
 
-  async onUserAttachRequest(tabId: number): Promise<void> {
+  onUserAttachRequest(tab: chrome.tabs.Tab): void {
     // Simulate a "new tab opened" event; the relay responds by calling
     // chrome.debugger.attach, which flows through handleCommand.
-    try {
-      const tab = await chrome.tabs.get(tabId);
-      this._context.sendMessage({ method: 'chrome.tabs.onCreated', params: [tab] });
-    } catch (error: any) {
-      debugLog('Error requesting attach for tab:', error);
-    }
+    this._context.sendMessage({ method: 'chrome.tabs.onCreated', params: [tab] });
   }
 
   onUserDetachRequest(tabId: number): void {
