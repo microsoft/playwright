@@ -37,8 +37,8 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
   private _frame: Frame;
   private static _idToDispatcher = new Map<string, WebSocketRouteDispatcher>();
 
-  constructor(scope: PageDispatcher | BrowserContextDispatcher, id: string, url: string, frame: Frame) {
-    super(scope, new SdkObject(scope._object, 'webSocketRoute'), 'WebSocketRoute', { url });
+  constructor(scope: PageDispatcher | BrowserContextDispatcher, id: string, url: string, protocols: string[], frame: Frame) {
+    super(scope, new SdkObject(scope._object, 'webSocketRoute'), 'WebSocketRoute', { url, protocols });
     this._id = id;
     this._frame = frame;
     this._eventListeners.push(
@@ -76,7 +76,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
           else if (contextDispatcher && matchesPattern(contextDispatcher, context._options.baseURL, payload.url))
             scope = contextDispatcher;
           if (scope) {
-            new WebSocketRouteDispatcher(scope, payload.id, payload.url, source.frame);
+            new WebSocketRouteDispatcher(scope, payload.id, payload.url, payload.protocols, source.frame);
           } else {
             const request: ws.PassthroughRequest = { id: payload.id, type: 'passthrough' };
             source.frame.evaluateExpression(progress, `globalThis.__pwWebSocketDispatch(${JSON.stringify(request)})`).catch(() => {});

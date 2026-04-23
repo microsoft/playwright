@@ -2430,6 +2430,7 @@ scheme.RouteFulfillParams = tObject({
 scheme.RouteFulfillResult = tOptional(tObject({}));
 scheme.WebSocketRouteInitializer = tObject({
   url: tString,
+  protocols: tArray(tString),
 });
 scheme.WebSocketRouteMessageFromPageEvent = tObject({
   message: tString,

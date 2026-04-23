@@ -3744,6 +3744,9 @@ WebSocketRoute:
 
   initializer:
     url: string
+    protocols:
+      type: array
+      items: string
 
   commands:
 

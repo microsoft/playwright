@@ -485,6 +485,10 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
         return this._initializer.url;
       },
 
+      protocols: () => {
+        return [...this._initializer.protocols];
+      },
+
       close: async (options: { code?: number, reason?: string } = {}) => {
         await this._channel.closeServer({ ...options, wasClean: true }).catch(() => {});
       },
@@ -532,6 +536,10 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
 
   url() {
     return this._initializer.url;
+  }
+
+  protocols(): string[] {
+    return [...this._initializer.protocols];
   }
 
   async close(options: { code?: number, reason?: string } = {}) {
