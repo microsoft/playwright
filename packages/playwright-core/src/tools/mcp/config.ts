@@ -413,6 +413,7 @@ function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
     ...pickDefined(overrides.browser),
     browserName: overrides.browser?.browserName ?? base.browser?.browserName,
     isolated: overrides.browser?.isolated ?? base.browser?.isolated,
+    userDataDir: overrides.browser?.userDataDir ?? base.browser?.userDataDir,
     launchOptions: {
       ...pickDefined(base.browser?.launchOptions),
       ...pickDefined(overrides.browser?.launchOptions),
