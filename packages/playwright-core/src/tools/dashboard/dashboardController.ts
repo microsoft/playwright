@@ -20,6 +20,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { Disposable } from '@isomorphic/disposable';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
@@ -121,7 +122,8 @@ export class DashboardConnection implements Transport {
   private _pendingSwitchPage?: api.Page;
   private _switchPromise?: Promise<void>;
   private _visible = true;
-  private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
+  private _currentReveal: { sessionName: string; workspaceDir?: string; cancel: ManualPromise<void>; promise: Promise<void> } | undefined;
+  private _sessionsChangedNext = new ManualPromise<void>();
 
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
@@ -148,6 +150,8 @@ export class DashboardConnection implements Transport {
     serverRegistry.off('changed', this._pushSessions);
     this._serverRegistryDispose?.();
     this._serverRegistryDispose = undefined;
+    this._currentReveal?.cancel.reject(new Error('Dashboard connection closed.'));
+    this._currentReveal = undefined;
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
     const streams = [...this._streams.values()];
@@ -216,26 +220,43 @@ export class DashboardConnection implements Transport {
     await this._attachedPage?.setScreencastActive(params.visible);
   }
 
-  revealSession(sessionName: string, workspaceDir?: string) {
-    this._pendingReveal = { sessionName, workspaceDir };
-    void this._tryRevealPending();
+  revealSession(sessionName: string, workspaceDir?: string): Promise<void> {
+    // Dedup identical in-flight reveals so concurrent callers awaiting the
+    // same target share a single promise. Distinct targets supersede the
+    // in-flight reveal: the prior promise rejects so its awaiter unblocks.
+    if (this._currentReveal
+        && this._currentReveal.sessionName === sessionName
+        && this._currentReveal.workspaceDir === workspaceDir)
+      return this._currentReveal.promise;
+    this._currentReveal?.cancel.reject(new Error('Reveal superseded by another revealSession call.'));
+    const cancel = new ManualPromise<void>();
+    const entry = {
+      sessionName,
+      workspaceDir,
+      cancel,
+      promise: this._doReveal(sessionName, workspaceDir, cancel).finally(() => {
+        if (this._currentReveal === entry)
+          this._currentReveal = undefined;
+      })
+    };
+    this._currentReveal = entry;
+    return entry.promise;
   }
 
-  private async _tryRevealPending() {
-    const pending = this._pendingReveal;
-    if (!pending)
-      return;
-    const slot = [...this._browsers.values()].find(s =>
-      s.descriptor.title === pending.sessionName
-        && (pending.workspaceDir === undefined || s.descriptor.workspaceDir === pending.workspaceDir));
-    if (!slot)
-      return;
-    const page = slot.browser.contexts().flatMap(c => c.pages())[0];
-    if (!page)
-      return;
-    this._pendingReveal = undefined;
-    await this._switchAttachedTo(page);
-    await this._pushTabs();
+  private async _doReveal(sessionName: string, workspaceDir: string | undefined, cancel: Promise<void>) {
+    while (true) {
+      const slot = [...this._browsers.values()].find(s =>
+        s.descriptor.title === sessionName
+          && (workspaceDir === undefined || s.descriptor.workspaceDir === workspaceDir));
+      const page = slot?.browser.contexts().flatMap(c => c.pages())[0];
+      if (page) {
+        await this._switchAttachedTo(page);
+        await this._pushTabs();
+        return;
+      }
+      // Page not ready yet; wait for the next sessions update or supersede.
+      await Promise.race([this._sessionsChangedNext, cancel]);
+    }
   }
 
   async submitAnnotation(params: { data: string; annotations: AnnotationData[] }) {
@@ -432,7 +453,7 @@ export class DashboardConnection implements Transport {
           // registry changes.
           this.emitSessions(sessions);
           await this._reconcile(sessions);
-          await this._tryRevealPending();
+          this._signalSessionsChanged();
           void this._pushTabs();
         } catch {
           // best-effort
@@ -442,6 +463,12 @@ export class DashboardConnection implements Transport {
     } finally {
       this._pushSessionsRunning = false;
     }
+  }
+
+  private _signalSessionsChanged() {
+    const previous = this._sessionsChangedNext;
+    this._sessionsChangedNext = new ManualPromise<void>();
+    previous.resolve();
   }
 
   private async _reconcile(sessions: BrowserStatus[]) {
