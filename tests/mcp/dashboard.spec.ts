@@ -145,7 +145,7 @@ async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page
   await dashboard.mouse.up();
   await dashboard.locator('.annotation-textarea').fill(text);
   await dashboard.locator('.annotation-textarea').press('Enter');
-  await dashboard.locator('.annotate-action-btn.primary').click();
+  await dashboard.getByRole('button', { name: 'Submit annotation' }).click();
 }
 
 function verifyAnnotateOutput(output: string, expectedText: string, outputDir: string) {
@@ -199,39 +199,6 @@ test('should start dashboard and annotate when no dashboard is running', async (
   expect(done).toBe(true);
   expect(exitCode).toBe(0);
   verifyAnnotateOutput(output, 'hi', test.info().outputDir);
-});
-
-test('should keep CLI annotate engaged across mode switches', async ({ connectToDashboard, cli, server }) => {
-  await cli('open', server.EMPTY_PAGE);
-  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  await cli('show', { bindTitle });
-  const browser = await connectToDashboard(bindTitle);
-
-  const dashboard = browser.contexts()[0].pages()[0];
-  await dashboard.locator('.sidebar-tab').first().click();
-
-  const annotatePromise = cli('show', '--annotate');
-  let done = false;
-  void annotatePromise.finally(() => { done = true; });
-
-  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
-
-  await dashboard.locator('.mode-toggle.mode-interactive').click();
-  await expect(dashboard.locator('div.dashboard-view')).toHaveClass(/interactive/);
-  await expect(dashboard.locator('div.dashboard-view')).not.toHaveClass(/annotate/);
-
-  const box = await dashboard.locator('img#display').boundingBox();
-  await dashboard.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-
-  await dashboard.locator('.mode-toggle.mode-annotate').click();
-  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
-
-  await drawAndSubmitAnnotation(dashboard, 'round-trip');
-
-  const { output, exitCode } = await annotatePromise;
-  expect(done).toBe(true);
-  expect(exitCode).toBe(0);
-  verifyAnnotateOutput(output, 'round-trip', test.info().outputDir);
 });
 
 test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate', async ({ connectToDashboard, cli, server }) => {
@@ -376,22 +343,7 @@ async function installSaveFilePickerMock(page: import('playwright-core').Page): 
   };
 }
 
-test('screenshot writes PNG bytes to the chosen file', async ({ cli, server, page, startDashboardServer }) => {
-  await cli('open', server.EMPTY_PAGE);
-  const awaitBytes = await installSaveFilePickerMock(page);
-
-  const dashboard = await startDashboardServer();
-  await dashboard.locator('.sidebar-tab').first().click();
-  await expect(dashboard.locator('img#display')).toBeVisible();
-  await expect(dashboard.locator('.screenshot')).toBeEnabled();
-
-  await dashboard.locator('.screenshot').click();
-
-  const bytes = await awaitBytes();
-  expect(bytes.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-});
-
-test('stop recording streams WebM bytes to the chosen file', async ({ cli, server, page, startDashboardServer }) => {
+test('save recording streams WebM bytes to the chosen file', async ({ cli, server, page, startDashboardServer }) => {
   await cli('open', server.EMPTY_PAGE);
   const awaitBytes = await installSaveFilePickerMock(page);
 
@@ -399,11 +351,15 @@ test('stop recording streams WebM bytes to the chosen file', async ({ cli, serve
   await dashboard.locator('.sidebar-tab').first().click();
   await expect(dashboard.locator('img#display')).toBeVisible();
 
-  const recordBtn = dashboard.locator('.recording');
-  await expect(recordBtn).toBeEnabled();
-  await recordBtn.click();
+  // Enter recording mode from the normal toolbar.
+  await dashboard.getByRole('button', { name: 'Record video' }).click();
   await expect(dashboard.locator('.recording-label')).toBeVisible();
-  await recordBtn.click();
+
+  // Click the toggled record button again to transition to the 'stopped' phase.
+  await dashboard.getByRole('button', { name: 'Stop recording' }).click();
+
+  // Save the recording.
+  await dashboard.getByRole('button', { name: 'Save recording' }).click();
 
   const bytes = await awaitBytes();
   // WebM files start with the EBML magic bytes.

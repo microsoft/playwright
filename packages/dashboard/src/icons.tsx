@@ -89,6 +89,30 @@ export const PlusIcon: React.FC = () => (
   </svg>
 );
 
+export const LockIcon: React.FC = () => (
+  <svg width='20' height='20' viewBox='0 -960 960 960' style={{ fill: 'currentColor' }} aria-hidden='true'>
+    <path d='M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm0-80h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80ZM240-160v-400 400Z'/>
+  </svg>
+);
+
+export const LockOpenIcon: React.FC = () => (
+  <svg width='20' height='20' viewBox='0 -960 960 960' style={{ fill: 'currentColor' }} aria-hidden='true'>
+    <path d='M240-160h480v-400H240v400Zm296.5-143.5Q560-327 560-360t-23.5-56.5Q513-440 480-440t-56.5 23.5Q400-393 400-360t23.5 56.5Q447-280 480-280t56.5-23.5ZM240-160v-400 400Zm0 80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h280v-80q0-83 58.5-141.5T720-920q83 0 141.5 58.5T920-720h-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80h120q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Z'/>
+  </svg>
+);
+
+export const ScreenshotRegionIcon: React.FC = () => (
+  <svg width='20' height='20' viewBox='0 -960 960 960' style={{ fill: 'currentColor' }} aria-hidden='true'>
+    <path d='M680-80v-120H560v-80h120v-120h80v120h120v80H760v120h-80ZM200-200v-200h80v120h120v80H200Zm0-360v-200h200v80H280v120h-80Zm480 0v-120H560v-80h200v200h-80Z'/>
+  </svg>
+);
+
+export const DownloadIcon: React.FC = () => (
+  <svg width='20' height='20' viewBox='0 -960 960 960' style={{ fill: 'currentColor' }} aria-hidden='true'>
+    <path d='M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z'/>
+  </svg>
+);
+
 export const ReloadIcon: React.FC = () => (
   <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
     <polyline points='23 4 23 10 17 10'/>
