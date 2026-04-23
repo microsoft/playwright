@@ -429,7 +429,6 @@ it('should return http version', async ({ page, server }) => {
 
 it('Response.formData() should parse multipart/form-data in page context', async ({ page, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40244' });
-  it.fail(browserName === 'webkit', 'WebKit 26.4 upstream regression: rejects multipart body without trailing CRLF after closing boundary');
   await page.goto(server.EMPTY_PAGE);
   const result = await page.evaluate(async () => {
     const boundary = '----WebKitFormBoundary1234';
