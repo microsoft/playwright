@@ -54,6 +54,7 @@ export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'
 export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
 export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected', isRadio?: boolean };
+export type ExpectReceived = { value?: any, ariaSnapshot?: string };
 
 export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
@@ -1441,7 +1442,39 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
+  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: ExpectReceived, missingReceived?: boolean }> {
+    const core = await this._expectCore(element, options, elements);
+    const ariaSnapshot = this._ariaSnapshotForExpect(element, options);
+    if (core.received === undefined && ariaSnapshot === undefined)
+      return { matches: core.matches, missingReceived: core.missingReceived };
+    return { matches: core.matches, received: { value: core.received, ariaSnapshot }, missingReceived: core.missingReceived };
+  }
+
+  private _ariaSnapshotForExpect(element: Element | undefined, options: FrameExpectParams): string | undefined {
+    const expression = options.expression;
+    if (expression === 'to.have.count' || expression.endsWith('.array'))
+      return undefined;
+    if (expression === 'to.match.aria')
+      return undefined;
+    if (element && isElementVisible(element)) {
+      // Element-scoped snapshot. Containment matchers want the full subtree;
+      // property matchers only need the element's own line.
+      const isContainment = expression === 'to.have.text';
+      return this._renderAriaSnapshot(element, { mode: 'default', depth: isContainment ? undefined : 1 });
+    }
+    // Element missing or hidden — fall back to a full-page snapshot for context.
+    if (!this.document.body)
+      return undefined;
+    return this._renderAriaSnapshot(this.document.body, { mode: 'default' });
+  }
+
+  private _renderAriaSnapshot(element: Element, options: AriaTreeOptions): string {
+    // Bypass _lastAriaSnapshotForQuery — that cache is reserved for explicit
+    // ariaSnapshot() calls used by the aria-ref selector engine.
+    return renderAriaTree(generateAriaTree(element, options), options).text;
+  }
+
+  private async _expectCore(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     if (isArray)
       return this.expectArray(elements, options);

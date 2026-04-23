@@ -132,6 +132,7 @@ type MatcherMessageDetails = {
   timeout?: number;
   errorMessage?: string;
   log?: string[];
+  ariaSnapshot?: string;
 };
 
 export function formatMatcherMessage(utils: InternalMatcherUtils, details: MatcherMessageDetails) {
@@ -169,6 +170,8 @@ export function formatMatcherMessage(utils: InternalMatcherUtils, details: Match
       message += '\n';
   }
   message += callLogText(utils, details.log);
+  if (details.ariaSnapshot)
+    message += `\nAria snapshot:\n${utils.DIM_COLOR(details.ariaSnapshot)}\n`;
   return message;
 }
 

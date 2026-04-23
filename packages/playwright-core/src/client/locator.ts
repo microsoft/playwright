@@ -22,7 +22,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
 import { DisposableStub } from './disposable';
 
-import type { Frame } from './frame';
+import type { ExpectResult, Frame } from './frame';
 import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -396,7 +396,7 @@ export class Locator implements api.Locator {
   }
 
 
-  async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }> {
+  async _expect(expression: string, options: FrameExpectParams): Promise<ExpectResult> {
     return this._frame._expect(expression, {
       ...options,
       selector: this._selector,

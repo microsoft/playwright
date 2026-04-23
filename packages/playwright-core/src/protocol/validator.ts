@@ -2039,7 +2039,10 @@ scheme.FrameExpectParams = tObject({
 });
 scheme.FrameExpectResult = tObject({
   matches: tBoolean,
-  received: tOptional(tType('SerializedValue')),
+  received: tOptional(tObject({
+    value: tOptional(tType('SerializedValue')),
+    ariaSnapshot: tOptional(tString),
+  })),
   timedOut: tOptional(tBoolean),
   errorMessage: tOptional(tString),
   log: tOptional(tArray(tString)),
