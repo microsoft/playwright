@@ -22,6 +22,7 @@ import http from 'http';
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
@@ -37,11 +38,12 @@ import type { AnnotationData } from '@dashboard/dashboardChannel';
 // cost and the dev-server code (incl. `import('vite')`) is DCE'd in release.
 declare const __PW_DASHBOARD_HMR__: boolean;
 
+type AnnotationResult = { png: string; annotations: AnnotationData[] };
+
 type DashboardServer = {
   url: string;
-  reveal: (options: DashboardOptions) => void;
-  triggerAnnotate: () => void;
-  registerAnnotateWaiter: (socket: net.Socket) => void;
+  reveal: (options: DashboardOptions) => Promise<void>;
+  triggerAnnotate: (signal: AbortSignal) => Promise<AnnotationResult | undefined>;
 };
 
 async function startDashboardServer(options: DashboardOptions): Promise<DashboardServer> {
@@ -49,31 +51,19 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
   const dashboardDir = libPath('vite', 'dashboard');
 
   const connections = new Set<DashboardConnection>();
-  let currentReveal: DashboardOptions = options;
-  let pendingAnnotate = false;
-  const waitingSockets = new Set<net.Socket>();
+  const hasConnection = new ManualPromise<void>();
+  const pendingAnnotations = new Set<ManualPromise<AnnotationResult | undefined>>();
 
   const submitAnnotation = (base64Png: string, annotations: AnnotationData[]) => {
-    if (waitingSockets.size === 0)
-      return;
-    const payload = JSON.stringify({ png: base64Png, annotations });
-    for (const socket of waitingSockets) {
-      socket.write(payload);
-      socket.end();
-    }
-    waitingSockets.clear();
+    const result: AnnotationResult = { png: base64Png, annotations };
+    for (const p of pendingAnnotations)
+      p.resolve(result);
+    pendingAnnotations.clear();
   };
 
   httpServer.createWebSocket(() => {
-    let connection: DashboardConnection;
-    // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(() => connections.delete(connection), () => {
-      if (currentReveal.sessionName)
-        connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
-      if (pendingAnnotate) {
-        pendingAnnotate = false;
-        connection.emitAnnotate();
-      }
+    const connection = new DashboardConnection(() => connections.delete(connection), () => {
+      hasConnection.resolve();
     }, submitAnnotation);
     connections.add(connection);
     return connection;
@@ -89,42 +79,41 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
     attachDashboardStaticServer(httpServer, dashboardDir);
   await httpServer.start({ port: options.port, host: options.host });
 
-  const reveal = (next: DashboardOptions) => {
-    currentReveal = next;
+  const reveal = async (next: DashboardOptions): Promise<void> => {
     if (!next.sessionName)
       return;
-    for (const connection of connections)
-      connection.revealSession(next.sessionName, next.workspaceDir);
+    await hasConnection;
+    await Promise.all([...connections].map(c => c.revealSession(next.sessionName, next.workspaceDir)));
   };
 
-  const triggerAnnotate = () => {
-    if (connections.size === 0) {
-      pendingAnnotate = true;
-      return;
-    }
-    for (const connection of connections)
-      connection.emitAnnotate();
-  };
-
-  const notifyAnnotateEnded = () => {
-    pendingAnnotate = false;
-    for (const connection of connections)
-      connection.emitCancelAnnotate();
-  };
-
-  const registerAnnotateWaiter = (socket: net.Socket) => {
-    waitingSockets.add(socket);
-    const cleanup = () => {
-      if (!waitingSockets.delete(socket))
+  const triggerAnnotate = async (signal: AbortSignal): Promise<AnnotationResult | undefined> => {
+    const pending = new ManualPromise<AnnotationResult | undefined>();
+    pendingAnnotations.add(pending);
+    const onAbort = () => {
+      if (!pendingAnnotations.delete(pending))
         return;
-      if (waitingSockets.size === 0)
-        notifyAnnotateEnded();
+      if (pendingAnnotations.size === 0) {
+        for (const c of connections)
+          c.emitCancelAnnotate();
+      }
+      pending.resolve(undefined);
     };
-    socket.on('close', cleanup);
-    socket.on('error', cleanup);
+    signal.addEventListener('abort', onAbort);
+    try {
+      await hasConnection;
+      for (const c of connections)
+        c.emitAnnotate();
+      return await pending;
+    } finally {
+      signal.removeEventListener('abort', onAbort);
+    }
   };
 
-  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter };
+  // Seed the initial reveal so the first connection lands on the requested
+  // session as soon as the dashboard opens.
+  void reveal(options).catch(() => {});
+
+  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
@@ -339,18 +328,30 @@ export async function openDashboardApp() {
         socket.end();
         return;
       }
-      void statePromise.then(({ page, server: dashboard }) => {
-        if (parsed.annotate) {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          dashboard.triggerAnnotate();
-          dashboard.registerAnnotateWaiter(socket);
-        } else if (parsed.kill) {
-          socket.end();
-          gracefullyProcessExitDoNotHang(0);
-        } else {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
+      void statePromise.then(async ({ page, server: dashboard }) => {
+        try {
+          if (parsed.annotate) {
+            page?.bringToFront().catch(() => {});
+            await dashboard.reveal(parsed);
+            const ac = new AbortController();
+            socket.once('close', () => ac.abort());
+            const result = await dashboard.triggerAnnotate(ac.signal);
+            if (result)
+              socket.write(JSON.stringify(result));
+          } else if (parsed.kill) {
+            gracefullyProcessExitDoNotHang(0);
+          } else {
+            page?.bringToFront().catch(() => {});
+            dashboard.reveal(parsed).catch(() => {});
+          }
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e);
+          try {
+            socket.write(JSON.stringify({ error: message }));
+          } catch {
+            // socket may already be gone; fall through to finally.
+          }
+        } finally {
           socket.end();
         }
       });
@@ -406,7 +407,14 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   const text = Buffer.concat(chunks).toString();
   if (!text)
     return;
-  const { png, annotations } = JSON.parse(text) as { png: string; annotations: AnnotationData[] };
+  const parsed = JSON.parse(text) as { error: string } | { png: string; annotations: AnnotationData[] };
+  if ('error' in parsed) {
+    // eslint-disable-next-line no-console
+    console.error(`Dashboard error: ${parsed.error}`);
+    gracefullyProcessExitDoNotHang(1);
+    return;
+  }
+  const { png, annotations } = parsed;
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const filePath = await saveOutputFile(`annotations-${timestamp}.png`, Buffer.from(png, 'base64'));
   for (const a of annotations) {
