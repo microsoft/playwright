@@ -16,6 +16,7 @@
 
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { expect, playwrightTest } from '../config/browserTest';
+import { ensureSomeFrames } from '../config/utils';
 import type { Browser, BrowserContext, BrowserServer, ConnectOptions, Page } from 'playwright-core';
 
 type ExtraFixtures = {
@@ -379,6 +380,30 @@ test('should avoid side effects upon disconnect', async ({ twoPages, server }) =
 
   expect(error.message).toContain(kTargetClosedErrorMessage);
   expect(counter).toBe(savedCounter);
+});
+
+test('screencast should deliver cached last frame to a new client', async ({ twoPages, server, trace, video }) => {
+  test.skip(trace === 'on', 'trace=on has screencast active on the page already');
+  test.skip(video === 'on', 'video=on has screencast active on the page already');
+
+  const { pageA, pageB } = twoPages;
+  await pageA.goto(server.EMPTY_PAGE);
+  await pageA.evaluate(() => document.body.style.backgroundColor = 'red');
+
+  const framesA: Buffer[] = [];
+  await pageA.screencast.start({ onFrame: ({ data }) => framesA.push(data), size: { width: 320, height: 240 } });
+  await ensureSomeFrames(pageA);
+  expect(framesA.length).toBeGreaterThan(0);
+  const lastFrameA = framesA[framesA.length - 1];
+
+  const framesB: Buffer[] = [];
+  await pageB.screencast.start({ onFrame: ({ data }) => framesB.push(data) });
+  // Second client should receive the cached last frame without waiting for a browser repaint.
+  await expect.poll(() => framesB.length, { timeout: 5000 }).toBeGreaterThan(0);
+  expect(framesB[0].equals(lastFrameA)).toBe(true);
+
+  await pageA.screencast.stop();
+  await pageB.screencast.stop();
 });
 
 test('should stop tracing upon disconnect', async ({ twoPages, trace }) => {

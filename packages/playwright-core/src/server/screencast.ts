@@ -42,6 +42,7 @@ export class Screencast implements InstrumentationListener {
   private _clients = new Set<ScreencastClient>();
   private _actions: ActionOptions | undefined;
   private _size: types.Size | undefined;
+  private _lastFrame: types.ScreencastFrame | undefined;
 
   constructor(page: Page) {
     this.page = page;
@@ -73,9 +74,20 @@ export class Screencast implements InstrumentationListener {
   }
 
   addClient(client: ScreencastClient): { size: types.Size } {
+    const isFirst = this._clients.size === 0;
     this._clients.add(client);
-    if (this._clients.size === 1)
+    if (isFirst) {
       this._startScreencast(client.size, client.quality);
+    } else if (this._lastFrame) {
+      // Deliver the cached last frame to the new client so it does not have
+      // to wait for the next browser repaint. setTimeout(0) ensures the caller
+      // of addClient() finishes before the frame is dispatched.
+      const frame = this._lastFrame;
+      setTimeout(() => {
+        if (this._clients.has(client))
+          void client.onFrame(frame);
+      }, 0);
+    }
     return { size: this._size! };
   }
 
@@ -112,10 +124,12 @@ export class Screencast implements InstrumentationListener {
   }
 
   private _stopScreencast() {
+    this._lastFrame = undefined;
     this.page.delegate.stopScreencast();
   }
 
   onScreencastFrame(frame: types.ScreencastFrame, ack?: () => void) {
+    this._lastFrame = frame;
     const asyncResults: Promise<void>[] = [];
     for (const client of this._clients) {
       const result = client.onFrame(frame);
