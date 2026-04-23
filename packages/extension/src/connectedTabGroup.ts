@@ -38,35 +38,42 @@ export async function cleanupStalePlaywrightGroups(): Promise<void> {
   }
 }
 
-// The Playwright tab group for an active RelayConnection: `_connectedTabIds`
-// is the source of truth for which tabs the client drives, and `_reconcile`
-// pushes that set into Chrome's tab group model.
+// The Playwright tab group for an active RelayConnection. The Chrome tab group
+// is the single source of truth for which tabs the client targets:
+//  - User drags a tab in/out → `_onTabGroupChanged` attaches/detaches.
+//  - Relay attaches on its own (initial tab, popup, Target.createTarget) →
+//    `_onTabAttached` pulls the new tab into the group, whose onUpdated event
+//    flows back through `_onTabGroupChanged` for consistency.
+// `_groupTabIds` caches group membership from Chrome events so hot-path checks
+// in `_onTabUpdated` stay synchronous.
 export class ConnectedTabGroup {
   private _connection: RelayConnection;
-  private _connectedTabIds: Set<number> = new Set();
   private _groupId: number | null = null;
-  // Serializes _reconcile calls to prevent concurrent group operations.
-  private _reconcileQueue: Promise<void> = Promise.resolve();
-  // True while _reconcile is actively mutating the group. onTabUpdated events
-  // fired during this window reflect our own changes, not user drags, so we
-  // skip handling them to avoid fighting the reconciler.
-  private _reconciling = false;
+  private _groupTabIds: Set<number> = new Set();
+  // Subset of `_groupTabIds` the debugger is actually attached to; drives the
+  // badge. A chrome:// tab can sit in the group without being attached.
+  private _attachedTabIds: Set<number> = new Set();
   private _onTabUpdatedListener: (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => void;
+  private _onTabRemovedListener: (tabId: number) => void;
 
   onclose?: () => void;
 
   constructor(connection: RelayConnection, selectedTabId: number) {
     this._connection = connection;
+    // Resolves the pending extension.selectTab command from cdpRelay; the relay
+    // will attach the selected tab and _onTabAttached pulls it into the group.
     this._connection.setSelectedTab(selectedTabId);
     this._connection.onclose = () => this._onConnectionClose();
     this._connection.ontabattached = (tabId: number) => this._onTabAttached(tabId);
     this._connection.ontabdetached = (tabId: number) => this._onTabDetached(tabId);
     this._onTabUpdatedListener = this._onTabUpdated.bind(this);
+    this._onTabRemovedListener = this._onTabRemoved.bind(this);
     chrome.tabs.onUpdated.addListener(this._onTabUpdatedListener);
+    chrome.tabs.onRemoved.addListener(this._onTabRemovedListener);
   }
 
   connectedTabIds(): number[] {
-    return [...this._connectedTabIds];
+    return [...this._groupTabIds];
   }
 
   close(reason: string): void {
@@ -74,47 +81,69 @@ export class ConnectedTabGroup {
   }
 
   private _onTabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): void {
-    // Chrome resets per-tab badge state on navigation, so re-apply it.
-    if (this._connectedTabIds.has(tabId))
-      void this._updateBadge(tabId, CONNECTED_BADGE);
     if (changeInfo.groupId !== undefined)
       this._onTabGroupChanged(tabId, changeInfo.groupId, tab.url);
+    if (changeInfo.url === undefined)
+      return;
+    // Chrome resets per-tab badge state on navigation, so re-apply it.
+    if (this._attachedTabIds.has(tabId))
+      void this._updateBadge(tabId, CONNECTED_BADGE);
+    else if (this._groupTabIds.has(tabId) && !isNonDebuggableUrl(changeInfo.url))
+      void this._connection.attachTab(tabId);
   }
 
-  // Translates a user drag in/out of the Playwright group into attach/detach
-  // on the relay.
+  // Single entry point for group membership changes, whether the user dragged
+  // or we grouped the tab ourselves. Attaches on entry (if debuggable) and
+  // detaches on exit; a chrome:// tab stays in the group until it navigates
+  // (handled in _onTabUpdated).
   private _onTabGroupChanged(tabId: number, newGroupId: number, url: string | undefined): void {
-    if (this._reconciling)
-      return;
     const inOurGroup = this._groupId !== null && newGroupId === this._groupId;
-    const connected = this._connectedTabIds.has(tabId);
-    if (inOurGroup === connected)
+    const wasInGroup = this._groupTabIds.has(tabId);
+    if (inOurGroup === wasInGroup)
       return;
-    if (inOurGroup && !isNonDebuggableUrl(url))
-      void this._connection.attachTab(tabId);
-    else if (!inOurGroup)
-      void this._connection.detachTab(tabId);
-    void this._reconcile();
+    if (inOurGroup) {
+      this._groupTabIds.add(tabId);
+      if (!isNonDebuggableUrl(url))
+        void this._connection.attachTab(tabId);
+    } else {
+      this._groupTabIds.delete(tabId);
+      if (this._attachedTabIds.has(tabId))
+        void this._connection.detachTab(tabId);
+    }
+  }
+
+  private _onTabRemoved(tabId: number): void {
+    this._groupTabIds.delete(tabId);
+    this._attachedTabIds.delete(tabId);
   }
 
   private _onTabAttached(tabId: number): void {
-    this._connectedTabIds.add(tabId);
+    this._attachedTabIds.add(tabId);
     void this._updateBadge(tabId, CONNECTED_BADGE);
-    void this._reconcile();
+    void this._addTabToGroup(tabId);
   }
 
+  // The debugger detached (drag-out, tab close, or external action). Clear the
+  // badge but leave the tab in the group — the user's intent is still there,
+  // and a subsequent navigation will re-attach via _onTabUpdated.
   private _onTabDetached(tabId: number): void {
-    this._connectedTabIds.delete(tabId);
+    this._attachedTabIds.delete(tabId);
     void this._updateBadge(tabId, { text: '' });
-    void this._reconcile();
   }
 
   private _onConnectionClose(): void {
     chrome.tabs.onUpdated.removeListener(this._onTabUpdatedListener);
-    const allTabIds = [...this._connectedTabIds];
-    this._connectedTabIds.clear();
-    allTabIds.forEach(id => void this._updateBadge(id, { text: '' }));
-    void this._reconcile();
+    chrome.tabs.onRemoved.removeListener(this._onTabRemovedListener);
+    const attachedIds = [...this._attachedTabIds];
+    const groupTabs = [...this._groupTabIds];
+    this._attachedTabIds.clear();
+    this._groupTabIds.clear();
+    attachedIds.forEach(id => void this._updateBadge(id, { text: '' }));
+    if (groupTabs.length) {
+      this._retryOnDrag(() => chrome.tabs.ungroup(groupTabs)).catch(error => {
+        debugLog('Error ungrouping tabs on close:', error);
+      });
+    }
     this.onclose?.();
   }
 
@@ -130,78 +159,45 @@ export class ConnectedTabGroup {
     }
   }
 
-  // Brings Chrome's Playwright group in line with _connectedTabIds. Serialized
-  // via _reconcileQueue and retries on drag errors until the state matches.
-  private _reconcile(): Promise<void> {
-    const result = this._reconcileQueue.then(() => this._reconcileImpl());
-    this._reconcileQueue = result.catch(() => {});
-    return result;
+  // Moves an already-attached tab into our Chrome tab group, creating it on
+  // first use. `_groupTabIds` is updated after the await so an onUpdated event
+  // that arrives concurrently (`_groupId` still null, wasInGroup still false)
+  // becomes a harmless no-op rather than taking the drag-out branch.
+  private async _addTabToGroup(tabId: number): Promise<void> {
+    if (this._groupTabIds.has(tabId))
+      return;
+    try {
+      await this._retryOnDrag(async () => {
+        if (this._groupId === null) {
+          this._groupId = await chrome.tabs.group({ tabIds: [tabId] });
+          await chrome.tabGroups.update(this._groupId, { color: PLAYWRIGHT_GROUP_COLOR, title: PLAYWRIGHT_GROUP_TITLE });
+        } else {
+          await chrome.tabs.group({ groupId: this._groupId, tabIds: [tabId] });
+        }
+      });
+      this._groupTabIds.add(tabId);
+    } catch (error: any) {
+      debugLog('Error adding tab to group:', error);
+    }
   }
 
-  private async _reconcileImpl(): Promise<void> {
-    const delays = [0, 100, 200];
-    let attempt = 0;
-    while (true) {
-      const delay = delays[attempt] ?? 400;
+  // Chrome throws "user may be dragging a tab" while a drag is in progress.
+  // Retry with backoff until it clears (or we give up).
+  private async _retryOnDrag(fn: () => Promise<void>): Promise<void> {
+    const delays = [0, 100, 200, 400, 800];
+    let lastError: unknown;
+    for (const delay of delays) {
       if (delay)
         await new Promise(resolve => setTimeout(resolve, delay));
       try {
-        if (await this._reconcileOnce())
-          return;
-      } catch (error: any) {
-        debugLog('Error reconciling group:', error);
+        await fn();
         return;
-      }
-      attempt++;
-    }
-  }
-
-  private async _reconcileOnce(): Promise<boolean> {
-    const desired = new Set(this._connectedTabIds);
-
-    let actual = new Set<number>();
-    if (this._groupId !== null) {
-      try {
-        // tabGroups.get throws if Chrome dissolved the group (e.g. all tabs
-        // removed); run in parallel with the membership query.
-        const [, tabs] = await Promise.all([
-          chrome.tabGroups.get(this._groupId),
-          chrome.tabs.query({ groupId: this._groupId }),
-        ]);
-        actual = new Set(tabs.map(t => t.id).filter((id): id is number => id !== undefined));
-      } catch {
-        this._groupId = null;
+      } catch (error: any) {
+        if (!error?.message?.includes('user may be dragging a tab'))
+          throw error;
+        lastError = error;
       }
     }
-
-    const toUngroup = [...actual].filter(id => !desired.has(id));
-    const toAdd = [...desired].filter(id => !actual.has(id));
-    if (!toUngroup.length && !toAdd.length)
-      return true;
-
-    this._reconciling = true;
-    try {
-      if (toUngroup.length)
-        await chrome.tabs.ungroup(toUngroup);
-      if (toAdd.length) {
-        if (this._groupId === null) {
-          this._groupId = await chrome.tabs.group({ tabIds: toAdd });
-          await chrome.tabGroups.update(this._groupId, { color: PLAYWRIGHT_GROUP_COLOR, title: PLAYWRIGHT_GROUP_TITLE });
-        } else {
-          await chrome.tabs.group({ groupId: this._groupId, tabIds: toAdd });
-        }
-      }
-      return true;
-    } catch (e: any) {
-      if (this._isDragError(e))
-        return false;
-      throw e;
-    } finally {
-      this._reconciling = false;
-    }
-  }
-
-  private _isDragError(e: any): boolean {
-    return e?.message?.includes('user may be dragging a tab');
+    throw lastError;
   }
 }
