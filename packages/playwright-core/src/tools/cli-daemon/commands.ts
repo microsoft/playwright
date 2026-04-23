@@ -259,6 +259,33 @@ const drag = declareCommand({
   toolParams: ({ startTarget, endTarget }) => ({ startTarget, endTarget }),
 });
 
+const drop = declareCommand({
+  name: 'drop',
+  description: 'Drop files or data onto an element',
+  category: 'core',
+  args: z.object({
+    target: z.string().describe(elementTargetDescription),
+  }),
+  options: z.object({
+    path: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Absolute path to a file to drop onto the element (repeatable)'),
+    data: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Data to drop in "mime/type=value" format, e.g. --data "text/plain=hello" (repeatable)'),
+  }),
+  toolName: 'browser_drop',
+  toolParams: ({ target, path, data }) => {
+    let dataMap: Record<string, string> | undefined;
+    if (data) {
+      dataMap = {};
+      for (const entry of data) {
+        const idx = entry.indexOf('=');
+        if (idx === -1)
+          throw new Error(`--data must be in "mime/type=value" format, got: ${entry}`);
+        dataMap[entry.slice(0, idx)] = entry.slice(idx + 1);
+      }
+    }
+    return { target, paths: path, data: dataMap };
+  },
+});
+
 const fill = declareCommand({
   name: 'fill',
   description: 'Fill text into editable element',
@@ -993,6 +1020,7 @@ const commandsArray: AnyCommandSchema[] = [
   doubleClick,
   fill,
   drag,
+  drop,
   hover,
   select,
   fileUpload,
