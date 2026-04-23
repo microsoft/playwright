@@ -91,6 +91,42 @@ test('should have correct tags', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should deduplicate tags that appear in both describe title and test title', async ({ runInlineTest }) => {
+  // Regression test for https://github.com/microsoft/playwright/issues/40368
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+        onError(error) {
+          console.log(error);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'dedup.spec.js': `
+      import { test } from '@playwright/test';
+      test.describe('@saas tests', () => {
+        test('@saas create workflow', () => {});
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  // @saas appears in both the describe title and test title — should only appear once.
+  expect(result.outputLines).toEqual([
+    'title=@saas create workflow, tags=@saas',
+  ]);
+});
+
 test('config.grep should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
