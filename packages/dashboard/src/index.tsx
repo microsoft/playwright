@@ -22,24 +22,22 @@ import './common.css';
 import { applyTheme } from '@web/theme';
 import { Dashboard } from './dashboard';
 import { DashboardClientContext } from './dashboardContext';
-import { SessionModel } from './sessionModel';
 import { DashboardClient } from './dashboardClient';
 import { SessionSidebar } from './sessionSidebar';
 import { SplitView } from '@web/components/splitView';
 
 applyTheme();
 
-const client = DashboardClient.create('/ws');
-const model = new SessionModel(client);
-
-const pushVisibility = () => client.setVisible({ visible: !document.hidden }).catch(() => {});
-document.addEventListener('visibilitychange', pushVisibility);
-if (document.hidden)
-  pushVisibility();
-
 const App: React.FC = () => {
-  const [, setRevision] = React.useState(0);
-  React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), []);
+  const client = React.useMemo(() => DashboardClient.create('/ws'), []);
+
+  React.useEffect(() => {
+    const pushVisibility = () => client.setVisible({ visible: !document.hidden }).catch(() => {});
+    document.addEventListener('visibilitychange', pushVisibility);
+    if (document.hidden)
+      pushVisibility();
+    return () => document.removeEventListener('visibilitychange', pushVisibility);
+  }, [client]);
 
   return <DashboardClientContext.Provider value={client}>
     <SplitView
@@ -49,7 +47,6 @@ const App: React.FC = () => {
       minSidebarSize={220}
       settingName='dashboardSessionSidebar'
       sidebar={<SessionSidebar
-        model={model}
         onSelectTab={tab => { void client.selectTab({ browser: tab.browser, context: tab.context, page: tab.page }); }}
         onCloseTab={tab => { void client.closeTab({ browser: tab.browser, context: tab.context, page: tab.page }); }}
         onNewTab={(browser, context) => { void client.newTab({ browser, context }); }}

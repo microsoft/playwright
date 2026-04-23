@@ -15,7 +15,7 @@
  */
 
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
-import type { SessionStatus } from './sessionModel';
+import type { BrowserStatus } from '../../playwright-core/src/serverRegistry';
 
 export type Tab = {
   browser: string;
@@ -31,7 +31,7 @@ export type Tab = {
 export type AnnotationData = { x: number; y: number; width: number; height: number; text: string };
 
 export type DashboardChannelEvents = {
-  sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
+  sessions: { sessions: BrowserStatus[]; clientInfo: ClientInfo };
   tabs: { tabs: Tab[] };
   frame: { data: string; viewportWidth: number; viewportHeight: number };
   annotate: {};

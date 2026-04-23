@@ -22,10 +22,10 @@ import { BrowserIcon } from './icons';
 import { ToolbarButton } from '@web/components/toolbarButton';
 
 import type { Tab, DashboardChannelEvents } from './dashboardChannel';
-import type { SessionModel, SessionStatus } from './sessionModel';
+import type { BrowserStatus } from '../../playwright-core/src/serverRegistry';
+import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
 
 type SessionSidebarProps = {
-  model: SessionModel;
   onSelectTab: (tab: Tab) => void;
   onCloseTab: (tab: Tab) => void;
   onNewTab: (browser: string, context: string) => void;
@@ -56,18 +56,29 @@ function normalizeWorkspacePath(workspace: string, homeDir: string | undefined):
   return normalized;
 }
 
-export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectTab, onCloseTab, onNewTab }) => {
+export const SessionSidebar: React.FC<SessionSidebarProps> = ({ onSelectTab, onCloseTab, onNewTab }) => {
   const client = React.useContext(DashboardClientContext);
-  const openSessions = React.useMemo(() => model.sessions.filter(session => session.canConnect), [model.sessions]);
-  const clientInfo = model.clientInfo;
+  const [sessions, setSessions] = React.useState<BrowserStatus[]>([]);
+  const [clientInfo, setClientInfo] = React.useState<ClientInfo | undefined>(undefined);
+  const [loading, setLoading] = React.useState(true);
   const [allTabs, setAllTabs] = React.useState<Tab[] | null>(null);
+  const openSessions = React.useMemo(() => sessions.filter(session => session.canConnect), [sessions]);
 
   React.useEffect(() => {
     if (!client)
       return;
     const onTabs = (params: DashboardChannelEvents['tabs']) => setAllTabs(params.tabs);
+    const onSessions = (params: DashboardChannelEvents['sessions']) => {
+      setSessions(params.sessions);
+      setClientInfo(params.clientInfo);
+      setLoading(false);
+    };
     client.on('tabs', onTabs);
-    return () => client.off('tabs', onTabs);
+    client.on('sessions', onSessions);
+    return () => {
+      client.off('tabs', onTabs);
+      client.off('sessions', onSessions);
+    };
   }, [client]);
 
   const tabsByBrowserAndContext = React.useMemo(() => {
@@ -91,7 +102,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
   const activeContext = React.useMemo(() => allTabs?.find(t => t.selected)?.context, [allTabs]);
 
   const workspaceGroups = React.useMemo(() => {
-    const groups = new Map<string, SessionStatus[]>();
+    const groups = new Map<string, BrowserStatus[]>();
     for (const session of openSessions) {
       const key = session.workspaceDir || 'Global';
       let list = groups.get(key);
@@ -117,8 +128,8 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
       <SettingsButton />
     </div>
     <div className='dashboard-shell-sidebar-content'>
-      {model.loading && <div className='sidebar-empty' role='status' aria-live='polite'>Loading sessions...</div>}
-      {!model.loading && openSessions.length === 0 && <div className='sidebar-empty' role='status' aria-live='polite'>No open sessions.</div>}
+      {loading && <div className='sidebar-empty' role='status' aria-live='polite'>Loading sessions...</div>}
+      {!loading && openSessions.length === 0 && <div className='sidebar-empty' role='status' aria-live='polite'>No open sessions.</div>}
       {workspaceGroups.map(([workspace, entries]) => {
         const workspacePath = normalizeWorkspacePath(workspace, clientInfo?.homeDir);
         return <section key={workspace} className='workspace-group'>
@@ -149,7 +160,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model, onSelectT
                         className='session-browser-close'
                         icon='close'
                         title='Close session'
-                        onClick={() => void model.closeSession(session)}
+                        onClick={() => void client?.closeSession({ browser: session.browser.guid })}
                       />
                     </div>
                     <span className='session-chip-name'>{session.title}</span>
