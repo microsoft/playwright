@@ -21,8 +21,7 @@ import '@web/common.css';
 import './common.css';
 import { applyTheme } from '@web/theme';
 import { Dashboard } from './dashboard';
-import { DashboardClientContext } from './dashboardContext';
-import { SessionModel } from './sessionModel';
+import { DashboardModel } from './dashboardModel';
 import { DashboardClient } from './dashboardClient';
 import { SessionSidebar } from './sessionSidebar';
 import { SplitView } from '@web/components/splitView';
@@ -30,9 +29,9 @@ import { SplitView } from '@web/components/splitView';
 applyTheme();
 
 const client = DashboardClient.create('/ws');
-const model = new SessionModel(client);
+const model = new DashboardModel(client);
 
-const pushVisibility = () => client.setVisible({ visible: !document.hidden }).catch(() => {});
+const pushVisibility = () => model.setVisible(!document.hidden);
 document.addEventListener('visibilitychange', pushVisibility);
 if (document.hidden)
   pushVisibility();
@@ -41,24 +40,17 @@ const App: React.FC = () => {
   const [, setRevision] = React.useState(0);
   React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), []);
 
-  return <DashboardClientContext.Provider value={client}>
-    <SplitView
-      orientation='horizontal'
-      sidebarIsFirst
-      sidebarSize={320}
-      minSidebarSize={220}
-      settingName='dashboardSessionSidebar'
-      sidebar={<SessionSidebar
-        model={model}
-        onSelectTab={tab => { void client.selectTab({ browser: tab.browser, context: tab.context, page: tab.page }); }}
-        onCloseTab={tab => { void client.closeTab({ browser: tab.browser, context: tab.context, page: tab.page }); }}
-        onNewTab={(browser, context) => { void client.newTab({ browser, context }); }}
-      />}
-      main={<div className='dashboard-shell-main'>
-        <Dashboard />
-      </div>}
-    />
-  </DashboardClientContext.Provider>;
+  return <SplitView
+    orientation='horizontal'
+    sidebarIsFirst
+    sidebarSize={320}
+    minSidebarSize={220}
+    settingName='dashboardSessionSidebar'
+    sidebar={<SessionSidebar model={model} />}
+    main={<div className='dashboard-shell-main'>
+      <Dashboard model={model} />
+    </div>}
+  />;
 };
 
 // HMR begin: cache the root on the DOM node so re-running this module during
