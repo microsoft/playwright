@@ -1061,7 +1061,7 @@ export class InitScript extends DisposableObject {
   }
 }
 
-export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
+export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number, boxes?: boolean } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
@@ -1085,6 +1085,7 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
         doNotRenderActive: options.doNotRenderActive,
         info: options.info,
         depth: options.depth,
+        boxes: options.boxes,
       }));
       if (snapshotOrRetry === true)
         return continuePolling;

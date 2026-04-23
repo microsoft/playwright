@@ -42,6 +42,7 @@ const snapshot = defineTabTool({
       target: z.string().optional().describe(elementTargetDescription),
       filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
       depth: z.number().optional().describe('Limit the depth of the snapshot tree'),
+      boxes: z.boolean().optional().describe('Include each element\'s bounding box as [box=x,y,width,height] in the snapshot'),
     }),
     type: 'readOnly',
   },
@@ -50,7 +51,7 @@ const snapshot = defineTabTool({
     let resolved: { locator: playwright.Locator | undefined, resolved: string } = { locator: undefined, resolved: '' };
     if (params.target)
       resolved = await tab.targetLocator({ target: params.target });
-    response.setIncludeFullSnapshot(params.filename, resolved.locator, params.depth);
+    response.setIncludeFullSnapshot(params.filename, resolved.locator, params.depth, params.boxes);
   },
 });
 
