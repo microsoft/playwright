@@ -15,6 +15,7 @@
  */
 
 import { baseTest } from '../config/baseTest';
+import { execFileSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -33,7 +34,25 @@ const { removeFolders } = utils;
 type LocalFixtures = PageTestFixtures & {
   launchElectronApp: (appFile: string, args?: string[], options?: Parameters<Electron['launch']>[0]) => Promise<ElectronApplication>;
   createUserDataDir: () => Promise<string>;
+  _electronDiag: void;
 };
+
+let diagSeq = 0;
+
+function countElectronProcesses(): number {
+  try {
+    if (process.platform === 'win32') {
+      const out = execFileSync('tasklist', ['/FI', 'IMAGENAME eq electron*', '/NH'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      return out.split('\n').filter(l => /electron/i.test(l)).length;
+    }
+    // BSD pgrep (macOS) has no -c, so use ps+grep. `|| echo 0` keeps grep's
+    // no-match exit code from tripping execFileSync.
+    const out = execFileSync('sh', ['-c', 'ps -A -o comm= | grep -ic electron || echo 0'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    return parseInt(out.trim(), 10) || 0;
+  } catch {
+    return -1;
+  }
+}
 
 export const electronTest = mergeTests(baseTest, electronBaseTest)
     .extend<TraceViewerFixtures>(traceViewerFixtures)
@@ -86,4 +105,20 @@ export const electronTest = mergeTests(baseTest, electronBaseTest)
         for (const app of apps)
           await app.close();
       },
+
+      _electronDiag: [async ({}, use, testInfo) => {
+        const seq = ++diagSeq;
+        const startedAt = Date.now();
+        const procsBefore = process.env.CI ? countElectronProcesses() : -1;
+        await use();
+        if (!process.env.CI)
+          return;
+        const durMs = Date.now() - startedAt;
+        const rssMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
+        const freeMb = Math.round(os.freemem() / 1024 / 1024);
+        const totalMb = Math.round(os.totalmem() / 1024 / 1024);
+        const procsAfter = countElectronProcesses();
+        const title = testInfo.titlePath.slice(-2).join(' > ');
+        process.stderr.write(`[ediag] seq=${seq} dur=${durMs}ms rss=${rssMb}M free=${freeMb}/${totalMb}M eproc=${procsBefore}->${procsAfter} :: ${title}\n`);
+      }, { auto: true }],
     });
