@@ -18,7 +18,9 @@ import { expect, browserTest as test } from '../config/browserTest';
 
 test.skip(({ mode }) => mode !== 'default', 'Highlight overlay uses an open shadow root only in default mode');
 
-test('highlight should accept a CSS string style', async ({ browser, server, browserName }) => {
+test('highlight should accept a CSS string style', async ({ browser, server, browserName, isFrozenWebkit }) => {
+  test.skip(isFrozenWebkit);
+
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -40,7 +42,9 @@ test('highlight should accept a CSS string style', async ({ browser, server, bro
   await context.close();
 });
 
-test('highlight should accept an object style (JS only)', async ({ browser, server, browserName }) => {
+test('highlight should accept an object style (JS only)', async ({ browser, server, browserName, isFrozenWebkit }) => {
+  test.skip(isFrozenWebkit);
+
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');

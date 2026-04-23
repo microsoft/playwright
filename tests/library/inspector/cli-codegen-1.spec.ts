@@ -1078,8 +1078,9 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
   });
 
   test('should not throw csp directive violation errors', async ({ openRecorder, server }) => {
+    server.setCSP('/empty.html', `default-src 'self'`);
     const { page } = await openRecorder();
-    await page.goto(server.PREFIX + '/csp.html');
+    await page.goto(server.EMPTY_PAGE);
     const predicate = (msg: ConsoleMessage) => msg.type() === 'error' && /Content[\- ]Security[\- ]Policy/i.test(msg.text());
     await expect(page.waitForEvent('console', { predicate, timeout: 1000 })).rejects.toThrow();
   });

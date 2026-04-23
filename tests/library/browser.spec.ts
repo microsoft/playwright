@@ -68,6 +68,7 @@ test('should fire context event on newContext', async ({ browser }) => {
   browser.on('context', ctx => events.push(ctx));
   const context = await browser.newContext();
   expect(events).toEqual([context]);
+  await context.close();
 });
 
 test('newContext should not leave a context upon failure', async ({ browser, toImpl }) => {
