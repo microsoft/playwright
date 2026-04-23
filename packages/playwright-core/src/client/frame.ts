@@ -487,15 +487,28 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return (await this._channel.title()).value;
   }
 
-  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }> {
+  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<ExpectResult> {
     const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
     params.expectedValue = serializeArgument(options.expectedValue);
-    const result = (await this._channel.expect(params));
-    if (result.received !== undefined)
-      result.received = parseResult(result.received);
+    const channelResult = await this._channel.expect(params);
+    const result: ExpectResult = {
+      matches: channelResult.matches,
+      log: channelResult.log,
+      timedOut: channelResult.timedOut,
+      errorMessage: channelResult.errorMessage,
+    };
+    if (channelResult.received !== undefined) {
+      result.received = {
+        value: channelResult.received.value !== undefined ? parseResult(channelResult.received.value) : undefined,
+        ariaSnapshot: channelResult.received.ariaSnapshot,
+      };
+    }
     return result;
   }
 }
+
+export type ExpectReceived = { value?: any, ariaSnapshot?: string };
+export type ExpectResult = { matches: boolean, received?: ExpectReceived, log?: string[], timedOut?: boolean, errorMessage?: string };
 
 export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')

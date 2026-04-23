@@ -3518,7 +3518,10 @@ export type FrameExpectOptions = {
 };
 export type FrameExpectResult = {
   matches: boolean,
-  received?: SerializedValue,
+  received?: {
+    value?: SerializedValue,
+    ariaSnapshot?: string,
+  },
   timedOut?: boolean,
   errorMessage?: string,
   log?: string[],

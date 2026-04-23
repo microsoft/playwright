@@ -103,8 +103,17 @@ function propertyToString(event: ActionTraceEvent, name: string, value: any, sdk
     return { text: '<files>', type: 'string', name };
   if (name === 'eventInit' || name === 'expectedValue' || (name === 'arg' && isEval))
     value = parseSerializedValue(value.value, new Array(10).fill({ handle: '<handle>' }));
-  if ((name === 'value' && isEval) || (name === 'received' && event.method === 'expect'))
+  if (name === 'value' && isEval)
     value = parseSerializedValue(value, new Array(10).fill({ handle: '<handle>' }));
+  if (name === 'received' && event.method === 'expect') {
+    // Older traces store received as a raw SerializedValue; newer traces wrap it
+    // as { value?: SerializedValue, ariaSnapshot?: string }. Support both.
+    const wrapped = value && typeof value === 'object' && ('value' in value || 'ariaSnapshot' in value);
+    const serialized = wrapped ? value.value : value;
+    value = serialized !== undefined
+      ? parseSerializedValue(serialized, new Array(10).fill({ handle: '<handle>' }))
+      : undefined;
+  }
   if (name === 'selector')
     return { text: asLocator(sdkLanguage || 'javascript', event.params.selector), type: 'locator', name: 'locator' };
   const type = typeof value;
