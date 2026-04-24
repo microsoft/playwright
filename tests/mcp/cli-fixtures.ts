@@ -97,15 +97,6 @@ export const test = baseTest.extend<{
         await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
         continue;
       }
-      const workspacePath = path.join(daemonDir, dir);
-      for (const entry of await fs.promises.readdir(workspacePath).catch<string[]>(() => [])) {
-        if (!entry.endsWith('.err'))
-          continue;
-        const errPath = path.join(workspacePath, entry);
-        if ((await fs.promises.stat(errPath)).size === 0)
-          continue;
-        await test.info().attach(entry, { path: errPath, contentType: 'text/plain' });
-      }
     }
   },
   boundBrowser: async ({ mcpBrowser, playwright }, use) => {
@@ -133,47 +124,44 @@ function cliEnv() {
 }
 
 async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string>, bindTitle?: string }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
-  const stepTitle = `cli ${args.join(' ')}`;
-  return await test.step(stepTitle, async () => {
-    const testInfo = test.info();
-    const cli = childProcess({
-      command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...args],
-      cwd: cliOptions.cwd ?? testInfo.outputPath(),
-      env: inheritAndCleanEnv({
-        ...cliEnv(),
-        PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
-        PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
-        PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
-        PWTEST_DASHBOARD_APP_BIND_TITLE: cliOptions.bindTitle,
-        ...cliOptions.env,
-      }),
-    });
-    await cli.exited.finally(async () => {
-      await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });
-    });
-
-    let snapshot: string | undefined;
-    let inlineSnapshot: string | undefined;
-    if (cli.stdout.includes('### Snapshot'))
-      ({ snapshot, inlineSnapshot } = await loadSnapshot(cli.stdout));
-    const attachments = loadAttachments(cli.stdout);
-
-    const browserMatches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
-    const daemonPid = browserMatches?.[2] ?? parseJsonPid(cli.stdout);
-    const dashboardMatches = cli.stdout.includes('### Dashboard') ? cli.stdout.match(/Dashboard opened with pid (\d+)\./) : undefined;
-    const dashboardPid = dashboardMatches?.[1];
-
-    return {
-      exitCode: await cli.exitCode,
-      output: cli.stdout.trim(),
-      error: cli.stderr.trim(),
-      snapshot,
-      inlineSnapshot,
-      attachments,
-      daemonPid: daemonPid ? +daemonPid : undefined,
-      dashboardPid: dashboardPid ? +dashboardPid : undefined,
-    };
+  const testInfo = test.info();
+  const cli = childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...args],
+    cwd: cliOptions.cwd ?? testInfo.outputPath(),
+    env: inheritAndCleanEnv({
+      ...cliEnv(),
+      PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
+      PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+      PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
+      PWTEST_DASHBOARD_APP_BIND_TITLE: cliOptions.bindTitle,
+      ...cliOptions.env,
+    }),
   });
+
+  // Wait for the CLI to exit so stdout is complete before we parse it.
+  const exitCode = await cli.exitCode;
+
+  let snapshot: string | undefined;
+  let inlineSnapshot: string | undefined;
+  if (cli.stdout.includes('### Snapshot'))
+    ({ snapshot, inlineSnapshot } = await loadSnapshot(cli.stdout));
+  const attachments = loadAttachments(cli.stdout);
+
+  const browserMatches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
+  const daemonPid = browserMatches?.[2] ?? parseJsonPid(cli.stdout);
+  const dashboardMatches = cli.stdout.includes('### Dashboard') ? cli.stdout.match(/Dashboard opened with pid (\d+)\./) : undefined;
+  const dashboardPid = dashboardMatches?.[1];
+
+  return {
+    exitCode,
+    output: cli.stdout.trim(),
+    error: cli.stderr.trim(),
+    snapshot,
+    inlineSnapshot,
+    attachments,
+    daemonPid: daemonPid ? +daemonPid : undefined,
+    dashboardPid: dashboardPid ? +dashboardPid : undefined,
+  };
 }
 
 function parseJsonPid(stdout: string) {
