@@ -29,12 +29,12 @@ import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { transform } from '../common';
+import { ipc, transform } from '../common';
 
 import type { RunnableDescription } from './timeoutManager';
-import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
+import type { FullProject, TestInfo, TestInfoError, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { config as commonConfig, FullConfigInternal, ipc, test as testNs } from '../common';
+import type { config as commonConfig, FullConfigInternal, test as testNs } from '../common';
 import type { StackFrame } from '@protocol/channels';
 
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
@@ -60,7 +60,7 @@ export interface TestStepInternal extends TestStepData {
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
   endWallTime?: number;
-  error?: ipc.TestInfoErrorImpl;
+  error?: TestInfoError;
   infectParentStepsWithError?: boolean;
 }
 
@@ -137,16 +137,16 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  errors: ipc.TestInfoErrorImpl[] = [];
+  errors: TestInfoError[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: ipc.WorkerInitParams;
   private _ignoreTimeoutsCounter = 0;
 
-  get error(): ipc.TestInfoErrorImpl | undefined {
+  get error(): TestInfoError | undefined {
     return this.errors[0];
   }
 
-  set error(e: ipc.TestInfoErrorImpl | undefined) {
+  set error(e: TestInfoError | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
     this.errors[0] = e;
@@ -355,7 +355,7 @@ export class TestInfoImpl implements TestInfo {
             testId: this.testId,
             stepId,
             wallTime: step.endWallTime,
-            error: step.error,
+            error: step.error ? ipc.toTestInfoErrorPayload(step.error) : undefined,
             suggestedRebaseline: result.suggestedRebaseline,
             annotations: step.info.annotations,
           };
@@ -484,7 +484,7 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       await Promise.race([
-        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [], status: this.status }),
+        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors.map(ipc.toTestInfoErrorPayload) : [], status: this.status }),
         this._interruptedPromise,
       ]);
     }
