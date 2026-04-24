@@ -21,10 +21,5 @@
     "test": "playwright test",
     "lint": "tsc --project .",
     "clean": "rm -rf dist test-results"
-  },
-  "devDependencies": {
-    "@types/chrome": "^0.0.315",
-    "minimist": "^1.2.5",
-    "vite-plugin-static-copy": "^3.1.1"
   }
 }
