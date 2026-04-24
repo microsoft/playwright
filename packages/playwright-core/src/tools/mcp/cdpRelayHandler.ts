@@ -34,6 +34,4 @@ export interface ExtensionProtocolHandler {
   handleCDPCommand(method: string, params: any, sessionId: string | undefined): Promise<{ result: any } | undefined>;
   // Forward a CDP command to the extension.
   forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any>;
-  // Reset protocol state on extension disconnect/reconnect.
-  reset(): void;
 }

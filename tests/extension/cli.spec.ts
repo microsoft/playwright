@@ -66,6 +66,8 @@ test('daemon exits when user rejects the extension connection', async ({ startAt
 
 test('daemon exits when user closes the connect tab', async ({ startAttach }) => {
   const { confirmationPage, cliPromise } = await startAttach();
+  // Wait for the page to fully load and the connection to the relay to be established before closing it.
+  await expect(confirmationPage.getByRole('button', { name: 'Reject' })).toBeVisible();
   await confirmationPage.close();
   await expectDaemonExited(cliPromise);
 });
