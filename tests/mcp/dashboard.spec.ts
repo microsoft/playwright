@@ -146,8 +146,8 @@ async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page
   await dashboard.mouse.down();
   await dashboard.mouse.move(x1, y1);
   await dashboard.mouse.up();
-  await dashboard.locator('.annotation-textarea').fill(text);
-  await dashboard.locator('.annotation-textarea').press('Enter');
+  await dashboard.locator('.annotations-textarea').fill(text);
+  await dashboard.locator('.annotations-textarea').press('Enter');
   await dashboard.getByRole('button', { name: 'Submit annotation' }).click();
 }
 
@@ -354,7 +354,7 @@ test('save recording streams WebM bytes to the chosen file', async ({ cli, serve
 
   // Enter recording mode from the normal toolbar.
   await dashboard.getByRole('button', { name: 'Record video' }).click();
-  await expect(dashboard.locator('.recording-label')).toBeVisible();
+  await expect(dashboard.locator('.mode-record-label')).toBeVisible();
 
   // Click the toggled record button again to transition to the 'stopped' phase.
   await dashboard.getByRole('button', { name: 'Stop recording' }).click();

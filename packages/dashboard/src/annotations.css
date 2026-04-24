@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-.annotation-layer {
+:root {
+  --annotations-blue: 54 116 209;
+}
+
+.annotations-layer {
   position: absolute;
   inset: 0;
   z-index: 5;
@@ -22,19 +26,14 @@
   cursor: crosshair;
 }
 
-.annotation-layer::after {
+.annotations-layer::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-:root.dark-mode .annotate-action-btn {
-  background: var(--color-neutral-muted);
-  border-color: var(--color-border-default);
-}
-
-.annotate-action-btn {
+.annotations-action-btn {
   height: 26px;
   padding: 0 12px;
   font-size: 11px;
@@ -49,78 +48,83 @@
   line-height: 1;
 }
 
-.annotate-action-btn:hover:not(:disabled) {
+:root.dark-mode .annotations-action-btn {
+  background: var(--color-neutral-muted);
+  border-color: var(--color-border-default);
+}
+
+.annotations-action-btn:hover:not(:disabled) {
   background: var(--color-neutral-muted);
 }
 
-.annotate-action-btn:disabled {
+.annotations-action-btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-.annotate-action-btn.danger {
+.annotations-action-btn.danger {
   background: transparent;
   color: var(--color-danger-fg);
   border-color: var(--color-border-muted);
 }
 
-.annotate-action-btn.danger:hover:not(:disabled) {
+.annotations-action-btn.danger:hover:not(:disabled) {
   background: var(--color-danger-subtle);
 }
 
-.annotation-rect {
+.annotations-rect {
   position: absolute;
   box-sizing: border-box;
-  border: 2px solid rgb(var(--annotate-blue));
-  background: rgb(var(--annotate-blue) / 0.12);
+  border: 2px solid rgb(var(--annotations-blue));
+  background: rgb(var(--annotations-blue) / 0.12);
   cursor: pointer;
   transition: box-shadow 120ms ease;
 }
 
-.annotation-rect:hover {
-  box-shadow: 0 0 0 3px rgb(var(--annotate-blue) / 0.25);
+.annotations-rect:hover {
+  box-shadow: 0 0 0 3px rgb(var(--annotations-blue) / 0.25);
 }
 
-.annotation-rect.selected {
-  box-shadow: 0 0 0 3px rgb(var(--annotate-blue) / 0.4);
+.annotations-rect.selected {
+  box-shadow: 0 0 0 3px rgb(var(--annotations-blue) / 0.4);
   border-style: solid;
-  border-color: rgb(var(--annotate-blue));
+  border-color: rgb(var(--annotations-blue));
   cursor: move;
 }
 
-.annotation-rect.draft {
+.annotations-rect.draft {
   border-style: dashed;
-  background: rgb(var(--annotate-blue) / 0.18);
+  background: rgb(var(--annotations-blue) / 0.18);
   pointer-events: none;
 }
 
-.annotation-handle {
+.annotations-handle {
   position: absolute;
   width: 10px;
   height: 10px;
   background: #fff;
-  border: 1.5px solid rgb(var(--annotate-blue));
+  border: 1.5px solid rgb(var(--annotations-blue));
   border-radius: 2px;
   box-sizing: border-box;
   z-index: 1;
 }
 
-.annotation-handle-nw { left: -6px; top: -6px; cursor: nwse-resize; }
-.annotation-handle-n  { left: 50%; top: -6px; margin-left: -5px; cursor: ns-resize; }
-.annotation-handle-ne { right: -6px; top: -6px; cursor: nesw-resize; }
-.annotation-handle-e  { right: -6px; top: 50%; margin-top: -5px; cursor: ew-resize; }
-.annotation-handle-se { right: -6px; bottom: -6px; cursor: nwse-resize; }
-.annotation-handle-s  { left: 50%; bottom: -6px; margin-left: -5px; cursor: ns-resize; }
-.annotation-handle-sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
-.annotation-handle-w  { left: -6px; top: 50%; margin-top: -5px; cursor: ew-resize; }
+.annotations-handle-nw { left: -6px; top: -6px; cursor: nwse-resize; }
+.annotations-handle-n  { left: 50%; top: -6px; margin-left: -5px; cursor: ns-resize; }
+.annotations-handle-ne { right: -6px; top: -6px; cursor: nesw-resize; }
+.annotations-handle-e  { right: -6px; top: 50%; margin-top: -5px; cursor: ew-resize; }
+.annotations-handle-se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.annotations-handle-s  { left: 50%; bottom: -6px; margin-left: -5px; cursor: ns-resize; }
+.annotations-handle-sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.annotations-handle-w  { left: -6px; top: 50%; margin-top: -5px; cursor: ew-resize; }
 
-.annotation-label {
+.annotations-label {
   position: absolute;
   top: -2px;
   left: -2px;
   max-width: calc(100% + 4px);
   padding: 2px 6px;
-  background: rgb(var(--annotate-blue));
+  background: rgb(var(--annotations-blue));
   color: #fff;
   font-size: 11px;
   font-weight: 500;
@@ -132,11 +136,11 @@
   cursor: text;
 }
 
-.annotation-label:hover {
-  background: rgb(var(--annotate-blue) / 0.85);
+.annotations-label:hover {
+  background: rgb(var(--annotations-blue) / 0.85);
 }
 
-.annotation-popover {
+.annotations-popover {
   position: absolute;
   min-width: 220px;
   max-width: 320px;
@@ -152,7 +156,7 @@
   cursor: default;
 }
 
-.annotation-textarea {
+.annotations-textarea {
   width: 100%;
   min-height: 64px;
   resize: vertical;
@@ -167,68 +171,22 @@
   box-sizing: border-box;
 }
 
-.annotation-textarea:focus {
-  border-color: rgb(var(--annotate-blue));
+.annotations-textarea:focus {
+  border-color: rgb(var(--annotations-blue));
 }
 
-.annotation-popover-actions {
+.annotations-popover-actions {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
 }
 
-.annotation-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  cursor: default;
-}
-
-.annotation-modal {
-  width: min(520px, 92%);
-  max-height: 80%;
-  background: var(--color-canvas-default);
-  border: 1px solid var(--color-border-default);
-  border-radius: 10px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.annotation-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-border-muted);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-fg-default);
-}
-
-.annotation-modal-text {
-  flex: 1;
-  min-height: 200px;
-  padding: 12px 16px;
-  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  font-size: 12px;
-  color: var(--color-fg-default);
-  background: var(--color-canvas-subtle);
-  border: none;
-  outline: none;
-  resize: none;
-  white-space: pre;
-}
-
-.annotation-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 10px 16px;
-  border-top: 1px solid var(--color-border-muted);
+.annotate-modal-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  box-shadow: 0 0 0 1px var(--color-border-muted), 0 0 8px var(--color-border-muted);
 }
