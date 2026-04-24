@@ -19,15 +19,16 @@ import { PendingConnections } from './pendingConnection';
 import { ConnectedTabGroup, cleanupStalePlaywrightGroups, isNonDebuggableUrl } from './connectedTabGroup';
 
 type PageMessage = {
-  type: 'connectToMCPRelay';
+  type: 'connectionRequested';
   mcpRelayUrl: string;
   protocolVersion: number;
 } | {
   type: 'getTabs';
 } | {
   type: 'connectToTab';
-  tabId?: number;
-  windowId?: number;
+  // Picked in the connect page; absent when the user clicked plain "Allow"
+  // without selecting a tab.
+  tab?: chrome.tabs.Tab;
   clientName?: string;
 } | {
   type: 'getConnectionStatus';
@@ -54,7 +55,7 @@ class PlaywrightExtension {
   // Promise-based message handling is not supported in Chrome: https://issues.chromium.org/issues/40753031
   private _onMessage(message: PageMessage, sender: chrome.runtime.MessageSender, sendResponse: (response: any) => void) {
     switch (message.type) {
-      case 'connectToMCPRelay':
+      case 'connectionRequested':
         this._pendingConnections.create(sender.tab!.id!, message.mcpRelayUrl, message.protocolVersion).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
@@ -64,13 +65,17 @@ class PlaywrightExtension {
             tabs => sendResponse({ success: true, tabs, currentTabId: sender.tab?.id }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true;
-      case 'connectToTab':
-        const tabId = message.tabId || sender.tab?.id!;
-        const windowId = message.windowId || sender.tab?.windowId!;
-        this._connectTab(sender.tab!.id!, tabId, windowId, message.clientName).then(
+      case 'connectToTab': {
+        // Plain "Allow" (no specific pick) falls back to the connect page itself
+        // so `ConnectedTabGroup` always has a concrete tab to start from. Both
+        // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
+        // message sender, where `id` is always defined.
+        const selectedTab = (message.tab ?? sender.tab!) as chrome.tabs.Tab & { id: number };
+        this._connectTab(sender.tab!.id!, selectedTab, message.clientName).then(
             () => sendResponse({ success: true }),
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true; // Return true to indicate that the response will be sent asynchronously
+      }
       case 'getConnectionStatus':
         sendResponse({
           connectedTabIds: this._activeGroup?.connectedTabIds() ?? [],
@@ -93,16 +98,16 @@ class PlaywrightExtension {
     }
   }
 
-  private async _connectTab(selectorTabId: number, tabId: number, windowId: number, clientName: string | undefined): Promise<void> {
+  private async _connectTab(selectorTabId: number, tab: chrome.tabs.Tab & { id: number }, clientName: string | undefined): Promise<void> {
     try {
       await this._cleanupPromise;
       this._disconnect('Another connection is requested');
 
-      const pending = this._pendingConnections.take(selectorTabId);
-      if (!pending)
+      const connection = await this._pendingConnections.take(selectorTabId);
+      if (!connection)
         throw new Error('Pending client connection closed');
 
-      const group = new ConnectedTabGroup(pending.connection, tabId);
+      const group = new ConnectedTabGroup(connection, tab);
       group.onclose = () => {
         if (this._activeGroup === group) {
           this._activeGroup = undefined;
@@ -113,14 +118,14 @@ class PlaywrightExtension {
       this._activeClientName = clientName;
 
       await Promise.all([
-        chrome.tabs.update(tabId, { active: true }),
-        chrome.windows.update(windowId, { focused: true }),
-      ]);
+        chrome.tabs.update(tab.id, { active: true }),
+        chrome.windows.update(tab.windowId, { focused: true }),
+      ]).catch(() => {});
 
-      if (tabId !== selectorTabId)
+      if (tab.id !== selectorTabId)
         await chrome.tabs.remove(selectorTabId).catch(() => {});
     } catch (error: any) {
-      debugLog(`Failed to connect tab ${tabId}:`, error.message);
+      debugLog(`Failed to connect tab ${tab.id}:`, error.message);
       throw error;
     }
   }

@@ -285,7 +285,10 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   });
 });
 
-test(`pending connection closed when client disconnects`, async ({ startExtensionClient, server }) => {
+test(`pending connection closed when client disconnects`, async ({ startExtensionClient, server, protocolVersion }) => {
+  // v2 does not open a WS to the relay before the user clicks Allow, so there
+  // is no pending connection to tear down when the client dies pre-Allow.
+  test.skip(protocolVersion === 2, 'v2 defers the relay connection until Allow');
   const { browserContext, client } = await startExtensionClient();
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {

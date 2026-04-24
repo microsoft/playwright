@@ -16,14 +16,6 @@
 
 import React from 'react';
 
-export interface TabInfo {
-  id: number;
-  windowId: number;
-  title: string;
-  url: string;
-  favIconUrl?: string;
-}
-
 export const Button: React.FC<{ variant: 'primary' | 'default' | 'reject'; onClick: () => void; children: React.ReactNode }> = ({
   variant,
   onClick,
@@ -38,7 +30,7 @@ export const Button: React.FC<{ variant: 'primary' | 'default' | 'reject'; onCli
 
 
 export interface TabItemProps {
-  tab: TabInfo;
+  tab: chrome.tabs.Tab;
   onClick?: () => void;
   button?: React.ReactNode;
 }

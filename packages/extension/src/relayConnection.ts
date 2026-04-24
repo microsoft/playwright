@@ -51,8 +51,6 @@ export class RelayConnection {
   // Once we've attached at least one tab, detaching the last one closes the connection.
   private _hasEverAttached = false;
   private _eventListeners: Array<{ remove: () => void }> = [];
-  private _selectedTabPromise: Promise<number>;
-  private _selectedTabResolve!: (tabId: number) => void;
   private _closed = false;
 
   onclose?: () => void;
@@ -65,9 +63,7 @@ export class RelayConnection {
 
   constructor(ws: WebSocket, protocolVersion: number) {
     this._ws = ws;
-    this._selectedTabPromise = new Promise(resolve => this._selectedTabResolve = resolve);
     const context: RelayContext = {
-      selectedTab: this._selectedTabPromise,
       attachedTabs: this._attachedTabs,
       sendMessage: msg => this._sendMessage(msg),
       notifyTabAttached: tabId => this._notifyTabAttached(tabId),
@@ -81,9 +77,11 @@ export class RelayConnection {
     this._ws.onclose = () => this._onClose();
   }
 
-  // Resolves the pending extension.selectTab call from cdpRelay.
-  setSelectedTab(tabId: number): void {
-    this._selectedTabResolve(tabId);
+  // Signals the end of the initial-tab handshake — call after the initial
+  // round of `attachTab` invocations. For v2 this sends `extension.initialized`
+  // so the relay can unblock Playwright CDP traffic; v1 has no handshake.
+  didInitialize(): void {
+    this._handler.didInitialize();
   }
 
   close(message: string): void {

@@ -85,12 +85,11 @@ export class CDPRelayServer {
         throw new Error('Extension not connected');
       return this._extensionConnection.send(method as keyof ExtensionCommand, params);
     };
-    const sendToPlaywright = (message: CDPResponse) => this._sendToPlaywright(message);
 
     if (this._protocolVersion >= 2)
-      this._handler = new ExtensionProtocolV2(sendCommand, sendToPlaywright);
+      this._handler = new ExtensionProtocolV2(sendCommand);
     else
-      this._handler = new ExtensionProtocolV1(sendCommand, sendToPlaywright);
+      this._handler = new ExtensionProtocolV1(sendCommand);
 
     const uuid = crypto.randomUUID();
     this._cdpPath = `/cdp/${uuid}`;
@@ -114,6 +113,7 @@ export class CDPRelayServer {
     this._openConnectPageInBrowser(clientName);
     debugLogger('Waiting for incoming extension connection');
     await this._extensionConnectionPromise;
+    await this._handler.ready();
     debugLogger('Extension connection established');
   }
 
@@ -193,10 +193,10 @@ export class CDPRelayServer {
       return;
     }
     this._cdpConnection = ws;
+    this._handler.connectOverCDP(msg => this._sendToCDPClient(msg));
     ws.on('message', async data => {
       try {
-        const message = JSON.parse(data.toString());
-        await this._handlePlaywrightMessage(message);
+        await this._handlePlaywrightMessage(JSON.parse(data.toString()));
       } catch (error: any) {
         debugLogger(`Error while handling Playwright message\n${data.toString()}\n`, error);
       }
@@ -230,6 +230,7 @@ export class CDPRelayServer {
     this._extensionConnection = new ExtensionConnection(ws);
     this._extensionConnection.onclose = reason => {
       debugLogger('Extension WebSocket closed:', reason);
+      this._handler.onExtensionDisconnect(reason);
       this._closeCDPConnection(`Extension disconnected: ${reason}`);
     };
     this._extensionConnection.onmessage = (method, params) => this._handler.handleExtensionEvent(method, params);
@@ -241,10 +242,10 @@ export class CDPRelayServer {
     const { id, sessionId, method, params } = message;
     try {
       const result = await this._handleCDPCommand(method, params, sessionId);
-      this._sendToPlaywright({ id, sessionId, result });
+      this._sendToCDPClient({ id, sessionId, result });
     } catch (e) {
       debugLogger('Error in the extension:', e);
-      this._sendToPlaywright({
+      this._sendToCDPClient({
         id,
         sessionId,
         error: { message: (e as Error).message }
@@ -271,7 +272,7 @@ export class CDPRelayServer {
     return await this._handler.forwardToExtension(method, params, sessionId);
   }
 
-  private _sendToPlaywright(message: CDPResponse): void {
+  private _sendToCDPClient(message: CDPResponse): void {
     debugLogger('→ Playwright:', `${message.method ?? `response(id=${message.id})`}`);
     this._cdpConnection?.send(JSON.stringify(message));
   }

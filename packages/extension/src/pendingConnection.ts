@@ -16,85 +16,107 @@
 
 import { RelayConnection, debugLog } from './relayConnection';
 
-// A RelayConnection opened by the connect page that has not yet been promoted
-// to an active ConnectedTabGroup (the user hasn't picked a tab). Owns the
-// RelayConnection until `connection` is handed off.
-export class PendingConnection {
-  readonly connection: RelayConnection;
-  readonly selectorTabId: number;
+interface PendingEntry {
+  connect(): Promise<RelayConnection>;
+  close(reason: string): void;
+}
+
+class EagerPending implements PendingEntry {
+  private _connection: RelayConnection;
   onclose?: () => void;
 
-  private constructor(connection: RelayConnection, selectorTabId: number) {
-    this.connection = connection;
-    this.selectorTabId = selectorTabId;
-    this.connection.onclose = () => this.onclose?.();
+  static async create(mcpRelayUrl: string, protocolVersion: number): Promise<EagerPending> {
+    const connection = await openRelayConnection(mcpRelayUrl, protocolVersion);
+    return new EagerPending(connection);
   }
 
-  static async connect(selectorTabId: number, mcpRelayUrl: string, protocolVersion: number): Promise<PendingConnection> {
-    try {
-      const socket = new WebSocket(mcpRelayUrl);
-      await new Promise<void>((resolve, reject) => {
-        socket.onopen = () => resolve();
-        socket.onerror = () => reject(new Error('WebSocket error'));
-        setTimeout(() => reject(new Error('Connection timeout')), 5000);
-      });
-      const connection = new RelayConnection(socket, protocolVersion);
-      return new PendingConnection(connection, selectorTabId);
-    } catch (error: any) {
-      const message = `Failed to connect to MCP relay: ${error.message}`;
-      debugLog(message);
-      throw new Error(message);
-    }
+  private constructor(connection: RelayConnection) {
+    this._connection = connection;
+    this._connection.onclose = () => this.onclose?.();
+  }
+
+  async connect(): Promise<RelayConnection> {
+    return this._connection;
   }
 
   close(reason: string): void {
-    this.connection.close(reason);
+    this._connection.close(reason);
   }
 }
 
-// Collection of PendingConnections keyed by their selector (connect page) tab.
-// Owns the tab-removal listener that closes pendings whose selector tab went
-// away, and notifies the connect page when the relay drops its socket.
+class DeferredPending implements PendingEntry {
+  constructor(private _mcpRelayUrl: string, private _protocolVersion: number) {}
+
+  async connect(): Promise<RelayConnection> {
+    return openRelayConnection(this._mcpRelayUrl, this._protocolVersion);
+  }
+
+  close(_reason: string): void {
+  }
+}
+
 export class PendingConnections {
-  private _map = new Map<number, PendingConnection>();
+  private _map = new Map<number, PendingEntry>();
 
   constructor() {
     chrome.tabs.onRemoved.addListener(this._onTabRemoved.bind(this));
   }
 
+  // v1 opens the relay WS eagerly — the daemon expects a prompt connection.
+  // v2 records only the descriptor; the WS opens lazily in `take` once the
+  // user clicks Allow.
   async create(selectorTabId: number, mcpRelayUrl: string, protocolVersion: number): Promise<void> {
-    const pending = await PendingConnection.connect(selectorTabId, mcpRelayUrl, protocolVersion);
-    pending.onclose = () => {
-      const existed = this._map.delete(selectorTabId);
-      if (existed)
-        chrome.tabs.sendMessage(selectorTabId, { type: 'pendingConnectionClosed' }).catch(() => {});
+    if (protocolVersion !== 1) {
+      this._map.set(selectorTabId, new DeferredPending(mcpRelayUrl, protocolVersion));
+      return;
+    }
+    const entry = await EagerPending.create(mcpRelayUrl, protocolVersion);
+    entry.onclose = () => {
+      if (this._map.get(selectorTabId) !== entry)
+        return;
+      this._map.delete(selectorTabId);
+      chrome.tabs.sendMessage(selectorTabId, { type: 'pendingConnectionClosed' }).catch(() => {});
     };
-    this._map.set(selectorTabId, pending);
+    this._map.set(selectorTabId, entry);
   }
 
   reject(selectorTabId: number): void {
-    const pending = this._map.get(selectorTabId);
-    if (!pending)
+    const entry = this._map.get(selectorTabId);
+    if (!entry)
       return;
     this._map.delete(selectorTabId);
-    pending.close('Rejected by user');
+    entry.close('Rejected by user');
   }
 
-  // Hands off ownership of the pending connection. The caller is expected to
-  // immediately transfer its RelayConnection to an active ConnectedTabGroup, which
-  // replaces `onclose` so the pending's handler no longer fires.
-  take(selectorTabId: number): PendingConnection | undefined {
-    const pending = this._map.get(selectorTabId);
-    if (pending)
-      this._map.delete(selectorTabId);
-    return pending;
+  async take(selectorTabId: number): Promise<RelayConnection | undefined> {
+    const entry = this._map.get(selectorTabId);
+    if (!entry)
+      return undefined;
+    this._map.delete(selectorTabId);
+    return entry.connect();
   }
 
   private _onTabRemoved(tabId: number): void {
-    const pending = this._map.get(tabId);
-    if (!pending)
+    const entry = this._map.get(tabId);
+    if (!entry)
       return;
     this._map.delete(tabId);
-    pending.close('Browser tab closed');
+    entry.close('Browser tab closed');
+  }
+}
+
+async function openRelayConnection(mcpRelayUrl: string, protocolVersion: number): Promise<RelayConnection> {
+  try {
+    const socket = new WebSocket(mcpRelayUrl);
+    await new Promise<void>((resolve, reject) => {
+      socket.onopen = () => resolve();
+      socket.onerror = () => reject(new Error('WebSocket error'));
+      setTimeout(() => reject(new Error('Connection timeout')), 5000);
+    });
+    return new RelayConnection(socket, protocolVersion);
+  } catch (error: any) {
+    const message = `Failed to connect to MCP relay: ${error.message}`;
+    debugLog(message);
+    throw new Error(message);
   }
 }

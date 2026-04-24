@@ -24,7 +24,7 @@ export type CDPMessage = {
 };
 
 export type SendCommand = (method: string, params: any) => Promise<any>;
-export type SendToPlaywright = (message: CDPMessage) => void;
+export type SendToCDPClient = (message: CDPMessage) => void;
 
 export interface ExtensionProtocolHandler {
   // Handle an event from the extension. Sends CDP events to Playwright as needed.
@@ -34,4 +34,15 @@ export interface ExtensionProtocolHandler {
   handleCDPCommand(method: string, params: any, sessionId: string | undefined): Promise<{ result: any } | undefined>;
   // Forward a CDP command to the extension.
   forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any>;
+  // Resolves once the extension has completed its initial handshake and the
+  // relay may start processing CDP commands from Playwright.
+  ready(): Promise<void>;
+  // Wires up the sink through which the handler emits CDP events back to
+  // Playwright. Called once `ready()` has resolved and the Playwright ws is
+  // about to start draining — before this call the handler is a silent sink.
+  connectOverCDP(sendToCDPClient: SendToCDPClient): void;
+  // Called when the extension WebSocket closes. Handlers should reject any
+  // pending `ready()` promise so a blocked `establishExtensionConnection`
+  // bails out instead of hanging forever.
+  onExtensionDisconnect(reason: string): void;
 }
