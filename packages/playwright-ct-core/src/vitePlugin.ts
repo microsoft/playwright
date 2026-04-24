@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { iso, utils, getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
-import { colors, debug, stoppable } from 'playwright-core/lib/utilsBundle';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { cc, transform } from 'playwright/lib/common';
 import { removeDirAndLogToConsole } from 'playwright/lib/util';
 
@@ -37,7 +37,7 @@ import type { ComponentRegistry } from './viteUtils';
 
 const log = debug('pw:vite');
 
-let stoppableServer: any;
+let previewHttpServer: http.Server | undefined;
 const playwrightVersion = getPlaywrightVersion();
 
 export function createPlugin(): TestRunnerPlugin {
@@ -59,7 +59,8 @@ export function createPlugin(): TestRunnerPlugin {
       const { viteConfig } = result;
       const { preview } = await import('vite');
       const previewServer = await preview(viteConfig);
-      stoppableServer = stoppable(previewServer.httpServer as http.Server, 0);
+      previewHttpServer = previewServer.httpServer as http.Server;
+      utils.decorateServer(previewHttpServer);
       const isAddressInfo = (x: any): x is AddressInfo => x?.address;
       const address = previewServer.httpServer.address();
       if (isAddressInfo(address)) {
@@ -69,8 +70,8 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     end: async () => {
-      if (stoppableServer)
-        await new Promise(f => stoppableServer.stop(f));
+      if (previewHttpServer)
+        await new Promise<void>(f => previewHttpServer!.close(() => f()));
     },
 
     populateDependencies: async () => {

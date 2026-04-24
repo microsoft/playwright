@@ -29,7 +29,6 @@ const MAPPING = {
   'yaml': { default: 'yaml' },
   'json5': { default: 'json5' },
   'source-map-support': { default: 'sourceMapSupport' },
-  'stoppable': { default: 'stoppable' },
   'enquirer': { default: 'enquirer' },
   'chokidar': { default: 'chokidar' },
   'get-east-asian-width': { namespace: 'getEastAsianWidth' },
