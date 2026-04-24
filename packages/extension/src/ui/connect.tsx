@@ -105,6 +105,12 @@ const ConnectApp: React.FC = () => {
         await loadTabs();
     };
     void runAsync();
+    // Ping the background every 20s so the MV3 service worker (which owns the
+    // relay WebSocket) stays above its 30s idle timeout while the user decides.
+    const keepalive = setInterval(() => {
+      chrome.runtime.sendMessage({ type: 'keepalive' }).catch(() => {});
+    }, 20_000);
+    return () => clearInterval(keepalive);
   }, []);
 
   const handleReject = useCallback((message: string) => {

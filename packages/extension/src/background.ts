@@ -36,6 +36,8 @@ type PageMessage = {
   type: 'disconnect';
 } | {
   type: 'rejectConnection';
+} | {
+  type: 'keepalive';
 };
 
 class PlaywrightExtension {
@@ -95,6 +97,10 @@ class PlaywrightExtension {
           this._pendingConnections.reject(sender.tab.id);
         sendResponse({ success: true });
         return true;
+      case 'keepalive':
+        // Connect page pings us every ~20s so receiving this message resets
+        // the MV3 service worker idle timer and keeps the relay WebSocket alive.
+        return false;
     }
   }
 
