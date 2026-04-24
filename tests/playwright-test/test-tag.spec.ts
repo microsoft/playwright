@@ -183,6 +183,48 @@ test('should be included in testInfo if coming from describe or global tag', asy
   expect(result.exitCode).toBe(0);
 });
 
+test('should deduplicate tags when same tag appears in describe and test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+        onError(error) {
+          console.log(error);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = { reporter: './reporter' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test.describe('@smoke tests', () => {
+        test('@smoke create test', () => {});
+        test.describe('@smoke nested', () => {
+          test('@smoke deeply nested test', () => {});
+        });
+      });
+      test.describe('suite', { tag: '@foo' }, () => {
+        test('test', { tag: '@foo' }, () => {});
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    `title=@smoke create test, tags=@smoke`,
+    `title=@smoke deeply nested test, tags=@smoke`,
+    `title=test, tags=@foo`,
+  ]);
+});
+
 test('should not parse file names as tags', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `

@@ -34,6 +34,7 @@ test-results
 /packages/playwright-core/api.json
 /packages/playwright-cli
 .env
+CLAUDE.md
 /tests/installation/output/
 /tests/installation/.registry.json
 .cache/
