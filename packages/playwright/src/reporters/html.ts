@@ -27,8 +27,13 @@ import { MultiMap } from '@isomorphic/multimap';
 import { calculateSha1 } from '@utils/crypto';
 import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@utils/fileUtils';
 import { getPackageManagerExecCommand } from '@utils/env';
-import { serveFolder } from '@utils/httpServer';
+import { HttpServer, serveFolder } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+
+// HMR: build-time flag — `true` in watch builds, `false` in release. esbuild's
+// `define` in the runner bundle replaces this so the dev-server code (incl.
+// `import('vite')`) is DCE'd in release builds.
+declare const __PW_HMR__: boolean;
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import * as babel from '../transform/babelBundle';
@@ -222,7 +227,13 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
     gracefullyProcessExitDoNotHang(1);
     return;
   }
-  const server = serveFolder(folder);
+  // HMR: watch builds serve the html-reporter through an embedded Vite dev
+  // server so edits to packages/html-reporter/src/* reload live. Release
+  // builds always take the static branch (the dev-server arm is DCE'd).
+  // Set PW_HMR_STATIC=1 during watch to exercise the bundled output.
+  const server = (__PW_HMR__ && process.env.PW_HMR_STATIC !== '1')
+    ? await serveHtmlReportWithHMR(folder)
+    : serveFolder(folder);
   await server.start({ port, host, preferredPort: port ? undefined : 9323 });
   let url = server.urlPrefix('human-readable');
   writeLine('');
@@ -233,6 +244,53 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   await open(url, { wait: true }).catch(() => {});
   await new Promise(() => {});
 }
+
+// HMR begin: dev-mode branch — mounts a Vite dev server for the html-reporter
+// source at `/` while still serving the generated attachments (and the bundled
+// trace-viewer copy under /trace/) from the output folder. The report's data
+// payload lives in a <template id="playwrightReportBase64"> tag at the tail of
+// the generated index.html; we extract it and splice it into Vite's
+// transformed HTML so the client still finds it at runtime.
+async function serveHtmlReportWithHMR(folder: string): Promise<HttpServer> {
+  const server = new HttpServer();
+  const reporterRoot = path.resolve(__dirname, '..', '..', '..', 'html-reporter');
+  const devServer = await server.createViteDevServer({ root: reporterRoot });
+  const generatedIndex = await fs.promises.readFile(path.join(folder, 'index.html'), 'utf-8');
+  const templateMatch = /<template id="playwrightReportBase64">[\s\S]*?<\/template>/.exec(generatedIndex);
+  const reportTemplate = templateMatch ? templateMatch[0] : '';
+  const sourceIndex = await fs.promises.readFile(path.join(reporterRoot, 'index.html'), 'utf-8');
+
+  server.routePrefix('/', (request, response) => {
+    const url = new URL('http://localhost' + request.url!);
+    if (url.pathname === '/' || url.pathname === '/index.html') {
+      devServer.transformIndexHtml(url.pathname, sourceIndex).then(html => {
+        const injected = html.replace(/<\/body>/i, `${reportTemplate}</body>`);
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'text/html; charset=utf-8');
+        response.end(injected);
+      }, () => {
+        response.statusCode = 500;
+        response.end();
+      });
+      return true;
+    }
+    // Serve attachments and the bundled trace-viewer copy from the generated
+    // output folder first, falling through to Vite for source modules.
+    const relativePath = url.pathname === '/' ? '/index.html' : url.pathname;
+    const absolutePath = path.join(folder, ...relativePath.split('/'));
+    if (absolutePath.startsWith(folder) && fs.existsSync(absolutePath) && fs.statSync(absolutePath).isFile())
+      return server.serveFile(request, response, absolutePath);
+    devServer.middlewares(request, response, () => {
+      if (!response.headersSent) {
+        response.statusCode = 404;
+        response.end();
+      }
+    });
+    return true;
+  });
+  return server;
+}
+// HMR end
 
 type DataMap = Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>;
 

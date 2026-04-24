@@ -25,6 +25,14 @@ import { createHttpServer, startHttpServer } from './network';
 
 import type http from 'http';
 
+// Minimal shape of the Vite dev server we rely on. Kept inline so this file
+// doesn't need a type dep on `vite`, which is only available in watch builds.
+export type ViteDevServer = {
+  middlewares: (req: http.IncomingMessage, res: http.ServerResponse, next: (err?: unknown) => void) => void;
+  transformIndexHtml: (url: string, html: string, originalUrl?: string) => Promise<string>;
+  close: () => Promise<void>;
+};
+
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
 export type Transport = {
@@ -102,6 +110,27 @@ export class HttpServer {
   wsGuid(): string | undefined {
     return this._wsGuid;
   }
+
+  async createViteDevServer(options: { root: string, configFile?: string, base?: string, hmrPath?: string }): Promise<ViteDevServer> {
+    // HMR begin: hide the `vite` import from esbuild so release bundles can
+    // DCE this whole branch without keeping a resolvable module reference.
+    const loadVite = new Function('return import("vite")') as () => Promise<any>;
+    const vite = await loadVite();
+    return await vite.createServer({
+      root: options.root,
+      configFile: options.configFile ?? path.join(options.root, 'vite.config.ts'),
+      base: options.base,
+      server: {
+        middlewareMode: true,
+        // Dedicated path so Vite's HMR websocket does not collide with any
+        // websocket HttpServer owns via createWebSocket().
+        hmr: { path: options.hmrPath ?? '/__vite_hmr', server: this._server },
+      },
+      appType: 'spa',
+      clearScreen: false,
+    });
+  }
+  // HMR end
 
   async start(options: { port?: number, preferredPort?: number, host?: string } = {}): Promise<void> {
     assert(!this._started, 'server already started');
