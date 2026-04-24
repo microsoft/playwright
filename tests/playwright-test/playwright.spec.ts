@@ -896,6 +896,32 @@ test('page.pause() should disable test timeout', async ({ runInlineTest }) => {
   expect(result.output).toContain('success!');
 });
 
+test('page.pause() should not permanently disable test timeout in headless mode', async ({ runInlineTest }) => {
+  // Unset PWTEST_UNDER_TEST to simulate a real production headless run where
+  // the debugger is not enabled and page.pause() returns immediately.
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page }) => {
+        test.setTimeout(500);
+        // In production headless mode page.pause() is a no-op and returns immediately.
+        // The test timeout must remain active afterwards.
+        await page.pause();
+        // A plain JS timer that exceeds the test timeout. If the test timeout was
+        // incorrectly disabled by page.pause(), this would complete and the test
+        // would pass. With the timeout active, the test fails at 500ms.
+        await new Promise(f => setTimeout(f, 2000));
+        console.log('\\n%%should not reach here');
+      });
+    `,
+  }, {}, { PWTEST_UNDER_TEST: '' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test timeout of 500ms exceeded');
+  expect(result.output).not.toContain('should not reach here');
+});
+
 test('window.playwright should be undefined by default', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

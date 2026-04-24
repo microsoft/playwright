@@ -37,6 +37,7 @@ export interface ClientInstrumentation {
   onApiCallBegin(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any> }): void;
   onApiCallEnd(apiCall: ApiCallData): void;
   onWillPause(options: { keepTestTimeout: boolean }): void;
+  onDidResume(options: { keepTestTimeout: boolean }): void;
   onPage(page: Page): void;
 
   runBeforeCreateBrowserContext(options: BrowserContextOptions): Promise<void>;
@@ -51,6 +52,7 @@ export interface ClientInstrumentationListener {
   onApiCallBegin?(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any>  }): void;
   onApiCallEnd?(apiCall: ApiCallData): void;
   onWillPause?(options: { keepTestTimeout: boolean }): void;
+  onDidResume?(options: { keepTestTimeout: boolean }): void;
   onPage?(page: Page): void;
   runBeforeCreateBrowserContext?(options: BrowserContextOptions): Promise<void>;
   runBeforeCreateRequestContext?(options: NewContextOptions): Promise<void>;

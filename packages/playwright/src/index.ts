@@ -155,6 +155,10 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
         if (!keepTestTimeout)
           globals.currentTestInfo()?._setIgnoreTimeouts(true);
       },
+      onDidResume: ({ keepTestTimeout }) => {
+        if (!keepTestTimeout)
+          globals.currentTestInfo()?._setIgnoreTimeouts(false);
+      },
       runBeforeCreateBrowserContext: async (options: BrowserContextOptions) => {
         for (const [key, value] of Object.entries(_combinedContextOptions)) {
           if (!(key in options))
