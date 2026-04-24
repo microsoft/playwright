@@ -276,16 +276,10 @@ async function serveHtmlReportWithHMR(folder: string): Promise<HttpServer> {
     }
     // Serve attachments and the bundled trace-viewer copy from the generated
     // output folder first, falling through to Vite for source modules.
-    const relativePath = url.pathname === '/' ? '/index.html' : url.pathname;
-    const absolutePath = path.join(folder, ...relativePath.split('/'));
-    if (absolutePath.startsWith(folder) && fs.existsSync(absolutePath) && fs.statSync(absolutePath).isFile())
-      return server.serveFile(request, response, absolutePath);
-    devServer.middlewares(request, response, () => {
-      if (!response.headersSent) {
-        response.statusCode = 404;
-        response.end();
-      }
-    });
+    const absolutePath = path.join(folder, ...url.pathname.split('/'));
+    if (absolutePath.startsWith(folder) && server.serveFile(request, response, absolutePath))
+      return true;
+    devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
     return true;
   });
   return server;

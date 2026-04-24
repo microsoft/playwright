@@ -143,12 +143,7 @@ async function attachDashboardDevServer(httpServer: HttpServer) {
   const dashboardRoot = path.resolve(__dirname, '..', '..', 'dashboard');
   const devServer = await httpServer.createViteDevServer({ root: dashboardRoot });
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-    devServer.middlewares(request, response, () => {
-      if (!response.headersSent) {
-        response.statusCode = 404;
-        response.end();
-      }
-    });
+    devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
     return true;
   });
 }

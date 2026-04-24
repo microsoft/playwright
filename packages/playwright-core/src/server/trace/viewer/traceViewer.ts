@@ -88,13 +88,13 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   const server = new HttpServer();
 
   const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
-    const url = new URL('http://localhost' + request.url!);
     if (!relativePath.startsWith('/file'))
       return false;
+    const url = new URL('http://localhost' + request.url!);
     try {
       const filePath = url.searchParams.get('path')!;
       if (fs.existsSync(filePath))
-        return server.serveFile(request, response, url.searchParams.get('path')!);
+        return server.serveFile(request, response, filePath);
 
       // If .json is requested, we'll synthesize it for zip-less operation.
       if (filePath.endsWith('.json')) {
@@ -129,12 +129,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
         return serveTraceDataRoute(request, response, relativePath);
       if (relativePath === '/sw.bundle.js')
         return server.serveFile(request, response, path.join(libPath('vite', 'traceViewer'), 'sw.bundle.js'));
-      devServer.middlewares(request, response, () => {
-        if (!response.headersSent) {
-          response.statusCode = 404;
-          response.end();
-        }
-      });
+      devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
       return true;
     });
   } else {
