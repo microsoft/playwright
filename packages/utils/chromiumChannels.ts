@@ -14,78 +14,18 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import net from 'net';
 import os from 'os';
 import path from 'path';
 
-import { isPlaywrightExtensionInstalled } from '../utils/extension';
-
-export type ChannelSession = {
-  channel: string;
-  userDataDir: string;
-  endpoint?: string;
-  extensionInstalled: boolean;
-};
-
-export async function listChannelSessions(): Promise<ChannelSession[]> {
-  if (process.env.PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST)
-    return [];
-  const result: ChannelSession[] = [];
-  for (const [channel, dirs] of channelToUserDataDir) {
-    const userDataDir = dirs[process.platform];
-    if (!userDataDir)
-      continue;
-    if (!await pathExists(userDataDir))
-      continue;
-    const [endpoint, extensionInstalled] = await Promise.all([
-      readEndpoint(userDataDir),
-      isPlaywrightExtensionInstalled(userDataDir),
-    ]);
-    result.push({ channel, userDataDir, endpoint, extensionInstalled });
-  }
-  return result;
+export function defaultUserDataDirForChannel(channel: string): string | undefined {
+  return channelToDefaultUserDataDir.get(channel)?.[process.platform];
 }
 
-async function pathExists(p: string): Promise<boolean> {
-  try {
-    await fs.promises.access(p);
-    return true;
-  } catch {
-    return false;
-  }
+export function isChromiumChannelName(channel: string): boolean {
+  return channelToDefaultUserDataDir.has(channel);
 }
 
-async function readEndpoint(userDataDir: string): Promise<string | undefined> {
-  let contents: string;
-  try {
-    contents = await fs.promises.readFile(path.join(userDataDir, 'DevToolsActivePort'), 'utf-8');
-  } catch {
-    return undefined;
-  }
-  const port = parseInt(contents.trim().split('\n')[0], 10);
-  if (!Number.isFinite(port))
-    return undefined;
-  if (!await isPortOpen(port))
-    return undefined;
-  return `http://localhost:${port}`;
-}
-
-async function isPortOpen(port: number): Promise<boolean> {
-  return new Promise(resolve => {
-    const socket = net.createConnection(port, '127.0.0.1');
-    const done = (value: boolean) => {
-      socket.destroy();
-      resolve(value);
-    };
-    socket.once('connect', () => done(true));
-    socket.once('error', () => done(false));
-    socket.setTimeout(250, () => done(false));
-  });
-}
-
-// Keep in sync with packages/utils/chromiumChannels.ts.
-const channelToUserDataDir = new Map<string, Record<string, string>>([
+const channelToDefaultUserDataDir = new Map<string, Record<string, string>>([
   ['chrome', {
     'linux': path.join(os.homedir(), '.config', 'google-chrome'),
     'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome'),

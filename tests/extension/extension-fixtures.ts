@@ -79,6 +79,9 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
 
     let browserContext: BrowserContext | undefined;
     const userDataDir = testInfo.outputPath('extension-user-data-dir');
+    // --load-extension does not populate Default/Extensions/<id>; create the folder
+    // so the relay's extension-installed check recognizes the test profile.
+    await fs.mkdir(path.join(userDataDir, 'Default', 'Extensions', extensionId), { recursive: true });
     await use({
       userDataDir,
       launch: async (mode?: 'disable-extension') => {

@@ -255,6 +255,30 @@ test(`custom executablePath`, async ({ startClient, server }) => {
   }).toPass();
 });
 
+test(`warns when extension is missing in custom userDataDir`, async ({ startClient, server }) => {
+  const executablePath = test.info().outputPath('echo.sh');
+  await fs.writeFile(executablePath, '#!/bin/bash\n', { mode: 0o755 });
+  const userDataDir = test.info().outputPath('empty-profile');
+
+  const { client, stderr } = await startClient({
+    args: [`--extension`],
+    config: {
+      browser: {
+        userDataDir,
+        launchOptions: { executablePath },
+      }
+    },
+  });
+
+  // The call hangs as MCP server never connects to the extension.
+  client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  }).catch(() => {});
+
+  await expect.poll(stderr).toContain(`Playwright Extension not found in "${userDataDir}"`);
+});
+
 test(`bypass connection dialog with token`, async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
 

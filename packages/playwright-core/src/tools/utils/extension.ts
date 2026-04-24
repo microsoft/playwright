@@ -14,7 +14,32 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 // Also pinned via the "key" field in packages/extension/manifest.json.
 export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
 export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-mcp-bridge/${playwrightExtensionId}`;
+
+export async function isPlaywrightExtensionInstalled(userDataDir: string): Promise<boolean> {
+  // Covers two install shapes: web store drops the extension into Default/Extensions/<id>;
+  // `--load-extension` does not, and only shows up as the id inside Default/Preferences.
+  if (await pathExists(path.join(userDataDir, 'Default', 'Extensions', playwrightExtensionId)))
+    return true;
+  try {
+    const prefs = await fs.promises.readFile(path.join(userDataDir, 'Default', 'Preferences'), 'utf-8');
+    return prefs.includes(`"${playwrightExtensionId}"`);
+  } catch {
+    return false;
+  }
+}
+
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await fs.promises.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
