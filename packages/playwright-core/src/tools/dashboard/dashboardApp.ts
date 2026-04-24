@@ -35,7 +35,7 @@ import type { AnnotationData } from '@dashboard/dashboardChannel';
 // HMR: build-time flag — `true` in watch builds, `false` in release. esbuild
 // replaces the identifier via `define`, so the static branch pays zero runtime
 // cost and the dev-server code (incl. `import('vite')`) is DCE'd in release.
-declare const __PW_DASHBOARD_HMR__: boolean;
+declare const __PW_HMR__: boolean;
 
 type DashboardServer = {
   url: string;
@@ -82,8 +82,8 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
   // HMR: watch builds serve the dashboard through an embedded Vite dev server
   // so edits to packages/dashboard/src/* reload live. Release builds always
   // take the static branch (the dev-server arm is DCE'd). Set
-  // PW_DASHBOARD_STATIC=1 during watch to exercise the bundled output.
-  if (__PW_DASHBOARD_HMR__ && process.env.PW_DASHBOARD_STATIC !== '1')
+  // PW_HMR_STATIC=1 during watch to exercise the bundled output.
+  if (__PW_HMR__ && process.env.PW_HMR_STATIC !== '1')
     await attachDashboardDevServer(httpServer);
   else
     attachDashboardStaticServer(httpServer, dashboardDir);
@@ -141,27 +141,9 @@ function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: strin
 // HMR begin: dev-mode branch — wires a Vite dev server into HttpServer.
 async function attachDashboardDevServer(httpServer: HttpServer) {
   const dashboardRoot = path.resolve(__dirname, '..', '..', 'dashboard');
-  const loadVite = new Function('return import("vite")') as () => Promise<typeof import('vite')>;
-  const vite = await loadVite();
-  const devServer = await vite.createServer({
-    root: dashboardRoot,
-    configFile: path.join(dashboardRoot, 'vite.config.ts'),
-    server: {
-      middlewareMode: true,
-      // HMR: dedicated path so this websocket does not collide with the
-      // dashboard IPC websocket HttpServer owns at /ws.
-      hmr: { path: '/__vite_hmr', server: httpServer.server() },
-    },
-    appType: 'spa',
-    clearScreen: false,
-  });
+  const devServer = await httpServer.createViteDevServer({ root: dashboardRoot });
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-    devServer.middlewares(request, response, () => {
-      if (!response.headersSent) {
-        response.statusCode = 404;
-        response.end();
-      }
-    });
+    devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
     return true;
   });
 }

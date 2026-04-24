@@ -635,11 +635,12 @@ steps.push(new EsbuildStep({
     'chromium-bidi/*',
     'mitt',
   ],
-  // HMR: baked-in flag that enables the dashboard Vite dev server in watch
-  // builds. In release builds it's `false` and esbuild dead-code-eliminates
-  // the whole dev-server branch (including the `import('vite')` call).
+  // HMR: baked-in flag that enables the embedded Vite dev server for the
+  // dashboard and trace viewer (incl. UI mode) in watch builds. In release
+  // builds it's `false` and esbuild dead-code-eliminates the whole dev-server
+  // branch (including the `import('vite')` call).
   define: {
-    __PW_DASHBOARD_HMR__: String(!!watchMode),
+    __PW_HMR__: String(!!watchMode),
   },
   plugins: [{
     name: 'externalize-utilsBundle',
@@ -768,6 +769,11 @@ steps.push(new EsbuildStep({
     '../transform/babelBundle',
     '../transform/esmLoader',
   ],
+  // HMR: same flag as coreBundle; enables the html-reporter Vite dev server
+  // in watch builds (reporters/html.ts lives in this bundle).
+  define: {
+    __PW_HMR__: String(!!watchMode),
+  },
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
 
@@ -883,12 +889,16 @@ steps.push(new ProgramStep({
 }));
 
 // Build/watch web packages.
-// HMR: in watch mode the dashboard is served by the embedded Vite dev server
-// in dashboardApp.ts, so skip its `vite build --watch` step. Set
-// PW_DASHBOARD_STATIC=1 to keep the watch-build for testing the bundled output.
-const hmrReplacesDashboardBuild = watchMode && process.env.PW_DASHBOARD_STATIC !== '1';
+// HMR: in watch mode the dashboard, html-reporter, and trace viewer (incl. UI
+// mode) are served by embedded Vite dev servers, so skip their
+// `vite build --watch` steps. Set PW_HMR_STATIC=1 to keep the watch builds for
+// testing the bundled output. Recorder is not yet HMR'd. The trace viewer
+// service worker still builds via vite.sw.config.ts above — that step is not
+// in this loop.
+const hmrReplacesWebBuilds = watchMode && process.env.PW_HMR_STATIC !== '1';
+const hmrHandledPackages = new Set(['dashboard', 'html-reporter', 'trace-viewer']);
 const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard']
-    .filter(pkg => !(pkg === 'dashboard' && hmrReplacesDashboardBuild));
+    .filter(pkg => !(hmrReplacesWebBuilds && hmrHandledPackages.has(pkg)));
 for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
     command: 'npx',
