@@ -12,17 +12,17 @@ on:
       - 'packages/extension/**'
       - 'tests/extension/**'
       - '.github/workflows/tests_extension.yml'
-  pull_request:
-    branches:
-      - main
-      - release-*
-    paths:
-      - 'packages/playwright-core/src/tools/**'
-      - '!packages/playwright-core/src/tools/dashboard/**'
-      - '!packages/playwright-core/src/tools/trace/**'
-      - 'packages/extension/**'
-      - 'tests/extension/**'
-      - '.github/workflows/tests_extension.yml'
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - release-*
+  #   paths:
+  #     - 'packages/playwright-core/src/tools/**'
+  #     - '!packages/playwright-core/src/tools/dashboard/**'
+  #     - '!packages/playwright-core/src/tools/trace/**'
+  #     - 'packages/extension/**'
+  #     - 'tests/extension/**'
+  #     - '.github/workflows/tests_extension.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}

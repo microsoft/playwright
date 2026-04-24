@@ -35,6 +35,19 @@ import type childProcess from 'child_process';
 
 const debugLogger = debug('pw:electron');
 
+// Env-gated milestone timings for hunting the macOS timeout regression. See
+// https://github.com/microsoft/playwright/pull/40381 for context.
+let diagLaunchSeq = 0;
+let diagCloseSeq = 0;
+
+function emitDiag(tag: string, seq: number, parts: Record<string, number>) {
+  if (process.env.PWTEST_ELECTRON_DIAG !== '1')
+    return;
+  const body = Object.entries(parts).map(([k, v]) => `${k}=${v}ms`).join(' ');
+  // eslint-disable-next-line no-restricted-properties -- diagnostic output, intentionally on stderr
+  process.stderr.write(`[${tag}] seq=${seq} ${body}\n`);
+}
+
 export const Events = {
   ElectronApplication: {
     Close: 'close',
@@ -83,6 +96,13 @@ export class Electron implements api.Electron {
     const timeout = options.timeout ?? (debugMode() === 'inspector' ? 0 : 3 * 60 * 1000);
     const progress = new Progress(timeout, `electron.launch: Timeout ${timeout}ms exceeded`);
     let app: ElectronApplication | undefined;
+    const t0 = monotonicTime();
+    let tSpawn = 0;
+    let tNode = 0;
+    let tWorker = 0;
+    let tChrome = 0;
+    let tCDP = 0;
+    let tInit = 0;
 
     // --remote-debugging-port=0 must be the last playwright argument; loader.ts relies on it.
     let electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...(options.args || [])];
@@ -150,6 +170,7 @@ export class Electron implements api.Electron {
       handleSIGHUP: true,
       onExit: () => app?._onClose(),
     });
+    tSpawn = monotonicTime();
 
     // Start every line listener immediately — the lines may arrive before we
     // are ready to await them.
@@ -171,16 +192,30 @@ export class Electron implements api.Electron {
     try {
       const chromium = this._playwright.chromium;
       const nodeMatch = await nodeMatchPromise;
+      tNode = monotonicTime();
       const worker = await chromium.connectToWorker(nodeMatch[1], { timeout: progress.timeUntilDeadline() });
+      tWorker = monotonicTime();
 
       // Release the Electron process immediately if the user is debugging it.
       debuggerDisconnectPromise.then(() => worker.disconnect()).catch(() => {});
 
       const chromeMatch = await Promise.race([chromeMatchPromise, waitForXserverError]);
+      tChrome = monotonicTime();
       const browser = await chromium.connectOverCDP(chromeMatch[1], { timeout: progress.timeUntilDeadline(), isLocal: true });
+      tCDP = monotonicTime();
 
       app = new ElectronApplication(worker, browser, launchedProcess);
       await progress.race(app._initialize());
+      tInit = monotonicTime();
+      emitDiag('elaunch', ++diagLaunchSeq, {
+        spawn: Math.round(tSpawn - t0),
+        wait_node: Math.round(tNode - tSpawn),
+        conn_worker: Math.round(tWorker - tNode),
+        wait_cdp: Math.round(tChrome - tWorker),
+        conn_cdp: Math.round(tCDP - tChrome),
+        init: Math.round(tInit - tCDP),
+        total: Math.round(tInit - t0),
+      });
       return app;
     } catch (error) {
       await kill();
@@ -249,14 +284,35 @@ export class ElectronApplication extends EventEmitter implements api.ElectronApp
   }
 
   async close() {
+    const t0 = monotonicTime();
+    const firstCall = !this._closedPromise;
+    let tBrowser = t0;
+    let tHandle = t0;
+    let tQuit = t0;
+    let tWorker = t0;
     if (!this._closedPromise) {
       this._closedPromise = new Promise<void>(f => this.once(Events.ElectronApplication.Close, f));
       await this._browser.close();
+      tBrowser = monotonicTime();
       const appHandle = await this._appHandlePromise;
-      await appHandle.evaluate(({ app }) => app.quit()).catch(() => {});
+      tHandle = monotonicTime();
+      await appHandle.evaluate(() => process.exit(0)).catch(() => {});
+      tQuit = monotonicTime();
       await this._worker.disconnect();
+      tWorker = monotonicTime();
     }
     await this._closedPromise;
+    if (firstCall) {
+      const tClosed = monotonicTime();
+      emitDiag('eclose', ++diagCloseSeq, {
+        browser_close: Math.round(tBrowser - t0),
+        app_handle: Math.round(tHandle - tBrowser),
+        app_quit: Math.round(tQuit - tHandle),
+        worker_disconnect: Math.round(tWorker - tQuit),
+        close_event: Math.round(tClosed - tWorker),
+        total: Math.round(tClosed - t0),
+      });
+    }
   }
 
   async waitForEvent(event: string, optionsOrPredicate: Function | { timeout?: number, predicate?: Function } = {}): Promise<any> {

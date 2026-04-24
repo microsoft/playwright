@@ -107,11 +107,12 @@ export const electronTest = mergeTests(baseTest, electronBaseTest)
       },
 
       _electronDiag: [async ({}, use, testInfo) => {
+        const enabled = process.env.PWTEST_ELECTRON_DIAG === '1';
         const seq = ++diagSeq;
         const startedAt = Date.now();
-        const procsBefore = process.env.CI ? countElectronProcesses() : -1;
+        const procsBefore = enabled ? countElectronProcesses() : -1;
         await use();
-        if (!process.env.CI)
+        if (!enabled)
           return;
         const durMs = Date.now() - startedAt;
         const rssMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
