@@ -22,6 +22,10 @@ import { singleTSConfig, transformConfig } from '../transform/transform';
 
 let loaderChannel: PortTransport | undefined;
 
+function isArchivePath(filePath: string) {
+  return filePath.includes('.zip/') || filePath.includes('.zip\\');
+}
+
 export function registerESMLoader() {
   // Opt-out switch.
   if (process.env.PW_DISABLE_TS_ESM)
@@ -40,11 +44,21 @@ export function registerESMLoader() {
     return false;
 
   const { port1, port2 } = new MessageChannel();
+  const esmLoaderPath = require.resolve('../transform/esmLoader.js');
   // register will wait until the loader is initialized.
-  register(url.pathToFileURL(require.resolve('../transform/esmLoader.js')), {
-    data: { port: port2 },
-    transferList: [port2],
-  });
+  try {
+    register(url.pathToFileURL(esmLoaderPath), {
+      data: { port: port2 },
+      transferList: [port2],
+    });
+  } catch (error: any) {
+    // Yarn Plug'n'Play may resolve Playwright from a zip archive. Node's loader
+    // registration can then fail while importing the loader's sibling files.
+    // Fall back to running without the ts ESM loader instead of crashing.
+    if (error?.code === 'ERR_MODULE_NOT_FOUND' && isArchivePath(esmLoaderPath))
+      return false;
+    throw error;
+  }
   loaderChannel = createPortTransport(port1);
   return true;
 }
