@@ -16,7 +16,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Button, TabItem } from './tabItem';
+import { Button, NewTabRadioItem, TabRadioItem } from './tabItem';
 import { AuthTokenSection, getOrCreateAuthToken } from './authToken';
 
 import type { TabInfo } from './tabItem';
@@ -29,6 +29,8 @@ type Status =
 
 const SUPPORTED_PROTOCOL_VERSION = 2;
 
+const NEW_TAB_VALUE = '__new_tab__';
+
 const ConnectApp: React.FC = () => {
   const [tabs, setTabs] = useState<TabInfo[]>([]);
   const [status, setStatus] = useState<Status | null>(null);
@@ -36,6 +38,7 @@ const ConnectApp: React.FC = () => {
   const [showTabList, setShowTabList] = useState(true);
   const [clientInfo, setClientInfo] = useState('unknown');
   const [mcpRelayUrl, setMcpRelayUrl] = useState('');
+  const [selectedTabKey, setSelectedTabKey] = useState<string>(NEW_TAB_VALUE);
 
   useEffect(() => {
     const runAsync = async () => {
@@ -66,7 +69,7 @@ const ConnectApp: React.FC = () => {
         setClientInfo(info);
         setStatus({
           type: 'connecting',
-          message: `"${info}" is trying to connect to the Playwright Extension.`
+          message: `"${info}" wants to connect to this browser using the Playwright Extension.`
         });
       } catch (e) {
         setStatus({ type: 'error', message: 'Failed to parse client version.' });
@@ -162,6 +165,15 @@ const ConnectApp: React.FC = () => {
     }
   }, [clientInfo, mcpRelayUrl]);
 
+  const handleAllow = useCallback(() => {
+    if (selectedTabKey === NEW_TAB_VALUE || !showTabList) {
+      void handleConnectToTab();
+      return;
+    }
+    const tab = tabs.find(t => String(t.id) === selectedTabKey);
+    void handleConnectToTab(tab);
+  }, [handleConnectToTab, selectedTabKey, showTabList, tabs]);
+
   useEffect(() => {
     const listener = (message: any) => {
       if (message.type === 'pendingConnectionClosed') {
@@ -175,57 +187,59 @@ const ConnectApp: React.FC = () => {
     };
   }, [handleReject]);
 
+  const isConnecting = status?.type === 'connecting';
+
   return (
     <div className='app-container'>
       <div className='content-wrapper'>
-        {status && (
-          <div className='status-container'>
-            <StatusBanner status={status} />
-            {showButtons && (
-              <div className='button-container'>
-                <Button variant='primary' onClick={() => handleConnectToTab()}>
-                  Allow
-                </Button>
-                <Button variant='reject' onClick={() => handleReject('Connection rejected. This tab can be closed.')}>
-                  Reject
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+        {status && <StatusHeader status={status} />}
 
-        {status?.type === 'connecting' && (
-          <div className='warning-banner'>
-            <strong>⚠️ Warning:</strong> Allowing this connection exposes the entire browser to the client,
+        {isConnecting && (
+          <div className='warning-text'>
+            <span className='warning-icon' aria-hidden='true'>⚠</span>
+            Allowing this connection exposes the entire browser to the client,
             including any signed-in sessions, cookies, and content in other tabs and windows.
             Once approved, the client may also be able to reconnect later without showing this dialog again,
             unless you regenerate the token below and then restart the browser.
           </div>
         )}
 
-        {status?.type === 'connecting' && (
+        {isConnecting && showTabList && (
+          <div className='tab-section'>
+            <div className='tab-section-title'>
+              Select a tab to allow, or open a new one. You can drag more tabs into the Playwright tab group later.
+            </div>
+            <div className='tab-list' role='radiogroup' aria-label='Select a tab'>
+              {tabs.map(tab => (
+                <TabRadioItem
+                  key={tab.id}
+                  tab={tab}
+                  name='connect-tab'
+                  checked={selectedTabKey === String(tab.id)}
+                  onSelect={() => setSelectedTabKey(String(tab.id))}
+                />
+              ))}
+              <NewTabRadioItem
+                name='connect-tab'
+                checked={selectedTabKey === NEW_TAB_VALUE}
+                onSelect={() => setSelectedTabKey(NEW_TAB_VALUE)}
+              />
+            </div>
+          </div>
+        )}
+
+        {isConnecting && (
           <AuthTokenSection />
         )}
 
-        {showTabList && (
-          <div>
-            <div className='tab-section-title'>
-              You can drag tabs into the Playwright group later to make them accessible to the client.
-              Optionally, select a tab to allow and immediately switch to it:
-            </div>
-            <div>
-              {tabs.map(tab => (
-                <TabItem
-                  key={tab.id}
-                  tab={tab}
-                  button={
-                    <Button variant='primary' onClick={() => handleConnectToTab(tab)}>
-                      Allow &amp; select
-                    </Button>
-                  }
-                />
-              ))}
-            </div>
+        {showButtons && (
+          <div className='footer'>
+            <Button variant='default' onClick={() => handleReject('Connection rejected. This tab can be closed.')}>
+              Reject
+            </Button>
+            <Button variant='primary' onClick={handleAllow}>
+              Allow
+            </Button>
           </div>
         )}
       </div>
@@ -245,9 +259,9 @@ const VersionMismatchError: React.FC<{ extensionVersion: string }> = ({ extensio
   );
 };
 
-const StatusBanner: React.FC<{ status: Status }> = ({ status }) => {
+const StatusHeader: React.FC<{ status: Status }> = ({ status }) => {
   return (
-    <div className={`status-banner ${status.type}`}>
+    <h1 className={`status-heading ${status.type}`}>
       {'versionMismatch' in status ? (
         <VersionMismatchError
           extensionVersion={status.versionMismatch.extensionVersion}
@@ -255,7 +269,7 @@ const StatusBanner: React.FC<{ status: Status }> = ({ status }) => {
       ) : (
         status.message
       )}
-    </div>
+    </h1>
   );
 };
 

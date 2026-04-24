@@ -243,7 +243,7 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
   });
 
   const confirmationPage = await confirmationPagePromise;
-  await expect(confirmationPage.locator('.status-banner')).toContainText(`Playwright client trying to connect requires newer extension version`);
+  await expect(confirmationPage.locator('.status-heading')).toContainText(`Playwright client trying to connect requires newer extension version`);
 
   expect(await navigateResponse).toHaveResponse({
     error: expect.stringContaining('Extension connection timeout.'),
@@ -327,7 +327,7 @@ test(`pending connection closed when client disconnects`, async ({ startExtensio
   // Close the MCP client, which tears down the relay WebSocket.
   await client.close();
 
-  await expect(selectorPage.locator('.status-banner')).toContainText('Pending client connection closed.');
+  await expect(selectorPage.locator('.status-heading')).toContainText('Pending client connection closed.');
   await expect(selectorPage).toHaveTitle('Playwright Extension');
 
   // The connect tab should be removed from the Playwright group.

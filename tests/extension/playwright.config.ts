@@ -19,6 +19,8 @@ import { defineConfig } from '@playwright/test';
 import type { TestOptions } from '../mcp/fixtures';
 import type { ExtensionTestOptions } from './extension-fixtures';
 
+process.env.PWTEST_UNDER_TEST = '1';
+
 export default defineConfig<TestOptions & ExtensionTestOptions>({
   testDir: './',
   fullyParallel: true,

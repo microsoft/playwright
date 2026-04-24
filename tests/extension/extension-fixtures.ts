@@ -17,7 +17,6 @@
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import { chromium } from 'playwright';
 import { spawn } from 'child_process';
 import { test as base, expect } from '../mcp/fixtures';
 import { kTargetClosedErrorMessage } from '../config/errors';
@@ -72,7 +71,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
     await use(extensionDir);
   },
 
-  browserWithExtension: async ({ mcpBrowser, pathToExtension }, use, testInfo) => {
+  // @ts-expect-error _decorateContext is private/internal
+  browserWithExtension: async ({ mcpBrowser, pathToExtension, playwright, _decorateContext }, use, testInfo) => {
     // The flags no longer work in Chrome since
     // https://chromium.googlesource.com/chromium/src/+/290ed8046692651ce76088914750cb659b65fb17%5E%21/chrome/browser/extensions/extension_service.cc?pli=1#
     test.skip('chromium' !== mcpBrowser, '--load-extension is not supported for official builds of Chromium');
@@ -82,7 +82,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
     await use({
       userDataDir,
       launch: async (mode?: 'disable-extension') => {
-        browserContext = await chromium.launchPersistentContext(userDataDir, {
+        browserContext = await playwright.chromium.launchPersistentContext(userDataDir, {
           channel: mcpBrowser,
           // Opening the browser singleton only works in headed.
           headless: false,
@@ -98,6 +98,9 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
         // background to be ready so tests can reach `chrome.*` via it.
         if (!browserContext.serviceWorkers().length)
           await browserContext.waitForEvent('serviceworker');
+
+        // needed for dogfooding --debug=cli
+        await _decorateContext(browserContext);
 
         return browserContext;
       }
@@ -218,7 +221,8 @@ export async function startWithExtensionFlag(browserWithExtension: BrowserWithEx
 // with the click — the request reaches the background while the page is being
 // torn down. Swallow the resulting "Target closed" error.
 export async function clickAllowAndSelect(connectPage: Page, tabTitle: RegExp | string): Promise<void> {
-  await connectPage.locator('.tab-item', { hasText: tabTitle }).getByRole('button', { name: 'Allow & select' }).click().catch(e => {
+  await connectPage.locator('.tab-item', { hasText: tabTitle }).click();
+  await connectPage.getByRole('button', { name: 'Allow', exact: true }).click().catch(e => {
     if (!e?.message?.includes(kTargetClosedErrorMessage))
       throw e;
   });

@@ -25,75 +25,52 @@ body {
   background-color: #ffffff;
   color: #1f2328;
   margin: 0;
-  padding: 16px;
+  padding: 24px 16px 96px;
   min-height: 100vh;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .content-wrapper {
-  max-width: 600px;
+  max-width: 640px;
   margin: 0 auto;
 }
 
-/* Status Banner */
-.status-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.status-banner {
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.status-banner.connected {
-  color: #1f2328;
-}
-
-.status-banner.connected::before {
-  content: "\2705";
-  margin-right: 8px;
-}
-
-.status-banner.error {
-  color: #1f2328;
-}
-
-.status-banner.error::before {
-  content: "\274C";
-  margin-right: 8px;
-}
-
-/* Warning banner */
-.warning-banner {
+/* Heading */
+.status-heading {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.35;
   margin: 0 0 16px 0;
-  padding: 12px;
-  background-color: #fff8e1;
-  border: 1px solid #f0c674;
-  border-radius: 6px;
+  color: #1f2328;
+}
+
+.status-heading.connected::before {
+  content: "\2705 ";
+}
+
+.status-heading.error::before {
+  content: "\274C ";
+}
+
+/* Warning text (replaces the yellow banner) */
+.warning-text {
+  display: flex;
+  gap: 8px;
   font-size: 13px;
   line-height: 1.5;
-  color: #5c4408;
+  color: #656d76;
+  margin: 0 0 24px 0;
 }
 
-.warning-banner strong {
-  color: #1f2328;
+.warning-icon {
+  flex: none;
+  color: #9a6700;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 /* Buttons */
-.button-container {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .button {
   padding: 8px 16px;
   border-radius: 6px;
@@ -109,26 +86,27 @@ body {
 }
 
 .button.primary {
-  background-color: #f8f9fa;
-  color: #3c4043;
-  border: 1px solid #dadce0;
+  background-color: #1f6feb;
+  color: #ffffff;
+  border: 1px solid #1f6feb;
 }
 
 .button.primary:hover {
-  background-color: #f1f3f4;
-  border-color: #dadce0;
-  box-shadow: 0 1px 2px 0 rgba(60,64,67,.1);
+  background-color: #1a5fcc;
+  border-color: #1a5fcc;
 }
 
 .button.default {
-  background-color: #f6f8fa;
+  background-color: #ffffff;
   color: #24292f;
+  border: 1px solid #d0d7de;
 }
 
 .button.default:hover {
-  background-color: #f3f4f6;
+  background-color: #f6f8fa;
 }
 
+/* Reject variant kept for back-compat (status page); connect page uses default. */
 .button.reject {
   background-color: #da3633;
   color: #ffffff;
@@ -140,47 +118,57 @@ body {
   border-color: #c73836;
 }
 
-/* Connection header */
-.connection-header {
+/* Footer with action buttons */
+.footer {
+  position: sticky;
+  bottom: 0;
+  background-color: #ffffff;
+  margin-top: 24px;
+  padding: 16px 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 12px;
-  margin-bottom: 16px;
-}
-
-.client-info {
-  font-size: 14px;
-  color: #1f2328;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid #d0d7de;
 }
 
 /* Tab selection */
+.tab-section {
+  margin-top: 8px;
+}
+
 .tab-section-title {
-  padding-left: 12px;
   font-size: 12px;
   font-weight: 400;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: #656d76;
+}
+
+.tab-list {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .tab-item {
   display: flex;
   align-items: center;
-  padding: 12px 0 12px 12px;
-  margin-bottom: 8px;
+  padding: 10px 12px;
   background-color: #ffffff;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.tab-list .tab-item:last-child {
+  border-bottom: none;
 }
 
 .tab-item:hover {
-  background-color: #f8f9fa;
+  background-color: #f6f8fa;
 }
 
 .tab-item.selected {
-  background-color: #f6f8fa;
+  background-color: #ddf4ff;
 }
 
 .tab-item.disabled {
@@ -191,13 +179,24 @@ body {
 .tab-radio {
   margin-right: 12px;
   flex-shrink: 0;
+  accent-color: #1f6feb;
 }
 
 .tab-favicon {
   width: 16px;
   height: 16px;
-  margin-right: 8px;
+  margin-right: 10px;
   flex-shrink: 0;
+}
+
+.tab-favicon-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  color: #656d76;
+  font-weight: 600;
 }
 
 .tab-content {
@@ -235,7 +234,7 @@ body {
 
 /* Auth token section */
 .auth-token-section {
-  margin: 16px 0;
+  margin: 24px 0 0 0;
   padding: 12px;
   background-color: #f6f8fa;
   border-radius: 6px;
@@ -261,8 +260,10 @@ body {
   color: #1f2328;
   border: none;
   flex: 1;
+  min-width: 0;
   padding: 0;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 
 .auth-token-refresh {
