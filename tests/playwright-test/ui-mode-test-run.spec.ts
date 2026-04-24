@@ -787,12 +787,12 @@ test('should not leak websocket connections', {
   });
 
   const [ws1] = await Promise.all([
-    page.waitForEvent('websocket'),
+    page.waitForEvent('websocket', w => !w.url().includes('hmr')),
     page.getByTitle('Reload').click(),
   ]);
 
   await Promise.all([
-    page.waitForEvent('websocket'),
+    page.waitForEvent('websocket', w => !w.url().includes('hmr')),
     page.getByTitle('Reload').click(),
   ]);
 
