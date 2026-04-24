@@ -30,7 +30,7 @@ import { testInfoError } from './util';
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
 import type { config as commonConfig, FullConfigInternal, test as testNs } from '../common';
-import type { TestAnnotation } from '../../types/test';
+import type { TestAnnotation, TestInfoError } from '../../types/test';
 
 export class WorkerMain extends ProcessRunner {
   private _params: ipc.WorkerInitParams;
@@ -40,7 +40,7 @@ export class WorkerMain extends ProcessRunner {
   private _fixtureRunner: FixtureRunner;
 
   // Accumulated fatal errors that cannot be attributed to a test.
-  private _fatalErrors: ipc.TestInfoErrorImpl[] = [];
+  private _fatalErrors: TestInfoError[] = [];
   // Whether we should skip running remaining tests in this suite because
   // of a setup error, usually beforeAll hook.
   private _skipRemainingTestsInSuite: testNs.Suite | undefined;
@@ -130,12 +130,12 @@ export class WorkerMain extends ProcessRunner {
 
     if (this._fatalErrors.length) {
       this._appendProcessTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
-      const payload: ipc.TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
+      const payload: ipc.TeardownErrorsPayload = { fatalErrors: this._fatalErrors.map(ipc.toTestInfoErrorPayload) };
       this.dispatchEvent('teardownErrors', payload);
     }
   }
 
-  private _appendProcessTeardownDiagnostics(error: ipc.TestInfoErrorImpl) {
+  private _appendProcessTeardownDiagnostics(error: TestInfoError) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -255,7 +255,7 @@ export class WorkerMain extends ProcessRunner {
       void this._stop();
     } finally {
       const donePayload: ipc.DonePayload = {
-        fatalErrors: this._fatalErrors,
+        fatalErrors: this._fatalErrors.map(ipc.toTestInfoErrorPayload),
         skipTestsDueToSetupFailure: [],
         fatalUnknownTestIds,
         stoppedDueToUnhandledErrorInTestFail: this._stoppedDueToUnhandledErrorInTestFail,
@@ -278,7 +278,7 @@ export class WorkerMain extends ProcessRunner {
       const response = await this._currentTest._onCustomMessageCallback?.(payload.request);
       return { response };
     } catch (error) {
-      return { response: {}, error: testInfoError(error) };
+      return { response: {}, error: ipc.toTestInfoErrorPayload(testInfoError(error)) };
     }
   }
 
@@ -649,7 +649,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl): ipc.TestEndPayload {
     testId: testInfo.testId,
     duration: testInfo.duration,
     status: testInfo.status!,
-    errors: testInfo.errors,
+    errors: testInfo.errors.map(ipc.toTestInfoErrorPayload),
     hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,

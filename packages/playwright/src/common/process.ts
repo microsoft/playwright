@@ -22,7 +22,7 @@ import { startProfiling, stopProfiling } from '@utils/profiler';
 
 import { serializeError } from '../util';
 
-import type { EnvProducedPayload, ProcessInitParams, TestInfoErrorImpl } from './ipc';
+import type { EnvProducedPayload, ProcessInitParams, TestInfoErrorPayload } from './ipc';
 
 export type ProtocolRequest = {
   id: number;
@@ -32,7 +32,7 @@ export type ProtocolRequest = {
 
 export type ProtocolResponse = {
   id?: number;
-  error?: TestInfoErrorImpl;
+  error?: TestInfoErrorPayload;
   method?: string;
   params?: any;
   result?: any;

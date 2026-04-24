@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-import util from 'util';
-
 import { serializeError } from '../util';
 
-import type { ipc } from '../common';
+import type { TestInfoError } from '../../types/test';
 import type { MatcherResultProperty } from '../matchers/matcherHint';
 
-export function testInfoError(error: Error | any): ipc.TestInfoErrorImpl {
+export function testInfoError(error: Error | any): TestInfoError {
   const result = serializeError(error);
   const matcherResult = (error instanceof Error ? (error as any).matcherResult : undefined) as MatcherResultProperty | undefined;
   if (matcherResult) {
-    const serialized: NonNullable<ipc.TestInfoErrorImpl['matcherResult']> = {
+    const serialized: NonNullable<TestInfoError['matcherResult']> = {
       name: matcherResult.name,
       pass: matcherResult.pass,
     };
     if (matcherResult.expected !== undefined)
-      serialized.expected = inspectForIpc(matcherResult.expected);
+      serialized.expected = matcherResult.expected;
     if (matcherResult.actual !== undefined)
-      serialized.actual = inspectForIpc(matcherResult.actual);
+      serialized.actual = matcherResult.actual;
     if (matcherResult.log !== undefined)
       serialized.log = matcherResult.log;
     if (matcherResult.timeout !== undefined)
@@ -42,10 +40,4 @@ export function testInfoError(error: Error | any): ipc.TestInfoErrorImpl {
     result.matcherResult = serialized;
   }
   return result;
-}
-
-function inspectForIpc(value: unknown): string {
-  if (typeof value === 'string')
-    return value;
-  return util.inspect(value, { depth: 10 });
 }

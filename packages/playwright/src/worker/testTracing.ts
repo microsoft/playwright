@@ -28,8 +28,7 @@ import { getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
 import { filteredStackTrace } from '../util';
 
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
-import type { PlaywrightWorkerOptions, TestInfo, TraceMode } from '../../types/test';
-import type { ipc } from '../common';
+import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
@@ -250,7 +249,7 @@ export class TestTracing {
     this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }
 
-  appendForError(error: ipc.TestInfoErrorImpl) {
+  appendForError(error: TestInfoError) {
     const rawStack = error.stack?.split('\n') || [];
     const stack = rawStack ? filteredStackTrace(rawStack) : [];
     this._appendTraceEvent({
@@ -260,7 +259,7 @@ export class TestTracing {
     });
   }
 
-  _formatError(error: ipc.TestInfoErrorImpl) {
+  _formatError(error: TestInfoError) {
     const parts: string[] = [error.message || String(error.value)];
     if (error.cause)
       parts.push('[cause]: ' + this._formatError(error.cause));

@@ -27,8 +27,8 @@ Error stack. Set when [Error] (or its subclass) has been thrown.
 - type: ?<[Object]>
   - `name` <[string]> Matcher name (e.g. `toBeVisible`).
   - `pass` <[boolean]> Whether the matcher passed.
-  - `expected` ?<[string]> Expected value formatted as a string.
-  - `actual` ?<[string]> Received value formatted as a string.
+  - `expected` ?<[any]> Expected value.
+  - `actual` ?<[any]> Received value.
   - `log` ?<[Array]<[string]>> Matcher log lines, if any.
   - `timeout` ?<[int]> Matcher timeout in milliseconds, set when the matcher timed out.
   - `ariaSnapshot` ?<[string]> Aria snapshot of the receiver at the time of failure, if available.

@@ -10023,14 +10023,14 @@ export interface TestInfoError {
     pass: boolean;
 
     /**
-     * Expected value formatted as a string.
+     * Expected value.
      */
-    expected?: string;
+    expected?: any;
 
     /**
-     * Received value formatted as a string.
+     * Received value.
      */
-    actual?: string;
+    actual?: any;
 
     /**
      * Matcher log lines, if any.
