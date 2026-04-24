@@ -6,24 +6,13 @@ on:
       - main
       - release-*
   pull_request:
-    paths:
-      - 'packages/playwright/**'
-      - 'packages/playwright-core/**'
-      - '!packages/playwright-core/src/server/bidi/**'
-      - '!packages/playwright-core/src/tools/dashboard/**'
-      - '!packages/playwright-core/src/tools/trace/**'
-      - 'packages/playwright-test/**'
-      - 'packages/injected/**'
-      - 'packages/isomorphic/**'
-      - 'packages/protocol/**'
-      - 'packages/utils/**'
-      - 'tests/config/**'
-      - 'tests/mcp/**'
-      - 'utils/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/actions/**'
-      - '.github/workflows/tests_mcp.yml'
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+      - 'packages/extension/**'
+      - 'packages/playwright-core/src/server/bidi/**'
+      - 'tests/bidi/**'
+      - 'tests/extension/**'
     branches:
       - main
       - release-*
