@@ -24,7 +24,19 @@ import { clientToViewport, getImageLayout } from './imageLayout';
 import type { ImageLayout } from './imageLayout';
 import type { AnnotateFrame } from './dashboardModel';
 
-export type Annotation = { id: string; x: number; y: number; width: number; height: number; text: string };
+export type Annotation = { id: string; x: number; y: number; width: number; height: number; text: string; color: string };
+
+// Palette is 6 rgb triples — matches the `--annotations-blue` pattern so they
+// compose nicely via `rgb(var(--annotation-color))` / `rgb(var(...) / 0.12)`.
+const ANNOTATION_COLORS = [
+  { name: 'blue',   rgb: '54 116 209' },
+  { name: 'red',    rgb: '229 62 62' },
+  { name: 'green',  rgb: '56 161 105' },
+  { name: 'orange', rgb: '221 107 32' },
+  { name: 'purple', rgb: '128 90 213' },
+  { name: 'pink',   rgb: '213 63 140' },
+];
+const DEFAULT_ANNOTATION_COLOR = ANNOTATION_COLORS[0].rgb;
 
 type Rect = { x: number; y: number; width: number; height: number };
 type DragKind = 'move' | 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
@@ -138,19 +150,21 @@ export async function buildAnnotatedImage(
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const sx = canvas.width / viewportWidth;
   const sy = canvas.height / viewportHeight;
-  const blue = 'rgb(54, 116, 209)';
   const fontSize = Math.max(11, Math.round(14 * sy));
   ctx.font = `500 ${fontSize}px -apple-system, system-ui, sans-serif`;
   ctx.textBaseline = 'middle';
   for (const a of annotations) {
+    const [r, g, b] = a.color.split(' ').map(Number);
+    const solid = `rgb(${r}, ${g}, ${b})`;
+    const wash = `rgba(${r}, ${g}, ${b}, 0.12)`;
     const x = a.x * sx;
     const y = a.y * sy;
     const w = a.width * sx;
     const h = a.height * sy;
-    ctx.fillStyle = 'rgba(54, 116, 209, 0.12)';
+    ctx.fillStyle = wash;
     ctx.fillRect(x, y, w, h);
     ctx.lineWidth = Math.max(2, Math.round(2 * sy));
-    ctx.strokeStyle = blue;
+    ctx.strokeStyle = solid;
     ctx.strokeRect(x, y, w, h);
     if (a.text) {
       const padX = Math.max(4, Math.round(6 * sy));
@@ -160,7 +174,7 @@ export async function buildAnnotatedImage(
       const labelH = fontSize + padY * 2;
       const labelX = x - ctx.lineWidth / 2;
       const labelY = y - labelH;
-      ctx.fillStyle = blue;
+      ctx.fillStyle = solid;
       ctx.fillRect(labelX, labelY, labelW, labelH);
       ctx.fillStyle = '#fff';
       ctx.fillText(a.text, labelX + padX, labelY + labelH / 2);
@@ -185,11 +199,33 @@ type AnnotationsProps = {
   onAnnotationsChange?: (count: number) => void;
 };
 
+const ColorPicker: React.FC<{ color: string; onChange: (color: string) => void }> = ({ color, onChange }) => (
+  <div className='annotations-color-picker' role='radiogroup' aria-label='Annotation color'>
+    {ANNOTATION_COLORS.map(({ name, rgb }) => (
+      <button
+        key={name}
+        type='button'
+        role='radio'
+        aria-checked={color === rgb}
+        title={`Use ${name}`}
+        className={'annotations-color-swatch' + (color === rgb ? ' selected' : '')}
+        style={{ '--annotation-color': rgb } as React.CSSProperties}
+        onClick={() => onChange(rgb)}
+      />
+    ))}
+  </div>
+);
+
 export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>(({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit, onAnnotationsChange }, ref) => {
   const [annotations, setAnnotations] = React.useState<Annotation[]>([]);
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
   const [selection, setSelection] = React.useState<Selection>(null);
   const [drag, setDrag] = React.useState<DragState | null>(null);
+  const [activeColor, setActiveColor] = React.useState<string>(DEFAULT_ANNOTATION_COLOR);
+  // Snapshot of the annotation taken when an *existing* annotation enters edit
+  // mode. Its presence signals "editing" (Cancel/Done) vs "adding" (Discard/Add);
+  // Cancel reverts to this snapshot.
+  const [editSnapshot, setEditSnapshot] = React.useState<Annotation | null>(null);
   const [, setTick] = React.useState(0);
   const forceRender = React.useCallback(() => setTick(t => t + 1), []);
   const layerRef = React.useRef<HTMLDivElement>(null);
@@ -297,7 +333,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
     if (rect.width < MIN_ANNOTATION_SIZE || rect.height < MIN_ANNOTATION_SIZE)
       return;
     const id = newAnnotationId();
-    setAnnotations(prev => [...prev, { id, ...rect, text: '' }]);
+    setAnnotations(prev => [...prev, { id, ...rect, text: '', color: activeColor }]);
     setSelection({ id, editing: true });
   }
 
@@ -352,6 +388,12 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   React.useEffect(() => {
     onAnnotationsChange?.(annotations.length);
   }, [annotations.length, onAnnotationsChange]);
+
+  // Snapshot is only meaningful while an annotation is actively being edited.
+  React.useEffect(() => {
+    if (!editingId)
+      setEditSnapshot(null);
+  }, [editingId]);
 
   React.useImperativeHandle(ref, () => ({
     clear: () => {
@@ -415,10 +457,12 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
           <div
             key={a.id}
             className={'annotations-rect' + (isSelected ? ' selected' : '') + (isEditing ? ' editing' : '') + (a.text ? '' : ' empty')}
-            style={style}
+            style={{ ...style, '--annotation-color': a.color } as React.CSSProperties}
             onDoubleClick={e => {
               e.preventDefault();
               e.stopPropagation();
+              if (editingId !== a.id)
+                setEditSnapshot({ ...a });
               setSelection({ id: a.id, editing: true });
             }}
           >
@@ -428,6 +472,8 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
                 onMouseDown={e => {
                   e.preventDefault();
                   e.stopPropagation();
+                  if (editingId !== a.id)
+                    setEditSnapshot({ ...a });
                   setSelection({ id: a.id, editing: true });
                 }}
               >
@@ -447,17 +493,18 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
 
       {draft && (() => {
         const style = mapRect(normalizeRect(draft));
-        return style ? <div className='annotations-rect draft' style={style} /> : null;
+        return style ? <div className='annotations-rect draft' style={{ ...style, '--annotation-color': activeColor } as React.CSSProperties} /> : null;
       })()}
 
       {editingAnnotation && (() => {
         const style = mapRect(editingAnnotation);
         if (!style)
           return null;
-        const popoverStyle: React.CSSProperties = {
-          left: style.left as number,
-          top: (style.top as number) + (style.height as number) + 6,
-        };
+        const popoverStyle = {
+          'left': style.left as number,
+          'top': (style.top as number) + (style.height as number) + 6,
+          '--annotation-color': editingAnnotation.color,
+        } as React.CSSProperties;
         return (
           <div
             className='annotations-popover'
@@ -486,23 +533,56 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
               }}
               onKeyUp={e => e.stopPropagation()}
             />
-            <div className='annotations-popover-actions'>
-              <button
-                className='annotations-action-btn danger'
-                onClick={() => {
-                  setAnnotations(prev => prev.filter(a => a.id !== editingAnnotation.id));
-                  setSelection(null);
-                  layerRef.current?.focus();
+            <div className='annotations-popover-footer'>
+              <ColorPicker
+                color={editingAnnotation.color}
+                onChange={color => {
+                  setAnnotations(prev => prev.map(a => a.id === editingAnnotation.id ? { ...a, color } : a));
+                  setActiveColor(color);
                 }}
-              >
-                Discard
-              </button>
-              <button
-                className='annotations-action-btn'
-                onClick={closeEditor}
-              >
-                Add
-              </button>
+              />
+              <div className='annotations-popover-actions'>
+                {editSnapshot ? (
+                  <>
+                    <button
+                      className='annotations-action-btn'
+                      onClick={() => {
+                        const snap = editSnapshot;
+                        setAnnotations(prev => prev.map(a => a.id === snap.id ? snap : a));
+                        setSelection(null);
+                        layerRef.current?.focus();
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className='annotations-action-btn'
+                      onClick={closeEditor}
+                    >
+                      Done
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className='annotations-action-btn danger'
+                      onClick={() => {
+                        setAnnotations(prev => prev.filter(a => a.id !== editingAnnotation.id));
+                        setSelection(null);
+                        layerRef.current?.focus();
+                      }}
+                    >
+                      Discard
+                    </button>
+                    <button
+                      className='annotations-action-btn'
+                      onClick={closeEditor}
+                    >
+                      Add
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         );

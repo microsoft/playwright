@@ -18,6 +18,15 @@
   --annotations-blue: 54 116 209;
 }
 
+/* --annotation-color: each rect sets this inline to its own palette colour;
+   falls back to the brand blue so draft / unstyled cases still read correctly. */
+.annotations-layer,
+.annotations-rect,
+.annotations-popover,
+.annotations-color-swatch {
+  --annotation-color: var(--annotations-blue);
+}
+
 .annotations-layer {
   position: absolute;
   inset: 0;
@@ -75,26 +84,26 @@
 .annotations-rect {
   position: absolute;
   box-sizing: border-box;
-  border: 2px solid rgb(var(--annotations-blue));
-  background: rgb(var(--annotations-blue) / 0.12);
+  border: 2px solid rgb(var(--annotation-color));
+  background: rgb(var(--annotation-color) / 0.12);
   cursor: pointer;
   transition: box-shadow 120ms ease;
 }
 
 .annotations-rect:hover {
-  box-shadow: 0 0 0 3px rgb(var(--annotations-blue) / 0.25);
+  box-shadow: 0 0 0 3px rgb(var(--annotation-color) / 0.25);
 }
 
 .annotations-rect.selected {
-  box-shadow: 0 0 0 3px rgb(var(--annotations-blue) / 0.4);
+  box-shadow: 0 0 0 3px rgb(var(--annotation-color) / 0.4);
   border-style: solid;
-  border-color: rgb(var(--annotations-blue));
+  border-color: rgb(var(--annotation-color));
   cursor: move;
 }
 
 .annotations-rect.draft {
   border-style: dashed;
-  background: rgb(var(--annotations-blue) / 0.18);
+  background: rgb(var(--annotation-color) / 0.18);
   pointer-events: none;
 }
 
@@ -103,7 +112,7 @@
   width: 10px;
   height: 10px;
   background: #fff;
-  border: 1.5px solid rgb(var(--annotations-blue));
+  border: 1.5px solid rgb(var(--annotation-color));
   border-radius: 2px;
   box-sizing: border-box;
   z-index: 1;
@@ -124,7 +133,7 @@
   left: -2px;
   max-width: calc(100% + 4px);
   padding: 2px 6px;
-  background: rgb(var(--annotations-blue));
+  background: rgb(var(--annotation-color));
   color: #fff;
   font-size: 11px;
   font-weight: 500;
@@ -137,7 +146,7 @@
 }
 
 .annotations-label:hover {
-  background: rgb(var(--annotations-blue) / 0.85);
+  background: rgb(var(--annotation-color) / 0.85);
 }
 
 .annotations-popover {
@@ -172,13 +181,46 @@
 }
 
 .annotations-textarea:focus {
-  border-color: rgb(var(--annotations-blue));
+  border-color: rgb(var(--annotation-color));
+}
+
+.annotations-popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .annotations-popover-actions {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
+}
+
+.annotations-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.annotations-color-swatch {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: rgb(var(--annotation-color));
+  cursor: pointer;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+.annotations-color-swatch:hover {
+  box-shadow: 0 0 0 2px rgb(var(--annotation-color) / 0.35);
+}
+
+.annotations-color-swatch.selected {
+  border-color: var(--color-fg-default);
+  transform: scale(1.1);
 }
 
 .annotate-modal-image {
