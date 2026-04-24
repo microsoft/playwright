@@ -96,7 +96,6 @@ export async function toMatchText(
       printedDiff,
       log,
       errorMessage,
-      ariaSnapshot: received?.ariaSnapshot,
     });
   };
 
@@ -108,5 +107,6 @@ export async function toMatchText(
     actual: receivedValue,
     log,
     timeout: timedOut ? timeout : undefined,
+    ariaSnapshot: received?.ariaSnapshot,
   };
 }

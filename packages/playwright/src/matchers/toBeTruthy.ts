@@ -69,7 +69,6 @@ export async function toBeTruthy(
       printedReceived,
       errorMessage,
       log,
-      ariaSnapshot: received?.ariaSnapshot,
     });
   };
 
@@ -81,5 +80,6 @@ export async function toBeTruthy(
     expected,
     log,
     timeout: timedOut ? timeout : undefined,
+    ariaSnapshot: received?.ariaSnapshot,
   };
 }

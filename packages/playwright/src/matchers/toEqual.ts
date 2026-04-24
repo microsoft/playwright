@@ -98,7 +98,6 @@ export async function toEqual<T>(
       printedDiff,
       errorMessage,
       log,
-      ariaSnapshot: received?.ariaSnapshot,
     });
   };
 
@@ -112,5 +111,6 @@ export async function toEqual<T>(
     pass,
     log,
     timeout: timedOut ? timeout : undefined,
+    ariaSnapshot: received?.ariaSnapshot,
   };
 }
