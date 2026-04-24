@@ -22,7 +22,6 @@ export type ProtocolCommand = {
 
 // The narrow surface of RelayConnection that protocol handlers use.
 export interface RelayContext {
-  readonly selectedTab: Promise<number>;
   readonly attachedTabs: ReadonlySet<number>;
   sendMessage(message: any): void;
   // Records that a tab's debugger is now attached. Fires ontabattached on the
@@ -38,31 +37,35 @@ export interface ProtocolHandler {
   // Forwards an already-filtered chrome.* event (concerning a currently-attached
   // tab) to the relay. Shape is protocol-specific.
   forwardChromeEvent(fullMethod: string, args: any[]): void;
-  // The UI added a tab to the Playwright group. Handler tells the relay the
-  // tab is now available; the relay attaches via the usual command path.
+  // The UI added a tab to the Playwright group, whether as the initial pick
+  // from the connect page or from a later drag-in. Handler tells the relay
+  // the tab is now available; the relay attaches via the usual command path.
   onUserAttachRequest(tab: chrome.tabs.Tab): void;
   // The UI removed a tab. RelayConnection has already detached the debugger
   // and called notifyTabDetached; the handler only sends the wire-level
   // detach notification (if the protocol has one).
   onUserDetachRequest(tabId: number): void;
+  // Signals that the initial set of `onUserAttachRequest` calls is complete.
+  // For v2 this sends `extension.initialized` so the relay can unblock CDP
+  // traffic from Playwright; v1 has no handshake and ignores it.
+  didInitialize(): void;
 }
 
 // ─── Protocol v1 (legacy single-tab) ───────────────────────────────────────
 
 export class ProtocolV1Handler implements ProtocolHandler {
   private _context: RelayContext;
+  private _selectedTabPromise: Promise<number>;
+  private _selectedTabResolve!: (tabId: number) => void;
 
   constructor(context: RelayContext) {
     this._context = context;
+    this._selectedTabPromise = new Promise(resolve => this._selectedTabResolve = resolve);
   }
 
   async handleCommand(message: ProtocolCommand): Promise<any> {
-    if (message.method === 'extension.selectTab') {
-      const tabId = await this._context.selectedTab;
-      return { tabId };
-    }
     if (message.method === 'attachToTab') {
-      const tabId = await this._context.selectedTab;
+      const tabId = await this._selectedTabPromise;
       const debuggee: chrome.debugger.Debuggee = { tabId };
       await chrome.debugger.attach(debuggee, '1.3');
       this._context.notifyTabAttached(tabId);
@@ -94,13 +97,22 @@ export class ProtocolV1Handler implements ProtocolHandler {
     });
   }
 
-  onUserAttachRequest(_tab: chrome.tabs.Tab): void {
-    // v1 is single-tab by design; dragging extra tabs into the group is a no-op.
+  onUserAttachRequest(tab: chrome.tabs.Tab): void {
+    // v1 is single-tab by design: the first attach call determines the tab
+    // used by the pending `attachToTab` command. Later attach requests are
+    // silently ignored (Promise.resolve is a no-op once resolved).
+    if (tab.id !== undefined)
+      this._selectedTabResolve(tab.id);
   }
 
   onUserDetachRequest(_tabId: number): void {
     // v1 has no wire-level detach notification; when the last tab detaches the
     // socket closes and the relay notices.
+  }
+
+  didInitialize(): void {
+    // v1 has no initial-tab-list handshake. `_selectedTabPromise` is resolved
+    // by the first `onUserAttachRequest`, which already unblocks `attachToTab`.
   }
 }
 
@@ -124,10 +136,6 @@ export class ProtocolV2Handler implements ProtocolHandler {
   }
 
   async handleCommand(message: ProtocolCommand): Promise<any> {
-    if (message.method === 'extension.selectTab') {
-      const tabId = await this._context.selectedTab;
-      return { tabId };
-    }
     if (ALLOWED_CHROME_COMMANDS.has(message.method)) {
       const args = (message.params ?? []) as any[];
       const result = await invokeChromeMethod(message.method, args);
@@ -150,6 +158,13 @@ export class ProtocolV2Handler implements ProtocolHandler {
     // Simulate a "new tab opened" event; the relay responds by calling
     // chrome.debugger.attach, which flows through handleCommand.
     this._context.sendMessage({ method: 'chrome.tabs.onCreated', params: [tab] });
+  }
+
+  didInitialize(): void {
+    // Signals the end of the initial-tab handshake. The relay holds CDP
+    // traffic from Playwright until it sees this event, so that
+    // `Target.setAutoAttach` is answered from a populated tab model.
+    this._context.sendMessage({ method: 'extension.initialized', params: [] });
   }
 
   onUserDetachRequest(tabId: number): void {

@@ -15,83 +15,73 @@
  */
 
 /**
- * Protocol v2: multi-tab interface. The relay owns CDP session management —
- * it asks the extension for the user's tab pick (extension.selectTab), then
- * attaches the debugger and dispatches Target.attachedToTarget events to
- * Playwright. Additional tabs are created either by Playwright
- * (Target.createTarget → chrome.tabs.create) or by the controlled tabs
- * themselves (chrome.tabs.onCreated event from the extension).
+ * Protocol v2: thin adapter between the extension wire protocol and the
+ * CDP wire protocol. All tab-model state lives in `BrowserModel`; this file
+ * only demultiplexes incoming extension events and dispatches CDP commands
+ * to the model.
+ *
+ * Handshake: the extension pushes `chrome.tabs.onCreated` for each initial
+ * tab, then `extension.initialized`. The relay does not process CDP
+ * commands until `ready()` resolves, so `Target.setAutoAttach` is always
+ * answered from a populated model.
  */
 
-import { logUnhandledError } from './log';
+import { ManualPromise } from '@isomorphic/manualPromise';
 
-import type { ExtensionProtocolHandler, SendCommand, SendToPlaywright } from './cdpRelayHandler';
+import { logUnhandledError } from './log';
+import { BrowserModel } from './browserModel';
+
+import type { ExtensionProtocolHandler, SendCommand, SendToCDPClient } from './cdpRelayHandler';
 import type { ExtensionEventsV2 } from './protocol';
 
-type TabSession = {
-  tabId: number;
-  sessionId: string;
-  targetInfo: any;
-  // Child CDP sessionIds (workers, oopifs, ...) belonging to this tab,
-  // tracked via Target.attachedToTarget / Target.detachedFromTarget events.
-  childSessions: Set<string>;
-};
-
 export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
-  private _sendCommand: SendCommand;
-  private _sendToPlaywright: SendToPlaywright;
-  private _tabSessions = new Map<number, TabSession>();
-  private _nextSessionId = 1;
+  private _model: BrowserModel;
+  // Resolved by `extension.initialized`. Purely a handshake signal for the
+  // relay — the model itself is oblivious to this phase.
+  private _ready = new ManualPromise<void>();
 
-  constructor(sendCommand: SendCommand, sendToPlaywright: SendToPlaywright) {
-    this._sendCommand = sendCommand;
-    this._sendToPlaywright = sendToPlaywright;
+  constructor(sendCommand: SendCommand) {
+    this._model = new BrowserModel(sendCommand);
+    void this._ready.catch(logUnhandledError);
+  }
+
+  ready(): Promise<void> {
+    return this._ready;
+  }
+
+  connectOverCDP(sendToCDPClient: SendToCDPClient): void {
+    this._model.connectOverCDP(sendToCDPClient);
+  }
+
+  onExtensionDisconnect(reason: string): void {
+    if (!this._ready.isDone())
+      this._ready.reject(new Error(`Extension disconnected before initialization: ${reason}`));
   }
 
   handleExtensionEvent(method: string, params: any): void {
     switch (method) {
       case 'chrome.debugger.onEvent': {
         const [source, cdpMethod, cdpParams] = params as ExtensionEventsV2['chrome.debugger.onEvent']['params'];
-        if (source.tabId === undefined)
-          return;
-        const tabSession = this._tabSessions.get(source.tabId);
-        if (!tabSession)
-          return;
-        // Track child CDP sessions so we can route subsequent commands for
-        // them to the correct tab. Target.attachedToTarget introduces a new
-        // sessionId belonging to the same tab; Target.detachedFromTarget
-        // releases it.
-        const childSessionId = (cdpParams as { sessionId?: string } | undefined)?.sessionId;
-        if (cdpMethod === 'Target.attachedToTarget' && childSessionId)
-          tabSession.childSessions.add(childSessionId);
-        else if (cdpMethod === 'Target.detachedFromTarget' && childSessionId)
-          tabSession.childSessions.delete(childSessionId);
-        // Top-level CDP events for the tab use the tab's relay sessionId.
-        // Child CDP sessions (workers, oopifs) keep their own sessionId.
-        const sessionId = source.sessionId || tabSession.sessionId;
-        this._sendToPlaywright({
-          sessionId,
-          method: cdpMethod,
-          params: cdpParams,
-        });
+        this._model.onDebuggerEvent(source, cdpMethod, cdpParams);
         break;
       }
       case 'chrome.debugger.onDetach': {
         const [source] = params as ExtensionEventsV2['chrome.debugger.onDetach']['params'];
-        if (source.tabId !== undefined)
-          this._detachTab(source.tabId);
+        this._model.onDebuggerDetach(source);
         break;
       }
       case 'chrome.tabs.onCreated': {
         const [tab] = params as ExtensionEventsV2['chrome.tabs.onCreated']['params'];
-        // A controlled tab opened a popup. Attach to it.
-        if (tab.id !== undefined)
-          void this._attachTab(tab.id).catch(logUnhandledError);
+        this._model.onTabCreated(tab);
         break;
       }
       case 'chrome.tabs.onRemoved': {
         const [tabId] = params as ExtensionEventsV2['chrome.tabs.onRemoved']['params'];
-        this._detachTab(tabId);
+        this._model.onTabRemoved(tabId);
+        break;
+      }
+      case 'extension.initialized': {
+        this._ready.resolve();
         break;
       }
     }
@@ -102,31 +92,15 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
       case 'Target.setAutoAttach': {
         if (sessionId)
           return undefined;
-        // Ask the user to pick the initial tab via the connect UI, then attach.
-        const { tabId } = await this._sendCommand('extension.selectTab', []);
-        await this._attachTab(tabId);
+        await this._model.enableAutoAttach();
         return { result: {} };
       }
-      case 'Target.createTarget': {
-        const tab = await this._sendCommand('chrome.tabs.create', [{ url: params?.url }]);
-        if (tab?.id === undefined)
-          throw new Error('Failed to create tab');
-        const tabSession = await this._attachTab(tab.id);
-        return { result: { targetId: tabSession.targetInfo?.targetId } };
-      }
-      case 'Target.closeTarget': {
-        const targetId = params?.targetId;
-        const tabSession = targetId ? this._findTabSession(s => s.targetInfo?.targetId === targetId) : undefined;
-        if (!tabSession)
-          return { result: { success: false } };
-        await this._sendCommand('chrome.tabs.remove', [tabSession.tabId]);
-        return { result: { success: true } };
-      }
-      case 'Target.getTargetInfo': {
-        if (!sessionId)
-          return { result: undefined };
-        return { result: this._findTabSession(s => s.sessionId === sessionId)?.targetInfo };
-      }
+      case 'Target.createTarget':
+        return { result: await this._model.createTarget(params?.url) };
+      case 'Target.closeTarget':
+        return { result: await this._model.closeTarget(params?.targetId) };
+      case 'Target.getTargetInfo':
+        return { result: this._model.getTargetInfo(sessionId) };
     }
     return undefined;
   }
@@ -134,68 +108,6 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
   async forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any> {
     if (!sessionId)
       throw new Error(`Unsupported command without sessionId: ${method}`);
-    // Resolve the sessionId to a tab session. Two cases:
-    // 1. sessionId is a relay-level tab session (pw-tab-N) → strip and route by tabId.
-    // 2. sessionId is a child CDP session (worker, oopif) → route to its owning tab,
-    //    keep the sessionId so the extension forwards it to chrome.debugger.
-    let tabSession = this._findTabSession(s => s.sessionId === sessionId);
-    let cdpSessionId: string | undefined;
-    if (!tabSession) {
-      tabSession = this._findTabSession(s => s.childSessions.has(sessionId));
-      cdpSessionId = sessionId;
-    }
-    if (!tabSession)
-      throw new Error(`No tab found for sessionId: ${sessionId}`);
-    return await this._sendCommand('chrome.debugger.sendCommand', [
-      { tabId: tabSession.tabId, sessionId: cdpSessionId },
-      method,
-      params,
-    ]);
-  }
-
-  private async _attachTab(tabId: number): Promise<TabSession> {
-    const existing = this._tabSessions.get(tabId);
-    if (existing)
-      return existing;
-    await this._sendCommand('chrome.debugger.attach', [{ tabId }, '1.3']);
-    const result = await this._sendCommand('chrome.debugger.sendCommand', [
-      { tabId },
-      'Target.getTargetInfo',
-    ]);
-    const targetInfo = result?.targetInfo;
-    const sessionId = `pw-tab-${this._nextSessionId++}`;
-    const tabSession: TabSession = { tabId, sessionId, targetInfo, childSessions: new Set() };
-    this._tabSessions.set(tabId, tabSession);
-    this._sendToPlaywright({
-      method: 'Target.attachedToTarget',
-      params: {
-        sessionId,
-        targetInfo: { ...targetInfo, attached: true },
-        waitingForDebugger: false,
-      },
-    });
-    return tabSession;
-  }
-
-  private _detachTab(tabId: number): void {
-    const tabSession = this._tabSessions.get(tabId);
-    if (!tabSession)
-      return;
-    this._tabSessions.delete(tabId);
-    this._sendToPlaywright({
-      method: 'Target.detachedFromTarget',
-      params: {
-        sessionId: tabSession.sessionId,
-        targetId: tabSession.targetInfo?.targetId,
-      },
-    });
-  }
-
-  private _findTabSession(predicate: (session: TabSession) => boolean): TabSession | undefined {
-    for (const session of this._tabSessions.values()) {
-      if (predicate(session))
-        return session;
-    }
-    return undefined;
+    return await this._model.sendCommand(sessionId, method, params);
   }
 }

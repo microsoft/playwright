@@ -17,12 +17,10 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Button, TabItem  } from './tabItem';
-
-import type { TabInfo } from './tabItem';
 import { AuthTokenSection } from './authToken';
 
 const StatusApp: React.FC = () => {
-  const [connectedTabs, setConnectedTabs] = useState<TabInfo[]>([]);
+  const [connectedTabs, setConnectedTabs] = useState<chrome.tabs.Tab[]>([]);
   const [clientName, setClientName] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -31,21 +29,7 @@ const StatusApp: React.FC = () => {
 
   const loadStatus = async () => {
     const { connectedTabIds, clientName } = await chrome.runtime.sendMessage({ type: 'getConnectionStatus' });
-    const tabs: TabInfo[] = [];
-    for (const tabId of (connectedTabIds as number[] ?? [])) {
-      try {
-        const tab = await chrome.tabs.get(tabId);
-        tabs.push({
-          id: tab.id!,
-          windowId: tab.windowId!,
-          title: tab.title!,
-          url: tab.url!,
-          favIconUrl: tab.favIconUrl
-        });
-      } catch {
-        // Tab may have been closed.
-      }
-    }
+    const tabs = await Promise.all((connectedTabIds as number[] ?? []).map(tabId => chrome.tabs.get(tabId)));
     setConnectedTabs(tabs);
     setClientName(clientName);
   };
@@ -81,7 +65,7 @@ const StatusApp: React.FC = () => {
                 <TabItem
                   key={tab.id}
                   tab={tab}
-                  onClick={() => openTab(tab.id)}
+                  onClick={() => openTab(tab.id!)}
                 />
               ))}
             </div>

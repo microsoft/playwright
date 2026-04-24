@@ -19,18 +19,21 @@
  * attachment and forwards CDP events/commands through a thin wrapper.
  */
 
-import type { ExtensionProtocolHandler, SendCommand, SendToPlaywright } from './cdpRelayHandler';
+import type { ExtensionProtocolHandler, SendCommand, SendToCDPClient } from './cdpRelayHandler';
 import type { ExtensionEventsV1 } from './protocol';
 
 export class ExtensionProtocolV1 implements ExtensionProtocolHandler {
   private _sendCommand: SendCommand;
-  private _sendToPlaywright: SendToPlaywright;
+  private _sendToCDPClient: SendToCDPClient | null = null;
   private _connectedTabInfo: { targetInfo: any; sessionId: string } | undefined;
   private _nextSessionId = 1;
 
-  constructor(sendCommand: SendCommand, sendToPlaywright: SendToPlaywright) {
+  constructor(sendCommand: SendCommand) {
     this._sendCommand = sendCommand;
-    this._sendToPlaywright = sendToPlaywright;
+  }
+
+  connectOverCDP(sendToCDPClient: SendToCDPClient): void {
+    this._sendToCDPClient = sendToCDPClient;
   }
 
   handleExtensionEvent(method: string, params: any): void {
@@ -38,7 +41,7 @@ export class ExtensionProtocolV1 implements ExtensionProtocolHandler {
       case 'forwardCDPEvent': {
         const p = params as ExtensionEventsV1['forwardCDPEvent']['params'];
         const sessionId = p.sessionId || this._connectedTabInfo?.sessionId;
-        this._sendToPlaywright({
+        this._sendToCDPClient?.({
           sessionId,
           method: p.method,
           params: p.params,
@@ -58,7 +61,7 @@ export class ExtensionProtocolV1 implements ExtensionProtocolHandler {
           targetInfo,
           sessionId: `pw-tab-${this._nextSessionId++}`,
         };
-        this._sendToPlaywright({
+        this._sendToCDPClient?.({
           method: 'Target.attachedToTarget',
           params: {
             sessionId: this._connectedTabInfo.sessionId,
@@ -86,5 +89,14 @@ export class ExtensionProtocolV1 implements ExtensionProtocolHandler {
     if (this._connectedTabInfo?.sessionId === sessionId)
       sessionId = undefined;
     return await this._sendCommand('forwardCDPCommand', { sessionId, method, params });
+  }
+
+  ready(): Promise<void> {
+    // v1 has no initial handshake; messages from Playwright are processed immediately.
+    return Promise.resolve();
+  }
+
+  onExtensionDisconnect(_reason: string): void {
+    // v1 has no pending ready() promise to reject.
   }
 }

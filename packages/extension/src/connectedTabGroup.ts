@@ -55,11 +55,8 @@ export class ConnectedTabGroup {
 
   onclose?: () => void;
 
-  constructor(connection: RelayConnection, selectedTabId: number) {
+  constructor(connection: RelayConnection, selectedTab: chrome.tabs.Tab) {
     this._connection = connection;
-    // Resolves the pending extension.selectTab command from cdpRelay; the relay
-    // will attach the selected tab and _onTabAttached pulls it into the group.
-    this._connection.setSelectedTab(selectedTabId);
     this._connection.onclose = () => this._onConnectionClose();
     this._connection.ontabattached = (tabId: number) => this._onTabAttached(tabId);
     this._connection.ontabdetached = (tabId: number) => this._onTabDetached(tabId);
@@ -67,6 +64,12 @@ export class ConnectedTabGroup {
     this._onTabRemovedListener = this._onTabRemoved.bind(this);
     chrome.tabs.onUpdated.addListener(this._onTabUpdatedListener);
     chrome.tabs.onRemoved.addListener(this._onTabRemovedListener);
+    // Seed the relay with the user-selected tab, then close out the initial
+    // handshake. The relay holds Playwright-side CDP traffic until
+    // `didInitialize` arrives, so it sees a fully populated tab model by the
+    // time it handles `Target.setAutoAttach`.
+    this._connection.attachTab(selectedTab);
+    this._connection.didInitialize();
   }
 
   connectedTabIds(): number[] {

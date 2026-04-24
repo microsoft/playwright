@@ -19,8 +19,6 @@ import { createRoot } from 'react-dom/client';
 import { Button, TabItem } from './tabItem';
 import { AuthTokenSection, getOrCreateAuthToken } from './authToken';
 
-import type { TabInfo } from './tabItem';
-
 type Status =
   | { type: 'connecting'; message: string }
   | { type: 'connected'; message: string }
@@ -30,12 +28,11 @@ type Status =
 const SUPPORTED_PROTOCOL_VERSION = 2;
 
 const ConnectApp: React.FC = () => {
-  const [tabs, setTabs] = useState<TabInfo[]>([]);
+  const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [status, setStatus] = useState<Status | null>(null);
   const [showButtons, setShowButtons] = useState(true);
   const [showTabList, setShowTabList] = useState(true);
   const [clientInfo, setClientInfo] = useState('unknown');
-  const [mcpRelayUrl, setMcpRelayUrl] = useState('');
 
   useEffect(() => {
     const runAsync = async () => {
@@ -57,8 +54,6 @@ const ConnectApp: React.FC = () => {
         handleReject(`Invalid mcpRelayUrl parameter in URL: ${relayUrl}. ${e}`);
         return;
       }
-
-      setMcpRelayUrl(relayUrl);
 
       try {
         const client = JSON.parse(params.get('client') || '{}');
@@ -87,11 +82,14 @@ const ConnectApp: React.FC = () => {
         });
         return;
       }
+      // The background decides per protocolVersion: v1 opens the relay WS
+      // immediately (the daemon expects a prompt connection); v2 just records
+      // the descriptor and defers the WS until the user clicks Allow.
+      await connectionRequested(relayUrl, requestedVersion);
 
       const expectedToken = getOrCreateAuthToken();
       const token = params.get('token');
       if (token === expectedToken) {
-        await connectToMCPRelay(relayUrl, requestedVersion);
         await handleConnectToTab();
         return;
       }
@@ -99,8 +97,6 @@ const ConnectApp: React.FC = () => {
         handleReject('Invalid token provided.');
         return;
       }
-
-      await connectToMCPRelay(relayUrl, requestedVersion);
 
       // If this is a browser_navigate command, hide the tab list and show simple allow/reject
       if (params.get('newTab') === 'true')
@@ -120,8 +116,8 @@ const ConnectApp: React.FC = () => {
     chrome.runtime.sendMessage({ type: 'rejectConnection' }).catch(() => {});
   }, []);
 
-  const connectToMCPRelay = useCallback(async (mcpRelayUrl: string, protocolVersion: number) => {
-    const response = await chrome.runtime.sendMessage({ type: 'connectToMCPRelay', mcpRelayUrl, protocolVersion });
+  const connectionRequested = useCallback(async (mcpRelayUrl: string, protocolVersion: number) => {
+    const response = await chrome.runtime.sendMessage({ type: 'connectionRequested', mcpRelayUrl, protocolVersion });
     if (!response.success)
       handleReject(response.error);
   }, [handleReject]);
@@ -134,15 +130,14 @@ const ConnectApp: React.FC = () => {
       setStatus({ type: 'error', message: 'Failed to load tabs: ' + response.error });
   }, []);
 
-  const handleConnectToTab = useCallback(async (tab?: TabInfo) => {
+  const handleConnectToTab = useCallback(async (tab?: chrome.tabs.Tab) => {
     setShowButtons(false);
     setShowTabList(false);
 
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'connectToTab',
-        tabId: tab?.id,
-        windowId: tab?.windowId,
+        tab,
         clientName: clientInfo,
       });
 
@@ -160,7 +155,7 @@ const ConnectApp: React.FC = () => {
         message: `"${clientInfo}" failed to connect: ${e}`
       });
     }
-  }, [clientInfo, mcpRelayUrl]);
+  }, [clientInfo]);
 
   useEffect(() => {
     const listener = (message: any) => {
