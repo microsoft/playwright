@@ -31,6 +31,7 @@ export type MatcherResult<E = unknown, A = unknown> = {
   diff?: string;
   log?: string[];
   timeout?: number;
+  ariaSnapshot?: string;
   suggestedRebaseline?: string;
   attachments?: MatcherAttachment[];
   softError?: Error | unknown;
@@ -132,7 +133,6 @@ type MatcherMessageDetails = {
   timeout?: number;
   errorMessage?: string;
   log?: string[];
-  ariaSnapshot?: string;
 };
 
 export function formatMatcherMessage(utils: InternalMatcherUtils, details: MatcherMessageDetails) {
@@ -170,8 +170,6 @@ export function formatMatcherMessage(utils: InternalMatcherUtils, details: Match
       message += '\n';
   }
   message += callLogText(utils, details.log);
-  if (details.ariaSnapshot)
-    message += `\nAria snapshot:\n${utils.DIM_COLOR(details.ariaSnapshot)}\n`;
   return message;
 }
 

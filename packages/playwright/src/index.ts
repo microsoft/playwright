@@ -728,6 +728,8 @@ class ArtifactsRecorder {
       return;
     if (this._testInfo.errors.length === 0)
       return;
+    if (this._testInfo.errors.some(e => e.matcherResult?.ariaSnapshot))
+      return;
     if (this._pageSnapshot)
       return;
     const page = context.pages()[0];
@@ -774,11 +776,12 @@ class ArtifactsRecorder {
       await this._takePageSnapshot(context);
 
     if (this._testInfo.errors.length > 0) {
+      const hasMatcherAriaSnapshot = this._testInfo.errors.some(e => e.matcherResult?.ariaSnapshot);
       const errorContextContent = buildErrorContext({
         titlePath: this._testInfo.titlePath,
         location: { file: this._testInfo.file, line: this._testInfo.line, column: this._testInfo.column },
         errors: this._testInfo.errors,
-        pageSnapshot: this._pageSnapshot,
+        pageSnapshot: hasMatcherAriaSnapshot ? undefined : this._pageSnapshot,
       });
       if (errorContextContent) {
         const filePath = this._testInfo.outputPath('error-context.md');

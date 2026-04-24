@@ -10008,6 +10008,47 @@ export interface TestInfoError {
   cause?: TestInfoError;
 
   /**
+   * Structured information about a matcher failure. Set when the error originated from an `expect(...)` matcher; unset
+   * otherwise.
+   */
+  matcherResult?: {
+    /**
+     * Matcher name (e.g. `toBeVisible`).
+     */
+    name: string;
+
+    /**
+     * Whether the matcher passed.
+     */
+    pass: boolean;
+
+    /**
+     * Expected value formatted as a string.
+     */
+    expected?: string;
+
+    /**
+     * Received value formatted as a string.
+     */
+    actual?: string;
+
+    /**
+     * Matcher log lines, if any.
+     */
+    log?: Array<string>;
+
+    /**
+     * Matcher timeout in milliseconds, set when the matcher timed out.
+     */
+    timeout?: number;
+
+    /**
+     * Aria snapshot of the receiver at the time of failure, if available.
+     */
+    ariaSnapshot?: string;
+  };
+
+  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;

@@ -67,9 +67,6 @@ Call log:
   - Expect "toBeVisible" with timeout 1000ms
   - waiting for getByRole('button', { name: 'Missing' })
 
-Aria snapshot:
-- button "Submit"
-
 
 ### Page state
 - Page URL: about:blank
@@ -188,9 +185,6 @@ Error: element(s) not found
 Call log:
   - Expect "toBeVisible" with timeout 1000ms
   - waiting for getByRole('button', { name: 'Missing' })
-
-Aria snapshot:
-- button "Submit"
 
 
 ### Page state

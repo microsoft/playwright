@@ -32,6 +32,7 @@ test('toMatchText-based assertions should have matcher result', async ({ page })
       pass: false,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toHaveText(expected) failed
@@ -56,6 +57,7 @@ Call log`);
       pass: true,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toHaveText(expected) failed
 
@@ -83,6 +85,7 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
       pass: false,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeVisible() failed
@@ -108,6 +111,7 @@ Call log:
       pass: true,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeVisible() failed
@@ -190,6 +194,7 @@ test('toBeChecked({ checked }) should have expected', async ({ page }) => {
       pass: false,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked() failed
@@ -214,6 +219,7 @@ Call log`);
       pass: true,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeChecked() failed
@@ -238,6 +244,7 @@ Call log`);
       pass: false,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked({ checked: false }) failed
@@ -262,6 +269,7 @@ Call log`);
       pass: true,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).not.toBeChecked({ checked: false }) failed
@@ -286,6 +294,7 @@ Call log`);
       pass: false,
       log: expect.any(Array),
       timeout: 1,
+      ariaSnapshot: expect.any(String),
     });
 
     expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(locator).toBeChecked({ indeterminate: true }) failed
