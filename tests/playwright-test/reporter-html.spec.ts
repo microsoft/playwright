@@ -599,10 +599,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
       await expect(page.locator('.source-line-running')).toContainText('page.evaluate');
 
-      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem')).toContainText([
+      await expect(page.getByRole('listbox', { name: 'Stack trace' }).getByRole('option')).toContainText([
         /a.test.js:[\d]+/,
       ]);
-      await expect(page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem').and(page.locator('.selected'))).toContainText('a.test.js');
+      await expect(page.getByRole('listbox', { name: 'Stack trace' }).getByRole('option', { selected: true })).toContainText('a.test.js');
     });
 
     test('should not show stack trace', async ({ runInlineTest, page, showReport }) => {

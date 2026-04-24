@@ -34,7 +34,7 @@ test('should filter network requests by resource type', async ({ runUITest, serv
 
   await page.getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
+  const networkItems = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
 
   await page.getByText('JS', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
@@ -79,7 +79,7 @@ test('should filter network requests by multiple resource types', async ({ runUI
 
   await page.getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
+  const networkItems = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
   await expect(networkItems).toHaveCount(10);
 
   await page.getByText('JS', { exact: true }).click();
@@ -120,7 +120,7 @@ test('should filter network requests by url', async ({ runUITest, server }) => {
 
   await page.getByText('Network', { exact: true }).click();
 
-  const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
+  const networkItems = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
 
   await page.getByPlaceholder('Filter network').fill('script.');
   await expect(networkItems).toHaveCount(1);
@@ -247,7 +247,7 @@ test('should pretty-print response bodies and show formatting errors', async ({ 
   await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
   await page.getByRole('tab', { name: 'Network' }).click();
 
-  const networkList = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
+  const networkList = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
   const responsePanel = page.getByRole('tabpanel', { name: 'Response' });
 
   // Pretty printed by default
@@ -352,7 +352,7 @@ test('should not duplicate network entries from beforeAll', {
   await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
   await page.getByText('Network', { exact: true }).click();
-  await expect(page.getByRole('list', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
+  await expect(page.getByRole('listbox', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
 });
 
 test('should toggle sections inside network details', async ({ runUITest, server }) => {
@@ -370,7 +370,7 @@ test('should toggle sections inside network details', async ({ runUITest, server
   await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
   await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
+  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
   const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
 
   await headersPanel.getByRole('button', { name: 'Request Headers × 16' }).click();
@@ -387,7 +387,7 @@ test('should toggle sections inside network details', async ({ runUITest, server
 
   // Re-opening should preserve open state
   await page.getByRole('tabpanel', { name: 'Network' }).getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
+  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
   await expect(headersPanel.getByRole('region', { name: 'Request Headers × 16' })).toBeHidden();
   await expect(headersPanel.getByRole('region', { name: 'General' })).toContainText(/Start.+Duration\d+ms/);
 });
@@ -414,7 +414,7 @@ test('should copy network request', async ({ runUITest, server }) => {
   await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
   await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
+  await page.getByRole('option').filter({ hasText: 'post-data-1' }).click();
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
@@ -470,7 +470,7 @@ test('should preserve selection during test run', async ({ runUITest, server }, 
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
   await page.getByRole('tab', { name: 'Network' }).click();
-  await page.getByRole('listitem').filter({ hasText: 'network.html' }).click();
+  await page.getByRole('option').filter({ hasText: 'network.html' }).click();
   const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
   await expect(headersPanel).toBeVisible();
 

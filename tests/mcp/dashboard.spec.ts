@@ -38,18 +38,18 @@ test('should show browser session chip', async ({ cli, server, startDashboardSer
   await cli('open', server.EMPTY_PAGE);
 
   const dashboard = await startDashboardServer();
-  const chips = dashboard.locator('.session-chip');
-  await expect(chips).toHaveCount(1);
+  const sessions = dashboard.getByRole('region', { name: /^Session / });
+  await expect(sessions).toHaveCount(1);
 });
 
 test('should show placeholder chip for browser with no contexts', async ({ boundBrowser, startDashboardServer }) => {
   expect(boundBrowser.contexts()).toHaveLength(0);
 
   const dashboard = await startDashboardServer();
-  const chips = dashboard.locator('.session-chip');
-  await expect(chips).toHaveCount(1);
-  await expect(chips.locator('.sidebar-tabs-empty')).toHaveText('No tabs open.');
-  await expect(chips.locator('.sidebar-session-new-tab')).toHaveCount(0);
+  const sessions = dashboard.getByRole('region', { name: /^Session / });
+  await expect(sessions).toHaveCount(1);
+  await expect(sessions.getByText('No tabs open.')).toBeVisible();
+  await expect(sessions.getByRole('button', { name: 'New tab' })).toHaveCount(0);
 });
 
 test('should show one row per context for a single browser', async ({ boundBrowser, server, startDashboardServer }) => {
@@ -58,13 +58,13 @@ test('should show one row per context for a single browser', async ({ boundBrows
   await pageA.goto(server.EMPTY_PAGE);
 
   const dashboard = await startDashboardServer();
-  const chips = dashboard.locator('.session-chip');
-  await expect(chips).toHaveCount(1);
+  const sessions = dashboard.getByRole('region', { name: /^Session / });
+  await expect(sessions).toHaveCount(1);
 
   const contextB = await boundBrowser.newContext();
   const pageB = await contextB.newPage();
   await pageB.goto(server.EMPTY_PAGE);
-  await expect(chips).toHaveCount(2);
+  await expect(sessions).toHaveCount(2);
 });
 
 test('should show current workspace sessions first', async ({ cli, server, startDashboardServer }) => {
@@ -79,16 +79,16 @@ test('should show current workspace sessions first', async ({ cli, server, start
 
   const checkOrder = async (first: string, second: string) => {
     const dashboard = await startDashboardServer({ cwd: first });
-    const workspaceGroups = dashboard.locator('.workspace-group');
+    const workspaceGroups = dashboard.getByRole('region', { name: /^Workspace / });
     await expect(workspaceGroups).toHaveCount(2);
 
     // Current workspace (first) should be first.
-    await expect(workspaceGroups.nth(0).locator('.workspace-path-full')).toHaveText(displayPath(first));
-    await expect(workspaceGroups.nth(0).locator('.session-chip')).toHaveCount(1);
+    await expect(workspaceGroups.nth(0).getByRole('heading', { level: 3 })).toHaveText(displayPath(first));
+    await expect(workspaceGroups.nth(0).getByRole('region', { name: /^Session / })).toHaveCount(1);
 
     // Other workspace (second) should be second.
-    await expect(workspaceGroups.nth(1).locator('.workspace-path-full')).toHaveText(displayPath(second));
-    await expect(workspaceGroups.nth(1).locator('.session-chip')).toHaveCount(1);
+    await expect(workspaceGroups.nth(1).getByRole('heading', { level: 3 })).toHaveText(displayPath(second));
+    await expect(workspaceGroups.nth(1).getByRole('region', { name: /^Session / })).toHaveCount(1);
   };
 
   await test.step('open dashboard in workspace A', async () => {
@@ -100,13 +100,16 @@ test('should show current workspace sessions first', async ({ cli, server, start
   });
 });
 
+function activeSession(dashboard: import('playwright-core').Page) {
+  return dashboard.getByRole('region', { name: /^Session / }).filter({ has: dashboard.getByRole('option', { selected: true }) });
+}
+
 test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer }) => {
   await cli('-s=sessA', 'open', server.EMPTY_PAGE);
   await cli('-s=sessB', 'open', server.EMPTY_PAGE);
 
   const dashboard = await startDashboardServer({ session: 'sessB' });
-  const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
-  await expect(activeSession.locator('.session-chip-name')).toHaveText('sessB');
+  await expect(activeSession(dashboard)).toHaveAccessibleName('Session sessB');
 });
 
 function isAlive(pid: number): boolean {
@@ -133,7 +136,7 @@ test('daemon show: closing page exits the process', async ({ cli, connectToDashb
 });
 
 async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page, text: string) {
-  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
   const box = await dashboard.locator('img#display').boundingBox();
   const x0 = box!.x + box!.width * 0.3;
   const y0 = box!.y + box!.height * 0.3;
@@ -165,7 +168,7 @@ test('should capture annotations via show --annotate', async ({ connectToDashboa
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
-  await dashboard.locator('.sidebar-tab').first().click();
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
 
   const annotatePromise = cli('show', '--annotate');
   let done = false;
@@ -213,9 +216,8 @@ test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
-    const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
-    await expect(activeSession.locator('.session-chip-name')).toHaveText('second');
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
     await drawAndSubmitAnnotation(dashboard, 'fresh');
   } finally {
     await browser.close().catch(() => {});
@@ -261,9 +263,8 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
-  const activeSession = dashboard.locator('.sidebar-session:has(.sidebar-tab.active)');
-  await expect(activeSession.locator('.session-chip-name')).toHaveText('second');
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+  await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
 
   await expect.poll(async () => {
     const c = await sampleCenter();
@@ -283,7 +284,7 @@ test('should disengage annotate mode when --annotate client disconnects', async 
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
-  await dashboard.locator('.sidebar-tab').first().click();
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
 
   const annotateClient = childProcess({
     command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), 'show', '--annotate'],
@@ -295,11 +296,11 @@ test('should disengage annotate mode when --annotate client disconnects', async 
     }),
   });
 
-  await expect(dashboard.locator('div.dashboard-view.annotate')).toBeVisible();
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
 
   await annotateClient.kill();
 
-  await expect(dashboard.locator('div.dashboard-view')).not.toHaveClass(/annotate/);
+  await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
 });
 
 async function installSaveFilePickerMock(page: import('playwright-core').Page): Promise<() => Promise<Buffer>> {
@@ -348,7 +349,7 @@ test('save recording streams WebM bytes to the chosen file', async ({ cli, serve
   const awaitBytes = await installSaveFilePickerMock(page);
 
   const dashboard = await startDashboardServer();
-  await dashboard.locator('.sidebar-tab').first().click();
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
   await expect(dashboard.locator('img#display')).toBeVisible();
 
   // Enter recording mode from the normal toolbar.
