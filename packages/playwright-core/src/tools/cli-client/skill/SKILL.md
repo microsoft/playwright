@@ -224,6 +224,8 @@ playwright-cli open --config=my-config.json
 
 # Close the browser
 playwright-cli close
+# Detach from an attached browser (leaves the external browser running)
+playwright-cli -s=msedge detach
 # Delete user data for the default session
 playwright-cli delete-data
 ```

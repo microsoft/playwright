@@ -80,6 +80,15 @@ const close = declareCommand({
   toolParams: () => ({}),
 });
 
+const detach = declareCommand({
+  name: 'detach',
+  description: 'Detach from an attached browser',
+  category: 'core',
+  args: z.object({}),
+  toolName: '',
+  toolParams: () => ({}),
+});
+
 const goto = declareCommand({
   name: 'goto',
   description: 'Navigate to a URL',
@@ -1015,6 +1024,7 @@ const commandsArray: AnyCommandSchema[] = [
   open,
   attach,
   close,
+  detach,
   goto,
   type,
   click,

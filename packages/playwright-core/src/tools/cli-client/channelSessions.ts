@@ -28,6 +28,10 @@ export type ChannelSession = {
   extensionInstalled: boolean;
 };
 
+export function isKnownChannel(name: string): boolean {
+  return channelToUserDataDir.has(name);
+}
+
 export async function listChannelSessions(): Promise<ChannelSession[]> {
   if (process.env.PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST)
     return [];
