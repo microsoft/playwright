@@ -15,6 +15,7 @@
  */
 
 export * from './ascii';
+export * from './chromiumChannels';
 export * from './comparators';
 export * from './crypto';
 export * from './debug';

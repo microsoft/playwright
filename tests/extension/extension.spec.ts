@@ -255,6 +255,25 @@ test(`custom executablePath`, async ({ startClient, server }) => {
   }).toPass();
 });
 
+test(`fails when extension is missing in custom userDataDir`, async ({ startClient, server }) => {
+  const userDataDir = test.info().outputPath('empty-profile');
+
+  const { client } = await startClient({
+    args: [`--extension`],
+    config: {
+      browser: { userDataDir },
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    error: expect.stringContaining(`Playwright Extension not found in "${userDataDir}"`),
+    isError: true,
+  });
+});
+
 test(`bypass connection dialog with token`, async ({ browserWithExtension, startClient, server }) => {
   const browserContext = await browserWithExtension.launch();
 
