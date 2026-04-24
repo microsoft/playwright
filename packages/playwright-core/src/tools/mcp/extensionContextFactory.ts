@@ -29,10 +29,8 @@ const debugLogger = debug('pw:mcp:relay');
 export async function createExtensionBrowser(config: FullConfig, clientName: string): Promise<playwrightTypes.Browser> {
   const channel = config.browser.launchOptions.channel || 'chrome';
   const userDataDir = config.browser.userDataDir ?? defaultUserDataDirForChannel(channel);
-  if (userDataDir && !await isPlaywrightExtensionInstalled(userDataDir)) {
-    // eslint-disable-next-line no-console
-    console.error(`Playwright Extension not found in "${userDataDir}". Install it from ${playwrightExtensionInstallUrl}`);
-  }
+  if (userDataDir && !await isPlaywrightExtensionInstalled(userDataDir))
+    throw new Error(`Playwright Extension not found in "${userDataDir}". Install it from ${playwrightExtensionInstallUrl}`);
 
   const httpServer = createHttpServer();
   await startHttpServer(httpServer, {});
