@@ -214,21 +214,18 @@
   background: var(--color-neutral-muted);
 }
 
-.sidebar-tab-list {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.sidebar-tabs-loading,
-.sidebar-tabs-empty {
+.sidebar-tabs-loading {
   color: var(--color-fg-subtle);
   font-size: 12px;
   padding: 4px 12px 6px 38px;
+  margin: 0;
+  flex: none;
+  display: block;
+  justify-content: flex-start;
+  text-align: left;
 }
 
-.sidebar-tab {
+.sidebar-session .list-view-entry {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -236,15 +233,11 @@
   color: var(--color-fg-muted);
   border-radius: 0;
   padding: 4px 4px 4px 24px;
+  line-height: 1.4;
 }
 
-.sidebar-tab:hover {
+.sidebar-session .list-view-entry:hover {
   background: var(--color-neutral-muted);
-}
-
-.sidebar-tab.active {
-  background: var(--color-neutral-subtle);
-  color: var(--color-fg-default);
 }
 
 .sidebar-tab-favicon {
@@ -253,20 +246,6 @@
   flex-shrink: 0;
   margin-top: 0;
   align-self: center;
-}
-
-.sidebar-tab-select {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-}
-
-.sidebar-tab-select:focus-visible {
-  outline: 1px solid var(--color-accent-emphasis);
-  outline-offset: 2px;
 }
 
 .sidebar-tab-favicon.placeholder {
@@ -313,7 +292,7 @@
   transition: opacity 120ms ease;
 }
 
-.sidebar-tab:hover .sidebar-tab-close,
+.sidebar-session .list-view-entry:hover .sidebar-tab-close,
 .sidebar-tab-close:focus-visible {
   opacity: 1;
   pointer-events: auto;

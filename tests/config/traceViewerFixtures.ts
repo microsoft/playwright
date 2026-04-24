@@ -58,12 +58,12 @@ class TraceViewerPage {
     this.actionTitles = page.locator('.action-title');
     this.actionsTree = page.getByTestId('actions-tree');
     this.callLines = page.locator('.call-tab .call-line');
-    this.logLines = page.getByRole('list', { name: 'Log entries' }).getByRole('listitem');
-    this.consoleLines = page.getByRole('tabpanel', { name: 'Console' }).getByRole('listitem');
+    this.logLines = page.getByRole('listbox', { name: 'Log entries' }).getByRole('option');
+    this.consoleLines = page.getByRole('tabpanel', { name: 'Console' }).getByRole('option');
     this.consoleLineMessages = page.locator('.console-line-message');
     this.errorMessages = page.locator('.error-message');
     this.consoleStacks = page.locator('.console-stack');
-    this.networkRequests = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
+    this.networkRequests = page.getByRole('listbox', { name: 'Network requests' }).getByRole('option');
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
     this.metadataTab = page.getByRole('tabpanel', { name: 'Metadata' });
     this.sourceCodeTab = page.getByRole('tabpanel', { name: 'Source' });
@@ -84,10 +84,7 @@ class TraceViewerPage {
   }
 
   stackFrames(options: { selected?: boolean } = {}) {
-    const entry = this.page.getByRole('list', { name: 'Stack trace' }).getByRole('listitem');
-    if (options.selected)
-      return entry.locator(':scope.selected');
-    return entry;
+    return this.page.getByRole('listbox', { name: 'Stack trace' }).getByRole('option', options);
   }
 
   actionIconsText(action: string) {

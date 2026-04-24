@@ -116,6 +116,7 @@ export class DashboardConnection implements Transport {
   private _pushTabsScheduled = false;
   private _visible = true;
   private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
+  private _annotateWaitingForAttach = false;
 
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
@@ -286,10 +287,16 @@ export class DashboardConnection implements Transport {
   }
 
   emitAnnotate() {
+    // Defer until a page is attached so the client can fetch a screenshot.
+    if (!this._attachedPage) {
+      this._annotateWaitingForAttach = true;
+      return;
+    }
     this.sendEvent?.('annotate', {});
   }
 
   emitCancelAnnotate() {
+    this._annotateWaitingForAttach = false;
     this.sendEvent?.('cancelAnnotate', {});
   }
 
@@ -348,6 +355,10 @@ export class DashboardConnection implements Transport {
         this._attachedPage = undefined;
       attached.dispose();
       throw e;
+    }
+    if (this._annotateWaitingForAttach && this._attachedPage === attached) {
+      this._annotateWaitingForAttach = false;
+      this.sendEvent?.('annotate', {});
     }
   }
 

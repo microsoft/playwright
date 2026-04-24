@@ -239,9 +239,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   }
 
   const overlayText = selectedTab ? undefined : 'Select a session';
+  const modeLabel = annotating ? 'Dashboard: annotate' : recording ? 'Dashboard: record' : 'Dashboard';
 
   return (
-    <div className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '') + (recording ? ' recording' : '')}>
+    <main className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotating ? ' annotate' : '') + (recording ? ' recording' : '')} aria-label={modeLabel}>
       {/* Toolbar */}
       <div ref={toolbarRef} className='toolbar'>
         {annotating ? (
@@ -468,6 +469,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 };
