@@ -237,6 +237,6 @@ export async function connectAndNavigate(
   );
   const navigatePromise = client.callTool({ name: 'browser_navigate', arguments: { url } });
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
+  await clickAllowAndSelect(selectorPage, 'Welcome');
   return await navigatePromise;
 }
