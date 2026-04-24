@@ -28,7 +28,7 @@ import { createClientInfo } from '../cli-client/registry';
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
 import type { AnnotationData, Tab } from '@dashboard/dashboardChannel';
-import type { BrowserDescriptor, BrowserStatus } from '../../serverRegistry';
+import type { BrowserDescriptor } from '../../serverRegistry';
 
 type BrowserTrackerCallbacks = {
   onTabsChanged: () => void;
@@ -274,7 +274,7 @@ export class DashboardConnection implements Transport {
     return this._visible;
   }
 
-  emitSessions(sessions: BrowserStatus[]) {
+  emitSessions(sessions: BrowserDescriptor[]) {
     this.sendEvent?.('sessions', { sessions, clientInfo: createClientInfo() });
   }
 
@@ -379,7 +379,7 @@ export class DashboardConnection implements Transport {
       this._pushSessionsScheduled = false;
       try {
         const byWs = await serverRegistry.list();
-        const sessions: BrowserStatus[] = [];
+        const sessions: BrowserDescriptor[] = [];
         for (const list of byWs.values()) {
           for (const status of list) {
             if (status.title.startsWith('--playwright-internal'))
@@ -397,12 +397,10 @@ export class DashboardConnection implements Transport {
     });
   };
 
-  private async _reconcile(sessions: BrowserStatus[]) {
-    const connectable = new Map<string, BrowserStatus>();
-    for (const status of sessions) {
-      if (status.canConnect)
-        connectable.set(status.browser.guid, status);
-    }
+  private async _reconcile(sessions: BrowserDescriptor[]) {
+    const connectable = new Map<string, BrowserDescriptor>();
+    for (const status of sessions)
+      connectable.set(status.browser.guid, status);
 
     for (const [guid, slot] of this._browsers) {
       if (connectable.has(guid))

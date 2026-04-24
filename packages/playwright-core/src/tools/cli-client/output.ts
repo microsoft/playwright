@@ -22,7 +22,7 @@ import path from 'path';
 import { playwrightExtensionInstallUrl } from '../utils/extension';
 
 import type { ChannelSession } from './channelSessions';
-import type { BrowserStatus } from '../../serverRegistry';
+import type { BrowserDescriptor } from '../../serverRegistry';
 
 export type ListedBrowser = {
   name: string;
@@ -40,7 +40,7 @@ export type ListedBrowser = {
 export type ListData = {
   all: boolean;
   browsers: ListedBrowser[];
-  servers?: BrowserStatus[];
+  servers?: BrowserDescriptor[];
   channelSessions?: ChannelSession[];
 };
 
@@ -55,6 +55,7 @@ export interface Output {
   errorAttachConflict(): never;
   errorDetachNotAttached(session: string): never;
   errorBrowserNotOpenForTool(session: string): never;
+  errorAttachNoTarget(): never;
 
   list(data: ListData): void;
   closeAll(sessions: string[]): void;
@@ -112,6 +113,11 @@ export class TextOutput implements Output {
     return process.exit(1);
   }
 
+  errorAttachNoTarget(): never {
+    console.error(`Error: no target specified for attach command; use one of [name], --cdp, --endpoint, or --extension to specify the target to attach to.`);
+    return process.exit(1);
+  }
+
   list({ all, browsers, servers, channelSessions }: ListData): void {
     const byWorkspace = new Map<string, ListedBrowser[]>();
     for (const browser of browsers) {
@@ -144,7 +150,7 @@ export class TextOutput implements Output {
       if (count)
         console.log('');
       console.log('### Browser servers available for attach');
-      const serversByWorkspace = new Map<string, BrowserStatus[]>();
+      const serversByWorkspace = new Map<string, BrowserDescriptor[]>();
       for (const server of servers) {
         let list = serversByWorkspace.get(server.workspaceDir ?? '');
         if (!list) {
@@ -204,7 +210,8 @@ export class TextOutput implements Output {
   attach(session: string, pid: number | undefined, endpoint: string | undefined, toolResult: string): void {
     if (endpoint) {
       console.log(`### Session \`${session}\` created, attached to \`${endpoint}\`.`);
-      console.log(`Run commands with: playwright-cli --session=${session} <command>`);
+      console.log(`Run commands with: playwright-cli --s=${session} <command>`);
+      console.log('');
     } else {
       console.log(`### Browser \`${session}\` opened with pid ${pid}.`);
     }
@@ -279,6 +286,11 @@ export class JsonOutput implements Output {
 
   errorBrowserNotOpenForTool(session: string): never {
     this._emit({ isError: true, error: `The browser '${session}' is not open, please run open first` });
+    return process.exit(1);
+  }
+
+  errorAttachNoTarget(): never {
+    this._emit({ isError: true, error: `no target specified for attach command; use one of [name], --cdp, --endpoint, or --extension to specify the target to attach to.` });
     return process.exit(1);
   }
 
@@ -372,11 +384,10 @@ function renderBrowser(browser: ListedBrowser): string {
   return lines.join('\n');
 }
 
-function renderServer(server: BrowserStatus): string {
+function renderServer(server: BrowserDescriptor): string {
   const lines = [`- browser "${server.title}":`];
   lines.push(`  - browser: ${server.browser.browserName}`);
   lines.push(`  - version: v${server.playwrightVersion}`);
-  lines.push(`  - status: ${server.canConnect ? 'open' : 'closed'}`);
   if (server.browser.userDataDir)
     lines.push(`  - data-dir: ${server.browser.userDataDir}`);
   else

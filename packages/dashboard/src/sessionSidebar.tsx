@@ -78,7 +78,7 @@ const TabRow: React.FC<{ tab: Tab; model: DashboardModel }> = ({ tab, model }) =
 
 export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model }) => {
   const { sessions, clientInfo, loadingSessions, tabs: allTabs } = model.state;
-  const openSessions = React.useMemo(() => sessions.filter(session => session.canConnect), [sessions]);
+  const openSessions = sessions;
 
   const tabsByBrowserAndContext = React.useMemo(() => {
     const map = new Map<string, Map<string, Tab[]>>();

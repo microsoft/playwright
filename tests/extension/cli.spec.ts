@@ -34,7 +34,7 @@ const test = base.extend<{
       const confirmationPagePromise = browserContext.waitForEvent('page', page =>
         page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
       );
-      const cliPromise = cli('attach', '--extension', `--config=cli-config.json`);
+      const cliPromise = cli('attach', '--extension=chromium', `--config=cli-config.json`);
       const confirmationPage = await confirmationPagePromise;
       return { confirmationPage, cliPromise };
     });
@@ -89,7 +89,7 @@ test('attach <url> --extension', async ({ startAttach, cli, server }) => {
   }
 
   {
-    const { output } = await cli('goto', server.HELLO_WORLD);
+    const { output } = await cli('-s=chromium', 'goto', server.HELLO_WORLD);
     expect(output).toContain(`### Page`);
     expect(output).toContain(`- Page URL: ${server.HELLO_WORLD}`);
     expect(output).toContain(`- Page Title: Title`);

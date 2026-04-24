@@ -15,9 +15,9 @@
  */
 
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
-import type { BrowserStatus } from '../../playwright-core/src/serverRegistry';
+import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
 
-export type SessionStatus = BrowserStatus;
+export type SessionStatus = BrowserDescriptor;
 
 export type Tab = {
   browser: string;
