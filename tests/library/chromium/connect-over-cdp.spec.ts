@@ -431,6 +431,21 @@ test('should use proxy with connectOverCDP', async ({ browserType, server }, tes
   }
 });
 
+test('should use env proxy with connectOverCDP discovery request', async ({ browserType, server, proxyServer, mode }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40394' });
+  test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
+  proxyServer.forwardTo(server.PORT);
+
+  const oldValue = process.env.HTTP_PROXY;
+  try {
+    process.env.HTTP_PROXY = proxyServer.URL;
+    await browserType.connectOverCDP(server.PREFIX).catch(() => {});
+    expect(proxyServer.requestUrls).toEqual([`${server.PREFIX}/json/version/`]);
+  } finally {
+    process.env.HTTP_PROXY = oldValue;
+  }
+});
+
 test('should be able to connect via localhost', async ({ browserType }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({

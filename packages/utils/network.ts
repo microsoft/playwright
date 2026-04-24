@@ -58,7 +58,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   if (proxyURL) {
     const parsedProxyURL = normalizeProxyURL(proxyURL);
     if (params.url.startsWith('http:')) {
-      parsedProxyURL.pathname = url.toString();
+      options.path = url.toString();
       url = parsedProxyURL;
     } else {
       options.agent = new HttpsProxyAgent(parsedProxyURL);
