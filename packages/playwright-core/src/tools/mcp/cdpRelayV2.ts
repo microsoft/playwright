@@ -153,10 +153,6 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
     ]);
   }
 
-  reset(): void {
-    this._tabSessions.clear();
-  }
-
   private async _attachTab(tabId: number): Promise<TabSession> {
     const existing = this._tabSessions.get(tabId);
     if (existing)

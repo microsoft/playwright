@@ -190,27 +190,9 @@ test(`snapshot of an existing page`, async ({ browserWithExtension, startClient,
   });
 });
 
-test(`extension not installed timeout`, async ({ startExtensionClient, server }) => {
-  const { browserContext, client } = await startExtensionClient({ PWMCP_TEST_CONNECTION_TIMEOUT: '100' });
-
-  const confirmationPagePromise = browserContext.waitForEvent('page', page => {
-    return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
-  });
-
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  })).toHaveResponse({
-    error: expect.stringMatching(/Extension connection timeout. Make sure the "Playwright.* is installed\./),
-    isError: true,
-  });
-
-  await confirmationPagePromise;
-});
-
 testWithOldExtensionVersion(`works with old extension version`, async ({ startExtensionClient, server }) => {
   // Prelaunch the browser, so that it is properly closed after the test.
-  const { browserContext, client } = await startExtensionClient({ PWMCP_TEST_CONNECTION_TIMEOUT: '500' });
+  const { browserContext, client } = await startExtensionClient();
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
@@ -231,24 +213,20 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
 
 test(`extension needs update`, async ({ startExtensionClient, server }) => {
   // Prelaunch the browser, so that it is properly closed after the test.
-  const { browserContext, client } = await startExtensionClient({ PWMCP_TEST_CONNECTION_TIMEOUT: '500', PLAYWRIGHT_EXTENSION_PROTOCOL: '1000' });
+  const { browserContext, client } = await startExtensionClient({ PLAYWRIGHT_EXTENSION_PROTOCOL: '1000' });
 
   const confirmationPagePromise = browserContext.waitForEvent('page', page => {
     return page.url().startsWith(`chrome-extension://${extensionId}/connect.html`);
   });
 
-  const navigateResponse = client.callTool({
+  // The call hangs as MCP server never connects to the extension.
+  client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
-  });
+  }).catch(() => {});
 
   const confirmationPage = await confirmationPagePromise;
   await expect(confirmationPage.locator('.status-banner')).toContainText(`Playwright client trying to connect requires newer extension version`);
-
-  expect(await navigateResponse).toHaveResponse({
-    error: expect.stringContaining('Extension connection timeout.'),
-    isError: true,
-  });
 });
 
 test(`custom executablePath`, async ({ startClient, server }) => {
@@ -257,7 +235,6 @@ test(`custom executablePath`, async ({ startClient, server }) => {
 
   const { client } = await startClient({
     args: [`--extension`],
-    env: { PWMCP_TEST_CONNECTION_TIMEOUT: '1000' },
     config: {
       browser: {
         launchOptions: {
@@ -267,15 +244,15 @@ test(`custom executablePath`, async ({ startClient, server }) => {
     },
   });
 
-  const navigateResponse = await client.callTool({
+  // The call hangs as MCP server never connects to the extension.
+  client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
-  });
-  expect(await navigateResponse).toHaveResponse({
-    error: expect.stringContaining('Extension connection timeout.'),
-    isError: true,
-  });
-  expect(await fs.readFile(test.info().outputPath('output.txt'), 'utf8')).toMatch(new RegExp(`Custom exec args.*chrome-extension://${extensionId}/connect\\.html\\?`));
+  }).catch(() => {});
+  await expect(async () => {
+    const output = await fs.readFile(test.info().outputPath('output.txt'), 'utf8');
+    expect(output).toMatch(new RegExp(`Custom exec args.*chrome-extension://${extensionId}/connect\\.html\\?`));
+  }).toPass();
 });
 
 test(`bypass connection dialog with token`, async ({ browserWithExtension, startClient, server }) => {

@@ -87,8 +87,4 @@ export class ExtensionProtocolV1 implements ExtensionProtocolHandler {
       sessionId = undefined;
     return await this._sendCommand('forwardCDPCommand', { sessionId, method, params });
   }
-
-  reset(): void {
-    this._connectedTabInfo = undefined;
-  }
 }
