@@ -26,16 +26,14 @@ type PageMessage = {
   type: 'getTabs';
 } | {
   type: 'connectToTab';
-  // Picked in the connect page; absent when the user clicked plain "Allow"
-  // without selecting a tab.
+  // Picked in the connect page; absent on the token-bypass path where no tab
+  // selection happens.
   tab?: chrome.tabs.Tab;
   clientName?: string;
 } | {
   type: 'getConnectionStatus';
 } | {
   type: 'disconnect';
-} | {
-  type: 'rejectConnection';
 } | {
   type: 'keepalive';
 };
@@ -68,7 +66,7 @@ class PlaywrightExtension {
             (error: any) => sendResponse({ success: false, error: error.message }));
         return true;
       case 'connectToTab': {
-        // Plain "Allow" (no specific pick) falls back to the connect page itself
+        // Token-bypass (no specific pick) falls back to the connect page itself
         // so `ConnectedTabGroup` always has a concrete tab to start from. Both
         // sender.tab and UI-supplied tabs come from chrome.tabs.query / runtime
         // message sender, where `id` is always defined.
@@ -91,11 +89,6 @@ class PlaywrightExtension {
         } catch (error: any) {
           sendResponse({ success: false, error: error.message });
         }
-        return true;
-      case 'rejectConnection':
-        if (sender.tab?.id !== undefined)
-          this._pendingConnections.reject(sender.tab.id);
-        sendResponse({ success: true });
         return true;
       case 'keepalive':
         // Connect page pings us every ~20s so receiving this message resets
@@ -138,7 +131,7 @@ class PlaywrightExtension {
 
   private async _getTabs(): Promise<chrome.tabs.Tab[]> {
     const tabs = await chrome.tabs.query({});
-    return tabs.filter(tab => !isNonDebuggableUrl(tab.url) && !tab.url?.startsWith('chrome-extension:'));
+    return tabs.filter(tab => !isNonDebuggableUrl(tab.url));
   }
 
   private async _onActionClicked(): Promise<void> {

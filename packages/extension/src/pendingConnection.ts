@@ -80,14 +80,6 @@ export class PendingConnections {
     this._map.set(selectorTabId, entry);
   }
 
-  reject(selectorTabId: number): void {
-    const entry = this._map.get(selectorTabId);
-    if (!entry)
-      return;
-    this._map.delete(selectorTabId);
-    entry.close('Rejected by user');
-  }
-
   async take(selectorTabId: number): Promise<RelayConnection | undefined> {
     const entry = this._map.get(selectorTabId);
     if (!entry)

@@ -30,7 +30,7 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
+  await clickAllowAndSelect(selectorPage, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
@@ -104,7 +104,7 @@ test(`browser_run_code can evaluate in a web worker`, async ({ startExtensionCli
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
+  await clickAllowAndSelect(selectorPage, 'Welcome');
 
   await navigateResponse;
 
@@ -204,7 +204,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   });
 
   const selectorPage = await confirmationPagePromise;
-  await selectorPage.getByRole('button', { name: 'Allow', exact: true }).click();
+  await clickAllowAndSelect(selectorPage, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
