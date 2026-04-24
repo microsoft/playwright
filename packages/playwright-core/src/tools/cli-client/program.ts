@@ -22,7 +22,7 @@ import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
 
-import { listChannelSessions } from './channelSessions';
+import { isKnownChannel, listChannelSessions } from './channelSessions';
 import { JsonOutput, TextOutput } from './output';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session } from './session';
@@ -160,11 +160,13 @@ export async function program(options?: { embedderVersion?: string}) {
         output.errorAttachConflict();
       if (attachTarget)
         args.endpoint = attachTarget;
+      const extensionChannel = typeof args.extension === 'string' && isKnownChannel(args.extension) ? args.extension : undefined;
       if (typeof args.extension === 'string') {
         args.browser = args.extension;
         args.extension = true;
       }
-      const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? sessionName;
+      const cdpChannel = typeof args.cdp === 'string' && isKnownChannel(args.cdp) ? args.cdp : undefined;
+      const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? cdpChannel ?? extensionChannel ?? sessionName;
       args.session = attachSessionName;
       const { pid, endpoint } = await startSession(attachSessionName, registry, clientInfo, args, 'attach');
       const newEntry = await registry.loadEntry(clientInfo, attachSessionName);
@@ -176,6 +178,14 @@ export async function program(options?: { embedderVersion?: string}) {
       const closeEntry = registry.entry(clientInfo, sessionName);
       const { wasOpen } = closeEntry ? await new Session(closeEntry).stop() : { wasOpen: false };
       output.close(sessionName, wasOpen);
+      return;
+    }
+    case 'detach': {
+      const detachEntry = registry.entry(clientInfo, sessionName);
+      if (detachEntry && !detachEntry.config.attached)
+        output.errorDetachNotAttached(sessionName);
+      const { wasOpen } = detachEntry ? await new Session(detachEntry).stop() : { wasOpen: false };
+      output.detach(sessionName, wasOpen);
       return;
     }
     case 'install':

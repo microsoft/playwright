@@ -53,6 +53,7 @@ export interface Output {
   errorUnknownCommand(name: string | undefined, globalHelp: string): never;
   errorUnknownOption(opts: string[], commandHelp: string): never;
   errorAttachConflict(): never;
+  errorDetachNotAttached(session: string): never;
   errorBrowserNotOpenForTool(session: string): never;
 
   list(data: ListData): void;
@@ -62,6 +63,7 @@ export interface Output {
   open(session: string, pid: number | undefined, toolResult: string): void;
   attach(session: string, pid: number | undefined, endpoint: string | undefined, toolResult: string): void;
   close(session: string, wasOpen: boolean): void;
+  detach(session: string, wasAttached: boolean): void;
   installed(): void;
   show(session: string, pid: number | undefined): void;
   toolResult(text: string): void;
@@ -95,6 +97,11 @@ export class TextOutput implements Output {
 
   errorAttachConflict(): never {
     console.error(`Error: cannot use target name with --cdp, --endpoint, or --extension`);
+    return process.exit(1);
+  }
+
+  errorDetachNotAttached(session: string): never {
+    console.error(`Error: session '${session}' was not attached; use \`playwright-cli${session !== 'default' ? ` -s=${session}` : ''} close\` to stop it.`);
     return process.exit(1);
   }
 
@@ -213,6 +220,14 @@ export class TextOutput implements Output {
     console.log(`Browser '${session}' closed\n`);
   }
 
+  detach(session: string, wasAttached: boolean): void {
+    if (!wasAttached) {
+      console.log(`Browser '${session}' is not attached.`);
+      return;
+    }
+    console.log(`Browser '${session}' detached\n`);
+  }
+
   installed(): void {
     // The spawned install subprocess handles its own output.
   }
@@ -257,6 +272,11 @@ export class JsonOutput implements Output {
     return process.exit(1);
   }
 
+  errorDetachNotAttached(session: string): never {
+    this._emit({ isError: true, error: `session '${session}' was not attached; use close to stop it.` });
+    return process.exit(1);
+  }
+
   errorBrowserNotOpenForTool(session: string): never {
     this._emit({ isError: true, error: `The browser '${session}' is not open, please run open first` });
     return process.exit(1);
@@ -298,6 +318,10 @@ export class JsonOutput implements Output {
 
   close(session: string, wasOpen: boolean): void {
     this._emit({ session, status: wasOpen ? 'closed' : 'not-open' });
+  }
+
+  detach(session: string, wasAttached: boolean): void {
+    this._emit({ session, status: wasAttached ? 'detached' : 'not-attached' });
   }
 
   installed(): void {
