@@ -15,7 +15,14 @@
  */
 
 import React from 'react';
+import './modal.css';
 import './annotations.css';
+import { DownloadIcon } from './icons';
+import { ToolbarButton } from '@web/components/toolbarButton';
+import { clientToViewport, getImageLayout } from './imageLayout';
+
+import type { ImageLayout } from './imageLayout';
+import type { AnnotateFrame } from './dashboardModel';
 
 export type Annotation = { id: string; x: number; y: number; width: number; height: number; text: string };
 
@@ -71,34 +78,6 @@ function applyDrag(orig: Rect, kind: DragKind, dvx: number, dvy: number): Rect {
     width: Math.abs(right - left),
     height: Math.abs(bottom - top),
   };
-}
-
-export type ImageLayout = {
-  rect: DOMRect;
-  renderW: number;
-  renderH: number;
-  offsetX: number;
-  offsetY: number;
-};
-
-export function getImageLayout(display: HTMLImageElement | null): ImageLayout | null {
-  if (!display || !display.naturalWidth || !display.naturalHeight)
-    return null;
-  const rect = display.getBoundingClientRect();
-  const imgAspect = display.naturalWidth / display.naturalHeight;
-  const elemAspect = rect.width / rect.height;
-  if (imgAspect > elemAspect) {
-    const renderH = rect.width / imgAspect;
-    return { rect, renderW: rect.width, renderH, offsetX: 0, offsetY: (rect.height - renderH) / 2 };
-  }
-  const renderW = rect.height * imgAspect;
-  return { rect, renderW, renderH: rect.height, offsetX: (rect.width - renderW) / 2, offsetY: 0 };
-}
-
-export function clientToViewport(layout: ImageLayout, vw: number, vh: number, clientX: number, clientY: number): { x: number; y: number } {
-  const fracX = (clientX - layout.rect.left - layout.offsetX) / layout.renderW;
-  const fracY = (clientY - layout.rect.top - layout.offsetY) / layout.renderH;
-  return { x: Math.round(fracX * vw), y: Math.round(fracY * vh) };
 }
 
 function viewportRectToScreenStyle(layout: ImageLayout, screenRect: DOMRect, vw: number, vh: number, r: Rect): React.CSSProperties {
@@ -418,7 +397,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   return (
     <div
       ref={layerRef}
-      className='annotation-layer'
+      className='annotations-layer'
       tabIndex={0}
       onMouseDown={onLayerMouseDown}
       onMouseMove={onLayerMouseMove}
@@ -435,7 +414,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
         return (
           <div
             key={a.id}
-            className={'annotation-rect' + (isSelected ? ' selected' : '') + (isEditing ? ' editing' : '') + (a.text ? '' : ' empty')}
+            className={'annotations-rect' + (isSelected ? ' selected' : '') + (isEditing ? ' editing' : '') + (a.text ? '' : ' empty')}
             style={style}
             onDoubleClick={e => {
               e.preventDefault();
@@ -445,7 +424,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
           >
             {a.text && (
               <div
-                className='annotation-label'
+                className='annotations-label'
                 onMouseDown={e => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -458,7 +437,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
             {isSelected && !isEditing && HANDLES.map(h => (
               <div
                 key={h}
-                className={'annotation-handle annotation-handle-' + h}
+                className={'annotations-handle annotations-handle-' + h}
                 onMouseDown={e => startResize(h, a, e)}
               />
             ))}
@@ -468,7 +447,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
 
       {draft && (() => {
         const style = mapRect(normalizeRect(draft));
-        return style ? <div className='annotation-rect draft' style={style} /> : null;
+        return style ? <div className='annotations-rect draft' style={style} /> : null;
       })()}
 
       {editingAnnotation && (() => {
@@ -481,13 +460,13 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
         };
         return (
           <div
-            className='annotation-popover'
+            className='annotations-popover'
             style={popoverStyle}
             onMouseDown={e => e.stopPropagation()}
             onClick={e => e.stopPropagation()}
           >
             <textarea
-              className='annotation-textarea'
+              className='annotations-textarea'
               autoFocus
               value={editingAnnotation.text}
               placeholder='Task or comment…'
@@ -507,9 +486,9 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
               }}
               onKeyUp={e => e.stopPropagation()}
             />
-            <div className='annotation-popover-actions'>
+            <div className='annotations-popover-actions'>
               <button
-                className='annotate-action-btn danger'
+                className='annotations-action-btn danger'
                 onClick={() => {
                   setAnnotations(prev => prev.filter(a => a.id !== editingAnnotation.id));
                   setSelection(null);
@@ -519,7 +498,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
                 Discard
               </button>
               <button
-                className='annotate-action-btn'
+                className='annotations-action-btn'
                 onClick={closeEditor}
               >
                 Add
@@ -533,3 +512,70 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   );
 });
 Annotations.displayName = 'Annotations';
+
+type AnnotateModalProps = {
+  frame: AnnotateFrame;
+  showSubmit: boolean;
+  onSubmit: (blob: Blob, annotations: Annotation[]) => Promise<void>;
+  onClose: () => void;
+};
+
+export const AnnotateModal: React.FC<AnnotateModalProps> = ({ frame, showSubmit, onSubmit, onClose }) => {
+  const [annotationCount, setAnnotationCount] = React.useState(0);
+  const annotationsRef = React.useRef<AnnotationsHandle>(null);
+  const displayRef = React.useRef<HTMLImageElement>(null);
+  const viewRef = React.useRef<HTMLDivElement>(null);
+
+  return (
+    <div className='modal-overlay' role='dialog' aria-modal='true' aria-label='Annotate screenshot'>
+      <div className='modal'>
+        <div className='modal-toolbar'>
+          <div className='modal-title'>Annotate screenshot</div>
+          {showSubmit && (
+            <ToolbarButton
+              title='Submit annotation'
+              icon='check'
+              disabled={annotationCount === 0}
+              onClick={() => annotationsRef.current?.submit()}
+            />
+          )}
+          <ToolbarButton
+            title='Save annotated image'
+            onClick={() => annotationsRef.current?.save()}
+          >
+            <DownloadIcon />
+          </ToolbarButton>
+          <ToolbarButton
+            title='Clear annotations'
+            icon='circle-slash'
+            disabled={annotationCount === 0}
+            onClick={() => annotationsRef.current?.clear()}
+          />
+          <ToolbarButton
+            title='Discard'
+            icon='close'
+            onClick={onClose}
+          />
+        </div>
+        <div ref={viewRef} className='modal-body'>
+          <img
+            ref={displayRef}
+            className='annotate-modal-image'
+            alt='annotation'
+            src={'data:image/png;base64,' + frame.data}
+          />
+          <Annotations
+            ref={annotationsRef}
+            active={true}
+            displayRef={displayRef}
+            screenRef={viewRef}
+            viewportWidth={frame.viewportWidth}
+            viewportHeight={frame.viewportHeight}
+            onSubmit={onSubmit}
+            onAnnotationsChange={setAnnotationCount}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};

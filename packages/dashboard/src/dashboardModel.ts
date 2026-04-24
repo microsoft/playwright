@@ -170,6 +170,10 @@ export class DashboardModel {
   // variants; intra-model flows `await` the private variants when they
   // need to sequence mode switches correctly.
 
+  enterInteractive() {
+    void this._enterInteractive();
+  }
+
   enterAnnotate(initiator: 'cli' | 'user') {
     void this._enterAnnotate(initiator);
   }
@@ -207,6 +211,13 @@ export class DashboardModel {
       annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
     });
     this.cancelAnnotate();
+  }
+
+  private async _enterInteractive() {
+    // Interactive mode coexists with recording so the user can drive the
+    // page while it is being captured. Only in-flight annotation is cleared.
+    await this._completeAnnotation();
+    this._emit({ mode: 'interactive' });
   }
 
   private async _enterAnnotate(initiator: 'cli' | 'user') {
