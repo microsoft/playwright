@@ -121,6 +121,10 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
 
+  const isStdio = result.server?.port === undefined;
+  if (result.browser.isolated === undefined && isStdio)
+    result.browser.isolated = !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
+
   const browser = await validateBrowserConfig(result.browser);
   if (browser.launchOptions.headless === undefined)
     browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;

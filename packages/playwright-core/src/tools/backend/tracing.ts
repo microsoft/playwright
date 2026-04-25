@@ -30,7 +30,8 @@ const tracingStart = defineTool({
   },
 
   handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
+    const tab = await context.ensureTab();
+    const browserContext = tab.page.context();
     const tracesDir = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code' });
     const name = 'trace-' + Date.now();
     await browserContext.tracing.start({
@@ -43,8 +44,7 @@ const tracingStart = defineTool({
     response.addFileLink('Action log', `${tracesDir}/${name}.trace`);
     response.addFileLink('Network log', `${tracesDir}/${name}.network`);
     response.addFileLink('Resources', `${tracesDir}/resources`);
-    // eslint-disable-next-line no-restricted-syntax
-    (browserContext.tracing as any)[traceLegendSymbol] = { tracesDir, name };
+    traceLegend.set(browserContext, { tracesDir, name });
   },
 });
 
@@ -61,18 +61,16 @@ const tracingStop = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    await browserContext.tracing.stop();
-    // eslint-disable-next-line no-restricted-syntax
-    const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
-    if (!traceLegend)
+    const legend = traceLegend.get(browserContext);
+    if (!legend)
       throw new Error('Tracing is not started');
-    // eslint-disable-next-line no-restricted-syntax
-    delete (browserContext.tracing as any)[traceLegendSymbol];
+    await browserContext.tracing.stop();
+    traceLegend.delete(browserContext);
 
     response.addTextResult(`Trace recording stopped.`);
-    response.addFileLink('Trace', `${traceLegend.tracesDir}/${traceLegend.name}.trace`);
-    response.addFileLink('Network log', `${traceLegend.tracesDir}/${traceLegend.name}.network`);
-    response.addFileLink('Resources', `${traceLegend.tracesDir}/resources`);
+    response.addFileLink('Trace', `${legend.tracesDir}/${legend.name}.trace`);
+    response.addFileLink('Network log', `${legend.tracesDir}/${legend.name}.network`);
+    response.addFileLink('Resources', `${legend.tracesDir}/resources`);
   },
 });
 
@@ -81,4 +79,4 @@ export default [
   tracingStop,
 ];
 
-const traceLegendSymbol = Symbol('tracesDir');
+const traceLegend = new WeakMap<object, { tracesDir: string, name: string }>();

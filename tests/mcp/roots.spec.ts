@@ -22,9 +22,10 @@ import { test, expect } from './fixtures';
 
 const p = process.platform === 'win32' ? 'c:\\non\\existent\\folder' : '/non/existent/folder';
 
-test('should use separate user data by root path', async ({ startClient, server }, testInfo) => {
+test('persistent mode should use separate user data by root path', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({
     clientName: 'Visual Studio Code',
+    config: { browser: { isolated: false } },
     roots: [
       {
         name: 'test',
@@ -53,9 +54,10 @@ test('should list all tools when listRoots is slow', async ({ startClient }) => 
   expect(tools.tools.length).toBeGreaterThan(10);
 });
 
-test('should tolerate malformed roots', async ({ startClient, server }, testInfo) => {
+test('persistent mode should tolerate malformed roots', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({
     clientName: 'Visual Studio Code',
+    config: { browser: { isolated: false } },
     roots: [
       {
         name: 'test',

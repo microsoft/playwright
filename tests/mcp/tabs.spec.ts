@@ -52,22 +52,18 @@ test('list first tab', async ({ client }) => {
       action: 'list',
     },
   })).toHaveResponse({
-    result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+    result: `- 0: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 
 test('create new tab', async ({ client }) => {
   expect(await createTab(client, 'Tab one', 'Body one')).toHaveResponse({
-    tabs: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
     snapshot: `- generic [active] [ref=e1]: Body one`,
   });
 
   expect(await createTab(client, 'Tab two', 'Body two')).toHaveResponse({
-    tabs: `- 0: [](about:blank)
-- 1: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
-- 2: (current) [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
+    tabs: `- 0: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
+- 1: (current) [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
     snapshot: `- generic [active] [ref=e1]: Body two`,
   });
   expect(await client.callTool({
@@ -86,8 +82,7 @@ test('create new tab with url', async ({ client }) => {
       url: `data:text/html,<title>Tab one</title><body>Body one</body>`,
     },
   })).toHaveResponse({
-    result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+    result: `- 0: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 
@@ -99,24 +94,22 @@ test('select tab', async ({ client }) => {
     name: 'browser_tabs',
     arguments: {
       action: 'select',
-      index: 1,
+      index: 0,
     },
   })).toHaveResponse({
-    result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
-- 2: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
+    result: `- 0: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
+- 1: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
   });
 
   expect(await client.callTool({
     name: 'browser_tabs',
     arguments: {
       action: 'select',
-      index: 0,
+      index: 1,
     },
   })).toHaveResponse({
-    result: `- 0: (current) [](about:blank)
-- 1: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
-- 2: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
+    result: `- 0: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
+- 1: (current) [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
   });
 });
 
@@ -128,11 +121,10 @@ test('close tab', async ({ client }) => {
     name: 'browser_tabs',
     arguments: {
       action: 'close',
-      index: 2,
+      index: 1,
     },
   })).toHaveResponse({
-    result: `- 0: [](about:blank)
-- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+    result: `- 0: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 
