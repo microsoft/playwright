@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
+import path from 'path';
 import { chromium } from 'playwright';
 
 import { test, expect } from './fixtures';
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
+
+function defaultMcpProfileDir(testOutputDir: string, mcpBrowser: string) {
+  const browserToken = mcpBrowser === 'chromium' ? 'chrome-for-testing' : mcpBrowser;
+  const rootPathToken = crypto.createHash('sha256').update(testOutputDir).digest('hex').slice(0, 7);
+  return path.join(testOutputDir, 'ms-playwright', `mcp-${browserToken}-${rootPathToken}`);
+}
 
 test('isProfileLocked returns false for empty directory', async ({ mcpBrowser }, testInfo) => {
   test.skip(!['chromium', 'chrome', 'msedge'].includes(mcpBrowser!), 'Chromium-only');
@@ -93,4 +101,24 @@ test('stale profile does not prevent browser launch', async ({ mcpBrowser, start
   })).toHaveResponse({
     snapshot: expect.stringContaining('Hello, world!'),
   });
+});
+
+test('stdio default avoids pre-existing profile lock', async ({ mcpBrowser, startClient, server }, testInfo) => {
+  test.skip(!['chromium', 'chrome', 'msedge'].includes(mcpBrowser!), 'Chromium-only');
+  const userDataDir = defaultMcpProfileDir(testInfo.outputPath(), mcpBrowser!);
+  const context = await chromium.launchPersistentContext(userDataDir, {
+    channel: mcpBrowser === 'chromium' ? 'chrome-for-testing' : mcpBrowser,
+    headless: true,
+  });
+  try {
+    const { client } = await startClient();
+    expect(await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.HELLO_WORLD },
+    })).toHaveResponse({
+      snapshot: expect.stringContaining('Hello, world!'),
+    });
+  } finally {
+    await context.close();
+  }
 });

@@ -129,6 +129,34 @@ test('isolated context', async ({ startClient, server }) => {
   });
 });
 
+test('stdio default sessions do not share storage', async ({ startClient, server }) => {
+  server.setContent('/', `
+    <body>
+    </body>
+    <script>
+      document.body.textContent = localStorage.getItem('test') ? 'Storage: YES' : 'Storage: NO';
+      localStorage.setItem('test', 'test');
+    </script>
+  `, 'text/html');
+
+  const { client: client1 } = await startClient();
+  expect(await client1.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Storage: NO`),
+  });
+  await client1.close();
+
+  const { client: client2 } = await startClient();
+  expect(await client2.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Storage: NO`),
+  });
+});
+
 test('isolated context with storage state', async ({ startClient, server }, testInfo) => {
   const storageStatePath = testInfo.outputPath('storage-state.json');
   await fs.promises.writeFile(storageStatePath, JSON.stringify({

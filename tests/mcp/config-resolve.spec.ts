@@ -270,6 +270,37 @@ test.describe('resolveCLIConfigForMCP', () => {
     expect(config.browser.launchOptions.headless).toBeDefined();
   });
 
+  test('defaults to isolated under stdio transport', async () => {
+    const config = await resolveCLIConfigForMCP({}, emptyEnv);
+    expect(config.browser.isolated).toBe(true);
+  });
+
+  test('defaults to persistent under HTTP transport', async () => {
+    const config = await resolveCLIConfigForMCP({ port: 0 }, emptyEnv);
+    expect(config.browser.isolated).not.toBe(true);
+  });
+
+  test('explicit user data dir keeps stdio persistent', async () => {
+    const config = await resolveCLIConfigForMCP({ userDataDir: '/tmp/playwright-mcp-user-data' }, emptyEnv);
+    expect(config.browser.isolated).not.toBe(true);
+  });
+
+  test('attached browser modes keep stdio persistent', async () => {
+    const cdpConfig = await resolveCLIConfigForMCP({ cdpEndpoint: 'http://localhost:9222' }, emptyEnv);
+    expect(cdpConfig.browser.isolated).not.toBe(true);
+
+    const remoteConfig = await resolveCLIConfigForMCP({ endpoint: 'ws://localhost:1234' }, emptyEnv);
+    expect(remoteConfig.browser.isolated).not.toBe(true);
+
+    const extensionConfig = await resolveCLIConfigForMCP({ extension: true }, emptyEnv);
+    expect(extensionConfig.browser.isolated).not.toBe(true);
+  });
+
+  test('explicit isolated is honored under HTTP transport', async () => {
+    const config = await resolveCLIConfigForMCP({ port: 0, isolated: true }, emptyEnv);
+    expect(config.browser.isolated).toBe(true);
+  });
+
   test('cli timeout overrides defaults', async () => {
     const config = await resolveCLIConfigForMCP({ timeoutAction: 10000, timeoutNavigation: 30000 }, emptyEnv);
     expect(config.timeouts.action).toBe(10000);
