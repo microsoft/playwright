@@ -209,8 +209,8 @@ playwright-cli open --persistent
 # Use persistent profile with custom directory
 playwright-cli open --profile=/path/to/profile
 
-# Connect to browser via extension
-playwright-cli attach --extension
+# Connect to browser via Playwright Extension
+playwright-cli attach --extension=chrome
 
 # Connect to a running Chrome or Edge by channel name
 playwright-cli attach --cdp=chrome

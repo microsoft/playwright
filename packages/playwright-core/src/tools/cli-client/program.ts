@@ -160,18 +160,22 @@ export async function program(options?: { embedderVersion?: string}) {
         output.errorAttachConflict();
       if (attachTarget)
         args.endpoint = attachTarget;
-      const extensionChannel = typeof args.extension === 'string' && isKnownChannel(args.extension) ? args.extension : undefined;
-      if (typeof args.extension === 'string') {
-        args.browser = args.extension;
+      const extensionChannel = typeof args.extension === 'string' ? args.extension : undefined;
+      if (extensionChannel) {
+        args.browser = extensionChannel;
         args.extension = true;
       }
+
       const cdpChannel = typeof args.cdp === 'string' && isKnownChannel(args.cdp) ? args.cdp : undefined;
+      const targetName = attachTarget ?? cdpChannel ?? extensionChannel ?? args.cdp as string;
+      if (!targetName)
+        output.errorAttachNoTarget();
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? cdpChannel ?? extensionChannel ?? sessionName;
       args.session = attachSessionName;
-      const { pid, endpoint } = await startSession(attachSessionName, registry, clientInfo, args, 'attach');
+      const { pid } = await startSession(attachSessionName, registry, clientInfo, args, 'attach');
       const newEntry = await registry.loadEntry(clientInfo, attachSessionName);
       const toolText = await runInSession(newEntry, clientInfo, { _: ['snapshot'], filename: '<auto>' }, output);
-      output.attach(attachSessionName, pid, endpoint, toolText);
+      output.attach(attachSessionName, pid, targetName, toolText);
       return;
     }
     case 'close': {
@@ -341,6 +345,9 @@ async function killAllDaemons(): Promise<number[]> {
 async function collectList(registry: Registry, clientInfo: ClientInfo, all: boolean): Promise<ListData> {
   const browsers: ListedBrowser[] = [];
   const entries = registry.entryMap();
+
+  // List early to GC.
+  const serverEntries = await serverRegistry.list();
   const key = clientKey(clientInfo);
   for (const [workspaceKey, list] of entries) {
     if (!all && workspaceKey !== key)
@@ -348,7 +355,7 @@ async function collectList(registry: Registry, clientInfo: ClientInfo, all: bool
     for (const entry of list) {
       const session = new Session(entry);
       const canConnect = await session.canConnect();
-      if (!canConnect && !session.config.cli.persistent) {
+      if (!canConnect) {
         await session.deleteSessionConfig();
         continue;
       }
@@ -372,7 +379,6 @@ async function collectList(registry: Registry, clientInfo: ClientInfo, all: bool
   if (!all)
     return { all, browsers };
 
-  const serverEntries = await serverRegistry.list();
   const servers = [...serverEntries.values()].flat();
   return { all, browsers, servers, channelSessions: await listChannelSessions() };
 }

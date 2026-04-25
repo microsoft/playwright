@@ -888,9 +888,9 @@ const videoChapter = declareCommand({
   toolParams: ({ title, description, duration }) => ({ title, description, duration }),
 });
 
-const devtoolsShow = declareCommand({
+const dashboardShow = declareCommand({
   name: 'show',
-  description: 'Show browser DevTools',
+  description: 'Show Playwright Dashboard',
   category: 'devtools',
   args: z.object({}),
   options: z.object({
@@ -1111,7 +1111,7 @@ const commandsArray: AnyCommandSchema[] = [
   videoStart,
   videoStop,
   videoChapter,
-  devtoolsShow,
+  dashboardShow,
   pauseAt,
   resume,
   stepOver,

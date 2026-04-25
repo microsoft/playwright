@@ -89,7 +89,7 @@ class ServerRegistry extends EventEmitter {
     return this._ready ?? Promise.resolve();
   }
 
-  async list(): Promise<Map<string, BrowserStatus[]>> {
+  async list(): Promise<Map<string, BrowserDescriptor[]>> {
     const ownWatcher = !this._watcher;
     let dispose: (() => void) | undefined;
     if (ownWatcher)
@@ -102,7 +102,7 @@ class ServerRegistry extends EventEmitter {
             return { descriptor, canConnect };
           }),
       );
-      const result = new Map<string, BrowserStatus[]>();
+      const result = new Map<string, BrowserDescriptor[]>();
       for (const { descriptor, canConnect } of statuses) {
         if (!canConnect) {
           await fs.promises.unlink(path.join(this._browsersDir(), descriptor.browser.guid)).catch(() => {});
@@ -114,7 +114,7 @@ class ServerRegistry extends EventEmitter {
           list = [];
           result.set(key, list);
         }
-        list.push({ ...descriptor, canConnect });
+        list.push(descriptor);
       }
       return result;
     } finally {
@@ -133,7 +133,7 @@ class ServerRegistry extends EventEmitter {
       endpoint: endpoint.endpoint,
       workspaceDir: endpoint.workspaceDir,
     };
-    await fs.promises.writeFile(file, JSON.stringify(descriptor), 'utf-8');
+    await fs.promises.writeFile(file, JSON.stringify(descriptor, null, 2), 'utf-8');
   }
 
   async delete(guid: string): Promise<void> {

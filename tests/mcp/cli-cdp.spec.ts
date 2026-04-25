@@ -93,10 +93,9 @@ test('cdp server', async ({ cdpServer, cli, server }) => {
 
   const configPath = test.info().outputPath('config.ini');
   await fs.promises.writeFile(configPath, `
-browser.cdpEndpoint=${cdpServer.endpoint}
 browser.isolated=false
 `);
-  await cli('attach', `--config=${configPath}`);
+  await cli('attach', `--cdp=${cdpServer.endpoint}`, `--config=${configPath}`);
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
 });
