@@ -21,15 +21,15 @@ export interface MountOptions<HooksConfig> {
 }
 
 export interface MountResult extends Locator {
-  unmount(): Promise<void>;
-  update(component: JSX.Element): Promise<void>;
+  unmount: () => Promise<void>;
+  update: (component: JSX.Element) => Promise<void>;
 }
 
 export interface ComponentFixtures {
-  mount<HooksConfig>(
+  mount: <HooksConfig>(
     component: JSX.Element,
     options?: MountOptions<HooksConfig>
-  ): Promise<MountResult>;
+  ) => Promise<MountResult>;
 }
 
 export const test: TestType<ComponentFixtures>;

@@ -39,28 +39,30 @@ export interface MountOptionsJsx<HooksConfig> {
 }
 
 export interface MountResult<Component> extends Locator {
-  unmount(): Promise<void>;
-  update(options: {
+  unmount: () => Promise<void>;
+  update: (options: {
     props?: Partial<ComponentProps<Component>>;
     slots?: Partial<ComponentSlots>;
     on?: Partial<ComponentEvents>;
-  }): Promise<void>;
+  }) => Promise<void>;
 }
 
 export interface MountResultJsx extends Locator {
-  unmount(): Promise<void>;
-  update(component: JSX.Element): Promise<void>;
+  unmount: () => Promise<void>;
+  update: (component: JSX.Element) => Promise<void>;
 }
 
 export interface ComponentFixtures {
-  mount<HooksConfig>(
-    component: JSX.Element,
-    options?: MountOptionsJsx<HooksConfig>
-  ): Promise<MountResultJsx>;
-  mount<HooksConfig, Component = unknown>(
-    component: Component,
-    options?: MountOptions<HooksConfig, Component>
-  ): Promise<MountResult<Component>>;
+  mount: {
+    <HooksConfig>(
+      component: JSX.Element,
+      options?: MountOptionsJsx<HooksConfig>
+    ): Promise<MountResultJsx>;
+    <HooksConfig, Component = unknown>(
+      component: Component,
+      options?: MountOptions<HooksConfig, Component>
+    ): Promise<MountResult<Component>>;
+  };
 }
 
 export const test: TestType<ComponentFixtures>;
