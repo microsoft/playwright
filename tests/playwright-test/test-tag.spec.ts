@@ -183,6 +183,34 @@ test('should be included in testInfo if coming from describe or global tag', asy
   expect(result.exitCode).toBe(0);
 });
 
+test('should deduplicate tags when same tag appears in both describe and test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test.describe('suite', { tag: '@foo' }, () => {
+      test('test', { tag: '@foo' }, async ({}, testInfo) => {
+        expect(testInfo.tags).toStrictEqual(['@foo']);
+      });
+    });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should deduplicate inline tags when same tag appears in both describe title and test title', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test.describe('@foo suite', () => {
+      test('@foo test', async ({}, testInfo) => {
+        expect(testInfo.tags).toStrictEqual(['@foo']);
+      });
+    });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should not parse file names as tags', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
