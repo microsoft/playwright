@@ -22,6 +22,19 @@ Error message. Set when [Error] (or its subclass) has been thrown.
 
 Error stack. Set when [Error] (or its subclass) has been thrown.
 
+## property: TestInfoError.matcherResult
+* since: v1.60
+- type: ?<[Object]>
+  - `name` <[string]> Matcher name (e.g. `toBeVisible`).
+  - `pass` <[boolean]> Whether the matcher passed.
+  - `expected` ?<[any]> Expected value.
+  - `actual` ?<[any]> Received value.
+  - `log` ?<[Array]<[string]>> Matcher log lines, if any.
+  - `timeout` ?<[int]> Matcher timeout in milliseconds, set when the matcher timed out.
+  - `ariaSnapshot` ?<[string]> Aria snapshot of the receiver at the time of failure, if available.
+
+Structured information about a matcher failure. Set when the error originated from an `expect(...)` matcher; unset otherwise.
+
 ## property: TestInfoError.value
 * since: v1.10
 - type: ?<[string]>

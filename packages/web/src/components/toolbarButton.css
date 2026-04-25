@@ -25,6 +25,7 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  border-radius: 4px;
 }
 
 .toolbar-button:disabled {

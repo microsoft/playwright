@@ -21,6 +21,7 @@ import path from 'path';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { wrapInASCIIBox } from '@utils/ascii';
+import { isChromiumChannelName, defaultUserDataDirForChannel } from '@utils/chromiumChannels';
 import { RecentLogsCollector } from '@utils/debugLogger';
 import { removeFolders } from '@utils/fileUtils';
 import { gracefullyCloseSet } from '@utils/processLauncher';
@@ -80,11 +81,11 @@ export class Chromium extends BrowserType {
     return super.launchPersistentContext(progress, userDataDir, options);
   }
 
-  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, isLocal?: boolean }) {
+  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean }) {
     return await this._connectOverCDPInternal(progress, endpointURL, options);
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean }, onClose?: () => Promise<void>) {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean }, onClose?: () => Promise<void>) {
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
@@ -94,7 +95,7 @@ export class Chromium extends BrowserType {
     else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
       headersMap['User-Agent'] = getUserAgent();
 
-    const channel = channelToUserDataDir.has(endpointURL) ? endpointURL : undefined;
+    const channel = isChromiumChannelName(endpointURL) ? endpointURL : undefined;
     if (channel)
       endpointURL = await resolveChannelEndpoint(progress, endpointURL);
 
@@ -112,7 +113,7 @@ export class Chromium extends BrowserType {
     return this._connectOverCDPImpl(progress, chromeTransport, closeAndWait, options, onClose);
   }
 
-  private async _connectOverCDPImpl(progress: Progress, transport: ConnectionTransport, closeAndWait: () => Promise<void>, options: types.LaunchOptions & { isLocal?: boolean }, onClose?: () => Promise<void>) {
+  private async _connectOverCDPImpl(progress: Progress, transport: ConnectionTransport, closeAndWait: () => Promise<void>, options: types.LaunchOptions & { isLocal?: boolean, noDefaults?: boolean }, onClose?: () => Promise<void>) {
     const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
     const doCleanup = async () => {
       await removeFolders([artifactsDir]);
@@ -128,7 +129,10 @@ export class Chromium extends BrowserType {
 
     try {
       const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
-      const persistent: types.BrowserContextOptions = { noDefaultViewport: true };
+      const persistent: types.BrowserContextOptions = {
+        noDefaultViewport: true,
+        ...(options.noDefaults ? { acceptDownloads: 'internal-browser-default' as const } : {}),
+      };
       const browserOptions: BrowserOptions = {
         slowMo: options.slowMo,
         name: 'chromium',
@@ -141,6 +145,7 @@ export class Chromium extends BrowserType {
         downloadsPath: options.downloadsPath || artifactsDir,
         tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
+        noDefaults: options.noDefaults,
       };
       validateBrowserContextOptions(persistent, browserOptions);
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, transport, browserOptions));
@@ -162,6 +167,11 @@ export class Chromium extends BrowserType {
       const session = connection.rootSession;
       const worker = new Worker(this, '', () => transport.closeAndWait());
       session.on('Runtime.executionContextCreated', event => {
+        const isDefault = event.context.auxData?.isDefault as boolean | undefined;
+        if (isDefault === false) {
+          // Node.js sometimes creates internal contexts we are not interested in.
+          return;
+        }
         worker.workerScriptLoaded();
         worker.createExecutionContext(new CRExecutionContext(session, event.context));
       });
@@ -193,12 +203,9 @@ export class Chromium extends BrowserType {
     try {
       return await CRBrowser.connect(this.attribution.playwright, transport, options, this._devtools);
     } catch (e) {
-      if (browserLogsCollector.recentLogs().some(log => log.includes('Failed to create a ProcessSingleton for your profile directory.'))) {
-        throw new Error(
-            'Failed to create a ProcessSingleton for your profile directory. ' +
-            'This usually means that the profile is already in use by another instance of Chromium.'
-        );
-      }
+      const error = profileInUseError(browserLogsCollector.recentLogs());
+      if (error)
+        throw error;
       throw e;
     }
   }
@@ -409,16 +416,31 @@ export class Chromium extends BrowserType {
   }
 }
 
+export function profileInUseError(logs: string[]): Error | undefined {
+  const markers = [
+    'Failed to create a ProcessSingleton for your profile directory.',
+    'Opening in existing browser session.',
+  ];
+  for (const log of logs) {
+    const marker = markers.find(m => log.includes(m));
+    if (marker) {
+      return new Error(
+          `${marker} ` +
+          'This usually means that the profile is already in use by another instance of Chromium.'
+      );
+    }
+  }
+}
+
 export async function waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
   if (!options.args?.some(a => a.startsWith('--remote-debugging-port')))
     return {};
 
   const result = new ManualPromise<{ wsEndpoint?: string }>();
   browserLogsCollector.onMessage(message => {
-    if (message.includes('Failed to create a ProcessSingleton for your profile directory.')) {
-      result.reject(new Error('Failed to create a ProcessSingleton for your profile directory. ' +
-        'This usually means that the profile is already in use by another instance of Chromium.'));
-    }
+    const error = profileInUseError([message]);
+    if (error)
+      result.reject(error);
     const match = message.match(/DevTools listening on (.*)/);
     if (match)
       result.resolve({ wsEndpoint: match[1] });
@@ -446,8 +468,7 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
 }
 
 async function resolveChannelEndpoint(progress: Progress, channel: string): Promise<string> {
-  const dirs = channelToUserDataDir.get(channel)!;
-  const userDataDir = dirs[process.platform];
+  const userDataDir = defaultUserDataDirForChannel(channel);
   if (!userDataDir)
     throw new Error(`Connecting to ${channel} by channel name is not supported on ${process.platform}.`);
 
@@ -514,46 +535,3 @@ function remoteDebuggingHint(channel: string): string {
 and check "Allow remote debugging for this browser instance".
 `;
 }
-
-const channelToUserDataDir = new Map<string, Record<string, string>>([
-  ['chrome', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome', 'User Data'),
-  }],
-  ['chrome-beta', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome-beta'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Beta'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Beta', 'User Data'),
-  }],
-  ['chrome-dev', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome-unstable'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Dev'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome Dev', 'User Data'),
-  }],
-  ['chrome-canary', {
-    'linux': path.join(os.homedir(), '.config', 'google-chrome-canary'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome Canary'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Google', 'Chrome SxS', 'User Data'),
-  }],
-  ['msedge', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge', 'User Data'),
-  }],
-  ['msedge-beta', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-beta'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Beta'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Beta', 'User Data'),
-  }],
-  ['msedge-dev', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-dev'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Dev'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge Dev', 'User Data'),
-  }],
-  ['msedge-canary', {
-    'linux': path.join(os.homedir(), '.config', 'microsoft-edge-canary'),
-    'darwin': path.join(os.homedir(), 'Library', 'Application Support', 'Microsoft Edge Canary'),
-    'win32': path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'Microsoft', 'Edge SxS', 'User Data'),
-  }],
-]);

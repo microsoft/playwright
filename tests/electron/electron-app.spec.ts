@@ -17,7 +17,7 @@
 import type { BrowserWindow } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import { electronTest as test, expect } from './electronTest';
+import { electronTest as test, expect, selectors } from './electronTest';
 import type { ConsoleMessage } from 'playwright';
 
 test('should fire close event via ElectronApplication.close();', async ({ launchElectronApp }) => {
@@ -63,11 +63,10 @@ test('should fire close event when the app quits itself', async ({ launchElectro
     await electronApp.evaluate(({ app }) => app.quit());
     await waitForAppClose;
   }
-  events.sort(); // we don't care about the order
-  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
+  await expect.poll(() => [...events].sort()).toEqual(['application(close)', 'context(close)', 'process(exit)']);
   // Give it some time to fire more events - there should not be any.
   await new Promise(f => setTimeout(f, 1000));
-  expect(events).toEqual(['application(close)', 'context(close)', 'process(exit)']);
+  expect([...events].sort()).toEqual(['application(close)', 'context(close)', 'process(exit)']);
 });
 
 test('should fire console events', async ({ launchElectronApp }) => {
@@ -124,7 +123,7 @@ test('should dispatch ready event', async ({ launchElectronApp }) => {
   ]);
 });
 
-test('should script application', async ({ electronApp }) => {
+test('should script application', async ({ app: electronApp }) => {
   const appPath = await electronApp.evaluate(async ({ app }) => app.getAppPath());
   expect(appPath).toBe(path.resolve(__dirname));
 });
@@ -136,44 +135,82 @@ test('should preserve args', async ({ launchElectronApp, isMac }) => {
   expect(argv).toEqual([expect.stringContaining(electronPath), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar', '& <>^|\\"']);
 });
 
-test('should return windows', async ({ electronApp, newWindow }) => {
-  const window = await newWindow();
-  expect(electronApp.windows()).toEqual([window]);
+test('should return windows', async ({ app, page }) => {
+  expect(app.windows()).toEqual([page]);
 });
 
-test('should evaluate handle', async ({ electronApp }) => {
-  const appHandle = await electronApp.evaluateHandle(({ app }) => app);
-  expect(await electronApp.evaluate(({ app }, appHandle) => app === appHandle, appHandle)).toBeTruthy();
+test('should evaluate handle', async ({ app }) => {
+  const appHandle = await app.evaluateHandle(({ app }) => app);
+  expect(await app.evaluate(({ app }, appHandle) => app === appHandle, appHandle)).toBeTruthy();
 });
 
-test('should route network', async ({ electronApp, newWindow }) => {
-  await electronApp.context().route('**/empty.html', async (route, request) => {
+test('should infer evaluate types', async ({ app }) => {
+  // No-arg evaluate, returning a primitive.
+  const appPath: string = await app.evaluate(({ app }) => app.getAppPath());
+  expect(typeof appPath).toBe('string');
+
+  // Arg evaluate with explicit typing on both sides.
+  const sum: number = await app.evaluate(({}, { a, b }) => a + b, { a: 1, b: 2 });
+  expect(sum).toBe(3);
+
+  // Async evaluate returning an object literal.
+  const info = await app.evaluate(async ({ app }) => ({ name: app.getName(), version: app.getVersion() }));
+  const name: string = info.name;
+  const version: string = info.version;
+  expect(typeof name).toBe('string');
+  expect(typeof version).toBe('string');
+
+  // evaluateHandle returns JSHandle<R>; jsonValue() preserves R.
+  const handle = await app.evaluateHandle(({ app }) => ({ path: app.getAppPath() }));
+  const jsonValue = await handle.jsonValue();
+  const path: string = jsonValue.path;
+  expect(typeof path).toBe('string');
+
+  // Passing a JSHandle as an arg unwraps it on the worker side.
+  const numberHandle = await app.evaluateHandle(() => 42);
+  const doubled: number = await app.evaluate(({}, n) => n * 2, numberHandle);
+  expect(doubled).toBe(84);
+
+});
+
+test('should register custom selector engine', async ({ page, server }) => {
+  const tag = `electron-tag-${test.info().workerIndex}`;
+  await selectors.register(tag, `({
+    query(root, selector) { return root.querySelector(selector); },
+    queryAll(root, selector) { return Array.from(root.querySelectorAll(selector)); },
+  })`);
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<div><span></span></div><div></div>');
+  expect(await page.$eval(`${tag}=DIV`, e => e.nodeName)).toBe('DIV');
+  expect(await page.$$eval(`${tag}=DIV`, es => es.length)).toBe(2);
+});
+
+test('should route network', async ({ app, page }) => {
+  await app.context().route('**/empty.html', async (route, request) => {
     await route.fulfill({
       status: 200,
       contentType: 'text/html',
       body: '<title>Hello World</title>',
     });
   });
-  const window = await newWindow();
-  await window.goto('https://localhost:1000/empty.html');
-  expect(await window.title()).toBe('Hello World');
+  await page.goto('https://localhost:1000/empty.html');
+  expect(await page.title()).toBe('Hello World');
 });
 
-test('should support init script', async ({ electronApp, newWindow }) => {
-  await electronApp.context().addInitScript('window.magic = 42;');
-  const window = await newWindow();
-  await window.goto('data:text/html,<script>window.copy = magic</script>');
-  expect(await window.evaluate(() => window['copy'])).toBe(42);
+test('should support init script', async ({ app, page }) => {
+  await app.context().addInitScript('window.magic = 42;');
+  await page.goto('data:text/html,<script>window.copy = magic</script>');
+  expect(await page.evaluate(() => window['copy'])).toBe(42);
 });
 
-test('should expose function', async ({ electronApp, newWindow }) => {
-  await electronApp.context().exposeFunction('add', (a, b) => a + b);
-  const window = await newWindow();
-  await window.goto('data:text/html,<script>window["result"] = add(20, 22);</script>');
-  expect(await window.evaluate(() => window['result'])).toBe(42);
+test('should expose function', async ({ app, page }) => {
+  await app.context().exposeFunction('add', (a, b) => a + b);
+  await page.goto('data:text/html,<script>window["result"] = add(20, 22);</script>');
+  expect(await page.evaluate(() => window['result'])).toBe(42);
 });
 
-test('should wait for first window', async ({ electronApp }) => {
+test('should wait for first window', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app-args.js');
   await electronApp.evaluate(({ BrowserWindow }) => {
     const window = new BrowserWindow({ width: 800, height: 600 });
     void window.loadURL('data:text/html,<title>Hello World!</title>');
@@ -182,10 +219,10 @@ test('should wait for first window', async ({ electronApp }) => {
   expect(await window.title()).toBe('Hello World!');
 });
 
-test('should have a clipboard instance', async ({ electronApp }) => {
+test('should have a clipboard instance', async ({ app }) => {
   const clipboardContentToWrite = 'Hello from Playwright';
-  await electronApp.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), clipboardContentToWrite);
-  const clipboardContentRead = await electronApp.evaluate(async ({ clipboard }) => clipboard.readText());
+  await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), clipboardContentToWrite);
+  const clipboardContentRead = await app.evaluate(async ({ clipboard }) => clipboard.readText());
   expect(clipboardContentRead).toEqual(clipboardContentToWrite);
 });
 
@@ -200,20 +237,19 @@ test('should return browser window', async ({ launchElectronApp }) => {
   expect(await bwHandle.evaluate((bw: BrowserWindow) => bw.title)).toBe('Electron');
 });
 
-test('should bypass csp', async ({ launchElectronApp, server }) => {
-  const app = await launchElectronApp('electron-app.js', [], { bypassCSP: true });
-  await app.evaluate(electron => {
-    const window = new electron.BrowserWindow({
-      width: 800,
-      height: 600,
-    });
-    void window.loadURL('about:blank');
-  });
+test('should set timezone via process.env.TZ', async ({ launchElectronApp }) => {
+  // Migrated from the removed timezoneId launch option, see packages/playwright-electron/README.md.
+  const app = await launchElectronApp('electron-options-app.js', [], { env: { PWTEST_OPTION_TZ: 'Europe/London' } });
   const page = await app.firstWindow();
-  await page.goto(server.PREFIX + '/csp.html');
-  await page.addScriptTag({ content: 'window["__injected"] = 42;' });
-  expect(await page.evaluate('window["__injected"]')).toBe(42);
-  expect(await page.evaluate('window["__inlineScriptValue"]')).toBe(42);
+  expect(await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone)).toBe('Europe/London');
+});
+
+test('should ignore https errors via --ignore-certificate-errors switch', async ({ launchElectronApp, httpsServer }) => {
+  // Migrated from the removed ignoreHTTPSErrors launch option, see packages/playwright-electron/README.md.
+  const app = await launchElectronApp('electron-options-app.js', [], { env: { PWTEST_OPTION_IGNORE_HTTPS_ERRORS: '1' } });
+  const page = await app.firstWindow();
+  const response = await page.goto(httpsServer.EMPTY_PAGE);
+  expect(response.status()).toBe(200);
 });
 
 test('should create page for browser view', async ({ launchElectronApp }) => {
@@ -250,28 +286,29 @@ test('should return same browser window for browser view pages', async ({ launch
   expect(firstWindowId).toEqual(secondWindowId);
 });
 
-test('should record video', async ({ launchElectronApp }, testInfo) => {
-  const app = await launchElectronApp('electron-window-app.js', [], {
-    recordVideo: { dir: testInfo.outputPath('video') }
-  });
+test('should record video via page.screencast.start', async ({ launchElectronApp }, testInfo) => {
+  const app = await launchElectronApp('electron-window-app.js');
   const page = await app.firstWindow();
+  const videoPath = testInfo.outputPath('video.webm');
+  await page.screencast.start({ path: videoPath });
   await page.setContent(`<style>body {background:red}</style>`);
   await page.waitForTimeout(1000);
+  await page.screencast.stop();
   await app.close();
-  const videoPath = await page.video().path();
   expect(fs.statSync(videoPath).size).toBeGreaterThan(0);
 });
 
-test('should record har', async ({ launchElectronApp, server }, testInfo) => {
+test('should record har via context.tracing.startHar', async ({ launchElectronApp, server }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30747' });
-  const app = await launchElectronApp('electron-window-app.js', [], {
-    recordHar: { path: testInfo.outputPath('har.zip') }
-  });
+  const app = await launchElectronApp('electron-window-app.js');
+  const harPath = testInfo.outputPath('har.zip');
+  await app.context().tracing.startHar(harPath);
   const page = await app.firstWindow();
   await page.goto(server.EMPTY_PAGE);
+  await app.context().tracing.stopHar();
   await app.close();
-  expect(fs.existsSync(testInfo.outputPath('har.zip'))).toBeTruthy();
-  expect(fs.statSync(testInfo.outputPath('har.zip')).size).toBeGreaterThan(0);
+  expect(fs.existsSync(harPath)).toBeTruthy();
+  expect(fs.statSync(harPath).size).toBeGreaterThan(0);
 });
 
 test('should be able to get the first window when with a delayed navigation', async ({ launchElectronApp }) => {
@@ -325,9 +362,7 @@ test('should report downloads', async ({ launchElectronApp, electronMajorVersion
     res.end(`Hello world`);
   });
 
-  const app = await launchElectronApp('electron-window-app.js', [], {
-    acceptDownloads: true,
-  });
+  const app = await launchElectronApp('electron-window-app.js');
   const window = await app.firstWindow();
   await window.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [download] = await Promise.all([
@@ -338,30 +373,4 @@ test('should report downloads', async ({ launchElectronApp, electronMajorVersion
   expect(fs.existsSync(path)).toBeTruthy();
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await app.close();
-});
-
-test('should save downloads to artifactsDir', async ({ launchElectronApp, electronMajorVersion, server }, testInfo) => {
-  server.setRoute('/download', (req, res) => {
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', 'attachment');
-    res.end(`Hello world`);
-  });
-
-  const artifactsDir = testInfo.outputPath('artifacts');
-  const app = await launchElectronApp('electron-window-app.js', [], {
-    acceptDownloads: true,
-    artifactsDir,
-  });
-  const window = await app.firstWindow();
-  await window.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  const [download] = await Promise.all([
-    window.waitForEvent('download'),
-    window.click('a')
-  ]);
-  const downloadPath = await download.path();
-  expect(downloadPath.startsWith(artifactsDir)).toBeTruthy();
-  expect(fs.existsSync(downloadPath)).toBeTruthy();
-  await app.close();
-  // User-provided artifactsDir should not be cleaned up.
-  expect(fs.existsSync(artifactsDir)).toBeTruthy();
 });

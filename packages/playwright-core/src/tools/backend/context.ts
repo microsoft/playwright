@@ -19,7 +19,7 @@ import path from 'path';
 
 import debug from 'debug';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
-import { disposeAll } from '@utils/disposable';
+import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
 import { playwright } from '../../inprocess';
 
@@ -27,7 +27,7 @@ import { Tab } from './tab';
 
 import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
-import type { Disposable } from '@utils/disposable';
+import type { Disposable } from '@isomorphic/disposable';
 import type { ToolCapability } from './tool';
 
 const testDebug = debug('pw:mcp:test');
@@ -379,7 +379,7 @@ export async function outputFile(options: ContextOptions, fileName: string, flag
 
 async function checkFile(options: ContextOptions, resolvedFilename: string, flags: { origin: 'code' | 'llm' }) {
   // Trust code and unrestricted file access.
-  if (flags.origin === 'code' || options.config.allowUnrestrictedFileAccess)
+  if (flags.origin === 'code' || options.config.allowUnrestrictedFileAccess || options.config.skillMode)
     return;
 
   // Trust llm to use valid characters in file names.

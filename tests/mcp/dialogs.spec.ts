@@ -29,7 +29,7 @@ test('alert dialog', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Button' }).click();`,
@@ -40,7 +40,7 @@ test('alert dialog', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     code: undefined,
@@ -77,7 +77,7 @@ test('two alert dialogs', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Button' }).click();`,
@@ -126,7 +126,7 @@ test('confirm dialog (true)', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     modalState: expect.stringContaining(`- ["confirm" dialog with message "Confirm"]: can be handled by browser_handle_dialog`),
@@ -161,7 +161,7 @@ test('confirm dialog (false)', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     modalState: expect.stringContaining(`- ["confirm" dialog with message "Confirm"]: can be handled by browser_handle_dialog`),
@@ -196,7 +196,7 @@ test('prompt dialog', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     modalState: expect.stringContaining(`- ["prompt" dialog with message "Prompt"]: can be handled by browser_handle_dialog`),
@@ -228,7 +228,7 @@ test('alert dialog w/ race', async ({ client, server }) => {
     name: 'browser_click',
     arguments: {
       element: 'Button',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Button' }).click();`,

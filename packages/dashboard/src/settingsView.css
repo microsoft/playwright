@@ -21,21 +21,13 @@
 .settings-gear-btn {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  justify-content: center;
 }
 
 .settings-gear-btn svg {
   width: 16px;
   height: 16px;
-}
-
-.settings-gear-btn:hover {
-  background: var(--color-neutral-subtle);
-}
-
-.settings-gear-btn.open {
-  background: var(--color-neutral-muted);
-  color: var(--color-fg-default);
+  fill: currentColor;
 }
 
 .settings-popup {

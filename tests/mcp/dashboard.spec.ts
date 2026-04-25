@@ -15,37 +15,59 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { test, expect } from './cli-fixtures';
+import { inheritAndCleanEnv } from '../config/utils';
+
+function displayPath(p: string): string {
+  const home = os.homedir();
+  if (p === home)
+    return '~';
+  if (p.startsWith(home + path.sep))
+    return '~' + p.slice(home.length);
+  return p;
+}
 
 test.beforeEach(({}, testInfo) => {
   process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
 });
 
-test('should show browser session chip', async ({ cli, server, openDashboard }) => {
+test('should show browser session chip', async ({ cli, server, startDashboardServer }) => {
   await cli('open', server.EMPTY_PAGE);
 
-  const dashboard = await openDashboard();
-  const chips = dashboard.locator('.session-chip');
-  await expect(chips).toHaveCount(1);
+  const dashboard = await startDashboardServer();
+  const sessions = dashboard.getByRole('region', { name: /^Session / });
+  await expect(sessions).toHaveCount(1);
 });
 
-test('should show devtools sidebar', async ({ cli, server, openDashboard, mcpBrowser }) => {
-  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'DevTools sidebar requires CDP, only available in Chromium');
+test('should show placeholder chip for browser with no contexts', async ({ boundBrowser, startDashboardServer }) => {
+  expect(boundBrowser.contexts()).toHaveLength(0);
 
-  await cli('open', server.EMPTY_PAGE);
-
-  const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
-
-  const devToolsButton = dashboard.locator('button.nav-btn[title="Chrome DevTools"]');
-  await expect(dashboard.locator('.inspector-frame')).not.toBeVisible();
-  await devToolsButton.click();
-  await expect(dashboard.locator('.inspector-frame')).toBeVisible();
+  const dashboard = await startDashboardServer();
+  const sessions = dashboard.getByRole('region', { name: /^Session / });
+  await expect(sessions).toHaveCount(1);
+  await expect(sessions.getByText('No tabs open.')).toBeVisible();
+  await expect(sessions.getByRole('button', { name: 'New tab' })).toHaveCount(0);
 });
 
-test('should show current workspace sessions first', async ({ cli, server, openDashboard }) => {
+test('should show one row per context for a single browser', async ({ boundBrowser, server, startDashboardServer }) => {
+  const contextA = await boundBrowser.newContext();
+  const pageA = await contextA.newPage();
+  await pageA.goto(server.EMPTY_PAGE);
+
+  const dashboard = await startDashboardServer();
+  const sessions = dashboard.getByRole('region', { name: /^Session / });
+  await expect(sessions).toHaveCount(1);
+
+  const contextB = await boundBrowser.newContext();
+  const pageB = await contextB.newPage();
+  await pageB.goto(server.EMPTY_PAGE);
+  await expect(sessions).toHaveCount(2);
+});
+
+test('should show current workspace sessions first', async ({ cli, server, startDashboardServer }) => {
   const wsA = test.info().outputPath('workspace-a');
   const wsB = test.info().outputPath('workspace-b');
 
@@ -56,19 +78,17 @@ test('should show current workspace sessions first', async ({ cli, server, openD
   await cli('open', server.EMPTY_PAGE, { cwd: wsB });
 
   const checkOrder = async (first: string, second: string) => {
-    const dashboard = await openDashboard({ cwd: first });
-    const workspaceGroups = dashboard.locator('.workspace-group');
+    const dashboard = await startDashboardServer({ cwd: first });
+    const workspaceGroups = dashboard.getByRole('region', { name: /^Workspace / });
     await expect(workspaceGroups).toHaveCount(2);
 
-    // Current workspace (first) should be first and expanded.
-    await expect(workspaceGroups.nth(0).locator('.workspace-path')).toContainText(first);
-    await expect(workspaceGroups.nth(0).locator('.session-chips')).toBeVisible();
+    // Current workspace (first) should be first.
+    await expect(workspaceGroups.nth(0).getByRole('heading', { level: 3 })).toHaveText(displayPath(first));
+    await expect(workspaceGroups.nth(0).getByRole('region', { name: /^Session / })).toHaveCount(1);
 
-    // Other workspace (second) should be second and collapsed.
-    await expect(workspaceGroups.nth(1).locator('.workspace-path')).toContainText(second);
-    await expect(workspaceGroups.nth(1).locator('.session-chips')).not.toBeVisible();
-
-    await dashboard.close();
+    // Other workspace (second) should be second.
+    await expect(workspaceGroups.nth(1).getByRole('heading', { level: 3 })).toHaveText(displayPath(second));
+    await expect(workspaceGroups.nth(1).getByRole('region', { name: /^Session / })).toHaveCount(1);
   };
 
   await test.step('open dashboard in workspace A', async () => {
@@ -80,39 +100,269 @@ test('should show current workspace sessions first', async ({ cli, server, openD
   });
 });
 
-test('should pick locator from browser', async ({ cli, server, openDashboard }) => {
-  server.setContent('/', '<button style="position:fixed;top:0;left:0;width:200px;height:100px">Submit</button>', 'text/html');
+function activeSession(dashboard: import('playwright-core').Page) {
+  return dashboard.getByRole('region', { name: /^Session / }).filter({ has: dashboard.getByRole('option', { selected: true }) });
+}
 
-  await cli('open', server.PREFIX);
+test('should activate session when show is called with -s', async ({ cli, server, startDashboardServer }) => {
+  await cli('-s=sessA', 'open', server.EMPTY_PAGE);
+  await cli('-s=sessB', 'open', server.EMPTY_PAGE);
 
-  const dashboard = await openDashboard();
-  await dashboard.locator('.session-chip').click();
+  const dashboard = await startDashboardServer({ session: 'sessB' });
+  await expect(activeSession(dashboard)).toHaveAccessibleName('Session sessB');
+});
 
-  const pickBtn = dashboard.locator('button.nav-btn[title="Pick locator"]');
-  await pickBtn.click();
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  await expect(dashboard.locator('div.dashboard-view')).toContainClass('interactive');
+test('daemon show: closing page exits the process', async ({ cli, connectToDashboard }) => {
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { exitCode, dashboardPid } = await cli('show', { bindTitle });
+  expect(exitCode).toBe(0);
+  expect(dashboardPid).toBeDefined();
+  expect(isAlive(dashboardPid)).toBe(true);
 
-  // Intercept clipboard writes before clicking pick.
-  const copyPromise = dashboard.evaluate(() => {
-    if (!navigator.clipboard)
-      return 'no clipboard';
-    return new Promise<string>(f => {
-      const original = navigator.clipboard.writeText;
-      navigator.clipboard.writeText = text => {
-        f(text);
-        navigator.clipboard.writeText = original;
-        return navigator.clipboard.writeText(text);
-      };
+  const browser = await connectToDashboard(bindTitle);
+  const page = browser.contexts()[0].pages()[0];
+  await page.close();
+
+  await expect(() => expect(isAlive(dashboardPid)).toBe(false)).toPass();
+});
+
+async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page, text: string) {
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+  const box = await dashboard.locator('img#display').boundingBox();
+  const x0 = box!.x + box!.width * 0.3;
+  const y0 = box!.y + box!.height * 0.3;
+  const x1 = box!.x + box!.width * 0.6;
+  const y1 = box!.y + box!.height * 0.6;
+  await dashboard.mouse.move(x0, y0);
+  await dashboard.mouse.down();
+  await dashboard.mouse.move(x1, y1);
+  await dashboard.mouse.up();
+  await dashboard.locator('.annotations-textarea').fill(text);
+  await dashboard.locator('.annotations-textarea').press('Enter');
+  await dashboard.getByRole('button', { name: 'Submit annotation' }).click();
+}
+
+function verifyAnnotateOutput(output: string, expectedText: string, outputDir: string) {
+  const lines = output.trim().split('\n');
+  expect(lines[0]).toMatch(new RegExp(`^\\{ x: \\d+, y: \\d+, width: \\d+, height: \\d+ \\}: ${expectedText}$`));
+  expect(lines[lines.length - 1]).toMatch(/^image: \.playwright-cli[\\/]annotations-.*\.png$/);
+  const pngRel = lines[lines.length - 1].replace(/^image: /, '');
+  const pngPath = path.resolve(outputDir, pngRel);
+  expect(fs.existsSync(pngPath)).toBe(true);
+  expect(fs.statSync(pngPath).size).toBeGreaterThan(0);
+}
+
+test('should capture annotations via show --annotate', async ({ connectToDashboard, cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+
+  const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+
+  const annotatePromise = cli('show', '--annotate');
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  await drawAndSubmitAnnotation(dashboard, 'hello');
+
+  const { output, exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+  verifyAnnotateOutput(output, 'hello', test.info().outputDir);
+});
+
+test('should start dashboard and annotate when no dashboard is running', async ({ connectToDashboard, cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const annotatePromise = cli('show', '--annotate', { bindTitle });
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await drawAndSubmitAnnotation(dashboard, 'hi');
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  const { output, exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+  verifyAnnotateOutput(output, 'hi', test.info().outputDir);
+});
+
+test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate', async ({ connectToDashboard, cli, server }) => {
+  await cli('-s=first', 'open', server.EMPTY_PAGE);
+  await cli('-s=second', 'open', server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const annotatePromise = cli('-s=second', 'show', '--annotate', { bindTitle });
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
+    await drawAndSubmitAnnotation(dashboard, 'fresh');
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  const { exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+});
+
+test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
+  server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');
+  server.setContent('/green', '<html><head><style>html,body{margin:0;height:100vh;background:#00ff00}</style></head><body></body></html>', 'text/html');
+
+  await cli('-s=first', 'open', server.PREFIX + '/red');
+  await cli('-s=second', 'open', server.PREFIX + '/green');
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('-s=first', 'show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+  const dashboard = browser.contexts()[0].pages()[0];
+  await expect(dashboard.locator('#display')).toBeVisible();
+
+  const sampleCenter = () => dashboard.evaluate(() => {
+    const img = document.querySelector('#display') as HTMLImageElement | null;
+    if (!img || !img.naturalWidth)
+      return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, img.naturalWidth / 2, img.naturalHeight / 2, 1, 1, 0, 0, 1, 1);
+    const [r, g] = ctx.getImageData(0, 0, 1, 1).data;
+    return { r, g };
+  });
+
+  await expect.poll(async () => {
+    const c = await sampleCenter();
+    return !!(c && c.r > 200 && c.g < 50);
+  }, { timeout: 15000 }).toBe(true);
+
+  const annotatePromise = cli('-s=second', 'show', '--annotate');
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+  await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
+
+  await expect.poll(async () => {
+    const c = await sampleCenter();
+    return !!(c && c.g > 200 && c.r < 50);
+  }, { timeout: 15000 }).toBe(true);
+
+  await drawAndSubmitAnnotation(dashboard, 'session switch');
+  const { exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+});
+
+test('should disengage annotate mode when --annotate client disconnects', async ({ connectToDashboard, cli, childProcess, cliEnv, mcpBrowser, mcpHeadless, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+
+  const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+
+  const annotateClient = childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), 'show', '--annotate'],
+    cwd: test.info().outputPath(),
+    env: inheritAndCleanEnv({
+      ...cliEnv,
+      PLAYWRIGHT_MCP_BROWSER: mcpBrowser,
+      PLAYWRIGHT_MCP_HEADLESS: String(mcpHeadless),
+    }),
+  });
+
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+
+  await annotateClient.kill();
+
+  await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
+});
+
+async function installSaveFilePickerMock(page: import('playwright-core').Page): Promise<() => Promise<Buffer>> {
+  let captured: string | undefined;
+  let resolveCaptured: ((b64: string) => void) | undefined;
+  const waitForCapture = new Promise<string>(resolve => {
+    resolveCaptured = resolve;
+  });
+  await page.exposeBinding('__testCaptureBytes', (_, b64: string) => {
+    captured = b64;
+    resolveCaptured!(b64);
+  });
+  await page.addInitScript(() => {
+    (window as any).showSaveFilePicker = async () => ({
+      createWritable: async () => {
+        const chunks: Uint8Array[] = [];
+        return {
+          write: async (chunk: Blob | BufferSource) => {
+            const buf = chunk instanceof Blob
+              ? new Uint8Array(await chunk.arrayBuffer())
+              : new Uint8Array(chunk instanceof ArrayBuffer ? chunk : (chunk as ArrayBufferView).buffer);
+            chunks.push(buf);
+          },
+          close: async () => {
+            const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+            const merged = new Uint8Array(total);
+            let offset = 0;
+            for (const c of chunks) {
+              merged.set(c, offset);
+              offset += c.byteLength;
+            }
+            await (window as any).__testCaptureBytes((merged as any).toBase64());
+          },
+        };
+      },
     });
-  }).catch(e => `Exception in eval: ${e}`);
+  });
+  return async () => {
+    const b64 = captured ?? await waitForCapture;
+    return Buffer.from(b64, 'base64');
+  };
+}
 
-  await expect(async () => {
-    await dashboard.locator('img#display').click({ position: { x: 50, y: 25 } });
-    const text = await Promise.race([
-      copyPromise,
-      new Promise<string>(f => setTimeout(() => f('timeout'), 1000))
-    ]);
-    expect(text).toContain('Submit');
-  }).toPass();
+test('save recording streams WebM bytes to the chosen file', async ({ cli, server, page, startDashboardServer }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const awaitBytes = await installSaveFilePickerMock(page);
+
+  const dashboard = await startDashboardServer();
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+  await expect(dashboard.locator('img#display')).toBeVisible();
+
+  // Enter recording mode from the normal toolbar.
+  await dashboard.getByRole('button', { name: 'Record video' }).click();
+  await expect(dashboard.locator('.mode-record-label')).toBeVisible();
+
+  // Click the toggled record button again to transition to the 'stopped' phase.
+  await dashboard.getByRole('button', { name: 'Stop recording' }).click();
+
+  // Save the recording.
+  await dashboard.getByRole('button', { name: 'Save recording' }).click();
+
+  const bytes = await awaitBytes();
+  // WebM files start with the EBML magic bytes.
+  expect(bytes.subarray(0, 4)).toEqual(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
 });

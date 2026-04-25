@@ -17,7 +17,7 @@
 export type WebSocketMessage = string | ArrayBufferLike | Blob | ArrayBufferView;
 export type WSData = { data: string, isBase64: boolean };
 
-export type OnCreatePayload = { type: 'onCreate', id: string, url: string };
+export type OnCreatePayload = { type: 'onCreate', id: string, url: string, protocols: string[] };
 export type OnMessageFromPagePayload = { type: 'onMessageFromPage', id: string, data: WSData };
 export type OnClosePagePayload = { type: 'onClosePage', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
 export type OnMessageFromServerPayload = { type: 'onMessageFromServer', id: string, data: WSData };
@@ -147,7 +147,8 @@ export function inject(globalThis: GlobalThis) {
 
       this._id = generateId();
       idToWebSocket.set(this._id, this);
-      binding({ type: 'onCreate', id: this._id, url: this.url });
+      const protocolsList = Array.isArray(protocols) ? [...protocols] : (protocols ? [protocols] : []);
+      binding({ type: 'onCreate', id: this._id, url: this.url, protocols: protocolsList });
     }
 
     // --- native WebSocket implementation ---

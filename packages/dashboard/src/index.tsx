@@ -17,53 +17,45 @@
 import React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import './colors.css';
+import '@web/common.css';
 import './common.css';
 import { applyTheme } from '@web/theme';
 import { Dashboard } from './dashboard';
-import { Grid } from './grid';
-import { SessionModel } from './sessionModel';
+import { DashboardModel } from './dashboardModel';
+import { DashboardClient } from './dashboardClient';
+import { SessionSidebar } from './sessionSidebar';
+import { SplitView } from '@web/components/splitView';
 
 applyTheme();
 
-export function navigate(hash: string) {
-  window.history.pushState(null, '', hash);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
+const client = DashboardClient.create('/ws');
+const model = new DashboardModel(client);
 
-function parseHash(): string | undefined {
-  const hash = window.location.hash;
-  const prefix = '#session=';
-  if (hash.startsWith(prefix))
-    return decodeURIComponent(hash.slice(prefix.length));
-  return undefined;
-}
-
-const model = new SessionModel();
+const pushVisibility = () => model.setVisible(!document.hidden);
+document.addEventListener('visibilitychange', pushVisibility);
+if (document.hidden)
+  pushVisibility();
 
 const App: React.FC = () => {
   const [, setRevision] = React.useState(0);
-  const [socketPath, setSocketPath] = React.useState<string | undefined>(parseHash);
+  React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), []);
 
-  React.useEffect(() => {
-    model.startPolling();
-    const unsubscribe = model.subscribe(() => setRevision(r => r + 1));
-    return () => {
-      unsubscribe();
-      model.stopPolling();
-    };
-  }, [model]);
-
-  React.useEffect(() => {
-    const onPopState = () => setSocketPath(parseHash());
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
-
-  if (socketPath) {
-    const wsUrl = model.sessionByGuid(socketPath)?.wsUrl;
-    return <Dashboard wsUrl={wsUrl || undefined} />;
-  }
-  return <Grid model={model} />;
+  return <SplitView
+    orientation='horizontal'
+    sidebarIsFirst
+    sidebarSize={320}
+    minSidebarSize={220}
+    settingName='dashboardSessionSidebar'
+    sidebar={<SessionSidebar model={model} />}
+    main={<div className='dashboard-shell-main'>
+      <Dashboard model={model} />
+    </div>}
+  />;
 };
 
-ReactDOM.createRoot(document.querySelector('#root')!).render(<App/>);
+// HMR begin: cache the root on the DOM node so re-running this module during
+// an HMR update reuses it instead of calling createRoot twice on the same container.
+const rootElement = document.querySelector('#root')! as HTMLElement & { __dashboardRoot?: ReactDOM.Root };
+const root = rootElement.__dashboardRoot ??= ReactDOM.createRoot(rootElement);
+root.render(<App />);
+// HMR end

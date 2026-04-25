@@ -790,7 +790,6 @@ Playwright:
     firefox: BrowserType
     webkit: BrowserType
     android: Android
-    electron: Electron
     utils: LocalUtils?
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
@@ -1030,6 +1029,7 @@ BrowserType:
         slowMo: float?
         timeout: float
         isLocal: boolean?
+        noDefaults: boolean?
       returns:
         browser: Browser
         defaultContext: BrowserContext?
@@ -2101,6 +2101,10 @@ Page:
       title: Cancel pick locator
       group: configuration
 
+    hideHighlight:
+      title: Hide all element highlights
+      group: configuration
+
     screencastShowOverlay:
       title: Show overlay
       group: configuration
@@ -2305,6 +2309,14 @@ Frame:
         snapshot: true
         pause: true
 
+    ariaRef:
+      internal: true
+      parameters:
+        selector: string
+        timeout: float
+      returns:
+        ref: string?
+
     ariaSnapshot:
       title: Aria snapshot
       group: getter
@@ -2318,6 +2330,7 @@ Frame:
         track: string?
         selector: string?
         depth: int?
+        boxes: boolean?
         timeout: float
       returns:
         snapshot: string
@@ -2405,6 +2418,42 @@ Frame:
         targetPosition: Point?
         strict: boolean?
         steps: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    drop:
+      title: Drop files or data onto an element
+      parameters:
+        selector: string
+        strict: boolean?
+        position: Point?
+        # Only one of payloads, localPaths and streams may be present.
+        payloads:
+          type: array?
+          items:
+            type: object
+            properties:
+              name: string
+              mimeType: string?
+              buffer: binary
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        data:
+          type: array?
+          items:
+            type: object
+            properties:
+              mimeType: string
+              value: string
+        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -2523,8 +2572,13 @@ Frame:
         resolvedSelector: string
 
     highlight:
-      title: Highlight element
-      group: configuration
+      internal: true
+      parameters:
+        selector: string
+        style: string?
+
+    hideHighlight:
+      internal: true
       parameters:
         selector: string
 
@@ -2939,6 +2993,11 @@ Frame:
         selector: string?
         expression: string
         expressionArg: json?
+        pseudo:
+          type: enum?
+          literals:
+          - before
+          - after
         expectedText:
           type: array?
           items: ExpectedTextValue
@@ -2949,7 +3008,11 @@ Frame:
         timeout: float
       returns:
         matches: boolean
-        received: SerializedValue?
+        received:
+          type: object?
+          properties:
+            value: SerializedValue?
+            ariaSnapshot: string?
         timedOut: boolean?
         errorMessage: string?
         log:
@@ -3692,6 +3755,9 @@ WebSocketRoute:
 
   initializer:
     url: string
+    protocols:
+      type: array
+      items: string
 
   commands:
 
@@ -4137,132 +4203,6 @@ CDPSession:
     close:
 
 
-Electron:
-  type: interface
-
-  commands:
-
-    launch:
-      title: Launch electron
-      parameters:
-        executablePath: string?
-        args:
-          type: array?
-          items: string
-        chromiumSandbox: boolean?
-        cwd: string?
-        env:
-          type: array?
-          items: NameValue
-        timeout: float
-        acceptDownloads:
-          type: enum?
-          literals:
-          - accept
-          - deny
-          - internal-browser-default
-        bypassCSP: boolean?
-        colorScheme:
-          type: enum?
-          literals:
-          - dark
-          - light
-          - no-preference
-          - no-override
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        geolocation:
-          type: object?
-          properties:
-            longitude: float
-            latitude: float
-            accuracy: float?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-            origin: string?
-        ignoreHTTPSErrors: boolean?
-        locale: string?
-        offline: boolean?
-        recordVideo:
-          type: object?
-          properties:
-            dir: string?
-            size:
-              type: object?
-              properties:
-                width: int
-                height: int
-            showActions:
-              type: object?
-              properties:
-                $mixin: ShowActionsOptions
-        strictSelectors: boolean?
-        timezoneId: string?
-        tracesDir: string?
-        artifactsDir: string?
-        selectorEngines:
-          type: array?
-          items: SelectorEngine
-        testIdAttributeName: string?
-
-      returns:
-        electronApplication: ElectronApplication
-
-
-ElectronApplication:
-  type: interface
-
-  extends: EventTarget
-
-  initializer:
-    context: BrowserContext
-
-  commands:
-
-    browserWindow:
-      internal: true
-      parameters:
-        page: Page
-      returns:
-        handle: JSHandle
-
-    evaluateExpression:
-      title: Evaluate
-      parameters:
-        expression: string
-        isFunction: boolean?
-        arg: SerializedArgument
-      returns:
-        value: SerializedValue
-
-    evaluateExpressionHandle:
-      title: Evaluate
-      parameters:
-        expression: string
-        isFunction: boolean?
-        arg: SerializedArgument
-      returns:
-        handle: JSHandle
-
-    updateSubscription:
-      internal: true
-      parameters:
-        event:
-          type: enum
-          literals:
-          - console
-        enabled: boolean
-
-  events:
-    close:
-    console:
-      parameters:
-        $mixin: ConsoleMessage
-
 Android:
   type: interface
 
@@ -4599,5 +4539,3 @@ JsonPipe:
     closed:
       parameters:
         reason: string?
-
-

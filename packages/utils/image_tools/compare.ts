@@ -61,7 +61,9 @@ export function compare(actual: Buffer, expected: Buffer, diff: Buffer|null, wid
     drawPixel(width, diff, x - paddingSize, y - paddingSize, value, value, value);
   } : noop;
 
-  let fastR, fastG, fastB;
+  let fastR;
+  let fastG;
+  let fastB;
 
   let diffCount = 0;
   for (let y = paddingSize; y < r1.height - paddingSize; ++y){

@@ -426,3 +426,36 @@ it('should return http version', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(await response.httpVersion()).toBe('HTTP/1.1');
 });
+
+it('Response.formData() should parse multipart/form-data in page context', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40244' });
+  await page.goto(server.EMPTY_PAGE);
+  const result = await page.evaluate(async () => {
+    const boundary = '----WebKitFormBoundary1234';
+    const body = [
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="field1"',
+      '',
+      'value1',
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="file1"; filename="test.txt"',
+      'Content-Type: text/plain',
+      '',
+      'hello',
+      `--${boundary}--`,
+    ].join('\r\n');
+    const response = new Response(body, {
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+    });
+    const fd = await response.formData();
+    const file = fd.get('file1') as File;
+    return {
+      field1: fd.get('field1'),
+      filename: file instanceof File ? file.name : null,
+      fileContent: file instanceof File ? await file.text() : null,
+    };
+  });
+  expect(result.field1).toBe('value1');
+  expect(result.filename).toBe('test.txt');
+  expect(result.fileContent).toBe('hello');
+});

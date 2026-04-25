@@ -2,9 +2,21 @@
 "strict"
 ../../package.ts
 ../../serverRegistry.ts
+./channelSessions.ts
 ./minimist.ts
+./output.ts
 ./session.ts
 ./registry.ts
+./utils.ts
+
+[output.ts]
+"strict"
+../utils/extension.ts
+./channelSessions.ts
+
+[channelSessions.ts]
+"strict"
+../utils/extension.ts
 
 [session.ts]
 "strict"
@@ -20,4 +32,7 @@
 ../../package.ts
 
 [minimist.ts]
+"strict"
+
+[utils.ts]
 "strict"

@@ -62,6 +62,15 @@ export function buildErrorContext(options: {
           stripAnsiEscapes(error.message || ''),
           '```',
       );
+      const ariaSnapshot = error.matcherResult?.ariaSnapshot;
+      if (ariaSnapshot) {
+        lines.push(
+            '',
+            '```yaml',
+            ariaSnapshot,
+            '```',
+        );
+      }
     }
   }
 

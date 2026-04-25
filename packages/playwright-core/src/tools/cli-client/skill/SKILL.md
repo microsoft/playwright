@@ -38,6 +38,9 @@ playwright-cli dblclick e7
 # --submit presses Enter after filling the element
 playwright-cli fill e5 "user@example.com"  --submit
 playwright-cli drag e2 e8
+# drop files or data onto an element (from outside the page)
+playwright-cli drop e4 --path=./image.png
+playwright-cli drop e4 --data="text/plain=hello world"
 playwright-cli hover e4
 playwright-cli select e9 "option-value"
 playwright-cli upload ./document.pdf
@@ -158,6 +161,19 @@ playwright-cli tracing-stop
 playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
+
+# launch the dashboard with annotation prompt to ask the user for input
+playwright-cli show --annotate
+
+# generate a Playwright locator for an element from its ref or selector
+playwright-cli generate-locator e5 --raw
+
+# show a persistent highlight overlay for an element, optionally with a custom style
+playwright-cli highlight e5
+playwright-cli highlight e5 --style="outline: 3px dashed red"
+# hide a single element highlight, or all page highlights when no target is given
+playwright-cli highlight e5 --hide
+playwright-cli highlight --hide
 ```
 
 ## Raw output
@@ -175,6 +191,11 @@ TOKEN=$(playwright-cli --raw cookie-get session_id)
 playwright-cli --raw localstorage-get theme
 ```
 
+For structured output wrapping every reply as JSON, pass --json
+```bash
+playwright-cli list --json
+```
+
 ## Open parameters
 ```bash
 # Use specific browser when creating session
@@ -188,8 +209,8 @@ playwright-cli open --persistent
 # Use persistent profile with custom directory
 playwright-cli open --profile=/path/to/profile
 
-# Connect to browser via extension
-playwright-cli attach --extension
+# Connect to browser via Playwright Extension
+playwright-cli attach --extension=chrome
 
 # Connect to a running Chrome or Edge by channel name
 playwright-cli attach --cdp=chrome
@@ -203,6 +224,8 @@ playwright-cli open --config=my-config.json
 
 # Close the browser
 playwright-cli close
+# Detach from an attached browser (leaves the external browser running)
+playwright-cli -s=msedge detach
 # Delete user data for the default session
 playwright-cli delete-data
 ```
@@ -235,6 +258,9 @@ playwright-cli snapshot "#main"
 # limit snapshot depth for efficiency, take a partial snapshot afterwards
 playwright-cli snapshot --depth=4
 playwright-cli snapshot e34
+
+# include each element's bounding box as [box=x,y,width,height]
+playwright-cli snapshot --boxes
 ```
 
 ## Targeting elements
@@ -336,6 +362,15 @@ playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli tracing-stop
 playwright-cli close
+```
+
+## Example: Interactive session
+
+Ask the user to annotate the UI. User can provide contextual tasks or ask contextual questions using annotations:
+
+```bash
+playwright-cli open https://example.com
+playwright-cli show --annotate
 ```
 
 ## Specific tasks

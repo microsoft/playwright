@@ -9224,6 +9224,11 @@ interface LocatorAssertions {
    */
   toHaveCSS(name: string, value: string|RegExp, options?: {
     /**
+     * Pseudo-element to read computed styles from.
+     */
+    pseudo?: "before"|"after";
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -10001,6 +10006,47 @@ export interface TestInfoError {
    * error. Will be `undefined` if there is no cause or if the cause is not an instance of [Error].
    */
   cause?: TestInfoError;
+
+  /**
+   * Structured information about a matcher failure. Set when the error originated from an `expect(...)` matcher; unset
+   * otherwise.
+   */
+  matcherResult?: {
+    /**
+     * Matcher name (e.g. `toBeVisible`).
+     */
+    name: string;
+
+    /**
+     * Whether the matcher passed.
+     */
+    pass: boolean;
+
+    /**
+     * Expected value.
+     */
+    expected?: any;
+
+    /**
+     * Received value.
+     */
+    actual?: any;
+
+    /**
+     * Matcher log lines, if any.
+     */
+    log?: Array<string>;
+
+    /**
+     * Matcher timeout in milliseconds, set when the matcher timed out.
+     */
+    timeout?: number;
+
+    /**
+     * Aria snapshot of the receiver at the time of failure, if available.
+     */
+    ariaSnapshot?: string;
+  };
 
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.

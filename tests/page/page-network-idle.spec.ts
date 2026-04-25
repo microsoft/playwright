@@ -32,7 +32,8 @@ async function networkIdleTest(frame: Frame, server: TestServer, action: () => P
     ]);
   };
 
-  let responseA, responseB;
+  let responseA;
+  let responseB;
   // Hold on to a bunch of requests without answering.
   server.setRoute('/fetch-request-a.js', (req, res) => responseA = res);
   const firstFetchResourceRequested = waitForRequest('/fetch-request-a.js');

@@ -168,9 +168,19 @@ async function innerCheckDeps(root) {
         if (!allowImport(fileName, importPath, mergedDeps))
           errors.push(`Disallowed import ${path.relative(root, importPath)} in ${path.relative(root, fileName)}`);
         return;
-      } else {
-        if (mergedDeps.includes('"strict"') && !builtins.has(node.moduleSpecifier.text))
-          errors.push(`Disallowed import ${node.moduleSpecifier.text} in ${path.relative(root, fileName)}`);
+      }
+
+      // Per-folder explicit allow-list: `node_modules/<importName>` in DEPS.list
+      // declares the file may import that exact package specifier. When a
+      // DEPS.list authorizes the dep, do NOT add it to the package.json
+      // dependency check either — the per-file allowlist is the contract. This
+      // also bypasses the strict-mode external-import rejection below.
+      if (mergedDeps.includes('node_modules/' + importName))
+        return;
+
+      if (mergedDeps.includes('"strict"') && !builtins.has(node.moduleSpecifier.text)) {
+        errors.push(`Disallowed import ${node.moduleSpecifier.text} in ${path.relative(root, fileName)}`);
+        return;
       }
 
       const fullStart = node.getFullStart();
@@ -180,13 +190,6 @@ async function innerCheckDeps(root) {
           if (comment.includes('@no-check-deps'))
             return;
       }
-
-      // Per-folder explicit allow-list: `node_modules/<importName>` in DEPS.list
-      // declares the file may import that exact package specifier. When a
-      // DEPS.list authorizes the dep, do NOT add it to the package.json
-      // dependency check either — the per-file allowlist is the contract.
-      if (mergedDeps.includes('node_modules/' + importName))
-        return;
 
       const topLevel = importName.startsWith('@')
           ? importName.split('/').slice(0, 2).join('/')

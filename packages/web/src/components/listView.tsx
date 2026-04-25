@@ -82,7 +82,7 @@ export function ListView<T>({
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
   }, [name]);
 
-  return <div className={clsx(`list-view vbox`, name + '-list-view')} role={items.length > 0 ? 'list' : undefined} aria-label={ariaLabel}>
+  return <div className={clsx(`list-view vbox`, name + '-list-view')} role={items.length > 0 ? 'listbox' : undefined} aria-label={ariaLabel}>
     <div
       className={clsx('list-view-content', notSelectable && 'not-selectable')}
       tabIndex={0}
@@ -126,7 +126,7 @@ export function ListView<T>({
         return <div
           key={id?.(item, index) || index}
           onDoubleClick={() => onAccepted?.(item, index)}
-          role='listitem'
+          role='option'
           className={clsx(
               'list-view-entry',
               selectedItem === item && 'selected',

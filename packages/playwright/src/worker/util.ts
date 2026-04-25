@@ -16,8 +16,28 @@
 
 import { serializeError } from '../util';
 
-import type { ipc } from '../common';
+import type { TestInfoError } from '../../types/test';
+import type { MatcherResultProperty } from '../matchers/matcherHint';
 
-export function testInfoError(error: Error | any): ipc.TestInfoErrorImpl {
-  return serializeError(error);
+export function testInfoError(error: Error | any): TestInfoError {
+  const result = serializeError(error);
+  const matcherResult = (error instanceof Error ? (error as any).matcherResult : undefined) as MatcherResultProperty | undefined;
+  if (matcherResult) {
+    const serialized: NonNullable<TestInfoError['matcherResult']> = {
+      name: matcherResult.name,
+      pass: matcherResult.pass,
+    };
+    if (matcherResult.expected !== undefined)
+      serialized.expected = matcherResult.expected;
+    if (matcherResult.actual !== undefined)
+      serialized.actual = matcherResult.actual;
+    if (matcherResult.log !== undefined)
+      serialized.log = matcherResult.log;
+    if (matcherResult.timeout !== undefined)
+      serialized.timeout = matcherResult.timeout;
+    if (matcherResult.ariaSnapshot !== undefined)
+      serialized.ariaSnapshot = matcherResult.ariaSnapshot;
+    result.matcherResult = serialized;
+  }
+  return result;
 }

@@ -15,21 +15,22 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import { chromium } from 'playwright-core';
-
-import { test as baseTest } from './fixtures';
+import { test as baseTest, expect } from './fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
-import type { Page } from 'playwright-core';
+import type { Page, Browser } from 'playwright-core';
 import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
+  boundBrowser: Browser,
   cliEnv: Record<string, string>,
-  openDashboard: (options?: { cwd?: string }) => Promise<Page>,
+  startDashboardServer: (options?: { cwd?: string, session?: string }) => Promise<Page>,
+  connectToDashboard: (bindTitle: string) => Promise<Browser>;
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -37,107 +38,137 @@ export const test = baseTest.extend<{
     inlineSnapshot?: string,
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
-    pid?: number,
+    daemonPid?: number,
+    dashboardPid?: number,
   }>;
 }>({
   cliEnv: async ({}, use) => {
     await use(cliEnv());
   },
-  openDashboard: async ({ cli, waitForPort, findFreePort }, use) => {
-    const dashboards = [];
-    await use(async (options?: { cwd?: string }) => {
-      const debugPort = await findFreePort();
-      await cli('show', { cwd: options?.cwd, env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(debugPort) } });
-      await waitForPort(debugPort);
-      const browser = await chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`);
-      const dashboard = browser.contexts()[0].pages()[0];
-      dashboards.push({ dashboard, browser });
-      return dashboard;
+  startDashboardServer: async ({ childProcess, page }, use) => {
+    await use(async (options?: { cwd?: string, session?: string }) => {
+      const testInfo = test.info();
+      const showArgs = options?.session ? [`-s=${options.session}`, 'show'] : ['show'];
+      const serverProcess = childProcess({
+        command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...showArgs, '--port=0'],
+        cwd: options?.cwd ?? testInfo.outputPath(),
+        env: inheritAndCleanEnv(cliEnv()),
+      });
+      await serverProcess.waitForOutput('Listening on ');
+      await page.goto(serverProcess.output.match(/Listening on (http:\/\/\S+)/)![1]);
+      return page;
     });
-    for (const { dashboard, browser } of dashboards) {
-      if (!browser.isConnected())
-        continue;
-      await Promise.all([
-        // Closing the page should close the browser.
-        new Promise(r => browser.on('disconnected', r)),
-        dashboard.close()
-      ]).catch(e => console.error('Error during dashboard close', e));
-    }
   },
+  connectToDashboard: async ({ cli, playwright }, use) => {
+    await use(async (bindTitle: string) => {
+      let endpoint = '';
+      await expect(async () => {
+        const { output } = await cli('list', '--all', '--json');
+        const { servers } = JSON.parse(output);
+        const server = servers.find(s => s.title === bindTitle);
+        endpoint = server.endpoint;
+      }).toPass();
+      return await playwright.chromium.connect(endpoint);
+    });
+    await cli('show', '--kill');
+  },
+
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
-    const sessions: { name: string, pid: number }[] = [];
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
+    const allPids: number[] = [];
 
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      return await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless }, sessions);
+      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      if (result.daemonPid)
+        allPids.push(result.daemonPid);
+      if (result.dashboardPid)
+        allPids.push(result.dashboardPid);
+      return result;
     });
 
-    for (const session of sessions) {
-      await runCli(childProcess, ['--session=' + session.name, 'close'], {}, { mcpBrowser, mcpHeadless }, []).catch(e => {
-        if (!e.message.includes('is not running'))
-          throw e;
-      });
-      killProcessGroup(session.pid);
-    }
+    for (const pid of allPids)
+      killProcessGroup(pid);
 
-    const daemonDir = path.join(test.info().outputDir, 'daemon');
-    const userDataDirs = await fs.promises.readdir(daemonDir).catch(() => []);
-    for (const dir of userDataDirs.filter(f => f.startsWith('ud-')))
-      await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
+    const daemonDir = test.info().outputPath('daemon');
+    for (const dir of await fs.promises.readdir(daemonDir).catch<string[]>(() => [])) {
+      if (dir.startsWith('ud-')) {
+        await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
+        continue;
+      }
+    }
+  },
+  boundBrowser: async ({ mcpBrowser, playwright }, use) => {
+    const browserName = (mcpBrowser === 'chrome' || mcpBrowser === 'msedge') ? 'chromium' : mcpBrowser;
+    const channel = (mcpBrowser === 'chrome' || mcpBrowser === 'msedge') ? mcpBrowser : undefined;
+    const browser = await playwright[browserName].launch({ channel, headless: true });
+    for (const [name, value] of Object.entries(cliEnv()))
+      process.env[name] = value;
+    await browser.bind('default');
+    await use(browser);
+    for (const name of Object.keys(cliEnv()))
+      delete process.env[name];
+    await browser.close();
   },
 });
 
 function cliEnv() {
   return {
     PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
+    PWTEST_DASHBOARD_SETTINGS_FILE: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    PLAYWRIGHT_SOCKETS_DIR: path.join(test.info().project.outputDir, 'ds', String(test.info().parallelIndex)),
+    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
+    PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
   };
 }
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
-  const stepTitle = `cli ${args.join(' ')}`;
-  return await test.step(stepTitle, async () => {
-    const testInfo = test.info();
-    const cli = childProcess({
-      command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...args],
-      cwd: cliOptions.cwd ?? testInfo.outputPath(),
-      env: inheritAndCleanEnv({
-        ...cliEnv(),
-        PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
-        PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
-        ...cliOptions.env,
-      }),
-    });
-    await cli.exited.finally(async () => {
-      await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });
-    });
-
-    let snapshot: string | undefined;
-    let inlineSnapshot: string | undefined;
-    if (cli.stdout.includes('### Snapshot'))
-      ({ snapshot, inlineSnapshot } = await loadSnapshot(cli.stdout));
-    const attachments = loadAttachments(cli.stdout);
-
-    const browserMatches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
-    const [, sessionName, browserPid] = browserMatches ?? [];
-    if (sessionName && browserPid)
-      sessions.push({ name: sessionName, pid: +browserPid });
-    const dashboardMatches = cli.stdout.includes('### Dashboard') ? cli.stdout.match(/Dashboard opened with pid (\d+)\./) : undefined;
-    const dashboardPid = dashboardMatches?.[1];
-    const pid = browserPid ?? dashboardPid;
-    return {
-      exitCode: await cli.exitCode,
-      output: cli.stdout.trim(),
-      error: cli.stderr.trim(),
-      snapshot,
-      inlineSnapshot,
-      attachments,
-      pid: pid ? +pid : undefined,
-    };
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string>, bindTitle?: string }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
+  const testInfo = test.info();
+  const cli = childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...args],
+    cwd: cliOptions.cwd ?? testInfo.outputPath(),
+    env: inheritAndCleanEnv({
+      ...cliEnv(),
+      PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
+      PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+      PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
+      PWTEST_DASHBOARD_APP_BIND_TITLE: cliOptions.bindTitle,
+      ...cliOptions.env,
+    }),
   });
+
+  // Wait for the CLI to exit so stdout is complete before we parse it.
+  const exitCode = await cli.exitCode;
+
+  let snapshot: string | undefined;
+  let inlineSnapshot: string | undefined;
+  if (cli.stdout.includes('### Snapshot'))
+    ({ snapshot, inlineSnapshot } = await loadSnapshot(cli.stdout));
+  const attachments = loadAttachments(cli.stdout);
+
+  const browserMatches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
+  const daemonPid = browserMatches?.[2] ?? parseJsonPid(cli.stdout);
+  const dashboardMatches = cli.stdout.includes('### Dashboard') ? cli.stdout.match(/Dashboard opened with pid (\d+)\./) : undefined;
+  const dashboardPid = dashboardMatches?.[1];
+
+  return {
+    exitCode,
+    output: cli.stdout.trim(),
+    error: cli.stderr.trim(),
+    snapshot,
+    inlineSnapshot,
+    attachments,
+    daemonPid: daemonPid ? +daemonPid : undefined,
+    dashboardPid: dashboardPid ? +dashboardPid : undefined,
+  };
+}
+
+function parseJsonPid(stdout: string) {
+  try {
+    return JSON.parse(stdout).pid;
+  } catch {
+  }
 }
 
 function loadAttachments(output: string) {

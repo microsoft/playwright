@@ -15,17 +15,14 @@
  */
 
 import { electronTest as test, expect } from './electronTest';
-import fs from 'fs';
-import path from 'path';
 
 test.skip(({ trace }) => trace === 'on');
 
-test('should record trace', async ({ newWindow, server, runAndTrace }) => {
+test('should record trace', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
-    const window = await newWindow();
-    await window.goto(server.PREFIX + '/input/button.html');
-    await window.click('button');
-    expect(await window.evaluate('result')).toBe('Clicked');
+    await page.goto(server.PREFIX + '/input/button.html');
+    await page.click('button');
+    expect(await page.evaluate('result')).toBe('Clicked');
   });
   await expect(traceViewer.actionTitles).toHaveText([
     /Navigate/,
@@ -34,29 +31,14 @@ test('should record trace', async ({ newWindow, server, runAndTrace }) => {
   ]);
 });
 
-test('should support custom protocol', async ({ electronApp, newWindow, server, runAndTrace }) => {
-  const window = await newWindow();
-  await electronApp.evaluate(({ BrowserWindow }) => {
+test('should support custom protocol', async ({ app, page, runAndTrace }) => {
+  await app.evaluate(({ BrowserWindow }) => {
     void BrowserWindow.getAllWindows()[0].loadURL('vscode-file://index.html');
   });
   const traceViewer = await runAndTrace(async () => {
-    await window.click('button');
+    await page.click('button');
   });
   const frame = await traceViewer.snapshotFrame('Click');
   await expect(frame.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
   await expect(frame.locator('button')).toHaveCSS('font-weight', '700');
-});
-
-test('should respect tracesDir and name', async ({ launchElectronApp, server }, testInfo) => {
-  const tracesDir = testInfo.outputPath('traces');
-  const electronApp = await launchElectronApp('electron-window-app.js', [], { tracesDir });
-
-  await electronApp.context().tracing.start({ name: 'name1', snapshots: true });
-  const page = await electronApp.firstWindow();
-  await page.goto(server.PREFIX + '/one-style.html');
-  await electronApp.context().tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
-  expect(fs.existsSync(path.join(tracesDir, 'name1.trace'))).toBe(true);
-  expect(fs.existsSync(path.join(tracesDir, 'name1.network'))).toBe(true);
-
-  await electronApp.close();
 });

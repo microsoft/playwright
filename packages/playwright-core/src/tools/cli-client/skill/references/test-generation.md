@@ -77,12 +77,58 @@ playwright-cli click e5
 
 ### 3. Add Assertions Manually
 
-Generated code captures actions but not assertions. Add expectations in your test:
+Generated code captures actions but not assertions. Add expectations in your test using one of the recommended matchers:
+
+- `toBeVisible()` — element is rendered and visible
+- `toHaveText(text)` — element text content matches
+- `toHaveValue(value) / toBeEmpty()` — input/select value matches
+- `toBeChecked() / toBeUnchecked()` — checkbox state matches
+- `toMatchAriaSnapshot(snapshot)` — page (or locator) matches a partial accessibility snapshot
+
+Use `playwright-cli generate-locator <target>` to produce the locator expression for the assertion, and the snapshot/eval commands to capture the expected value.
+
+When asserting text content, make sure that generated locator does not contain text from the element itself. `getByTestId()` or `getByLabel()` usually work well with asserting text. When locator is text-based, prefer `toBeVisible()` instead.
+
+Snapshot to be matched does not have to contain all the information - only capture what's necessary for the assertion. You can use regular expressions for unstable values.
+
+```bash
+# Get a stable locator for an element ref to use in the assertion
+playwright-cli --raw generate-locator e5
+# getByRole('button', { name: 'Submit' })
+
+# Capture expected text content for toHaveText
+playwright-cli --raw eval "el => el.textContent" e5
+
+# Capture expected input value for toHaveValue/toBeEmpty
+playwright-cli --raw eval "el => el.value" e5
+
+# Capture expected aria snapshot for toMatchAriaSnapshot/toBeChecked
+# (whole page, or use a ref to scope to a region)
+playwright-cli --raw snapshot
+playwright-cli --raw snapshot e5
+```
 
 ```typescript
 // Generated action
 await page.getByRole('button', { name: 'Submit' }).click();
 
-// Manual assertion
-await expect(page.getByText('Success')).toBeVisible();
+// Manual assertions using the outputs above:
+await expect(page.getByRole('alert', { name: 'Success' })).toBeVisible();
+await expect(page.getByTestId('main-header')).toHaveText('Welcome, user');
+await expect(page.getByRole('textbox', { name: 'Email' })).toHaveValue('user@example.com');
+await expect(page.getByRole('checkbox', { name: 'Enable notifications' })).toBeChecked();
+
+// toMatchAriaSnapshot on the whole page, finds a matching region
+await expect(page).toMatchAriaSnapshot(`
+  - heading "Welcome, user"
+  - link /\\d+ new messages?/
+  - button "Sign out"
+`);
+
+// toMatchAriaSnapshot scoped to a region
+await expect(page.getByRole('navigation')).toMatchAriaSnapshot(`
+  - link "Home"
+  - link /\\d+ new messages?/
+  - link "Profile"
+`);
 ```

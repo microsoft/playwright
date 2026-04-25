@@ -18,6 +18,7 @@ import { expectTypes, formatMatcherMessage } from './matcherHint';
 
 import type { MatcherResult } from './matcherHint';
 import type { Locator } from 'playwright-core';
+import type { ExpectResult } from 'playwright-core/lib/client/frame';
 import type { ExpectMatcherStateInternal } from './matchers';
 
 export async function toBeTruthy(
@@ -27,7 +28,7 @@ export async function toBeTruthy(
   receiverType: 'Locator',
   expected: string,
   arg: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[], received?: any, timedOut?: boolean, errorMessage?: string }>,
+  query: (isNot: boolean, timeout: number) => Promise<ExpectResult>,
   options: { timeout?: number } = {},
 ): Promise<MatcherResult<any, any>> {
   expectTypes(locator, [receiverType], matcherName);
@@ -35,6 +36,7 @@ export async function toBeTruthy(
   const timeout = options.timeout ?? this.timeout;
 
   const { matches: pass, log, timedOut, received, errorMessage } = await query(!!this.isNot, timeout);
+  const receivedValue = received?.value;
 
   if (pass === !this.isNot) {
     return {
@@ -52,7 +54,7 @@ export async function toBeTruthy(
     printedReceived = errorMessage ? '' : `Received: ${expected}`;
   } else {
     printedExpected = `Expected: ${expected}`;
-    printedReceived = errorMessage ? '' : `Received: ${received}`;
+    printedReceived = errorMessage ? '' : `Received: ${receivedValue}`;
   }
   const message = () => {
     return formatMatcherMessage(this.utils, {
@@ -73,10 +75,11 @@ export async function toBeTruthy(
   return {
     message,
     pass,
-    actual: received,
+    actual: receivedValue,
     name: matcherName,
     expected,
     log,
     timeout: timedOut ? timeout : undefined,
+    ariaSnapshot: received?.ariaSnapshot,
   };
 }

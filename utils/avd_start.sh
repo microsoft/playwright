@@ -8,9 +8,14 @@ fi
 
 bash $PWD/utils/avd_stop.sh
 
+EMULATOR_EXTRA_ARGS=()
+if [[ "${PWTEST_ANDROID_NO_ACCEL}" == "1" ]]; then
+    # Software-only emulation: disable HW hypervisor and use software GPU.
+    EMULATOR_EXTRA_ARGS+=(-accel off -gpu swiftshader_indirect)
+fi
+
 echo "Starting emulator"
-# nohup ${ANDROID_HOME}/emulator/emulator -avd android35 -gpu swiftshader &
-nohup ${ANDROID_HOME}/emulator/emulator -avd android35 -no-audio -no-window -no-boot-anim -no-snapshot &
+nohup ${ANDROID_HOME}/emulator/emulator -avd android35 -no-audio -no-window -no-boot-anim -no-snapshot "${EMULATOR_EXTRA_ARGS[@]}" &
 ${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
 ${ANDROID_HOME}/platform-tools/adb devices
 echo "Emulator started"

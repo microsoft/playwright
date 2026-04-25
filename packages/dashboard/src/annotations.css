@@ -1,0 +1,234 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:root {
+  --annotations-blue: 54 116 209;
+}
+
+/* --annotation-color: each rect sets this inline to its own palette colour;
+   falls back to the brand blue so draft / unstyled cases still read correctly. */
+.annotations-layer,
+.annotations-rect,
+.annotations-popover,
+.annotations-color-swatch {
+  --annotation-color: var(--annotations-blue);
+}
+
+.annotations-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  outline: none;
+  cursor: crosshair;
+}
+
+.annotations-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.annotations-action-btn {
+  height: 26px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--color-neutral-subtle);
+  color: var(--color-fg-default);
+  border: 1px solid var(--color-border-muted);
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+:root.dark-mode .annotations-action-btn {
+  background: var(--color-neutral-muted);
+  border-color: var(--color-border-default);
+}
+
+.annotations-action-btn:hover:not(:disabled) {
+  background: var(--color-neutral-muted);
+}
+
+.annotations-action-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.annotations-action-btn.danger {
+  background: transparent;
+  color: var(--color-danger-fg);
+  border-color: var(--color-border-muted);
+}
+
+.annotations-action-btn.danger:hover:not(:disabled) {
+  background: var(--color-danger-subtle);
+}
+
+.annotations-rect {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid rgb(var(--annotation-color));
+  background: rgb(var(--annotation-color) / 0.12);
+  cursor: pointer;
+  transition: box-shadow 120ms ease;
+}
+
+.annotations-rect:hover {
+  box-shadow: 0 0 0 3px rgb(var(--annotation-color) / 0.25);
+}
+
+.annotations-rect.selected {
+  box-shadow: 0 0 0 3px rgb(var(--annotation-color) / 0.4);
+  border-style: solid;
+  border-color: rgb(var(--annotation-color));
+  cursor: move;
+}
+
+.annotations-rect.draft {
+  border-style: dashed;
+  background: rgb(var(--annotation-color) / 0.18);
+  pointer-events: none;
+}
+
+.annotations-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border: 1.5px solid rgb(var(--annotation-color));
+  border-radius: 2px;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.annotations-handle-nw { left: -6px; top: -6px; cursor: nwse-resize; }
+.annotations-handle-n  { left: 50%; top: -6px; margin-left: -5px; cursor: ns-resize; }
+.annotations-handle-ne { right: -6px; top: -6px; cursor: nesw-resize; }
+.annotations-handle-e  { right: -6px; top: 50%; margin-top: -5px; cursor: ew-resize; }
+.annotations-handle-se { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.annotations-handle-s  { left: 50%; bottom: -6px; margin-left: -5px; cursor: ns-resize; }
+.annotations-handle-sw { left: -6px; bottom: -6px; cursor: nesw-resize; }
+.annotations-handle-w  { left: -6px; top: 50%; margin-top: -5px; cursor: ew-resize; }
+
+.annotations-label {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  max-width: calc(100% + 4px);
+  padding: 2px 6px;
+  background: rgb(var(--annotation-color));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 2px 2px 2px 0;
+  transform: translateY(-100%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text;
+}
+
+.annotations-label:hover {
+  background: rgb(var(--annotation-color) / 0.85);
+}
+
+.annotations-popover {
+  position: absolute;
+  min-width: 220px;
+  max-width: 320px;
+  background: var(--color-canvas-overlay);
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+  cursor: default;
+}
+
+.annotations-textarea {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-fg-default);
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-muted);
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.annotations-textarea:focus {
+  border-color: rgb(var(--annotation-color));
+}
+
+.annotations-popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.annotations-popover-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.annotations-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.annotations-color-swatch {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: rgb(var(--annotation-color));
+  cursor: pointer;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+.annotations-color-swatch:hover {
+  box-shadow: 0 0 0 2px rgb(var(--annotation-color) / 0.35);
+}
+
+.annotations-color-swatch.selected {
+  border-color: var(--color-fg-default);
+  transform: scale(1.1);
+}
+
+.annotate-modal-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  box-shadow: 0 0 0 1px var(--color-border-muted), 0 0 8px var(--color-border-muted);
+}

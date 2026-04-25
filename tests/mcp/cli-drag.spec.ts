@@ -49,3 +49,51 @@ test('drag between elements', async ({ cli, server }) => {
   expect(error).not.toMatch(/invalid_type|Zod validation error/i);
   expect(output).toContain('dragTo');
 });
+
+test('drop files and data onto an element', async ({ cli, server }, testInfo) => {
+  server.setContent('/', `
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="zone" aria-label="dropzone" style="width:200px;height:100px;border:1px solid"></div>
+  <script>
+    window.__dropInfo = null;
+    const zone = document.getElementById('zone');
+    zone.addEventListener('dragenter', e => e.preventDefault());
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', async e => {
+      e.preventDefault();
+      const data = {};
+      for (const t of e.dataTransfer.types) {
+        if (t !== 'Files')
+          data[t] = e.dataTransfer.getData(t);
+      }
+      window.__dropInfo = { fileCount: e.dataTransfer.files.length, data };
+    });
+  </script>
+</body>
+</html>`, 'text/html');
+
+  const { snapshot } = await cli('open', server.PREFIX);
+  const refLine = snapshot!.split('\n').find(l => l.includes('"dropzone"') && l.includes('[ref='));
+  const ref = refLine?.match(/\[ref=(e\d+)\]/)?.[1];
+  expect(ref, 'snapshot should list the dropzone element with a ref').toBeTruthy();
+
+  const fs = await import('fs/promises');
+  const filePath = testInfo.outputPath('drop.txt');
+  await fs.writeFile(filePath, 'hi');
+
+  {
+    const { output, error, exitCode } = await cli('drop', ref!, `--path=${filePath}`);
+    expect(error).not.toMatch(/invalid_type|Zod validation error/i);
+    expect(exitCode).toBe(0);
+    expect(output).toContain('drop');
+  }
+
+  {
+    const { output, error, exitCode } = await cli('drop', ref!, '--data=text/plain=hello world');
+    expect(error).not.toMatch(/invalid_type|Zod validation error/i);
+    expect(exitCode).toBe(0);
+    expect(output).toContain('drop');
+  }
+});

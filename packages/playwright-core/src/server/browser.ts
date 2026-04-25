@@ -63,6 +63,7 @@ export type BrowserOptions = {
   sdkLanguage?: Language;
   originalLaunchOptions: types.LaunchOptions;
   userDataDir?: string;
+  noDefaults?: boolean;
 };
 
 export abstract class Browser extends SdkObject {
@@ -217,7 +218,7 @@ export class BrowserServer {
     let endpoint: string;
     if (options.host !== undefined || options.port !== undefined) {
       this._wsServer = new PlaywrightWebSocketServer(this._browser, '/');
-      endpoint = await this._wsServer.listen(options.port ?? 0, options.host, createGuid());
+      endpoint = await this._wsServer.listen(options.port ?? 0, options.host, '/' + createGuid());
     } else {
       this._pipeServer = new PlaywrightPipeServer(this._browser);
       this._pipeSocketPath = await this._socketPath();

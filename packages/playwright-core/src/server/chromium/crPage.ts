@@ -512,9 +512,11 @@ class FrameSession {
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
     ];
     if (!this._page.isStorageStatePage) {
+      const skipDefaultOverrides = this._crPage._browserContext._browser.options.noDefaults &&
+          this._crPage._browserContext === this._crPage._browserContext._browser._defaultContext;
       if (this._crPage._browserContext.needsPlaywrightBinding())
         promises.push(this.exposePlaywrightBinding());
-      if (this._isMainFrame())
+      if (this._isMainFrame() && !skipDefaultOverrides)
         promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
       const options = this._crPage._browserContext._options;
       if (options.bypassCSP)
@@ -536,7 +538,8 @@ class FrameSession {
       if (!this._crPage._browserContext._browser.options.headful)
         promises.push(this._setDefaultFontFamilies(this._client));
       promises.push(this._updateGeolocation(true));
-      promises.push(this._updateEmulateMedia());
+      if (!skipDefaultOverrides)
+        promises.push(this._updateEmulateMedia());
       promises.push(this._updateFileChooserInterception(true));
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));

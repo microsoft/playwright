@@ -149,7 +149,7 @@ test('video-start-stop', async ({ cli, server }) => {
   const { output: tabCloseOutput } = await cli('tab-close');
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);
   const { output: videoStopOutput } = await cli('video-stop');
-  expect(videoStopOutput).toContain(`### Result\n- [Video](video.webm)\n- [Video](video-1.webm)`);
+  expect(videoStopOutput).toContain(`### Result\n- [Video](./video.webm)\n- [Video](./video-1.webm)`);
 });
 
 test('video-chapter', async ({ cli, server }) => {
@@ -158,4 +158,84 @@ test('video-chapter', async ({ cli, server }) => {
   const { output } = await cli('video-chapter', 'Introduction', '--description=Welcome to the demo', '--duration=100');
   expect(output).toContain(`Chapter 'Introduction' added.`);
   await cli('video-stop');
+});
+
+test('generate-locator', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  await cli('snapshot');
+
+  const { output } = await cli('generate-locator', 'e2', '--raw');
+  expect(output).toContain(`getByRole('button', { name: 'Submit' })`);
+});
+
+test('highlight', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+
+  await cli('attach', 'default');
+  await cli('snapshot');
+
+  const { output } = await cli('highlight', 'e2');
+  expect(output).toContain(`Highlighted locator('aria-ref=e2')`);
+
+  const highlight = page.locator('x-pw-highlight');
+  const tooltip = page.locator('x-pw-tooltip-line');
+  await expect(highlight).toBeVisible();
+  await expect(tooltip).toHaveText(`locator('aria-ref=e2')`);
+  expect(await highlight.boundingBox()).toEqual(await page.getByRole('button', { name: 'Submit' }).boundingBox());
+});
+
+test('highlight --hide', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+
+  await cli('attach', 'default');
+  await cli('snapshot');
+
+  await cli('highlight', 'e2');
+  await expect(page.locator('x-pw-highlight')).toBeVisible();
+
+  const { output } = await cli('highlight', 'e2', '--hide');
+  expect(output).toContain(`Hid highlight for locator('aria-ref=e2')`);
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+});
+
+test('highlight --hide all', async ({ boundBrowser, cli }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button><a href="#">Go</a>`);
+
+  await cli('attach', 'default');
+  await cli('snapshot');
+
+  await cli('highlight', 'e2');
+  await cli('highlight', 'e3');
+  await expect(page.locator('x-pw-highlight')).toHaveCount(2);
+
+  const { output } = await cli('highlight', '--hide');
+  expect(output).toContain('Hid page highlight');
+  await expect(page.locator('x-pw-highlight')).toHaveCount(0);
+});
+
+test('highlight --style', async ({ boundBrowser, cli, mcpBrowser }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+
+  await cli('attach', 'default');
+  await cli('snapshot');
+
+  await cli('highlight', 'e2', '--style=outline: 3px solid rgb(255, 0, 0); background-color: rgba(0, 255, 0, 0.25)');
+
+  const highlight = page.locator('x-pw-highlight');
+  await expect(highlight).toBeVisible();
+  expect(await highlight.evaluate((el: HTMLElement) => ({
+    outline: el.style.outline,
+    backgroundColor: el.style.backgroundColor,
+  }))).toEqual(mcpBrowser === 'webkit' ? {
+    outline: '3px solid rgb(255, 0, 0)',
+    backgroundColor: 'rgba(0, 255, 0, 0.25)',
+  } : {
+    outline: 'rgb(255, 0, 0) solid 3px',
+    backgroundColor: 'rgba(0, 255, 0, 0.25)',
+  });
 });

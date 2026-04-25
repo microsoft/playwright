@@ -3,3 +3,6 @@
 
 [connect.ts]
 "strict"
+
+[extension.ts]
+"strict"

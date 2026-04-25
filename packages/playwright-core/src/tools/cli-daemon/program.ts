@@ -27,6 +27,7 @@ import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
+import { guessClientName } from '../cli-client/utils';
 import { registry as browserRegistry } from '../../server/registry/index';
 import type { Command } from 'commander';
 
@@ -72,16 +73,14 @@ export function decorateProgram(program: Command) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
           console.log(`### Error\n${message}`);
           console.log('<EOF>');
+          // Hygiene cleanup in createExtensionBrowser releases the http server
+          // and websocket connections, but the chrome subprocess + WS lifecycle
+          // leave behind libuv state we can't reach from JS, so the event loop
+          // would otherwise stay alive for ~5 seconds.
+          // eslint-disable-next-line no-restricted-properties
+          process.exit(1);
         }
       });
-}
-
-function guessClientName(): string {
-  if (process.env.CLAUDECODE)
-    return 'Claude Code';
-  if (process.env.COPILOT_CLI)
-    return 'GitHub Copilot';
-  return 'playwright-cli';
 }
 
 function defaultConfigFile(): string {

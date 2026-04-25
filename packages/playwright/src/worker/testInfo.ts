@@ -29,12 +29,12 @@ import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
-import { transform } from '../common';
+import { ipc, transform } from '../common';
 
 import type { RunnableDescription } from './timeoutManager';
-import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
+import type { FullProject, TestInfo, TestInfoError, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
-import type { config as commonConfig, FullConfigInternal, ipc, test as testNs } from '../common';
+import type { config as commonConfig, FullConfigInternal, test as testNs } from '../common';
 import type { StackFrame } from '@protocol/channels';
 
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
@@ -46,7 +46,6 @@ interface TestStepData {
   location?: Location;
   apiName?: string;
   params?: Record<string, any>;
-  infectParentStepsWithError?: boolean;
   box?: boolean;
   // steps with any defined group are hidden from the report
   // 'internal' steps are hidden from the trace
@@ -54,14 +53,15 @@ interface TestStepData {
 }
 
 export interface TestStepInternal extends TestStepData {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  complete(result: { error?: Error | unknown, softError?: Error | unknown, shouldNotRetryTest?: boolean, suggestedRebaseline?: string, attachments?: TestInfo['attachments'] }): void;
   info: TestStepInfoImpl;
   attachmentIndices: number[];
   stepId: string;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
   endWallTime?: number;
-  error?: ipc.TestInfoErrorImpl;
+  error?: TestInfoError;
+  infectParentStepsWithError?: boolean;
 }
 
 type SnapshotNames = {
@@ -137,16 +137,16 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  errors: ipc.TestInfoErrorImpl[] = [];
+  errors: TestInfoError[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: ipc.WorkerInitParams;
   private _ignoreTimeoutsCounter = 0;
 
-  get error(): ipc.TestInfoErrorImpl | undefined {
+  get error(): TestInfoError | undefined {
     return this.errors[0];
   }
 
-  set error(e: ipc.TestInfoErrorImpl | undefined) {
+  set error(e: TestInfoError | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
     this.errors[0] = e;
@@ -318,6 +318,10 @@ export class TestInfoImpl implements TestInfo {
           return;
 
         step.endWallTime = Date.now();
+        if (result.attachments) {
+          for (const attachment of result.attachments)
+            this._attach(attachment, stepId);
+        }
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
@@ -326,6 +330,12 @@ export class TestInfoImpl implements TestInfo {
             error.stack = `${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
           step.error = error;
         }
+        if (result.softError) {
+          step.infectParentStepsWithError = true;
+          this._failWithError(result.softError);
+        }
+        if (result.shouldNotRetryTest)
+          this._hasNonRetriableError = true;
 
         if (!step.error) {
           // Soft errors inside try/catch will make the test fail.
@@ -345,7 +355,7 @@ export class TestInfoImpl implements TestInfo {
             testId: this.testId,
             stepId,
             wallTime: step.endWallTime,
-            error: step.error,
+            error: step.error ? ipc.toTestInfoErrorPayload(step.error) : undefined,
             suggestedRebaseline: result.suggestedRebaseline,
             annotations: step.info.annotations,
           };
@@ -403,9 +413,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error | unknown, shouldNotRetry?: 'shouldNotRetry') {
-    if (shouldNotRetry)
-      this._hasNonRetriableError = true;
+  _failWithError(error: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const serialized = testInfoError(error);
@@ -476,7 +484,7 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       await Promise.race([
-        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [], status: this.status }),
+        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors.map(ipc.toTestInfoErrorPayload) : [], status: this.status }),
         this._interruptedPromise,
       ]);
     }
@@ -694,12 +702,8 @@ export class TestStepInfoImpl implements TestStepInfo {
     }
   }
 
-  _attachToStep(attachment: TestInfo['attachments'][0]): void {
-    this._testInfo._attach(attachment, this._stepId);
-  }
-
   async attach(name: string, options?: { body?: string | Buffer; contentType?: string; path?: string; }): Promise<void> {
-    this._attachToStep(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options));
+    this._testInfo._attach(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options), this._stepId);
   }
 
   get titlePath(): string[] {

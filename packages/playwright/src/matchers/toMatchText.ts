@@ -18,6 +18,7 @@ import { expectTypes, formatMatcherMessage, printReceivedStringContainExpectedRe
 
 import type { MatcherResult } from './matcherHint';
 import type { Page, Locator } from 'playwright-core';
+import type { ExpectResult } from 'playwright-core/lib/client/frame';
 import type { ExpectMatcherStateInternal } from './matchers';
 
 export async function toMatchText(
@@ -25,7 +26,7 @@ export async function toMatchText(
   matcherName: string,
   receiver: Locator | Page,
   receiverType: 'Locator' | 'Page',
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[], timedOut?: boolean, errorMessage?: string }>,
+  query: (isNot: boolean, timeout: number) => Promise<ExpectResult>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
@@ -55,7 +56,8 @@ export async function toMatchText(
 
   const expectedSuffix = typeof expected === 'string' ? (options.matchSubstring ? ' substring' : '') : ' pattern';
   const receivedSuffix = typeof expected === 'string' ? (options.matchSubstring ? ' string' : '') : ' string';
-  const receivedString = received || '';
+  const receivedValue = received?.value as string | undefined;
+  const receivedString = receivedValue || '';
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;
   let printedDiff: string | undefined;
@@ -102,8 +104,9 @@ export async function toMatchText(
     expected,
     message,
     pass,
-    actual: received,
+    actual: receivedValue,
     log,
     timeout: timedOut ? timeout : undefined,
+    ariaSnapshot: received?.ariaSnapshot,
   };
 }

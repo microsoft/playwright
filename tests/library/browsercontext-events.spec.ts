@@ -208,3 +208,73 @@ test('weberror event should include location', async ({ page, server }) => {
   expect(location.line).toBe(2);
   expect(location.column).toBeGreaterThan(0); // column is not consistent across browsers
 });
+
+test('pageload event should work @smoke', async ({ page, server }) => {
+  const [eventPage] = await Promise.all([
+    page.context().waitForEvent('pageload'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  expect(eventPage).toBe(page);
+});
+
+test('framenavigated event should work @smoke', async ({ page, server }) => {
+  const [frame] = await Promise.all([
+    page.context().waitForEvent('framenavigated'),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  expect(frame).toBe(page.mainFrame());
+  expect(frame.url()).toBe(server.EMPTY_PAGE);
+});
+
+test('pageclose event should work @smoke', async ({ context }) => {
+  const page = await context.newPage();
+  const [closed] = await Promise.all([
+    context.waitForEvent('pageclose'),
+    page.close(),
+  ]);
+  expect(closed).toBe(page);
+});
+
+test('frameattached event should work @smoke', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const [frame] = await Promise.all([
+    page.context().waitForEvent('frameattached'),
+    page.evaluate(() => {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'about:blank';
+      document.body.appendChild(iframe);
+    }),
+  ]);
+  expect(frame.parentFrame()).toBe(page.mainFrame());
+});
+
+test('framedetached event should work @smoke', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => {
+    const iframe = document.createElement('iframe');
+    iframe.id = 'x';
+    iframe.src = 'about:blank';
+    document.body.appendChild(iframe);
+  });
+  await page.waitForSelector('iframe');
+  const [frame] = await Promise.all([
+    page.context().waitForEvent('framedetached'),
+    page.evaluate(() => document.getElementById('x')!.remove()),
+  ]);
+  expect(frame.parentFrame()).toBe(page.mainFrame());
+});
+
+test('download event should work @smoke', async ({ page, server }) => {
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+    res.end('Hello world');
+  });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [download] = await Promise.all([
+    page.context().waitForEvent('download'),
+    page.click('a'),
+  ]);
+  expect(download.suggestedFilename()).toBe('file.txt');
+  expect(download.page()).toBe(page);
+});

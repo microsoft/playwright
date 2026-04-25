@@ -41,6 +41,7 @@ export type AriaTreeOptions = {
   refPrefix?: string;
   doNotRenderActive?: boolean;
   depth?: number;
+  boxes?: boolean;
 };
 
 type InternalOptions = {
@@ -51,9 +52,11 @@ type InternalOptions = {
   renderCursorPointer?: boolean,
   renderActive?: boolean,
   renderStringsAsRegex?: boolean,
+  renderBoxes?: boolean,
 };
 
 function toInternalOptions(options: AriaTreeOptions): InternalOptions {
+  const renderBoxes = options.boxes;
   if (options.mode === 'ai') {
     // For AI consumption.
     return {
@@ -63,18 +66,19 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
       includeGenericRole: true,
       renderActive: !options.doNotRenderActive,
       renderCursorPointer: true,
+      renderBoxes,
     };
   }
   if (options.mode === 'autoexpect') {
     // To auto-generate assertions on visible elements.
-    return { visibility: 'ariaAndVisible', refs: 'none' };
+    return { visibility: 'ariaAndVisible', refs: 'none', renderBoxes };
   }
   if (options.mode === 'codegen') {
     // To generate aria assertion with regex heurisitcs.
-    return { visibility: 'aria', refs: 'none', renderStringsAsRegex: true };
+    return { visibility: 'aria', refs: 'none', renderStringsAsRegex: true, renderBoxes };
   }
   // To match aria snapshot.
-  return { visibility: 'aria', refs: 'none' };
+  return { visibility: 'aria', refs: 'none', renderBoxes };
 }
 
 export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOptions): AriaSnapshot {
@@ -623,6 +627,13 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
       key += ` [ref=${ariaNode.ref}]`;
       if (renderCursorPointer && aria.hasPointerCursor(ariaNode))
         key += ' [cursor=pointer]';
+    }
+    if (options.renderBoxes) {
+      const element = ariaNodeElement(ariaNode);
+      if (element) {
+        const r = element.getBoundingClientRect();
+        key += ` [box=${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}]`;
+      }
     }
     return key;
   };

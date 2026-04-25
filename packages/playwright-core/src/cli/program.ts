@@ -239,6 +239,7 @@ export function decorateProgram(program: Command) {
       .command('cli', { hidden: true })
       .allowExcessArguments(true)
       .allowUnknownOption(true)
+      .helpOption(false)
       .action(async options => {
         process.argv.splice(process.argv.indexOf('cli'), 1);
         cliProgram().catch(logErrorAndExit);

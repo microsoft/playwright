@@ -30,7 +30,7 @@ import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';
 
 import type { RawStack } from '@isomorphic/stackTrace';
 import type { Location } from './../types/testReporter';
-import type { TestInfoErrorImpl } from './common/ipc';
+import type { TestInfoError } from './../types/test';
 import type { StackFrame } from '@protocol/channels';
 import type { TestCase } from './common/test';
 
@@ -74,7 +74,7 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   return frames;
 }
 
-export function serializeError(error: Error | any): TestInfoErrorImpl {
+export function serializeError(error: Error | any): TestInfoError {
   if (error instanceof Error)
     return filterStackTrace(error);
   return {

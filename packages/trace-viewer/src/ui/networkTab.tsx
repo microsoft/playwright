@@ -49,16 +49,18 @@ type ColumnName = keyof RenderedEntry;
 type Sorting = { by: ColumnName, negate: boolean};
 const NetworkGridView = GridView<RenderedEntry>;
 
-export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined): NetworkTabModel {
+export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined, pageId?: string): NetworkTabModel {
   const resources = React.useMemo(() => {
     const resources = model?.resources || [];
     const filtered = resources.filter(resource => {
+      if (pageId && resource.pageref !== pageId)
+        return false;
       if (!selectedTime)
         return true;
       return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
     });
     return filtered;
-  }, [model, selectedTime]);
+  }, [model, selectedTime, pageId]);
   const contextIdMap = React.useMemo(() => new ContextIdMap(model), [model]);
   return { resources, contextIdMap };
 }

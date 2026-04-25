@@ -50,6 +50,7 @@ export class Response {
   private _includeSnapshotFileName: string | undefined;
   private _includeSnapshotRoot: playwright.Locator | undefined;
   private _includeSnapshotDepth: number | undefined;
+  private _includeSnapshotBoxes: boolean | undefined;
   private _isClose: boolean = false;
 
   readonly toolName: string;
@@ -57,17 +58,24 @@ export class Response {
   private _clientWorkspace: string;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
   private _raw: boolean;
+  private _json: boolean;
 
-  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean }) {
+  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean, json?: boolean }) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
     this._clientWorkspace = options?.relativeTo ?? context.options.cwd;
-    this._raw = options?.raw ?? false;
+    this._json = options?.json ?? false;
+    this._raw = this._json || (options?.raw ?? false);
   }
 
-  private _computRelativeTo(fileName: string): string {
-    return path.relative(this._clientWorkspace, fileName);
+  private _computeRelativeTo(fileName: string): string {
+    const rel = path.relative(this._clientWorkspace, fileName);
+    // Prefix bare filenames with `./` so they're not mistaken for living in
+    // the auto-named `.playwright-cli/` artifact directory.
+    if (path.dirname(rel) === '.' && !rel.startsWith('.'))
+      return './' + rel;
+    return rel;
   }
 
   async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
@@ -76,7 +84,7 @@ export class Response {
       fileName = await this.resolveClientFilename(template.suggestedFilename);
     else
       fileName = await this._context.outputFile(template, { origin: 'llm' });
-    const relativeName = this._computRelativeTo(fileName);
+    const relativeName = this._computeRelativeTo(fileName);
     const printableLink = `- [${title}](${relativeName})`;
     return { fileName, relativeName, printableLink };
   }
@@ -111,7 +119,7 @@ export class Response {
   }
 
   addFileLink(title: string, fileName: string) {
-    const relativeName = this._computRelativeTo(fileName);
+    const relativeName = this._computeRelativeTo(fileName);
     this.addTextResult(`- [${title}](${relativeName})`);
   }
 
@@ -135,10 +143,11 @@ export class Response {
     this._includeSnapshot = this._context.config.snapshot?.mode ?? 'full';
   }
 
-  setIncludeFullSnapshot(includeSnapshotFileName?: string, root?: playwright.Locator, depth?: number) {
+  setIncludeFullSnapshot(includeSnapshotFileName?: string, root?: playwright.Locator, depth?: number, boxes?: boolean) {
     this._includeSnapshot = 'explicit';
     this._includeSnapshotFileName = includeSnapshotFileName;
     this._includeSnapshotDepth = depth;
+    this._includeSnapshotBoxes = boxes;
     this._includeSnapshotRoot = root;
   }
 
@@ -157,26 +166,47 @@ export class Response {
     const rawSections = ['Error', 'Result', 'Snapshot'] as const;
     const sections = this._raw ? allSections.filter(section => rawSections.includes(section.title as typeof rawSections[number])) : allSections;
 
-    const text: string[] = [];
-    for (const section of sections) {
-      if (!section.content.length)
-        continue;
-      if (!this._raw) {
-        text.push(`### ${section.title}`);
-        if (section.codeframe)
-          text.push(`\`\`\`${section.codeframe}`);
-        text.push(...section.content);
-        if (section.codeframe)
-          text.push('```');
-      } else {
-        text.push(...section.content);
+    let serializedText: string;
+    if (this._json) {
+      const payload: Record<string, unknown> = {};
+      const isError = sections.some(section => section.isError);
+      if (isError)
+        payload.isError = true;
+      for (const section of sections) {
+        if (!section.content.length)
+          continue;
+        const key = section.title.toLowerCase();
+        if (key === 'snapshot') {
+          const match = section.content[0]?.match(/^- \[Snapshot\]\(([^)]+)\)$/);
+          payload.snapshot = match ? { file: match[1] } : section.content.join('\n');
+        } else {
+          payload[key] = section.content.join('\n');
+        }
       }
+      serializedText = JSON.stringify(payload, null, 2);
+    } else {
+      const text: string[] = [];
+      for (const section of sections) {
+        if (!section.content.length)
+          continue;
+        if (!this._raw) {
+          text.push(`### ${section.title}`);
+          if (section.codeframe)
+            text.push(`\`\`\`${section.codeframe}`);
+          text.push(...section.content);
+          if (section.codeframe)
+            text.push('```');
+        } else {
+          text.push(...section.content);
+        }
+      }
+      serializedText = text.join('\n');
     }
 
     const content: (TextContent | ImageContent)[] = [
       {
         type: 'text',
-        text: sanitizeUnicode(this._redactSecrets(text.join('\n'))),
+        text: sanitizeUnicode(this._redactSecrets(serializedText)),
       }
     ];
 
@@ -214,7 +244,7 @@ export class Response {
       addSection('Ran Playwright code', this._code, 'js');
 
     // Render tab titles upon changes or when more than one tab.
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._clientWorkspace) : undefined;
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotRoot, this._includeSnapshotDepth, this._includeSnapshotBoxes, this._clientWorkspace) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
@@ -249,7 +279,7 @@ export class Response {
         if (event.type === 'download-start')
           text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);
         else if (event.type === 'download-finish')
-          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computRelativeTo(event.download.outputFile)}"`);
+          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computeRelativeTo(event.download.outputFile)}"`);
       }
     }
     if (text.length)
@@ -258,7 +288,7 @@ export class Response {
     const pausedDetails = this._context.debugger().pausedDetails();
     if (pausedDetails) {
       addSection('Paused', [
-        `- ${pausedDetails.title} at ${this._computRelativeTo(pausedDetails.location.file)}${pausedDetails.location.line ? ':' + pausedDetails.location.line : ''}`,
+        `- ${pausedDetails.title} at ${this._computeRelativeTo(pausedDetails.location.file)}${pausedDetails.location.line ? ':' + pausedDetails.location.line : ''}`,
         '- Use any tools to explore and interact, resume by calling resume/step-over/pause-at',
       ]);
     }

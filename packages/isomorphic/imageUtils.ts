@@ -57,7 +57,8 @@ export function scaleImageToSize(image: ImageData, size: { width: number; height
 
   // Catmull–Rom weights
   const weights = (t: number, o: Float32Array) => {
-    const t2 = t * t, t3 = t2 * t;
+    const t2 = t * t;
+    const t3 = t2 * t;
     o[0] = -0.5 * t + 1.0 * t2 - 0.5 * t3;
     o[1] = 1.0 - 2.5 * t2 + 1.5 * t3;
     o[2] = 0.5 * t + 2.0 * t2 - 1.5 * t3;
@@ -112,14 +113,26 @@ export function scaleImageToSize(image: ImageData, size: { width: number; height
 
   for (let y = 0; y < h2; y++) {
     const yb = y * 4;
-    const rb0 = yRow[yb + 0], rb1 = yRow[yb + 1], rb2 = yRow[yb + 2], rb3 = yRow[yb + 3];
-    const wy0 = yW[yb + 0], wy1 = yW[yb + 1], wy2 = yW[yb + 2], wy3 = yW[yb + 3];
+    const rb0 = yRow[yb + 0];
+    const rb1 = yRow[yb + 1];
+    const rb2 = yRow[yb + 2];
+    const rb3 = yRow[yb + 3];
+    const wy0 = yW[yb + 0];
+    const wy1 = yW[yb + 1];
+    const wy2 = yW[yb + 2];
+    const wy3 = yW[yb + 3];
     const dstBase = y * dstRowStride;
 
     for (let x = 0; x < w2; x++) {
       const xb = x * 4;
-      const xo0 = xOff[xb + 0], xo1 = xOff[xb + 1], xo2 = xOff[xb + 2], xo3 = xOff[xb + 3];
-      const wx0 = xW[xb + 0], wx1 = xW[xb + 1], wx2 = xW[xb + 2], wx3 = xW[xb + 3];
+      const xo0 = xOff[xb + 0];
+      const xo1 = xOff[xb + 1];
+      const xo2 = xOff[xb + 2];
+      const xo3 = xOff[xb + 3];
+      const wx0 = xW[xb + 0];
+      const wx1 = xW[xb + 1];
+      const wx2 = xW[xb + 2];
+      const wx3 = xW[xb + 3];
       const di = dstBase + (x << 2);
 
       // unrolled RGBA

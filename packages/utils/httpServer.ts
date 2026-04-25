@@ -25,13 +25,21 @@ import { createHttpServer, startHttpServer } from './network';
 
 import type http from 'http';
 
+// Minimal shape of the Vite dev server we rely on. Kept inline so this file
+// doesn't need a type dep on `vite`, which is only available in watch builds.
+export type ViteDevServer = {
+  middlewares: (req: http.IncomingMessage, res: http.ServerResponse, next: (err?: unknown) => void) => void;
+  transformIndexHtml: (url: string, html: string, originalUrl?: string) => Promise<string>;
+  close: () => Promise<void>;
+};
+
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
 export type Transport = {
-  sendMessage?: (message: string) => void;
+  sendEvent?: (method: string, params: any) => void;
   close?: () => void;
   onconnect: () => void;
-  onmessage: (message: string) => void;
+  dispatch: (method: string, params: any) => Promise<any>;
   onclose: () => void;
 };
 
@@ -67,14 +75,33 @@ export class HttpServer {
   createWebSocket(transportFactory: (url: URL) => Transport, guid?: string) {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
-    const wss = new wsServer({ server: this._server, path: '/' + this._wsGuid });
+    // HMR begin: route upgrades manually with `noServer` so Vite HMR's upgrade
+    // listener on the same http.Server is not pre-empted. With `{ server, path }`
+    // the ws library aborts non-matching upgrades with 400.
+    const wsPath = '/' + this._wsGuid;
+    const wss = new wsServer({ noServer: true });
+    this._server.on('upgrade', (request, socket, head) => {
+      const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+      if (pathname !== wsPath)
+        return;
+      wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws, request));
+    });
+    // HMR end
     wss.on('connection', (ws, request) => {
       const url = new URL(request.url ?? '/', 'http://localhost');
       const transport = transportFactory(url);
-      transport.sendMessage = message => ws.send(message);
+      transport.sendEvent = (method, params) => ws.send(JSON.stringify({ method, params }));
       transport.close = () => ws.close();
       transport.onconnect();
-      ws.on('message', message => transport.onmessage(String(message)));
+      ws.on('message', async message => {
+        const { id, method, params } = JSON.parse(String(message));
+        try {
+          const result = await transport.dispatch(method, params);
+          ws.send(JSON.stringify({ id, result }));
+        } catch (e) {
+          ws.send(JSON.stringify({ id, error: String(e) }));
+        }
+      });
       ws.on('close', () => transport.onclose());
       ws.on('error', () => transport.onclose());
     });
@@ -82,6 +109,37 @@ export class HttpServer {
 
   wsGuid(): string | undefined {
     return this._wsGuid;
+  }
+
+  async createViteDevServer(options: { root: string, base?: string }): Promise<ViteDevServer> {
+    // HMR begin: hide the `vite` import from esbuild so release bundles can
+    // DCE this whole branch without keeping a resolvable module reference.
+    const loadVite = new Function('return import("vite")') as () => Promise<any>;
+    const vite = await loadVite();
+    return await vite.createServer({
+      root: options.root,
+      base: options.base,
+      server: {
+        middlewareMode: true,
+        // Dedicated path so Vite's HMR websocket does not collide with any
+        // websocket HttpServer owns via createWebSocket().
+        hmr: { path: '/__vite_hmr', server: this._server },
+      },
+      appType: 'spa',
+      clearScreen: false,
+    });
+  }
+  // HMR end
+
+  // Vite's middleware `next` callback for the "no middleware matched" case;
+  // emits a 404 only if nothing downstream already responded.
+  static notFoundFallback(response: http.ServerResponse): () => void {
+    return () => {
+      if (!response.headersSent) {
+        response.statusCode = 404;
+        response.end();
+      }
+    };
   }
 
   async start(options: { port?: number, preferredPort?: number, host?: string } = {}): Promise<void> {

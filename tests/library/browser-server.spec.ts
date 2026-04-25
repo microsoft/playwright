@@ -31,7 +31,7 @@ it('should start and stop pipe server', async ({ browserType, browser }) => {
     endpoint: expect.stringMatching(/browser@/),
   }));
 
-  const browser2 = await (browserType as any).connect(serverInfo.endpoint);
+  const browser2 = await browserType.connect(serverInfo.endpoint);
   const page = await browser2.newPage();
   await page.goto('data:text/html,<h1>Hello via pipe</h1>');
   expect(await page.locator('h1').textContent()).toBe('Hello via pipe');
@@ -61,4 +61,17 @@ it('should write descriptor on start and remove on stop', async ({ browser }) =>
   expect(fs.existsSync(file)).toBe(false);
   if (process.platform !== 'win32')
     expect(fs.existsSync(serverInfo.endpoint)).toBe(false);
+});
+
+it('should start ws server with host/port and produce well-formed endpoint', async ({ browserType, browser }) => {
+  const serverInfo = await browser.bind('default', { host: 'localhost', port: 0 });
+  expect(serverInfo.endpoint).toMatch(/^ws:\/\/localhost:\d+\/[a-f0-9]+$/);
+
+  const browser2 = await browserType.connect(serverInfo.endpoint);
+  const page = await browser2.newPage();
+  await page.goto('data:text/html,<h1>Hello via ws</h1>');
+  expect(await page.locator('h1').textContent()).toBe('Hello via ws');
+  await page.close();
+  await browser2.close();
+  await browser.unbind();
 });

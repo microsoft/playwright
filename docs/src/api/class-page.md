@@ -2280,6 +2280,8 @@ Attribute name to get the value for.
 
 ### option: Page.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Page.getByRole.description = %%-locator-get-by-role-option-description-%%
+
 ## method: Page.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -2450,6 +2452,11 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 Referer header value. If provided it will take preference over the referer header value set by
 [`method: Page.setExtraHTTPHeaders`].
+
+## async method: Page.hideHighlight
+* since: v1.60
+
+Hide all locator highlight overlays previously added by [`method: Locator.highlight`] on this page.
 
 ## async method: Page.hover
 * since: v1.8
@@ -4245,6 +4252,12 @@ When set to `"ai"`, returns a snapshot optimized for AI consumption: including e
 - `depth` <[int]>
 
 When specified, limits the depth of the snapshot.
+
+### option: Page.ariaSnapshot.boxes
+* since: v1.60
+- `boxes` <[boolean]>
+
+When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
 
 ## async method: Page.tap
 * since: v1.8

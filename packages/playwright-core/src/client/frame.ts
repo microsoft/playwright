@@ -32,7 +32,7 @@ import { TimeoutSettings } from './timeoutSettings';
 
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
-import type { FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
+import type { DropPayload, FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, TimeoutOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
@@ -80,8 +80,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       }
       if (event.remove)
         this._loadStates.delete(event.remove);
-      if (!this._parentFrame && event.add === 'load' && this._page)
+      if (!this._parentFrame && event.add === 'load' && this._page) {
         this._page.emit(Events.Page.Load, this._page);
+        this._page.context().emit(Events.BrowserContext.PageLoad, this._page);
+      }
       if (!this._parentFrame && event.add === 'domcontentloaded' && this._page)
         this._page.emit(Events.Page.DOMContentLoaded, this._page);
     });
@@ -89,8 +91,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       this._url = event.url;
       this._name = event.name;
       this._eventEmitter.emit('navigated', event);
-      if (!event.error && this._page)
+      if (!event.error && this._page) {
         this._page.emit(Events.Page.FrameNavigated, this);
+        this._page.context().emit(Events.BrowserContext.FrameNavigated, this);
+      }
     });
   }
 
@@ -305,6 +309,24 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.dragAndDrop({ source, target, ...options, timeout: this._timeout(options) });
   }
 
+  async _drop(selector: string, payload: DropPayload, options: Omit<channels.FrameDropOptions, 'payloads' | 'localPaths' | 'streams' | 'data'> & TimeoutOptions = {}) {
+    let fileParams: { payloads?: channels.FrameDropParams['payloads'], localPaths?: string[], streams?: channels.FrameDropParams['streams'] } = {};
+    if (payload.files !== undefined) {
+      const converted = await convertInputFiles(this._platform, payload.files, this.page().context());
+      if (converted.localDirectory || converted.directoryStream)
+        throw new Error('Dropping a directory is not supported — pass individual files.');
+      fileParams = { payloads: converted.payloads, localPaths: converted.localPaths, streams: converted.streams };
+    }
+    const dataArray = payload.data ? Object.entries(payload.data).map(([mimeType, value]) => ({ mimeType, value })) : undefined;
+    await this._channel.drop({
+      selector,
+      ...fileParams,
+      data: dataArray,
+      ...options,
+      timeout: this._timeout(options),
+    });
+  }
+
   async tap(selector: string, options: channels.FrameTapOptions & TimeoutOptions = {}) {
     return await this._channel.tap({ selector, ...options, timeout: this._timeout(options) });
   }
@@ -313,8 +335,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.fill({ selector, value, ...options, timeout: this._timeout(options) });
   }
 
-  async _highlight(selector: string) {
-    return await this._channel.highlight({ selector });
+  async _highlight(selector: string, style?: string) {
+    return await this._channel.highlight({ selector, style });
+  }
+
+  async _hideHighlight(selector: string) {
+    return await this._channel.hideHighlight({ selector });
   }
 
   locator(selector: string, options?: LocatorOptions): Locator {
@@ -461,15 +487,28 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return (await this._channel.title()).value;
   }
 
-  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }> {
+  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<ExpectResult> {
     const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
     params.expectedValue = serializeArgument(options.expectedValue);
-    const result = (await this._channel.expect(params));
-    if (result.received !== undefined)
-      result.received = parseResult(result.received);
+    const channelResult = await this._channel.expect(params);
+    const result: ExpectResult = {
+      matches: channelResult.matches,
+      log: channelResult.log,
+      timedOut: channelResult.timedOut,
+      errorMessage: channelResult.errorMessage,
+    };
+    if (channelResult.received !== undefined) {
+      result.received = {
+        value: channelResult.received.value !== undefined ? parseResult(channelResult.received.value) : undefined,
+        ariaSnapshot: channelResult.received.ariaSnapshot,
+      };
+    }
     return result;
   }
 }
+
+export type ExpectReceived = { value?: any, ariaSnapshot?: string };
+export type ExpectResult = { matches: boolean, received?: ExpectReceived, log?: string[], timedOut?: boolean, errorMessage?: string };
 
 export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')

@@ -150,6 +150,21 @@ var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 
 Additional locator to match.
 
+## async method: Locator.ariaRef
+* since: v1.60
+* langs: js
+- returns: <[null]|[string]>
+
+Returns the aria ref (for example `e1`, `e2`) assigned to this element by the most recent aria snapshot, or `null`
+if no ref has been assigned yet. Call [`method: Locator.ariaSnapshot`] or [`method: Page.ariaSnapshot`] before this
+method to ensure a ref is available.
+
+### option: Locator.ariaRef.timeout = %%-input-timeout-%%
+* since: v1.60
+
+### option: Locator.ariaRef.timeout = %%-input-timeout-js-%%
+* since: v1.60
+
 ## async method: Locator.ariaSnapshot
 * since: v1.49
 - returns: <[string]>
@@ -228,6 +243,12 @@ When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to
 - `depth` <[int]>
 
 When specified, limits the depth of the snapshot.
+
+### option: Locator.ariaSnapshot.boxes
+* since: v1.60
+- `boxes` <[boolean]>
+
+When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
 
 ## async method: Locator.blur
 * since: v1.28
@@ -907,6 +928,54 @@ Locator of the element to drag to.
 ### option: Locator.dragTo.steps = %%-input-drag-steps-%%
 * since: v1.57
 
+## async method: Locator.drop
+* since: v1.60
+
+Simulate an external drag-and-drop of files or clipboard-like data onto this locator.
+
+**Details**
+
+Dispatches the native `dragenter`, `dragover`, and `drop` events at the center of the
+target element with a synthetic [DataTransfer] carrying the provided files and/or data
+entries. Works cross-browser by constructing the [DataTransfer] in the page context.
+
+If the target element's `dragover` listener does not call `preventDefault()`, the target
+is considered to have rejected the drop: Playwright dispatches `dragleave` and this
+method throws.
+
+**Usage**
+
+Drop a file buffer onto an upload area:
+
+```js
+await page.locator('#dropzone').drop({
+  files: { name: 'note.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
+});
+```
+
+Drop plain text and a URL together:
+
+```js
+await page.locator('#dropzone').drop({
+  data: {
+    'text/plain': 'hello world',
+    'text/uri-list': 'https://example.com',
+  },
+});
+```
+
+### param: Locator.drop.payload = %%-drop-payload-%%
+* since: v1.60
+
+### option: Locator.drop.position = %%-input-position-%%
+* since: v1.60
+
+### option: Locator.drop.timeout = %%-input-timeout-%%
+* since: v1.60
+
+### option: Locator.drop.timeout = %%-input-timeout-js-%%
+* since: v1.60
+
 ## async method: Locator.elementHandle
 * since: v1.14
 * discouraged: Always prefer using [Locator]s and web assertions over [ElementHandle]s because latter are inherently racy.
@@ -1386,6 +1455,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByRole.exact = %%-locator-get-by-role-option-exact-%%
 
+### option: Locator.getByRole.description = %%-locator-get-by-role-option-description-%%
+
 ## method: Locator.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -1415,10 +1486,35 @@ Attribute name to get the value for.
 
 ### option: Locator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
+## async method: Locator.hideHighlight
+* since: v1.60
+
+Hide element highlight added with Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
+
 ## async method: Locator.highlight
 * since: v1.20
+- returns: <[Disposable]>
 
 Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
+
+### option: Locator.highlight.style
+* since: v1.60
+* langs: js
+- `style` <[string]|[Object]<[string], [any]>>
+
+Inline CSS applied to the highlight overlay, e.g.
+
+```js
+await locator.highlight('outline: 2px dashed red');
+await locator.highlight({ color: 'red' });
+```
+
+### option: Locator.highlight.style
+* since: v1.60
+* langs: java, python, csharp
+- `style` <[string]>
+
+Additional inline CSS applied to the highlight overlay, e.g. `"outline: 2px dashed red"`.
 
 ## async method: Locator.hover
 * since: v1.14

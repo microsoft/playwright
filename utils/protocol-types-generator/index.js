@@ -1,7 +1,7 @@
 // @ts-check
 const path = require('path');
 const fs = require('fs');
-const StreamZip = require('node-stream-zip');
+const yauzl = require('yauzl');
 const vm = require('vm');
 const os = require('os');
 
@@ -128,15 +128,44 @@ function typeOfProperty(property, domain) {
   return property.type;
 }
 
+/**
+ * @param {string} zipPath
+ * @param {string} entryName
+ * @returns {Promise<Buffer>}
+ */
+function readFileFromZip(zipPath, entryName) {
+  return new Promise((resolve, reject) => {
+    yauzl.open(zipPath, { lazyEntries: true }, (err, zip) => {
+      if (err) return reject(err);
+      zip.on('entry', entry => {
+        if (entry.fileName !== entryName) {
+          zip.readEntry();
+          return;
+        }
+        zip.openReadStream(entry, (err, readStream) => {
+          if (err) return reject(err);
+          const buffers = [];
+          readStream.on('data', d => buffers.push(d));
+          readStream.on('end', () => {
+            zip.close();
+            resolve(Buffer.concat(buffers));
+          });
+          readStream.on('error', reject);
+        });
+      });
+      zip.on('end', () => reject(new Error(`${entryName} not found in ${zipPath}`)));
+      zip.on('error', reject);
+      zip.readEntry();
+    });
+  });
+}
+
 async function generateFirefoxProtocol(executablePath) {
   const outputPath = path.join(__dirname, '../../packages/playwright-core/src/server/firefox/protocol.d.ts');
   const omnija = os.platform() === 'darwin' ?
     path.join(executablePath, '../../Resources/omni.ja') :
     path.join(executablePath, '../omni.ja');
-  const zip = new StreamZip({file: omnija, storeEntries: true});
-  // @ts-ignore
-  await new Promise(x => zip.on('ready', x));
-  const data = zip.entryDataSync(zip.entry('chrome/juggler/content/protocol/Protocol.js'))
+  const data = await readFileFromZip(omnija, 'chrome/juggler/content/protocol/Protocol.js');
 
   const ctx = vm.createContext();
   const protocolJSCode = data.toString('utf8').replace('export const protocol', 'const protocol')

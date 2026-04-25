@@ -6,11 +6,6 @@ on:
       - main
       - release-*
   pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
-      - 'packages/playwright-core/src/server/bidi/**'
-      - 'tests/bidi/**'
     types: [ labeled ]
     branches:
       - main
@@ -132,7 +127,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-24.04, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-15-xlarge, windows-latest]
         include:
           # We have different binaries per Ubuntu version for WebKit.
           - browser: webkit

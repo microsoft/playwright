@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export * from './eventEmitter';
+module.exports = require('./lib/index');

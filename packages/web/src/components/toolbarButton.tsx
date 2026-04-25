@@ -14,6 +14,7 @@
   limitations under the License.
 */
 
+import '../third_party/vscode/colors.css';
 import './toolbarButton.css';
 import '../third_party/vscode/codicon.css';
 import * as React from 'react';

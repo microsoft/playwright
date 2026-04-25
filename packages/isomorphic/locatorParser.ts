@@ -177,6 +177,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/filter\(,?has2=([^)]+)\)/g, 'internal:has=$1')
       .replace(/filter\(,?hasnot2=([^)]+)\)/g, 'internal:has-not=$1')
       .replace(/,exact=false/g, '')
+      .replace(/(,name=\$\d+)(,description=\$\d+),exact=true/g, '$1s$2s') // exact=true is shared between name and description, so we need a special case for applying it to both.
       .replace(/,exact=true/g, 's')
       .replace(/,includehidden=/g, ',include-hidden=')
       .replace(/\,/g, '][');

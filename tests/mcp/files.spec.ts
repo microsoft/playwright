@@ -49,7 +49,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   })).toHaveResponse({
     modalState: expect.stringContaining(`- [File chooser]: can be handled by browser_file_upload`),
@@ -77,7 +77,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
       name: 'browser_click',
       arguments: {
         element: 'Textbox',
-        ref: 'e2',
+        target: 'e2',
       },
     });
 
@@ -91,7 +91,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
       name: 'browser_click',
       arguments: {
         element: 'Button',
-        ref: 'e3',
+        target: 'e3',
       },
     });
 
@@ -122,7 +122,7 @@ test('clicking on download link emits download', async ({ startClient, server },
     name: 'browser_click',
     arguments: {
       element: 'Download link',
-      ref: 'e2',
+      target: 'e2',
     },
   });
   const parsed = parseResponse(response);
@@ -186,7 +186,7 @@ test('file upload restricted to roots by default', async ({ startClient, server 
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -209,7 +209,7 @@ test('file upload restricted to roots by default', async ({ startClient, server 
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -249,7 +249,7 @@ test('file upload is restricted to cwd if no roots are configured', async ({ sta
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -272,7 +272,7 @@ test('file upload is restricted to cwd if no roots are configured', async ({ sta
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -318,7 +318,7 @@ test('file upload unrestricted when flag is set', async ({ startClient, server }
     name: 'browser_click',
     arguments: {
       element: 'Textbox',
-      ref: 'e2',
+      target: 'e2',
     },
   });
 
@@ -334,5 +334,104 @@ test('file upload unrestricted when flag is set', async ({ startClient, server }
     },
   })).toHaveResponse({
     code: expect.stringContaining(`await fileChooser.setFiles(`),
+  });
+});
+
+const dropzoneHtml = `
+  <div id="dropzone" aria-label="dropzone" style="width:300px;height:200px;border:2px dashed #888"></div>
+  <script>
+    window.__dropInfo = null;
+    const zone = document.getElementById('dropzone');
+    zone.addEventListener('dragenter', e => e.preventDefault());
+    zone.addEventListener('dragover', e => e.preventDefault());
+    zone.addEventListener('drop', async e => {
+      e.preventDefault();
+      const files = [];
+      for (const f of e.dataTransfer.files)
+        files.push({ name: f.name, size: f.size, text: await f.text() });
+      const data = {};
+      for (const t of e.dataTransfer.types) {
+        if (t !== 'Files')
+          data[t] = e.dataTransfer.getData(t);
+      }
+      window.__dropInfo = { files, data };
+    });
+  </script>
+`;
+
+test('browser_drop files', async ({ client, server }, testInfo) => {
+  server.setContent('/', dropzoneHtml, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const filePath = testInfo.outputPath('drop-me.txt');
+  await fs.writeFile(filePath, 'hello');
+
+  expect(await client.callTool({
+    name: 'browser_drop',
+    arguments: {
+      element: 'dropzone',
+      target: 'e2',
+      paths: [filePath],
+    },
+  })).toHaveResponse({
+    code: expect.stringContaining(`.drop(`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => window.__dropInfo' },
+  })).toHaveResponse({
+    result: expect.stringContaining(`"text": "hello"`),
+  });
+});
+
+test('browser_drop data', async ({ client, server }) => {
+  server.setContent('/', dropzoneHtml, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_drop',
+    arguments: {
+      element: 'dropzone',
+      target: 'e2',
+      data: { 'text/plain': 'hello world' },
+    },
+  })).toHaveResponse({
+    code: expect.stringContaining(`.drop(`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => window.__dropInfo.data["text/plain"]' },
+  })).toHaveResponse({
+    result: `"hello world"`,
+  });
+});
+
+test('browser_drop requires paths or data', async ({ client, server }) => {
+  server.setContent('/', dropzoneHtml, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_drop',
+    arguments: {
+      element: 'dropzone',
+      target: 'e2',
+    },
+  })).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining(`At least one of "paths" or "data" must be provided.`),
   });
 });

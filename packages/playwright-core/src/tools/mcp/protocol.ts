@@ -70,10 +70,10 @@ export type ExtensionCommandV2 = {
     params: [createProperties: TabCreateProperties];
     result: Tab;
   };
-  // Playwright-specific: ask the user to pick a tab via the connect UI.
-  'extension.selectTab': {
-    params: [];
-    result: { tabId: number };
+  // chrome.tabs.remove(tabIds)
+  'chrome.tabs.remove': {
+    params: [tabIds: number | number[]];
+    result: void;
   };
 };
 
@@ -94,6 +94,13 @@ export type ExtensionEventsV2 = {
   // chrome.tabs.onRemoved: (tabId, removeInfo) => void
   'chrome.tabs.onRemoved': {
     params: [tabId: number, removeInfo: TabRemoveInfo];
+  };
+  // Playwright-specific: signals end of the initial tab handshake. The relay
+  // withholds Playwright-side CDP messages until this event arrives, so that
+  // `Target.setAutoAttach` can be answered from a fully-populated tab model
+  // rather than blocking on a user pick.
+  'extension.initialized': {
+    params: [];
   };
 };
 

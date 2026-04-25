@@ -16,12 +16,22 @@
 
 import { test, expect } from './cli-fixtures';
 
-test('prints help by default', async ({ cli }) => {
+test('prints help', async ({ cli }) => {
   const { output } = await cli('--help');
+  expect(output).toContain('Usage: playwright-cli <command>');
+});
+
+test('prints help by default', async ({ cli }) => {
+  const { output } = await cli();
   expect(output).toContain('Usage: playwright-cli <command>');
 });
 
 test('prints command help', async ({ cli }) => {
   const { output } = await cli('click', '--help');
   expect(output).toContain('playwright-cli click <target> [button]');
+});
+
+test('prints agent skill path when running under a coding agent', async ({ cli }) => {
+  const { output } = await cli('--help', { env: { CLAUDECODE: '1' } });
+  expect(output).toContain('Agent skill:');
 });

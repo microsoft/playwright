@@ -319,6 +319,10 @@ export class PlaywrightServer {
 
   async close() {
     await this._wsServer.close();
+    // Close all browsers that were launched by this server (e.g. in reuse mode)
+    // to avoid leaking browser processes that may hold connections to test servers.
+    for (const browser of this._playwright.allBrowsers())
+      await browser.close(nullProgress, { reason: 'Server closed' });
   }
 }
 

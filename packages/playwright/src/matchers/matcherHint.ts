@@ -20,43 +20,40 @@ import { stringifyStackFrames } from '@isomorphic/stackTrace';
 
 import type { StackFrame } from '@protocol/channels';
 
-export type MatcherResult<E, A> = {
-  name: string;
+export type MatcherAttachment = { name: string; contentType: string; path?: string; body?: string | Buffer };
+
+export type MatcherResult<E = unknown, A = unknown> = {
+  name?: string;
   expected?: E;
   message: () => string;
   pass: boolean;
   actual?: A;
+  diff?: string;
   log?: string[];
   timeout?: number;
+  ariaSnapshot?: string;
   suggestedRebaseline?: string;
+  attachments?: MatcherAttachment[];
+  softError?: Error | unknown;
+  shouldNotRetryTest?: boolean;
 };
 
-export type MatcherResultProperty = Omit<MatcherResult<unknown, unknown>, 'message'> & {
+export type MatcherResultProperty = Omit<MatcherResult, 'message' | 'name' | 'shouldNotRetryTest'> & {
+  name: string;
   message: string;
-};
-
-type JestError = Error & {
-  matcherResult: MatcherResultProperty;
 };
 
 export class ExpectError extends Error {
   matcherResult: MatcherResultProperty;
 
-  constructor(jestError: JestError, customMessage: string, stackFrames: StackFrame[]) {
+  constructor(matcherResult: MatcherResultProperty, customMessage: string, stackFrames: StackFrame[]) {
     super('');
-    // Copy to erase the JestMatcherError constructor name from the console.log(error).
-    this.name = jestError.name;
-    this.message = jestError.message;
-    this.matcherResult = jestError.matcherResult;
-
+    this.message = matcherResult.message;
+    this.matcherResult = matcherResult;
     if (customMessage)
       this.message = customMessage + '\n\n' + this.message;
     this.stack = this.name + ': ' + this.message + '\n' + stringifyStackFrames(stackFrames).join('\n');
   }
-}
-
-export function isJestError(e: unknown): e is JestError {
-  return e instanceof Error && 'matcherResult' in e && !!e.matcherResult;
 }
 
 export function expectTypes(receiver: any, types: ('APIResponse' | 'Page' | 'Locator')[], matcherName: string) {

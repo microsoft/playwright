@@ -14,355 +14,618 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
+import crypto from 'crypto';
+import { execFile } from 'child_process';
+import { Disposable } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
+import { serverRegistry } from '../../serverRegistry';
+import { createClientInfo } from '../cli-client/registry';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
-import type { DashboardChannel, DashboardChannelEvents, Tab } from '@dashboard/dashboardChannel';
+import type { AnnotationData, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor } from '../../serverRegistry';
 
-export class DashboardConnection implements Transport, DashboardChannel {
-  readonly version = 1;
+type BrowserTrackerCallbacks = {
+  onTabsChanged: () => void;
+  onContextClosed: (context: api.BrowserContext) => void;
+};
 
-  sendMessage?: (message: string) => void;
+class BrowserTracker {
+  readonly descriptor: BrowserDescriptor;
+  readonly browser: api.Browser;
+  private _callbacks: BrowserTrackerCallbacks;
+  private _contextListeners = new Map<api.BrowserContext, Disposable[]>();
+  private _browserListeners: Disposable[] = [];
+
+  static async create(descriptor: BrowserDescriptor, callbacks: BrowserTrackerCallbacks): Promise<BrowserTracker | undefined> {
+    try {
+      const browser = await connectToBrowserAcrossVersions(descriptor);
+      const slot = new BrowserTracker(descriptor, browser, callbacks);
+      for (const context of browser.contexts())
+        slot._wireContext(context);
+      slot._browserListeners.push(eventsHelper.addEventListener(browser, 'context', (context: api.BrowserContext) => {
+        slot._wireContext(context);
+      }));
+      return slot;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private constructor(descriptor: BrowserDescriptor, browser: api.Browser, callbacks: BrowserTrackerCallbacks) {
+    this.descriptor = descriptor;
+    this.browser = browser;
+    this._callbacks = callbacks;
+  }
+
+  contexts(): api.BrowserContext[] {
+    return this.browser.contexts();
+  }
+
+  dispose() {
+    this._browserListeners.forEach(d => d.dispose());
+    this._browserListeners = [];
+    for (const listeners of this._contextListeners.values())
+      listeners.forEach(d => d.dispose());
+    this._contextListeners.clear();
+  }
+
+  private _wireContext(context: api.BrowserContext) {
+    if (this._contextListeners.has(context))
+      return;
+    const onTabsChanged = () => this._callbacks.onTabsChanged();
+    const listeners: Disposable[] = [
+      eventsHelper.addEventListener(context, 'page', onTabsChanged),
+      eventsHelper.addEventListener(context, 'pageload', onTabsChanged),
+      eventsHelper.addEventListener(context, 'pageclose', onTabsChanged),
+      eventsHelper.addEventListener(context, 'framenavigated', (frame: api.Frame) => {
+        if (frame === frame.page().mainFrame())
+          this._callbacks.onTabsChanged();
+      }),
+      eventsHelper.addEventListener(context, 'close', () => {
+        const ls = this._contextListeners.get(context);
+        if (ls) {
+          ls.forEach(d => d.dispose());
+          this._contextListeners.delete(context);
+        }
+        this._callbacks.onContextClosed(context);
+        this._callbacks.onTabsChanged();
+      }),
+    ];
+    this._contextListeners.set(context, listeners);
+    this._callbacks.onTabsChanged();
+  }
+}
+
+export class DashboardConnection implements Transport {
+  sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
-  selectedPage: api.Page | null = null;
-  private _lastFrameData: string | null = null;
-  private _lastViewportSize: { width: number, height: number } | null = null;
-  private _pageListeners: { dispose: () => Promise<void> }[] = [];
-  private _contextListeners: { dispose: () => Promise<void> }[] = [];
-  private _eventListeners = new Map<string, Set<Function>>();
-
-  private _browserDescriptor: BrowserDescriptor;
-  private _cdpUrl: URL;
+  private _browsers = new Map<string, BrowserTracker>();
+  private _attachedPage: AttachedPage | undefined;
   private _onclose: () => void;
+  private _onconnected?: () => void;
+  private _onAnnotationSubmit?: (base64Png: string | undefined, annotations: AnnotationData[]) => void;
+  private _serverRegistryDispose?: () => void;
+  private _pushSessionsScheduled = false;
+  private _pushTabsScheduled = false;
+  private _visible = true;
+  private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
+  private _annotateWaitingForAttach = false;
 
-  private _initPromise?: Promise<void>;
-  private _context!: api.BrowserContext;
-  private _browser?: api.Browser;
+  _recordingDir: string;
+  _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(browserDescriptor: BrowserDescriptor, cdpUrl: URL, onclose: () => void) {
-    this._browserDescriptor = browserDescriptor;
-    this._cdpUrl = cdpUrl;
+  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string | undefined, annotations: AnnotationData[]) => void) {
     this._onclose = onclose;
-  }
-
-  on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void {
-    let set = this._eventListeners.get(event);
-    if (!set) {
-      set = new Set();
-      this._eventListeners.set(event, set);
-    }
-    set.add(listener);
-  }
-
-  off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void {
-    this._eventListeners.get(event)?.delete(listener);
-  }
-
-  private _emit<K extends keyof DashboardChannelEvents>(event: K, params: DashboardChannelEvents[K]): void {
-    this.sendMessage?.(JSON.stringify({ method: event, params }));
-    const set = this._eventListeners.get(event);
-    if (set) {
-      for (const fn of set)
-        fn(params);
-    }
+    this._onconnected = onconnected;
+    this._onAnnotationSubmit = onAnnotationSubmit;
+    this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
   onconnect() {
-    this._initPromise = this._init();
-    this._initPromise.catch(() => this.close?.());
-  }
-
-  private async _init() {
-    this._browser = await connectToBrowserAcrossVersions(this._browserDescriptor);
-    this._context = this._browser.contexts()[0];
-
-    this._contextListeners.push(
-        eventsHelper.addEventListener(this._context, 'page', page => {
-          this._sendTabList();
-          if (!this.selectedPage)
-            this._selectPage(page);
-        }),
-    );
-
-    // Auto-select first page.
-    const pages = this._context.pages();
-    if (pages.length > 0)
-      this._selectPage(pages[0]);
-
-    this._sendCachedState();
+    this._serverRegistryDispose = serverRegistry.watch();
+    serverRegistry.on('added', this._pushSessions);
+    serverRegistry.on('removed', this._pushSessions);
+    serverRegistry.on('changed', this._pushSessions);
+    this._pushSessions();
+    this._onconnected?.();
   }
 
   onclose() {
-    this._deselectPage();
-    this._contextListeners.forEach(d => d.dispose());
-    this._contextListeners = [];
+    serverRegistry.off('added', this._pushSessions);
+    serverRegistry.off('removed', this._pushSessions);
+    serverRegistry.off('changed', this._pushSessions);
+    this._serverRegistryDispose?.();
+    this._serverRegistryDispose = undefined;
+    this._attachedPage?.dispose();
+    this._attachedPage = undefined;
+    for (const stream of this._streams.values()) {
+      void stream.handle.close()
+          .catch(() => {})
+          .then(() => fs.promises.unlink(stream.path))
+          .catch(() => {});
+    }
+    this._streams.clear();
+    for (const tracker of this._browsers.values())
+      tracker.dispose();
+    this._browsers.clear();
     this._onclose();
-    this._browser?.close().catch(() => {});
   }
 
-  async onmessage(message: string) {
-    const { id, method, params } = JSON.parse(message);
-    await this._initPromise;
+  async dispatch(method: string, params: any): Promise<any> {
+    // eslint-disable-next-line no-restricted-syntax
+    const handler = (this as any)[method];
+    if (typeof handler === 'function')
+      return handler.call(this, params);
+    const attached = this._attachedPage;
+    if (!attached)
+      return;
+    // eslint-disable-next-line no-restricted-syntax
+    const onAtt = (attached as any)[method];
+    if (typeof onAtt === 'function')
+      return onAtt.call(attached, params);
+  }
+
+  async selectTab(params: { browser: string; context: string; page: string }) {
+    const page = this._findPage(params);
+    if (page)
+      await this._switchAttachedTo(page);
+    this._pushTabs();
+  }
+
+  async newTab(params: { browser: string; context: string }) {
+    const context = this._findContext(params);
+    if (!context)
+      return;
+    const page = await context.newPage();
+    await this._switchAttachedTo(page);
+    this._pushTabs();
+  }
+
+  async closeTab(params: { browser: string; context: string; page: string }) {
+    const page = this._findPage(params);
+    await page?.close({ reason: 'Closed in Dashboard' });
+  }
+
+  async closeSession(params: { browser: string }) {
+    const descriptor = serverRegistry.readDescriptor(params.browser);
+    const browser = await connectToBrowserAcrossVersions(descriptor);
     try {
-      // eslint-disable-next-line no-restricted-syntax
-      const result = await (this as any)[method]?.(params);
-      this.sendMessage?.(JSON.stringify({ id, result }));
-    } catch (e) {
-      this.sendMessage?.(JSON.stringify({ id, error: String(e) }));
+      await Promise.all(browser.contexts().map(context => context.close()));
+      await browser.close();
+    } catch {
+      // best-effort
     }
   }
 
-  async selectTab(params: { pageId: string }) {
-    const page = this._context.pages().find(p => this._pageId(p) === params.pageId);
-    if (page)
-      await this._selectPage(page);
+  async deleteSessionData(params: { browser: string }) {
+    await serverRegistry.deleteUserData(params.browser);
   }
 
-  async closeTab(params: { pageId: string }) {
-    const page = this._context.pages().find(p => this._pageId(p) === params.pageId);
-    if (page)
-      await page.close({ reason: 'Closed in Dashboard' });
-  }
-
-  async newTab() {
-    const page = await this._context.newPage();
-    await this._selectPage(page);
-  }
-
-  async navigate(params: { url: string }) {
-    if (!this.selectedPage || !params.url)
+  async setVisible(params: { visible: boolean }) {
+    if (this._visible === params.visible)
       return;
-    const page = this.selectedPage;
-    await page.goto(params.url);
+    this._visible = params.visible;
+    await this._attachedPage?.setScreencastActive(params.visible);
   }
 
-  async back() {
-    await this.selectedPage?.goBack();
+  revealSession(sessionName: string, workspaceDir?: string) {
+    this._pendingReveal = { sessionName, workspaceDir };
+    void this._tryRevealPending();
   }
 
-  async forward() {
-    await this.selectedPage?.goForward();
-  }
-
-  async reload() {
-    await this.selectedPage?.reload();
-  }
-
-  async mousemove(params: { x: number; y: number }) {
-    await this.selectedPage?.mouse.move(params.x, params.y);
-  }
-
-  async mousedown(params: { x: number; y: number; button?: 'left' | 'right' | 'middle' }) {
-    await this.selectedPage?.mouse.move(params.x, params.y);
-    await this.selectedPage?.mouse.down({ button: params.button || 'left' });
-  }
-
-  async mouseup(params: { x: number; y: number; button?: 'left' | 'right' | 'middle' }) {
-    await this.selectedPage?.mouse.move(params.x, params.y);
-    await this.selectedPage?.mouse.up({ button: params.button || 'left' });
-  }
-
-  async wheel(params: { deltaX: number; deltaY: number }) {
-    await this.selectedPage?.mouse.wheel(params.deltaX, params.deltaY);
-  }
-
-  async keydown(params: { key: string }) {
-    await this.selectedPage?.keyboard.down(params.key);
-  }
-
-  async keyup(params: { key: string }) {
-    await this.selectedPage?.keyboard.up(params.key);
-  }
-
-  private async _selectPage(page: api.Page) {
-    if (this.selectedPage === page)
+  private async _tryRevealPending() {
+    const pending = this._pendingReveal;
+    if (!pending)
       return;
+    const slot = [...this._browsers.values()].find(s =>
+      s.descriptor.title === pending.sessionName
+        && (pending.workspaceDir === undefined || s.descriptor.workspaceDir === pending.workspaceDir));
+    if (!slot)
+      return;
+    const page = slot.browser.contexts().flatMap(c => c.pages())[0];
+    if (!page)
+      return;
+    this._pendingReveal = undefined;
+    await this._switchAttachedTo(page);
+    this._pushTabs();
+  }
 
-    if (this.selectedPage) {
-      this._pageListeners.forEach(d => d.dispose());
-      this._pageListeners = [];
-      await this.selectedPage.screencast.stop();
+  async submitAnnotation(params: { data: string | undefined; annotations: AnnotationData[] }) {
+    this._onAnnotationSubmit?.(params.data, params.annotations);
+  }
+
+  async reveal(params: { path: string }) {
+    switch (os.platform()) {
+      case 'darwin':
+        execFile('open', ['-R', params.path]);
+        break;
+      case 'win32':
+        execFile('explorer', ['/select,', params.path]);
+        break;
+      case 'linux':
+        execFile('xdg-open', [path.dirname(params.path)]);
+        break;
     }
+  }
 
-    this.selectedPage = page;
-    this._lastFrameData = null;
-    this._lastViewportSize = null;
-    this._sendTabList();
+  async readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }> {
+    const stream = this._streams.get(params.streamId);
+    if (!stream)
+      throw new Error(`Unknown stream: ${params.streamId}`);
+    const buffer = Buffer.alloc(256 * 1024);
+    const { bytesRead } = await stream.handle.read(buffer, 0, buffer.length);
+    if (bytesRead === 0) {
+      this._streams.delete(params.streamId);
+      await stream.handle.close().catch(() => {});
+      await fs.promises.unlink(stream.path).catch(() => {});
+      return { data: '', eof: true };
+    }
+    return { data: buffer.subarray(0, bytesRead).toString('base64'), eof: false };
+  }
 
-    this._pageListeners.push(
-        eventsHelper.addEventListener(page, 'close', () => {
-          this._deselectPage();
-          const pages = page.context().pages();
-          if (pages.length > 0)
-            this._selectPage(pages[0]);
-          this._sendTabList();
-        }),
-        eventsHelper.addEventListener(page, 'framenavigated', frame => {
-          if (frame === page.mainFrame())
-            this._sendTabList();
-        }),
-    );
+  visible(): boolean {
+    return this._visible;
+  }
 
-    const size = { width: 1280, height: 800 };
-    await page.screencast.start({
-      onFrame: ({ data }: { data: Buffer }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
-      size,
+  emitSessions(sessions: BrowserDescriptor[]) {
+    this.sendEvent?.('sessions', { sessions, clientInfo: createClientInfo() });
+  }
+
+  emitTabs(tabs: Tab[]) {
+    this.sendEvent?.('tabs', { tabs });
+  }
+
+  emitFrame(data: string, viewportWidth: number, viewportHeight: number) {
+    this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
+  }
+
+  emitAnnotate() {
+    // Defer until a page is attached so the client can fetch a screenshot.
+    if (!this._attachedPage) {
+      this._annotateWaitingForAttach = true;
+      return;
+    }
+    this.sendEvent?.('annotate', {});
+  }
+
+  emitCancelAnnotate() {
+    this._annotateWaitingForAttach = false;
+    this.sendEvent?.('cancelAnnotate', {});
+  }
+
+  _pushTabs() {
+    if (this._pushTabsScheduled)
+      return;
+    this._pushTabsScheduled = true;
+    queueMicrotask(async () => {
+      this._pushTabsScheduled = false;
+      try {
+        const tabs = await this._aggregateTabs();
+        this.emitTabs(tabs);
+      } catch {
+        // best-effort
+      }
     });
   }
 
-  private _deselectPage() {
-    if (!this.selectedPage)
+  private async _aggregateTabs(): Promise<Tab[]> {
+    const attachedPage = this._attachedPage?.page;
+    const tasks: Promise<Tab>[] = [];
+    for (const { browser } of this._browsers.values()) {
+      for (const context of browser.contexts()) {
+        for (const page of context.pages()) {
+          tasks.push((async () => ({
+            browser: browserId(browser),
+            context: contextId(context),
+            page: pageId(page),
+            title: await page.title().catch(() => ''),
+            url: page.url(),
+            selected: page === attachedPage,
+            faviconUrl: await faviconUrl(page),
+          }))());
+        }
+      }
+    }
+    return await Promise.all(tasks);
+  }
+
+  private async _switchAttachedTo(page: api.Page) {
+    if (this._attachedPage?.page === page)
       return;
-    this._pageListeners.forEach(d => d.dispose());
-    this._pageListeners = [];
-    this.selectedPage.screencast.stop().catch(() => {});
-    this.selectedPage = null;
-    this._lastFrameData = null;
-    this._lastViewportSize = null;
-  }
-
-  async pickLocator() {
-    if (!this.selectedPage)
+    this._attachedPage?.dispose();
+    const browser = page.context().browser();
+    const slot = browser ? [...this._browsers.values()].find(s => s.browser === browser) : undefined;
+    if (!slot) {
+      this._attachedPage = undefined;
       return;
-    const locator = await this.selectedPage.pickLocator();
-    this._emit('elementPicked', { selector: locator.toString() });
-  }
-
-  async cancelPickLocator() {
-    await this.selectedPage?.cancelPickLocator();
-  }
-
-  private _sendCachedState() {
-    if (this._lastFrameData && this._lastViewportSize)
-      this._emit('frame', { data: this._lastFrameData, viewportWidth: this._lastViewportSize.width, viewportHeight: this._lastViewportSize.height });
-    this._sendTabList();
-  }
-
-  async tabs(): Promise<{ tabs: Tab[] }> {
-    return { tabs: await this._tabList() };
-  }
-
-  private async _tabList(): Promise<Tab[]> {
-    const pages = this._context.pages();
-    if (pages.length === 0)
-      return [];
-    const devtoolsUrl = await this._devtoolsUrl(pages[0]);
-    return await Promise.all(pages.map(async page => {
-      const title = await page.title();
-      return {
-        pageId: this._pageId(page),
-        title,
-        url: page.url(),
-        selected: page === this.selectedPage,
-        inspectorUrl: devtoolsUrl ? await this._pageInspectorUrl(page, devtoolsUrl) : 'data:text/plain,Dashboard only supported in Chromium based browsers',
-      };
-    }));
-  }
-
-  pageForId(pageId: string) {
-    return this._context?.pages().find(p => this._pageId(p) === pageId);
-  }
-
-  private _pageId(p: api.Page): string {
-    // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
-    return (p as any)._guid;
-  }
-
-  private async _devtoolsUrl(page: api.Page) {
-    // eslint-disable-next-line no-restricted-syntax -- cdpPort is not in the public LaunchOptions type, fine if regresses.
-    const cdpPort = (this._browserDescriptor.browser.launchOptions as any).cdpPort;
-    if (cdpPort)
-      return new URL(`http://localhost:${cdpPort}/devtools/`);
-
-    const browserRevision = await getBrowserRevision(page);
-    if (!browserRevision)
-      return null;
-    return new URL(`https://chrome-devtools-frontend.appspot.com/serve_rev/${browserRevision}/`);
-  }
-
-  private async _pageInspectorUrl(page: api.Page, devtoolsUrl: URL): Promise<string | undefined> {
-    const inspector = new URL('./devtools_app.html', devtoolsUrl);
-    const cdp = new URL(this._cdpUrl);
-    cdp.searchParams.set('cdpPageId', this._pageId(page));
-    inspector.searchParams.set('ws', `${cdp.host}${cdp.pathname}${cdp.search}`);
-    const url = inspector.toString();
-    return url;
-  }
-
-  private _sendTabList() {
-    this._tabList().then(tabs => this._emit('tabs', { tabs }));
-  }
-
-  private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {
-    const data = frame.toString('base64');
-    this._lastFrameData = data;
-    this._lastViewportSize = { width: viewportWidth, height: viewportHeight };
-    this._emit('frame', { data, viewportWidth, viewportHeight });
-  }
-}
-
-async function getBrowserRevision(page: api.Page): Promise<string | null> {
-  try {
-    const session = await page.context().newCDPSession(page);
-    const version = await session.send('Browser.getVersion');
-    await session.detach();
-    return version.revision;
-  } catch (error) {
-    return null;
-  }
-}
-
-export class CDPConnection implements Transport {
-  sendMessage?: (message: string) => void;
-  close?: () => void;
-
-  private _page: api.Page;
-  private _rawSession: api.CDPSession | null = null;
-  private _rawSessionListeners: { dispose: () => Promise<void> }[] = [];
-  private _initializePromise: Promise<void> | undefined;
-
-  constructor(page: api.Page) {
-    this._page = page;
-  }
-
-  onconnect() {
-    this._initializePromise = this._initializeRawSession();
-  }
-
-  async onmessage(message: string) {
-    const { id, method, params } = JSON.parse(message);
-    await this._initializePromise;
-    if (!this._rawSession)
-      throw new Error('CDP session is not initialized');
+    }
+    const attached = new AttachedPage(this, slot, page);
+    this._attachedPage = attached;
     try {
-      const result = await this._rawSession.send(method as Parameters<api.CDPSession['send']>[0], params);
-      this.sendMessage?.(JSON.stringify({ id, result }));
+      await attached.init();
     } catch (e) {
-      this.sendMessage?.(JSON.stringify({ id, error: String(e) }));
+      if (this._attachedPage === attached)
+        this._attachedPage = undefined;
+      attached.dispose();
+      throw e;
+    }
+    if (this._annotateWaitingForAttach && this._attachedPage === attached) {
+      this._annotateWaitingForAttach = false;
+      this.sendEvent?.('annotate', {});
     }
   }
 
-  onclose() {
-    this._rawSessionListeners.forEach(listener => listener.dispose());
-    this._rawSession?.detach().catch(() => {});
-    this._rawSession = null;
-    this._initializePromise = undefined;
+  _handleAttachedPageClose(context: api.BrowserContext) {
+    this._attachedPage?.dispose();
+    this._attachedPage = undefined;
+    const next = context.pages()[0];
+    if (next)
+      void this._switchAttachedTo(next);
+    this._pushTabs();
   }
 
-  private async _initializeRawSession() {
-    const session = await this._page.context().newCDPSession(this._page);
-    this._rawSession = session;
-    this._rawSessionListeners = [
-      eventsHelper.addEventListener(session, 'event', ({ method, params }) => {
-        this.sendMessage?.(JSON.stringify({ method, params }));
-      }),
-      eventsHelper.addEventListener(session, 'close', () => {
-        this.close?.();
-      }),
-    ];
+  private _pushSessions = () => {
+    if (this._pushSessionsScheduled)
+      return;
+    this._pushSessionsScheduled = true;
+    queueMicrotask(async () => {
+      this._pushSessionsScheduled = false;
+      try {
+        const byWs = await serverRegistry.list();
+        const sessions: BrowserDescriptor[] = [];
+        for (const list of byWs.values()) {
+          for (const status of list) {
+            if (status.title.startsWith('--playwright-internal'))
+              continue;
+            sessions.push(status);
+          }
+        }
+        await this._reconcile(sessions);
+        await this._tryRevealPending();
+        this.emitSessions(sessions);
+        this._pushTabs();
+      } catch {
+        // best-effort
+      }
+    });
+  };
+
+  private async _reconcile(sessions: BrowserDescriptor[]) {
+    const connectable = new Map<string, BrowserDescriptor>();
+    for (const status of sessions)
+      connectable.set(status.browser.guid, status);
+
+    for (const [guid, slot] of this._browsers) {
+      if (connectable.has(guid))
+        continue;
+      if (this._attachedPage && this._attachedPage.page.context().browser() === slot.browser) {
+        this._attachedPage.dispose();
+        this._attachedPage = undefined;
+      }
+      slot.dispose();
+      this._browsers.delete(guid);
+    }
+
+    for (const [guid, status] of connectable) {
+      if (this._browsers.has(guid))
+        continue;
+      const slot = await BrowserTracker.create(status, {
+        onTabsChanged: () => this._pushTabs(),
+        onContextClosed: context => {
+          if (this._attachedPage?.page.context() === context) {
+            this._attachedPage.dispose();
+            this._attachedPage = undefined;
+          }
+        },
+      });
+      if (!slot)
+        continue;
+      if (this._browsers.has(guid)) {
+        slot.dispose();
+        continue;
+      }
+      this._browsers.set(guid, slot);
+    }
   }
+
+  private _findContext(params: { browser: string; context: string }): api.BrowserContext | undefined {
+    const slot = this._browsers.get(params.browser);
+    if (!slot)
+      return undefined;
+    return slot.contexts().find(c => contextId(c) === params.context);
+  }
+
+  private _findPage(params: { browser: string; context: string; page: string }): api.Page | undefined {
+    const context = this._findContext(params);
+    return context?.pages().find(p => pageId(p) === params.page);
+  }
+}
+
+class AttachedPage {
+  private _owner: DashboardConnection;
+  private _slot: BrowserTracker;
+  private _page: api.Page;
+  private _listeners: Disposable[] = [];
+  private _screencastRunning = false;
+  private _recordingPath: string | null = null;
+  private _disposed = false;
+
+  constructor(owner: DashboardConnection, slot: BrowserTracker, page: api.Page) {
+    this._owner = owner;
+    this._slot = slot;
+    this._page = page;
+  }
+
+  get page(): api.Page { return this._page; }
+  private get _descriptor(): BrowserDescriptor { return this._slot.descriptor; }
+
+  async init() {
+    this._listeners.push(
+        eventsHelper.addEventListener(this._page, 'close', () => {
+          this._owner._handleAttachedPageClose(this._page.context());
+        }),
+        eventsHelper.addEventListener(this._page, 'framenavigated', (frame: api.Frame) => {
+          if (frame === this._page.mainFrame())
+            this._owner._pushTabs();
+        }),
+    );
+    this._owner._pushTabs();
+    if (this._owner.visible()) {
+      this._screencastRunning = true;
+      await this._startScreencast(this._page);
+    }
+  }
+
+  dispose() {
+    this._disposed = true;
+    this._listeners.forEach(d => d.dispose());
+    this._listeners = [];
+    if (this._screencastRunning)
+      this._page.screencast.stop().catch(() => {});
+    this._screencastRunning = false;
+    this._recordingPath = null;
+  }
+
+  async setScreencastActive(active: boolean) {
+    if (active && !this._screencastRunning) {
+      this._screencastRunning = true;
+      await this._startScreencast(this._page);
+    } else if (!active && this._screencastRunning) {
+      this._screencastRunning = false;
+      await this._page.screencast.stop().catch(() => {});
+    }
+  }
+
+  async navigate(params: { url: string }) {
+    if (!params.url)
+      return;
+    await this._page.goto(params.url);
+  }
+
+  async back() {
+    await this._page.goBack();
+  }
+
+  async forward() {
+    await this._page.goForward();
+  }
+
+  async reload() {
+    await this._page.reload();
+  }
+
+  async mousemove(params: { x: number; y: number }) {
+    await this._page.mouse.move(params.x, params.y);
+  }
+
+  async mousedown(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
+    await this._page.mouse.move(params.x, params.y);
+    await this._page.mouse.down({ button: params.button || 'left' });
+  }
+
+  async mouseup(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
+    await this._page.mouse.move(params.x, params.y);
+    await this._page.mouse.up({ button: params.button || 'left' });
+  }
+
+  async wheel(params: { deltaX: number; deltaY: number }) {
+    await this._page.mouse.wheel(params.deltaX, params.deltaY);
+  }
+
+  async keydown(params: { key: string }) {
+    await this._page.keyboard.down(params.key);
+  }
+
+  async keyup(params: { key: string }) {
+    await this._page.keyboard.up(params.key);
+  }
+
+  async startRecording() {
+    const artifactsDir = this._descriptor.browser.launchOptions.artifactsDir ?? this._owner._recordingDir;
+    this._recordingPath = path.join(artifactsDir, `recording-${Date.now()}.webm`);
+    if (this._screencastRunning)
+      await this._restartScreencast(this._page);
+  }
+
+  async stopRecording(): Promise<{ streamId: string }> {
+    const p = this._recordingPath;
+    if (!p)
+      throw new Error('No recording in progress');
+    this._recordingPath = null;
+    if (this._screencastRunning)
+      await this._restartScreencast(this._page);
+    const handle = await fs.promises.open(p, 'r');
+    const streamId = crypto.randomUUID();
+    this._owner._streams.set(streamId, { handle, path: p });
+    return { streamId };
+  }
+
+  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number }> {
+    const buffer = await this._page.screenshot({ type: 'png' });
+    const vp = this._page.viewportSize();
+    return {
+      data: buffer.toString('base64'),
+      viewportWidth: vp?.width ?? 0,
+      viewportHeight: vp?.height ?? 0,
+    };
+  }
+
+  private async _startScreencast(page: api.Page) {
+    await page.screencast.start({
+      onFrame: ({ data }: { data: Buffer }) => {
+        if (this._disposed)
+          return;
+        const vp = page.viewportSize();
+        this._owner.emitFrame(data.toString('base64'), vp?.width ?? 0, vp?.height ?? 0);
+      },
+      size: { width: 1280, height: 800 },
+      ...(this._recordingPath ? { path: this._recordingPath } : {}),
+    });
+  }
+
+  private async _restartScreencast(page: api.Page) {
+    await page.screencast.stop().catch(() => {});
+    await this._startScreencast(page);
+  }
+}
+
+function browserId(browser: api.Browser): string {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+  return (browser as any)._guid;
+}
+
+function pageId(p: api.Page): string {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+  return (p as any)._guid;
+}
+
+function contextId(c: api.BrowserContext): string {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is very conservative.
+  return (c as any)._guid;
+}
+
+async function faviconUrl(page: api.Page): Promise<string | undefined> {
+  const url = page.evaluate(async () => {
+    const response = await fetch(document.querySelector<HTMLLinkElement>('link[rel~="icon"]')?.href ?? '/favicon.ico');
+    if (!response.ok)
+      return undefined;
+    const blob = await response.blob();
+    if (!blob.type.startsWith('image/'))
+      return undefined;
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }).catch(() => undefined);
+  const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 3000));
+  return await Promise.race([url, timeout]);
 }

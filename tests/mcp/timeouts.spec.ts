@@ -36,7 +36,7 @@ test('action timeout (default)', async ({ server, startClient }) => {
     name: 'browser_type',
     arguments: {
       element: 'textbox',
-      ref: 'e2',
+      target: 'e2',
       text: 'Hi!',
       submit: true,
     },
@@ -66,7 +66,7 @@ test('action timeout (custom)', async ({ startClient, server }) => {
     name: 'browser_type',
     arguments: {
       element: 'textbox',
-      ref: 'e2',
+      target: 'e2',
       text: 'Hi!',
       submit: true,
     },

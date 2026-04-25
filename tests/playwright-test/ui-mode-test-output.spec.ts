@@ -148,12 +148,12 @@ test('should collapse repeated console messages for test', async ({ runUITest })
   await page.getByRole('tab', { name: 'Console' }).click();
   await expect(page.getByRole('tabpanel', { name: 'Console' })).toMatchAriaSnapshot(`
     - tabpanel "Console":
-      - list:
-        - listitem: /page message/
-        - listitem: /10 page message/
-        - listitem: /10 node message/
-        - listitem: /10 page message/
-        - listitem: /10 page message/
+      - listbox:
+        - option /page message/
+        - option /10 page message/
+        - option /10 node message/
+        - option /10 page message/
+        - option /10 page message/
   `);
 });
 
@@ -189,14 +189,14 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
   ]);
 
   await expect(page.locator('.console-tab')).toMatchAriaSnapshot(`
-    - list:
-      - listitem: "/<anonymous>:1 Object {a: 1}/"
-      - listitem: "/<anonymous>:4 Date/"
-      - listitem: "/<anonymous>:5 Regex \/a\//"
-      - listitem: "/<anonymous>:6 Number 0 one 2/"
-      - listitem: "/<anonymous>:7 Download the React DevTools for a better development experience: https:\/\/fb\.me\/react-devtools/"
-      - listitem: "/<anonymous>:8 Array of values/"
-      - listitem: "/Failed to load resource: net::ERR_CONNECTION_REFUSED/"
+    - listbox:
+      - option /<anonymous>:1 Object/
+      - option /<anonymous>:4 Date/
+      - option /<anonymous>:5 Regex/
+      - option /<anonymous>:6 Number 0 one 2/
+      - option /<anonymous>:7 Download the React DevTools/
+      - option /<anonymous>:8 Array of values/
+      - option /Failed to load resource/
   `);
 
   const label = page.getByText('React DevTools');

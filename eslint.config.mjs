@@ -109,6 +109,7 @@ export const baseRules = {
   "new-parens": 2,
   "arrow-parens": [2, "as-needed"],
   "prefer-const": 2,
+  "one-var": [2, "never"],
   "quote-props": [2, "consistent"],
   "nonblock-statement-body-position": [2, "below"],
 
@@ -286,6 +287,8 @@ const reactFiles = [
   `packages/recorder/src/**/*.tsx`,
   `packages/trace-viewer/src/**/*.ts`,
   `packages/trace-viewer/src/**/*.tsx`,
+  `packages/dashboard/src/**/*.ts`,
+  `packages/dashboard/src/**/*.tsx`,
   `packages/web/src/**/*.ts`,
   `packages/web/src/**/*.tsx`,
 ];

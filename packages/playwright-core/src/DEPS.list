@@ -54,3 +54,4 @@ node_modules/yaml
 [serverRegistry.ts]
 "strict"
 package.ts
+node_modules/chokidar

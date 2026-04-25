@@ -2,6 +2,7 @@
 ../../..
 ../../
 ../utils/mcp/
+../utils/extension.ts
 ../backend/
 @utils/**
 @isomorphic/**

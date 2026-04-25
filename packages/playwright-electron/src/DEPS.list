@@ -1,0 +1,5 @@
+[*]
+@isomorphic/**
+@utils/**
+node_modules/playwright
+node_modules/debug

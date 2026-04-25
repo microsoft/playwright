@@ -30,8 +30,6 @@ export type InitializerTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceInitializer :
     T extends AndroidSocketChannel ? AndroidSocketInitializer :
     T extends AndroidChannel ? AndroidInitializer :
-    T extends ElectronApplicationChannel ? ElectronApplicationInitializer :
-    T extends ElectronChannel ? ElectronInitializer :
     T extends CDPSessionChannel ? CDPSessionInitializer :
     T extends WritableStreamChannel ? WritableStreamInitializer :
     T extends StreamChannel ? StreamInitializer :
@@ -69,8 +67,6 @@ export type EventsTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceEvents :
     T extends AndroidSocketChannel ? AndroidSocketEvents :
     T extends AndroidChannel ? AndroidEvents :
-    T extends ElectronApplicationChannel ? ElectronApplicationEvents :
-    T extends ElectronChannel ? ElectronEvents :
     T extends CDPSessionChannel ? CDPSessionEvents :
     T extends WritableStreamChannel ? WritableStreamEvents :
     T extends StreamChannel ? StreamEvents :
@@ -108,8 +104,6 @@ export type EventTargetTraits<T> =
     T extends AndroidDeviceChannel ? AndroidDeviceEventTarget :
     T extends AndroidSocketChannel ? AndroidSocketEventTarget :
     T extends AndroidChannel ? AndroidEventTarget :
-    T extends ElectronApplicationChannel ? ElectronApplicationEventTarget :
-    T extends ElectronChannel ? ElectronEventTarget :
     T extends CDPSessionChannel ? CDPSessionEventTarget :
     T extends WritableStreamChannel ? WritableStreamEventTarget :
     T extends StreamChannel ? StreamEventTarget :
@@ -619,7 +613,6 @@ export type PlaywrightInitializer = {
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
   android: AndroidChannel,
-  electron: ElectronChannel,
   utils?: LocalUtilsChannel,
   preLaunchedBrowser?: BrowserChannel,
   preConnectedAndroidDevice?: AndroidDeviceChannel,
@@ -1133,11 +1126,13 @@ export type BrowserTypeConnectOverCDPParams = {
   slowMo?: number,
   timeout: number,
   isLocal?: boolean,
+  noDefaults?: boolean,
 };
 export type BrowserTypeConnectOverCDPOptions = {
   headers?: NameValue[],
   slowMo?: number,
   isLocal?: boolean,
+  noDefaults?: boolean,
 };
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
@@ -2165,6 +2160,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
+  hideHighlight(params?: PageHideHighlightParams, progress?: Progress): Promise<PageHideHighlightResult>;
   screencastShowOverlay(params: PageScreencastShowOverlayParams, progress?: Progress): Promise<PageScreencastShowOverlayResult>;
   screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, progress?: Progress): Promise<PageScreencastRemoveOverlayResult>;
   screencastChapter(params: PageScreencastChapterParams, progress?: Progress): Promise<PageScreencastChapterResult>;
@@ -2687,6 +2683,9 @@ export type PagePickLocatorResult = {
 export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
+export type PageHideHighlightParams = {};
+export type PageHideHighlightOptions = {};
+export type PageHideHighlightResult = void;
 export type PageScreencastShowOverlayParams = {
   html: string,
   duration?: number,
@@ -2809,12 +2808,14 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, progress?: Progress): Promise<FrameEvalOnSelectorAllResult>;
   addScriptTag(params: FrameAddScriptTagParams, progress?: Progress): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, progress?: Progress): Promise<FrameAddStyleTagResult>;
+  ariaRef(params: FrameAriaRefParams, progress?: Progress): Promise<FrameAriaRefResult>;
   ariaSnapshot(params: FrameAriaSnapshotParams, progress?: Progress): Promise<FrameAriaSnapshotResult>;
   blur(params: FrameBlurParams, progress?: Progress): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, progress?: Progress): Promise<FrameCheckResult>;
   click(params: FrameClickParams, progress?: Progress): Promise<FrameClickResult>;
   content(params?: FrameContentParams, progress?: Progress): Promise<FrameContentResult>;
   dragAndDrop(params: FrameDragAndDropParams, progress?: Progress): Promise<FrameDragAndDropResult>;
+  drop(params: FrameDropParams, progress?: Progress): Promise<FrameDropResult>;
   dblclick(params: FrameDblclickParams, progress?: Progress): Promise<FrameDblclickResult>;
   dispatchEvent(params: FrameDispatchEventParams, progress?: Progress): Promise<FrameDispatchEventResult>;
   evaluateExpression(params: FrameEvaluateExpressionParams, progress?: Progress): Promise<FrameEvaluateExpressionResult>;
@@ -2824,6 +2825,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   frameElement(params?: FrameFrameElementParams, progress?: Progress): Promise<FrameFrameElementResult>;
   resolveSelector(params: FrameResolveSelectorParams, progress?: Progress): Promise<FrameResolveSelectorResult>;
   highlight(params: FrameHighlightParams, progress?: Progress): Promise<FrameHighlightResult>;
+  hideHighlight(params: FrameHideHighlightParams, progress?: Progress): Promise<FrameHideHighlightResult>;
   getAttribute(params: FrameGetAttributeParams, progress?: Progress): Promise<FrameGetAttributeResult>;
   goto(params: FrameGotoParams, progress?: Progress): Promise<FrameGotoResult>;
   hover(params: FrameHoverParams, progress?: Progress): Promise<FrameHoverResult>;
@@ -2915,11 +2917,22 @@ export type FrameAddStyleTagOptions = {
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
 };
+export type FrameAriaRefParams = {
+  selector: string,
+  timeout: number,
+};
+export type FrameAriaRefOptions = {
+
+};
+export type FrameAriaRefResult = {
+  ref?: string,
+};
 export type FrameAriaSnapshotParams = {
   mode?: 'ai' | 'default',
   track?: string,
   selector?: string,
   depth?: number,
+  boxes?: boolean,
   timeout: number,
 };
 export type FrameAriaSnapshotOptions = {
@@ -2927,6 +2940,7 @@ export type FrameAriaSnapshotOptions = {
   track?: string,
   selector?: string,
   depth?: number,
+  boxes?: boolean,
 };
 export type FrameAriaSnapshotResult = {
   snapshot: string,
@@ -3007,6 +3021,39 @@ export type FrameDragAndDropOptions = {
   steps?: number,
 };
 export type FrameDragAndDropResult = void;
+export type FrameDropParams = {
+  selector: string,
+  strict?: boolean,
+  position?: Point,
+  payloads?: {
+    name: string,
+    mimeType?: string,
+    buffer: Binary,
+  }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  data?: {
+    mimeType: string,
+    value: string,
+  }[],
+  timeout: number,
+};
+export type FrameDropOptions = {
+  strict?: boolean,
+  position?: Point,
+  payloads?: {
+    name: string,
+    mimeType?: string,
+    buffer: Binary,
+  }[],
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  data?: {
+    mimeType: string,
+    value: string,
+  }[],
+};
+export type FrameDropResult = void;
 export type FrameDblclickParams = {
   selector: string,
   strict?: boolean,
@@ -3100,11 +3147,19 @@ export type FrameResolveSelectorResult = {
 };
 export type FrameHighlightParams = {
   selector: string,
+  style?: string,
 };
 export type FrameHighlightOptions = {
-
+  style?: string,
 };
 export type FrameHighlightResult = void;
+export type FrameHideHighlightParams = {
+  selector: string,
+};
+export type FrameHideHighlightOptions = {
+
+};
+export type FrameHideHighlightResult = void;
 export type FrameGetAttributeParams = {
   selector: string,
   strict?: boolean,
@@ -3449,6 +3504,7 @@ export type FrameExpectParams = {
   selector?: string,
   expression: string,
   expressionArg?: any,
+  pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3459,6 +3515,7 @@ export type FrameExpectParams = {
 export type FrameExpectOptions = {
   selector?: string,
   expressionArg?: any,
+  pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3466,7 +3523,10 @@ export type FrameExpectOptions = {
 };
 export type FrameExpectResult = {
   matches: boolean,
-  received?: SerializedValue,
+  received?: {
+    value?: SerializedValue,
+    ariaSnapshot?: string,
+  },
   timedOut?: boolean,
   errorMessage?: string,
   log?: string[],
@@ -4147,6 +4207,7 @@ export interface RouteEvents {
 // ----------- WebSocketRoute -----------
 export type WebSocketRouteInitializer = {
   url: string,
+  protocols: string[],
 };
 export interface WebSocketRouteEventTarget {
   on(event: 'messageFromPage', callback: (params: WebSocketRouteMessageFromPageEvent) => void): this;
@@ -4688,178 +4749,6 @@ export type CDPSessionDetachResult = void;
 export interface CDPSessionEvents {
   'event': CDPSessionEventEvent;
   'close': CDPSessionCloseEvent;
-}
-
-// ----------- Electron -----------
-export type ElectronInitializer = {};
-export interface ElectronEventTarget {
-}
-export interface ElectronChannel extends ElectronEventTarget, Channel {
-  _type_Electron: boolean;
-  launch(params: ElectronLaunchParams, progress?: Progress): Promise<ElectronLaunchResult>;
-}
-export type ElectronLaunchParams = {
-  executablePath?: string,
-  args?: string[],
-  chromiumSandbox?: boolean,
-  cwd?: string,
-  env?: NameValue[],
-  timeout: number,
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  extraHTTPHeaders?: NameValue[],
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
-  ignoreHTTPSErrors?: boolean,
-  locale?: string,
-  offline?: boolean,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  timezoneId?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-};
-export type ElectronLaunchOptions = {
-  executablePath?: string,
-  args?: string[],
-  chromiumSandbox?: boolean,
-  cwd?: string,
-  env?: NameValue[],
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  bypassCSP?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  extraHTTPHeaders?: NameValue[],
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-  },
-  ignoreHTTPSErrors?: boolean,
-  locale?: string,
-  offline?: boolean,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  timezoneId?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-};
-export type ElectronLaunchResult = {
-  electronApplication: ElectronApplicationChannel,
-};
-
-export interface ElectronEvents {
-}
-
-// ----------- ElectronApplication -----------
-export type ElectronApplicationInitializer = {
-  context: BrowserContextChannel,
-};
-export interface ElectronApplicationEventTarget {
-  on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
-  on(event: 'console', callback: (params: ElectronApplicationConsoleEvent) => void): this;
-}
-export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, EventTargetChannel {
-  _type_ElectronApplication: boolean;
-  browserWindow(params: ElectronApplicationBrowserWindowParams, progress?: Progress): Promise<ElectronApplicationBrowserWindowResult>;
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, progress?: Progress): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, progress?: Progress): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, progress?: Progress): Promise<ElectronApplicationUpdateSubscriptionResult>;
-}
-export type ElectronApplicationCloseEvent = {};
-export type ElectronApplicationConsoleEvent = {
-  type: string,
-  text: string,
-  args: JSHandleChannel[],
-  location: {
-    url: string,
-    lineNumber: number,
-    columnNumber: number,
-  },
-  timestamp: number,
-};
-export type ElectronApplicationBrowserWindowParams = {
-  page: PageChannel,
-};
-export type ElectronApplicationBrowserWindowOptions = {
-
-};
-export type ElectronApplicationBrowserWindowResult = {
-  handle: JSHandleChannel,
-};
-export type ElectronApplicationEvaluateExpressionParams = {
-  expression: string,
-  isFunction?: boolean,
-  arg: SerializedArgument,
-};
-export type ElectronApplicationEvaluateExpressionOptions = {
-  isFunction?: boolean,
-};
-export type ElectronApplicationEvaluateExpressionResult = {
-  value: SerializedValue,
-};
-export type ElectronApplicationEvaluateExpressionHandleParams = {
-  expression: string,
-  isFunction?: boolean,
-  arg: SerializedArgument,
-};
-export type ElectronApplicationEvaluateExpressionHandleOptions = {
-  isFunction?: boolean,
-};
-export type ElectronApplicationEvaluateExpressionHandleResult = {
-  handle: JSHandleChannel,
-};
-export type ElectronApplicationUpdateSubscriptionParams = {
-  event: 'console',
-  enabled: boolean,
-};
-export type ElectronApplicationUpdateSubscriptionOptions = {
-
-};
-export type ElectronApplicationUpdateSubscriptionResult = void;
-
-export interface ElectronApplicationEvents {
-  'close': ElectronApplicationCloseEvent;
-  'console': ElectronApplicationConsoleEvent;
 }
 
 // ----------- Android -----------

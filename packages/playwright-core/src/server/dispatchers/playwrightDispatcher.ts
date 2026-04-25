@@ -22,7 +22,6 @@ import { AndroidDeviceDispatcher } from './androidDispatcher';
 import { BrowserDispatcher } from './browserDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher } from './dispatcher';
-import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SdkObject } from '../instrumentation';
@@ -59,7 +58,6 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       firefox,
       webkit,
       android,
-      electron: new ElectronDispatcher(scope, playwright.electron, denyLaunch),
       utils: playwright.options.isServer ? undefined : new LocalUtilsDispatcher(scope, playwright),
       socksSupport: options.socksProxy ? new SocksSupportDispatcher(scope, playwright, options.socksProxy) : undefined,
     };

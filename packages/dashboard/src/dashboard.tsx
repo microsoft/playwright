@@ -16,144 +16,178 @@
 
 import React from 'react';
 import './dashboard.css';
-import { navigate } from './index';
-import { DashboardClient } from './dashboardClient';
-import { asLocator } from '@isomorphic/locatorGenerators';
-import { SplitView } from '@web/components/splitView';
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon, PickLocatorIcon, InspectorPanelIcon } from './icons';
-import { SettingsButton } from './settingsView';
+import { ChevronLeftIcon, ChevronRightIcon, LockIcon, LockOpenIcon, ReloadIcon, ScreenshotRegionIcon } from './icons';
+import { AnnotateModal } from './annotations';
+import { clientToViewport, getImageLayout } from './imageLayout';
+import { Recording } from './recording';
 
-import type { DashboardClientChannel } from './dashboardClient';
-import type { Tab, DashboardChannelEvents } from './dashboardChannel';
+import type { Annotation } from './annotations';
+import { ToolbarButton } from '@web/components/toolbarButton';
+import { useMeasureForRef } from '@web/uiUtils';
 
-function tabFavicon(url: string): string {
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\./, '');
-    return host ? host[0].toUpperCase() : '';
-  } catch {
-    return '';
-  }
-}
+import type { DashboardModel } from './dashboardModel';
 
 const BUTTONS = ['left', 'middle', 'right'] as const;
 
-export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
-  const [interactive, setInteractive] = React.useState(false);
-  const [tabs, setTabs] = React.useState<Tab[] | null>(null);
-  const [url, setUrl] = React.useState('');
-  const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
-  const [showInspector, setShowInspector] = React.useState(false);
-  const [pickingTabId, setPickingTabId] = React.useState<string | null>(null);
-  const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
+async function pickSaveWritable(suggestedName: string, description: string, mime: string, extension: string): Promise<FileSystemWritableFileStream | null> {
+  try {
+    const handle = await (window as any).showSaveFilePicker({
+      suggestedName,
+      types: [{ description, accept: { [mime]: [extension] } }],
+    });
+    return await handle.createWritable();
+  } catch {
+    return null;
+  }
+}
 
-  const [channel, setChannel] = React.useState<DashboardClientChannel | undefined>();
+function smartUrl(input: string): string {
+  const value = input.trim();
+  if (!value)
+    return value;
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value) || value.startsWith('about:') || value.startsWith('data:'))
+    return value;
+  const host = value.split(/[/?#]/, 1)[0];
+  const hasDot = host.includes('.');
+  const isLocalhost = /^localhost(:\d+)?$/i.test(host);
+  const hasPort = /:\d+$/.test(host);
+  const isIp = /^\d{1,3}(\.\d{1,3}){3}(:\d+)?$/.test(host);
+  if (isLocalhost || isIp || (hasPort && !hasDot))
+    return 'http://' + value;
+  if (hasDot || hasPort)
+    return 'https://' + value;
+  return 'https://' + host + '.com' + value.slice(host.length);
+}
+
+type DashboardProps = {
+  model: DashboardModel;
+};
+
+export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
+  const [, setRevision] = React.useState(0);
+  React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), [model]);
+
+  const { tabs, mode, recording, liveFrame, annotateFrame, annotateInitiator, pendingAnnotate } = model.state;
+  const interactive = mode === 'interactive';
+
+  const [flashTick, setFlashTick] = React.useState(0);
+
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
-  const tabbarRef = React.useRef<HTMLDivElement>(null);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const viewportMainRef = React.useRef<HTMLDivElement>(null);
+  const browserChromeRef = React.useRef<HTMLDivElement>(null);
+  const interactiveBtnRef = React.useRef<HTMLButtonElement>(null);
   const moveThrottleRef = React.useRef(0);
 
+  const aspect = liveFrame && liveFrame.viewportWidth && liveFrame.viewportHeight
+    ? liveFrame.viewportWidth / liveFrame.viewportHeight
+    : null;
+
+  const [viewportRect] = useMeasureForRef(viewportMainRef);
+
+  // Active recording hides the browser chrome so the viewport matches what's
+  // being captured.
+  const showBrowserChrome = recording?.phase !== 'recording';
+
+  const windowStyle = React.useMemo<React.CSSProperties | undefined>(() => {
+    const OUTER_MARGIN = 24;
+    const chromeHeight = showBrowserChrome ? (browserChromeRef.current?.offsetHeight ?? 40) : 0;
+    const availW = viewportRect.width - OUTER_MARGIN;
+    const availH = viewportRect.height - OUTER_MARGIN;
+    if (availW <= 0 || availH <= 0)
+      return undefined;
+    if (aspect === null)
+      return { width: availW, height: availH };
+    const screenH = availH - chromeHeight;
+    let w = availW;
+    let h = w / aspect;
+    if (h > screenH) {
+      h = screenH;
+      w = h * aspect;
+    }
+    return { width: w, height: h + chromeHeight };
+  }, [viewportRect, aspect, showBrowserChrome]);
+
   React.useEffect(() => {
-    if (!wsUrl)
+    if (flashTick === 0)
       return;
-    const channel = DashboardClient.create(wsUrl);
-
-    channel.onopen = () => {
-      setChannel(channel);
-      setInteractive(false);
-      setPickingTabId(null);
-    };
-
-    channel.on('tabs', params => {
-      setTabs(params.tabs);
-      const selected = params.tabs.find(t => t.selected);
-      if (selected)
-        setUrl(selected.url);
-    });
-
-    let resized = false;
-
-    channel.on('frame', params => {
-      setFrame(params);
-      const tabbar = tabbarRef.current;
-      const toolbar = toolbarRef.current;
-      if (!resized && tabbar && toolbar && params.viewportWidth && params.viewportHeight) {
-        resized = true;
-        const chromeHeight = tabbar.offsetHeight + toolbar.offsetHeight;
-        const extraW = window.outerWidth - window.innerWidth;
-        const extraH = window.outerHeight - window.innerHeight;
-        const targetW = Math.min(params.viewportWidth + extraW, screen.availWidth);
-        const targetH = Math.min(params.viewportHeight + chromeHeight + extraH, screen.availHeight);
-        window.resizeTo(targetW, targetH);
-      }
-    });
-
-    channel.on('elementPicked', params => {
-      const locator = asLocator('javascript', params.selector);
-      navigator.clipboard?.writeText(locator).catch(() => {});
-      setPickingTabId(null);
-      setLocatorToast(old => {
-        clearTimeout(old?.timer);
-        return { text: locator, timer: setTimeout(() => setLocatorToast(undefined), 3000) };
-      });
-    });
-
-    channel.onclose = () => {
-      setChannel(undefined);
-      setInteractive(false);
-      setPickingTabId(null);
-      setShowInspector(false);
-    };
-
+    const btn = interactiveBtnRef.current;
+    if (!btn)
+      return;
+    btn.classList.remove('flash');
+    // Force a reflow so that re-adding the class restarts the animation.
+    void btn.offsetWidth;
+    btn.classList.add('flash');
+    const timer = setTimeout(() => btn.classList.remove('flash'), 2000);
     return () => {
-      channel.close();
+      clearTimeout(timer);
+      btn.classList.remove('flash');
     };
-  }, [wsUrl]);
+  }, [flashTick]);
+
+  React.useEffect(() => {
+    if (interactive)
+      interactiveBtnRef.current?.classList.remove('flash');
+  }, [interactive]);
+
+  const onSubmitAnnotations = React.useCallback(async (blob: Blob, annotations: Annotation[]) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+    const data = dataUrl.slice(dataUrl.indexOf(',') + 1);
+    await model.submitAnnotation(data, annotations);
+  }, [model]);
+
+  function flashInteractiveHint() {
+    setFlashTick(tick => tick + 1);
+  }
+
+  const onSaveRecording = React.useCallback(async (blob: Blob) => {
+    const writable = await pickSaveWritable(`playwright-recording-${Date.now()}.webm`, 'WebM Video', 'video/webm', '.webm');
+    if (!writable)
+      return;
+    await writable.write(blob);
+    await writable.close();
+    model.discardRecording();
+  }, [model]);
+
+  const onCloseAnnotate = React.useCallback(() => {
+    if (annotateInitiator === 'cli')
+      model.completeAnnotation();
+    else
+      model.cancelAnnotate();
+  }, [model, annotateInitiator]);
+
+  const selectedTab = tabs?.find(t => t.selected);
+  const ready = !!selectedTab;
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
-    const vw = frame?.viewportWidth ?? 0;
-    const vh = frame?.viewportHeight ?? 0;
+    const vw = liveFrame?.viewportWidth ?? 0;
+    const vh = liveFrame?.viewportHeight ?? 0;
     if (!vw || !vh)
       return { x: 0, y: 0 };
-    const display = displayRef.current;
-    if (!display)
+    const layout = getImageLayout(displayRef.current);
+    if (!layout)
       return { x: 0, y: 0 };
-    const rect = display.getBoundingClientRect();
-    const imgAspect = display.naturalWidth / display.naturalHeight;
-    const elemAspect = rect.width / rect.height;
-    let renderW: number, renderH: number, offsetX: number, offsetY: number;
-    if (imgAspect > elemAspect) {
-      renderW = rect.width;
-      renderH = rect.width / imgAspect;
-      offsetX = 0;
-      offsetY = (rect.height - renderH) / 2;
-    } else {
-      renderH = rect.height;
-      renderW = rect.height * imgAspect;
-      offsetX = (rect.width - renderW) / 2;
-      offsetY = 0;
-    }
-    const fracX = (e.clientX - rect.left - offsetX) / renderW;
-    const fracY = (e.clientY - rect.top - offsetY) / renderH;
-    return {
-      x: Math.round(fracX * vw),
-      y: Math.round(fracY * vh),
-    };
+    return clientToViewport(layout, vw, vh, e.clientX, e.clientY);
   }
 
   function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
     const { x, y } = imgCoords(e);
-    channel?.[method]({ x, y, button: BUTTONS[e.button] || 'left' });
+    model[method](x, y, BUTTONS[e.button] || 'left');
   }
 
   function onScreenMouseDown(e: React.MouseEvent) {
     e.preventDefault();
     screenRef.current?.focus();
-    if (!channel)
+    if (!ready)
       return;
     if (!interactive) {
-      setInteractive(true);
+      flashInteractiveHint();
       return;
     }
     sendMouseEvent('mousedown', e);
@@ -174,226 +208,193 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       return;
     moveThrottleRef.current = now;
     const { x, y } = imgCoords(e);
-    channel?.mousemove({ x, y });
+    model.mousemove(x, y);
   }
 
   function onScreenWheel(e: React.WheelEvent) {
     if (!interactive)
       return;
     e.preventDefault();
-    channel?.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
+    model.wheel(e.deltaX, e.deltaY);
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
-    if (pickingTabId !== null && e.key === 'Escape') {
-      e.preventDefault();
-      channel?.cancelPickLocator();
-      setPickingTabId(null);
-      return;
-    }
     if (!interactive)
       return;
     e.preventDefault();
-    channel?.keydown({ key: e.key });
+    model.keydown(e.key);
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
     if (!interactive)
       return;
     e.preventDefault();
-    channel?.keyup({ key: e.key });
+    model.keyup(e.key);
   }
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
-      let value = (e.target as HTMLInputElement).value.trim();
-      if (!/^https?:\/\//i.test(value))
-        value = 'https://' + value;
-      setUrl(value);
-      channel?.navigate({ url: value });
+      const value = smartUrl((e.target as HTMLInputElement).value);
+      model.navigate(value);
       e.currentTarget.blur();
     }
   }
 
-  const selectedTab = tabs?.find(t => t.selected);
-  const picking = selectedTab?.pageId === pickingTabId;
+  const overlayText = selectedTab ? undefined : 'Select a session';
+  const isRecording = recording?.phase === 'recording';
+  const showAnnotateModal = !!annotateFrame;
+  const showRecording = recording?.phase === 'stopped';
+  const modeLabel = showAnnotateModal ? 'Dashboard: annotate' : isRecording ? 'Dashboard: record' : 'Dashboard';
 
-  let overlayText: string | undefined;
-  if (!channel)
-    overlayText = 'Disconnected';
-  else if (tabs === null)
-    overlayText = 'Loading...';
-  else if (tabs.length === 0)
-    overlayText = 'No tabs open';
-
-  return (<div className={'dashboard-view' + (interactive ? ' interactive' : '')}
-  >
-    {/* Tab bar */}
-    <div ref={tabbarRef} className='tabbar'>
-      <a className='tabbar-back' href='#' title='Back to sessions' onClick={e => { e.preventDefault(); navigate('#'); }}>
-        <ChevronLeftIcon />
-        Sessions
-      </a>
-      <div id='tabstrip' className='tabstrip' role='tablist'>
-        {tabs?.map(tab => (
-          <div
-            key={tab.pageId}
-            className={'tab' + (tab.selected ? ' active' : '')}
-            role='tab'
-            aria-selected={tab.selected}
-            title={tab.url || ''}
-            onClick={() => channel?.selectTab({ pageId: tab.pageId })}
-          >
-            <span className='tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
-            <span className='tab-label'>{tab.title || 'New Tab'}</span>
-            <button
-              className='tab-close'
-              title='Close tab'
-              onClick={e => {
-                e.stopPropagation();
-                channel?.closeTab({ pageId: tab.pageId });
-              }}
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        ))}
-      </div>
-      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => channel?.newTab()}>
-        <PlusIcon />
-      </button>
-      <div className='interactive-controls'>
-        <div className={'segmented-control' + (interactive ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactive ? 'Interactive mode: page input is forwarded' : 'Read-only mode: page input is blocked'}>
-          <button
-            className={'segmented-control-option' + (!interactive ? ' active' : '')}
-            disabled={!channel}
-            aria-pressed={!interactive}
-            title='Read-only mode'
-            onClick={() => {
-              channel?.cancelPickLocator();
-              setPickingTabId(null);
-              setShowInspector(false);
-              setInteractive(false);
-            }}
-          >
-            Read-only
-          </button>
-          <button
-            className={'segmented-control-option' + (interactive ? ' active' : '')}
-            disabled={!channel}
-            aria-pressed={interactive}
-            title='Interactive mode'
-            onClick={() => setInteractive(true)}
-          >
-            Interactive
-          </button>
-        </div>
-        <SettingsButton />
-      </div>
-    </div>
-
-    {/* Toolbar */}
-    <div ref={toolbarRef} className='toolbar'>
-      <button className='nav-btn' title='Back' onClick={() => channel?.back()}>
-        <ChevronLeftIcon />
-      </button>
-      <button className='nav-btn' title='Forward' onClick={() => channel?.forward()}>
-        <ChevronRightIcon />
-      </button>
-      <button className='nav-btn' title='Reload' onClick={() => channel?.reload()}>
-        <ReloadIcon />
-      </button>
-      <input
-        id='omnibox'
-        className='omnibox'
-        type='text'
-        placeholder='Search or enter URL'
-        spellCheck={false}
-        autoComplete='off'
-        value={url}
-        onChange={e => setUrl(e.target.value)}
-        onKeyDown={onOmniboxKeyDown}
-        onFocus={e => e.target.select()}
-      />
-      <button
-        className={'nav-btn' + (picking ? ' active-toggle' : '')}
-        title='Pick locator'
-        aria-pressed={picking}
-        disabled={!channel}
-        onClick={() => {
-          if (picking) {
-            channel?.cancelPickLocator();
-            setPickingTabId(null);
-          } else {
-            setInteractive(true);
-            setPickingTabId(selectedTab?.pageId ?? null);
-            screenRef.current?.focus();
-            channel?.pickLocator();
-          }
-        }}
-      >
-        <PickLocatorIcon />
-      </button>
-      {selectedTab?.inspectorUrl && (
-        <button
-          className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
-          title='Chrome DevTools'
-          aria-pressed={showInspector}
-          disabled={!channel}
+  return (
+    <main className={'dashboard-view' + (interactive ? ' interactive' : '')} aria-label={modeLabel}>
+      {/* Toolbar */}
+      <div ref={toolbarRef} className='toolbar'>
+        <ToolbarButton
+          ref={interactiveBtnRef}
+          className='mode-toggle mode-interactive'
+          title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
+          toggled={interactive}
+          disabled={!ready}
           onClick={() => {
-            setInteractive(true);
-            setShowInspector(!showInspector);
+            if (interactive)
+              model.toggleInteractive();
+            else
+              model.enterInteractive();
           }}
         >
-          <InspectorPanelIcon />
-        </button>
-      )}
-    </div>
+          {interactive ? <LockOpenIcon /> : <LockIcon />}
+        </ToolbarButton>
+        <ToolbarButton
+          className='mode-annotate'
+          title='Annotate screenshot'
+          disabled={!ready || !!pendingAnnotate || showAnnotateModal}
+          onClick={() => model.enterAnnotate('user')}
+        >
+          <ScreenshotRegionIcon />
+        </ToolbarButton>
+        <ToolbarButton
+          className='mode-toggle mode-record'
+          title={isRecording ? 'Stop recording' : 'Record video'}
+          icon='record'
+          toggled={isRecording}
+          disabled={!ready || showRecording}
+          onClick={() => {
+            if (isRecording)
+              model.stopRecording();
+            else
+              model.startRecording();
+          }}
+        >
+          {isRecording && <span className='mode-record-label'>Recording...</span>}
+        </ToolbarButton>
+      </div>
 
-    {/* Viewport */}
-    <div className='viewport-wrapper'>
-      <SplitView
-        orientation='horizontal'
-        sidebarSize={500}
-        minSidebarSize={300}
-        settingName='devtoolsInspector'
-        sidebarHidden={!showInspector || !selectedTab?.inspectorUrl}
-        main={<div className='viewport-main'>
-          <div
-            ref={screenRef}
-            className='screen'
-            tabIndex={0}
-            style={{ display: frame ? '' : 'none' }}
-            onMouseDown={onScreenMouseDown}
-            onMouseUp={onScreenMouseUp}
-            onMouseMove={onScreenMouseMove}
-            onWheel={onScreenWheel}
-            onKeyDown={onScreenKeyDown}
-            onKeyUp={onScreenKeyUp}
-            onContextMenu={e => e.preventDefault()}
-          >
-            <img
-              ref={displayRef}
-              id='display'
-              className='display'
-              alt='screencast'
-              src={frame ? 'data:image/jpeg;base64,' + frame.data : undefined}
-            />
-            {locatorToast
-              ? <div className='screen-toast visible'>Copied: <code>{locatorToast.text}</code></div>
-              : picking
-                ? <div className='screen-toast visible'>Click an element to pick its locator</div>
-                : null
-            }
+      {/* Viewport */}
+      <div className='viewport-wrapper'>
+        <div ref={viewportMainRef} className='viewport-main'>
+          <div className='browser-window' style={windowStyle}>
+            {showBrowserChrome && (
+              <div ref={browserChromeRef} className='browser-chrome'>
+                <button className='nav-btn' title='Back' aria-disabled={!interactive || undefined} onClick={() => {
+                  if (!interactive) {
+                    flashInteractiveHint();
+                    return;
+                  }
+                  model.back();
+                }}>
+                  <ChevronLeftIcon />
+                </button>
+                <button className='nav-btn' title='Forward' aria-disabled={!interactive || undefined} onClick={() => {
+                  if (!interactive) {
+                    flashInteractiveHint();
+                    return;
+                  }
+                  model.forward();
+                }}>
+                  <ChevronRightIcon />
+                </button>
+                <button className='nav-btn' title='Reload' aria-disabled={!interactive || undefined} onClick={() => {
+                  if (!interactive) {
+                    flashInteractiveHint();
+                    return;
+                  }
+                  model.reload();
+                }}>
+                  <ReloadIcon />
+                </button>
+                <div className='omnibox-wrap'>
+                  <input
+                    id='omnibox'
+                    className='omnibox'
+                    type='text'
+                    placeholder='Search or enter URL'
+                    spellCheck={false}
+                    autoComplete='off'
+                    value={selectedTab?.url}
+                    onChange={() => {}}
+                    onKeyDown={e => {
+                      if (!interactive)
+                        return;
+                      onOmniboxKeyDown(e);
+                    }}
+                    onFocus={e => {
+                      if (!interactive) {
+                        flashInteractiveHint();
+                        e.target.blur();
+                        return;
+                      }
+                      e.target.select();
+                    }}
+                    aria-disabled={!interactive || undefined}
+                    readOnly={!interactive}
+                  />
+                </div>
+              </div>
+            )}
+            <div
+              ref={screenRef}
+              className='screen'
+              tabIndex={0}
+              style={{ display: liveFrame ? '' : 'none' }}
+              onMouseDown={onScreenMouseDown}
+              onMouseUp={onScreenMouseUp}
+              onMouseMove={onScreenMouseMove}
+              onWheel={onScreenWheel}
+              onKeyDown={onScreenKeyDown}
+              onKeyUp={onScreenKeyUp}
+              onContextMenu={e => e.preventDefault()}
+            >
+              <img
+                ref={displayRef}
+                id='display'
+                className='display'
+                alt='screencast'
+                src={liveFrame ? 'data:image/jpeg;base64,' + liveFrame.data : undefined}
+              />
+            </div>
+            {overlayText && <div className={'screen-overlay' + (liveFrame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
           </div>
-          {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
-        </div>}
-        sidebar={<iframe
-          className='inspector-frame'
-          src={selectedTab?.inspectorUrl || ''}
-          title='Chrome DevTools'
-        />}
-      />
-    </div>
-  </div>);
+        </div>
+      </div>
+
+      {showAnnotateModal && annotateFrame && (
+        <AnnotateModal
+          frame={annotateFrame}
+          showSubmit={annotateInitiator === 'cli'}
+          onSubmit={onSubmitAnnotations}
+          onClose={onCloseAnnotate}
+        />
+      )}
+
+      {showRecording && recording?.phase === 'stopped' && (
+        <Recording
+          blob={recording.blob}
+          blobUrl={recording.blobUrl}
+          onSave={onSaveRecording}
+          onClose={() => model.discardRecording()}
+        />
+      )}
+    </main>
+  );
 };

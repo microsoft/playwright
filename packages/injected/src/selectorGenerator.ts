@@ -17,7 +17,7 @@
 import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { beginDOMCaches, closestCrossShadow, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
-import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleDescription, getElementAccessibleName } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
 
 import type { InjectedScript } from './injectedScript';
@@ -349,8 +349,17 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       candidates.push([roleToken]);
       for (const alternative of suitableTextAlternatives(ariaName))
         candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}]`, score: kRoleWithNameScore - alternative.scoreBonus }]);
+      const ariaDescription = getElementAccessibleDescription(element, false);
+      if (ariaDescription) {
+        candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}][description=${escapeForAttributeSelector(ariaDescription, true)}]`, score: kRoleWithNameScoreExact + 1 }]);
+        for (const alternative of suitableTextAlternatives(ariaName))
+          candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}][description=${escapeForAttributeSelector(ariaDescription, true)}]`, score: kRoleWithNameScore - alternative.scoreBonus + 1 }]);
+      }
     } else {
       const roleToken = { engine: 'internal:role', selector: `${ariaRole}`, score: kRoleWithoutNameScore };
+      const ariaDescription = getElementAccessibleDescription(element, false);
+      if (ariaDescription)
+        candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[description=${escapeForAttributeSelector(ariaDescription, true)}]`, score: kRoleWithoutNameScore + 1 }]);
       for (const alternative of textAlternatives)
         candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
       if (isTargetNode && text.length <= 80) {

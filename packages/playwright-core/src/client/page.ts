@@ -143,7 +143,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
       const artifactObject = Artifact.from(artifact);
-      this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));
+      const download = new Download(this, url, suggestedFilename, artifactObject);
+      this.emit(Events.Page.Download, download);
+      this._browserContext.emit(Events.BrowserContext.Download, download);
     });
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
@@ -177,6 +179,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     if (frame._parentFrame)
       frame._parentFrame._childFrames.add(frame);
     this.emit(Events.Page.FrameAttached, frame);
+    this._browserContext.emit(Events.BrowserContext.FrameAttached, frame);
   }
 
   private _onFrameDetached(frame: Frame) {
@@ -185,6 +188,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     if (frame._parentFrame)
       frame._parentFrame._childFrames.delete(frame);
     this.emit(Events.Page.FrameDetached, frame);
+    this._browserContext.emit(Events.BrowserContext.FrameDetached, frame);
   }
 
   private async _onRoute(route: Route) {
@@ -239,6 +243,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._browserContext._pages.delete(this);
     this._disposeHarRouters();
     this.emit(Events.Page.Close, this);
+    this._browserContext.emit(Events.BrowserContext.PageClose, this);
   }
 
   private _onCrash() {
@@ -298,6 +303,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async cancelPickLocator(): Promise<void> {
     await this._channel.cancelPickLocator({});
+  }
+
+  async hideHighlight(): Promise<void> {
+    await this._channel.hideHighlight({});
   }
 
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
@@ -857,8 +866,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, _track?: string } = {}): Promise<string> {
-    const result = await this.mainFrame()._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), track: options._track, mode: options.mode, depth: options.depth });
+  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean, _track?: string } = {}): Promise<string> {
+    const result = await this.mainFrame()._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), track: options._track, mode: options.mode, depth: options.depth, boxes: options.boxes });
     return result.snapshot;
   }
 

@@ -90,7 +90,7 @@ export async function startCliDaemonServer(
             await sendAck();
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
-          toolParams._meta = { cwd: params.cwd, raw: params.raw };
+          toolParams._meta = { cwd: params.cwd, raw: params.raw || params.json, json: !!params.json };
           const response = await backend.callTool(toolName, toolParams);
           await connection.send({ id, result: formatResult(response) });
         } else {

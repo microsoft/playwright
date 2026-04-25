@@ -377,6 +377,65 @@ Message to send.
 
 
 
+## method: WebSocketRoute.protocols
+* since: v1.60
+- returns: <[Array]<[string]>>
+
+The list of WebSocket subprotocols requested by the page, as passed via the second argument to the [`WebSocket` constructor](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/WebSocket). Corresponds to the `Sec-WebSocket-Protocol` request header.
+
+Returns an empty array if no protocols were specified.
+
+**Usage**
+
+```js
+await page.routeWebSocket('wss://example.com/ws', ws => {
+  if (ws.protocols().includes('chat.v2'))
+    ws.onMessage(message => ws.send(JSON.stringify({ version: 2, echo: message })));
+  else
+    ws.close({ code: 1002, reason: 'Unsupported protocol' });
+});
+```
+
+```java
+page.routeWebSocket("wss://example.com/ws", ws -> {
+  if (ws.protocols().contains("chat.v2")) {
+    ws.onMessage(frame -> ws.send("v2:" + frame.text()));
+  } else {
+    ws.close(1002, "Unsupported protocol");
+  }
+});
+```
+
+```python async
+async def handler(ws: WebSocketRoute):
+  if "chat.v2" in ws.protocols:
+    ws.on_message(lambda message: ws.send(f"v2:{message}"))
+  else:
+    await ws.close(code=1002, reason="Unsupported protocol")
+
+await page.route_web_socket("wss://example.com/ws", handler)
+```
+
+```python sync
+def handler(ws: WebSocketRoute):
+  if "chat.v2" in ws.protocols:
+    ws.on_message(lambda message: ws.send(f"v2:{message}"))
+  else:
+    ws.close(code=1002, reason="Unsupported protocol")
+
+page.route_web_socket("wss://example.com/ws", handler)
+```
+
+```csharp
+await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
+  if (ws.Protocols.Contains("chat.v2"))
+    ws.OnMessage(frame => ws.Send($"v2:{frame.Text}"));
+  else
+    ws.CloseAsync(new() { Code = 1002, Reason = "Unsupported protocol" });
+});
+```
+
+
 ## method: WebSocketRoute.url
 * since: v1.48
 - returns: <[string]>

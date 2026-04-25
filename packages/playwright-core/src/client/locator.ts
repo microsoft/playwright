@@ -20,9 +20,10 @@ import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
+import { DisposableStub } from './disposable';
 
-import type { Frame } from './frame';
-import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import type { ExpectResult, Frame } from './frame';
+import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
@@ -125,6 +126,10 @@ export class Locator implements api.Locator {
     });
   }
 
+  async drop(payload: DropPayload, options: Omit<channels.FrameDropOptions, 'payloads' | 'localPaths' | 'streams' | 'data' | 'force' | 'trial'> & TimeoutOptions = {}) {
+    await this._frame._drop(this._selector, payload, { strict: true, ...options });
+  }
+
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
     return await this._withElement(h => h.evaluate(pageFunction, arg), { title: 'Evaluate', timeout: options?.timeout });
   }
@@ -150,8 +155,14 @@ export class Locator implements api.Locator {
     return await this._frame._highlight(this._selector);
   }
 
-  async highlight() {
-    return await this._frame._highlight(this._selector);
+  async highlight(options: { style?: string | Record<string, string | number> } = {}) {
+    const style = typeof options.style === 'object' ? cssObjectToString(options.style) : options.style;
+    await this._frame._highlight(this._selector, style);
+    return new DisposableStub(() => this.hideHighlight());
+  }
+
+  async hideHighlight() {
+    await this._frame._hideHighlight(this._selector);
   }
 
   locator(selectorOrLocator: string | Locator, options?: Omit<LocatorOptions, 'visible'>): Locator {
@@ -313,8 +324,13 @@ export class Locator implements api.Locator {
     return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), { title: 'Screenshot', timeout: options.timeout });
   }
 
-  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number } = {}): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ timeout: this._frame._timeout(options), mode: options.mode, selector: this._selector, depth: options.depth });
+  async ariaRef(options: TimeoutOptions = {}): Promise<string | null> {
+    const { ref } = await this._frame._channel.ariaRef({ selector: this._selector, timeout: this._frame._timeout(options) });
+    return ref ?? null;
+  }
+
+  async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
+    const result = await this._frame._channel.ariaSnapshot({ timeout: this._frame._timeout(options), mode: options.mode, selector: this._selector, depth: options.depth, boxes: options.boxes });
     return result.snapshot;
   }
 
@@ -380,7 +396,7 @@ export class Locator implements api.Locator {
   }
 
 
-  async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }> {
+  async _expect(expression: string, options: FrameExpectParams): Promise<ExpectResult> {
     return this._frame._expect(expression, {
       ...options,
       selector: this._selector,
@@ -470,4 +486,11 @@ export function testIdAttributeName(): string {
 
 export function setTestIdAttribute(attributeName: string) {
   _testIdAttributeName = attributeName;
+}
+
+function cssObjectToString(style: Record<string, string | number>): string {
+  return Object.entries(style).map(([key, value]) => {
+    const property = key.startsWith('--') ? key : key.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
+    return `${property}: ${value}`;
+  }).join('; ');
 }

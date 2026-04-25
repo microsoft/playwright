@@ -160,6 +160,45 @@ test('isolated context with storage state', async ({ startClient, server }, test
   });
 });
 
+test('--proxy-server routes browser traffic through the proxy', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40204' },
+}, async ({ startClient, server }) => {
+  server.setRoute('/target.html', (_req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  const { client } = await startClient({
+    args: [`--proxy-server=${server.HOST}`],
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'http://non-existent.com/target.html' },
+  })).toHaveResponse({
+    page: expect.stringContaining('Served by the proxy'),
+  });
+});
+
+test('--proxy-server overrides contextOptions.proxy from config file', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40204' },
+}, async ({ startClient, server }) => {
+  server.setRoute('/target.html', (_req, res) => {
+    res.end('<html><title>Served by CLI proxy</title></html>');
+  });
+  const { client } = await startClient({
+    config: {
+      browser: {
+        contextOptions: { proxy: { server: 'http://unreachable-config-proxy:1' } },
+      },
+    },
+    args: [`--proxy-server=${server.HOST}`],
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'http://non-existent.com/target.html' },
+  })).toHaveResponse({
+    page: expect.stringContaining('Served by CLI proxy'),
+  });
+});
+
 test('proper launch error message for broken browser and persistent context', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1305' }
 }, async ({ startClient, server, mcpBrowser }, testInfo) => {
@@ -182,14 +221,6 @@ exit 1
     isError: true,
     error: expect.stringContaining(`Bogus browser script`),
   });
-  // Chromium waits for the CDP endpoint, so we know if the process failed to launch
-  // before connecting.
-  if (mcpBrowser === 'chromium') {
-    expect.soft(result).toHaveResponse({
-      isError: true,
-      error: expect.stringContaining(`Failed to launch the browser process.`),
-    });
-  }
   expect.soft(result).toHaveResponse({
     isError: true,
     error: expect.not.stringContaining(`Browser is already in use`),

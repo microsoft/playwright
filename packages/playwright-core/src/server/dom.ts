@@ -15,6 +15,9 @@
  */
 
 import fs from 'fs';
+import path from 'path';
+
+import mime from 'mime';
 
 import { isUnderTest } from '@utils/debug';
 import * as js from './javascript';
@@ -35,7 +38,7 @@ export type InputFilesItems = {
   localDirectory?: string
 };
 
-type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
+type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down' | 'drop';
 type PerformActionResult = 'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:optionsnotfound' | 'error:optionnotenabled' | { missingState: ElementState } | { hitTargetDescription: string } | 'done';
 
 export class NonRecoverableDOMError extends Error {
@@ -657,6 +660,73 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return assertDone(throwRetargetableDOMError(result));
   }
 
+  async _drop(progress: Progress, inputFileItems: InputFilesItems, data: { mimeType: string, value: string }[], options: types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    const { filePayloads, localPaths } = inputFileItems;
+    let payloads: { name: string, mimeType: string, buffer: string, lastModifiedMs?: number }[];
+    if (localPaths && !filePayloads) {
+      // Co-located server/browser: read files into buffers so File objects can be
+      // constructed in page context.
+      payloads = await Promise.all(localPaths.map(async p => ({
+        name: path.basename(p),
+        mimeType: mime.getType(p) || 'application/octet-stream',
+        buffer: (await fs.promises.readFile(p)).toString('base64'),
+        lastModifiedMs: (await fs.promises.stat(p)).mtimeMs,
+      })));
+    } else {
+      payloads = (filePayloads ?? []).map(p => ({
+        name: p.name,
+        mimeType: p.mimeType || 'application/octet-stream',
+        buffer: p.buffer,
+        lastModifiedMs: p.lastModifiedMs,
+      }));
+    }
+    return this._retryPointerAction(progress, 'drop', false /* waitForEnabled */, async (progress, point) => {
+      // Firefox strips files from DataTransfer objects that cross the isolated-world
+      // boundary into the page's main world. Adopt the element to main context and
+      // construct the DataTransfer + dispatch events there.
+      const mainContext = await progress.race(this._frame.mainContext());
+      const handle = this._context === mainContext ? this : await progress.race(this._page.delegate.adoptElementHandle(this, mainContext));
+      const disposeHandle = handle !== this;
+      try {
+        const result = await progress.race(handle.evaluate((node: Node, { payloads, data, point }) => {
+          if (!node.isConnected || node.nodeType !== 1 /* ELEMENT_NODE */)
+            return 'error:notconnected' as const;
+          const element = node as Element;
+          const dt = new DataTransfer();
+          for (const p of payloads) {
+            const bytes = Uint8Array.from(atob(p.buffer), c => c.charCodeAt(0));
+            const file = new File([bytes], p.name, { type: p.mimeType, lastModified: p.lastModifiedMs });
+            dt.items.add(file);
+          }
+          for (const entry of data)
+            dt.setData(entry.mimeType, entry.value);
+          const makeEvent = (type: string) => new DragEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            clientX: point.x,
+            clientY: point.y,
+            dataTransfer: dt,
+          });
+          element.dispatchEvent(makeEvent('dragenter'));
+          const over = makeEvent('dragover');
+          element.dispatchEvent(over);
+          if (!over.defaultPrevented) {
+            element.dispatchEvent(makeEvent('dragleave'));
+            return 'not-accepted' as const;
+          }
+          element.dispatchEvent(makeEvent('drop'));
+          return 'accepted' as const;
+        }, { payloads, data, point }));
+        if (result === 'not-accepted')
+          throw new NonRecoverableDOMError('Drop target did not accept the drop — its dragover handler did not call preventDefault()');
+      } finally {
+        if (disposeHandle)
+          handle.dispose();
+      }
+    }, { ...options, waitAfter: 'disabled' });
+  }
+
   async _setInputFiles(progress: Progress, items: InputFilesItems): Promise<'error:notconnected' | 'done'> {
     const { filePayloads, localPaths, localDirectory } = items;
     const multiple = filePayloads && filePayloads.length > 1 || localPaths && localPaths.length > 1;
@@ -917,7 +987,10 @@ function roundPoint(point: types.Point): types.Point {
 }
 
 function quadToRect(quad: types.Quad): types.Rect {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
   for (const point of quad) {
     minX = Math.min(minX, point.x);
     minY = Math.min(minY, point.y);

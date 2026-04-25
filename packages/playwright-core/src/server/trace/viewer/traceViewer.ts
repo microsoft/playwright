@@ -33,6 +33,10 @@ import type { BrowserType } from '../../browserType';
 import type { Page } from '../../page';
 import type http from 'http';
 
+// HMR: build-time flag — `true` in watch builds, `false` in release. Mirror of
+// the one in dashboardApp.ts; esbuild's `define` replaces both.
+declare const __PW_HMR__: boolean;
+
 export type TraceViewerServerOptions = {
   host?: string;
   port?: number;
@@ -82,35 +86,62 @@ function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | un
 
 export async function startTraceViewerServer(options?: TraceViewerServerOptions): Promise<HttpServer> {
   const server = new HttpServer();
-  server.routePrefix('/trace', (request, response) => {
+
+  const serveTraceDataRoute = (request: http.IncomingMessage, response: http.ServerResponse, relativePath: string): boolean => {
+    if (!relativePath.startsWith('/file'))
+      return false;
     const url = new URL('http://localhost' + request.url!);
-    const relativePath = url.pathname.slice('/trace'.length);
-    if (relativePath.startsWith('/file')) {
-      try {
-        const filePath = url.searchParams.get('path')!;
-        if (fs.existsSync(filePath))
-          return server.serveFile(request, response, url.searchParams.get('path')!);
+    try {
+      const filePath = url.searchParams.get('path')!;
+      if (fs.existsSync(filePath))
+        return server.serveFile(request, response, filePath);
 
-        // If .json is requested, we'll synthesize it for zip-less operation.
-        if (filePath.endsWith('.json')) {
-          const fullPrefix = filePath.substring(0, filePath.length - '.json'.length);
-          // Live traces are stored in the common artifacts directory. Trace files
-          // corresponding to a particular test, all have the same unique prefix.
-          return sendTraceDescriptor(response, path.dirname(fullPrefix), path.basename(fullPrefix));
-        }
-
-        // If 'trace.dir' is requested, return all trace files inside.
-        if (filePath.endsWith(tracesDirMarker))
-          return sendTraceDescriptor(response, path.dirname(filePath));
-      } catch {
+      // If .json is requested, we'll synthesize it for zip-less operation.
+      if (filePath.endsWith('.json')) {
+        const fullPrefix = filePath.substring(0, filePath.length - '.json'.length);
+        // Live traces are stored in the common artifacts directory. Trace files
+        // corresponding to a particular test, all have the same unique prefix.
+        return sendTraceDescriptor(response, path.dirname(fullPrefix), path.basename(fullPrefix));
       }
-      response.statusCode = 404;
-      response.end();
-      return true;
+
+      // If 'trace.dir' is requested, return all trace files inside.
+      if (filePath.endsWith(tracesDirMarker))
+        return sendTraceDescriptor(response, path.dirname(filePath));
+    } catch {
     }
-    const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
-    return server.serveFile(request, response, absolutePath);
-  });
+    response.statusCode = 404;
+    response.end();
+    return true;
+  };
+
+  // HMR: watch builds serve the trace viewer (incl. UI mode) through an
+  // embedded Vite dev server. Release builds always take the static branch
+  // (the dev-server arm is DCE'd). Set PW_HMR_STATIC=1 during watch to
+  // exercise the bundled output. The service worker at /trace/sw.bundle.js
+  // still ships from the separate vite.sw.config.ts build — serve it from lib.
+  if (__PW_HMR__ && process.env.PW_HMR_STATIC !== '1') {
+    const traceViewerRoot = path.resolve(__dirname, '..', '..', 'trace-viewer');
+    const devServer = await server.createViteDevServer({ root: traceViewerRoot, base: '/trace/' });
+    server.routePrefix('/trace', (request, response) => {
+      const url = new URL('http://localhost' + request.url!);
+      const relativePath = url.pathname.slice('/trace'.length);
+      if (relativePath.startsWith('/file'))
+        return serveTraceDataRoute(request, response, relativePath);
+      if (relativePath === '/sw.bundle.js')
+        return server.serveFile(request, response, path.join(libPath('vite', 'traceViewer'), 'sw.bundle.js'));
+      devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
+      return true;
+    });
+  } else {
+    server.routePrefix('/trace', (request, response) => {
+      const url = new URL('http://localhost' + request.url!);
+      const relativePath = url.pathname.slice('/trace'.length);
+      if (relativePath.startsWith('/file'))
+        return serveTraceDataRoute(request, response, relativePath);
+      const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
+      return server.serveFile(request, response, absolutePath);
+    });
+  }
 
   const transport = options?.transport || (options?.isServer ? new StdinServer() : undefined);
   if (transport)
@@ -231,25 +262,23 @@ class StdinServer implements Transport {
   onconnect() {
   }
 
-  onmessage(message: string) {
-    const { id, method } = JSON.parse(message);
+  async dispatch(method: string, params: any) {
     if (method === 'initialize') {
       if (this._traceUrl)
         this._loadTrace(this._traceUrl);
     }
-    this.sendMessage?.(JSON.stringify({ id }));
   }
 
   onclose() {
   }
 
-  sendMessage?: (message: string) => void;
+  sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
   private _loadTrace(traceUrl: string) {
     this._traceUrl = traceUrl;
     clearTimeout(this._pollTimer);
-    this.sendMessage?.(JSON.stringify({ method: 'loadTraceRequested', params: { traceUrl } }));
+    this.sendEvent?.('loadTraceRequested', { traceUrl });
   }
 
   private _pollLoadTrace(url: string) {

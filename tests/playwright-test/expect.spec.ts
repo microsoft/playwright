@@ -412,72 +412,18 @@ test('should return void/Promise when appropriate', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test.describe('helpful expect errors', () => {
-  test('top-level', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('explodes', () => {
-          expect(1).nope();
-        });
-      `
-    });
-
-    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+test('bare expect call should not throw', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('explodes', () => {
+        expect('');
+      });
+    `
   });
 
-  test('soft', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('explodes', () => {
-          expect.soft(1).nope();
-        });
-      `
-    });
-
-    expect(result.output).toContain(`expect: Property 'nope' not found.`);
-  });
-
-  test('poll', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('explodes', () => {
-          expect.poll(() => {}).nope();
-        });
-      `
-    });
-
-    expect(result.output).toContain(`expect: Property 'nope' not found.`);
-  });
-
-  test('not', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('explodes', () => {
-          expect(1).not.nope();
-        });
-      `
-    });
-
-    expect(result.output).toContain(`expect: Property 'nope' not found.`);
-  });
-
-  test('bare', async ({ runInlineTest }) => {
-    const result = await runInlineTest({
-      'a.spec.ts': `
-        import { test, expect } from '@playwright/test';
-        test('explodes', () => {
-          expect('');
-        });
-      `
-    });
-
-    expect(result.exitCode).toBe(0);
-    expect(result.passed).toBe(1);
-  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should reasonably work in global setup', async ({ runInlineTest }) => {
