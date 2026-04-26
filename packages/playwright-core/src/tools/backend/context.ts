@@ -88,6 +88,66 @@ export type FilenameTemplate = {
 
 type VideoParams = { size?: { width: number; height: number } };
 
+export type RecordedEvent =
+  | { type: 'navigate'; url: string }
+  | { type: 'click'; selector: string }
+  | { type: 'fill'; selector: string; value: string }
+  | { type: 'selectOption'; selector: string; value: string }
+  | { type: 'check'; selector: string }
+  | { type: 'uncheck'; selector: string };
+
+type RecordingState = {
+  events: RecordedEvent[];
+  disposables: Disposable[];
+};
+
+// Injected into every page to bridge user interactions to Node via exposeFunction.
+const CAPTURE_SCRIPT = `(function() {
+  if (window.__pw_capture_installed) return;
+  window.__pw_capture_installed = true;
+  function _sel(el) {
+    if (!el || el === document.body) return null;
+    var v;
+    v = el.getAttribute && (el.getAttribute('data-testid') || el.getAttribute('data-test') || el.getAttribute('data-pw'));
+    if (v) return '[data-testid=' + JSON.stringify(v) + ']';
+    v = el.getAttribute && el.getAttribute('aria-label');
+    if (v) return '[aria-label=' + JSON.stringify(v) + ']';
+    v = el.getAttribute && el.getAttribute('placeholder');
+    if (v) return '[placeholder=' + JSON.stringify(v) + ']';
+    v = el.getAttribute && el.getAttribute('name');
+    if (v) return '[name=' + JSON.stringify(v) + ']';
+    if (el.id) return '#' + el.id;
+    var tag = (el.tagName || '').toLowerCase();
+    var txt = (el.textContent || '').trim().slice(0, 50);
+    if (txt && (tag === 'button' || tag === 'a'))
+      return tag + ':has-text(' + JSON.stringify(txt) + ')';
+    return tag || null;
+  }
+  document.addEventListener('click', function(e) {
+    if (typeof window.__pw_record !== 'function') return;
+    var s = _sel(e.target);
+    if (s) window.__pw_record({ type: 'click', selector: s });
+  }, true);
+  document.addEventListener('change', function(e) {
+    if (typeof window.__pw_record !== 'function') return;
+    var el = e.target;
+    if (!el) return;
+    var s = _sel(el);
+    if (!s) return;
+    var tag = (el.tagName || '').toLowerCase();
+    var tp = (el.type || '').toLowerCase();
+    if (tag === 'select') {
+      window.__pw_record({ type: 'selectOption', selector: s, value: el.value });
+    } else if (tp === 'checkbox') {
+      window.__pw_record({ type: el.checked ? 'check' : 'uncheck', selector: s });
+    } else if (tp === 'radio') {
+      if (el.checked) window.__pw_record({ type: 'check', selector: s });
+    } else {
+      window.__pw_record({ type: 'fill', selector: s, value: el.value });
+    }
+  }, true);
+})()`;
+
 export class Context {
   readonly config: ContextConfig;
   readonly sessionLog: SessionLog | undefined;
@@ -112,6 +172,8 @@ export class Context {
     for (const listener of this._unhandledRejectionListeners)
       listener(reason);
   };
+  private _recordingState: RecordingState | undefined;
+  private _recordingSetUp = false;
 
   constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
     this.config = options.config;
@@ -239,7 +301,7 @@ export class Context {
     this._tabs.push(tab);
     if (!this._currentTab)
       this._currentTab = tab;
-    this._startPageVideo(page).catch(() => {});
+    this._startPageVideo(page).catch(() => { });
   }
 
   private _onPageClosed(tab: Tab) {
@@ -347,6 +409,67 @@ export class Context {
       return;
     if (new URL(url).protocol === 'file:')
       throw new Error(`Access to "file:" protocol is blocked. Attempted URL: "${url}"`);
+  }
+
+  async startRecording(): Promise<void> {
+    if (this._recordingState)
+      throw new Error('A recording session is already in progress. Call `browser_recording_stop` first.');
+    const state: RecordingState = { events: [], disposables: [] };
+    this._recordingState = state;
+    const browserContext = await this.ensureBrowserContext();
+    if (!this._recordingSetUp) {
+      this._recordingSetUp = true;
+      // exposeFunction and addInitScript persist for the lifetime of the context.
+      await browserContext.exposeFunction('__pw_record', (event: unknown) => {
+        if (this._recordingState)
+          this._recordingState.events.push(event as RecordedEvent);
+      });
+      this._disposables.push(await browserContext.addInitScript(CAPTURE_SCRIPT));
+    }
+    const attachToPage = (page: playwrightTypes.Page) => {
+      const navHandler = (frame: playwrightTypes.Frame) => {
+        if (frame === page.mainFrame() && this._recordingState) {
+          const url = frame.url();
+          if (url && url !== 'about:blank')
+            this._recordingState.events.push({ type: 'navigate', url });
+        }
+      };
+      page.on('framenavigated', navHandler);
+      state.disposables.push({ dispose: () => page.off('framenavigated', navHandler) });
+      page.evaluate(CAPTURE_SCRIPT).catch(() => { });
+    };
+    for (const page of browserContext.pages())
+      attachToPage(page);
+    state.disposables.push(eventsHelper.addEventListener(browserContext, 'page', attachToPage));
+  }
+
+  stopRecording(): number {
+    const state = this._recordingState;
+    if (!state)
+      return 0;
+    disposeAll(state.disposables).catch(() => { });
+    this._recordingState = undefined;
+    return state.events.length;
+  }
+
+  getRecordedCode(): string[] {
+    const events = this._recordingState?.events ?? [];
+    return events.map(event => {
+      switch (event.type) {
+        case 'navigate':
+          return `await page.goto(${escapeWithQuotes(event.url, "'")});`;
+        case 'click':
+          return `await page.locator(${escapeWithQuotes(event.selector, "'")}).click();`;
+        case 'fill':
+          return `await page.locator(${escapeWithQuotes(event.selector, "'")}).fill(${escapeWithQuotes(event.value, "'")});`;
+        case 'selectOption':
+          return `await page.locator(${escapeWithQuotes(event.selector, "'")}).selectOption(${escapeWithQuotes(event.value, "'")});`;
+        case 'check':
+          return `await page.locator(${escapeWithQuotes(event.selector, "'")}).check();`;
+        case 'uncheck':
+          return `await page.locator(${escapeWithQuotes(event.selector, "'")}).uncheck();`;
+      }
+    });
   }
 
   lookupSecret(secretName: string): { value: string, code: string } {

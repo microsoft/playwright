@@ -29,6 +29,7 @@ import mouse from './mouse';
 import navigate from './navigate';
 import network from './network';
 import pdf from './pdf';
+import recording from './recording';
 import route from './route';
 import runCode from './runCode';
 import snapshot from './snapshot';
@@ -59,6 +60,7 @@ export const browserTools: Tool<any>[] = [
   ...navigate,
   ...network,
   ...pdf,
+  ...recording,
   ...route,
   ...runCode,
   ...screenshot,
@@ -79,8 +81,8 @@ export function filteredTools(config: Pick<ContextConfig, 'capabilities'>) {
       ...tool.schema,
       // Note: we first ensure that "selector" property is present, so that we can omit() it without an error.
       inputSchema: tool.schema.inputSchema
-          .extend({ selector: z.string(), startSelector: z.string(), endSelector: z.string() })
-          .omit({ selector: true, startSelector: true, endSelector: true }),
+        .extend({ selector: z.string(), startSelector: z.string(), endSelector: z.string() })
+        .omit({ selector: true, startSelector: true, endSelector: true }),
     },
   }));
 }
