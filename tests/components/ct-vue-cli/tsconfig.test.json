@@ -7,6 +7,7 @@
     "lib": [],
     "jsx": "react-jsx",
     "types": ["node"],
-    "ignoreDeprecations": "5.0"
+    "noUncheckedSideEffectImports": false,
+    "ignoreDeprecations": "6.0"
   }
 }

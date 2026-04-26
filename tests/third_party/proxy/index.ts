@@ -467,7 +467,7 @@ function requestAuthorization(
 	res.end('Proxy authorization required');
 }
 
-function onupgrade(req: http.IncomingMessage, socket: net.Socket, head: Buffer) {
+function onupgrade(this: ProxyServer, req: http.IncomingMessage, socket: net.Socket, head: Buffer) {
 	const proxyReq = http.request(req.url, {
 		method: req.method,
 		headers: req.headers,

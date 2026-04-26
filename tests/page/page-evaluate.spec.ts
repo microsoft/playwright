@@ -621,7 +621,7 @@ it('should respect use strict expression', async ({ page }) => {
 });
 
 it('should not leak utility script', async function({ page }) {
-  expect(await page.evaluate(() => this === window)).toBe(true);
+  expect(await page.evaluate('this === window')).toBe(true);
 });
 
 it('should not leak handles', async ({ page }) => {

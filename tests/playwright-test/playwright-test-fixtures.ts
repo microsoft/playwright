@@ -359,8 +359,10 @@ const TSCONFIG = {
     'allowSyntheticDefaultImports': true,
     'rootDir': '.',
     'lib': ['esnext', 'dom', 'DOM.Iterable'],
+    'types': ['node'],
     'noEmit': true,
     'skipLibCheck': true,
+    'ignoreDeprecations': '6.0',
   },
   'exclude': [
     'node_modules'

@@ -199,7 +199,8 @@ it('should work when the event is canceled', async ({ page }) => {
 
 async function listenForWheelEvents(page: Page, selector: string) {
   await page.evaluate(selector => {
-    document.querySelector(selector).addEventListener('wheel', (e: WheelEvent) => {
+    document.querySelector(selector).addEventListener('wheel', event => {
+      const e = event as WheelEvent;
       window['lastEvent'] = {
         deltaX: e.deltaX,
         deltaY: e.deltaY,

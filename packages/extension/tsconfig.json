@@ -11,7 +11,8 @@
     "types": ["chrome"],
     "jsx": "react-jsx",
     "jsxImportSource": "react",
-    "noEmit": true
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src",

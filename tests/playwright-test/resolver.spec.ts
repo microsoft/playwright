@@ -817,7 +817,8 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"]
           }
         }
       `,
@@ -861,7 +862,8 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"]
           }
         }
       `,
@@ -899,7 +901,9 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"],
+            "ignoreDeprecations": "6.0"
           }
         }
       `,
@@ -946,7 +950,9 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"],
+            "ignoreDeprecations": "6.0"
           },
         }
       `,
@@ -996,7 +1002,8 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"]
           },
         }
       `,
@@ -1038,7 +1045,8 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"]
           },
         }
       `,
@@ -1082,7 +1090,9 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"],
+            "ignoreDeprecations": "6.0"
           }
         }
       `,
@@ -1134,7 +1144,9 @@ test.describe('directory imports', () => {
             "moduleResolution": "bundler",
             "module": "preserve",
             "noEmit": true,
-            "noImplicitAny": true
+            "noImplicitAny": true,
+            "types": ["node"],
+            "ignoreDeprecations": "6.0"
           }
         }
       `,

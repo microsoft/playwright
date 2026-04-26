@@ -30,9 +30,11 @@
     "noEmit": true,
     "noImplicitOverride": true,
     "strictNullChecks": false,
+    "noImplicitAny": false,
     "useUnknownInCatchVariables": false,
     "useDefineForClassFields": false,
     "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
   },
   "include": ["**/*.spec.js", "**/*.ts"],
   "exclude": ["components/", "installation/fixture-scripts/", "packages/playwright-core/lib/"]

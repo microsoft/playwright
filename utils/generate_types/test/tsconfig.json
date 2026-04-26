@@ -4,7 +4,9 @@
     "target": "ESNext",
     "noEmit": true,
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "test.ts"
