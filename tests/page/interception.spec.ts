@@ -164,6 +164,14 @@ it('should work with glob', async () => {
     expect(urlMatches(undefined, `${prefix}:blank`, `${prefix}:*`)).toBeTruthy();
     expect(urlMatches(undefined, `not${prefix}:blank`, `${prefix}:*`)).toBeFalsy();
   }
+
+  // Unbalanced braces must throw early with a descriptive error.
+  expect(() => globToRegexPattern('{foo')).toThrow(`Invalid glob pattern "{foo": unmatched '{'`);
+  expect(() => globToRegexPattern('}foo')).toThrow(`Invalid glob pattern "}foo": unmatched '}'`);
+  expect(() => globToRegexPattern('**/*.png?{')).toThrow(`Invalid glob pattern "**/*.png?{": unmatched '{'`);
+  expect(() => globToRegexPattern('https://example.com/{a')).toThrow(`Invalid glob pattern "https://example.com/{a": unmatched '{'`);
+  expect(() => globToRegexPattern('{a,b')).toThrow(`Invalid glob pattern "{a,b": unmatched '{'`);
+  expect(() => globToRegexPattern('{a,{b}}')).toThrow(`Invalid glob pattern "{a,{b}}": nested '{' is not supported`);
 });
 
 it('should intercept by glob', async function({ page, server, isAndroid }) {
