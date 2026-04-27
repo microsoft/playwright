@@ -22,8 +22,6 @@ import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
 
-import { isCodingAgent } from '@utils/env';
-
 import { isKnownChannel, listChannelSessions } from './channelSessions';
 import { JsonOutput, TextOutput } from './output';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
@@ -100,7 +98,7 @@ export async function program(options?: { embedderVersion?: string}) {
       output.help(command.help);
     } else {
       const lines = ['playwright-cli - run playwright mcp commands from terminal'];
-      if (isCodingAgent())
+      if (process.env.CLAUDECODE || process.env.COPILOT_CLI)
         lines.push(`Agent skill: ${path.relative(process.cwd(), libPath('tools', 'cli-client', 'skill', 'SKILL.md'))}`);
       lines.push(help.global);
       output.help(lines.join('\n\n'));

@@ -7,7 +7,6 @@
 ./output.ts
 ./session.ts
 ./registry.ts
-@utils/env.ts
 
 [output.ts]
 "strict"
@@ -32,7 +31,4 @@
 ../../package.ts
 
 [minimist.ts]
-"strict"
-
-[utils.ts]
 "strict"
