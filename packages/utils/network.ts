@@ -202,10 +202,22 @@ export async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onLog
   return statusCode >= 200 && statusCode < 404;
 }
 
+// Avoid OS-default TCP connect timeout (~2 min) when SYNs are silently dropped, e.g. WSL mirrored networking. See #40430.
+// A request-level setTimeout is not enough — Happy Eyeballs only assigns a socket once one address connects.
+const URL_AVAILABILITY_CHECK_TIMEOUT = 1000;
+
 async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onLog?: (data: string) => void, onStdErr?: (data: string) => void): Promise<number> {
   return new Promise(resolve => {
     onLog?.(`HTTP GET: ${url}`);
-    httpRequest({
+    let resolved = false;
+    const safeResolve = (status: number) => {
+      if (resolved)
+        return;
+      resolved = true;
+      clearTimeout(timer);
+      resolve(status);
+    };
+    const { cancel } = httpRequest({
       url: url.toString(),
       headers: { Accept: '*/*' },
       rejectUnauthorized: !ignoreHTTPSErrors
@@ -213,13 +225,16 @@ async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onLog?: (dat
       res.resume();
       const statusCode = res.statusCode ?? 0;
       onLog?.(`HTTP Status: ${statusCode}`);
-      resolve(statusCode);
+      safeResolve(statusCode);
     }, error => {
       if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT')
         onStdErr?.(`[WebServer] Self-signed certificate detected. Try adding ignoreHTTPSErrors: true to config.webServer.`);
       onLog?.(`Error while checking if ${url} is available: ${error.message}`);
-      resolve(0);
+      safeResolve(0);
     });
+    const timer = setTimeout(() => {
+      cancel(new Error(`Request to ${url} timed out after ${URL_AVAILABILITY_CHECK_TIMEOUT}ms`));
+    }, URL_AVAILABILITY_CHECK_TIMEOUT);
   });
 }
 

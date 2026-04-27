@@ -15,6 +15,7 @@
  */
 
 import type http from 'http';
+import net from 'net';
 import path from 'path';
 import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
 import type { RunResult } from './playwright-test-fixtures';
@@ -406,6 +407,44 @@ test('should be able to use an existing server when reuseExistingServer:true', a
   expect(result.output).not.toContain('[WebServer] ');
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
   await new Promise(resolve => server.close(resolve));
+});
+
+test('should not hang on a non-responding URL probe (regression for #40430)', async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex * 2 + 10500;
+  // Stand-in for WSL silent-drop networking: TCP accepts but no HTTP response. Without a probe timeout this would hang.
+  const sockets = new Set<net.Socket>();
+  const hungServer = net.createServer(socket => {
+    sockets.add(socket);
+    socket.once('close', () => sockets.delete(socket));
+  });
+  await new Promise<void>(resolve => hungServer.listen(port, resolve));
+  try {
+    const start = Date.now();
+    const result = await runInlineTest({
+      'test.spec.ts': `
+        import { test } from '@playwright/test';
+        test('noop', () => {});
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          webServer: {
+            command: 'node -e "setInterval(() => {}, 1000)"',
+            url: 'http://localhost:${port}',
+            reuseExistingServer: false,
+            timeout: 3000,
+          }
+        };
+      `,
+    });
+    const elapsed = Date.now() - start;
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Timed out waiting 3000ms from config.webServer.');
+    expect(elapsed).toBeLessThan(30_000);
+  } finally {
+    for (const socket of sockets)
+      socket.destroy();
+    await new Promise<void>(resolve => hungServer.close(() => resolve()));
+  }
 });
 
 test('should throw when a server is already running on the given port and strict is true', async ({ runInlineTest }, { workerIndex }) => {

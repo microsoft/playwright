@@ -209,17 +209,22 @@ export class WebServerPlugin implements TestRunnerPlugin {
   }
 }
 
+// Avoid OS-default TCP connect timeout (~2 min) when SYNs are silently dropped, e.g. WSL mirrored networking. See #40430.
+const PORT_AVAILABILITY_CHECK_TIMEOUT = 1000;
+
 async function isPortUsed(port: number): Promise<boolean> {
   const innerIsPortUsed = (host: string) => new Promise<boolean>(resolve => {
-    const conn = net
-        .connect(port, host)
-        .on('error', () => {
-          resolve(false);
-        })
-        .on('connect', () => {
-          conn.end();
-          resolve(true);
-        });
+    const conn = net.connect(port, host);
+    conn.setTimeout(PORT_AVAILABILITY_CHECK_TIMEOUT);
+    conn.on('error', () => resolve(false));
+    conn.on('timeout', () => {
+      conn.destroy();
+      resolve(false);
+    });
+    conn.on('connect', () => {
+      conn.end();
+      resolve(true);
+    });
   });
   return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
 }
