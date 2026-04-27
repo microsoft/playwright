@@ -157,6 +157,11 @@ export type PageEventMap = {
 
 const navigationMarkSymbol = Symbol('navigationMark');
 
+export type PageError = {
+  error: Error,
+  location: types.ConsoleMessageLocation,
+};
+
 export class Page extends SdkObject<PageEventMap> {
   static Events = PageEvent;
 
@@ -165,7 +170,7 @@ export class Page extends SdkObject<PageEventMap> {
   private _initialized: Page | Error | undefined;
   private _initializedPromise = new ManualPromise<Page | Error>();
   private _consoleMessages: ConsoleMessage[] = [];
-  private _pageErrors: Error[] = [];
+  private _pageErrors: PageError[] = [];
   private _crashed = false;
   readonly openScope = new LongStandingScope();
   readonly browserContext: BrowserContext;
@@ -422,7 +427,8 @@ export class Page extends SdkObject<PageEventMap> {
     return marked === -1 ? this._consoleMessages : this._consoleMessages.slice(marked + 1);
   }
 
-  addPageError(pageError: Error) {
+  addPageError(error: Error, location: types.ConsoleMessageLocation) {
+    const pageError: PageError = { error, location };
     this._pageErrors.push(pageError);
     ensureArrayLimit(this._pageErrors, 200); // Avoid unbounded memory growth.
 
@@ -439,9 +445,9 @@ export class Page extends SdkObject<PageEventMap> {
 
   pageErrors(filter?: 'all' | 'since-navigation') {
     if (filter === 'all')
-      return this._pageErrors;
+      return this._pageErrors.map(e => e.error);
     const marked = this._pageErrors.findLastIndex(e => (e as any)[navigationMarkSymbol]);
-    return marked === -1 ? this._pageErrors : this._pageErrors.slice(marked + 1);
+    return (marked === -1 ? this._pageErrors : this._pageErrors.slice(marked + 1)).map(e => e.error);
   }
 
   async reload(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {

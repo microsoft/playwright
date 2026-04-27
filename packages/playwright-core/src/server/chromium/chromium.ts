@@ -42,7 +42,7 @@ import { Browser } from '../browser';
 import { Worker } from '../page';
 import { CRExecutionContext, createHandle } from './crExecutionContext';
 import { ConsoleMessage } from '../console';
-import { toConsoleMessageLocation } from './crProtocolHelper';
+import { stackTraceToLocation } from './crProtocolHelper';
 
 import type { HTTPRequestParams } from '@utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
@@ -180,7 +180,7 @@ export class Chromium extends BrowserType {
         if (!worker.existingExecutionContext)
           return;
         const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
-        const message = new ConsoleMessage(null, worker, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace), event.timestamp);
+        const message = new ConsoleMessage(null, worker, event.type, undefined, args, stackTraceToLocation(event.stackTrace), event.timestamp);
         worker.emit(Worker.Events.Console, message);
       });
       connection.on(ConnectionEvents.Disconnected, () => worker.didClose());

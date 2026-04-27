@@ -38,6 +38,7 @@ import type { Browser, BrowserOptions } from './browser';
 import type { ConsoleMessage } from './console';
 import type { Download } from './download';
 import type * as frames from './frames';
+import type { PageError } from './page';
 import type { Progress } from './progress';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
@@ -68,7 +69,7 @@ export type BrowserContextEventMap = {
   [BrowserContextEvent.Console]: [message: ConsoleMessage];
   [BrowserContextEvent.Close]: [];
   [BrowserContextEvent.Page]: [page: Page];
-  [BrowserContextEvent.PageError]: [error: Error, page: Page];
+  [BrowserContextEvent.PageError]: [pageError: PageError, page: Page];
   [BrowserContextEvent.Request]: [request: network.Request];
   [BrowserContextEvent.Response]: [response: network.Response];
   [BrowserContextEvent.RequestFailed]: [request: network.Request];

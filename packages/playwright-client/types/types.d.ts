@@ -21982,6 +21982,23 @@ export interface WebError {
    */
   error(): Error;
 
+  location(): {
+    /**
+     * URL of the resource.
+     */
+    url: string;
+
+    /**
+     * 0-based line number in the resource.
+     */
+    line: number;
+
+    /**
+     * 0-based column number in the resource.
+     */
+    column: number;
+  };
+
   /**
    * The page that produced this unhandled exception, if any.
    */

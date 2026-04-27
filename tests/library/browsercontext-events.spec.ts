@@ -182,6 +182,33 @@ test('weberror event should work', async ({ page }) => {
   expect(webError.error().stack).toContain('boom');
 });
 
+test('weberror event should include location', async ({ page, server }) => {
+  server.setRoute('/error.js', (req, res) => {
+    res.setHeader('content-type', 'application/javascript');
+    res.end(`
+      function foo() {
+        throw new Error('boom');
+      }
+      foo();
+    `);
+  });
+
+  server.setRoute('/error.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end('<script src="/error.js"></script>');
+  });
+
+  const [webError] = await Promise.all([
+    page.context().waitForEvent('weberror'),
+    page.goto(server.PREFIX + '/error.html'),
+  ]);
+
+  const location = webError.location();
+  expect(location.url).toBe(`${server.PREFIX}/error.js`);
+  expect(location.line).toBe(2);
+  expect(location.column).toBeGreaterThan(0); // column is not consistent across browsers
+});
+
 test('pageload event should work @smoke', async ({ page, server }) => {
   const [eventPage] = await Promise.all([
     page.context().waitForEvent('pageload'),

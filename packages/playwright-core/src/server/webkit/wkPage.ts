@@ -549,7 +549,11 @@ export class WKPage implements PageDelegate {
       error.stack = stack;
       error.name = name;
 
-      this._page.addPageError(error);
+      this._page.addPageError(error, {
+        url: url || '',
+        lineNumber: (lineNumber || 1) - 1,
+        columnNumber: (columnNumber || 1) - 1,
+      });
       return;
     }
 
