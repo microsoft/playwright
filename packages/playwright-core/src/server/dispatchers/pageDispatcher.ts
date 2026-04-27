@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
+import { deserializeURLMatch, resolveGlobToRegexPattern, urlMatches } from '@isomorphic/urlMatch';
 import { Page, Worker } from '../page';
 import { Dispatcher } from './dispatcher';
 import { parseError, serializeError } from '../errors';
@@ -219,6 +219,11 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<void> {
+    const baseURL = this._page.browserContext._options.baseURL;
+    for (const pattern of params.patterns) {
+      if (pattern.glob)
+        resolveGlobToRegexPattern(baseURL, pattern.glob, true);
+    }
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length && !this._routeWebSocketInitScript)
       this._routeWebSocketInitScript = await WebSocketRouteDispatcher.install(progress, this.connection, this._page);

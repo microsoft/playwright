@@ -590,8 +590,6 @@ export class WebSocketRouteHandler {
   constructor(baseURL: string | undefined, url: URLMatch, handler: WebSocketRouteHandlerCallback) {
     this._baseURL = baseURL;
     this.url = url;
-    if (isString(url))
-      resolveGlobToRegexPattern(baseURL, url, true);
     this.handler = handler;
   }
 
