@@ -240,9 +240,8 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   if (testId)
     url += `#?testId=${testId}`;
   url = url.replace('0.0.0.0', 'localhost');
-  if (isCodingAgent())
-    return;
-  await open(url, { wait: true }).catch(() => {});
+  if (!isCodingAgent())
+    await open(url, { wait: true }).catch(() => {});
   await new Promise(() => {});
 }
 
