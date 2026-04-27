@@ -243,8 +243,9 @@ export class Dispatcher {
     });
     worker.on('teardownErrors', (params: ipc.TeardownErrorsPayload) => {
       this._testRun.hasWorkerErrors = true;
+      const timestamp = Date.now();
       for (const error of params.fatalErrors)
-        this._testRun.reporter.onError?.(error);
+        this._testRun.reporter.onError?.({ ...error, timestamp, workerIndex: worker.workerIndex, parallelIndex: worker.parallelIndex });
     });
     worker.on('exit', () => {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};

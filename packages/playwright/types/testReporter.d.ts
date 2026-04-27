@@ -570,6 +570,12 @@ export interface TestError {
   message?: string;
 
   /**
+   * Parallel slot index of the worker that emitted this error. Set for errors that originate from a worker fixture
+   * teardown. See [testInfo.parallelIndex](https://playwright.dev/docs/api/class-testinfo#test-info-parallel-index).
+   */
+  parallelIndex?: number;
+
+  /**
    * Source code snippet with highlighted error.
    */
   snippet?: string;
@@ -580,9 +586,21 @@ export interface TestError {
   stack?: string;
 
   /**
+   * Time when the error was emitted, in milliseconds since the Unix epoch. Set for errors that originate from a worker
+   * fixture teardown.
+   */
+  timestamp?: number;
+
+  /**
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
+
+  /**
+   * Index of the worker that emitted this error. Set for errors that originate from a worker fixture teardown. See
+   * [testInfo.workerIndex](https://playwright.dev/docs/api/class-testinfo#test-info-worker-index).
+   */
+  workerIndex?: number;
 }
 
 /**

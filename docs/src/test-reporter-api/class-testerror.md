@@ -39,3 +39,21 @@ Error location in the source code.
 - type: ?<[string]>
 
 Source code snippet with highlighted error.
+
+## property: TestError.timestamp
+* since: v1.60
+- type: ?<[float]>
+
+Time when the error was emitted, in milliseconds since the Unix epoch. Set for errors that originate from a worker fixture teardown.
+
+## property: TestError.workerIndex
+* since: v1.60
+- type: ?<[int]>
+
+Index of the worker that emitted this error. Set for errors that originate from a worker fixture teardown. See [`property: TestInfo.workerIndex`].
+
+## property: TestError.parallelIndex
+* since: v1.60
+- type: ?<[int]>
+
+Parallel slot index of the worker that emitted this error. Set for errors that originate from a worker fixture teardown. See [`property: TestInfo.parallelIndex`].
