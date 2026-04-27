@@ -2,7 +2,6 @@
 ../../package.ts
 ../utils/socketConnection.ts
 ../cli-client/registry.ts
-../cli-client/utils.ts
 ../backend/
 ../mcp/
 @utils/**

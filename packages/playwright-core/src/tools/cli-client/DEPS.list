@@ -7,7 +7,7 @@
 ./output.ts
 ./session.ts
 ./registry.ts
-./utils.ts
+@utils/env.ts
 
 [output.ts]
 "strict"

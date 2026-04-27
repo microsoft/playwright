@@ -22,11 +22,12 @@ import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
 
+import { isCodingAgent } from '@utils/env';
+
 import { isKnownChannel, listChannelSessions } from './channelSessions';
 import { JsonOutput, TextOutput } from './output';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session } from './session';
-import { isCodingAgent } from './utils';
 import { libPath } from '../../package';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
