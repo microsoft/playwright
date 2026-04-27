@@ -18,7 +18,7 @@ import { contextTest as it, expect } from '../config/browserTest';
 import { iso } from '../../packages/playwright-core/lib/coreBundle';
 import type { Page, Frame, Locator, FrameLocator } from 'playwright-core';
 
-const { asLocator, asLocators, asLocatorDescription, locatorOrSelectorAsSelector: parseLocator } = iso;
+const { asLocator, asLocators, asLocatorDescription, locatorOrSelectorAsSelector: parseLocator, unsafeLocatorOrSelectorAsSelector: unsafeParseLocator } = iso;
 
 it.skip(({ mode }) => mode !== 'default');
 
@@ -685,4 +685,25 @@ it('asLocatorDescription invalid input', async () => {
   expect.soft(asLocatorDescription('javascript', `body >> internal:describe=12`)).toBe(`locator('body')`);
   expect.soft(asLocatorDescription('javascript', `following-sibling::*[1]`)).toBe(`following-sibling::*[1]`);
   expect.soft(asLocatorDescription('javascript', `body >> internal:describe="desc" >> div`)).toBe(`locator('body').locator('div')`);
+});
+
+it('parseLocator returns empty string for malformed input (regression for #40427)', async () => {
+  for (const lang of ['javascript', 'python', 'java', 'csharp', 'jsonl'] as const) {
+    for (const input of ['()', '(', '((((', '[level=css=div=foo', 'in((((ternal', '[[[[[']) {
+      expect.soft(parseLocator(lang, input, 'data-testid'), `${lang}: ${JSON.stringify(input)}`).toBe('');
+      expect.soft(unsafeParseLocator(lang, input, 'data-testid'), `unsafe ${lang}: ${JSON.stringify(input)}`).toBe('');
+    }
+  }
+  for (const { lang, input } of [
+    { lang: 'javascript' as const, input: `nth("x"1)` },
+    { lang: 'java' as const,       input: `nth("x"1)` },
+    { lang: 'csharp' as const,     input: `Nth("x"1)` },
+  ]) {
+    expect.soft(parseLocator(lang, input, 'data-testid'), `${lang}: ${input}`).toBe('');
+    expect.soft(unsafeParseLocator(lang, input, 'data-testid'), `unsafe ${lang}: ${input}`).toBe('');
+  }
+  for (const input of [`getByText(/[oops/)`, `getByRole('button', { name: /(unclosed/ })`]) {
+    expect.soft(parseLocator('javascript', input, 'data-testid'), input).toBe('');
+    expect.soft(unsafeParseLocator('javascript', input, 'data-testid'), `unsafe ${input}`).toBe('');
+  }
 });

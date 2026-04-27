@@ -233,7 +233,14 @@ export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: s
     return locator;
   } catch (e) {
   }
-  const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
+  let selector: string;
+  let preferredQuote: Quote | undefined;
+  try {
+    ({ selector, preferredQuote } = parseLocator(locator, testIdAttributeName));
+    parseSelector(selector);
+  } catch (e) {
+    return '';
+  }
   const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
   const digest = digestForComparison(language, locator);
   if (locators.some(candidate => digestForComparison(language, candidate) === digest))
