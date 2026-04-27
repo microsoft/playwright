@@ -33,6 +33,7 @@ test('test snapshot tool list', async ({ client }) => {
     'browser_close',
     'browser_navigate_back',
     'browser_navigate',
+    'browser_network_request',
     'browser_network_requests',
     'browser_press_key',
     'browser_resize',

@@ -164,7 +164,8 @@ playwright-cli tab-close [index]        # close a tab
 ### Network
 
 ```bash
-playwright-cli network                  # list network requests since page load
+playwright-cli requests                 # list network requests since page load
+playwright-cli request <num>            # show full details of a single request
 playwright-cli route <pattern> [opts]   # mock network requests
 playwright-cli route-list               # list active routes
 playwright-cli unroute [pattern]        # remove routes

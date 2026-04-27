@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import * as z from 'zod';
+
+import { getExtensionForMimeType, isTextualMimeType } from '@isomorphic/mimeType';
+
 import { defineTool, defineTabTool } from './tool';
 
+import type { Response as ToolResponse } from './response';
 import type * as playwright from '../../..';
 
 const requests = defineTabTool({
@@ -25,11 +31,9 @@ const requests = defineTabTool({
   schema: {
     name: 'browser_network_requests',
     title: 'List network requests',
-    description: 'Returns all network requests since loading the page',
+    description: 'Returns a numbered list of network requests since loading the page. Use browser_network_request with the number to get full details.',
     inputSchema: z.object({
       static: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
-      requestBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
-      requestHeaders: z.boolean().default(false).describe('Whether to include request headers. Defaults to false.'),
       filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
@@ -37,10 +41,11 @@ const requests = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const requests = await tab.requests();
+    const allRequests = await tab.requests();
     const filter = params.filter ? new RegExp(params.filter) : undefined;
-    const text: string[] = [];
-    for (const request of requests) {
+    const lines: string[] = [];
+    for (let i = 0; i < allRequests.length; i++) {
+      const request = allRequests[i];
       if (!params.static && !isFetch(request) && isSuccessfulResponse(request))
         continue;
       if (filter) {
@@ -48,9 +53,44 @@ const requests = defineTabTool({
         if (!filter.test(request.url()))
           continue;
       }
-      text.push(await renderRequest(request, params.requestBody, params.requestHeaders));
+      lines.push(`${i + 1}. ${renderRequestLine(request)}`);
     }
-    await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
+    await response.addResult('Network', lines.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
+  },
+});
+
+const REQUEST_PARTS = ['request-headers', 'request-body', 'response-headers', 'response-body'] as const;
+type RequestPart = typeof REQUEST_PARTS[number];
+
+const request = defineTabTool({
+  capability: 'core',
+
+  schema: {
+    name: 'browser_network_request',
+    title: 'Show network request details',
+    description: 'Returns full details (headers and body) of a single network request, or a single part if `part` is set. Use the number from browser_network_requests.',
+    inputSchema: z.object({
+      index: z.number().int().min(1).describe('1-based index of the request, as printed by browser_network_requests.'),
+      part: z.enum(REQUEST_PARTS).optional().describe('Return only this part of the request. Omit to return full details.'),
+    }),
+    type: 'readOnly',
+  },
+
+  handle: async (tab, params, response) => {
+    const allRequests = await tab.requests();
+    const request = allRequests[params.index - 1];
+    if (!request) {
+      response.addError(`Request #${params.index} not found. Use browser_network_requests to see available indexes.`);
+      return;
+    }
+    if (params.part) {
+      const partText = await renderRequestPart(request, params.part, response);
+      if (partText !== undefined)
+        response.addTextResult(partText);
+      return;
+    }
+    const bodyPath = await saveResponseBody(request, response);
+    response.addTextResult(renderRequestDetails(params.index, request, bodyPath));
   },
 });
 
@@ -80,27 +120,120 @@ export function isFetch(request: playwright.Request): boolean {
   return ['fetch', 'xhr'].includes(request.resourceType());
 }
 
-export async function renderRequest(request: playwright.Request, includeBody = false, includeHeaders = false): Promise<string> {
+export function renderRequestLine(request: playwright.Request): string {
   const response = request.existingResponse();
-
-  const result: string[] = [];
-  result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
+  let line = `[${request.method().toUpperCase()}] ${request.url()}`;
   if (response)
-    result.push(` => [${response.status()}] ${response.statusText()}`);
+    line += ` => [${response.status()}] ${response.statusText()}`;
   else if (request.failure())
-    result.push(` => [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
-  if (includeHeaders) {
-    const headers = request.headers();
-    const headerLines = Object.entries(headers).map(([k, v]) => `    ${k}: ${v}`).join('\n');
-    if (headerLines)
-      result.push(`\n  Request headers:\n${headerLines}`);
+    line += ` => [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`;
+  return line;
+}
+
+function renderRequestDetails(index: number, request: playwright.Request, responseBodyPath: string | undefined): string {
+  const httpResponse = request.existingResponse();
+  const responseHeaders = httpResponse?.headers();
+  const lines: string[] = [];
+  lines.push(`#${index} [${request.method().toUpperCase()}] ${request.url()}`);
+
+  lines.push('');
+  lines.push('  General');
+  if (httpResponse)
+    lines.push(`    status:    [${httpResponse.status()}] ${httpResponse.statusText()}`);
+  else if (request.failure())
+    lines.push(`    status:    [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
+  const duration = computeDurationMs(request);
+  if (duration !== undefined)
+    lines.push(`    duration:  ${duration}ms`);
+  lines.push(`    type:      ${request.resourceType()}`);
+  const contentType = responseHeaders?.['content-type'];
+  if (contentType)
+    lines.push(`    mimeType:  ${contentType.split(';')[0].trim()}`);
+
+  appendHeaderSection(lines, 'Request headers', request.headers());
+
+  const postData = request.postData();
+  if (postData) {
+    lines.push('');
+    lines.push('  Request body');
+    lines.push(`    ${postData}`);
   }
-  if (includeBody) {
-    const postData = request.postData();
-    if (postData)
-      result.push(`\n  Request body: ${postData}`);
+
+  if (responseHeaders)
+    appendHeaderSection(lines, 'Response headers', responseHeaders);
+
+  if (responseBodyPath) {
+    lines.push('');
+    lines.push('  Response body');
+    lines.push(`    ${responseBodyPath}`);
   }
-  return result.join('');
+
+  return lines.join('\n');
+}
+
+function appendHeaderSection(lines: string[], title: string, headers: Record<string, string>): void {
+  const entries = Object.entries(headers);
+  if (!entries.length)
+    return;
+  lines.push('');
+  lines.push(`  ${title}`);
+  for (const [k, v] of entries)
+    lines.push(`    ${k}: ${v}`);
+}
+
+function computeDurationMs(request: playwright.Request): number | undefined {
+  const timing = request.timing();
+  if (!timing || timing.responseEnd < 0)
+    return undefined;
+  return Math.round(timing.responseEnd);
+}
+
+async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse): Promise<string | undefined> {
+  if (part === 'request-headers')
+    return renderHeaders(request.headers());
+  if (part === 'request-body')
+    return request.postData() ?? undefined;
+  const httpResponse = request.existingResponse();
+  if (!httpResponse)
+    return undefined;
+  if (part === 'response-headers')
+    return renderHeaders(httpResponse.headers());
+  // response-body
+  const contentType = httpResponse.headers()['content-type'];
+  if (isTextualMimeType(contentType ?? '')) {
+    try {
+      return await httpResponse.text();
+    } catch {
+      return undefined;
+    }
+  }
+  return await saveResponseBody(request, response);
+}
+
+function renderHeaders(headers: Record<string, string>): string {
+  return Object.entries(headers).map(([k, v]) => `${k}: ${v}`).join('\n');
+}
+
+async function saveResponseBody(request: playwright.Request, response: ToolResponse): Promise<string | undefined> {
+  const httpResponse = request.existingResponse();
+  if (!httpResponse)
+    return undefined;
+  const status = httpResponse.status();
+  // Status codes that cannot have a response body per RFC 7230.
+  if (status === 204 || status === 304 || (status >= 100 && status < 200))
+    return undefined;
+  let body: Buffer;
+  try {
+    body = await httpResponse.body();
+  } catch {
+    return undefined;
+  }
+  if (!body.length)
+    return undefined;
+  const ext = getExtensionForMimeType(httpResponse.headers()['content-type']);
+  const resolved = await response.resolveClientFile({ prefix: 'response', ext }, 'Response body');
+  await fs.promises.writeFile(resolved.fileName, body);
+  return resolved.relativeName;
 }
 
 const networkStateSet = defineTool({
@@ -127,6 +260,7 @@ const networkStateSet = defineTool({
 
 export default [
   requests,
+  request,
   networkClear,
   networkStateSet,
 ];

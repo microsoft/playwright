@@ -404,7 +404,7 @@ Error: expect(locator).toBeVisible() failed`));
   expect(await client.callTool({
     name: 'browser_network_requests',
   })).toHaveResponse({
-    result: `[GET\] ${server.PREFIX}/missing => [404] Not Found`,
+    result: expect.stringContaining(`[GET] ${server.PREFIX}/missing => [404] Not Found`),
   });
 });
 

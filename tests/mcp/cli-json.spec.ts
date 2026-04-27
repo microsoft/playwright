@@ -179,3 +179,47 @@ test('close-all after open returns closed sessions', async ({ cli, server }) => 
   const { output } = await cli('--json', 'close-all');
   expect(JSON.parse(output)).toEqual({ closed: ['default'] });
 });
+
+test('requests returns numbered list as JSON result', async ({ cli, server }) => {
+  await cli('open', server.PREFIX);
+  await cli('eval', '() => fetch("/hello-world")');
+  const { output } = await cli('--json', 'requests');
+  const parsed = JSON.parse(output);
+  expect(typeof parsed.result).toBe('string');
+  expect(parsed.result).toMatch(new RegExp(String.raw`^\d+\. \[GET\] [^ ]+/hello-world => \[200\] OK$`, 'm'));
+});
+
+test('request and per-part commands return JSON result', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', headers: { 'X-Custom-Header': 'test-value' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
+  `, 'text/html');
+  server.setRoute('/api', (_req, res) => {
+    res.setHeader('X-Custom-Response', 'response-value');
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ name: 'John Doe' }));
+  });
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  const { output: list } = await cli('requests');
+  const num = list.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m)![1];
+
+  console.error(list);
+
+  expect(JSON.parse((await cli('--json', 'request-headers', num)).output).result).toContain('x-custom-header: test-value');
+  expect(JSON.parse((await cli('--json', 'request-body', num)).output)).toEqual({ result: '{"key":"value"}' });
+  expect(JSON.parse((await cli('--json', 'response-headers', num)).output).result).toContain('x-custom-response: response-value');
+  expect(JSON.parse((await cli('--json', 'response-body', num)).output)).toEqual({ result: '{"name":"John Doe"}' });
+
+  const detail = JSON.parse((await cli('--json', 'request', num)).output);
+  expect(detail.result).toContain(`#${num} [POST] ${server.PREFIX}/api`);
+  expect(detail.result).toContain('Response body');
+});
+
+test('request with out-of-range index returns JSON error', async ({ cli, server }) => {
+  await cli('open', server.PREFIX);
+  const { output } = await cli('--json', 'request', '999');
+  const parsed = JSON.parse(output);
+  expect(parsed.isError).toBe(true);
+  expect(parsed.error).toContain('Request #999 not found');
+});
