@@ -1680,7 +1680,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     });
 
     test.describe('labels', () => {
-      test('should show labels in the test row', async ({ runInlineTest, showReport, page }) => {
+      test('should show labels in the test row', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40368' } }, async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({
           'playwright.config.js': `
             module.exports = {
@@ -1694,8 +1694,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           `,
           'a.test.js': `
             const { expect, test } = require('@playwright/test');
-            test('@smoke @passed passed', async ({}) => {
-              expect(1).toBe(1);
+            test.describe('@smoke tests', () => {
+              test('@smoke @passed passed', async ({}) => {
+                expect(1).toBe(1);
+              });
             });
           `,
           'b.test.js': `
@@ -1752,7 +1754,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           'regression',
           'flaky',
         ]);
-        await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
+        await expect(page.locator('.test-file-test', { has: page.getByText('@smoke tests › @smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
           'smoke',
           'passed',
@@ -2618,26 +2620,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.label')).toHaveText(['firefox', 'Monitoring', 'call', 'call-details', 'e2e', 'regression']);
       });
 
-      test('should not show duplicate labels when tag appears in both describe and test title', async ({ runInlineTest, showReport, page }) => {
-        // Regression test for https://github.com/microsoft/playwright/issues/40368
-        const result = await runInlineTest({
-          'a.test.js': `
-            const { test } = require('@playwright/test');
-            test.describe('@saas tests', () => {
-              test('@saas create workflow', () => {});
-            });
-          `,
-        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-
-        expect(result.exitCode).toBe(0);
-        expect(result.passed).toBe(1);
-
-        await showReport();
-
-        // @saas is in both the describe title and the test title — should appear only once as a label
-        await expect(page.locator('.test-file-test .label')).toHaveCount(1);
-        await expect(page.locator('.test-file-test .label')).toHaveText(['saas']);
-      });
     });
 
     test('should list tests in the right order', async ({ runInlineTest, showReport, page }) => {
