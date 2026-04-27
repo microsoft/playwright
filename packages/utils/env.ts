@@ -56,3 +56,15 @@ export function isLikelyNpxGlobal() {
 export function setPlaywrightTestProcessEnv() {
   return process.env['PLAYWRIGHT_TEST'] = '1';
 }
+
+export function guessClientName(): string {
+  if (process.env.CLAUDECODE)
+    return 'Claude Code';
+  if (process.env.COPILOT_CLI)
+    return 'GitHub Copilot';
+  return 'playwright-cli';
+}
+
+export function isCodingAgent(): boolean {
+  return !!process.env.CLAUDECODE || !!process.env.COPILOT_CLI;
+}
