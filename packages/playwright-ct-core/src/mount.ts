@@ -27,8 +27,8 @@ import type { Page as PageImpl } from 'playwright-core/lib/client/page';
 let boundCallbacksForMount: Function[] = [];
 
 interface MountResult extends Locator {
-  unmount(locator: Locator): Promise<void>;
-  update(options: Omit<MountOptions, 'hooksConfig'> | string | JsxComponent): Promise<void>;
+  unmount: () => Promise<void>;
+  update: (options: ObjectComponentOptions | JsxComponent) => Promise<void>;
 }
 
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
