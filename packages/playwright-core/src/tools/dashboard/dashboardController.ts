@@ -110,7 +110,7 @@ export class DashboardConnection implements Transport {
   private _attachedPage: AttachedPage | undefined;
   private _onclose: () => void;
   private _onconnected?: () => void;
-  private _onAnnotationSubmit?: (base64Png: string | undefined, annotations: AnnotationData[]) => void;
+  private _onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void;
   private _serverRegistryDispose?: () => void;
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
@@ -121,7 +121,7 @@ export class DashboardConnection implements Transport {
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string | undefined, annotations: AnnotationData[]) => void) {
+  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void) {
     this._onclose = onclose;
     this._onconnected = onconnected;
     this._onAnnotationSubmit = onAnnotationSubmit;
@@ -237,8 +237,8 @@ export class DashboardConnection implements Transport {
     this._pushTabs();
   }
 
-  async submitAnnotation(params: { data: string | undefined; annotations: AnnotationData[] }) {
-    this._onAnnotationSubmit?.(params.data, params.annotations);
+  async submitAnnotation(params: { data: string | undefined; ariaSnapshot: string; annotations: AnnotationData[] }) {
+    this._onAnnotationSubmit?.(params.data, params.ariaSnapshot, params.annotations);
   }
 
   async reveal(params: { path: string }) {
@@ -567,13 +567,15 @@ class AttachedPage {
     return { streamId };
   }
 
-  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number }> {
+  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number, ariaSnapshot: string }> {
     const buffer = await this._page.screenshot({ type: 'png' });
     const vp = this._page.viewportSize();
+    const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
     return {
       data: buffer.toString('base64'),
       viewportWidth: vp?.width ?? 0,
       viewportHeight: vp?.height ?? 0,
+      ariaSnapshot,
     };
   }
 

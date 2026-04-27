@@ -53,10 +53,10 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
   let pendingAnnotate = false;
   const waitingSockets = new Set<net.Socket>();
 
-  const submitAnnotation = (base64Png: string | undefined, annotations: AnnotationData[]) => {
+  const submitAnnotation = (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => {
     if (waitingSockets.size === 0)
       return;
-    const payload = JSON.stringify({ png: base64Png, annotations });
+    const payload = JSON.stringify({ png: base64Png, ariaSnapshot, annotations });
     for (const socket of waitingSockets) {
       socket.write(payload);
       socket.end();
@@ -388,16 +388,21 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   const text = Buffer.concat(chunks).toString();
   if (!text)
     return;
-  const { png, annotations } = JSON.parse(text) as { png: string; annotations: AnnotationData[] };
+  const { png, annotations, ariaSnapshot } = JSON.parse(text) as { png: string; annotations: AnnotationData[], ariaSnapshot: string };
   for (const a of annotations) {
     // eslint-disable-next-line no-console
     console.log(`{ x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
   }
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   if (png) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filePath = await saveOutputFile(`annotations-${timestamp}.png`, Buffer.from(png, 'base64'));
     // eslint-disable-next-line no-console
     console.log(`image: ${path.relative(process.cwd(), filePath)}`);
+  }
+  if (ariaSnapshot) {
+    const filePath = await saveOutputFile(`annotations-${timestamp}.yaml`, ariaSnapshot);
+    // eslint-disable-next-line no-console
+    console.log(`snapshot: ${path.relative(process.cwd(), filePath)}`);
   }
 }
 
