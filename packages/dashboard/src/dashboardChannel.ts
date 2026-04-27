@@ -64,8 +64,8 @@ export interface DashboardChannel {
   startRecording(): Promise<void>;
   stopRecording(): Promise<{ streamId: string }>;
   readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
-  screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number }>;
-  submitAnnotation(params: { data: string | undefined; annotations: AnnotationData[] }): Promise<void>;
+  screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number, ariaSnapshot: string }>;
+  submitAnnotation(params: { data: string | undefined; annotations: AnnotationData[], ariaSnapshot: string }): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
