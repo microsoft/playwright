@@ -102,6 +102,23 @@ test.describe(() => {
       page: expect.stringContaining(`Firefox`),
     });
   });
+
+  test('browserName msedge in config file', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1570' } }, async ({ startClient }, testInfo) => {
+    const configPath = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configPath, JSON.stringify({
+      browser: {
+        browserName: 'msedge',
+      },
+      capabilities: ['config'],
+    }, null, 2));
+
+    const { client } = await startClient({ args: ['--config', configPath] });
+    const result = await client.callTool({ name: 'browser_get_config' });
+    expect(result.isError).toBeFalsy();
+    const config = JSON.parse(parseResponse(result).result);
+    expect(config.browser.browserName).toBe('chromium');
+    expect(config.browser.launchOptions.channel).toBe('msedge');
+  });
 });
 
 test('config ignoreDefaultArgs merged with persistent mode defaults', async ({ startClient, mcpBrowser }, testInfo) => {
