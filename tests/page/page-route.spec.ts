@@ -98,6 +98,12 @@ it('should not support ? in glob pattern', async ({ page, server }) => {
   expect(await page.content()).toContain('index123hello');
 });
 
+it('should throw for unbalanced braces in glob pattern', async ({ page }) => {
+  await expect(page.route('http://*/foo{', () => {})).rejects.toThrow(`Invalid glob pattern "http://*/foo{": unmatched '{'`);
+  await expect(page.route('}foo', () => {})).rejects.toThrow(`Invalid glob pattern "}foo": unmatched '}'`);
+  await expect(page.route('**/img.{png,{gif}}', () => {})).rejects.toThrow(`Invalid glob pattern "**/img.{png,{gif}}": nested '{' is not supported`);
+});
+
 it('should work when POST is redirected with 302', async ({ page, server }) => {
   server.setRedirect('/rredirect', '/empty.html');
   await page.goto(server.EMPTY_PAGE);
