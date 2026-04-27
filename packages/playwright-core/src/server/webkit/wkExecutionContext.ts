@@ -106,6 +106,10 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       return;
     await this._session.send('Runtime.releaseObject', { objectId: handle._objectId });
   }
+
+  shouldPrependErrorPrefix(): boolean {
+    return false;
+  }
 }
 
 function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {

@@ -75,6 +75,7 @@ export type InjectedScriptOptions = {
   testIdAttributeName: string;
   stableRafCount: number;
   browserName: string;
+  shouldPrependErrorPrefix?: boolean;
   isUtilityWorld?: boolean;
   customEngines: { name: string, source: string }[];
 };
@@ -84,6 +85,7 @@ export class InjectedScript {
   readonly _evaluator: SelectorEvaluatorImpl;
   private _stableRafCount: number;
   private _browserName: string;
+  private _shouldPrependErrorPrefix: boolean;
   private _isUtilityWorld: boolean;
   readonly onGlobalListenersRemoved: Set<() => void>;
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
@@ -238,6 +240,7 @@ export class InjectedScript {
 
     this._stableRafCount = options.stableRafCount;
     this._browserName = options.browserName;
+    this._shouldPrependErrorPrefix = !!options.shouldPrependErrorPrefix;
     this._isUtilityWorld = !!options.isUtilityWorld;
     setGlobalOptions({ browserNameForWorkarounds: options.browserName });
 
@@ -1276,13 +1279,12 @@ export class InjectedScript {
   }
 
   createStacklessError(message: string): Error {
+    const error = this._shouldPrependErrorPrefix ? new Error('Error: ' + message) : new Error(message);
     if (this._browserName === 'firefox') {
-      const error = new Error('Error: ' + message);
       // Firefox cannot delete the stack, so assign to an empty string.
       error.stack = '';
       return error;
     }
-    const error = new Error(message);
     // Chromium/WebKit should delete the stack instead.
     delete error.stack;
     return error;

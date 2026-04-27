@@ -93,6 +93,10 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       return;
     await releaseObject(this._client, handle._objectId);
   }
+
+  shouldPrependErrorPrefix(): boolean {
+    return false;
+  }
 }
 
 function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {

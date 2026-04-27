@@ -90,6 +90,10 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       objectId: handle._objectId,
     });
   }
+
+  shouldPrependErrorPrefix(): boolean {
+    return true;
+  }
 }
 
 function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
