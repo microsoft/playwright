@@ -206,10 +206,50 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     return !!match && !!match[1];
   };
 
+  const shouldSkipRegexLiteral = () => {
+    const prefix = selector.substring(start, index).trim();
+    if (/^(?:internal:(?:text|label|has-text|has-not-text)|text(?::light)?)\s*=$/.test(prefix))
+      return true;
+    if (/^(?:internal:(?:attr|testid|role)|role)\s*=/.test(prefix))
+      return /(?:^|[\[=])\s*$/.test(prefix);
+    return false;
+  };
+
+  const skipRegexLiteral = () => {
+    let position = index + 1;
+    let inClass = false;
+    while (position < selector.length) {
+      const c = selector[position];
+      if (c === '\\' && position + 1 < selector.length) {
+        position += 2;
+        continue;
+      }
+      if (c === '[') {
+        inClass = true;
+        position++;
+        continue;
+      }
+      if (c === ']' && inClass) {
+        inClass = false;
+        position++;
+        continue;
+      }
+      if (c === '/' && !inClass) {
+        position++;
+        while (position < selector.length && /[a-z]/i.test(selector[position]))
+          position++;
+        return position;
+      }
+      position++;
+    }
+  };
+
   while (index < selector.length) {
     const c = selector[index];
     if (c === '\\' && index + 1 < selector.length) {
       index += 2;
+    } else if (!quote && c === '/' && shouldSkipRegexLiteral()) {
+      index = skipRegexLiteral() ?? index + 1;
     } else if (c === quote) {
       quote = undefined;
       index++;
