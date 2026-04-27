@@ -815,21 +815,28 @@ const consoleList = declareCommand({
 });
 
 const networkRequests = declareCommand({
-  name: 'network',
-  description: 'List all network requests since loading the page',
-  category: 'devtools',
+  name: 'requests',
+  description: 'List all network requests since loading the page. Each request is numbered for use with the `request` command.',
+  category: 'network',
   args: z.object({}),
   options: z.object({
     static: z.boolean().optional().describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
-    ['request-body']: z.boolean().optional().describe('Whether to include request body. Defaults to false.'),
-    ['request-headers']: z.boolean().optional().describe('Whether to include request headers. Defaults to false.'),
-    ['response-body']: z.boolean().optional().describe('Whether to include response body. Defaults to false.'),
-    ['response-headers']: z.boolean().optional().describe('Whether to include response headers. Defaults to false.'),
     filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
     clear: z.boolean().optional().describe('Whether to clear the network list'),
   }),
   toolName: ({ clear }) => clear ? 'browser_network_clear' : 'browser_network_requests',
-  toolParams: ({ static: s, 'request-body': requestBody, 'request-headers': requestHeaders, 'response-body': responseBody, 'response-headers': responseHeaders, filter, clear }) => clear ? ({}) : ({ static: s, requestBody, requestHeaders, responseBody, responseHeaders, filter }),
+  toolParams: ({ static: s, filter, clear }) => clear ? ({}) : ({ static: s, filter }),
+});
+
+const networkRequest = declareCommand({
+  name: 'request',
+  description: 'Show full details (headers, body, response) of a single network request by its number from the `requests` command.',
+  category: 'network',
+  args: z.object({
+    index: numberArg.describe('1-based number of the request as listed by `requests`'),
+  }),
+  toolName: 'browser_network_request',
+  toolParams: ({ index }) => ({ index }),
 });
 
 const tracingStart = declareCommand({
@@ -1094,6 +1101,8 @@ const commandsArray: AnyCommandSchema[] = [
   sessionStorageClear,
 
   // network category
+  networkRequests,
+  networkRequest,
   routeMock,
   routeList,
   unroute,
@@ -1107,7 +1116,6 @@ const commandsArray: AnyCommandSchema[] = [
   installBrowser,
 
   // devtools category
-  networkRequests,
   tracingStart,
   tracingStop,
   videoStart,

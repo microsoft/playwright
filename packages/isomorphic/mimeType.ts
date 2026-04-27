@@ -33,6 +33,21 @@ export function getMimeTypeForPath(path: string): string | null {
   return types.get(extension) || null;
 }
 
+export function getExtensionForMimeType(contentType: string | undefined): string {
+  const subtype = (contentType ?? '').split(';')[0].split('/')[1]?.trim().toLowerCase() ?? '';
+  if (!subtype)
+    return 'bin';
+  // image/svg+xml → xml, application/ld+json → json
+  const tail = subtype.includes('+') ? subtype.split('+').pop()! : subtype;
+  if (tail === 'plain')
+    return 'txt';
+  if (tail === 'javascript' || tail === 'ecmascript')
+    return 'js';
+  if (tail === 'jpeg')
+    return 'jpg';
+  return tail.replace(/[^a-z0-9]/g, '') || 'bin';
+}
+
 const types: Map<string, string> = new Map([
   ['ez', 'application/andrew-inset'],
   ['aw', 'application/applixware'],
