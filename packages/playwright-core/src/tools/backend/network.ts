@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import * as z from 'zod';
 
-import { getExtensionForMimeType } from '@isomorphic/mimeType';
+import { getExtensionForMimeType, isTextualMimeType } from '@isomorphic/mimeType';
 
 import { defineTool, defineTabTool } from './tool';
 
@@ -59,15 +59,19 @@ const requests = defineTabTool({
   },
 });
 
+const REQUEST_PARTS = ['request-headers', 'request-body', 'response-headers', 'response-body'] as const;
+type RequestPart = typeof REQUEST_PARTS[number];
+
 const request = defineTabTool({
   capability: 'core',
 
   schema: {
     name: 'browser_network_request',
     title: 'Show network request details',
-    description: 'Returns full details (headers and body) of a single network request. Use the number from browser_network_requests.',
+    description: 'Returns full details (headers and body) of a single network request, or a single part if `part` is set. Use the number from browser_network_requests.',
     inputSchema: z.object({
       index: z.number().int().min(1).describe('1-based index of the request, as printed by browser_network_requests.'),
+      part: z.enum(REQUEST_PARTS).optional().describe('Return only this part of the request. Omit to return full details.'),
     }),
     type: 'readOnly',
   },
@@ -77,6 +81,12 @@ const request = defineTabTool({
     const request = allRequests[params.index - 1];
     if (!request) {
       response.addError(`Request #${params.index} not found. Use browser_network_requests to see available indexes.`);
+      return;
+    }
+    if (params.part) {
+      const partText = await renderRequestPart(request, params.part, response);
+      if (partText !== undefined)
+        response.addTextResult(partText);
       return;
     }
     const bodyPath = await saveResponseBody(request, response);
@@ -176,6 +186,32 @@ function computeDurationMs(request: playwright.Request): number | undefined {
   if (!timing || timing.responseEnd < 0)
     return undefined;
   return Math.round(timing.responseEnd);
+}
+
+async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse): Promise<string | undefined> {
+  if (part === 'request-headers')
+    return renderHeaders(request.headers());
+  if (part === 'request-body')
+    return request.postData() ?? undefined;
+  const httpResponse = request.existingResponse();
+  if (!httpResponse)
+    return undefined;
+  if (part === 'response-headers')
+    return renderHeaders(httpResponse.headers());
+  // response-body
+  const contentType = httpResponse.headers()['content-type'];
+  if (isTextualMimeType(contentType ?? '')) {
+    try {
+      return await httpResponse.text();
+    } catch {
+      return undefined;
+    }
+  }
+  return await saveResponseBody(request, response);
+}
+
+function renderHeaders(headers: Record<string, string>): string {
+  return Object.entries(headers).map(([k, v]) => `${k}: ${v}`).join('\n');
 }
 
 async function saveResponseBody(request: playwright.Request, response: ToolResponse): Promise<string | undefined> {

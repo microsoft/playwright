@@ -134,6 +134,45 @@ test('request saves binary response body to a file', async ({ cli, server }) => 
   expect(fs.readFileSync(bodyPath)).toEqual(pngBytes);
 });
 
+test('per-part commands extract individual parts', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', headers: { 'X-Custom-Header': 'test-value' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
+  `, 'text/html');
+  server.setRoute('/api', (_req, res) => {
+    res.setHeader('X-Custom-Response', 'response-value');
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ name: 'John Doe' }));
+  });
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  const { output: list } = await cli('requests');
+  const match = list.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m);
+  expect(match).not.toBeNull();
+  const num = match![1];
+
+  expect((await cli('request-headers', num)).output).toContain('x-custom-header: test-value');
+  expect((await cli('request-body', num)).output).toContain('{"key":"value"}');
+  expect((await cli('response-headers', num)).output).toContain('x-custom-response: response-value');
+  expect((await cli('response-body', num)).output).toContain('{"name":"John Doe"}');
+});
+
+test('--raw response-body returns just the body', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api')">Click me</button>
+  `, 'text/html');
+  server.setContent('/api', JSON.stringify({ name: 'John Doe' }), 'application/json');
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  const { output: list } = await cli('requests');
+  const match = list.match(/^(\d+)\. \[GET\] [^ ]+\/api =>/m);
+  expect(match).not.toBeNull();
+
+  const { output } = await cli('--raw', 'response-body', match![1]);
+  expect(output.trim()).toBe('{"name":"John Doe"}');
+});
+
 test('request with out-of-range index', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   const { output } = await cli('request', '999');

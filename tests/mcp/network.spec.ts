@@ -217,6 +217,94 @@ test('browser_network_request reports failed requests', async ({ client, server 
   expect(detail!.result).toContain('status:    [404]');
 });
 
+test('browser_network_request returns individual parts', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', headers: { 'X-Custom-Header': 'test-value' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
+  `, 'text/html');
+  server.setRoute('/api', (_req, res) => {
+    res.setHeader('X-Custom-Response', 'response-value');
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ name: 'John Doe' }));
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Click me button', target: 'e2' },
+  });
+
+  const list = parseResponse(await client.callTool({
+    name: 'browser_network_requests',
+  }));
+  const match = list!.result!.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m);
+  expect(match).not.toBeNull();
+  const index = Number(match![1]);
+
+  const requestHeaders = parseResponse(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index, part: 'request-headers' },
+  }));
+  expect(requestHeaders!.result).toContain('x-custom-header: test-value');
+  expect(requestHeaders!.result).not.toContain('General');
+
+  const requestBody = parseResponse(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index, part: 'request-body' },
+  }));
+  expect(requestBody!.result).toBe('{"key":"value"}');
+
+  const responseHeaders = parseResponse(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index, part: 'response-headers' },
+  }));
+  expect(responseHeaders!.result).toContain('x-custom-response: response-value');
+
+  const responseBody = parseResponse(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index, part: 'response-body' },
+  }));
+  expect(responseBody!.result).toBe('{"name":"John Doe"}');
+});
+
+test('browser_network_request response-body part saves binary to a file', async ({ client, server }) => {
+  const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  server.setContent('/', `
+    <button onclick="fetch('/image.png')">Click me</button>
+  `, 'text/html');
+  server.setRoute('/image.png', (_req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.end(pngBytes);
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Click me button', target: 'e2' },
+  });
+
+  const list = parseResponse(await client.callTool({
+    name: 'browser_network_requests',
+    arguments: { static: true },
+  }));
+  const match = list!.result!.match(/^(\d+)\. \[GET\] [^ ]+\/image\.png =>/m);
+  expect(match).not.toBeNull();
+
+  const detail = parseResponse(await client.callTool({
+    name: 'browser_network_request',
+    arguments: { index: Number(match![1]), part: 'response-body' },
+  }));
+  const bodyPath = path.resolve(test.info().outputPath(), detail!.result!.trim());
+  expect(fs.readFileSync(bodyPath)).toEqual(pngBytes);
+});
+
 test('browser_network_request rejects out-of-range index', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_navigate',
