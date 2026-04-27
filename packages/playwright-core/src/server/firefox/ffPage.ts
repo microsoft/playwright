@@ -331,8 +331,15 @@ export class FFPage implements PageDelegate {
   }
 
   async updateEmulatedViewportSize(): Promise<void> {
-    const viewportSize = this._page.emulatedSize()?.viewport ?? null;
-    await this._session.send('Page.setViewportSize', { viewportSize });
+    const emulatedSize = this._page.emulatedSize();
+    const viewportSize = emulatedSize?.viewport ?? null;
+    const screenSize = emulatedSize?.screen ?? null;
+    const hasExplicitScreen = screenSize && viewportSize &&
+        (screenSize.width !== viewportSize.width || screenSize.height !== viewportSize.height);
+    await this._session.send('Page.setViewportSize', {
+      viewportSize,
+      screenSize: hasExplicitScreen ? screenSize : undefined,
+    });
   }
 
   async bringToFront(): Promise<void> {

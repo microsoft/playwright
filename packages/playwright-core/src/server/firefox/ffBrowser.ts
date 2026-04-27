@@ -357,9 +357,13 @@ export class FFBrowserContext extends BrowserContext {
   override async doUpdateDefaultViewport() {
     if (!this._options.viewport)
       return;
+    const screen = this._options.screen;
+    const defaultViewport = this._options.viewport;
     const viewport = {
-      viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
+      viewportSize: { width: defaultViewport.width, height: defaultViewport.height },
       deviceScaleFactor: this._options.deviceScaleFactor || 1,
+      screenSize: screen && (screen.width !== defaultViewport.width || screen.height !== defaultViewport.height)
+          ? { width: screen.width, height: screen.height } : undefined,
     };
     await this._browser.session.send('Browser.setDefaultViewport', { browserContextId: this._browserContextId, viewport });
   }
