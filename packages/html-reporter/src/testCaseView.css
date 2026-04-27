@@ -15,7 +15,6 @@
 */
 
 .test-case-column {
-  border-radius: 6px;
   margin-bottom: 24px;
 }
 
@@ -67,7 +66,6 @@
 
 @media only screen and (max-width: 600px) {
   .test-case-column {
-    border-radius: 0 !important;
     margin: 0 !important;
   }
 }

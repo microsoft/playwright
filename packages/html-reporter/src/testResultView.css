@@ -28,7 +28,6 @@
 .test-result video,
 .test-result img.screenshot {
   flex: none;
-  box-shadow: var(--box-shadow-thick);
   margin: 24px auto;
   min-width: 200px;
   max-width: 80%;
@@ -40,7 +39,6 @@
 }
 
 .test-result-counter {
-  border-radius: 12px;
   color: var(--color-canvas-default);
   padding: 2px 8px;
   line-height: normal;
@@ -76,7 +74,6 @@
 .step-attachment-link {
   display: flex;
   flex: none;
-  border-radius: 4px;
   padding: 4px;
 }
 

@@ -36,7 +36,6 @@
 
 .chip-header.expanded-false {
   border: 1px solid var(--color-border-default);
-  border-radius: 6px;
 }
 
 .chip-header.expanded-false,
@@ -63,13 +62,11 @@
 
 @media only screen and (max-width: 600px) {
   .chip-header {
-    border-radius: 0;
     border-right: none;
     border-left: none;
   }
 
   .chip-body {
-    border-radius: 0;
     border-right: none;
     border-left: none;
     padding: 8px;

@@ -22,7 +22,6 @@
   flex: none;
   padding: 0;
   background-color: var(--color-canvas-subtle);
-  border-radius: 6px;
   line-height: initial;
   margin-bottom: 6px;
 }

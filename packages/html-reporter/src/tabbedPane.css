@@ -32,7 +32,6 @@
   color: var(--color-fg-default);
   height: 48px;
   min-width: 70px;
-  box-shadow: inset 0 -1px 0 var(--color-border-muted) !important;
 }
 
 .tabbed-pane-tab-strip:focus {
@@ -61,7 +60,6 @@
   display: inline-block;
   height: 30px;
   padding: 0 8px;
-  border-radius: 6px;
 }
 
 .tabbed-pane-tab-label:hover {

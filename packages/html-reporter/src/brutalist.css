@@ -1,0 +1,209 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+/* JetBrains Mono — SIL OFL-1.1 (see assets/fonts/OFL.txt) */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/JetBrainsMono-Italic.woff2') format('woff2');
+}
+
+/* Stark light/dark palettes — flatten Primer to brutalist B&W. */
+.light-mode, :root:not(.dark-mode) {
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #ffffff;
+  --color-canvas-inset: #ffffff;
+  --color-fg-default: #000000;
+  --color-fg-muted: #000000;
+  --color-fg-subtle: #000000;
+  --color-fg-on-emphasis: #ffffff;
+  --color-border-default: #000000;
+  --color-border-muted: #000000;
+  --color-neutral-muted: #ffffff;
+  --color-neutral-subtle: #ffffff;
+  --color-control-transparent-bg-hover: #000000;
+
+  --color-btn-bg: #ffffff;
+  --color-btn-text: #000000;
+  --color-btn-border: #000000;
+  --color-btn-hover-bg: #000000;
+  --color-btn-hover-border: #000000;
+  --color-btn-shadow: none;
+  --color-btn-inset-shadow: none;
+  --color-btn-focus-shadow: none;
+  --color-btn-shadow-active: none;
+  --color-btn-shadow-input-focus: none;
+
+  --color-success-fg: #007a00;
+  --color-success-emphasis: #007a00;
+  --color-danger-fg: #cc0000;
+  --color-danger-emphasis: #cc0000;
+  --color-attention-fg: #b88600;
+  --color-checks-step-warning-text: #b88600;
+
+  --color-primer-shadow-inset: none;
+  --color-shadow-small: none;
+  --color-shadow-medium: none;
+  --color-shadow-large: none;
+  --color-shadow-extra-large: none;
+  --color-overlay-shadow: none;
+  --box-shadow: none;
+  --box-shadow-thick: none;
+
+  --brutalist-accent: #ff2bd6;
+  --brutalist-accent-fg: #000000;
+}
+
+.dark-mode {
+  --color-canvas-default: #000000;
+  --color-canvas-subtle: #000000;
+  --color-canvas-inset: #000000;
+  --color-fg-default: #ffffff;
+  --color-fg-muted: #ffffff;
+  --color-fg-subtle: #ffffff;
+  --color-fg-on-emphasis: #000000;
+  --color-border-default: #ffffff;
+  --color-border-muted: #ffffff;
+  --color-neutral-muted: #000000;
+  --color-neutral-subtle: #000000;
+  --color-control-transparent-bg-hover: #ffffff;
+
+  --color-btn-bg: #000000;
+  --color-btn-text: #ffffff;
+  --color-btn-border: #ffffff;
+  --color-btn-hover-bg: #ffffff;
+  --color-btn-hover-border: #ffffff;
+  --color-btn-shadow: none;
+  --color-btn-inset-shadow: none;
+  --color-btn-focus-shadow: none;
+  --color-btn-shadow-active: none;
+
+  --color-success-fg: #00ff7a;
+  --color-success-emphasis: #00ff7a;
+  --color-danger-fg: #ff4d4d;
+  --color-danger-emphasis: #ff4d4d;
+  --color-attention-fg: #ffd000;
+  --color-checks-step-warning-text: #ffd000;
+
+  --color-primer-shadow-inset: none;
+  --color-shadow-small: none;
+  --color-shadow-medium: none;
+  --color-shadow-large: none;
+  --color-shadow-extra-large: none;
+  --color-overlay-shadow: none;
+  --box-shadow: none;
+  --box-shadow-thick: none;
+
+  --brutalist-accent: #caff00;
+  --brutalist-accent-fg: #000000;
+}
+
+/* Hover inverts background/foreground for buttons + subnav. */
+.light-mode .button:not(:disabled):hover,
+:root:not(.dark-mode) .button:not(:disabled):hover {
+  color: #ffffff;
+}
+.dark-mode .button:not(:disabled):hover {
+  color: #000000;
+}
+
+.subnav-item[aria-selected="true"] {
+  color: var(--color-fg-on-emphasis) !important;
+}
+
+/* Brutalist global rules. */
+#root,
+#root * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+#root {
+  background: var(--color-canvas-default);
+  color: var(--color-fg-default);
+}
+
+/* Hard 1-2px borders over Primer's softer tones. */
+.subnav-item,
+.form-control,
+.form-select,
+.button,
+dialog {
+  border: 1px solid var(--color-fg-default) !important;
+}
+
+/* UPPERCASE typography on chrome (headings, tabs, buttons, labels). */
+.subnav-item,
+.subnav-item-label,
+.button,
+.tab-element,
+.tabbed-pane-tab-title,
+.chip-header,
+h1, h2, h3, h4, h5, h6,
+.label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+/* Plain rectangular counters (no border — the parent subnav-item already has one). */
+.counter {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--color-fg-default) !important;
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+/* Status colors stay high-contrast and override muted/subtle Primer text. */
+.color-icon-success { color: var(--color-success-fg) !important; }
+.color-text-danger { color: var(--color-danger-fg) !important; }
+.color-text-warning { color: var(--color-checks-step-warning-text) !important; }
+
+/* Report title: bold uppercase mono, no background block. */
+.header-title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-fg-default);
+}
+
+/* Selected tab gets a hard inverted block, not a soft underline. */
+.tab-element[data-selected="true"],
+.tabbed-pane-tab[aria-selected="true"] {
+  background: var(--color-fg-default) !important;
+  color: var(--color-fg-on-emphasis) !important;
+}

@@ -164,9 +164,7 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   background-repeat: no-repeat;
   background-position: right 8px center;
   border: 1px solid var(--color-border-default);
-  border-radius: 6px;
   outline: none;
-  box-shadow: var(--color-primer-shadow-inset);
 }
 
 .input-contrast {
@@ -219,16 +217,6 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   background: var(--color-control-transparent-bg-hover);
 }
 
-.subnav-item:first-child {
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
-}
-
-.subnav-item:last-child {
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
-}
-
 .subnav-item + .subnav-item {
   margin-left: -1px;
 }
@@ -252,7 +240,6 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   text-align: center;
   background-color: var(--color-neutral-muted);
   border: 1px solid transparent;
-  border-radius: 2em;
 }
 
 .color-icon-success {
@@ -292,7 +279,6 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
 }
 
 .button:not(:disabled):hover {
@@ -307,8 +293,7 @@ input[type="checkbox"] {
 
 dialog {
   background-color: var(--color-canvas-subtle);
-  border: 1px solid var(--color-border-default);  
-  border-radius: 6px;
+  border: 1px solid var(--color-border-default);
   padding: 6px;
 }
 
@@ -321,10 +306,6 @@ dialog {
   color: var(--color-fg-default) !important;
 }
 @media only screen and (max-width: 600px) {
-  .subnav-item, .form-control {
-    border-radius: 0 !important;
-  }
-
   .subnav-item {
     border: none;
   }
