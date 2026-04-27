@@ -309,8 +309,8 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
       cdpTimeout: cliOptions.cdpTimeout,
-      initPage: cliOptions.initPage,
-      initScript: cliOptions.initScript,
+      initPage: cliOptions.initPage?.map(p => path.resolve(p)),
+      initScript: cliOptions.initScript?.map(p => path.resolve(p)),
       remoteEndpoint: cliOptions.endpoint,
     },
     extension: cliOptions.extension,
@@ -397,15 +397,29 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   if (!configFile)
     return {};
 
-  if (configFile.endsWith('.ini'))
-    return configFromIniFile(configFile);
-
-  try {
-    const data = await fs.promises.readFile(configFile, 'utf8');
-    return JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
-  } catch {
-    return configFromIniFile(configFile);
+  let config: Config;
+  if (configFile.endsWith('.ini')) {
+    config = configFromIniFile(configFile);
+  } else {
+    try {
+      const data = await fs.promises.readFile(configFile, 'utf8');
+      config = JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
+    } catch {
+      config = configFromIniFile(configFile);
+    }
   }
+  return resolveConfigPaths(config, path.dirname(path.resolve(configFile)));
+}
+
+// initPage/initScript paths inside a config file are resolved against the
+// config file's directory so they keep working when the CLI is invoked from
+// a different cwd.
+function resolveConfigPaths(config: Config, baseDir: string): Config {
+  if (config.browser?.initPage)
+    config.browser.initPage = config.browser.initPage.map(p => path.resolve(baseDir, p));
+  if (config.browser?.initScript)
+    config.browser.initScript = config.browser.initScript.map(p => path.resolve(baseDir, p));
+  return config;
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
