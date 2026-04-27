@@ -187,12 +187,17 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
     if (browser.launchOptions.channel === undefined)
       browser.launchOptions.channel = 'chrome';
   } else if (browserName !== 'chromium' && browserName !== 'firefox' && browserName !== 'webkit') {
-    const channel = browserName as string;
-    if (!isChromiumChannelName(channel))
-      throw new Error(`Unsupported browser "${channel}". Use one of: chromium, firefox, webkit, ${chromiumChannelNames().join(', ')}.`);
-    browserName = 'chromium';
-    browser.browserName = 'chromium';
-    browser.launchOptions.channel = browser.launchOptions.channel ?? channel;
+    const value = browserName as string;
+    const lines = [
+      `Unsupported "browser.browserName": "${value}". It must be one of: "chromium", "firefox", "webkit".`,
+    ];
+    if (isChromiumChannelName(value)) {
+      lines.push(`To use "${value}", set it as the launch channel instead:`);
+      lines.push(JSON.stringify({ browser: { browserName: 'chromium', launchOptions: { channel: value } } }, null, 2));
+    } else {
+      lines.push(`Supported Chromium channels (set via "browser.launchOptions.channel"): ${chromiumChannelNames().join(', ')}.`);
+    }
+    throw new Error(lines.join('\n'));
   }
 
   if (browser.browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {

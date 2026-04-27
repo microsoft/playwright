@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
-import { test, expect, parseResponse } from './fixtures';
+import { test, expect, mcpServerPath, parseResponse } from './fixtures';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
@@ -103,21 +104,19 @@ test.describe(() => {
     });
   });
 
-  test('browserName msedge in config file', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1570' } }, async ({ startClient }, testInfo) => {
+  test('browserName msedge in config file', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1570' } }, async ({}, testInfo) => {
     const configPath = testInfo.outputPath('config.json');
     await fs.promises.writeFile(configPath, JSON.stringify({
       browser: {
         browserName: 'msedge',
       },
-      capabilities: ['config'],
     }, null, 2));
 
-    const { client } = await startClient({ args: ['--config', configPath] });
-    const result = await client.callTool({ name: 'browser_get_config' });
-    expect(result.isError).toBeFalsy();
-    const config = JSON.parse(parseResponse(result).result);
-    expect(config.browser.browserName).toBe('chromium');
-    expect(config.browser.launchOptions.channel).toBe('msedge');
+    const stderr = await runMCP(['--config', configPath]);
+    expect(stderr).toContain(`Unsupported "browser.browserName": "msedge"`);
+    expect(stderr).toContain(`It must be one of: "chromium", "firefox", "webkit"`);
+    expect(stderr).toContain(`To use "msedge", set it as the launch channel instead:`);
+    expect(stderr).toContain(`"channel": "msedge"`);
   });
 });
 
@@ -190,3 +189,13 @@ test('browser_get_config returns merged config from file, env and cli', async ({
   // From CLI arg (--isolated).
   expect(config.browser.isolated).toBe(true);
 });
+
+async function runMCP(args: string[]): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
+    const child = spawn('node', [...mcpServerPath, ...args], { stdio: ['ignore', 'ignore', 'pipe'] });
+    let stderr = '';
+    child.stderr.on('data', chunk => { stderr += chunk.toString(); });
+    child.on('error', reject);
+    child.on('close', () => resolve(stderr));
+  });
+}
