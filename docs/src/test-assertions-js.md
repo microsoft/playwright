@@ -270,7 +270,19 @@ await expect(async () => {
 });
 ```
 
-Note that by default `toPass` has timeout 0 and does not respect custom [expect timeout](./test-timeouts.md#expect-timeout).
+Note that by default `toPass` has timeout 0 and does not respect custom [expect timeout](./test-timeouts.md#expect-timeout). Instead, you can configure a global timeout for expect.toPass() using the (config)[./test-api/class-testconfig.md#property-testconfigexpect]:
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  expect: {
+    toPass: {
+			timeout: 10_000
+		}
+  },
+});
+```
 
 ## Add custom matchers using expect.extend
 
