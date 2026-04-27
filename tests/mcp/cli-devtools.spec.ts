@@ -112,6 +112,52 @@ test('network --request-headers', async ({ cli, server }) => {
   }
 });
 
+test('network --response-body', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api')">Click me</button>
+  `, 'text/html');
+  server.setContent('/api', JSON.stringify({ name: 'John Doe' }), 'application/json');
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  {
+    const { output } = await cli('network');
+    expect(output).toContain(`[GET] ${server.PREFIX}/api => [200] OK`);
+    expect(output).not.toContain('Response body:');
+  }
+
+  {
+    const { output } = await cli('network', '--response-body');
+    expect(output).toContain(`[GET] ${server.PREFIX}/api => [200] OK`);
+    expect(output).toContain('Response body: {"name":"John Doe"}');
+  }
+});
+
+test('network --response-headers', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api')">Click me</button>
+  `, 'text/html');
+  server.setRoute('/api', (_req, res) => {
+    res.setHeader('X-Custom-Response', 'response-value');
+    res.setHeader('Content-Type', 'application/json');
+    res.end('{}');
+  });
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  {
+    const { output } = await cli('network');
+    expect(output).not.toContain('Response headers:');
+  }
+
+  {
+    const { output } = await cli('network', '--response-headers');
+    expect(output).toContain(`[GET] ${server.PREFIX}/api => [200] OK`);
+    expect(output).toContain('Response headers:');
+    expect(output).toContain('x-custom-response: response-value');
+  }
+});
+
 test('network --clear', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   await cli('eval', '() => fetch("/hello-world")');

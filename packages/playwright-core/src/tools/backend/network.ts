@@ -15,6 +15,9 @@
  */
 
 import * as z from 'zod';
+
+import { isTextualMimeType } from '@isomorphic/mimeType';
+
 import { defineTool, defineTabTool } from './tool';
 
 import type * as playwright from '../../..';
@@ -30,6 +33,8 @@ const requests = defineTabTool({
       static: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
       requestBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
       requestHeaders: z.boolean().default(false).describe('Whether to include request headers. Defaults to false.'),
+      responseBody: z.boolean().default(false).describe('Whether to include response body. Defaults to false.'),
+      responseHeaders: z.boolean().default(false).describe('Whether to include response headers. Defaults to false.'),
       filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
@@ -48,7 +53,7 @@ const requests = defineTabTool({
         if (!filter.test(request.url()))
           continue;
       }
-      text.push(await renderRequest(request, params.requestBody, params.requestHeaders));
+      text.push(await renderRequest(request, params.requestBody, params.requestHeaders, params.responseBody, params.responseHeaders));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -80,7 +85,7 @@ export function isFetch(request: playwright.Request): boolean {
   return ['fetch', 'xhr'].includes(request.resourceType());
 }
 
-export async function renderRequest(request: playwright.Request, includeBody = false, includeHeaders = false): Promise<string> {
+export async function renderRequest(request: playwright.Request, includeRequestBody = false, includeRequestHeaders = false, includeResponseBody = false, includeResponseHeaders = false): Promise<string> {
   const response = request.existingResponse();
 
   const result: string[] = [];
@@ -89,16 +94,35 @@ export async function renderRequest(request: playwright.Request, includeBody = f
     result.push(` => [${response.status()}] ${response.statusText()}`);
   else if (request.failure())
     result.push(` => [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
-  if (includeHeaders) {
+  if (includeRequestHeaders) {
     const headers = request.headers();
     const headerLines = Object.entries(headers).map(([k, v]) => `    ${k}: ${v}`).join('\n');
     if (headerLines)
       result.push(`\n  Request headers:\n${headerLines}`);
   }
-  if (includeBody) {
+  if (includeRequestBody) {
     const postData = request.postData();
     if (postData)
       result.push(`\n  Request body: ${postData}`);
+  }
+  if (includeResponseHeaders && response) {
+    const headers = response.headers();
+    const headerLines = Object.entries(headers).map(([k, v]) => `    ${k}: ${v}`).join('\n');
+    if (headerLines)
+      result.push(`\n  Response headers:\n${headerLines}`);
+  }
+  if (includeResponseBody && response) {
+    const contentType = response.headers()['content-type'] || '';
+    if (isTextualMimeType(contentType)) {
+      try {
+        const body = await response.text();
+        if (body)
+          result.push(`\n  Response body: ${body}`);
+      } catch {
+      }
+    } else {
+      result.push(`\n  Response body: <binary data${contentType ? ` (${contentType.split(';')[0].trim()})` : ''}>`);
+    }
   }
   return result.join('');
 }

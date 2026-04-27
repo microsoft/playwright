@@ -823,11 +823,13 @@ const networkRequests = declareCommand({
     static: z.boolean().optional().describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
     ['request-body']: z.boolean().optional().describe('Whether to include request body. Defaults to false.'),
     ['request-headers']: z.boolean().optional().describe('Whether to include request headers. Defaults to false.'),
+    ['response-body']: z.boolean().optional().describe('Whether to include response body. Defaults to false.'),
+    ['response-headers']: z.boolean().optional().describe('Whether to include response headers. Defaults to false.'),
     filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
     clear: z.boolean().optional().describe('Whether to clear the network list'),
   }),
   toolName: ({ clear }) => clear ? 'browser_network_clear' : 'browser_network_requests',
-  toolParams: ({ static: s, 'request-body': requestBody, 'request-headers': requestHeaders, filter, clear }) => clear ? ({}) : ({ static: s, requestBody, requestHeaders, filter }),
+  toolParams: ({ static: s, 'request-body': requestBody, 'request-headers': requestHeaders, 'response-body': responseBody, 'response-headers': responseHeaders, filter, clear }) => clear ? ({}) : ({ static: s, requestBody, requestHeaders, responseBody, responseHeaders, filter }),
 });
 
 const tracingStart = declareCommand({
