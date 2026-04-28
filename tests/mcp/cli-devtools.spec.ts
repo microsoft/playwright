@@ -51,12 +51,14 @@ test('requests', async ({ cli, server }) => {
   const { output } = await cli('requests');
   expect(output).not.toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
   expect(output).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/hello-world`)} => \[200\] OK$`, 'm'));
+  expect(output).toContain('Note: 1 static request not shown, run with --static option to see it.');
 });
 
 test('requests --static', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   const { output } = await cli('requests', '--static');
   expect(output).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/`)} => \[200\] OK$`, 'm'));
+  expect(output).not.toContain('not shown');
 });
 
 test('requests --filter', async ({ cli, server }) => {

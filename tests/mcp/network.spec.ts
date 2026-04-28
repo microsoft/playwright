@@ -49,6 +49,7 @@ test('browser_network_requests', async ({ client, server }) => {
     expect(response.result).not.toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
     expect(response.result).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/json`)} => \[200\] OK$`, 'm'));
     expect(response.result).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/image.png`)} => \[404\]`, 'm'));
+    expect(response.result).toContain('Note: 1 static request not shown, run with "static" option to see it.');
   }
 
   {
@@ -61,6 +62,7 @@ test('browser_network_requests', async ({ client, server }) => {
     expect(response.result).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/`)} => \[200\] OK$`, 'm'));
     expect(response.result).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/json`)} => \[200\] OK$`, 'm'));
     expect(response.result).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/image.png`)} => \[404\]`, 'm'));
+    expect(response.result).not.toContain('not shown');
   }
 });
 

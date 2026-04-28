@@ -44,16 +44,23 @@ const requests = defineTabTool({
     const allRequests = await tab.requests();
     const filter = params.filter ? new RegExp(params.filter) : undefined;
     const lines: string[] = [];
+    let hiddenStaticCount = 0;
     for (let i = 0; i < allRequests.length; i++) {
       const request = allRequests[i];
-      if (!params.static && !isFetch(request) && isSuccessfulResponse(request))
+      if (!params.static && !isFetch(request) && isSuccessfulResponse(request)) {
+        hiddenStaticCount++;
         continue;
+      }
       if (filter) {
         filter.lastIndex = 0;
         if (!filter.test(request.url()))
           continue;
       }
       lines.push(`${i + 1}. ${renderRequestLine(request)}`);
+    }
+    if (hiddenStaticCount > 0) {
+      const optionName = tab.context.config.skillMode ? '--static' : '"static"';
+      lines.push(`\nNote: ${hiddenStaticCount} static request${hiddenStaticCount === 1 ? '' : 's'} not shown, run with ${optionName} option to see ${hiddenStaticCount === 1 ? 'it' : 'them'}.`);
     }
     await response.addResult('Network', lines.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
