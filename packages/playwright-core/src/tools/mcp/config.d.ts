@@ -87,6 +87,14 @@ export type Config = {
     remoteEndpoint?: string;
 
     /**
+     * Expose network for remote browser connections. When set to `'<loopback>'`,
+     * the remote browser can access localhost on the client machine via SOCKS proxy tunneling.
+     * Only applies when `remoteEndpoint` is configured.
+     * @see https://playwright.dev/docs/api/class-browsertype#browser-type-connect-option-expose-network
+     */
+    exposeNetwork?: string;
+
+    /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
      */
     initPage?: string[];
