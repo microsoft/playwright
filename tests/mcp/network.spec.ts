@@ -154,48 +154,7 @@ test('browser_network_request shows full request and response details', async ({
   expect(detail.result).toContain('x-custom-response: response-value');
   expect(detail.result).toContain('Call browser_network_request with part="request-body" to read the request body.');
   expect(detail.result).toContain('Call browser_network_request with part="response-body" to read the response body.');
-
-  const bodyMatch = detail.result.match(/Response body\n\s+(\S+\.json)/);
-  expect(bodyMatch).not.toBeNull();
-  const bodyPath = path.resolve(test.info().outputPath(), bodyMatch![1]);
-  expect(fs.readFileSync(bodyPath, 'utf-8')).toBe('{"name":"John Doe"}');
-});
-
-test('browser_network_request saves binary response body to a file', async ({ client, server }) => {
-  const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  server.setContent('/', `
-    <button onclick="fetch('/image.png')">Click me</button>
-  `, 'text/html');
-  server.setRoute('/image.png', (_req, res) => {
-    res.setHeader('Content-Type', 'image/png');
-    res.end(pngBytes);
-  });
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
-  });
-
-  await client.callTool({
-    name: 'browser_click',
-    arguments: { element: 'Click me button', target: 'e2' },
-  });
-
-  const list = parseResponse(await client.callTool({
-    name: 'browser_network_requests',
-    arguments: { static: true },
-  }));
-  const match = list.result.match(/^(\d+)\. \[GET\] [^ ]+\/image\.png =>/m);
-  expect(match).not.toBeNull();
-
-  const detail = parseResponse(await client.callTool({
-    name: 'browser_network_request',
-    arguments: { index: Number(match![1]) },
-  }));
-  const bodyMatch = detail.result.match(/Response body\n\s+(\S+\.png)/);
-  expect(bodyMatch).not.toBeNull();
-  const bodyPath = path.resolve(test.info().outputPath(), bodyMatch![1]);
-  expect(fs.readFileSync(bodyPath)).toEqual(pngBytes);
+  expect(detail.result).not.toContain('Response body');
 });
 
 test('browser_network_request reports failed requests', async ({ client, server }) => {

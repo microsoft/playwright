@@ -109,33 +109,7 @@ test('request shows full request and response details', async ({ cli, server }) 
   expect(output).toContain('x-custom-response: response-value');
   expect(output).toContain(`Run \`request-body ${match![1]}\` to read the request body.`);
   expect(output).toContain(`Run \`response-body ${match![1]}\` to read the response body.`);
-  const bodyMatch = output.match(/Response body\n\s+(\S+\.json)/);
-  expect(bodyMatch).not.toBeNull();
-  const bodyPath = path.resolve(test.info().outputPath(), bodyMatch![1]);
-  expect(fs.readFileSync(bodyPath, 'utf-8')).toBe('{"name":"John Doe"}');
-});
-
-test('request saves binary response body to a file', async ({ cli, server }) => {
-  const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  server.setContent('/', `
-    <button onclick="fetch('/image.png')">Click me</button>
-  `, 'text/html');
-  server.setRoute('/image.png', (_req, res) => {
-    res.setHeader('Content-Type', 'image/png');
-    res.end(pngBytes);
-  });
-  await cli('open', server.PREFIX);
-  await cli('click', 'e2');
-
-  const { output: list } = await cli('requests', '--static');
-  const match = list.match(/^(\d+)\. \[GET\] [^ ]+\/image\.png =>/m);
-  expect(match).not.toBeNull();
-
-  const { output } = await cli('request', match![1]);
-  const bodyMatch = output.match(/Response body\n\s+(\S+\.png)/);
-  expect(bodyMatch).not.toBeNull();
-  const bodyPath = path.resolve(test.info().outputPath(), bodyMatch![1]);
-  expect(fs.readFileSync(bodyPath)).toEqual(pngBytes);
+  expect(output).not.toContain('Response body');
 });
 
 test('per-part commands extract individual parts', async ({ cli, server }) => {

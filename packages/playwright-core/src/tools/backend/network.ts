@@ -96,8 +96,7 @@ const request = defineTabTool({
         response.addTextResult(partText);
       return;
     }
-    const bodyPath = await saveResponseBody(request, response);
-    response.addTextResult(renderRequestDetails(params.index, request, bodyPath, !!tab.context.config.skillMode));
+    response.addTextResult(renderRequestDetails(params.index, request, !!tab.context.config.skillMode));
   },
 });
 
@@ -137,7 +136,7 @@ export function renderRequestLine(request: playwright.Request): string {
   return line;
 }
 
-function renderRequestDetails(index: number, request: playwright.Request, responseBodyPath: string | undefined, skillMode: boolean): string {
+function renderRequestDetails(index: number, request: playwright.Request, skillMode: boolean): string {
   const httpResponse = request.existingResponse();
   const responseHeaders = httpResponse?.headers();
   const lines: string[] = [];
@@ -169,19 +168,13 @@ function renderRequestDetails(index: number, request: playwright.Request, respon
   if (responseHeaders)
     appendHeaderSection(lines, 'Response headers', responseHeaders);
 
-  if (responseBodyPath) {
-    lines.push('');
-    lines.push('  Response body');
-    lines.push(`    ${responseBodyPath}`);
-  }
-
   if (postData) {
     lines.push('');
     lines.push(skillMode
       ? `Run \`request-body ${index}\` to read the request body.`
       : `Call browser_network_request with part="request-body" to read the request body.`);
   }
-  if (responseBodyPath) {
+  if (mayHaveResponseBody(httpResponse)) {
     if (!postData)
       lines.push('');
     lines.push(skillMode
@@ -190,6 +183,16 @@ function renderRequestDetails(index: number, request: playwright.Request, respon
   }
 
   return lines.join('\n');
+}
+
+function mayHaveResponseBody(httpResponse: playwright.Response | null): boolean {
+  if (!httpResponse)
+    return false;
+  const status = httpResponse.status();
+  // Status codes that cannot have a response body per RFC 7230.
+  if (status === 204 || status === 304 || (status >= 100 && status < 200))
+    return false;
+  return true;
 }
 
 function appendHeaderSection(lines: string[], title: string, headers: Record<string, string>): void {
