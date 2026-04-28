@@ -44,16 +44,23 @@ const requests = defineTabTool({
     const allRequests = await tab.requests();
     const filter = params.filter ? new RegExp(params.filter) : undefined;
     const lines: string[] = [];
+    let hiddenStaticCount = 0;
     for (let i = 0; i < allRequests.length; i++) {
       const request = allRequests[i];
-      if (!params.static && !isFetch(request) && isSuccessfulResponse(request))
+      if (!params.static && !isFetch(request) && isSuccessfulResponse(request)) {
+        hiddenStaticCount++;
         continue;
+      }
       if (filter) {
         filter.lastIndex = 0;
         if (!filter.test(request.url()))
           continue;
       }
       lines.push(`${i + 1}. ${renderRequestLine(request)}`);
+    }
+    if (hiddenStaticCount > 0) {
+      const optionName = tab.context.config.skillMode ? '--static' : '"static"';
+      lines.push(`\nNote: ${hiddenStaticCount} static request${hiddenStaticCount === 1 ? '' : 's'} not shown, run with ${optionName} option to see ${hiddenStaticCount === 1 ? 'it' : 'them'}.`);
     }
     await response.addResult('Network', lines.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -72,6 +79,7 @@ const request = defineTabTool({
     inputSchema: z.object({
       index: z.number().int().min(1).describe('1-based index of the request, as printed by browser_network_requests.'),
       part: z.enum(REQUEST_PARTS).optional().describe('Return only this part of the request. Omit to return full details.'),
+      filename: z.string().optional().describe('Filename to save the result to. If not provided, output is returned as text.'),
     }),
     type: 'readOnly',
   },
@@ -84,13 +92,10 @@ const request = defineTabTool({
       return;
     }
     if (params.part) {
-      const partText = await renderRequestPart(request, params.part, response);
-      if (partText !== undefined)
-        response.addTextResult(partText);
+      await renderRequestPart(request, params.part, response, params.filename);
       return;
     }
-    const bodyPath = await saveResponseBody(request, response);
-    response.addTextResult(renderRequestDetails(params.index, request, bodyPath));
+    await response.addResult('Request', renderRequestDetails(params.index, request, !!tab.context.config.skillMode), { prefix: 'request', ext: 'log', suggestedFilename: params.filename });
   },
 });
 
@@ -130,7 +135,7 @@ export function renderRequestLine(request: playwright.Request): string {
   return line;
 }
 
-function renderRequestDetails(index: number, request: playwright.Request, responseBodyPath: string | undefined): string {
+function renderRequestDetails(index: number, request: playwright.Request, skillMode: boolean): string {
   const httpResponse = request.existingResponse();
   const responseHeaders = httpResponse?.headers();
   const lines: string[] = [];
@@ -152,23 +157,33 @@ function renderRequestDetails(index: number, request: playwright.Request, respon
 
   appendHeaderSection(lines, 'Request headers', request.headers());
 
-  const postData = request.postData();
-  if (postData) {
-    lines.push('');
-    lines.push('  Request body');
-    lines.push(`    ${postData}`);
-  }
-
   if (responseHeaders)
     appendHeaderSection(lines, 'Response headers', responseHeaders);
 
-  if (responseBodyPath) {
-    lines.push('');
-    lines.push('  Response body');
-    lines.push(`    ${responseBodyPath}`);
-  }
+  const hints: string[] = [];
+  if (request.postData())
+    hints.push(partHint(skillMode, 'request-body', index));
+  if (canHaveResponseBody(httpResponse))
+    hints.push(partHint(skillMode, 'response-body', index));
+  if (hints.length)
+    lines.push('', ...hints);
 
   return lines.join('\n');
+}
+
+function partHint(skillMode: boolean, part: 'request-body' | 'response-body', index: number): string {
+  const subject = part === 'request-body' ? 'request body' : 'response body';
+  return skillMode
+    ? `Run \`${part} ${index}\` to read the ${subject}.`
+    : `Call browser_network_request with part="${part}" to read the ${subject}.`;
+}
+
+function canHaveResponseBody(httpResponse: playwright.Response | null): httpResponse is playwright.Response {
+  if (!httpResponse)
+    return false;
+  const status = httpResponse.status();
+  // Status codes that cannot have a response body per RFC 7230.
+  return status !== 204 && status !== 304 && !(status >= 100 && status < 200);
 }
 
 function appendHeaderSection(lines: string[], title: string, headers: Record<string, string>): void {
@@ -188,39 +203,48 @@ function computeDurationMs(request: playwright.Request): number | undefined {
   return Math.round(timing.responseEnd);
 }
 
-async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse): Promise<string | undefined> {
-  if (part === 'request-headers')
-    return renderHeaders(request.headers());
-  if (part === 'request-body')
-    return request.postData() ?? undefined;
+async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse, suggestedFilename: string | undefined): Promise<void> {
+  if (part === 'request-headers') {
+    await response.addResult('Request headers', renderHeaders(request.headers()), { prefix: 'request', ext: 'txt', suggestedFilename });
+    return;
+  }
+  if (part === 'request-body') {
+    const data = request.postData();
+    if (data !== null)
+      await response.addResult('Request body', data, { prefix: 'request', ext: 'txt', suggestedFilename });
+    return;
+  }
   const httpResponse = request.existingResponse();
   if (!httpResponse)
-    return undefined;
-  if (part === 'response-headers')
-    return renderHeaders(httpResponse.headers());
+    return;
+  if (part === 'response-headers') {
+    await response.addResult('Response headers', renderHeaders(httpResponse.headers()), { prefix: 'response', ext: 'txt', suggestedFilename });
+    return;
+  }
   // response-body
   const contentType = httpResponse.headers()['content-type'];
   if (isTextualMimeType(contentType ?? '')) {
+    let text: string;
     try {
-      return await httpResponse.text();
+      text = await httpResponse.text();
     } catch {
-      return undefined;
+      return;
     }
+    await response.addResult('Response body', text, { prefix: 'response', ext: 'txt', suggestedFilename });
+    return;
   }
-  return await saveResponseBody(request, response);
+  const path = await saveResponseBody(request, response, suggestedFilename);
+  if (path !== undefined)
+    response.addTextResult(path);
 }
 
 function renderHeaders(headers: Record<string, string>): string {
   return Object.entries(headers).map(([k, v]) => `${k}: ${v}`).join('\n');
 }
 
-async function saveResponseBody(request: playwright.Request, response: ToolResponse): Promise<string | undefined> {
+async function saveResponseBody(request: playwright.Request, response: ToolResponse, suggestedFilename?: string): Promise<string | undefined> {
   const httpResponse = request.existingResponse();
-  if (!httpResponse)
-    return undefined;
-  const status = httpResponse.status();
-  // Status codes that cannot have a response body per RFC 7230.
-  if (status === 204 || status === 304 || (status >= 100 && status < 200))
+  if (!canHaveResponseBody(httpResponse))
     return undefined;
   let body: Buffer;
   try {
@@ -231,7 +255,7 @@ async function saveResponseBody(request: playwright.Request, response: ToolRespo
   if (!body.length)
     return undefined;
   const ext = getExtensionForMimeType(httpResponse.headers()['content-type']);
-  const resolved = await response.resolveClientFile({ prefix: 'response', ext }, 'Response body');
+  const resolved = await response.resolveClientFile({ prefix: 'response', ext, suggestedFilename }, 'Response body');
   await fs.promises.writeFile(resolved.fileName, body);
   return resolved.relativeName;
 }

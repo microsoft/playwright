@@ -51,12 +51,14 @@ test('requests', async ({ cli, server }) => {
   const { output } = await cli('requests');
   expect(output).not.toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
   expect(output).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/hello-world`)} => \[200\] OK$`, 'm'));
+  expect(output).toContain('Note: 1 static request not shown, run with --static option to see it.');
 });
 
 test('requests --static', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   const { output } = await cli('requests', '--static');
   expect(output).toMatch(new RegExp(String.raw`^\d+\. \[GET\] ${escapeRegExp(`${server.PREFIX}/`)} => \[200\] OK$`, 'm'));
+  expect(output).not.toContain('not shown');
 });
 
 test('requests --filter', async ({ cli, server }) => {
@@ -101,37 +103,13 @@ test('request shows full request and response details', async ({ cli, server }) 
   expect(output).toContain('status:    [200] OK');
   expect(output).toContain('Request headers');
   expect(output).toContain('x-custom-header: test-value');
-  expect(output).toContain('Request body');
-  expect(output).toContain('{"key":"value"}');
   expect(output).toContain('Response headers');
   expect(output).toContain('x-custom-response: response-value');
-  const bodyMatch = output.match(/Response body\n\s+(\S+\.json)/);
-  expect(bodyMatch).not.toBeNull();
-  const bodyPath = path.resolve(test.info().outputPath(), bodyMatch![1]);
-  expect(fs.readFileSync(bodyPath, 'utf-8')).toBe('{"name":"John Doe"}');
-});
-
-test('request saves binary response body to a file', async ({ cli, server }) => {
-  const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  server.setContent('/', `
-    <button onclick="fetch('/image.png')">Click me</button>
-  `, 'text/html');
-  server.setRoute('/image.png', (_req, res) => {
-    res.setHeader('Content-Type', 'image/png');
-    res.end(pngBytes);
-  });
-  await cli('open', server.PREFIX);
-  await cli('click', 'e2');
-
-  const { output: list } = await cli('requests', '--static');
-  const match = list.match(/^(\d+)\. \[GET\] [^ ]+\/image\.png =>/m);
-  expect(match).not.toBeNull();
-
-  const { output } = await cli('request', match![1]);
-  const bodyMatch = output.match(/Response body\n\s+(\S+\.png)/);
-  expect(bodyMatch).not.toBeNull();
-  const bodyPath = path.resolve(test.info().outputPath(), bodyMatch![1]);
-  expect(fs.readFileSync(bodyPath)).toEqual(pngBytes);
+  expect(output).toContain(`Run \`request-body ${match![1]}\` to read the request body.`);
+  expect(output).toContain(`Run \`response-body ${match![1]}\` to read the response body.`);
+  expect(output).not.toContain('Request body');
+  expect(output).not.toContain('Response body');
+  expect(output).not.toContain('{"key":"value"}');
 });
 
 test('per-part commands extract individual parts', async ({ cli, server }) => {
@@ -155,6 +133,41 @@ test('per-part commands extract individual parts', async ({ cli, server }) => {
   expect((await cli('request-body', num)).output).toContain('{"key":"value"}');
   expect((await cli('response-headers', num)).output).toContain('x-custom-response: response-value');
   expect((await cli('response-body', num)).output).toContain('{"name":"John Doe"}');
+});
+
+test('request* and response* commands support --filename', async ({ cli, server }, testInfo) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', body: 'hello' })">Click me</button>
+  `, 'text/html');
+  server.setRoute('/api', (_req, res) => {
+    res.setHeader('X-Custom-Response', 'response-value');
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ name: 'John Doe' }));
+  });
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  const { output: list } = await cli('requests');
+  const match = list.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m);
+  expect(match).not.toBeNull();
+  const num = match![1];
+
+  const read = (file: string) => fs.readFileSync(testInfo.outputPath(file), 'utf-8');
+
+  expect((await cli('request', num, '--filename=req.log')).output).toContain('[Request](./req.log)');
+  expect(read('req.log')).toContain(`[POST] ${server.PREFIX}/api`);
+
+  expect((await cli('request-headers', num, '--filename=req-h.txt')).output).toContain('[Request headers](./req-h.txt)');
+  expect(read('req-h.txt')).toContain('content-type: text/plain;charset=UTF-8');
+
+  expect((await cli('request-body', num, '--filename=req-b.txt')).output).toContain('[Request body](./req-b.txt)');
+  expect(read('req-b.txt')).toBe('hello');
+
+  expect((await cli('response-headers', num, '--filename=res-h.txt')).output).toContain('[Response headers](./res-h.txt)');
+  expect(read('res-h.txt')).toContain('x-custom-response: response-value');
+
+  expect((await cli('response-body', num, '--filename=res-b.json')).output).toContain('[Response body](./res-b.json)');
+  expect(read('res-b.json')).toBe('{"name":"John Doe"}');
 });
 
 test('--raw response-body returns just the body', async ({ cli, server }) => {
