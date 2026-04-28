@@ -1108,42 +1108,6 @@ Used for messages that reference a specific permission name
       disableReason?: string;
     }
     /**
-     * Metadata about the ad script that was on the stack that caused the current
-script in the `AdAncestry` to be considered ad related.
-     */
-    export interface AdScriptIdentifier {
-      /**
-       * The script's v8 identifier.
-       */
-      scriptId: Runtime.ScriptId;
-      /**
-       * v8's debugging id for the v8::Context.
-       */
-      debuggerId: Runtime.UniqueDebuggerId;
-      /**
-       * The script's url (or generated name based on id if inline script).
-       */
-      name: string;
-    }
-    /**
-     * Providence about how an ad script was determined to be such. It is an ad
-because its url matched a filterlist rule, or because some other ad script
-was on the stack when this script was loaded.
-     */
-    export interface AdAncestry {
-      /**
-       * The ad-script in the stack when the offending script was loaded. This is
-recursive down to the root script that was tagged due to the filterlist
-rule.
-       */
-      adAncestryChain: AdScriptIdentifier[];
-      /**
-       * The filterlist rule that caused the root (last) script in
-`adAncestry` to be ad-tagged.
-       */
-      rootScriptFilterlistRule?: string;
-    }
-    /**
      * The issue warns about blocked calls to privacy sensitive APIs via the
 Selective Permissions Intervention.
      */
@@ -1155,7 +1119,7 @@ Selective Permissions Intervention.
       /**
        * Why the ad script using the API is considered an ad.
        */
-      adAncestry: AdAncestry;
+      adAncestry: Network.AdAncestry;
       /**
        * The stack trace at the time of the intervention.
        */
@@ -3276,6 +3240,10 @@ stylesheet rules) this rule came from.
        * Function body.
        */
       children: CSSFunctionNode[];
+      /**
+       * The BackendNodeId of the DOM node that constitutes the origin tree scope of this rule.
+       */
+      originTreeScopeNodeId?: DOM.BackendNodeId;
     }
     /**
      * CSS keyframe rule representation.
@@ -4243,6 +4211,33 @@ sink via Presentation API, Remote Playback API, or Cast SDK.
   }
   
   /**
+   * This domain exposes the current state of the CrashReportContext API.
+   */
+  export namespace CrashReportContext {
+    /**
+     * Key-value pair in CrashReportContext.
+     */
+    export interface CrashReportContextEntry {
+      key: string;
+      value: string;
+      /**
+       * The ID of the frame where the key-value pair was set.
+       */
+      frameId: Page.FrameId;
+    }
+    
+    
+    /**
+     * Returns all entries in the CrashReportContext across all frames in the page.
+     */
+    export type getEntriesParameters = {
+    }
+    export type getEntriesReturnValue = {
+      entries: CrashReportContextEntry[];
+    }
+  }
+  
+  /**
    * This domain exposes DOM read/write operations. Each DOM Node is represented with its mirror object
 that has an `id`. This `id` can be used to get additional information on the Node, resolve it into
 the JavaScript object wrapper, etc. It is important that client receives DOM events only for the
@@ -4282,7 +4277,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"picker-icon"|"interest-hint"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon"|"overscroll-area-parent";
+    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"expand-icon"|"picker-icon"|"interest-hint"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon"|"overscroll-area-parent";
     /**
      * Shadow root type.
      */
@@ -4434,7 +4429,7 @@ The property is always undefined now.
       isScrollable?: boolean;
       affectedByStartingStyles?: boolean;
       adoptedStyleSheets?: StyleSheetId[];
-      isAdRelated?: boolean;
+      adProvenance?: Network.AdProvenance;
     }
     /**
      * A structure to hold the top-level node of a detached tree and an array of its retained descendants.
@@ -4714,9 +4709,9 @@ The property is always undefined now.
        */
       nodeId: DOM.NodeId;
       /**
-       * If the node is ad related.
+       * The provenance of the ad related node, if it is ad related.
        */
-      isAdRelated: boolean;
+      adProvenance?: Network.AdProvenance;
     }
     /**
      * Fired when a node's starting styles changes.
@@ -11328,6 +11323,62 @@ the same request (but not for redirected requests).
       initiatorIPAddressSpace: IPAddressSpace;
       localNetworkAccessRequestPolicy: LocalNetworkAccessRequestPolicy;
     }
+    /**
+     * Identifies the script on the stack that caused a resource or element to be
+labeled as an ad. For resources, this indicates the context that triggered
+the fetch. For elements, this indicates the context that caused the element
+to be appended to the DOM.
+     */
+    export interface AdScriptIdentifier {
+      /**
+       * The script's V8 identifier.
+       */
+      scriptId: Runtime.ScriptId;
+      /**
+       * V8's debugging ID for the v8::Context.
+       */
+      debuggerId: Runtime.UniqueDebuggerId;
+      /**
+       * The script's url (or generated name based on id if inline script).
+       */
+      name: string;
+    }
+    /**
+     * Encapsulates the script ancestry and the root script filter list rule that
+caused the resource or element to be labeled as an ad.
+     */
+    export interface AdAncestry {
+      /**
+       * A chain of `AdScriptIdentifier`s representing the ancestry of an ad
+script that led to the creation of a resource or element. The chain is
+ordered from the script itself (lowest level) up to its root ancestor
+that was flagged by a filter list.
+       */
+      ancestryChain: AdScriptIdentifier[];
+      /**
+       * The filter list rule that caused the root (last) script in
+`ancestryChain` to be tagged as an ad.
+       */
+      rootScriptFilterlistRule?: string;
+    }
+    /**
+     * Represents the provenance of an ad resource or element. Only one of
+`filterlistRule` or `adScriptAncestry` can be set. If `filterlistRule`
+is provided, the resource URL directly matches a filter list rule. If
+`adScriptAncestry` is provided, an ad script initiated the resource fetch or
+appended the element to the DOM. If neither is provided, the entity is
+known to be an ad, but provenance tracking information is unavailable.
+     */
+    export interface AdProvenance {
+      /**
+       * The filterlist rule that matched, if any.
+       */
+      filterlistRule?: string;
+      /**
+       * The script ancestry that created the ad, if any.
+       */
+      adScriptAncestry?: AdAncestry;
+    }
     export type CrossOriginOpenerPolicyValue = "SameOrigin"|"SameOriginAllowPopups"|"RestrictProperties"|"UnsafeNone"|"SameOriginPlusCoep"|"RestrictPropertiesPlusCoep"|"NoopenerAllowPopups";
     export interface CrossOriginOpenerPolicyStatus {
       value: CrossOriginOpenerPolicyValue;
@@ -14216,41 +14267,6 @@ supported yet.
       explanations?: AdFrameExplanation[];
     }
     /**
-     * Identifies the script which caused a script or frame to be labelled as an
-ad.
-     */
-    export interface AdScriptId {
-      /**
-       * Script Id of the script which caused a script or frame to be labelled as
-an ad.
-       */
-      scriptId: Runtime.ScriptId;
-      /**
-       * Id of scriptId's debugger.
-       */
-      debuggerId: Runtime.UniqueDebuggerId;
-    }
-    /**
-     * Encapsulates the script ancestry and the root script filterlist rule that
-caused the frame to be labelled as an ad. Only created when `ancestryChain`
-is not empty.
-     */
-    export interface AdScriptAncestry {
-      /**
-       * A chain of `AdScriptId`s representing the ancestry of an ad script that
-led to the creation of a frame. The chain is ordered from the script
-itself (lower level) up to its root ancestor that was flagged by
-filterlist.
-       */
-      ancestryChain: AdScriptId[];
-      /**
-       * The filterlist rule that caused the root (last) script in
-`ancestryChain` to be ad-tagged. Only populated if the rule is
-available.
-       */
-      rootScriptFilterlistRule?: string;
-    }
-    /**
      * Indicates whether the frame is a secure context and why it is the case.
      */
     export type SecureContextType = "Secure"|"SecureLocalhost"|"InsecureScheme"|"InsecureAncestor";
@@ -14264,7 +14280,7 @@ available.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -15557,7 +15573,7 @@ chain is ordered from the most immediate script (in the frame creation
 stack) to more distant ancestors (that created the immediately preceding
 script). Only sent if frame is labelled as an ad and ids are available.
        */
-      adScriptAncestry?: AdScriptAncestry;
+      adScriptAncestry?: Network.AdAncestry;
     }
     /**
      * Returns present frame tree structure.
@@ -16562,6 +16578,7 @@ still keyed with the initial URL.
       loaderId: Network.LoaderId;
       action: SpeculationAction;
       url: string;
+      formSubmission?: boolean;
       targetHint?: SpeculationTargetHint;
     }
     /**
@@ -16589,7 +16606,7 @@ CDP events for them are emitted separately but they share
     /**
      * List of FinalStatus reasons for Prerender2.
      */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch"|"BrowsingDataRemoved"|"PrerenderHostReused";
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch"|"BrowsingDataRemoved"|"PrerenderHostReused"|"FormSubmitWhenPrerendering";
     /**
      * Preloading status values, see also PreloadingTriggeringOutcome. This
 status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
@@ -17749,159 +17766,6 @@ Present only for SharedStorageAccessMethod: batchUpdate.
       persistent: boolean;
       durability: StorageBucketsDurability;
     }
-    export type AttributionReportingSourceType = "navigation"|"event";
-    export type UnsignedInt64AsBase10 = string;
-    export type UnsignedInt128AsBase16 = string;
-    export type SignedInt64AsBase10 = string;
-    export interface AttributionReportingFilterDataEntry {
-      key: string;
-      values: string[];
-    }
-    export interface AttributionReportingFilterConfig {
-      filterValues: AttributionReportingFilterDataEntry[];
-      /**
-       * duration in seconds
-       */
-      lookbackWindow?: number;
-    }
-    export interface AttributionReportingFilterPair {
-      filters: AttributionReportingFilterConfig[];
-      notFilters: AttributionReportingFilterConfig[];
-    }
-    export interface AttributionReportingAggregationKeysEntry {
-      key: string;
-      value: UnsignedInt128AsBase16;
-    }
-    export interface AttributionReportingEventReportWindows {
-      /**
-       * duration in seconds
-       */
-      start: number;
-      /**
-       * duration in seconds
-       */
-      ends: number[];
-    }
-    export type AttributionReportingTriggerDataMatching = "exact"|"modulus";
-    export interface AttributionReportingAggregatableDebugReportingData {
-      keyPiece: UnsignedInt128AsBase16;
-      /**
-       * number instead of integer because not all uint32 can be represented by
-int
-       */
-      value: number;
-      types: string[];
-    }
-    export interface AttributionReportingAggregatableDebugReportingConfig {
-      /**
-       * number instead of integer because not all uint32 can be represented by
-int, only present for source registrations
-       */
-      budget?: number;
-      keyPiece: UnsignedInt128AsBase16;
-      debugData: AttributionReportingAggregatableDebugReportingData[];
-      aggregationCoordinatorOrigin?: string;
-    }
-    export interface AttributionScopesData {
-      values: string[];
-      /**
-       * number instead of integer because not all uint32 can be represented by
-int
-       */
-      limit: number;
-      maxEventStates: number;
-    }
-    export interface AttributionReportingNamedBudgetDef {
-      name: string;
-      budget: number;
-    }
-    export interface AttributionReportingSourceRegistration {
-      time: Network.TimeSinceEpoch;
-      /**
-       * duration in seconds
-       */
-      expiry: number;
-      /**
-       * number instead of integer because not all uint32 can be represented by
-int
-       */
-      triggerData: number[];
-      eventReportWindows: AttributionReportingEventReportWindows;
-      /**
-       * duration in seconds
-       */
-      aggregatableReportWindow: number;
-      type: AttributionReportingSourceType;
-      sourceOrigin: string;
-      reportingOrigin: string;
-      destinationSites: string[];
-      eventId: UnsignedInt64AsBase10;
-      priority: SignedInt64AsBase10;
-      filterData: AttributionReportingFilterDataEntry[];
-      aggregationKeys: AttributionReportingAggregationKeysEntry[];
-      debugKey?: UnsignedInt64AsBase10;
-      triggerDataMatching: AttributionReportingTriggerDataMatching;
-      destinationLimitPriority: SignedInt64AsBase10;
-      aggregatableDebugReportingConfig: AttributionReportingAggregatableDebugReportingConfig;
-      scopesData?: AttributionScopesData;
-      maxEventLevelReports: number;
-      namedBudgets: AttributionReportingNamedBudgetDef[];
-      debugReporting: boolean;
-      eventLevelEpsilon: number;
-    }
-    export type AttributionReportingSourceRegistrationResult = "success"|"internalError"|"insufficientSourceCapacity"|"insufficientUniqueDestinationCapacity"|"excessiveReportingOrigins"|"prohibitedByBrowserPolicy"|"successNoised"|"destinationReportingLimitReached"|"destinationGlobalLimitReached"|"destinationBothLimitsReached"|"reportingOriginsPerSiteLimitReached"|"exceedsMaxChannelCapacity"|"exceedsMaxScopesChannelCapacity"|"exceedsMaxTriggerStateCardinality"|"exceedsMaxEventStatesLimit"|"destinationPerDayReportingLimitReached";
-    export type AttributionReportingSourceRegistrationTimeConfig = "include"|"exclude";
-    export interface AttributionReportingAggregatableValueDictEntry {
-      key: string;
-      /**
-       * number instead of integer because not all uint32 can be represented by
-int
-       */
-      value: number;
-      filteringId: UnsignedInt64AsBase10;
-    }
-    export interface AttributionReportingAggregatableValueEntry {
-      values: AttributionReportingAggregatableValueDictEntry[];
-      filters: AttributionReportingFilterPair;
-    }
-    export interface AttributionReportingEventTriggerData {
-      data: UnsignedInt64AsBase10;
-      priority: SignedInt64AsBase10;
-      dedupKey?: UnsignedInt64AsBase10;
-      filters: AttributionReportingFilterPair;
-    }
-    export interface AttributionReportingAggregatableTriggerData {
-      keyPiece: UnsignedInt128AsBase16;
-      sourceKeys: string[];
-      filters: AttributionReportingFilterPair;
-    }
-    export interface AttributionReportingAggregatableDedupKey {
-      dedupKey?: UnsignedInt64AsBase10;
-      filters: AttributionReportingFilterPair;
-    }
-    export interface AttributionReportingNamedBudgetCandidate {
-      name?: string;
-      filters: AttributionReportingFilterPair;
-    }
-    export interface AttributionReportingTriggerRegistration {
-      filters: AttributionReportingFilterPair;
-      debugKey?: UnsignedInt64AsBase10;
-      aggregatableDedupKeys: AttributionReportingAggregatableDedupKey[];
-      eventTriggerData: AttributionReportingEventTriggerData[];
-      aggregatableTriggerData: AttributionReportingAggregatableTriggerData[];
-      aggregatableValues: AttributionReportingAggregatableValueEntry[];
-      aggregatableFilteringIdMaxBytes: number;
-      debugReporting: boolean;
-      aggregationCoordinatorOrigin?: string;
-      sourceRegistrationTimeConfig: AttributionReportingSourceRegistrationTimeConfig;
-      triggerContextId?: string;
-      aggregatableDebugReportingConfig: AttributionReportingAggregatableDebugReportingConfig;
-      scopes: string[];
-      namedBudgets: AttributionReportingNamedBudgetCandidate[];
-    }
-    export type AttributionReportingEventLevelResult = "success"|"successDroppedLowerPriority"|"internalError"|"noCapacityForAttributionDestination"|"noMatchingSources"|"deduplicated"|"excessiveAttributions"|"priorityTooLow"|"neverAttributedSource"|"excessiveReportingOrigins"|"noMatchingSourceFilterData"|"prohibitedByBrowserPolicy"|"noMatchingConfigurations"|"excessiveReports"|"falselyAttributedSource"|"reportWindowPassed"|"notRegistered"|"reportWindowNotStarted"|"noMatchingTriggerData";
-    export type AttributionReportingAggregatableResult = "success"|"internalError"|"noCapacityForAttributionDestination"|"noMatchingSources"|"excessiveAttributions"|"excessiveReportingOrigins"|"noHistograms"|"insufficientBudget"|"insufficientNamedBudget"|"noMatchingSourceFilterData"|"notRegistered"|"prohibitedByBrowserPolicy"|"deduplicated"|"reportWindowPassed"|"excessiveReports";
-    export type AttributionReportingReportResult = "sent"|"prohibited"|"failedToAssemble"|"expired";
     /**
      * A single Related Website Set object.
      */
@@ -18133,33 +17997,6 @@ associated shared storage worklet.
     }
     export type storageBucketDeletedPayload = {
       bucketId: string;
-    }
-    export type attributionReportingSourceRegisteredPayload = {
-      registration: AttributionReportingSourceRegistration;
-      result: AttributionReportingSourceRegistrationResult;
-    }
-    export type attributionReportingTriggerRegisteredPayload = {
-      registration: AttributionReportingTriggerRegistration;
-      eventLevel: AttributionReportingEventLevelResult;
-      aggregatable: AttributionReportingAggregatableResult;
-    }
-    export type attributionReportingReportSentPayload = {
-      url: string;
-      body: { [key: string]: string };
-      result: AttributionReportingReportResult;
-      /**
-       * If result is `sent`, populated with net/HTTP status.
-       */
-      netError?: number;
-      netErrorName?: string;
-      httpStatusCode?: number;
-    }
-    export type attributionReportingVerboseDebugReportSentPayload = {
-      url: string;
-      body?: { [key: string]: string }[];
-      netError?: number;
-      netErrorName?: string;
-      httpStatusCode?: number;
     }
     
     /**
@@ -18536,37 +18373,6 @@ interestGroupAuctionNetworkRequestCreated.
       deletedSites: string[];
     }
     /**
-     * https://wicg.github.io/attribution-reporting-api/
-     */
-    export type setAttributionReportingLocalTestingModeParameters = {
-      /**
-       * If enabled, noise is suppressed and reports are sent immediately.
-       */
-      enabled: boolean;
-    }
-    export type setAttributionReportingLocalTestingModeReturnValue = {
-    }
-    /**
-     * Enables/disables issuing of Attribution Reporting events.
-     */
-    export type setAttributionReportingTrackingParameters = {
-      enable: boolean;
-    }
-    export type setAttributionReportingTrackingReturnValue = {
-    }
-    /**
-     * Sends all pending Attribution Reports immediately, regardless of their
-scheduled report time.
-     */
-    export type sendPendingAttributionReportsParameters = {
-    }
-    export type sendPendingAttributionReportsReturnValue = {
-      /**
-       * The number of reports that were sent.
-       */
-      numSent: number;
-    }
-    /**
      * Returns the effective Related Website Sets in use by this profile for the browser
 session. The effective Related Website Sets will not change during a browser session.
      */
@@ -18574,28 +18380,6 @@ session. The effective Related Website Sets will not change during a browser ses
     }
     export type getRelatedWebsiteSetsReturnValue = {
       sets: RelatedWebsiteSet[];
-    }
-    /**
-     * Returns the list of URLs from a page and its embedded resources that match
-existing grace period URL pattern rules.
-https://developers.google.com/privacy-sandbox/cookies/temporary-exceptions/grace-period
-     */
-    export type getAffectedUrlsForThirdPartyCookieMetadataParameters = {
-      /**
-       * The URL of the page currently being visited.
-       */
-      firstPartyUrl: string;
-      /**
-       * The list of embedded resource URLs from the page.
-       */
-      thirdPartyUrls: string[];
-    }
-    export type getAffectedUrlsForThirdPartyCookieMetadataReturnValue = {
-      /**
-       * Array of matching URLs. If there is a primary pattern match for the first-
-party URL, only the first-party URL is returned in the array.
-       */
-      matchedUrls: string[];
     }
     export type setProtectedAudienceKAnonymityParameters = {
       owner: string;
@@ -19845,7 +19629,7 @@ API.
   export namespace WebAuthn {
     export type AuthenticatorId = string;
     export type AuthenticatorProtocol = "u2f"|"ctap2";
-    export type Ctap2Version = "ctap2_0"|"ctap2_1";
+    export type Ctap2Version = "ctap2_0"|"ctap2_1"|"ctap2_2";
     export type AuthenticatorTransport = "usb"|"nfc"|"ble"|"cable"|"internal";
     export interface VirtualAuthenticatorOptions {
       protocol: AuthenticatorProtocol;
@@ -19886,6 +19670,18 @@ https://w3c.github.io/webauthn/#prf-extension
 Defaults to false.
        */
       hasPrf?: boolean;
+      /**
+       * If set to true, the authenticator will support the hmac-secret extension.
+https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-hmac-secret-extension
+Defaults to false.
+       */
+      hasHmacSecret?: boolean;
+      /**
+       * If set to true, the authenticator will support the hmac-secret-mc extension.
+https://fidoalliance.org/specs/fido-v2.2-rd-20241003/fido-client-to-authenticator-protocol-v2.2-rd-20241003.html#sctn-hmac-secret-make-cred-extension
+Defaults to false.
+       */
+      hasHmacSecretMc?: boolean;
       /**
        * If set to true, tests of user presence will succeed immediately.
 Otherwise, they will not be resolved. Defaults to true.
@@ -20151,6 +19947,10 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
       autosubmit?: boolean;
     }
     /**
+     * Represents the status of a tool invocation.
+     */
+    export type InvocationStatus = "Success"|"Canceled"|"Error";
+    /**
      * Definition of a tool that can be invoked.
      */
     export interface Tool {
@@ -20202,6 +20002,52 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
        */
       tools: Tool[];
     }
+    /**
+     * Event fired when a tool invocation starts.
+     */
+    export type toolInvokedPayload = {
+      /**
+       * Name of the tool to invoke.
+       */
+      toolName: string;
+      /**
+       * Frame id
+       */
+      frameId: Page.FrameId;
+      /**
+       * Invocation identifier.
+       */
+      invocationId: string;
+      /**
+       * The input parameters used for the invocation.
+       */
+      input: string;
+    }
+    /**
+     * Event fired when a tool invocation completes or fails.
+     */
+    export type toolRespondedPayload = {
+      /**
+       * Invocation identifier.
+       */
+      invocationId: string;
+      /**
+       * Status of the invocation.
+       */
+      status: InvocationStatus;
+      /**
+       * Output or error delivered as delivered to the agent. Missing if `status` is anything other than Success.
+       */
+      output?: any;
+      /**
+       * Error text for protocol users.
+       */
+      errorText?: string;
+      /**
+       * The exception object, if the javascript tool threw an error>
+       */
+      exception?: Runtime.RemoteObject;
+    }
     
     /**
      * Enables the WebMCP domain, allowing events to be sent. Enabling the domain will trigger a toolsAdded event for
@@ -20210,6 +20056,13 @@ all currently registered tools.
     export type enableParameters = {
     }
     export type enableReturnValue = {
+    }
+    /**
+     * Disables the WebMCP domain.
+     */
+    export type disableParameters = {
+    }
+    export type disableReturnValue = {
     }
   }
   
@@ -23083,10 +22936,6 @@ Error was thrown.
     "Storage.sharedStorageWorkletOperationExecutionFinished": Storage.sharedStorageWorkletOperationExecutionFinishedPayload;
     "Storage.storageBucketCreatedOrUpdated": Storage.storageBucketCreatedOrUpdatedPayload;
     "Storage.storageBucketDeleted": Storage.storageBucketDeletedPayload;
-    "Storage.attributionReportingSourceRegistered": Storage.attributionReportingSourceRegisteredPayload;
-    "Storage.attributionReportingTriggerRegistered": Storage.attributionReportingTriggerRegisteredPayload;
-    "Storage.attributionReportingReportSent": Storage.attributionReportingReportSentPayload;
-    "Storage.attributionReportingVerboseDebugReportSent": Storage.attributionReportingVerboseDebugReportSentPayload;
     "Target.attachedToTarget": Target.attachedToTargetPayload;
     "Target.detachedFromTarget": Target.detachedFromTargetPayload;
     "Target.receivedMessageFromTarget": Target.receivedMessageFromTargetPayload;
@@ -23117,6 +22966,8 @@ Error was thrown.
     "WebAuthn.credentialAsserted": WebAuthn.credentialAssertedPayload;
     "WebMCP.toolsAdded": WebMCP.toolsAddedPayload;
     "WebMCP.toolsRemoved": WebMCP.toolsRemovedPayload;
+    "WebMCP.toolInvoked": WebMCP.toolInvokedPayload;
+    "WebMCP.toolResponded": WebMCP.toolRespondedPayload;
     "Console.messageAdded": Console.messageAddedPayload;
     "Debugger.breakpointResolved": Debugger.breakpointResolvedPayload;
     "Debugger.paused": Debugger.pausedPayload;
@@ -23324,10 +23175,6 @@ Error was thrown.
     ["Storage.sharedStorageWorkletOperationExecutionFinished"]: [Storage.sharedStorageWorkletOperationExecutionFinishedPayload];
     ["Storage.storageBucketCreatedOrUpdated"]: [Storage.storageBucketCreatedOrUpdatedPayload];
     ["Storage.storageBucketDeleted"]: [Storage.storageBucketDeletedPayload];
-    ["Storage.attributionReportingSourceRegistered"]: [Storage.attributionReportingSourceRegisteredPayload];
-    ["Storage.attributionReportingTriggerRegistered"]: [Storage.attributionReportingTriggerRegisteredPayload];
-    ["Storage.attributionReportingReportSent"]: [Storage.attributionReportingReportSentPayload];
-    ["Storage.attributionReportingVerboseDebugReportSent"]: [Storage.attributionReportingVerboseDebugReportSentPayload];
     ["Target.attachedToTarget"]: [Target.attachedToTargetPayload];
     ["Target.detachedFromTarget"]: [Target.detachedFromTargetPayload];
     ["Target.receivedMessageFromTarget"]: [Target.receivedMessageFromTargetPayload];
@@ -23358,6 +23205,8 @@ Error was thrown.
     ["WebAuthn.credentialAsserted"]: [WebAuthn.credentialAssertedPayload];
     ["WebMCP.toolsAdded"]: [WebMCP.toolsAddedPayload];
     ["WebMCP.toolsRemoved"]: [WebMCP.toolsRemovedPayload];
+    ["WebMCP.toolInvoked"]: [WebMCP.toolInvokedPayload];
+    ["WebMCP.toolResponded"]: [WebMCP.toolRespondedPayload];
     ["Console.messageAdded"]: [Console.messageAddedPayload];
     ["Debugger.breakpointResolved"]: [Debugger.breakpointResolvedPayload];
     ["Debugger.paused"]: [Debugger.pausedPayload];
@@ -23496,6 +23345,7 @@ Error was thrown.
     "Cast.startDesktopMirroring": Cast.startDesktopMirroringParameters;
     "Cast.startTabMirroring": Cast.startTabMirroringParameters;
     "Cast.stopCasting": Cast.stopCastingParameters;
+    "CrashReportContext.getEntries": CrashReportContext.getEntriesParameters;
     "DOM.collectClassNamesFromSubtree": DOM.collectClassNamesFromSubtreeParameters;
     "DOM.copyTo": DOM.copyToParameters;
     "DOM.describeNode": DOM.describeNodeParameters;
@@ -23914,11 +23764,7 @@ Error was thrown.
     "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingParameters;
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketParameters;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsParameters;
-    "Storage.setAttributionReportingLocalTestingMode": Storage.setAttributionReportingLocalTestingModeParameters;
-    "Storage.setAttributionReportingTracking": Storage.setAttributionReportingTrackingParameters;
-    "Storage.sendPendingAttributionReports": Storage.sendPendingAttributionReportsParameters;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsParameters;
-    "Storage.getAffectedUrlsForThirdPartyCookieMetadata": Storage.getAffectedUrlsForThirdPartyCookieMetadataParameters;
     "Storage.setProtectedAudienceKAnonymity": Storage.setProtectedAudienceKAnonymityParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateParameters;
@@ -23967,6 +23813,7 @@ Error was thrown.
     "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationParameters;
     "WebAuthn.setCredentialProperties": WebAuthn.setCredentialPropertiesParameters;
     "WebMCP.enable": WebMCP.enableParameters;
+    "WebMCP.disable": WebMCP.disableParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
     "Console.disable": Console.disableParameters;
     "Console.enable": Console.enableParameters;
@@ -24164,6 +24011,7 @@ Error was thrown.
     "Cast.startDesktopMirroring": Cast.startDesktopMirroringReturnValue;
     "Cast.startTabMirroring": Cast.startTabMirroringReturnValue;
     "Cast.stopCasting": Cast.stopCastingReturnValue;
+    "CrashReportContext.getEntries": CrashReportContext.getEntriesReturnValue;
     "DOM.collectClassNamesFromSubtree": DOM.collectClassNamesFromSubtreeReturnValue;
     "DOM.copyTo": DOM.copyToReturnValue;
     "DOM.describeNode": DOM.describeNodeReturnValue;
@@ -24582,11 +24430,7 @@ Error was thrown.
     "Storage.setStorageBucketTracking": Storage.setStorageBucketTrackingReturnValue;
     "Storage.deleteStorageBucket": Storage.deleteStorageBucketReturnValue;
     "Storage.runBounceTrackingMitigations": Storage.runBounceTrackingMitigationsReturnValue;
-    "Storage.setAttributionReportingLocalTestingMode": Storage.setAttributionReportingLocalTestingModeReturnValue;
-    "Storage.setAttributionReportingTracking": Storage.setAttributionReportingTrackingReturnValue;
-    "Storage.sendPendingAttributionReports": Storage.sendPendingAttributionReportsReturnValue;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsReturnValue;
-    "Storage.getAffectedUrlsForThirdPartyCookieMetadata": Storage.getAffectedUrlsForThirdPartyCookieMetadataReturnValue;
     "Storage.setProtectedAudienceKAnonymity": Storage.setProtectedAudienceKAnonymityReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateReturnValue;
@@ -24635,6 +24479,7 @@ Error was thrown.
     "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationReturnValue;
     "WebAuthn.setCredentialProperties": WebAuthn.setCredentialPropertiesReturnValue;
     "WebMCP.enable": WebMCP.enableReturnValue;
+    "WebMCP.disable": WebMCP.disableReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;
     "Console.disable": Console.disableReturnValue;
     "Console.enable": Console.enableReturnValue;
