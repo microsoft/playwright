@@ -15,10 +15,9 @@
  */
 
 // @ts-expect-error
-import { _utilityTest } from 'playwright/test';
+import { _utilityTest, _electron as electron } from 'playwright/test';
 import { selectors } from 'playwright/test';
 
-import { electron } from './electron';
 export { expect, devices, defineConfig, mergeExpects, mergeTests } from 'playwright/test';
 export { electron, selectors };
 

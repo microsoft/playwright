@@ -384,5 +384,15 @@ export type AndroidKey =
 
 export const _android: Android;
 
+//@ts-ignore this will be any if electron is not installed
+type ElectronType = typeof import('electron');
+
+export interface ElectronApplication {
+  evaluate: JSHandle<ElectronType>['evaluate'];
+  evaluateHandle: JSHandle<ElectronType>['evaluateHandle'];
+}
+
+export const _electron: Electron;
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

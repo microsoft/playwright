@@ -1,0 +1,4 @@
+[*]
+@isomorphic/**
+@utils/**
+node_modules/debug

@@ -549,10 +549,9 @@ for (const pkg of workspace.packages()) {
   }));
 }
 
-// playwright-electron/lib/index.js — self-contained bundle that inlines
-// @utils/* and @isomorphic/* sources (via tsconfig paths) plus the `node_modules`
-// deps. playwright, electron, and the sibling loader.js are resolved at
-// runtime.
+// playwright-electron/lib/index.js — thin test-runner integration shim that
+// re-exports `playwright._electron`. Resolved at runtime against the parent
+// `playwright` install.
 {
   const electronPkg = filePath('packages/playwright-electron');
   steps.push(new EsbuildStep({
@@ -562,18 +561,7 @@ for (const pkg of workspace.packages()) {
     external: [
       'playwright',
       'playwright/*',
-      'electron',
-      'electron/*',
-      './loader',
     ],
-  }, [filePath('packages/utils'), filePath('packages/isomorphic')]));
-
-  // loader.ts is preloaded inside the Electron main process via `-r` and is
-  // already self-contained (no @utils/@isomorphic imports). Compile it
-  // per-file so the output stays a thin shim.
-  steps.push(new EsbuildStep({
-    entryPoints: [path.join(electronPkg, 'src/loader.ts')],
-    outdir: path.join(electronPkg, 'lib'),
   }));
 }
 
@@ -588,6 +576,10 @@ steps.push(new EsbuildStep({
     filePath('packages/playwright-core/src/entry/dashboardApp.ts'),
     filePath('packages/playwright-core/src/entry/mcp.ts'),
     filePath('packages/playwright-core/src/entry/oopBrowserDownload.ts'),
+
+    // Electron loader — preloaded inside the Electron main process via `-r`.
+    // Self-contained (no @utils/@isomorphic imports) — emitted as a thin shim.
+    filePath('packages/playwright-core/src/electron/loader.ts'),
 
     // CLI client tools, should be a separate bundle.
     filePath('packages/playwright-core/src/tools/cli-client/*.ts'),
@@ -956,7 +948,6 @@ onChanges.push({
     'utils/generate_types/overrides.d.ts',
     'utils/generate_types/overrides-test.d.ts',
     'utils/generate_types/overrides-testReporter.d.ts',
-    'utils/generate_types/overrides-electron.d.ts',
     'utils/generate_types/exported.json',
     'packages/playwright-core/src/server/chromium/protocol.d.ts',
   ],

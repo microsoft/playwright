@@ -15,9 +15,9 @@
  */
 
 import os from 'os';
+import path from 'path';
 import readline from 'readline';
 import { EventEmitter } from 'events';
-import { chromium } from 'playwright/test';
 import debug from 'debug';
 
 import { launchProcess } from '@utils/processLauncher';
@@ -27,9 +27,9 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 
 import type { BrowserWindow } from 'electron';
-import type { Browser, BrowserContext, JSHandle, Page, Worker } from 'playwright/test';
+import type { Browser, BrowserContext, JSHandle, Page, Worker } from '../../types/types';
+import type { Playwright } from '../client/playwright';
 import type childProcess from 'child_process';
-import type * as api from '../types';
 
 const debugLogger = debug('pw:electron');
 
@@ -41,7 +41,14 @@ export const Events = {
   },
 };
 
-type ElectronLaunchOptions = NonNullable<Parameters<api.Electron['launch']>[0]>;
+type ElectronLaunchOptions = {
+  args?: string[];
+  chromiumSandbox?: boolean;
+  cwd?: string;
+  env?: { [key: string]: string };
+  executablePath?: string;
+  timeout?: number;
+};
 
 type ElectronAppType = typeof import('electron');
 
@@ -70,7 +77,13 @@ class Progress {
   }
 }
 
-export class Electron implements api.Electron {
+export class Electron {
+  _playwright: Playwright;
+
+  constructor(playwright: Playwright) {
+    this._playwright = playwright;
+  }
+
   async launch(options: ElectronLaunchOptions = {}): Promise<ElectronApplication> {
     const timeout = options.timeout ?? (debugMode() === 'inspector' ? 0 : 3 * 60 * 1000);
     const progress = new Progress(timeout, `electron.launch: Timeout ${timeout}ms exceeded`);
@@ -101,8 +114,10 @@ export class Electron implements api.Electron {
         throw error;
       }
       // Only inject our loader for non-packaged apps; packaged apps may have
-      // their own command-line handling.
-      electronArguments.unshift('-r', require.resolve('./loader'));
+      // their own command-line handling. The path is resolved relative to
+      // the bundled coreBundle.js at runtime; loader.js is emitted as a
+      // sibling file by the build (see utils/build/build.js).
+      electronArguments.unshift('-r', path.join(__dirname, 'electron', 'loader.js'));
     }
 
     let shell = false;
@@ -160,6 +175,7 @@ export class Electron implements api.Electron {
     const debuggerDisconnectPromise = waitForLine(progress, launchedProcess, /Waiting for the debugger to disconnect\.\.\./);
 
     try {
+      const chromium = this._playwright.chromium;
       const nodeMatch = await nodeMatchPromise;
       const worker = await chromium.connectToWorker(nodeMatch[1], { timeout: progress.timeUntilDeadline() });
 
@@ -179,7 +195,7 @@ export class Electron implements api.Electron {
   }
 }
 
-export class ElectronApplication extends EventEmitter implements api.ElectronApplication {
+export class ElectronApplication extends EventEmitter {
   private _worker: Worker;
   private _browser: Browser;
   private _process: childProcess.ChildProcess;
@@ -345,5 +361,3 @@ async function waitForLine(progress: Progress, process: childProcess.ChildProces
     process.removeListener('error', onFail);
   }
 }
-
-export const electron = new Electron();

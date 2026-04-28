@@ -30,6 +30,7 @@ import type { Electron, ElectronApplication } from './types';
 
 export * from './types';
 export { expect, devices, mergeExpects, mergeTests } from 'playwright/test';
+export { _electron as electron } from 'playwright-core';
 
 export type ElectronAppOptions = Parameters<Electron['launch']>[0];
 export type PlaywrightTestOptions = Pick<BasePlaywrightTestOptions, 'testIdAttribute'> & {

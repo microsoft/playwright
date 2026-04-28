@@ -1,6 +1,7 @@
 {
   "name": "@playwright/electron",
-  "version": "1.60.0-next",
+  "version": "0.0.0",
+  "private": true,
   "description": "Playwright for Electron",
   "repository": {
     "type": "git",
@@ -21,6 +22,6 @@
     }
   },
   "dependencies": {
-    "playwright": "1.60.0-next"
+    "playwright": "*"
   }
 }
