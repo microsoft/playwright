@@ -25,6 +25,8 @@ test.afterEach(async ({}, testInfo) => {
   expect(fs.existsSync(screenshots[0].path!)).toBe(true);
 });
 
-test('should capture screenshot', async ({ page }) => {
+test('should capture screenshot', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   await page.setContent('<h1>Electron</h1>');
 });

@@ -123,8 +123,9 @@ test('should dispatch ready event', async ({ launchElectronApp }) => {
   ]);
 });
 
-test('should script application', async ({ app: electronApp }) => {
-  const appPath = await electronApp.evaluate(async ({ app }) => app.getAppPath());
+test('should script application', async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const appPath = await app.evaluate(async ({ app }) => app.getAppPath());
   expect(appPath).toBe(path.resolve(__dirname));
 });
 
@@ -135,16 +136,20 @@ test('should preserve args', async ({ launchElectronApp, isMac }) => {
   expect(argv).toEqual([expect.stringContaining(electronPath), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar', '& <>^|\\"']);
 });
 
-test('should return windows', async ({ app, page }) => {
+test('should return windows', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   expect(app.windows()).toEqual([page]);
 });
 
-test('should evaluate handle', async ({ app }) => {
+test('should evaluate handle', async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-app.js');
   const appHandle = await app.evaluateHandle(({ app }) => app);
   expect(await app.evaluate(({ app }, appHandle) => app === appHandle, appHandle)).toBeTruthy();
 });
 
-test('should infer evaluate types', async ({ app }) => {
+test('should infer evaluate types', async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-app.js');
   // No-arg evaluate, returning a primitive.
   const appPath: string = await app.evaluate(({ app }) => app.getAppPath());
   expect(typeof appPath).toBe('string');
@@ -173,7 +178,9 @@ test('should infer evaluate types', async ({ app }) => {
 
 });
 
-test('should register custom selector engine', async ({ page, server }) => {
+test('should register custom selector engine', async ({ launchElectronApp, newWindow, server }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   const tag = `electron-tag-${test.info().workerIndex}`;
   await selectors.register(tag, `({
     query(root, selector) { return root.querySelector(selector); },
@@ -185,7 +192,9 @@ test('should register custom selector engine', async ({ page, server }) => {
   expect(await page.$$eval(`${tag}=DIV`, es => es.length)).toBe(2);
 });
 
-test('should route network', async ({ app, page }) => {
+test('should route network', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   await app.context().route('**/empty.html', async (route, request) => {
     await route.fulfill({
       status: 200,
@@ -197,14 +206,18 @@ test('should route network', async ({ app, page }) => {
   expect(await page.title()).toBe('Hello World');
 });
 
-test('should support init script', async ({ app, page }) => {
+test('should support init script', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
   await app.context().addInitScript('window.magic = 42;');
+  const page = await newWindow(app);
   await page.goto('data:text/html,<script>window.copy = magic</script>');
   expect(await page.evaluate(() => window['copy'])).toBe(42);
 });
 
-test('should expose function', async ({ app, page }) => {
+test('should expose function', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
   await app.context().exposeFunction('add', (a, b) => a + b);
+  const page = await newWindow(app);
   await page.goto('data:text/html,<script>window["result"] = add(20, 22);</script>');
   expect(await page.evaluate(() => window['result'])).toBe(42);
 });
@@ -219,7 +232,8 @@ test('should wait for first window', async ({ launchElectronApp }) => {
   expect(await window.title()).toBe('Hello World!');
 });
 
-test('should have a clipboard instance', async ({ app }) => {
+test('should have a clipboard instance', async ({ launchElectronApp }) => {
+  const app = await launchElectronApp('electron-app.js');
   const clipboardContentToWrite = 'Hello from Playwright';
   await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), clipboardContentToWrite);
   const clipboardContentRead = await app.evaluate(async ({ clipboard }) => clipboard.readText());

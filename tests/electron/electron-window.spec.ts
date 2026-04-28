@@ -16,25 +16,33 @@
 
 import { electronTest as test, expect } from './electronTest';
 
-test('should click the button', async ({ page, server }) => {
+test('should click the button', async ({ launchElectronApp, newWindow, server }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-test('should check the box', async ({ page }) => {
+test('should check the box', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await page.check('input');
   expect(await page.evaluate('checkbox.checked')).toBe(true);
 });
 
-test('should not check the checked box', async ({ page }) => {
+test('should not check the checked box', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await page.check('input');
   expect(await page.evaluate('checkbox.checked')).toBe(true);
 });
 
-test('should type into a textarea', async ({ page }) => {
+test('should type into a textarea', async ({ launchElectronApp, newWindow }) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
