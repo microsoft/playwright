@@ -625,6 +625,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?platform\}/g, '$1' + process.platform)
         .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : '')
         .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
+        .replace(/\{(.)?testFileBaseName\}/g, '$1' + parsedRelativeTestFilePath.name)
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
         .replace(/\{(.)?arg\}/g, '$1' + nameArgument)

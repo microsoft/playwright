@@ -80,6 +80,9 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
       name: 'testFileName',
       snapshotPathTemplate: '{testFileName}',
     }, {
+      name: 'testFileBaseName',
+      snapshotPathTemplate: '{testFileBaseName}',
+    }, {
       name: 'snapshotDir',
       snapshotDir: './a-snapshot-dir',
       snapshotPathTemplate: '{snapshotDir}.png',
@@ -101,6 +104,7 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
   expect.soft(snapshotPath['testFileDir']).toBe(path.join('a', 'b', 'c'));
   expect.soft(snapshotPath['testFilePath']).toBe(path.join('a', 'b', 'c', 'd.spec.ts'));
   expect.soft(snapshotPath['testFileName']).toBe('d.spec.ts');
+  expect.soft(snapshotPath['testFileBaseName']).toBe('d.spec');
   expect.soft(snapshotPath['snapshotDir']).toBe('a-snapshot-dir.png');
   expect.soft(snapshotPath['snapshotSuffix']).toBe('-' + process.platform);
   expect.soft(snapshotPath['testName']).toBe('suite-test-should-work');
