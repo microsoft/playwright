@@ -21,6 +21,7 @@ import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import './colors.css';
+import './brutalist.css';
 import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
 // @ts-ignore
