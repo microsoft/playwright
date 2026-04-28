@@ -1,4 +1,3 @@
-page/elementhandle-bounding-box.spec.ts › should return null for invisible elements [fail]
 page/elementhandle-click.spec.ts › should double click the button [fail]
 page/elementhandle-click.spec.ts › should work for TextNodes [fail]
 page/elementhandle-content-frame.spec.ts › should work for cross-frame evaluations [fail]

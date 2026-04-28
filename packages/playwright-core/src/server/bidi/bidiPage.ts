@@ -517,7 +517,7 @@ export class BidiPage implements PageDelegate {
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const box = await handle.evaluate(element => {
-      if (!(element instanceof Element))
+      if (!(element instanceof Element) || element.getClientRects().length === 0)
         return null;
       const rect = element.getBoundingClientRect();
       return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
