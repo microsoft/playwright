@@ -497,10 +497,10 @@ class TypesGenerator {
 }
 
 (async function () {
-  const coreDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  const coreDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'))
+      .mergeWith(parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'electron-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md')));
   const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   const reporterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
-  const electronDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'electron-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   const assertionClasses = new Set([
     'APIResponseAssertions',
     'GenericAssertions',
@@ -519,7 +519,6 @@ class TypesGenerator {
       documentation,
       doNotGenerate: new Set([
         ...assertionClasses,
-        ...electronDocumentation.classesArray.map(cls => cls.name),
       ]),
     });
     let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
@@ -611,21 +610,6 @@ class TypesGenerator {
   }
 
   /**
-   * @returns {Promise<string>}
-   */
-  async function generateElectronTypes() {
-    const documentation = coreDocumentation.mergeWith(electronDocumentation);
-    const generator = new TypesGenerator({
-      documentation,
-      doNotGenerate: new Set([
-        ...coreDocumentation.classesArray.map(cls => cls.name),
-        'ElectronFixtures',
-      ]),
-    });
-    return await generator.generateTypes(path.join(__dirname, 'overrides-electron.d.ts'));
-  }
-
-  /**
    * @param {string} filePath
    * @param {string} content
    * @param {boolean} removeTrailingWhiteSpace
@@ -654,8 +638,6 @@ class TypesGenerator {
   writeFile(path.join(clientTypesDir, 'types.d.ts'), coreTypes, true);
   writeFile(path.join(playwrightTypesDir, 'test.d.ts'), await generateTestTypes(), true);
   writeFile(path.join(playwrightTypesDir, 'testReporter.d.ts'), await generateReporterTypes(), true);
-  const electronTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-electron');
-  writeFile(path.join(electronTypesDir, 'types.d.ts'), await generateElectronTypes(), true);
   process.exit(0);
 })().catch(e => {
   console.error(e);

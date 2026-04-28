@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { electron } = require('@playwright/electron');
+const { _electron: electron } = require('@playwright/test');
 const path = require('path');
 
 (async () => {
@@ -25,7 +25,7 @@ const path = require('path');
   await application.close();
   if (appPath !== __dirname)
     throw new Error(`Malformed app path: got "${appPath}", expected "${__dirname}"`);
-  console.log(`@playwright/electron SUCCESS`);
+  console.log(`@playwright/test electron SUCCESS`);
 })().catch(err => {
   console.error(err);
   process.exit(1);

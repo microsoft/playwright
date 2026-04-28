@@ -17,7 +17,6 @@
 import os from 'os';
 import readline from 'readline';
 import { EventEmitter } from 'events';
-import { chromium } from 'playwright/test';
 import debug from 'debug';
 
 import { launchProcess } from '@utils/processLauncher';
@@ -26,10 +25,13 @@ import { debugMode } from '@utils/debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 
+import { libPath } from '../package';
+
 import type { BrowserWindow } from 'electron';
-import type { Browser, BrowserContext, JSHandle, Page, Worker } from 'playwright/test';
+import type { Browser, BrowserContext, JSHandle, Page, Worker } from '../../types/types';
+import type * as api from '../../types/types';
+import type { Playwright } from '../client/playwright';
 import type childProcess from 'child_process';
-import type * as api from '../types';
 
 const debugLogger = debug('pw:electron');
 
@@ -71,6 +73,12 @@ class Progress {
 }
 
 export class Electron implements api.Electron {
+  _playwright: Playwright;
+
+  constructor(playwright: Playwright) {
+    this._playwright = playwright;
+  }
+
   async launch(options: ElectronLaunchOptions = {}): Promise<ElectronApplication> {
     const timeout = options.timeout ?? (debugMode() === 'inspector' ? 0 : 3 * 60 * 1000);
     const progress = new Progress(timeout, `electron.launch: Timeout ${timeout}ms exceeded`);
@@ -101,8 +109,9 @@ export class Electron implements api.Electron {
         throw error;
       }
       // Only inject our loader for non-packaged apps; packaged apps may have
-      // their own command-line handling.
-      electronArguments.unshift('-r', require.resolve('./loader'));
+      // their own command-line handling. loader.js is emitted under
+      // lib/electron/ as a per-file build (see utils/build/build.js).
+      electronArguments.unshift('-r', libPath('electron', 'loader.js'));
     }
 
     let shell = false;
@@ -160,6 +169,7 @@ export class Electron implements api.Electron {
     const debuggerDisconnectPromise = waitForLine(progress, launchedProcess, /Waiting for the debugger to disconnect\.\.\./);
 
     try {
+      const chromium = this._playwright.chromium;
       const nodeMatch = await nodeMatchPromise;
       const worker = await chromium.connectToWorker(nodeMatch[1], { timeout: progress.timeUntilDeadline() });
 
@@ -345,5 +355,3 @@ async function waitForLine(progress: Progress, process: childProcess.ChildProces
     process.removeListener('error', onFail);
   }
 }
-
-export const electron = new Electron();

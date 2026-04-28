@@ -1,0 +1,5 @@
+[*]
+../package.ts
+@isomorphic/**
+@utils/**
+node_modules/debug
