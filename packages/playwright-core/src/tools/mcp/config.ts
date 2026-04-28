@@ -115,11 +115,12 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   const cliOverrides = configFromCLIOptions(cliOptions);
   const configFile = cliOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
+  const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
 
   let result = defaultConfig;
-  result = mergeConfig(result, configInFile);
-  result = mergeConfig(result, envOverrides);
-  result = mergeConfig(result, cliOverrides);
+  result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
+  result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
+  result = mergeConfig(result, resolveConfigPaths(cliOverrides, process.cwd()));
 
   const browser = await validateBrowserConfig(result.browser);
   if (browser.launchOptions.headless === undefined)
@@ -151,14 +152,17 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   const envOverrides = configFromEnv(env);
   const configFile = daemonOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
+  const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
   const globalConfigPath = path.join((env ?? process.env)['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
-  const globalConfigInFile = await loadConfig(fs.existsSync(globalConfigPath) ? globalConfigPath : undefined);
+  const globalConfigExists = fs.existsSync(globalConfigPath);
+  const globalConfigInFile = await loadConfig(globalConfigExists ? globalConfigPath : undefined);
+  const globalConfigDir = globalConfigExists ? path.dirname(globalConfigPath) : process.cwd();
 
   let result = defaultConfig;
-  result = mergeConfig(result, globalConfigInFile);
-  result = mergeConfig(result, configInFile);
-  result = mergeConfig(result, envOverrides);
-  result = mergeConfig(result, daemonOverrides);
+  result = mergeConfig(result, resolveConfigPaths(globalConfigInFile, globalConfigDir));
+  result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
+  result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
+  result = mergeConfig(result, resolveConfigPaths(daemonOverrides, process.cwd()));
 
   if (result.browser.isolated === undefined)
     result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
@@ -309,8 +313,8 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
       cdpTimeout: cliOptions.cdpTimeout,
-      initPage: cliOptions.initPage?.map(p => path.resolve(p)),
-      initScript: cliOptions.initScript?.map(p => path.resolve(p)),
+      initPage: cliOptions.initPage,
+      initScript: cliOptions.initScript,
       remoteEndpoint: cliOptions.endpoint,
     },
     extension: cliOptions.extension,
@@ -397,23 +401,21 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   if (!configFile)
     return {};
 
-  let config: Config;
-  if (configFile.endsWith('.ini')) {
-    config = configFromIniFile(configFile);
-  } else {
-    try {
-      const data = await fs.promises.readFile(configFile, 'utf8');
-      config = JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
-    } catch {
-      config = configFromIniFile(configFile);
-    }
+  if (configFile.endsWith('.ini'))
+    return configFromIniFile(configFile);
+
+  try {
+    const data = await fs.promises.readFile(configFile, 'utf8');
+    return JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
+  } catch {
+    return configFromIniFile(configFile);
   }
-  return resolveConfigPaths(config, path.dirname(path.resolve(configFile)));
 }
 
-// initPage/initScript paths inside a config file are resolved against the
-// config file's directory so they keep working when the CLI is invoked from
-// a different cwd.
+// initPage/initScript paths are resolved against a per-source base dir
+// (config-file dir for entries loaded from a --config file, cwd for entries
+// supplied via CLI flags or PLAYWRIGHT_MCP_INIT_* env vars) so they keep
+// working when the CLI is invoked from a different cwd.
 function resolveConfigPaths(config: Config, baseDir: string): Config {
   if (config.browser?.initPage)
     config.browser.initPage = config.browser.initPage.map(p => path.resolve(baseDir, p));
