@@ -135,11 +135,12 @@ test('per-part commands extract individual parts', async ({ cli, server }) => {
   expect((await cli('response-body', num)).output).toContain('{"name":"John Doe"}');
 });
 
-test('request* and response* commands support --filename', async ({ cli, server }) => {
+test('request* and response* commands support --filename', async ({ cli, server }, testInfo) => {
   server.setContent('/', `
     <button onclick="fetch('/api', { method: 'POST', body: 'hello' })">Click me</button>
   `, 'text/html');
   server.setRoute('/api', (_req, res) => {
+    res.setHeader('X-Custom-Response', 'response-value');
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ name: 'John Doe' }));
   });
@@ -151,11 +152,22 @@ test('request* and response* commands support --filename', async ({ cli, server 
   expect(match).not.toBeNull();
   const num = match![1];
 
+  const read = (file: string) => fs.readFileSync(testInfo.outputPath(file), 'utf-8');
+
   expect((await cli('request', num, '--filename=req.log')).output).toContain('[Request](./req.log)');
+  expect(read('req.log')).toContain(`[POST] ${server.PREFIX}/api`);
+
   expect((await cli('request-headers', num, '--filename=req-h.txt')).output).toContain('[Body](./req-h.txt)');
+  expect(read('req-h.txt')).toContain('content-type: text/plain;charset=UTF-8');
+
   expect((await cli('request-body', num, '--filename=req-b.txt')).output).toContain('[Body](./req-b.txt)');
+  expect(read('req-b.txt')).toBe('hello');
+
   expect((await cli('response-headers', num, '--filename=res-h.txt')).output).toContain('[Body](./res-h.txt)');
+  expect(read('res-h.txt')).toContain('x-custom-response: response-value');
+
   expect((await cli('response-body', num, '--filename=res-b.json')).output).toContain('[Body](./res-b.json)');
+  expect(read('res-b.json')).toBe('{"name":"John Doe"}');
 });
 
 test('--raw response-body returns just the body', async ({ cli, server }) => {
