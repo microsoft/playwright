@@ -34,6 +34,7 @@ const testDebug = debug('pw:mcp:test');
 
 export type ContextConfig = {
   allowUnrestrictedFileAccess?: boolean;
+  autoRecord?: boolean;
   capabilities?: ToolCapability[];
   codegen?: 'typescript' | 'none';
   console?: { level?: 'error' | 'warning' | 'info' | 'debug' };
@@ -173,6 +174,7 @@ export class Context {
       listener(reason);
   };
   private _recordingState: RecordingState | undefined;
+  private _stoppedEvents: RecordedEvent[] = [];
   private _recordingSetUp = false;
 
   constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
@@ -414,6 +416,7 @@ export class Context {
   async startRecording(): Promise<void> {
     if (this._recordingState)
       throw new Error('A recording session is already in progress. Call `browser_recording_stop` first.');
+    this._stoppedEvents = [];
     const state: RecordingState = { events: [], disposables: [] };
     this._recordingState = state;
     const browserContext = await this.ensureBrowserContext();
@@ -448,12 +451,25 @@ export class Context {
     if (!state)
       return 0;
     disposeAll(state.disposables).catch(() => { });
+    this._stoppedEvents = state.events;
     this._recordingState = undefined;
     return state.events.length;
   }
 
+  async resetRecording(): Promise<void> {
+    // Stop the active session if one is running.
+    if (this._recordingState) {
+      disposeAll(this._recordingState.disposables).catch(() => { });
+      this._recordingState = undefined;
+    }
+    // Clear the stopped-event buffer so the next recording starts clean.
+    this._stoppedEvents = [];
+    // Start a fresh session immediately.
+    await this.startRecording();
+  }
+
   getRecordedCode(): string[] {
-    const events = this._recordingState?.events ?? [];
+    const events = this._recordingState?.events ?? this._stoppedEvents;
     return events.map(event => {
       switch (event.type) {
         case 'navigate':
@@ -470,6 +486,24 @@ export class Context {
           return `await page.locator(${escapeWithQuotes(event.selector, "'")}).uncheck();`;
       }
     });
+  }
+
+  saveRecordingAsTest(testName: string, outputPath: string): string {
+    const lines = this.getRecordedCode();
+    const body = lines.map(l => `  ${l}`).join('\n');
+    const content = [
+      `import { test, expect } from '@playwright/test';`,
+      ``,
+      `test(${escapeWithQuotes(testName, "'")}, async ({ page }) => {`,
+      body,
+      `});`,
+      ``,
+    ].join('\n');
+    const dir = path.dirname(outputPath);
+    if (!fs.existsSync(dir))
+      fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(outputPath, content, 'utf-8');
+    return content;
   }
 
   lookupSecret(secretName: string): { value: string, code: string } {

@@ -57,6 +57,7 @@ export type CLIOptions = {
   initPage?: string[];
   isolated?: boolean;
   imageResponses?: 'allow' | 'omit';
+  autoRecord?: boolean;
   sandbox?: boolean;
   outputDir?: string;
   port?: number;
@@ -328,6 +329,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       blockedOrigins: cliOptions.blockedOrigins,
     },
     allowUnrestrictedFileAccess: cliOptions.allowUnrestrictedFileAccess,
+    autoRecord: cliOptions.autoRecord,
     codegen: cliOptions.codegen,
     saveSession: cliOptions.saveSession,
     secrets: cliOptions.secrets,

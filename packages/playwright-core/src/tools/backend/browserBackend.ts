@@ -44,6 +44,8 @@ export class BrowserBackend implements ServerBackend {
       sessionLog: this._sessionLog,
       cwd: clientInfo.cwd,
     });
+    if (this._config.autoRecord)
+      await this._context.startRecording();
   }
 
   async dispose() {

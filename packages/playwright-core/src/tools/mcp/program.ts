@@ -64,6 +64,7 @@ export function decorateMCPCommand(command: Command) {
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--sandbox', 'enable the sandbox for all process types that are normally not sandboxed.')
+      .option('--auto-record', 'automatically start recording browser interactions when the browser starts.')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)
       .option('--shared-browser-context', 'reuse the same browser context between all connected HTTP clients.')
@@ -84,7 +85,7 @@ export function decorateMCPCommand(command: Command) {
         setupExitWatchdog();
 
         if (options.vision) {
-          // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console
           console.error('The --vision option is deprecated, use --caps=vision instead');
           options.caps = 'vision';
         }
