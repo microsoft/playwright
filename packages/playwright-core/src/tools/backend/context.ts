@@ -105,6 +105,13 @@ export class Context {
   private _disposables: Disposable[] = [];
 
   private _runningToolName: string | undefined;
+  private _pendingUnhandledRejections: unknown[] = [];
+  private _unhandledRejectionListeners = new Set<(reason: unknown) => void>();
+  private _onUnhandledRejection = (reason: unknown) => {
+    this._pendingUnhandledRejections.push(reason);
+    for (const listener of this._unhandledRejectionListeners)
+      listener(reason);
+  };
 
   constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
     this.config = options.config;
@@ -112,15 +119,28 @@ export class Context {
     this.options = options;
     this._rawBrowserContext = browserContext;
     testDebug('create context');
+    process.on('unhandledRejection', this._onUnhandledRejection);
   }
 
   async dispose() {
+    process.off('unhandledRejection', this._onUnhandledRejection);
     await disposeAll(this._disposables);
     for (const tab of this._tabs)
       await tab.dispose();
     this._tabs.length = 0;
     this._currentTab = undefined;
     await this.stopVideoRecording();
+  }
+
+  drainPendingUnhandledRejections(): unknown[] {
+    const reasons = this._pendingUnhandledRejections.slice();
+    this._pendingUnhandledRejections.length = 0;
+    return reasons;
+  }
+
+  onUnhandledRejection(listener: (reason: unknown) => void): () => void {
+    this._unhandledRejectionListeners.add(listener);
+    return () => this._unhandledRejectionListeners.delete(listener);
   }
 
   debugger() {

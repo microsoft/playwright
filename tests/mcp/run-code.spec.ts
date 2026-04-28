@@ -108,6 +108,40 @@ test('browser_run_code return value', async ({ client, server }) => {
   expect(content).toContain('[LOG] Submit');
 });
 
+test('browser_run_code route handler exception keeps server alive', async ({ client, server }) => {
+  server.setContent('/', '<button>Submit</button>', 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const code = `async (page) => {
+    await page.unroute('**/*').catch(() => {});
+    await page.route('**/route-throws.json', async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ path }) });
+    });
+    return await page.evaluate(async () => {
+      const response = await fetch('/route-throws.json');
+      return response.text();
+    });
+  }`;
+  expect(await client.callTool({
+    name: 'browser_run_code',
+    arguments: { code },
+  })).toHaveResponse({
+    error: expect.stringContaining('ReferenceError: URL is not defined'),
+    isError: true,
+  });
+
+  // Subsequent tool calls should still work because the transport remains alive.
+  const followUp = await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'list' },
+  });
+  expect(followUp.isError).toBeFalsy();
+});
+
 test('browser_run_code with filename', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Clicked')">Click</button>
