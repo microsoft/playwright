@@ -106,8 +106,11 @@ export class Context {
 
   private _runningToolName: string | undefined;
   private _pendingUnhandledRejections: unknown[] = [];
+  private _unhandledRejectionListeners = new Set<(reason: unknown) => void>();
   private _onUnhandledRejection = (reason: unknown) => {
     this._pendingUnhandledRejections.push(reason);
+    for (const listener of this._unhandledRejectionListeners)
+      listener(reason);
   };
 
   constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
@@ -133,6 +136,11 @@ export class Context {
     const reasons = this._pendingUnhandledRejections.slice();
     this._pendingUnhandledRejections.length = 0;
     return reasons;
+  }
+
+  onUnhandledRejection(listener: (reason: unknown) => void): () => void {
+    this._unhandledRejectionListeners.add(listener);
+    return () => this._unhandledRejectionListeners.delete(listener);
   }
 
   debugger() {

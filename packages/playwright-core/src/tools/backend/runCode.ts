@@ -50,23 +50,38 @@ const runCode = defineTabTool({
       __end__,
     };
     vm.createContext(context);
-    await tab.waitForCompletion(async () => {
-      // Compile the user function separately to avoid template literal escaping issues
-      // when the code contains backticks.
-      context.__fn__ = vm.runInContext('(' + code + ')', context);
-      const snippet = '(async () => {\n' +
-          '  try {\n' +
-          '    const result = await __fn__(page);\n' +
-          '    __end__.resolve(JSON.stringify(result));\n' +
-          '  } catch (e) {\n' +
-          '    __end__.reject(e);\n' +
-          '  }\n' +
-          '})()';
-      await vm.runInContext(snippet, context);
-      const result = await __end__;
-      if (typeof result === 'string')
-        response.addTextResult(result);
+    // User-installed callbacks (e.g. page.route handlers) can throw
+    // asynchronously while __fn__ awaits an operation that depends on them
+    // (e.g. a page.evaluate awaiting a fetch the route never fulfills).
+    // Settle __end__ on the first such rejection so we unblock instead of
+    // waiting for a timeout. The Context-level handler still records it for
+    // surfacing on the response.
+    const unsubscribe = tab.context.onUnhandledRejection(reason => {
+      if (!__end__.isDone())
+        __end__.reject(reason instanceof Error ? reason : new Error(String(reason)));
     });
+    try {
+      await tab.waitForCompletion(async () => {
+        // Compile the user function separately to avoid template literal escaping issues
+        // when the code contains backticks.
+        context.__fn__ = vm.runInContext('(' + code + ')', context);
+        const snippet = '(async () => {\n' +
+            '  try {\n' +
+            '    const result = await __fn__(page);\n' +
+            '    __end__.resolve(JSON.stringify(result));\n' +
+            '  } catch (e) {\n' +
+            '    __end__.reject(e);\n' +
+            '  }\n' +
+            '})()';
+        const iifePromise = vm.runInContext(snippet, context) as Promise<void>;
+        await Promise.race([iifePromise, __end__]);
+        const result = await __end__;
+        if (typeof result === 'string')
+          response.addTextResult(result);
+      });
+    } finally {
+      unsubscribe();
+    }
   },
 });
 
