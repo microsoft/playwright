@@ -23,6 +23,7 @@ export * from './debugLogger';
 export * from './env';
 export * from './eventsHelper';
 export * from './fileUtils';
+export * from './happyEyeballs';
 export * from './hostPlatform';
 export * from './httpServer';
 export * from './network';
