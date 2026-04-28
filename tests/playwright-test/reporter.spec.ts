@@ -547,6 +547,35 @@ onEnd
 onExit
 `);
     });
+
+    test('onError receives workerInfo for fixture teardown errors (#39063)', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'reporter.ts': `
+          class Reporter {
+            printsToStdio() { return true; }
+            onError(error, workerInfo) {
+              console.log('teardownError:'
+                + ' message=' + (error.message || '').split('\\n')[0]
+                + ' workerInfo=' + (workerInfo ? typeof workerInfo.workerIndex + '/' + typeof workerInfo.parallelIndex : 'undefined'));
+            }
+          }
+          module.exports = Reporter;
+        `,
+        'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+        'a.spec.ts': `
+          import { test as base } from '@playwright/test';
+          const test = base.extend<{}, { brokenWorker: void }>({
+            brokenWorker: [async ({}, use) => {
+              await use();
+              throw new Error('teardown failed');
+            }, { scope: 'worker' }],
+          });
+          test('uses worker fixture', async ({ brokenWorker }) => {});
+        `,
+      }, { reporter: '', workers: 1 });
+      expect(result.exitCode).toBe(1);
+      expect(result.output).toContain('teardownError: message=Error: teardown failed workerInfo=number/number');
+    });
   });
 }
 
