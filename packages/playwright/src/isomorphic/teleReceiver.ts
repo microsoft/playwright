@@ -212,6 +212,7 @@ export type JsonOnErrorEvent = {
   method: 'onError';
   params: {
     error: reporterTypes.TestError;
+    workerInfo?: { workerIndex: number, parallelIndex: number };
   };
 };
 
@@ -313,7 +314,7 @@ export class TeleReporterReceiver {
       return;
     }
     if (method === 'onError') {
-      this._onError(params.error);
+      this._onError(params.error, params.workerInfo);
       return;
     }
     if (method === 'onStdIO') {
@@ -438,8 +439,14 @@ export class TeleReporterReceiver {
     })));
   }
 
-  private _onError(error: reporterTypes.TestError) {
-    this._reporter.onError?.(error);
+  private _onError(error: reporterTypes.TestError, workerInfo?: { workerIndex: number, parallelIndex: number }) {
+    const fullWorkerInfo: reporterTypes.WorkerInfo | undefined = workerInfo ? {
+      workerIndex: workerInfo.workerIndex,
+      parallelIndex: workerInfo.parallelIndex,
+      config: this._config,
+      project: (this._rootSuite._entries[0] as TeleSuite)?.project() ?? baseFullConfig.projects[0],
+    } : undefined;
+    this._reporter.onError?.(error, fullWorkerInfo);
   }
 
   private _onStdIO(type: JsonStdIOType, testId: string | undefined, resultId: string | undefined, data: string, isBase64: boolean) {

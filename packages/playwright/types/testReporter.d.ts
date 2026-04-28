@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject, Location } from './test';
-export type { FullConfig, FullProject, TestStatus, Location } from './test';
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject, Location, WorkerInfo } from './test';
+export type { FullConfig, FullProject, TestStatus, Location, WorkerInfo } from './test';
 
 /**
  * Result of the full test run.
@@ -119,8 +119,8 @@ export interface FullResult {
  * [reporter.onStdOut(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-out) and
  * [reporter.onStdErr(chunk, test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-std-err) are
  * called when standard output is produced in the worker process, possibly during a test execution, and
- * [reporter.onError(error)](https://playwright.dev/docs/api/class-reporter#reporter-on-error) is called when
- * something went wrong outside of the test execution.
+ * [reporter.onError(error[, workerInfo])](https://playwright.dev/docs/api/class-reporter#reporter-on-error) is called
+ * when something went wrong outside of the test execution.
  *
  * If your custom reporter does not print anything to the terminal, implement
  * [reporter.printsToStdio()](https://playwright.dev/docs/api/class-reporter#reporter-prints-to-stdio) and return
@@ -169,8 +169,10 @@ export interface Reporter {
   /**
    * Called on some global error, for example unhandled exception in the worker process.
    * @param error The error.
+   * @param workerInfo When the error originates from a worker fixture teardown, contains information about the worker that produced it.
+   * `undefined` for errors that are not associated with a specific worker.
    */
-  onError?(error: TestError): void;
+  onError?(error: TestError, workerInfo?: WorkerInfo): void;
 
   /**
    * Called immediately before test runner exists. At this point all the reporters have received the
@@ -570,12 +572,6 @@ export interface TestError {
   message?: string;
 
   /**
-   * Parallel slot index of the worker that emitted this error. Set for errors that originate from a worker fixture
-   * teardown. See [testInfo.parallelIndex](https://playwright.dev/docs/api/class-testinfo#test-info-parallel-index).
-   */
-  parallelIndex?: number;
-
-  /**
    * Source code snippet with highlighted error.
    */
   snippet?: string;
@@ -586,21 +582,9 @@ export interface TestError {
   stack?: string;
 
   /**
-   * Time when the error was emitted, in milliseconds since the Unix epoch. Set for errors that originate from a worker
-   * fixture teardown.
-   */
-  timestamp?: number;
-
-  /**
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
-
-  /**
-   * Index of the worker that emitted this error. Set for errors that originate from a worker fixture teardown. See
-   * [testInfo.workerIndex](https://playwright.dev/docs/api/class-testinfo#test-info-worker-index).
-   */
-  workerIndex?: number;
 }
 
 /**

@@ -548,17 +548,15 @@ onExit
 `);
     });
 
-    test('onError exposes worker info for fixture teardown errors (#39063)', async ({ runInlineTest }) => {
+    test('onError receives workerInfo for fixture teardown errors (#39063)', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'reporter.ts': `
           class Reporter {
             printsToStdio() { return true; }
-            onError(error) {
+            onError(error, workerInfo) {
               console.log('teardownError:'
                 + ' message=' + (error.message || '').split('\\n')[0]
-                + ' timestampType=' + typeof error.timestamp
-                + ' workerIndexType=' + typeof error.workerIndex
-                + ' parallelIndexType=' + typeof error.parallelIndex);
+                + ' workerInfo=' + (workerInfo ? typeof workerInfo.workerIndex + '/' + typeof workerInfo.parallelIndex : 'undefined'));
             }
           }
           module.exports = Reporter;
@@ -576,7 +574,7 @@ onExit
         `,
       }, { reporter: '', workers: 1 });
       expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('teardownError: message=Error: teardown failed timestampType=number workerIndexType=number parallelIndexType=number');
+      expect(result.output).toContain('teardownError: message=Error: teardown failed workerInfo=number/number');
     });
   });
 }

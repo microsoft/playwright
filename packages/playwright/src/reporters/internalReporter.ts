@@ -25,7 +25,7 @@ import * as babel from '../transform/babelBundle';
 import { wrapReporterAsV2 } from './reporterV2';
 
 import type { AnyReporter, ReporterV2 } from './reporterV2';
-import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep, WorkerInfo } from '../../types/testReporter';
 
 
 export class InternalReporter implements ReporterV2 {
@@ -93,9 +93,9 @@ export class InternalReporter implements ReporterV2 {
     await this._reporter.onExit?.();
   }
 
-  onError(error: TestError) {
+  onError(error: TestError, workerInfo?: WorkerInfo) {
     addLocationAndSnippetToError(this._config, error);
-    this._reporter.onError?.(error);
+    this._reporter.onError?.(error, workerInfo);
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {

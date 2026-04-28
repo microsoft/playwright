@@ -15,7 +15,7 @@
  */
 
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
-import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep, WorkerInfo } from '../../types/testReporter';
 import type { test } from '../common';
 
 export class Multiplexer implements ReporterV2 {
@@ -88,9 +88,9 @@ export class Multiplexer implements ReporterV2 {
       await wrapAsync(() => reporter.onExit?.());
   }
 
-  onError(error: TestError) {
+  onError(error: TestError, workerInfo?: WorkerInfo) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onError?.(error));
+      wrap(() => reporter.onError?.(error, workerInfo));
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
