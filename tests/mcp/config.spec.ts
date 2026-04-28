@@ -16,8 +16,11 @@
 
 import fs from 'node:fs';
 
-import { test, expect, parseResponse } from './fixtures';
+import { test, expect, mcpServerPath, parseResponse } from './fixtures';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
+
+const { spawnAsync } = utils;
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
   server.setContent('/', `
@@ -101,6 +104,29 @@ test.describe(() => {
     })).toHaveResponse({
       page: expect.stringContaining(`Firefox`),
     });
+  });
+
+  test('browserName msedge in config file', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1570' } }, async ({}, testInfo) => {
+    const configPath = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configPath, JSON.stringify({
+      browser: {
+        browserName: 'msedge',
+      },
+    }, null, 2));
+
+    const { stderr } = await spawnAsync('node', [...mcpServerPath, '--config', configPath]);
+    expect(stderr.trim()).toBe([
+      `Unsupported "browser.browserName": "msedge". It must be one of: "chromium", "firefox", "webkit".`,
+      `To use "msedge", set it as the launch channel instead:`,
+      `{`,
+      `  "browser": {`,
+      `    "browserName": "chromium",`,
+      `    "launchOptions": {`,
+      `      "channel": "msedge"`,
+      `    }`,
+      `  }`,
+      `}`,
+    ].join('\n'));
   });
 });
 

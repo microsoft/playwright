@@ -25,6 +25,10 @@ export function isChromiumChannelName(channel: string): boolean {
   return channelToDefaultUserDataDir.has(channel);
 }
 
+export function chromiumChannelNames(): string[] {
+  return [...channelToDefaultUserDataDir.keys()];
+}
+
 const channelToDefaultUserDataDir = new Map<string, Record<string, string>>([
   ['chrome', {
     'linux': path.join(os.homedir(), '.config', 'google-chrome'),

@@ -19,6 +19,7 @@ import path from 'path';
 import os from 'os';
 
 import dotenv from 'dotenv';
+import { chromiumChannelNames, isChromiumChannelName } from '@utils/chromiumChannels';
 import { playwright } from '../../inprocess';
 import { configFromIniFile } from './configIni';
 
@@ -185,6 +186,18 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
     // Assign channel only if the browserName is not provided, otherwise assume full control to the user.
     if (browser.launchOptions.channel === undefined)
       browser.launchOptions.channel = 'chrome';
+  } else if (browserName !== 'chromium' && browserName !== 'firefox' && browserName !== 'webkit') {
+    const value = browserName as string;
+    const lines = [
+      `Unsupported "browser.browserName": "${value}". It must be one of: "chromium", "firefox", "webkit".`,
+    ];
+    if (isChromiumChannelName(value)) {
+      lines.push(`To use "${value}", set it as the launch channel instead:`);
+      lines.push(JSON.stringify({ browser: { browserName: 'chromium', launchOptions: { channel: value } } }, null, 2));
+    } else {
+      lines.push(`Supported Chromium channels (set via "browser.launchOptions.channel"): ${chromiumChannelNames().join(', ')}.`);
+    }
+    throw new Error(lines.join('\n'));
   }
 
   if (browser.browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {
@@ -228,29 +241,23 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
 function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
   let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
   let channel: string | undefined;
-  switch (cliOptions.browser) {
-    case 'chrome':
-    case 'chrome-beta':
-    case 'chrome-canary':
-    case 'chrome-dev':
-    case 'msedge':
-    case 'msedge-beta':
-    case 'msedge-canary':
-    case 'msedge-dev':
-      browserName = 'chromium';
-      channel = cliOptions.browser;
-      break;
-    case 'chromium':
-      // Never use old headless.
-      browserName = 'chromium';
-      channel = 'chrome-for-testing';
-      break;
-    case 'firefox':
-      browserName = 'firefox';
-      break;
-    case 'webkit':
-      browserName = 'webkit';
-      break;
+  if (cliOptions.browser && isChromiumChannelName(cliOptions.browser)) {
+    browserName = 'chromium';
+    channel = cliOptions.browser;
+  } else {
+    switch (cliOptions.browser) {
+      case 'chromium':
+        // Never use old headless.
+        browserName = 'chromium';
+        channel = 'chrome-for-testing';
+        break;
+      case 'firefox':
+        browserName = 'firefox';
+        break;
+      case 'webkit':
+        browserName = 'webkit';
+        break;
+    }
   }
 
   // Launch options
