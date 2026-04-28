@@ -92,20 +92,10 @@ const request = defineTabTool({
       return;
     }
     if (params.part) {
-      const partResult = await renderRequestPart(request, params.part, response, params.filename);
-      if (partResult === undefined)
-        return;
-      if (params.filename && !partResult.isFilePath)
-        await response.addResult('Body', partResult.text, { prefix: 'request', ext: 'txt', suggestedFilename: params.filename });
-      else
-        response.addTextResult(partResult.text);
+      await renderRequestPart(request, params.part, response, params.filename);
       return;
     }
-    const text = renderRequestDetails(params.index, request, !!tab.context.config.skillMode);
-    if (params.filename)
-      await response.addResult('Request', text, { prefix: 'request', ext: 'log', suggestedFilename: params.filename });
-    else
-      response.addTextResult(text);
+    await response.addResult('Request', renderRequestDetails(params.index, request, !!tab.context.config.skillMode), { prefix: 'request', ext: 'log', suggestedFilename: params.filename });
   },
 });
 
@@ -170,32 +160,30 @@ function renderRequestDetails(index: number, request: playwright.Request, skillM
   if (responseHeaders)
     appendHeaderSection(lines, 'Response headers', responseHeaders);
 
-  const hasPostData = !!request.postData();
-  if (hasPostData) {
-    lines.push('');
-    lines.push(skillMode
-      ? `Run \`request-body ${index}\` to read the request body.`
-      : `Call browser_network_request with part="request-body" to read the request body.`);
-  }
-  if (mayHaveResponseBody(httpResponse)) {
-    if (!hasPostData)
-      lines.push('');
-    lines.push(skillMode
-      ? `Run \`response-body ${index}\` to read the response body.`
-      : `Call browser_network_request with part="response-body" to read the response body.`);
-  }
+  const hints: string[] = [];
+  if (request.postData())
+    hints.push(partHint(skillMode, 'request-body', index));
+  if (canHaveResponseBody(httpResponse))
+    hints.push(partHint(skillMode, 'response-body', index));
+  if (hints.length)
+    lines.push('', ...hints);
 
   return lines.join('\n');
 }
 
-function mayHaveResponseBody(httpResponse: playwright.Response | null): boolean {
+function partHint(skillMode: boolean, part: 'request-body' | 'response-body', index: number): string {
+  const subject = part === 'request-body' ? 'request body' : 'response body';
+  return skillMode
+    ? `Run \`${part} ${index}\` to read the ${subject}.`
+    : `Call browser_network_request with part="${part}" to read the ${subject}.`;
+}
+
+function canHaveResponseBody(httpResponse: playwright.Response | null): httpResponse is playwright.Response {
   if (!httpResponse)
     return false;
   const status = httpResponse.status();
   // Status codes that cannot have a response body per RFC 7230.
-  if (status === 204 || status === 304 || (status >= 100 && status < 200))
-    return false;
-  return true;
+  return status !== 204 && status !== 304 && !(status >= 100 && status < 200);
 }
 
 function appendHeaderSection(lines: string[], title: string, headers: Record<string, string>): void {
@@ -215,29 +203,39 @@ function computeDurationMs(request: playwright.Request): number | undefined {
   return Math.round(timing.responseEnd);
 }
 
-async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse, suggestedFilename: string | undefined): Promise<{ text: string; isFilePath: boolean } | undefined> {
-  if (part === 'request-headers')
-    return { text: renderHeaders(request.headers()), isFilePath: false };
+async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse, suggestedFilename: string | undefined): Promise<void> {
+  if (part === 'request-headers') {
+    await response.addResult('Request headers', renderHeaders(request.headers()), { prefix: 'request', ext: 'txt', suggestedFilename });
+    return;
+  }
   if (part === 'request-body') {
     const data = request.postData();
-    return data === null ? undefined : { text: data, isFilePath: false };
+    if (data !== null)
+      await response.addResult('Request body', data, { prefix: 'request', ext: 'txt', suggestedFilename });
+    return;
   }
   const httpResponse = request.existingResponse();
   if (!httpResponse)
-    return undefined;
-  if (part === 'response-headers')
-    return { text: renderHeaders(httpResponse.headers()), isFilePath: false };
+    return;
+  if (part === 'response-headers') {
+    await response.addResult('Response headers', renderHeaders(httpResponse.headers()), { prefix: 'response', ext: 'txt', suggestedFilename });
+    return;
+  }
   // response-body
   const contentType = httpResponse.headers()['content-type'];
   if (isTextualMimeType(contentType ?? '')) {
+    let text: string;
     try {
-      return { text: await httpResponse.text(), isFilePath: false };
+      text = await httpResponse.text();
     } catch {
-      return undefined;
+      return;
     }
+    await response.addResult('Response body', text, { prefix: 'response', ext: 'txt', suggestedFilename });
+    return;
   }
   const path = await saveResponseBody(request, response, suggestedFilename);
-  return path === undefined ? undefined : { text: path, isFilePath: true };
+  if (path !== undefined)
+    response.addTextResult(path);
 }
 
 function renderHeaders(headers: Record<string, string>): string {
@@ -246,11 +244,7 @@ function renderHeaders(headers: Record<string, string>): string {
 
 async function saveResponseBody(request: playwright.Request, response: ToolResponse, suggestedFilename?: string): Promise<string | undefined> {
   const httpResponse = request.existingResponse();
-  if (!httpResponse)
-    return undefined;
-  const status = httpResponse.status();
-  // Status codes that cannot have a response body per RFC 7230.
-  if (status === 204 || status === 304 || (status >= 100 && status < 200))
+  if (!canHaveResponseBody(httpResponse))
     return undefined;
   let body: Buffer;
   try {

@@ -157,16 +157,16 @@ test('request* and response* commands support --filename', async ({ cli, server 
   expect((await cli('request', num, '--filename=req.log')).output).toContain('[Request](./req.log)');
   expect(read('req.log')).toContain(`[POST] ${server.PREFIX}/api`);
 
-  expect((await cli('request-headers', num, '--filename=req-h.txt')).output).toContain('[Body](./req-h.txt)');
+  expect((await cli('request-headers', num, '--filename=req-h.txt')).output).toContain('[Request headers](./req-h.txt)');
   expect(read('req-h.txt')).toContain('content-type: text/plain;charset=UTF-8');
 
-  expect((await cli('request-body', num, '--filename=req-b.txt')).output).toContain('[Body](./req-b.txt)');
+  expect((await cli('request-body', num, '--filename=req-b.txt')).output).toContain('[Request body](./req-b.txt)');
   expect(read('req-b.txt')).toBe('hello');
 
-  expect((await cli('response-headers', num, '--filename=res-h.txt')).output).toContain('[Body](./res-h.txt)');
+  expect((await cli('response-headers', num, '--filename=res-h.txt')).output).toContain('[Response headers](./res-h.txt)');
   expect(read('res-h.txt')).toContain('x-custom-response: response-value');
 
-  expect((await cli('response-body', num, '--filename=res-b.json')).output).toContain('[Body](./res-b.json)');
+  expect((await cli('response-body', num, '--filename=res-b.json')).output).toContain('[Response body](./res-b.json)');
   expect(read('res-b.json')).toBe('{"name":"John Doe"}');
 });
 
