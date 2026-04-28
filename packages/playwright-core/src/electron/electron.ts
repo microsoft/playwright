@@ -15,7 +15,6 @@
  */
 
 import os from 'os';
-import path from 'path';
 import readline from 'readline';
 import { EventEmitter } from 'events';
 import debug from 'debug';
@@ -25,6 +24,8 @@ import { wrapInASCIIBox } from '@utils/ascii';
 import { debugMode } from '@utils/debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
+
+import { libPath } from '../package';
 
 import type { BrowserWindow } from 'electron';
 import type { Browser, BrowserContext, JSHandle, Page, Worker } from '../../types/types';
@@ -108,10 +109,9 @@ export class Electron implements api.Electron {
         throw error;
       }
       // Only inject our loader for non-packaged apps; packaged apps may have
-      // their own command-line handling. The path is resolved relative to
-      // the bundled coreBundle.js at runtime; loader.js is emitted as a
-      // sibling file by the build (see utils/build/build.js).
-      electronArguments.unshift('-r', path.join(__dirname, 'electron', 'loader.js'));
+      // their own command-line handling. loader.js is emitted under
+      // lib/electron/ as a per-file build (see utils/build/build.js).
+      electronArguments.unshift('-r', libPath('electron', 'loader.js'));
     }
 
     let shell = false;
