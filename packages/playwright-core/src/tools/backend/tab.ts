@@ -170,7 +170,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         const { default: func } = require(initPage);
         await func({ page: this.page });
       } catch (e) {
-        debug('pw:tools:error')(e);
+        const reason = e instanceof Error ? e.message : String(e);
+        throw new Error(`Failed to load init page "${initPage}": ${reason}`, { cause: e });
       }
     }
   }

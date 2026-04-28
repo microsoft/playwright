@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { test, expect } from './fixtures';
 
@@ -34,6 +35,63 @@ test('--init-page', async ({ startClient }) => {
   })).toHaveResponse({
     inlineSnapshot: expect.stringContaining('Hello world'),
   });
+});
+
+test('init-page relative path from --config resolves against the config dir', async ({ startClient }) => {
+  // Regression for https://github.com/microsoft/playwright-cli/issues/290:
+  // relative initPage entries in a --config file used to resolve against
+  // cwd (or the require() caller), not the config file's directory. We put
+  // the config + init page in a sibling subdir of cwd so a cwd-based
+  // resolution would miss the file. Same resolution path also covers
+  // browser.initScript.
+  const configDir = test.info().outputPath('cfg');
+  const cwd = test.info().outputPath('cwd');
+  await fs.promises.mkdir(configDir, { recursive: true });
+  await fs.promises.mkdir(cwd, { recursive: true });
+
+  const initPagePath = path.join(configDir, 'initPage.ts');
+  await fs.promises.writeFile(initPagePath, `
+    export default async ({ page }) => {
+      await page.setContent('<div>From relative initPage</div>');
+    };
+  `);
+  const configPath = path.join(configDir, 'config.json');
+  await fs.promises.writeFile(configPath, JSON.stringify({
+    browser: { initPage: ['./initPage.ts'] },
+  }));
+
+  const { client } = await startClient({
+    cwd,
+    args: [`--config=${configPath}`],
+  });
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {},
+  })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining('From relative initPage'),
+  });
+});
+
+test('init-page surfaces load errors instead of silently dropping them', async ({ startClient }) => {
+  // Regression for https://github.com/microsoft/playwright-cli/issues/290:
+  // a failing init-page module used to be swallowed into debug logs, leaving
+  // the user with no signal that their hook never ran.
+  const initPagePath = test.info().outputPath('brokenInitPage.ts');
+  await fs.promises.writeFile(initPagePath, `
+    export default async () => {
+      throw new Error('boom from initPage');
+    };
+  `);
+
+  const { client } = await startClient({
+    args: [`--init-page=${initPagePath}`],
+  });
+  const response: any = await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {},
+  });
+  expect(response.isError).toBe(true);
+  expect(JSON.stringify(response.content)).toContain('boom from initPage');
 });
 
 test('--init-page w/ --init-script', async ({ startClient, server }) => {
