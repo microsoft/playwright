@@ -213,7 +213,7 @@ test('request and per-part commands return JSON result', async ({ cli, server })
 
   const detail = JSON.parse((await cli('--json', 'request', num)).output);
   expect(detail.result).toContain(`#${num} [POST] ${server.PREFIX}/api`);
-  expect(detail.result).toContain('Response body');
+  expect(detail.result).toContain(`Run \`response-body ${num}\` to read the response body.`);
 });
 
 test('request with out-of-range index returns JSON error', async ({ cli, server }) => {
