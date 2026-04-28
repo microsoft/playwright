@@ -152,6 +152,8 @@ test('browser_network_request shows full request and response details', async ({
   expect(detail.result).toContain('{"key":"value"}');
   expect(detail.result).toContain('Response headers');
   expect(detail.result).toContain('x-custom-response: response-value');
+  expect(detail.result).toContain('Call browser_network_request with part="request-body" to read the request body.');
+  expect(detail.result).toContain('Call browser_network_request with part="response-body" to read the response body.');
 
   const bodyMatch = detail.result.match(/Response body\n\s+(\S+\.json)/);
   expect(bodyMatch).not.toBeNull();

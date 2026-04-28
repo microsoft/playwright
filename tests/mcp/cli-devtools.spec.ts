@@ -107,6 +107,8 @@ test('request shows full request and response details', async ({ cli, server }) 
   expect(output).toContain('{"key":"value"}');
   expect(output).toContain('Response headers');
   expect(output).toContain('x-custom-response: response-value');
+  expect(output).toContain(`Run \`request-body ${match![1]}\` to read the request body.`);
+  expect(output).toContain(`Run \`response-body ${match![1]}\` to read the response body.`);
   const bodyMatch = output.match(/Response body\n\s+(\S+\.json)/);
   expect(bodyMatch).not.toBeNull();
   const bodyPath = path.resolve(test.info().outputPath(), bodyMatch![1]);

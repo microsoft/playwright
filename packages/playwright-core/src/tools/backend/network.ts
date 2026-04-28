@@ -97,7 +97,7 @@ const request = defineTabTool({
       return;
     }
     const bodyPath = await saveResponseBody(request, response);
-    response.addTextResult(renderRequestDetails(params.index, request, bodyPath));
+    response.addTextResult(renderRequestDetails(params.index, request, bodyPath, !!tab.context.config.skillMode));
   },
 });
 
@@ -137,7 +137,7 @@ export function renderRequestLine(request: playwright.Request): string {
   return line;
 }
 
-function renderRequestDetails(index: number, request: playwright.Request, responseBodyPath: string | undefined): string {
+function renderRequestDetails(index: number, request: playwright.Request, responseBodyPath: string | undefined, skillMode: boolean): string {
   const httpResponse = request.existingResponse();
   const responseHeaders = httpResponse?.headers();
   const lines: string[] = [];
@@ -173,6 +173,20 @@ function renderRequestDetails(index: number, request: playwright.Request, respon
     lines.push('');
     lines.push('  Response body');
     lines.push(`    ${responseBodyPath}`);
+  }
+
+  if (postData) {
+    lines.push('');
+    lines.push(skillMode
+      ? `Run \`request-body ${index}\` to read the request body.`
+      : `Call browser_network_request with part="request-body" to read the request body.`);
+  }
+  if (responseBodyPath) {
+    if (!postData)
+      lines.push('');
+    lines.push(skillMode
+      ? `Run \`response-body ${index}\` to read the response body.`
+      : `Call browser_network_request with part="response-body" to read the response body.`);
   }
 
   return lines.join('\n');
