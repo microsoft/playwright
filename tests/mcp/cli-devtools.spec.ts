@@ -170,7 +170,7 @@ test('request* and response* commands support --filename', async ({ cli, server 
   expect(read('res-b.json')).toBe('{"name":"John Doe"}');
 });
 
-test('--raw response-body returns just the body', async ({ cli, server }) => {
+test('response-body returns just the body', async ({ cli, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/api')">Click me</button>
   `, 'text/html');
@@ -182,7 +182,7 @@ test('--raw response-body returns just the body', async ({ cli, server }) => {
   const match = list.match(/^(\d+)\. \[GET\] [^ ]+\/api =>/m);
   expect(match).not.toBeNull();
 
-  const { output } = await cli('--raw', 'response-body', match![1]);
+  const { output } = await cli('response-body', match![1]);
   expect(output.trim()).toBe('{"name":"John Doe"}');
 });
 

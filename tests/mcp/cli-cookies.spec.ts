@@ -26,7 +26,7 @@ test('cookie-list shows no cookies when empty', async ({ cli, server, mcpBrowser
 
   await cli('open', server.EMPTY_PAGE);
   const { output } = await cli('cookie-list');
-  expect(output).toContain('No cookies found');
+  expect(output).toBe('No cookies found');
 });
 
 test('cookie-set and cookie-get', async ({ cli, server }, testInfo) => {
@@ -40,7 +40,7 @@ test('cookie-set and cookie-get', async ({ cli, server }, testInfo) => {
 
   // Get the cookie
   const { output: getOutput } = await cli('cookie-get', 'testCookie');
-  expect(getOutput).toContain('testCookie=testValue');
+  expect(getOutput).toMatch(/^testCookie=testValue \(domain: [^,]+, path: \/, httpOnly: \w+, secure: \w+, sameSite: \w+\)$/);
 });
 
 test('cookie-list shows cookies', async ({ cli, server }, testInfo) => {
@@ -52,8 +52,10 @@ test('cookie-list shows cookies', async ({ cli, server }, testInfo) => {
   await cli('cookie-set', 'cookie2', 'value2');
 
   const { output } = await cli('cookie-list');
-  expect(output).toContain('cookie1=value1');
-  expect(output).toContain('cookie2=value2');
+  const lines = output.split('\n');
+  expect(lines).toHaveLength(2);
+  expect(lines[0]).toMatch(/^cookie1=value1 \(domain: [^,]+, path: \/\)$/);
+  expect(lines[1]).toMatch(/^cookie2=value2 \(domain: [^,]+, path: \/\)$/);
 });
 
 test('cookie-delete removes cookie', async ({ cli, server }, testInfo) => {
@@ -68,7 +70,7 @@ test('cookie-delete removes cookie', async ({ cli, server }, testInfo) => {
 
   // Verify it's gone
   const { output: getOutput } = await cli('cookie-get', 'testCookie');
-  expect(getOutput).toContain('not found');
+  expect(getOutput).toBe(`Cookie 'testCookie' not found`);
 });
 
 test('cookie-clear removes all cookies', async ({ cli, server }, testInfo) => {
@@ -84,5 +86,5 @@ test('cookie-clear removes all cookies', async ({ cli, server }, testInfo) => {
 
   // Verify they're gone
   const { output: listOutput } = await cli('cookie-list');
-  expect(listOutput).toContain('No cookies found');
+  expect(listOutput).toBe('No cookies found');
 });

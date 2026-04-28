@@ -240,6 +240,8 @@ export async function program(options?: { embedderVersion?: string}) {
       const entry = registry.entry(clientInfo, sessionName);
       if (!entry)
         output.errorBrowserNotOpenForTool(sessionName);
+      if (command.raw)
+        args.raw = true;
       const text = await runInSession(entry, clientInfo, args, output);
       output.toolResult(text);
     }
