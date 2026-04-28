@@ -23,12 +23,30 @@ export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-mcp-bridge/${playwrightExtensionId}`;
 
 export async function isPlaywrightExtensionInstalled(userDataDir: string): Promise<boolean> {
-  // Covers two install shapes: web store drops the extension into Default/Extensions/<id>;
-  // `--load-extension` does not, and only shows up as the id inside Default/Preferences.
-  if (await pathExists(path.join(userDataDir, 'Default', 'Extensions', playwrightExtensionId)))
+  // Chrome stores profiles as `Default` and `Profile <N>` subdirs of the user data dir;
+  // the extension may be installed into any of them.
+  let entries: string[];
+  try {
+    entries = await fs.promises.readdir(userDataDir);
+  } catch {
+    return false;
+  }
+  for (const entry of entries) {
+    if (entry !== 'Default' && !entry.startsWith('Profile '))
+      continue;
+    if (await isExtensionInstalledInProfile(path.join(userDataDir, entry)))
+      return true;
+  }
+  return false;
+}
+
+async function isExtensionInstalledInProfile(profileDir: string): Promise<boolean> {
+  // Covers two install shapes: web store drops the extension into <profile>/Extensions/<id>;
+  // `--load-extension` does not, and only shows up as the id inside <profile>/Preferences.
+  if (await pathExists(path.join(profileDir, 'Extensions', playwrightExtensionId)))
     return true;
   try {
-    const prefs = await fs.promises.readFile(path.join(userDataDir, 'Default', 'Preferences'), 'utf-8');
+    const prefs = await fs.promises.readFile(path.join(profileDir, 'Preferences'), 'utf-8');
     return prefs.includes(`"${playwrightExtensionId}"`);
   } catch {
     return false;
