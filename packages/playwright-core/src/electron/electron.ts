@@ -28,6 +28,7 @@ import { monotonicTime } from '@isomorphic/time';
 
 import type { BrowserWindow } from 'electron';
 import type { Browser, BrowserContext, JSHandle, Page, Worker } from '../../types/types';
+import type * as api from '../../types/types';
 import type { Playwright } from '../client/playwright';
 import type childProcess from 'child_process';
 
@@ -41,14 +42,7 @@ export const Events = {
   },
 };
 
-type ElectronLaunchOptions = {
-  args?: string[];
-  chromiumSandbox?: boolean;
-  cwd?: string;
-  env?: { [key: string]: string };
-  executablePath?: string;
-  timeout?: number;
-};
+type ElectronLaunchOptions = NonNullable<Parameters<api.Electron['launch']>[0]>;
 
 type ElectronAppType = typeof import('electron');
 
@@ -77,7 +71,7 @@ class Progress {
   }
 }
 
-export class Electron {
+export class Electron implements api.Electron {
   _playwright: Playwright;
 
   constructor(playwright: Playwright) {
@@ -195,7 +189,7 @@ export class Electron {
   }
 }
 
-export class ElectronApplication extends EventEmitter {
+export class ElectronApplication extends EventEmitter implements api.ElectronApplication {
   private _worker: Worker;
   private _browser: Browser;
   private _process: childProcess.ChildProcess;
