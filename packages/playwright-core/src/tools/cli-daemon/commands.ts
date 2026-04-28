@@ -828,6 +828,8 @@ const networkRequests = declareCommand({
   toolParams: ({ static: s, filter, clear }) => clear ? ({}) : ({ static: s, filter }),
 });
 
+const filenameOption = z.string().optional().describe('Filename to save the result to. If not provided, output is returned as text.');
+
 const networkRequest = declareCommand({
   name: 'request',
   description: 'Show full details (headers, body, response) of a single network request by its number from the `requests` command.',
@@ -835,8 +837,11 @@ const networkRequest = declareCommand({
   args: z.object({
     index: numberArg.describe('1-based number of the request as listed by `requests`'),
   }),
+  options: z.object({
+    filename: filenameOption,
+  }),
   toolName: 'browser_network_request',
-  toolParams: ({ index }) => ({ index }),
+  toolParams: ({ index, filename }) => ({ index, filename }),
 });
 
 const networkRequestHeaders = declareCommand({
@@ -846,8 +851,11 @@ const networkRequestHeaders = declareCommand({
   args: z.object({
     index: numberArg.describe('1-based number of the request as listed by `requests`'),
   }),
+  options: z.object({
+    filename: filenameOption,
+  }),
   toolName: 'browser_network_request',
-  toolParams: ({ index }) => ({ index, part: 'request-headers' }),
+  toolParams: ({ index, filename }) => ({ index, part: 'request-headers', filename }),
 });
 
 const networkRequestBody = declareCommand({
@@ -857,8 +865,11 @@ const networkRequestBody = declareCommand({
   args: z.object({
     index: numberArg.describe('1-based number of the request as listed by `requests`'),
   }),
+  options: z.object({
+    filename: filenameOption,
+  }),
   toolName: 'browser_network_request',
-  toolParams: ({ index }) => ({ index, part: 'request-body' }),
+  toolParams: ({ index, filename }) => ({ index, part: 'request-body', filename }),
 });
 
 const networkResponseHeaders = declareCommand({
@@ -868,8 +879,11 @@ const networkResponseHeaders = declareCommand({
   args: z.object({
     index: numberArg.describe('1-based number of the request as listed by `requests`'),
   }),
+  options: z.object({
+    filename: filenameOption,
+  }),
   toolName: 'browser_network_request',
-  toolParams: ({ index }) => ({ index, part: 'response-headers' }),
+  toolParams: ({ index, filename }) => ({ index, part: 'response-headers', filename }),
 });
 
 const networkResponseBody = declareCommand({
@@ -879,8 +893,11 @@ const networkResponseBody = declareCommand({
   args: z.object({
     index: numberArg.describe('1-based number of the request as listed by `requests`'),
   }),
+  options: z.object({
+    filename: filenameOption,
+  }),
   toolName: 'browser_network_request',
-  toolParams: ({ index }) => ({ index, part: 'response-body' }),
+  toolParams: ({ index, filename }) => ({ index, part: 'response-body', filename }),
 });
 
 const tracingStart = declareCommand({

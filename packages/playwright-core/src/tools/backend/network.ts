@@ -79,6 +79,7 @@ const request = defineTabTool({
     inputSchema: z.object({
       index: z.number().int().min(1).describe('1-based index of the request, as printed by browser_network_requests.'),
       part: z.enum(REQUEST_PARTS).optional().describe('Return only this part of the request. Omit to return full details.'),
+      filename: z.string().optional().describe('Filename to save the result to. If not provided, output is returned as text.'),
     }),
     type: 'readOnly',
   },
@@ -91,12 +92,20 @@ const request = defineTabTool({
       return;
     }
     if (params.part) {
-      const partText = await renderRequestPart(request, params.part, response);
-      if (partText !== undefined)
-        response.addTextResult(partText);
+      const partResult = await renderRequestPart(request, params.part, response, params.filename);
+      if (partResult === undefined)
+        return;
+      if (params.filename && !partResult.isFilePath)
+        await response.addResult('Body', partResult.text, { prefix: 'request', ext: 'txt', suggestedFilename: params.filename });
+      else
+        response.addTextResult(partResult.text);
       return;
     }
-    response.addTextResult(renderRequestDetails(params.index, request, !!tab.context.config.skillMode));
+    const text = renderRequestDetails(params.index, request, !!tab.context.config.skillMode);
+    if (params.filename)
+      await response.addResult('Request', text, { prefix: 'request', ext: 'log', suggestedFilename: params.filename });
+    else
+      response.addTextResult(text);
   },
 });
 
@@ -206,33 +215,36 @@ function computeDurationMs(request: playwright.Request): number | undefined {
   return Math.round(timing.responseEnd);
 }
 
-async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse): Promise<string | undefined> {
+async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse, suggestedFilename: string | undefined): Promise<{ text: string; isFilePath: boolean } | undefined> {
   if (part === 'request-headers')
-    return renderHeaders(request.headers());
-  if (part === 'request-body')
-    return request.postData() ?? undefined;
+    return { text: renderHeaders(request.headers()), isFilePath: false };
+  if (part === 'request-body') {
+    const data = request.postData();
+    return data === null ? undefined : { text: data, isFilePath: false };
+  }
   const httpResponse = request.existingResponse();
   if (!httpResponse)
     return undefined;
   if (part === 'response-headers')
-    return renderHeaders(httpResponse.headers());
+    return { text: renderHeaders(httpResponse.headers()), isFilePath: false };
   // response-body
   const contentType = httpResponse.headers()['content-type'];
   if (isTextualMimeType(contentType ?? '')) {
     try {
-      return await httpResponse.text();
+      return { text: await httpResponse.text(), isFilePath: false };
     } catch {
       return undefined;
     }
   }
-  return await saveResponseBody(request, response);
+  const path = await saveResponseBody(request, response, suggestedFilename);
+  return path === undefined ? undefined : { text: path, isFilePath: true };
 }
 
 function renderHeaders(headers: Record<string, string>): string {
   return Object.entries(headers).map(([k, v]) => `${k}: ${v}`).join('\n');
 }
 
-async function saveResponseBody(request: playwright.Request, response: ToolResponse): Promise<string | undefined> {
+async function saveResponseBody(request: playwright.Request, response: ToolResponse, suggestedFilename?: string): Promise<string | undefined> {
   const httpResponse = request.existingResponse();
   if (!httpResponse)
     return undefined;
@@ -249,7 +261,7 @@ async function saveResponseBody(request: playwright.Request, response: ToolRespo
   if (!body.length)
     return undefined;
   const ext = getExtensionForMimeType(httpResponse.headers()['content-type']);
-  const resolved = await response.resolveClientFile({ prefix: 'response', ext }, 'Response body');
+  const resolved = await response.resolveClientFile({ prefix: 'response', ext, suggestedFilename }, 'Response body');
   await fs.promises.writeFile(resolved.fileName, body);
   return resolved.relativeName;
 }

@@ -135,6 +135,29 @@ test('per-part commands extract individual parts', async ({ cli, server }) => {
   expect((await cli('response-body', num)).output).toContain('{"name":"John Doe"}');
 });
 
+test('request* and response* commands support --filename', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', body: 'hello' })">Click me</button>
+  `, 'text/html');
+  server.setRoute('/api', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ name: 'John Doe' }));
+  });
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  const { output: list } = await cli('requests');
+  const match = list.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m);
+  expect(match).not.toBeNull();
+  const num = match![1];
+
+  expect((await cli('request', num, '--filename=req.log')).output).toContain('[Request](./req.log)');
+  expect((await cli('request-headers', num, '--filename=req-h.txt')).output).toContain('[Body](./req-h.txt)');
+  expect((await cli('request-body', num, '--filename=req-b.txt')).output).toContain('[Body](./req-b.txt)');
+  expect((await cli('response-headers', num, '--filename=res-h.txt')).output).toContain('[Body](./res-h.txt)');
+  expect((await cli('response-body', num, '--filename=res-b.json')).output).toContain('[Body](./res-b.json)');
+});
+
 test('--raw response-body returns just the body', async ({ cli, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/api')">Click me</button>
