@@ -14,7 +14,7 @@ PLAYWRIGHT_HTML_OPEN=never npm run special-test-command
 
 To debug a failing Playwright test, run it with `--debug=cli` option. This command will pause the test at the start and print the debugging instructions.
 
-**IMPORTANT**: run the command in the background and check the output until "Debugging Instructions" is printed.
+**IMPORTANT**: run the command in the background and check the output until "Debugging Instructions" is printed. Make sure to stop the command after you have finished.
 
 Once instructions containing a session name are printed, use `playwright-cli` to attach the session and explore the page.
 
