@@ -115,6 +115,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       eventsHelper.addEventListener(p, 'response', response => this._handleResponse(response)),
       eventsHelper.addEventListener(p, 'requestfailed', request => this._handleRequestFailed(request)),
       eventsHelper.addEventListener(p, 'close', () => this._onClose()),
+      eventsHelper.addEventListener(p, 'crash', () => this._onClose()),
       eventsHelper.addEventListener(p, 'filechooser', chooser => {
         this.setModalState({
           type: 'fileChooser',
