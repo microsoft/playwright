@@ -1933,6 +1933,8 @@ The list of supported tokens:
   * Value: `/home/playwright/tests` (absolute path since `testDir` is resolved relative to directory with config)
 * `{testFileDir}` - Directories in relative path from `testDir` to **test file**.
   * Value: `page`
+* `{testFileBaseName}` - Test file name without the last extension.
+  * Value: `page-click.spec`
 * `{testFileName}` - Test file name with extension.
   * Value: `page-click.spec.ts`
 * `{testFilePath}` - Relative path from `testDir` to **test file**.
