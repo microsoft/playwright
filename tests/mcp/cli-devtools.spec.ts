@@ -103,13 +103,13 @@ test('request shows full request and response details', async ({ cli, server }) 
   expect(output).toContain('status:    [200] OK');
   expect(output).toContain('Request headers');
   expect(output).toContain('x-custom-header: test-value');
-  expect(output).toContain('Request body');
-  expect(output).toContain('{"key":"value"}');
   expect(output).toContain('Response headers');
   expect(output).toContain('x-custom-response: response-value');
   expect(output).toContain(`Run \`request-body ${match![1]}\` to read the request body.`);
   expect(output).toContain(`Run \`response-body ${match![1]}\` to read the response body.`);
+  expect(output).not.toContain('Request body');
   expect(output).not.toContain('Response body');
+  expect(output).not.toContain('{"key":"value"}');
 });
 
 test('per-part commands extract individual parts', async ({ cli, server }) => {

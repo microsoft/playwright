@@ -158,24 +158,18 @@ function renderRequestDetails(index: number, request: playwright.Request, skillM
 
   appendHeaderSection(lines, 'Request headers', request.headers());
 
-  const postData = request.postData();
-  if (postData) {
-    lines.push('');
-    lines.push('  Request body');
-    lines.push(`    ${postData}`);
-  }
-
   if (responseHeaders)
     appendHeaderSection(lines, 'Response headers', responseHeaders);
 
-  if (postData) {
+  const hasPostData = !!request.postData();
+  if (hasPostData) {
     lines.push('');
     lines.push(skillMode
       ? `Run \`request-body ${index}\` to read the request body.`
       : `Call browser_network_request with part="request-body" to read the request body.`);
   }
   if (mayHaveResponseBody(httpResponse)) {
-    if (!postData)
+    if (!hasPostData)
       lines.push('');
     lines.push(skillMode
       ? `Run \`response-body ${index}\` to read the response body.`

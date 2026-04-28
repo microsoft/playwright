@@ -148,13 +148,13 @@ test('browser_network_request shows full request and response details', async ({
   expect(detail.result).toContain('mimeType:  application/json');
   expect(detail.result).toContain('Request headers');
   expect(detail.result).toContain('x-custom-header: test-value');
-  expect(detail.result).toContain('Request body');
-  expect(detail.result).toContain('{"key":"value"}');
   expect(detail.result).toContain('Response headers');
   expect(detail.result).toContain('x-custom-response: response-value');
   expect(detail.result).toContain('Call browser_network_request with part="request-body" to read the request body.');
   expect(detail.result).toContain('Call browser_network_request with part="response-body" to read the response body.');
+  expect(detail.result).not.toContain('Request body');
   expect(detail.result).not.toContain('Response body');
+  expect(detail.result).not.toContain('{"key":"value"}');
 });
 
 test('browser_network_request reports failed requests', async ({ client, server }) => {
