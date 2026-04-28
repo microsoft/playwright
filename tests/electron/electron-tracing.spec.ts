@@ -18,12 +18,16 @@ import { electronTest as test, expect } from './electronTest';
 
 test.skip(({ trace }) => trace === 'on');
 
-test('should record trace', async ({ page, server, runAndTrace }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.PREFIX + '/input/button.html');
-    await page.click('button');
-    expect(await page.evaluate('result')).toBe('Clicked');
-  });
+test('should record trace', async ({ launchElectronApp, newWindow, server, showTraceViewer }, testInfo) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
+  const traceFile = testInfo.outputPath('trace.zip');
+  await app.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.click('button');
+  expect(await page.evaluate('result')).toBe('Clicked');
+  await app.context().tracing.stop({ path: traceFile });
+  const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionTitles).toHaveText([
     /Navigate/,
     /Click/,
@@ -31,13 +35,17 @@ test('should record trace', async ({ page, server, runAndTrace }) => {
   ]);
 });
 
-test('should support custom protocol', async ({ app, page, runAndTrace }) => {
+test('should support custom protocol', async ({ launchElectronApp, newWindow, showTraceViewer }, testInfo) => {
+  const app = await launchElectronApp('electron-app.js');
+  const page = await newWindow(app);
   await app.evaluate(({ BrowserWindow }) => {
     void BrowserWindow.getAllWindows()[0].loadURL('vscode-file://index.html');
   });
-  const traceViewer = await runAndTrace(async () => {
-    await page.click('button');
-  });
+  const traceFile = testInfo.outputPath('trace.zip');
+  await app.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
+  await page.click('button');
+  await app.context().tracing.stop({ path: traceFile });
+  const traceViewer = await showTraceViewer(traceFile);
   const frame = await traceViewer.snapshotFrame('Click');
   await expect(frame.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
   await expect(frame.locator('button')).toHaveCSS('font-weight', '700');

@@ -5,11 +5,11 @@ on:
     branches:
       - main
       - release-*
-  pull_request:
-    types: [ labeled ]
-    branches:
-      - main
-      - release-*
+  # pull_request:
+  #   types: [ labeled ]
+  #   branches:
+  #     - main
+  #     - release-*
 
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
