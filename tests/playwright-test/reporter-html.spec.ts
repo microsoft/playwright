@@ -1680,7 +1680,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     });
 
     test.describe('labels', () => {
-      test('should show labels in the test row', async ({ runInlineTest, showReport, page }) => {
+      test('should show labels in the test row', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40368' } }, async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({
           'playwright.config.js': `
             module.exports = {
@@ -1694,8 +1694,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           `,
           'a.test.js': `
             const { expect, test } = require('@playwright/test');
-            test('@smoke @passed passed', async ({}) => {
-              expect(1).toBe(1);
+            test.describe('@smoke tests', () => {
+              test('@smoke @passed passed', async ({}) => {
+                expect(1).toBe(1);
+              });
             });
           `,
           'b.test.js': `
@@ -1752,7 +1754,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           'regression',
           'flaky',
         ]);
-        await expect(page.locator('.test-file-test', { has: page.getByText('@smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
+        await expect(page.locator('.test-file-test', { has: page.getByText('@smoke tests › @smoke @passed passed', { exact: true }) }).locator('.label')).toHaveText([
           'chromium',
           'smoke',
           'passed',
@@ -2617,6 +2619,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.header-title')).toHaveText('Test passed -- @call @call-details @e2e @regression #VQ457');
         await expect(page.locator('.label')).toHaveText(['firefox', 'Monitoring', 'call', 'call-details', 'e2e', 'regression']);
       });
+
     });
 
     test('should list tests in the right order', async ({ runInlineTest, showReport, page }) => {
