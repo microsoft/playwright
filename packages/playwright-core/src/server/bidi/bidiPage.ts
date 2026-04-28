@@ -615,7 +615,11 @@ export class BidiPage implements PageDelegate {
     const fromContext = toBidiExecutionContext(handle._context);
     const nodeId = await fromContext.nodeIdForElementHandle(handle);
     const executionContext = toBidiExecutionContext(to);
-    return await executionContext.remoteObjectForNodeId(to, nodeId) as dom.ElementHandle<T>;
+    try {
+      return await executionContext.remoteObjectForNodeId(to, nodeId) as dom.ElementHandle<T>;
+    } catch {
+      throw new Error(dom.kUnableToAdoptErrorMessage);
+    }
   }
 
   async inputActionEpilogue(): Promise<void> {
