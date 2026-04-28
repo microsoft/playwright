@@ -1,0 +1,229 @@
+/*
+  Brutalist Monospace overlay for the Playwright HTML reporter.
+
+  Loaded last in the cascade so it can override the upstream Primer
+  variables defined in colors.css and the legacy values baked into
+  the per-component CSS files.
+*/
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/JetBrainsMono-Italic.woff2') format('woff2');
+}
+
+/* ---------- Palette ---------- */
+
+:root.light-mode {
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #f4f4f4;
+  --color-canvas-inset: #ffffff;
+  --color-fg-default: #000000;
+  --color-fg-muted: #444444;
+  --color-fg-subtle: #6b6b6b;
+  --color-border-default: #000000;
+  --color-border-muted: #000000;
+  --color-neutral-muted: #ededed;
+  --color-attention-subtle: #fff7a8;
+
+  --color-success-fg: #007a1f;
+  --color-danger-fg: #c4001a;
+  --color-checks-step-warning-text: #8a5a00;
+
+  --color-btn-bg: #ffffff;
+  --color-btn-text: #000000;
+  --color-btn-border: #000000;
+  --color-btn-hover-bg: #000000;
+  --color-btn-hover-border: #000000;
+  --color-control-transparent-bg-hover: #ededed;
+  --color-primer-shadow-inset: none;
+  --color-primer-border-active: #000000;
+  --color-focus-border: #000000;
+
+  --brutal-accent: #ff2bd6;
+  --brutal-accent-fg: #000000;
+}
+
+:root.dark-mode {
+  --color-canvas-default: #000000;
+  --color-canvas-subtle: #0d0d0d;
+  --color-canvas-inset: #000000;
+  --color-fg-default: #ffffff;
+  --color-fg-muted: #b8b8b8;
+  --color-fg-subtle: #888888;
+  --color-border-default: #ffffff;
+  --color-border-muted: #ffffff;
+  --color-neutral-muted: #1c1c1c;
+  --color-attention-subtle: #4a3d00;
+
+  --color-success-fg: #4dff7c;
+  --color-danger-fg: #ff5566;
+  --color-checks-step-warning-text: #ffc04d;
+
+  --color-btn-bg: #000000;
+  --color-btn-text: #ffffff;
+  --color-btn-border: #ffffff;
+  --color-btn-hover-bg: #ffffff;
+  --color-btn-hover-border: #ffffff;
+  --color-control-transparent-bg-hover: #1c1c1c;
+  --color-primer-shadow-inset: none;
+  --color-primer-border-active: #ffffff;
+  --color-focus-border: #ffffff;
+
+  --brutal-accent: #caff00;
+  --brutal-accent-fg: #000000;
+}
+
+:root.light-mode .button:not(:disabled):hover,
+:root.dark-mode .button:not(:disabled):hover {
+  color: var(--color-canvas-default);
+}
+
+/* ---------- Shadows: gone ---------- */
+
+:root {
+  --box-shadow: none;
+  --box-shadow-thick: none;
+  --color-shadow-small: none;
+  --color-shadow-medium: none;
+  --color-shadow-large: none;
+  --color-shadow-extra-large: none;
+  --color-shadow-inset: none;
+}
+
+/* ---------- Global flatten ---------- */
+
+#root,
+#root * {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+#root {
+  background-color: var(--color-canvas-default);
+}
+
+/* ---------- Typography ---------- */
+
+.header-superheader,
+.subnav-item,
+.tabbed-pane-tab-element,
+.chip-header,
+.label,
+.metadata-toggle {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.subnav-item-label,
+.button {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.chip-header {
+  font-weight: 700;
+}
+
+/* ---------- Borders: hard, default-fg ---------- */
+
+.form-control,
+.form-select,
+.subnav-item,
+.chip-header,
+.chip-body,
+.metadata-view,
+dialog,
+.button {
+  border-color: var(--color-fg-default) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+.tabbed-pane-tab-strip {
+  border-bottom: 2px solid var(--color-fg-default) !important;
+}
+
+.tabbed-pane-tab-element.selected {
+  border-bottom: 2px solid var(--color-fg-default) !important;
+}
+
+.test-case-column .tab-element.selected {
+  border-bottom: 2px solid var(--color-fg-default) !important;
+}
+
+/* ---------- Counters: borderless, monospace emphasis ---------- */
+
+.counter,
+.test-result-counter {
+  border: none !important;
+  background-color: transparent !important;
+  color: var(--color-fg-default) !important;
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+/* ---------- Labels: rectangles ---------- */
+
+.label {
+  border: 1px solid var(--color-fg-default) !important;
+  font-weight: 700;
+}
+
+/* ---------- Header ---------- */
+
+.header-title {
+  margin: 8px 0 12px 0;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-default);
+}
+
+.header-superheader {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---------- Dialog ---------- */
+
+dialog {
+  background-color: var(--color-canvas-default);
+}
+
+/* ---------- Error block: monospace, hard outline ---------- */
+
+.test-error-container {
+  border: 1px solid var(--color-fg-default) !important;
+  background-color: var(--color-canvas-subtle);
+}
+
+.test-error-text {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
