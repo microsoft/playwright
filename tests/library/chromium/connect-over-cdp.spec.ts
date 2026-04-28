@@ -439,10 +439,14 @@ test('should use env proxy with connectOverCDP discovery request', async ({ brow
   const oldValue = process.env.HTTP_PROXY;
   try {
     process.env.HTTP_PROXY = proxyServer.URL;
-    await browserType.connectOverCDP(server.PREFIX).catch(() => {});
+    const error = await browserType.connectOverCDP(server.PREFIX).catch(e => e);
+    expect(error.message).toContain(`Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
     expect(proxyServer.requestUrls).toEqual([`${server.PREFIX}/json/version/`]);
   } finally {
-    process.env.HTTP_PROXY = oldValue;
+    if (oldValue === undefined)
+      delete process.env.HTTP_PROXY;
+    else
+      process.env.HTTP_PROXY = oldValue;
   }
 });
 
