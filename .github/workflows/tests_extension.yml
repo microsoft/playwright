@@ -48,6 +48,5 @@ jobs:
         node-version: 22
     - run: npm ci
     - run: npm run build
-    - run: npm run build-extension
     - run: npx playwright install --with-deps chromium
     - run: npm run test-extension
