@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs/promises';
 import { test as base, expect, extensionId, clickAllowAndSelect } from './extension-fixtures';
 
 import type { CliResult } from './extension-fixtures';
@@ -23,18 +22,15 @@ import type { Page } from 'playwright';
 const test = base.extend<{
   startAttach: () => Promise<{ confirmationPage: Page, cliPromise: Promise<CliResult> }>,
 }>({
-  startAttach: async ({ browserWithExtension, cli }, use, testInfo) => {
+  startAttach: async ({ browserWithExtension, cli }, use) => {
     await use(async () => {
-      await fs.writeFile(testInfo.outputPath('cli-config.json'), JSON.stringify({
-        browser: {
-          userDataDir: browserWithExtension.userDataDir,
-        }
-      }, null, 2));
       const browserContext = await browserWithExtension.launch();
       const confirmationPagePromise = browserContext.waitForEvent('page', page =>
         page.url().startsWith(`chrome-extension://${extensionId}/connect.html`)
       );
-      const cliPromise = cli('attach', '--extension=chromium', `--config=cli-config.json`);
+      const cliPromise = cli(['attach', '--extension=chromium'], {
+        env: { PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir },
+      });
       const confirmationPage = await confirmationPagePromise;
       return { confirmationPage, cliPromise };
     });
@@ -81,7 +77,7 @@ test('attach <url> --extension', async ({ startAttach, cli, server }) => {
   }
 
   {
-    const { output } = await cli('-s=chromium', 'goto', server.HELLO_WORLD);
+    const { output } = await cli(['-s=chromium', 'goto', server.HELLO_WORLD]);
     expect(output).toContain(`### Page`);
     expect(output).toContain(`- Page URL: ${server.HELLO_WORLD}`);
     expect(output).toContain(`- Page Title: Title`);

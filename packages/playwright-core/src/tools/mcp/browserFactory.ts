@@ -63,7 +63,8 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
     canBind = true;
     ownership = 'own';
   } else if (config.extension) {
-    browser = await createExtensionBrowser(config, clientInfo.clientName);
+    const channel = config.browser.launchOptions.channel || 'chrome';
+    browser = await createExtensionBrowser(channel, clientInfo.clientName);
     ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);

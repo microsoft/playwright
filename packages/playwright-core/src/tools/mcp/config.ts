@@ -117,6 +117,11 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   const configInFile = await loadConfig(configFile);
   const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
 
+  // In extension mode, browser config from the file is ignored - only channel/browser name
+  // from CLI/env applies, and user data dir is always the browser default.
+  if (cliOverrides.extension ?? envOverrides.extension ?? configInFile.extension)
+    delete configInFile.browser;
+
   let result = defaultConfig;
   result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));

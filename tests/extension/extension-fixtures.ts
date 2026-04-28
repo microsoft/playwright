@@ -44,7 +44,7 @@ export type TestFixtures = {
   browserWithExtension: BrowserWithExtension,
   pathToExtension: string,
   startExtensionClient: (env?: Record<string, string>) => Promise<{ browserContext: BrowserContext, client: Client }>,
-  cli: (...args: string[]) => Promise<CliResult>;
+  cli: (args: string[], options?: { env?: Record<string, string> }) => Promise<CliResult>;
 };
 
 type WorkerFixtures = {
@@ -120,8 +120,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures & ExtensionTestOpti
   },
 
   cli: async ({ mcpBrowser }, use, testInfo) => {
-    await use(async (...args: string[]) => {
-      return await runCli(args, { mcpBrowser, testInfo });
+    await use(async (args, options) => {
+      return await runCli(args, { mcpBrowser, testInfo, env: options?.env });
     });
 
     // Cleanup sessions
@@ -156,7 +156,7 @@ function cliEnv() {
 
 async function runCli(
   args: string[],
-  options: { mcpBrowser?: string, testInfo: any },
+  options: { mcpBrowser?: string, testInfo: any, env?: Record<string, string> },
 ): Promise<CliResult> {
   const stepTitle = `cli ${args.join(' ')}`;
 
@@ -177,6 +177,7 @@ async function runCli(
           ...cliEnv(),
           PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
           PLAYWRIGHT_MCP_HEADLESS: 'false',
+          ...options.env,
         },
         detached: true,
       });
@@ -207,11 +208,9 @@ async function runCli(
 export async function startWithExtensionFlag(browserWithExtension: BrowserWithExtension, startClient: StartClient, env?: Record<string, string>): Promise<Client> {
   const { client } = await startClient({
     args: [`--extension`],
-    env,
-    config: {
-      browser: {
-        userDataDir: browserWithExtension.userDataDir,
-      }
+    env: {
+      ...env,
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
   return client;
