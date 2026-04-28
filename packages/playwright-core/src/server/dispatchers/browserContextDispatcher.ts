@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
+import { deserializeURLMatch, resolveGlobToRegexPattern, urlMatches } from '@isomorphic/urlMatch';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from '../browserContext';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
@@ -329,6 +329,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<void> {
+    const baseURL = this._context._options.baseURL;
+    for (const pattern of params.patterns) {
+      if (pattern.glob)
+        resolveGlobToRegexPattern(baseURL, pattern.glob, true);
+    }
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length && !this._routeWebSocketInitScript)
       this._routeWebSocketInitScript = await WebSocketRouteDispatcher.install(progress, this.connection, this._context);

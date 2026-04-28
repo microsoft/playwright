@@ -56,10 +56,14 @@ export function globToRegexPattern(glob: string): string {
 
     switch (c) {
       case '{':
+        if (inGroup)
+          throw new Error(`Invalid glob pattern "${glob}": nested '{' is not supported`);
         inGroup = true;
         tokens.push('(');
         break;
       case '}':
+        if (!inGroup)
+          throw new Error(`Invalid glob pattern "${glob}": unmatched '}'`);
         inGroup = false;
         tokens.push(')');
         break;
@@ -74,6 +78,8 @@ export function globToRegexPattern(glob: string): string {
         tokens.push(escapedChars.has(c) ? '\\' + c : c);
     }
   }
+  if (inGroup)
+    throw new Error(`Invalid glob pattern "${glob}": unmatched '{'`);
   tokens.push('$');
   return tokens.join('');
 }

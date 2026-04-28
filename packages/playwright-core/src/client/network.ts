@@ -16,7 +16,7 @@
 
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
-import { serializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
+import { resolveGlobToRegexPattern, serializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '@isomorphic/manualPromise';
 import { MultiMap } from '@isomorphic/multimap';
 import { isString } from '@isomorphic/rtti';
@@ -834,6 +834,8 @@ export class RouteHandler {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
+    if (isString(url))
+      resolveGlobToRegexPattern(baseURL, url);
     this.handler = handler;
     this._savedZone = platform.zones.current().pop();
   }
