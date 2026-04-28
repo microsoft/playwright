@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 
 import { test, expect, mcpServerPath, parseResponse } from './fixtures';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
+
+const { spawnAsync } = utils;
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
   server.setContent('/', `
@@ -112,11 +114,19 @@ test.describe(() => {
       },
     }, null, 2));
 
-    const stderr = await runMCP(['--config', configPath]);
-    expect(stderr).toContain(`Unsupported "browser.browserName": "msedge"`);
-    expect(stderr).toContain(`It must be one of: "chromium", "firefox", "webkit"`);
-    expect(stderr).toContain(`To use "msedge", set it as the launch channel instead:`);
-    expect(stderr).toContain(`"channel": "msedge"`);
+    const { stderr } = await spawnAsync('node', [...mcpServerPath, '--config', configPath]);
+    expect(stderr.trim()).toBe([
+      `Unsupported "browser.browserName": "msedge". It must be one of: "chromium", "firefox", "webkit".`,
+      `To use "msedge", set it as the launch channel instead:`,
+      `{`,
+      `  "browser": {`,
+      `    "browserName": "chromium",`,
+      `    "launchOptions": {`,
+      `      "channel": "msedge"`,
+      `    }`,
+      `  }`,
+      `}`,
+    ].join('\n'));
   });
 });
 
@@ -189,13 +199,3 @@ test('browser_get_config returns merged config from file, env and cli', async ({
   // From CLI arg (--isolated).
   expect(config.browser.isolated).toBe(true);
 });
-
-async function runMCP(args: string[]): Promise<string> {
-  return await new Promise<string>((resolve, reject) => {
-    const child = spawn('node', [...mcpServerPath, ...args], { stdio: ['ignore', 'ignore', 'pipe'] });
-    let stderr = '';
-    child.stderr.on('data', chunk => { stderr += chunk.toString(); });
-    child.on('error', reject);
-    child.on('close', () => resolve(stderr));
-  });
-}
