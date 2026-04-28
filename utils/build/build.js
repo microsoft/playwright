@@ -907,6 +907,25 @@ for (const webPackage of webPackages) {
   }));
 }
 
+// Build/watch extension UI pages and service worker.
+for (const config of ['vite.config.mts', 'vite.sw.config.mts']) {
+  steps.push(new ProgramStep({
+    command: 'npx',
+    args: [
+      'vite',
+      'build',
+      '--config',
+      config,
+      ...(watchMode ? ['--watch', '--minify=false'] : []),
+      ...(withSourceMaps ? ['--sourcemap=inline'] : []),
+      '--clearScreen=false',
+    ],
+    shell: true,
+    cwd: path.join(__dirname, '..', '..', 'packages', 'extension'),
+    concurrent: true,
+  }));
+}
+
 // Generate CLI help.
 onChanges.push({
   inputs: [

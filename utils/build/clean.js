@@ -8,6 +8,7 @@ const rmSync = (dir) => fs.rmSync(dir, { recursive: true, force: true, maxRetrie
 for (const pkg of workspace.packages()) {
   rmSync(path.join(pkg.path, 'node_modules'));
   rmSync(path.join(pkg.path, 'lib'));
+  rmSync(path.join(pkg.path, 'dist'));
   rmSync(path.join(pkg.path, 'src', 'generated'));
   const bundles = path.join(pkg.path, 'bundles');
   if (fs.existsSync(bundles) && fs.statSync(bundles).isDirectory()) {

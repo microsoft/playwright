@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build extension
-        run: npm run build-extension
+        run: npm run build
       - name: Package extension
         working-directory: ./packages/extension
         run: |
