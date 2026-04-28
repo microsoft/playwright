@@ -283,7 +283,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     // which will eventually trigger the same process inside the iframe recursively.
     // When there's a canvas to render, we iterate over its ancestor frames to compute
     // its position relative to the top snapshot frame.
-    const frameBoundingRectsInfo = {
+    const frameBoundingRectsInfo: FrameBoundingRectsInfo = {
       viewport,
       frames: new WeakMap(),
     };

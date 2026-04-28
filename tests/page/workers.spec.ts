@@ -41,7 +41,7 @@ it('should emit created and destroyed events', async function({ page }) {
   const workerCreatedPromise = page.waitForEvent('worker');
   const workerObj = await page.evaluateHandle(() => new Worker(URL.createObjectURL(new Blob(['1'], { type: 'application/javascript' }))));
   const worker = await workerCreatedPromise;
-  const workerThisObj = await worker.evaluateHandle(() => this);
+  const workerThisObj = await worker.evaluateHandle('this');
   const workerDestroyedPromise = new Promise(x => worker.once('close', x));
   await page.evaluate(workerObj => workerObj.terminate(), workerObj);
   expect(await workerDestroyedPromise).toBe(worker);

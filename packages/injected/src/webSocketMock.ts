@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export type WebSocketMessage = string | ArrayBufferLike | Blob | ArrayBufferView;
+export type WebSocketMessage = string | ArrayBuffer | Blob | ArrayBufferView<ArrayBuffer>;
 export type WSData = { data: string, isBase64: boolean };
 
 export type OnCreatePayload = { type: 'onCreate', id: string, url: string, protocols: string[] };
@@ -360,5 +360,5 @@ export function inject(globalThis: GlobalThis) {
         idToWebSocket.delete(this._id);
     }
   }
-  globalThis.WebSocket = class WebSocket extends WebSocketMock {};
+  globalThis.WebSocket = class WebSocket extends WebSocketMock {} as typeof globalThis.WebSocket;
 }

@@ -25,7 +25,7 @@ it('should support touch points in touch event arguments', async ({ page, server
         <div data-testid='inner' style="position: absolute; width: 100px; height: 100px; top: 10px; left: 10px; background-color: green; z-index: 3;">inner</div>
       </div>`);
   const outer = page.getByTestId('outer');
-  await outer.evaluate(el => {
+  await outer.evaluate((el: HTMLElement) => {
     const events = [];
     (window as any).events = events;
     el.addEventListener('touchstart', (e: TouchEvent) => events.push('touchstart: ' + [...e.touches].map(t => `${t.constructor.name}(id: ${t.identifier}, clientX: ${t.clientX}, clientY: ${t.clientY})`)));

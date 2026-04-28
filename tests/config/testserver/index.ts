@@ -38,6 +38,8 @@ type UpgradeActions = {
   socket: stream.Duplex;
 };
 
+type IncomingMessageWithBody = http.IncomingMessage & { postBody: Promise<Buffer> };
+
 export class TestServer {
   private _server: http.Server;
   private _wsServer: WebSocketServer;
@@ -45,7 +47,7 @@ export class TestServer {
   readonly debugServer: any;
   private _startTime: Date;
   private _cachedPathPrefix: string | null;
-  private _routes = new Map<string, (arg0: http.IncomingMessage, arg1: http.ServerResponse) => any>();
+  private _routes = new Map<string, (arg0: IncomingMessageWithBody, arg1: http.ServerResponse) => any>();
   private _auths = new Map<string, { username: string; password: string; }>();
   private _csp = new Map<string, string>();
   private _extraHeaders = new Map<string, object>();
@@ -180,7 +182,7 @@ export class TestServer {
     });
   }
 
-  setRoute(path: string, handler: (arg0: http.IncomingMessage & { postBody: Promise<Buffer> }, arg1: http.ServerResponse) => any) {
+  setRoute(path: string, handler: (arg0: IncomingMessageWithBody, arg1: http.ServerResponse) => any) {
     this._routes.set(path, handler);
   }
 
@@ -192,7 +194,7 @@ export class TestServer {
     });
   }
 
-  waitForRequest(path: string): Promise<http.IncomingMessage & { postBody: Promise<Buffer> }> {
+  waitForRequest(path: string): Promise<IncomingMessageWithBody> {
     let promise = this._requestSubscribers.get(path);
     if (promise)
       return promise;
@@ -259,7 +261,7 @@ export class TestServer {
     }
     const handler = this._routes.get(pathWithSearch);
     if (handler)
-      handler.call(null, request, response);
+      handler.call(null, request as IncomingMessageWithBody, response);
     else
       this.serveFile(request, response);
   }

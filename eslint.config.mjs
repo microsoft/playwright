@@ -499,6 +499,29 @@ export default [
       ...noFloatingPromisesRules,
     },
   },
+  {
+    files: ["packages/extension/src/**/*.ts", "packages/extension/src/**/*.tsx"],
+    ignores: ["packages/extension/src/ui/**"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 9,
+      sourceType: "module",
+      parserOptions: {
+        project: path.join(__dirname, "packages", "extension", "tsconfig.json"),
+      },
+    },
+  },
+  {
+    files: ["packages/extension/src/ui/**/*.ts", "packages/extension/src/ui/**/*.tsx"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 9,
+      sourceType: "module",
+      parserOptions: {
+        project: path.join(__dirname, "packages", "extension", "tsconfig.ui.json"),
+      },
+    },
+  },
   ...reactBaseConfig.map((config) => ({
     ...config,
     files: reactFiles,

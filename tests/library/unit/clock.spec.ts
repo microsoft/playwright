@@ -1760,7 +1760,7 @@ interface Stub {
 
 const createStub = (body?: () => void): Stub => {
   const allFirstArgs = new Set<any>();
-  const stub: Stub = function(...args: any[]) {
+  const stub: Stub = function(this: any, ...args: any[]) {
     stub.calls.push({ receiver: this, args, time: process.hrtime.bigint() });
     allFirstArgs.add(args[0]);
     if (body)

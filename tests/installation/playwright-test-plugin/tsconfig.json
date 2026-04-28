@@ -3,6 +3,7 @@
     "target": "ES2019",
     "module": "commonjs",
     "lib": ["esnext", "dom", "DOM.Iterable"],
+    "types": ["node"],
     "esModuleInterop": true,
     "strict": true,
     "allowJs": false,

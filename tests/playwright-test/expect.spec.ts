@@ -230,7 +230,9 @@ test('should work with default expect matchers and esModuleInterop=false', async
         'rootDir': '.',
         'esModuleInterop': false,
         'allowSyntheticDefaultImports': true,
-        'lib': ['esnext', 'dom', 'DOM.Iterable']
+        'lib': ['esnext', 'dom', 'DOM.Iterable'],
+        'types': ['node'],
+        'ignoreDeprecations': '6.0',
       },
       'exclude': [
         'node_modules'
