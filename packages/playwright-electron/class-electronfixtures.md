@@ -4,11 +4,33 @@
 
 The `@playwright/electron` package exposes a `test` object with a set of fixtures tailored for Electron automation. Fixtures are used to establish the environment for each test, giving the test everything it needs and nothing else.
 
-```js
+Below is an example config and a test file.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/electron';
+
+export default defineConfig({
+  use: {
+    appOptions: {
+      args: ['main.js'],
+      env: { NODE_ENV: 'test' },
+    },
+  },
+});
+```
+
+```js title="example.spec.ts"
 import { test, expect } from '@playwright/electron';
 
-test('basic test', async ({ page }) => {
-  // ...
+test('basic test', async ({ app, page }) => {
+  // Evaluate in the main Electron process.
+  const appPath = await app.evaluate(async ({ app }) => app.getAppPath());
+  console.log(appPath);
+
+  // Interact with the first window via the `page` fixture.
+  await expect(page).toHaveTitle(/My App/);
+  await page.click('text=Click me');
+  await expect(page.getByRole('heading')).toHaveText('Hello');
 });
 ```
 

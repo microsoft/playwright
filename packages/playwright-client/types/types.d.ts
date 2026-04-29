@@ -16867,7 +16867,7 @@ type ElectronType = typeof import('electron');
  * application instance. This instance you can control main electron process as well as work with Electron windows:
  *
  * ```js
- * const { _electron: electron } = require('playwright');
+ * import { _electron as electron } from 'playwright';
  *
  * (async () => {
  *   // Launch Electron app.
@@ -22573,9 +22573,38 @@ export interface WebSocket {
 }
 
 /**
- * Playwright supports Electron automation, shipped as a separate package.
+ * Playwright has **experimental** support for Electron automation, exposed as `_electron`. An example of the Electron
+ * automation script would be:
  *
- * After installation, you can write a test or an automation script.
+ * ```js
+ * import { _electron as electron } from 'playwright';
+ *
+ * (async () => {
+ *   // Launch Electron app.
+ *   const electronApp = await electron.launch({ args: ['main.js'] });
+ *
+ *   // Evaluation expression in the Electron context.
+ *   const appPath = await electronApp.evaluate(async ({ app }) => {
+ *     // This runs in the main Electron process, parameter here is always
+ *     // the result of the require('electron') in the main app script.
+ *     return app.getAppPath();
+ *   });
+ *   console.log(appPath);
+ *
+ *   // Get the first window that the app opens, wait if necessary.
+ *   const window = await electronApp.firstWindow();
+ *   // Print the title.
+ *   console.log(await window.title());
+ *   // Capture a screenshot.
+ *   await window.screenshot({ path: 'intro.png' });
+ *   // Direct Electron console to Node terminal.
+ *   window.on('console', console.log);
+ *   // Click button.
+ *   await window.click('text=Click me');
+ *   // Exit app.
+ *   await electronApp.close();
+ * })();
+ * ```
  *
  * **Supported Electron versions are:**
  * - v12.2.0+
@@ -22588,6 +22617,126 @@ export interface WebSocket {
  * - Ensure that `nodeCliInspect`
  *   ([FuseV1Options.EnableNodeCliInspectArguments](https://www.electronjs.org/docs/latest/tutorial/fuses#nodecliinspect))
  *   fuse is **not** set to `false`.
+ *
+ * **Migrating from v1.59**
+ *
+ * A number of launch options have been removed. The sections below describes the alternatives.
+ * - `recordHar` - use `method: Tracing.startHar`.
+ *
+ *   ```js
+ *   const electronApp = await electron.launch({ args: ['main.js'] });
+ *   await electronApp.context().tracing.startHar('network.har');
+ *   // ... drive the app ...
+ *   await electronApp.context().tracing.stopHar();
+ *   await electronApp.close();
+ *   ```
+ *
+ * - `recordVideo` - use
+ *   [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start) on each
+ *   window.
+ *
+ *   ```js
+ *   const electronApp = await electron.launch({ args: ['main.js'] });
+ *   const window = await electronApp.firstWindow();
+ *   await window.screencast.start({ path: 'video.webm' });
+ *   // ... drive the window ...
+ *   await window.screencast.stop();
+ *   await electronApp.close();
+ *   ```
+ *
+ * - `colorScheme` - use
+ *   [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) on each window.
+ *
+ *   ```js
+ *   const window = await electronApp.firstWindow();
+ *   await window.emulateMedia({ colorScheme: 'dark' });
+ *   ```
+ *
+ * - `extraHTTPHeaders` - use
+ *   [browserContext.setExtraHTTPHeaders(headers)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-extra-http-headers).
+ *
+ *   ```js
+ *   await electronApp.context().setExtraHTTPHeaders({ 'X-My-Header': 'value' });
+ *   ```
+ *
+ * - `geolocation` - use
+ *   [browserContext.setGeolocation(geolocation)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-geolocation).
+ *
+ *   ```js
+ *   await electronApp.context().setGeolocation({ latitude: 48.858455, longitude: 2.294474 });
+ *   ```
+ *
+ * - `httpCredentials` - use
+ *   [browserContext.setHTTPCredentials(httpCredentials)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-http-credentials).
+ *
+ *   ```js
+ *   await electronApp.context().setHTTPCredentials({ username: 'user', password: 'pass' });
+ *   ```
+ *
+ * - `offline` - use
+ *   [browserContext.setOffline(offline)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-offline).
+ *
+ *   ```js
+ *   await electronApp.context().setOffline(true);
+ *   ```
+ *
+ * - `bypassCSP` Disable CSP at the `BrowserWindow` level via Electron's
+ *   [web preferences](https://www.electronjs.org/docs/latest/api/structures/web-preferences). Note that
+ *   `webSecurity: false` also disables CORS and the Same-Origin Policy.
+ *
+ *   ```js
+ *   const win = new BrowserWindow({
+ *     webPreferences: {
+ *       webSecurity: false,
+ *     },
+ *   });
+ *   ```
+ *
+ * - `ignoreHTTPSErrors`
+ *
+ *   There are several ways to relax HTTPS checks in Electron. Pick the one that matches the scope you need.
+ *
+ *   Per-window, allow mixed content through
+ *   [web preferences](https://www.electronjs.org/docs/latest/api/structures/web-preferences):
+ *
+ *   ```js
+ *   const win = new BrowserWindow({
+ *     webPreferences: {
+ *       allowRunningInsecureContent: true,
+ *     },
+ *   });
+ *   ```
+ *
+ *   Process-wide, ignore certificate errors via Chromium command-line switches (must run before the `ready` event):
+ *
+ *   ```js
+ *   const { app } = require('electron');
+ *   app.commandLine.appendSwitch('ignore-certificate-errors');
+ *   // Optional: also ignore localhost certificate errors when testing on an IP.
+ *   app.commandLine.appendSwitch('allow-insecure-localhost', 'true');
+ *   ```
+ *
+ *   Per-request, accept the certificate manually via the
+ *   [`certificate-error`](https://www.electronjs.org/docs/latest/api/app#event-certificate-error) event:
+ *
+ *   ```js
+ *   app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+ *     event.preventDefault();
+ *     callback(true);
+ *   });
+ *   ```
+ *
+ * - `timezoneId` - set an environment variable at the very top of the main file, before any other logic or Chromium
+ *   windows are initialized.
+ *
+ *   ```js
+ *   // main.js
+ *   process.env.TZ = 'Europe/London';
+ *
+ *   const { app } = require('electron');
+ *   // ... rest of your app logic
+ *   ```
+ *
  */
 export interface Electron {
   /**

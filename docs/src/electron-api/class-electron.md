@@ -2,33 +2,10 @@
 * since: v1.9
 * langs: js
 
-Playwright supports Electron automation, shipped as a separate package.
+Playwright has **experimental** support for Electron automation, exposed as `_electron`. An example of the Electron automation script would be:
 
-```sh
-npm i -D @playwright/electron
-```
-
-After installation, you can write a test or an automation script.
-
-```js tab=js-test
-import { test, expect } from '@playwright/electron';
-
-test.use({ appOptions: { args: ['main.js'] } });
-
-test('basic test', async ({ app, page }) => {
-  // Evaluate in the main Electron process.
-  const appPath = await app.evaluate(async ({ app }) => app.getAppPath());
-  console.log(appPath);
-
-  // Interact with the first window via the `page` fixture.
-  await expect(page).toHaveTitle(/My App/);
-  await page.click('text=Click me');
-  await expect(page.getByRole('heading')).toHaveText('Hello');
-});
-```
-
-```js tab=js-library
-import { electron } from '@playwright/electron';
+```js
+import { _electron as electron } from 'playwright';
 
 (async () => {
   // Launch Electron app.
@@ -67,6 +44,112 @@ import { electron } from '@playwright/electron';
 If you are not able to launch Electron and it will end up in timeouts during launch, try the following:
 
 * Ensure that `nodeCliInspect` ([FuseV1Options.EnableNodeCliInspectArguments](https://www.electronjs.org/docs/latest/tutorial/fuses#nodecliinspect)) fuse is **not** set to `false`.
+
+**Migrating from v1.59**
+
+A number of launch options have been removed. The sections below describes the alternatives.
+
+* `recordHar` - use `method: Tracing.startHar`.
+  ```js
+  const electronApp = await electron.launch({ args: ['main.js'] });
+  await electronApp.context().tracing.startHar('network.har');
+  // ... drive the app ...
+  await electronApp.context().tracing.stopHar();
+  await electronApp.close();
+  ```
+
+* `recordVideo` - use [`method: Screencast.start`] on each window.
+  ```js
+  const electronApp = await electron.launch({ args: ['main.js'] });
+  const window = await electronApp.firstWindow();
+  await window.screencast.start({ path: 'video.webm' });
+  // ... drive the window ...
+  await window.screencast.stop();
+  await electronApp.close();
+  ```
+
+* `colorScheme` - use [`method: Page.emulateMedia`] on each window.
+  ```js
+  const window = await electronApp.firstWindow();
+  await window.emulateMedia({ colorScheme: 'dark' });
+  ```
+
+* `extraHTTPHeaders` - use [`method: BrowserContext.setExtraHTTPHeaders`].
+  ```js
+  await electronApp.context().setExtraHTTPHeaders({ 'X-My-Header': 'value' });
+  ```
+
+* `geolocation` - use [`method: BrowserContext.setGeolocation`].
+  ```js
+  await electronApp.context().setGeolocation({ latitude: 48.858455, longitude: 2.294474 });
+  ```
+
+* `httpCredentials` - use [`method: BrowserContext.setHTTPCredentials`].
+  ```js
+  await electronApp.context().setHTTPCredentials({ username: 'user', password: 'pass' });
+  ```
+
+* `offline` - use [`method: BrowserContext.setOffline`].
+  ```js
+  await electronApp.context().setOffline(true);
+  ```
+
+* `bypassCSP`
+  Disable CSP at the `BrowserWindow` level via Electron's
+  [web preferences](https://www.electronjs.org/docs/latest/api/structures/web-preferences).
+  Note that `webSecurity: false` also disables CORS and the Same-Origin Policy.
+
+  ```js
+  const win = new BrowserWindow({
+    webPreferences: {
+      webSecurity: false,
+    },
+  });
+  ```
+
+* `ignoreHTTPSErrors`
+
+  There are several ways to relax HTTPS checks in Electron. Pick the one that matches the scope you need.
+
+  Per-window, allow mixed content through [web preferences](https://www.electronjs.org/docs/latest/api/structures/web-preferences):
+
+  ```js
+  const win = new BrowserWindow({
+    webPreferences: {
+      allowRunningInsecureContent: true,
+    },
+  });
+  ```
+
+  Process-wide, ignore certificate errors via Chromium command-line switches
+  (must run before the `ready` event):
+
+  ```js
+  const { app } = require('electron');
+  app.commandLine.appendSwitch('ignore-certificate-errors');
+  // Optional: also ignore localhost certificate errors when testing on an IP.
+  app.commandLine.appendSwitch('allow-insecure-localhost', 'true');
+  ```
+
+  Per-request, accept the certificate manually via the
+  [`certificate-error`](https://www.electronjs.org/docs/latest/api/app#event-certificate-error)
+  event:
+
+  ```js
+  app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+    event.preventDefault();
+    callback(true);
+  });
+  ```
+
+* `timezoneId` - set an environment variable at the very top of the main file, before any other logic or Chromium windows are initialized.
+  ```js
+  // main.js
+  process.env.TZ = 'Europe/London';
+
+  const { app } = require('electron');
+  // ... rest of your app logic
+  ```
 
 ## async method: Electron.launch
 * since: v1.9

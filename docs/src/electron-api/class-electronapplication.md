@@ -7,7 +7,7 @@ obtain the application instance. This instance you can control main electron pro
 as well as work with Electron windows:
 
 ```js
-const { _electron: electron } = require('playwright');
+import { _electron as electron } from 'playwright';
 
 (async () => {
   // Launch Electron app.
