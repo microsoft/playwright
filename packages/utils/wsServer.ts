@@ -60,6 +60,10 @@ export class WSServer {
   async listen(port: number = 0, hostname: string | undefined, path: string): Promise<string> {
     debugLogger.log('server', `Server started at ${new Date()}`);
 
+    // Default to loopback so the WebSocket RPC is not exposed to the network unless
+    // the caller explicitly opts in by passing a host (e.g. '0.0.0.0').
+    hostname ??= 'localhost';
+
     const server = createHttpServer(this._delegate.onRequest);
     server.on('error', error => debugLogger.log('server', String(error)));
     this.server = server;
@@ -71,7 +75,7 @@ export class WSServer {
           reject(new Error('Could not bind server socket'));
           return;
         }
-        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://${hostname || 'localhost'}:${address.port}${path}`;
+        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://${hostname}:${address.port}${path}`;
         resolve(wsEndpoint);
       }).on('error', reject);
     });

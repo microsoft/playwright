@@ -16118,9 +16118,9 @@ export interface BrowserType<Unused = {}> {
     headless?: boolean;
 
     /**
-     * Host to use for the web socket. It is optional and if it is omitted, the server will accept connections on the
-     * unspecified IPv6 address (::) when IPv6 is available, or the unspecified IPv4 address (0.0.0.0) otherwise. Consider
-     * hardening it with picking a specific interface.
+     * Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the
+     * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware
+     * this exposes the browser RPC to anything that can reach the listening port.
      */
     host?: string;
 
@@ -17366,9 +17366,9 @@ export interface Android {
     deviceSerialNumber?: string;
 
     /**
-     * Host to use for the web socket. It is optional and if it is omitted, the server will accept connections on the
-     * unspecified IPv6 address (::) when IPv6 is available, or the unspecified IPv4 address (0.0.0.0) otherwise. Consider
-     * hardening it with picking a specific interface.
+     * Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the
+     * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware
+     * this exposes the device RPC to anything that can reach the listening port.
      */
     host?: string;
 
@@ -19544,9 +19544,6 @@ export interface BrowserServer {
    * Browser websocket endpoint which can be used as an argument to
    * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect)
    * to establish connection to the browser.
-   *
-   * Note that if the listen `host` option in `launchServer` options is not specified, localhost will be output anyway,
-   * even if the actual listening address is an unspecified address.
    */
   wsEndpoint(): string;
 
