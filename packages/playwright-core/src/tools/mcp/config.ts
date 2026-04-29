@@ -110,8 +110,8 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
   return { ...merged, browser };
 }
 
-export async function resolveCLIConfigForMCP(cliOptions: CLIOptions): Promise<FullConfig> {
-  const envOverrides = configFromEnv();
+export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
+  const envOverrides = configFromEnv(env);
   const cliOverrides = configFromCLIOptions(cliOptions);
   const configFile = cliOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
@@ -129,7 +129,7 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions): Promise<Fu
   return { ...result, browser, configFile };
 }
 
-export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any): Promise<FullConfig> {
+export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
   const config = options.config ? path.resolve(options.config) : undefined;
   try {
     const defaultConfigFile = path.resolve('.playwright', 'cli.config.json');
@@ -149,11 +149,11 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     snapshotMode: 'full',
   });
 
-  const envOverrides = configFromEnv();
+  const envOverrides = configFromEnv(env);
   const configFile = daemonOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
   const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
-  const globalConfigPath = path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
+  const globalConfigPath = path.join((env ?? process.env)['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
   const globalConfigExists = fs.existsSync(globalConfigPath);
   const globalConfigInFile = await loadConfig(globalConfigExists ? globalConfigPath : undefined);
   const globalConfigDir = globalConfigExists ? path.dirname(globalConfigPath) : process.cwd();
@@ -235,7 +235,7 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
   return { ...browser, browserName };
 }
 
-function resolveBrowserParam(browserOption: string | undefined): { browserName: 'chromium' | 'firefox' | 'webkit', channel?: string } {
+function resolveBrowserParam(browserOption: string | undefined): { browserName?: 'chromium' | 'firefox' | 'webkit', channel?: string } {
   switch (browserOption) {
     case 'chrome':
     case 'chrome-beta':
@@ -253,7 +253,7 @@ function resolveBrowserParam(browserOption: string | undefined): { browserName: 
     case 'webkit':
       return { browserName: 'webkit' };
     default:
-      return { browserName: 'chromium', channel: 'chrome' };
+      return {};
   }
 }
 
@@ -352,8 +352,8 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   return { ...config, configFile: cliOptions.config };
 }
 
-export function configFromEnv(): Config & { configFile?: string } {
-  const e = process.env;
+export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: string } {
+  const e = env ?? process.env;
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
   options.allowedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
