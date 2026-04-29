@@ -230,6 +230,10 @@ async function canConnectTo(descriptor: BrowserDescriptor): Promise<boolean> {
         socket.destroy();
         resolve(true);
       });
+      socket.setTimeout(2000, () => {
+        socket.destroy();
+        resolve(false);
+      });
       socket.on('error', () => resolve(false));
     });
   }
@@ -237,6 +241,10 @@ async function canConnectTo(descriptor: BrowserDescriptor): Promise<boolean> {
     const socket = net.createConnection(descriptor.endpoint ?? (descriptor as any).pipeName, () => {
       socket.destroy();
       resolve(true);
+    });
+    socket.setTimeout(2000, () => {
+      socket.destroy();
+      resolve(false);
     });
     socket.on('error', () => resolve(false));
   });
