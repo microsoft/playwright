@@ -17,6 +17,7 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
+import path from 'path';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
@@ -943,5 +944,32 @@ it.describe('tracing.startHar', () => {
     const resources = await parseHar(harPath);
     const log = JSON.parse(resources.get('har.har')!.toString()).log as Log;
     expect(log.entries.some(e => e.request.url === server.PREFIX + '/simple.json')).toBe(true);
+  });
+
+  it('should record a HAR with resourcesDir', async ({ contextFactory, server }, testInfo) => {
+    const context = await contextFactory();
+    const harPath = testInfo.outputPath('tracing.har');
+    const resourcesDir = testInfo.outputPath('har-resources');
+    await context.tracing.startHar(harPath, { content: 'attach', resourcesDir });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/one-style.html');
+    await context.tracing.stopHar();
+    await context.close();
+
+    const log = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
+    const styleEntry = log.entries.find(e => e.request.url.endsWith('/one-style.css'))!;
+    const sha1 = (styleEntry.response.content as any)._file as string;
+    expect(sha1).toBeTruthy();
+    const resourcePath = path.join(resourcesDir, sha1);
+    expect(fs.existsSync(resourcePath)).toBe(true);
+    expect(fs.readFileSync(resourcePath).toString()).toContain('pink');
+  });
+
+  it('should reject resourcesDir together with a .zip har file', async ({ contextFactory }, testInfo) => {
+    const context = await contextFactory();
+    const harPath = testInfo.outputPath('tracing.har.zip');
+    const resourcesDir = testInfo.outputPath('har-resources');
+    await expect(context.tracing.startHar(harPath, { content: 'attach', resourcesDir })).rejects.toThrow(/resourcesDir option is not compatible with a \.zip har file/);
+    await context.close();
   });
 });

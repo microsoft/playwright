@@ -359,16 +359,15 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   harStart(page: Page | null, options: RecordHarOptions): string {
     const harId = createGuid();
     const artifactsDir = this._context instanceof BrowserContext ? this._context._browser.options.artifactsDir : this._createTracesDirIfNeeded();
-    const harFilePath = path.join(artifactsDir, `${harId}.har`);
-    this.harRecorders.set(harId, new HarRecorder(this._context, harFilePath, page, options));
+    this.harRecorders.set(harId, new HarRecorder(this._context, artifactsDir, harId, page, options));
     return harId;
   }
 
-  async harExport(progress: Progress, harId: string | undefined): Promise<Artifact> {
+  async harExport(progress: Progress, harId: string | undefined, mode: 'archive' | 'entries'): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
     const recorder = this.harRecorders.get(harId || '')!;
-    const artifact = await progress.race(recorder.export());
+    const result = await progress.race(recorder.export(mode));
     this.harRecorders.delete(harId || '');
-    return artifact;
+    return result;
   }
 
   private _closeAllGroups() {

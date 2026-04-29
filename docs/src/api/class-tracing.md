@@ -372,6 +372,14 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 
 A glob or regex pattern to filter requests that are stored in the HAR. Defaults to none.
 
+### option: Tracing.startHar.resourcesDir
+* since: v1.60
+* langs: js
+- `resourcesDir` <[path]>
+
+Only used together with `content: 'attach'`. When set, response bodies are placed in this directory instead of next to
+the HAR file. Not compatible with a `.zip` HAR file.
+
 ## async method: Tracing.group
 * since: v1.49
 - returns: <[Disposable]>

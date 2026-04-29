@@ -22210,6 +22210,12 @@ export interface Tracing {
     mode?: "full"|"minimal";
 
     /**
+     * Only used together with `content: 'attach'`. When set, response bodies are placed in this directory instead of next
+     * to the HAR file. Not compatible with a `.zip` HAR file.
+     */
+    resourcesDir?: string;
+
+    /**
      * A glob or regex pattern to filter requests that are stored in the HAR. Defaults to none.
      */
     urlFilter?: string|RegExp;

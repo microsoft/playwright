@@ -14,36 +14,42 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
 
-import * as yazl from 'yazl';
-import { ManualPromise } from '@isomorphic/manualPromise';
+import { SerializedFS } from '@utils/serializedFS';
 import { Artifact } from '../artifact';
 import { HarTracer } from './harTracer';
 
 import type { APIRequestContext } from '../fetch';
 import type { BrowserContext } from '../browserContext';
 import type { HarTracerDelegate } from './harTracer';
-import type { ZipFile } from 'yazl';
 import type { Page } from '../page';
+import type { NameValue } from '@isomorphic/types';
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
-import type EventEmitter from 'events';
 
 export class HarRecorder implements HarTracerDelegate {
-  private _artifact: Artifact;
+  private _context: BrowserContext | APIRequestContext;
+  private _fs = new SerializedFS();
+  private _harFilePath: string;
+  private _resourcesDir: string;
   private _isFlushed: boolean = false;
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
-  private _zipFile: ZipFile | null = null;
-  private _writtenZipEntries = new Set<string>();
+  private _writtenContentEntries = new Set<string>();
 
-  constructor(context: BrowserContext | APIRequestContext, harFilePath: string, page: Page | null, options: channels.RecordHarOptions) {
-    this._artifact = new Artifact(context, harFilePath);
+  constructor(context: BrowserContext | APIRequestContext, fallbackDir: string, harId: string, page: Page | null, options: channels.RecordHarOptions) {
+    this._context = context;
+    const isServer = !!context.attribution.playwright.options.isServer;
+    this._harFilePath = !isServer && options.harPath ? options.harPath : path.join(fallbackDir, `${harId}.har`);
+    if (!isServer && options.resourcesDir)
+      this._resourcesDir = options.resourcesDir;
+    else if (!isServer && options.harPath)
+      this._resourcesDir = path.dirname(options.harPath);
+    else
+      this._resourcesDir = path.join(fallbackDir, `${harId}-resources`);
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
-    const expectsZip = !!options.zip;
-    const content = options.content || (expectsZip ? 'attach' : 'embed');
+    const content = options.content || 'embed';
     this._tracer = new HarTracer(context, page, this, {
       content,
       slimMode: options.mode === 'minimal',
@@ -52,7 +58,6 @@ export class HarRecorder implements HarTracerDelegate {
       waitForContentOnStop: true,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
-    this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
     this._tracer.start({ omitScripts: false });
   }
 
@@ -64,13 +69,15 @@ export class HarRecorder implements HarTracerDelegate {
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
-    if (!this._zipFile || this._writtenZipEntries.has(sha1))
+    if (this._writtenContentEntries.has(sha1))
       return;
-    this._writtenZipEntries.add(sha1);
-    this._zipFile!.addBuffer(buffer, sha1);
+    if (!this._writtenContentEntries.size)
+      this._fs.mkdir(this._resourcesDir);
+    this._writtenContentEntries.add(sha1);
+    this._fs.writeFile(path.join(this._resourcesDir, sha1), buffer, true /* skipIfExists */);
   }
 
-  async flush() {
+  private async _flush() {
     if (this._isFlushed)
       return;
     this._isFlushed = true;
@@ -79,28 +86,33 @@ export class HarRecorder implements HarTracerDelegate {
     const log = this._tracer.stop();
     log.entries = this._entries;
 
-    const harFileContent = jsonStringify({ log });
-
-    await fs.promises.mkdir(path.dirname(this._artifact.localPath()), { recursive: true });
-
-    if (this._zipFile) {
-      const result = new ManualPromise<void>();
-      (this._zipFile as unknown as EventEmitter).on('error', error => result.reject(error));
-      this._zipFile.addBuffer(Buffer.from(harFileContent, 'utf-8'), 'har.har');
-      this._zipFile.end();
-      this._zipFile.outputStream.pipe(fs.createWriteStream(this._artifact.localPath())).on('close', () => {
-        result.resolve();
-      });
-      await result;
-    } else {
-      await fs.promises.writeFile(this._artifact.localPath(), harFileContent);
-    }
+    this._fs.mkdir(path.dirname(this._harFilePath));
+    this._fs.writeFile(this._harFilePath, jsonStringify({ log }));
   }
 
-  async export(): Promise<Artifact> {
-    await this.flush();
-    this._artifact.reportFinished();
-    return this._artifact;
+  async flush() {
+    await this._flush();
+    const error = await this._fs.syncAndGetError();
+    if (error)
+      throw error;
+  }
+
+  async export(mode: 'archive' | 'entries'): Promise<{ entries?: NameValue[], artifact?: Artifact }> {
+    await this._flush();
+    const entries: NameValue[] = [{ name: 'har.har', value: this._harFilePath }];
+    for (const sha1 of this._writtenContentEntries)
+      entries.push({ name: sha1, value: path.join(this._resourcesDir, sha1) });
+    const zipPath = this._harFilePath + '.zip';
+    if (mode === 'archive')
+      this._fs.zip(entries, zipPath);
+    const error = await this._fs.syncAndGetError();
+    if (error)
+      throw error;
+    if (mode === 'entries')
+      return { entries };
+    const artifact = new Artifact(this._context, zipPath);
+    artifact.reportFinished();
+    return { artifact };
   }
 }
 

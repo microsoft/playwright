@@ -310,12 +310,13 @@ export type SerializedError = {
 };
 
 export type RecordHarOptions = {
-  zip?: boolean,
   content?: 'embed' | 'attach' | 'omit',
   mode?: 'full' | 'minimal',
   urlGlob?: string,
   urlRegexSource?: string,
   urlRegexFlags?: string,
+  harPath?: string,
+  resourcesDir?: string,
 };
 
 export type FormField = {
@@ -521,9 +522,10 @@ export type LocalUtilsHarCloseResult = void;
 export type LocalUtilsHarUnzipParams = {
   zipFile: string,
   harFile: string,
+  resourcesDir?: string,
 };
 export type LocalUtilsHarUnzipOptions = {
-
+  resourcesDir?: string,
 };
 export type LocalUtilsHarUnzipResult = void;
 export type LocalUtilsConnectParams = {
@@ -4604,12 +4606,14 @@ export type TracingHarStartResult = {
 };
 export type TracingHarExportParams = {
   harId?: string,
+  mode: 'archive' | 'entries',
 };
 export type TracingHarExportOptions = {
   harId?: string,
 };
 export type TracingHarExportResult = {
-  artifact: ArtifactChannel,
+  artifact?: ArtifactChannel,
+  entries?: NameValue[],
 };
 
 export interface TracingEvents {

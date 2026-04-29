@@ -71,10 +71,11 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   }
 
   async harExport(params: channels.TracingHarExportParams, progress: Progress): Promise<channels.TracingHarExportResult> {
-    const artifact = await this._object.harExport(progress, params.harId);
-    if (!artifact)
-      throw new Error('No HAR artifact. Ensure record.harPath is set.');
-    return { artifact: ArtifactDispatcher.from(this, artifact) };
+    const { artifact, entries } = await this._object.harExport(progress, params.harId, params.mode);
+    return {
+      artifact: artifact ? ArtifactDispatcher.from(this, artifact) : undefined,
+      entries,
+    };
   }
 
   override _onDispose() {

@@ -178,12 +178,13 @@ scheme.SerializedError = tObject({
   value: tOptional(tType('SerializedValue')),
 });
 scheme.RecordHarOptions = tObject({
-  zip: tOptional(tBoolean),
   content: tOptional(tEnum(['embed', 'attach', 'omit'])),
   mode: tOptional(tEnum(['full', 'minimal'])),
   urlGlob: tOptional(tString),
   urlRegexSource: tOptional(tString),
   urlRegexFlags: tOptional(tString),
+  harPath: tOptional(tString),
+  resourcesDir: tOptional(tString),
 });
 scheme.FormField = tObject({
   name: tString,
@@ -312,6 +313,7 @@ scheme.LocalUtilsHarCloseResult = tOptional(tObject({}));
 scheme.LocalUtilsHarUnzipParams = tObject({
   zipFile: tString,
   harFile: tString,
+  resourcesDir: tOptional(tString),
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
 scheme.LocalUtilsConnectParams = tObject({
@@ -2656,9 +2658,11 @@ scheme.TracingHarStartResult = tObject({
 });
 scheme.TracingHarExportParams = tObject({
   harId: tOptional(tString),
+  mode: tEnum(['archive', 'entries']),
 });
 scheme.TracingHarExportResult = tObject({
-  artifact: tChannel(['Artifact']),
+  artifact: tOptional(tChannel(['Artifact'])),
+  entries: tOptional(tArray(tType('NameValue'))),
 });
 scheme.ArtifactInitializer = tObject({
   absolutePath: tString,

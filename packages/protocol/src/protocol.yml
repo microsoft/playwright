@@ -310,7 +310,6 @@ SerializedError:
 RecordHarOptions:
   type: object
   properties:
-    zip: boolean?
     content:
       type: enum?
       literals:
@@ -325,6 +324,8 @@ RecordHarOptions:
     urlGlob: string?
     urlRegexSource: string?
     urlRegexFlags: string?
+    harPath: string?
+    resourcesDir: string?
 
 
 FormField:
@@ -726,6 +727,7 @@ LocalUtils:
       parameters:
         zipFile: string
         harFile: string
+        resourcesDir: string?
 
     connect:
       internal: true
@@ -4099,8 +4101,18 @@ Tracing:
       internal: true
       parameters:
         harId: string?
+        mode:
+          type: enum
+          literals:
+          - archive
+          - entries
       returns:
-        artifact: Artifact
+        # Present when mode is 'archive'.
+        artifact: Artifact?
+        # Present when mode is 'entries'.
+        entries:
+          type: array?
+          items: NameValue
 
 
 Artifact:

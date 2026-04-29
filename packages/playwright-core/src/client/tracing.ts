@@ -31,7 +31,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   private _stacksId: string | undefined;
   private _isTracing = false;
   private _harId: string | undefined;
-  private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
+  private _harRecorders = new Map<string, { path: string, resourcesDir?: string }>();
 
   static from(channel: channels.TracingChannel): Tracing {
     return (channel as any)._object;
@@ -96,15 +96,18 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     });
   }
 
-  async startHar(path: string, options: { content?: 'embed' | 'attach' | 'omit', mode?: 'full' | 'minimal', urlFilter?: string | RegExp } = {}) {
+  async startHar(path: string, options: { content?: 'embed' | 'attach' | 'omit', mode?: 'full' | 'minimal', urlFilter?: string | RegExp, resourcesDir?: string } = {}) {
     await this._wrapApiCall(async () => {
       if (this._harId)
         throw new Error('HAR recording has already been started');
+      if (options.resourcesDir && path.endsWith('.zip'))
+        throw new Error('resourcesDir option is not compatible with a .zip har file');
       const defaultContent = path.endsWith('.zip') ? 'attach' : 'embed';
       this._harId = await this._recordIntoHAR(path, null, {
         url: options.urlFilter,
         updateContent: options.content ?? defaultContent,
         updateMode: options.mode ?? 'full',
+        resourcesDir: options.resourcesDir,
       });
     });
     return new DisposableStub(() => this.stopHar());
@@ -120,19 +123,21 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     });
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full' } = {}): Promise<string> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full', resourcesDir?: string } = {}): Promise<string> {
+    const isZip = har.endsWith('.zip');
     const { harId } = await this._channel.harStart({
       page: page?._channel,
       options: {
-        zip: har.endsWith('.zip'),
         content: options.updateContent ?? 'attach',
         urlGlob: isString(options.url) ? options.url : undefined,
         urlRegexSource: isRegExp(options.url) ? options.url.source : undefined,
         urlRegexFlags: isRegExp(options.url) ? options.url.flags : undefined,
         mode: options.updateMode ?? 'minimal',
+        harPath: isZip ? undefined : har,
+        resourcesDir: options.resourcesDir,
       },
     });
-    this._harRecorders.set(harId, { path: har, content: options.updateContent ?? 'attach' });
+    this._harRecorders.set(harId, { path: har, resourcesDir: options.resourcesDir });
     return harId;
   }
 
@@ -141,19 +146,34 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     if (!harParams)
       return;
     this._harRecorders.delete(harId);
-    const har = await this._channel.harExport({ harId });
-    const artifact = Artifact.from(har.artifact);
-    const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
-    const needCompressed = harParams.path.endsWith('.zip');
-    if (isCompressed && !needCompressed) {
+    const isLocal = !this._connection.isRemote();
+    const isZip = harParams.path.endsWith('.zip');
+
+    if (isLocal) {
+      const { entries } = await this._channel.harExport({ harId, mode: 'entries' });
+      if (!isZip) {
+        // Server wrote HAR and resources to the user's chosen paths.
+        return;
+      }
       const localUtils = this._connection.localUtils();
       if (!localUtils)
-        throw new Error('Uncompressed har is not supported in thin clients');
-      await artifact.saveAs(harParams.path + '.tmp');
-      await localUtils.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
-    } else {
-      await artifact.saveAs(harParams.path);
+        throw new Error('Cannot save zipped HAR in thin clients');
+      await localUtils.zip({ zipFile: harParams.path, entries: entries!, mode: 'write', includeSources: false, additionalSources: [] });
+      return;
     }
+
+    const { artifact: artifactChannel } = await this._channel.harExport({ harId, mode: 'archive' });
+    const artifact = Artifact.from(artifactChannel!);
+    if (isZip) {
+      await artifact.saveAs(harParams.path);
+      await artifact.delete();
+      return;
+    }
+    const localUtils = this._connection.localUtils();
+    if (!localUtils)
+      throw new Error('Uncompressed har is not supported in thin clients');
+    await artifact.saveAs(harParams.path + '.tmp');
+    await localUtils.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path, resourcesDir: harParams.resourcesDir });
     await artifact.delete();
   }
 
