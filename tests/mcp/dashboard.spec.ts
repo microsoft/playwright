@@ -137,7 +137,8 @@ test('daemon show: closing page exits the process', async ({ cli, connectToDashb
 
 async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page, text: string) {
   await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
-  const box = await dashboard.locator('img#display').boundingBox();
+  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible();
+  const box = await dashboard.locator('.annotate-modal-image').boundingBox();
   const x0 = box!.x + box!.width * 0.3;
   const y0 = box!.y + box!.height * 0.3;
   const x1 = box!.x + box!.width * 0.6;
