@@ -21,7 +21,7 @@ import type { TestChildProcess } from '../config/commonFixtures';
 import { cliEntrypoint, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
 import type { Browser, Page, TestInfo } from './stable-test-runner';
-import { chromium } from './stable-test-runner';
+import { chromium, expect as baseExpect } from './stable-test-runner';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { inheritAndCleanEnv } from '../config/utils';
 
@@ -124,6 +124,7 @@ export const test = base
             const [context] = browser.contexts();
             [page] = context.pages();
           }
+          await expect(page).toHaveTitle('Playwright Test');
           return { page, testProcess };
         });
         await browser?.close();
@@ -141,8 +142,6 @@ export const test = base
         });
       },
     });
-
-import { expect as baseExpect } from './stable-test-runner';
 
 // Slow tests are 90s.
 export const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 });

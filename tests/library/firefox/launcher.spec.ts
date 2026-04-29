@@ -60,7 +60,7 @@ it('should support custom firefox policies', async ({ browserType, mode, asset, 
   const policiesPath = testInfo.outputPath('policies.json');
   await fs.promises.writeFile(policiesPath, JSON.stringify(policies));
 
-  const port = 48112;
+  const port = 13122;
   const server = new TestServer(asset(''), port, loopback, {
     key: await fs.promises.readFile(asset('client-certificates/client/localhost/localhost.key')),
     cert: await fs.promises.readFile(asset('client-certificates/client/localhost/localhost.pem')),

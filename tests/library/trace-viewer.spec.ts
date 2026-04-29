@@ -99,7 +99,7 @@ test('should show empty trace viewer', async ({ showTraceViewer }, testInfo) => 
 });
 
 test('should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
-  const port = testInfo.workerIndex + 48321;
+  const port = testInfo.workerIndex + 13321;
   const traceViewer1 = await showTraceViewer(testInfo.outputPath(), { host: 'localhost', port });
   await expect(traceViewer1.page).toHaveTitle('Playwright Trace Viewer');
   const traceViewer2 = await showTraceViewer(testInfo.outputPath(), { host: 'localhost', port });
