@@ -241,7 +241,6 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
       PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
     },
   });
-  await client.callTool({ name: 'browser_snapshot' });
 
   const annotatePromise = client.callTool({ name: 'browser_annotate' });
   let done = false;
