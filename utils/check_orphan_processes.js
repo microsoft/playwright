@@ -64,8 +64,11 @@ const SYSTEM_PROCESS_DENYLIST = {
 // `max` orphan processes behind. Drive each entry to 0 (or remove it) as
 // leaks are fixed. Jobs not listed have an implicit budget of 0. The job
 // key is passed via the ORPHAN_PROCESS_BUDGET_KEY env var.
+//
+// `line` is this file's line number of the entry — used to point GitHub
+// Actions notice/error annotations at the entry. Update it if you reorder.
 const JOB_BUDGETS = {
-  test_mcp: { max: 15, reason: 'tests/mcp/ leaks cliDaemon.js + chromium browser tree (~9 processes) on test failures.' },
+  test_mcp: { max: 15, line: 71, reason: 'tests/mcp/ leaks cliDaemon.js + chromium browser tree (~9 processes) on test failures.' },
 };
 
 /** @returns {ProcessRecord[]} */
@@ -201,11 +204,26 @@ function isSystemProcess(p) {
  * listed in JOB_BUDGETS.
  *
  * @param {string} jobKey
- * @returns {{ max: number, reason: string }}
+ * @returns {{ max: number, line: number, reason: string }}
  */
 function loadBudget(jobKey) {
   const entry = jobKey ? JOB_BUDGETS[jobKey] : null;
-  return entry || { max: 0, reason: '' };
+  return entry || { max: 0, line: 0, reason: '' };
+}
+
+/**
+ * Builds a GitHub Actions workflow-command annotation prefix that points at
+ * this file's JOB_BUDGETS entry for the given job (when known), so clicking
+ * the annotation in the run summary or PR Checks tab jumps straight to the
+ * line you'd edit to ratchet the budget.
+ *
+ * @param {'notice' | 'error'} level
+ * @param {{ line: number }} budget
+ */
+function annotationPrefix(level, budget) {
+  if (!budget.line)
+    return `::${level}::`;
+  return `::${level} file=utils/check_orphan_processes.js,line=${budget.line},title=Orphan-process budget::`;
 }
 
 /**
@@ -288,7 +306,7 @@ async function check(file, graceSeconds, budgetKey) {
     console.log(`Budget for job '${budgetKey}': ${budget.max} orphan(s) allowed${budget.reason ? ` (${budget.reason})` : ''}.`);
 
   if (realOrphans.length > budget.max) {
-    console.log(`::error::Detected ${realOrphans.length} orphaned process(es) — over the budget of ${budget.max} for '${budgetKey || '<no budget key set>'}':`);
+    console.log(`${annotationPrefix('error', budget)}Detected ${realOrphans.length} orphaned process(es) — over the budget of ${budget.max} for '${budgetKey || '<no budget key set>'}':`);
     for (const p of realOrphans)
       console.log(`  pid=${p.pid} ppid=${p.ppid} command=${p.command}`);
     console.log(`To raise the budget, edit JOB_BUDGETS in utils/check_orphan_processes.js (and document the leak). Better: fix the leak.`);
@@ -302,7 +320,7 @@ async function check(file, graceSeconds, budgetKey) {
   }
 
   if (budget.max > 0 && realOrphans.length < budget.max) {
-    console.log(`::notice::Orphan count (${realOrphans.length}) is below the budget (${budget.max}) for '${budgetKey}'. Lower JOB_BUDGETS in utils/check_orphan_processes.js to lock in the improvement.`);
+    console.log(`${annotationPrefix('notice', budget)}Orphan count (${realOrphans.length}) is below the budget (${budget.max}) for '${budgetKey}'. Lower JOB_BUDGETS in utils/check_orphan_processes.js to lock in the improvement.`);
   }
 }
 
