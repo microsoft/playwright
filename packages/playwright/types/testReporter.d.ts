@@ -169,8 +169,8 @@ export interface Reporter {
   /**
    * Called on some global error, for example unhandled exception in the worker process.
    * @param error The error.
-   * @param workerInfo When the error originates from a worker fixture teardown, contains information about the worker that produced it.
-   * `undefined` for errors that are not associated with a specific worker.
+   * @param workerInfo Contains information about the worker that produced this error. `undefined` for errors that are not associated with
+   * a specific worker.
    */
   onError?(error: TestError, workerInfo?: WorkerInfo): void;
 

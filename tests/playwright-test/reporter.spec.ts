@@ -556,12 +556,12 @@ onExit
             onError(error, workerInfo) {
               console.log('teardownError:'
                 + ' message=' + (error.message || '').split('\\n')[0]
-                + ' workerInfo=' + (workerInfo ? typeof workerInfo.workerIndex + '/' + typeof workerInfo.parallelIndex : 'undefined'));
+                + ' workerInfo=' + (workerInfo ? typeof workerInfo.workerIndex + '/' + typeof workerInfo.parallelIndex + '/' + workerInfo.project.name : 'undefined'));
             }
           }
           module.exports = Reporter;
         `,
-        'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+        'playwright.config.ts': `module.exports = { projects: [{ name: 'foo' }], reporter: './reporter.ts' };`,
         'a.spec.ts': `
           import { test as base } from '@playwright/test';
           const test = base.extend<{}, { brokenWorker: void }>({
@@ -574,7 +574,7 @@ onExit
         `,
       }, { reporter: '', workers: 1 });
       expect(result.exitCode).toBe(1);
-      expect(result.output).toContain('teardownError: message=Error: teardown failed workerInfo=number/number');
+      expect(result.output).toContain('teardownError: message=Error: teardown failed workerInfo=number/number/foo');
     });
   });
 }

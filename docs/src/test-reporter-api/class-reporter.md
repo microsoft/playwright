@@ -154,7 +154,7 @@ The error.
 * since: v1.60
 - `workerInfo` ?<[WorkerInfo]>
 
-When the error originates from a worker fixture teardown, contains information about the worker that produced it. `undefined` for errors that are not associated with a specific worker.
+Contains information about the worker that produced this error. `undefined` for errors that are not associated with a specific worker.
 
 ## optional async method: Reporter.onExit
 * since: v1.33
