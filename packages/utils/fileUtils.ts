@@ -60,6 +60,21 @@ export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
 
+export function isPathInside(root: string, candidate: string): boolean {
+  const resolvedRoot = path.resolve(root);
+  const resolvedCandidate = path.resolve(candidate);
+  if (resolvedCandidate === resolvedRoot)
+    return true;
+  return resolvedCandidate.startsWith(resolvedRoot + path.sep);
+}
+
+export function resolveWithinRoot(root: string, fileName: string): string | null {
+  if (path.isAbsolute(fileName))
+    return null;
+  const resolvedFile = path.resolve(root, fileName);
+  return isPathInside(root, resolvedFile) ? resolvedFile : null;
+}
+
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }

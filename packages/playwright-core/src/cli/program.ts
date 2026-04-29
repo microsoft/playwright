@@ -177,6 +177,7 @@ export function decorateProgram(program: Command) {
       .option('--max-clients <maxClients>', 'Maximum clients')
       .option('--mode <mode>', 'Server mode, either "default" or "extension"')
       .option('--artifacts-dir <artifactsDir>', 'Artifacts directory')
+      .option('--unsafe', 'Allow clients to set unsafe launch options (args, executablePath, ignoreAllDefaultArgs, etc)')
       .action(async function(options) {
         runServer({
           port: options.port ? +options.port : undefined,
@@ -185,6 +186,7 @@ export function decorateProgram(program: Command) {
           maxConnections: options.maxClients ? +options.maxClients : Infinity,
           extension: options.mode === 'extension' || !!process.env.PW_EXTENSION_MODE,
           artifactsDir: options.artifactsDir,
+          unsafe: !!options.unsafe,
         }).catch(logErrorAndExit);
       });
 

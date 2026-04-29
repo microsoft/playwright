@@ -42,6 +42,7 @@ type ServerOptions = {
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
   artifactsDir?: string;
+  unsafe?: boolean;
 };
 
 export class PlaywrightServer {
@@ -106,8 +107,7 @@ export class PlaywrightServer {
         }
 
         const isExtension = this._options.mode === 'extension';
-        const allowFSPaths = isExtension;
-        launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
+        launchOptions = filterLaunchOptions(launchOptions, isExtension || !!this._options.unsafe);
 
         // Always override artifacts dir with the one from server options.
         if (this._options.artifactsDir)
@@ -363,21 +363,21 @@ function launchOptionsHash(options: LaunchOptionsWithTimeout) {
   return JSON.stringify(copy);
 }
 
-function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowFSPaths: boolean): LaunchOptionsWithTimeout {
+function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowUnsafe: boolean): LaunchOptionsWithTimeout {
   return {
     channel: options.channel,
-    args: options.args,
-    ignoreAllDefaultArgs: options.ignoreAllDefaultArgs,
-    ignoreDefaultArgs: options.ignoreDefaultArgs,
+    args: allowUnsafe ? options.args : undefined,
+    ignoreAllDefaultArgs: allowUnsafe ? options.ignoreAllDefaultArgs : undefined,
+    ignoreDefaultArgs: allowUnsafe ? options.ignoreDefaultArgs : undefined,
     timeout: options.timeout,
     headless: options.headless,
     proxy: options.proxy,
-    chromiumSandbox: options.chromiumSandbox,
-    firefoxUserPrefs: options.firefoxUserPrefs,
+    chromiumSandbox: allowUnsafe ? options.chromiumSandbox : undefined,
+    firefoxUserPrefs: allowUnsafe ? options.firefoxUserPrefs : undefined,
     slowMo: options.slowMo,
-    executablePath: (isUnderTest() || allowFSPaths) ? options.executablePath : undefined,
-    downloadsPath: allowFSPaths ? options.downloadsPath : undefined,
-    artifactsDir: (isUnderTest() || allowFSPaths) ? options.artifactsDir : undefined,
+    executablePath: (isUnderTest() || allowUnsafe) ? options.executablePath : undefined,
+    downloadsPath: allowUnsafe ? options.downloadsPath : undefined,
+    artifactsDir: (isUnderTest() || allowUnsafe) ? options.artifactsDir : undefined,
   };
 }
 

@@ -18,6 +18,8 @@ import fs from 'fs';
 import path from 'path';
 
 import * as z from 'zod';
+import { resolveWithinRoot } from '@utils/fileUtils';
+
 import { defineTestTool } from './testTool';
 
 export const setupPage = defineTestTool({
@@ -117,7 +119,11 @@ export const saveTestPlan = defineTestTool({
       }
     }
     lines.push(``);
-    await fs.promises.writeFile(path.resolve(context.rootPath, params.fileName), lines.join('\n'));
+    const resolvedFile = resolveWithinRoot(context.rootPath, params.fileName);
+    if (!resolvedFile)
+      throw new Error(`Plan file name must be a relative path inside the workspace: ${params.fileName}`);
+    await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
+    await fs.promises.writeFile(resolvedFile, lines.join('\n'));
     return {
       content: [{
         type: 'text',

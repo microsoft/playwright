@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { isPathInside } from '@utils/fileUtils';
 import { ZipFile } from '@utils/zipFile';
 
 import {  currentBlobReportVersion } from './blob';
@@ -68,7 +69,12 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     // a relative path on posix, and vice versa.
     // Therefore, we cannot use `path.resolve()` here - it will resolve relative-looking paths
     // against `process.cwd()`, while we just want to normalize ".." and "." segments.
-    resolvePath: (rootDir, relativePath) => stringPool.internString(pathPackage.normalize(pathPackage.join(rootDir, relativePath))),
+    resolvePath: (rootDir, relativePath) => {
+      const resolved = pathPackage.normalize(pathPackage.join(rootDir, relativePath));
+      const escapes = pathPackage.isAbsolute(relativePath)
+          || (resolved !== rootDir && !resolved.startsWith(rootDir + pathPackage.sep));
+      return stringPool.internString(escapes ? pathPackage.join(rootDir, '<external>') : resolved);
+    },
     configOverrides: config.config,
   });
   printStatus(`processing test events`);
@@ -494,11 +500,16 @@ class AttachmentPathPatcher {
   }
 
   private _patchAttachments(attachments: JsonAttachment[]) {
+    const resourceRoot = path.resolve(this._resourceDir);
     for (const attachment of attachments) {
       if (!attachment.path)
         continue;
-
-      attachment.path = path.join(this._resourceDir, attachment.path);
+      const joined = path.resolve(resourceRoot, attachment.path);
+      if (!isPathInside(resourceRoot, joined)) {
+        attachment.path = undefined;
+        continue;
+      }
+      attachment.path = joined;
     }
   }
 }
