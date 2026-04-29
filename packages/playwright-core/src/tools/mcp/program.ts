@@ -123,13 +123,13 @@ export function decorateMCPCommand(command: Command) {
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
             if (useSharedBrowser && clientCount === 0) {
-              const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
+              const { browser, canBind } = await createBrowserWithInfo(config, clientInfo);
               sharedBrowser = browser;
               if (canBind)
                 await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
             }
             clientCount++;
-            const { browser, canBind } = sharedBrowser ? { browser: sharedBrowser, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
+            const { browser, canBind } = sharedBrowser ? { browser: sharedBrowser, canBind: false } : await createBrowserWithInfo(config, clientInfo);
             if (canBind) {
               const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
               clientNameCounters.set(clientInfo.clientName, count);

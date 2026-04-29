@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs/promises';
 import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
 
 test(`navigate with extension`, async ({ startExtensionClient, server }) => {
@@ -228,12 +229,40 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
   await expect(confirmationPage.locator('.status-banner')).toContainText(`Playwright client trying to connect requires newer extension version`);
 });
 
+test(`custom executablePath`, async ({ startClient, server }) => {
+  const executablePath = test.info().outputPath('echo.sh');
+  await fs.writeFile(executablePath, '#!/bin/bash\necho "Custom exec args: $@" > "$(dirname "$0")/output.txt"', { mode: 0o755 });
+
+  const { client } = await startClient({
+    args: [`--extension`],
+    config: {
+      browser: {
+        launchOptions: {
+          executablePath,
+        },
+      }
+    },
+  });
+
+  // The call hangs as MCP server never connects to the extension.
+  client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  }).catch(() => {});
+  await expect(async () => {
+    const output = await fs.readFile(test.info().outputPath('output.txt'), 'utf8');
+    expect(output).toMatch(new RegExp(`Custom exec args.*chrome-extension://${extensionId}/connect\\.html\\?`));
+  }).toPass();
+});
+
 test(`fails when extension is missing in custom userDataDir`, async ({ startClient, server }) => {
   const userDataDir = test.info().outputPath('empty-profile');
 
   const { client } = await startClient({
     args: [`--extension`],
-    env: { PWTEST_EXTENSION_USER_DATA_DIR: userDataDir },
+    config: {
+      browser: { userDataDir },
+    },
   });
 
   expect(await client.callTool({
@@ -255,9 +284,13 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
 
   const { client } = await startClient({
     args: [`--extension`],
+    config: {
+      browser: {
+        userDataDir: browserWithExtension.userDataDir,
+      }
+    },
     env: {
       PLAYWRIGHT_MCP_EXTENSION_TOKEN: value,
-      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
     },
   });
 

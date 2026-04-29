@@ -58,7 +58,7 @@ export function decorateProgram(program: Command) {
         };
 
         try {
-          const { browser, browserInfo, canBind, ownership } = await createBrowserWithInfo(mcpConfig, mcpClientInfo, options);
+          const { browser, browserInfo, canBind, ownership } = await createBrowserWithInfo(mcpConfig, mcpClientInfo);
           if (canBind)
             await browser.bind(sessionName, { workspaceDir: clientInfo.workspaceDir });
           const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
