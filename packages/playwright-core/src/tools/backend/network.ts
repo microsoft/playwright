@@ -23,6 +23,7 @@ import { getExtensionForMimeType, isTextualMimeType } from '@isomorphic/mimeType
 import { defineTool, defineTabTool } from './tool';
 
 import type { Response as ToolResponse } from './response';
+import type { HeadersArray } from '@isomorphic/types';
 import type * as playwright from '../../..';
 
 const requests = defineTabTool({
@@ -95,7 +96,12 @@ const request = defineTabTool({
       await renderRequestPart(request, params.part, response, params.filename);
       return;
     }
-    await response.addResult('Request', renderRequestDetails(params.index, request, !!tab.context.config.skillMode), { prefix: 'request', ext: 'log', suggestedFilename: params.filename });
+    const details = await buildRequestDetails(params.index, request);
+    if (response.json && !params.filename) {
+      response.setResultJSON(details);
+      return;
+    }
+    await response.addResult('Request', renderRequestDetailsText(details, !!tab.context.config.skillMode), { prefix: 'request', ext: 'log', suggestedFilename: params.filename });
   },
 });
 
@@ -135,36 +141,72 @@ export function renderRequestLine(request: playwright.Request): string {
   return line;
 }
 
-function renderRequestDetails(index: number, request: playwright.Request, skillMode: boolean): string {
+type RequestDetails = {
+  index: number;
+  method: string;
+  url: string;
+  resourceType: string;
+  duration?: number;
+  mimeType?: string;
+  status?: number;
+  statusText?: string;
+  failure?: string;
+  requestHeaders: HeadersArray;
+  responseHeaders?: HeadersArray;
+  hasRequestBody: boolean;
+  hasResponseBody: boolean;
+};
+
+async function buildRequestDetails(index: number, request: playwright.Request): Promise<RequestDetails> {
   const httpResponse = request.existingResponse();
-  const responseHeaders = httpResponse?.headers();
+  const [requestHeaders, responseHeaders] = await Promise.all([
+    request.headersArray(),
+    httpResponse?.headersArray(),
+  ]);
+  const contentType = responseHeaders?.find(h => h.name.toLowerCase() === 'content-type')?.value;
+  return {
+    index,
+    method: request.method().toUpperCase(),
+    url: request.url(),
+    resourceType: request.resourceType(),
+    duration: computeDurationMs(request),
+    mimeType: contentType ? contentType.split(';')[0].trim() : undefined,
+    status: httpResponse?.status(),
+    statusText: httpResponse?.statusText(),
+    failure: request.failure()?.errorText,
+    requestHeaders,
+    responseHeaders,
+    hasRequestBody: request.postData() !== null,
+    hasResponseBody: canHaveResponseBody(httpResponse),
+  };
+}
+
+function renderRequestDetailsText(details: RequestDetails, skillMode: boolean): string {
   const lines: string[] = [];
-  lines.push(`#${index} [${request.method().toUpperCase()}] ${request.url()}`);
+  lines.push(`#${details.index} [${details.method}] ${details.url}`);
 
   lines.push('');
   lines.push('  General');
-  if (httpResponse)
-    lines.push(`    status:    [${httpResponse.status()}] ${httpResponse.statusText()}`);
-  else if (request.failure())
-    lines.push(`    status:    [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
-  const duration = computeDurationMs(request);
-  if (duration !== undefined)
-    lines.push(`    duration:  ${duration}ms`);
-  lines.push(`    type:      ${request.resourceType()}`);
-  const contentType = responseHeaders?.['content-type'];
-  if (contentType)
-    lines.push(`    mimeType:  ${contentType.split(';')[0].trim()}`);
+  if (details.status !== undefined)
+    lines.push(`    status:    [${details.status}] ${details.statusText}`);
+  else if (details.failure)
+    lines.push(`    status:    [FAILED] ${details.failure}`);
+  if (details.duration !== undefined)
+    lines.push(`    duration:  ${details.duration}ms`);
+  lines.push(`    type:      ${details.resourceType}`);
+  if (details.mimeType)
+    lines.push(`    mimeType:  ${details.mimeType}`);
 
-  appendHeaderSection(lines, 'Request headers', request.headers());
+  appendHeaderSection(lines, 'Request headers', details.requestHeaders);
 
-  if (responseHeaders)
-    appendHeaderSection(lines, 'Response headers', responseHeaders);
+  if (details.responseHeaders)
+    appendHeaderSection(lines, 'Response headers', details.responseHeaders);
 
   const hints: string[] = [];
-  if (request.postData())
-    hints.push(partHint(skillMode, 'request-body', index));
-  if (canHaveResponseBody(httpResponse))
-    hints.push(partHint(skillMode, 'response-body', index));
+  if (details.hasRequestBody)
+    hints.push(partHint(skillMode, 'request-body', details.index));
+  if (details.hasResponseBody)
+    hints.push(partHint(skillMode, 'response-body', details.index));
   if (hints.length)
     lines.push('', ...hints);
 
@@ -186,14 +228,13 @@ function canHaveResponseBody(httpResponse: playwright.Response | null): httpResp
   return status !== 204 && status !== 304 && !(status >= 100 && status < 200);
 }
 
-function appendHeaderSection(lines: string[], title: string, headers: Record<string, string>): void {
-  const entries = Object.entries(headers);
-  if (!entries.length)
+function appendHeaderSection(lines: string[], title: string, headers: HeadersArray): void {
+  if (!headers.length)
     return;
   lines.push('');
   lines.push(`  ${title}`);
-  for (const [k, v] of entries)
-    lines.push(`    ${k}: ${v}`);
+  for (const { name, value } of headers)
+    lines.push(`    ${name}: ${value}`);
 }
 
 function computeDurationMs(request: playwright.Request): number | undefined {
@@ -205,11 +246,20 @@ function computeDurationMs(request: playwright.Request): number | undefined {
 
 async function renderRequestPart(request: playwright.Request, part: RequestPart, response: ToolResponse, suggestedFilename: string | undefined): Promise<void> {
   if (part === 'request-headers') {
-    await response.addResult('Request headers', renderHeaders(request.headers()), { prefix: 'request', ext: 'txt', suggestedFilename });
+    const headers = await request.headersArray();
+    if (response.json && !suggestedFilename) {
+      response.setResultJSON(headers);
+      return;
+    }
+    await response.addResult('Request headers', renderHeaders(headers), { prefix: 'request', ext: 'txt', suggestedFilename });
     return;
   }
   if (part === 'request-body') {
     const data = request.postData();
+    if (response.json && !suggestedFilename) {
+      response.setResultJSON(data);
+      return;
+    }
     if (data !== null)
       await response.addResult('Request body', data, { prefix: 'request', ext: 'txt', suggestedFilename });
     return;
@@ -218,7 +268,12 @@ async function renderRequestPart(request: playwright.Request, part: RequestPart,
   if (!httpResponse)
     return;
   if (part === 'response-headers') {
-    await response.addResult('Response headers', renderHeaders(httpResponse.headers()), { prefix: 'response', ext: 'txt', suggestedFilename });
+    const headers = await httpResponse.headersArray();
+    if (response.json && !suggestedFilename) {
+      response.setResultJSON(headers);
+      return;
+    }
+    await response.addResult('Response headers', renderHeaders(headers), { prefix: 'response', ext: 'txt', suggestedFilename });
     return;
   }
   // response-body
@@ -230,16 +285,22 @@ async function renderRequestPart(request: playwright.Request, part: RequestPart,
     } catch {
       return;
     }
+    if (response.json && !suggestedFilename) {
+      response.setResultJSON(text);
+      return;
+    }
     await response.addResult('Response body', text, { prefix: 'response', ext: 'txt', suggestedFilename });
     return;
   }
   const path = await saveResponseBody(request, response, suggestedFilename);
-  if (path !== undefined)
+  if (path !== undefined) {
+    response.setResultJSON({ file: path });
     response.addTextResult(path);
+  }
 }
 
-function renderHeaders(headers: Record<string, string>): string {
-  return Object.entries(headers).map(([k, v]) => `${k}: ${v}`).join('\n');
+function renderHeaders(headers: HeadersArray): string {
+  return headers.map(({ name, value }) => `${name}: ${value}`).join('\n');
 }
 
 async function saveResponseBody(request: playwright.Request, response: ToolResponse, suggestedFilename?: string): Promise<string | undefined> {

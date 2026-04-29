@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './cli-fixtures';
 
 const SNAPSHOT_FILE = expect.stringMatching(/^\.playwright-cli[\\/]page-[\dTZ:.-]+\.yml$/);
@@ -204,16 +206,25 @@ test('request and per-part commands return JSON result', async ({ cli, server })
   const { output: list } = await cli('requests');
   const num = list.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m)![1];
 
-  console.error(list);
-
-  expect(JSON.parse((await cli('--json', 'request-headers', num)).output).result).toContain('x-custom-header: test-value');
+  expect(JSON.parse((await cli('--json', 'request-headers', num)).output).result).toContainEqual({ name: expect.stringMatching(/^x-custom-header$/i), value: 'test-value' });
   expect(JSON.parse((await cli('--json', 'request-body', num)).output)).toEqual({ result: '{"key":"value"}' });
-  expect(JSON.parse((await cli('--json', 'response-headers', num)).output).result).toContain('x-custom-response: response-value');
+  expect(JSON.parse((await cli('--json', 'response-headers', num)).output).result).toContainEqual({ name: expect.stringMatching(/^x-custom-response$/i), value: 'response-value' });
   expect(JSON.parse((await cli('--json', 'response-body', num)).output)).toEqual({ result: '{"name":"John Doe"}' });
 
   const detail = JSON.parse((await cli('--json', 'request', num)).output);
-  expect(detail.result).toContain(`#${num} [POST] ${server.PREFIX}/api`);
-  expect(detail.result).toContain(`Run \`response-body ${num}\` to read the response body.`);
+  expect(detail.result).toMatchObject({
+    index: Number(num),
+    method: 'POST',
+    url: `${server.PREFIX}/api`,
+    resourceType: 'fetch',
+    status: 200,
+    statusText: 'OK',
+    mimeType: 'application/json',
+    hasRequestBody: true,
+    hasResponseBody: true,
+  });
+  expect(detail.result.requestHeaders).toContainEqual({ name: expect.stringMatching(/^x-custom-header$/i), value: 'test-value' });
+  expect(detail.result.responseHeaders).toContainEqual({ name: expect.stringMatching(/^x-custom-response$/i), value: 'response-value' });
 });
 
 test('request with out-of-range index returns JSON error', async ({ cli, server }) => {
@@ -222,4 +233,93 @@ test('request with out-of-range index returns JSON error', async ({ cli, server 
   const parsed = JSON.parse(output);
   expect(parsed.isError).toBe(true);
   expect(parsed.error).toContain('Request #999 not found');
+});
+
+test('cookie-list returns array of cookies', async ({ cli, server }, testInfo) => {
+  const config = { capabilities: ['storage'] };
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
+  await cli('open', server.EMPTY_PAGE);
+  await cli('cookie-set', 'k1', 'v1');
+  await cli('cookie-set', 'k2', 'v2');
+
+  const { output } = await cli('--json', 'cookie-list');
+  const parsed = JSON.parse(output);
+  expect(parsed.result).toHaveLength(2);
+  expect(parsed.result).toEqual(expect.arrayContaining([
+    expect.objectContaining({ name: 'k1', value: 'v1', path: '/' }),
+    expect.objectContaining({ name: 'k2', value: 'v2', path: '/' }),
+  ]));
+});
+
+test('cookie-get returns cookie object or null', async ({ cli, server }, testInfo) => {
+  const config = { capabilities: ['storage'] };
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
+  await cli('open', server.EMPTY_PAGE);
+  await cli('cookie-set', 'k1', 'v1');
+
+  const found = JSON.parse((await cli('--json', 'cookie-get', 'k1')).output);
+  expect(found.result).toMatchObject({ name: 'k1', value: 'v1', path: '/' });
+
+  const missing = JSON.parse((await cli('--json', 'cookie-get', 'nope')).output);
+  expect(missing).toEqual({ result: null });
+});
+
+test('localstorage-list and localstorage-get return structured JSON', async ({ cli, server }, testInfo) => {
+  const config = { capabilities: ['storage'] };
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
+  await cli('open', server.EMPTY_PAGE);
+  await cli('localstorage-set', 'k1', 'v1');
+  await cli('localstorage-set', 'k2', 'v2');
+
+  const list = JSON.parse((await cli('--json', 'localstorage-list')).output);
+  expect(list.result).toEqual(expect.arrayContaining([
+    { key: 'k1', value: 'v1' },
+    { key: 'k2', value: 'v2' },
+  ]));
+
+  expect(JSON.parse((await cli('--json', 'localstorage-get', 'k1')).output)).toEqual({ result: 'v1' });
+  expect(JSON.parse((await cli('--json', 'localstorage-get', 'nope')).output)).toEqual({ result: null });
+});
+
+test('sessionstorage-list and sessionstorage-get return structured JSON', async ({ cli, server }, testInfo) => {
+  const config = { capabilities: ['storage'] };
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
+  await cli('open', server.EMPTY_PAGE);
+  await cli('sessionstorage-set', 'k1', 'v1');
+
+  const list = JSON.parse((await cli('--json', 'sessionstorage-list')).output);
+  expect(list.result).toEqual([{ key: 'k1', value: 'v1' }]);
+
+  expect(JSON.parse((await cli('--json', 'sessionstorage-get', 'k1')).output)).toEqual({ result: 'v1' });
+  expect(JSON.parse((await cli('--json', 'sessionstorage-get', 'nope')).output)).toEqual({ result: null });
+});
+
+test('route-list returns array of route entries', async ({ cli, server }) => {
+  await cli('open', server.PREFIX);
+  await cli('route', '**/api/users', '--status=200', '--body={"ok":true}', '--content-type=application/json');
+
+  const parsed = JSON.parse((await cli('--json', 'route-list')).output);
+  expect(parsed.result).toEqual([
+    expect.objectContaining({
+      pattern: '**/api/users',
+      status: 200,
+      body: '{"ok":true}',
+      contentType: 'application/json',
+    }),
+  ]);
+});
+
+test('request-headers --filename returns file reference in JSON', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', headers: { 'X-Custom-Header': 'test-value' }, body: 'hello' })">Click me</button>
+  `, 'text/html');
+  server.setContent('/api', '{}', 'application/json');
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  const { output: list } = await cli('requests');
+  const num = list.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m)![1];
+
+  const parsed = JSON.parse((await cli('--json', 'request-headers', num, '--filename=req-h.txt')).output);
+  expect(parsed.result).toEqual({ file: './req-h.txt' });
 });

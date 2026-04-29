@@ -102,9 +102,9 @@ test('request shows full request and response details', async ({ cli, server }) 
   expect(output).toContain('General');
   expect(output).toContain('status:    [200] OK');
   expect(output).toContain('Request headers');
-  expect(output).toContain('x-custom-header: test-value');
+  expect(output).toMatch(/x-custom-header: test-value/i);
   expect(output).toContain('Response headers');
-  expect(output).toContain('x-custom-response: response-value');
+  expect(output).toMatch(/x-custom-response: response-value/i);
   expect(output).toContain(`Run \`request-body ${match![1]}\` to read the request body.`);
   expect(output).toContain(`Run \`response-body ${match![1]}\` to read the response body.`);
   expect(output).not.toContain('Request body');
@@ -129,9 +129,9 @@ test('per-part commands extract individual parts', async ({ cli, server }) => {
   expect(match).not.toBeNull();
   const num = match![1];
 
-  expect((await cli('request-headers', num)).output).toContain('x-custom-header: test-value');
+  expect((await cli('request-headers', num)).output).toMatch(/x-custom-header: test-value/i);
   expect((await cli('request-body', num)).output).toContain('{"key":"value"}');
-  expect((await cli('response-headers', num)).output).toContain('x-custom-response: response-value');
+  expect((await cli('response-headers', num)).output).toMatch(/x-custom-response: response-value/i);
   expect((await cli('response-body', num)).output).toContain('{"name":"John Doe"}');
 });
 
@@ -158,13 +158,13 @@ test('request* and response* commands support --filename', async ({ cli, server 
   expect(read('req.log')).toContain(`[POST] ${server.PREFIX}/api`);
 
   expect((await cli('request-headers', num, '--filename=req-h.txt')).output).toContain('[Request headers](./req-h.txt)');
-  expect(read('req-h.txt')).toContain('content-type: text/plain;charset=UTF-8');
+  expect(read('req-h.txt')).toMatch(/content-type: text\/plain;charset=UTF-8/i);
 
   expect((await cli('request-body', num, '--filename=req-b.txt')).output).toContain('[Request body](./req-b.txt)');
   expect(read('req-b.txt')).toBe('hello');
 
   expect((await cli('response-headers', num, '--filename=res-h.txt')).output).toContain('[Response headers](./res-h.txt)');
-  expect(read('res-h.txt')).toContain('x-custom-response: response-value');
+  expect(read('res-h.txt')).toMatch(/x-custom-response: response-value/i);
 
   expect((await cli('response-body', num, '--filename=res-b.json')).output).toContain('[Response body](./res-b.json)');
   expect(read('res-b.json')).toBe('{"name":"John Doe"}');

@@ -39,10 +39,13 @@ const localStorageList = defineTabTool({
       return result;
     });
 
-    if (items.length === 0)
-      response.addTextResult('No localStorage items found');
-    else
-      response.addTextResult(items.map(item => `${item.key}=${item.value}`).join('\n'));
+    if (response.json) {
+      response.setResultJSON(items);
+      return;
+    }
+    response.addTextResult(items.length === 0
+      ? 'No localStorage items found'
+      : items.map(item => `${item.key}=${item.value}`).join('\n'));
     response.addCode(`await page.evaluate(() => ({ ...localStorage }));`);
   },
 });
@@ -63,10 +66,13 @@ const localStorageGet = defineTabTool({
   handle: async (tab, params, response) => {
     const value = await tab.page.evaluate(key => localStorage.getItem(key), params.key);
 
-    if (value === null)
-      response.addTextResult(`localStorage key '${params.key}' not found`);
-    else
-      response.addTextResult(`${params.key}=${value}`);
+    if (response.json) {
+      response.setResultJSON(value);
+      return;
+    }
+    response.addTextResult(value === null
+      ? `localStorage key '${params.key}' not found`
+      : `${params.key}=${value}`);
     response.addCode(`await page.evaluate(() => localStorage.getItem('${params.key}'));`);
   },
 });
@@ -151,10 +157,13 @@ const sessionStorageList = defineTabTool({
       return result;
     });
 
-    if (items.length === 0)
-      response.addTextResult('No sessionStorage items found');
-    else
-      response.addTextResult(items.map(item => `${item.key}=${item.value}`).join('\n'));
+    if (response.json) {
+      response.setResultJSON(items);
+      return;
+    }
+    response.addTextResult(items.length === 0
+      ? 'No sessionStorage items found'
+      : items.map(item => `${item.key}=${item.value}`).join('\n'));
     response.addCode(`await page.evaluate(() => ({ ...sessionStorage }));`);
   },
 });
@@ -175,10 +184,13 @@ const sessionStorageGet = defineTabTool({
   handle: async (tab, params, response) => {
     const value = await tab.page.evaluate(key => sessionStorage.getItem(key), params.key);
 
-    if (value === null)
-      response.addTextResult(`sessionStorage key '${params.key}' not found`);
-    else
-      response.addTextResult(`${params.key}=${value}`);
+    if (response.json) {
+      response.setResultJSON(value);
+      return;
+    }
+    response.addTextResult(value === null
+      ? `sessionStorage key '${params.key}' not found`
+      : `${params.key}=${value}`);
     response.addCode(`await page.evaluate(() => sessionStorage.getItem('${params.key}'));`);
   },
 });

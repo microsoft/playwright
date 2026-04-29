@@ -40,10 +40,13 @@ const cookieList = defineTool({
     if (params.path)
       cookies = cookies.filter(c => c.path.startsWith(params.path!));
 
-    if (cookies.length === 0)
-      response.addTextResult('No cookies found');
-    else
-      response.addTextResult(cookies.map(c => `${c.name}=${c.value} (domain: ${c.domain}, path: ${c.path})`).join('\n'));
+    if (response.json) {
+      response.setResultJSON(cookies);
+      return;
+    }
+    response.addTextResult(cookies.length === 0
+      ? 'No cookies found'
+      : cookies.map(c => `${c.name}=${c.value} (domain: ${c.domain}, path: ${c.path})`).join('\n'));
     response.addCode(`await page.context().cookies();`);
   },
 });
@@ -66,10 +69,13 @@ const cookieGet = defineTool({
     const cookies = await browserContext.cookies();
     const cookie = cookies.find(c => c.name === params.name);
 
-    if (!cookie)
-      response.addTextResult(`Cookie '${params.name}' not found`);
-    else
-      response.addTextResult(`${cookie.name}=${cookie.value} (domain: ${cookie.domain}, path: ${cookie.path}, httpOnly: ${cookie.httpOnly}, secure: ${cookie.secure}, sameSite: ${cookie.sameSite})`);
+    if (response.json) {
+      response.setResultJSON(cookie ?? null);
+      return;
+    }
+    response.addTextResult(cookie
+      ? `${cookie.name}=${cookie.value} (domain: ${cookie.domain}, path: ${cookie.path}, httpOnly: ${cookie.httpOnly}, secure: ${cookie.secure}, sameSite: ${cookie.sameSite})`
+      : `Cookie '${params.name}' not found`);
     response.addCode(`await page.context().cookies();`);
   },
 });

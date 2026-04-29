@@ -59,6 +59,7 @@ export class Response {
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
   private _raw: boolean;
   private _json: boolean;
+  private _resultJSON: { value: unknown } | undefined;
 
   constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean, json?: boolean }) {
     this._context = context;
@@ -67,6 +68,10 @@ export class Response {
     this._clientWorkspace = options?.relativeTo ?? context.options.cwd;
     this._json = options?.json ?? false;
     this._raw = this._json || (options?.raw ?? false);
+  }
+
+  get json(): boolean {
+    return this._json;
   }
 
   private _computeRelativeTo(fileName: string): string {
@@ -97,10 +102,15 @@ export class Response {
     this._results.push(text);
   }
 
+  setResultJSON(value: unknown) {
+    this._resultJSON = { value };
+  }
+
   async addResult(title: string, data: Buffer | string, file: FilenameTemplate) {
     if (file.suggestedFilename || typeof data !== 'string') {
       const resolvedFile = await this.resolveClientFile(file, title);
       await this.addFileResult(resolvedFile, data);
+      this.setResultJSON({ file: resolvedFile.relativeName });
     } else {
       this.addTextResult(data);
     }
@@ -183,6 +193,8 @@ export class Response {
           payload[key] = section.content.join('\n');
         }
       }
+      if (this._resultJSON !== undefined)
+        payload.result = this._resultJSON.value;
       serializedText = JSON.stringify(payload, null, 2);
     } else {
       const text: string[] = [];

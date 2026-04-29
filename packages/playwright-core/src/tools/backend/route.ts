@@ -98,6 +98,10 @@ const routeList = defineTool({
 
   handle: async (context, params, response) => {
     const routes = context.routes();
+    if (response.json) {
+      response.setResultJSON(routes.map(({ handler, ...rest }) => rest));
+      return;
+    }
     if (routes.length === 0) {
       response.addTextResult('No active routes');
       return;
