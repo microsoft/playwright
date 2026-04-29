@@ -18,7 +18,6 @@ import path from 'path';
 
 import { createGuid } from '@utils/crypto';
 
-import { getProjectId } from '../common/config';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 import type { ReporterV2 } from './reporterV2';
@@ -144,7 +143,7 @@ export class TeleReporterEmitter implements ReporterV2 {
         workerInfo: workerInfo ? {
           workerIndex: workerInfo.workerIndex,
           parallelIndex: workerInfo.parallelIndex,
-          projectId: getProjectId(workerInfo.project),
+          projectName: workerInfo.project.name,
         } : undefined,
       },
     });
@@ -209,7 +208,6 @@ export class TeleReporterEmitter implements ReporterV2 {
     const report: teleReceiver.JsonProject = {
       metadata: project.metadata,
       name: project.name,
-      id: getProjectId(project),
       outputDir: this._relativePath(project.outputDir),
       repeatEach: project.repeatEach,
       retries: project.retries,

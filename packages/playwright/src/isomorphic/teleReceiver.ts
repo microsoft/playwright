@@ -41,7 +41,6 @@ export type JsonProject = {
   grepInvert: JsonPattern[];
   metadata: Metadata;
   name: string;
-  id?: string;
   dependencies: string[];
   // This is relative to root dir.
   snapshotDir: string;
@@ -213,7 +212,7 @@ export type JsonOnErrorEvent = {
   method: 'onError';
   params: {
     error: reporterTypes.TestError;
-    workerInfo?: { workerIndex: number, parallelIndex: number, projectId?: string };
+    workerInfo?: { workerIndex: number, parallelIndex: number, projectName: string };
   };
 };
 
@@ -440,16 +439,18 @@ export class TeleReporterReceiver {
     })));
   }
 
-  private _onError(error: reporterTypes.TestError, workerInfo?: { workerIndex: number, parallelIndex: number, projectId?: string }) {
+  private _onError(error: reporterTypes.TestError, workerInfo?: { workerIndex: number, parallelIndex: number, projectName: string }) {
     let fullWorkerInfo: reporterTypes.WorkerInfo | undefined;
     if (workerInfo) {
-      const project = (workerInfo.projectId !== undefined ? this._config.projects.find(p => (p as any).__projectId === workerInfo.projectId) : undefined) ?? this._config.projects[0] ?? baseFullConfig.projects[0];
-      fullWorkerInfo = {
-        workerIndex: workerInfo.workerIndex,
-        parallelIndex: workerInfo.parallelIndex,
-        config: this._config,
-        project,
-      };
+      const project = this._config.projects.find(p => p.name === workerInfo.projectName);
+      if (project) {
+        fullWorkerInfo = {
+          workerIndex: workerInfo.workerIndex,
+          parallelIndex: workerInfo.parallelIndex,
+          config: this._config,
+          project,
+        };
+      }
     }
     this._reporter.onError?.(error, fullWorkerInfo);
   }
@@ -487,7 +488,7 @@ export class TeleReporterReceiver {
   }
 
   private _parseProject(project: JsonProject): TeleFullProject {
-    const parsed: TeleFullProject = {
+    return {
       metadata: project.metadata,
       name: project.name,
       outputDir: this._absolutePath(project.outputDir),
@@ -505,9 +506,6 @@ export class TeleReporterReceiver {
       ignoreSnapshots: project.ignoreSnapshots ?? false,
       use: project.use,
     };
-    if (project.id !== undefined)
-      (parsed as any).__projectId = project.id;
-    return parsed;
   }
 
   private _parseAttachments(attachments: JsonAttachment[]): reporterTypes.TestResult['attachments'] {
