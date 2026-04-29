@@ -37,6 +37,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NODE_OPTIONS: --max-old-space-size=8192
         HTML_REPORT_URL: 'https://mspwblobreport.z1.web.core.windows.net/run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}/index.html'
+        WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
 
     - name: Azure Login
       uses: azure/login@v2

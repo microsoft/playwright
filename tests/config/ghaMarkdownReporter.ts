@@ -52,6 +52,11 @@ class MarkdownReporter implements Reporter {
   async onEnd(result: FullResult) {
     const summary = this._generateSummary();
     const lines: string[] = [];
+    const incompleteWarning = this._incompleteRunWarning();
+    if (incompleteWarning) {
+      lines.push(incompleteWarning);
+      lines.push(``);
+    }
     if (this._fatalErrors.length)
       lines.push(`**${this._fatalErrors.length} fatal errors, not part of any test**`);
     if (summary.unexpected.length) {
@@ -85,6 +90,13 @@ class MarkdownReporter implements Reporter {
     const reportFile = path.resolve(this._options.configDir, maybeRelativeFile);
     await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
     await fs.promises.writeFile(reportFile, report);
+  }
+
+  protected _incompleteRunWarning(): string | undefined {
+    const conclusion = process.env.WORKFLOW_RUN_CONCLUSION;
+    if (!conclusion || conclusion === 'success' || conclusion === 'failure')
+      return undefined;
+    return `> [!WARNING]\n> The triggering workflow run ended with status \`${conclusion}\`. Results below may be incomplete — blob reports from cancelled or timed-out shards are missing, so passing/failing counts do not reflect the full test suite.`;
   }
 
   protected _generateSummary() {
