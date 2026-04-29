@@ -51,7 +51,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
       [Events.Worker.Console, 'console'],
     ]));
     this._channel.on('console', event => {
-      // Note: we only receive console events here for workers from "chromium.connectToWorker".
+      // Note: we only receive console events here for workers from "chromium._connectToWorker".
       this.emit(Events.Worker.Console, new ConsoleMessage(this._platform, event, null, this));
     });
     this._channel.on('close', () => {
@@ -101,7 +101,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     });
   }
 
-  async disconnect(options: { reason?: string } = {}): Promise<void> {
+  async _disconnect(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     try {
       await this._channel.disconnect(options);

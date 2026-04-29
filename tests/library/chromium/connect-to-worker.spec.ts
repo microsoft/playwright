@@ -22,7 +22,7 @@ test('should connect, evaluate, receive console and disconnect', async ({ browse
   const child = childProcess({ command: [process.execPath, '--inspect-brk=0', '-e', 'console.log("hello from node"); setTimeout(() => {}, 1e9)'] });
   await child.waitForOutput('Debugger listening on ws://');
   const endpoint = child.output.match(/Debugger listening on (ws:\/\/\S+)/)![1];
-  const worker = await browserType.connectToWorker(endpoint);
+  const worker = await (browserType as any)._connectToWorker(endpoint);
   // Script runs after connect due to --inspect-brk, so listen before evaluating.
   const messagePromise = worker.waitForEvent('console');
   const result = await worker.evaluate(() => 1 + 1);
@@ -32,7 +32,7 @@ test('should connect, evaluate, receive console and disconnect', async ({ browse
   expect(message.type()).toBe('log');
   // Disconnect and receive close event.
   const closePromise = worker.waitForEvent('close');
-  await worker.disconnect();
+  await worker._disconnect();
   await closePromise;
 });
 
@@ -40,7 +40,7 @@ test('should receive close when node process exits', async ({ browserType, child
   const child = childProcess({ command: [process.execPath, '--inspect-brk=0', '-e', 'setTimeout(() => {}, 1e9)'] });
   await child.waitForOutput('Debugger listening on ws://');
   const endpoint = child.output.match(/Debugger listening on (ws:\/\/\S+)/)![1];
-  const worker = await browserType.connectToWorker(endpoint);
+  const worker = await (browserType as any)._connectToWorker(endpoint);
   const closePromise = worker.waitForEvent('close');
   child.process.kill();
   await closePromise;

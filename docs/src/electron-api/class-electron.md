@@ -47,9 +47,9 @@ If you are not able to launch Electron and it will end up in timeouts during lau
 
 **Migrating from v1.59**
 
-A number of launch options have been removed. The sections below describes the alternatives.
+A number of launch options have been removed after v1.59. See below for alternatives.
 
-* `recordHar` - use `method: Tracing.startHar`.
+* `recordHar` - use [`method: Tracing.startHar`].
   ```js
   const electronApp = await electron.launch({ args: ['main.js'] });
   await electronApp.context().tracing.startHar('network.har');
@@ -94,10 +94,7 @@ A number of launch options have been removed. The sections below describes the a
   await electronApp.context().setOffline(true);
   ```
 
-* `bypassCSP`
-  Disable CSP at the `BrowserWindow` level via Electron's
-  [web preferences](https://www.electronjs.org/docs/latest/api/structures/web-preferences).
-  Note that `webSecurity: false` also disables CORS and the Same-Origin Policy.
+* `bypassCSP` - disable CSP at the `BrowserWindow` level via Electron's [web preferences](https://www.electronjs.org/docs/latest/api/structures/web-preferences). Note that `webSecurity: false` also disables CORS and the Same-Origin Policy.
 
   ```js
   const win = new BrowserWindow({

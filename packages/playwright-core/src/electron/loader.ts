@@ -61,7 +61,7 @@ const chromiumSwitches = [
   '--disable-sync',
 ];
 
-// The new `chromium.connectToWorker`-based client reads these globals via
+// The new `chromium._connectToWorker`-based client reads these globals via
 // the Node debugger to bootstrap the Electron app.
 (globalThis as any).__playwright_electron = electronModule;
 

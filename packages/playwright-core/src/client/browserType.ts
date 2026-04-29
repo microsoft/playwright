@@ -165,7 +165,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return browser;
   }
 
-  async connectToWorker(endpoint: string, options: { timeout?: number } = {}): Promise<Worker>  {
+  async _connectToWorker(endpoint: string, options: { timeout?: number } = {}): Promise<Worker>  {
     if (this.name() !== 'chromium')
       throw new Error('Connecting to workers is only supported in Chromium.');
     const result = await this._channel.connectToWorker({

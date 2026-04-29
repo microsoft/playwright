@@ -28,9 +28,10 @@ import { monotonicTime } from '@isomorphic/time';
 import { libPath } from '../package';
 
 import type { BrowserWindow } from 'electron';
-import type { Browser, BrowserContext, JSHandle, Page, Worker } from '../../types/types';
+import type { Browser, BrowserContext, JSHandle, Page } from '../../types/types';
 import type * as api from '../../types/types';
 import type { Playwright } from '../client/playwright';
+import type { Worker } from '../client/worker';
 import type childProcess from 'child_process';
 
 const debugLogger = debug('pw:electron');
@@ -171,10 +172,10 @@ export class Electron implements api.Electron {
     try {
       const chromium = this._playwright.chromium;
       const nodeMatch = await nodeMatchPromise;
-      const worker = await chromium.connectToWorker(nodeMatch[1], { timeout: progress.timeUntilDeadline() });
+      const worker = await chromium._connectToWorker(nodeMatch[1], { timeout: progress.timeUntilDeadline() });
 
       // Release the Electron process immediately if the user is debugging it.
-      debuggerDisconnectPromise.then(() => worker.disconnect()).catch(() => {});
+      debuggerDisconnectPromise.then(() => worker._disconnect()).catch(() => {});
 
       const chromeMatch = await Promise.race([chromeMatchPromise, waitForXserverError]);
       const browser = await chromium.connectOverCDP(chromeMatch[1], { timeout: progress.timeUntilDeadline(), isLocal: true });
@@ -254,7 +255,7 @@ export class ElectronApplication extends EventEmitter implements api.ElectronApp
       await this._browser.close();
       const appHandle = await this._appHandlePromise;
       await appHandle.evaluate(({ app }) => app.quit()).catch(() => {});
-      await this._worker.disconnect();
+      await this._worker._disconnect();
     }
     await this._closedPromise;
   }
