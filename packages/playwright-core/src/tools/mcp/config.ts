@@ -96,18 +96,58 @@ export type MergedConfig = Config & {
   }
 };
 
-export type FullConfig = MergedConfig & {
-  browser: MergedConfig['browser'] & {
-    browserName: 'chromium' | 'firefox' | 'webkit';
-  },
+type BrowserName = 'chromium' | 'firefox' | 'webkit';
+
+type CommonResolvedBrowser = {
+  initPage?: string[];
+  initScript?: string[];
+};
+
+export type LocalBrowserConfig = CommonResolvedBrowser & {
+  mode: 'local';
+  browserName: BrowserName;
+  isolated?: boolean;
+  userDataDir?: string;
+  launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
+  contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
+};
+
+export type CDPBrowserConfig = CommonResolvedBrowser & {
+  mode: 'cdp';
+  browserName: BrowserName;
+  isolated?: boolean;
+  cdpEndpoint: string;
+  cdpHeaders?: Record<string, string>;
+  cdpTimeout?: number;
+  contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
+};
+
+export type RemoteBrowserConfig = CommonResolvedBrowser & {
+  mode: 'remote';
+  browserName: BrowserName;
+  isolated?: boolean;
+  remoteEndpoint: string;
+  contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
+};
+
+export type ExtensionBrowserConfig = CommonResolvedBrowser & {
+  mode: 'extension';
+  browserName: 'chromium';
+  isolated: false;
+  channel: string;
+};
+
+export type ResolvedBrowser = LocalBrowserConfig | CDPBrowserConfig | RemoteBrowserConfig | ExtensionBrowserConfig;
+
+export type FullConfig = Omit<MergedConfig, 'browser' | 'extension'> & {
+  browser: ResolvedBrowser,
   skillMode?: boolean;
   configFile?: string;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
   const merged = mergeConfig(defaultConfig, config);
-  const browser = await validateBrowserConfig(merged.browser);
-  return { ...merged, browser };
+  return await finalizeConfig(merged, undefined);
 }
 
 export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
@@ -122,11 +162,10 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
   result = mergeConfig(result, resolveConfigPaths(cliOverrides, process.cwd()));
 
-  const browser = await validateBrowserConfig(result.browser);
-  if (browser.launchOptions.headless === undefined)
-    browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;
+  if (isLocalMode(result) && result.browser.launchOptions.headless === undefined)
+    result.browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;
 
-  return { ...result, browser, configFile };
+  return await finalizeConfig(result, configFile);
 }
 
 export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
@@ -167,31 +206,79 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   if (result.browser.isolated === undefined)
     result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
 
-  if (result.browser.launchOptions.headless === undefined)
+  if (isLocalMode(result) && result.browser.launchOptions.headless === undefined)
     result.browser.launchOptions.headless = true;
 
-  const browser = await validateBrowserConfig(result.browser);
+  const fullConfig = await finalizeConfig(result, configFile);
+  fullConfig.skillMode = true;
 
-  if (!result.extension && !browser.isolated && !browser.userDataDir && !browser.remoteEndpoint && !browser.cdpEndpoint) {
+  if (fullConfig.browser.mode === 'local' && !fullConfig.browser.isolated && !fullConfig.browser.userDataDir) {
     // No custom value provided, use the daemon data dir.
-    const browserToken = browser.launchOptions?.channel ?? browser?.browserName;
-    const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
-    browser.userDataDir = userDataDir;
+    const browserToken = fullConfig.browser.launchOptions.channel ?? fullConfig.browser.browserName;
+    fullConfig.browser.userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
   }
 
-  return { ...result, browser, configFile, skillMode: true };
+  return fullConfig;
 }
 
-async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {
-  let browserName = browser.browserName;
-  if (!browserName) {
-    browserName = 'chromium';
+function isLocalMode(merged: MergedConfig): boolean {
+  return !merged.extension && !merged.browser.cdpEndpoint && !merged.browser.remoteEndpoint;
+}
+
+async function finalizeConfig(merged: MergedConfig, configFile: string | undefined): Promise<FullConfig> {
+  return { ...merged, browser: await resolveBrowserConfig(merged), configFile };
+}
+
+async function resolveBrowserConfig(merged: MergedConfig): Promise<ResolvedBrowser> {
+  const browser = merged.browser;
+  await validateInitFiles(browser);
+  const browserName: BrowserName = browser.browserName ?? 'chromium';
+
+  if (merged.extension) {
+    return {
+      mode: 'extension',
+      browserName: 'chromium',
+      isolated: false,
+      channel: browser.launchOptions.channel || 'chrome',
+      initPage: browser.initPage,
+      initScript: browser.initScript,
+    };
+  }
+  if (browser.cdpEndpoint) {
+    return {
+      mode: 'cdp',
+      browserName,
+      isolated: browser.isolated,
+      cdpEndpoint: browser.cdpEndpoint,
+      cdpHeaders: browser.cdpHeaders,
+      cdpTimeout: browser.cdpTimeout,
+      contextOptions: browser.contextOptions,
+      initPage: browser.initPage,
+      initScript: browser.initScript,
+    };
+  }
+  if (browser.remoteEndpoint) {
+    return {
+      mode: 'remote',
+      browserName,
+      isolated: browser.isolated,
+      remoteEndpoint: browser.remoteEndpoint,
+      contextOptions: browser.contextOptions,
+      initPage: browser.initPage,
+      initScript: browser.initScript,
+    };
+  }
+  return await resolveLocalBrowserConfig(browser, browserName);
+}
+
+async function resolveLocalBrowserConfig(browser: MergedConfig['browser'], browserName: BrowserName): Promise<LocalBrowserConfig> {
+  if (!browser.browserName) {
     // Assign channel only if the browserName is not provided, otherwise assume full control to the user.
     if (browser.launchOptions.channel === undefined)
       browser.launchOptions.channel = 'chrome';
   }
 
-  if (browser.browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {
+  if (browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {
     if (process.platform === 'linux')
       browser.launchOptions.chromiumSandbox = browser.launchOptions.channel !== 'chromium' && browser.launchOptions.channel !== 'chrome-for-testing';
     else
@@ -201,18 +288,6 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
   if (browser.isolated && browser.userDataDir)
     throw new Error('Browser userDataDir is not supported in isolated mode.');
 
-  if (browser.initScript) {
-    for (const script of browser.initScript) {
-      if (!await fileExistsAsync(script))
-        throw new Error(`Init script file does not exist: ${script}`);
-    }
-  }
-  if (browser.initPage) {
-    for (const page of browser.initPage) {
-      if (!await fileExistsAsync(page))
-        throw new Error(`Init page file does not exist: ${page}`);
-    }
-  }
   if (browser.contextOptions.viewport === undefined) {
     if (browser.launchOptions.headless)
       browser.contextOptions.viewport = { width: 1280, height: 720 };
@@ -226,7 +301,31 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
       browser.launchOptions.args.push(`--disable-blink-features=AutomationControlled`);
   }
 
-  return { ...browser, browserName };
+  return {
+    mode: 'local',
+    browserName,
+    isolated: browser.isolated,
+    userDataDir: browser.userDataDir,
+    launchOptions: browser.launchOptions,
+    contextOptions: browser.contextOptions,
+    initPage: browser.initPage,
+    initScript: browser.initScript,
+  };
+}
+
+async function validateInitFiles(browser: MergedConfig['browser']): Promise<void> {
+  if (browser.initScript) {
+    for (const script of browser.initScript) {
+      if (!await fileExistsAsync(script))
+        throw new Error(`Init script file does not exist: ${script}`);
+    }
+  }
+  if (browser.initPage) {
+    for (const page of browser.initPage) {
+      if (!await fileExistsAsync(page))
+        throw new Error(`Init page file does not exist: ${page}`);
+    }
+  }
 }
 
 function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
@@ -473,7 +572,7 @@ function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
       ...pickDefined(base.timeouts),
       ...pickDefined(overrides.timeouts),
     },
-  } as FullConfig;
+  } as MergedConfig;
 }
 
 export function semicolonSeparatedList(value: string | undefined): string[] | undefined {

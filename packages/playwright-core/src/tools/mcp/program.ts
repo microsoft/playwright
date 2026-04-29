@@ -18,7 +18,7 @@ import { Option as ProgramOption } from 'commander';
 import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { createBrowser, createBrowserWithInfo } from './browserFactory';
+import { acquireBrowserContext, createBrowser, createBrowserWithInfo } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
@@ -94,7 +94,7 @@ export function decorateMCPCommand(command: Command) {
 
         const config = await resolveCLIConfigForMCP(options);
         const tools = filteredTools(config);
-        if (config.extension) {
+        if (config.browser.mode === 'extension') {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright w/ extension',
             nameInConfig: 'playwright-extension',
@@ -136,7 +136,7 @@ export function decorateMCPCommand(command: Command) {
               const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
               await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
             }
-            const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
+            const browserContext = await acquireBrowserContext(browser, config.browser);
             return new BrowserBackend(config, browserContext, tools);
           },
           disposed: async backend => {
