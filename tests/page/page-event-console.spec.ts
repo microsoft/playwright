@@ -111,9 +111,10 @@ it('should format the message correctly with time/timeLog/timeEnd', async ({ pag
     expect(messages[0].type()).toBe('timeLog');
   expect(messages[1].type()).toBe('timeEnd');
 
-  // WebKit has a space before the unit: https://bugs.webkit.org/show_bug.cgi?id=233556
-  expect(messages[0].text()).toMatch(/foo time: \d+.\d+ ?ms/);
-  expect(messages[1].text()).toMatch(/foo time: \d+.\d+ ?ms/);
+  // WebKit has no space before the unit: https://bugs.webkit.org/show_bug.cgi?id=233556
+  // Firefox/Bidi has no fractional part.
+  expect(messages[0].text()).toMatch(/foo time: \d+(.\d+)? ?ms/);
+  expect(messages[1].text()).toMatch(/foo time: \d+(.\d+)? ?ms/);
 });
 
 it('should not fail for window object', async ({ page, browserName, channel }) => {
