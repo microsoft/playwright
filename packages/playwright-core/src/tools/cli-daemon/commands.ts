@@ -465,7 +465,7 @@ const runCode = declareCommand({
   options: z.object({
     filename: z.string().optional().describe('Load code from the specified file.'),
   }),
-  toolName: 'browser_run_code',
+  toolName: 'browser_run_code_unsafe',
   toolParams: ({ code, filename }) => ({ code, filename }),
 });
 

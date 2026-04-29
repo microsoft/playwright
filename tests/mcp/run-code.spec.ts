@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
-test('browser_run_code', async ({ client, server }) => {
+test('browser_run_code_unsafe', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
   `, 'text/html');
@@ -29,7 +29,7 @@ test('browser_run_code', async ({ client, server }) => {
 
   const code = 'async (page) => await page.getByRole("button", { name: "Submit" }).click()';
   const response = parseResponse(await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: {
       code,
     },
@@ -38,7 +38,7 @@ test('browser_run_code', async ({ client, server }) => {
   expect(content).toContain('[LOG] Submit');
 });
 
-test('browser_run_code block', async ({ client, server }) => {
+test('browser_run_code_unsafe block', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
   `, 'text/html');
@@ -48,7 +48,7 @@ test('browser_run_code block', async ({ client, server }) => {
   });
 
   const response = parseResponse(await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: {
       code: 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); await page.getByRole("button", { name: "Submit" }).click(); }',
     },
@@ -62,7 +62,7 @@ test('browser_run_code block', async ({ client, server }) => {
   expect(content).toMatch(/\[LOG\] Submit.*\n.*\[LOG\] Submit/);
 });
 
-test('browser_run_code no-require', async ({ client, server }) => {
+test('browser_run_code_unsafe no-require', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
   `, 'text/html');
@@ -72,7 +72,7 @@ test('browser_run_code no-require', async ({ client, server }) => {
   });
 
   expect(await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: {
       code: `(page) => { require('fs'); }`,
     },
@@ -82,7 +82,7 @@ test('browser_run_code no-require', async ({ client, server }) => {
   });
 });
 
-test('browser_run_code return value', async ({ client, server }) => {
+test('browser_run_code_unsafe return value', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
   `, 'text/html');
@@ -94,7 +94,7 @@ test('browser_run_code return value', async ({ client, server }) => {
   const code = 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); return { message: "Hello, world!" }; await page.getByRole("banner").click(); }';
 
   const response = parseResponse(await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: {
       code,
     },
@@ -108,7 +108,7 @@ test('browser_run_code return value', async ({ client, server }) => {
   expect(content).toContain('[LOG] Submit');
 });
 
-test('browser_run_code route handler exception keeps server alive', async ({ client, server }) => {
+test('browser_run_code_unsafe route handler exception keeps server alive', async ({ client, server }) => {
   server.setContent('/', '<button>Submit</button>', 'text/html');
   await client.callTool({
     name: 'browser_navigate',
@@ -127,7 +127,7 @@ test('browser_run_code route handler exception keeps server alive', async ({ cli
     });
   }`;
   expect(await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: { code },
   })).toHaveResponse({
     error: expect.stringContaining('ReferenceError: URL is not defined'),
@@ -142,7 +142,7 @@ test('browser_run_code route handler exception keeps server alive', async ({ cli
   expect(followUp.isError).toBeFalsy();
 });
 
-test('browser_run_code with filename', async ({ client, server }) => {
+test('browser_run_code_unsafe with filename', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Clicked')">Click</button>
   `, 'text/html');
@@ -156,14 +156,14 @@ test('browser_run_code with filename', async ({ client, server }) => {
   await fs.promises.writeFile(filePath, code);
 
   const response = parseResponse(await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: { filename: 'test-code.js' },
   }));
   const content = await consoleEntries(response);
   expect(content).toContain('[LOG] Clicked');
 });
 
-test('browser_run_code with filename containing template literals', async ({ client, server }) => {
+test('browser_run_code_unsafe with filename containing template literals', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="console.log('Done')">Submit</button>
   `, 'text/html');
@@ -177,7 +177,7 @@ test('browser_run_code with filename containing template literals', async ({ cli
   await fs.promises.writeFile(filePath, code);
 
   const response = parseResponse(await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: { filename: 'template-code.js' },
   }));
   const content = await consoleEntries(response);

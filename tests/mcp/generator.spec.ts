@@ -46,7 +46,7 @@ test('generator tools intent', async ({ startClient }) => {
   expect(toolsWithIntent).toContain('browser_press_key');
   expect(toolsWithIntent).toContain('browser_press_sequentially');
   expect(toolsWithIntent).toContain('browser_resize');
-  expect(toolsWithIntent).toContain('browser_run_code');
+  expect(toolsWithIntent).toContain('browser_run_code_unsafe');
   expect(toolsWithIntent).toContain('browser_select_option');
   expect(toolsWithIntent).toContain('browser_tabs');
 });

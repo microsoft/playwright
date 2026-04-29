@@ -77,7 +77,7 @@ test(`protocolVersion defaults to 1`, async ({ startExtensionClient, server, pro
   process.env.PLAYWRIGHT_EXTENSION_PROTOCOL = saved;
 });
 
-test(`browser_run_code can evaluate in a web worker`, async ({ startExtensionClient, server, protocolVersion }) => {
+test(`browser_run_code_unsafe can evaluate in a web worker`, async ({ startExtensionClient, server, protocolVersion }) => {
   test.skip(protocolVersion === 1, 'Multi-tab not supported in protocol v1');
   server.setContent('/worker.js', `
     self.onmessage = (e) => self.postMessage('echo:' + e.data);
@@ -109,7 +109,7 @@ test(`browser_run_code can evaluate in a web worker`, async ({ startExtensionCli
   await navigateResponse;
 
   const runCodeResponse = await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: {
       code: `async (page) => {
         const worker = page.workers().length ? page.workers()[0] : await page.waitForEvent('worker');
@@ -144,7 +144,7 @@ test(`browser_run_code can evaluate in a web worker`, async ({ startExtensionCli
   });
 
   const runCodeResponse2 = await client.callTool({
-    name: 'browser_run_code',
+    name: 'browser_run_code_unsafe',
     arguments: {
       code: `async (page) => {
         const worker = page.workers().length ? page.workers()[0] : await page.waitForEvent('worker');

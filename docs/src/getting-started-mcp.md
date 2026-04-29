@@ -103,7 +103,7 @@ Playwright MCP provides tools for all common browser interactions:
 
 ### Running Playwright code
 
-For complex interactions that go beyond individual tool calls, use the `browser_run_code` tool to execute Playwright scripts directly:
+For complex interactions that go beyond individual tool calls, use the `browser_run_code_unsafe` tool to execute Playwright scripts directly. This tool runs arbitrary JavaScript in the Playwright server process and is RCE-equivalent — only enable it for trusted MCP clients:
 
 ```txt
 Run this Playwright code to verify the todo count:
