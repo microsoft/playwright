@@ -26,7 +26,6 @@ import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { minimist } from '../cli-client/minimist';
-import { saveOutputFile } from '../trace/traceUtils';
 import { DashboardConnection } from './dashboardController';
 
 import type * as api from '../../..';
@@ -68,7 +67,9 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
     connection = new DashboardConnection(() => connections.delete(connection), () => {
-      if (currentReveal.sessionName)
+      if (currentReveal.pageId)
+        connection.revealPage(currentReveal.pageId);
+      else if (currentReveal.sessionName)
         connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
       if (pendingAnnotate) {
         pendingAnnotate = false;
@@ -91,6 +92,11 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
 
   const reveal = (next: DashboardOptions) => {
     currentReveal = next;
+    if (next.pageId) {
+      for (const connection of connections)
+        connection.revealPage(next.pageId);
+      return;
+    }
     if (!next.sessionName)
       return;
     for (const connection of connections)
@@ -230,6 +236,7 @@ function dashboardSocketPath() {
 type DashboardOptions = {
   sessionName: string;
   workspaceDir: string;
+  pageId?: string;
   kill?: boolean;
   annotate?: boolean;
   port?: number;
@@ -237,11 +244,12 @@ type DashboardOptions = {
 };
 
 function parseOpenArgs(): DashboardOptions {
-  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host'], boolean: ['annotate', 'kill'] });
+  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['annotate', 'kill'] });
   const portStr = args.port as string | undefined;
   return {
     sessionName: args.sessionName as string,
     workspaceDir: args.workspaceDir as string,
+    pageId: args.pageId as string | undefined,
     port: portStr !== undefined ? Number(portStr) : undefined,
     host: args.host as string | undefined,
     annotate: !!args.annotate,
@@ -378,32 +386,13 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
     return;
   }
   socket.write(JSON.stringify(options) + '\n');
-  const chunks: Buffer[] = [];
+  // eslint-disable-next-line no-restricted-properties
+  socket.pipe(process.stdout, { end: false });
   await new Promise<void>((resolve, reject) => {
-    socket!.on('data', chunk => chunks.push(chunk));
-    socket!.on('end', () => resolve());
-    socket!.on('error', reject);
+    socket!.once('end', resolve);
+    socket!.once('error', reject);
   });
   socket.destroy();
-  const text = Buffer.concat(chunks).toString();
-  if (!text)
-    return;
-  const { png, annotations, ariaSnapshot } = JSON.parse(text) as { png: string; annotations: AnnotationData[], ariaSnapshot: string };
-  for (const a of annotations) {
-    // eslint-disable-next-line no-console
-    console.log(`{ x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
-  }
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  if (png) {
-    const filePath = await saveOutputFile(`annotations-${timestamp}.png`, Buffer.from(png, 'base64'));
-    // eslint-disable-next-line no-console
-    console.log(`image: ${path.relative(process.cwd(), filePath)}`);
-  }
-  if (ariaSnapshot) {
-    const filePath = await saveOutputFile(`annotations-${timestamp}.yaml`, ariaSnapshot);
-    // eslint-disable-next-line no-console
-    console.log(`snapshot: ${path.relative(process.cwd(), filePath)}`);
-  }
 }
 
 function selfDestructOnParentGone() {

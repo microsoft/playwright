@@ -30,7 +30,7 @@ export const test = baseTest.extend<{
   boundBrowser: Browser,
   cliEnv: Record<string, string>,
   startDashboardServer: (options?: { cwd?: string, session?: string }) => Promise<Page>,
-  connectToDashboard: (bindTitle: string) => Promise<Browser>;
+  connectToDashboard: () => Promise<Browser>;
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -41,9 +41,13 @@ export const test = baseTest.extend<{
     daemonPid?: number,
     dashboardPid?: number,
   }>;
+  dashboardBindTitle: string,
 }>({
   cliEnv: async ({}, use) => {
     await use(cliEnv());
+  },
+  dashboardBindTitle: async ({}, use) => {
+    await use(`--playwright-internal-dashboard-${test.info().testId}`);
   },
   startDashboardServer: async ({ childProcess, page }, use) => {
     await use(async (options?: { cwd?: string, session?: string }) => {
@@ -59,13 +63,13 @@ export const test = baseTest.extend<{
       return page;
     });
   },
-  connectToDashboard: async ({ cli, playwright }, use) => {
-    await use(async (bindTitle: string) => {
+  connectToDashboard: async ({ cli, playwright, dashboardBindTitle }, use) => {
+    await use(async () => {
       let endpoint = '';
       await expect(async () => {
         const { output } = await cli('list', '--all', '--json');
         const { servers } = JSON.parse(output);
-        const server = servers.find(s => s.title === bindTitle);
+        const server = servers.find(s => s.title === dashboardBindTitle);
         endpoint = server.endpoint;
       }).toPass();
       return await playwright.chromium.connect(endpoint);
@@ -73,14 +77,14 @@ export const test = baseTest.extend<{
     await cli('show', '--kill');
   },
 
-  cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
+  cli: async ({ mcpBrowser, mcpHeadless, childProcess, dashboardBindTitle }, use) => {
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
     const allPids: number[] = [];
 
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless, dashboardBindTitle });
       if (result.daemonPid)
         allPids.push(result.daemonPid);
       if (result.dashboardPid)
@@ -123,7 +127,7 @@ function cliEnv() {
   };
 }
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string>, bindTitle?: string }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean, dashboardBindTitle: string }) {
   const testInfo = test.info();
   const cli = childProcess({
     command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...args],
@@ -133,7 +137,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
       PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
       PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
-      PWTEST_DASHBOARD_APP_BIND_TITLE: cliOptions.bindTitle,
+      PWTEST_DASHBOARD_APP_BIND_TITLE: options.dashboardBindTitle,
       ...cliOptions.env,
     }),
   });

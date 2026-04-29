@@ -115,7 +115,7 @@ export class DashboardConnection implements Transport {
   private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
   private _visible = true;
-  private _pendingReveal: { sessionName: string; workspaceDir?: string } | undefined;
+  private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string } | undefined;
   private _annotateWaitingForAttach = false;
 
   _recordingDir: string;
@@ -220,16 +220,24 @@ export class DashboardConnection implements Transport {
     void this._tryRevealPending();
   }
 
+  revealPage(pageId: string) {
+    this._pendingReveal = { pageId };
+    void this._tryRevealPending();
+  }
+
   private async _tryRevealPending() {
     const pending = this._pendingReveal;
     if (!pending)
       return;
-    const slot = [...this._browsers.values()].find(s =>
-      s.descriptor.title === pending.sessionName
-        && (pending.workspaceDir === undefined || s.descriptor.workspaceDir === pending.workspaceDir));
-    if (!slot)
-      return;
-    const page = slot.browser.contexts().flatMap(c => c.pages())[0];
+    const allPages = [...this._browsers.values()].flatMap(s => s.browser.contexts().flatMap(c => c.pages().map(p => ({ slot: s, page: p }))));
+    let page: api.Page | undefined;
+    if (pending.pageId !== undefined) {
+      page = allPages.find(({ page }) => pageId(page) === pending.pageId)?.page;
+    } else if (pending.sessionName !== undefined) {
+      page = allPages.find(({ slot }) =>
+        slot.descriptor.title === pending.sessionName
+          && (pending.workspaceDir === undefined || slot.descriptor.workspaceDir === pending.workspaceDir))?.page;
+    }
     if (!page)
       return;
     this._pendingReveal = undefined;

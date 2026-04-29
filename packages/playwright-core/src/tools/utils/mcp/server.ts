@@ -65,7 +65,7 @@ const backendManager = new BackendManager();
 
 export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
-  callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult & { isClose?: boolean }>;
+  callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback, signal?: AbortSignal): Promise<CallToolResult & { isClose?: boolean }>;
   dispose?(): Promise<void>;
 }
 
@@ -127,7 +127,7 @@ export function createServer(name: string, version: string, factory: ServerBacke
       }
 
       const backend = await backendPromise;
-      const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, progress);
+      const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, progress, extra.signal);
       if (toolResult.isClose) {
         await backendManager.disposeBackend(backend).catch(serverDebug);
         backendPromise = undefined;
@@ -194,7 +194,10 @@ function addServerListener(server: ServerType, event: 'close' | 'initialized', l
 
 export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[], socketPath?: string } = {}) {
   if (options.port === undefined) {
-    await connect(serverBackendFactory, new StdioServerTransport(), false);
+    // eslint-disable-next-line no-restricted-properties
+    const transport = new StdioServerTransport(process.stdin, process.stdout);
+    process.stdin.on('end', () => void transport.close().catch(() => {}));
+    await connect(serverBackendFactory, transport, false);
     return;
   }
 

@@ -217,10 +217,7 @@ export async function program(options?: { embedderVersion?: string}) {
         return;
       }
       if (args.annotate) {
-        const dashboard = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
-        dashboard.unref();
-        const annotate = spawn(process.execPath, [...daemonArgs, '--annotate'], { stdio: 'inherit' });
-        await new Promise<void>(resolve => annotate.on('exit', () => resolve()));
+        await runToolInSession(args, command, registry, clientInfo, sessionName, output);
         return;
       }
       const foreground = args.port !== undefined;
@@ -237,15 +234,19 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     }
     default: {
-      const entry = registry.entry(clientInfo, sessionName);
-      if (!entry)
-        output.errorBrowserNotOpenForTool(sessionName);
-      if (command.raw)
-        args.raw = true;
-      const text = await runInSession(entry, clientInfo, args, output);
-      output.toolResult(text);
+      await runToolInSession(args, command, registry, clientInfo, sessionName, output);
     }
   }
+}
+
+async function runToolInSession(args: MinimistArgs, command: { raw?: boolean }, registry: Registry, clientInfo: ClientInfo, sessionName: string, output: Output) {
+  const entry = registry.entry(clientInfo, sessionName);
+  if (!entry)
+    output.errorBrowserNotOpenForTool(sessionName);
+  if (command.raw)
+    args.raw = true;
+  const text = await runInSession(entry, clientInfo, args, output);
+  output.toolResult(text);
 }
 
 async function startSession(sessionName: string, registry: Registry, clientInfo: ClientInfo, args: MinimistArgs, mode: 'open' | 'attach') {
