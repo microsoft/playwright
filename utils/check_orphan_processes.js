@@ -37,6 +37,37 @@ const { spawnSync } = require('child_process');
  * @typedef {{ pid: number, ppid: number, startTime: string, command: string }} ProcessRecord
  */
 
+// CI infrastructure processes that may legitimately spawn during the post-test
+// grace window. These are noise from the GitHub-hosted runner image, not test
+// leaks. Patterns are case-insensitive substring matches against the full
+// command line.
+const SYSTEM_PROCESS_DENYLIST = {
+  linux: [
+    '/usr/bin/dbus-daemon',          // systemd-activated user-session bus
+  ],
+  darwin: [
+    '/System/Library/',              // macOS system frameworks / XPC services
+    '/System/Cryptexes/',            // macOS Cryptex system payload
+    '/System/Volumes/Preboot/Cryptexes/', // macOS preboot Cryptex
+    '/usr/libexec/',                 // macOS launchd-managed helpers
+    'cloudphotod',                   // self-named iCloud Photos daemon
+  ],
+  win32: [
+    '\\System32\\svchost.exe',       // Windows service host
+    '\\System32\\wbem\\wmiprvse.exe',// WMI provider (invoked by our own snapshot)
+    '\\System32\\CompatTelRunner.exe',// Microsoft Compatibility Telemetry
+  ],
+};
+
+// Per-job orphan-process ratchet. Each entry is a known unfixed leak — the
+// test run for the named GitHub Actions job (github.job) may leave at most
+// `max` orphan processes behind. Drive each entry to 0 (or remove it) as
+// leaks are fixed. Jobs not listed have an implicit budget of 0. The job
+// key is passed via the ORPHAN_PROCESS_BUDGET_KEY env var.
+const JOB_BUDGETS = {
+  test_mcp: { max: 15, reason: 'tests/mcp/ leaks cliDaemon.js + chromium browser tree (~9 processes) on test failures.' },
+};
+
 /** @returns {ProcessRecord[]} */
 function readProcessesLinux() {
   const myUid = process.geteuid ? process.geteuid() : -1;
@@ -150,6 +181,34 @@ function identity(p) {
 }
 
 /**
+ * Returns true if the process matches a hardcoded CI infrastructure pattern
+ * (system daemons, etc.) that should be ignored unconditionally.
+ *
+ * @param {ProcessRecord} p
+ */
+function isSystemProcess(p) {
+  const patterns = SYSTEM_PROCESS_DENYLIST[process.platform] || [];
+  const cmd = (p.command || '').toLowerCase();
+  for (const pattern of patterns) {
+    if (cmd.includes(pattern.toLowerCase()))
+      return true;
+  }
+  return false;
+}
+
+/**
+ * Returns the per-job orphan-process budget. Defaults to 0 for jobs not
+ * listed in JOB_BUDGETS.
+ *
+ * @param {string} jobKey
+ * @returns {{ max: number, reason: string }}
+ */
+function loadBudget(jobKey) {
+  const entry = jobKey ? JOB_BUDGETS[jobKey] : null;
+  return entry || { max: 0, reason: '' };
+}
+
+/**
  * Returns the set of pids that should be excluded from the orphan list because
  * they are the check process itself, its ancestors, or its descendants.
  *
@@ -206,7 +265,7 @@ function snapshot(file) {
   console.log(`Snapshot written to ${file} (${processes.length} processes)`);
 }
 
-async function check(file, graceSeconds) {
+async function check(file, graceSeconds, budgetKey) {
   if (graceSeconds > 0) {
     console.log(`Waiting ${graceSeconds}s grace period for late teardown...`);
     await new Promise(resolve => setTimeout(resolve, graceSeconds * 1000));
@@ -218,18 +277,33 @@ async function check(file, graceSeconds) {
 
   const after = readProcesses();
   const excluded = selfExclusionSet(after);
+  const budget = loadBudget(budgetKey);
 
-  const orphans = after.filter(p => !beforeIds.has(identity(p)) && !excluded.has(p.pid));
+  const newProcesses = after.filter(p => !beforeIds.has(identity(p)) && !excluded.has(p.pid));
+  const realOrphans = newProcesses.filter(p => !isSystemProcess(p));
+  const systemNoise = newProcesses.length - realOrphans.length;
 
-  if (orphans.length === 0) {
-    console.log(`No orphaned processes detected (compared against ${before.length} processes from snapshot, ${after.length} processes now, ${excluded.size} self-excluded).`);
-    return;
+  console.log(`Snapshot: ${before.length} processes. Now: ${after.length}. New: ${newProcesses.length} (${systemNoise} system, ${excluded.size} self-excluded).`);
+  if (budgetKey)
+    console.log(`Budget for job '${budgetKey}': ${budget.max} orphan(s) allowed${budget.reason ? ` (${budget.reason})` : ''}.`);
+
+  if (realOrphans.length > budget.max) {
+    console.log(`::error::Detected ${realOrphans.length} orphaned process(es) — over the budget of ${budget.max} for '${budgetKey || '<no budget key set>'}':`);
+    for (const p of realOrphans)
+      console.log(`  pid=${p.pid} ppid=${p.ppid} command=${p.command}`);
+    console.log(`To raise the budget, edit JOB_BUDGETS in utils/check_orphan_processes.js (and document the leak). Better: fix the leak.`);
+    process.exit(1);
   }
 
-  console.log(`::error::Detected ${orphans.length} orphaned process(es) that survived the test run:`);
-  for (const p of orphans)
-    console.log(`  pid=${p.pid} ppid=${p.ppid} command=${p.command}`);
-  process.exit(1);
+  if (realOrphans.length > 0) {
+    console.log(`Detected ${realOrphans.length} orphaned process(es) — within the budget of ${budget.max}:`);
+    for (const p of realOrphans)
+      console.log(`  pid=${p.pid} ppid=${p.ppid} command=${p.command}`);
+  }
+
+  if (budget.max > 0 && realOrphans.length < budget.max) {
+    console.log(`::notice::Orphan count (${realOrphans.length}) is below the budget (${budget.max}) for '${budgetKey}'. Lower JOB_BUDGETS in utils/check_orphan_processes.js to lock in the improvement.`);
+  }
 }
 
 async function main() {
@@ -238,6 +312,9 @@ async function main() {
     console.error('Usage:');
     console.error('  node utils/check_orphan_processes.js snapshot <file>');
     console.error('  node utils/check_orphan_processes.js check <file> [graceSeconds]');
+    console.error('');
+    console.error('Set ORPHAN_PROCESS_BUDGET_KEY to look up a per-job budget in');
+    console.error('JOB_BUDGETS at the top of this file (defaults to 0).');
     process.exit(2);
   }
   if (mode === 'snapshot') {
@@ -246,7 +323,8 @@ async function main() {
     const grace = graceArg ? +graceArg : 5;
     if (isNaN(grace) || grace < 0)
       throw new Error(`Invalid graceSeconds: ${graceArg}`);
-    await check(file, grace);
+    const budgetKey = process.env.ORPHAN_PROCESS_BUDGET_KEY || '';
+    await check(file, grace, budgetKey);
   } else {
     console.error(`Unknown mode: ${mode}`);
     process.exit(2);

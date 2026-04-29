@@ -86,10 +86,14 @@ runs:
       if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && inputs.shell == 'bash' }}
       run: node utils/check_orphan_processes.js check "${{ runner.temp }}/orphan-process-snapshot.json"
       shell: bash
+      env:
+        ORPHAN_PROCESS_BUDGET_KEY: ${{ github.job }}
     - name: Check for orphaned processes
       if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && inputs.shell != 'bash' }}
       run: node utils/check_orphan_processes.js check "${{ runner.temp }}/orphan-process-snapshot.json"
       shell: ${{ inputs.shell }}
+      env:
+        ORPHAN_PROCESS_BUDGET_KEY: ${{ github.job }}
     - name: Azure Login
       uses: azure/login@v2
       if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
