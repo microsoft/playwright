@@ -173,3 +173,36 @@ test('browser_get_config returns merged config from file, env and cli', async ({
   // From CLI arg (--isolated).
   expect(config.browser.isolated).toBe(true);
 });
+
+test('remoteEndpoint as ConnectOptions object with exposeNetwork', async ({ startClient, server, wsEndpoint }) => {
+  server.setRoute('/remote-test.html', (req, res) => {
+    res.end('<html><body>remote-expose-network</body></html>');
+  });
+
+  const { client } = await startClient({
+    config: {
+      browser: {
+        remoteEndpoint: {
+          endpoint: wsEndpoint,
+          exposeNetwork: '*',
+        },
+        isolated: true,
+      },
+    },
+  });
+
+  const result = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX + '/remote-test.html' },
+  });
+
+  expect(result.isError).toBeFalsy();
+
+  const snapshot = await client.callTool({
+    name: 'browser_snapshot',
+  });
+
+  expect(snapshot).toHaveResponse({
+    include: ['remote-expose-network'],
+  });
+});
