@@ -121,6 +121,7 @@ fix(proxy): handle SOCKS proxy authentication
 Fixes: https://github.com/microsoft/playwright/issues/39562
 EOF
 )"
+# **Never `git push` without an explicit instruction to push.**
 git push origin fix-39562
 gh pr create --repo microsoft/playwright --head username:fix-39562 \
   --title "fix(proxy): handle SOCKS proxy authentication" \

@@ -568,7 +568,10 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     win.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${JSON.stringify(blankSnapshotUrl)},${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
+  // Trace data is untrusted; escape `<` so attacker-controlled targetIds/viewport
+  // cannot terminate the surrounding <script> tag with "</script>".
+  const safe = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
+  return `\n(${applyPlaywrightAttributes.toString()})(${safe(blankSnapshotUrl)},${safe(viewport)}${targetIds.map(id => `, ${safe(String(id))}`).join('')})`;
 }
 
 
