@@ -99,6 +99,7 @@ export class Session {
         else
           resolve({ error });
       });
+      setTimeout(() => { socket.destroy(); resolve({ error: new Error('Connection timeout') }); }, 5000);
     });
   }
 
