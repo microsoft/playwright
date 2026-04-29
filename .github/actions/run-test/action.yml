@@ -57,6 +57,14 @@ runs:
       shell: bash
     - run: echo "PLAYWRIGHT_SETUP_COMPLETE=true" >> $GITHUB_ENV
       shell: bash
+    - name: Snapshot processes
+      if: inputs.shell == 'bash'
+      run: node utils/check_orphan_processes.js snapshot "${{ runner.temp }}/orphan-process-snapshot.json"
+      shell: bash
+    - name: Snapshot processes
+      if: inputs.shell != 'bash'
+      run: node utils/check_orphan_processes.js snapshot "${{ runner.temp }}/orphan-process-snapshot.json"
+      shell: ${{ inputs.shell }}
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |
@@ -74,6 +82,14 @@ runs:
       shell: ${{ inputs.shell }}
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
+    - name: Check for orphaned processes
+      if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && inputs.shell == 'bash' }}
+      run: node utils/check_orphan_processes.js check "${{ runner.temp }}/orphan-process-snapshot.json"
+      shell: bash
+    - name: Check for orphaned processes
+      if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && inputs.shell != 'bash' }}
+      run: node utils/check_orphan_processes.js check "${{ runner.temp }}/orphan-process-snapshot.json"
+      shell: ${{ inputs.shell }}
     - name: Azure Login
       uses: azure/login@v2
       if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
