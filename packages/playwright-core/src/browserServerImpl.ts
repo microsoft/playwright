@@ -18,6 +18,7 @@ import EventEmitter from 'events';
 
 import { createGuid } from '@utils/crypto';
 import { isUnderTest } from '@utils/debug';
+import { SocksProxy } from '@utils/socksProxy';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '@isomorphic/time';
 import { PlaywrightServer } from './remote/playwrightServer';
@@ -57,6 +58,15 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       timeout: options.timeout ?? DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT,
     };
 
+    // 2. Optionally start a SOCKS proxy that forwards client-allowed network requests back to the connecting client.
+    let socksProxy: SocksProxy | undefined;
+    let socksProxyPort: number | undefined;
+    if (options.allowClientNetwork !== undefined) {
+      socksProxy = new SocksProxy();
+      socksProxy.setPattern(options.allowClientNetwork);
+      socksProxyPort = await socksProxy.listen(0);
+    }
+
     let browser: Browser;
     try {
       const controller = new ProgressController(metadata);
@@ -64,15 +74,16 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
         if (options._userDataDir !== undefined) {
           const validator = validatorPrimitives.scheme['BrowserTypeLaunchPersistentContextParams'];
           launchOptions = validator({ ...launchOptions, userDataDir: options._userDataDir }, '', validatorContext);
-          const context = await playwright[this._browserName].launchPersistentContext(progress, options._userDataDir, launchOptions);
+          const context = await playwright[this._browserName].launchPersistentContext(progress, options._userDataDir, { ...launchOptions, socksProxyPort });
           return context._browser;
         } else {
           const validator = validatorPrimitives.scheme['BrowserTypeLaunchParams'];
           launchOptions = validator(launchOptions, '', validatorContext);
-          return await playwright[this._browserName].launch(progress, launchOptions, toProtocolLogger(options.logger));
+          return await playwright[this._browserName].launch(progress, { ...launchOptions, socksProxyPort }, toProtocolLogger(options.logger));
         }
       });
     } catch (e) {
+      await socksProxy?.close();
       const log = helper.formatBrowserLogs(metadata.log);
       rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
       throw e;
@@ -80,11 +91,11 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
     const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
 
-    // 2. Start the server
-    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser });
+    // 3. Start the server
+    const server = new PlaywrightServer({ mode: options._sharedBrowser ? 'launchServerShared' : 'launchServer', path, maxConnections: Infinity, preLaunchedBrowser: browser, preLaunchedSocksProxy: socksProxy });
     const wsEndpoint = await server.listen(options.port, options.host);
 
-    // 3. Return the BrowserServer interface
+    // 4. Return the BrowserServer interface
     const browserServer = new EventEmitter() as (BrowserServer & EventEmitter);
     browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
@@ -94,6 +105,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     (browserServer as any)._disconnectForTest = () => server.close();
     (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
     browser.options.browserProcess.onclose = (exitCode, signal) => {
+      socksProxy?.close();
       server.close();
       browserServer.emit('close', exitCode, signal);
     };
