@@ -24,7 +24,7 @@ import { getAsBooleanFromENV, guessClientName } from '@utils/env';
 import { libPath } from '../../package';
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
-import { acquireBrowserContext, createBrowserWithInfo } from '../mcp/browserFactory';
+import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { registry as browserRegistry } from '../../server/registry/index';
@@ -61,10 +61,10 @@ export function decorateProgram(program: Command) {
           const { browser, browserInfo, canBind, ownership } = await createBrowserWithInfo(mcpConfig, mcpClientInfo);
           if (canBind)
             await browser.bind(sessionName, { workspaceDir: clientInfo.workspaceDir });
-          const browserContext = await acquireBrowserContext(browser, mcpConfig.browser);
+          const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
           if (!browserContext)
             throw new Error('Error: unable to connect to a browser that does not have any contexts');
-          const persistent = options.persistent || options.profile || (mcpConfig.browser.mode === 'local' && mcpConfig.browser.userDataDir) ? true : undefined;
+          const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
           const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true, ownership });
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
@@ -120,7 +120,7 @@ async function ensureConfiguredBrowserInstalled() {
     const clientInfo = createClientInfo();
     const config = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, 'default', {});
     const browserName = config.browser.browserName;
-    const channel = config.browser.mode === 'local' ? config.browser.launchOptions.channel : undefined;
+    const channel = config.browser.launchOptions.channel;
     if (!channel || channel.startsWith('chromium'))
       await resolveAndInstall(channel ?? browserName);
   } else {

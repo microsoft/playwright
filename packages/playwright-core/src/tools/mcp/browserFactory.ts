@@ -28,7 +28,7 @@ import { serverRegistry } from '../../serverRegistry';
 // eslint-disable-next-line no-restricted-imports
 import { connectToBrowser } from '../../client/connect';
 
-import type { CDPBrowserConfig, ExtensionBrowserConfig, FullConfig, LocalBrowserConfig, RemoteBrowserConfig, ResolvedBrowser } from './config';
+import type { FullConfig } from './config';
 import type { ClientInfo } from '../utils/mcp/server';
 // eslint-disable-next-line no-restricted-imports
 import type { Playwright } from '../../client/playwright';
@@ -48,34 +48,31 @@ export async function createBrowser(config: FullConfig, clientInfo: ClientInfo):
 }
 
 export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo): Promise<BrowserWithInfo> {
-  if (config.browser.mode === 'local')
-    return await createLocalBrowserWithInfo(config, config.browser, clientInfo);
-  return await createAttachedBrowser(config.browser, clientInfo);
-}
+  if (config.browser.remoteEndpoint)
+    return await createRemoteBrowser(config);
 
-async function createAttachedBrowser(browserConfig: CDPBrowserConfig | RemoteBrowserConfig | ExtensionBrowserConfig, clientInfo: ClientInfo): Promise<BrowserWithInfo> {
-  switch (browserConfig.mode) {
-    case 'remote':
-      return await createRemoteBrowser(browserConfig);
-    case 'cdp': {
-      const browser = await createCDPBrowser(browserConfig);
-      return { browser, browserInfo: browserInfo(browser, browserConfig, undefined), canBind: true, ownership: 'attached' };
-    }
-    case 'extension': {
-      const browser = await createExtensionBrowser(browserConfig.channel, clientInfo.clientName);
-      return { browser, browserInfo: browserInfo(browser, browserConfig, undefined), canBind: false, ownership: 'attached' };
-    }
+  let browser: playwrightTypes.Browser;
+  let canBind = false;
+  let ownership: 'attached' | 'own' = 'own';
+  if (config.browser.cdpEndpoint) {
+    browser = await createCDPBrowser(config);
+    canBind = true;
+    ownership = 'attached';
+  } else if (config.browser.isolated) {
+    browser = await createIsolatedBrowser(config, clientInfo);
+    canBind = true;
+    ownership = 'own';
+  } else if (config.extension) {
+    const channel = config.browser.launchOptions.channel || 'chrome';
+    browser = await createExtensionBrowser(channel, clientInfo.clientName);
+    ownership = 'attached';
+  } else {
+    browser = await createPersistentBrowser(config, clientInfo);
+    canBind = true;
+    ownership = 'own';
   }
-}
 
-async function createLocalBrowserWithInfo(config: FullConfig, browserConfig: LocalBrowserConfig, clientInfo: ClientInfo): Promise<BrowserWithInfo> {
-  if (browserConfig.isolated) {
-    const browser = await createIsolatedBrowser(config, browserConfig, clientInfo);
-    return { browser, browserInfo: browserInfo(browser, browserConfig, undefined), canBind: true, ownership: 'own' };
-  }
-  const userDataDir = browserConfig.userDataDir ?? await createUserDataDir(browserConfig, clientInfo);
-  const browser = await createPersistentBrowser(config, browserConfig, userDataDir, clientInfo);
-  return { browser, browserInfo: browserInfo(browser, browserConfig, userDataDir), canBind: true, ownership: 'own' };
+  return { browser, browserInfo: browserInfo(browser, config), canBind, ownership };
 }
 
 export interface BrowserContextFactory {
@@ -83,61 +80,45 @@ export interface BrowserContextFactory {
   createContext(clientInfo: ClientInfo): Promise<playwrightTypes.BrowserContext>;
 }
 
-type BrowserLike = {
-  contexts(): playwrightTypes.BrowserContext[];
-  newContext(options?: playwrightTypes.BrowserContextOptions): Promise<playwrightTypes.BrowserContext>;
-};
-
-export async function acquireBrowserContext(browser: BrowserLike, browserConfig: ResolvedBrowser): Promise<playwrightTypes.BrowserContext> {
-  if (browserConfig.isolated)
-    return await browser.newContext(browserConfig.contextOptions);
-  return browser.contexts()[0];
+function browserInfo(browser: playwrightTypes.Browser, config: FullConfig): BrowserInfo {
+  return {
+    // eslint-disable-next-line no-restricted-syntax
+    guid: (browser as any)._guid,
+    browserName: config.browser.browserName,
+    launchOptions: config.browser.launchOptions,
+    userDataDir: config.browser.userDataDir
+  };
 }
 
-function browserInfo(browser: playwrightTypes.Browser, browserConfig: ResolvedBrowser, userDataDir: string | undefined): BrowserInfo {
-  // eslint-disable-next-line no-restricted-syntax
-  const guid = (browser as any)._guid;
-  const browserName = browserConfig.browserName;
-  switch (browserConfig.mode) {
-    case 'local':
-      return { guid, browserName, launchOptions: browserConfig.launchOptions, userDataDir };
-    case 'extension':
-      return { guid, browserName, launchOptions: { channel: browserConfig.channel }, userDataDir };
-    case 'cdp':
-    case 'remote':
-      return { guid, browserName, launchOptions: {}, userDataDir };
-  }
-}
-
-async function createIsolatedBrowser(config: FullConfig, browserConfig: LocalBrowserConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
+async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (isolated)');
-  const browserType = playwright[browserConfig.browserName];
+  const browserType = playwright[config.browser.browserName];
   const tracesDir = await computeTracesDir(config, clientInfo);
   const browser = await browserType.launch({
     tracesDir,
-    ...browserConfig.launchOptions,
+    ...config.browser.launchOptions,
     handleSIGINT: false,
     handleSIGTERM: false,
   }).catch(error => {
     if (error.message.includes('Executable doesn\'t exist'))
-      throwBrowserIsNotInstalledError(config, browserConfig);
+      throwBrowserIsNotInstalledError(config);
     throw error;
   });
   return browser;
 }
 
-async function createCDPBrowser(browserConfig: CDPBrowserConfig): Promise<playwrightTypes.Browser> {
+async function createCDPBrowser(config: FullConfig): Promise<playwrightTypes.Browser> {
   testDebug('create browser (cdp)');
-  const browser = await playwright.chromium.connectOverCDP(browserConfig.cdpEndpoint, {
-    headers: browserConfig.cdpHeaders,
-    timeout: browserConfig.cdpTimeout
+  const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
+    headers: config.browser.cdpHeaders,
+    timeout: config.browser.cdpTimeout
   });
   return browser;
 }
 
-async function createRemoteBrowser(browserConfig: RemoteBrowserConfig): Promise<BrowserWithInfo> {
+async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
   testDebug('create browser (remote)');
-  const descriptor = await serverRegistry.find(browserConfig.remoteEndpoint);
+  const descriptor = await serverRegistry.find(config.browser.remoteEndpoint!);
   if (descriptor) {
     const browser = await connectToBrowserAcrossVersions(descriptor);
     return {
@@ -153,31 +134,28 @@ async function createRemoteBrowser(browserConfig: RemoteBrowserConfig): Promise<
     };
   }
 
+  const endpoint = config.browser.remoteEndpoint!;
   const playwrightObject = playwright as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
-  const browser = await connectToBrowser(playwrightObject, { endpoint: browserConfig.remoteEndpoint });
+  const browser = await connectToBrowser(playwrightObject, { endpoint });
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
-  return {
-    browser,
-    browserInfo: browserInfo(browser, browserConfig, undefined),
-    canBind: false,
-    ownership: 'attached',
-  };
+  return { browser, browserInfo: browserInfo(browser, config), canBind: false, ownership: 'attached' };
 }
 
-async function createPersistentBrowser(config: FullConfig, browserConfig: LocalBrowserConfig, userDataDir: string, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
+async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (persistent)');
+  const userDataDir = config.browser.userDataDir ?? await createUserDataDir(config, clientInfo);
   const tracesDir = await computeTracesDir(config, clientInfo);
 
   if (await isProfileLocked5Times(userDataDir))
     throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
 
-  const browserType = playwright[browserConfig.browserName];
-  const configIgnoreDefaultArgs = browserConfig.launchOptions?.ignoreDefaultArgs;
+  const browserType = playwright[config.browser.browserName];
+  const configIgnoreDefaultArgs = config.browser.launchOptions?.ignoreDefaultArgs;
   const launchOptions: playwrightTypes.LaunchOptions & playwrightTypes.BrowserContextOptions = {
     tracesDir,
-    ...browserConfig.launchOptions,
-    ...browserConfig.contextOptions,
+    ...config.browser.launchOptions,
+    ...config.browser.contextOptions,
     handleSIGINT: false,
     handleSIGTERM: false,
     ignoreDefaultArgs: configIgnoreDefaultArgs === true
@@ -193,9 +171,9 @@ async function createPersistentBrowser(config: FullConfig, browserConfig: LocalB
     return browser;
   } catch (error: any) {
     if (error.message.includes('Executable doesn\'t exist'))
-      throwBrowserIsNotInstalledError(config, browserConfig);
+      throwBrowserIsNotInstalledError(config);
     if (error.message.includes('cannot open shared object file: No such file or directory')) {
-      const browserName = launchOptions.channel ?? browserConfig.browserName;
+      const browserName = launchOptions.channel ?? config.browser.browserName;
       throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
     }
     if (error.message.includes('ProcessSingleton') || error.message.includes('exitCode=21'))
@@ -204,9 +182,9 @@ async function createPersistentBrowser(config: FullConfig, browserConfig: LocalB
   }
 }
 
-async function createUserDataDir(browserConfig: LocalBrowserConfig, clientInfo: ClientInfo) {
+async function createUserDataDir(config: FullConfig, clientInfo: ClientInfo) {
   const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? registryDirectory;
-  const browserToken = browserConfig.launchOptions.channel ?? browserConfig.browserName;
+  const browserToken = config.browser.launchOptions?.channel ?? config.browser?.browserName;
   // Hesitant putting hundreds of files into the user's workspace, so using it for hashing instead.
   const rootPathToken = createHash(clientInfo.cwd);
   const result = path.join(dir, `mcp-${browserToken}-${rootPathToken}`);
@@ -257,8 +235,8 @@ export function isProfileLocked(userDataDir: string): boolean {
   }
 }
 
-function throwBrowserIsNotInstalledError(config: FullConfig, browserConfig: LocalBrowserConfig): never {
-  const channel = browserConfig.launchOptions.channel ?? browserConfig.browserName;
+function throwBrowserIsNotInstalledError(config: FullConfig): never {
+  const channel = config.browser.launchOptions?.channel ?? config.browser.browserName;
   if (config.skillMode)
     throw new Error(`Browser "${channel}" is not installed. Run \`playwright-cli install-browser ${channel}\` to install`);
   else

@@ -345,7 +345,7 @@ test.describe('resolveCLIConfigForCLI - isolated and userDataDir', () => {
 
   test('not isolated when --attach is set', async ({}, testInfo) => {
     const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { endpoint: 'ws://localhost:1234' });
-    expect(config.browser.mode).toBe('remote');
+    expect(config.browser.isolated).toBe(false);
   });
 
   test('not isolated when config file sets userDataDir', async ({}, testInfo) => {
@@ -455,8 +455,9 @@ test.describe('resolveCLIConfigForCLI - config file discovery', () => {
 });
 
 test.describe('resolveCLIConfigForCLI - extension', () => {
-  test('--extension switches mode to extension', async ({}, testInfo) => {
+  test('--extension disables isolated', async ({}, testInfo) => {
     const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { extension: true }) as any;
-    expect(config.browser.mode).toBe('extension');
+    expect(config.extension).toBe(true);
+    expect(config.browser.isolated).toBe(false);
   });
 });
