@@ -110,8 +110,8 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
   return { ...merged, browser };
 }
 
-export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
-  const envOverrides = configFromEnv(env);
+export async function resolveCLIConfigForMCP(cliOptions: CLIOptions): Promise<FullConfig> {
+  const envOverrides = configFromEnv();
   const cliOverrides = configFromCLIOptions(cliOptions);
   const configFile = cliOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
@@ -129,7 +129,7 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   return { ...result, browser, configFile };
 }
 
-export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
+export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any): Promise<FullConfig> {
   const config = options.config ? path.resolve(options.config) : undefined;
   try {
     const defaultConfigFile = path.resolve('.playwright', 'cli.config.json');
@@ -149,11 +149,11 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     snapshotMode: 'full',
   });
 
-  const envOverrides = configFromEnv(env);
+  const envOverrides = configFromEnv();
   const configFile = daemonOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
   const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
-  const globalConfigPath = path.join((env ?? process.env)['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
+  const globalConfigPath = path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
   const globalConfigExists = fs.existsSync(globalConfigPath);
   const globalConfigInFile = await loadConfig(globalConfigExists ? globalConfigPath : undefined);
   const globalConfigDir = globalConfigExists ? path.dirname(globalConfigPath) : process.cwd();
@@ -180,6 +180,12 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   }
 
   return { ...result, browser, configFile, skillMode: true };
+}
+
+export function resolveChannelForExtension(cliOptions: CLIOptions): string {
+  const browser = cliOptions.browser ?? envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
+  const { channel } = resolveBrowserParam(browser);
+  return channel ?? 'chrome';
 }
 
 async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {
@@ -229,10 +235,8 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
   return { ...browser, browserName };
 }
 
-function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
-  let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
-  let channel: string | undefined;
-  switch (cliOptions.browser) {
+function resolveBrowserParam(browserOption: string | undefined): { browserName: 'chromium' | 'firefox' | 'webkit', channel?: string } {
+  switch (browserOption) {
     case 'chrome':
     case 'chrome-beta':
     case 'chrome-canary':
@@ -241,21 +245,20 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     case 'msedge-beta':
     case 'msedge-canary':
     case 'msedge-dev':
-      browserName = 'chromium';
-      channel = cliOptions.browser;
-      break;
+      return { browserName: 'chromium', channel: browserOption };
     case 'chromium':
-      // Never use old headless.
-      browserName = 'chromium';
-      channel = 'chrome-for-testing';
-      break;
+      return { browserName: 'chromium', channel: 'chrome-for-testing' };
     case 'firefox':
-      browserName = 'firefox';
-      break;
+      return { browserName: 'firefox' };
     case 'webkit':
-      browserName = 'webkit';
-      break;
+      return { browserName: 'webkit' };
+    default:
+      return { browserName: 'chromium', channel: 'chrome' };
   }
+}
+
+function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
+  const { browserName, channel } = resolveBrowserParam(cliOptions.browser);
 
   // Launch options
   const launchOptions: playwrightTypes.LaunchOptions = {
@@ -349,8 +352,8 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   return { ...config, configFile: cliOptions.config };
 }
 
-export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: string } {
-  const e = env ?? process.env;
+export function configFromEnv(): Config & { configFile?: string } {
+  const e = process.env;
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
   options.allowedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);

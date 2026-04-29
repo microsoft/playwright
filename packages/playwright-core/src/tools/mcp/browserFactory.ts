@@ -25,10 +25,11 @@ import { outputDir } from '../backend/context';
 import { createExtensionBrowser } from './extensionContextFactory';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
+import { resolveChannelForExtension } from './config';
 // eslint-disable-next-line no-restricted-imports
 import { connectToBrowser } from '../../client/connect';
 
-import type { FullConfig } from './config';
+import type { CLIOptions, FullConfig } from './config';
 import type { ClientInfo } from '../utils/mcp/server';
 // eslint-disable-next-line no-restricted-imports
 import type { Playwright } from '../../client/playwright';
@@ -43,11 +44,11 @@ type BrowserWithInfo = {
 };
 
 export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
-  const { browser } = await createBrowserWithInfo(config, clientInfo);
+  const { browser } = await createBrowserWithInfo(config, clientInfo, {});
   return browser;
 }
 
-export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo): Promise<BrowserWithInfo> {
+export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions): Promise<BrowserWithInfo> {
   if (config.browser.remoteEndpoint)
     return await createRemoteBrowser(config);
 
@@ -63,7 +64,7 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
     canBind = true;
     ownership = 'own';
   } else if (config.extension) {
-    const channel = config.browser.launchOptions.channel || 'chrome';
+    const channel = resolveChannelForExtension(cliOptions);
     browser = await createExtensionBrowser(channel, clientInfo.clientName);
     ownership = 'attached';
   } else {
