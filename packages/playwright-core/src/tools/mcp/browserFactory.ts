@@ -119,7 +119,9 @@ async function createCDPBrowser(config: FullConfig): Promise<playwrightTypes.Bro
 
 async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
   testDebug('create browser (remote)');
-  const descriptor = await serverRegistry.find(config.browser.remoteEndpoint!);
+  const remoteEndpoint = config.browser.remoteEndpoint!;
+  const endpoint = typeof remoteEndpoint === 'string' ? remoteEndpoint : remoteEndpoint.endpoint;
+  const descriptor = await serverRegistry.find(endpoint);
   if (descriptor) {
     const browser = await connectToBrowserAcrossVersions(descriptor);
     return {
@@ -135,7 +137,6 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
     };
   }
 
-  const remoteEndpoint = config.browser.remoteEndpoint!;
   const connectOptions = typeof remoteEndpoint === 'string' ? { endpoint: remoteEndpoint } : remoteEndpoint;
   const playwrightObject = playwright as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
