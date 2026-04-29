@@ -83,16 +83,18 @@ export type Config = {
 
     /**
      * Remote endpoint to connect to an existing Playwright server.
+     * Can be a URL string or a ConnectOptions object for advanced configuration
+     * (e.g. `exposeNetwork`, `headers`, `slowMo`, `timeout`).
+     * @see https://playwright.dev/docs/api/class-browsertype#browser-type-connect
      */
-    remoteEndpoint?: string;
-
-    /**
-     * Expose network for remote browser connections. When set to `'<loopback>'`,
-     * the remote browser can access localhost on the client machine via SOCKS proxy tunneling.
-     * Only applies when `remoteEndpoint` is configured.
-     * @see https://playwright.dev/docs/api/class-browsertype#browser-type-connect-option-expose-network
-     */
-    exposeNetwork?: string;
+    remoteEndpoint?: string | {
+      endpoint: string;
+      browserName?: string;
+      headers?: Record<string, string>;
+      exposeNetwork?: string;
+      slowMo?: number;
+      timeout?: number;
+    };
 
     /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
