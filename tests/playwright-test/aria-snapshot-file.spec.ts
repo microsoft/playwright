@@ -430,3 +430,29 @@ test('top-level equal should overwrite deep-equal children config', async ({ run
 
   expect(result.exitCode).toBe(0);
 });
+
+test('expect(page).toMatchAriaSnapshot should respect config.expect.toMatchAriaSnapshot.children', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        expect: {
+          toMatchAriaSnapshot: {
+            children: 'equal',
+          },
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>Title</h1><p>Paragraph</p>\`);
+        await expect(page).toMatchAriaSnapshot(\`
+          - heading "Title" [level=1]
+        \`, { timeout: 1000 });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('+ - paragraph: Paragraph');
+});
