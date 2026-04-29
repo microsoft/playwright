@@ -30,17 +30,6 @@ export type ToolCapability =
   'vision' |
   'devtools';
 
-/**
- * Options for connecting to a remote Playwright server.
- * Extends `playwright.ConnectOptions` with a required `endpoint` field.
- */
-export type ConnectOptions = playwright.ConnectOptions & {
-  /**
-   * A Playwright server URL to connect to.
-   */
-  endpoint: string;
-};
-
 export type Config = {
   /**
    * The browser to use.
@@ -98,7 +87,7 @@ export type Config = {
      * (e.g. `exposeNetwork`, `headers`, `slowMo`, `timeout`).
      * @see https://playwright.dev/docs/api/class-browsertype#browser-type-connect
      */
-    remoteEndpoint?: string | ConnectOptions;
+    remoteEndpoint?: string | playwright.ConnectOptions & { endpoint: string };
 
     /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
