@@ -162,7 +162,7 @@ const annotate = defineTabTool({
     if (png)
       await response.addResult('Annotation image', Buffer.from(png, 'base64'), { prefix: 'annotations', ext: 'png', date });
     if (ariaSnapshot)
-      await response.addResult('Annotation snapshot', ariaSnapshot, { prefix: 'annotations', ext: 'yaml', date });
+      await response.addResult('Annotation snapshot', Buffer.from(ariaSnapshot, 'utf8'), { prefix: 'annotations', ext: 'yaml', date });
   },
 });
 
