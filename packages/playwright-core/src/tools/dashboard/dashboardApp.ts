@@ -68,7 +68,9 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
     connection = new DashboardConnection(() => connections.delete(connection), () => {
-      if (currentReveal.sessionName)
+      if (currentReveal.pageId)
+        connection.revealPage(currentReveal.pageId);
+      else if (currentReveal.sessionName)
         connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
       if (pendingAnnotate) {
         pendingAnnotate = false;
@@ -91,6 +93,11 @@ async function startDashboardServer(options: DashboardOptions): Promise<Dashboar
 
   const reveal = (next: DashboardOptions) => {
     currentReveal = next;
+    if (next.pageId) {
+      for (const connection of connections)
+        connection.revealPage(next.pageId);
+      return;
+    }
     if (!next.sessionName)
       return;
     for (const connection of connections)
@@ -230,21 +237,25 @@ function dashboardSocketPath() {
 type DashboardOptions = {
   sessionName: string;
   workspaceDir: string;
+  pageId?: string;
   kill?: boolean;
   annotate?: boolean;
+  json?: boolean;
   port?: number;
   host?: string;
 };
 
 function parseOpenArgs(): DashboardOptions {
-  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host'], boolean: ['annotate', 'kill'] });
+  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['annotate', 'kill', 'json'] });
   const portStr = args.port as string | undefined;
   return {
     sessionName: args.sessionName as string,
     workspaceDir: args.workspaceDir as string,
+    pageId: args.pageId as string | undefined,
     port: portStr !== undefined ? Number(portStr) : undefined,
     host: args.host as string | undefined,
     annotate: !!args.annotate,
+    json: !!args.json,
     kill: !!args.kill,
   };
 }
@@ -388,6 +399,11 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   const text = Buffer.concat(chunks).toString();
   if (!text)
     return;
+  if (options.json) {
+    // eslint-disable-next-line no-console
+    console.log(text);
+    return;
+  }
   const { png, annotations, ariaSnapshot } = JSON.parse(text) as { png: string; annotations: AnnotationData[], ariaSnapshot: string };
   for (const a of annotations) {
     // eslint-disable-next-line no-console

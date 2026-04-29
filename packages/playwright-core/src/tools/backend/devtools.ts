@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+import { spawn } from 'child_process';
+
 import * as z from 'zod';
+
+import { libPath } from '../../package';
 import { defineTabTool, defineTool } from './tool';
 import { elementSchema, optionalElementSchema } from './snapshot';
+
+import type { AnnotationData } from '@dashboard/dashboardChannel';
 
 const resume = defineTool({
   capability: 'devtools',
@@ -108,4 +114,51 @@ const hideHighlight = defineTabTool({
   },
 });
 
-export default [resume, highlight, hideHighlight];
+const annotate = defineTabTool({
+  capability: 'devtools',
+  schema: {
+    name: 'browser_annotate',
+    title: 'Annotate the current page',
+    description: 'Open the Playwright Dashboard in annotation mode for the current page and wait for the user to draw annotations. Returns the annotated screenshot, ARIA snapshot, and the list of annotations.',
+    inputSchema: z.object({}),
+    type: 'readOnly',
+  },
+
+  handle: async (tab, params, response) => {
+    // eslint-disable-next-line no-restricted-syntax -- _guid is the cross-process page identifier shared with the dashboard daemon.
+    const pageId = (tab.page as any)._guid as string;
+    const daemonScript = libPath('entry', 'dashboardApp.js');
+    const daemonArgs = [daemonScript, `--pageId=${pageId}`];
+
+    // Spawn the dashboard daemon (idempotent — the singleton socket guards against duplicates).
+    const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
+    daemon.unref();
+
+    // Spawn the annotate client in JSON mode to capture the raw payload over stdout.
+    const client = spawn(process.execPath, [...daemonArgs, '--annotate', '--json'], {
+      stdio: ['pipe', 'pipe', 'inherit'],
+    });
+    const stdoutChunks: Buffer[] = [];
+    client.stdout!.on('data', chunk => stdoutChunks.push(chunk));
+    const exitCode = await new Promise<number | null>(resolve => client.on('exit', code => resolve(code)));
+    if (exitCode !== 0) {
+      response.addError(`Annotation client exited with code ${exitCode}`);
+      return;
+    }
+    const text = Buffer.concat(stdoutChunks).toString('utf8').trim();
+    if (!text) {
+      response.addTextResult('No annotations were submitted.');
+      return;
+    }
+    const { png, ariaSnapshot, annotations } = JSON.parse(text) as { png?: string; ariaSnapshot?: string; annotations: AnnotationData[] };
+    for (const a of annotations)
+      response.addTextResult(`{ x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
+    const date = new Date();
+    if (png)
+      await response.addResult('Annotation image', Buffer.from(png, 'base64'), { prefix: 'annotations', ext: 'png', date });
+    if (ariaSnapshot)
+      await response.addResult('Annotation snapshot', Buffer.from(ariaSnapshot, 'utf8'), { prefix: 'annotations', ext: 'yaml', date });
+  },
+});
+
+export default [resume, highlight, hideHighlight, annotate];
