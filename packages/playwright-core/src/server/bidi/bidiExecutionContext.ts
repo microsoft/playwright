@@ -93,7 +93,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       serializationOptions: returnByValue ? {} : { maxObjectDepth: 0, maxDomDepth: 0 },
       awaitPromise: true,
       userActivation: true,
-    });
+    }).catch(rewriteError);
     if (response.type === 'exception')
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text);
     if (response.type === 'success') {
@@ -192,6 +192,12 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       return response.result;
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
+}
+
+function rewriteError(error: Error): never {
+  if (error.message.includes('too much recursion') || error.message.includes('stack limit exceeded'))
+    throw new Error('Cannot serialize result: object reference chain is too long.');
+  throw error;
 }
 
 function renderPreview(remoteObject: bidi.Script.RemoteValue, nested = false): string {

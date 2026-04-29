@@ -102,7 +102,6 @@ page/page-emulate-media.spec.ts › should keep reduced motion and color emulati
 page/page-emulate-media.spec.ts › should work during navigation [fail]
 page/page-evaluate-no-stall.spec.ts › should throw when no main execution context [fail]
 page/page-evaluate.spec.ts › should throw a nice error after a navigation [fail]
-page/page-evaluate.spec.ts › should throw for too deep reference chain [fail]
 page/page-evaluate.spec.ts › should throw when evaluation triggers reload [fail]
 page/page-event-console.spec.ts › should not throw when there are console messages in detached iframes [fail]
 page/page-event-console.spec.ts › should trigger correct Log [timeout]
