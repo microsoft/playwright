@@ -150,7 +150,7 @@ test('http transport browser sigint', async ({ serverEndpoint, server }) => {
     arguments: { url: server.HELLO_WORLD },
   });
 
-  await fetch(new URL('/killkillkill', url).href).catch(() => {});
+  await fetch(new URL('/killkillkill', url).href, { method: 'POST', headers: { 'x-pw-mcp-kill': '1' } }).catch(() => {});
 
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create browser (isolated)': 1,
