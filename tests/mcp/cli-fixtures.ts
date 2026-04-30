@@ -91,7 +91,15 @@ export const test = baseTest.extend<{
     for (const pid of allPids)
       killProcessGroup(pid);
 
-    const daemonDir = test.info().outputPath('daemon');
+    const testInfo = test.info();
+    const daemonLog = testInfo.outputPath('dashboard-daemon.log');
+    if (testInfo.status !== testInfo.expectedStatus) {
+      const contents = await fs.promises.readFile(daemonLog, 'utf8').catch(() => '');
+      if (contents)
+        await testInfo.attach('dashboard-daemon.log', { body: contents, contentType: 'text/plain' });
+    }
+
+    const daemonDir = testInfo.outputPath('daemon');
     for (const dir of await fs.promises.readdir(daemonDir).catch<string[]>(() => [])) {
       if (dir.startsWith('ud-')) {
         await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
@@ -120,6 +128,7 @@ function cliEnv() {
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
+    PWTEST_DASHBOARD_DAEMON_LOG: test.info().outputPath('dashboard-daemon.log'),
   };
 }
 
@@ -134,6 +143,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
       PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
       PWTEST_DASHBOARD_APP_BIND_TITLE: cliOptions.bindTitle,
+      DEBUG: [process.env.DEBUG, 'pw:browser*'].filter(Boolean).join(','),
       ...cliOptions.env,
     }),
   });

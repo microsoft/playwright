@@ -19,6 +19,7 @@
 import { execSync, spawn } from 'child_process';
 
 import crypto from 'crypto';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -211,9 +212,17 @@ export async function program(options?: { embedderVersion?: string}) {
         daemonArgs.push(`--port=${args.port}`);
       if (args.host !== undefined)
         daemonArgs.push(`--host=${args.host as string}`);
+      const detachedStdio = (): 'ignore' | ['ignore', number, number] => {
+        const logFile = process.env.PWTEST_DASHBOARD_DAEMON_LOG;
+        if (!logFile)
+          return 'ignore';
+        fs.mkdirSync(path.dirname(logFile), { recursive: true });
+        const fd = fs.openSync(logFile, 'a');
+        return ['ignore', fd, fd];
+      };
       if (args.kill) {
         daemonArgs.push(`--kill`);
-        const child = spawn(process.execPath, daemonArgs, { stdio: 'ignore' });
+        const child = spawn(process.execPath, daemonArgs, { stdio: detachedStdio() });
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
       }
@@ -227,7 +236,7 @@ export async function program(options?: { embedderVersion?: string}) {
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
-        stdio: foreground ? 'inherit' : 'ignore',
+        stdio: foreground ? 'inherit' : detachedStdio(),
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
