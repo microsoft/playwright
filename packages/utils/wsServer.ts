@@ -102,6 +102,11 @@ export class WSServer {
         socket.destroy();
         return;
       }
+      if (this._allowedHosts && !this._isAllowedOrigin(request.headers.origin)) {
+        socket.write(`HTTP/${request.httpVersion} 403 Forbidden\r\n\r\n`);
+        socket.destroy();
+        return;
+      }
       const upgradeResult = this._delegate.onUpgrade(request, socket);
       if (upgradeResult) {
         socket.write(upgradeResult.error);
@@ -134,6 +139,18 @@ export class WSServer {
       }
     }
     this._delegate.onRequest(request, response);
+  }
+
+  private _isAllowedOrigin(origin: string | undefined): boolean {
+    if (!origin)
+      return true;
+    try {
+      const hostname = new URL(origin).hostname.toLowerCase();
+      const bracketed = hostname.includes(':') ? `[${hostname}]` : hostname;
+      return this._allowedHosts!.has(hostname) || this._allowedHosts!.has(bracketed);
+    } catch {
+      return false;
+    }
   }
 
   async close() {
