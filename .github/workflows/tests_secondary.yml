@@ -144,13 +144,11 @@ jobs:
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
-  transport_linux:
-    name: "Transport"
+  driver_linux:
+    name: "Driver"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
-      matrix:
-        mode: [driver, service]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v6
@@ -158,12 +156,12 @@ jobs:
       with:
         browsers-to-install: chromium
         command: npm run ctest
-        bot-name: "${{ matrix.mode }}"
+        bot-name: "driver"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
-        PWTEST_MODE: ${{ matrix.mode }}
+        PWTEST_MODE: driver
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}

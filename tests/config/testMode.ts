@@ -16,7 +16,7 @@
 
 import { oop, client } from '../../packages/playwright-core/lib/coreBundle';
 
-export type TestModeName = 'default' | 'driver' | 'service' | 'service2' | 'wsl';
+export type TestModeName = 'default' | 'driver';
 
 const { start } = oop;
 

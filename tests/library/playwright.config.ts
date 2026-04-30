@@ -59,25 +59,6 @@ const runId = process.env.PLAYWRIGHT_SERVICE_RUN_ID || new Date().toISOString();
 let connectOptions: any;
 let webServer: Config['webServer'];
 
-if (mode === 'service') {
-  connectOptions = { wsEndpoint: 'ws://localhost:3333/' };
-  webServer = {
-    command: 'npx playwright run-server --port=3333',
-    url: 'http://localhost:3333',
-    reuseExistingServer: !process.env.CI,
-  };
-}
-if (mode === 'service2') {
-  process.env.PW_VERSION_OVERRIDE = process.env.PW_VERSION_OVERRIDE || '1.39';
-  connectOptions = {
-    wsEndpoint: `${process.env.PLAYWRIGHT_SERVICE_URL}?cap=${JSON.stringify({ os, runId })}`,
-    timeout: 3 * 60 * 1000,
-    exposeNetwork: '<loopback>',
-    headers: {
-      'x-mpt-access-key': process.env.PLAYWRIGHT_SERVICE_ACCESS_KEY!
-    }
-  };
-}
 if (channel === 'webkit-wsl') {
   connectOptions = { wsEndpoint: 'ws://localhost:3777/' };
   webServer = {
