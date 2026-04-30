@@ -985,8 +985,9 @@ const dashboardShow = declareCommand({
 
 const annotate = declareCommand({
   name: 'annotate',
-  description: 'Ask the user to annotate the current page for UI review or design feedback. Opens the dashboard in annotation mode and returns the annotated screenshot, ARIA snapshot and notes.',
+  description: 'Ask the user to annotate the current page.',
   category: 'devtools',
+  raw: true,
   args: z.object({}),
   toolName: 'browser_annotate',
   toolParams: () => ({}),
