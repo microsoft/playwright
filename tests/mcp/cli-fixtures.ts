@@ -30,7 +30,7 @@ export const test = baseTest.extend<{
   boundBrowser: Browser,
   cliEnv: Record<string, string>,
   startDashboardServer: (options?: { cwd?: string, session?: string }) => Promise<Page>,
-  connectToDashboard: () => Promise<Browser>;
+  connectToDashboard: (bindTitle: string) => Promise<Browser>;
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -60,8 +60,7 @@ export const test = baseTest.extend<{
     });
   },
   connectToDashboard: async ({ cli, playwright }, use) => {
-    await use(async () => {
-      const bindTitle = cliEnv().PWTEST_DASHBOARD_APP_BIND_TITLE;
+    await use(async (bindTitle: string) => {
       let endpoint = '';
       await expect(async () => {
         const { output } = await cli('list', '--all', '--json');
@@ -121,11 +120,10 @@ function cliEnv() {
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
-    PWTEST_DASHBOARD_APP_BIND_TITLE: `--playwright-internal--${test.info().testId}`,
   };
 }
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string>, bindTitle?: string }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
   const testInfo = test.info();
   const cli = childProcess({
     command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...args],
@@ -135,6 +133,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
       PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
       PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
+      PWTEST_DASHBOARD_APP_BIND_TITLE: cliOptions.bindTitle,
       ...cliOptions.env,
     }),
   });
