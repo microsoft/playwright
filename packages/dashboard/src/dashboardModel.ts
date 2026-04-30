@@ -295,8 +295,9 @@ export class DashboardModel {
     let frame: AnnotateFrame | undefined;
     try {
       frame = await this._client.screenshot();
-    } catch {
-      // frame stays undefined
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[dashboard] screenshot failed:', e);
     }
     if (id !== this._requestId)
       return;

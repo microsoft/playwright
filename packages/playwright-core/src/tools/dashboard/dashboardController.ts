@@ -426,15 +426,21 @@ class AttachedPage {
   }
 
   async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number, ariaSnapshot: string }> {
-    const buffer = await this._page.screenshot({ type: 'png' });
-    const vp = await this._viewportSize();
-    const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
-    return {
-      data: buffer.toString('base64'),
-      viewportWidth: vp.width,
-      viewportHeight: vp.height,
-      ariaSnapshot,
-    };
+    try {
+      const buffer = await this._page.screenshot({ type: 'png' });
+      const vp = await this._viewportSize();
+      const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
+      return {
+        data: buffer.toString('base64'),
+        viewportWidth: vp.width,
+        viewportHeight: vp.height,
+        ariaSnapshot,
+      };
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[dashboardController] screenshot failed:', e);
+      throw e;
+    }
   }
 
   private async _viewportSize(): Promise<{ width: number; height: number }> {
