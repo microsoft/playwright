@@ -15,6 +15,8 @@
  */
 
 import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 import * as z from 'zod';
 
@@ -23,6 +25,15 @@ import { defineTabTool, defineTool } from './tool';
 import { elementSchema, optionalElementSchema } from './snapshot';
 
 import type { AnnotationData } from '@dashboard/dashboardChannel';
+
+function detachedStdio(): 'ignore' | ['ignore', number, number] {
+  const logFile = process.env.PWTEST_DASHBOARD_DAEMON_LOG;
+  if (!logFile)
+    return 'ignore';
+  fs.mkdirSync(path.dirname(logFile), { recursive: true });
+  const fd = fs.openSync(logFile, 'a');
+  return ['ignore', fd, fd];
+}
 
 const resume = defineTool({
   capability: 'devtools',
@@ -131,7 +142,7 @@ const annotate = defineTabTool({
     const daemonArgs = [daemonScript, `--pageId=${pageId}`];
 
     // Spawn the dashboard daemon (idempotent — the singleton socket guards against duplicates).
-    const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
+    const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: detachedStdio() });
     daemon.unref();
 
     // Spawn the annotate client in JSON mode to capture the raw payload over stdout.

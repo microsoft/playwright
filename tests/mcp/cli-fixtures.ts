@@ -100,12 +100,12 @@ export const test = baseTest.extend<{
       const dashContents = await fs.promises.readFile(daemonLog, 'utf8').catch(() => '');
       if (dashContents)
         await testInfo.attach('dashboard-daemon.log', { body: dashContents, contentType: 'text/plain' });
-      for (const entry of await fs.promises.readdir(daemonDir).catch<string[]>(() => [])) {
-        if (!entry.endsWith('.err'))
+      for await (const entry of walk(daemonDir)) {
+        if (!entry.endsWith('.err') && !entry.endsWith('.session'))
           continue;
-        const errContents = await fs.promises.readFile(path.join(daemonDir, entry), 'utf8').catch(() => '');
-        if (errContents)
-          await testInfo.attach(entry, { body: errContents, contentType: 'text/plain' });
+        const contents = await fs.promises.readFile(entry, 'utf8').catch(() => '');
+        if (contents)
+          await testInfo.attach(path.relative(daemonDir, entry).replaceAll(path.sep, '/'), { body: contents, contentType: 'text/plain' });
       }
     }
 
@@ -220,6 +220,17 @@ async function loadSnapshot(output: string): Promise<{ snapshot?: string, inline
     return { snapshot: await fs.promises.readFile(test.info().outputPath(fileName), 'utf8').catch(() => undefined) };
   } catch (e) {
     return {};
+  }
+}
+
+async function* walk(dir: string): AsyncGenerator<string> {
+  const entries = await fs.promises.readdir(dir, { withFileTypes: true }).catch<fs.Dirent[]>(() => []);
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory())
+      yield* walk(full);
+    else
+      yield full;
   }
 }
 
