@@ -38,6 +38,7 @@ import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
+import type { ParseSelector } from 'typed-query-selector/parser';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -229,13 +230,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options, timeout: this._timeout(options) });
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
+  async $eval<R, Arg, E extends Element = Element>(selector: string, pageFunction: structs.PageFunctionOn<E, Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return parseResult(result.value);
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
+  async $$eval<R, Arg, E extends Element = Element>(selector: string, pageFunction: structs.PageFunctionOn<E[], Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return parseResult(result.value);
@@ -343,7 +344,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.hideHighlight({ selector });
   }
 
-  locator(selector: string, options?: LocatorOptions): Locator {
+  locator<S extends string>(selector: S, options?: LocatorOptions): Locator<ParseSelector<S>> {
     return new Locator(this, selector, options);
   }
 

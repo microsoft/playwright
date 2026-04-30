@@ -30,5 +30,8 @@
   "bin": {
     "playwright-core": "cli.js"
   },
-  "types": "types/types.d.ts"
+  "types": "types/types.d.ts",
+  "dependencies": {
+    "typed-query-selector": "^2.12.2"
+  }
 }

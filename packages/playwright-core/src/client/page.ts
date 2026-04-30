@@ -55,6 +55,7 @@ import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
+import type { ParseSelector } from 'typed-query-selector/parser';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -698,7 +699,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return errors.map(error => parseError(error));
   }
 
-  locator(selector: string, options?: LocatorOptions): Locator {
+  locator<S extends string>(selector: S, options?: LocatorOptions): Locator<ParseSelector<S>> {
     return this.mainFrame().locator(selector, options);
   }
 

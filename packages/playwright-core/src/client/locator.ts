@@ -28,6 +28,7 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type * as channels from '@protocol/channels';
+import type { ParseSelector } from 'typed-query-selector/parser';
 
 
 export type LocatorOptions = {
@@ -38,7 +39,7 @@ export type LocatorOptions = {
   visible?: boolean;
 };
 
-export class Locator implements api.Locator {
+export class Locator<E extends Element = Element> implements api.Locator {
   _frame: Frame;
   _selector: string;
   _apiName = 'Locator';
@@ -74,13 +75,13 @@ export class Locator implements api.Locator {
       (this as any)[this._frame._platform.inspectCustom] = () => this._inspect();
   }
 
-  private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, options: { title: string, internal?: boolean, timeout?: number }): Promise<R> {
+  private async _withElement<R>(task: (handle: ElementHandle<E>, timeout?: number) => Promise<R>, options: { title: string, internal?: boolean, timeout?: number }): Promise<R> {
     const timeout = this._frame._timeout({ timeout: options.timeout });
     const deadline = timeout ? monotonicTime() + timeout : 0;
 
     return await this._frame._wrapApiCall<R>(async () => {
       const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached', timeout });
-      const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
+      const handle = ElementHandle.fromNullable(result.element) as ElementHandle<E> | null;
       if (!handle)
         throw new Error(`Could not resolve ${this._selector} to DOM Element`);
       try {
@@ -130,11 +131,11 @@ export class Locator implements api.Locator {
     await this._frame._drop(this._selector, payload, { strict: true, ...options });
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<E, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
     return await this._withElement(h => h.evaluate(pageFunction, arg), { title: 'Evaluate', timeout: options?.timeout });
   }
 
-  async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
+  async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<E[], Arg, R>, arg?: Arg): Promise<R> {
     return await this._frame.$$eval(this._selector, pageFunction, arg);
   }
 
@@ -165,6 +166,8 @@ export class Locator implements api.Locator {
     await this._frame._hideHighlight(this._selector);
   }
 
+  locator<S extends string>(selector: S, options?: Omit<LocatorOptions, 'visible'>): Locator<ParseSelector<S>>;
+  locator(locator: Locator, options?: Omit<LocatorOptions, 'visible'>): Locator;
   locator(selectorOrLocator: string | Locator, options?: Omit<LocatorOptions, 'visible'>): Locator {
     if (isString(selectorOrLocator))
       return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator, options);
