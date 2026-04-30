@@ -67,13 +67,20 @@ test('browser_network_requests', async ({ client, server }) => {
 });
 
 test('browser_network_requests filter', async ({ client, server }) => {
-  server.setContent('/', `<script>
-    Promise.all([fetch('/api/users'), fetch('/api/orders'), fetch('/static/image.png')]);
-  </script>`, 'text/html');
+  server.setContent('/', '', 'text/html');
 
   await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: `async () => {
+        await Promise.all([fetch('/api/users'), fetch('/api/orders'), fetch('/static/image.png')]);
+      }`,
+    },
   });
 
   {
@@ -88,16 +95,21 @@ test('browser_network_requests filter', async ({ client, server }) => {
 });
 
 test('browser_network_requests numbers requests with stable indexes', async ({ client, server }) => {
-  server.setContent('/', `<script>
-    (async () => {
-      await fetch('/api/users');
-      await fetch('/api/orders');
-    })();
-  </script>`, 'text/html');
+  server.setContent('/', '', 'text/html');
 
   await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: `async () => {
+        await fetch('/api/users');
+        await fetch('/api/orders');
+      }`,
+    },
   });
 
   // Index assignment is stable across calls — the same request keeps the same number.
