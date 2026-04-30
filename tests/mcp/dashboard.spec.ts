@@ -239,7 +239,6 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
     env: {
       ...cliEnv,
       PWTEST_DASHBOARD_APP_BIND_TITLE: bindTitle,
-      PWTEST_PRINT_DASHBOARD_PID_FOR_TEST: '1',
     },
   });
 
@@ -259,13 +258,8 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
   const result = await annotatePromise;
   expect(done).toBe(true);
   const text = (result.content as any).map(c => c.text ?? '').join('\n');
-  const dashboardPid = +text.match(/### Dashboard opened with pid (\d+)\./)![1];
-  try {
-    expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: direct-mcp/);
-    expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
-  } finally {
-    try { process.kill(dashboardPid); } catch {}
-  }
+  expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: direct-mcp/);
+  expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
 });
 
 test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
