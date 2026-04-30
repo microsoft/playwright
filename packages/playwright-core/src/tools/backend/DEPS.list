@@ -1,6 +1,7 @@
 [*]
 ../../..
 ../..
+../dashboard/dashboardApp.ts
 @utils/**
 @utils/**
 @isomorphic/**

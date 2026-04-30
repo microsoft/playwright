@@ -40,11 +40,18 @@ import type { SessionProvider } from './sessionProvider';
 // cost and the dev-server code (incl. `import('vite')`) is DCE'd in release.
 declare const __PW_HMR__: boolean;
 
+type AnnotationPayload = { png?: string; ariaSnapshot: string; annotations: AnnotationData[] };
+type AnnotationWaiter = {
+  resolve: (payload: AnnotationPayload) => void;
+  ondispose: () => void;
+};
+
 type DashboardServer = {
   url: string;
   reveal: (options: DashboardOptions) => void;
   triggerAnnotate: () => void;
   registerAnnotateWaiter: (socket: net.Socket) => void;
+  awaitAnnotation: (signal?: AbortSignal) => Promise<AnnotationPayload | undefined>;
   close: () => Promise<void>;
 };
 
@@ -55,17 +62,15 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   const connections = new Set<DashboardConnection>();
   let currentReveal: DashboardOptions = options;
   let pendingAnnotate = false;
-  const waitingSockets = new Set<net.Socket>();
+  const waiters = new Set<AnnotationWaiter>();
 
   const submitAnnotation = (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => {
-    if (waitingSockets.size === 0)
+    if (waiters.size === 0)
       return;
-    const payload = JSON.stringify({ png: base64Png, ariaSnapshot, annotations });
-    for (const socket of waitingSockets) {
-      socket.write(payload);
-      socket.end();
-    }
-    waitingSockets.clear();
+    const payload: AnnotationPayload = { png: base64Png, ariaSnapshot, annotations };
+    for (const waiter of waiters)
+      waiter.resolve(payload);
+    waiters.clear();
   };
 
   httpServer.createWebSocket(() => {
@@ -124,19 +129,53 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   };
 
   const registerAnnotateWaiter = (socket: net.Socket) => {
-    waitingSockets.add(socket);
+    const waiter: AnnotationWaiter = {
+      resolve: payload => {
+        socket.write(JSON.stringify(payload));
+        socket.end();
+      },
+      ondispose: () => {
+        if (waiters.size === 0)
+          notifyAnnotateEnded();
+      },
+    };
+    waiters.add(waiter);
     const cleanup = () => {
-      if (!waitingSockets.delete(socket))
+      if (!waiters.delete(waiter))
         return;
-      if (waitingSockets.size === 0)
-        notifyAnnotateEnded();
+      waiter.ondispose();
     };
     socket.on('close', cleanup);
     socket.on('error', cleanup);
   };
 
+  const awaitAnnotation = (signal?: AbortSignal) => new Promise<AnnotationPayload | undefined>(resolve => {
+    if (signal?.aborted) {
+      resolve(undefined);
+      return;
+    }
+    let done = false;
+    const finish = (payload?: AnnotationPayload) => {
+      if (done)
+        return;
+      done = true;
+      waiters.delete(waiter);
+      signal?.removeEventListener('abort', onAbort);
+      if (waiters.size === 0)
+        notifyAnnotateEnded();
+      resolve(payload);
+    };
+    const waiter: AnnotationWaiter = {
+      resolve: payload => finish(payload),
+      ondispose: () => {},
+    };
+    const onAbort = () => finish(undefined);
+    waiters.add(waiter);
+    signal?.addEventListener('abort', onAbort);
+  });
+
   const close = () => httpServer.stop();
-  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter, close };
+  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter, awaitAnnotation, close };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
@@ -369,6 +408,35 @@ export async function openDashboardForContext(context: api.BrowserContext): Prom
   const { page } = await launchApp('dashboard', { onClose: () => { void close(); } });
   context.on('close', () => { void close(); });
   await page.goto(server.url);
+}
+
+export async function annotateInContext(context: api.BrowserContext, page: api.Page, signal?: AbortSignal): Promise<AnnotationPayload | undefined> {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is the cross-process page identifier.
+  const pageId = (page as any)._guid as string;
+  const server = await startDashboardServer(new IdentitySessionProvider(context), { pageId, annotate: true });
+
+  let closed = false;
+  const close = async () => {
+    if (closed)
+      return;
+    closed = true;
+    await server.close().catch(() => {});
+    await dashboardContext.close({ reason: 'Annotation modal closed' }).catch(() => {});
+  };
+
+  const { context: dashboardContext, page: dashboardPage } = await launchApp('dashboard', { onClose: () => { void close(); } });
+  context.on('close', () => { void close(); });
+  signal?.addEventListener('abort', () => { void close(); });
+
+  await dashboardPage.goto(server.url);
+  server.reveal({ pageId, annotate: true });
+  server.triggerAnnotate();
+
+  try {
+    return await server.awaitAnnotation(signal);
+  } finally {
+    await close();
+  }
 }
 
 async function runKillClient(): Promise<void> {

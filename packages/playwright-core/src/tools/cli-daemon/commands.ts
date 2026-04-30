@@ -989,8 +989,11 @@ const annotate = declareCommand({
   category: 'devtools',
   raw: true,
   args: z.object({}),
+  options: z.object({
+    modal: z.boolean().optional().describe('Open a dedicated dashboard window for this annotation, instead of reusing the singleton dashboard daemon. Experimental.'),
+  }),
   toolName: 'browser_annotate',
-  toolParams: () => ({}),
+  toolParams: ({ modal }) => ({ modal }),
 });
 
 const resume = declareCommand({

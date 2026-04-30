@@ -320,6 +320,68 @@ test('should cancel browser_annotate when the MCP client disconnects', async ({ 
   }
 });
 
+test('should annotate via modal browser_annotate', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {
+  const page = await boundBrowser.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { client } = await startClient({
+    args: ['--endpoint=default', '--caps=devtools'],
+    env: {
+      ...cliEnv,
+      PWTEST_DASHBOARD_APP_BIND_TITLE: bindTitle,
+    },
+  });
+
+  const annotatePromise = client.callTool({ name: 'browser_annotate', arguments: { modal: true } });
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await drawAndSubmitAnnotation(dashboard, 'modal-mcp');
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  const result = await annotatePromise;
+  const text = (result.content as any).map(c => c.text ?? '').join('\n');
+  expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: modal-mcp/);
+  expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
+});
+
+test('should cancel modal browser_annotate when the MCP request is aborted', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {
+  const page = await boundBrowser.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { client } = await startClient({
+    args: ['--endpoint=default', '--caps=devtools'],
+    env: {
+      ...cliEnv,
+      PWTEST_DASHBOARD_APP_BIND_TITLE: bindTitle,
+    },
+  });
+
+  const controller = new AbortController();
+  const annotatePromise = client.callTool({ name: 'browser_annotate', arguments: { modal: true } }, undefined, { signal: controller.signal }).catch(() => {});
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+
+    controller.abort();
+
+    // Modal window auto-closes on abort.
+    await expect.poll(() => dashboard.isClosed()).toBe(true);
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  await annotatePromise;
+});
+
 
 test('should switch screencast to -s session on annotate', async ({ connectToDashboard, cli, server }) => {
   server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');

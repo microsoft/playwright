@@ -19,6 +19,7 @@ import { spawn } from 'child_process';
 import * as z from 'zod';
 
 import { libPath } from '../../package';
+import { annotateInContext } from '../dashboard/dashboardApp';
 import { defineTabTool, defineTool } from './tool';
 import { elementSchema, optionalElementSchema } from './snapshot';
 
@@ -120,52 +121,78 @@ const annotate = defineTabTool({
     name: 'browser_annotate',
     title: 'Annotate the current page',
     description: 'Open the Playwright Dashboard in annotation mode for the current page and wait for the user to draw annotations. Returns the annotated screenshot, ARIA snapshot, and the list of annotations.',
-    inputSchema: z.object({}),
+    inputSchema: z.object({
+      modal: z.boolean().optional().describe('Open a dedicated dashboard window for this annotation (modal), instead of reusing the singleton dashboard daemon. Experimental — used to A/B-compare the two implementations.'),
+    }),
     type: 'readOnly',
   },
 
   handle: async (tab, params, response, signal) => {
-    // eslint-disable-next-line no-restricted-syntax -- _guid is the cross-process page identifier shared with the dashboard daemon.
-    const pageId = (tab.page as any)._guid as string;
-    const daemonScript = libPath('entry', 'dashboardApp.js');
-    const daemonArgs = [daemonScript, `--pageId=${pageId}`];
-
-    // Spawn the dashboard daemon (idempotent — the singleton socket guards against duplicates).
-    const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
-    daemon.unref();
-
-    // Spawn the annotate client in JSON mode to capture the raw payload over stdout.
-    const client = spawn(process.execPath, [...daemonArgs, '--annotate', '--json'], {
-      stdio: ['pipe', 'pipe', 'inherit'],
-    });
-    const onAbort = () => client.kill();
-    signal?.addEventListener('abort', onAbort);
-    const stdoutChunks: Buffer[] = [];
-    client.stdout!.on('data', chunk => stdoutChunks.push(chunk));
-    const exitCode = await new Promise<number | null>(resolve => client.on('exit', code => resolve(code)));
-    signal?.removeEventListener('abort', onAbort);
-    if (signal?.aborted) {
+    const result = params.modal
+      ? await runModalAnnotate(tab, signal)
+      : await runDaemonAnnotate(tab, signal);
+    if (result === 'cancelled') {
       response.addTextResult('Annotation cancelled.');
       return;
     }
-    if (exitCode !== 0) {
-      response.addError(`Annotation client exited with code ${exitCode}`);
+    if ('error' in result) {
+      response.addError(result.error);
       return;
     }
-    const text = Buffer.concat(stdoutChunks).toString('utf8').trim();
-    if (!text) {
+    if (!result.annotations.length && !result.png && !result.ariaSnapshot) {
       response.addTextResult('No annotations were submitted.');
       return;
     }
-    const { png, ariaSnapshot, annotations } = JSON.parse(text) as { png?: string; ariaSnapshot?: string; annotations: AnnotationData[] };
-    for (const a of annotations)
+    for (const a of result.annotations)
       response.addTextResult(`{ x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
     const date = new Date();
-    if (png)
-      await response.addResult('Annotation image', Buffer.from(png, 'base64'), { prefix: 'annotations', ext: 'png', date });
-    if (ariaSnapshot)
-      await response.addResult('Annotation snapshot', Buffer.from(ariaSnapshot, 'utf8'), { prefix: 'annotations', ext: 'yaml', date });
+    if (result.png)
+      await response.addResult('Annotation image', Buffer.from(result.png, 'base64'), { prefix: 'annotations', ext: 'png', date });
+    if (result.ariaSnapshot)
+      await response.addResult('Annotation snapshot', Buffer.from(result.ariaSnapshot, 'utf8'), { prefix: 'annotations', ext: 'yaml', date });
   },
 });
+
+type AnnotateResult =
+  | { png?: string; ariaSnapshot?: string; annotations: AnnotationData[] }
+  | { error: string }
+  | 'cancelled';
+
+async function runDaemonAnnotate(tab: import('./tab').Tab, signal: AbortSignal | undefined): Promise<AnnotateResult> {
+  // eslint-disable-next-line no-restricted-syntax -- _guid is the cross-process page identifier shared with the dashboard daemon.
+  const pageId = (tab.page as any)._guid as string;
+  const daemonScript = libPath('entry', 'dashboardApp.js');
+  const daemonArgs = [daemonScript, `--pageId=${pageId}`];
+
+  const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
+  daemon.unref();
+
+  const client = spawn(process.execPath, [...daemonArgs, '--annotate', '--json'], {
+    stdio: ['pipe', 'pipe', 'inherit'],
+  });
+  const onAbort = () => client.kill();
+  signal?.addEventListener('abort', onAbort);
+  const stdoutChunks: Buffer[] = [];
+  client.stdout!.on('data', chunk => stdoutChunks.push(chunk));
+  const exitCode = await new Promise<number | null>(resolve => client.on('exit', code => resolve(code)));
+  signal?.removeEventListener('abort', onAbort);
+  if (signal?.aborted)
+    return 'cancelled';
+  if (exitCode !== 0)
+    return { error: `Annotation client exited with code ${exitCode}` };
+  const text = Buffer.concat(stdoutChunks).toString('utf8').trim();
+  if (!text)
+    return { annotations: [] };
+  return JSON.parse(text) as AnnotateResult;
+}
+
+async function runModalAnnotate(tab: import('./tab').Tab, signal: AbortSignal | undefined): Promise<AnnotateResult> {
+  const payload = await annotateInContext(tab.page.context(), tab.page, signal);
+  if (signal?.aborted)
+    return 'cancelled';
+  if (!payload)
+    return { annotations: [] };
+  return { png: payload.png, ariaSnapshot: payload.ariaSnapshot, annotations: payload.annotations };
+}
 
 export default [resume, highlight, hideHighlight, annotate];
