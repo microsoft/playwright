@@ -1287,15 +1287,10 @@ export class Registry {
       } as any)[process.platform];
       const release = searchConfig ? product.releases.find((release: any) => release.platform === searchConfig.platform && release.architecture === searchConfig.arch && release.artifacts.length > 0) : null;
       const artifact = release ? release.artifacts.find((artifact: any) => artifact.artifactname === searchConfig.artifact) : null;
-      if (!artifact)
+      if (artifact)
+        scriptArgs.push(artifact.location /* url */);
+      else
         throw new Error(`Cannot install ${channel} on ${process.platform}`);
-      const location = String(artifact.location);
-      if (!URL.canParse(location))
-        throw new Error(`Cannot install ${channel}: invalid artifact url`);
-      const parsed = new URL(location);
-      if (parsed.protocol !== 'https:')
-        throw new Error(`Cannot install ${channel}: artifact url must be https`);
-      scriptArgs.push(location);
     }
     await this._installChromiumChannel(channel, scripts, scriptArgs);
   }

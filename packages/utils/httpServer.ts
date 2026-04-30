@@ -172,7 +172,7 @@ export class HttpServer {
       const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
       this._urlPrefixPrecise = `http://${resolvedHost}:${address.port}`;
       this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
-      this._allowedHosts = computeAllowedHosts(host, address.address, this._port);
+      this._allowedHosts = computeAllowedHosts(host, address.address);
     }
   }
 
@@ -264,7 +264,8 @@ export class HttpServer {
 
     if (this._allowedHosts) {
       const host = request.headers.host?.toLowerCase();
-      if (!host || !this._allowedHosts.has(host)) {
+      const hostname = host ? hostnameFromHostHeader(host) : undefined;
+      if (!hostname || !this._allowedHosts.has(hostname)) {
         response.statusCode = 403;
         response.end();
         return;
@@ -292,18 +293,23 @@ export class HttpServer {
   }
 }
 
-function computeAllowedHosts(requested: string | undefined, bound: string, port: number): Set<string> | null {
+export function computeAllowedHosts(requested: string | undefined, bound: string): Set<string> | null {
   const loopback = new Set(['127.0.0.1', '::1', 'localhost']);
   const isLoopback = (h: string | undefined) => h !== undefined && loopback.has(h.toLowerCase());
   if (!isLoopback(requested) && requested !== undefined)
     return null;
   if (!isLoopback(bound) && requested === undefined)
     return null;
-  return new Set([
-    `localhost:${port}`,
-    `127.0.0.1:${port}`,
-    `[::1]:${port}`,
-  ]);
+  return new Set(['localhost', '127.0.0.1', '[::1]']);
+}
+
+export function hostnameFromHostHeader(host: string): string {
+  if (host.startsWith('[')) {
+    const end = host.indexOf(']');
+    return end < 0 ? host : host.substring(0, end + 1);
+  }
+  const colon = host.indexOf(':');
+  return colon < 0 ? host : host.substring(0, colon);
 }
 
 export function serveFolder(folder: string): HttpServer {

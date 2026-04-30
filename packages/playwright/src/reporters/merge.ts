@@ -69,12 +69,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     // a relative path on posix, and vice versa.
     // Therefore, we cannot use `path.resolve()` here - it will resolve relative-looking paths
     // against `process.cwd()`, while we just want to normalize ".." and "." segments.
-    resolvePath: (rootDir, relativePath) => {
-      const resolved = pathPackage.normalize(pathPackage.join(rootDir, relativePath));
-      const escapes = pathPackage.isAbsolute(relativePath)
-          || (resolved !== rootDir && !resolved.startsWith(rootDir + pathPackage.sep));
-      return stringPool.internString(escapes ? pathPackage.join(rootDir, '<external>') : resolved);
-    },
+    resolvePath: (rootDir, relativePath) => stringPool.internString(pathPackage.normalize(pathPackage.join(rootDir, relativePath))),
     configOverrides: config.config,
   });
   printStatus(`processing test events`);

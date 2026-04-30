@@ -15,6 +15,7 @@
  */
 
 import { WebSocketServer as wsServer } from 'ws';
+import { computeAllowedHosts, hostnameFromHostHeader } from './httpServer';
 import { createHttpServer } from './network';
 import { debugLogger } from './debugLogger';
 
@@ -52,6 +53,8 @@ export class WSServer {
   private _wsServer: WebSocketServer | undefined;
   server: http.Server | undefined;
   private _delegate: WSServerDelegate;
+  // Allowed Host headers for HTTP requests. null disables the check (server bound to a public address).
+  private _allowedHosts: Set<string> | null = null;
 
   constructor(delegate: WSServerDelegate) {
     this._delegate = delegate;
@@ -64,7 +67,7 @@ export class WSServer {
     // the caller explicitly opts in by passing a host (e.g. '0.0.0.0').
     hostname ??= 'localhost';
 
-    const server = createHttpServer(this._delegate.onRequest);
+    const server = createHttpServer((request, response) => this._onRequest(request, response));
     server.on('error', error => debugLogger.log('server', String(error)));
     this.server = server;
 
@@ -75,7 +78,10 @@ export class WSServer {
           reject(new Error('Could not bind server socket'));
           return;
         }
-        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://${hostname}:${address.port}${path}`;
+        const urlHost = hostname.includes(':') && !hostname.startsWith('[') ? `[${hostname}]` : hostname;
+        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://${urlHost}:${address.port}${path}`;
+        if (typeof address !== 'string')
+          this._allowedHosts = computeAllowedHosts(hostname, address.address);
         resolve(wsEndpoint);
       }).on('error', reject);
     });
@@ -115,6 +121,19 @@ export class WSServer {
     });
 
     return wsEndpoint;
+  }
+
+  private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+    if (this._allowedHosts) {
+      const host = request.headers.host?.toLowerCase();
+      const hostname = host ? hostnameFromHostHeader(host) : undefined;
+      if (!hostname || !this._allowedHosts.has(hostname)) {
+        response.statusCode = 403;
+        response.end();
+        return;
+      }
+    }
+    this._delegate.onRequest(request, response);
   }
 
   async close() {
