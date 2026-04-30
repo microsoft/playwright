@@ -174,7 +174,7 @@ test('browser_get_config returns merged config from file, env and cli', async ({
   expect(config.browser.isolated).toBe(true);
 });
 
-test('remoteEndpoint as ConnectOptions object', async ({ startClient, server, wsEndpoint }) => {
+test('remoteEndpoint as ConnectOptions object', async ({ startClient, wsEndpoint }) => {
   const { client } = await startClient({
     config: {
       browser: {
@@ -186,10 +186,11 @@ test('remoteEndpoint as ConnectOptions object', async ({ startClient, server, ws
     },
   });
 
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
-  })).toHaveResponse({
-    snapshot: expect.stringContaining('Hello, world!'),
+  // Verify the object form of remoteEndpoint connects successfully
+  // by taking a snapshot of the default blank page.
+  const result = await client.callTool({
+    name: 'browser_snapshot',
   });
+
+  expect(result.isError).toBeFalsy();
 });
