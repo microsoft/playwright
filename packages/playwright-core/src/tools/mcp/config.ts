@@ -19,8 +19,8 @@ import path from 'path';
 import os from 'os';
 
 import dotenv from 'dotenv';
+import { isSystemDirectory } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
-import { isUnsuitableForOutput } from '../backend/context';
 import { configFromIniFile } from './configIni';
 
 import type * as playwrightTypes from '../../..';
@@ -135,7 +135,7 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
 function validateOutputDir(outputDir: string | undefined) {
   if (!outputDir)
     return;
-  if (isUnsuitableForOutput(outputDir))
+  if (isSystemDirectory(outputDir))
     throw new Error(`--output-dir cannot point to a system directory: ${path.resolve(outputDir)}.`);
 }
 

@@ -45,6 +45,24 @@ export function canAccessFile(file: string) {
   }
 }
 
+export function isWritable(file: string): boolean {
+  try {
+    fs.accessSync(file, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isSystemDirectory(dir: string): boolean {
+  const resolved = path.resolve(dir);
+  if (process.platform === 'win32') {
+    const systemRoot = path.resolve(process.env.SystemRoot || 'C:\\Windows');
+    return isPathInside(systemRoot.toLowerCase(), resolved.toLowerCase());
+  }
+  return resolved === '/';
+}
+
 export async function copyFileAndMakeWritable(from: string, to: string) {
   await fs.promises.copyFile(from, to);
   await fs.promises.chmod(to, 0o664);
