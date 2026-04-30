@@ -262,6 +262,38 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
   expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
 });
 
+test('should cancel browser_annotate when the MCP request is aborted', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {
+  const page = await boundBrowser.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { client } = await startClient({
+    args: ['--endpoint=default', '--caps=devtools'],
+    env: {
+      ...cliEnv,
+      PWTEST_DASHBOARD_APP_BIND_TITLE: bindTitle,
+    },
+  });
+
+  const controller = new AbortController();
+  const annotatePromise = client.callTool({ name: 'browser_annotate' }, undefined, { signal: controller.signal }).catch(() => {});
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+
+    controller.abort();
+
+    await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  await annotatePromise;
+});
+
+
 test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
   server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');
   server.setContent('/green', '<html><head><style>html,body{margin:0;height:100vh;background:#00ff00}</style></head><body></body></html>', 'text/html');

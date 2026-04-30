@@ -50,7 +50,7 @@ export class BrowserBackend implements ServerBackend {
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
   }
 
-  async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}): Promise<mcpServer.CallToolResult> {
+  async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
     const json = !!rawArguments._meta?.json;
     const formatError = (message: string): mcpServer.CallToolResult => ({
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
@@ -68,7 +68,7 @@ export class BrowserBackend implements ServerBackend {
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult;
     try {
-      await tool.handle(context, parsedArguments, response);
+      await tool.handle(context, parsedArguments, response, signal);
       for (const reason of context.drainPendingUnhandledRejections())
         response.addError(formatRejectionReason(reason));
       responseObject = await response.serialize();
