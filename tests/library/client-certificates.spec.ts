@@ -156,6 +156,40 @@ test.describe('fetch', () => {
     await request.dispose();
   });
 
+  test('should not leak client certificate to cross-origin redirect target', async ({ playwright, startCCServer, asset }) => {
+    const targetURL = await startCCServer();
+
+    // Standalone HTTPS server (not cert-required) that 302-redirects to the cert-required server.
+    const redirectServer = createHttpsServer({
+      key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+      cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+    }, (req, res) => {
+      res.writeHead(302, { Location: targetURL });
+      res.end();
+    });
+    await new Promise<void>(f => redirectServer.listen(0, '127.0.0.1', () => f()));
+    const redirectAddr = redirectServer.address() as net.AddressInfo;
+    // Use 'localhost' for the redirect origin so it differs from the target's '127.0.0.1' origin
+    // even though both resolve to the loopback interface and share the same trusted CA.
+    const redirectURL = `https://localhost:${redirectAddr.port}/redir`;
+
+    const request = await playwright.request.newContext({
+      ignoreHTTPSErrors: true,
+      // Cert is scoped to the redirect *origin*, not the target — it must not follow the redirect.
+      clientCertificates: [{
+        origin: new URL(redirectURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    const response = await request.get(redirectURL);
+    expect(response.url()).toBe(targetURL);
+    expect(response.status()).toBe(401);
+    expect(await response.text()).toContain('you need to provide a client certificate');
+    await request.dispose();
+    await new Promise<void>(f => redirectServer.close(() => f()));
+  });
+
   test('pass with trusted client certificates in pfx format', async ({ playwright, startCCServer, asset }) => {
     const serverURL = await startCCServer();
     const request = await playwright.request.newContext({

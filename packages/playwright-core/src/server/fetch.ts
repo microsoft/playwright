@@ -414,7 +414,6 @@ export abstract class APIRequestContext extends SdkObject {
             headers,
             agent: options.agent,
             maxRedirects: options.maxRedirects - 1,
-            ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, url.origin),
             __testHookLookup: options.__testHookLookup,
           };
           // rejectUnauthorized = undefined is treated as true in node 12.
@@ -437,6 +436,15 @@ export abstract class APIRequestContext extends SdkObject {
 
             if (headers['host'])
               headers['host'] = locationURL.host;
+
+            // Drop credentials scoped to the original origin on cross-origin redirects.
+            if (locationURL.origin !== url.origin)
+              removeHeader(headers, 'authorization');
+
+            // Client certificates are origin-scoped — pick them based on the redirect
+            // target, not the original URL.
+            Object.assign(redirectOptions,
+                getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, locationURL.origin));
 
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
@@ -767,7 +775,9 @@ function getHeader(headers: HeadersObject, name: string) {
 }
 
 function removeHeader(headers: { [name: string]: string }, name: string) {
-  delete headers[name];
+  const existing = Object.entries(headers).find(pair => pair[0].toLowerCase() === name.toLowerCase());
+  if (existing)
+    delete headers[existing[0]];
 }
 
 function setBasicAuthorizationHeader(headers: { [name: string]: string }, credentials: HTTPCredentials) {
