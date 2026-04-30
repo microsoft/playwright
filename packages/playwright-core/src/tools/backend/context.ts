@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import debug from 'debug';
@@ -384,10 +385,32 @@ export async function workspaceFile(options: ContextOptions, fileName: string, p
   return resolvedName;
 }
 
+export function isUnsuitableForOutput(dir: string): boolean {
+  const resolved = path.resolve(dir);
+  if (process.platform === 'win32') {
+    const systemRoot = path.resolve(process.env.SystemRoot || 'C:\\Windows');
+    return isPathInside(systemRoot.toLowerCase(), resolved.toLowerCase());
+  }
+  return resolved === '/';
+}
+
+function isWritableDir(dir: string): boolean {
+  try {
+    fs.accessSync(dir, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function outputDir(options: ContextOptions): string {
   if (options.config.outputDir)
     return path.resolve(options.config.outputDir);
-  return path.resolve(options.cwd, options.config.skillMode ? '.playwright-cli' : '.playwright-mcp');
+  const baseName = options.config.skillMode ? '.playwright-cli' : '.playwright-mcp';
+  const cwd = path.resolve(options.cwd);
+  if (isUnsuitableForOutput(cwd) || !isWritableDir(cwd))
+    return path.join(os.tmpdir(), baseName);
+  return path.join(cwd, baseName);
 }
 
 export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {

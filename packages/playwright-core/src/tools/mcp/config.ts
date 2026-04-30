@@ -20,6 +20,7 @@ import os from 'os';
 
 import dotenv from 'dotenv';
 import { playwright } from '../../inprocess';
+import { isUnsuitableForOutput } from '../backend/context';
 import { configFromIniFile } from './configIni';
 
 import type * as playwrightTypes from '../../..';
@@ -126,7 +127,16 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   if (browser.launchOptions.headless === undefined)
     browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;
 
+  validateOutputDir(result.outputDir);
+
   return { ...result, browser, configFile };
+}
+
+function validateOutputDir(outputDir: string | undefined) {
+  if (!outputDir)
+    return;
+  if (isUnsuitableForOutput(outputDir))
+    throw new Error(`--output-dir cannot point to a system directory: ${path.resolve(outputDir)}.`);
 }
 
 export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
@@ -171,6 +181,8 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     result.browser.launchOptions.headless = true;
 
   const browser = await validateBrowserConfig(result.browser);
+
+  validateOutputDir(result.outputDir);
 
   if (!result.extension && !browser.isolated && !browser.userDataDir && !browser.remoteEndpoint && !browser.cdpEndpoint) {
     // No custom value provided, use the daemon data dir.

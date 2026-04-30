@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { test, expect } from './fixtures';
@@ -22,7 +23,7 @@ import { test, expect } from './fixtures';
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
-const { resolveCLIConfigForCLI, resolveCLIConfigForMCP } = tools;
+const { resolveCLIConfigForCLI, resolveCLIConfigForMCP, isUnsuitableForOutput, outputDir } = tools;
 
 // Empty env to isolate tests from the host environment.
 const emptyEnv = {};
@@ -257,6 +258,67 @@ test.describe('validation', () => {
   test('isolated + userDataDir throws', async () => {
     await expect(resolveCLIConfigForMCP({ isolated: true, userDataDir: '/tmp/data' }, emptyEnv))
         .rejects.toThrow('Browser userDataDir is not supported in isolated mode.');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Output directory — fallback for unsuitable cwd, throw on explicit system dir
+// ---------------------------------------------------------------------------
+
+test.describe('outputDir', () => {
+  test.skip(process.platform === 'win32', 'POSIX-specific cases');
+
+  test('falls back to tmpdir when cwd is /', () => {
+    const result = outputDir({ config: {}, cwd: '/' });
+    expect(result).toBe(path.join(os.tmpdir(), '.playwright-mcp'));
+  });
+
+  test('uses cwd-relative .playwright-mcp for normal cwd', ({}, testInfo) => {
+    const cwd = testInfo.outputPath('workspace');
+    fs.mkdirSync(cwd, { recursive: true });
+    const result = outputDir({ config: {}, cwd });
+    expect(result).toBe(path.join(cwd, '.playwright-mcp'));
+  });
+
+  test('uses .playwright-cli when skillMode is set', ({}, testInfo) => {
+    const cwd = testInfo.outputPath('workspace');
+    fs.mkdirSync(cwd, { recursive: true });
+    const result = outputDir({ config: { skillMode: true }, cwd });
+    expect(result).toBe(path.join(cwd, '.playwright-cli'));
+  });
+
+  test('skillMode falls back to tmpdir/.playwright-cli when cwd is /', () => {
+    const result = outputDir({ config: { skillMode: true }, cwd: '/' });
+    expect(result).toBe(path.join(os.tmpdir(), '.playwright-cli'));
+  });
+
+  test('explicit outputDir wins regardless of cwd', ({}, testInfo) => {
+    const explicit = testInfo.outputPath('explicit');
+    const result = outputDir({ config: { outputDir: explicit }, cwd: '/' });
+    expect(result).toBe(explicit);
+  });
+
+  test('falls back to tmpdir when cwd is not writable', ({}, testInfo) => {
+    const cwd = testInfo.outputPath('readonly');
+    fs.mkdirSync(cwd, { recursive: true });
+    fs.chmodSync(cwd, 0o500);
+    try {
+      const result = outputDir({ config: {}, cwd });
+      expect(result).toBe(path.join(os.tmpdir(), '.playwright-mcp'));
+    } finally {
+      fs.chmodSync(cwd, 0o700);
+    }
+  });
+
+  test('isUnsuitableForOutput detects /', () => {
+    expect(isUnsuitableForOutput('/')).toBe(true);
+    expect(isUnsuitableForOutput('/tmp')).toBe(false);
+    expect(isUnsuitableForOutput(os.homedir())).toBe(false);
+  });
+
+  test('resolveCLIConfigForMCP throws when --output-dir is /', async () => {
+    await expect(resolveCLIConfigForMCP({ outputDir: '/' }, emptyEnv))
+        .rejects.toThrow(/--output-dir cannot point to a system directory/);
   });
 });
 

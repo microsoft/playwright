@@ -23,6 +23,7 @@ export { browserTools, filteredTools } from './backend/tools';
 export { start } from './utils/mcp/server';
 export { createConnection } from './mcp/index';
 export { resolveCLIConfigForCLI, resolveCLIConfigForMCP } from './mcp/config';
+export { isUnsuitableForOutput, outputDir } from './backend/context';
 export { isProfileLocked } from './mcp/browserFactory';
 export { compareSemver } from './utils/socketConnection';
 export { extractTrace, DirTraceLoaderBackend } from './trace/traceParser';
