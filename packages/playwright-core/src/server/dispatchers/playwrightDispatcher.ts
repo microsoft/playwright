@@ -52,7 +52,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     const chromium = new BrowserTypeDispatcher(scope, playwright.chromium, denyLaunch);
     const firefox = new BrowserTypeDispatcher(scope, playwright.firefox, denyLaunch);
     const webkit = new BrowserTypeDispatcher(scope, playwright.webkit, denyLaunch);
-    const android = new AndroidDispatcher(scope, playwright.android);
+    const android = new AndroidDispatcher(scope, playwright.android, denyLaunch);
     const initializer: channels.PlaywrightInitializer = {
       chromium,
       firefox,

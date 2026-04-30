@@ -27,11 +27,15 @@ import type { Progress } from '@protocol/progress';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel, RootDispatcher> implements channels.AndroidChannel {
   _type_Android = true;
-  constructor(scope: RootDispatcher, android: Android) {
+  private readonly _denyLaunch: boolean;
+  constructor(scope: RootDispatcher, android: Android, denyLaunch: boolean) {
     super(scope, android, 'Android', {});
+    this._denyLaunch = denyLaunch;
   }
 
   async devices(params: channels.AndroidDevicesParams, progress: Progress): Promise<channels.AndroidDevicesResult> {
+    if (this._denyLaunch)
+      throw new Error(`Connecting to Android devices is not allowed.`);
     const devices = await this._object.devices(progress, params);
     return {
       devices: devices.map(d => AndroidDeviceDispatcher.from(this, d))
