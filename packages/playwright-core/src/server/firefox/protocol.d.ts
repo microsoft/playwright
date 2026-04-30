@@ -520,6 +520,7 @@ export namespace Protocol {
         width: number;
         height: number;
       }|null;
+      deviceScaleFactor?: number;
     };
     export type setViewportSizeReturnValue = void;
     export type setZoomParameters = {
