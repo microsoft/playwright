@@ -486,11 +486,11 @@ unless explicitly provided.
 
 ## python-fetch-option-form
 * langs: python
-- `form` <[Object]<[string], [string]|[float]|[boolean]>>
+- `form` <[Object]<[string], [string]|[float]|[boolean]>|[FormData]>
 
 Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
 this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
-unless explicitly provided.
+unless explicitly provided. Use [FormData] to send multiple values for the same field.
 
 ## csharp-fetch-option-form
 * langs: csharp
@@ -516,7 +516,7 @@ or as file-like object containing file name, mime-type and its content.
 
 ## python-fetch-option-multipart
 * langs: python
-- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
+- `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>|[FormData]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -524,6 +524,7 @@ or as file-like object containing file name, mime-type and its content.
 Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as
 this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
 unless explicitly provided. File values can be passed as file-like object containing file name, mime-type and its content.
+Use [FormData] to send multiple files in the same field.
 
 ## csharp-fetch-option-multipart
 * langs: csharp

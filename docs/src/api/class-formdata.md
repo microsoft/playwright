@@ -1,6 +1,6 @@
 # class: FormData
 * since: v1.18
-* langs: java, csharp
+* langs: java, csharp, python
 
 The [FormData] is used create form data that is sent via [APIRequestContext].
 
@@ -12,6 +12,22 @@ FormData form = FormData.create()
     .set("lastName", "Doe")
     .set("age", 30);
 page.request().post("http://localhost/submit", RequestOptions.create().setForm(form));
+```
+
+```python async
+form = FormData()
+form.set("firstName", "John")
+form.set("lastName", "Doe")
+form.set("age", 30)
+await page.request.post("http://localhost/submit", form=form)
+```
+
+```python sync
+form = FormData()
+form.set("firstName", "John")
+form.set("lastName", "Doe")
+form.set("age", 30)
+page.request.post("http://localhost/submit", form=form)
 ```
 
 ## method: FormData.append
@@ -58,6 +74,36 @@ multipart.Append("attachment", new FilePayload()
     Buffer = File.ReadAllBytes("my-tble.csv")
 });
 await Page.APIRequest.PostAsync("https://localhost/submit", new() { Multipart = multipart });
+```
+
+```python async
+form = FormData()
+# Only name and value are set.
+form.append("firstName", "John")
+# Name and value are set, filename and Content-Type are inferred from the file path.
+form.append("attachment", Path("pic.jpg"))
+# Name, value, filename and Content-Type are set.
+form.append("attachment", {
+    "name": "table.csv",
+    "mimeType": "text/csv",
+    "buffer": Path("my-table.csv").read_bytes(),
+})
+await page.request.post("http://localhost/submit", multipart=form)
+```
+
+```python sync
+form = FormData()
+# Only name and value are set.
+form.append("firstName", "John")
+# Name and value are set, filename and Content-Type are inferred from the file path.
+form.append("attachment", Path("pic.jpg"))
+# Name, value, filename and Content-Type are set.
+form.append("attachment", {
+    "name": "table.csv",
+    "mimeType": "text/csv",
+    "buffer": Path("my-table.csv").read_bytes(),
+})
+page.request.post("http://localhost/submit", multipart=form)
 ```
 
 ### param: FormData.append.name
@@ -127,6 +173,38 @@ multipart.Set("profilePicture", new FilePayload()
 });
 multipart.Set("age", 30);
 await Page.APIRequest.PostAsync("https://localhost/submit", new() { Multipart = multipart });
+```
+
+```python async
+form = FormData()
+# Only name and value are set.
+form.set("firstName", "John")
+# Name and value are set, filename and Content-Type are inferred from the file path.
+form.set("profilePicture1", Path("john.jpg"))
+# Name, value, filename and Content-Type are set.
+form.set("profilePicture2", {
+    "name": "john.jpg",
+    "mimeType": "image/jpeg",
+    "buffer": Path("john.jpg").read_bytes(),
+})
+form.set("age", 30)
+await page.request.post("http://localhost/submit", multipart=form)
+```
+
+```python sync
+form = FormData()
+# Only name and value are set.
+form.set("firstName", "John")
+# Name and value are set, filename and Content-Type are inferred from the file path.
+form.set("profilePicture1", Path("john.jpg"))
+# Name, value, filename and Content-Type are set.
+form.set("profilePicture2", {
+    "name": "john.jpg",
+    "mimeType": "image/jpeg",
+    "buffer": Path("john.jpg").read_bytes(),
+})
+form.set("age", 30)
+page.request.post("http://localhost/submit", multipart=form)
 ```
 
 ### param: FormData.set.name
