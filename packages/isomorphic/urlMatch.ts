@@ -16,9 +16,9 @@
 
 import { isString } from './stringUtils';
 
-export function isHttpUrl(url: string): boolean {
+export function isHttpUrl(url: string, base?: string): boolean {
   try {
-    return ['http:', 'https:'].includes(new URL(url).protocol);
+    return ['http:', 'https:'].includes(new URL(url, base).protocol);
   } catch {
     return false;
   }

@@ -1,0 +1,36 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+import { isHttpUrl } from '@isomorphic/urlMatch';
+
+(async () => {
+  if (!navigator.serviceWorker)
+    throw new Error(`Service workers are not supported.\nMake sure to serve the Trace Viewer (${window.location}) via HTTPS or localhost.`);
+  navigator.serviceWorker.register('sw.bundle.js');
+  if (!navigator.serviceWorker.controller)
+    await new Promise(f => navigator.serviceWorker.oncontrollerchange = f);
+  const traceUrl = new URL(location.href).searchParams.get('trace');
+  const params = new URLSearchParams();
+  if (traceUrl)
+    params.set('trace', traceUrl);
+  await fetch('contexts?' + params.toString());
+  const r = new URLSearchParams(location.search).get('r');
+  if (!r || !isHttpUrl(r, location.href))
+    return;
+  const iframe = document.querySelector('iframe');
+  if (iframe)
+    iframe.src = r;
+})();
