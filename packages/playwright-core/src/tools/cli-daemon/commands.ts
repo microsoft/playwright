@@ -977,10 +977,18 @@ const dashboardShow = declareCommand({
   options: z.object({
     port: numberArg.optional().describe('Start as a blocking HTTP server on this port (use 0 for a random port)'),
     host: z.string().optional().describe('Host to bind to when using --port (defaults to localhost)'),
-    annotate: z.boolean().optional().describe('Switch the dashboard into annotation mode.'),
     kill: z.boolean().optional().describe('Kill the dashboard daemon.'),
   }),
   toolName: '',
+  toolParams: () => ({}),
+});
+
+const annotate = declareCommand({
+  name: 'annotate',
+  description: 'Ask the user to annotate the current page for UI review or design feedback. Opens the dashboard in annotation mode and returns the annotated screenshot, ARIA snapshot and notes.',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_annotate',
   toolParams: () => ({}),
 });
 
@@ -1198,6 +1206,7 @@ const commandsArray: AnyCommandSchema[] = [
   videoStop,
   videoChapter,
   dashboardShow,
+  annotate,
   pauseAt,
   resume,
   stepOver,
