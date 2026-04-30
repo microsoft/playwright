@@ -53,9 +53,6 @@ const reporters = () => {
   return result;
 };
 
-const os: 'linux' | 'windows' = (process.env.PLAYWRIGHT_SERVICE_OS as 'linux' | 'windows') || 'linux';
-const runId = process.env.PLAYWRIGHT_SERVICE_RUN_ID || new Date().toISOString(); // name the test run
-
 let connectOptions: any;
 let webServer: Config['webServer'];
 

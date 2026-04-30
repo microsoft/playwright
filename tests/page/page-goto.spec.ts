@@ -360,23 +360,14 @@ it('should fail when main resources failed to load', async ({ page, browserName,
   it.skip(channel === 'webkit-wsl', 'Networking mode mirrored ends up stalling connections rather than terminating them, see https://github.com/microsoft/WSL/issues/10855.');
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-  if (browserName === 'chromium') {
-    if (mode === 'service2')
-      expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED');
-    else
-      expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
-  } else if (browserName === 'webkit' && isWindows && mode === 'service2') {
-    expect(error.message).toContain(`proxy handshake error`);
-  } else if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') {
+  if (browserName === 'chromium')
+    expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
+  else if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
     expect(error.message).toContain(`Could not connect to server`);
-  } else if (browserName === 'webkit') {
-    if (mode === 'service2')
-      expect(error.message).toContain('Connection refused');
-    else
-      expect(error.message).toContain('Could not connect');
-  } else {
+  else if (browserName === 'webkit')
+    expect(error.message).toContain('Could not connect');
+  else
     expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
-  }
 });
 
 it('should fail when exceeding maximum navigation timeout', async ({ page, server, playwright }) => {

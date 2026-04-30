@@ -24,8 +24,6 @@ import { suppressCertificateWarning } from '../../config/utils';
 const { nullProgress } = coreServer;
 type Frame = coreServer.Frame;
 
-test.skip(({ mode }) => mode === 'service2');
-
 test('should connect to an existing cdp session', async ({ browserType, mode }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({

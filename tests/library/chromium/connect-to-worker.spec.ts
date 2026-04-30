@@ -16,8 +16,6 @@
 
 import { playwrightTest as test, expect } from '../../config/browserTest';
 
-test.skip(({ mode }) => mode === 'service2');
-
 test('should connect, evaluate, receive console and disconnect', async ({ browserType, childProcess }) => {
   const child = childProcess({ command: [process.execPath, '--inspect-brk=0', '-e', 'console.log("hello from node"); setTimeout(() => {}, 1e9)'] });
   await child.waitForOutput('Debugger listening on ws://');
