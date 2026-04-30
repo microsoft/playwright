@@ -293,6 +293,34 @@ test('should cancel browser_annotate when the MCP request is aborted', async ({ 
   await annotatePromise;
 });
 
+test('should cancel browser_annotate when the MCP client disconnects', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {
+  const page = await boundBrowser.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { client } = await startClient({
+    args: ['--endpoint=default', '--caps=devtools'],
+    env: {
+      ...cliEnv,
+      PWTEST_DASHBOARD_APP_BIND_TITLE: bindTitle,
+    },
+  });
+
+  void client.callTool({ name: 'browser_annotate' }).catch(() => {});
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+
+    await client.close();
+
+    await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
+  } finally {
+    await browser.close().catch(() => {});
+  }
+});
+
 
 test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
   server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');

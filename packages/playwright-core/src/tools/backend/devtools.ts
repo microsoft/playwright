@@ -134,11 +134,6 @@ const annotate = defineTabTool({
     const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
     daemon.unref();
 
-    if (signal?.aborted) {
-      response.addTextResult('Annotation cancelled.');
-      return;
-    }
-
     // Spawn the annotate client in JSON mode to capture the raw payload over stdout.
     const client = spawn(process.execPath, [...daemonArgs, '--annotate', '--json'], {
       stdio: ['pipe', 'pipe', 'inherit'],
@@ -147,12 +142,8 @@ const annotate = defineTabTool({
     signal?.addEventListener('abort', onAbort);
     const stdoutChunks: Buffer[] = [];
     client.stdout!.on('data', chunk => stdoutChunks.push(chunk));
-    let exitCode: number | null;
-    try {
-      exitCode = await new Promise<number | null>(resolve => client.on('exit', code => resolve(code)));
-    } finally {
-      signal?.removeEventListener('abort', onAbort);
-    }
+    const exitCode = await new Promise<number | null>(resolve => client.on('exit', code => resolve(code)));
+    signal?.removeEventListener('abort', onAbort);
     if (signal?.aborted) {
       response.addTextResult('Annotation cancelled.');
       return;
