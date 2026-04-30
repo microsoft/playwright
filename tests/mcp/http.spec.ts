@@ -29,6 +29,7 @@ import { ListRootsRequestSchema } from 'playwright-core/lib/utilsBundle';
 const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
     let cp: ChildProcess | undefined;
+    let stderr = '';
     const userDataDir = testInfo.outputPath('user-data-dir');
     await use(async (options?: { args?: string[], noPort?: boolean }) => {
       if (cp)
@@ -43,13 +44,12 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
       ], {
         stdio: 'pipe',
         env: inheritAndCleanEnv({
-          DEBUG: 'pw:mcp:test',
+          DEBUG: ['pw:mcp:test', 'pw:browser*'].join(','),
           DEBUG_COLORS: '0',
           DEBUG_HIDE_DATE: '1',
         }),
         cwd: testInfo.outputPath(),
       });
-      let stderr = '';
       const url = await new Promise<string>(resolve => cp!.stderr?.on('data', data => {
         stderr += data.toString();
         const match = stderr.match(/Listening on (http:\/\/.*)/);
@@ -60,6 +60,8 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
       return { url: new URL(url), stderr: () => stderr };
     });
     cp?.kill('SIGTERM');
+    if (stderr && testInfo.status !== testInfo.expectedStatus)
+      await testInfo.attach('mcp-server.stderr', { body: stderr, contentType: 'text/plain' });
   },
 });
 

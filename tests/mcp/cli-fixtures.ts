@@ -92,14 +92,23 @@ export const test = baseTest.extend<{
       killProcessGroup(pid);
 
     const testInfo = test.info();
-    const daemonLog = testInfo.outputPath('dashboard-daemon.log');
-    if (testInfo.status !== testInfo.expectedStatus) {
-      const contents = await fs.promises.readFile(daemonLog, 'utf8').catch(() => '');
-      if (contents)
-        await testInfo.attach('dashboard-daemon.log', { body: contents, contentType: 'text/plain' });
+    const failed = testInfo.status !== testInfo.expectedStatus;
+    const daemonDir = testInfo.outputPath('daemon');
+
+    if (failed) {
+      const daemonLog = testInfo.outputPath('dashboard-daemon.log');
+      const dashContents = await fs.promises.readFile(daemonLog, 'utf8').catch(() => '');
+      if (dashContents)
+        await testInfo.attach('dashboard-daemon.log', { body: dashContents, contentType: 'text/plain' });
+      for (const entry of await fs.promises.readdir(daemonDir).catch<string[]>(() => [])) {
+        if (!entry.endsWith('.err'))
+          continue;
+        const errContents = await fs.promises.readFile(path.join(daemonDir, entry), 'utf8').catch(() => '');
+        if (errContents)
+          await testInfo.attach(entry, { body: errContents, contentType: 'text/plain' });
+      }
     }
 
-    const daemonDir = testInfo.outputPath('daemon');
     for (const dir of await fs.promises.readdir(daemonDir).catch<string[]>(() => [])) {
       if (dir.startsWith('ud-')) {
         await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
