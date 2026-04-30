@@ -83,7 +83,15 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     }, submitAnnotation);
     connections.add(connection);
     return connection;
-  }, 'ws');
+  });
+
+  const wsGuid = httpServer.wsGuid()!;
+  httpServer.routePath('/', (_, response) => {
+    response.statusCode = 302;
+    response.setHeader('Location', `/index.html?ws=${wsGuid}`);
+    response.end();
+    return true;
+  });
 
   // HMR: watch builds serve the dashboard through an embedded Vite dev server
   // so edits to packages/dashboard/src/* reload live. Release builds always
