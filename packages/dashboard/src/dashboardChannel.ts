@@ -47,9 +47,7 @@ export interface DashboardChannel {
   closeTab(params: { browser: string; context: string; page: string }): Promise<void>;
   newTab(params: { browser: string; context: string }): Promise<void>;
   closeSession(params: { browser: string }): Promise<void>;
-  deleteSessionData(params: { browser: string }): Promise<void>;
   setVisible(params: { visible: boolean }): Promise<void>;
-  reveal(params: { path: string }): Promise<void>;
 
   navigate(params: { url: string }): Promise<void>;
   back(): Promise<void>;

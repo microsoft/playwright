@@ -21,98 +21,25 @@ import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { Disposable } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
-import { connectToBrowserAcrossVersions } from '../utils/connect';
-import { serverRegistry } from '../../serverRegistry';
 import { createClientInfo } from '../cli-client/registry';
+
+import { SessionProviderEvent } from './sessionProvider';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
 import type { AnnotationData, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor } from '../../serverRegistry';
-
-type BrowserTrackerCallbacks = {
-  onTabsChanged: () => void;
-  onContextClosed: (context: api.BrowserContext) => void;
-};
-
-class BrowserTracker {
-  readonly descriptor: BrowserDescriptor;
-  readonly browser: api.Browser;
-  private _callbacks: BrowserTrackerCallbacks;
-  private _contextListeners = new Map<api.BrowserContext, Disposable[]>();
-  private _browserListeners: Disposable[] = [];
-
-  static async create(descriptor: BrowserDescriptor, callbacks: BrowserTrackerCallbacks): Promise<BrowserTracker | undefined> {
-    try {
-      const browser = await connectToBrowserAcrossVersions(descriptor);
-      const slot = new BrowserTracker(descriptor, browser, callbacks);
-      for (const context of browser.contexts())
-        slot._wireContext(context);
-      slot._browserListeners.push(eventsHelper.addEventListener(browser, 'context', (context: api.BrowserContext) => {
-        slot._wireContext(context);
-      }));
-      return slot;
-    } catch {
-      return undefined;
-    }
-  }
-
-  private constructor(descriptor: BrowserDescriptor, browser: api.Browser, callbacks: BrowserTrackerCallbacks) {
-    this.descriptor = descriptor;
-    this.browser = browser;
-    this._callbacks = callbacks;
-  }
-
-  contexts(): api.BrowserContext[] {
-    return this.browser.contexts();
-  }
-
-  dispose() {
-    this._browserListeners.forEach(d => d.dispose());
-    this._browserListeners = [];
-    for (const listeners of this._contextListeners.values())
-      listeners.forEach(d => d.dispose());
-    this._contextListeners.clear();
-  }
-
-  private _wireContext(context: api.BrowserContext) {
-    if (this._contextListeners.has(context))
-      return;
-    const onTabsChanged = () => this._callbacks.onTabsChanged();
-    const listeners: Disposable[] = [
-      eventsHelper.addEventListener(context, 'page', onTabsChanged),
-      eventsHelper.addEventListener(context, 'pageload', onTabsChanged),
-      eventsHelper.addEventListener(context, 'pageclose', onTabsChanged),
-      eventsHelper.addEventListener(context, 'framenavigated', (frame: api.Frame) => {
-        if (frame === frame.page().mainFrame())
-          this._callbacks.onTabsChanged();
-      }),
-      eventsHelper.addEventListener(context, 'close', () => {
-        const ls = this._contextListeners.get(context);
-        if (ls) {
-          ls.forEach(d => d.dispose());
-          this._contextListeners.delete(context);
-        }
-        this._callbacks.onContextClosed(context);
-        this._callbacks.onTabsChanged();
-      }),
-    ];
-    this._contextListeners.set(context, listeners);
-    this._callbacks.onTabsChanged();
-  }
-}
+import type { SessionProvider } from './sessionProvider';
 
 export class DashboardConnection implements Transport {
   sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
-  private _browsers = new Map<string, BrowserTracker>();
+  private _provider: SessionProvider;
   private _attachedPage: AttachedPage | undefined;
   private _onclose: () => void;
   private _onconnected?: () => void;
   private _onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void;
-  private _serverRegistryDispose?: () => void;
-  private _pushSessionsScheduled = false;
   private _pushTabsScheduled = false;
   private _visible = true;
   private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string } | undefined;
@@ -121,7 +48,8 @@ export class DashboardConnection implements Transport {
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void) {
+  constructor(provider: SessionProvider, onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void) {
+    this._provider = provider;
     this._onclose = onclose;
     this._onconnected = onconnected;
     this._onAnnotationSubmit = onAnnotationSubmit;
@@ -129,20 +57,24 @@ export class DashboardConnection implements Transport {
   }
 
   onconnect() {
-    this._serverRegistryDispose = serverRegistry.watch();
-    serverRegistry.on('added', this._pushSessions);
-    serverRegistry.on('removed', this._pushSessions);
-    serverRegistry.on('changed', this._pushSessions);
-    this._pushSessions();
+    this._provider.on(SessionProviderEvent.SessionsChanged, () => {
+      this._pushSessions();
+      void this._tryRevealPending();
+    });
+    this._provider.on(SessionProviderEvent.TabsChanged, () => this._pushTabs());
+    this._provider.on(SessionProviderEvent.ContextClosed, context => {
+      if (this._attachedPage?.page.context() === context) {
+        this._attachedPage.dispose();
+        this._attachedPage = undefined;
+      }
+    });
+    this._provider.on(SessionProviderEvent.AttachRequested, page => { void this._switchAttachedTo(page); });
+    this._provider.start();
     this._onconnected?.();
   }
 
   onclose() {
-    serverRegistry.off('added', this._pushSessions);
-    serverRegistry.off('removed', this._pushSessions);
-    serverRegistry.off('changed', this._pushSessions);
-    this._serverRegistryDispose?.();
-    this._serverRegistryDispose = undefined;
+    this._provider.dispose();
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
     for (const stream of this._streams.values()) {
@@ -152,9 +84,6 @@ export class DashboardConnection implements Transport {
           .catch(() => {});
     }
     this._streams.clear();
-    for (const tracker of this._browsers.values())
-      tracker.dispose();
-    this._browsers.clear();
     this._onclose();
   }
 
@@ -173,14 +102,14 @@ export class DashboardConnection implements Transport {
   }
 
   async selectTab(params: { browser: string; context: string; page: string }) {
-    const page = this._findPage(params);
+    const page = this._provider.findPage(params);
     if (page)
       await this._switchAttachedTo(page);
     this._pushTabs();
   }
 
   async newTab(params: { browser: string; context: string }) {
-    const context = this._findContext(params);
+    const context = this._provider.findContext(params);
     if (!context)
       return;
     const page = await context.newPage();
@@ -189,23 +118,12 @@ export class DashboardConnection implements Transport {
   }
 
   async closeTab(params: { browser: string; context: string; page: string }) {
-    const page = this._findPage(params);
+    const page = this._provider.findPage(params);
     await page?.close({ reason: 'Closed in Dashboard' });
   }
 
   async closeSession(params: { browser: string }) {
-    const descriptor = serverRegistry.readDescriptor(params.browser);
-    const browser = await connectToBrowserAcrossVersions(descriptor);
-    try {
-      await Promise.all(browser.contexts().map(context => context.close()));
-      await browser.close();
-    } catch {
-      // best-effort
-    }
-  }
-
-  async deleteSessionData(params: { browser: string }) {
-    await serverRegistry.deleteUserData(params.browser);
+    await this._provider.closeSession(params.browser);
   }
 
   async setVisible(params: { visible: boolean }) {
@@ -229,14 +147,14 @@ export class DashboardConnection implements Transport {
     const pending = this._pendingReveal;
     if (!pending)
       return;
-    const allPages = [...this._browsers.values()].flatMap(s => s.browser.contexts().flatMap(c => c.pages().map(p => ({ slot: s, page: p }))));
+    const allPages = this._provider.contextEntries().flatMap(e => e.context.pages().map(page => ({ entry: e, page })));
     let page: api.Page | undefined;
     if (pending.pageId !== undefined) {
-      page = allPages.find(({ page }) => pageId(page) === pending.pageId)?.page;
+      page = allPages.find(({ page: p }) => pageId(p) === pending.pageId)?.page;
     } else if (pending.sessionName !== undefined) {
-      page = allPages.find(({ slot }) =>
-        slot.descriptor.title === pending.sessionName
-          && (pending.workspaceDir === undefined || slot.descriptor.workspaceDir === pending.workspaceDir))?.page;
+      page = allPages.find(({ entry }) =>
+        entry.descriptor.title === pending.sessionName
+          && (pending.workspaceDir === undefined || entry.descriptor.workspaceDir === pending.workspaceDir))?.page;
     }
     if (!page)
       return;
@@ -308,6 +226,14 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('cancelAnnotate', {});
   }
 
+  artifactsDirFor(context: api.BrowserContext): string {
+    for (const entry of this._provider.contextEntries()) {
+      if (entry.context === context)
+        return entry.descriptor.browser.launchOptions.artifactsDir ?? this._recordingDir;
+    }
+    return this._recordingDir;
+  }
+
   _pushTabs() {
     if (this._pushTabsScheduled)
       return;
@@ -323,22 +249,31 @@ export class DashboardConnection implements Transport {
     });
   }
 
+  private _pushSessions() {
+    void (async () => {
+      try {
+        const sessions = await this._provider.sessions();
+        this.emitSessions(sessions);
+      } catch {
+        // best-effort
+      }
+    })();
+  }
+
   private async _aggregateTabs(): Promise<Tab[]> {
     const attachedPage = this._attachedPage?.page;
     const tasks: Promise<Tab>[] = [];
-    for (const { browser } of this._browsers.values()) {
-      for (const context of browser.contexts()) {
-        for (const page of context.pages()) {
-          tasks.push((async () => ({
-            browser: browserId(browser),
-            context: contextId(context),
-            page: pageId(page),
-            title: await page.title().catch(() => ''),
-            url: page.url(),
-            selected: page === attachedPage,
-            faviconUrl: await faviconUrl(page),
-          }))());
-        }
+    for (const { browser, context } of this._provider.contextEntries()) {
+      for (const page of context.pages()) {
+        tasks.push((async () => ({
+          browser: browserId(browser),
+          context: contextId(context),
+          page: pageId(page),
+          title: await page.title().catch(() => ''),
+          url: page.url(),
+          selected: page === attachedPage,
+          faviconUrl: await faviconUrl(page),
+        }))());
       }
     }
     return await Promise.all(tasks);
@@ -348,13 +283,7 @@ export class DashboardConnection implements Transport {
     if (this._attachedPage?.page === page)
       return;
     this._attachedPage?.dispose();
-    const browser = page.context().browser();
-    const slot = browser ? [...this._browsers.values()].find(s => s.browser === browser) : undefined;
-    if (!slot) {
-      this._attachedPage = undefined;
-      return;
-    }
-    const attached = new AttachedPage(this, slot, page);
+    const attached = new AttachedPage(this, page);
     this._attachedPage = attached;
     try {
       await attached.init();
@@ -378,101 +307,22 @@ export class DashboardConnection implements Transport {
       void this._switchAttachedTo(next);
     this._pushTabs();
   }
-
-  private _pushSessions = () => {
-    if (this._pushSessionsScheduled)
-      return;
-    this._pushSessionsScheduled = true;
-    queueMicrotask(async () => {
-      this._pushSessionsScheduled = false;
-      try {
-        const byWs = await serverRegistry.list();
-        const sessions: BrowserDescriptor[] = [];
-        for (const list of byWs.values()) {
-          for (const status of list) {
-            if (status.title.startsWith('--playwright-internal'))
-              continue;
-            sessions.push(status);
-          }
-        }
-        await this._reconcile(sessions);
-        await this._tryRevealPending();
-        this.emitSessions(sessions);
-        this._pushTabs();
-      } catch {
-        // best-effort
-      }
-    });
-  };
-
-  private async _reconcile(sessions: BrowserDescriptor[]) {
-    const connectable = new Map<string, BrowserDescriptor>();
-    for (const status of sessions)
-      connectable.set(status.browser.guid, status);
-
-    for (const [guid, slot] of this._browsers) {
-      if (connectable.has(guid))
-        continue;
-      if (this._attachedPage && this._attachedPage.page.context().browser() === slot.browser) {
-        this._attachedPage.dispose();
-        this._attachedPage = undefined;
-      }
-      slot.dispose();
-      this._browsers.delete(guid);
-    }
-
-    for (const [guid, status] of connectable) {
-      if (this._browsers.has(guid))
-        continue;
-      const slot = await BrowserTracker.create(status, {
-        onTabsChanged: () => this._pushTabs(),
-        onContextClosed: context => {
-          if (this._attachedPage?.page.context() === context) {
-            this._attachedPage.dispose();
-            this._attachedPage = undefined;
-          }
-        },
-      });
-      if (!slot)
-        continue;
-      if (this._browsers.has(guid)) {
-        slot.dispose();
-        continue;
-      }
-      this._browsers.set(guid, slot);
-    }
-  }
-
-  private _findContext(params: { browser: string; context: string }): api.BrowserContext | undefined {
-    const slot = this._browsers.get(params.browser);
-    if (!slot)
-      return undefined;
-    return slot.contexts().find(c => contextId(c) === params.context);
-  }
-
-  private _findPage(params: { browser: string; context: string; page: string }): api.Page | undefined {
-    const context = this._findContext(params);
-    return context?.pages().find(p => pageId(p) === params.page);
-  }
 }
 
 class AttachedPage {
   private _owner: DashboardConnection;
-  private _slot: BrowserTracker;
   private _page: api.Page;
   private _listeners: Disposable[] = [];
   private _screencastRunning = false;
   private _recordingPath: string | null = null;
   private _disposed = false;
 
-  constructor(owner: DashboardConnection, slot: BrowserTracker, page: api.Page) {
+  constructor(owner: DashboardConnection, page: api.Page) {
     this._owner = owner;
-    this._slot = slot;
     this._page = page;
   }
 
   get page(): api.Page { return this._page; }
-  private get _descriptor(): BrowserDescriptor { return this._slot.descriptor; }
 
   async init() {
     this._listeners.push(
@@ -556,7 +406,7 @@ class AttachedPage {
   }
 
   async startRecording() {
-    const artifactsDir = this._descriptor.browser.launchOptions.artifactsDir ?? this._owner._recordingDir;
+    const artifactsDir = this._owner.artifactsDirFor(this._page.context());
     this._recordingPath = path.join(artifactsDir, `recording-${Date.now()}.webm`);
     if (this._screencastRunning)
       await this._restartScreencast(this._page);

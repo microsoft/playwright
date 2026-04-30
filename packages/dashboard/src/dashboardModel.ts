@@ -92,10 +92,6 @@ export class DashboardModel {
     void this._client.closeSession({ browser: descriptor.browser.guid });
   }
 
-  deleteSessionData(descriptor: BrowserDescriptor) {
-    void this._client.deleteSessionData({ browser: descriptor.browser.guid });
-  }
-
   setVisible(visible: boolean) {
     void this._client.setVisible({ visible });
   }
