@@ -198,3 +198,29 @@ test('remoteEndpoint as ConnectOptions object', async ({ startClient, server, ws
     snapshot: expect.stringContaining('Hello, world!'),
   });
 });
+
+test('remoteEndpoint as ConnectOptions object with exposeNetwork', async ({ startClient, server, wsEndpoint }) => {
+  server.setContent('/', `
+    <title>Title</title>
+    <body>exposed-network-content</body>
+  `, 'text/html');
+
+  const { client } = await startClient({
+    config: {
+      browser: {
+        remoteEndpoint: {
+          endpoint: wsEndpoint,
+          exposeNetwork: '*',
+        },
+        isolated: true,
+      },
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining('exposed-network-content'),
+  });
+});
