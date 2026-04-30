@@ -20,6 +20,7 @@ import path from 'path';
 import { TraceModel, buildActionTree } from '@isomorphic/trace/traceModel';
 import { TraceLoader } from '@isomorphic/trace/traceLoader';
 import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { resolveWithinRoot } from '@utils/fileUtils';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
 import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
@@ -113,8 +114,11 @@ export async function saveOutputFile(fileName: string, content: string | Buffer,
   if (explicitOutput) {
     outFile = explicitOutput;
   } else {
-    await fs.promises.mkdir(cliOutputDir, { recursive: true });
-    outFile = path.join(cliOutputDir, fileName);
+    const resolved = resolveWithinRoot(cliOutputDir, fileName);
+    if (!resolved)
+      throw new Error(`Attachment name '${fileName}' escapes output directory`);
+    await fs.promises.mkdir(path.dirname(resolved), { recursive: true });
+    outFile = resolved;
   }
   await fs.promises.writeFile(outFile, content);
   return outFile;
