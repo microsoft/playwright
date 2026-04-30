@@ -113,13 +113,17 @@ test('browser_network_requests numbers requests with stable indexes', async ({ c
   });
 
   // Index assignment is stable across calls — the same request keeps the same number.
-  const response = parseResponse(await client.callTool({
-    name: 'browser_network_requests',
-    arguments: { static: true },
-  }));
-  const lines = response.result.split('\n').filter(Boolean);
-  expect(lines[0]).toMatch(/^1\. \[GET\] /);
-  expect(lines).toHaveLength(3);
+  // browser_navigate resolves on `load`, which can fire before the fire-and-forget
+  // fetches in the inline script complete; retry until all 3 requests are visible.
+  await expect(async () => {
+    const response = parseResponse(await client.callTool({
+      name: 'browser_network_requests',
+      arguments: { static: true },
+    }));
+    const lines = response.result.split('\n').filter(Boolean);
+    expect(lines[0]).toMatch(/^1\. \[GET\] /);
+    expect(lines).toHaveLength(3);
+  }).toPass();
 });
 
 test('browser_network_request shows full request and response details', async ({ client, server }) => {
