@@ -78,8 +78,6 @@ export async function startCliDaemonServer(
 
   const server = net.createServer(socket => {
     const connection = new SocketConnection(socket);
-    const abortController = new AbortController();
-    connection.onclose = () => abortController.abort();
     connection.onmessage = async message => {
       const { id, method, params } = message;
       try {
@@ -93,7 +91,7 @@ export async function startCliDaemonServer(
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
           toolParams._meta = { cwd: params.cwd, raw: params.raw || params.json, json: !!params.json };
-          const response = await backend.callTool(toolName, toolParams, abortController.signal);
+          const response = await backend.callTool(toolName, toolParams);
           await connection.send({ id, result: formatResult(response) });
         } else {
           throw new Error(`Unknown method: ${method}`);

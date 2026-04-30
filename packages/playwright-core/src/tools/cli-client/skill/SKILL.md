@@ -163,8 +163,8 @@ playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop
 
-# launch the dashboard for UI review / design feedback — user annotates the page, you receive the annotated screenshot, snapshot, and notes
-playwright-cli annotate
+# launch the dashboard with annotation prompt to ask the user for input
+playwright-cli show --annotate
 
 # generate a Playwright locator for an element from its ref or selector
 playwright-cli generate-locator e5 --raw
@@ -367,11 +367,11 @@ playwright-cli close
 
 ## Example: Interactive session
 
-Ask the user for UI review or design feedback. The user draws boxes on the live page and types comments; you receive the annotated screenshot, the snapshot of the marked region, and the user's notes. Use this whenever the user asks for "UI review", "design feedback", or to "ask the user what they think / want / mean":
+Ask the user to annotate the UI. User can provide contextual tasks or ask contextual questions using annotations:
 
 ```bash
 playwright-cli open https://example.com
-playwright-cli annotate
+playwright-cli show --annotate
 ```
 
 ## Specific tasks

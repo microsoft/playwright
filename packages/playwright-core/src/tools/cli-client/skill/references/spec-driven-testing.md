@@ -88,7 +88,7 @@ playwright-cli resume                   # resume so that seed test runs fully
 playwright-cli snapshot                 # inventory of interactive elements
 playwright-cli click e5                 # follow a flow
 playwright-cli eval "location.href"     # read URL / state
-playwright-cli annotate                  # ask the user to point at something
+playwright-cli show --annotate          # ask the user to point at something
 ```
 
 Map out:
@@ -262,7 +262,7 @@ The test is paused at the start. Step forward or run to until just before the fa
 playwright-cli snapshot                # did the element change / move / rename?
 playwright-cli console                 # app-side errors?
 playwright-cli network                 # failed request? wrong payload?
-playwright-cli annotate                 # ask the user to point somewhere
+playwright-cli show --annotate         # ask the user to point somewhere
 ```
 
 Common causes: selector drift, new wrapper element, label/ARIA rename, timing (transition, async load), assertion text updated in the app, test data leaking between runs.
