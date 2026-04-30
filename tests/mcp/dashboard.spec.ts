@@ -259,8 +259,13 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
   const result = await annotatePromise;
   expect(done).toBe(true);
   const text = (result.content as any).map(c => c.text ?? '').join('\n');
-  expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: direct-mcp/);
-  expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
+  const dashboardPid = +text.match(/### Dashboard opened with pid (\d+)\./)![1];
+  try {
+    expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: direct-mcp/);
+    expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
+  } finally {
+    try { process.kill(dashboardPid); } catch {}
+  }
 });
 
 test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {

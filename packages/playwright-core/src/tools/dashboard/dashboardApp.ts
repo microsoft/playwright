@@ -235,8 +235,8 @@ function dashboardSocketPath() {
 }
 
 type DashboardOptions = {
-  sessionName: string;
-  workspaceDir: string;
+  sessionName?: string;
+  workspaceDir?: string;
   pageId?: string;
   kill?: boolean;
   annotate?: boolean;
@@ -249,8 +249,8 @@ function parseOpenArgs(): DashboardOptions {
   const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['annotate', 'kill', 'json'] });
   const portStr = args.port as string | undefined;
   return {
-    sessionName: args.sessionName as string,
-    workspaceDir: args.workspaceDir as string,
+    sessionName: args.sessionName as string | undefined,
+    workspaceDir: args.workspaceDir as string | undefined,
     pageId: args.pageId as string | undefined,
     port: portStr !== undefined ? Number(portStr) : undefined,
     host: args.host as string | undefined,
