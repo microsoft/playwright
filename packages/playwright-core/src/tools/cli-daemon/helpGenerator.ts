@@ -162,7 +162,7 @@ function isBooleanSchema(schema: zodType.ZodTypeAny): boolean {
 export function generateHelpJSON() {
   const booleanOptions = new Set<string>();
 
-  const commandEntries: Record<string, { help: string, flags: Record<string, 'boolean' | 'string'>, raw?: boolean }> = {};
+  const commandEntries: Record<string, { help: string, flags: Record<string, 'boolean' | 'string'>, args: string[], raw?: boolean }> = {};
   for (const [name, command] of Object.entries(commands)) {
     const flags: Record<string, 'boolean' | 'string'> = {};
     if (command.options) {
@@ -174,7 +174,8 @@ export function generateHelpJSON() {
           booleanOptions.add(flagName);
       }
     }
-    commandEntries[name] = { help: generateCommandHelp(command), flags };
+    const args: string[] = command.args ? Object.keys((command.args as zodType.ZodObject<any>).shape) : [];
+    commandEntries[name] = { help: generateCommandHelp(command), flags, args };
     if (command.raw)
       commandEntries[name].raw = true;
   }

@@ -52,6 +52,7 @@ export interface Output {
 
   errorUnknownCommand(name: string | undefined, globalHelp: string): never;
   errorUnknownOption(opts: string[], commandHelp: string): never;
+  errorTooManyArguments(expected: number, received: number, commandHelp: string): never;
   errorAttachConflict(): never;
   errorDetachNotAttached(session: string): never;
   errorBrowserNotOpenForTool(session: string): never;
@@ -91,6 +92,13 @@ export class TextOutput implements Output {
 
   errorUnknownOption(opts: string[], commandHelp: string): never {
     console.error(`Unknown option${opts.length > 1 ? 's' : ''}: ${opts.map(f => `--${f}`).join(', ')}`);
+    console.log('');
+    console.log(commandHelp);
+    return process.exit(1);
+  }
+
+  errorTooManyArguments(expected: number, received: number, commandHelp: string): never {
+    console.error(`error: too many arguments: expected ${expected}, received ${received}`);
     console.log('');
     console.log(commandHelp);
     return process.exit(1);
@@ -271,6 +279,11 @@ export class JsonOutput implements Output {
 
   errorUnknownOption(opts: string[], _commandHelp: string): never {
     this._emit({ isError: true, error: `Unknown option${opts.length > 1 ? 's' : ''}: ${opts.map(f => `--${f}`).join(', ')}` });
+    return process.exit(1);
+  }
+
+  errorTooManyArguments(expected: number, received: number, _commandHelp: string): never {
+    this._emit({ isError: true, error: `error: too many arguments: expected ${expected}, received ${received}` });
     return process.exit(1);
   }
 

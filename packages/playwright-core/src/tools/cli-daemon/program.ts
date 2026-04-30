@@ -21,6 +21,7 @@ import os from 'os';
 import path from 'path';
 
 import { getAsBooleanFromENV, guessClientName } from '@utils/env';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { libPath } from '../../package';
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
@@ -72,12 +73,7 @@ export function decorateProgram(program: Command) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
           console.log(`### Error\n${message}`);
           console.log('<EOF>');
-          // Hygiene cleanup in createExtensionBrowser releases the http server
-          // and websocket connections, but the chrome subprocess + WS lifecycle
-          // leave behind libuv state we can't reach from JS, so the event loop
-          // would otherwise stay alive for ~5 seconds.
-          // eslint-disable-next-line no-restricted-properties
-          process.exit(1);
+          gracefullyProcessExitDoNotHang(1);
         }
       });
 }

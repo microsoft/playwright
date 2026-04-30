@@ -110,6 +110,7 @@ export async function program(options?: { embedderVersion?: string}) {
     output.errorUnknownCommand(commandName, help.global);
 
   validateFlags(args, command, output);
+  validateArgs(args, command, output);
 
   const registry = await Registry.load();
   const sessionName = resolveSessionName(args.session as string);
@@ -149,7 +150,7 @@ export async function program(options?: { embedderVersion?: string}) {
       const { pid } = await startSession(sessionName, registry, clientInfo, args, 'open');
       const newEntry = await registry.loadEntry(clientInfo, sessionName);
       const params = args._.slice(1);
-      const toolText = await runInSession(newEntry, clientInfo, { _: ['goto', ...(params.length ? params : ['about:blank'])] }, output);
+      const toolText = await runInSessionOrStop(newEntry, clientInfo, { _: ['goto', ...(params.length ? params : ['about:blank'])] }, output);
       output.open(sessionName, pid, toolText);
       return;
     }
@@ -173,7 +174,7 @@ export async function program(options?: { embedderVersion?: string}) {
       args.session = attachSessionName;
       const { pid } = await startSession(attachSessionName, registry, clientInfo, args, 'attach');
       const newEntry = await registry.loadEntry(clientInfo, attachSessionName);
-      const toolText = await runInSession(newEntry, clientInfo, { _: ['snapshot'], filename: '<auto>' }, output);
+      const toolText = await runInSessionOrStop(newEntry, clientInfo, { _: ['snapshot'], filename: '<auto>' }, output);
       output.attach(attachSessionName, pid, targetName, toolText);
       return;
     }
@@ -255,6 +256,19 @@ async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: Mi
   const session = new Session(entry);
   const result = await session.run(clientInfo, args, { raw, json: output.json });
   return result.text;
+}
+
+// Used by `open` / `attach` after `startSession`: if the implicit goto/snapshot
+// fails post-spawn (e.g. tool runtime error), stop the freshly-spawned daemon
+// so we don't strand a detached browser. Pre-spawn arg validation lives in
+// `validateArgs`; this is a defense-in-depth backstop for runtime errors.
+async function runInSessionOrStop(entry: SessionFile, clientInfo: ClientInfo, args: MinimistArgs, output: Output): Promise<string> {
+  try {
+    return await runInSession(entry, clientInfo, args, output);
+  } catch (e) {
+    await new Session(entry).stop().catch(() => {});
+    throw e;
+  }
 }
 
 async function runInitWorkspace(args: MinimistArgs, output: Output) {
@@ -389,6 +403,12 @@ function validateFlags(args: MinimistArgs, command: { flags: Record<string, 'boo
   }
   if (unknownFlags.length)
     output.errorUnknownOption(unknownFlags, command.help);
+}
+
+function validateArgs(args: MinimistArgs, command: { args: string[], help: string }, output: Output) {
+  const positional = args._.slice(1);
+  if (positional.length > command.args.length)
+    output.errorTooManyArguments(command.args.length, positional.length, command.help);
 }
 
 export function calculateSha1(buffer: Buffer | string): string {
