@@ -17,7 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
+import * as yazl from 'yazl';
+import { test as baseTest, expect as baseExpect, cliEntrypoint, createImage } from './playwright-test-fixtures';
 import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
 
 type HttpServer = utils.HttpServer;
@@ -3523,6 +3524,84 @@ test('should support merge files option', async ({ runInlineTest, showReport, pa
           - link "b.test.js:4"
   `);
 });
+
+test.describe('show-report .zip support', () => {
+  test('should serve a zipped report', async ({ runInlineTest, childProcess, findFreePort, page }, testInfo) => {
+    await runInlineTest({
+      'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('passes', async ({}) => {});
+      `,
+    }, { reporter: 'html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+    const reportFolder = testInfo.outputPath('playwright-report');
+    const zipPath = testInfo.outputPath('report.zip');
+    await zipDirectory(reportFolder, zipPath);
+
+    const port = await findFreePort();
+    const proc = childProcess({
+      command: ['node', cliEntrypoint, 'show-report', zipPath, `--port=${port}`],
+      cwd: testInfo.outputPath(),
+      env: { ...process.env, PLAYWRIGHT_HTML_OPEN: 'never' },
+    });
+    await proc.waitForOutput('Serving HTML report at');
+    await page.goto(`http://localhost:${port}`);
+    await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+    await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
+  });
+
+  test('should error on a non-zip non-directory path', async ({ runInlineTest, childProcess }, testInfo) => {
+    const filePath = testInfo.outputPath('not-a-report.txt');
+    await fs.promises.writeFile(filePath, 'hello');
+    const proc = childProcess({
+      command: ['node', cliEntrypoint, 'show-report', filePath],
+      cwd: testInfo.outputPath(),
+    });
+    const { exitCode } = await proc.exited;
+    expect(exitCode).toBe(1);
+    expect(proc.output).toContain(`No report found at "${filePath}"`);
+  });
+
+  test('should error when zip lacks a top-level index.html', async ({ childProcess }, testInfo) => {
+    const zipPath = testInfo.outputPath('nested.zip');
+    const zipFile = new yazl.ZipFile();
+    const finished = new Promise<void>(resolve => zipFile.outputStream.pipe(fs.createWriteStream(zipPath)).on('close', () => resolve()));
+    zipFile.addBuffer(Buffer.from('<html></html>'), 'nested/index.html');
+    zipFile.end();
+    await finished;
+
+    const proc = childProcess({
+      command: ['node', cliEntrypoint, 'show-report', zipPath],
+      cwd: testInfo.outputPath(),
+    });
+    const { exitCode } = await proc.exited;
+    expect(exitCode).toBe(1);
+    expect(proc.output).toContain(`No "index.html" found at the top level of "${zipPath}"`);
+  });
+});
+
+async function zipDirectory(sourceDir: string, zipPath: string): Promise<void> {
+  const zipFile = new yazl.ZipFile();
+  const finished = new Promise<void>((resolve, reject) => {
+    zipFile.outputStream.pipe(fs.createWriteStream(zipPath))
+        .on('close', () => resolve())
+        .on('error', reject);
+  });
+  const walk = async (dir: string, relative: string) => {
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const absolute = path.join(dir, entry.name);
+      const relativeEntry = relative ? `${relative}/${entry.name}` : entry.name;
+      if (entry.isDirectory())
+        await walk(absolute, relativeEntry);
+      else if (entry.isFile())
+        zipFile.addFile(absolute, relativeEntry);
+    }
+  };
+  await walk(sourceDir, '');
+  zipFile.end();
+  await finished;
+}
 
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise(resolve => {

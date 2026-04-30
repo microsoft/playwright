@@ -100,10 +100,12 @@ function addShowReportCommand(program: Command) {
   command.addHelpText('afterAll', `
 Arguments [report]:
   When specified, opens given report, otherwise opens last generated report.
+  Accepts a directory or a .zip archive whose top-level entry is "index.html" (e.g. one downloaded from a CI artifact).
 
 Examples:
   $ npx playwright show-report
-  $ npx playwright show-report playwright-report`);
+  $ npx playwright show-report playwright-report
+  $ npx playwright show-report playwright-report.zip`);
 }
 
 function addMergeReportsCommand(program: Command) {

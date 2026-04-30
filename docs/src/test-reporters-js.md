@@ -242,6 +242,12 @@ Or if there is a custom folder name:
 npx playwright show-report my-report
 ```
 
+You can also pass a `.zip` archive — for example one downloaded from a CI artifact. The archive must contain `index.html` at its top level. Playwright will extract it to a temporary directory and serve the report:
+
+```bash
+npx playwright show-report playwright-report.zip
+```
+
 HTML report supports the following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
