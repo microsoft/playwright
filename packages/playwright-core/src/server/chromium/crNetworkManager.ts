@@ -382,14 +382,22 @@ export class CRNetworkManager {
 
       const session = request.session;
       const response = await session.send('Network.getResponseBody', { requestId: request._requestId });
-      if (response.body || !expectedLength)
+      // CDP returns the body as a UTF-8 string for "text" content types. When the
+      // payload contains bytes that are not valid UTF-8 (e.g. binary data served
+      // as text/plain;charset=utf-8), Chromium replaces them with U+FFFD, which
+      // corrupts the body. Detect this and recover via Network.loadNetworkResource
+      // (which streams base64 binary). See #40510.
+      const corrupted = !response.base64Encoded && response.body.includes('\uFFFD');
+      if ((response.body || !expectedLength) && !corrupted)
         return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
 
       // Make sure no network requests sent while reading the body for fulfilled requests.
       if (request._originalRequestRoute?._fulfilled)
         return Buffer.from('');
 
-      // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
+      // Fall back to Network.loadNetworkResource for:
+      // - <link prefetch> where we receive an empty body with non-empty content-length expectation;
+      // - corrupted text bodies (see above).
       const resource = await session.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
       while (resource.resource.stream) {

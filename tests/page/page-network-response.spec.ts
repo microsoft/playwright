@@ -459,3 +459,20 @@ it('Response.formData() should parse multipart/form-data in page context', async
   expect(result.filename).toBe('test.txt');
   expect(result.fileContent).toBe('hello');
 });
+
+it('should return raw binary body for text/plain;charset=utf-8 response', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40510' });
+  it.fixme(browserName === 'webkit', 'WebKit corrupts non-UTF-8 bytes in Network.getResponseBody and exposes no alternative API');
+  const binary = Buffer.from([0xb5, 0x6e, 0x4c, 0x0d, 0x28, 0xd4, 0x8b, 0xea, 0x8b, 0x9a, 0x5c, 0x3f, 0x72, 0xf9, 0xa1, 0xcf]);
+  server.setRoute('/binary', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+    res.end(binary);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForEvent('response'),
+    page.evaluate(() => fetch('/binary')),
+  ]);
+  const body = await response.body();
+  expect(body.toString('hex')).toBe(binary.toString('hex'));
+});
