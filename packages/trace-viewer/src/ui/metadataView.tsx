@@ -15,6 +15,7 @@
 */
 
 import { msToString } from '@isomorphic/formatUtils';
+import { isHttpUrl } from '@isomorphic/urlMatch';
 import * as React from 'react';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import './callTab.css';
@@ -41,7 +42,9 @@ export const MetadataView: React.FunctionComponent<{
     {model.options.baseURL && (
       <>
         <div className='call-section' style={{ paddingTop: 2 }}>Config</div>
-        <div className='call-line'>baseURL:<a className='call-value string' href={model.options.baseURL} title={model.options.baseURL} target='_blank' rel='noopener noreferrer'>{model.options.baseURL}</a></div>
+        <div className='call-line'>baseURL:{isHttpUrl(model.options.baseURL)
+          ? <a className='call-value string' href={model.options.baseURL} title={model.options.baseURL} target='_blank' rel='noopener noreferrer'>{model.options.baseURL}</a>
+          : <span className='call-value string' title={model.options.baseURL}>{model.options.baseURL}</span>}</div>
       </>
     )}
     <div className='call-section'>Viewport</div>
