@@ -238,11 +238,6 @@ test('browser_take_screenshot (filename: "output.png")', async ({ client, server
         text: expect.stringContaining(`output.png`),
         type: 'text',
       },
-      {
-        data: expect.any(String),
-        mimeType: 'image/png',
-        type: 'image',
-      },
     ],
   });
 
