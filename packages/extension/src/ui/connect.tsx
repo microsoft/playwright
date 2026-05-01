@@ -217,7 +217,7 @@ const ConnectApp: React.FC = () => {
 
 const VersionMismatchError: React.FC<{ extensionVersion: string }> = ({ extensionVersion }) => {
   const readmeUrl = 'https://github.com/microsoft/playwright/blob/main/packages/extension/README.md';
-  const chromeWebStoreUrl = 'https://chromewebstore.google.com/detail/playwright-mcp-bridge/mmlmfjhmonkocbjadbfplnigmagldckm';
+  const chromeWebStoreUrl = 'https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm';
   return (
     <div>
       Playwright client trying to connect requires newer extension version (current version: {extensionVersion}).{' '}
