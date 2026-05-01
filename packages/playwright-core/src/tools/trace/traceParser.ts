@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { resolveWithinRoot } from '@utils/fileUtils';
 import { ZipFile } from '@utils/zipFile';
 
 import type { TraceLoaderBackend } from '@isomorphic/trace/traceLoader';
@@ -47,8 +48,11 @@ export class DirTraceLoaderBackend implements TraceLoaderBackend {
   }
 
   async hasEntry(entryName: string): Promise<boolean> {
+    const resolved = resolveWithinRoot(this._dir, entryName);
+    if (!resolved)
+      return false;
     try {
-      await fs.promises.access(path.join(this._dir, entryName));
+      await fs.promises.access(resolved);
       return true;
     } catch {
       return false;
@@ -56,15 +60,21 @@ export class DirTraceLoaderBackend implements TraceLoaderBackend {
   }
 
   async readText(entryName: string): Promise<string | undefined> {
+    const resolved = resolveWithinRoot(this._dir, entryName);
+    if (!resolved)
+      return;
     try {
-      return await fs.promises.readFile(path.join(this._dir, entryName), 'utf-8');
+      return await fs.promises.readFile(resolved, 'utf-8');
     } catch {
     }
   }
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
+    const resolved = resolveWithinRoot(this._dir, entryName);
+    if (!resolved)
+      return;
     try {
-      const buffer = await fs.promises.readFile(path.join(this._dir, entryName));
+      const buffer = await fs.promises.readFile(resolved);
       return new Blob([new Uint8Array(buffer)]);
     } catch {
     }
@@ -73,12 +83,17 @@ export class DirTraceLoaderBackend implements TraceLoaderBackend {
 
 export async function extractTrace(traceFile: string, outDir: string): Promise<void> {
   const zipFile = new ZipFile(traceFile);
-  const entries = await zipFile.entries();
-  for (const entry of entries) {
-    const outPath = path.join(outDir, entry);
-    await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
-    const buffer = await zipFile.read(entry);
-    await fs.promises.writeFile(outPath, buffer);
+  try {
+    const entries = await zipFile.entries();
+    for (const entry of entries) {
+      const outPath = resolveWithinRoot(outDir, entry);
+      if (!outPath)
+        throw new Error(`Trace entry '${entry}' escapes output directory`);
+      await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
+      const buffer = await zipFile.read(entry);
+      await fs.promises.writeFile(outPath, buffer);
+    }
+  } finally {
+    zipFile.close();
   }
-  zipFile.close();
 }
