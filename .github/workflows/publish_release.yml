@@ -54,7 +54,7 @@ jobs:
       run: utils/publish_all_packages.sh --release
 
     - name: Azure Login
-      uses: azure/login@v2
+      uses: azure/login@v3
       with:
         client-id: ${{ secrets.AZURE_PW_CDN_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_PW_CDN_TENANT_ID }}
@@ -75,7 +75,7 @@ jobs:
     - uses: actions/setup-node@v6
       with:
         node-version: 20
-    - uses: actions/create-github-app-token@v2
+    - uses: actions/create-github-app-token@v3
       id: app-token
       with:
         app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
