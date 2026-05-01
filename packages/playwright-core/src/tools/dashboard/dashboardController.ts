@@ -443,7 +443,7 @@ class AttachedPage {
     const vp = this._page.viewportSize();
     if (vp)
       return vp;
-    return await this._page.evaluate(() => ({ width: document.documentElement.clientWidth, height: document.documentElement.clientHeight }));
+    return await this._page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
   }
 
   private async _startScreencast(page: api.Page) {
