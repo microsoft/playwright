@@ -265,6 +265,61 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(request.headers['foo']).toBe('bar');
     });
 
+    test('should send launch options as header', async ({ browserType, server }) => {
+      const [request] = await Promise.all([
+        server.waitForWebSocketConnectionRequest(),
+        browserType.connect(`ws://localhost:${server.PORT}/ws`, {
+          channel: 'msedge',
+          headless: false,
+          proxy: { server: 'http://myproxy.com:3128', bypass: '.example.com' },
+          timeout: 100,
+        }).catch(() => {})
+      ]);
+      expect(JSON.parse(request.headers['x-playwright-launch-options'] as string)).toEqual({
+        channel: 'msedge',
+        headless: false,
+        proxy: { server: 'http://myproxy.com:3128', bypass: '.example.com' },
+      });
+    });
+
+    test('should not send launch options header when none of the options are set', async ({ browserType, server }) => {
+      const [request] = await Promise.all([
+        server.waitForWebSocketConnectionRequest(),
+        browserType.connect(`ws://localhost:${server.PORT}/ws`, {
+          timeout: 100,
+        }).catch(() => {})
+      ]);
+      expect(request.headers['x-playwright-launch-options']).toBeUndefined();
+    });
+
+    test('explicit headers should override launch options header', async ({ browserType, server }) => {
+      const [request] = await Promise.all([
+        server.waitForWebSocketConnectionRequest(),
+        browserType.connect(`ws://localhost:${server.PORT}/ws`, {
+          channel: 'msedge',
+          headers: { 'x-playwright-launch-options': '{"channel":"chrome"}' },
+          timeout: 100,
+        }).catch(() => {})
+      ]);
+      expect(request.headers['x-playwright-launch-options']).toBe('{"channel":"chrome"}');
+    });
+
+    test('should encode launch options header as ASCII', async ({ browserType, server }) => {
+      const [request] = await Promise.all([
+        server.waitForWebSocketConnectionRequest(),
+        browserType.connect(`ws://localhost:${server.PORT}/ws`, {
+          proxy: { server: 'http://myproxy.com:3128', username: 'tëst' },
+          timeout: 100,
+        }).catch(() => {})
+      ]);
+      const header = request.headers['x-playwright-launch-options'] as string;
+      expect(header).not.toContain('ë');
+      expect(header).toContain('\\u00eb');
+      expect(JSON.parse(header)).toEqual({
+        proxy: { server: 'http://myproxy.com:3128', username: 'tëst' },
+      });
+    });
+
     test('should support slowmo option', async ({ connect, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
 

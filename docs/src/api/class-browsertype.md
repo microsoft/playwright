@@ -137,6 +137,15 @@ Some common examples:
 1. `"<loopback>"` to expose localhost network.
 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to expose test/staging deployments and localhost.
 
+### option: BrowserType.connect.channel = %%-browser-option-channel-%%
+* since: v1.60
+
+### option: BrowserType.connect.headless = %%-browser-option-headless-%%
+* since: v1.60
+
+### option: BrowserType.connect.proxy = %%-browser-option-proxy-%%
+* since: v1.60
+
 ## async method: BrowserType.connectOverCDP
 * since: v1.9
 - returns: <[Browser]>

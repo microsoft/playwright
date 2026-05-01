@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { jsonStringifyForceASCII } from '@isomorphic/stringUtils';
 import { monotonicTime } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { Browser } from './browser';
@@ -28,7 +29,8 @@ import type * as channels from '@protocol/channels';
 export async function connectToBrowser(playwright: Playwright, params: ConnectOptions): Promise<Browser> {
   const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
   const nameParam = params.browserName ? { 'x-playwright-browser': params.browserName } : {};
-  const headers = { ...nameParam, ...params.headers };
+  const launchOptionsHeader = launchOptionsHeaderFromConnectOptions(params);
+  const headers = { ...nameParam, ...launchOptionsHeader, ...params.headers };
   const connectParams: channels.LocalUtilsConnectParams = {
     endpoint: params.endpoint!,
     headers,
@@ -72,6 +74,20 @@ export async function connectToBrowser(playwright: Playwright, params: ConnectOp
     connection.close();
     throw new Error(`Timeout ${params.timeout}ms exceeded`);
   }
+}
+
+function launchOptionsHeaderFromConnectOptions(params: ConnectOptions): { 'x-playwright-launch-options'?: string } {
+  const launchOptions: { channel?: string, headless?: boolean, proxy?: ConnectOptions['proxy'] } = {};
+  if (params.channel !== undefined)
+    launchOptions.channel = params.channel;
+  if (params.headless !== undefined)
+    launchOptions.headless = params.headless;
+  if (params.proxy !== undefined)
+    launchOptions.proxy = params.proxy;
+  if (Object.keys(launchOptions).length === 0)
+    return {};
+  // HTTP headers are ASCII only (not UTF-8).
+  return { 'x-playwright-launch-options': jsonStringifyForceASCII(launchOptions) };
 }
 
 export async function connectToEndpoint(parentConnection: Connection, params: channels.LocalUtilsConnectParams): Promise<Connection> {

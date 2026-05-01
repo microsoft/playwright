@@ -104,6 +104,9 @@ export type ConnectOptions = {
   exposeNetwork?: string;
   slowMo?: number;
   timeout?: number;
+  channel?: string;
+  headless?: boolean;
+  proxy?: LaunchOptions['proxy'];
 };
 export type LaunchServerOptions = LaunchOptions & {
   host?: string,

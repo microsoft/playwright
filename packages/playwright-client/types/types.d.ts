@@ -22943,6 +22943,16 @@ export interface ConnectOverCDPOptions {
 
 export interface ConnectOptions {
   /**
+   * Browser distribution channel.
+   *
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
+   *
+   * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
+   * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   */
+  channel?: string;
+
+  /**
    * This option exposes network available on the connecting client to the browser being connected to. Consists of a
    * list of rules separated by comma.
    *
@@ -22963,6 +22973,39 @@ export interface ConnectOptions {
    * Additional HTTP headers to be sent with web socket connect request. Optional.
    */
   headers?: { [key: string]: string; };
+
+  /**
+   * Whether to run browser in headless mode. More details for
+   * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
+   * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true`.
+   */
+  headless?: boolean;
+
+  /**
+   * Network proxy settings.
+   */
+  proxy?: {
+    /**
+     * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+     * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+     */
+    server: string;
+
+    /**
+     * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+     */
+    bypass?: string;
+
+    /**
+     * Optional username to use if HTTP proxy requires authentication.
+     */
+    username?: string;
+
+    /**
+     * Optional password to use if HTTP proxy requires authentication.
+     */
+    password?: string;
+  };
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going

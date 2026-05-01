@@ -193,3 +193,10 @@ export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA
 export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }
+
+export function jsonStringifyForceASCII(object: any): string {
+  return JSON.stringify(object).replace(
+      /[\u007f-\uffff]/g,
+      c => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4)
+  );
+}
