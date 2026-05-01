@@ -16,7 +16,7 @@
 
 import { resolveConfig } from './config';
 import { filteredTools } from '../backend/tools';
-import { createBrowser } from './browserFactory';
+import { createBrowserWithInfo } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { createServer } from '../utils/mcp/server';
 import { packageJSON } from '../../package';
@@ -35,7 +35,9 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
     version: packageJSON.version,
     toolSchemas: tools.map(tool => tool.schema),
     create: async (clientInfo: ClientInfo) => {
-      const browser = contextGetter ? new SimpleBrowser(await contextGetter()) : await createBrowser(config, clientInfo);
+      const browser = contextGetter
+        ? new SimpleBrowser(await contextGetter())
+        : (await createBrowserWithInfo(config, clientInfo, {})).browser;
       const context = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
       return new BrowserBackend(config, context, tools);
     },

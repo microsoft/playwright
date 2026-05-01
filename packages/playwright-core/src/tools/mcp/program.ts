@@ -18,7 +18,7 @@ import { Option as ProgramOption } from 'commander';
 import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { createBrowser, createBrowserWithInfo } from './browserFactory';
+import { createBrowserWithInfo } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
@@ -101,7 +101,7 @@ export function decorateMCPCommand(command: Command) {
             version,
             toolSchemas: tools.map(tool => tool.schema),
             create: async (clientInfo: ClientInfo) => {
-              const browser = await createBrowser(config, clientInfo);
+              const { browser } = await createBrowserWithInfo(config, clientInfo, options);
               const browserContext = browser.contexts()[0];
               return new BrowserBackend(config, browserContext, tools);
             },

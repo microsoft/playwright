@@ -43,11 +43,6 @@ type BrowserWithInfo = {
   ownership: 'attached' | 'own',
 };
 
-export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
-  const { browser } = await createBrowserWithInfo(config, clientInfo, {});
-  return browser;
-}
-
 export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions): Promise<BrowserWithInfo> {
   if (config.browser.remoteEndpoint)
     return await createRemoteBrowser(config);
