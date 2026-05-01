@@ -89,6 +89,9 @@ class InspectTool implements RecorderTool {
   }
 
   onClick(event: MouseEvent) {
+    // Shift+click bypasses locator picking and interacts with the page.
+    if (event.shiftKey)
+      return;
     consumeEvent(event);
     if (event.button !== 0)
       return;
@@ -97,22 +100,34 @@ class InspectTool implements RecorderTool {
   }
 
   onPointerDown(event: PointerEvent) {
+    if (event.shiftKey)
+      return;
     consumeEvent(event);
   }
 
   onPointerUp(event: PointerEvent) {
+    if (event.shiftKey)
+      return;
     consumeEvent(event);
   }
 
   onMouseDown(event: MouseEvent) {
+    if (event.shiftKey)
+      return;
     consumeEvent(event);
   }
 
   onMouseUp(event: MouseEvent) {
+    if (event.shiftKey)
+      return;
     consumeEvent(event);
   }
 
   onMouseMove(event: MouseEvent) {
+    if (event.shiftKey) {
+      this._reset(false);
+      return;
+    }
     consumeEvent(event);
     let target: HTMLElement | null = this._recorder.deepEventTarget(event);
     if (!target.isConnected)
@@ -139,6 +154,8 @@ class InspectTool implements RecorderTool {
   }
 
   onMouseEnter(event: MouseEvent) {
+    if (event.shiftKey)
+      return;
     consumeEvent(event);
   }
 
@@ -152,6 +169,10 @@ class InspectTool implements RecorderTool {
 
   onKeyDown(event: KeyboardEvent) {
     consumeEvent(event);
+    if (event.key === 'Shift') {
+      this._reset(false);
+      return;
+    }
     if (event.key === 'Escape') {
       if (this._assertVisibility)
         this._recorder.setMode('recording');

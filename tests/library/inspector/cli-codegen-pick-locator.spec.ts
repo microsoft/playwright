@@ -30,6 +30,36 @@ test.describe(() => {
     `);
   });
 
+  test('should shift-click to interact with page while picking locator', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
+    await recorder.setContentAndWait(`
+      <button onclick="document.getElementById('target').textContent = 'clicked'">Click me</button>
+      <div id="target">initial</div>
+    `);
+
+    // Enter pick locator mode.
+    await recorder.page.click('x-pw-tool-item.pick-locator');
+
+    // Shift+click the button - should interact with the page, not pick a locator.
+    const button = recorder.page.getByRole('button', { name: 'Click me' });
+    await recorder.trustedMove(button);
+    await recorder.page.keyboard.down('Shift');
+    await recorder.trustedClick();
+    await recorder.page.keyboard.up('Shift');
+
+    // Verify the page interaction happened.
+    await expect(recorder.page.locator('#target')).toHaveText('clicked');
+
+    // Now click without Shift - should pick the locator.
+    const target = recorder.page.locator('#target');
+    await recorder.trustedMove(target);
+    await recorder.trustedClick();
+    await recorder.recorderPage.getByRole('tab', { name: 'Locator' }).click();
+    await expect(recorder.recorderPage.locator('.tab-locator .CodeMirror')).toMatchAriaSnapshot(`
+      - text: "getByText('clicked')"
+    `);
+  });
+
   test('should update locator highlight', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main>
