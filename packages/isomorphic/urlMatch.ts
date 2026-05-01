@@ -63,13 +63,29 @@ export function globToRegexPattern(glob: string): string {
     }
 
     switch (c) {
-      case '{':
-        inGroup = true;
-        tokens.push('(');
+      case '{': {
+        // Only treat '{' as a group opener when a matching '}' exists ahead;
+        // otherwise emit it as a literal to avoid producing an invalid regex.
+        let hasMatchingClose = false;
+        for (let j = i + 1; j < glob.length; j++) {
+          if (glob[j] === '\\' && j + 1 < glob.length) { j++; continue; }
+          if (glob[j] === '}') { hasMatchingClose = true; break; }
+        }
+        if (hasMatchingClose) {
+          inGroup = true;
+          tokens.push('(');
+        } else {
+          tokens.push('\\{');
+        }
         break;
+      }
       case '}':
-        inGroup = false;
-        tokens.push(')');
+        if (inGroup) {
+          inGroup = false;
+          tokens.push(')');
+        } else {
+          tokens.push('\\}');
+        }
         break;
       case ',':
         if (inGroup) {

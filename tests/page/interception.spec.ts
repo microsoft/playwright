@@ -114,6 +114,15 @@ it('should work with glob', async () => {
   expect(globToRegex('[a-z]')).toEqual(/^\[a-z\]$/);
   expect(globToRegex('$^+.\\*()|\\?\\{\\}\\[\\]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
 
+  // unbalanced braces must be treated as literals, not produce invalid regexes
+  expect(globToRegex('{foo').test('{foo')).toBeTruthy();
+  expect(globToRegex('{foo').test('foo')).toBeFalsy();
+  expect(globToRegex('foo}').test('foo}')).toBeTruthy();
+  expect(globToRegex('foo}').test('foo')).toBeFalsy();
+  expect(globToRegex('**/*.png?{').test('https://localhost:8080/c.png?{')).toBeTruthy();
+  expect(globToRegex('**/*.png?{').test('https://localhost:8080/c.png?')).toBeFalsy();
+  expect(globToRegex('}foo{').test('}foo{')).toBeTruthy();
+
   expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.dev')).toBeTruthy();
   expect(urlMatches(undefined, 'http://playwright.dev/?a=b', 'http://playwright.dev?a=b')).toBeTruthy();
   expect(urlMatches(undefined, 'http://playwright.dev/', 'h*://playwright.dev')).toBeTruthy();
