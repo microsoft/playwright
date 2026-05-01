@@ -25,7 +25,7 @@ import { outputDir } from '../backend/context';
 import { createExtensionBrowser } from './extensionContextFactory';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
-import { resolveChannelForExtension } from './config';
+import { resolveExtensionOptions } from './config';
 // eslint-disable-next-line no-restricted-imports
 import { connectToBrowser } from '../../client/connect';
 
@@ -59,8 +59,8 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
     canBind = true;
     ownership = 'own';
   } else if (config.extension) {
-    const channel = resolveChannelForExtension(cliOptions);
-    browser = await createExtensionBrowser(channel, clientInfo.clientName);
+    const { channel, executablePath } = resolveExtensionOptions(cliOptions);
+    browser = await createExtensionBrowser(channel, executablePath, clientInfo.clientName);
     ownership = 'attached';
   } else {
     browser = await createPersistentBrowser(config, clientInfo);

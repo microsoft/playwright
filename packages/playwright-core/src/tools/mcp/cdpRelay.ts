@@ -62,7 +62,6 @@ type CDPResponse = CDPMessage;
 export class CDPRelayServer {
   private _wsHost: string;
   private _browserChannel: string;
-  private _userDataDir?: string;
   private _executablePath?: string;
   private _cdpPath: string;
   private _extensionPath: string;
@@ -73,10 +72,9 @@ export class CDPRelayServer {
   private _handler: ExtensionProtocolHandler;
   private _extensionConnectionPromise = new ManualPromise<void>();
 
-  constructor(server: http.Server, browserChannel: string, userDataDir?: string, executablePath?: string) {
+  constructor(server: http.Server, browserChannel: string, executablePath?: string) {
     this._wsHost = addressToString(server.address(), { protocol: 'ws' });
     this._browserChannel = browserChannel;
-    this._userDataDir = userDataDir;
     this._executablePath = executablePath;
     this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.DEFAULT_VERSION.toString(), 10);
 
@@ -145,8 +143,9 @@ export class CDPRelayServer {
     }
 
     const args: string[] = [];
-    if (this._userDataDir)
-      args.push(`--user-data-dir=${this._userDataDir}`);
+    const userDataDir = process.env.PWTEST_EXTENSION_USER_DATA_DIR;
+    if (userDataDir)
+      args.push(`--user-data-dir=${userDataDir}`);
     if (os.platform() === 'linux' && channel === 'chromium')
       args.push('--no-sandbox');
     args.push(href);

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs/promises';
+
 import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
@@ -229,6 +231,28 @@ test(`extension needs update`, async ({ startExtensionClient, server }) => {
 
   const confirmationPage = await confirmationPagePromise;
   await expect(confirmationPage.locator('.status-banner')).toContainText(`Playwright client trying to connect requires newer extension version`);
+});
+
+test(`custom executablePath skips local extension check`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1590' },
+}, async ({ startClient, server }) => {
+  const executablePath = test.info().outputPath('echo.sh');
+  await fs.writeFile(executablePath, '#!/bin/bash\necho "Custom exec args: $@" > "$(dirname "$0")/output.txt"', { mode: 0o755 });
+
+  // Empty profile would normally fail the extension-installed check; it is skipped when executablePath is set.
+  const { client } = await startClient({
+    args: [`--extension`, `--executable-path=${executablePath}`],
+    env: { PWTEST_EXTENSION_USER_DATA_DIR: test.info().outputPath('empty-profile') },
+  });
+
+  client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  }).catch(() => {});
+  await expect(async () => {
+    const output = await fs.readFile(test.info().outputPath('output.txt'), 'utf8');
+    expect(output).toMatch(new RegExp(`Custom exec args.*chrome-extension://${extensionId}/connect\\.html\\?`));
+  }).toPass();
 });
 
 test(`fails when extension is missing in custom userDataDir`, async ({ startClient, server }) => {

@@ -194,10 +194,11 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   return { ...result, browser, configFile, skillMode: true };
 }
 
-export function resolveChannelForExtension(cliOptions: CLIOptions): string {
+export function resolveExtensionOptions(cliOptions: CLIOptions): { channel: string, executablePath?: string } {
   const browser = cliOptions.browser ?? envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   const { channel } = resolveBrowserParam(browser);
-  return channel ?? 'chrome';
+  const executablePath = cliOptions.executablePath ?? envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  return { channel: channel ?? 'chrome', executablePath };
 }
 
 async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {
