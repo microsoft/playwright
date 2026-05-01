@@ -60,7 +60,7 @@ export function decorateProgram(program: Command) {
   commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
       [
         ['-o, --output <file name>', 'saves the generated script to a file'],
-        ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
+        ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, csharp-xunit, java, java-junit`, codegenId()],
         ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
       ]).action(async function(url, options) {
     await codegen(options, url);

@@ -23,7 +23,7 @@ import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './ty
 import type { BrowserContextOptions } from '../../..';
 import type * as actions from '@recorder/actions';
 
-type CSharpLanguageMode = 'library' | 'mstest' | 'nunit';
+type CSharpLanguageMode = 'library' | 'mstest' | 'nunit' | 'xunit';
 
 export class CSharpLanguageGenerator implements LanguageGenerator {
   id: string;
@@ -42,6 +42,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     } else if (mode === 'nunit') {
       this.name = 'NUnit';
       this.id = 'csharp-nunit';
+    } else if (mode === 'xunit') {
+      this.name = 'xUnit';
+      this.id = 'csharp-xunit';
     } else {
       throw new Error(`Unknown C# language mode: ${mode}`);
     }
@@ -196,13 +199,16 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
   generateTestRunnerHeader(options: LanguageGeneratorOptions): string {
     const formatter = new CSharpFormatter(0);
+    const playwrightNamespace = this._mode === 'nunit' ? 'NUnit' : this._mode === 'xunit' ? 'Xunit' : 'MSTest';
+    const classAttributes = this._mode === 'nunit' ? `[Parallelizable(ParallelScope.Self)]
+      [TestFixture]
+      ` : this._mode === 'mstest' ? `[TestClass]
+      ` : '';
     formatter.add(`
-      using Microsoft.Playwright.${this._mode === 'nunit' ? 'NUnit' : 'MSTest'};
-      using Microsoft.Playwright;
+      using Microsoft.Playwright.${playwrightNamespace};
+      using Microsoft.Playwright;${this._mode === 'xunit' ? `\n      using Xunit;` : ''}
 
-      ${this._mode === 'nunit' ? `[Parallelizable(ParallelScope.Self)]
-      [TestFixture]` : '[TestClass]'}
-      public class Tests : PageTest
+      ${classAttributes}public class Tests : PageTest
       {`);
     const formattedContextOptions = formatContextOptions(options.contextOptions, options.deviceName);
     if (formattedContextOptions) {
@@ -212,7 +218,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       }`);
       formatter.newLine();
     }
-    formatter.add(`    [${this._mode === 'nunit' ? 'Test' : 'TestMethod'}]
+    const testAttribute = this._mode === 'nunit' ? 'Test' : this._mode === 'xunit' ? 'Fact' : 'TestMethod';
+    formatter.add(`    [${testAttribute}]
     public async Task MyTest()
     {`);
     if (options.contextOptions.recordHar) {

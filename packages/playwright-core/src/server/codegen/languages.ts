@@ -31,6 +31,7 @@ export function languageSet() {
     new PythonLanguageGenerator(/* isAsync */true,  /* isPytest */false),
     new CSharpLanguageGenerator('mstest'),
     new CSharpLanguageGenerator('nunit'),
+    new CSharpLanguageGenerator('xunit'),
     new CSharpLanguageGenerator('library'),
     new JavaLanguageGenerator('junit'),
     new JavaLanguageGenerator('library'),

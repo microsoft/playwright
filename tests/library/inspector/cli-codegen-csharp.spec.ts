@@ -198,7 +198,7 @@ test('should work with --save-har and --save-har-glob', async ({ runCLI }, testI
   expect(json.log.creator.name).toBe('Playwright');
 });
 
-for (const testFramework of ['nunit', 'mstest'] as const) {
+for (const testFramework of ['nunit', 'mstest', 'xunit'] as const) {
   test(`should not print context options method override in ${testFramework} if no options were passed`, async ({ runCLI, server }) => {
     const cli = runCLI([`--target=csharp-${testFramework}`, server.EMPTY_PAGE]);
     await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
@@ -287,6 +287,32 @@ public class Tests : PageTest
     }
 
     [Test]
+    public async Task MyTest()
+    {
+        await Page.GotoAsync("${server.EMPTY_PAGE}");
+    }
+}`;
+  expect(await cli.text()).toContain(expected);
+});
+
+test(`should print a valid basic program in xunit`, async ({ runCLI, server }) => {
+  const cli = runCLI([`--target=csharp-xunit`, '--color-scheme=dark', server.EMPTY_PAGE]);
+  await cli.waitFor(`Page.GotoAsync("${server.EMPTY_PAGE}")`);
+  const expected = `using Microsoft.Playwright.Xunit;
+using Microsoft.Playwright;
+using Xunit;
+
+public class Tests : PageTest
+{
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new()
+        {
+            ColorScheme = ColorScheme.Dark,
+        };
+    }
+
+    [Fact]
     public async Task MyTest()
     {
         await Page.GotoAsync("${server.EMPTY_PAGE}");
