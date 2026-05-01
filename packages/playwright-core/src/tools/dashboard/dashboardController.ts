@@ -427,14 +427,23 @@ class AttachedPage {
 
   async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number, ariaSnapshot: string }> {
     const buffer = await this._page.screenshot({ type: 'png' });
-    const vp = this._page.viewportSize();
+    const vp = await this._viewportSize();
     const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
     return {
       data: buffer.toString('base64'),
-      viewportWidth: vp?.width ?? 0,
-      viewportHeight: vp?.height ?? 0,
+      viewportWidth: vp.width,
+      viewportHeight: vp.height,
       ariaSnapshot,
     };
+  }
+
+  private async _viewportSize(): Promise<{ width: number; height: number }> {
+    // Pages whose context was created with `viewport: null` (e.g. headed `playwright-cli open --headed`)
+    // have no fixed viewport, so `viewportSize()` returns null. Fall back to the live window size.
+    const vp = this._page.viewportSize();
+    if (vp)
+      return vp;
+    return await this._page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
   }
 
   private async _startScreencast(page: api.Page) {

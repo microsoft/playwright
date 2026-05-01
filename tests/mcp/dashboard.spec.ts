@@ -262,6 +262,42 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
   expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
 });
 
+test('should annotate when context has no fixed viewport', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {
+  // Simulates headed `playwright-cli open --headed`, which launches with viewport: null
+  // so that the browser window controls the page size. https://github.com/microsoft/playwright/issues/40565
+  const context = await boundBrowser.newContext({ viewport: null });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { client } = await startClient({
+    args: ['--endpoint=default', '--caps=devtools'],
+    env: {
+      ...cliEnv,
+      PWTEST_DASHBOARD_APP_BIND_TITLE: bindTitle,
+    },
+  });
+
+  const annotatePromise = client.callTool({ name: 'browser_annotate' });
+  let done = false;
+  void annotatePromise.then(() => { done = true; });
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await drawAndSubmitAnnotation(dashboard, 'no-viewport');
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  const result = await annotatePromise;
+  expect(done).toBe(true);
+  const text = (result.content as any).map(c => c.text ?? '').join('\n');
+  expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: no-viewport/);
+  expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
+});
+
 test('should cancel browser_annotate when the MCP request is aborted', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {
   const page = await boundBrowser.newPage();
   await page.goto(server.EMPTY_PAGE);
