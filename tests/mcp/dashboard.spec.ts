@@ -267,6 +267,7 @@ test('should annotate when context has no fixed viewport', async ({ connectToDas
   // so that the browser window controls the page size. https://github.com/microsoft/playwright/issues/40565
   const context = await boundBrowser.newContext({ viewport: null });
   const page = await context.newPage();
+  expect(page.viewportSize()).toBe(null);
   await page.goto(server.EMPTY_PAGE);
 
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
