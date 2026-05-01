@@ -94,23 +94,6 @@ export function decorateMCPCommand(command: Command) {
 
         const config = await resolveCLIConfigForMCP(options);
         const tools = filteredTools(config);
-        if (config.extension) {
-          const serverBackendFactory: mcpServer.ServerBackendFactory = {
-            name: 'Playwright w/ extension',
-            nameInConfig: 'playwright-extension',
-            version,
-            toolSchemas: tools.map(tool => tool.schema),
-            create: async (clientInfo: ClientInfo) => {
-              const { browser } = await createBrowserWithInfo(config, clientInfo, options);
-              const browserContext = browser.contexts()[0];
-              return new BrowserBackend(config, browserContext, tools);
-            },
-            disposed: async () => { }
-          };
-          await mcpServer.start(serverBackendFactory, config.server);
-          return;
-        }
-
         const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
         let sharedBrowser: playwright.Browser | undefined;
         let clientCount = 0;

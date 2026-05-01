@@ -22,28 +22,28 @@ test.describe.configure({
 });
 
 test('connect by channel name error', async ({ cli }) => {
-  const { error } = await cli('attach', '--cdp=chrome-canary');
-  expect(error).toContain('Could not connect to chrome-canary');
+  const { error } = await cli('attach', '--cdp=chrome-dev');
+  expect(error).toContain('Could not connect to chrome-dev');
   expect(error).toContain('chrome://inspect/#remote-debugging');
 });
 
 test('attach --cdp=<channel> defaults session name to the channel', async ({ cli }) => {
   // Connection fails, but the daemon writes its err log under the resolved session name.
-  await cli('attach', '--cdp=chrome-canary');
+  await cli('attach', '--cdp=chrome-dev');
   const folder = await daemonFolder();
   expect(folder).toBeTruthy();
   const files = await fs.promises.readdir(folder!);
-  expect(files).toContain('chrome-canary.err');
+  expect(files).toContain('chrome-dev.err');
   expect(files).not.toContain('default.err');
 });
 
 test('explicit --session wins over --cdp=<channel>', async ({ cli }) => {
-  await cli('attach', '--cdp=chrome-canary', '-s=explicit');
+  await cli('attach', '--cdp=chrome-dev', '-s=explicit');
   const folder = await daemonFolder();
   expect(folder).toBeTruthy();
   const files = await fs.promises.readdir(folder!);
   expect(files).toContain('explicit.err');
-  expect(files).not.toContain('chrome-canary.err');
+  expect(files).not.toContain('chrome-dev.err');
 });
 
 test('attach via cdp URL keeps the default session', async ({ cdpServer, cli, server }) => {

@@ -15,6 +15,9 @@
  */
 
 import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
+
+const { defaultUserDataDirForChannel } = utils;
 
 test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   const { browserContext, client } = await startExtensionClient();
@@ -241,6 +244,25 @@ test(`fails when extension is missing in custom userDataDir`, async ({ startClie
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
     error: expect.stringContaining(`Playwright Extension not found in "${userDataDir}"`),
+    isError: true,
+  });
+});
+
+test(`--browser <channel> selects channel-specific userDataDir`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1589' },
+}, async ({ startClient, server }) => {
+  const expectedUserDataDir = defaultUserDataDirForChannel('chrome-dev')!;
+
+  const { client } = await startClient({
+    args: [`--extension`, `--browser=chrome-dev`],
+    omitArgs: [`--browser=chromium`],
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    error: expect.stringContaining(`Playwright Extension not found in "${expectedUserDataDir}"`),
     isError: true,
   });
 });
