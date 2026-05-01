@@ -37,7 +37,7 @@ title: "Assertions"
 | [`method: APIResponseAssertions.toBeOK`] | Response has an OK status |
 
 ## Custom Expect Message
-* langs: python
+* langs: python, csharp
 
 You can specify a custom expect message as a second argument to the `expect` function, for example:
 
@@ -45,9 +45,13 @@ You can specify a custom expect message as a second argument to the `expect` fun
 expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 ```
 
+```csharp
+await Expect(Page.GetByText("Name"), "should be logged in").ToBeVisibleAsync();
+```
+
 When expect fails, the error would look like this:
 
-```bash
+```bash lang=python
     def test_foobar(page: Page) -> None:
 >       expect(page.get_by_text("Name"), "should be logged in").to_be_visible()
 E       AssertionError: should be logged in
@@ -58,6 +62,15 @@ E       waiting for get_by_text("Name")
 E       waiting for get_by_text("Name")
 
 tests/test_foobar.py:22: AssertionError
+```
+
+```bash lang=csharp
+Microsoft.Playwright.PlaywrightException : should be logged in
+
+Locator expected to be visible
+Call log:
+- Expect "ToBeVisibleAsync" with timeout 5000ms
+- waiting for GetByText("Name")
 ```
 
 ## Setting a custom timeout
