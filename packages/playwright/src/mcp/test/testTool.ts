@@ -21,7 +21,7 @@ import type { tools } from 'playwright-core/lib/coreBundle';
 
 export type TestTool<Input extends z.Schema = z.Schema> = {
   schema: tools.ToolSchema<Input>;
-  handle: (context: TestContext, params: z.output<Input>) => Promise<CallToolResult>;
+  handle: (context: TestContext, params: z.output<Input>, signal?: AbortSignal) => Promise<CallToolResult>;
 };
 
 export function defineTestTool<Input extends z.Schema>(tool: TestTool<Input>): TestTool<Input> {

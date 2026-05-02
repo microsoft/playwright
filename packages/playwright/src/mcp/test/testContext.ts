@@ -88,6 +88,7 @@ type TestRunnerAndScreen = {
 export class TestContext {
   private _clientInfo: tools.ClientInfo;
   private _testRunnerAndScreen: TestRunnerAndScreen | undefined;
+  private _testOpQueue: Promise<void> = Promise.resolve();
   readonly computedHeaded: boolean;
   private readonly _configLocation: ConfigLocation;
   readonly rootPath: string;
@@ -103,6 +104,12 @@ export class TestContext {
       this.computedHeaded = !options.headless;
     else
       this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY);
+  }
+
+  private _enqueue<T>(fn: () => Promise<T>): Promise<T> {
+    const result = this._testOpQueue.then(fn);
+    this._testOpQueue = result.then(() => {}, () => {});
+    return result;
   }
 
   existingTestRunner(): testRunner.TestRunner | undefined {
@@ -176,7 +183,7 @@ export class TestContext {
     };
   }
 
-  async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
+  async runSeedTest(seedFile: string, projectName: string, signal?: AbortSignal): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
     const result = await this.runTestsWithGlobalSetupAndPossiblePause({
       headed: this.computedHeaded,
       locations: ['/' + escapeRegExp(seedFile) + '/'],
@@ -186,7 +193,7 @@ export class TestContext {
       pauseAtEnd: true,
       disableConfigReporters: true,
       failOnLoadErrors: true,
-    });
+    }, signal);
     if (result.status === 'passed')
       result.output += '\nError: seed test not found.';
     else if (result.status !== 'paused')
@@ -194,7 +201,11 @@ export class TestContext {
     return result;
   }
 
-  async runTestsWithGlobalSetupAndPossiblePause(params: testRunner.RunTestsParams): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
+  async runTestsWithGlobalSetupAndPossiblePause(params: testRunner.RunTestsParams, signal?: AbortSignal): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
+    return this._enqueue(() => this._runTestsImpl(params, signal));
+  }
+
+  private async _runTestsImpl(params: testRunner.RunTestsParams, signal?: AbortSignal): Promise<{ output: string, status: testRunner.FullResultStatus | 'paused' }> {
     const configDir = this._configLocation.configDir;
     const testRunnerAndScreen = await this.createTestRunner();
     const { testRunner: runner, screen, claimStdio, releaseStdio } = testRunnerAndScreen;
@@ -222,12 +233,28 @@ export class TestContext {
       }
     };
 
+    const abortPromise: Promise<'interrupted'> = signal
+      ? new Promise(resolve => {
+        if (signal.aborted)
+          resolve('interrupted');
+        else
+          signal.addEventListener('abort', () => resolve('interrupted'), { once: true });
+      })
+      : new Promise<never>(() => {});
+
     try {
       const reporter = new MCPListReporter({ configDir, screen, includeTestId: true });
       status = await Promise.race([
         runner.runTests(reporter, params).then(result => result.status),
         testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
+        abortPromise,
       ]);
+
+      if (status === 'interrupted') {
+        await runner.stopTests();
+        await cleanup();
+        return { output: testRunnerAndScreen.output.join('\n'), status };
+      }
 
       if (status === 'paused') {
         const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
@@ -248,7 +275,7 @@ export class TestContext {
   }
 
   async close() {
-    await this._cleanupTestRunner().catch(e => debug('pw:mcp:error')(e));
+    await this._enqueue(() => this._cleanupTestRunner()).catch(e => debug('pw:mcp:error')(e));
   }
 
   async sendMessageToPausedTest(request: BrowserMCPRequest): Promise<BrowserMCPResponse> {

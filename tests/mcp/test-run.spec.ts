@@ -123,6 +123,44 @@ Running 2 tests using 1 worker
   2 passed (XXms)`);
 });
 
+test('test_run should stop when aborted', async ({ startClient }) => {
+  await writeFiles({
+    'slow.test.ts': `
+      import { test } from '@playwright/test';
+      test('slow', async () => {
+        await new Promise(resolve => setTimeout(resolve, 60_000));
+      });
+    `,
+    'fast.test.ts': `
+      import { test } from '@playwright/test';
+      test('fast', async () => {});
+    `,
+  });
+
+  const { client } = await startClient();
+  const controller = new AbortController();
+
+  const runPromise = client.callTool(
+      { name: 'test_run', arguments: { locations: ['slow.test.ts'] } },
+      undefined,
+      { signal: controller.signal },
+  );
+
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  controller.abort();
+
+  // Per MCP spec, client can initiate a new call without waiting for the
+  // aborted one. Start the next run immediately to verify serialization.
+  const [, response] = await Promise.all([
+    runPromise.catch(() => {}),
+    client.callTool({
+      name: 'test_run',
+      arguments: { locations: ['fast.test.ts'] },
+    }),
+  ]);
+  expect(response.content[0].text).toContain('1 passed');
+});
+
 test('test_run should include dependencies', async ({ startClient }) => {
   await writeFiles({
     'playwright.config.ts': `
