@@ -1086,6 +1086,39 @@ test('should remove import css', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
+test('should remove stylesheet imports in esm mode', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39187' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.test.ts': `
+      import './styles.scss';
+      import './styles.sass';
+      import './styles.less';
+      import './styles.styl';
+      import './styles.css';
+      import { helper } from './helper.ts';
+
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {
+        expect(helper).toBe(42);
+      });
+    `,
+    'helper.ts': `
+      import './nested.scss';
+      export const helper = 42;
+    `,
+    'styles.scss': `@use 'sass:math'; .foo { color: red; }`,
+    'styles.sass': `.foo\n  color: red`,
+    'styles.less': `@primary: red; .foo { color: @primary; }`,
+    'styles.styl': `.foo\n  color red`,
+    'styles.css': `.foo { color: red; }`,
+    'nested.scss': `@import 'foo'; .bar { color: blue; }`,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should dynamically import re-exported cjs namespace', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35812' },
 }, async ({ runInlineTest }) => {
