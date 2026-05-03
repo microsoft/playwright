@@ -85,6 +85,14 @@ Page to retrieve the window for.
 
 Closes Electron application.
 
+### option: ElectronApplication.close.timeout
+* since: v1.52
+- `timeout` ?<[float]>
+
+Maximum time in milliseconds to wait for the application to close gracefully. If the timeout is exceeded, the
+application process is forcefully terminated. Pass `0` to disable timeout (default). When no timeout is specified,
+`close()` waits indefinitely for the application to exit.
+
 ## method: ElectronApplication.context
 * since: v1.9
 - returns: <[BrowserContext]>

@@ -343,6 +343,33 @@ test('should detach debugger on app-initiated exit', async ({ launchElectronApp 
   await closePromise;
 });
 
+test('should force-kill app when close timeout is exceeded', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app-hang-on-close.js');
+  const events: string[] = [];
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
+
+  // This app prevents quit via before-quit handler, so close() without
+  // timeout would hang indefinitely. With a timeout, it should force-kill.
+  await electronApp.close({ timeout: 3000 });
+
+  events.sort();
+  expect(events).toEqual(['application(close)', 'process(exit)']);
+});
+
+test('should not force-kill when app closes within timeout', async ({ launchElectronApp }) => {
+  const electronApp = await launchElectronApp('electron-app.js');
+  const events: string[] = [];
+  electronApp.on('close', () => events.push('application(close)'));
+  electronApp.process().on('exit', () => events.push('process(exit)'));
+
+  // Normal app should close well within the timeout.
+  await electronApp.close({ timeout: 30000 });
+
+  events.sort();
+  expect(events).toEqual(['application(close)', 'process(exit)']);
+});
+
 test('should run pre-ready apis', async ({ launchElectronApp }) => {
   await launchElectronApp('electron-app-pre-ready.js');
 });

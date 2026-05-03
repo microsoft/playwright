@@ -17076,8 +17076,16 @@ export interface ElectronApplication {
 
   /**
    * Closes Electron application.
+   * @param options
    */
-  close(): Promise<void>;
+  close(options?: {
+    /**
+     * Maximum time in milliseconds to wait for the application to close gracefully. If the timeout is exceeded, the
+     * application process is forcefully terminated. Pass `0` to disable timeout (default). When no timeout is specified,
+     * `close()` waits indefinitely for the application to exit.
+     */
+    timeout?: number;
+  }): Promise<void>;
 
   /**
    * This method returns browser context that can be used for setting up context-wide routing, etc.
