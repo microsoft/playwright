@@ -218,10 +218,12 @@ export async function program(options?: { embedderVersion?: string}) {
         return;
       }
       if (args.annotate) {
-        const dashboard = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
-        dashboard.unref();
-        const annotate = spawn(process.execPath, [...daemonArgs, '--annotate'], { stdio: 'inherit' });
-        await new Promise<void>(resolve => annotate.on('exit', () => resolve()));
+        const entry = registry.entry(clientInfo, sessionName);
+        if (!entry)
+          output.errorBrowserNotOpenForTool(sessionName);
+        args.raw = true;
+        const text = await runInSession(entry, clientInfo, args, output);
+        output.toolResult(text);
         return;
       }
       const foreground = args.port !== undefined;

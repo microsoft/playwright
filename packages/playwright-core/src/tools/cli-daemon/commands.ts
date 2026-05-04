@@ -973,6 +973,7 @@ const dashboardShow = declareCommand({
   name: 'show',
   description: 'Show Playwright Dashboard',
   category: 'devtools',
+  raw: true,
   args: z.object({}),
   options: z.object({
     port: numberArg.optional().describe('Start as a blocking HTTP server on this port (use 0 for a random port)'),
@@ -980,7 +981,7 @@ const dashboardShow = declareCommand({
     annotate: z.boolean().optional().describe('Switch the dashboard into annotation mode.'),
     kill: z.boolean().optional().describe('Kill the dashboard daemon.'),
   }),
-  toolName: '',
+  toolName: ({ annotate }) => annotate ? 'browser_annotate' : '',
   toolParams: () => ({}),
 });
 
