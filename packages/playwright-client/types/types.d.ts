@@ -22899,10 +22899,15 @@ export interface ConnectOverCDPOptions {
   isLocal?: boolean;
 
   /**
-   * When true, Playwright will not send default overrides to the browser on the default context. This includes
-   * `Browser.setDownloadBehavior`, `Emulation.setFocusEmulationEnabled`, and `Emulation.setEmulatedMedia`. Useful when
-   * attaching to a user's daily-driver browser where these overrides would interfere with existing browser state. New
-   * contexts created via
+   * When true, Playwright will not apply its default overrides to the existing default browser context. Specifically,
+   * [`acceptDownloads`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-accept-downloads) is
+   * left at the browser's setting, focus emulation is not enabled, and media emulation options (such as
+   * [`colorScheme`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-color-scheme),
+   * [`reducedMotion`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-reduced-motion),
+   * [`forcedColors`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-forced-colors), and
+   * [`contrast`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-contrast)) are not applied.
+   * Useful when attaching to a user's daily-driver browser where these overrides would interfere with existing browser
+   * state. New contexts created via
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) are not
    * affected. Defaults to `false`.
    */

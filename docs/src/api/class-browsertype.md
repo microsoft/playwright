@@ -225,15 +225,16 @@ Maximum time in milliseconds to wait for the connection to be established. Defau
 `30000` (30 seconds). Pass `0` to disable timeout.
 
 ### option: BrowserType.connectOverCDP.noDefaults
-* since: v1.53
+* since: v1.60
 - `noDefaults` <[boolean]>
 
-When true, Playwright will not send default overrides to the browser on the default context. This includes
-`Browser.setDownloadBehavior`, `Emulation.setFocusEmulationEnabled`, and `Emulation.setEmulatedMedia`.
-Useful when attaching to a user's daily-driver browser where these overrides would interfere with
-existing browser state. New contexts created via
-[browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context)
-are not affected. Defaults to `false`.
+When true, Playwright will not apply its default overrides to the existing default browser context.
+Specifically, [`option: Browser.newContext.acceptDownloads`] is left at the browser's setting, focus
+emulation is not enabled, and media emulation options (such as [`option: Browser.newContext.colorScheme`],
+[`option: Browser.newContext.reducedMotion`], [`option: Browser.newContext.forcedColors`], and
+[`option: Browser.newContext.contrast`]) are not applied. Useful when attaching to a user's daily-driver
+browser where these overrides would interfere with existing browser state. New contexts created via
+[`method: Browser.newContext`] are not affected. Defaults to `false`.
 
 
 ## method: BrowserType.executablePath
