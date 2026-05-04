@@ -22,7 +22,7 @@ import { msToString } from '@isomorphic/formatUtils';
 import { TerminalReporter, formatResultFailure, formatRetry } from './base';
 import { stripAnsiEscapes } from '../util';
 
-import type { FullResult, TestCase, TestError } from '../../types/testReporter';
+import type { FullResult, TestCase, TestError, TestResult } from '../../types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 
@@ -64,6 +64,7 @@ class GitHubLogger {
 
 export class GitHubReporter extends TerminalReporter {
   githubLogger = new GitHubLogger();
+  private _failedTestCount = 0;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     super(options);
@@ -72,6 +73,29 @@ export class GitHubReporter extends TerminalReporter {
 
   printsToStdio() {
     return false;
+  }
+
+  override onTestEnd(test: TestCase, result: TestResult) {
+    super.onTestEnd(test, result);
+    if (this.willRetry(test))
+      return;
+    if (!this._shouldPrintFailureAnnotations(test))
+      return;
+    this._failedTestCount++;
+    for (const r of test.results)
+      this._printFailureAnnotation(test, r, this._failedTestCount);
+  }
+
+  private _shouldPrintFailureAnnotations(test: TestCase): boolean {
+    switch (test.outcome()) {
+      case 'unexpected':
+      case 'flaky':
+        return true;
+      case 'skipped':
+        return test.results.some(r => r.status === 'interrupted') && test.results.some(r => !!r.error);
+      default:
+        return false;
+    }
   }
 
   override async onEnd(result: FullResult) {
@@ -87,8 +111,6 @@ export class GitHubReporter extends TerminalReporter {
   private _printAnnotations() {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (summary.failuresToPrint.length)
-      this._printFailureAnnotations(summary.failuresToPrint);
     this._printSlowTestAnnotations();
     this._printSummaryAnnotation(summaryMessage);
   }
@@ -109,26 +131,22 @@ export class GitHubReporter extends TerminalReporter {
     });
   }
 
-  private _printFailureAnnotations(failures: TestCase[]) {
-    failures.forEach((test, index) => {
-      const title = this.formatTestTitle(test);
-      const header = this.formatTestHeader(test, { indent: '  ', index: index + 1, mode: 'error' });
-      for (const result of test.results) {
-        const errors = formatResultFailure(this.screen, test, result, '    ');
-        for (const error of errors) {
-          const options: GitHubLogOptions = {
-            file: workspaceRelativePath(error.location?.file || test.location.file),
-            title,
-          };
-          if (error.location) {
-            options.line = error.location.line;
-            options.col = error.location.column;
-          }
-          const message = [header, ...formatRetry(this.screen, result), error.message].join('\n');
-          this.githubLogger.error(message, options);
-        }
+  private _printFailureAnnotation(test: TestCase, result: TestResult, index: number) {
+    const title = this.formatTestTitle(test);
+    const header = this.formatTestHeader(test, { indent: '  ', index, mode: 'error' });
+    const errors = formatResultFailure(this.screen, test, result, '    ');
+    for (const error of errors) {
+      const options: GitHubLogOptions = {
+        file: workspaceRelativePath(error.location?.file || test.location.file),
+        title,
+      };
+      if (error.location) {
+        options.line = error.location.line;
+        options.col = error.location.column;
       }
-    });
+      const message = [header, ...formatRetry(this.screen, result), error.message].join('\n');
+      this.githubLogger.error(message, options);
+    }
   }
 }
 

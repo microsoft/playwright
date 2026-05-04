@@ -97,5 +97,23 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('::error ::Error: Oh my!%0A%0A');
       expect(result.exitCode).toBe(1);
     });
+
+    test('emit GitHub failure annotation before run summary', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('failing', async ({}) => {
+            expect(1 + 1).toBe(3);
+          });
+          test.skip('marker', async ({}) => {});
+        `
+      }, { workers: 1, reporter: 'github' }, { GITHUB_WORKSPACE: process.cwd() });
+      const text = result.output;
+      const errorIndex = text.indexOf('::error');
+      const summaryIndex = text.indexOf('🎭 Playwright Run Summary');
+      expect(errorIndex).toBeGreaterThanOrEqual(0);
+      expect(summaryIndex).toBeGreaterThan(errorIndex);
+      expect(result.exitCode).toBe(1);
+    });
   });
 }
