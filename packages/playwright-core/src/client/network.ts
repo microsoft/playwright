@@ -16,7 +16,7 @@
 
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
-import { serializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
+import { resolveGlobToRegexPattern, serializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '@isomorphic/manualPromise';
 import { MultiMap } from '@isomorphic/multimap';
 import { isString } from '@isomorphic/rtti';
@@ -591,6 +591,10 @@ export class WebSocketRouteHandler {
     this._baseURL = baseURL;
     this.url = url;
     this.handler = handler;
+    // Eagerly validate string globs so that invalid patterns throw at the call site
+    // (e.g. page.routeWebSocket()) rather than silently failing later.
+    if (typeof url === 'string')
+      resolveGlobToRegexPattern(baseURL, url, true);
   }
 
   static prepareInterceptionPatterns(handlers: WebSocketRouteHandler[]) {
@@ -836,6 +840,10 @@ export class RouteHandler {
     this.url = url;
     this.handler = handler;
     this._savedZone = platform.zones.current().pop();
+    // Eagerly validate string globs so that invalid patterns throw at the call site
+    // (e.g. page.route()) rather than silently aborting requests later.
+    if (typeof url === 'string')
+      resolveGlobToRegexPattern(baseURL, url);
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {
