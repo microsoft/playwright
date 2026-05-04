@@ -12,7 +12,7 @@ The Playwright Chrome Extension allows you to connect to pages in your existing 
 
 ### Install the Extension
 
-Install [Playwright Extension](https://chromewebstore.google.com/detail/playwright-mcp-bridge/mmlmfjhmonkocbjadbfplnigmagldckm) from the Chrome Web Store.
+Install [Playwright Extension](https://chromewebstore.google.com/detail/playwright-extension/mmlmfjhmonkocbjadbfplnigmagldckm) from the Chrome Web Store.
 
 ### Configure Playwright MCP server
 

@@ -20,7 +20,7 @@ import path from 'path';
 // Also pinned via the "key" field in packages/extension/manifest.json.
 export const playwrightExtensionId = 'mmlmfjhmonkocbjadbfplnigmagldckm';
 
-export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-mcp-bridge/${playwrightExtensionId}`;
+export const playwrightExtensionInstallUrl = `https://chromewebstore.google.com/detail/playwright-extension/${playwrightExtensionId}`;
 
 export async function isPlaywrightExtensionInstalled(userDataDir: string): Promise<boolean> {
   // Chrome stores profiles as `Default` and `Profile <N>` subdirs of the user data dir;
