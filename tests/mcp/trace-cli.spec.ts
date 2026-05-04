@@ -175,6 +175,16 @@ test('trace snapshot --name before', async ({ runTraceCli }) => {
   expect(stdout).toBeTruthy();
 });
 
+test('trace snapshot resolves inner frames', async ({ runTraceCli }) => {
+  const { stdout: listOutput } = await runTraceCli(['actions', '--grep', 'Click']);
+  const ordinals = [...listOutput.matchAll(/^\s+(\d+)\.\s/gm)].map(m => m[1]);
+  expect(ordinals.length).toBeGreaterThanOrEqual(2);
+  const anchorClickOrdinal = ordinals[ordinals.length - 1];
+
+  const { stdout } = await runTraceCli(['snapshot', '--name', 'after', anchorClickOrdinal]);
+  expect(stdout).toContain('Innermost');
+});
+
 test('trace screenshot saves image file', async ({ runTraceCli }, testInfo) => {
   const { stdout: listOutput } = await runTraceCli(['actions', '--grep', 'Navigate']);
   const match = listOutput.match(/^\s+(\d+)\.\s/m);

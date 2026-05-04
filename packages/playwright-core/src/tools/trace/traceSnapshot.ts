@@ -87,11 +87,12 @@ async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader,
   const snapshotServer = new SnapshotServer(storage, sha1 => loader.resourceForSha1(sha1));
   const httpServer = new HttpServer();
 
-  httpServer.routePrefix('/snapshot', (request: any, response: any) => {
+  httpServer.routePrefix('/snapshot/', (request: any, response: any) => {
     const url = new URL('http://localhost' + request.url!);
+    const pageOrFrameId = url.pathname.substring('/snapshot/'.length);
     const searchParams = url.searchParams;
     searchParams.set('name', snapshotKey);
-    const snapshotResponse = snapshotServer.serveSnapshot(pageId, searchParams, '/snapshot');
+    const snapshotResponse = snapshotServer.serveSnapshot(pageOrFrameId, searchParams, url.href);
     response.statusCode = snapshotResponse.status;
     snapshotResponse.headers.forEach((value: string, key: string) => response.setHeader(key, value));
     snapshotResponse.text().then((text: string) => response.end(text));
@@ -100,7 +101,7 @@ async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader,
 
   httpServer.routePrefix('/', (_request: any, response: any) => {
     response.statusCode = 302;
-    response.setHeader('Location', '/snapshot');
+    response.setHeader('Location', `/snapshot/${pageId}?name=${encodeURIComponent(snapshotKey)}`);
     response.end();
     return true;
   });

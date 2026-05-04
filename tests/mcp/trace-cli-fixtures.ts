@@ -57,7 +57,27 @@ export const test = baseTest
         server.setContent('/page2', `
           <html>
             <head><title>Page 2</title></head>
-            <body><h1>Page 2</h1></body>
+            <body>
+              <h1>Page 2</h1>
+              <iframe src="/iframe" id="frame1"></iframe>
+            </body>
+          </html>
+        `, 'text/html');
+
+        server.setContent('/iframe', `
+          <html>
+            <head><title>Iframe</title></head>
+            <body>
+              <p>Iframe content</p>
+              <iframe src="/iframe-inner" id="frame2"></iframe>
+            </body>
+          </html>
+        `, 'text/html');
+
+        server.setContent('/iframe-inner', `
+          <html>
+            <head><title>Inner iframe</title></head>
+            <body><p>Innermost</p></body>
           </html>
         `, 'text/html');
 
@@ -84,7 +104,9 @@ export const test = baseTest
 
         // Navigate to another page
         await page.locator('a').click();
-        await page.waitForURL('**/page2');
+
+        // Click into innermost frame
+        await page.frameLocator('#frame1').frameLocator('#frame2').locator('p').click();
 
         await page.close();
         const tmpDir = path.join(workerInfo.project.outputDir, 'pw-trace-cli-' + workerInfo.workerIndex);
