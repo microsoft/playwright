@@ -169,12 +169,18 @@ async function attachDashboardDevServer(httpServer: HttpServer) {
 }
 // HMR end
 
+/* eslint-disable no-console */
 async function innerOpenDashboardApp(options: DashboardOptions): Promise<{ page: api.Page; server: DashboardServer }> {
+  console.log(`[dashboardApp pid=${process.pid}] innerOpenDashboardApp start`);
   const server = await startDashboardServer(new RegistrySessionProvider(), options);
+  console.log(`[dashboardApp pid=${process.pid}] dashboard server started at ${server.url}, calling launchApp`);
   const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
+  console.log(`[dashboardApp pid=${process.pid}] launchApp returned, navigating`);
   await page.goto(server.url);
+  console.log(`[dashboardApp pid=${process.pid}] innerOpenDashboardApp done`);
   return { page, server };
 }
+/* eslint-enable no-console */
 
 async function launchApp(appName: string, options?: { onClose?: () => void }) {
   const channel = findChromiumChannelBestEffort('javascript');
@@ -190,8 +196,19 @@ async function launchApp(appName: string, options?: { onClose?: () => void }) {
     ],
     viewport: null,
   });
-  if (process.env.PWTEST_DASHBOARD_APP_BIND_TITLE)
-    await context.browser()?.bind(process.env.PWTEST_DASHBOARD_APP_BIND_TITLE, { workspaceDir: process.cwd() });
+  if (process.env.PWTEST_DASHBOARD_APP_BIND_TITLE) {
+    // eslint-disable-next-line no-console
+    console.log(`[dashboardApp pid=${process.pid}] launchPersistentContext done, browser=${!!context.browser()}, calling bind(${process.env.PWTEST_DASHBOARD_APP_BIND_TITLE})`);
+    try {
+      await context.browser()?.bind(process.env.PWTEST_DASHBOARD_APP_BIND_TITLE, { workspaceDir: process.cwd() });
+      // eslint-disable-next-line no-console
+      console.log(`[dashboardApp pid=${process.pid}] bind succeeded`);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(`[dashboardApp pid=${process.pid}] bind failed:`, e);
+      throw e;
+    }
+  }
 
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.
@@ -297,6 +314,8 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
 
 export async function openDashboardApp() {
   const options = parseOpenArgs();
+  // eslint-disable-next-line no-console
+  console.log(`[dashboardApp pid=${process.pid}] openDashboardApp start, options=${JSON.stringify({ kill: options.kill, annotate: options.annotate, port: options.port })}, bindTitle=${process.env.PWTEST_DASHBOARD_APP_BIND_TITLE}`);
   if (options.kill) {
     await runKillClient();
     return;
@@ -320,7 +339,11 @@ export async function openDashboardApp() {
   process.on('exit', () => server?.close());
   try {
     server = await acquireSingleton(options);
-  } catch {
+    // eslint-disable-next-line no-console
+    console.log(`[dashboardApp pid=${process.pid}] acquireSingleton ok`);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(`[dashboardApp pid=${process.pid}] acquireSingleton failed:`, e);
     return;
   }
   const statePromise = innerOpenDashboardApp(options);

@@ -218,6 +218,7 @@ export async function program(options?: { embedderVersion?: string}) {
           return 'ignore';
         fs.mkdirSync(path.dirname(logFile), { recursive: true });
         const fd = fs.openSync(logFile, 'a');
+        fs.writeSync(fd, `[cli pid=${process.pid}] opened log for show args=${JSON.stringify({ kill: !!args.kill, annotate: !!args.annotate, port: args.port })} bindTitle=${process.env.PWTEST_DASHBOARD_APP_BIND_TITLE} platform=${process.platform}\n`);
         return ['ignore', fd, fd];
       };
       if (args.kill) {
@@ -227,7 +228,7 @@ export async function program(options?: { embedderVersion?: string}) {
         return;
       }
       if (args.annotate) {
-        const dashboard = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
+        const dashboard = spawn(process.execPath, daemonArgs, { detached: true, stdio: detachedStdio() });
         dashboard.unref();
         const annotate = spawn(process.execPath, [...daemonArgs, '--annotate'], { stdio: 'inherit' });
         await new Promise<void>(resolve => annotate.on('exit', () => resolve()));
