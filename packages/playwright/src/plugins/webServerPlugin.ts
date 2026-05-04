@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import net from 'net';
 import path from 'path';
 
 import colors from 'colors/safe';
@@ -20,7 +21,6 @@ import debug from 'debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
-import { createSocket } from '@utils/happyEyeballs';
 import { isURLAvailable } from '@utils/network';
 import { launchProcess } from '@utils/processLauncher';
 
@@ -210,13 +210,18 @@ export class WebServerPlugin implements TestRunnerPlugin {
 }
 
 async function isPortUsed(port: number): Promise<boolean> {
-  try {
-    const socket = await createSocket('localhost', port);
-    socket.end();
-    return true;
-  } catch {
-    return false;
-  }
+  const innerIsPortUsed = (host: string) => new Promise<boolean>(resolve => {
+    const conn = net
+        .connect(port, host)
+        .on('error', () => {
+          resolve(false);
+        })
+        .on('connect', () => {
+          conn.end();
+          resolve(true);
+        });
+  });
+  return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
 }
 
 async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canceled: boolean }) {
