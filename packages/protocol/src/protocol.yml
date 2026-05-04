@@ -326,6 +326,7 @@ RecordHarOptions:
     urlRegexFlags: string?
     harPath: string?
     resourcesDir: string?
+    live: boolean?
 
 
 FormField:

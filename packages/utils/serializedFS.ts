@@ -101,6 +101,11 @@ export class SerializedFS {
       last.content += op.content;
       return;
     }
+    if (last?.op === 'writeFile' && op.op === 'writeFile' && last.file === op.file && !last.skipIfExists && !op.skipIfExists) {
+      // The latest write supersedes the previous one queued for the same file.
+      last.content = op.content;
+      return;
+    }
 
     this._operations.push(op);
     if (this._operationsDone.isDone())

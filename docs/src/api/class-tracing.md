@@ -380,6 +380,13 @@ A glob or regex pattern to filter requests that are stored in the HAR. Defaults 
 Only used together with `content: 'attach'`. When set, response bodies are placed in this directory instead of next to
 the HAR file. Not compatible with a `.zip` HAR file.
 
+### option: Tracing.startHar.live
+* since: v1.60
+* langs: js
+- `live` <[boolean]>
+
+When set to `true`, the HAR file is rewritten on disk every time a network request finishes, so that the file can be read while recording. The file is finalized on [`method: Tracing.stopHar`]. Not compatible with a `.zip` HAR file or with remote connections.
+
 ## async method: Tracing.group
 * since: v1.49
 - returns: <[Disposable]>
