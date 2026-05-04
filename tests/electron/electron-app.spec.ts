@@ -78,7 +78,7 @@ test('should force-kill the app when close timeout fires', async ({ launchElectr
   await electronApp.close({ timeout: 1000 });
   const elapsed = Date.now() - start;
   // Should not wait much longer than the timeout itself.
-  expect(elapsed).toBeLessThan(15000);
+  expect(elapsed).toBeLessThan(10000);
   expect([...events].sort()).toEqual(['application(close)', 'process(exit)']);
   // A second call should be a noop and not throw.
   await electronApp.close({ timeout: 1000 });
