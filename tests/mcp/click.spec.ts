@@ -202,3 +202,25 @@ test('browser_click (test id attribute)', async ({ startClient, server, mcpBrows
     code: `await page.getByTestId('submit').click();`,
   });
 });
+
+test('browser_click (locator target containing aria-ref-like substring)', async ({ client, server }) => {
+  server.setContent('/', `
+    <title>Title</title>
+    <button id="z2l9e43l3">Submit</button>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Submit button',
+      target: '#z2l9e43l3',
+    },
+  })).toHaveResponse({
+    code: `await page.locator('#z2l9e43l3').click();`,
+  });
+});

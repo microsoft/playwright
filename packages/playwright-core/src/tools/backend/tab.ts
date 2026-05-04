@@ -444,7 +444,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   async targetLocators(params: { element?: string, target: string }[]): Promise<{ locator: playwright.Locator, resolved: string }[]> {
     await this._initializedPromise;
     return Promise.all(params.map(async param => {
-      if (!param.target.match(/(f\d+)?(e\d+)/)) {
+      if (!param.target.match(/^(f\d+)?e\d+$/)) {
         const selector = locatorOrSelectorAsSelector('javascript', param.target, this.context.config.testIdAttribute || 'data-testid');
         const handle = await this.page.$(selector);
         if (!handle)
