@@ -42,7 +42,7 @@ const snapshot = defineTabTool({
       target: z.string().optional().describe(elementTargetDescription),
       filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
       depth: z.number().optional().describe('Limit the depth of the snapshot tree'),
-      boxes: z.boolean().optional().describe('Include each element\'s bounding box as [box=x,y,width,height] in the snapshot'),
+      boxes: z.boolean().optional().describe('Include each element\'s bounding box as [box=x,y,width,height] in the snapshot. Coordinates are viewport-relative, in CSS pixels (Element.getBoundingClientRect)'),
     }),
     type: 'readOnly',
   },

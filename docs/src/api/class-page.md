@@ -4257,7 +4257,9 @@ When specified, limits the depth of the snapshot.
 * since: v1.60
 - `boxes` <[boolean]>
 
-When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
+When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Coordinates are
+relative to the viewport, in CSS pixels, as returned by [`Element.getBoundingClientRect()`](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+Defaults to `false`.
 
 ## async method: Page.tap
 * since: v1.8
