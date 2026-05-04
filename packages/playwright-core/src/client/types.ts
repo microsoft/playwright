@@ -109,7 +109,6 @@ export type LaunchServerOptions = LaunchOptions & {
   host?: string,
   port?: number,
   wsPath?: string,
-  allowClientNetwork?: string,
 };
 
 export type LaunchAndroidServerOptions = {

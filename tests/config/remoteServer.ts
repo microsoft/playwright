@@ -70,7 +70,6 @@ export type RemoteServerOptions = {
   startStopAndRunHttp?: boolean;
   sharedBrowser?: boolean;
   artifactsDir?: string;
-  allowClientNetwork?: string;
 };
 
 export class RemoteServer implements PlaywrightServer {
@@ -101,8 +100,6 @@ export class RemoteServer implements PlaywrightServer {
       (launchOptions as any)._sharedBrowser = true;
     if (remoteServerOptions.artifactsDir)
       launchOptions.artifactsDir = remoteServerOptions.artifactsDir;
-    if (remoteServerOptions.allowClientNetwork !== undefined)
-      launchOptions.allowClientNetwork = remoteServerOptions.allowClientNetwork;
     const options = {
       browserTypeName: browserType.name(),
       channel,

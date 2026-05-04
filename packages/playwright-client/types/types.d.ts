@@ -16002,26 +16002,6 @@ export interface BrowserType<Unused = {}> {
    */
   launchServer(options?: {
     /**
-     * This option allows the connecting client to expose its local network to the browser via
-     * [`exposeNetwork`](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-option-expose-network).
-     * The value is the maximum set of network rules the server will accept; the client must request a subset of these
-     * rules through `exposeNetwork`, otherwise its requests will be served directly from the server. Consists of a list
-     * of rules separated by comma.
-     *
-     * Available rules:
-     * 1. Hostname pattern, for example: `example.com`, `*.org:99`, `x.*.y.com`, `*foo.org`.
-     * 1. IP literal, for example: `127.0.0.1`, `0.0.0.0:99`, `[::1]`, `[0:0::1]:99`.
-     * 1. `<loopback>` that matches local loopback interfaces: `localhost`, `*.localhost`, `127.0.0.1`, `[::1]`.
-     *
-     * Some common examples:
-     * 1. `"*"` to allow exposing any network.
-     * 1. `"<loopback>"` to allow exposing localhost network.
-     * 1. `"*.test.internal-domain,*.staging.internal-domain,<loopback>"` to allow exposing test/staging deployments
-     *    and localhost.
-     */
-    allowClientNetwork?: string;
-
-    /**
      * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
      *
      * Additional arguments to pass to the browser instance. The list of Chromium flags can be found

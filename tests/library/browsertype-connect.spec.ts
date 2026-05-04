@@ -841,9 +841,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     });
 
     test.describe('socks proxy', () => {
-      // For 'launchServer', the proxy pattern is configured on the server up-front via allowClientNetwork.
-      // For 'run-server', the proxy pattern comes from each connecting client.
-      const allowAllOnServer = kind === 'launchServer' ? { allowClientNetwork: '*' } : undefined;
+      test.skip(kind === 'launchServer', 'not supported yet');
 
       test('should forward non-forwarded requests', async ({ server, startRemoteServer, connect }) => {
         let reachedOriginalTarget = false;
@@ -851,7 +849,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           reachedOriginalTarget = true;
           res.end('<html><body>original-target</body></html>');
         });
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' });
         const page = await browser.newPage();
         await page.goto(server.PREFIX + '/foo.html');
@@ -868,7 +866,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           res.end('<html><body></body></html>');
         });
         const examplePort = 20_000 + testInfo.workerIndex * 3;
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' } as any, dummyServerPort);
         const page = await browser.newPage();
         {
@@ -899,7 +897,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           res.end('<html><body></body></html>');
         });
         const examplePort = 20_000 + testInfo.workerIndex * 3;
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' }, ipV6ServerPort);
         const page = await browser.newPage();
         {
@@ -930,7 +928,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           res.end('<html><body></body></html>');
         });
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' }, dummyServerPort);
         const page = await browser.newPage();
         {
@@ -961,7 +959,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           res.end('<html><body></body></html>');
         });
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' }, ipV6ServerPort);
         const page = await browser.newPage();
         {
@@ -990,7 +988,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           res.end('<html><body></body></html>');
         });
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' }, dummyServerPort);
         const page = await browser.newPage();
         await page.goto(`http://local.playwright:${examplePort}/foo.html`);
@@ -1000,7 +998,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
 
       test('should lead to the error page for forwarded requests when the connection is refused', async ({ connect, startRemoteServer, browserName }, workerInfo) => {
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' });
         const page = await browser.newPage();
         const error = await page.goto(`http://127.0.0.1:${examplePort}`).catch(e => e);
@@ -1021,8 +1019,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           res.end('<html><body>from-original-server</body></html>');
         });
         const examplePort = 20_000 + workerInfo.workerIndex * 3;
-        const serverOptions = kind === 'launchServer' ? { allowClientNetwork: 'localhost' } : undefined;
-        const remoteServer = await startRemoteServer(kind, serverOptions);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: 'localhost' }, dummyServerPort);
         const page = await browser.newPage();
 
@@ -1050,9 +1047,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
           reachedOriginalTarget = true;
           res.end('<html><body>from-original-server</body></html>');
         });
-        // Server allows everything ('x-playwright-proxy': '*' for run-server, allowClientNetwork: '*' for launchServer)
-        // so that the request reaches the client, where the client's exposeNetwork pattern will reject it.
-        const remoteServer = await startRemoteServer(kind, allowAllOnServer);
+        const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), {
           exposeNetwork: '127.0.0.1',
           headers: {
