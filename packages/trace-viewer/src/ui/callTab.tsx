@@ -84,12 +84,15 @@ function renderDuration(action: ActionTraceEventInContext): string {
 }
 
 function renderProperty(property: Property) {
-  let text = property.text.replace(/\n/g, '↵');
+  let text = property.text;
+  if (text.length > 1000)
+    text = text.slice(0, 1000) + '…';
+  text = text.replace(/\n/g, '↵');
   if (property.type === 'string')
     text = `"${text}"`;
   return (
     <div key={property.name} className='call-line'>
-      {property.name}:<span className={clsx('call-value', property.type)} title={property.text}>{text}</span>
+      {property.name}:<span className={clsx('call-value', property.type)} title={text}>{text}</span>
       { ['literal', 'string', 'number', 'object', 'locator'].includes(property.type) &&
         <CopyToClipboard value={property.text} />
       }
@@ -121,7 +124,7 @@ function propertyToString(event: ActionTraceEvent, name: string, value: any, sdk
     return { text: String(value), type, name };
   if (value.guid)
     return { text: '<handle>', type: 'handle', name };
-  return { text: JSON.stringify(value).slice(0, 1000), type: 'object', name };
+  return { text: JSON.stringify(value), type: 'object', name };
 }
 
 function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {

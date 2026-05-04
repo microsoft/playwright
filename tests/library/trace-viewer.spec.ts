@@ -389,6 +389,28 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   ]);
 });
 
+test('should truncate long return values with ellipsis but copy full value', async ({ page, runAndTrace }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40527' });
+  const traceViewer = await runAndTrace(async () => {
+    await page.evaluate(() => {
+      const value: Record<string, string> = {};
+      for (let i = 0; i < 100; i++)
+        value['key_' + i] = 'value_' + i + '_padding_padding_padding';
+      return value;
+    });
+  });
+  await traceViewer.selectAction('Evaluate');
+  const returnValue = traceViewer.callLines.filter({ hasText: 'value:' });
+  await expect(returnValue.locator('.call-value')).toHaveText(/…$/);
+
+  await traceViewer.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await returnValue.hover();
+  await returnValue.getByRole('button', { name: 'Copy' }).click();
+  const copied = await traceViewer.page.evaluate(() => navigator.clipboard.readText());
+  expect(copied.length).toBeGreaterThan(1000);
+  expect(copied.endsWith('…')).toBe(false);
+});
+
 test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('SET VIEWPORT');
