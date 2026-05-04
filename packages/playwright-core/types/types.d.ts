@@ -2052,7 +2052,10 @@ export interface Page {
    */
   ariaSnapshot(options?: {
     /**
-     * When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
+     * When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Coordinates are
+     * relative to the viewport, as returned by
+     * [Element.getBoundingClientRect()](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+     * Defaults to `false`.
      */
     boxes?: boolean;
 
@@ -13050,7 +13053,10 @@ export interface Locator {
    */
   ariaSnapshot(options?: {
     /**
-     * When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Defaults to `false`.
+     * When `true`, appends each element's bounding box as `[box=x,y,width,height]` to the snapshot. Coordinates are
+     * relative to the viewport, as returned by
+     * [Element.getBoundingClientRect()](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+     * Defaults to `false`.
      */
     boxes?: boolean;
 
