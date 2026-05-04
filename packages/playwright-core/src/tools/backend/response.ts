@@ -300,6 +300,8 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
   const lines = [`- Page URL: ${tab.url}`];
   if (tab.title)
     lines.push(`- Page Title: ${tab.title}`);
+  if (tab.crashed)
+    lines.push(`- Page status: crashed`);
   if (tab.console.errors || tab.console.warnings)
     lines.push(`- Console: ${tab.console.errors} errors, ${tab.console.warnings} warnings`);
   return lines;
@@ -313,7 +315,8 @@ export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
     const current = tab.current ? ' (current)' : '';
-    lines.push(`- ${i}:${current} [${tab.title}](${tab.url})`);
+    const crashed = tab.crashed ? ' [crashed]' : '';
+    lines.push(`- ${i}:${current} [${tab.title}](${tab.url})${crashed}`);
   }
   return lines;
 }

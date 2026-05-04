@@ -76,6 +76,7 @@ export type TabHeader = {
   title: string;
   url: string;
   current: boolean;
+  crashed: boolean;
   console: { total: number, warnings: number, errors: number };
 };
 
@@ -89,10 +90,11 @@ type TabSnapshot = {
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
   readonly page: playwright.Page;
-  private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, console: { total: 0, warnings: 0, errors: 0 } };
+  private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, crashed: false, console: { total: 0, warnings: 0, errors: 0 } };
   private _downloads: Download[] = [];
   private _requests: playwright.Request[] = [];
   private _onPageClose: (tab: Tab) => void;
+  crashed = false;
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
   private _recentEventEntries: EventEntry[] = [];
@@ -115,6 +117,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       eventsHelper.addEventListener(p, 'response', response => this._handleResponse(response)),
       eventsHelper.addEventListener(p, 'requestfailed', request => this._handleRequestFailed(request)),
       eventsHelper.addEventListener(p, 'close', () => this._onClose()),
+      eventsHelper.addEventListener(p, 'crash', () => { this.crashed = true; }),
       eventsHelper.addEventListener(p, 'filechooser', chooser => {
         this.setModalState({
           type: 'fileChooser',
@@ -254,6 +257,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       this._consoleLog.appendLine(wallTime, message.toString());
   }
 
+  logErrorMessage(text: string) {
+    this._handleConsoleMessage(pageErrorToConsoleMessage(new Error(text)));
+  }
+
   private _addLogEntry(entry: EventEntry) {
     this._recentEventEntries.push(entry);
   }
@@ -265,14 +272,19 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async headerSnapshot(): Promise<TabHeader & { changed: boolean }> {
     let title: string | undefined;
-    await this._raceAgainstModalStates(async () => {
-      title = await this.page.title();
-    });
+    let consoleCounts = { total: 0, errors: 0, warnings: 0 };
+    if (!this.crashed) {
+      await this._raceAgainstModalStates(async () => {
+        title = await this.page.title();
+      });
+      consoleCounts = await this.consoleMessageCount();
+    }
     const newHeader: TabHeader = {
       title: title ?? '',
       url: this.page.url(),
       current: this.isCurrentTab(),
-      console: await this.consoleMessageCount()
+      crashed: this.crashed,
+      console: consoleCounts,
     };
 
     if (!tabHeaderEquals(this._lastHeader, newHeader)) {
@@ -570,6 +582,7 @@ function tabHeaderEquals(a: TabHeader, b: TabHeader): boolean {
   return a.title === b.title &&
       a.url === b.url &&
       a.current === b.current &&
+      a.crashed === b.crashed &&
       a.console.errors === b.console.errors &&
       a.console.warnings === b.console.warnings &&
       a.console.total === b.console.total;

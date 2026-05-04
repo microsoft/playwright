@@ -180,9 +180,16 @@ export class Context {
   }
 
   async ensureTab(): Promise<Tab> {
-    const browserContext = await this.ensureBrowserContext();
+    await this.ensureBrowserContext();
+    const crashed = this._currentTab?.crashed;
+    if (crashed) {
+      await this._currentTab!.page.close().catch(() => {});
+      this._currentTab = undefined;
+    }
     if (!this._currentTab)
-      await browserContext.newPage();
+      await this.newTab();
+    if (crashed)
+      this._currentTab!.logErrorMessage('Page crashed and was reset to about:blank.');
     return this._currentTab!;
   }
 
