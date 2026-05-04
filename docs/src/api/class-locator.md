@@ -1489,7 +1489,7 @@ Attribute name to get the value for.
 ## async method: Locator.hideHighlight
 * since: v1.60
 
-Hide element highlight added with Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
+Hides the element highlight previously added by [`method: Locator.highlight`].
 
 ## async method: Locator.highlight
 * since: v1.20
@@ -1500,13 +1500,13 @@ Highlight the corresponding element(s) on the screen. Useful for debugging, don'
 ### option: Locator.highlight.style
 * since: v1.60
 * langs: js
-- `style` <[string]|[Object]<[string], [any]>>
+- `style` <[string]|[Object]<[string], [string]|[number]>>
 
 Inline CSS applied to the highlight overlay, e.g.
 
 ```js
-await locator.highlight('outline: 2px dashed red');
-await locator.highlight({ color: 'red' });
+await locator.highlight({ style: 'outline: 2px dashed red' });
+await locator.highlight({ style: { color: 'red' } });
 ```
 
 ### option: Locator.highlight.style

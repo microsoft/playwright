@@ -14238,8 +14238,7 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Hide element highlight added with Highlight the corresponding element(s) on the screen. Useful for debugging, don't
-   * commit the code that uses
+   * Hides the element highlight previously added by
    * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
    */
   hideHighlight(): Promise<void>;
