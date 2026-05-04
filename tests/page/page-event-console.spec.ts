@@ -148,11 +148,11 @@ it('should have location for console API calls', async ({ page, server }) => {
     page.goto(server.PREFIX + '/consolelog.html'),
   ]);
   expect(message.type()).toBe('log');
-  const location = message.location();
   // Engines have different column notion.
-  delete location.columnNumber;
-  expect(location).toEqual({
+  const { url, line, lineNumber } = message.location();
+  expect({ url, line, lineNumber }).toEqual({
     url: server.PREFIX + '/consolelog.html',
+    line: 7,
     lineNumber: 7,
   });
 });

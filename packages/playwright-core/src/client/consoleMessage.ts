@@ -22,8 +22,6 @@ import type * as channels from '@protocol/channels';
 import type { Page } from './page';
 import type { Worker } from './worker';
 
-type ConsoleMessageLocation = channels.BrowserContextConsoleEvent['location'];
-
 export class ConsoleMessage implements api.ConsoleMessage {
 
   private _page: Page | null;
@@ -58,8 +56,9 @@ export class ConsoleMessage implements api.ConsoleMessage {
     return this._event.args.map(JSHandle.from);
   }
 
-  location(): ConsoleMessageLocation {
-    return this._event.location;
+  location(): ReturnType<api.ConsoleMessage['location']> {
+    const { url, lineNumber, columnNumber } = this._event.location;
+    return { url, line: lineNumber, column: columnNumber, lineNumber, columnNumber };
   }
 
   timestamp(): number {
