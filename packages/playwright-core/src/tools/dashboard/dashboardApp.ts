@@ -293,23 +293,48 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
   if (process.platform !== 'win32')
     await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
-  return await new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.listen(socketPath, () => resolve(server));
-    server.on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code !== 'EADDRINUSE')
-        return reject(err);
-      const client = net.connect(socketPath, () => {
-        client.write(JSON.stringify(options) + '\n');
-        reject(new Error('already running'));
-      });
-      client.on('error', () => {
-        if (process.platform !== 'win32')
-          fs.unlinkSync(socketPath);
-        server.listen(socketPath, () => resolve(server));
-      });
+  // Try to acquire the singleton. The OS may report a number of error codes
+  // when the socket / named-pipe name is in use (EADDRINUSE on Unix and TCP,
+  // EACCES / ENOENT / EBUSY on Windows pipes depending on libuv mapping and
+  // pipe instance state). Treat any listen failure as "in use" and probe the
+  // existing holder with connect():
+  //  - If connect succeeds, the holder is alive and serving -> "already running".
+  //  - If connect fails, the holder is dead/dying (server has stopped accepting)
+  //    -> wait briefly and retry listen, until either we acquire it or we time out.
+  const deadline = Date.now() + 30000;
+  let lastListenError: NodeJS.ErrnoException | undefined;
+  while (Date.now() < deadline) {
+    const tryListen = await new Promise<{ server?: net.Server, listenErr?: NodeJS.ErrnoException }>(resolve => {
+      const server = net.createServer();
+      const onError = (err: NodeJS.ErrnoException) => { server.removeAllListeners(); resolve({ listenErr: err }); };
+      server.once('error', onError);
+      server.listen(socketPath, () => { server.off('error', onError); resolve({ server }); });
     });
-  });
+    if (tryListen.server)
+      return tryListen.server;
+    lastListenError = tryListen.listenErr;
+    const holderAlive = await new Promise<boolean>(resolve => {
+      const client = net.connect(socketPath);
+      let settled = false;
+      const settle = (alive: boolean) => {
+        if (settled)
+          return;
+        settled = true;
+        resolve(alive);
+      };
+      client.once('connect', () => {
+        client.end(JSON.stringify(options) + '\n');
+        settle(true);
+      });
+      client.once('error', () => settle(false));
+    });
+    if (holderAlive)
+      throw new Error('already running');
+    if (process.platform !== 'win32')
+      try { fs.unlinkSync(socketPath); } catch {}
+    await new Promise(r => setTimeout(r, 50));
+  }
+  throw new Error(`Timed out acquiring dashboard singleton at ${socketPath}: ${lastListenError?.code ?? 'unknown'}`);
 }
 
 export async function openDashboardApp() {
@@ -373,6 +398,12 @@ export async function openDashboardApp() {
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
         } else if (parsed.kill) {
+          // Stop accepting new connections immediately so a concurrent
+          // acquireSingleton() in another process gets a connect-error
+          // (rather than seeing us as "already running") and waits for the
+          // binding to be released. Existing connections (this kill RPC)
+          // stay alive long enough for socket.end() to drain.
+          server?.close();
           socket.end();
           gracefullyProcessExitDoNotHang(0);
         } else {
@@ -412,28 +443,6 @@ async function runKillClient(): Promise<void> {
     client.once('end', () => resolve());
     client.once('error', () => resolve());
   });
-  // The daemon ack'd the kill request before actually exiting (it still has
-  // to run gracefullyProcessExitDoNotHang, close any open browsers, and let
-  // the OS release the socket/named pipe). Poll the socket until nothing is
-  // listening, so callers can rely on `cli show --kill` meaning "the
-  // singleton is gone".
-  await waitForSocketReleased(socketPath, 30000);
-}
-
-async function waitForSocketReleased(socketPath: string, timeoutMs: number): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const released = await new Promise<boolean>(resolve => {
-      const client = net.connect(socketPath);
-      const cleanup = () => { client.removeAllListeners(); client.destroy(); };
-      client.once('connect', () => { cleanup(); resolve(false); });
-      client.once('error', () => { cleanup(); resolve(true); });
-    });
-    if (released)
-      return;
-    await new Promise(r => setTimeout(r, 50));
-  }
-  throw new Error(`Dashboard socket ${socketPath} was not released within ${timeoutMs}ms after kill`);
 }
 
 async function runAnnotateClient(options: DashboardOptions): Promise<void> {
