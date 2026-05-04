@@ -62,12 +62,21 @@ export const test = baseTest.extend<{
   connectToDashboard: async ({ cli, playwright }, use) => {
     await use(async (bindTitle: string) => {
       let endpoint = '';
-      await expect(async () => {
-        const { output } = await cli('list', '--all', '--json');
-        const { servers } = JSON.parse(output);
-        const server = servers.find(s => s.title === bindTitle);
-        endpoint = server.endpoint;
-      }).toPass();
+      let lastListOutput = '';
+      try {
+        await expect(async () => {
+          const { output } = await cli('list', '--all', '--json');
+          lastListOutput = output;
+          const { servers } = JSON.parse(output);
+          const server = servers.find(s => s.title === bindTitle);
+          if (!server)
+            throw new Error(`No server with title ${JSON.stringify(bindTitle)} in list. Got titles: ${JSON.stringify(servers.map(s => s.title))}`);
+          endpoint = server.endpoint;
+        }).toPass();
+      } catch (e) {
+        await test.info().attach('connect-to-dashboard-last-list.json', { body: lastListOutput, contentType: 'application/json' });
+        throw e;
+      }
       return await playwright.chromium.connect(endpoint);
     });
     await cli('show', '--kill');
@@ -97,9 +106,9 @@ export const test = baseTest.extend<{
 
     if (failed) {
       const daemonLog = testInfo.outputPath('dashboard-daemon.log');
-      const dashContents = await fs.promises.readFile(daemonLog, 'utf8').catch(() => '');
-      if (dashContents)
-        await testInfo.attach('dashboard-daemon.log', { body: dashContents, contentType: 'text/plain' });
+      const dashContents = await fs.promises.readFile(daemonLog, 'utf8').catch(() => undefined);
+      if (dashContents !== undefined)
+        await testInfo.attach('dashboard-daemon.log', { body: dashContents || '<empty>', contentType: 'text/plain' });
       for await (const entry of walk(daemonDir)) {
         if (!entry.endsWith('.err') && !entry.endsWith('.session'))
           continue;
