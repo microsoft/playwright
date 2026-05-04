@@ -139,6 +139,8 @@ Never add "Generated with" in commit message.
 Never add test plan to PR description. Keep PR description short — a few bullet points at most.
 Branch naming for issue fixes: `fix-<issue-number>`
 
+**Never amend commits.** Always create a new commit for follow-up changes, even when iterating on an open PR. Amending rewrites history and forces a force-push, losing the incremental review trail. Only amend if the user explicitly says so.
+
 **Never `git push` without an explicit instruction to push.** Applies even when a PR is already open for the branch — additional commits are immediately visible to reviewers. Commit locally, report what was committed, and wait. Only push when the user's message contains "push", "upload", "create PR", "ship it", or equivalent.
 
 ## Development Guides
