@@ -728,7 +728,7 @@ class ArtifactsRecorder {
       return;
     if (this._testInfo.errors.length === 0)
       return;
-    if (this._testInfo.errors.some(e => e.matcherResult?.ariaSnapshot))
+    if (this._testInfo.errors.some(e => e.errorContext))
       return;
     if (this._pageSnapshot)
       return;
@@ -776,7 +776,7 @@ class ArtifactsRecorder {
       await this._takePageSnapshot(context);
 
     if (this._testInfo.errors.length > 0) {
-      const hasMatcherAriaSnapshot = this._testInfo.errors.some(e => e.matcherResult?.ariaSnapshot);
+      const hasMatcherAriaSnapshot = this._testInfo.errors.some(e => e.errorContext);
       const errorContextContent = buildErrorContext({
         titlePath: this._testInfo.titlePath,
         location: { file: this._testInfo.file, line: this._testInfo.line, column: this._testInfo.column },

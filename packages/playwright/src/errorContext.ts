@@ -62,12 +62,11 @@ export function buildErrorContext(options: {
           stripAnsiEscapes(error.message || ''),
           '```',
       );
-      const ariaSnapshot = error.matcherResult?.ariaSnapshot;
-      if (ariaSnapshot) {
+      if (error.errorContext) {
         lines.push(
             '',
             '```yaml',
-            ariaSnapshot,
+            error.errorContext,
             '```',
         );
       }
