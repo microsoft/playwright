@@ -905,7 +905,7 @@ it('should throw if screenshot size is too large', async ({ page, browserName, i
     if ((browserName === 'firefox' && !isBidi) || (browserName === 'webkit' && !isMac))
       expect(exception.message).toContain('Cannot take screenshot larger than 32767');
     else if (browserName === 'firefox' && isBidi)
-      expect(exception.message).toContain('Unable to capture screenshot');
+      expect(exception.message).toContain('65536 exceeds the maximum allowed screenshot height of 65535 pixels');
   }
 });
 
