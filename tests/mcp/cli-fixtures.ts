@@ -162,7 +162,7 @@ function cliEnv() {
     PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
     PWTEST_DASHBOARD_SETTINGS_FILE: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex) + '-' + test.info().testId),
+    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
     PWTEST_DASHBOARD_DAEMON_LOG: test.info().outputPath('dashboard-daemon.log'),
   };

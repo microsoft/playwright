@@ -412,6 +412,28 @@ async function runKillClient(): Promise<void> {
     client.once('end', () => resolve());
     client.once('error', () => resolve());
   });
+  // The daemon ack'd the kill request before actually exiting (it still has
+  // to run gracefullyProcessExitDoNotHang, close any open browsers, and let
+  // the OS release the socket/named pipe). Poll the socket until nothing is
+  // listening, so callers can rely on `cli show --kill` meaning "the
+  // singleton is gone".
+  await waitForSocketReleased(socketPath, 30000);
+}
+
+async function waitForSocketReleased(socketPath: string, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const released = await new Promise<boolean>(resolve => {
+      const client = net.connect(socketPath);
+      const cleanup = () => { client.removeAllListeners(); client.destroy(); };
+      client.once('connect', () => { cleanup(); resolve(false); });
+      client.once('error', () => { cleanup(); resolve(true); });
+    });
+    if (released)
+      return;
+    await new Promise(r => setTimeout(r, 50));
+  }
+  throw new Error(`Dashboard socket ${socketPath} was not released within ${timeoutMs}ms after kill`);
 }
 
 async function runAnnotateClient(options: DashboardOptions): Promise<void> {
