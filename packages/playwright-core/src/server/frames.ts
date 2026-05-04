@@ -1762,15 +1762,6 @@ export class Frame extends SdkObject<FrameEventMap> {
     }, { source, arg });
   }
 
-  async ariaRef(progress: Progress, selector: string): Promise<{ ref?: string }> {
-    const ref = await this._retryWithProgressIfNotConnected(progress, selector, { strict: true, performActionPreChecks: true }, async (progress, handle) => {
-      return await progress.race(handle.evaluateInUtility(([injected, element]) => {
-        return (element as any)._ariaRef?.ref as string | undefined;
-      }, {}));
-    });
-    return { ref };
-  }
-
   async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean } = {}): Promise<{ snapshot: string }> {
     if (options.selector && options.track)
       throw new Error('Cannot specify both selector and track options');

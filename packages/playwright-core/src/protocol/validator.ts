@@ -1655,13 +1655,6 @@ scheme.FrameAddStyleTagParams = tObject({
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
-scheme.FrameAriaRefParams = tObject({
-  selector: tString,
-  timeout: tFloat,
-});
-scheme.FrameAriaRefResult = tObject({
-  ref: tOptional(tString),
-});
 scheme.FrameAriaSnapshotParams = tObject({
   mode: tOptional(tEnum(['ai', 'default'])),
   track: tOptional(tString),

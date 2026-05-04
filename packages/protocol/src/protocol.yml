@@ -2311,14 +2311,6 @@ Frame:
         snapshot: true
         pause: true
 
-    ariaRef:
-      internal: true
-      parameters:
-        selector: string
-        timeout: float
-      returns:
-        ref: string?
-
     ariaSnapshot:
       title: Aria snapshot
       group: getter
