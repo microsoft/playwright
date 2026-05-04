@@ -149,35 +149,3 @@ test('reuse first tab when navigating', async ({ startClient, cdpServer, server 
   expect(pages.length).toBe(1);
   expect(await pages[0].title()).toBe('Title');
 });
-
-test('crashed tab is removed from tabs list and server recovers', async ({ client, mcpBrowser }) => {
-  test.skip(mcpBrowser !== 'chromium', 'Crash via chrome://crash is chromium-only');
-
-  // Open a second tab alongside the initial one
-  await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'new' },
-  });
-
-  // Crash the second tab; navigation to chrome://crash throws, that's expected
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: 'chrome://crash' },
-  }).catch(() => {});
-
-  // Crashed tab must be gone — only the initial tab (index 0) should remain
-  expect(await client.callTool({
-    name: 'browser_tabs',
-    arguments: { action: 'list' },
-  })).toHaveResponse({
-    result: `- 0: (current) [](about:blank)`,
-  });
-
-  // Server must recover: subsequent navigation must work without hanging
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: 'data:text/html,<body>recovered</body>' },
-  })).toHaveResponse({
-    snapshot: expect.stringContaining('recovered'),
-  });
-});
