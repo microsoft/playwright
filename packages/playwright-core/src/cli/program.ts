@@ -107,7 +107,7 @@ export function decorateProgram(program: Command) {
   program
       .command('install-deps [browser...]')
       .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-      .option('--dry-run', 'Do not execute installation commands, only print them')
+      .option('--dry-run', 'Do not modify the system. On Linux, simulate the install via apt-get and exit with a non-zero code if any required packages are missing; on Windows, print the install command.')
       .action(async function(args: string[], options: { dryRun?: boolean }) {
         try {
           await installDeps(args, options);
@@ -121,7 +121,10 @@ export function decorateProgram(program: Command) {
       Install dependencies for default browsers.
 
     - $ install-deps chrome firefox
-      Install dependencies for specific browsers, supports chromium, firefox, webkit, chromium-headless-shell.`);
+      Install dependencies for specific browsers, supports chromium, firefox, webkit, chromium-headless-shell.
+
+    - $ install-deps --dry-run
+      Report which required system dependencies are missing without modifying the system. Exits non-zero if any are missing. Useful for non-interactive verification scripts.`);
 
   const browsers = [
     { alias: 'cr', name: 'Chromium', type: 'chromium' },

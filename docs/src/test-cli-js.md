@@ -223,7 +223,7 @@ npx playwright install --with-deps
 
 | Option | Description |
 | :--- | :--- |
-| `--dry-run` | Don't perform installation, just print information |
+| `--dry-run` | Don't modify the system. On Linux, simulates the install via apt-get and exits with a non-zero code if any required packages are missing — useful for non-interactive verification scripts. On Windows, prints the install command. |
 
 ## Generation & Debugging Tools
 

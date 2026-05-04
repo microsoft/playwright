@@ -103,18 +103,17 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     libraries.push(...info[target]);
   }
   const uniqueLibraries = Array.from(new Set(libraries));
-  if (!dryRun)
-    console.log(`Installing dependencies...`);  // eslint-disable-line no-console
+  if (dryRun) {
+    await reportMissingDependenciesLinux(uniqueLibraries);
+    return;
+  }
+  console.log(`Installing dependencies...`);  // eslint-disable-line no-console
   const commands: string[] = [];
   commands.push('apt-get update');
   commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
     ...uniqueLibraries,
   ].join(' '));
   const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
-  if (dryRun) {
-    console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
-    return;
-  }
   if (elevatedPermissions)
     console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
   const child = childProcess.spawn(command, args, { stdio: 'inherit' });
@@ -122,6 +121,30 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
     child.on('error', reject);
   });
+}
+
+async function reportMissingDependenciesLinux(packages: string[]) {
+  // `apt-get install -s` simulates the install: it does not need root and does not
+  // modify the system. Stdout includes one `Inst <package> ...` line per package
+  // that would be installed (i.e. that is currently missing).
+  const { code, stdout, stderr, error } = await spawnAsync('apt-get', ['install', '-s', '--no-install-recommends', ...packages], {});
+  if (error)
+    throw new Error(`Failed to run 'apt-get install -s' to simulate dependency install: ${error.message}`);
+  if (code !== 0)
+    throw new Error(`'apt-get install -s' exited with code ${code}:\n${stderr || stdout}`);
+  const missingPackages: string[] = [];
+  for (const line of stdout.split('\n')) {
+    const match = /^Inst (\S+) /.exec(line);
+    if (match)
+      missingPackages.push(match[1]);
+  }
+  if (!missingPackages.length) {
+    console.log('All system dependencies are installed.'); // eslint-disable-line no-console
+    return;
+  }
+  // eslint-disable-next-line no-console
+  console.log(`Missing system dependencies (${missingPackages.length}):\n${missingPackages.sort().map(p => `  ${p}`).join('\n')}`);
+  process.exitCode = 1;
 }
 
 export async function validateDependenciesWindows(sdkLanguage: string, windowsExeAndDllDirectories: string[]) {
