@@ -85,11 +85,13 @@ export const test = baseTest.extend<{
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
     const allPids: number[] = [];
+    const cliInvocations: { args: string[]; output: string; error: string; exitCode: number | null }[] = [];
 
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
       const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      cliInvocations.push({ args: cliArgs, output: result.output, error: result.error, exitCode: result.exitCode });
       if (result.daemonPid)
         allPids.push(result.daemonPid);
       if (result.dashboardPid)
@@ -106,7 +108,23 @@ export const test = baseTest.extend<{
 
     if (failed) {
       const daemonLog = testInfo.outputPath('dashboard-daemon.log');
+      const dashStat = await fs.promises.stat(daemonLog).catch(e => e as NodeJS.ErrnoException);
       const dashContents = await fs.promises.readFile(daemonLog, 'utf8').catch(() => undefined);
+      const summary = [
+        `daemonLog path: ${daemonLog}`,
+        `stat: ${dashStat instanceof Error ? `ERROR ${dashStat.code}: ${dashStat.message}` : `size=${(dashStat as any).size}`}`,
+        `PWTEST_DASHBOARD_DAEMON_LOG env (test process): ${process.env.PWTEST_DASHBOARD_DAEMON_LOG ?? '<undefined>'}`,
+        `cwd: ${process.cwd()}`,
+        `platform: ${process.platform}`,
+        '',
+        `cli invocations (${cliInvocations.length}):`,
+        ...cliInvocations.map((c, i) => [
+          `--- [${i}] cli ${c.args.join(' ')} (exit=${c.exitCode}) ---`,
+          c.output ? `stdout:\n${c.output}` : '(no stdout)',
+          c.error ? `stderr:\n${c.error}` : '(no stderr)',
+        ].join('\n')),
+      ].join('\n');
+      await testInfo.attach('cli-fixture-debug.txt', { body: summary, contentType: 'text/plain' });
       if (dashContents !== undefined)
         await testInfo.attach('dashboard-daemon.log', { body: dashContents || '<empty>', contentType: 'text/plain' });
       for await (const entry of walk(daemonDir)) {

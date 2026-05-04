@@ -214,12 +214,18 @@ export async function program(options?: { embedderVersion?: string}) {
         daemonArgs.push(`--host=${args.host as string}`);
       const detachedStdio = (): 'ignore' | ['ignore', number, number] => {
         const logFile = process.env.PWTEST_DASHBOARD_DAEMON_LOG;
+        process.stderr.write(`[cli pid=${process.pid}] detachedStdio called, logFile=${JSON.stringify(logFile)} platform=${process.platform}\n`);
         if (!logFile)
           return 'ignore';
-        fs.mkdirSync(path.dirname(logFile), { recursive: true });
-        const fd = fs.openSync(logFile, 'a');
-        fs.writeSync(fd, `[cli pid=${process.pid}] opened log for show args=${JSON.stringify({ kill: !!args.kill, annotate: !!args.annotate, port: args.port })} bindTitle=${process.env.PWTEST_DASHBOARD_APP_BIND_TITLE} platform=${process.platform}\n`);
-        return ['ignore', fd, fd];
+        try {
+          fs.mkdirSync(path.dirname(logFile), { recursive: true });
+          const fd = fs.openSync(logFile, 'a');
+          fs.writeSync(fd, `[cli pid=${process.pid}] opened log for show args=${JSON.stringify({ kill: !!args.kill, annotate: !!args.annotate, port: args.port })} bindTitle=${process.env.PWTEST_DASHBOARD_APP_BIND_TITLE} platform=${process.platform}\n`);
+          return ['ignore', fd, fd];
+        } catch (e) {
+          process.stderr.write(`[cli pid=${process.pid}] detachedStdio failed to open ${logFile}: ${(e as Error).message}\n`);
+          return 'ignore';
+        }
       };
       if (args.kill) {
         daemonArgs.push(`--kill`);
