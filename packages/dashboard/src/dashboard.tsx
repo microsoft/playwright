@@ -325,14 +325,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
                 </button>
                 <div className='omnibox-wrap'>
                   <input
+                    key={selectedTab ? `${selectedTab.browser}::${selectedTab.context}::${selectedTab.page}::${selectedTab.url}` : 'none'}
                     id='omnibox'
                     className='omnibox'
                     type='text'
                     placeholder='Search or enter URL'
                     spellCheck={false}
                     autoComplete='off'
-                    value={selectedTab?.url}
-                    onChange={() => {}}
+                    defaultValue={selectedTab?.url ?? ''}
                     onKeyDown={e => {
                       if (!interactive)
                         return;
