@@ -106,9 +106,12 @@ export class TestContext {
       this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY);
   }
 
-  private _enqueue<T>(fn: () => Promise<T>): Promise<T> {
-    const result = this._testOpQueue.then(fn);
-    this._testOpQueue = result.then(() => {}, () => {});
+  private async _enqueue<T>(fn: () => Promise<T>): Promise<T> {
+    let result!: T;
+    this._testOpQueue = this._testOpQueue.then(async () => {
+      result = await fn();
+    });
+    await this._testOpQueue;
     return result;
   }
 
