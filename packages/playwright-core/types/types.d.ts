@@ -17140,1226 +17140,6 @@ export {};
 
 
 /**
- * Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android
- * WebView.
- *
- * *Requirements*
- * - Android device or AVD Emulator.
- * - [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device.
- *   Typically running `adb devices` is all you need to do.
- * - [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the
- *   device
- * - "Enable command line on non-rooted devices" enabled in `chrome://flags`.
- *
- * *Known limitations*
- * - Raw USB operation is not yet supported, so you need ADB.
- * - Device needs to be awake to produce screenshots. Enabling "Stay awake" developer mode will help.
- * - We didn't run all the tests against the device, so not everything works.
- *
- * *How to run*
- *
- * An example of the Android automation script would be:
- *
- * ```js
- * const { _android: android } = require('playwright');
- *
- * (async () => {
- *   // Connect to the device.
- *   const [device] = await android.devices();
- *   console.log(`Model: ${device.model()}`);
- *   console.log(`Serial: ${device.serial()}`);
- *   // Take screenshot of the whole device.
- *   await device.screenshot({ path: 'device.png' });
- *
- *   {
- *     // --------------------- WebView -----------------------
- *
- *     // Launch an application with WebView.
- *     await device.shell('am force-stop org.chromium.webview_shell');
- *     await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
- *     // Get the WebView.
- *     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
- *
- *     // Fill the input box.
- *     await device.fill({
- *       res: 'org.chromium.webview_shell:id/url_field',
- *     }, 'github.com/microsoft/playwright');
- *     await device.press({
- *       res: 'org.chromium.webview_shell:id/url_field',
- *     }, 'Enter');
- *
- *     // Work with WebView's page as usual.
- *     const page = await webview.page();
- *     await page.waitForNavigation({ url: /.*microsoft\/playwright.*\/ });
- *     console.log(await page.title());
- *   }
- *
- *   {
- *     // --------------------- Browser -----------------------
- *
- *     // Launch Chrome browser.
- *     await device.shell('am force-stop com.android.chrome');
- *     const context = await device.launchBrowser();
- *
- *     // Use BrowserContext as usual.
- *     const page = await context.newPage();
- *     await page.goto('https://webkit.org/');
- *     console.log(await page.evaluate(() => window.location.href));
- *     await page.screenshot({ path: 'page.png' });
- *
- *     await context.close();
- *   }
- *
- *   // Close the device.
- *   await device.close();
- * })();
- * ```
- *
- */
-export interface Android {
-  /**
-   * This methods attaches Playwright to an existing Android device. Use
-   * [android.launchServer([options])](https://playwright.dev/docs/api/class-android#android-launch-server) to launch a
-   * new Android server instance.
-   * @param endpoint A browser websocket endpoint to connect to.
-   * @param options
-   */
-  connect(endpoint: string, options?: {
-    /**
-     * Additional HTTP headers to be sent with web socket connect request. Optional.
-     */
-    headers?: { [key: string]: string; };
-
-    /**
-     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
-     * on. Defaults to `0`.
-     */
-    slowMo?: number;
-
-    /**
-     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
-     * `0` to disable timeout.
-     */
-    timeout?: number;
-  }): Promise<AndroidDevice>;
-
-  /**
-   * Returns the list of detected Android devices.
-   * @param options
-   */
-  devices(options?: {
-    /**
-     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
-     */
-    host?: string;
-
-    /**
-     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
-     */
-    omitDriverInstall?: boolean;
-
-    /**
-     * Optional port to establish ADB server connection. Default to `5037`.
-     */
-    port?: number;
-  }): Promise<Array<AndroidDevice>>;
-
-  /**
-   * Launches Playwright Android server that clients can connect to. See the following example:
-   *
-   * **Usage**
-   *
-   * Server Side:
-   *
-   * ```js
-   * const { _android } = require('playwright');
-   *
-   * (async () => {
-   *   const browserServer = await _android.launchServer({
-   *     // If you have multiple devices connected and want to use a specific one.
-   *     // deviceSerialNumber: '<deviceSerialNumber>',
-   *   });
-   *   const wsEndpoint = browserServer.wsEndpoint();
-   *   console.log(wsEndpoint);
-   * })();
-   * ```
-   *
-   * Client Side:
-   *
-   * ```js
-   * const { _android } = require('playwright');
-   *
-   * (async () => {
-   *   const device = await _android.connect('<wsEndpoint>');
-   *
-   *   console.log(device.model());
-   *   console.log(device.serial());
-   *   await device.shell('am force-stop com.android.chrome');
-   *   const context = await device.launchBrowser();
-   *
-   *   const page = await context.newPage();
-   *   await page.goto('https://webkit.org/');
-   *   console.log(await page.evaluate(() => window.location.href));
-   *   await page.screenshot({ path: 'page-chrome-1.png' });
-   *
-   *   await context.close();
-   * })();
-   * ```
-   *
-   * @param options
-   */
-  launchServer(options?: {
-    /**
-     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
-     */
-    adbHost?: string;
-
-    /**
-     * Optional port to establish ADB server connection. Default to `5037`.
-     */
-    adbPort?: number;
-
-    /**
-     * Optional device serial number to launch the browser on. If not specified, it will throw if multiple devices are
-     * connected.
-     */
-    deviceSerialNumber?: string;
-
-    /**
-     * Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the
-     * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware
-     * this exposes the device RPC to anything that can reach the listening port.
-     */
-    host?: string;
-
-    /**
-     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
-     */
-    omitDriverInstall?: boolean;
-
-    /**
-     * Port to use for the web socket. Defaults to 0 that picks any available port.
-     */
-    port?: number;
-
-    /**
-     * Path at which to serve the Android Server. For security, this defaults to an unguessable string.
-     *
-     * **NOTE** Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take
-     * control of the OS user. For this reason, you should use an unguessable token when using this option.
-     *
-     */
-    wsPath?: string;
-  }): Promise<BrowserServer>;
-
-  /**
-   * This setting will change the default maximum time for all the methods accepting
-   * [`timeout`](https://playwright.dev/docs/api/class-android#android-set-default-timeout-option-timeout) option.
-   * @param timeout Maximum time in milliseconds
-   */
-  setDefaultTimeout(timeout: number): void;
-}
-
-/**
- * [AndroidDevice](https://playwright.dev/docs/api/class-androiddevice) represents a connected device, either real
- * hardware or emulated. Devices can be obtained using
- * [android.devices([options])](https://playwright.dev/docs/api/class-android#android-devices).
- */
-export interface AndroidDevice {
-  /**
-   * Emitted when the device connection gets closed.
-   */
-  on(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
-
-  /**
-   * Emitted when a new WebView instance is detected.
-   */
-  on(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
-
-  /**
-   * Emitted when the device connection gets closed.
-   */
-  addListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
-
-  /**
-   * Emitted when a new WebView instance is detected.
-   */
-  addListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
-
-  /**
-   * Emitted when the device connection gets closed.
-   */
-  prependListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
-
-  /**
-   * Emitted when a new WebView instance is detected.
-   */
-  prependListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
-
-  /**
-   * Disconnects from the device.
-   */
-  close(): Promise<void>;
-
-  /**
-   * Drags the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-drag-option-selector) towards
-   * [`dest`](https://playwright.dev/docs/api/class-androiddevice#android-device-drag-option-dest) point.
-   * @param selector Selector to drag.
-   * @param dest Point to drag to.
-   * @param options
-   */
-  drag(selector: AndroidSelector, dest: {
-    x: number;
-
-    y: number;
-  }, options?: {
-    /**
-     * Optional speed of the drag in pixels per second.
-     */
-    speed?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Fills the specific
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-fill-option-selector) input box
-   * with [`text`](https://playwright.dev/docs/api/class-androiddevice#android-device-fill-option-text).
-   * @param selector Selector to fill.
-   * @param text Text to be filled in the input box.
-   * @param options
-   */
-  fill(selector: AndroidSelector, text: string, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Flings the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-fling-option-selector) in  the
-   * specified [`direction`](https://playwright.dev/docs/api/class-androiddevice#android-device-fling-option-direction).
-   * @param selector Selector to fling.
-   * @param direction Fling direction.
-   * @param options
-   */
-  fling(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", options?: {
-    /**
-     * Optional speed of the fling in pixels per second.
-     */
-    speed?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Returns information about a widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-info-option-selector).
-   * @param selector Selector to return information about.
-   */
-  info(selector: AndroidSelector): Promise<AndroidElementInfo>;
-
-  /**
-   * Installs an apk on the device.
-   * @param file Either a path to the apk file, or apk file content.
-   * @param options
-   */
-  installApk(file: string|Buffer, options?: {
-    /**
-     * Optional arguments to pass to the `shell:cmd package install` call. Defaults to `-r -t -S`.
-     */
-    args?: Array<string>;
-  }): Promise<void>;
-
-  /**
-   * Launches Chrome browser on the device, and returns its persistent context.
-   * @param options
-   */
-  launchBrowser(options?: {
-    /**
-     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
-     */
-    acceptDownloads?: boolean;
-
-    /**
-     * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
-     *
-     * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
-     * [here](https://peter.sh/experiments/chromium-command-line-switches/).
-     */
-    args?: Array<string>;
-
-    /**
-     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
-     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
-     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
-     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
-     * or
-     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
-     * it takes the base URL in consideration by using the
-     * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
-     * Unset by default. Examples:
-     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
-     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
-     *   `http://localhost:3000/foo/bar.html`
-     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
-     *   `http://localhost:3000/bar.html`
-     */
-    baseURL?: string;
-
-    /**
-     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
-     */
-    bypassCSP?: boolean;
-
-    /**
-     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
-     * media feature, supported values are `'light'` and `'dark'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-     * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
-     */
-    colorScheme?: null|"light"|"dark"|"no-preference";
-
-    /**
-     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
-     */
-    contrast?: null|"no-preference"|"more";
-
-    /**
-     * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
-     * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
-     */
-    deviceScaleFactor?: number;
-
-    /**
-     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
-     */
-    extraHTTPHeaders?: { [key: string]: string; };
-
-    /**
-     * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-     * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
-     */
-    forcedColors?: null|"active"|"none";
-
-    geolocation?: {
-      /**
-       * Latitude between -90 and 90.
-       */
-      latitude: number;
-
-      /**
-       * Longitude between -180 and 180.
-       */
-      longitude: number;
-
-      /**
-       * Non-negative accuracy value. Defaults to `0`.
-       */
-      accuracy?: number;
-    };
-
-    /**
-     * Specifies if viewport supports touch events. Defaults to false. Learn more about
-     * [mobile emulation](https://playwright.dev/docs/emulation#devices).
-     */
-    hasTouch?: boolean;
-
-    /**
-     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
-     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
-     */
-    httpCredentials?: {
-      username: string;
-
-      password: string;
-
-      /**
-       * Restrain sending http credentials on specific origin (scheme://host:port).
-       */
-      origin?: string;
-
-      /**
-       * This option only applies to the requests sent from corresponding
-       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
-       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
-       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
-       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
-       */
-      send?: "unauthorized"|"always";
-    };
-
-    /**
-     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
-     */
-    ignoreHTTPSErrors?: boolean;
-
-    /**
-     * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
-     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
-     * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
-     */
-    isMobile?: boolean;
-
-    /**
-     * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
-     * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
-     */
-    javaScriptEnabled?: boolean;
-
-    /**
-     * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
-     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
-     */
-    locale?: string;
-
-    /**
-     * Logger sink for Playwright logging.
-     * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
-     */
-    logger?: Logger;
-
-    /**
-     * Whether to emulate network being offline. Defaults to `false`. Learn more about
-     * [network emulation](https://playwright.dev/docs/emulation#offline).
-     */
-    offline?: boolean;
-
-    /**
-     * A list of permissions to grant to all pages in this context. See
-     * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
-     * for more details. Defaults to none.
-     */
-    permissions?: Array<string>;
-
-    /**
-     * Optional package name to launch instead of default Chrome for Android.
-     */
-    pkg?: string;
-
-    /**
-     * Network proxy settings.
-     */
-    proxy?: {
-      /**
-       * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
-       * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-       */
-      server: string;
-
-      /**
-       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-       */
-      bypass?: string;
-
-      /**
-       * Optional username to use if HTTP proxy requires authentication.
-       */
-      username?: string;
-
-      /**
-       * Optional password to use if HTTP proxy requires authentication.
-       */
-      password?: string;
-    };
-
-    /**
-     * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
-     * If not specified, the HAR is not recorded. Make sure to await
-     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
-     * the HAR to be saved.
-     */
-    recordHar?: {
-      /**
-       * Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
-       * `content` policy instead.
-       */
-      omitContent?: boolean;
-
-      /**
-       * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
-       * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
-       * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
-       * files and to `embed` for all other file extensions.
-       */
-      content?: "omit"|"embed"|"attach";
-
-      /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
-       * default.
-       */
-      path: string;
-
-      /**
-       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
-       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
-       */
-      mode?: "full"|"minimal";
-
-      /**
-       * A glob or regex pattern to filter requests that are stored in the HAR. When a
-       * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
-       * options was provided and the passed URL is a path, it gets merged via the
-       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
-       */
-      urlFilter?: string|RegExp;
-    };
-
-    /**
-     * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
-     * Make sure to await
-     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
-     * videos to be saved.
-     */
-    recordVideo?: {
-      /**
-       * Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see
-       * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) options).
-       */
-      dir?: string;
-
-      /**
-       * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
-       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
-       * each page will be scaled down if necessary to fit the specified size.
-       */
-      size?: {
-        /**
-         * Video frame width.
-         */
-        width: number;
-
-        /**
-         * Video frame height.
-         */
-        height: number;
-      };
-
-      /**
-       * If specified, enables visual annotations on interacted elements during video recording.
-       */
-      showActions?: {
-        /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
-         */
-        duration?: number;
-
-        /**
-         * Position of the action title overlay. Defaults to `"top-right"`.
-         */
-        position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
-
-        /**
-         * Font size of the action title in pixels. Defaults to `24`.
-         */
-        fontSize?: number;
-      };
-    };
-
-    /**
-     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
-     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
-     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
-     */
-    reducedMotion?: null|"reduce"|"no-preference";
-
-    /**
-     * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
-     * [`viewport`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-viewport) is
-     * set.
-     */
-    screen?: {
-      /**
-       * page width in pixels.
-       */
-      width: number;
-
-      /**
-       * page height in pixels.
-       */
-      height: number;
-    };
-
-    /**
-     * Whether to allow sites to register Service workers. Defaults to `'allow'`.
-     * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
-     *   registered.
-     * - `'block'`: Playwright will block all registration of Service Workers.
-     */
-    serviceWorkers?: "allow"|"block";
-
-    /**
-     * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
-     * selectors that imply single target DOM element will throw when more than one element matches the selector. This
-     * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See
-     * [Locator](https://playwright.dev/docs/api/class-locator) to learn more about the strict mode.
-     */
-    strictSelectors?: boolean;
-
-    /**
-     * Changes the timezone of the context. See
-     * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
-     * for a list of supported timezone IDs. Defaults to the system timezone.
-     */
-    timezoneId?: string;
-
-    /**
-     * Specific user agent to use in this context.
-     */
-    userAgent?: string;
-
-    /**
-     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
-     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
-     *
-     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
-     * by the operating system. It makes the execution of the tests non-deterministic.
-     *
-     */
-    viewport?: null|{
-      /**
-       * page width in pixels.
-       */
-      width: number;
-
-      /**
-       * page height in pixels.
-       */
-      height: number;
-    };
-  }): Promise<BrowserContext>;
-
-  /**
-   * Performs a long tap on the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-long-tap-option-selector).
-   * @param selector Selector to tap on.
-   * @param options
-   */
-  longTap(selector: AndroidSelector, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Device model.
-   */
-  model(): string;
-
-  /**
-   * Launches a process in the shell on the device and returns a socket to communicate with the launched process.
-   * @param command Shell command to execute.
-   */
-  open(command: string): Promise<AndroidSocket>;
-
-  /**
-   * Pinches the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-pinch-close-option-selector) in the
-   * closing direction.
-   * @param selector Selector to pinch close.
-   * @param percent The size of the pinch as a percentage of the widget's size.
-   * @param options
-   */
-  pinchClose(selector: AndroidSelector, percent: number, options?: {
-    /**
-     * Optional speed of the pinch in pixels per second.
-     */
-    speed?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Pinches the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-pinch-open-option-selector) in the
-   * open direction.
-   * @param selector Selector to pinch open.
-   * @param percent The size of the pinch as a percentage of the widget's size.
-   * @param options
-   */
-  pinchOpen(selector: AndroidSelector, percent: number, options?: {
-    /**
-     * Optional speed of the pinch in pixels per second.
-     */
-    speed?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Presses the specific [`key`](https://playwright.dev/docs/api/class-androiddevice#android-device-press-option-key)
-   * in the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-press-option-selector).
-   * @param selector Selector to press the key in.
-   * @param key The key to press.
-   * @param options
-   */
-  press(selector: AndroidSelector, key: AndroidKey, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Copies a file to the device.
-   * @param file Either a path to the file, or file content.
-   * @param path Path to the file on the device.
-   * @param options
-   */
-  push(file: string|Buffer, path: string, options?: {
-    /**
-     * Optional file mode, defaults to `644` (`rw-r--r--`).
-     */
-    mode?: number;
-  }): Promise<void>;
-
-  /**
-   * Returns the buffer with the captured screenshot of the device.
-   * @param options
-   */
-  screenshot(options?: {
-    /**
-     * The file path to save the image to. If
-     * [`path`](https://playwright.dev/docs/api/class-androiddevice#android-device-screenshot-option-path) is a relative
-     * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
-     * saved to the disk.
-     */
-    path?: string;
-  }): Promise<Buffer>;
-
-  /**
-   * Scrolls the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-scroll-option-selector) in  the
-   * specified
-   * [`direction`](https://playwright.dev/docs/api/class-androiddevice#android-device-scroll-option-direction).
-   * @param selector Selector to scroll.
-   * @param direction Scroll direction.
-   * @param percent Distance to scroll as a percentage of the widget's size.
-   * @param options
-   */
-  scroll(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", percent: number, options?: {
-    /**
-     * Optional speed of the scroll in pixels per second.
-     */
-    speed?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Device serial number.
-   */
-  serial(): string;
-
-  /**
-   * This setting will change the default maximum time for all the methods accepting
-   * [`timeout`](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout-option-timeout)
-   * option.
-   * @param timeout Maximum time in milliseconds
-   */
-  setDefaultTimeout(timeout: number): void;
-
-  /**
-   * Executes a shell command on the device and returns its output.
-   * @param command Shell command to execute.
-   */
-  shell(command: string): Promise<Buffer>;
-
-  /**
-   * Swipes the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-swipe-option-selector) in  the
-   * specified [`direction`](https://playwright.dev/docs/api/class-androiddevice#android-device-swipe-option-direction).
-   * @param selector Selector to swipe.
-   * @param direction Swipe direction.
-   * @param percent Distance to swipe as a percentage of the widget's size.
-   * @param options
-   */
-  swipe(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", percent: number, options?: {
-    /**
-     * Optional speed of the swipe in pixels per second.
-     */
-    speed?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Taps on the widget defined by
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-tap-option-selector).
-   * @param selector Selector to tap on.
-   * @param options
-   */
-  tap(selector: AndroidSelector, options?: {
-    /**
-     * Optional duration of the tap in milliseconds.
-     */
-    duration?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Waits for the specific
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-wait-option-selector) to either
-   * appear or disappear, depending on the
-   * [`state`](https://playwright.dev/docs/api/class-androiddevice#android-device-wait-option-state).
-   * @param selector Selector to wait for.
-   * @param options
-   */
-  wait(selector: AndroidSelector, options?: {
-    /**
-     * Optional state. Can be either:
-     * - default - wait for element to be present.
-     * - `'gone'` - wait for element to not be present.
-     */
-    state?: "gone";
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Emitted when the device connection gets closed.
-   */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (androidDevice: AndroidDevice) => boolean | Promise<boolean>, timeout?: number } | ((androidDevice: AndroidDevice) => boolean | Promise<boolean>)): Promise<AndroidDevice>;
-
-  /**
-   * Emitted when a new WebView instance is detected.
-   */
-  waitForEvent(event: 'webview', optionsOrPredicate?: { predicate?: (androidWebView: AndroidWebView) => boolean | Promise<boolean>, timeout?: number } | ((androidWebView: AndroidWebView) => boolean | Promise<boolean>)): Promise<AndroidWebView>;
-
-
-  /**
-   * This method waits until [AndroidWebView](https://playwright.dev/docs/api/class-androidwebview) matching the
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-web-view-option-selector) is opened
-   * and returns it. If there is already an open [AndroidWebView](https://playwright.dev/docs/api/class-androidwebview)
-   * matching the
-   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-web-view-option-selector), returns
-   * immediately.
-   * @param selector
-   * @param options
-   */
-  webView(selector: {
-    /**
-     * Optional Package identifier.
-     */
-    pkg?: string;
-
-    /**
-     * Optional webview socket name.
-     */
-    socketName?: string;
-  }, options?: {
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
-     * by using the
-     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
-     * method.
-     */
-    timeout?: number;
-  }): Promise<AndroidWebView>;
-
-  /**
-   * Currently open WebViews.
-   */
-  webViews(): Array<AndroidWebView>;
-
-  input: AndroidInput;
-
-  [Symbol.asyncDispose](): Promise<void>;
-}
-
-export interface AndroidInput {
-  /**
-   * Performs a drag between [`from`](https://playwright.dev/docs/api/class-androidinput#android-input-drag-option-from)
-   * and [`to`](https://playwright.dev/docs/api/class-androidinput#android-input-drag-option-to) points.
-   * @param from The start point of the drag.
-   * @param to The end point of the drag.
-   * @param steps The number of steps in the drag. Each step takes 5 milliseconds to complete.
-   */
-  drag(from: {
-    x: number;
-
-    y: number;
-  }, to: {
-    x: number;
-
-    y: number;
-  }, steps: number): Promise<void>;
-
-  /**
-   * Presses the [`key`](https://playwright.dev/docs/api/class-androidinput#android-input-press-option-key).
-   * @param key Key to press.
-   */
-  press(key: AndroidKey): Promise<void>;
-
-  /**
-   * Swipes following the path defined by
-   * [`segments`](https://playwright.dev/docs/api/class-androidinput#android-input-swipe-option-segments).
-   * @param from The point to start swiping from.
-   * @param segments Points following the [`from`](https://playwright.dev/docs/api/class-androidinput#android-input-swipe-option-from)
-   * point in the swipe gesture.
-   * @param steps The number of steps for each segment. Each step takes 5 milliseconds to complete, so 100 steps means half a second
-   * per each segment.
-   */
-  swipe(from: {
-    x: number;
-
-    y: number;
-  }, segments: ReadonlyArray<{
-    x: number;
-
-    y: number;
-  }>, steps: number): Promise<void>;
-
-  /**
-   * Taps at the specified [`point`](https://playwright.dev/docs/api/class-androidinput#android-input-tap-option-point).
-   * @param point The point to tap at.
-   */
-  tap(point: {
-    x: number;
-
-    y: number;
-  }): Promise<void>;
-
-  /**
-   * Types [`text`](https://playwright.dev/docs/api/class-androidinput#android-input-type-option-text) into currently
-   * focused widget.
-   * @param text Text to type.
-   */
-  type(text: string): Promise<void>;
-}
-
-/**
- * [AndroidSocket](https://playwright.dev/docs/api/class-androidsocket) is a way to communicate with a process
- * launched on the [AndroidDevice](https://playwright.dev/docs/api/class-androiddevice). Use
- * [androidDevice.open(command)](https://playwright.dev/docs/api/class-androiddevice#android-device-open) to open a
- * socket.
- */
-export interface AndroidSocket {
-  /**
-   * Emitted when the socket is closed.
-   */
-  on(event: 'close', listener: () => any): this;
-
-  /**
-   * Emitted when data is available to read from the socket.
-   */
-  on(event: 'data', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'close', listener: () => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'data', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Emitted when the socket is closed.
-   */
-  addListener(event: 'close', listener: () => any): this;
-
-  /**
-   * Emitted when data is available to read from the socket.
-   */
-  addListener(event: 'data', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'close', listener: () => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'data', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'close', listener: () => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'data', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Emitted when the socket is closed.
-   */
-  prependListener(event: 'close', listener: () => any): this;
-
-  /**
-   * Emitted when data is available to read from the socket.
-   */
-  prependListener(event: 'data', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Closes the socket.
-   */
-  close(): Promise<void>;
-
-  /**
-   * Writes some [`data`](https://playwright.dev/docs/api/class-androidsocket#android-socket-write-option-data) to the
-   * socket.
-   * @param data Data to write.
-   */
-  write(data: Buffer): Promise<void>;
-
-  [Symbol.asyncDispose](): Promise<void>;
-}
-
-/**
- * [AndroidWebView](https://playwright.dev/docs/api/class-androidwebview) represents a WebView open on the
- * [AndroidDevice](https://playwright.dev/docs/api/class-androiddevice). WebView is usually obtained using
- * [androidDevice.webView(selector[, options])](https://playwright.dev/docs/api/class-androiddevice#android-device-web-view).
- */
-export interface AndroidWebView {
-  /**
-   * Emitted when the WebView is closed.
-   */
-  on(event: 'close', listener: () => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'close', listener: () => any): this;
-
-  /**
-   * Emitted when the WebView is closed.
-   */
-  addListener(event: 'close', listener: () => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'close', listener: () => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'close', listener: () => any): this;
-
-  /**
-   * Emitted when the WebView is closed.
-   */
-  prependListener(event: 'close', listener: () => any): this;
-
-  /**
-   * Connects to the WebView and returns a regular Playwright [Page](https://playwright.dev/docs/api/class-page) to
-   * interact with.
-   */
-  page(): Promise<Page>;
-
-  /**
-   * WebView process PID.
-   */
-  pid(): number;
-
-  /**
-   * WebView package identifier.
-   */
-  pkg(): string;
-}
-
-/**
  * Exposes API that can be used for the Web API testing. This class is used for creating
  * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) instance which in turn can be used for
  * sending web requests. An instance of this class can be obtained via
@@ -22751,6 +21531,1226 @@ export interface Electron {
      */
     timeout?: number;
   }): Promise<ElectronApplication>;
+}
+
+/**
+ * Playwright has **experimental** support for Android automation. This includes Chrome for Android and Android
+ * WebView.
+ *
+ * *Requirements*
+ * - Android device or AVD Emulator.
+ * - [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device.
+ *   Typically running `adb devices` is all you need to do.
+ * - [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the
+ *   device
+ * - "Enable command line on non-rooted devices" enabled in `chrome://flags`.
+ *
+ * *Known limitations*
+ * - Raw USB operation is not yet supported, so you need ADB.
+ * - Device needs to be awake to produce screenshots. Enabling "Stay awake" developer mode will help.
+ * - We didn't run all the tests against the device, so not everything works.
+ *
+ * *How to run*
+ *
+ * An example of the Android automation script would be:
+ *
+ * ```js
+ * const { _android: android } = require('playwright');
+ *
+ * (async () => {
+ *   // Connect to the device.
+ *   const [device] = await android.devices();
+ *   console.log(`Model: ${device.model()}`);
+ *   console.log(`Serial: ${device.serial()}`);
+ *   // Take screenshot of the whole device.
+ *   await device.screenshot({ path: 'device.png' });
+ *
+ *   {
+ *     // --------------------- WebView -----------------------
+ *
+ *     // Launch an application with WebView.
+ *     await device.shell('am force-stop org.chromium.webview_shell');
+ *     await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+ *     // Get the WebView.
+ *     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
+ *
+ *     // Fill the input box.
+ *     await device.fill({
+ *       res: 'org.chromium.webview_shell:id/url_field',
+ *     }, 'github.com/microsoft/playwright');
+ *     await device.press({
+ *       res: 'org.chromium.webview_shell:id/url_field',
+ *     }, 'Enter');
+ *
+ *     // Work with WebView's page as usual.
+ *     const page = await webview.page();
+ *     await page.waitForNavigation({ url: /.*microsoft\/playwright.*\/ });
+ *     console.log(await page.title());
+ *   }
+ *
+ *   {
+ *     // --------------------- Browser -----------------------
+ *
+ *     // Launch Chrome browser.
+ *     await device.shell('am force-stop com.android.chrome');
+ *     const context = await device.launchBrowser();
+ *
+ *     // Use BrowserContext as usual.
+ *     const page = await context.newPage();
+ *     await page.goto('https://webkit.org/');
+ *     console.log(await page.evaluate(() => window.location.href));
+ *     await page.screenshot({ path: 'page.png' });
+ *
+ *     await context.close();
+ *   }
+ *
+ *   // Close the device.
+ *   await device.close();
+ * })();
+ * ```
+ *
+ */
+export interface Android {
+  /**
+   * This methods attaches Playwright to an existing Android device. Use
+   * [android.launchServer([options])](https://playwright.dev/docs/api/class-android#android-launch-server) to launch a
+   * new Android server instance.
+   * @param endpoint A browser websocket endpoint to connect to.
+   * @param options
+   */
+  connect(endpoint: string, options?: {
+    /**
+     * Additional HTTP headers to be sent with web socket connect request. Optional.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
+     * on. Defaults to `0`.
+     */
+    slowMo?: number;
+
+    /**
+     * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass
+     * `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<AndroidDevice>;
+
+  /**
+   * Returns the list of detected Android devices.
+   * @param options
+   */
+  devices(options?: {
+    /**
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    host?: string;
+
+    /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
+     * Optional port to establish ADB server connection. Default to `5037`.
+     */
+    port?: number;
+  }): Promise<Array<AndroidDevice>>;
+
+  /**
+   * Launches Playwright Android server that clients can connect to. See the following example:
+   *
+   * **Usage**
+   *
+   * Server Side:
+   *
+   * ```js
+   * const { _android } = require('playwright');
+   *
+   * (async () => {
+   *   const browserServer = await _android.launchServer({
+   *     // If you have multiple devices connected and want to use a specific one.
+   *     // deviceSerialNumber: '<deviceSerialNumber>',
+   *   });
+   *   const wsEndpoint = browserServer.wsEndpoint();
+   *   console.log(wsEndpoint);
+   * })();
+   * ```
+   *
+   * Client Side:
+   *
+   * ```js
+   * const { _android } = require('playwright');
+   *
+   * (async () => {
+   *   const device = await _android.connect('<wsEndpoint>');
+   *
+   *   console.log(device.model());
+   *   console.log(device.serial());
+   *   await device.shell('am force-stop com.android.chrome');
+   *   const context = await device.launchBrowser();
+   *
+   *   const page = await context.newPage();
+   *   await page.goto('https://webkit.org/');
+   *   console.log(await page.evaluate(() => window.location.href));
+   *   await page.screenshot({ path: 'page-chrome-1.png' });
+   *
+   *   await context.close();
+   * })();
+   * ```
+   *
+   * @param options
+   */
+  launchServer(options?: {
+    /**
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    adbHost?: string;
+
+    /**
+     * Optional port to establish ADB server connection. Default to `5037`.
+     */
+    adbPort?: number;
+
+    /**
+     * Optional device serial number to launch the browser on. If not specified, it will throw if multiple devices are
+     * connected.
+     */
+    deviceSerialNumber?: string;
+
+    /**
+     * Host to use for the web socket. It is optional and defaults to `localhost`, accepting connections only from the
+     * loopback interface. Pass an explicit address (e.g. `0.0.0.0`) to accept connections from the network — be aware
+     * this exposes the device RPC to anything that can reach the listening port.
+     */
+    host?: string;
+
+    /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
+     * Port to use for the web socket. Defaults to 0 that picks any available port.
+     */
+    port?: number;
+
+    /**
+     * Path at which to serve the Android Server. For security, this defaults to an unguessable string.
+     *
+     * **NOTE** Any process or web page (including those running in Playwright) with knowledge of the `wsPath` can take
+     * control of the OS user. For this reason, you should use an unguessable token when using this option.
+     *
+     */
+    wsPath?: string;
+  }): Promise<BrowserServer>;
+
+  /**
+   * This setting will change the default maximum time for all the methods accepting
+   * [`timeout`](https://playwright.dev/docs/api/class-android#android-set-default-timeout-option-timeout) option.
+   * @param timeout Maximum time in milliseconds
+   */
+  setDefaultTimeout(timeout: number): void;
+}
+
+/**
+ * [AndroidDevice](https://playwright.dev/docs/api/class-androiddevice) represents a connected device, either real
+ * hardware or emulated. Devices can be obtained using
+ * [android.devices([options])](https://playwright.dev/docs/api/class-android#android-devices).
+ */
+export interface AndroidDevice {
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  on(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
+
+  /**
+   * Emitted when a new WebView instance is detected.
+   */
+  on(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  addListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
+
+  /**
+   * Emitted when a new WebView instance is detected.
+   */
+  addListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  prependListener(event: 'close', listener: (androidDevice: AndroidDevice) => any): this;
+
+  /**
+   * Emitted when a new WebView instance is detected.
+   */
+  prependListener(event: 'webview', listener: (androidWebView: AndroidWebView) => any): this;
+
+  /**
+   * Disconnects from the device.
+   */
+  close(): Promise<void>;
+
+  /**
+   * Drags the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-drag-option-selector) towards
+   * [`dest`](https://playwright.dev/docs/api/class-androiddevice#android-device-drag-option-dest) point.
+   * @param selector Selector to drag.
+   * @param dest Point to drag to.
+   * @param options
+   */
+  drag(selector: AndroidSelector, dest: {
+    x: number;
+
+    y: number;
+  }, options?: {
+    /**
+     * Optional speed of the drag in pixels per second.
+     */
+    speed?: number;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Fills the specific
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-fill-option-selector) input box
+   * with [`text`](https://playwright.dev/docs/api/class-androiddevice#android-device-fill-option-text).
+   * @param selector Selector to fill.
+   * @param text Text to be filled in the input box.
+   * @param options
+   */
+  fill(selector: AndroidSelector, text: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Flings the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-fling-option-selector) in  the
+   * specified [`direction`](https://playwright.dev/docs/api/class-androiddevice#android-device-fling-option-direction).
+   * @param selector Selector to fling.
+   * @param direction Fling direction.
+   * @param options
+   */
+  fling(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", options?: {
+    /**
+     * Optional speed of the fling in pixels per second.
+     */
+    speed?: number;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Returns information about a widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-info-option-selector).
+   * @param selector Selector to return information about.
+   */
+  info(selector: AndroidSelector): Promise<AndroidElementInfo>;
+
+  /**
+   * Installs an apk on the device.
+   * @param file Either a path to the apk file, or apk file content.
+   * @param options
+   */
+  installApk(file: string|Buffer, options?: {
+    /**
+     * Optional arguments to pass to the `shell:cmd package install` call. Defaults to `-r -t -S`.
+     */
+    args?: Array<string>;
+  }): Promise<void>;
+
+  /**
+   * Launches Chrome browser on the device, and returns its persistent context.
+   * @param options
+   */
+  launchBrowser(options?: {
+    /**
+     * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+     */
+    acceptDownloads?: boolean;
+
+    /**
+     * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
+     *
+     * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
+     * [here](https://peter.sh/experiments/chromium-command-line-switches/).
+     */
+    args?: Array<string>;
+
+    /**
+     * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
+     * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
+     * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
+     * [page.waitForRequest(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-request),
+     * or
+     * [page.waitForResponse(urlOrPredicate[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-response)
+     * it takes the base URL in consideration by using the
+     * [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL.
+     * Unset by default. Examples:
+     * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
+     * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in
+     *   `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
+     */
+    baseURL?: string;
+
+    /**
+     * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+     */
+    bypassCSP?: boolean;
+
+    /**
+     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+     * media feature, supported values are `'light'` and `'dark'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+     */
+    colorScheme?: null|"light"|"dark"|"no-preference";
+
+    /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    contrast?: null|"no-preference"|"more";
+
+    /**
+     * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
+     * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
+     */
+    deviceScaleFactor?: number;
+
+    /**
+     * An object containing additional HTTP headers to be sent with every request. Defaults to none.
+     */
+    extraHTTPHeaders?: { [key: string]: string; };
+
+    /**
+     * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
+     */
+    forcedColors?: null|"active"|"none";
+
+    geolocation?: {
+      /**
+       * Latitude between -90 and 90.
+       */
+      latitude: number;
+
+      /**
+       * Longitude between -180 and 180.
+       */
+      longitude: number;
+
+      /**
+       * Non-negative accuracy value. Defaults to `0`.
+       */
+      accuracy?: number;
+    };
+
+    /**
+     * Specifies if viewport supports touch events. Defaults to false. Learn more about
+     * [mobile emulation](https://playwright.dev/docs/emulation#devices).
+     */
+    hasTouch?: boolean;
+
+    /**
+     * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+     * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+     */
+    httpCredentials?: {
+      username: string;
+
+      password: string;
+
+      /**
+       * Restrain sending http credentials on specific origin (scheme://host:port).
+       */
+      origin?: string;
+
+      /**
+       * This option only applies to the requests sent from corresponding
+       * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+       * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+       * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+       * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+       */
+      send?: "unauthorized"|"always";
+    };
+
+    /**
+     * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+     */
+    ignoreHTTPSErrors?: boolean;
+
+    /**
+     * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
+     * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
+     * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).
+     */
+    isMobile?: boolean;
+
+    /**
+     * Whether or not to enable JavaScript in the context. Defaults to `true`. Learn more about
+     * [disabling JavaScript](https://playwright.dev/docs/emulation#javascript-enabled).
+     */
+    javaScriptEnabled?: boolean;
+
+    /**
+     * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+     * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+     * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+     */
+    locale?: string;
+
+    /**
+     * Logger sink for Playwright logging.
+     * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
+     */
+    logger?: Logger;
+
+    /**
+     * Whether to emulate network being offline. Defaults to `false`. Learn more about
+     * [network emulation](https://playwright.dev/docs/emulation#offline).
+     */
+    offline?: boolean;
+
+    /**
+     * A list of permissions to grant to all pages in this context. See
+     * [browserContext.grantPermissions(permissions[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-grant-permissions)
+     * for more details. Defaults to none.
+     */
+    permissions?: Array<string>;
+
+    /**
+     * Optional package name to launch instead of default Chrome for Android.
+     */
+    pkg?: string;
+
+    /**
+     * Network proxy settings.
+     */
+    proxy?: {
+      /**
+       * Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or
+       * `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+       */
+      server: string;
+
+      /**
+       * Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+       */
+      bypass?: string;
+
+      /**
+       * Optional username to use if HTTP proxy requires authentication.
+       */
+      username?: string;
+
+      /**
+       * Optional password to use if HTTP proxy requires authentication.
+       */
+      password?: string;
+    };
+
+    /**
+     * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+     * If not specified, the HAR is not recorded. Make sure to await
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * the HAR to be saved.
+     */
+    recordHar?: {
+      /**
+       * Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+       * `content` policy instead.
+       */
+      omitContent?: boolean;
+
+      /**
+       * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+       * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+       * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+       * files and to `embed` for all other file extensions.
+       */
+      content?: "omit"|"embed"|"attach";
+
+      /**
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * default.
+       */
+      path: string;
+
+      /**
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+       * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+       */
+      mode?: "full"|"minimal";
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a
+       * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+       * options was provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+       */
+      urlFilter?: string|RegExp;
+    };
+
+    /**
+     * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+     * Make sure to await
+     * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+     * videos to be saved.
+     */
+    recordVideo?: {
+      /**
+       * Path to the directory to put videos into. If not specified, the videos will be stored in `artifactsDir` (see
+       * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) options).
+       */
+      dir?: string;
+
+      /**
+       * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+       * each page will be scaled down if necessary to fit the specified size.
+       */
+      size?: {
+        /**
+         * Video frame width.
+         */
+        width: number;
+
+        /**
+         * Video frame height.
+         */
+        height: number;
+      };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      showActions?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        duration?: number;
+
+        /**
+         * Position of the action title overlay. Defaults to `"top-right"`.
+         */
+        position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+
+        /**
+         * Font size of the action title in pixels. Defaults to `24`.
+         */
+        fontSize?: number;
+      };
+    };
+
+    /**
+     * Emulates `'prefers-reduced-motion'` media feature, supported values are `'reduce'`, `'no-preference'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    reducedMotion?: null|"reduce"|"no-preference";
+
+    /**
+     * Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
+     * [`viewport`](https://playwright.dev/docs/api/class-androiddevice#android-device-launch-browser-option-viewport) is
+     * set.
+     */
+    screen?: {
+      /**
+       * page width in pixels.
+       */
+      width: number;
+
+      /**
+       * page height in pixels.
+       */
+      height: number;
+    };
+
+    /**
+     * Whether to allow sites to register Service workers. Defaults to `'allow'`.
+     * - `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be
+     *   registered.
+     * - `'block'`: Playwright will block all registration of Service Workers.
+     */
+    serviceWorkers?: "allow"|"block";
+
+    /**
+     * If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on
+     * selectors that imply single target DOM element will throw when more than one element matches the selector. This
+     * option does not affect any Locator APIs (Locators are always strict). Defaults to `false`. See
+     * [Locator](https://playwright.dev/docs/api/class-locator) to learn more about the strict mode.
+     */
+    strictSelectors?: boolean;
+
+    /**
+     * Changes the timezone of the context. See
+     * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+     * for a list of supported timezone IDs. Defaults to the system timezone.
+     */
+    timezoneId?: string;
+
+    /**
+     * Specific user agent to use in this context.
+     */
+    userAgent?: string;
+
+    /**
+     * Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use `null` to disable the consistent
+     * viewport emulation. Learn more about [viewport emulation](https://playwright.dev/docs/emulation#viewport).
+     *
+     * **NOTE** The `null` value opts out from the default presets, makes viewport depend on the host window size defined
+     * by the operating system. It makes the execution of the tests non-deterministic.
+     *
+     */
+    viewport?: null|{
+      /**
+       * page width in pixels.
+       */
+      width: number;
+
+      /**
+       * page height in pixels.
+       */
+      height: number;
+    };
+  }): Promise<BrowserContext>;
+
+  /**
+   * Performs a long tap on the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-long-tap-option-selector).
+   * @param selector Selector to tap on.
+   * @param options
+   */
+  longTap(selector: AndroidSelector, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Device model.
+   */
+  model(): string;
+
+  /**
+   * Launches a process in the shell on the device and returns a socket to communicate with the launched process.
+   * @param command Shell command to execute.
+   */
+  open(command: string): Promise<AndroidSocket>;
+
+  /**
+   * Pinches the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-pinch-close-option-selector) in the
+   * closing direction.
+   * @param selector Selector to pinch close.
+   * @param percent The size of the pinch as a percentage of the widget's size.
+   * @param options
+   */
+  pinchClose(selector: AndroidSelector, percent: number, options?: {
+    /**
+     * Optional speed of the pinch in pixels per second.
+     */
+    speed?: number;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Pinches the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-pinch-open-option-selector) in the
+   * open direction.
+   * @param selector Selector to pinch open.
+   * @param percent The size of the pinch as a percentage of the widget's size.
+   * @param options
+   */
+  pinchOpen(selector: AndroidSelector, percent: number, options?: {
+    /**
+     * Optional speed of the pinch in pixels per second.
+     */
+    speed?: number;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Presses the specific [`key`](https://playwright.dev/docs/api/class-androiddevice#android-device-press-option-key)
+   * in the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-press-option-selector).
+   * @param selector Selector to press the key in.
+   * @param key The key to press.
+   * @param options
+   */
+  press(selector: AndroidSelector, key: AndroidKey, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Copies a file to the device.
+   * @param file Either a path to the file, or file content.
+   * @param path Path to the file on the device.
+   * @param options
+   */
+  push(file: string|Buffer, path: string, options?: {
+    /**
+     * Optional file mode, defaults to `644` (`rw-r--r--`).
+     */
+    mode?: number;
+  }): Promise<void>;
+
+  /**
+   * Returns the buffer with the captured screenshot of the device.
+   * @param options
+   */
+  screenshot(options?: {
+    /**
+     * The file path to save the image to. If
+     * [`path`](https://playwright.dev/docs/api/class-androiddevice#android-device-screenshot-option-path) is a relative
+     * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
+     * saved to the disk.
+     */
+    path?: string;
+  }): Promise<Buffer>;
+
+  /**
+   * Scrolls the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-scroll-option-selector) in  the
+   * specified
+   * [`direction`](https://playwright.dev/docs/api/class-androiddevice#android-device-scroll-option-direction).
+   * @param selector Selector to scroll.
+   * @param direction Scroll direction.
+   * @param percent Distance to scroll as a percentage of the widget's size.
+   * @param options
+   */
+  scroll(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", percent: number, options?: {
+    /**
+     * Optional speed of the scroll in pixels per second.
+     */
+    speed?: number;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Device serial number.
+   */
+  serial(): string;
+
+  /**
+   * This setting will change the default maximum time for all the methods accepting
+   * [`timeout`](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout-option-timeout)
+   * option.
+   * @param timeout Maximum time in milliseconds
+   */
+  setDefaultTimeout(timeout: number): void;
+
+  /**
+   * Executes a shell command on the device and returns its output.
+   * @param command Shell command to execute.
+   */
+  shell(command: string): Promise<Buffer>;
+
+  /**
+   * Swipes the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-swipe-option-selector) in  the
+   * specified [`direction`](https://playwright.dev/docs/api/class-androiddevice#android-device-swipe-option-direction).
+   * @param selector Selector to swipe.
+   * @param direction Swipe direction.
+   * @param percent Distance to swipe as a percentage of the widget's size.
+   * @param options
+   */
+  swipe(selector: AndroidSelector, direction: "down"|"up"|"left"|"right", percent: number, options?: {
+    /**
+     * Optional speed of the swipe in pixels per second.
+     */
+    speed?: number;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Taps on the widget defined by
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-tap-option-selector).
+   * @param selector Selector to tap on.
+   * @param options
+   */
+  tap(selector: AndroidSelector, options?: {
+    /**
+     * Optional duration of the tap in milliseconds.
+     */
+    duration?: number;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Waits for the specific
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-wait-option-selector) to either
+   * appear or disappear, depending on the
+   * [`state`](https://playwright.dev/docs/api/class-androiddevice#android-device-wait-option-state).
+   * @param selector Selector to wait for.
+   * @param options
+   */
+  wait(selector: AndroidSelector, options?: {
+    /**
+     * Optional state. Can be either:
+     * - default - wait for element to be present.
+     * - `'gone'` - wait for element to not be present.
+     */
+    state?: "gone";
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Emitted when the device connection gets closed.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (androidDevice: AndroidDevice) => boolean | Promise<boolean>, timeout?: number } | ((androidDevice: AndroidDevice) => boolean | Promise<boolean>)): Promise<AndroidDevice>;
+
+  /**
+   * Emitted when a new WebView instance is detected.
+   */
+  waitForEvent(event: 'webview', optionsOrPredicate?: { predicate?: (androidWebView: AndroidWebView) => boolean | Promise<boolean>, timeout?: number } | ((androidWebView: AndroidWebView) => boolean | Promise<boolean>)): Promise<AndroidWebView>;
+
+
+  /**
+   * This method waits until [AndroidWebView](https://playwright.dev/docs/api/class-androidwebview) matching the
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-web-view-option-selector) is opened
+   * and returns it. If there is already an open [AndroidWebView](https://playwright.dev/docs/api/class-androidwebview)
+   * matching the
+   * [`selector`](https://playwright.dev/docs/api/class-androiddevice#android-device-web-view-option-selector), returns
+   * immediately.
+   * @param selector
+   * @param options
+   */
+  webView(selector: {
+    /**
+     * Optional Package identifier.
+     */
+    pkg?: string;
+
+    /**
+     * Optional webview socket name.
+     */
+    socketName?: string;
+  }, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed
+     * by using the
+     * [androidDevice.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-androiddevice#android-device-set-default-timeout)
+     * method.
+     */
+    timeout?: number;
+  }): Promise<AndroidWebView>;
+
+  /**
+   * Currently open WebViews.
+   */
+  webViews(): Array<AndroidWebView>;
+
+  input: AndroidInput;
+
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+export interface AndroidInput {
+  /**
+   * Performs a drag between [`from`](https://playwright.dev/docs/api/class-androidinput#android-input-drag-option-from)
+   * and [`to`](https://playwright.dev/docs/api/class-androidinput#android-input-drag-option-to) points.
+   * @param from The start point of the drag.
+   * @param to The end point of the drag.
+   * @param steps The number of steps in the drag. Each step takes 5 milliseconds to complete.
+   */
+  drag(from: {
+    x: number;
+
+    y: number;
+  }, to: {
+    x: number;
+
+    y: number;
+  }, steps: number): Promise<void>;
+
+  /**
+   * Presses the [`key`](https://playwright.dev/docs/api/class-androidinput#android-input-press-option-key).
+   * @param key Key to press.
+   */
+  press(key: AndroidKey): Promise<void>;
+
+  /**
+   * Swipes following the path defined by
+   * [`segments`](https://playwright.dev/docs/api/class-androidinput#android-input-swipe-option-segments).
+   * @param from The point to start swiping from.
+   * @param segments Points following the [`from`](https://playwright.dev/docs/api/class-androidinput#android-input-swipe-option-from)
+   * point in the swipe gesture.
+   * @param steps The number of steps for each segment. Each step takes 5 milliseconds to complete, so 100 steps means half a second
+   * per each segment.
+   */
+  swipe(from: {
+    x: number;
+
+    y: number;
+  }, segments: ReadonlyArray<{
+    x: number;
+
+    y: number;
+  }>, steps: number): Promise<void>;
+
+  /**
+   * Taps at the specified [`point`](https://playwright.dev/docs/api/class-androidinput#android-input-tap-option-point).
+   * @param point The point to tap at.
+   */
+  tap(point: {
+    x: number;
+
+    y: number;
+  }): Promise<void>;
+
+  /**
+   * Types [`text`](https://playwright.dev/docs/api/class-androidinput#android-input-type-option-text) into currently
+   * focused widget.
+   * @param text Text to type.
+   */
+  type(text: string): Promise<void>;
+}
+
+/**
+ * [AndroidSocket](https://playwright.dev/docs/api/class-androidsocket) is a way to communicate with a process
+ * launched on the [AndroidDevice](https://playwright.dev/docs/api/class-androiddevice). Use
+ * [androidDevice.open(command)](https://playwright.dev/docs/api/class-androiddevice#android-device-open) to open a
+ * socket.
+ */
+export interface AndroidSocket {
+  /**
+   * Emitted when the socket is closed.
+   */
+  on(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted when data is available to read from the socket.
+   */
+  on(event: 'data', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'close', listener: () => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'data', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Emitted when the socket is closed.
+   */
+  addListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted when data is available to read from the socket.
+   */
+  addListener(event: 'data', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'data', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'data', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Emitted when the socket is closed.
+   */
+  prependListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted when data is available to read from the socket.
+   */
+  prependListener(event: 'data', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Closes the socket.
+   */
+  close(): Promise<void>;
+
+  /**
+   * Writes some [`data`](https://playwright.dev/docs/api/class-androidsocket#android-socket-write-option-data) to the
+   * socket.
+   * @param data Data to write.
+   */
+  write(data: Buffer): Promise<void>;
+
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ * [AndroidWebView](https://playwright.dev/docs/api/class-androidwebview) represents a WebView open on the
+ * [AndroidDevice](https://playwright.dev/docs/api/class-androiddevice). WebView is usually obtained using
+ * [androidDevice.webView(selector[, options])](https://playwright.dev/docs/api/class-androiddevice#android-device-web-view).
+ */
+export interface AndroidWebView {
+  /**
+   * Emitted when the WebView is closed.
+   */
+  on(event: 'close', listener: () => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted when the WebView is closed.
+   */
+  addListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted when the WebView is closed.
+   */
+  prependListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Connects to the WebView and returns a regular Playwright [Page](https://playwright.dev/docs/api/class-page) to
+   * interact with.
+   */
+  page(): Promise<Page>;
+
+  /**
+   * WebView process PID.
+   */
+  pid(): number;
+
+  /**
+   * WebView package identifier.
+   */
+  pkg(): string;
 }
 
 export interface LaunchOptions {

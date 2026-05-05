@@ -964,6 +964,7 @@ onChanges.push({
     'docs/src/test-api/',
     'docs/src/test-reporter-api/',
     'docs/src/electron-api/',
+    'docs/src/mobile-api/',
     'utils/generate_types/overrides.d.ts',
     'utils/generate_types/overrides-test.d.ts',
     'utils/generate_types/overrides-testReporter.d.ts',
