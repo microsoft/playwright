@@ -411,7 +411,7 @@ test.describe('--auth-token', () => {
     expect(response.headers.get('www-authenticate')).toContain('error="invalid_request"');
   });
 
-  test('rejects access_token in URI per OAuth 2.1 §5.1.1', async ({ serverEndpoint }) => {
+  test('rejects access_token in URI per OAuth 2.1 §5', async ({ serverEndpoint }) => {
     const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
     const response = await fetch(new URL(`/mcp?access_token=${TOKEN}`, url).href, { method: 'POST' });
     expect(response.status).toBe(400);

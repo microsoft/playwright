@@ -127,8 +127,14 @@ export type Config = {
      * When set, requests without `Authorization: Bearer <token>` get HTTP 401. When unset, the
      * server accepts unauthenticated requests (default — appropriate for localhost-only binds).
      *
-     * Authorization follows OAuth 2.1 Section 5 / RFC 6750 bearer-token usage:
-     * https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+     * Implements the OAuth 2.1 §5 / RFC 6750 resource-server token-usage rules
+     * (Authorization: Bearer header, tokens not in URI, 401 + WWW-Authenticate on failure).
+     * Does NOT implement the OAuth 2.1 authorization-code grant, RFC 9728 Protected Resource
+     * Metadata, RFC 8707 audience binding, or Dynamic Client Registration that the full MCP
+     * authorization spec requires; deployments that need those should front the server with
+     * an OAuth-aware proxy or identity provider.
+     *
+     * https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization
      */
     authToken?: string;
   },

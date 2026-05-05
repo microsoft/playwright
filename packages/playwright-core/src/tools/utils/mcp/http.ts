@@ -127,7 +127,7 @@ async function installHttpTransport(httpServer: http.Server, serverBackendFactor
     console.error(
         `Warning: MCP server is bound to a non-loopback host (${configuredHost}) without --auth-token set. ` +
         `Anyone with network access to this port can drive the browser. ` +
-        `See https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization`
+        `See https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization`
     );
   }
 
@@ -165,8 +165,8 @@ async function installHttpTransport(httpServer: http.Server, serverBackendFactor
       return;
     }
 
-    // Bearer-token gate for MCP endpoints. Per the MCP 2025-03-26 authorization spec, when
-    // authorization is required and not yet proven, the server MUST respond with HTTP 401.
+    // Bearer-token gate for MCP endpoints. Per the MCP authorization spec, when authorization is
+    // required and not yet proven, the server MUST respond with HTTP 401.
     // The /killkillkill endpoint above has its own CSRF protection and does not need bearer auth.
     if (authToken && !validateBearerToken(req, res, authToken))
       return;
