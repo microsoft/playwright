@@ -487,14 +487,13 @@ test('should allow typing in omnibox in interactive mode', async ({ cli, server,
   await dashboard.getByRole('button', { name: 'Enable interactive mode' }).click();
   await expect(dashboard.getByRole('main')).toHaveClass(/interactive/);
 
-  // Should be able to type a new URL into the omnibox.
+  const schemeless = `${server.HOST}/page2`;
   await dashboard.locator('#omnibox').click();
-  await dashboard.locator('#omnibox').fill(server.PREFIX + '/page2');
-  await expect(dashboard.locator('#omnibox')).toHaveValue(server.PREFIX + '/page2');
+  await dashboard.locator('#omnibox').fill(schemeless);
+  await expect(dashboard.locator('#omnibox')).toHaveValue(schemeless);
 
-  // Pressing Enter should trigger navigation.
   await dashboard.locator('#omnibox').press('Enter');
-  await expect(dashboard.locator('#omnibox')).toHaveValue(/page2/, { timeout: 10000 });
+  await expect(dashboard.locator('#omnibox')).toHaveValue(server.PREFIX + '/page2', { timeout: 10000 });
 });
 
 test('save recording streams WebM bytes to the chosen file', async ({ cli, server, page, startDashboardServer }) => {
