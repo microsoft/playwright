@@ -32,14 +32,19 @@ import type { StreamableHTTPServerTransport as StreamableHTTPServerTransportType
 
 const testDebug = debug('pw:mcp:test');
 
+export type HttpTransportOptions = {
+  allowedHosts?: string[];
+  authToken?: string;
+};
+
 export async function startMcpHttpServer(
   config: { host?: string, port?: number },
   serverBackendFactory: ServerBackendFactory,
-  allowedHosts?: string[]
+  options: HttpTransportOptions = {}
 ): Promise<string> {
   const httpServer = createHttpServer();
   await startHttpServer(httpServer, config);
-  return await installHttpTransport(httpServer, serverBackendFactory, allowedHosts);
+  return await installHttpTransport(httpServer, serverBackendFactory, options, config.host);
 }
 
 export function addressToString(address: string | net.AddressInfo | null, options: {
@@ -55,11 +60,76 @@ export function addressToString(address: string | net.AddressInfo | null, option
   return `${options.protocol}://${host}:${address.port}`;
 }
 
-async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts?: string[]) {
+const REALM = 'MCP';
+
+function isLoopbackHost(host: string | undefined): boolean {
+  if (!host)
+    return false;
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+}
+
+function sendAuthChallenge(res: http.ServerResponse, error?: { code: string, description: string }) {
+  // RFC 6750 Section 3 — Bearer challenge.
+  let challenge = `Bearer realm="${REALM}"`;
+  let status = 401;
+  if (error) {
+    challenge += `, error="${error.code}", error_description="${error.description}"`;
+    if (error.code === 'invalid_request')
+      status = 400;
+  }
+  res.statusCode = status;
+  res.setHeader('WWW-Authenticate', challenge);
+  res.end();
+}
+
+function validateBearerToken(req: http.IncomingMessage, res: http.ServerResponse, expectedToken: string): boolean {
+  // OAuth 2.1 Section 5.1.1: token MUST be in Authorization header, MUST NOT be in URI query.
+  const url = new URL(`http://localhost${req.url}`);
+  if (url.searchParams.has('access_token')) {
+    sendAuthChallenge(res, { code: 'invalid_request', description: 'access_token must not be in the URI query string' });
+    return false;
+  }
+
+  const header = req.headers['authorization'];
+  if (!header) {
+    sendAuthChallenge(res);
+    return false;
+  }
+
+  const match = /^Bearer\s+(\S+)\s*$/i.exec(header);
+  if (!match) {
+    sendAuthChallenge(res, { code: 'invalid_request', description: 'malformed Authorization header' });
+    return false;
+  }
+
+  const presented = Buffer.from(match[1], 'utf8');
+  const expected = Buffer.from(expectedToken, 'utf8');
+  // Constant-time comparison; length-mismatched buffers are not equal but we still compare to
+  // avoid leaking length via timing.
+  const padded = presented.length === expected.length ? presented : Buffer.alloc(expected.length);
+  if (presented.length !== expected.length || !crypto.timingSafeEqual(padded, expected)) {
+    sendAuthChallenge(res, { code: 'invalid_token', description: 'token is invalid or expired' });
+    return false;
+  }
+
+  return true;
+}
+
+async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, options: HttpTransportOptions, configuredHost: string | undefined) {
   const url = addressToString(httpServer.address(), { protocol: 'http', normalizeLoopback: true });
   const host = new URL(url).host;
-  allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
+  const allowedHosts = (options.allowedHosts || [host]).map(h => h.toLowerCase());
   const allowAnyHost = allowedHosts.includes('*');
+  const authToken = options.authToken;
+
+  if (!authToken && configuredHost && !isLoopbackHost(configuredHost)) {
+    // eslint-disable-next-line no-console
+    console.error(
+        `Warning: MCP server is bound to a non-loopback host (${configuredHost}) without --auth-token set. ` +
+        `Anyone with network access to this port can drive the browser. ` +
+        `See https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization`
+    );
+  }
 
   const sseSessions = new Map();
   const streamableSessions = new Map();
@@ -94,6 +164,13 @@ async function installHttpTransport(httpServer: http.Server, serverBackendFactor
       process.emit('SIGINT');
       return;
     }
+
+    // Bearer-token gate for MCP endpoints. Per the MCP 2025-03-26 authorization spec, when
+    // authorization is required and not yet proven, the server MUST respond with HTTP 401.
+    // The /killkillkill endpoint above has its own CSRF protection and does not need bearer auth.
+    if (authToken && !validateBearerToken(req, res, authToken))
+      return;
+
     if (url.pathname.startsWith('/sse'))
       await handleSSE(serverBackendFactory, req, res, url, sseSessions);
     else

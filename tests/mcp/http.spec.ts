@@ -380,3 +380,146 @@ test('should be able to allow any host', async ({ serverEndpoint }) => {
   expect(response.status).toBe(400);
   expect(await response.text()).toBe('Invalid request');
 });
+
+test.describe('--auth-token', () => {
+  const TOKEN = 'sekret-pre-shared-token-9f2c';
+
+  test('rejects request with no Authorization header', async ({ serverEndpoint }) => {
+    const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
+    const response = await fetch(new URL('/mcp', url).href, { method: 'POST' });
+    expect(response.status).toBe(401);
+    expect(response.headers.get('www-authenticate')).toBe('Bearer realm="MCP"');
+  });
+
+  test('rejects request with wrong token', async ({ serverEndpoint }) => {
+    const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
+    const response = await fetch(new URL('/mcp', url).href, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer not-the-token' },
+    });
+    expect(response.status).toBe(401);
+    expect(response.headers.get('www-authenticate')).toContain('error="invalid_token"');
+  });
+
+  test('rejects malformed Authorization header', async ({ serverEndpoint }) => {
+    const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
+    const response = await fetch(new URL('/mcp', url).href, {
+      method: 'POST',
+      headers: { Authorization: 'Basic ' + Buffer.from('user:pass').toString('base64') },
+    });
+    expect(response.status).toBe(400);
+    expect(response.headers.get('www-authenticate')).toContain('error="invalid_request"');
+  });
+
+  test('rejects access_token in URI per OAuth 2.1 §5.1.1', async ({ serverEndpoint }) => {
+    const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
+    const response = await fetch(new URL(`/mcp?access_token=${TOKEN}`, url).href, { method: 'POST' });
+    expect(response.status).toBe(400);
+    expect(response.headers.get('www-authenticate')).toContain('error="invalid_request"');
+  });
+
+  test('rejects /sse without token', async ({ serverEndpoint }) => {
+    const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
+    const response = await fetch(new URL('/sse', url).href);
+    expect(response.status).toBe(401);
+  });
+
+  test('accepts request with correct Bearer token', async ({ serverEndpoint }) => {
+    const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
+    const transport = new StreamableHTTPClientTransport(new URL('/mcp', url), {
+      requestInit: { headers: { Authorization: `Bearer ${TOKEN}` } },
+    });
+    const client = new Client({ name: 'test', version: '1.0.0' });
+    await client.connect(transport);
+    await client.ping();
+    await transport.terminateSession();
+    await client.close();
+  });
+
+  test('accepts token configured via env var', async ({ mcpHeadless }, testInfo) => {
+    const userDataDir = testInfo.outputPath('user-data-dir');
+    const cp = spawn('node', [
+      ...mcpServerPath,
+      '--port=0',
+      '--user-data-dir=' + userDataDir,
+      ...(mcpHeadless ? ['--headless'] : []),
+    ], {
+      stdio: 'pipe',
+      env: inheritAndCleanEnv({
+        PLAYWRIGHT_MCP_AUTH_TOKEN: TOKEN,
+        DEBUG: 'pw:mcp:test',
+        DEBUG_COLORS: '0',
+        DEBUG_HIDE_DATE: '1',
+      }),
+      cwd: testInfo.outputPath(),
+    });
+    try {
+      let stderr = '';
+      const url = await new Promise<string>(resolve => cp.stderr?.on('data', data => {
+        stderr += data.toString();
+        const match = stderr.match(/Listening on (http:\/\/.*)/);
+        if (match)
+          resolve(match[1]);
+      }));
+
+      const noAuth = await fetch(new URL('/mcp', url).href, { method: 'POST' });
+      expect(noAuth.status).toBe(401);
+
+      const transport = new StreamableHTTPClientTransport(new URL('/mcp', url), {
+        requestInit: { headers: { Authorization: `Bearer ${TOKEN}` } },
+      });
+      const client = new Client({ name: 'test', version: '1.0.0' });
+      await client.connect(transport);
+      await client.ping();
+      await transport.terminateSession();
+      await client.close();
+    } finally {
+      cp.kill('SIGTERM');
+    }
+  });
+
+  test('killkillkill ignores bearer token (own CSRF protection)', async ({ serverEndpoint }) => {
+    const { url } = await serverEndpoint({ args: ['--auth-token=' + TOKEN] });
+    // killkillkill must remain reachable without bearer auth — its security is a custom CSRF
+    // header that browsers can't add cross-origin without preflight.
+    const response = await fetch(new URL('/killkillkill', url).href, {
+      method: 'POST',
+      headers: { 'x-pw-mcp-kill': '1' },
+    });
+    expect(response.status).toBe(200);
+  });
+
+  test('warns when binding non-loopback host without auth', async ({ findFreePort }, testInfo) => {
+    const port = await findFreePort();
+    const userDataDir = testInfo.outputPath('user-data-dir');
+    const cp = spawn('node', [
+      ...mcpServerPath,
+      '--port=' + port,
+      '--host=0.0.0.0',
+      '--user-data-dir=' + userDataDir,
+      '--headless',
+      '--allowed-hosts=*',
+    ], {
+      stdio: 'pipe',
+      env: inheritAndCleanEnv({}),
+      cwd: testInfo.outputPath(),
+    });
+    try {
+      let stderr = '';
+      await new Promise<void>(resolve => cp.stderr?.on('data', data => {
+        stderr += data.toString();
+        if (stderr.includes('Listening on '))
+          resolve();
+      }));
+      expect(stderr).toContain('Warning: MCP server is bound to a non-loopback host');
+      expect(stderr).toContain('--auth-token');
+    } finally {
+      cp.kill('SIGTERM');
+    }
+  });
+
+  test('does not warn when localhost without auth', async ({ serverEndpoint }) => {
+    const { stderr } = await serverEndpoint();
+    expect(stderr()).not.toContain('Warning: MCP server is bound to a non-loopback host');
+  });
+});

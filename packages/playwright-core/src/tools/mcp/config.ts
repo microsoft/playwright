@@ -36,6 +36,7 @@ export type CLIOptions = {
   allowedHosts?: string[];
   allowedOrigins?: string[];
   allowUnrestrictedFileAccess?: boolean;
+  authToken?: string;
   blockedOrigins?: string[];
   blockServiceWorkers?: boolean;
   browser?: string;
@@ -338,6 +339,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       port: cliOptions.port,
       host: cliOptions.host,
       allowedHosts: cliOptions.allowedHosts,
+      authToken: cliOptions.authToken,
     },
     capabilities: cliOptions.caps as ToolCapability[],
     console: {
@@ -371,6 +373,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.allowedHosts = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
   options.allowedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
   options.allowUnrestrictedFileAccess = envToBoolean(e.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
+  options.authToken = envToString(e.PLAYWRIGHT_MCP_AUTH_TOKEN);
   options.blockedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
   options.blockServiceWorkers = envToBoolean(e.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
   options.browser = envToString(e.PLAYWRIGHT_MCP_BROWSER);

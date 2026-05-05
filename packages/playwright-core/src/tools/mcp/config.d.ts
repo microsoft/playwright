@@ -121,6 +121,16 @@ export type Config = {
      * This is not for CORS, but rather for the DNS rebinding protection.
      */
     allowedHosts?: string[];
+
+    /**
+     * Pre-shared bearer token required on every HTTP request to the MCP endpoints (`/mcp`, `/sse`).
+     * When set, requests without `Authorization: Bearer <token>` get HTTP 401. When unset, the
+     * server accepts unauthenticated requests (default — appropriate for localhost-only binds).
+     *
+     * Authorization follows OAuth 2.1 Section 5 / RFC 6750 bearer-token usage:
+     * https://modelcontextprotocol.io/specification/2025-03-26/basic/authorization
+     */
+    authToken?: string;
   },
 
   /**
