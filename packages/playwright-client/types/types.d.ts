@@ -22171,14 +22171,6 @@ export interface Tracing {
     content?: "omit"|"embed"|"attach";
 
     /**
-     * When set to `true`, the HAR file is rewritten on disk every time a network request finishes, so that the file can
-     * be read while recording. The file is finalized on
-     * [tracing.stopHar()](https://playwright.dev/docs/api/class-tracing#tracing-stop-har). Not compatible with a `.zip`
-     * HAR file or with remote connections.
-     */
-    live?: boolean;
-
-    /**
      * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
      * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
      */

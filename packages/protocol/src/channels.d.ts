@@ -317,7 +317,6 @@ export type RecordHarOptions = {
   urlRegexFlags?: string,
   harPath?: string,
   resourcesDir?: string,
-  live?: boolean,
 };
 
 export type FormField = {

@@ -96,23 +96,18 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     });
   }
 
-  async startHar(path: string, options: { content?: 'embed' | 'attach' | 'omit', mode?: 'full' | 'minimal', urlFilter?: string | RegExp, resourcesDir?: string, live?: boolean } = {}) {
+  async startHar(path: string, options: { content?: 'embed' | 'attach' | 'omit', mode?: 'full' | 'minimal', urlFilter?: string | RegExp, resourcesDir?: string } = {}) {
     await this._wrapApiCall(async () => {
       if (this._harId)
         throw new Error('HAR recording has already been started');
       if (options.resourcesDir && path.endsWith('.zip'))
         throw new Error('resourcesDir option is not compatible with a .zip har file');
-      if (options.live && path.endsWith('.zip'))
-        throw new Error('live option is not compatible with a .zip har file');
-      if (options.live && this._connection.isRemote())
-        throw new Error('live option is not supported for remote connections');
       const defaultContent = path.endsWith('.zip') ? 'attach' : 'embed';
       this._harId = await this._recordIntoHAR(path, null, {
         url: options.urlFilter,
         updateContent: options.content ?? defaultContent,
         updateMode: options.mode ?? 'full',
         resourcesDir: options.resourcesDir,
-        live: options.live,
       });
     });
     return new DisposableStub(() => this.stopHar());
@@ -128,7 +123,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     });
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full', resourcesDir?: string, live?: boolean } = {}): Promise<string> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full', resourcesDir?: string } = {}): Promise<string> {
     const isZip = har.endsWith('.zip');
     const { harId } = await this._channel.harStart({
       page: page?._channel,
@@ -140,7 +135,6 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
         mode: options.updateMode ?? 'minimal',
         harPath: isZip ? undefined : har,
         resourcesDir: options.resourcesDir,
-        live: options.live,
       },
     });
     this._harRecorders.set(harId, { path: har, resourcesDir: options.resourcesDir });

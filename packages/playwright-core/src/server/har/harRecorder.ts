@@ -37,8 +37,6 @@ export class HarRecorder implements HarTracerDelegate {
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
   private _writtenContentEntries = new Set<string>();
-  private _live: boolean;
-  private _harDirEnsured = false;
 
   constructor(context: BrowserContext | APIRequestContext, fallbackDir: string, harId: string, page: Page | null, options: channels.RecordHarOptions) {
     this._context = context;
@@ -52,7 +50,6 @@ export class HarRecorder implements HarTracerDelegate {
       this._resourcesDir = path.join(fallbackDir, `${harId}-resources`);
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
     const content = options.content || 'embed';
-    this._live = !!options.live;
     this._tracer = new HarTracer(context, page, this, {
       content,
       slimMode: options.mode === 'minimal',
@@ -69,17 +66,6 @@ export class HarRecorder implements HarTracerDelegate {
   }
 
   onEntryFinished(entry: har.Entry) {
-    if (this._live)
-      this._writeLog(this._tracer._snapshot());
-  }
-
-  private _writeLog(log: har.Log) {
-    log.entries = this._entries;
-    if (!this._harDirEnsured) {
-      this._fs.mkdir(path.dirname(this._harFilePath));
-      this._harDirEnsured = true;
-    }
-    this._fs.writeFile(this._harFilePath, jsonStringify({ log }));
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
@@ -96,7 +82,12 @@ export class HarRecorder implements HarTracerDelegate {
       return;
     this._isFlushed = true;
     await this._tracer.flush();
-    this._writeLog(this._tracer.stop());
+
+    const log = this._tracer.stop();
+    log.entries = this._entries;
+
+    this._fs.mkdir(path.dirname(this._harFilePath));
+    this._fs.writeFile(this._harFilePath, jsonStringify({ log }));
   }
 
   async flush() {

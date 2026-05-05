@@ -185,7 +185,6 @@ scheme.RecordHarOptions = tObject({
   urlRegexFlags: tOptional(tString),
   harPath: tOptional(tString),
   resourcesDir: tOptional(tString),
-  live: tOptional(tBoolean),
 });
 scheme.FormField = tObject({
   name: tString,

@@ -532,18 +532,13 @@ export class HarTracer {
     await Promise.all(this._barrierPromises);
   }
 
-  _snapshot(): har.Log {
+  stop() {
+    this._started = false;
+    eventsHelper.removeEventListeners(this._eventListeners);
+    this._barrierPromises.clear();
+
     const context = this._context instanceof BrowserContext ? this._context : undefined;
-    const pages = this._pageEntries.size ? Array.from(this._pageEntries.values()).map(pageEntry => {
-      const copy = { ...pageEntry, pageTimings: { ...pageEntry.pageTimings } };
-      if (!this._options.omitTiming) {
-        const startDateTime = ((pageEntry as any)[startedDateSymbol] as Date).valueOf();
-        copy.pageTimings.onContentLoad = relativeTiming(copy.pageTimings.onContentLoad, startDateTime);
-        copy.pageTimings.onLoad = relativeTiming(copy.pageTimings.onLoad, startDateTime);
-      }
-      return copy;
-    }) : undefined;
-    return {
+    const log: har.Log = {
       version: '1.2',
       creator: {
         name: 'Playwright',
@@ -553,16 +548,22 @@ export class HarTracer {
         name: context?._browser.options.name || '',
         version: context?._browser.version() || ''
       },
-      pages,
+      pages: this._pageEntries.size ? Array.from(this._pageEntries.values()) : undefined,
       entries: [],
     };
-  }
-
-  stop() {
-    this._started = false;
-    eventsHelper.removeEventListeners(this._eventListeners);
-    this._barrierPromises.clear();
-    const log = this._snapshot();
+    if (!this._options.omitTiming) {
+      for (const pageEntry of log.pages || []) {
+        const startDateTime = ((pageEntry as any)[startedDateSymbol] as Date).valueOf();
+        if (typeof pageEntry.pageTimings.onContentLoad === 'number' && pageEntry.pageTimings.onContentLoad >= 0)
+          pageEntry.pageTimings.onContentLoad -= startDateTime;
+        else
+          pageEntry.pageTimings.onContentLoad = -1;
+        if (typeof pageEntry.pageTimings.onLoad === 'number' && pageEntry.pageTimings.onLoad >= 0)
+          pageEntry.pageTimings.onLoad -= startDateTime;
+        else
+          pageEntry.pageTimings.onLoad = -1;
+      }
+    }
     this._pageEntries.clear();
     return log;
   }
@@ -609,10 +610,6 @@ export class HarTracer {
     return result;
   }
 
-}
-
-function relativeTiming(value: number | undefined, startDateTime: number): number {
-  return typeof value === 'number' && value >= 0 ? value - startDateTime : -1;
 }
 
 function createHarEntry(pageRef: string | undefined, method: string, url: URL, frameref: string | undefined, options: HarTracerOptions): har.Entry {
