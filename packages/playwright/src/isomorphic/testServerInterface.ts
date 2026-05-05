@@ -73,7 +73,7 @@ export interface TestServerInterface {
     locations?: string[];
     grep?: string;
     grepInvert?: string;
-    onlyChanged?: string;
+    onlyChanged?: boolean;
   }): Promise<{
     report: ReportEntry[],
     status: reporterTypes.FullResult['status']

@@ -58,7 +58,7 @@ export type ListTestsParams = {
   locations?: string[];
   grep?: string;
   grepInvert?: string;
-  onlyChanged?: string;
+  onlyChanged?: boolean;
 };
 
 export type RunTestsParams = {
@@ -246,7 +246,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       grep: params.grep,
       grepInvert: params.grepInvert,
       projectFilter: params.projects?.length ? params.projects : undefined,
-      onlyChanged: params.onlyChanged,
+      onlyChanged: params.onlyChanged ? 'HEAD' : undefined,
       listMode: true,
     };
 
