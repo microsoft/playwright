@@ -83,7 +83,7 @@ export async function traceSnapshot(actionId: string, options: { name?: string, 
   await runCommandOnSnapshot(server, options.browserArgs || []);
 }
 
-async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader, pageId: string, snapshotKey: string): Promise<{ url: string, stop: () => Promise<void> }> {
+async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader, pageId: string, snapshotKey: string): Promise<{ url: string, stop: () => Promise<void>, fetchResource: (frameUrl: string, requestUrl: string, method: string) => Promise<Response> }> {
   const snapshotServer = new SnapshotServer(storage, sha1 => loader.resourceForSha1(sha1));
   const httpServer = new HttpServer();
 
@@ -107,12 +107,33 @@ async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader,
   });
 
   await httpServer.start({ preferredPort: 0 });
-  return { url: httpServer.urlPrefix('human-readable'), stop: () => httpServer.stop() };
+  const url = httpServer.urlPrefix('human-readable');
+
+  const fetchResource = (frameUrl: string, requestUrl: string, method: string): Promise<Response> => {
+    const parsed = new URL(frameUrl);
+    const snapshotUrl = 'http://localhost' + parsed.pathname + parsed.search;
+    return snapshotServer.serveResource([requestUrl], method, snapshotUrl);
+  };
+
+  return { url, stop: () => httpServer.stop(), fetchResource };
 }
 
-async function runCommandOnSnapshot(server: { url: string, stop: () => Promise<void> }, browserArgs: string[]) {
+async function runCommandOnSnapshot(server: { url: string, stop: () => Promise<void>, fetchResource: (frameUrl: string, requestUrl: string, method: string) => Promise<Response> }, browserArgs: string[]) {
   const browser = await playwright.chromium.launch({ headless: true });
   const context = await browser.newContext();
+
+  await context.route('**/*', async route => {
+    const request = route.request();
+    const requestUrl = request.url();
+    if (requestUrl.startsWith(server.url)) {
+      await route.continue();
+      return;
+    }
+    const response = await server.fetchResource(request.frame().url(), requestUrl, request.method());
+    const body = Buffer.from(await response.arrayBuffer());
+    await route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body });
+  });
+
   const page = await context.newPage();
   await page.goto(server.url);
 
