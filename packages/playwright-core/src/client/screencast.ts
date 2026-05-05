@@ -24,17 +24,17 @@ export class Screencast implements api.Screencast {
   private _page: Page;
   private _started = false;
   private _savePath: string | undefined;
-  private _onFrame: ((frame: { data: Buffer }) => Promise<any>) | null = null;
+  private _onFrame: ((frame: { data: Buffer, viewportWidth: number, viewportHeight: number }) => Promise<any>) | null = null;
   private _artifact: Artifact | undefined;
 
   constructor(page: Page) {
     this._page = page;
-    this._page._channel.on('screencastFrame', ({ data }) => {
-      void this._onFrame?.({ data });
+    this._page._channel.on('screencastFrame', ({ data, viewportWidth, viewportHeight }) => {
+      void this._onFrame?.({ data, viewportWidth, viewportHeight });
     });
   }
 
-  async start(options: { onFrame?: (frame: { data: Buffer }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, quality?: number } = {}): Promise<DisposableStub> {
+  async start(options: { onFrame?: (frame: { data: Buffer, viewportWidth: number, viewportHeight: number }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, quality?: number } = {}): Promise<DisposableStub> {
     if (this._started)
       throw new Error('Screencast is already started');
     this._started = true;

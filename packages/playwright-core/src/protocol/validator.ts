@@ -2189,6 +2189,8 @@ scheme.PageRouteEvent = tObject({
 });
 scheme.PageScreencastFrameEvent = tObject({
   data: tBinary,
+  viewportWidth: tInt,
+  viewportHeight: tInt,
 });
 scheme.PageWebSocketRouteEvent = tObject({
   webSocketRoute: tChannel(['WebSocketRoute']),

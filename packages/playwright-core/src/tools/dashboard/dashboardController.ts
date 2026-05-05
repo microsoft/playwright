@@ -448,11 +448,10 @@ class AttachedPage {
 
   private async _startScreencast(page: api.Page) {
     await page.screencast.start({
-      onFrame: ({ data }: { data: Buffer }) => {
+      onFrame: ({ data, viewportWidth, viewportHeight }) => {
         if (this._disposed)
           return;
-        const vp = page.viewportSize();
-        this._owner.emitFrame(data.toString('base64'), vp?.width ?? 0, vp?.height ?? 0);
+        this._owner.emitFrame(data.toString('base64'), viewportWidth, viewportHeight);
       },
       size: { width: 1280, height: 800 },
       ...(this._recordingPath ? { path: this._recordingPath } : {}),

@@ -396,7 +396,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (params.sendFrames) {
       this._screencastClient = {
         onFrame: (frame: ScreencastFrame) => {
-          this._dispatchEvent('screencastFrame', { data: frame.buffer });
+          this._dispatchEvent('screencastFrame', { data: frame.buffer, viewportWidth: frame.viewportWidth, viewportHeight: frame.viewportHeight });
         },
         dispose: () => {},
         size: params.size,

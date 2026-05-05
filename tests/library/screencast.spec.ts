@@ -52,6 +52,29 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
   await context.close();
 });
 
+test('onFrame receives viewport size', async ({ browser, server, trace }) => {
+  test.skip(trace === 'on', 'trace=on has different screencast image configuration');
+  const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
+  const page = await context.newPage();
+
+  const frames: { viewportWidth: number, viewportHeight: number }[] = [];
+  await page.screencast.start({
+    onFrame: ({ viewportWidth, viewportHeight }) => frames.push({ viewportWidth, viewportHeight }),
+    size: { width: 500, height: 400 },
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await ensureSomeFrames(page);
+  await page.screencast.stop();
+
+  expect(frames.length).toBeGreaterThan(0);
+  for (const frame of frames) {
+    expect(frame.viewportWidth).toBe(1000);
+    expect(frame.viewportHeight).toBe(400);
+  }
+
+  await context.close();
+});
+
 test('start throws if screencast is already started', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();

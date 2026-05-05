@@ -22,7 +22,9 @@ await page.screencast.stop();
 ```js
 // Capture frames
 await page.screencast.start({
-  onFrame: ({ data }) => console.log(`frame size: ${data.length}`),
+  onFrame: ({ data, viewportWidth, viewportHeight }) => {
+    console.log(`frame size: ${data.length} (${viewportWidth}x${viewportHeight})`);
+  },
   size: { width: 800, height: 600 },
 });
 // ... perform actions ...
@@ -34,8 +36,10 @@ await page.screencast.stop();
 - `onFrame` <[function]\([Object]\): [Promise]>
   - alias: ScreencastFrame
   - `data` <[Buffer]> JPEG-encoded frame data.
+  - `viewportWidth` <[int]> Width of the page viewport at the time the frame was captured.
+  - `viewportHeight` <[int]> Height of the page viewport at the time the frame was captured.
 
-Callback that receives JPEG-encoded frame data.
+Callback that receives JPEG-encoded frame data along with the page viewport size at the time of capture.
 
 ### option: Screencast.start.path
 * since: v1.59
