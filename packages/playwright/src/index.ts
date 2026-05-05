@@ -64,7 +64,6 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
   _setupArtifacts: void;
-  _decorateContext: (context: BrowserContext) => Promise<void>;
   _contextFactory: (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
 };
 
@@ -77,7 +76,7 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 };
 
 // Note: utility fixtures and _utilityTest are reused in electron package. Be mindful when changing them.
-type UtilityTestFixtures = Pick<TestFixtures, 'testIdAttribute' | 'request' | '_combinedContextOptions' | '_setupArtifacts' | '_decorateContext'>;
+type UtilityTestFixtures = Pick<TestFixtures, 'testIdAttribute' | 'request' | '_combinedContextOptions' | '_setupArtifacts'>;
 type UtilityWorkerFixtures = Pick<WorkerFixtures, 'playwright' | 'screenshot' | 'trace'>;
 const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
   playwright: [async ({}, use) => {
@@ -87,13 +86,6 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
   trace: ['off', { scope: 'worker', option: true, box: true }],
   testIdAttribute: ['data-testid', { option: true, box: true }],
   _combinedContextOptions: [{}, { box: true }],
-  _decorateContext: [async ({}, use, testInfoPublic) => {
-    const testInfo = testInfoPublic as TestInfoImpl;
-    await use(async (context: BrowserContext) => {
-      testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
-      await runDaemonForContext(testInfo, context);
-    });
-  }, { box: true }],
   _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
@@ -180,9 +172,12 @@ const utilityFixtures: Fixtures<UtilityTestFixtures, UtilityWorkerFixtures> = {
         });
 
         await artifactsRecorder.didCreateBrowserContext(context);
-        const testInfo = globals.currentTestInfo();
-        if (testInfo)
-          attachConnectedHeaderIfNeeded(testInfo, context.browser());
+        const currentTestInfo = globals.currentTestInfo() as TestInfoImpl | undefined;
+        if (currentTestInfo) {
+          attachConnectedHeaderIfNeeded(currentTestInfo, context.browser());
+          currentTestInfo._onCustomMessageCallback = createCustomMessageHandler(currentTestInfo, context);
+          await runDaemonForContext(currentTestInfo, context);
+        }
       },
       runAfterCreateRequestContext: async (context: APIRequestContextImpl) => {
         await artifactsRecorder.didCreateRequestContext(context);
@@ -480,14 +475,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
 
-  context: async ({ browser, video, _reuseContext, _contextFactory, _decorateContext }, use, testInfoPublic) => {
+  context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
     const show = typeof video === 'string' ? undefined : video.show;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
-      await _decorateContext(context);
       await installScreencastTitleUpdater(testInfo, context, show?.test);
       await use(context);
       await close();
@@ -495,7 +489,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     }
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
-    await _decorateContext(context);
     await installScreencastTitleUpdater(testInfo, context, show?.test);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';

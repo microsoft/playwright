@@ -72,3 +72,45 @@ test('debug test and snapshot', async ({ cliEnv, cli, childProcess }) => {
   const { output: listOutput3 } = await cli('list');
   expect(listOutput3).toContain('(no browsers)');
 });
+
+test('debug test with custom fixture using browser.newContext', async ({ cliEnv, cli, childProcess }) => {
+  await writeFiles({
+    'subdir/a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend<{ customPage: import('@playwright/test').Page }>({
+        customPage: async ({ browser }, use) => {
+          const context = await browser.newContext();
+          const page = await context.newPage();
+          await use(page);
+          await context.close();
+        },
+      });
+      test('example test', async ({ customPage }) => {
+        await customPage.setContent('<title>My Page</title><body><button>Submit</button></body>');
+        await expect(customPage.getByRole('button', { name: 'Submit' })).toBeVisible();
+      });
+    `,
+  });
+
+  const testProcess = childProcess({
+    command: [process.argv[0], testEntrypoint, 'test', '--debug=cli'],
+    cwd: test.info().outputPath('subdir'),
+    env: cliEnv,
+  });
+
+  await testProcess.waitForOutput('playwright-cli attach');
+
+  const match = testProcess.output.match(/attach ([a-zA-Z0-9-_]+)/);
+  const session = match[1];
+
+  const { output: attachOutput } = await cli('attach', session);
+  expect(attachOutput).toContain('### Paused');
+
+  const { output: stepOutput } = await cli(`--session=${session}`, 'step-over');
+  expect(stepOutput).toContain('### Paused');
+
+  const snapshotResult = await cli(`--session=${session}`, 'snapshot');
+  expect(snapshotResult.inlineSnapshot).toContain('button "Submit"');
+
+  await cli(`--session=${session}`, 'resume');
+});

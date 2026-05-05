@@ -21,20 +21,17 @@ import { selectors } from 'playwright/test';
 export { expect, devices, defineConfig, mergeExpects, mergeTests } from 'playwright/test';
 export { electron, selectors };
 
-import type { BrowserContext, TestType } from '../index.d.ts';
+import type { TestType } from '../index.d.ts';
 
-const baseTest = _utilityTest as TestType<{
-  _decorateContext: (context: BrowserContext) => Promise<void>;
-}, {}>;
+const baseTest = _utilityTest as TestType<{}, {}>;
 
 export const test = baseTest.extend({
   // @ts-expect-error
   appOptions: [{}, { option: true }],
 
-  app: async ({ appOptions, testIdAttribute, _decorateContext }, use) => {
+  app: async ({ appOptions, testIdAttribute }, use) => {
     selectors.setTestIdAttribute(testIdAttribute);
     const app = await electron.launch(appOptions);
-    await _decorateContext(app.context());
     await use(app);
     await app.close();
   },

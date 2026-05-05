@@ -453,3 +453,34 @@ test('test_debug (no default page fixture)', async ({ startClient }) => {
     },
   })).toHaveTextResponse(expect.stringContaining(`Only tests that use default Playwright context or page fixture support test_debug`));
 });
+
+test('test_debug (custom fixture with browser.newContext)', async ({ startClient }) => {
+  const { client, id } = await prepareDebugTest(startClient, `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend<{ customPage: import('@playwright/test').Page }>({
+        customPage: async ({ browser }, use) => {
+          const context = await browser.newContext();
+          const page = await context.newPage();
+          await use(page);
+          await context.close();
+        },
+      });
+      test('fail', async ({ customPage }) => {
+        await customPage.setContent('<button>Submit</button>');
+        await expect(customPage.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+      });
+  `);
+
+  expect(await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toHaveTextResponse(expect.stringContaining(`### Paused on error:`));
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+  })).toHaveResponse({
+    inlineSnapshot: expect.stringContaining(`- button "Submit" [ref=e2]`),
+  });
+});
