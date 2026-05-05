@@ -278,7 +278,12 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
 
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
-    server.listen(socketPath, () => resolve(server));
+    let listenRetries = 0;
+
+    const tryListen = () => {
+      server.listen(socketPath, () => resolve(server));
+    };
+
     server.on('error', (err: NodeJS.ErrnoException) => {
       const isInUse = err.code === 'EADDRINUSE'
           || (process.platform === 'win32' && err.code === 'EBUSY');
@@ -291,9 +296,15 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
       client.on('error', () => {
         if (process.platform !== 'win32')
           fs.unlinkSync(socketPath);
-        server.listen(socketPath, () => resolve(server));
+        // On Windows the previous server may still be shutting down; retry with backoff.
+        if (listenRetries >= 5)
+          return reject(err);
+        const delay = Math.min(100 * (1 << listenRetries++), 3000);
+        setTimeout(tryListen, delay);
       });
     });
+
+    tryListen();
   });
 }
 
