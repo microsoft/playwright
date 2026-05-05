@@ -17,6 +17,7 @@
 
 import fs from 'fs';
 import url from 'url';
+import zlib from 'zlib';
 import { expect, test as it } from './pageTest';
 
 it('should work @smoke', async ({ page, server }) => {
@@ -61,6 +62,22 @@ it('should return uncompressed text', async ({ page, server }) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(response.headers()['content-encoding']).toBe('gzip');
   expect(await response.text()).toBe('{"foo": "bar"}\n');
+});
+
+it('should return uncompressed text for brotli encoding', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/39160');
+  const text = '{"foo": "bar"}\n';
+  const compressed = zlib.brotliCompressSync(Buffer.from(text));
+  server.setRoute('/brotli.json', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Content-Encoding': 'br',
+    });
+    res.end(compressed);
+  });
+  const response = await page.goto(server.PREFIX + '/brotli.json');
+  expect(response.headers()['content-encoding']).toBe('br');
+  expect(await response.text()).toBe(text);
 });
 
 it('should throw when requesting body of redirected response', async ({ page, server }) => {
