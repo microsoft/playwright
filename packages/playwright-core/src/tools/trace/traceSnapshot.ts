@@ -99,10 +99,61 @@ async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader,
     return true;
   });
 
+  httpServer.routePath('/__pwsnapshot/sw.js', (_request: any, response: any) => {
+    response.statusCode = 200;
+    response.setHeader('Content-Type', 'application/javascript');
+    response.setHeader('Service-Worker-Allowed', '/');
+    response.end(`
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', e => {
+  const reqUrl = new URL(e.request.url);
+  if (reqUrl.origin === self.location.origin)
+    return;
+  e.respondWith((async () => {
+    const client = e.clientId ? await self.clients.get(e.clientId) : null;
+    if (!client)
+      return new Response('No client', { status: 500 });
+    const params = new URLSearchParams({
+      frame: client.url,
+      url: e.request.url,
+      method: e.request.method,
+    });
+    return fetch('/__pwsnapshot/resource?' + params.toString());
+  })());
+});
+`);
+    return true;
+  });
+
+  httpServer.routePath('/__pwsnapshot/resource', (request: any, response: any) => {
+    const url = new URL('http://localhost' + request.url!);
+    const frame = new URL(url.searchParams.get('frame')!);
+    const snapshotUrl = 'http://localhost' + frame.pathname + frame.search;
+    const requestUrl = url.searchParams.get('url')!;
+    const method = url.searchParams.get('method')!;
+    snapshotServer.serveResource([requestUrl], method, snapshotUrl).then(async resp => {
+      response.statusCode = resp.status;
+      resp.headers.forEach((value: string, key: string) => response.appendHeader(key, value));
+      response.end(Buffer.from(await resp.arrayBuffer()));
+    }).catch(() => {
+      response.statusCode = 500;
+      response.end();
+    });
+    return true;
+  });
+
+  const startTime = Date.now();
   httpServer.routePrefix('/', (_request: any, response: any) => {
-    response.statusCode = 302;
-    response.setHeader('Location', `/snapshot/${pageId}?name=${encodeURIComponent(snapshotKey)}`);
-    response.end();
+    response.statusCode = 200;
+    response.setHeader('Content-Type', 'text/html; charset=utf-8');
+    response.end(`<!DOCTYPE html><html><body><script>(async () => {
+  await navigator.serviceWorker.register('/__pwsnapshot/sw.js?v=${startTime}', { scope: '/' });
+  await navigator.serviceWorker.ready;
+  if (!navigator.serviceWorker.controller)
+    await new Promise(r => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
+  location.replace(${JSON.stringify(`/snapshot/${pageId}?name=${encodeURIComponent(snapshotKey)}`)});
+})();</script></body></html>`);
     return true;
   });
 
@@ -115,6 +166,7 @@ async function runCommandOnSnapshot(server: { url: string, stop: () => Promise<v
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.url);
+  await page.waitForURL(url => new URL(url).pathname.startsWith('/snapshot/'));
 
   const backend = new BrowserBackend({
     snapshot: { mode: 'full' },
