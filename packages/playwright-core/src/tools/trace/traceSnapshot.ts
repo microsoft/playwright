@@ -103,26 +103,7 @@ async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader,
     response.statusCode = 200;
     response.setHeader('Content-Type', 'application/javascript');
     response.setHeader('Service-Worker-Allowed', '/');
-    response.end(`
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch', e => {
-  const reqUrl = new URL(e.request.url);
-  if (reqUrl.origin === self.location.origin)
-    return;
-  e.respondWith((async () => {
-    const client = e.clientId ? await self.clients.get(e.clientId) : null;
-    if (!client)
-      return new Response('No client', { status: 500 });
-    const params = new URLSearchParams({
-      frame: client.url,
-      url: e.request.url,
-      method: e.request.method,
-    });
-    return fetch('/__pwsnapshot/resource?' + params.toString());
-  })());
-});
-`);
+    response.end(`(${snapshotServiceWorker.toString()})();`);
     return true;
   });
 
@@ -144,21 +125,60 @@ self.addEventListener('fetch', e => {
   });
 
   const startTime = Date.now();
+  const snapshotUrl = `/snapshot/${pageId}?name=${encodeURIComponent(snapshotKey)}`;
   httpServer.routePrefix('/', (_request: any, response: any) => {
     response.statusCode = 200;
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
-    response.end(`<!DOCTYPE html><html><body><script>(async () => {
-  await navigator.serviceWorker.register('/__pwsnapshot/sw.js?v=${startTime}', { scope: '/' });
-  await navigator.serviceWorker.ready;
-  if (!navigator.serviceWorker.controller)
-    await new Promise(r => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
-  location.replace(${JSON.stringify(`/snapshot/${pageId}?name=${encodeURIComponent(snapshotKey)}`)});
-})();</script></body></html>`);
+    response.end(`<!DOCTYPE html><html><body><script>(${bootstrapSnapshotPage.toString()})(${JSON.stringify(`/__pwsnapshot/sw.js?v=${startTime}`)}, ${JSON.stringify(snapshotUrl)});</script></body></html>`);
     return true;
   });
 
   await httpServer.start({ preferredPort: 0 });
   return { url: httpServer.urlPrefix('human-readable'), stop: () => httpServer.stop() };
+}
+
+function snapshotServiceWorker() {
+  type Client = { url: string };
+  type FetchEvent = {
+    request: Request;
+    clientId: string | null;
+    respondWith(response: Promise<Response>): void;
+  };
+  type ServiceWorkerGlobalScope = {
+    location: { origin: string };
+    addEventListener(event: 'install' | 'activate', listener: (event: any) => void): void;
+    addEventListener(event: 'fetch', listener: (event: FetchEvent) => void): void;
+    clients: { claim(): Promise<void>; get(id: string): Promise<Client | undefined> };
+    skipWaiting(): Promise<void>;
+  };
+  const sw = self as unknown as ServiceWorkerGlobalScope;
+
+  sw.addEventListener('install', () => sw.skipWaiting());
+  sw.addEventListener('activate', event => event.waitUntil(sw.clients.claim()));
+  sw.addEventListener('fetch', event => {
+    const requestUrl = new URL(event.request.url);
+    if (requestUrl.origin === sw.location.origin)
+      return;
+    event.respondWith((async () => {
+      const client = event.clientId ? await sw.clients.get(event.clientId) : null;
+      if (!client)
+        return new Response('No client', { status: 500 });
+      const params = new URLSearchParams({
+        frame: client.url,
+        url: event.request.url,
+        method: event.request.method,
+      });
+      return fetch('/__pwsnapshot/resource?' + params.toString());
+    })());
+  });
+}
+
+async function bootstrapSnapshotPage(swUrl: string, snapshotUrl: string) {
+  await navigator.serviceWorker.register(swUrl, { scope: '/' });
+  await navigator.serviceWorker.ready;
+  if (!navigator.serviceWorker.controller)
+    await new Promise(resolve => navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true }));
+  location.replace(snapshotUrl);
 }
 
 async function runCommandOnSnapshot(server: { url: string, stop: () => Promise<void> }, browserArgs: string[]) {

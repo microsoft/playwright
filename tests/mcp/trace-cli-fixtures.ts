@@ -120,8 +120,6 @@ export const test = baseTest
         await context.tracing.stop({ path: tracePath });
         await browser.close();
 
-        // Drop the recorded routes so trace replay tests can't accidentally fetch sub-resources
-        // from the still-running test server — they should come from the trace archive.
         server.reset();
 
         await use(tracePath);

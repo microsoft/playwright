@@ -186,10 +186,6 @@ test('trace snapshot resolves inner frames', async ({ runTraceCli }) => {
 });
 
 test('trace snapshot replays sub-resource stylesheets from the archive', async ({ runTraceCli }) => {
-  // The CLI snapshot HTTP server only handles `/snapshot/...` directly. Sub-resource requests
-  // (the snapshot HTML's <base href> points at the recorded origin) are intercepted via
-  // BrowserContext.route in serveTraceSnapshot's decorateContext, mirroring the trace-viewer
-  // service worker's `snapshotServer.serveResource(...)` logic.
   const { stdout: listOutput } = await runTraceCli(['actions', '--grep', 'Click']);
   const match = listOutput.match(/^\s+(\d+)\.\s/m);
   expect(match).toBeTruthy();
