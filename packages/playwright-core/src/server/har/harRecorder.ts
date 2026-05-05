@@ -87,7 +87,34 @@ export class HarRecorder implements HarTracerDelegate {
     log.entries = this._entries;
 
     this._fs.mkdir(path.dirname(this._harFilePath));
-    this._fs.writeFile(this._harFilePath, jsonStringify({ log }));
+    // Stream the HAR field-by-field and entry-by-entry so the document is
+    // never held in memory in one piece - it can exceed V8's ~512MB string
+    // length limit.
+    const file = this._harFilePath;
+    this._fs.writeFile(file, '');
+    this._fs.appendFile(file, '{"log":{"version":' + JSON.stringify(log.version));
+    this._fs.appendFile(file, ',"creator":' + JSON.stringify(log.creator));
+    if (log.browser)
+      this._fs.appendFile(file, ',"browser":' + JSON.stringify(log.browser));
+    if (log.pages) {
+      this._fs.appendFile(file, ',"pages":[');
+      for (let i = 0; i < log.pages.length; i++) {
+        if (i)
+          this._fs.appendFile(file, ',');
+        this._fs.appendFile(file, JSON.stringify(log.pages[i]));
+      }
+      this._fs.appendFile(file, ']');
+    }
+    this._fs.appendFile(file, ',"entries":[');
+    for (let i = 0; i < log.entries.length; i++) {
+      if (i)
+        this._fs.appendFile(file, ',');
+      this._fs.appendFile(file, JSON.stringify(log.entries[i]));
+    }
+    this._fs.appendFile(file, ']');
+    if (log.comment !== undefined)
+      this._fs.appendFile(file, ',"comment":' + JSON.stringify(log.comment));
+    this._fs.appendFile(file, '}}', true /* flush */);
   }
 
   async flush() {
@@ -114,51 +141,4 @@ export class HarRecorder implements HarTracerDelegate {
     artifact.reportFinished();
     return { artifact };
   }
-}
-
-function jsonStringify(object: any): string {
-  const tokens: string[] = [];
-  innerJsonStringify(object, tokens, '', false, undefined);
-  return tokens.join('');
-}
-
-function innerJsonStringify(object: any, tokens: string[], indent: string, flat: boolean, parentKey: string | undefined) {
-  if (typeof object !== 'object' || object === null) {
-    tokens.push(JSON.stringify(object));
-    return;
-  }
-
-  const isArray = Array.isArray(object);
-  if (!isArray && object.constructor.name !== 'Object') {
-    tokens.push(JSON.stringify(object));
-    return;
-  }
-
-  const entries = isArray ? object : Object.entries(object).filter(e => e[1] !== undefined);
-  if (!entries.length) {
-    tokens.push(isArray ? `[]` : `{}`);
-    return;
-  }
-
-  const childIndent = `${indent}  `;
-  let brackets: { open: string, close: string };
-  if (isArray)
-    brackets = flat ? { open: '[', close: ']' } : { open: `[\n${childIndent}`, close: `\n${indent}]` };
-  else
-    brackets = flat ? { open: '{ ', close: ' }' } : { open: `{\n${childIndent}`, close: `\n${indent}}` };
-
-  tokens.push(brackets.open);
-
-  for (let i = 0; i < entries.length; ++i) {
-    const entry = entries[i];
-    if (i)
-      tokens.push(flat ? `, ` : `,\n${childIndent}`);
-    if (!isArray)
-      tokens.push(`${JSON.stringify(entry[0])}: `);
-    const key = isArray ? undefined : entry[0];
-    const flatten = flat || key === 'timings' || parentKey === 'headers';
-    innerJsonStringify(isArray ? entry : entry[1], tokens, childIndent, flatten, key);
-  }
-
-  tokens.push(brackets.close);
 }
