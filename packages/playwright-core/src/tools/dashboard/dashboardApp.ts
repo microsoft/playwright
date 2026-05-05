@@ -350,6 +350,7 @@ export async function openDashboardApp() {
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
         } else if (parsed.kill) {
+          server?.close();
           socket.end();
           gracefullyProcessExitDoNotHang(0);
         } else {
