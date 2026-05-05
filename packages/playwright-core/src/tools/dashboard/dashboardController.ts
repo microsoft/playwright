@@ -37,6 +37,8 @@ export class DashboardConnection implements Transport {
 
   private _provider: SessionProvider;
   private _attachedPage: AttachedPage | undefined;
+  private _overviewPages: Map<string, OverviewPage> = new Map();
+  private _overviewEnabled = false;
   private _onclose: () => void;
   private _onconnected?: () => void;
   private _onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void;
@@ -60,12 +62,24 @@ export class DashboardConnection implements Transport {
     this._provider.on(SessionProviderEvent.SessionsChanged, () => {
       this._pushSessions();
       void this._tryRevealPending();
+      if (this._overviewEnabled)
+        void this._syncOverview();
     });
-    this._provider.on(SessionProviderEvent.TabsChanged, () => this._pushTabs());
+    this._provider.on(SessionProviderEvent.TabsChanged, () => {
+      this._pushTabs();
+      if (this._overviewEnabled)
+        void this._syncOverview();
+    });
     this._provider.on(SessionProviderEvent.ContextClosed, context => {
       if (this._attachedPage?.page.context() === context) {
         this._attachedPage.dispose();
         this._attachedPage = undefined;
+      }
+      for (const [id, op] of this._overviewPages) {
+        if (op.page.context() === context) {
+          op.dispose();
+          this._overviewPages.delete(id);
+        }
       }
     });
     this._provider.on(SessionProviderEvent.AttachRequested, page => { void this._switchAttachedTo(page); });
@@ -77,6 +91,9 @@ export class DashboardConnection implements Transport {
     this._provider.dispose();
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
+    for (const op of this._overviewPages.values())
+      op.dispose();
+    this._overviewPages.clear();
     for (const stream of this._streams.values()) {
       void stream.handle.close()
           .catch(() => {})
@@ -131,6 +148,56 @@ export class DashboardConnection implements Transport {
       return;
     this._visible = params.visible;
     await this._attachedPage?.setScreencastActive(params.visible);
+    for (const op of this._overviewPages.values())
+      await op.setScreencastActive(params.visible);
+  }
+
+  async setOverview(params: { enabled: boolean }) {
+    if (this._overviewEnabled === params.enabled)
+      return;
+    this._overviewEnabled = params.enabled;
+    if (params.enabled) {
+      await this._syncOverview();
+    } else {
+      for (const op of this._overviewPages.values())
+        op.dispose();
+      this._overviewPages.clear();
+    }
+  }
+
+  private async _syncOverview() {
+    if (!this._overviewEnabled)
+      return;
+    const attachedPageObj = this._attachedPage?.page;
+    const wantedPages = new Map<string, api.Page>();
+    for (const { context } of this._provider.contextEntries()) {
+      for (const page of context.pages()) {
+        // The primary attached page already streams its own frames via
+        // AttachedPage.startScreencast; skip it here to avoid double-attach.
+        if (page === attachedPageObj)
+          continue;
+        wantedPages.set(pageId(page), page);
+      }
+    }
+    for (const [id, op] of this._overviewPages) {
+      if (!wantedPages.has(id) || wantedPages.get(id) !== op.page) {
+        op.dispose();
+        this._overviewPages.delete(id);
+      }
+    }
+    for (const [id, page] of wantedPages) {
+      if (this._overviewPages.has(id))
+        continue;
+      const op = new OverviewPage(this, page, id);
+      this._overviewPages.set(id, op);
+      try {
+        if (this._visible)
+          await op.setScreencastActive(true);
+      } catch {
+        op.dispose();
+        this._overviewPages.delete(id);
+      }
+    }
   }
 
   revealSession(sessionName: string, workspaceDir?: string) {
@@ -208,8 +275,8 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('tabs', { tabs });
   }
 
-  emitFrame(data: string, viewportWidth: number, viewportHeight: number) {
-    this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
+  emitFrame(pageId: string, data: string, viewportWidth: number, viewportHeight: number) {
+    this.sendEvent?.('frame', { page: pageId, data, viewportWidth, viewportHeight });
   }
 
   emitAnnotate() {
@@ -297,6 +364,8 @@ export class DashboardConnection implements Transport {
       this._annotateWaitingForAttach = false;
       this.sendEvent?.('annotate', {});
     }
+    if (this._overviewEnabled)
+      await this._syncOverview();
   }
 
   _handleAttachedPageClose(context: api.BrowserContext) {
@@ -452,7 +521,7 @@ class AttachedPage {
         if (this._disposed)
           return;
         const vp = page.viewportSize();
-        this._owner.emitFrame(data.toString('base64'), vp?.width ?? 0, vp?.height ?? 0);
+        this._owner.emitFrame(pageId(page), data.toString('base64'), vp?.width ?? 0, vp?.height ?? 0);
       },
       size: { width: 1280, height: 800 },
       ...(this._recordingPath ? { path: this._recordingPath } : {}),
@@ -462,6 +531,54 @@ class AttachedPage {
   private async _restartScreencast(page: api.Page) {
     await page.screencast.stop().catch(() => {});
     await this._startScreencast(page);
+  }
+}
+
+class OverviewPage {
+  private _owner: DashboardConnection;
+  private _page: api.Page;
+  private _pageId: string;
+  private _running = false;
+  private _disposed = false;
+
+  constructor(owner: DashboardConnection, page: api.Page, id: string) {
+    this._owner = owner;
+    this._page = page;
+    this._pageId = id;
+  }
+
+  get page(): api.Page { return this._page; }
+
+  async setScreencastActive(active: boolean) {
+    if (this._disposed)
+      return;
+    if (active && !this._running) {
+      this._running = true;
+      try {
+        await this._page.screencast.start({
+          onFrame: ({ data }: { data: Buffer }) => {
+            if (this._disposed)
+              return;
+            const vp = this._page.viewportSize();
+            this._owner.emitFrame(this._pageId, data.toString('base64'), vp?.width ?? 0, vp?.height ?? 0);
+          },
+          size: { width: 640, height: 400 },
+        });
+      } catch (e) {
+        this._running = false;
+        throw e;
+      }
+    } else if (!active && this._running) {
+      this._running = false;
+      await this._page.screencast.stop().catch(() => {});
+    }
+  }
+
+  dispose() {
+    this._disposed = true;
+    if (this._running)
+      this._page.screencast.stop().catch(() => {});
+    this._running = false;
   }
 }
 

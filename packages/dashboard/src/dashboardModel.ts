@@ -37,6 +37,8 @@ export type DashboardState = {
   // Dashboard / page state.
   tabs: Tab[] | null;
   liveFrame: DashboardChannelEvents['frame'] | undefined;
+  liveFrames: Map<string, DashboardChannelEvents['frame']>;
+  overview: boolean;
   annotateFrame: AnnotateFrame | undefined;
   pendingAnnotate: { initiator: 'cli' | 'user' } | null;
   annotateInitiator: 'cli' | 'user' | null;
@@ -52,6 +54,8 @@ const initialState: DashboardState = {
   loadingSessions: true,
   tabs: null,
   liveFrame: undefined,
+  liveFrames: new Map(),
+  overview: false,
   annotateFrame: undefined,
   pendingAnnotate: null,
   annotateInitiator: null,
@@ -71,10 +75,32 @@ export class DashboardModel {
   constructor(client: DashboardChannel) {
     this._client = client;
     client.on('sessions', params => this._emit({ sessions: params.sessions, clientInfo: params.clientInfo, loadingSessions: false }));
-    client.on('tabs', params => this._emit({ tabs: params.tabs }));
-    client.on('frame', params => this._emit({ liveFrame: params }));
+    client.on('tabs', params => this._onTabs(params.tabs));
+    client.on('frame', params => this._onFrame(params));
     client.on('annotate', () => this.enterAnnotate('cli'));
     client.on('cancelAnnotate', () => this.cancelAnnotate());
+  }
+
+  private _onFrame(params: DashboardChannelEvents['frame']) {
+    const liveFrames = new Map(this.state.liveFrames);
+    liveFrames.set(params.page, params);
+    const selectedPage = this.state.tabs?.find(t => t.selected)?.page;
+    const partial: Partial<DashboardState> = { liveFrames };
+    if (selectedPage === params.page)
+      partial.liveFrame = params;
+    this._emit(partial);
+  }
+
+  private _onTabs(tabs: Tab[]) {
+    const validIds = new Set(tabs.map(t => t.page));
+    const liveFrames = new Map<string, DashboardChannelEvents['frame']>();
+    for (const [id, frame] of this.state.liveFrames) {
+      if (validIds.has(id))
+        liveFrames.set(id, frame);
+    }
+    const selectedPage = tabs.find(t => t.selected)?.page;
+    const liveFrame = selectedPage ? liveFrames.get(selectedPage) : undefined;
+    this._emit({ tabs, liveFrames, liveFrame });
   }
 
   subscribe(listener: Listener): () => void {
@@ -96,9 +122,36 @@ export class DashboardModel {
     void this._client.setVisible({ visible });
   }
 
+  toggleOverview() {
+    void this.setOverview(!this.state.overview);
+  }
+
+  async setOverview(enabled: boolean) {
+    if (this.state.overview === enabled)
+      return;
+    if (enabled)
+      await this._cleanupOnModeSwitch();
+    this._emit({ overview: enabled });
+    try {
+      await this._client.setOverview({ enabled });
+    } catch {
+      // best-effort; revert on failure
+      this._emit({ overview: !enabled });
+    }
+  }
+
   // Tab actions.
 
   selectTab(tab: Tab) {
+    if (this.state.tabs) {
+      const optimisticTabs = this.state.tabs.map(t => ({
+        ...t,
+        selected: t.page === tab.page,
+      }));
+      this._onTabs(optimisticTabs);
+    }
+    if (this.state.overview)
+      void this.setOverview(false);
     void this._client.selectTab({ browser: tab.browser, context: tab.context, page: tab.page });
   }
 

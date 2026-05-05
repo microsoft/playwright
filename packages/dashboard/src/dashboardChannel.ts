@@ -35,7 +35,7 @@ export type AnnotationData = { x: number; y: number; width: number; height: numb
 export type DashboardChannelEvents = {
   sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
   tabs: { tabs: Tab[] };
-  frame: { data: string; viewportWidth: number; viewportHeight: number };
+  frame: { page: string; data: string; viewportWidth: number; viewportHeight: number };
   annotate: {};
   cancelAnnotate: {};
 };
@@ -48,6 +48,7 @@ export interface DashboardChannel {
   newTab(params: { browser: string; context: string }): Promise<void>;
   closeSession(params: { browser: string }): Promise<void>;
   setVisible(params: { visible: boolean }): Promise<void>;
+  setOverview(params: { enabled: boolean }): Promise<void>;
 
   navigate(params: { url: string }): Promise<void>;
   back(): Promise<void>;

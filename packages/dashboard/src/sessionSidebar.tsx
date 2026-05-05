@@ -17,7 +17,7 @@
 import React from 'react';
 import './sessionSidebar.css';
 import { SettingsButton } from './settingsView';
-import { BrowserIcon } from './icons';
+import { BrowserIcon, GridIcon } from './icons';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { ListView } from '@web/components/listView';
 
@@ -77,7 +77,7 @@ const TabRow: React.FC<{ tab: Tab; model: DashboardModel }> = ({ tab, model }) =
 };
 
 export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model }) => {
-  const { sessions, clientInfo, loadingSessions, tabs: allTabs } = model.state;
+  const { sessions, clientInfo, loadingSessions, tabs: allTabs, overview } = model.state;
   const openSessions = sessions;
 
   const tabsByBrowserAndContext = React.useMemo(() => {
@@ -123,7 +123,15 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model }) => {
 
   return <nav className='dashboard-shell-sidebar' aria-label='Sessions'>
     <div className='dashboard-shell-sidebar-header'>
-      <h2 className='dashboard-shell-sidebar-title'>Sessions</h2>
+      <ToolbarButton
+        className='dashboard-overview-toggle'
+        title={model.state.overview ? 'Exit overview' : 'Show overview of all tabs'}
+        toggled={model.state.overview}
+        onClick={() => model.toggleOverview()}
+      >
+        <GridIcon />
+        <span className='dashboard-overview-toggle-label'>Overview</span>
+      </ToolbarButton>
       <SettingsButton />
     </div>
     <div className='dashboard-shell-sidebar-content'>
@@ -148,7 +156,8 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({ model }) => {
                   ? [{ contextGuid: null, tabs: [] }]
                   : contextEntries.map(([contextGuid, tabs]) => ({ contextGuid, tabs }));
             return rows.map((row, rowIdx) => {
-              const activeTab = row.tabs?.find(t => t.context === activeContext && t.selected);
+              const realActiveTab = row.tabs?.find(t => t.context === activeContext && t.selected);
+              const activeTab = overview ? undefined : realActiveTab;
               const rowKey = `${guid}-${row.contextGuid ?? `placeholder-${rowIdx}`}`;
               return <section
                 key={rowKey}

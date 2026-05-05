@@ -120,6 +120,15 @@ export const ReloadIcon: React.FC = () => (
   </svg>
 );
 
+export const GridIcon: React.FC = () => (
+  <svg width='14' height='14' viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.5' aria-hidden='true'>
+    <rect x='1.75' y='1.75' width='5' height='5' rx='1.25'/>
+    <rect x='9.25' y='1.75' width='5' height='5' rx='1.25'/>
+    <rect x='1.75' y='9.25' width='5' height='5' rx='1.25'/>
+    <rect x='9.25' y='9.25' width='5' height='5' rx='1.25'/>
+  </svg>
+);
+
 export const InspectorPanelIcon: React.FC = () => (
   <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
     <rect x='3' y='3' width='18' height='18' rx='2'/>

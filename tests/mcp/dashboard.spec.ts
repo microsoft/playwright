@@ -496,3 +496,44 @@ test('save recording streams WebM bytes to the chosen file', async ({ cli, serve
   // WebM files start with the EBML magic bytes.
   expect(bytes.subarray(0, 4)).toEqual(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
 });
+
+test('overview mode shows a grid tile for every tab and selecting one exits overview', async ({ boundBrowser, server, startDashboardServer }) => {
+  const contextA = await boundBrowser.newContext();
+  const pageA = await contextA.newPage();
+  await pageA.goto(server.EMPTY_PAGE);
+
+  const contextB = await boundBrowser.newContext();
+  const pageB = await contextB.newPage();
+  await pageB.goto(server.PREFIX + '/title.html');
+
+  const dashboard = await startDashboardServer();
+  await expect(dashboard.getByRole('region', { name: /^Session / })).toHaveCount(2);
+
+  // Toggle overview on.
+  await dashboard.getByRole('button', { name: /overview/i }).click();
+
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: overview' })).toBeVisible();
+  // No tab is selected in the sidebar while overview is active.
+  await expect(dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option', { selected: true })).toHaveCount(0);
+  const grid = dashboard.getByRole('list', { name: 'All tabs overview' });
+  await expect(grid).toBeVisible();
+  const tiles = grid.getByRole('listitem');
+  await expect(tiles).toHaveCount(2);
+
+  // The toolbar (interactive / annotate / record buttons) is not shown in overview.
+  await expect(dashboard.getByRole('button', { name: /interactive mode/i })).toHaveCount(0);
+
+  // Clicking a tile exits overview and selects that tab.
+  await tiles.first().click();
+  await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
+  await expect(dashboard.locator('img#display')).toBeVisible();
+  const sessions = dashboard.getByRole('navigation', { name: 'Sessions' });
+  await expect(sessions.getByRole('option', { selected: true })).toHaveCount(1);
+
+  // Toggling overview on then off restores the previous selection (display-only).
+  const toggle = dashboard.getByRole('button', { name: /overview/i });
+  await toggle.click();
+  await expect(sessions.getByRole('option', { selected: true })).toHaveCount(0);
+  await toggle.click();
+  await expect(sessions.getByRole('option', { selected: true })).toHaveCount(1);
+});

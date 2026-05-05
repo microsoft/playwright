@@ -43,6 +43,25 @@
   letter-spacing: 0.03em;
 }
 
+.dashboard-overview-toggle.toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  height: 24px;
+}
+
+.dashboard-overview-toggle.toolbar-button.toggled {
+  background: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground, var(--color-fg-default));
+}
+
+.dashboard-overview-toggle-label {
+  line-height: 1;
+}
+
 .dashboard-shell-sidebar-content {
   flex: 1;
   overflow: auto;

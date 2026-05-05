@@ -19,6 +19,7 @@ import './dashboard.css';
 import { ChevronLeftIcon, ChevronRightIcon, LockIcon, LockOpenIcon, ReloadIcon, ScreenshotRegionIcon } from './icons';
 import { AnnotateModal } from './annotations';
 import { clientToViewport, getImageLayout } from './imageLayout';
+import { OverviewGrid } from './overviewGrid';
 import { Recording } from './recording';
 
 import type { Annotation } from './annotations';
@@ -67,7 +68,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   const [, setRevision] = React.useState(0);
   React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), [model]);
 
-  const { tabs, mode, recording, liveFrame, annotateFrame, annotateInitiator, pendingAnnotate } = model.state;
+  const { tabs, mode, recording, liveFrame, annotateFrame, annotateInitiator, pendingAnnotate, overview } = model.state;
   const interactive = mode === 'interactive';
 
   const [flashTick, setFlashTick] = React.useState(0);
@@ -244,7 +245,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   const isRecording = recording?.phase === 'recording';
   const showAnnotateModal = !!annotateFrame;
   const showRecording = recording?.phase === 'stopped';
-  const modeLabel = showAnnotateModal ? 'Dashboard: annotate' : isRecording ? 'Dashboard: record' : 'Dashboard';
+  const modeLabel = overview ? 'Dashboard: overview' : showAnnotateModal ? 'Dashboard: annotate' : isRecording ? 'Dashboard: record' : 'Dashboard';
+
+  if (overview) {
+    return (
+      <main className='dashboard-view dashboard-view-overview' aria-label={modeLabel}>
+        <OverviewGrid model={model} />
+      </main>
+    );
+  }
 
   return (
     <main className={'dashboard-view' + (interactive ? ' interactive' : '')} aria-label={modeLabel}>
