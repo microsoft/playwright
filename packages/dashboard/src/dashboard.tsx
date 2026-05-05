@@ -165,6 +165,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   const selectedTab = tabs?.find(t => t.selected);
   const ready = !!selectedTab;
 
+  const [omniboxValue, setOmniboxValue] = React.useState(selectedTab?.url ?? '');
+  React.useEffect(() => {
+    setOmniboxValue(selectedTab?.url ?? '');
+  }, [selectedTab?.url]);
+
   function imgCoords(e: React.MouseEvent): { x: number; y: number } {
     const vw = liveFrame?.viewportWidth ?? 0;
     const vh = liveFrame?.viewportHeight ?? 0;
@@ -325,14 +330,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
                 </button>
                 <div className='omnibox-wrap'>
                   <input
-                    key={selectedTab ? `${selectedTab.browser}::${selectedTab.context}::${selectedTab.page}::${selectedTab.url}` : 'none'}
                     id='omnibox'
                     className='omnibox'
                     type='text'
                     placeholder='Search or enter URL'
                     spellCheck={false}
                     autoComplete='off'
-                    defaultValue={selectedTab?.url ?? ''}
+                    value={omniboxValue}
+                    onChange={e => setOmniboxValue(e.target.value)}
                     onKeyDown={e => {
                       if (!interactive)
                         return;
