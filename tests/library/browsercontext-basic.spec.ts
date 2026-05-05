@@ -69,6 +69,40 @@ it('should be able to click across browser contexts', async function({ browser }
   await page2.close();
 });
 
+it('should be able to hover across browser contexts in parallel', async function({ browser, browserName }) {
+  it.fixme(browserName === 'firefox');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40562' });
+
+  const html = `
+    <style>
+      [role="tooltip"] { display: none; }
+      [role="tooltip"].visible { display: block; }
+    </style>
+    <button>Hover me</button>
+    <div role="tooltip">Tooltip content</div>
+    <script>
+      const button = document.querySelector('button');
+      const tooltip = document.querySelector('[role="tooltip"]');
+      button.addEventListener('pointerenter', () => tooltip.classList.add('visible'));
+      button.addEventListener('pointerleave', () => tooltip.classList.remove('visible'));
+    </script>
+  `;
+
+  const pages: Page[] = await Promise.all([1, 2, 3, 4, 5].map(async () => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.setContent(html);
+    return page;
+  }));
+
+  await Promise.all(pages.map(async (page, index) => {
+    await page.getByRole('button', { name: 'Hover me' }).hover();
+    await expect.soft(page.getByRole('tooltip'), `Tooltip for page ${index + 1} should be visible`).toBeVisible();
+  }));
+
+  await Promise.all(pages.map(page => page.context().close()));
+});
+
 it('window.open should use parent tab context', async function({ browser, server }) {
   const context = await browser.newContext();
   const page = await context.newPage();
