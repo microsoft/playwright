@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -118,7 +119,11 @@ function cliEnv() {
     PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
     PWTEST_DASHBOARD_SETTINGS_FILE: test.info().outputPath('dashboard.settings.json'),
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex)),
+    // Include a short hash of outputDir so that concurrent runs from different
+    // checkouts use different socket directories, while runs within the same
+    // checkout share them (which helps surface race conditions and cleanup
+    // issues). The hash is kept short to stay clear of socket path length limits.
+    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex) + '-' + crypto.createHash('sha1').update(test.info().outputDir).digest('hex').slice(0, 8)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
   };
 }
