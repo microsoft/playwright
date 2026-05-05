@@ -78,9 +78,9 @@ test('save as pdf (filename: output.pdf)', async ({ startClient, mcpBrowser, ser
     code: expect.stringContaining(`await page.pdf(`),
   });
 
-  const files = [...fs.readdirSync(testInfo.outputPath())];
+  const files = [...fs.readdirSync(testInfo.outputPath('.playwright-mcp'))];
 
-  expect(fs.existsSync(testInfo.outputPath())).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('.playwright-mcp'))).toBeTruthy();
   const pdfFiles = files.filter(f => f.endsWith('.pdf'));
   expect(pdfFiles).toHaveLength(1);
   expect(pdfFiles[0]).toMatch(/^output.pdf$/);

@@ -113,5 +113,5 @@ test('should respect snapshot[filename]', async ({ client, server }, testInfo) =
     },
   })).toHaveTextResponse(expect.stringContaining('snapshot1.yml'));
 
-  expect(await fs.promises.readFile(path.join(testInfo.outputPath(), 'snapshot1.yml'), 'utf8')).toContain(`- button "Button 1" [ref=e2]`);
+  expect(await fs.promises.readFile(path.join(testInfo.outputPath('.playwright-mcp'), 'snapshot1.yml'), 'utf8')).toContain(`- button "Button 1" [ref=e2]`);
 });

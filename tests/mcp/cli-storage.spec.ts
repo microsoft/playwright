@@ -54,7 +54,7 @@ test('state-save saves to custom filename', async ({ cli, server }, testInfo) =>
   const { output } = await cli('state-save', 'my-state.json');
   expect(output).toContain('my-state.json');
 
-  const stateFile = testInfo.outputPath('my-state.json');
+  const stateFile = testInfo.outputPath('.playwright-cli', 'my-state.json');
   expect(await fs.promises.stat(stateFile).catch(() => null)).not.toBeNull();
 });
 
@@ -117,7 +117,7 @@ test('state-save and state-load roundtrip', async ({ cli, server, mcpBrowser }, 
   expect(clearedResult).toContain('|null');
 
   // Restore storage state
-  await cli('state-load', testInfo.outputPath('roundtrip-state.json'));
+  await cli('state-load', testInfo.outputPath('.playwright-cli', 'roundtrip-state.json'));
 
   // Reload to pick up cookies
   await cli('goto', server.EMPTY_PAGE);

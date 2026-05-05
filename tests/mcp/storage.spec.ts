@@ -100,7 +100,7 @@ test('browser_storage_state saves to custom filename', async ({ startClient, ser
     result: expect.stringContaining('my-state.json'),
   });
 
-  const stateFile = testInfo.outputPath('my-state.json');
+  const stateFile = testInfo.outputPath('.playwright-mcp', 'my-state.json');
   expect(await fs.promises.stat(stateFile).catch(() => null)).not.toBeNull();
 });
 
@@ -243,7 +243,7 @@ test('browser_storage_state and browser_set_storage_state roundtrip', async ({ s
   // Restore storage state
   await client.callTool({
     name: 'browser_set_storage_state',
-    arguments: { filename: testInfo.outputPath('roundtrip-state.json') },
+    arguments: { filename: testInfo.outputPath('.playwright-mcp', 'roundtrip-state.json') },
   });
 
   // Reload to pick up cookies

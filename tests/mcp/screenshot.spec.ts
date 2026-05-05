@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { test, expect } from './fixtures';
 import { jpegjs, PNG } from '../../packages/playwright-core/lib/utilsBundle';
@@ -94,6 +95,29 @@ test('--output-dir should work', async ({ startClient, server }, testInfo) => {
   const files = [...fs.readdirSync(outputDir)].filter(f => f.endsWith('.png'));
   expect(files).toHaveLength(1);
   expect(files[0]).toMatch(/^page-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.png$/);
+});
+
+test('--output-dir should work with explicit filename', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: { outputDir },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: {
+      filename: 'output.png',
+    },
+  });
+
+  expect(fs.existsSync(path.join(outputDir, 'output.png'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('output.png'))).toBeFalsy();
 });
 
 for (const type of ['png', 'jpeg']) {
@@ -246,7 +270,7 @@ test('browser_take_screenshot (filename: "output.png")', async ({ client, server
     ],
   });
 
-  const files = [...fs.readdirSync(testInfo.outputPath())].filter(f => f.endsWith('.png'));
+  const files = [...fs.readdirSync(testInfo.outputPath('.playwright-mcp'))].filter(f => f.endsWith('.png'));
   expect(files).toHaveLength(1);
   expect(files[0]).toMatch(/^output\.png$/);
 });
