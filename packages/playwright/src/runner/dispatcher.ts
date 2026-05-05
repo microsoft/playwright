@@ -252,6 +252,10 @@ export class Dispatcher {
       for (const error of params.fatalErrors)
         this._testRun.reporter.onError?.(error, workerInfo);
     });
+    worker.on('processError', (error: TestError) => {
+      this._testRun.hasWorkerErrors = true;
+      this._testRun.reporter.onError?.(error);
+    });
     worker.on('exit', () => {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
       this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });

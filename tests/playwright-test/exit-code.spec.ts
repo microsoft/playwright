@@ -207,3 +207,26 @@ test('should exit with code 1 when config is not found', async ({ runInlineTest 
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`foo.config.js does not exist`);
 });
+
+test('should force-kill a worker that does not exit on stop', async ({ runInlineTest }) => {
+  const now = monotonicTime();
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        hangOnExit: [async ({}, use) => {
+          await use();
+          // Disable graceful exit to simulate a worker that cannot self-terminate.
+          process.exit = (() => {}) as any;
+          setInterval(() => {}, 1000);
+        }, { scope: 'worker' }],
+      });
+      test('passes', async ({ hangOnExit }) => {});
+    `,
+  }, undefined, { PWTEST_CHILD_PROCESS_TIMEOUT: '2000' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('process did not exit within 2000ms after stop, force-killed it');
+  // Should complete well within a minute thanks to the watchdog.
+  expect(monotonicTime() - now).toBeLessThan(60000);
+});

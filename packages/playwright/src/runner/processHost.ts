@@ -19,7 +19,8 @@ import { EventEmitter } from 'events';
 
 import debug from 'debug';
 import { assert } from '@isomorphic/assert';
-import { timeOrigin } from '@isomorphic/time';
+import { monotonicTime, timeOrigin } from '@isomorphic/time';
+import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 
 import type { ipc, processRunner } from '../common';
 
@@ -165,8 +166,30 @@ export class ProcessHost extends EventEmitter {
       this.send({ method: '__stop__' });
       this._didSendStop = true;
     }
-    if (!this._didExitAndRanOnExit)
-      await new Promise(f => this.once('exit', f));
+    if (this._didExitAndRanOnExit)
+      return;
+    const exitPromise = new Promise<void>(f => this.once('exit', () => f()));
+    const timeout = +(process.env.PWTEST_CHILD_PROCESS_TIMEOUT || 5 * 60 * 1000);
+    const result = await raceAgainstDeadline(() => exitPromise, monotonicTime() + timeout);
+    if (result.timedOut) {
+      this.emit('processError', { message: `Error: ${this._processName} process did not exit within ${timeout}ms after stop, force-killed it` });
+      this._forceKill();
+      await exitPromise;
+    }
+  }
+
+  private _forceKill() {
+    const pid = this.process?.pid;
+    if (!pid)
+      return;
+    try {
+      if (process.platform === 'win32')
+        child_process.spawnSync(`taskkill /pid ${pid} /T /F`, { shell: true });
+      else
+        process.kill(pid, 'SIGKILL');
+    } catch {
+      // The process may have already exited.
+    }
   }
 
   didSendStop() {
