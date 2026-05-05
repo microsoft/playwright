@@ -916,6 +916,41 @@ it('should not hang on slow chunked response', async ({ browserName, browser, co
   expect(log.browser!.version).toBe(browser.version());
 });
 
+it('should support HAR larger than 512MB', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.skip(browserName !== 'chromium', 'serializer is browser-agnostic; one browser is enough');
+  it.slow();
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36707' });
+
+  const harPath = testInfo.outputPath('test.har');
+  const context = await contextFactory({ recordHar: { path: harPath } });
+
+  // 30 x 20MB textual responses push the HAR JSON past V8's ~512MB max
+  // string length. Each body still fits in a single string; only the
+  // aggregate would overflow the previous tokens.join('').
+  const body = 'a'.repeat(20 * 1024 * 1024);
+  server.setRoute('/large', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(body);
+  });
+  for (let i = 0; i < 30; i++)
+    await context.request.get(`${server.PREFIX}/large`);
+  await context.close();
+
+  const stats = fs.statSync(harPath);
+  expect(stats.size).toBeGreaterThan(512 * 1024 * 1024);
+
+  // Reading the whole file as a string would re-hit V8's limit, so
+  // sample the head and tail to verify structural sanity.
+  const fd = fs.openSync(harPath, 'r');
+  const head = Buffer.alloc(64);
+  fs.readSync(fd, head, 0, 64, 0);
+  const tail = Buffer.alloc(64);
+  fs.readSync(fd, tail, 0, 64, stats.size - 64);
+  fs.closeSync(fd);
+  expect(head.toString()).toMatch(/^\{\s*"log"\s*:\s*\{/);
+  expect(tail.toString()).toMatch(/\}\s*\}\s*$/);
+});
+
 it.describe('tracing.startHar', () => {
   it('should record a HAR with options', async ({ contextFactory, server }, testInfo) => {
     const context = await contextFactory();
