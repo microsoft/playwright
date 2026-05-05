@@ -17,14 +17,13 @@
 import React from 'react';
 import './modal.css';
 import './annotations.css';
-import { DownloadIcon } from './icons';
-import { ToolbarButton } from '@web/components/toolbarButton';
 import { clientToViewport, getImageLayout } from './imageLayout';
 
 import type { ImageLayout } from './imageLayout';
-import type { AnnotateFrame } from './dashboardModel';
 
 export type Annotation = { id: string; x: number; y: number; width: number; height: number; text: string; color: string };
+
+export { buildAnnotatedImage, saveAnnotationAsDownload } from './annotationImage';
 
 // Palette is 6 rgb triples — matches the `--annotations-blue` pattern so they
 // compose nicely via `rgb(var(--annotation-color))` / `rgb(var(...) / 0.12)`.
@@ -103,90 +102,8 @@ function viewportRectToScreenStyle(layout: ImageLayout, screenRect: DOMRect, vw:
   };
 }
 
-export async function saveAnnotationAsDownload(blob: Blob): Promise<void> {
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const suggestedName = `annotations-${stamp}.png`;
-  const picker = (window as any).showSaveFilePicker as undefined | ((opts: any) => Promise<any>);
-  if (picker) {
-    try {
-      const handle = await picker({
-        suggestedName,
-        startIn: 'downloads',
-        types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }],
-      });
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-    } catch (e: any) {
-      if (e?.name !== 'AbortError')
-        throw e;
-    }
-    return;
-  }
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = suggestedName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-export async function buildAnnotatedImage(
-  img: HTMLImageElement,
-  viewportWidth: number,
-  viewportHeight: number,
-  annotations: Annotation[],
-): Promise<Blob | null> {
-  if (!img.naturalWidth || !img.naturalHeight || !viewportWidth || !viewportHeight)
-    return null;
-  const canvas = document.createElement('canvas');
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-  const ctx = canvas.getContext('2d');
-  if (!ctx)
-    return null;
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  const sx = canvas.width / viewportWidth;
-  const sy = canvas.height / viewportHeight;
-  const fontSize = Math.max(11, Math.round(14 * sy));
-  ctx.font = `500 ${fontSize}px -apple-system, system-ui, sans-serif`;
-  ctx.textBaseline = 'middle';
-  for (const a of annotations) {
-    const [r, g, b] = a.color.split(' ').map(Number);
-    const solid = `rgb(${r}, ${g}, ${b})`;
-    const wash = `rgba(${r}, ${g}, ${b}, 0.12)`;
-    const x = a.x * sx;
-    const y = a.y * sy;
-    const w = a.width * sx;
-    const h = a.height * sy;
-    ctx.fillStyle = wash;
-    ctx.fillRect(x, y, w, h);
-    ctx.lineWidth = Math.max(2, Math.round(2 * sy));
-    ctx.strokeStyle = solid;
-    ctx.strokeRect(x, y, w, h);
-    if (a.text) {
-      const padX = Math.max(4, Math.round(6 * sy));
-      const padY = Math.max(2, Math.round(3 * sy));
-      const metrics = ctx.measureText(a.text);
-      const labelW = metrics.width + padX * 2;
-      const labelH = fontSize + padY * 2;
-      const labelX = x - ctx.lineWidth / 2;
-      const labelY = y - labelH;
-      ctx.fillStyle = solid;
-      ctx.fillRect(labelX, labelY, labelW, labelH);
-      ctx.fillStyle = '#fff';
-      ctx.fillText(a.text, labelX + padX, labelY + labelH / 2);
-    }
-  }
-  return await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-}
-
 export type AnnotationsHandle = {
-  clear(): void;
-  submit(): Promise<void>;
-  save(): Promise<void>;
+  clearSelection(): void;
 };
 
 type AnnotationsProps = {
@@ -195,8 +112,8 @@ type AnnotationsProps = {
   screenRef: React.RefObject<HTMLDivElement | null>;
   viewportWidth: number;
   viewportHeight: number;
-  onSubmit: (blob: Blob, annotations: Annotation[]) => Promise<void> | void;
-  onAnnotationsChange?: (count: number) => void;
+  annotations: Annotation[];
+  onAnnotationsChange: (annotations: Annotation[]) => void;
 };
 
 const ColorPicker: React.FC<{ color: string; onChange: (color: string) => void }> = ({ color, onChange }) => (
@@ -216,8 +133,14 @@ const ColorPicker: React.FC<{ color: string; onChange: (color: string) => void }
   </div>
 );
 
-export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>(({ active, displayRef, screenRef, viewportWidth, viewportHeight, onSubmit, onAnnotationsChange }, ref) => {
-  const [annotations, setAnnotations] = React.useState<Annotation[]>([]);
+export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>(({ active, displayRef, screenRef, viewportWidth, viewportHeight, annotations, onAnnotationsChange }, ref) => {
+  const setAnnotations = React.useCallback(
+      (updater: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
+        const next = typeof updater === 'function' ? (updater as (p: Annotation[]) => Annotation[])(annotations) : updater;
+        onAnnotationsChange(next);
+      },
+      [annotations, onAnnotationsChange],
+  );
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
   const [selection, setSelection] = React.useState<Selection>(null);
   const [drag, setDrag] = React.useState<DragState | null>(null);
@@ -275,7 +198,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [drag, displayRef, viewportWidth, viewportHeight]);
+  }, [drag, displayRef, viewportWidth, viewportHeight, setAnnotations]);
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } | null {
     if (!viewportWidth || !viewportHeight)
@@ -385,10 +308,6 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
     }
   }
 
-  React.useEffect(() => {
-    onAnnotationsChange?.(annotations.length);
-  }, [annotations.length, onAnnotationsChange]);
-
   // Snapshot is only meaningful while an annotation is actively being edited.
   React.useEffect(() => {
     if (!editingId)
@@ -396,33 +315,11 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   }, [editingId]);
 
   React.useImperativeHandle(ref, () => ({
-    clear: () => {
-      setAnnotations([]);
+    clearSelection: () => {
       setDraft(null);
       setSelection(null);
     },
-    submit: async () => {
-      const img = displayRef.current;
-      if (!img)
-        return;
-      const blob = await buildAnnotatedImage(img, viewportWidth, viewportHeight, annotations);
-      if (!blob)
-        return;
-      await onSubmit(blob, annotations);
-      setAnnotations([]);
-      setSelection(null);
-      setDraft(null);
-    },
-    save: async () => {
-      const img = displayRef.current;
-      if (!img)
-        return;
-      const blob = await buildAnnotatedImage(img, viewportWidth, viewportHeight, annotations);
-      if (!blob)
-        return;
-      await saveAnnotationAsDownload(blob);
-    },
-  }), [displayRef, viewportWidth, viewportHeight, annotations, onSubmit]);
+  }), []);
 
   if (!active)
     return null;
@@ -592,70 +489,3 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   );
 });
 Annotations.displayName = 'Annotations';
-
-type AnnotateModalProps = {
-  frame: AnnotateFrame;
-  showSubmit: boolean;
-  onSubmit: (blob: Blob, annotations: Annotation[]) => Promise<void>;
-  onClose: () => void;
-};
-
-export const AnnotateModal: React.FC<AnnotateModalProps> = ({ frame, showSubmit, onSubmit, onClose }) => {
-  const [annotationCount, setAnnotationCount] = React.useState(0);
-  const annotationsRef = React.useRef<AnnotationsHandle>(null);
-  const displayRef = React.useRef<HTMLImageElement>(null);
-  const viewRef = React.useRef<HTMLDivElement>(null);
-
-  return (
-    <div className='modal-overlay' role='dialog' aria-modal='true' aria-label='Annotate screenshot'>
-      <div className='modal'>
-        <div className='modal-toolbar'>
-          <div className='modal-title'>Annotate screenshot</div>
-          {showSubmit && (
-            <ToolbarButton
-              title='Submit annotation'
-              icon='check'
-              disabled={annotationCount === 0}
-              onClick={() => annotationsRef.current?.submit()}
-            />
-          )}
-          <ToolbarButton
-            title='Save annotated image'
-            onClick={() => annotationsRef.current?.save()}
-          >
-            <DownloadIcon />
-          </ToolbarButton>
-          <ToolbarButton
-            title='Clear annotations'
-            icon='circle-slash'
-            disabled={annotationCount === 0}
-            onClick={() => annotationsRef.current?.clear()}
-          />
-          <ToolbarButton
-            title='Discard'
-            icon='close'
-            onClick={onClose}
-          />
-        </div>
-        <div ref={viewRef} className='modal-body'>
-          <img
-            ref={displayRef}
-            className='annotate-modal-image'
-            alt='annotation'
-            src={'data:image/png;base64,' + frame.data}
-          />
-          <Annotations
-            ref={annotationsRef}
-            active={true}
-            displayRef={displayRef}
-            screenRef={viewRef}
-            viewportWidth={frame.viewportWidth}
-            viewportHeight={frame.viewportHeight}
-            onSubmit={onSubmit}
-            onAnnotationsChange={setAnnotationCount}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};

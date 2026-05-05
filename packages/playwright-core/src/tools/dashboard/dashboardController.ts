@@ -27,7 +27,7 @@ import { SessionProviderEvent } from './sessionProvider';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
-import type { AnnotationData, Tab } from '@dashboard/dashboardChannel';
+import type { SubmittedAnnotationFrame, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor } from '../../serverRegistry';
 import type { SessionProvider } from './sessionProvider';
 
@@ -39,7 +39,7 @@ export class DashboardConnection implements Transport {
   private _attachedPage: AttachedPage | undefined;
   private _onclose: () => void;
   private _onconnected?: () => void;
-  private _onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void;
+  private _onAnnotationSubmit?: (frames: SubmittedAnnotationFrame[]) => void;
   private _pushTabsScheduled = false;
   private _visible = true;
   private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string } | undefined;
@@ -48,7 +48,7 @@ export class DashboardConnection implements Transport {
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(provider: SessionProvider, onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => void) {
+  constructor(provider: SessionProvider, onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (frames: SubmittedAnnotationFrame[]) => void) {
     this._provider = provider;
     this._onclose = onclose;
     this._onconnected = onconnected;
@@ -163,8 +163,8 @@ export class DashboardConnection implements Transport {
     this._pushTabs();
   }
 
-  async submitAnnotation(params: { data: string | undefined; ariaSnapshot: string; annotations: AnnotationData[] }) {
-    this._onAnnotationSubmit?.(params.data, params.ariaSnapshot, params.annotations);
+  async submitAnnotation(params: { frames: SubmittedAnnotationFrame[] }) {
+    this._onAnnotationSubmit?.(params.frames);
   }
 
   async reveal(params: { path: string }) {
@@ -232,6 +232,14 @@ export class DashboardConnection implements Transport {
         return entry.descriptor.browser.launchOptions.artifactsDir ?? this._recordingDir;
     }
     return this._recordingDir;
+  }
+
+  sessionTitleFor(context: api.BrowserContext): string {
+    for (const entry of this._provider.contextEntries()) {
+      if (entry.context === context)
+        return entry.descriptor.title ?? '';
+    }
+    return '';
   }
 
   _pushTabs() {
@@ -425,15 +433,21 @@ class AttachedPage {
     return { streamId };
   }
 
-  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number, ariaSnapshot: string }> {
+  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string; sessionTitle: string; tabTitle: string; url: string }> {
     const buffer = await this._page.screenshot({ type: 'png' });
     const vp = await this._viewportSize();
     const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
+    const tabTitle = await this._page.title().catch(() => '');
+    const url = this._page.url();
+    const sessionTitle = this._owner.sessionTitleFor(this._page.context());
     return {
       data: buffer.toString('base64'),
       viewportWidth: vp.width,
       viewportHeight: vp.height,
       ariaSnapshot,
+      sessionTitle,
+      tabTitle,
+      url,
     };
   }
 

@@ -232,3 +232,249 @@
   -webkit-user-drag: none;
   box-shadow: 0 0 0 1px var(--color-border-muted), 0 0 8px var(--color-border-muted);
 }
+
+
+/* -- Annotate sidebar -- */
+.annotate-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-canvas-subtle);
+  border-left: 1px solid var(--color-border-muted);
+  min-height: 0;
+}
+
+.annotate-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--color-border-muted);
+  background: var(--color-canvas-overlay);
+}
+
+:root.light-mode .annotate-sidebar-header {
+  background: var(--color-canvas-subtle);
+}
+
+.annotate-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.annotate-sidebar-thumb {
+  position: relative;
+  border: 1px solid var(--color-border-muted);
+  border-radius: 6px;
+  background: var(--color-canvas-default);
+  overflow: hidden;
+}
+
+.annotate-sidebar-thumb:hover {
+  border-color: var(--color-border-default);
+}
+
+.annotate-sidebar-thumb.selected {
+  border-color: var(--color-accent-fg, #2f81f7);
+  box-shadow: 0 0 0 1px var(--color-accent-fg, #2f81f7);
+}
+
+.annotate-sidebar-thumb-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.annotate-sidebar-thumb-img-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: var(--color-canvas-overlay);
+  overflow: hidden;
+}
+
+.annotate-sidebar-thumb-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.annotate-sidebar-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.annotate-sidebar-thumb-rect {
+  position: absolute;
+  border: 1.5px solid rgb(var(--annotation-color));
+  background: rgb(var(--annotation-color) / 0.12);
+  border-radius: 2px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.annotate-sidebar-thumb-remove.toolbar-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  z-index: 1;
+}
+
+.annotate-sidebar-thumb-remove.toolbar-button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+}
+
+.annotate-sidebar-thumb:hover .annotate-sidebar-thumb-remove,
+.annotate-sidebar-thumb-remove:focus-visible {
+  opacity: 1;
+}
+
+.annotate-sidebar-submit {
+  margin: 8px;
+  padding: 8px 12px;
+  background: var(--color-accent-fg, #2f81f7);
+  color: white;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.annotate-sidebar-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.annotate-sidebar-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* -- Annotate overlay (drawn on top of the live screen) -- */
+.annotate-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 50;
+  min-height: 0;
+}
+
+.annotate-overlay-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  background: var(--color-canvas-default);
+  min-height: 0;
+}
+
+.annotate-overlay-chrome {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  background: var(--color-canvas-overlay);
+  border-bottom: 1px solid var(--color-border-muted);
+}
+
+:root.light-mode .annotate-overlay-chrome {
+  background: var(--color-canvas-subtle);
+}
+
+.annotate-overlay-titlebar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  background: var(--color-canvas-inset);
+  color: var(--color-fg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: 16px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+:root.light-mode .annotate-overlay-titlebar {
+  background: var(--color-canvas-default);
+}
+
+.annotate-overlay-title-text {
+  font-weight: 500;
+  color: var(--color-fg-default);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 40%;
+}
+
+.annotate-overlay-title-sep {
+  color: var(--color-fg-subtle);
+}
+
+.annotate-overlay-title-url {
+  flex: 1;
+  font-family: var(--monospace-font, monospace);
+  font-size: 12px;
+  color: var(--color-fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.annotate-overlay-canvas {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 12px;
+  background: var(--color-canvas-default);
+}
+
+/* Fullscreen overlay (when a frame is selected): cover the entire main area, not just browser-window. */
+.dashboard-view.annotate-fullscreen .annotate-overlay {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 260px;
+  z-index: 100;
+}

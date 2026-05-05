@@ -22,7 +22,7 @@ import { libPath } from '../../package';
 import { defineTabTool, defineTool } from './tool';
 import { elementSchema, optionalElementSchema } from './snapshot';
 
-import type { AnnotationData } from '@dashboard/dashboardChannel';
+import type { SubmittedAnnotationFrame } from '@dashboard/dashboardChannel';
 
 const resume = defineTool({
   capability: 'devtools',
@@ -157,14 +157,25 @@ const annotate = defineTabTool({
       response.addTextResult('No annotations were submitted.');
       return;
     }
-    const { png, ariaSnapshot, annotations } = JSON.parse(text) as { png?: string; ariaSnapshot?: string; annotations: AnnotationData[] };
-    for (const a of annotations)
-      response.addTextResult(`{ x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
+    const { frames } = JSON.parse(text) as { frames: SubmittedAnnotationFrame[] };
+    if (!frames || frames.length === 0) {
+      response.addTextResult('No annotations were submitted.');
+      return;
+    }
     const date = new Date();
-    if (png)
-      await response.addResult('Annotation image', Buffer.from(png, 'base64'), { prefix: 'annotations', ext: 'png', date });
-    if (ariaSnapshot)
-      await response.addResult('Annotation snapshot', Buffer.from(ariaSnapshot, 'utf8'), { prefix: 'annotations', ext: 'yaml', date });
+    for (let i = 0; i < frames.length; i++) {
+      const frame = frames[i];
+      const idx = i + 1;
+      const session = frame.sessionTitle || 'session';
+      const tab = frame.tabTitle || 'tab';
+      response.addTextResult(`screenshot ${idx}: ${session} / ${tab} @ ${frame.url} (${frame.viewportWidth}x${frame.viewportHeight})`);
+      for (const a of frame.annotations)
+        response.addTextResult(`  { x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
+      if (frame.data)
+        await response.addResult(`Annotation image ${idx}`, Buffer.from(frame.data, 'base64'), { prefix: `annotations-${idx}`, ext: 'png', date });
+      if (frame.ariaSnapshot)
+        await response.addResult(`Annotation snapshot ${idx}`, Buffer.from(frame.ariaSnapshot, 'utf8'), { prefix: `annotations-${idx}`, ext: 'yaml', date });
+    }
   },
 });
 

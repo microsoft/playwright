@@ -32,7 +32,7 @@ import { RegistrySessionProvider } from './registrySessionProvider';
 import { IdentitySessionProvider } from './identitySessionProvider';
 
 import type * as api from '../../..';
-import type { AnnotationData } from '@dashboard/dashboardChannel';
+import type { SubmittedAnnotationFrame } from '@dashboard/dashboardChannel';
 import type { SessionProvider } from './sessionProvider';
 
 // HMR: build-time flag — `true` in watch builds, `false` in release. esbuild
@@ -57,10 +57,10 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   let pendingAnnotate = false;
   const waitingSockets = new Set<net.Socket>();
 
-  const submitAnnotation = (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => {
+  const submitAnnotation = (frames: SubmittedAnnotationFrame[]) => {
     if (waitingSockets.size === 0)
       return;
-    const payload = JSON.stringify({ png: base64Png, ariaSnapshot, annotations });
+    const payload = JSON.stringify({ frames });
     for (const socket of waitingSockets) {
       socket.write(payload);
       socket.end();
@@ -434,19 +434,31 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
     console.log(text);
     return;
   }
-  const { png, annotations, ariaSnapshot } = JSON.parse(text) as { png: string; annotations: AnnotationData[], ariaSnapshot: string };
-  for (const a of annotations) {
-    // eslint-disable-next-line no-console
-    console.log(`{ x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
-  }
+  const { frames } = JSON.parse(text) as { frames: SubmittedAnnotationFrame[] };
+  if (!frames || frames.length === 0)
+    return;
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  if (png) {
-    const filePath = await saveOutputFile(`annotations-${timestamp}.png`, Buffer.from(png, 'base64'));
+  const yamlChunks: string[] = [];
+  for (let i = 0; i < frames.length; i++) {
+    const frame = frames[i];
+    const idx = i + 1;
+    const session = frame.sessionTitle || 'session';
+    const tab = frame.tabTitle || 'tab';
     // eslint-disable-next-line no-console
-    console.log(`image: ${path.relative(process.cwd(), filePath)}`);
+    console.log(`screenshot ${idx}: ${session} / ${tab} @ ${frame.url} (${frame.viewportWidth}x${frame.viewportHeight})`);
+    for (const a of frame.annotations) {
+      // eslint-disable-next-line no-console
+      console.log(`  { x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
+    }
+    if (frame.data) {
+      const filePath = await saveOutputFile(`annotations-${timestamp}-${idx}.png`, Buffer.from(frame.data, 'base64'));
+      // eslint-disable-next-line no-console
+      console.log(`  image: ${path.relative(process.cwd(), filePath)}`);
+    }
+    yamlChunks.push(`--- # screenshot ${idx}: ${session} / ${tab} @ ${frame.url} (${frame.viewportWidth}x${frame.viewportHeight})\n${frame.ariaSnapshot ?? ''}`);
   }
-  if (ariaSnapshot) {
-    const filePath = await saveOutputFile(`annotations-${timestamp}.yaml`, ariaSnapshot);
+  if (yamlChunks.length) {
+    const filePath = await saveOutputFile(`annotations-${timestamp}.yaml`, yamlChunks.join('\n'));
     // eslint-disable-next-line no-console
     console.log(`snapshot: ${path.relative(process.cwd(), filePath)}`);
   }

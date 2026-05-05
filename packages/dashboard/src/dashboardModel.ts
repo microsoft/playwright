@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+import { buildAnnotatedImage } from './annotationImage';
+
 import type { Annotation } from './annotations';
-import type { DashboardChannel, DashboardChannelEvents, MouseButton, SessionStatus, Tab } from './dashboardChannel';
+import type { DashboardChannel, DashboardChannelEvents, MouseButton, SessionStatus, SubmittedAnnotationFrame, Tab } from './dashboardChannel';
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
 import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
 
@@ -27,7 +29,23 @@ export type RecordingState =
   | { phase: 'recording' }
   | { phase: 'stopped'; blob: Blob; blobUrl: string };
 
-export type AnnotateFrame = { data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string };
+export type AnnotateFrame = {
+  id: string;
+  data: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  ariaSnapshot: string;
+  sessionTitle: string;
+  tabTitle: string;
+  url: string;
+  annotations: Annotation[];
+};
+
+export type AnnotateSession = {
+  initiator: 'cli' | 'user';
+  frames: AnnotateFrame[];
+  selectedFrameId: string | null;
+};
 
 export type DashboardState = {
   // Session model state.
@@ -37,9 +55,8 @@ export type DashboardState = {
   // Dashboard / page state.
   tabs: Tab[] | null;
   liveFrame: DashboardChannelEvents['frame'] | undefined;
-  annotateFrame: AnnotateFrame | undefined;
-  pendingAnnotate: { initiator: 'cli' | 'user' } | null;
-  annotateInitiator: 'cli' | 'user' | null;
+  annotateSession: AnnotateSession | null;
+  pendingCapture: boolean;
   mode: Mode;
   recording: RecordingState | null;
 };
@@ -52,9 +69,8 @@ const initialState: DashboardState = {
   loadingSessions: true,
   tabs: null,
   liveFrame: undefined,
-  annotateFrame: undefined,
-  pendingAnnotate: null,
-  annotateInitiator: null,
+  annotateSession: null,
+  pendingCapture: false,
   mode: 'readonly',
   recording: null,
 };
@@ -158,7 +174,12 @@ export class DashboardModel {
 
   toggleInteractive() {
     const next: Mode = this.state.mode === 'interactive' ? 'readonly' : 'interactive';
-    this._emit({ mode: next });
+    // Switching to interactive deselects any active overlay; the annotate session
+    // (the sidebar) stays open.
+    if (next === 'interactive' && this.state.annotateSession?.selectedFrameId)
+      this._emit({ mode: next, annotateSession: { ...this.state.annotateSession, selectedFrameId: null } });
+    else
+      this._emit({ mode: next });
   }
 
   // Public action methods are sync fire-and-forget wrappers around the
@@ -172,6 +193,55 @@ export class DashboardModel {
 
   enterAnnotate(initiator: 'cli' | 'user') {
     void this._enterAnnotate(initiator);
+  }
+
+  addAnnotateFrame() {
+    void this._addAnnotateFrame();
+  }
+
+  selectAnnotateFrame(id: string) {
+    const session = this.state.annotateSession;
+    if (!session || !session.frames.find(f => f.id === id))
+      return;
+    this._emit({ annotateSession: { ...session, selectedFrameId: id }, mode: 'annotate' });
+  }
+
+  toggleSelectFrame(id: string) {
+    const session = this.state.annotateSession;
+    if (!session)
+      return;
+    if (session.selectedFrameId === id)
+      this._emit({ annotateSession: { ...session, selectedFrameId: null }, mode: 'readonly' });
+    else
+      this.selectAnnotateFrame(id);
+  }
+
+  deselectFrame() {
+    const session = this.state.annotateSession;
+    if (!session || session.selectedFrameId === null)
+      return;
+    this._emit({ annotateSession: { ...session, selectedFrameId: null }, mode: 'readonly' });
+  }
+
+  removeAnnotateFrame(id: string) {
+    const session = this.state.annotateSession;
+    if (!session)
+      return;
+    const frames = session.frames.filter(f => f.id !== id);
+    if (frames.length === 0) {
+      this.cancelAnnotate();
+      return;
+    }
+    const selectedFrameId = session.selectedFrameId === id ? null : session.selectedFrameId;
+    this._emit({ annotateSession: { ...session, frames, selectedFrameId } });
+  }
+
+  updateFrameAnnotations(frameId: string, annotations: Annotation[]) {
+    const session = this.state.annotateSession;
+    if (!session)
+      return;
+    const frames = session.frames.map(f => f.id === frameId ? { ...f, annotations } : f);
+    this._emit({ annotateSession: { ...session, frames } });
   }
 
   completeAnnotation() {
@@ -195,42 +265,110 @@ export class DashboardModel {
     const s = this.state;
     this._emit({
       mode: s.mode === 'annotate' ? 'readonly' : s.mode,
-      annotateFrame: undefined,
-      pendingAnnotate: null,
-      annotateInitiator: null,
+      annotateSession: null,
+      pendingCapture: false,
     });
   }
 
-  async submitAnnotation(data: string | undefined, annotations: Annotation[]) {
-    await this._client.submitAnnotation({
-      data,
-      ariaSnapshot: this.state.annotateFrame?.ariaSnapshot ?? '',
-      annotations: annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
-    });
+  async submitAnnotateSession() {
+    const session = this.state.annotateSession;
+    if (!session)
+      return;
+    const frames: SubmittedAnnotationFrame[] = [];
+    for (const frame of session.frames) {
+      const data = await renderFrameToBase64Png(frame);
+      frames.push({
+        data: data ?? frame.data,
+        ariaSnapshot: frame.ariaSnapshot,
+        annotations: frame.annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
+        sessionTitle: frame.sessionTitle,
+        tabTitle: frame.tabTitle,
+        url: frame.url,
+        viewportWidth: frame.viewportWidth,
+        viewportHeight: frame.viewportHeight,
+      });
+    }
+    if (session.initiator === 'cli') {
+      await this._client.submitAnnotation({ frames });
+    } else {
+      const { buildAnnotationZip } = await import('./annotationZip');
+      const blob = await buildAnnotationZip(frames);
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const { saveAnnotationAsDownload } = await import('./annotationImage');
+      await saveAnnotationAsDownload(blob, `annotations-${stamp}.zip`);
+    }
     this.cancelAnnotate();
   }
 
   private async _enterInteractive() {
-    // Interactive mode coexists with recording so the user can drive the
-    // page while it is being captured. Only in-flight annotation is cleared.
-    await this._completeAnnotation();
+    // Interactive coexists with the annotate sidebar; only the overlay is
+    // dismissed so the live page is reachable.
+    const s = this.state;
+    if (s.annotateSession?.selectedFrameId)
+      this.deselectFrame();
     this._emit({ mode: 'interactive' });
   }
 
   private async _enterAnnotate(initiator: 'cli' | 'user') {
-    await this._cleanupOnModeSwitch();
-    this._requestAnnotate(initiator);
+    const s = this.state;
+    if (s.annotateSession) {
+      // Session already open: capture another frame and select it.
+      if (initiator === 'cli' && s.annotateSession.initiator !== 'cli')
+        this._emit({ annotateSession: { ...s.annotateSession, initiator: 'cli' } });
+      await this._addAnnotateFrame();
+      return;
+    }
+    await this._discardRecording();
+    await this._addAnnotateFrame(initiator);
+  }
+
+  private async _addAnnotateFrame(initiator?: 'cli' | 'user') {
+    if (this.state.pendingCapture)
+      return;
+    const myId = ++this._requestId;
+    this._emit({ pendingCapture: true });
+    let frameData: Awaited<ReturnType<DashboardChannel['screenshot']>> | undefined;
+    try {
+      frameData = await this._client.screenshot();
+    } catch {
+      // ignore
+    }
+    if (myId !== this._requestId)
+      return;
+    if (!frameData) {
+      this._emit({ pendingCapture: false });
+      return;
+    }
+    const frame: AnnotateFrame = {
+      id: 'frm-' + Math.random().toString(36).slice(2, 10),
+      data: frameData.data,
+      viewportWidth: frameData.viewportWidth,
+      viewportHeight: frameData.viewportHeight,
+      ariaSnapshot: frameData.ariaSnapshot,
+      sessionTitle: frameData.sessionTitle,
+      tabTitle: frameData.tabTitle,
+      url: frameData.url,
+      annotations: [],
+    };
+    const existing = this.state.annotateSession;
+    const session: AnnotateSession = existing
+      ? { ...existing, frames: [...existing.frames, frame], selectedFrameId: frame.id }
+      : { initiator: initiator ?? 'user', frames: [frame], selectedFrameId: frame.id };
+    this._emit({ annotateSession: session, pendingCapture: false, mode: 'annotate' });
   }
 
   private async _completeAnnotation() {
     const s = this.state;
-    if (s.mode === 'annotate' && s.annotateInitiator === 'cli' && s.annotateFrame)
-      await this.submitAnnotation(undefined, []).catch(() => {});
-    this.cancelAnnotate();
+    if (s.annotateSession?.initiator === 'cli')
+      await this.submitAnnotateSession().catch(() => {});
+    else
+      this.cancelAnnotate();
   }
 
   private async _startRecording() {
-    await this._cleanupOnModeSwitch();
+    // Recording closes any open annotate session.
+    if (this.state.annotateSession)
+      this.cancelAnnotate();
     await this._client.startRecording();
     this._emit({ recording: { phase: 'recording' } });
   }
@@ -271,48 +409,6 @@ export class DashboardModel {
 
   private async _cleanupOnModeSwitch() {
     await this._discardRecording();
-    await this._completeAnnotation();
-  }
-
-  private _requestAnnotate(initiator: 'cli' | 'user') {
-    const s = this.state;
-    if (s.mode === 'annotate') {
-      if (initiator === 'cli' && s.annotateInitiator !== 'cli')
-        this._emit({ annotateInitiator: 'cli' });
-      return;
-    }
-    if (s.pendingAnnotate) {
-      if (initiator === 'cli' && s.pendingAnnotate.initiator !== 'cli')
-        this._emit({ pendingAnnotate: { initiator: 'cli' } });
-      return;
-    }
-    const myId = ++this._requestId;
-    this._emit({ pendingAnnotate: { initiator } });
-    void this._fetchScreenshot(myId);
-  }
-
-  private async _fetchScreenshot(id: number) {
-    let frame: AnnotateFrame | undefined;
-    try {
-      frame = await this._client.screenshot();
-    } catch {
-      // frame stays undefined
-    }
-    if (id !== this._requestId)
-      return;
-    const s = this.state;
-    if (!s.pendingAnnotate)
-      return;
-    if (!frame) {
-      this._emit({ pendingAnnotate: null });
-      return;
-    }
-    this._emit({
-      mode: 'annotate',
-      annotateFrame: frame,
-      annotateInitiator: s.pendingAnnotate.initiator,
-      pendingAnnotate: null,
-    });
   }
 
   private _emit(partial: Partial<DashboardState>) {
@@ -320,6 +416,29 @@ export class DashboardModel {
     for (const listener of this._listeners)
       listener();
   }
+}
+
+async function renderFrameToBase64Png(frame: AnnotateFrame): Promise<string | undefined> {
+  const img = new Image();
+  img.src = 'data:image/png;base64,' + frame.data;
+  try {
+    await img.decode();
+  } catch {
+    return undefined;
+  }
+  const blob = await buildAnnotatedImage(img, frame.viewportWidth, frame.viewportHeight, frame.annotations);
+  if (!blob)
+    return undefined;
+  const buf = await blob.arrayBuffer();
+  return uint8ToBase64(new Uint8Array(buf));
+}
+
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk)
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk) as unknown as number[]);
+  return btoa(binary);
 }
 
 function base64ToBlob(base64: string, mime: string): Blob {
