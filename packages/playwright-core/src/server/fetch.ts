@@ -303,7 +303,9 @@ export abstract class APIRequestContext extends SdkObject {
     await this._updateRequestCookieHeader(progress, url, options.headers);
 
     const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
-      const [name, value] = p.split('=').map(v => v.trim());
+      const indexOfEquals = p.indexOf('=');
+      const name = indexOfEquals !== -1 ? p.substring(0, indexOfEquals).trim() : p.trim();
+      const value = indexOfEquals !== -1 ? p.substring(indexOfEquals + 1).trim() : '';
       return { name, value };
     }) || [];
     const requestEvent: APIRequestEvent = {

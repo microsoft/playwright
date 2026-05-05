@@ -826,6 +826,19 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry._serverPort).toEqual(server.PORT);
 });
 
+it('should correctly record API request cookies with equals sign in value', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const url = server.PREFIX + '/simple.json';
+  await page.request.get(url, {
+    headers: { cookie: 'token=abc=xyz; other=val' },
+  });
+  const log = await getLog();
+  expect(log.entries[0].request.cookies).toEqual([
+    { name: 'token', value: 'abc=xyz' },
+    { name: 'other', value: 'val' },
+  ]);
+});
+
 it('should respect minimal mode for API Requests', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo, { mode: 'minimal' });
   const url = server.PREFIX + '/simple.json';
