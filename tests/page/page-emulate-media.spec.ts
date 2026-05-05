@@ -192,3 +192,9 @@ it('should emulate contrast ', async ({ page }) => {
   await page.emulateMedia({ contrast: null });
   await expect(page).toMatchMedia('(prefers-contrast: no-preference)');
 });
+
+it('should report hover and fine pointer for desktop', async ({ page, browserName, headless, isLinux }) => {
+  it.fail(browserName === 'firefox' && isLinux && headless, 'https://github.com/microsoft/playwright/issues/38835');
+  await expect(page).toMatchMedia('(hover: hover)');
+  await expect(page).toMatchMedia('(pointer: fine)');
+});
