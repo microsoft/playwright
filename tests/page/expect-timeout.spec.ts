@@ -110,3 +110,13 @@ Call log:
   expect(error.message).toContain(`locator handler has finished, waiting for locator('div') to be hidden`);
   expect(error.message).toContain(`locator resolved to visible <div>hello</div>`);
 });
+
+test('should not miss element that appears between retries before the deadline', async ({ page }) => {
+  await page.setContent(`<div id="target" style="display:none">content</div>`);
+  await page.evaluate(() => {
+    setTimeout(() => {
+      document.getElementById('target')!.style.display = 'block';
+    }, 1500);
+  });
+  await expect(page.locator('#target')).toBeVisible({ timeout: 1800 });
+});

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {  isInvalidSelectorError } from '@isomorphic/selectorParser';
+import { isInvalidSelectorError } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { LongStandingScope } from '@isomorphic/manualPromise';
@@ -790,7 +790,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     if (performActionPreChecksAndLog)
       progress.log(`waiting for ${this._asLocator(selector)}${state === 'attached' ? '' : ' to be ' + state}`);
-    const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async (progress, continuePolling) => {
+    const promise = this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
       if (performActionPreChecksAndLog)
         await this._page.performActionPreChecks(progress);
 
@@ -1100,6 +1100,16 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result!;
   }
 
+  async retryWithProgressAndBackoff<R>(progress: Progress, action: (progress: Progress, continuePolling: symbol) => Promise<R | symbol>): Promise<R> {
+    const backoffScale = [20, 50, 100, 100, 500];
+    if (progress.timeout) {
+      // For small timeouts, cap the large backoff values to produce meaningul retries.
+      while (backoffScale.length && backoffScale[backoffScale.length - 1] > progress.timeout / 5)
+        backoffScale.pop();
+    }
+    return await this.retryWithProgressAndTimeouts<R>(progress, backoffScale, action);
+  }
+
   async retryWithProgressAndTimeouts<R>(progress: Progress, timeouts: number[], action: (progress: Progress, continuePolling: symbol) => Promise<R | symbol>): Promise<R> {
     const continuePolling = Symbol('continuePolling');
     timeouts = [0, ...timeouts];
@@ -1152,7 +1162,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
     const noAutoWaiting = (options as any).__testHookNoAutoWaiting ?? options.noAutoWaiting;
     const performActionPreChecks = (options.performActionPreChecks ?? !options.force) && !noAutoWaiting;
-    return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async (progress, continuePolling) => {
+    return this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
       if (performActionPreChecks)
         await this._page.performActionPreChecks(progress);
 
@@ -1471,7 +1481,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       }
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      const result = await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async (progress, continuePolling) => {
+      const result = await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
         if (!options.noAutoWaiting)
           await this._page.performActionPreChecks(progress);
         const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
@@ -1678,7 +1688,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   private async _callOnElementOnceMatches<T, R>(progress: Progress, selector: string, body: ElementCallback<T, R>, taskData: T, options: types.StrictOptions & { mainWorld?: boolean }, scope?: dom.ElementHandle): Promise<R> {
     const callbackText = body.toString();
     progress.log(`waiting for ${this._asLocator(selector)}`);
-    const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async (progress, continuePolling) => {
+    const promise = this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
       const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, options, scope));
       if (!resolved)
         return continuePolling;
