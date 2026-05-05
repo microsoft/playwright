@@ -38,9 +38,9 @@
     },
     {
       "name": "firefox-beta",
-      "revision": "1511",
+      "revision": "1512",
       "installByDefault": false,
-      "browserVersion": "148.0b9",
+      "browserVersion": "151.0b5",
       "title": "Firefox Beta"
     },
     {
