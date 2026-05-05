@@ -952,7 +952,7 @@ onChanges.push({
 // Generate channels.
 onChanges.push({
   inputs: [
-    'packages/protocol/src/protocol.yml'
+    'packages/protocol/spec/'
   ],
   script: 'utils/generate_channels.js',
 });

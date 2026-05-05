@@ -8,7 +8,7 @@ on:
       - 'packages/playwright-core/src/client/**/*'
       - 'packages/isomorphic/**/*'
       - 'packages/playwright/src/matchers/matchers.ts'
-      - 'packages/protocol/src/protocol.yml'
+      - 'packages/protocol/spec/**/*.yml'
 jobs:
   check:
     name: Check

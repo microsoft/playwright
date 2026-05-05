@@ -1,0 +1,104 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SerializedValue:
+  type: object
+  # Exactly one of the properties must be present.
+  properties:
+    n: float?
+    b: boolean?
+    s: string?
+    v:
+      type: enum?
+      literals:
+      - null
+      - undefined
+      - NaN
+      - Infinity
+      - -Infinity
+      - "-0"
+    # String representation of the Date.
+    d: string?
+    # String representation of the URL.
+    u: string?
+    # String representation of BigInt.
+    bi: string?
+    # Typed array.
+    ta:
+      type: object?
+      properties:
+        b: binary
+        k:
+          type: enum
+          literals:
+          - i8
+          - ui8
+          - ui8c
+          - i16
+          - ui16
+          - i32
+          - ui32
+          - f32
+          - f64
+          - bi64
+          - bui64
+    # Serialized Error object.
+    e:
+      type: object?
+      properties:
+        m: string
+        n: string
+        s: string
+    # Regular expression pattern and flags.
+    r:
+      type: object?
+      properties:
+        p: string
+        f: string
+    a:
+      type: array?
+      items: SerializedValue
+    # Object with keys and values.
+    o:
+      type: array?
+      items:
+        type: object
+        properties:
+          k: string
+          v: SerializedValue
+    # An index in the handles array from SerializedArgument.
+    h: int?
+    # Index of the object in value-type for circular reference resolution.
+    id: int?
+    # Ref to the object in value-type for circular reference resolution.
+    ref: int?
+
+SerializedArgument:
+  type: object
+  properties:
+    value: SerializedValue
+    handles:
+      type: array
+      items: Channel
+
+SerializedError:
+  type: object
+  properties:
+    error:
+      type: object?
+      properties:
+        message: string
+        name: string
+        stack: string?
+    value: SerializedValue?

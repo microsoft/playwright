@@ -1,0 +1,397 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+BrowserContext:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    debugger: Debugger
+    requestContext: APIRequestContext
+    tracing: Tracing
+    options:
+      type: object
+      properties:
+        $mixin: ContextOptions
+
+  commands:
+
+    addCookies:
+      title: Add cookies
+      group: configuration
+      parameters:
+        cookies:
+          type: array
+          items: SetNetworkCookie
+
+    addInitScript:
+      title: Add init script
+      group: configuration
+      parameters:
+        source: string
+      returns:
+        disposable: Disposable
+
+    clearCookies:
+      title: Clear cookies
+      group: configuration
+      parameters:
+        name: string?
+        nameRegexSource: string?
+        nameRegexFlags: string?
+        domain: string?
+        domainRegexSource: string?
+        domainRegexFlags: string?
+        path: string?
+        pathRegexSource: string?
+        pathRegexFlags: string?
+
+    clearPermissions:
+      title: Clear permissions
+      group: configuration
+
+    close:
+      title: Close context
+      parameters:
+        reason: string?
+      flags:
+        pause: true
+
+    cookies:
+      title: Get cookies
+      group: getter
+      parameters:
+        urls:
+          type: array
+          items: string
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+
+    exposeBinding:
+      title: Expose binding
+      group: configuration
+      parameters:
+        name: string
+      returns:
+        disposable: Disposable
+
+    grantPermissions:
+      title: Grant permissions
+      group: configuration
+      parameters:
+        permissions:
+          type: array
+          items: string
+        origin: string?
+
+    newPage:
+      title: Create page
+      returns:
+        page: Page
+
+    registerSelectorEngine:
+      internal: true
+      parameters:
+        selectorEngine: SelectorEngine
+
+    setTestIdAttributeName:
+      internal: true
+      parameters:
+        testIdAttributeName: string
+
+    setExtraHTTPHeaders:
+      title: Set extra HTTP headers
+      group: configuration
+      parameters:
+        headers:
+          type: array
+          items: NameValue
+
+    setGeolocation:
+      title: Set geolocation
+      group: configuration
+      parameters:
+        geolocation:
+          type: object?
+          properties:
+            longitude: float
+            latitude: float
+            accuracy: float?
+
+    setHTTPCredentials:
+      title: Set HTTP credentials
+      group: configuration
+      parameters:
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+            origin: string?
+
+    setNetworkInterceptionPatterns:
+      title: Route requests
+      group: route
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+              urlPattern: URLPattern?
+
+    setWebSocketInterceptionPatterns:
+      title: Route WebSockets
+      group: route
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+              urlPattern: URLPattern?
+
+    setOffline:
+      title: Set offline mode
+      parameters:
+        offline: boolean
+
+    storageState:
+      title: Get storage state
+      group: configuration
+      parameters:
+        indexedDB: boolean?
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
+
+    setStorageState:
+      title: Set storage state
+      group: configuration
+      parameters:
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: SetOriginStorage
+
+    pause:
+      title: Pause
+
+    enableRecorder:
+      internal: true
+      parameters:
+        language: string?
+        mode:
+          type: enum?
+          literals:
+          - inspecting
+          - recording
+        recorderMode:
+          type: enum?
+          literals:
+          - default
+          - api
+        pauseOnNextStatement: boolean?
+        testIdAttributeName: string?
+        launchOptions: json?
+        contextOptions: json?
+        device: string?
+        saveStorage: string?
+        outputFile: string?
+        handleSIGINT: boolean?
+        omitCallTracking: boolean?
+
+    disableRecorder:
+      internal: true
+
+    exposeConsoleApi:
+      internal: true
+
+    newCDPSession:
+      title: Create CDP session
+      group: configuration
+      parameters:
+        page: Page?
+        frame: Frame?
+      returns:
+        session: CDPSession
+
+    createTempFiles:
+      internal: true
+      parameters:
+        rootDirName: string?
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              lastModifiedMs: float?
+      returns:
+        rootDir: WritableStream?
+        writableStreams:
+          type: array
+          items: WritableStream
+
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+          - dialog
+          - request
+          - response
+          - requestFinished
+          - requestFailed
+        enabled: boolean
+
+    clockFastForward:
+      title: Fast forward clock "{ticksNumber|ticksString}"
+      parameters:
+        ticksNumber: float?
+        ticksString: string?
+
+    clockInstall:
+      title: Install clock "{timeNumber|timeString}"
+      parameters:
+        timeNumber: float?
+        timeString: string?
+
+    clockPauseAt:
+      title: Pause clock "{timeNumber|timeString}"
+      parameters:
+        timeNumber: float?
+        timeString: string?
+
+    clockResume:
+      title: Resume clock
+
+    clockRunFor:
+      title: Run clock "{ticksNumber|ticksString}"
+      parameters:
+        ticksNumber: float?
+        ticksString: string?
+
+    clockSetFixedTime:
+      title: Set fixed time "{timeNumber|timeString}"
+      parameters:
+        timeNumber: float?
+        timeString: string?
+
+    clockSetSystemTime:
+      title: Set system time "{timeNumber|timeString}"
+      parameters:
+        timeNumber: float?
+        timeString: string?
+
+  events:
+
+    bindingCall:
+      parameters:
+        binding: BindingCall
+
+    console:
+      parameters:
+        $mixin: ConsoleMessage
+        page: Page?
+        worker: Worker?
+
+    close:
+
+    dialog:
+      parameters:
+        dialog: Dialog
+
+    page:
+      parameters:
+        page: Page
+
+    pageError:
+      parameters:
+        error: SerializedError
+        page: Page
+        location:
+          type: object
+          properties:
+            url: string
+            line: int
+            column: int
+
+    route:
+      parameters:
+        route: Route
+
+    webSocketRoute:
+      parameters:
+        webSocketRoute: WebSocketRoute
+
+    serviceWorker:
+      parameters:
+        worker: Worker
+
+    request:
+      parameters:
+        request: Request
+        page: Page?
+
+    requestFailed:
+      parameters:
+        request: Request
+        failureText: string?
+        responseEndTiming: float
+        page: Page?
+
+    requestFinished:
+      parameters:
+        request: Request
+        response: Response?
+        responseEndTiming: float
+        page: Page?
+
+    response:
+      parameters:
+        response: Response
+        page: Page?
+
+    recorderEvent:
+      parameters:
+        event:
+          type: enum
+          literals:
+          - actionAdded
+          - actionUpdated
+          - signalAdded
+        data: json
+        page: Page
+        code: string

@@ -1,0 +1,666 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Page:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    mainFrame: Frame
+    viewportSize:
+      type: object?
+      properties:
+        width: int
+        height: int
+    isClosed: boolean
+    opener: Page?
+    video: Artifact?
+
+  commands:
+
+    addInitScript:
+      title: Add init script
+      group: configuration
+      parameters:
+        source: string
+      returns:
+        disposable: Disposable
+
+    close:
+      title: Close page
+      parameters:
+        runBeforeUnload: boolean?
+        reason: string?
+      flags:
+        pause: true
+
+    clearConsoleMessages:
+      title: Clear console messages
+
+    consoleMessages:
+      title: Get console messages
+      group: getter
+      parameters:
+        filter: ConsoleMessagesFilter?
+      returns:
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              $mixin: ConsoleMessage
+
+    emulateMedia:
+      title: Emulate media
+      parameters:
+        media:
+          type: enum?
+          literals:
+          - screen
+          - print
+          - no-override
+        colorScheme:
+          type: enum?
+          literals:
+          - dark
+          - light
+          - no-preference
+          - no-override
+        reducedMotion:
+          type: enum?
+          literals:
+          - reduce
+          - no-preference
+          - no-override
+        forcedColors:
+          type: enum?
+          literals:
+          - active
+          - none
+          - no-override
+        contrast:
+          type: enum?
+          literals:
+          - no-preference
+          - more
+          - no-override
+      flags:
+        snapshot: true
+        pause: true
+
+    exposeBinding:
+      title: Expose binding
+      group: configuration
+      parameters:
+        name: string
+      returns:
+        disposable: Disposable
+
+    goBack:
+      title: Go back
+      parameters:
+        timeout: float
+        waitUntil: LifecycleEvent?
+      returns:
+        response: Response?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    goForward:
+      title: Go forward
+      parameters:
+        timeout: float
+        waitUntil: LifecycleEvent?
+      returns:
+        response: Response?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    requestGC:
+      title: Request garbage collection
+      group: configuration
+
+    registerLocatorHandler:
+      title: Register locator handler
+      parameters:
+        selector: string
+        noWaitAfter: boolean?
+      returns:
+        uid: int
+
+    resolveLocatorHandlerNoReply:
+      internal: true
+      parameters:
+        uid: int
+        remove: boolean?
+
+    unregisterLocatorHandler:
+      title: Unregister locator handler
+      parameters:
+        uid: int
+
+    reload:
+      title: Reload
+      parameters:
+        timeout: float
+        waitUntil: LifecycleEvent?
+      returns:
+        response: Response?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    expectScreenshot:
+      title: Expect screenshot
+      parameters:
+        expected: binary?
+        timeout: float
+        isNot: boolean
+        locator:
+          type: object?
+          properties:
+            frame: Frame
+            selector: string
+        comparator: string?
+        maxDiffPixels: int?
+        maxDiffPixelRatio: float?
+        threshold: float?
+        fullPage: boolean?
+        clip: Rect?
+        $mixin: CommonScreenshotOptions
+      returns:
+        diff: binary?
+        errorMessage: string?
+        actual: binary?
+        previous: binary?
+        timedOut: boolean?
+        log:
+          type: array?
+          items: string
+      flags:
+        snapshot: true
+        pause: true
+
+    screenshot:
+      title: Screenshot
+      parameters:
+        timeout: float
+        type:
+          type: enum?
+          literals:
+          - png
+          - jpeg
+        quality: int?
+        fullPage: boolean?
+        clip: Rect?
+        $mixin: CommonScreenshotOptions
+      returns:
+        binary: binary
+      flags:
+        snapshot: true
+        pause: true
+
+    setExtraHTTPHeaders:
+      title: Set extra HTTP headers
+      group: configuration
+      parameters:
+        headers:
+          type: array
+          items: NameValue
+
+    setNetworkInterceptionPatterns:
+      title: Route requests
+      group: route
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+              urlPattern: URLPattern?
+
+    setWebSocketInterceptionPatterns:
+      title: Route WebSockets
+      group: route
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+              urlPattern: URLPattern?
+
+    setViewportSize:
+      title: Set viewport size
+      parameters:
+        viewportSize:
+          type: object
+          properties:
+            width: int
+            height: int
+      flags:
+        snapshot: true
+        pause: true
+
+    keyboardDown:
+      title: Key down "{key}"
+      parameters:
+        key: string
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    keyboardUp:
+      title: Key up "{key}"
+      parameters:
+        key: string
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    keyboardInsertText:
+      title: Insert "{text}"
+      parameters:
+        text: string
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    keyboardType:
+      title: Type "{text}"
+      parameters:
+        text: string
+        delay: float?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    keyboardPress:
+      title: Press "{key}"
+      parameters:
+        key: string
+        delay: float?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    mouseMove:
+      title: Mouse move
+      parameters:
+        x: float
+        y: float
+        steps: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    mouseDown:
+      title: Mouse down
+      parameters:
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    mouseUp:
+      title: Mouse up
+      parameters:
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    mouseClick:
+      title: Click
+      parameters:
+        x: float
+        y: float
+        delay: float?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    mouseWheel:
+      title: Mouse wheel
+      parameters:
+        deltaX: float
+        deltaY: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    touchscreenTap:
+      title: Tap
+      parameters:
+        x: float
+        y: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
+    clearPageErrors:
+      title: Clear page errors
+
+    pageErrors:
+      title: Get page errors
+      group: getter
+      parameters:
+        filter: ConsoleMessagesFilter?
+      returns:
+        errors:
+          type: array
+          items: SerializedError
+
+    pdf:
+      title: PDF
+      parameters:
+        scale: float?
+        displayHeaderFooter: boolean?
+        headerTemplate: string?
+        footerTemplate: string?
+        printBackground: boolean?
+        landscape: boolean?
+        pageRanges: string?
+        format: string?
+        width: string?
+        height: string?
+        preferCSSPageSize: boolean?
+        margin:
+          type: object?
+          properties:
+            top: string?
+            bottom: string?
+            left: string?
+            right: string?
+        tagged: boolean?
+        outline: boolean?
+      returns:
+        pdf: binary
+
+    requests:
+      title: Get network requests
+      group: getter
+      returns:
+        requests:
+          type: array
+          items: Request
+
+    startJSCoverage:
+      title: Start JS coverage
+      group: configuration
+      parameters:
+        resetOnNavigation: boolean?
+        reportAnonymousScripts: boolean?
+
+    stopJSCoverage:
+      title: Stop JS coverage
+      group: configuration
+      returns:
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              url: string
+              scriptId: string
+              source: string?
+              functions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    functionName: string
+                    isBlockCoverage: boolean
+                    ranges:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          startOffset: int
+                          endOffset: int
+                          count: int
+
+    startCSSCoverage:
+      title: Start CSS coverage
+      group: configuration
+      parameters:
+        resetOnNavigation: boolean?
+
+    stopCSSCoverage:
+      title: Stop CSS coverage
+      group: configuration
+      returns:
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              url: string
+              text: string?
+              ranges:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    start: int
+                    end: int
+
+    bringToFront:
+      title: Bring to front
+
+    pickLocator:
+      title: Pick locator
+      group: configuration
+      returns:
+        selector: string
+
+    cancelPickLocator:
+      title: Cancel pick locator
+      group: configuration
+
+    hideHighlight:
+      title: Hide all element highlights
+      group: configuration
+
+    screencastShowOverlay:
+      title: Show overlay
+      group: configuration
+      parameters:
+        html: string
+        duration: float?
+      returns:
+        id: string
+
+    screencastRemoveOverlay:
+      title: Remove overlay
+      group: configuration
+      parameters:
+        id: string
+
+    screencastChapter:
+      title: Show chapter overlay
+      group: configuration
+      parameters:
+        title: string
+        description: string?
+        duration: float?
+
+    screencastSetOverlayVisible:
+      title: Set overlay visibility
+      group: configuration
+      parameters:
+        visible: boolean
+
+    screencastShowActions:
+      title: Show actions
+      group: configuration
+      parameters:
+        $mixin: ShowActionsOptions
+
+    screencastHideActions:
+      title: Remove actions
+      group: configuration
+
+    screencastStart:
+      title: Start screencast
+      group: configuration
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+        quality: int?
+        sendFrames: boolean?
+        record: boolean?
+      returns:
+        artifact: Artifact?
+
+    screencastStop:
+      title: Stop screencast
+      group: configuration
+
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+          - dialog
+          - fileChooser
+          - request
+          - response
+          - requestFinished
+          - requestFailed
+        enabled: boolean
+
+    setDockTile:
+      internal: true
+      parameters:
+        image: binary
+
+  events:
+
+    bindingCall:
+      parameters:
+        binding: BindingCall
+
+    close:
+
+    crash:
+
+    download:
+      parameters:
+        url: string
+        suggestedFilename: string
+        artifact: Artifact
+
+    viewportSizeChanged:
+      parameters:
+        viewportSize:
+          type: object?
+          properties:
+            width: int
+            height: int
+
+    fileChooser:
+      parameters:
+        element: ElementHandle
+        isMultiple: boolean
+
+    frameAttached:
+      parameters:
+        frame: Frame
+
+    frameDetached:
+      parameters:
+        frame: Frame
+
+    locatorHandlerTriggered:
+      parameters:
+        uid: int
+
+    route:
+      parameters:
+        route: Route
+
+    screencastFrame:
+      parameters:
+        data: binary
+
+    webSocketRoute:
+      parameters:
+        webSocketRoute: WebSocketRoute
+
+    webSocket:
+      parameters:
+        webSocket: WebSocket
+
+    worker:
+      parameters:
+        worker: Worker

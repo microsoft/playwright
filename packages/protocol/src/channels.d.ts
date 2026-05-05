@@ -26,310 +26,613 @@ export interface Channel {
 
 // ----------- Initializer Traits -----------
 export type InitializerTraits<T> =
-    T extends JsonPipeChannel ? JsonPipeInitializer :
     T extends AndroidDeviceChannel ? AndroidDeviceInitializer :
-    T extends AndroidSocketChannel ? AndroidSocketInitializer :
-    T extends AndroidChannel ? AndroidInitializer :
-    T extends CDPSessionChannel ? CDPSessionInitializer :
-    T extends WritableStreamChannel ? WritableStreamInitializer :
-    T extends StreamChannel ? StreamInitializer :
-    T extends ArtifactChannel ? ArtifactInitializer :
-    T extends TracingChannel ? TracingInitializer :
-    T extends DialogChannel ? DialogInitializer :
-    T extends DebuggerChannel ? DebuggerInitializer :
-    T extends BindingCallChannel ? BindingCallInitializer :
-    T extends WebSocketChannel ? WebSocketInitializer :
-    T extends ResponseChannel ? ResponseInitializer :
-    T extends WebSocketRouteChannel ? WebSocketRouteInitializer :
-    T extends RouteChannel ? RouteInitializer :
-    T extends RequestChannel ? RequestInitializer :
-    T extends ElementHandleChannel ? ElementHandleInitializer :
-    T extends JSHandleChannel ? JSHandleInitializer :
-    T extends DisposableChannel ? DisposableInitializer :
-    T extends WorkerChannel ? WorkerInitializer :
-    T extends FrameChannel ? FrameInitializer :
-    T extends PageChannel ? PageInitializer :
     T extends BrowserContextChannel ? BrowserContextInitializer :
-    T extends EventTargetChannel ? EventTargetInitializer :
+    T extends ElementHandleChannel ? ElementHandleInitializer :
+    T extends WebSocketChannel ? WebSocketInitializer :
+    T extends PageChannel ? PageInitializer :
+    T extends DebuggerChannel ? DebuggerInitializer :
+    T extends WorkerChannel ? WorkerInitializer :
+    T extends AndroidChannel ? AndroidInitializer :
+    T extends AndroidSocketChannel ? AndroidSocketInitializer :
+    T extends APIRequestContextChannel ? APIRequestContextInitializer :
+    T extends ArtifactChannel ? ArtifactInitializer :
+    T extends StreamChannel ? StreamInitializer :
+    T extends WritableStreamChannel ? WritableStreamInitializer :
     T extends BrowserChannel ? BrowserInitializer :
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
-    T extends SocksSupportChannel ? SocksSupportInitializer :
-    T extends DebugControllerChannel ? DebugControllerInitializer :
-    T extends PlaywrightChannel ? PlaywrightInitializer :
-    T extends RootChannel ? RootInitializer :
+    T extends DisposableChannel ? DisposableInitializer :
+    T extends EventTargetChannel ? EventTargetInitializer :
+    T extends FrameChannel ? FrameInitializer :
+    T extends JSHandleChannel ? JSHandleInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
-    T extends APIRequestContextChannel ? APIRequestContextInitializer :
+    T extends RequestChannel ? RequestInitializer :
+    T extends RouteChannel ? RouteInitializer :
+    T extends WebSocketRouteChannel ? WebSocketRouteInitializer :
+    T extends ResponseChannel ? ResponseInitializer :
+    T extends RootChannel ? RootInitializer :
+    T extends PlaywrightChannel ? PlaywrightInitializer :
+    T extends DebugControllerChannel ? DebugControllerInitializer :
+    T extends SocksSupportChannel ? SocksSupportInitializer :
+    T extends JsonPipeChannel ? JsonPipeInitializer :
+    T extends CDPSessionChannel ? CDPSessionInitializer :
+    T extends BindingCallChannel ? BindingCallInitializer :
+    T extends DialogChannel ? DialogInitializer :
+    T extends TracingChannel ? TracingInitializer :
     object;
 
 // ----------- Event Traits -----------
 export type EventsTraits<T> =
-    T extends JsonPipeChannel ? JsonPipeEvents :
     T extends AndroidDeviceChannel ? AndroidDeviceEvents :
-    T extends AndroidSocketChannel ? AndroidSocketEvents :
-    T extends AndroidChannel ? AndroidEvents :
-    T extends CDPSessionChannel ? CDPSessionEvents :
-    T extends WritableStreamChannel ? WritableStreamEvents :
-    T extends StreamChannel ? StreamEvents :
-    T extends ArtifactChannel ? ArtifactEvents :
-    T extends TracingChannel ? TracingEvents :
-    T extends DialogChannel ? DialogEvents :
-    T extends DebuggerChannel ? DebuggerEvents :
-    T extends BindingCallChannel ? BindingCallEvents :
-    T extends WebSocketChannel ? WebSocketEvents :
-    T extends ResponseChannel ? ResponseEvents :
-    T extends WebSocketRouteChannel ? WebSocketRouteEvents :
-    T extends RouteChannel ? RouteEvents :
-    T extends RequestChannel ? RequestEvents :
-    T extends ElementHandleChannel ? ElementHandleEvents :
-    T extends JSHandleChannel ? JSHandleEvents :
-    T extends DisposableChannel ? DisposableEvents :
-    T extends WorkerChannel ? WorkerEvents :
-    T extends FrameChannel ? FrameEvents :
-    T extends PageChannel ? PageEvents :
     T extends BrowserContextChannel ? BrowserContextEvents :
-    T extends EventTargetChannel ? EventTargetEvents :
+    T extends ElementHandleChannel ? ElementHandleEvents :
+    T extends WebSocketChannel ? WebSocketEvents :
+    T extends PageChannel ? PageEvents :
+    T extends DebuggerChannel ? DebuggerEvents :
+    T extends WorkerChannel ? WorkerEvents :
+    T extends AndroidChannel ? AndroidEvents :
+    T extends AndroidSocketChannel ? AndroidSocketEvents :
+    T extends APIRequestContextChannel ? APIRequestContextEvents :
+    T extends ArtifactChannel ? ArtifactEvents :
+    T extends StreamChannel ? StreamEvents :
+    T extends WritableStreamChannel ? WritableStreamEvents :
     T extends BrowserChannel ? BrowserEvents :
     T extends BrowserTypeChannel ? BrowserTypeEvents :
-    T extends SocksSupportChannel ? SocksSupportEvents :
-    T extends DebugControllerChannel ? DebugControllerEvents :
-    T extends PlaywrightChannel ? PlaywrightEvents :
-    T extends RootChannel ? RootEvents :
+    T extends DisposableChannel ? DisposableEvents :
+    T extends EventTargetChannel ? EventTargetEvents :
+    T extends FrameChannel ? FrameEvents :
+    T extends JSHandleChannel ? JSHandleEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
-    T extends APIRequestContextChannel ? APIRequestContextEvents :
+    T extends RequestChannel ? RequestEvents :
+    T extends RouteChannel ? RouteEvents :
+    T extends WebSocketRouteChannel ? WebSocketRouteEvents :
+    T extends ResponseChannel ? ResponseEvents :
+    T extends RootChannel ? RootEvents :
+    T extends PlaywrightChannel ? PlaywrightEvents :
+    T extends DebugControllerChannel ? DebugControllerEvents :
+    T extends SocksSupportChannel ? SocksSupportEvents :
+    T extends JsonPipeChannel ? JsonPipeEvents :
+    T extends CDPSessionChannel ? CDPSessionEvents :
+    T extends BindingCallChannel ? BindingCallEvents :
+    T extends DialogChannel ? DialogEvents :
+    T extends TracingChannel ? TracingEvents :
     undefined;
 
 // ----------- EventTarget Traits -----------
 export type EventTargetTraits<T> =
-    T extends JsonPipeChannel ? JsonPipeEventTarget :
     T extends AndroidDeviceChannel ? AndroidDeviceEventTarget :
-    T extends AndroidSocketChannel ? AndroidSocketEventTarget :
-    T extends AndroidChannel ? AndroidEventTarget :
-    T extends CDPSessionChannel ? CDPSessionEventTarget :
-    T extends WritableStreamChannel ? WritableStreamEventTarget :
-    T extends StreamChannel ? StreamEventTarget :
-    T extends ArtifactChannel ? ArtifactEventTarget :
-    T extends TracingChannel ? TracingEventTarget :
-    T extends DialogChannel ? DialogEventTarget :
-    T extends DebuggerChannel ? DebuggerEventTarget :
-    T extends BindingCallChannel ? BindingCallEventTarget :
-    T extends WebSocketChannel ? WebSocketEventTarget :
-    T extends ResponseChannel ? ResponseEventTarget :
-    T extends WebSocketRouteChannel ? WebSocketRouteEventTarget :
-    T extends RouteChannel ? RouteEventTarget :
-    T extends RequestChannel ? RequestEventTarget :
-    T extends ElementHandleChannel ? ElementHandleEventTarget :
-    T extends JSHandleChannel ? JSHandleEventTarget :
-    T extends DisposableChannel ? DisposableEventTarget :
-    T extends WorkerChannel ? WorkerEventTarget :
-    T extends FrameChannel ? FrameEventTarget :
-    T extends PageChannel ? PageEventTarget :
     T extends BrowserContextChannel ? BrowserContextEventTarget :
-    T extends EventTargetChannel ? EventTargetEventTarget :
+    T extends ElementHandleChannel ? ElementHandleEventTarget :
+    T extends WebSocketChannel ? WebSocketEventTarget :
+    T extends PageChannel ? PageEventTarget :
+    T extends DebuggerChannel ? DebuggerEventTarget :
+    T extends WorkerChannel ? WorkerEventTarget :
+    T extends AndroidChannel ? AndroidEventTarget :
+    T extends AndroidSocketChannel ? AndroidSocketEventTarget :
+    T extends APIRequestContextChannel ? APIRequestContextEventTarget :
+    T extends ArtifactChannel ? ArtifactEventTarget :
+    T extends StreamChannel ? StreamEventTarget :
+    T extends WritableStreamChannel ? WritableStreamEventTarget :
     T extends BrowserChannel ? BrowserEventTarget :
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
-    T extends SocksSupportChannel ? SocksSupportEventTarget :
-    T extends DebugControllerChannel ? DebugControllerEventTarget :
-    T extends PlaywrightChannel ? PlaywrightEventTarget :
-    T extends RootChannel ? RootEventTarget :
+    T extends DisposableChannel ? DisposableEventTarget :
+    T extends EventTargetChannel ? EventTargetEventTarget :
+    T extends FrameChannel ? FrameEventTarget :
+    T extends JSHandleChannel ? JSHandleEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
-    T extends APIRequestContextChannel ? APIRequestContextEventTarget :
+    T extends RequestChannel ? RequestEventTarget :
+    T extends RouteChannel ? RouteEventTarget :
+    T extends WebSocketRouteChannel ? WebSocketRouteEventTarget :
+    T extends ResponseChannel ? ResponseEventTarget :
+    T extends RootChannel ? RootEventTarget :
+    T extends PlaywrightChannel ? PlaywrightEventTarget :
+    T extends DebugControllerChannel ? DebugControllerEventTarget :
+    T extends SocksSupportChannel ? SocksSupportEventTarget :
+    T extends JsonPipeChannel ? JsonPipeEventTarget :
+    T extends CDPSessionChannel ? CDPSessionEventTarget :
+    T extends BindingCallChannel ? BindingCallEventTarget :
+    T extends DialogChannel ? DialogEventTarget :
+    T extends TracingChannel ? TracingEventTarget :
     undefined;
 
-export type StackFrame = {
-  file: string,
-  line: number,
-  column: number,
-  function?: string,
+// ----------- Android -----------
+export type AndroidInitializer = {};
+export interface AndroidEventTarget {
+}
+export interface AndroidChannel extends AndroidEventTarget, Channel {
+  _type_Android: boolean;
+  devices(params: AndroidDevicesParams, progress?: Progress): Promise<AndroidDevicesResult>;
+}
+export type AndroidDevicesParams = {
+  host?: string,
+  port?: number,
+  omitDriverInstall?: boolean,
+};
+export type AndroidDevicesOptions = {
+  host?: string,
+  port?: number,
+  omitDriverInstall?: boolean,
+};
+export type AndroidDevicesResult = {
+  devices: AndroidDeviceChannel[],
 };
 
-export type Metadata = {
-  location?: {
-    file: string,
-    line?: number,
-    column?: number,
+export interface AndroidEvents {
+}
+
+// ----------- AndroidSocket -----------
+export type AndroidSocketInitializer = {};
+export interface AndroidSocketEventTarget {
+  on(event: 'data', callback: (params: AndroidSocketDataEvent) => void): this;
+  on(event: 'close', callback: (params: AndroidSocketCloseEvent) => void): this;
+}
+export interface AndroidSocketChannel extends AndroidSocketEventTarget, Channel {
+  _type_AndroidSocket: boolean;
+  write(params: AndroidSocketWriteParams, progress?: Progress): Promise<AndroidSocketWriteResult>;
+  close(params?: AndroidSocketCloseParams, progress?: Progress): Promise<AndroidSocketCloseResult>;
+}
+export type AndroidSocketDataEvent = {
+  data: Binary,
+};
+export type AndroidSocketCloseEvent = {};
+export type AndroidSocketWriteParams = {
+  data: Binary,
+};
+export type AndroidSocketWriteOptions = {
+
+};
+export type AndroidSocketWriteResult = void;
+export type AndroidSocketCloseParams = {};
+export type AndroidSocketCloseOptions = {};
+export type AndroidSocketCloseResult = void;
+
+export interface AndroidSocketEvents {
+  'data': AndroidSocketDataEvent;
+  'close': AndroidSocketCloseEvent;
+}
+
+// ----------- AndroidDevice -----------
+export type AndroidDeviceInitializer = {
+  model: string,
+  serial: string,
+};
+export interface AndroidDeviceEventTarget {
+  on(event: 'close', callback: (params: AndroidDeviceCloseEvent) => void): this;
+  on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
+  on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
+}
+export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, EventTargetChannel {
+  _type_AndroidDevice: boolean;
+  wait(params: AndroidDeviceWaitParams, progress?: Progress): Promise<AndroidDeviceWaitResult>;
+  fill(params: AndroidDeviceFillParams, progress?: Progress): Promise<AndroidDeviceFillResult>;
+  tap(params: AndroidDeviceTapParams, progress?: Progress): Promise<AndroidDeviceTapResult>;
+  drag(params: AndroidDeviceDragParams, progress?: Progress): Promise<AndroidDeviceDragResult>;
+  fling(params: AndroidDeviceFlingParams, progress?: Progress): Promise<AndroidDeviceFlingResult>;
+  longTap(params: AndroidDeviceLongTapParams, progress?: Progress): Promise<AndroidDeviceLongTapResult>;
+  pinchClose(params: AndroidDevicePinchCloseParams, progress?: Progress): Promise<AndroidDevicePinchCloseResult>;
+  pinchOpen(params: AndroidDevicePinchOpenParams, progress?: Progress): Promise<AndroidDevicePinchOpenResult>;
+  scroll(params: AndroidDeviceScrollParams, progress?: Progress): Promise<AndroidDeviceScrollResult>;
+  swipe(params: AndroidDeviceSwipeParams, progress?: Progress): Promise<AndroidDeviceSwipeResult>;
+  info(params: AndroidDeviceInfoParams, progress?: Progress): Promise<AndroidDeviceInfoResult>;
+  screenshot(params?: AndroidDeviceScreenshotParams, progress?: Progress): Promise<AndroidDeviceScreenshotResult>;
+  inputType(params: AndroidDeviceInputTypeParams, progress?: Progress): Promise<AndroidDeviceInputTypeResult>;
+  inputPress(params: AndroidDeviceInputPressParams, progress?: Progress): Promise<AndroidDeviceInputPressResult>;
+  inputTap(params: AndroidDeviceInputTapParams, progress?: Progress): Promise<AndroidDeviceInputTapResult>;
+  inputSwipe(params: AndroidDeviceInputSwipeParams, progress?: Progress): Promise<AndroidDeviceInputSwipeResult>;
+  inputDrag(params: AndroidDeviceInputDragParams, progress?: Progress): Promise<AndroidDeviceInputDragResult>;
+  launchBrowser(params: AndroidDeviceLaunchBrowserParams, progress?: Progress): Promise<AndroidDeviceLaunchBrowserResult>;
+  open(params: AndroidDeviceOpenParams, progress?: Progress): Promise<AndroidDeviceOpenResult>;
+  shell(params: AndroidDeviceShellParams, progress?: Progress): Promise<AndroidDeviceShellResult>;
+  installApk(params: AndroidDeviceInstallApkParams, progress?: Progress): Promise<AndroidDeviceInstallApkResult>;
+  push(params: AndroidDevicePushParams, progress?: Progress): Promise<AndroidDevicePushResult>;
+  connectToWebView(params: AndroidDeviceConnectToWebViewParams, progress?: Progress): Promise<AndroidDeviceConnectToWebViewResult>;
+  close(params?: AndroidDeviceCloseParams, progress?: Progress): Promise<AndroidDeviceCloseResult>;
+}
+export type AndroidDeviceCloseEvent = {};
+export type AndroidDeviceWebViewAddedEvent = {
+  webView: AndroidWebView,
+};
+export type AndroidDeviceWebViewRemovedEvent = {
+  socketName: string,
+};
+export type AndroidDeviceWaitParams = {
+  androidSelector: AndroidSelector,
+  state?: 'gone',
+  timeout: number,
+};
+export type AndroidDeviceWaitOptions = {
+  state?: 'gone',
+};
+export type AndroidDeviceWaitResult = void;
+export type AndroidDeviceFillParams = {
+  androidSelector: AndroidSelector,
+  text: string,
+  timeout: number,
+};
+export type AndroidDeviceFillOptions = {
+
+};
+export type AndroidDeviceFillResult = void;
+export type AndroidDeviceTapParams = {
+  androidSelector: AndroidSelector,
+  duration?: number,
+  timeout: number,
+};
+export type AndroidDeviceTapOptions = {
+  duration?: number,
+};
+export type AndroidDeviceTapResult = void;
+export type AndroidDeviceDragParams = {
+  androidSelector: AndroidSelector,
+  dest: Point,
+  speed?: number,
+  timeout: number,
+};
+export type AndroidDeviceDragOptions = {
+  speed?: number,
+};
+export type AndroidDeviceDragResult = void;
+export type AndroidDeviceFlingParams = {
+  androidSelector: AndroidSelector,
+  direction: 'up' | 'down' | 'left' | 'right',
+  speed?: number,
+  timeout: number,
+};
+export type AndroidDeviceFlingOptions = {
+  speed?: number,
+};
+export type AndroidDeviceFlingResult = void;
+export type AndroidDeviceLongTapParams = {
+  androidSelector: AndroidSelector,
+  timeout: number,
+};
+export type AndroidDeviceLongTapOptions = {
+
+};
+export type AndroidDeviceLongTapResult = void;
+export type AndroidDevicePinchCloseParams = {
+  androidSelector: AndroidSelector,
+  percent: number,
+  speed?: number,
+  timeout: number,
+};
+export type AndroidDevicePinchCloseOptions = {
+  speed?: number,
+};
+export type AndroidDevicePinchCloseResult = void;
+export type AndroidDevicePinchOpenParams = {
+  androidSelector: AndroidSelector,
+  percent: number,
+  speed?: number,
+  timeout: number,
+};
+export type AndroidDevicePinchOpenOptions = {
+  speed?: number,
+};
+export type AndroidDevicePinchOpenResult = void;
+export type AndroidDeviceScrollParams = {
+  androidSelector: AndroidSelector,
+  direction: 'up' | 'down' | 'left' | 'right',
+  percent: number,
+  speed?: number,
+  timeout: number,
+};
+export type AndroidDeviceScrollOptions = {
+  speed?: number,
+};
+export type AndroidDeviceScrollResult = void;
+export type AndroidDeviceSwipeParams = {
+  androidSelector: AndroidSelector,
+  direction: 'up' | 'down' | 'left' | 'right',
+  percent: number,
+  speed?: number,
+  timeout: number,
+};
+export type AndroidDeviceSwipeOptions = {
+  speed?: number,
+};
+export type AndroidDeviceSwipeResult = void;
+export type AndroidDeviceInfoParams = {
+  androidSelector: AndroidSelector,
+};
+export type AndroidDeviceInfoOptions = {
+
+};
+export type AndroidDeviceInfoResult = {
+  info: AndroidElementInfo,
+};
+export type AndroidDeviceScreenshotParams = {};
+export type AndroidDeviceScreenshotOptions = {};
+export type AndroidDeviceScreenshotResult = {
+  binary: Binary,
+};
+export type AndroidDeviceInputTypeParams = {
+  text: string,
+};
+export type AndroidDeviceInputTypeOptions = {
+
+};
+export type AndroidDeviceInputTypeResult = void;
+export type AndroidDeviceInputPressParams = {
+  key: string,
+};
+export type AndroidDeviceInputPressOptions = {
+
+};
+export type AndroidDeviceInputPressResult = void;
+export type AndroidDeviceInputTapParams = {
+  point: Point,
+};
+export type AndroidDeviceInputTapOptions = {
+
+};
+export type AndroidDeviceInputTapResult = void;
+export type AndroidDeviceInputSwipeParams = {
+  segments: Point[],
+  steps: number,
+};
+export type AndroidDeviceInputSwipeOptions = {
+
+};
+export type AndroidDeviceInputSwipeResult = void;
+export type AndroidDeviceInputDragParams = {
+  from: Point,
+  to: Point,
+  steps: number,
+};
+export type AndroidDeviceInputDragOptions = {
+
+};
+export type AndroidDeviceInputDragResult = void;
+export type AndroidDeviceLaunchBrowserParams = {
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
   },
-  title?: string,
-  internal?: boolean,
-  stepId?: string,
-};
-
-export type ClientSideCallMetadata = {
-  id: number,
-  stack?: StackFrame[],
-};
-
-export type Point = {
-  x: number,
-  y: number,
-};
-
-export type Rect = {
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-};
-
-export type SerializedValue = {
-  n?: number,
-  b?: boolean,
-  s?: string,
-  v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
-  d?: string,
-  u?: string,
-  bi?: string,
-  ta?: {
-    b: Binary,
-    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
+  screen?: {
+    width: number,
+    height: number,
   },
-  e?: {
-    m: string,
-    n: string,
-    s: string,
-  },
-  r?: {
-    p: string,
-    f: string,
-  },
-  a?: SerializedValue[],
-  o?: {
-    k: string,
-    v: SerializedValue,
+  ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
   }[],
-  h?: number,
-  id?: number,
-  ref?: number,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
+  baseURL?: string,
+  recordVideo?: {
+    dir?: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
+  },
+  strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
+  pkg?: string,
+  args?: string[],
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
 };
-
-export type SerializedArgument = {
-  value: SerializedValue,
-  handles: Channel[],
+export type AndroidDeviceLaunchBrowserOptions = {
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
+  screen?: {
+    width: number,
+    height: number,
+  },
+  ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
+  baseURL?: string,
+  recordVideo?: {
+    dir?: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
+  },
+  strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
+  pkg?: string,
+  args?: string[],
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
 };
-
-export type ExpectedTextValue = {
-  string?: string,
-  regexSource?: string,
-  regexFlags?: string,
-  matchSubstring?: boolean,
-  ignoreCase?: boolean,
-  normalizeWhiteSpace?: boolean,
+export type AndroidDeviceLaunchBrowserResult = {
+  context: BrowserContextChannel,
 };
-
-export type SelectorEngine = {
-  name: string,
-  source: string,
-  contentScript?: boolean,
+export type AndroidDeviceOpenParams = {
+  command: string,
 };
+export type AndroidDeviceOpenOptions = {
 
-export type URLPattern = {
-  hash: string,
-  hostname: string,
-  password: string,
-  pathname: string,
-  port: string,
-  protocol: string,
-  search: string,
-  username: string,
 };
-
-export type SetNetworkCookie = {
-  name: string,
-  value: string,
-  url?: string,
-  domain?: string,
-  path?: string,
-  expires?: number,
-  httpOnly?: boolean,
-  secure?: boolean,
-  sameSite?: 'Strict' | 'Lax' | 'None',
-  partitionKey?: string,
-  _crHasCrossSiteAncestor?: boolean,
+export type AndroidDeviceOpenResult = {
+  socket: AndroidSocketChannel,
 };
+export type AndroidDeviceShellParams = {
+  command: string,
+};
+export type AndroidDeviceShellOptions = {
 
-export type NetworkCookie = {
-  name: string,
-  value: string,
-  domain: string,
+};
+export type AndroidDeviceShellResult = {
+  result: Binary,
+};
+export type AndroidDeviceInstallApkParams = {
+  file: Binary,
+  args?: string[],
+};
+export type AndroidDeviceInstallApkOptions = {
+  args?: string[],
+};
+export type AndroidDeviceInstallApkResult = void;
+export type AndroidDevicePushParams = {
+  file: Binary,
   path: string,
-  expires: number,
-  httpOnly: boolean,
-  secure: boolean,
-  sameSite: 'Strict' | 'Lax' | 'None',
-  partitionKey?: string,
-  _crHasCrossSiteAncestor?: boolean,
+  mode?: number,
+};
+export type AndroidDevicePushOptions = {
+  mode?: number,
+};
+export type AndroidDevicePushResult = void;
+export type AndroidDeviceConnectToWebViewParams = {
+  socketName: string,
+};
+export type AndroidDeviceConnectToWebViewOptions = {
+
+};
+export type AndroidDeviceConnectToWebViewResult = {
+  context: BrowserContextChannel,
+};
+export type AndroidDeviceCloseParams = {};
+export type AndroidDeviceCloseOptions = {};
+export type AndroidDeviceCloseResult = void;
+
+export interface AndroidDeviceEvents {
+  'close': AndroidDeviceCloseEvent;
+  'webViewAdded': AndroidDeviceWebViewAddedEvent;
+  'webViewRemoved': AndroidDeviceWebViewRemovedEvent;
+}
+
+export type AndroidWebView = {
+  pid: number,
+  pkg: string,
+  socketName: string,
 };
 
-export type NameValue = {
-  name: string,
-  value: string,
-};
-
-export type IndexedDBDatabase = {
-  name: string,
-  version: number,
-  stores: {
-    name: string,
-    autoIncrement: boolean,
-    keyPath?: string,
-    keyPathArray?: string[],
-    records: {
-      key?: any,
-      keyEncoded?: any,
-      value?: any,
-      valueEncoded?: any,
-    }[],
-    indexes: {
-      name: string,
-      keyPath?: string,
-      keyPathArray?: string[],
-      multiEntry: boolean,
-      unique: boolean,
-    }[],
-  }[],
-};
-
-export type SetOriginStorage = {
-  origin: string,
-  localStorage: NameValue[],
-  indexedDB?: IndexedDBDatabase[],
-};
-
-export type OriginStorage = {
-  origin: string,
-  localStorage: NameValue[],
-  indexedDB?: IndexedDBDatabase[],
-};
-
-export type SerializedError = {
-  error?: {
-    message: string,
-    name: string,
-    stack?: string,
+export type AndroidSelector = {
+  checkable?: boolean,
+  checked?: boolean,
+  clazz?: string,
+  clickable?: boolean,
+  depth?: number,
+  desc?: string,
+  enabled?: boolean,
+  focusable?: boolean,
+  focused?: boolean,
+  hasChild?: {
+    androidSelector: AndroidSelector,
   },
-  value?: SerializedValue,
-};
-
-export type RecordHarOptions = {
-  content?: 'embed' | 'attach' | 'omit',
-  mode?: 'full' | 'minimal',
-  urlGlob?: string,
-  urlRegexSource?: string,
-  urlRegexFlags?: string,
-  harPath?: string,
-  resourcesDir?: string,
-};
-
-export type FormField = {
-  name: string,
-  value?: string,
-  file?: {
-    name: string,
-    mimeType?: string,
-    buffer: Binary,
+  hasDescendant?: {
+    androidSelector: AndroidSelector,
+    maxDepth?: number,
   },
+  longClickable?: boolean,
+  pkg?: string,
+  res?: string,
+  scrollable?: boolean,
+  selected?: boolean,
+  text?: string,
 };
 
-export type SDKLanguage = 'javascript' | 'python' | 'java' | 'csharp';
+export type AndroidElementInfo = {
+  children?: AndroidElementInfo[],
+  clazz: string,
+  desc: string,
+  res: string,
+  pkg: string,
+  text: string,
+  bounds: Rect,
+  checkable: boolean,
+  checked: boolean,
+  clickable: boolean,
+  enabled: boolean,
+  focusable: boolean,
+  focused: boolean,
+  longClickable: boolean,
+  scrollable: boolean,
+  selected: boolean,
+};
+
 // ----------- APIRequestContext -----------
 export type APIRequestContextInitializer = {
   tracing: TracingChannel,
@@ -432,726 +735,105 @@ export type APIResponse = {
   headers: NameValue[],
 };
 
-export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
-export type ConsoleMessagesFilter = 'all' | 'since-navigation';
-// ----------- LocalUtils -----------
-export type LocalUtilsInitializer = {
-  deviceDescriptors: {
-    name: string,
-    descriptor: {
-      userAgent: string,
-      viewport: {
-        width: number,
-        height: number,
-      },
-      screen?: {
-        width: number,
-        height: number,
-      },
-      deviceScaleFactor: number,
-      isMobile: boolean,
-      hasTouch: boolean,
-      defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
-    },
-  }[],
+// ----------- Artifact -----------
+export type ArtifactInitializer = {
+  absolutePath: string,
 };
-export interface LocalUtilsEventTarget {
+export interface ArtifactEventTarget {
 }
-export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
-  _type_LocalUtils: boolean;
-  zip(params: LocalUtilsZipParams, progress?: Progress): Promise<LocalUtilsZipResult>;
-  harOpen(params: LocalUtilsHarOpenParams, progress?: Progress): Promise<LocalUtilsHarOpenResult>;
-  harLookup(params: LocalUtilsHarLookupParams, progress?: Progress): Promise<LocalUtilsHarLookupResult>;
-  harClose(params: LocalUtilsHarCloseParams, progress?: Progress): Promise<LocalUtilsHarCloseResult>;
-  harUnzip(params: LocalUtilsHarUnzipParams, progress?: Progress): Promise<LocalUtilsHarUnzipResult>;
-  connect(params: LocalUtilsConnectParams, progress?: Progress): Promise<LocalUtilsConnectResult>;
-  tracingStarted(params: LocalUtilsTracingStartedParams, progress?: Progress): Promise<LocalUtilsTracingStartedResult>;
-  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, progress?: Progress): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
-  traceDiscarded(params: LocalUtilsTraceDiscardedParams, progress?: Progress): Promise<LocalUtilsTraceDiscardedResult>;
-  globToRegex(params: LocalUtilsGlobToRegexParams, progress?: Progress): Promise<LocalUtilsGlobToRegexResult>;
+export interface ArtifactChannel extends ArtifactEventTarget, Channel {
+  _type_Artifact: boolean;
+  pathAfterFinished(params?: ArtifactPathAfterFinishedParams, progress?: Progress): Promise<ArtifactPathAfterFinishedResult>;
+  saveAs(params: ArtifactSaveAsParams, progress?: Progress): Promise<ArtifactSaveAsResult>;
+  saveAsStream(params?: ArtifactSaveAsStreamParams, progress?: Progress): Promise<ArtifactSaveAsStreamResult>;
+  failure(params?: ArtifactFailureParams, progress?: Progress): Promise<ArtifactFailureResult>;
+  stream(params?: ArtifactStreamParams, progress?: Progress): Promise<ArtifactStreamResult>;
+  cancel(params?: ArtifactCancelParams, progress?: Progress): Promise<ArtifactCancelResult>;
+  delete(params?: ArtifactDeleteParams, progress?: Progress): Promise<ArtifactDeleteResult>;
 }
-export type LocalUtilsZipParams = {
-  zipFile: string,
-  entries: NameValue[],
-  stacksId?: string,
-  mode: 'write' | 'append',
-  includeSources: boolean,
-  additionalSources?: string[],
+export type ArtifactPathAfterFinishedParams = {};
+export type ArtifactPathAfterFinishedOptions = {};
+export type ArtifactPathAfterFinishedResult = {
+  value: string,
 };
-export type LocalUtilsZipOptions = {
-  stacksId?: string,
-  additionalSources?: string[],
+export type ArtifactSaveAsParams = {
+  path: string,
 };
-export type LocalUtilsZipResult = void;
-export type LocalUtilsHarOpenParams = {
-  file: string,
-};
-export type LocalUtilsHarOpenOptions = {
+export type ArtifactSaveAsOptions = {
 
 };
-export type LocalUtilsHarOpenResult = {
-  harId?: string,
+export type ArtifactSaveAsResult = void;
+export type ArtifactSaveAsStreamParams = {};
+export type ArtifactSaveAsStreamOptions = {};
+export type ArtifactSaveAsStreamResult = {
+  stream: StreamChannel,
+};
+export type ArtifactFailureParams = {};
+export type ArtifactFailureOptions = {};
+export type ArtifactFailureResult = {
   error?: string,
 };
-export type LocalUtilsHarLookupParams = {
-  harId: string,
-  url: string,
-  method: string,
-  headers: NameValue[],
-  postData?: Binary,
-  isNavigationRequest: boolean,
+export type ArtifactStreamParams = {};
+export type ArtifactStreamOptions = {};
+export type ArtifactStreamResult = {
+  stream: StreamChannel,
 };
-export type LocalUtilsHarLookupOptions = {
-  postData?: Binary,
-};
-export type LocalUtilsHarLookupResult = {
-  action: 'error' | 'redirect' | 'fulfill' | 'noentry',
-  message?: string,
-  redirectURL?: string,
-  status?: number,
-  headers?: NameValue[],
-  body?: Binary,
-};
-export type LocalUtilsHarCloseParams = {
-  harId: string,
-};
-export type LocalUtilsHarCloseOptions = {
+export type ArtifactCancelParams = {};
+export type ArtifactCancelOptions = {};
+export type ArtifactCancelResult = void;
+export type ArtifactDeleteParams = {};
+export type ArtifactDeleteOptions = {};
+export type ArtifactDeleteResult = void;
 
-};
-export type LocalUtilsHarCloseResult = void;
-export type LocalUtilsHarUnzipParams = {
-  zipFile: string,
-  harFile: string,
-  resourcesDir?: string,
-};
-export type LocalUtilsHarUnzipOptions = {
-  resourcesDir?: string,
-};
-export type LocalUtilsHarUnzipResult = void;
-export type LocalUtilsConnectParams = {
-  endpoint: string,
-  headers?: any,
-  exposeNetwork?: string,
-  slowMo?: number,
-  timeout: number,
-  socksProxyRedirectPortForTest?: number,
-};
-export type LocalUtilsConnectOptions = {
-  headers?: any,
-  exposeNetwork?: string,
-  slowMo?: number,
-  socksProxyRedirectPortForTest?: number,
-};
-export type LocalUtilsConnectResult = {
-  pipe: JsonPipeChannel,
-  headers: NameValue[],
-};
-export type LocalUtilsTracingStartedParams = {
-  tracesDir?: string,
-  traceName: string,
-  live?: boolean,
-};
-export type LocalUtilsTracingStartedOptions = {
-  tracesDir?: string,
-  live?: boolean,
-};
-export type LocalUtilsTracingStartedResult = {
-  stacksId: string,
-};
-export type LocalUtilsAddStackToTracingNoReplyParams = {
-  callData: ClientSideCallMetadata,
-};
-export type LocalUtilsAddStackToTracingNoReplyOptions = {
-
-};
-export type LocalUtilsAddStackToTracingNoReplyResult = void;
-export type LocalUtilsTraceDiscardedParams = {
-  stacksId: string,
-};
-export type LocalUtilsTraceDiscardedOptions = {
-
-};
-export type LocalUtilsTraceDiscardedResult = void;
-export type LocalUtilsGlobToRegexParams = {
-  glob: string,
-  baseURL?: string,
-  webSocketUrl?: boolean,
-};
-export type LocalUtilsGlobToRegexOptions = {
-  baseURL?: string,
-  webSocketUrl?: boolean,
-};
-export type LocalUtilsGlobToRegexResult = {
-  regex: string,
-};
-
-export interface LocalUtilsEvents {
+export interface ArtifactEvents {
 }
 
-// ----------- Root -----------
-export type RootInitializer = {};
-export interface RootEventTarget {
+// ----------- Stream -----------
+export type StreamInitializer = {};
+export interface StreamEventTarget {
 }
-export interface RootChannel extends RootEventTarget, Channel {
-  _type_Root: boolean;
-  initialize(params: RootInitializeParams, progress?: Progress): Promise<RootInitializeResult>;
+export interface StreamChannel extends StreamEventTarget, Channel {
+  _type_Stream: boolean;
+  read(params: StreamReadParams, progress?: Progress): Promise<StreamReadResult>;
+  close(params?: StreamCloseParams, progress?: Progress): Promise<StreamCloseResult>;
 }
-export type RootInitializeParams = {
-  sdkLanguage: SDKLanguage,
+export type StreamReadParams = {
+  size?: number,
 };
-export type RootInitializeOptions = {
+export type StreamReadOptions = {
+  size?: number,
+};
+export type StreamReadResult = {
+  binary: Binary,
+};
+export type StreamCloseParams = {};
+export type StreamCloseOptions = {};
+export type StreamCloseResult = void;
 
-};
-export type RootInitializeResult = {
-  playwright: PlaywrightChannel,
-};
-
-export interface RootEvents {
-}
-
-// ----------- Playwright -----------
-export type PlaywrightInitializer = {
-  chromium: BrowserTypeChannel,
-  firefox: BrowserTypeChannel,
-  webkit: BrowserTypeChannel,
-  android: AndroidChannel,
-  utils?: LocalUtilsChannel,
-  preLaunchedBrowser?: BrowserChannel,
-  preConnectedAndroidDevice?: AndroidDeviceChannel,
-  socksSupport?: SocksSupportChannel,
-};
-export interface PlaywrightEventTarget {
-}
-export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
-  _type_Playwright: boolean;
-  newRequest(params: PlaywrightNewRequestParams, progress?: Progress): Promise<PlaywrightNewRequestResult>;
-}
-export type PlaywrightNewRequestParams = {
-  baseURL?: string,
-  userAgent?: string,
-  ignoreHTTPSErrors?: boolean,
-  extraHTTPHeaders?: NameValue[],
-  failOnStatusCode?: boolean,
-  clientCertificates?: {
-    origin: string,
-    cert?: Binary,
-    key?: Binary,
-    passphrase?: string,
-    pfx?: Binary,
-  }[],
-  maxRedirects?: number,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  storageState?: {
-    cookies?: NetworkCookie[],
-    origins?: SetOriginStorage[],
-  },
-  tracesDir?: string,
-};
-export type PlaywrightNewRequestOptions = {
-  baseURL?: string,
-  userAgent?: string,
-  ignoreHTTPSErrors?: boolean,
-  extraHTTPHeaders?: NameValue[],
-  failOnStatusCode?: boolean,
-  clientCertificates?: {
-    origin: string,
-    cert?: Binary,
-    key?: Binary,
-    passphrase?: string,
-    pfx?: Binary,
-  }[],
-  maxRedirects?: number,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  storageState?: {
-    cookies?: NetworkCookie[],
-    origins?: SetOriginStorage[],
-  },
-  tracesDir?: string,
-};
-export type PlaywrightNewRequestResult = {
-  request: APIRequestContextChannel,
-};
-
-export interface PlaywrightEvents {
+export interface StreamEvents {
 }
 
-export type RecorderSource = {
-  isRecorded: boolean,
-  id: string,
-  label: string,
-  text: string,
-  language: string,
-  highlight: {
-    line: number,
-    type: string,
-  }[],
-  revealLine?: number,
-  group?: string,
-};
-
-// ----------- DebugController -----------
-export type DebugControllerInitializer = {};
-export interface DebugControllerEventTarget {
-  on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
-  on(event: 'setModeRequested', callback: (params: DebugControllerSetModeRequestedEvent) => void): this;
-  on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
-  on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
-  on(event: 'paused', callback: (params: DebugControllerPausedEvent) => void): this;
+// ----------- WritableStream -----------
+export type WritableStreamInitializer = {};
+export interface WritableStreamEventTarget {
 }
-export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
-  _type_DebugController: boolean;
-  initialize(params: DebugControllerInitializeParams, progress?: Progress): Promise<DebugControllerInitializeResult>;
-  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, progress?: Progress): Promise<DebugControllerSetReportStateChangedResult>;
-  setRecorderMode(params: DebugControllerSetRecorderModeParams, progress?: Progress): Promise<DebugControllerSetRecorderModeResult>;
-  highlight(params: DebugControllerHighlightParams, progress?: Progress): Promise<DebugControllerHighlightResult>;
-  hideHighlight(params?: DebugControllerHideHighlightParams, progress?: Progress): Promise<DebugControllerHideHighlightResult>;
-  resume(params?: DebugControllerResumeParams, progress?: Progress): Promise<DebugControllerResumeResult>;
-  kill(params?: DebugControllerKillParams, progress?: Progress): Promise<DebugControllerKillResult>;
+export interface WritableStreamChannel extends WritableStreamEventTarget, Channel {
+  _type_WritableStream: boolean;
+  write(params: WritableStreamWriteParams, progress?: Progress): Promise<WritableStreamWriteResult>;
+  close(params?: WritableStreamCloseParams, progress?: Progress): Promise<WritableStreamCloseResult>;
 }
-export type DebugControllerInspectRequestedEvent = {
-  selector: string,
-  locator: string,
-  ariaSnapshot: string,
+export type WritableStreamWriteParams = {
+  binary: Binary,
 };
-export type DebugControllerSetModeRequestedEvent = {
-  mode: string,
-};
-export type DebugControllerStateChangedEvent = {
-  pageCount: number,
-};
-export type DebugControllerSourceChangedEvent = {
-  text: string,
-  header?: string,
-  footer?: string,
-  actions?: string[],
-};
-export type DebugControllerPausedEvent = {
-  paused: boolean,
-};
-export type DebugControllerInitializeParams = {
-  codegenId: string,
-  sdkLanguage: SDKLanguage,
-};
-export type DebugControllerInitializeOptions = {
+export type WritableStreamWriteOptions = {
 
 };
-export type DebugControllerInitializeResult = void;
-export type DebugControllerSetReportStateChangedParams = {
-  enabled: boolean,
-};
-export type DebugControllerSetReportStateChangedOptions = {
+export type WritableStreamWriteResult = void;
+export type WritableStreamCloseParams = {};
+export type WritableStreamCloseOptions = {};
+export type WritableStreamCloseResult = void;
 
-};
-export type DebugControllerSetReportStateChangedResult = void;
-export type DebugControllerSetRecorderModeParams = {
-  mode: 'inspecting' | 'recording' | 'none',
-  testIdAttributeName?: string,
-  generateAutoExpect?: boolean,
-};
-export type DebugControllerSetRecorderModeOptions = {
-  testIdAttributeName?: string,
-  generateAutoExpect?: boolean,
-};
-export type DebugControllerSetRecorderModeResult = void;
-export type DebugControllerHighlightParams = {
-  selector?: string,
-  ariaTemplate?: string,
-};
-export type DebugControllerHighlightOptions = {
-  selector?: string,
-  ariaTemplate?: string,
-};
-export type DebugControllerHighlightResult = void;
-export type DebugControllerHideHighlightParams = {};
-export type DebugControllerHideHighlightOptions = {};
-export type DebugControllerHideHighlightResult = void;
-export type DebugControllerResumeParams = {};
-export type DebugControllerResumeOptions = {};
-export type DebugControllerResumeResult = void;
-export type DebugControllerKillParams = {};
-export type DebugControllerKillOptions = {};
-export type DebugControllerKillResult = void;
-
-export interface DebugControllerEvents {
-  'inspectRequested': DebugControllerInspectRequestedEvent;
-  'setModeRequested': DebugControllerSetModeRequestedEvent;
-  'stateChanged': DebugControllerStateChangedEvent;
-  'sourceChanged': DebugControllerSourceChangedEvent;
-  'paused': DebugControllerPausedEvent;
-}
-
-// ----------- SocksSupport -----------
-export type SocksSupportInitializer = {};
-export interface SocksSupportEventTarget {
-  on(event: 'socksRequested', callback: (params: SocksSupportSocksRequestedEvent) => void): this;
-  on(event: 'socksData', callback: (params: SocksSupportSocksDataEvent) => void): this;
-  on(event: 'socksClosed', callback: (params: SocksSupportSocksClosedEvent) => void): this;
-}
-export interface SocksSupportChannel extends SocksSupportEventTarget, Channel {
-  _type_SocksSupport: boolean;
-  socksConnected(params: SocksSupportSocksConnectedParams, progress?: Progress): Promise<SocksSupportSocksConnectedResult>;
-  socksFailed(params: SocksSupportSocksFailedParams, progress?: Progress): Promise<SocksSupportSocksFailedResult>;
-  socksData(params: SocksSupportSocksDataParams, progress?: Progress): Promise<SocksSupportSocksDataResult>;
-  socksError(params: SocksSupportSocksErrorParams, progress?: Progress): Promise<SocksSupportSocksErrorResult>;
-  socksEnd(params: SocksSupportSocksEndParams, progress?: Progress): Promise<SocksSupportSocksEndResult>;
-}
-export type SocksSupportSocksRequestedEvent = {
-  uid: string,
-  host: string,
-  port: number,
-};
-export type SocksSupportSocksDataEvent = {
-  uid: string,
-  data: Binary,
-};
-export type SocksSupportSocksClosedEvent = {
-  uid: string,
-};
-export type SocksSupportSocksConnectedParams = {
-  uid: string,
-  host: string,
-  port: number,
-};
-export type SocksSupportSocksConnectedOptions = {
-
-};
-export type SocksSupportSocksConnectedResult = void;
-export type SocksSupportSocksFailedParams = {
-  uid: string,
-  errorCode: string,
-};
-export type SocksSupportSocksFailedOptions = {
-
-};
-export type SocksSupportSocksFailedResult = void;
-export type SocksSupportSocksDataParams = {
-  uid: string,
-  data: Binary,
-};
-export type SocksSupportSocksDataOptions = {
-
-};
-export type SocksSupportSocksDataResult = void;
-export type SocksSupportSocksErrorParams = {
-  uid: string,
-  error: string,
-};
-export type SocksSupportSocksErrorOptions = {
-
-};
-export type SocksSupportSocksErrorResult = void;
-export type SocksSupportSocksEndParams = {
-  uid: string,
-};
-export type SocksSupportSocksEndOptions = {
-
-};
-export type SocksSupportSocksEndResult = void;
-
-export interface SocksSupportEvents {
-  'socksRequested': SocksSupportSocksRequestedEvent;
-  'socksData': SocksSupportSocksDataEvent;
-  'socksClosed': SocksSupportSocksClosedEvent;
-}
-
-// ----------- BrowserType -----------
-export type BrowserTypeInitializer = {
-  executablePath: string,
-  name: string,
-};
-export interface BrowserTypeEventTarget {
-}
-export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
-  _type_BrowserType: boolean;
-  launch(params: BrowserTypeLaunchParams, progress?: Progress): Promise<BrowserTypeLaunchResult>;
-  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, progress?: Progress): Promise<BrowserTypeLaunchPersistentContextResult>;
-  connectOverCDP(params: BrowserTypeConnectOverCDPParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPResult>;
-  connectToWorker(params: BrowserTypeConnectToWorkerParams, progress?: Progress): Promise<BrowserTypeConnectToWorkerResult>;
-}
-export type BrowserTypeLaunchParams = {
-  channel?: string,
-  executablePath?: string,
-  args?: string[],
-  ignoreAllDefaultArgs?: boolean,
-  ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout: number,
-  env?: NameValue[],
-  headless?: boolean,
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  downloadsPath?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  chromiumSandbox?: boolean,
-  firefoxUserPrefs?: any,
-  cdpPort?: number,
-  slowMo?: number,
-};
-export type BrowserTypeLaunchOptions = {
-  channel?: string,
-  executablePath?: string,
-  args?: string[],
-  ignoreAllDefaultArgs?: boolean,
-  ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  env?: NameValue[],
-  headless?: boolean,
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  downloadsPath?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  chromiumSandbox?: boolean,
-  firefoxUserPrefs?: any,
-  cdpPort?: number,
-  slowMo?: number,
-};
-export type BrowserTypeLaunchResult = {
-  browser: BrowserChannel,
-};
-export type BrowserTypeLaunchPersistentContextParams = {
-  channel?: string,
-  executablePath?: string,
-  args?: string[],
-  ignoreAllDefaultArgs?: boolean,
-  ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout: number,
-  env?: NameValue[],
-  headless?: boolean,
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  downloadsPath?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  chromiumSandbox?: boolean,
-  firefoxUserPrefs?: any,
-  cdpPort?: number,
-  noDefaultViewport?: boolean,
-  viewport?: {
-    width: number,
-    height: number,
-  },
-  screen?: {
-    width: number,
-    height: number,
-  },
-  ignoreHTTPSErrors?: boolean,
-  clientCertificates?: {
-    origin: string,
-    cert?: Binary,
-    key?: Binary,
-    passphrase?: string,
-    pfx?: Binary,
-  }[],
-  javaScriptEnabled?: boolean,
-  bypassCSP?: boolean,
-  userAgent?: string,
-  locale?: string,
-  timezoneId?: string,
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  permissions?: string[],
-  extraHTTPHeaders?: NameValue[],
-  offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
-  deviceScaleFactor?: number,
-  isMobile?: boolean,
-  hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
-  forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  contrast?: 'no-preference' | 'more' | 'no-override',
-  baseURL?: string,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  serviceWorkers?: 'allow' | 'block',
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-  userDataDir: string,
-  slowMo?: number,
-};
-export type BrowserTypeLaunchPersistentContextOptions = {
-  channel?: string,
-  executablePath?: string,
-  args?: string[],
-  ignoreAllDefaultArgs?: boolean,
-  ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  env?: NameValue[],
-  headless?: boolean,
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  downloadsPath?: string,
-  tracesDir?: string,
-  artifactsDir?: string,
-  chromiumSandbox?: boolean,
-  firefoxUserPrefs?: any,
-  cdpPort?: number,
-  noDefaultViewport?: boolean,
-  viewport?: {
-    width: number,
-    height: number,
-  },
-  screen?: {
-    width: number,
-    height: number,
-  },
-  ignoreHTTPSErrors?: boolean,
-  clientCertificates?: {
-    origin: string,
-    cert?: Binary,
-    key?: Binary,
-    passphrase?: string,
-    pfx?: Binary,
-  }[],
-  javaScriptEnabled?: boolean,
-  bypassCSP?: boolean,
-  userAgent?: string,
-  locale?: string,
-  timezoneId?: string,
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  permissions?: string[],
-  extraHTTPHeaders?: NameValue[],
-  offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
-  deviceScaleFactor?: number,
-  isMobile?: boolean,
-  hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
-  forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  contrast?: 'no-preference' | 'more' | 'no-override',
-  baseURL?: string,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  serviceWorkers?: 'allow' | 'block',
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-  slowMo?: number,
-};
-export type BrowserTypeLaunchPersistentContextResult = {
-  browser: BrowserChannel,
-  context: BrowserContextChannel,
-};
-export type BrowserTypeConnectOverCDPParams = {
-  endpointURL: string,
-  headers?: NameValue[],
-  slowMo?: number,
-  timeout: number,
-  isLocal?: boolean,
-  noDefaults?: boolean,
-};
-export type BrowserTypeConnectOverCDPOptions = {
-  headers?: NameValue[],
-  slowMo?: number,
-  isLocal?: boolean,
-  noDefaults?: boolean,
-};
-export type BrowserTypeConnectOverCDPResult = {
-  browser: BrowserChannel,
-  defaultContext?: BrowserContextChannel,
-};
-export type BrowserTypeConnectToWorkerParams = {
-  endpoint: string,
-  timeout: number,
-};
-export type BrowserTypeConnectToWorkerOptions = {
-
-};
-export type BrowserTypeConnectToWorkerResult = {
-  worker: WorkerChannel,
-};
-
-export interface BrowserTypeEvents {
+export interface WritableStreamEvents {
 }
 
 // ----------- Browser -----------
@@ -1546,31 +1228,6 @@ export type BrowserStopTracingResult = {
 export interface BrowserEvents {
   'context': BrowserContextEvent;
   'close': BrowserCloseEvent;
-}
-
-// ----------- EventTarget -----------
-export type EventTargetInitializer = {};
-export interface EventTargetEventTarget {
-}
-export interface EventTargetChannel extends EventTargetEventTarget, Channel {
-  _type_EventTarget: boolean;
-  waitForEventInfo(params: EventTargetWaitForEventInfoParams, progress?: Progress): Promise<EventTargetWaitForEventInfoResult>;
-}
-export type EventTargetWaitForEventInfoParams = {
-  info: {
-    waitId: string,
-    phase: 'before' | 'after' | 'log',
-    event?: string,
-    message?: string,
-    error?: string,
-  },
-};
-export type EventTargetWaitForEventInfoOptions = {
-
-};
-export type EventTargetWaitForEventInfoResult = void;
-
-export interface EventTargetEvents {
 }
 
 // ----------- BrowserContext -----------
@@ -2092,705 +1749,339 @@ export interface BrowserContextEvents {
   'recorderEvent': BrowserContextRecorderEventEvent;
 }
 
-// ----------- Page -----------
-export type PageInitializer = {
-  mainFrame: FrameChannel,
-  viewportSize?: {
-    width: number,
-    height: number,
-  },
-  isClosed: boolean,
-  opener?: PageChannel,
-  video?: ArtifactChannel,
-};
-export interface PageEventTarget {
-  on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
-  on(event: 'close', callback: (params: PageCloseEvent) => void): this;
-  on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
-  on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
-  on(event: 'viewportSizeChanged', callback: (params: PageViewportSizeChangedEvent) => void): this;
-  on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
-  on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
-  on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
-  on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
-  on(event: 'route', callback: (params: PageRouteEvent) => void): this;
-  on(event: 'screencastFrame', callback: (params: PageScreencastFrameEvent) => void): this;
-  on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
-  on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
-  on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
-}
-export interface PageChannel extends PageEventTarget, EventTargetChannel {
-  _type_Page: boolean;
-  addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
-  close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
-  clearConsoleMessages(params?: PageClearConsoleMessagesParams, progress?: Progress): Promise<PageClearConsoleMessagesResult>;
-  consoleMessages(params: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
-  emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
-  exposeBinding(params: PageExposeBindingParams, progress?: Progress): Promise<PageExposeBindingResult>;
-  goBack(params: PageGoBackParams, progress?: Progress): Promise<PageGoBackResult>;
-  goForward(params: PageGoForwardParams, progress?: Progress): Promise<PageGoForwardResult>;
-  requestGC(params?: PageRequestGCParams, progress?: Progress): Promise<PageRequestGCResult>;
-  registerLocatorHandler(params: PageRegisterLocatorHandlerParams, progress?: Progress): Promise<PageRegisterLocatorHandlerResult>;
-  resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, progress?: Progress): Promise<PageResolveLocatorHandlerNoReplyResult>;
-  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, progress?: Progress): Promise<PageUnregisterLocatorHandlerResult>;
-  reload(params: PageReloadParams, progress?: Progress): Promise<PageReloadResult>;
-  expectScreenshot(params: PageExpectScreenshotParams, progress?: Progress): Promise<PageExpectScreenshotResult>;
-  screenshot(params: PageScreenshotParams, progress?: Progress): Promise<PageScreenshotResult>;
-  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, progress?: Progress): Promise<PageSetExtraHTTPHeadersResult>;
-  setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, progress?: Progress): Promise<PageSetNetworkInterceptionPatternsResult>;
-  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<PageSetWebSocketInterceptionPatternsResult>;
-  setViewportSize(params: PageSetViewportSizeParams, progress?: Progress): Promise<PageSetViewportSizeResult>;
-  keyboardDown(params: PageKeyboardDownParams, progress?: Progress): Promise<PageKeyboardDownResult>;
-  keyboardUp(params: PageKeyboardUpParams, progress?: Progress): Promise<PageKeyboardUpResult>;
-  keyboardInsertText(params: PageKeyboardInsertTextParams, progress?: Progress): Promise<PageKeyboardInsertTextResult>;
-  keyboardType(params: PageKeyboardTypeParams, progress?: Progress): Promise<PageKeyboardTypeResult>;
-  keyboardPress(params: PageKeyboardPressParams, progress?: Progress): Promise<PageKeyboardPressResult>;
-  mouseMove(params: PageMouseMoveParams, progress?: Progress): Promise<PageMouseMoveResult>;
-  mouseDown(params: PageMouseDownParams, progress?: Progress): Promise<PageMouseDownResult>;
-  mouseUp(params: PageMouseUpParams, progress?: Progress): Promise<PageMouseUpResult>;
-  mouseClick(params: PageMouseClickParams, progress?: Progress): Promise<PageMouseClickResult>;
-  mouseWheel(params: PageMouseWheelParams, progress?: Progress): Promise<PageMouseWheelResult>;
-  touchscreenTap(params: PageTouchscreenTapParams, progress?: Progress): Promise<PageTouchscreenTapResult>;
-  clearPageErrors(params?: PageClearPageErrorsParams, progress?: Progress): Promise<PageClearPageErrorsResult>;
-  pageErrors(params: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
-  pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
-  requests(params?: PageRequestsParams, progress?: Progress): Promise<PageRequestsResult>;
-  startJSCoverage(params: PageStartJSCoverageParams, progress?: Progress): Promise<PageStartJSCoverageResult>;
-  stopJSCoverage(params?: PageStopJSCoverageParams, progress?: Progress): Promise<PageStopJSCoverageResult>;
-  startCSSCoverage(params: PageStartCSSCoverageParams, progress?: Progress): Promise<PageStartCSSCoverageResult>;
-  stopCSSCoverage(params?: PageStopCSSCoverageParams, progress?: Progress): Promise<PageStopCSSCoverageResult>;
-  bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
-  pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
-  cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
-  hideHighlight(params?: PageHideHighlightParams, progress?: Progress): Promise<PageHideHighlightResult>;
-  screencastShowOverlay(params: PageScreencastShowOverlayParams, progress?: Progress): Promise<PageScreencastShowOverlayResult>;
-  screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, progress?: Progress): Promise<PageScreencastRemoveOverlayResult>;
-  screencastChapter(params: PageScreencastChapterParams, progress?: Progress): Promise<PageScreencastChapterResult>;
-  screencastSetOverlayVisible(params: PageScreencastSetOverlayVisibleParams, progress?: Progress): Promise<PageScreencastSetOverlayVisibleResult>;
-  screencastShowActions(params: PageScreencastShowActionsParams, progress?: Progress): Promise<PageScreencastShowActionsResult>;
-  screencastHideActions(params?: PageScreencastHideActionsParams, progress?: Progress): Promise<PageScreencastHideActionsResult>;
-  screencastStart(params: PageScreencastStartParams, progress?: Progress): Promise<PageScreencastStartResult>;
-  screencastStop(params?: PageScreencastStopParams, progress?: Progress): Promise<PageScreencastStopResult>;
-  updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
-  setDockTile(params: PageSetDockTileParams, progress?: Progress): Promise<PageSetDockTileResult>;
-}
-export type PageBindingCallEvent = {
-  binding: BindingCallChannel,
-};
-export type PageCloseEvent = {};
-export type PageCrashEvent = {};
-export type PageDownloadEvent = {
-  url: string,
-  suggestedFilename: string,
-  artifact: ArtifactChannel,
-};
-export type PageViewportSizeChangedEvent = {
-  viewportSize?: {
-    width: number,
-    height: number,
-  },
-};
-export type PageFileChooserEvent = {
-  element: ElementHandleChannel,
-  isMultiple: boolean,
-};
-export type PageFrameAttachedEvent = {
-  frame: FrameChannel,
-};
-export type PageFrameDetachedEvent = {
-  frame: FrameChannel,
-};
-export type PageLocatorHandlerTriggeredEvent = {
-  uid: number,
-};
-export type PageRouteEvent = {
-  route: RouteChannel,
-};
-export type PageScreencastFrameEvent = {
-  data: Binary,
-};
-export type PageWebSocketRouteEvent = {
-  webSocketRoute: WebSocketRouteChannel,
-};
-export type PageWebSocketEvent = {
-  webSocket: WebSocketChannel,
-};
-export type PageWorkerEvent = {
-  worker: WorkerChannel,
-};
-export type PageAddInitScriptParams = {
-  source: string,
-};
-export type PageAddInitScriptOptions = {
-
-};
-export type PageAddInitScriptResult = {
-  disposable: DisposableChannel,
-};
-export type PageCloseParams = {
-  runBeforeUnload?: boolean,
-  reason?: string,
-};
-export type PageCloseOptions = {
-  runBeforeUnload?: boolean,
-  reason?: string,
-};
-export type PageCloseResult = void;
-export type PageClearConsoleMessagesParams = {};
-export type PageClearConsoleMessagesOptions = {};
-export type PageClearConsoleMessagesResult = void;
-export type PageConsoleMessagesParams = {
-  filter?: ConsoleMessagesFilter,
-};
-export type PageConsoleMessagesOptions = {
-  filter?: ConsoleMessagesFilter,
-};
-export type PageConsoleMessagesResult = {
-  messages: {
-    type: string,
-    text: string,
-    args: JSHandleChannel[],
-    location: {
-      url: string,
-      lineNumber: number,
-      columnNumber: number,
-    },
-    timestamp: number,
-  }[],
-};
-export type PageEmulateMediaParams = {
-  media?: 'screen' | 'print' | 'no-override',
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
-  forcedColors?: 'active' | 'none' | 'no-override',
-  contrast?: 'no-preference' | 'more' | 'no-override',
-};
-export type PageEmulateMediaOptions = {
-  media?: 'screen' | 'print' | 'no-override',
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
-  forcedColors?: 'active' | 'none' | 'no-override',
-  contrast?: 'no-preference' | 'more' | 'no-override',
-};
-export type PageEmulateMediaResult = void;
-export type PageExposeBindingParams = {
+// ----------- BrowserType -----------
+export type BrowserTypeInitializer = {
+  executablePath: string,
   name: string,
 };
-export type PageExposeBindingOptions = {
-
-};
-export type PageExposeBindingResult = {
-  disposable: DisposableChannel,
-};
-export type PageGoBackParams = {
+export interface BrowserTypeEventTarget {
+}
+export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
+  _type_BrowserType: boolean;
+  launch(params: BrowserTypeLaunchParams, progress?: Progress): Promise<BrowserTypeLaunchResult>;
+  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, progress?: Progress): Promise<BrowserTypeLaunchPersistentContextResult>;
+  connectOverCDP(params: BrowserTypeConnectOverCDPParams, progress?: Progress): Promise<BrowserTypeConnectOverCDPResult>;
+  connectToWorker(params: BrowserTypeConnectToWorkerParams, progress?: Progress): Promise<BrowserTypeConnectToWorkerResult>;
+}
+export type BrowserTypeLaunchParams = {
+  channel?: string,
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
   timeout: number,
-  waitUntil?: LifecycleEvent,
-};
-export type PageGoBackOptions = {
-  waitUntil?: LifecycleEvent,
-};
-export type PageGoBackResult = {
-  response?: ResponseChannel,
-};
-export type PageGoForwardParams = {
-  timeout: number,
-  waitUntil?: LifecycleEvent,
-};
-export type PageGoForwardOptions = {
-  waitUntil?: LifecycleEvent,
-};
-export type PageGoForwardResult = {
-  response?: ResponseChannel,
-};
-export type PageRequestGCParams = {};
-export type PageRequestGCOptions = {};
-export type PageRequestGCResult = void;
-export type PageRegisterLocatorHandlerParams = {
-  selector: string,
-  noWaitAfter?: boolean,
-};
-export type PageRegisterLocatorHandlerOptions = {
-  noWaitAfter?: boolean,
-};
-export type PageRegisterLocatorHandlerResult = {
-  uid: number,
-};
-export type PageResolveLocatorHandlerNoReplyParams = {
-  uid: number,
-  remove?: boolean,
-};
-export type PageResolveLocatorHandlerNoReplyOptions = {
-  remove?: boolean,
-};
-export type PageResolveLocatorHandlerNoReplyResult = void;
-export type PageUnregisterLocatorHandlerParams = {
-  uid: number,
-};
-export type PageUnregisterLocatorHandlerOptions = {
-
-};
-export type PageUnregisterLocatorHandlerResult = void;
-export type PageReloadParams = {
-  timeout: number,
-  waitUntil?: LifecycleEvent,
-};
-export type PageReloadOptions = {
-  waitUntil?: LifecycleEvent,
-};
-export type PageReloadResult = {
-  response?: ResponseChannel,
-};
-export type PageExpectScreenshotParams = {
-  expected?: Binary,
-  timeout: number,
-  isNot: boolean,
-  locator?: {
-    frame: FrameChannel,
-    selector: string,
+  env?: NameValue[],
+  headless?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
   },
-  comparator?: string,
-  maxDiffPixels?: number,
-  maxDiffPixelRatio?: number,
-  threshold?: number,
-  fullPage?: boolean,
-  clip?: Rect,
-  omitBackground?: boolean,
-  caret?: 'hide' | 'initial',
-  animations?: 'disabled' | 'allow',
-  scale?: 'css' | 'device',
-  mask?: {
-    frame: FrameChannel,
-    selector: string,
-  }[],
-  maskColor?: string,
-  style?: string,
+  downloadsPath?: string,
+  tracesDir?: string,
+  artifactsDir?: string,
+  chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
+  cdpPort?: number,
+  slowMo?: number,
 };
-export type PageExpectScreenshotOptions = {
-  expected?: Binary,
-  locator?: {
-    frame: FrameChannel,
-    selector: string,
+export type BrowserTypeLaunchOptions = {
+  channel?: string,
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  env?: NameValue[],
+  headless?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
   },
-  comparator?: string,
-  maxDiffPixels?: number,
-  maxDiffPixelRatio?: number,
-  threshold?: number,
-  fullPage?: boolean,
-  clip?: Rect,
-  omitBackground?: boolean,
-  caret?: 'hide' | 'initial',
-  animations?: 'disabled' | 'allow',
-  scale?: 'css' | 'device',
-  mask?: {
-    frame: FrameChannel,
-    selector: string,
-  }[],
-  maskColor?: string,
-  style?: string,
+  downloadsPath?: string,
+  tracesDir?: string,
+  artifactsDir?: string,
+  chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
+  cdpPort?: number,
+  slowMo?: number,
 };
-export type PageExpectScreenshotResult = {
-  diff?: Binary,
-  errorMessage?: string,
-  actual?: Binary,
-  previous?: Binary,
-  timedOut?: boolean,
-  log?: string[],
+export type BrowserTypeLaunchResult = {
+  browser: BrowserChannel,
 };
-export type PageScreenshotParams = {
+export type BrowserTypeLaunchPersistentContextParams = {
+  channel?: string,
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
   timeout: number,
-  type?: 'png' | 'jpeg',
-  quality?: number,
-  fullPage?: boolean,
-  clip?: Rect,
-  omitBackground?: boolean,
-  caret?: 'hide' | 'initial',
-  animations?: 'disabled' | 'allow',
-  scale?: 'css' | 'device',
-  mask?: {
-    frame: FrameChannel,
-    selector: string,
-  }[],
-  maskColor?: string,
-  style?: string,
-};
-export type PageScreenshotOptions = {
-  type?: 'png' | 'jpeg',
-  quality?: number,
-  fullPage?: boolean,
-  clip?: Rect,
-  omitBackground?: boolean,
-  caret?: 'hide' | 'initial',
-  animations?: 'disabled' | 'allow',
-  scale?: 'css' | 'device',
-  mask?: {
-    frame: FrameChannel,
-    selector: string,
-  }[],
-  maskColor?: string,
-  style?: string,
-};
-export type PageScreenshotResult = {
-  binary: Binary,
-};
-export type PageSetExtraHTTPHeadersParams = {
-  headers: NameValue[],
-};
-export type PageSetExtraHTTPHeadersOptions = {
-
-};
-export type PageSetExtraHTTPHeadersResult = void;
-export type PageSetNetworkInterceptionPatternsParams = {
-  patterns: {
-    glob?: string,
-    regexSource?: string,
-    regexFlags?: string,
-    urlPattern?: URLPattern,
-  }[],
-};
-export type PageSetNetworkInterceptionPatternsOptions = {
-
-};
-export type PageSetNetworkInterceptionPatternsResult = void;
-export type PageSetWebSocketInterceptionPatternsParams = {
-  patterns: {
-    glob?: string,
-    regexSource?: string,
-    regexFlags?: string,
-    urlPattern?: URLPattern,
-  }[],
-};
-export type PageSetWebSocketInterceptionPatternsOptions = {
-
-};
-export type PageSetWebSocketInterceptionPatternsResult = void;
-export type PageSetViewportSizeParams = {
-  viewportSize: {
+  env?: NameValue[],
+  headless?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  downloadsPath?: string,
+  tracesDir?: string,
+  artifactsDir?: string,
+  chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
+  cdpPort?: number,
+  noDefaultViewport?: boolean,
+  viewport?: {
     width: number,
     height: number,
   },
-};
-export type PageSetViewportSizeOptions = {
-
-};
-export type PageSetViewportSizeResult = void;
-export type PageKeyboardDownParams = {
-  key: string,
-};
-export type PageKeyboardDownOptions = {
-
-};
-export type PageKeyboardDownResult = void;
-export type PageKeyboardUpParams = {
-  key: string,
-};
-export type PageKeyboardUpOptions = {
-
-};
-export type PageKeyboardUpResult = void;
-export type PageKeyboardInsertTextParams = {
-  text: string,
-};
-export type PageKeyboardInsertTextOptions = {
-
-};
-export type PageKeyboardInsertTextResult = void;
-export type PageKeyboardTypeParams = {
-  text: string,
-  delay?: number,
-};
-export type PageKeyboardTypeOptions = {
-  delay?: number,
-};
-export type PageKeyboardTypeResult = void;
-export type PageKeyboardPressParams = {
-  key: string,
-  delay?: number,
-};
-export type PageKeyboardPressOptions = {
-  delay?: number,
-};
-export type PageKeyboardPressResult = void;
-export type PageMouseMoveParams = {
-  x: number,
-  y: number,
-  steps?: number,
-};
-export type PageMouseMoveOptions = {
-  steps?: number,
-};
-export type PageMouseMoveResult = void;
-export type PageMouseDownParams = {
-  button?: 'left' | 'right' | 'middle',
-  clickCount?: number,
-};
-export type PageMouseDownOptions = {
-  button?: 'left' | 'right' | 'middle',
-  clickCount?: number,
-};
-export type PageMouseDownResult = void;
-export type PageMouseUpParams = {
-  button?: 'left' | 'right' | 'middle',
-  clickCount?: number,
-};
-export type PageMouseUpOptions = {
-  button?: 'left' | 'right' | 'middle',
-  clickCount?: number,
-};
-export type PageMouseUpResult = void;
-export type PageMouseClickParams = {
-  x: number,
-  y: number,
-  delay?: number,
-  button?: 'left' | 'right' | 'middle',
-  clickCount?: number,
-};
-export type PageMouseClickOptions = {
-  delay?: number,
-  button?: 'left' | 'right' | 'middle',
-  clickCount?: number,
-};
-export type PageMouseClickResult = void;
-export type PageMouseWheelParams = {
-  deltaX: number,
-  deltaY: number,
-};
-export type PageMouseWheelOptions = {
-
-};
-export type PageMouseWheelResult = void;
-export type PageTouchscreenTapParams = {
-  x: number,
-  y: number,
-};
-export type PageTouchscreenTapOptions = {
-
-};
-export type PageTouchscreenTapResult = void;
-export type PageClearPageErrorsParams = {};
-export type PageClearPageErrorsOptions = {};
-export type PageClearPageErrorsResult = void;
-export type PagePageErrorsParams = {
-  filter?: ConsoleMessagesFilter,
-};
-export type PagePageErrorsOptions = {
-  filter?: ConsoleMessagesFilter,
-};
-export type PagePageErrorsResult = {
-  errors: SerializedError[],
-};
-export type PagePdfParams = {
-  scale?: number,
-  displayHeaderFooter?: boolean,
-  headerTemplate?: string,
-  footerTemplate?: string,
-  printBackground?: boolean,
-  landscape?: boolean,
-  pageRanges?: string,
-  format?: string,
-  width?: string,
-  height?: string,
-  preferCSSPageSize?: boolean,
-  margin?: {
-    top?: string,
-    bottom?: string,
-    left?: string,
-    right?: string,
-  },
-  tagged?: boolean,
-  outline?: boolean,
-};
-export type PagePdfOptions = {
-  scale?: number,
-  displayHeaderFooter?: boolean,
-  headerTemplate?: string,
-  footerTemplate?: string,
-  printBackground?: boolean,
-  landscape?: boolean,
-  pageRanges?: string,
-  format?: string,
-  width?: string,
-  height?: string,
-  preferCSSPageSize?: boolean,
-  margin?: {
-    top?: string,
-    bottom?: string,
-    left?: string,
-    right?: string,
-  },
-  tagged?: boolean,
-  outline?: boolean,
-};
-export type PagePdfResult = {
-  pdf: Binary,
-};
-export type PageRequestsParams = {};
-export type PageRequestsOptions = {};
-export type PageRequestsResult = {
-  requests: RequestChannel[],
-};
-export type PageStartJSCoverageParams = {
-  resetOnNavigation?: boolean,
-  reportAnonymousScripts?: boolean,
-};
-export type PageStartJSCoverageOptions = {
-  resetOnNavigation?: boolean,
-  reportAnonymousScripts?: boolean,
-};
-export type PageStartJSCoverageResult = void;
-export type PageStopJSCoverageParams = {};
-export type PageStopJSCoverageOptions = {};
-export type PageStopJSCoverageResult = {
-  entries: {
-    url: string,
-    scriptId: string,
-    source?: string,
-    functions: {
-      functionName: string,
-      isBlockCoverage: boolean,
-      ranges: {
-        startOffset: number,
-        endOffset: number,
-        count: number,
-      }[],
-    }[],
-  }[],
-};
-export type PageStartCSSCoverageParams = {
-  resetOnNavigation?: boolean,
-};
-export type PageStartCSSCoverageOptions = {
-  resetOnNavigation?: boolean,
-};
-export type PageStartCSSCoverageResult = void;
-export type PageStopCSSCoverageParams = {};
-export type PageStopCSSCoverageOptions = {};
-export type PageStopCSSCoverageResult = {
-  entries: {
-    url: string,
-    text?: string,
-    ranges: {
-      start: number,
-      end: number,
-    }[],
-  }[],
-};
-export type PageBringToFrontParams = {};
-export type PageBringToFrontOptions = {};
-export type PageBringToFrontResult = void;
-export type PagePickLocatorParams = {};
-export type PagePickLocatorOptions = {};
-export type PagePickLocatorResult = {
-  selector: string,
-};
-export type PageCancelPickLocatorParams = {};
-export type PageCancelPickLocatorOptions = {};
-export type PageCancelPickLocatorResult = void;
-export type PageHideHighlightParams = {};
-export type PageHideHighlightOptions = {};
-export type PageHideHighlightResult = void;
-export type PageScreencastShowOverlayParams = {
-  html: string,
-  duration?: number,
-};
-export type PageScreencastShowOverlayOptions = {
-  duration?: number,
-};
-export type PageScreencastShowOverlayResult = {
-  id: string,
-};
-export type PageScreencastRemoveOverlayParams = {
-  id: string,
-};
-export type PageScreencastRemoveOverlayOptions = {
-
-};
-export type PageScreencastRemoveOverlayResult = void;
-export type PageScreencastChapterParams = {
-  title: string,
-  description?: string,
-  duration?: number,
-};
-export type PageScreencastChapterOptions = {
-  description?: string,
-  duration?: number,
-};
-export type PageScreencastChapterResult = void;
-export type PageScreencastSetOverlayVisibleParams = {
-  visible: boolean,
-};
-export type PageScreencastSetOverlayVisibleOptions = {
-
-};
-export type PageScreencastSetOverlayVisibleResult = void;
-export type PageScreencastShowActionsParams = {
-  duration?: number,
-  position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-  fontSize?: number,
-};
-export type PageScreencastShowActionsOptions = {
-  duration?: number,
-  position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-  fontSize?: number,
-};
-export type PageScreencastShowActionsResult = void;
-export type PageScreencastHideActionsParams = {};
-export type PageScreencastHideActionsOptions = {};
-export type PageScreencastHideActionsResult = void;
-export type PageScreencastStartParams = {
-  size?: {
+  screen?: {
     width: number,
     height: number,
   },
-  quality?: number,
-  sendFrames?: boolean,
-  record?: boolean,
+  ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
+  baseURL?: string,
+  recordVideo?: {
+    dir?: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
+  },
+  strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
+  userDataDir: string,
+  slowMo?: number,
 };
-export type PageScreencastStartOptions = {
-  size?: {
+export type BrowserTypeLaunchPersistentContextOptions = {
+  channel?: string,
+  executablePath?: string,
+  args?: string[],
+  ignoreAllDefaultArgs?: boolean,
+  ignoreDefaultArgs?: string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  env?: NameValue[],
+  headless?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  downloadsPath?: string,
+  tracesDir?: string,
+  artifactsDir?: string,
+  chromiumSandbox?: boolean,
+  firefoxUserPrefs?: any,
+  cdpPort?: number,
+  noDefaultViewport?: boolean,
+  viewport?: {
     width: number,
     height: number,
   },
-  quality?: number,
-  sendFrames?: boolean,
-  record?: boolean,
+  screen?: {
+    width: number,
+    height: number,
+  },
+  ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
+  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
+  baseURL?: string,
+  recordVideo?: {
+    dir?: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+    showActions?: {
+      duration?: number,
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+      fontSize?: number,
+    },
+  },
+  strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
+  selectorEngines?: SelectorEngine[],
+  testIdAttributeName?: string,
+  slowMo?: number,
 };
-export type PageScreencastStartResult = {
-  artifact?: ArtifactChannel,
+export type BrowserTypeLaunchPersistentContextResult = {
+  browser: BrowserChannel,
+  context: BrowserContextChannel,
 };
-export type PageScreencastStopParams = {};
-export type PageScreencastStopOptions = {};
-export type PageScreencastStopResult = void;
-export type PageUpdateSubscriptionParams = {
-  event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
-  enabled: boolean,
+export type BrowserTypeConnectOverCDPParams = {
+  endpointURL: string,
+  headers?: NameValue[],
+  slowMo?: number,
+  timeout: number,
+  isLocal?: boolean,
+  noDefaults?: boolean,
 };
-export type PageUpdateSubscriptionOptions = {
+export type BrowserTypeConnectOverCDPOptions = {
+  headers?: NameValue[],
+  slowMo?: number,
+  isLocal?: boolean,
+  noDefaults?: boolean,
+};
+export type BrowserTypeConnectOverCDPResult = {
+  browser: BrowserChannel,
+  defaultContext?: BrowserContextChannel,
+};
+export type BrowserTypeConnectToWorkerParams = {
+  endpoint: string,
+  timeout: number,
+};
+export type BrowserTypeConnectToWorkerOptions = {
 
 };
-export type PageUpdateSubscriptionResult = void;
-export type PageSetDockTileParams = {
-  image: Binary,
+export type BrowserTypeConnectToWorkerResult = {
+  worker: WorkerChannel,
 };
-export type PageSetDockTileOptions = {
+
+export interface BrowserTypeEvents {
+}
+
+export type Metadata = {
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
+  title?: string,
+  internal?: boolean,
+  stepId?: string,
+};
+
+export type ClientSideCallMetadata = {
+  id: number,
+  stack?: StackFrame[],
+};
+
+export type SDKLanguage = 'javascript' | 'python' | 'java' | 'csharp';
+// ----------- Disposable -----------
+export type DisposableInitializer = {};
+export interface DisposableEventTarget {
+}
+export interface DisposableChannel extends DisposableEventTarget, Channel {
+  _type_Disposable: boolean;
+  dispose(params?: DisposableDisposeParams, progress?: Progress): Promise<DisposableDisposeResult>;
+}
+export type DisposableDisposeParams = {};
+export type DisposableDisposeOptions = {};
+export type DisposableDisposeResult = void;
+
+export interface DisposableEvents {
+}
+
+// ----------- EventTarget -----------
+export type EventTargetInitializer = {};
+export interface EventTargetEventTarget {
+}
+export interface EventTargetChannel extends EventTargetEventTarget, Channel {
+  _type_EventTarget: boolean;
+  waitForEventInfo(params: EventTargetWaitForEventInfoParams, progress?: Progress): Promise<EventTargetWaitForEventInfoResult>;
+}
+export type EventTargetWaitForEventInfoParams = {
+  info: {
+    waitId: string,
+    phase: 'before' | 'after' | 'log',
+    event?: string,
+    message?: string,
+    error?: string,
+  },
+};
+export type EventTargetWaitForEventInfoOptions = {
 
 };
-export type PageSetDockTileResult = void;
+export type EventTargetWaitForEventInfoResult = void;
 
-export interface PageEvents {
-  'bindingCall': PageBindingCallEvent;
-  'close': PageCloseEvent;
-  'crash': PageCrashEvent;
-  'download': PageDownloadEvent;
-  'viewportSizeChanged': PageViewportSizeChangedEvent;
-  'fileChooser': PageFileChooserEvent;
-  'frameAttached': PageFrameAttachedEvent;
-  'frameDetached': PageFrameDetachedEvent;
-  'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
-  'route': PageRouteEvent;
-  'screencastFrame': PageScreencastFrameEvent;
-  'webSocketRoute': PageWebSocketRouteEvent;
-  'webSocket': PageWebSocketEvent;
-  'worker': PageWorkerEvent;
+export interface EventTargetEvents {
 }
 
 // ----------- Frame -----------
@@ -3528,91 +2819,6 @@ export interface FrameEvents {
   'navigated': FrameNavigatedEvent;
 }
 
-// ----------- Worker -----------
-export type WorkerInitializer = {
-  url: string,
-};
-export interface WorkerEventTarget {
-  on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
-  on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
-}
-export interface WorkerChannel extends WorkerEventTarget, EventTargetChannel {
-  _type_Worker: boolean;
-  disconnect(params: WorkerDisconnectParams, progress?: Progress): Promise<WorkerDisconnectResult>;
-  evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
-  updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
-}
-export type WorkerConsoleEvent = {
-  type: string,
-  text: string,
-  args: JSHandleChannel[],
-  location: {
-    url: string,
-    lineNumber: number,
-    columnNumber: number,
-  },
-  timestamp: number,
-};
-export type WorkerCloseEvent = {};
-export type WorkerDisconnectParams = {
-  reason?: string,
-};
-export type WorkerDisconnectOptions = {
-  reason?: string,
-};
-export type WorkerDisconnectResult = void;
-export type WorkerEvaluateExpressionParams = {
-  expression: string,
-  isFunction?: boolean,
-  arg: SerializedArgument,
-};
-export type WorkerEvaluateExpressionOptions = {
-  isFunction?: boolean,
-};
-export type WorkerEvaluateExpressionResult = {
-  value: SerializedValue,
-};
-export type WorkerEvaluateExpressionHandleParams = {
-  expression: string,
-  isFunction?: boolean,
-  arg: SerializedArgument,
-};
-export type WorkerEvaluateExpressionHandleOptions = {
-  isFunction?: boolean,
-};
-export type WorkerEvaluateExpressionHandleResult = {
-  handle: JSHandleChannel,
-};
-export type WorkerUpdateSubscriptionParams = {
-  event: 'console',
-  enabled: boolean,
-};
-export type WorkerUpdateSubscriptionOptions = {
-
-};
-export type WorkerUpdateSubscriptionResult = void;
-
-export interface WorkerEvents {
-  'console': WorkerConsoleEvent;
-  'close': WorkerCloseEvent;
-}
-
-// ----------- Disposable -----------
-export type DisposableInitializer = {};
-export interface DisposableEventTarget {
-}
-export interface DisposableChannel extends DisposableEventTarget, Channel {
-  _type_Disposable: boolean;
-  dispose(params?: DisposableDisposeParams, progress?: Progress): Promise<DisposableDisposeResult>;
-}
-export type DisposableDisposeParams = {};
-export type DisposableDisposeOptions = {};
-export type DisposableDisposeResult = void;
-
-export interface DisposableEvents {
-}
-
 // ----------- JSHandle -----------
 export type JSHandleInitializer = {
   preview: string,
@@ -4102,6 +3308,187 @@ export type ElementHandleWaitForSelectorResult = {
 export interface ElementHandleEvents {
 }
 
+// ----------- LocalUtils -----------
+export type LocalUtilsInitializer = {
+  deviceDescriptors: {
+    name: string,
+    descriptor: {
+      userAgent: string,
+      viewport: {
+        width: number,
+        height: number,
+      },
+      screen?: {
+        width: number,
+        height: number,
+      },
+      deviceScaleFactor: number,
+      isMobile: boolean,
+      hasTouch: boolean,
+      defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
+    },
+  }[],
+};
+export interface LocalUtilsEventTarget {
+}
+export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
+  _type_LocalUtils: boolean;
+  zip(params: LocalUtilsZipParams, progress?: Progress): Promise<LocalUtilsZipResult>;
+  harOpen(params: LocalUtilsHarOpenParams, progress?: Progress): Promise<LocalUtilsHarOpenResult>;
+  harLookup(params: LocalUtilsHarLookupParams, progress?: Progress): Promise<LocalUtilsHarLookupResult>;
+  harClose(params: LocalUtilsHarCloseParams, progress?: Progress): Promise<LocalUtilsHarCloseResult>;
+  harUnzip(params: LocalUtilsHarUnzipParams, progress?: Progress): Promise<LocalUtilsHarUnzipResult>;
+  connect(params: LocalUtilsConnectParams, progress?: Progress): Promise<LocalUtilsConnectResult>;
+  tracingStarted(params: LocalUtilsTracingStartedParams, progress?: Progress): Promise<LocalUtilsTracingStartedResult>;
+  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, progress?: Progress): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
+  traceDiscarded(params: LocalUtilsTraceDiscardedParams, progress?: Progress): Promise<LocalUtilsTraceDiscardedResult>;
+  globToRegex(params: LocalUtilsGlobToRegexParams, progress?: Progress): Promise<LocalUtilsGlobToRegexResult>;
+}
+export type LocalUtilsZipParams = {
+  zipFile: string,
+  entries: NameValue[],
+  stacksId?: string,
+  mode: 'write' | 'append',
+  includeSources: boolean,
+  additionalSources?: string[],
+};
+export type LocalUtilsZipOptions = {
+  stacksId?: string,
+  additionalSources?: string[],
+};
+export type LocalUtilsZipResult = void;
+export type LocalUtilsHarOpenParams = {
+  file: string,
+};
+export type LocalUtilsHarOpenOptions = {
+
+};
+export type LocalUtilsHarOpenResult = {
+  harId?: string,
+  error?: string,
+};
+export type LocalUtilsHarLookupParams = {
+  harId: string,
+  url: string,
+  method: string,
+  headers: NameValue[],
+  postData?: Binary,
+  isNavigationRequest: boolean,
+};
+export type LocalUtilsHarLookupOptions = {
+  postData?: Binary,
+};
+export type LocalUtilsHarLookupResult = {
+  action: 'error' | 'redirect' | 'fulfill' | 'noentry',
+  message?: string,
+  redirectURL?: string,
+  status?: number,
+  headers?: NameValue[],
+  body?: Binary,
+};
+export type LocalUtilsHarCloseParams = {
+  harId: string,
+};
+export type LocalUtilsHarCloseOptions = {
+
+};
+export type LocalUtilsHarCloseResult = void;
+export type LocalUtilsHarUnzipParams = {
+  zipFile: string,
+  harFile: string,
+  resourcesDir?: string,
+};
+export type LocalUtilsHarUnzipOptions = {
+  resourcesDir?: string,
+};
+export type LocalUtilsHarUnzipResult = void;
+export type LocalUtilsConnectParams = {
+  endpoint: string,
+  headers?: any,
+  exposeNetwork?: string,
+  slowMo?: number,
+  timeout: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type LocalUtilsConnectOptions = {
+  headers?: any,
+  exposeNetwork?: string,
+  slowMo?: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type LocalUtilsConnectResult = {
+  pipe: JsonPipeChannel,
+  headers: NameValue[],
+};
+export type LocalUtilsTracingStartedParams = {
+  tracesDir?: string,
+  traceName: string,
+  live?: boolean,
+};
+export type LocalUtilsTracingStartedOptions = {
+  tracesDir?: string,
+  live?: boolean,
+};
+export type LocalUtilsTracingStartedResult = {
+  stacksId: string,
+};
+export type LocalUtilsAddStackToTracingNoReplyParams = {
+  callData: ClientSideCallMetadata,
+};
+export type LocalUtilsAddStackToTracingNoReplyOptions = {
+
+};
+export type LocalUtilsAddStackToTracingNoReplyResult = void;
+export type LocalUtilsTraceDiscardedParams = {
+  stacksId: string,
+};
+export type LocalUtilsTraceDiscardedOptions = {
+
+};
+export type LocalUtilsTraceDiscardedResult = void;
+export type LocalUtilsGlobToRegexParams = {
+  glob: string,
+  baseURL?: string,
+  webSocketUrl?: boolean,
+};
+export type LocalUtilsGlobToRegexOptions = {
+  baseURL?: string,
+  webSocketUrl?: boolean,
+};
+export type LocalUtilsGlobToRegexResult = {
+  regex: string,
+};
+
+export interface LocalUtilsEvents {
+}
+
+export type SetNetworkCookie = {
+  name: string,
+  value: string,
+  url?: string,
+  domain?: string,
+  path?: string,
+  expires?: number,
+  httpOnly?: boolean,
+  secure?: boolean,
+  sameSite?: 'Strict' | 'Lax' | 'None',
+  partitionKey?: string,
+  _crHasCrossSiteAncestor?: boolean,
+};
+
+export type NetworkCookie = {
+  name: string,
+  value: string,
+  domain: string,
+  path: string,
+  expires: number,
+  httpOnly: boolean,
+  secure: boolean,
+  sameSite: 'Strict' | 'Lax' | 'None',
+  partitionKey?: string,
+  _crHasCrossSiteAncestor?: boolean,
+};
+
 // ----------- Request -----------
 export type RequestInitializer = {
   frame?: FrameChannel,
@@ -4405,6 +3792,1136 @@ export interface WebSocketEvents {
   'close': WebSocketCloseEvent;
 }
 
+// ----------- Page -----------
+export type PageInitializer = {
+  mainFrame: FrameChannel,
+  viewportSize?: {
+    width: number,
+    height: number,
+  },
+  isClosed: boolean,
+  opener?: PageChannel,
+  video?: ArtifactChannel,
+};
+export interface PageEventTarget {
+  on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
+  on(event: 'close', callback: (params: PageCloseEvent) => void): this;
+  on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
+  on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
+  on(event: 'viewportSizeChanged', callback: (params: PageViewportSizeChangedEvent) => void): this;
+  on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
+  on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
+  on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
+  on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
+  on(event: 'route', callback: (params: PageRouteEvent) => void): this;
+  on(event: 'screencastFrame', callback: (params: PageScreencastFrameEvent) => void): this;
+  on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
+  on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
+  on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
+}
+export interface PageChannel extends PageEventTarget, EventTargetChannel {
+  _type_Page: boolean;
+  addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
+  close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
+  clearConsoleMessages(params?: PageClearConsoleMessagesParams, progress?: Progress): Promise<PageClearConsoleMessagesResult>;
+  consoleMessages(params: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
+  emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
+  exposeBinding(params: PageExposeBindingParams, progress?: Progress): Promise<PageExposeBindingResult>;
+  goBack(params: PageGoBackParams, progress?: Progress): Promise<PageGoBackResult>;
+  goForward(params: PageGoForwardParams, progress?: Progress): Promise<PageGoForwardResult>;
+  requestGC(params?: PageRequestGCParams, progress?: Progress): Promise<PageRequestGCResult>;
+  registerLocatorHandler(params: PageRegisterLocatorHandlerParams, progress?: Progress): Promise<PageRegisterLocatorHandlerResult>;
+  resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, progress?: Progress): Promise<PageResolveLocatorHandlerNoReplyResult>;
+  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, progress?: Progress): Promise<PageUnregisterLocatorHandlerResult>;
+  reload(params: PageReloadParams, progress?: Progress): Promise<PageReloadResult>;
+  expectScreenshot(params: PageExpectScreenshotParams, progress?: Progress): Promise<PageExpectScreenshotResult>;
+  screenshot(params: PageScreenshotParams, progress?: Progress): Promise<PageScreenshotResult>;
+  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, progress?: Progress): Promise<PageSetExtraHTTPHeadersResult>;
+  setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, progress?: Progress): Promise<PageSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<PageSetWebSocketInterceptionPatternsResult>;
+  setViewportSize(params: PageSetViewportSizeParams, progress?: Progress): Promise<PageSetViewportSizeResult>;
+  keyboardDown(params: PageKeyboardDownParams, progress?: Progress): Promise<PageKeyboardDownResult>;
+  keyboardUp(params: PageKeyboardUpParams, progress?: Progress): Promise<PageKeyboardUpResult>;
+  keyboardInsertText(params: PageKeyboardInsertTextParams, progress?: Progress): Promise<PageKeyboardInsertTextResult>;
+  keyboardType(params: PageKeyboardTypeParams, progress?: Progress): Promise<PageKeyboardTypeResult>;
+  keyboardPress(params: PageKeyboardPressParams, progress?: Progress): Promise<PageKeyboardPressResult>;
+  mouseMove(params: PageMouseMoveParams, progress?: Progress): Promise<PageMouseMoveResult>;
+  mouseDown(params: PageMouseDownParams, progress?: Progress): Promise<PageMouseDownResult>;
+  mouseUp(params: PageMouseUpParams, progress?: Progress): Promise<PageMouseUpResult>;
+  mouseClick(params: PageMouseClickParams, progress?: Progress): Promise<PageMouseClickResult>;
+  mouseWheel(params: PageMouseWheelParams, progress?: Progress): Promise<PageMouseWheelResult>;
+  touchscreenTap(params: PageTouchscreenTapParams, progress?: Progress): Promise<PageTouchscreenTapResult>;
+  clearPageErrors(params?: PageClearPageErrorsParams, progress?: Progress): Promise<PageClearPageErrorsResult>;
+  pageErrors(params: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
+  pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
+  requests(params?: PageRequestsParams, progress?: Progress): Promise<PageRequestsResult>;
+  startJSCoverage(params: PageStartJSCoverageParams, progress?: Progress): Promise<PageStartJSCoverageResult>;
+  stopJSCoverage(params?: PageStopJSCoverageParams, progress?: Progress): Promise<PageStopJSCoverageResult>;
+  startCSSCoverage(params: PageStartCSSCoverageParams, progress?: Progress): Promise<PageStartCSSCoverageResult>;
+  stopCSSCoverage(params?: PageStopCSSCoverageParams, progress?: Progress): Promise<PageStopCSSCoverageResult>;
+  bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
+  pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
+  cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
+  hideHighlight(params?: PageHideHighlightParams, progress?: Progress): Promise<PageHideHighlightResult>;
+  screencastShowOverlay(params: PageScreencastShowOverlayParams, progress?: Progress): Promise<PageScreencastShowOverlayResult>;
+  screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, progress?: Progress): Promise<PageScreencastRemoveOverlayResult>;
+  screencastChapter(params: PageScreencastChapterParams, progress?: Progress): Promise<PageScreencastChapterResult>;
+  screencastSetOverlayVisible(params: PageScreencastSetOverlayVisibleParams, progress?: Progress): Promise<PageScreencastSetOverlayVisibleResult>;
+  screencastShowActions(params: PageScreencastShowActionsParams, progress?: Progress): Promise<PageScreencastShowActionsResult>;
+  screencastHideActions(params?: PageScreencastHideActionsParams, progress?: Progress): Promise<PageScreencastHideActionsResult>;
+  screencastStart(params: PageScreencastStartParams, progress?: Progress): Promise<PageScreencastStartResult>;
+  screencastStop(params?: PageScreencastStopParams, progress?: Progress): Promise<PageScreencastStopResult>;
+  updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
+  setDockTile(params: PageSetDockTileParams, progress?: Progress): Promise<PageSetDockTileResult>;
+}
+export type PageBindingCallEvent = {
+  binding: BindingCallChannel,
+};
+export type PageCloseEvent = {};
+export type PageCrashEvent = {};
+export type PageDownloadEvent = {
+  url: string,
+  suggestedFilename: string,
+  artifact: ArtifactChannel,
+};
+export type PageViewportSizeChangedEvent = {
+  viewportSize?: {
+    width: number,
+    height: number,
+  },
+};
+export type PageFileChooserEvent = {
+  element: ElementHandleChannel,
+  isMultiple: boolean,
+};
+export type PageFrameAttachedEvent = {
+  frame: FrameChannel,
+};
+export type PageFrameDetachedEvent = {
+  frame: FrameChannel,
+};
+export type PageLocatorHandlerTriggeredEvent = {
+  uid: number,
+};
+export type PageRouteEvent = {
+  route: RouteChannel,
+};
+export type PageScreencastFrameEvent = {
+  data: Binary,
+};
+export type PageWebSocketRouteEvent = {
+  webSocketRoute: WebSocketRouteChannel,
+};
+export type PageWebSocketEvent = {
+  webSocket: WebSocketChannel,
+};
+export type PageWorkerEvent = {
+  worker: WorkerChannel,
+};
+export type PageAddInitScriptParams = {
+  source: string,
+};
+export type PageAddInitScriptOptions = {
+
+};
+export type PageAddInitScriptResult = {
+  disposable: DisposableChannel,
+};
+export type PageCloseParams = {
+  runBeforeUnload?: boolean,
+  reason?: string,
+};
+export type PageCloseOptions = {
+  runBeforeUnload?: boolean,
+  reason?: string,
+};
+export type PageCloseResult = void;
+export type PageClearConsoleMessagesParams = {};
+export type PageClearConsoleMessagesOptions = {};
+export type PageClearConsoleMessagesResult = void;
+export type PageConsoleMessagesParams = {
+  filter?: ConsoleMessagesFilter,
+};
+export type PageConsoleMessagesOptions = {
+  filter?: ConsoleMessagesFilter,
+};
+export type PageConsoleMessagesResult = {
+  messages: {
+    type: string,
+    text: string,
+    args: JSHandleChannel[],
+    location: {
+      url: string,
+      lineNumber: number,
+      columnNumber: number,
+    },
+    timestamp: number,
+  }[],
+};
+export type PageEmulateMediaParams = {
+  media?: 'screen' | 'print' | 'no-override',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
+  contrast?: 'no-preference' | 'more' | 'no-override',
+};
+export type PageEmulateMediaOptions = {
+  media?: 'screen' | 'print' | 'no-override',
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
+  contrast?: 'no-preference' | 'more' | 'no-override',
+};
+export type PageEmulateMediaResult = void;
+export type PageExposeBindingParams = {
+  name: string,
+};
+export type PageExposeBindingOptions = {
+
+};
+export type PageExposeBindingResult = {
+  disposable: DisposableChannel,
+};
+export type PageGoBackParams = {
+  timeout: number,
+  waitUntil?: LifecycleEvent,
+};
+export type PageGoBackOptions = {
+  waitUntil?: LifecycleEvent,
+};
+export type PageGoBackResult = {
+  response?: ResponseChannel,
+};
+export type PageGoForwardParams = {
+  timeout: number,
+  waitUntil?: LifecycleEvent,
+};
+export type PageGoForwardOptions = {
+  waitUntil?: LifecycleEvent,
+};
+export type PageGoForwardResult = {
+  response?: ResponseChannel,
+};
+export type PageRequestGCParams = {};
+export type PageRequestGCOptions = {};
+export type PageRequestGCResult = void;
+export type PageRegisterLocatorHandlerParams = {
+  selector: string,
+  noWaitAfter?: boolean,
+};
+export type PageRegisterLocatorHandlerOptions = {
+  noWaitAfter?: boolean,
+};
+export type PageRegisterLocatorHandlerResult = {
+  uid: number,
+};
+export type PageResolveLocatorHandlerNoReplyParams = {
+  uid: number,
+  remove?: boolean,
+};
+export type PageResolveLocatorHandlerNoReplyOptions = {
+  remove?: boolean,
+};
+export type PageResolveLocatorHandlerNoReplyResult = void;
+export type PageUnregisterLocatorHandlerParams = {
+  uid: number,
+};
+export type PageUnregisterLocatorHandlerOptions = {
+
+};
+export type PageUnregisterLocatorHandlerResult = void;
+export type PageReloadParams = {
+  timeout: number,
+  waitUntil?: LifecycleEvent,
+};
+export type PageReloadOptions = {
+  waitUntil?: LifecycleEvent,
+};
+export type PageReloadResult = {
+  response?: ResponseChannel,
+};
+export type PageExpectScreenshotParams = {
+  expected?: Binary,
+  timeout: number,
+  isNot: boolean,
+  locator?: {
+    frame: FrameChannel,
+    selector: string,
+  },
+  comparator?: string,
+  maxDiffPixels?: number,
+  maxDiffPixelRatio?: number,
+  threshold?: number,
+  fullPage?: boolean,
+  clip?: Rect,
+  omitBackground?: boolean,
+  caret?: 'hide' | 'initial',
+  animations?: 'disabled' | 'allow',
+  scale?: 'css' | 'device',
+  mask?: {
+    frame: FrameChannel,
+    selector: string,
+  }[],
+  maskColor?: string,
+  style?: string,
+};
+export type PageExpectScreenshotOptions = {
+  expected?: Binary,
+  locator?: {
+    frame: FrameChannel,
+    selector: string,
+  },
+  comparator?: string,
+  maxDiffPixels?: number,
+  maxDiffPixelRatio?: number,
+  threshold?: number,
+  fullPage?: boolean,
+  clip?: Rect,
+  omitBackground?: boolean,
+  caret?: 'hide' | 'initial',
+  animations?: 'disabled' | 'allow',
+  scale?: 'css' | 'device',
+  mask?: {
+    frame: FrameChannel,
+    selector: string,
+  }[],
+  maskColor?: string,
+  style?: string,
+};
+export type PageExpectScreenshotResult = {
+  diff?: Binary,
+  errorMessage?: string,
+  actual?: Binary,
+  previous?: Binary,
+  timedOut?: boolean,
+  log?: string[],
+};
+export type PageScreenshotParams = {
+  timeout: number,
+  type?: 'png' | 'jpeg',
+  quality?: number,
+  fullPage?: boolean,
+  clip?: Rect,
+  omitBackground?: boolean,
+  caret?: 'hide' | 'initial',
+  animations?: 'disabled' | 'allow',
+  scale?: 'css' | 'device',
+  mask?: {
+    frame: FrameChannel,
+    selector: string,
+  }[],
+  maskColor?: string,
+  style?: string,
+};
+export type PageScreenshotOptions = {
+  type?: 'png' | 'jpeg',
+  quality?: number,
+  fullPage?: boolean,
+  clip?: Rect,
+  omitBackground?: boolean,
+  caret?: 'hide' | 'initial',
+  animations?: 'disabled' | 'allow',
+  scale?: 'css' | 'device',
+  mask?: {
+    frame: FrameChannel,
+    selector: string,
+  }[],
+  maskColor?: string,
+  style?: string,
+};
+export type PageScreenshotResult = {
+  binary: Binary,
+};
+export type PageSetExtraHTTPHeadersParams = {
+  headers: NameValue[],
+};
+export type PageSetExtraHTTPHeadersOptions = {
+
+};
+export type PageSetExtraHTTPHeadersResult = void;
+export type PageSetNetworkInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+    urlPattern?: URLPattern,
+  }[],
+};
+export type PageSetNetworkInterceptionPatternsOptions = {
+
+};
+export type PageSetNetworkInterceptionPatternsResult = void;
+export type PageSetWebSocketInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+    urlPattern?: URLPattern,
+  }[],
+};
+export type PageSetWebSocketInterceptionPatternsOptions = {
+
+};
+export type PageSetWebSocketInterceptionPatternsResult = void;
+export type PageSetViewportSizeParams = {
+  viewportSize: {
+    width: number,
+    height: number,
+  },
+};
+export type PageSetViewportSizeOptions = {
+
+};
+export type PageSetViewportSizeResult = void;
+export type PageKeyboardDownParams = {
+  key: string,
+};
+export type PageKeyboardDownOptions = {
+
+};
+export type PageKeyboardDownResult = void;
+export type PageKeyboardUpParams = {
+  key: string,
+};
+export type PageKeyboardUpOptions = {
+
+};
+export type PageKeyboardUpResult = void;
+export type PageKeyboardInsertTextParams = {
+  text: string,
+};
+export type PageKeyboardInsertTextOptions = {
+
+};
+export type PageKeyboardInsertTextResult = void;
+export type PageKeyboardTypeParams = {
+  text: string,
+  delay?: number,
+};
+export type PageKeyboardTypeOptions = {
+  delay?: number,
+};
+export type PageKeyboardTypeResult = void;
+export type PageKeyboardPressParams = {
+  key: string,
+  delay?: number,
+};
+export type PageKeyboardPressOptions = {
+  delay?: number,
+};
+export type PageKeyboardPressResult = void;
+export type PageMouseMoveParams = {
+  x: number,
+  y: number,
+  steps?: number,
+};
+export type PageMouseMoveOptions = {
+  steps?: number,
+};
+export type PageMouseMoveResult = void;
+export type PageMouseDownParams = {
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
+export type PageMouseDownOptions = {
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
+export type PageMouseDownResult = void;
+export type PageMouseUpParams = {
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
+export type PageMouseUpOptions = {
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
+export type PageMouseUpResult = void;
+export type PageMouseClickParams = {
+  x: number,
+  y: number,
+  delay?: number,
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
+export type PageMouseClickOptions = {
+  delay?: number,
+  button?: 'left' | 'right' | 'middle',
+  clickCount?: number,
+};
+export type PageMouseClickResult = void;
+export type PageMouseWheelParams = {
+  deltaX: number,
+  deltaY: number,
+};
+export type PageMouseWheelOptions = {
+
+};
+export type PageMouseWheelResult = void;
+export type PageTouchscreenTapParams = {
+  x: number,
+  y: number,
+};
+export type PageTouchscreenTapOptions = {
+
+};
+export type PageTouchscreenTapResult = void;
+export type PageClearPageErrorsParams = {};
+export type PageClearPageErrorsOptions = {};
+export type PageClearPageErrorsResult = void;
+export type PagePageErrorsParams = {
+  filter?: ConsoleMessagesFilter,
+};
+export type PagePageErrorsOptions = {
+  filter?: ConsoleMessagesFilter,
+};
+export type PagePageErrorsResult = {
+  errors: SerializedError[],
+};
+export type PagePdfParams = {
+  scale?: number,
+  displayHeaderFooter?: boolean,
+  headerTemplate?: string,
+  footerTemplate?: string,
+  printBackground?: boolean,
+  landscape?: boolean,
+  pageRanges?: string,
+  format?: string,
+  width?: string,
+  height?: string,
+  preferCSSPageSize?: boolean,
+  margin?: {
+    top?: string,
+    bottom?: string,
+    left?: string,
+    right?: string,
+  },
+  tagged?: boolean,
+  outline?: boolean,
+};
+export type PagePdfOptions = {
+  scale?: number,
+  displayHeaderFooter?: boolean,
+  headerTemplate?: string,
+  footerTemplate?: string,
+  printBackground?: boolean,
+  landscape?: boolean,
+  pageRanges?: string,
+  format?: string,
+  width?: string,
+  height?: string,
+  preferCSSPageSize?: boolean,
+  margin?: {
+    top?: string,
+    bottom?: string,
+    left?: string,
+    right?: string,
+  },
+  tagged?: boolean,
+  outline?: boolean,
+};
+export type PagePdfResult = {
+  pdf: Binary,
+};
+export type PageRequestsParams = {};
+export type PageRequestsOptions = {};
+export type PageRequestsResult = {
+  requests: RequestChannel[],
+};
+export type PageStartJSCoverageParams = {
+  resetOnNavigation?: boolean,
+  reportAnonymousScripts?: boolean,
+};
+export type PageStartJSCoverageOptions = {
+  resetOnNavigation?: boolean,
+  reportAnonymousScripts?: boolean,
+};
+export type PageStartJSCoverageResult = void;
+export type PageStopJSCoverageParams = {};
+export type PageStopJSCoverageOptions = {};
+export type PageStopJSCoverageResult = {
+  entries: {
+    url: string,
+    scriptId: string,
+    source?: string,
+    functions: {
+      functionName: string,
+      isBlockCoverage: boolean,
+      ranges: {
+        startOffset: number,
+        endOffset: number,
+        count: number,
+      }[],
+    }[],
+  }[],
+};
+export type PageStartCSSCoverageParams = {
+  resetOnNavigation?: boolean,
+};
+export type PageStartCSSCoverageOptions = {
+  resetOnNavigation?: boolean,
+};
+export type PageStartCSSCoverageResult = void;
+export type PageStopCSSCoverageParams = {};
+export type PageStopCSSCoverageOptions = {};
+export type PageStopCSSCoverageResult = {
+  entries: {
+    url: string,
+    text?: string,
+    ranges: {
+      start: number,
+      end: number,
+    }[],
+  }[],
+};
+export type PageBringToFrontParams = {};
+export type PageBringToFrontOptions = {};
+export type PageBringToFrontResult = void;
+export type PagePickLocatorParams = {};
+export type PagePickLocatorOptions = {};
+export type PagePickLocatorResult = {
+  selector: string,
+};
+export type PageCancelPickLocatorParams = {};
+export type PageCancelPickLocatorOptions = {};
+export type PageCancelPickLocatorResult = void;
+export type PageHideHighlightParams = {};
+export type PageHideHighlightOptions = {};
+export type PageHideHighlightResult = void;
+export type PageScreencastShowOverlayParams = {
+  html: string,
+  duration?: number,
+};
+export type PageScreencastShowOverlayOptions = {
+  duration?: number,
+};
+export type PageScreencastShowOverlayResult = {
+  id: string,
+};
+export type PageScreencastRemoveOverlayParams = {
+  id: string,
+};
+export type PageScreencastRemoveOverlayOptions = {
+
+};
+export type PageScreencastRemoveOverlayResult = void;
+export type PageScreencastChapterParams = {
+  title: string,
+  description?: string,
+  duration?: number,
+};
+export type PageScreencastChapterOptions = {
+  description?: string,
+  duration?: number,
+};
+export type PageScreencastChapterResult = void;
+export type PageScreencastSetOverlayVisibleParams = {
+  visible: boolean,
+};
+export type PageScreencastSetOverlayVisibleOptions = {
+
+};
+export type PageScreencastSetOverlayVisibleResult = void;
+export type PageScreencastShowActionsParams = {
+  duration?: number,
+  position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+  fontSize?: number,
+};
+export type PageScreencastShowActionsOptions = {
+  duration?: number,
+  position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
+  fontSize?: number,
+};
+export type PageScreencastShowActionsResult = void;
+export type PageScreencastHideActionsParams = {};
+export type PageScreencastHideActionsOptions = {};
+export type PageScreencastHideActionsResult = void;
+export type PageScreencastStartParams = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  quality?: number,
+  sendFrames?: boolean,
+  record?: boolean,
+};
+export type PageScreencastStartOptions = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  quality?: number,
+  sendFrames?: boolean,
+  record?: boolean,
+};
+export type PageScreencastStartResult = {
+  artifact?: ArtifactChannel,
+};
+export type PageScreencastStopParams = {};
+export type PageScreencastStopOptions = {};
+export type PageScreencastStopResult = void;
+export type PageUpdateSubscriptionParams = {
+  event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
+  enabled: boolean,
+};
+export type PageUpdateSubscriptionOptions = {
+
+};
+export type PageUpdateSubscriptionResult = void;
+export type PageSetDockTileParams = {
+  image: Binary,
+};
+export type PageSetDockTileOptions = {
+
+};
+export type PageSetDockTileResult = void;
+
+export interface PageEvents {
+  'bindingCall': PageBindingCallEvent;
+  'close': PageCloseEvent;
+  'crash': PageCrashEvent;
+  'download': PageDownloadEvent;
+  'viewportSizeChanged': PageViewportSizeChangedEvent;
+  'fileChooser': PageFileChooserEvent;
+  'frameAttached': PageFrameAttachedEvent;
+  'frameDetached': PageFrameDetachedEvent;
+  'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
+  'route': PageRouteEvent;
+  'screencastFrame': PageScreencastFrameEvent;
+  'webSocketRoute': PageWebSocketRouteEvent;
+  'webSocket': PageWebSocketEvent;
+  'worker': PageWorkerEvent;
+}
+
+// ----------- Root -----------
+export type RootInitializer = {};
+export interface RootEventTarget {
+}
+export interface RootChannel extends RootEventTarget, Channel {
+  _type_Root: boolean;
+  initialize(params: RootInitializeParams, progress?: Progress): Promise<RootInitializeResult>;
+}
+export type RootInitializeParams = {
+  sdkLanguage: SDKLanguage,
+};
+export type RootInitializeOptions = {
+
+};
+export type RootInitializeResult = {
+  playwright: PlaywrightChannel,
+};
+
+export interface RootEvents {
+}
+
+// ----------- Playwright -----------
+export type PlaywrightInitializer = {
+  chromium: BrowserTypeChannel,
+  firefox: BrowserTypeChannel,
+  webkit: BrowserTypeChannel,
+  android: AndroidChannel,
+  utils?: LocalUtilsChannel,
+  preLaunchedBrowser?: BrowserChannel,
+  preConnectedAndroidDevice?: AndroidDeviceChannel,
+  socksSupport?: SocksSupportChannel,
+};
+export interface PlaywrightEventTarget {
+}
+export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
+  _type_Playwright: boolean;
+  newRequest(params: PlaywrightNewRequestParams, progress?: Progress): Promise<PlaywrightNewRequestResult>;
+}
+export type PlaywrightNewRequestParams = {
+  baseURL?: string,
+  userAgent?: string,
+  ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  failOnStatusCode?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
+  maxRedirects?: number,
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  storageState?: {
+    cookies?: NetworkCookie[],
+    origins?: SetOriginStorage[],
+  },
+  tracesDir?: string,
+};
+export type PlaywrightNewRequestOptions = {
+  baseURL?: string,
+  userAgent?: string,
+  ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  failOnStatusCode?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
+  maxRedirects?: number,
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  storageState?: {
+    cookies?: NetworkCookie[],
+    origins?: SetOriginStorage[],
+  },
+  tracesDir?: string,
+};
+export type PlaywrightNewRequestResult = {
+  request: APIRequestContextChannel,
+};
+
+export interface PlaywrightEvents {
+}
+
+// ----------- DebugController -----------
+export type DebugControllerInitializer = {};
+export interface DebugControllerEventTarget {
+  on(event: 'inspectRequested', callback: (params: DebugControllerInspectRequestedEvent) => void): this;
+  on(event: 'setModeRequested', callback: (params: DebugControllerSetModeRequestedEvent) => void): this;
+  on(event: 'stateChanged', callback: (params: DebugControllerStateChangedEvent) => void): this;
+  on(event: 'sourceChanged', callback: (params: DebugControllerSourceChangedEvent) => void): this;
+  on(event: 'paused', callback: (params: DebugControllerPausedEvent) => void): this;
+}
+export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
+  _type_DebugController: boolean;
+  initialize(params: DebugControllerInitializeParams, progress?: Progress): Promise<DebugControllerInitializeResult>;
+  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, progress?: Progress): Promise<DebugControllerSetReportStateChangedResult>;
+  setRecorderMode(params: DebugControllerSetRecorderModeParams, progress?: Progress): Promise<DebugControllerSetRecorderModeResult>;
+  highlight(params: DebugControllerHighlightParams, progress?: Progress): Promise<DebugControllerHighlightResult>;
+  hideHighlight(params?: DebugControllerHideHighlightParams, progress?: Progress): Promise<DebugControllerHideHighlightResult>;
+  resume(params?: DebugControllerResumeParams, progress?: Progress): Promise<DebugControllerResumeResult>;
+  kill(params?: DebugControllerKillParams, progress?: Progress): Promise<DebugControllerKillResult>;
+}
+export type DebugControllerInspectRequestedEvent = {
+  selector: string,
+  locator: string,
+  ariaSnapshot: string,
+};
+export type DebugControllerSetModeRequestedEvent = {
+  mode: string,
+};
+export type DebugControllerStateChangedEvent = {
+  pageCount: number,
+};
+export type DebugControllerSourceChangedEvent = {
+  text: string,
+  header?: string,
+  footer?: string,
+  actions?: string[],
+};
+export type DebugControllerPausedEvent = {
+  paused: boolean,
+};
+export type DebugControllerInitializeParams = {
+  codegenId: string,
+  sdkLanguage: SDKLanguage,
+};
+export type DebugControllerInitializeOptions = {
+
+};
+export type DebugControllerInitializeResult = void;
+export type DebugControllerSetReportStateChangedParams = {
+  enabled: boolean,
+};
+export type DebugControllerSetReportStateChangedOptions = {
+
+};
+export type DebugControllerSetReportStateChangedResult = void;
+export type DebugControllerSetRecorderModeParams = {
+  mode: 'inspecting' | 'recording' | 'none',
+  testIdAttributeName?: string,
+  generateAutoExpect?: boolean,
+};
+export type DebugControllerSetRecorderModeOptions = {
+  testIdAttributeName?: string,
+  generateAutoExpect?: boolean,
+};
+export type DebugControllerSetRecorderModeResult = void;
+export type DebugControllerHighlightParams = {
+  selector?: string,
+  ariaTemplate?: string,
+};
+export type DebugControllerHighlightOptions = {
+  selector?: string,
+  ariaTemplate?: string,
+};
+export type DebugControllerHighlightResult = void;
+export type DebugControllerHideHighlightParams = {};
+export type DebugControllerHideHighlightOptions = {};
+export type DebugControllerHideHighlightResult = void;
+export type DebugControllerResumeParams = {};
+export type DebugControllerResumeOptions = {};
+export type DebugControllerResumeResult = void;
+export type DebugControllerKillParams = {};
+export type DebugControllerKillOptions = {};
+export type DebugControllerKillResult = void;
+
+export interface DebugControllerEvents {
+  'inspectRequested': DebugControllerInspectRequestedEvent;
+  'setModeRequested': DebugControllerSetModeRequestedEvent;
+  'stateChanged': DebugControllerStateChangedEvent;
+  'sourceChanged': DebugControllerSourceChangedEvent;
+  'paused': DebugControllerPausedEvent;
+}
+
+// ----------- SocksSupport -----------
+export type SocksSupportInitializer = {};
+export interface SocksSupportEventTarget {
+  on(event: 'socksRequested', callback: (params: SocksSupportSocksRequestedEvent) => void): this;
+  on(event: 'socksData', callback: (params: SocksSupportSocksDataEvent) => void): this;
+  on(event: 'socksClosed', callback: (params: SocksSupportSocksClosedEvent) => void): this;
+}
+export interface SocksSupportChannel extends SocksSupportEventTarget, Channel {
+  _type_SocksSupport: boolean;
+  socksConnected(params: SocksSupportSocksConnectedParams, progress?: Progress): Promise<SocksSupportSocksConnectedResult>;
+  socksFailed(params: SocksSupportSocksFailedParams, progress?: Progress): Promise<SocksSupportSocksFailedResult>;
+  socksData(params: SocksSupportSocksDataParams, progress?: Progress): Promise<SocksSupportSocksDataResult>;
+  socksError(params: SocksSupportSocksErrorParams, progress?: Progress): Promise<SocksSupportSocksErrorResult>;
+  socksEnd(params: SocksSupportSocksEndParams, progress?: Progress): Promise<SocksSupportSocksEndResult>;
+}
+export type SocksSupportSocksRequestedEvent = {
+  uid: string,
+  host: string,
+  port: number,
+};
+export type SocksSupportSocksDataEvent = {
+  uid: string,
+  data: Binary,
+};
+export type SocksSupportSocksClosedEvent = {
+  uid: string,
+};
+export type SocksSupportSocksConnectedParams = {
+  uid: string,
+  host: string,
+  port: number,
+};
+export type SocksSupportSocksConnectedOptions = {
+
+};
+export type SocksSupportSocksConnectedResult = void;
+export type SocksSupportSocksFailedParams = {
+  uid: string,
+  errorCode: string,
+};
+export type SocksSupportSocksFailedOptions = {
+
+};
+export type SocksSupportSocksFailedResult = void;
+export type SocksSupportSocksDataParams = {
+  uid: string,
+  data: Binary,
+};
+export type SocksSupportSocksDataOptions = {
+
+};
+export type SocksSupportSocksDataResult = void;
+export type SocksSupportSocksErrorParams = {
+  uid: string,
+  error: string,
+};
+export type SocksSupportSocksErrorOptions = {
+
+};
+export type SocksSupportSocksErrorResult = void;
+export type SocksSupportSocksEndParams = {
+  uid: string,
+};
+export type SocksSupportSocksEndOptions = {
+
+};
+export type SocksSupportSocksEndResult = void;
+
+export interface SocksSupportEvents {
+  'socksRequested': SocksSupportSocksRequestedEvent;
+  'socksData': SocksSupportSocksDataEvent;
+  'socksClosed': SocksSupportSocksClosedEvent;
+}
+
+// ----------- JsonPipe -----------
+export type JsonPipeInitializer = {};
+export interface JsonPipeEventTarget {
+  on(event: 'message', callback: (params: JsonPipeMessageEvent) => void): this;
+  on(event: 'closed', callback: (params: JsonPipeClosedEvent) => void): this;
+}
+export interface JsonPipeChannel extends JsonPipeEventTarget, Channel {
+  _type_JsonPipe: boolean;
+  send(params: JsonPipeSendParams, progress?: Progress): Promise<JsonPipeSendResult>;
+  close(params?: JsonPipeCloseParams, progress?: Progress): Promise<JsonPipeCloseResult>;
+}
+export type JsonPipeMessageEvent = {
+  message: any,
+};
+export type JsonPipeClosedEvent = {
+  reason?: string,
+};
+export type JsonPipeSendParams = {
+  message: any,
+};
+export type JsonPipeSendOptions = {
+
+};
+export type JsonPipeSendResult = void;
+export type JsonPipeCloseParams = {};
+export type JsonPipeCloseOptions = {};
+export type JsonPipeCloseResult = void;
+
+export interface JsonPipeEvents {
+  'message': JsonPipeMessageEvent;
+  'closed': JsonPipeClosedEvent;
+}
+
+export type ExpectedTextValue = {
+  string?: string,
+  regexSource?: string,
+  regexFlags?: string,
+  matchSubstring?: boolean,
+  ignoreCase?: boolean,
+  normalizeWhiteSpace?: boolean,
+};
+
+export type SelectorEngine = {
+  name: string,
+  source: string,
+  contentScript?: boolean,
+};
+
+export type FormField = {
+  name: string,
+  value?: string,
+  file?: {
+    name: string,
+    mimeType?: string,
+    buffer: Binary,
+  },
+};
+
+export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+export type ConsoleMessagesFilter = 'all' | 'since-navigation';
+export type RecorderSource = {
+  isRecorded: boolean,
+  id: string,
+  label: string,
+  text: string,
+  language: string,
+  highlight: {
+    line: number,
+    type: string,
+  }[],
+  revealLine?: number,
+  group?: string,
+};
+
+export type IndexedDBDatabase = {
+  name: string,
+  version: number,
+  stores: {
+    name: string,
+    autoIncrement: boolean,
+    keyPath?: string,
+    keyPathArray?: string[],
+    records: {
+      key?: any,
+      keyEncoded?: any,
+      value?: any,
+      valueEncoded?: any,
+    }[],
+    indexes: {
+      name: string,
+      keyPath?: string,
+      keyPathArray?: string[],
+      multiEntry: boolean,
+      unique: boolean,
+    }[],
+  }[],
+};
+
+export type SetOriginStorage = {
+  origin: string,
+  localStorage: NameValue[],
+  indexedDB?: IndexedDBDatabase[],
+};
+
+export type OriginStorage = {
+  origin: string,
+  localStorage: NameValue[],
+  indexedDB?: IndexedDBDatabase[],
+};
+
+export type RecordHarOptions = {
+  content?: 'embed' | 'attach' | 'omit',
+  mode?: 'full' | 'minimal',
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+  harPath?: string,
+  resourcesDir?: string,
+};
+
+// ----------- CDPSession -----------
+export type CDPSessionInitializer = {};
+export interface CDPSessionEventTarget {
+  on(event: 'event', callback: (params: CDPSessionEventEvent) => void): this;
+  on(event: 'close', callback: (params: CDPSessionCloseEvent) => void): this;
+}
+export interface CDPSessionChannel extends CDPSessionEventTarget, Channel {
+  _type_CDPSession: boolean;
+  send(params: CDPSessionSendParams, progress?: Progress): Promise<CDPSessionSendResult>;
+  detach(params?: CDPSessionDetachParams, progress?: Progress): Promise<CDPSessionDetachResult>;
+}
+export type CDPSessionEventEvent = {
+  method: string,
+  params?: any,
+};
+export type CDPSessionCloseEvent = {};
+export type CDPSessionSendParams = {
+  method: string,
+  params?: any,
+};
+export type CDPSessionSendOptions = {
+  params?: any,
+};
+export type CDPSessionSendResult = {
+  result: any,
+};
+export type CDPSessionDetachParams = {};
+export type CDPSessionDetachOptions = {};
+export type CDPSessionDetachResult = void;
+
+export interface CDPSessionEvents {
+  'event': CDPSessionEventEvent;
+  'close': CDPSessionCloseEvent;
+}
+
 // ----------- BindingCall -----------
 export type BindingCallInitializer = {
   frame: FrameChannel,
@@ -4512,6 +5029,86 @@ export type DialogDismissResult = void;
 export interface DialogEvents {
 }
 
+export type SerializedValue = {
+  n?: number,
+  b?: boolean,
+  s?: string,
+  v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
+  d?: string,
+  u?: string,
+  bi?: string,
+  ta?: {
+    b: Binary,
+    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
+  },
+  e?: {
+    m: string,
+    n: string,
+    s: string,
+  },
+  r?: {
+    p: string,
+    f: string,
+  },
+  a?: SerializedValue[],
+  o?: {
+    k: string,
+    v: SerializedValue,
+  }[],
+  h?: number,
+  id?: number,
+  ref?: number,
+};
+
+export type SerializedArgument = {
+  value: SerializedValue,
+  handles: Channel[],
+};
+
+export type SerializedError = {
+  error?: {
+    message: string,
+    name: string,
+    stack?: string,
+  },
+  value?: SerializedValue,
+};
+
+export type StackFrame = {
+  file: string,
+  line: number,
+  column: number,
+  function?: string,
+};
+
+export type Point = {
+  x: number,
+  y: number,
+};
+
+export type Rect = {
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+};
+
+export type URLPattern = {
+  hash: string,
+  hostname: string,
+  password: string,
+  pathname: string,
+  port: string,
+  protocol: string,
+  search: string,
+  username: string,
+};
+
+export type NameValue = {
+  name: string,
+  value: string,
+};
+
 // ----------- Tracing -----------
 export type TracingInitializer = {};
 export interface TracingEventTarget {
@@ -4608,670 +5205,73 @@ export type TracingHarExportResult = {
 export interface TracingEvents {
 }
 
-// ----------- Artifact -----------
-export type ArtifactInitializer = {
-  absolutePath: string,
+// ----------- Worker -----------
+export type WorkerInitializer = {
+  url: string,
 };
-export interface ArtifactEventTarget {
+export interface WorkerEventTarget {
+  on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
+  on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
 }
-export interface ArtifactChannel extends ArtifactEventTarget, Channel {
-  _type_Artifact: boolean;
-  pathAfterFinished(params?: ArtifactPathAfterFinishedParams, progress?: Progress): Promise<ArtifactPathAfterFinishedResult>;
-  saveAs(params: ArtifactSaveAsParams, progress?: Progress): Promise<ArtifactSaveAsResult>;
-  saveAsStream(params?: ArtifactSaveAsStreamParams, progress?: Progress): Promise<ArtifactSaveAsStreamResult>;
-  failure(params?: ArtifactFailureParams, progress?: Progress): Promise<ArtifactFailureResult>;
-  stream(params?: ArtifactStreamParams, progress?: Progress): Promise<ArtifactStreamResult>;
-  cancel(params?: ArtifactCancelParams, progress?: Progress): Promise<ArtifactCancelResult>;
-  delete(params?: ArtifactDeleteParams, progress?: Progress): Promise<ArtifactDeleteResult>;
+export interface WorkerChannel extends WorkerEventTarget, EventTargetChannel {
+  _type_Worker: boolean;
+  disconnect(params: WorkerDisconnectParams, progress?: Progress): Promise<WorkerDisconnectResult>;
+  evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
+  updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
 }
-export type ArtifactPathAfterFinishedParams = {};
-export type ArtifactPathAfterFinishedOptions = {};
-export type ArtifactPathAfterFinishedResult = {
-  value: string,
-};
-export type ArtifactSaveAsParams = {
-  path: string,
-};
-export type ArtifactSaveAsOptions = {
-
-};
-export type ArtifactSaveAsResult = void;
-export type ArtifactSaveAsStreamParams = {};
-export type ArtifactSaveAsStreamOptions = {};
-export type ArtifactSaveAsStreamResult = {
-  stream: StreamChannel,
-};
-export type ArtifactFailureParams = {};
-export type ArtifactFailureOptions = {};
-export type ArtifactFailureResult = {
-  error?: string,
-};
-export type ArtifactStreamParams = {};
-export type ArtifactStreamOptions = {};
-export type ArtifactStreamResult = {
-  stream: StreamChannel,
-};
-export type ArtifactCancelParams = {};
-export type ArtifactCancelOptions = {};
-export type ArtifactCancelResult = void;
-export type ArtifactDeleteParams = {};
-export type ArtifactDeleteOptions = {};
-export type ArtifactDeleteResult = void;
-
-export interface ArtifactEvents {
-}
-
-// ----------- Stream -----------
-export type StreamInitializer = {};
-export interface StreamEventTarget {
-}
-export interface StreamChannel extends StreamEventTarget, Channel {
-  _type_Stream: boolean;
-  read(params: StreamReadParams, progress?: Progress): Promise<StreamReadResult>;
-  close(params?: StreamCloseParams, progress?: Progress): Promise<StreamCloseResult>;
-}
-export type StreamReadParams = {
-  size?: number,
-};
-export type StreamReadOptions = {
-  size?: number,
-};
-export type StreamReadResult = {
-  binary: Binary,
-};
-export type StreamCloseParams = {};
-export type StreamCloseOptions = {};
-export type StreamCloseResult = void;
-
-export interface StreamEvents {
-}
-
-// ----------- WritableStream -----------
-export type WritableStreamInitializer = {};
-export interface WritableStreamEventTarget {
-}
-export interface WritableStreamChannel extends WritableStreamEventTarget, Channel {
-  _type_WritableStream: boolean;
-  write(params: WritableStreamWriteParams, progress?: Progress): Promise<WritableStreamWriteResult>;
-  close(params?: WritableStreamCloseParams, progress?: Progress): Promise<WritableStreamCloseResult>;
-}
-export type WritableStreamWriteParams = {
-  binary: Binary,
-};
-export type WritableStreamWriteOptions = {
-
-};
-export type WritableStreamWriteResult = void;
-export type WritableStreamCloseParams = {};
-export type WritableStreamCloseOptions = {};
-export type WritableStreamCloseResult = void;
-
-export interface WritableStreamEvents {
-}
-
-// ----------- CDPSession -----------
-export type CDPSessionInitializer = {};
-export interface CDPSessionEventTarget {
-  on(event: 'event', callback: (params: CDPSessionEventEvent) => void): this;
-  on(event: 'close', callback: (params: CDPSessionCloseEvent) => void): this;
-}
-export interface CDPSessionChannel extends CDPSessionEventTarget, Channel {
-  _type_CDPSession: boolean;
-  send(params: CDPSessionSendParams, progress?: Progress): Promise<CDPSessionSendResult>;
-  detach(params?: CDPSessionDetachParams, progress?: Progress): Promise<CDPSessionDetachResult>;
-}
-export type CDPSessionEventEvent = {
-  method: string,
-  params?: any,
-};
-export type CDPSessionCloseEvent = {};
-export type CDPSessionSendParams = {
-  method: string,
-  params?: any,
-};
-export type CDPSessionSendOptions = {
-  params?: any,
-};
-export type CDPSessionSendResult = {
-  result: any,
-};
-export type CDPSessionDetachParams = {};
-export type CDPSessionDetachOptions = {};
-export type CDPSessionDetachResult = void;
-
-export interface CDPSessionEvents {
-  'event': CDPSessionEventEvent;
-  'close': CDPSessionCloseEvent;
-}
-
-// ----------- Android -----------
-export type AndroidInitializer = {};
-export interface AndroidEventTarget {
-}
-export interface AndroidChannel extends AndroidEventTarget, Channel {
-  _type_Android: boolean;
-  devices(params: AndroidDevicesParams, progress?: Progress): Promise<AndroidDevicesResult>;
-}
-export type AndroidDevicesParams = {
-  host?: string,
-  port?: number,
-  omitDriverInstall?: boolean,
-};
-export type AndroidDevicesOptions = {
-  host?: string,
-  port?: number,
-  omitDriverInstall?: boolean,
-};
-export type AndroidDevicesResult = {
-  devices: AndroidDeviceChannel[],
-};
-
-export interface AndroidEvents {
-}
-
-// ----------- AndroidSocket -----------
-export type AndroidSocketInitializer = {};
-export interface AndroidSocketEventTarget {
-  on(event: 'data', callback: (params: AndroidSocketDataEvent) => void): this;
-  on(event: 'close', callback: (params: AndroidSocketCloseEvent) => void): this;
-}
-export interface AndroidSocketChannel extends AndroidSocketEventTarget, Channel {
-  _type_AndroidSocket: boolean;
-  write(params: AndroidSocketWriteParams, progress?: Progress): Promise<AndroidSocketWriteResult>;
-  close(params?: AndroidSocketCloseParams, progress?: Progress): Promise<AndroidSocketCloseResult>;
-}
-export type AndroidSocketDataEvent = {
-  data: Binary,
-};
-export type AndroidSocketCloseEvent = {};
-export type AndroidSocketWriteParams = {
-  data: Binary,
-};
-export type AndroidSocketWriteOptions = {
-
-};
-export type AndroidSocketWriteResult = void;
-export type AndroidSocketCloseParams = {};
-export type AndroidSocketCloseOptions = {};
-export type AndroidSocketCloseResult = void;
-
-export interface AndroidSocketEvents {
-  'data': AndroidSocketDataEvent;
-  'close': AndroidSocketCloseEvent;
-}
-
-// ----------- AndroidDevice -----------
-export type AndroidDeviceInitializer = {
-  model: string,
-  serial: string,
-};
-export interface AndroidDeviceEventTarget {
-  on(event: 'close', callback: (params: AndroidDeviceCloseEvent) => void): this;
-  on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
-  on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
-}
-export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, EventTargetChannel {
-  _type_AndroidDevice: boolean;
-  wait(params: AndroidDeviceWaitParams, progress?: Progress): Promise<AndroidDeviceWaitResult>;
-  fill(params: AndroidDeviceFillParams, progress?: Progress): Promise<AndroidDeviceFillResult>;
-  tap(params: AndroidDeviceTapParams, progress?: Progress): Promise<AndroidDeviceTapResult>;
-  drag(params: AndroidDeviceDragParams, progress?: Progress): Promise<AndroidDeviceDragResult>;
-  fling(params: AndroidDeviceFlingParams, progress?: Progress): Promise<AndroidDeviceFlingResult>;
-  longTap(params: AndroidDeviceLongTapParams, progress?: Progress): Promise<AndroidDeviceLongTapResult>;
-  pinchClose(params: AndroidDevicePinchCloseParams, progress?: Progress): Promise<AndroidDevicePinchCloseResult>;
-  pinchOpen(params: AndroidDevicePinchOpenParams, progress?: Progress): Promise<AndroidDevicePinchOpenResult>;
-  scroll(params: AndroidDeviceScrollParams, progress?: Progress): Promise<AndroidDeviceScrollResult>;
-  swipe(params: AndroidDeviceSwipeParams, progress?: Progress): Promise<AndroidDeviceSwipeResult>;
-  info(params: AndroidDeviceInfoParams, progress?: Progress): Promise<AndroidDeviceInfoResult>;
-  screenshot(params?: AndroidDeviceScreenshotParams, progress?: Progress): Promise<AndroidDeviceScreenshotResult>;
-  inputType(params: AndroidDeviceInputTypeParams, progress?: Progress): Promise<AndroidDeviceInputTypeResult>;
-  inputPress(params: AndroidDeviceInputPressParams, progress?: Progress): Promise<AndroidDeviceInputPressResult>;
-  inputTap(params: AndroidDeviceInputTapParams, progress?: Progress): Promise<AndroidDeviceInputTapResult>;
-  inputSwipe(params: AndroidDeviceInputSwipeParams, progress?: Progress): Promise<AndroidDeviceInputSwipeResult>;
-  inputDrag(params: AndroidDeviceInputDragParams, progress?: Progress): Promise<AndroidDeviceInputDragResult>;
-  launchBrowser(params: AndroidDeviceLaunchBrowserParams, progress?: Progress): Promise<AndroidDeviceLaunchBrowserResult>;
-  open(params: AndroidDeviceOpenParams, progress?: Progress): Promise<AndroidDeviceOpenResult>;
-  shell(params: AndroidDeviceShellParams, progress?: Progress): Promise<AndroidDeviceShellResult>;
-  installApk(params: AndroidDeviceInstallApkParams, progress?: Progress): Promise<AndroidDeviceInstallApkResult>;
-  push(params: AndroidDevicePushParams, progress?: Progress): Promise<AndroidDevicePushResult>;
-  connectToWebView(params: AndroidDeviceConnectToWebViewParams, progress?: Progress): Promise<AndroidDeviceConnectToWebViewResult>;
-  close(params?: AndroidDeviceCloseParams, progress?: Progress): Promise<AndroidDeviceCloseResult>;
-}
-export type AndroidDeviceCloseEvent = {};
-export type AndroidDeviceWebViewAddedEvent = {
-  webView: AndroidWebView,
-};
-export type AndroidDeviceWebViewRemovedEvent = {
-  socketName: string,
-};
-export type AndroidDeviceWaitParams = {
-  androidSelector: AndroidSelector,
-  state?: 'gone',
-  timeout: number,
-};
-export type AndroidDeviceWaitOptions = {
-  state?: 'gone',
-};
-export type AndroidDeviceWaitResult = void;
-export type AndroidDeviceFillParams = {
-  androidSelector: AndroidSelector,
+export type WorkerConsoleEvent = {
+  type: string,
   text: string,
-  timeout: number,
-};
-export type AndroidDeviceFillOptions = {
-
-};
-export type AndroidDeviceFillResult = void;
-export type AndroidDeviceTapParams = {
-  androidSelector: AndroidSelector,
-  duration?: number,
-  timeout: number,
-};
-export type AndroidDeviceTapOptions = {
-  duration?: number,
-};
-export type AndroidDeviceTapResult = void;
-export type AndroidDeviceDragParams = {
-  androidSelector: AndroidSelector,
-  dest: Point,
-  speed?: number,
-  timeout: number,
-};
-export type AndroidDeviceDragOptions = {
-  speed?: number,
-};
-export type AndroidDeviceDragResult = void;
-export type AndroidDeviceFlingParams = {
-  androidSelector: AndroidSelector,
-  direction: 'up' | 'down' | 'left' | 'right',
-  speed?: number,
-  timeout: number,
-};
-export type AndroidDeviceFlingOptions = {
-  speed?: number,
-};
-export type AndroidDeviceFlingResult = void;
-export type AndroidDeviceLongTapParams = {
-  androidSelector: AndroidSelector,
-  timeout: number,
-};
-export type AndroidDeviceLongTapOptions = {
-
-};
-export type AndroidDeviceLongTapResult = void;
-export type AndroidDevicePinchCloseParams = {
-  androidSelector: AndroidSelector,
-  percent: number,
-  speed?: number,
-  timeout: number,
-};
-export type AndroidDevicePinchCloseOptions = {
-  speed?: number,
-};
-export type AndroidDevicePinchCloseResult = void;
-export type AndroidDevicePinchOpenParams = {
-  androidSelector: AndroidSelector,
-  percent: number,
-  speed?: number,
-  timeout: number,
-};
-export type AndroidDevicePinchOpenOptions = {
-  speed?: number,
-};
-export type AndroidDevicePinchOpenResult = void;
-export type AndroidDeviceScrollParams = {
-  androidSelector: AndroidSelector,
-  direction: 'up' | 'down' | 'left' | 'right',
-  percent: number,
-  speed?: number,
-  timeout: number,
-};
-export type AndroidDeviceScrollOptions = {
-  speed?: number,
-};
-export type AndroidDeviceScrollResult = void;
-export type AndroidDeviceSwipeParams = {
-  androidSelector: AndroidSelector,
-  direction: 'up' | 'down' | 'left' | 'right',
-  percent: number,
-  speed?: number,
-  timeout: number,
-};
-export type AndroidDeviceSwipeOptions = {
-  speed?: number,
-};
-export type AndroidDeviceSwipeResult = void;
-export type AndroidDeviceInfoParams = {
-  androidSelector: AndroidSelector,
-};
-export type AndroidDeviceInfoOptions = {
-
-};
-export type AndroidDeviceInfoResult = {
-  info: AndroidElementInfo,
-};
-export type AndroidDeviceScreenshotParams = {};
-export type AndroidDeviceScreenshotOptions = {};
-export type AndroidDeviceScreenshotResult = {
-  binary: Binary,
-};
-export type AndroidDeviceInputTypeParams = {
-  text: string,
-};
-export type AndroidDeviceInputTypeOptions = {
-
-};
-export type AndroidDeviceInputTypeResult = void;
-export type AndroidDeviceInputPressParams = {
-  key: string,
-};
-export type AndroidDeviceInputPressOptions = {
-
-};
-export type AndroidDeviceInputPressResult = void;
-export type AndroidDeviceInputTapParams = {
-  point: Point,
-};
-export type AndroidDeviceInputTapOptions = {
-
-};
-export type AndroidDeviceInputTapResult = void;
-export type AndroidDeviceInputSwipeParams = {
-  segments: Point[],
-  steps: number,
-};
-export type AndroidDeviceInputSwipeOptions = {
-
-};
-export type AndroidDeviceInputSwipeResult = void;
-export type AndroidDeviceInputDragParams = {
-  from: Point,
-  to: Point,
-  steps: number,
-};
-export type AndroidDeviceInputDragOptions = {
-
-};
-export type AndroidDeviceInputDragResult = void;
-export type AndroidDeviceLaunchBrowserParams = {
-  noDefaultViewport?: boolean,
-  viewport?: {
-    width: number,
-    height: number,
+  args: JSHandleChannel[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
   },
-  screen?: {
-    width: number,
-    height: number,
-  },
-  ignoreHTTPSErrors?: boolean,
-  clientCertificates?: {
-    origin: string,
-    cert?: Binary,
-    key?: Binary,
-    passphrase?: string,
-    pfx?: Binary,
-  }[],
-  javaScriptEnabled?: boolean,
-  bypassCSP?: boolean,
-  userAgent?: string,
-  locale?: string,
-  timezoneId?: string,
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  permissions?: string[],
-  extraHTTPHeaders?: NameValue[],
-  offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
-  deviceScaleFactor?: number,
-  isMobile?: boolean,
-  hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
-  forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  contrast?: 'no-preference' | 'more' | 'no-override',
-  baseURL?: string,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  serviceWorkers?: 'allow' | 'block',
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-  pkg?: string,
-  args?: string[],
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
+  timestamp: number,
 };
-export type AndroidDeviceLaunchBrowserOptions = {
-  noDefaultViewport?: boolean,
-  viewport?: {
-    width: number,
-    height: number,
-  },
-  screen?: {
-    width: number,
-    height: number,
-  },
-  ignoreHTTPSErrors?: boolean,
-  clientCertificates?: {
-    origin: string,
-    cert?: Binary,
-    key?: Binary,
-    passphrase?: string,
-    pfx?: Binary,
-  }[],
-  javaScriptEnabled?: boolean,
-  bypassCSP?: boolean,
-  userAgent?: string,
-  locale?: string,
-  timezoneId?: string,
-  geolocation?: {
-    longitude: number,
-    latitude: number,
-    accuracy?: number,
-  },
-  permissions?: string[],
-  extraHTTPHeaders?: NameValue[],
-  offline?: boolean,
-  httpCredentials?: {
-    username: string,
-    password: string,
-    origin?: string,
-    send?: 'always' | 'unauthorized',
-  },
-  deviceScaleFactor?: number,
-  isMobile?: boolean,
-  hasTouch?: boolean,
-  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
-  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
-  forcedColors?: 'active' | 'none' | 'no-override',
-  acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
-  contrast?: 'no-preference' | 'more' | 'no-override',
-  baseURL?: string,
-  recordVideo?: {
-    dir?: string,
-    size?: {
-      width: number,
-      height: number,
-    },
-    showActions?: {
-      duration?: number,
-      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right',
-      fontSize?: number,
-    },
-  },
-  strictSelectors?: boolean,
-  serviceWorkers?: 'allow' | 'block',
-  selectorEngines?: SelectorEngine[],
-  testIdAttributeName?: string,
-  pkg?: string,
-  args?: string[],
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-};
-export type AndroidDeviceLaunchBrowserResult = {
-  context: BrowserContextChannel,
-};
-export type AndroidDeviceOpenParams = {
-  command: string,
-};
-export type AndroidDeviceOpenOptions = {
-
-};
-export type AndroidDeviceOpenResult = {
-  socket: AndroidSocketChannel,
-};
-export type AndroidDeviceShellParams = {
-  command: string,
-};
-export type AndroidDeviceShellOptions = {
-
-};
-export type AndroidDeviceShellResult = {
-  result: Binary,
-};
-export type AndroidDeviceInstallApkParams = {
-  file: Binary,
-  args?: string[],
-};
-export type AndroidDeviceInstallApkOptions = {
-  args?: string[],
-};
-export type AndroidDeviceInstallApkResult = void;
-export type AndroidDevicePushParams = {
-  file: Binary,
-  path: string,
-  mode?: number,
-};
-export type AndroidDevicePushOptions = {
-  mode?: number,
-};
-export type AndroidDevicePushResult = void;
-export type AndroidDeviceConnectToWebViewParams = {
-  socketName: string,
-};
-export type AndroidDeviceConnectToWebViewOptions = {
-
-};
-export type AndroidDeviceConnectToWebViewResult = {
-  context: BrowserContextChannel,
-};
-export type AndroidDeviceCloseParams = {};
-export type AndroidDeviceCloseOptions = {};
-export type AndroidDeviceCloseResult = void;
-
-export interface AndroidDeviceEvents {
-  'close': AndroidDeviceCloseEvent;
-  'webViewAdded': AndroidDeviceWebViewAddedEvent;
-  'webViewRemoved': AndroidDeviceWebViewRemovedEvent;
-}
-
-export type AndroidWebView = {
-  pid: number,
-  pkg: string,
-  socketName: string,
-};
-
-export type AndroidSelector = {
-  checkable?: boolean,
-  checked?: boolean,
-  clazz?: string,
-  clickable?: boolean,
-  depth?: number,
-  desc?: string,
-  enabled?: boolean,
-  focusable?: boolean,
-  focused?: boolean,
-  hasChild?: {
-    androidSelector: AndroidSelector,
-  },
-  hasDescendant?: {
-    androidSelector: AndroidSelector,
-    maxDepth?: number,
-  },
-  longClickable?: boolean,
-  pkg?: string,
-  res?: string,
-  scrollable?: boolean,
-  selected?: boolean,
-  text?: string,
-};
-
-export type AndroidElementInfo = {
-  children?: AndroidElementInfo[],
-  clazz: string,
-  desc: string,
-  res: string,
-  pkg: string,
-  text: string,
-  bounds: Rect,
-  checkable: boolean,
-  checked: boolean,
-  clickable: boolean,
-  enabled: boolean,
-  focusable: boolean,
-  focused: boolean,
-  longClickable: boolean,
-  scrollable: boolean,
-  selected: boolean,
-};
-
-// ----------- JsonPipe -----------
-export type JsonPipeInitializer = {};
-export interface JsonPipeEventTarget {
-  on(event: 'message', callback: (params: JsonPipeMessageEvent) => void): this;
-  on(event: 'closed', callback: (params: JsonPipeClosedEvent) => void): this;
-}
-export interface JsonPipeChannel extends JsonPipeEventTarget, Channel {
-  _type_JsonPipe: boolean;
-  send(params: JsonPipeSendParams, progress?: Progress): Promise<JsonPipeSendResult>;
-  close(params?: JsonPipeCloseParams, progress?: Progress): Promise<JsonPipeCloseResult>;
-}
-export type JsonPipeMessageEvent = {
-  message: any,
-};
-export type JsonPipeClosedEvent = {
+export type WorkerCloseEvent = {};
+export type WorkerDisconnectParams = {
   reason?: string,
 };
-export type JsonPipeSendParams = {
-  message: any,
+export type WorkerDisconnectOptions = {
+  reason?: string,
 };
-export type JsonPipeSendOptions = {
+export type WorkerDisconnectResult = void;
+export type WorkerEvaluateExpressionParams = {
+  expression: string,
+  isFunction?: boolean,
+  arg: SerializedArgument,
+};
+export type WorkerEvaluateExpressionOptions = {
+  isFunction?: boolean,
+};
+export type WorkerEvaluateExpressionResult = {
+  value: SerializedValue,
+};
+export type WorkerEvaluateExpressionHandleParams = {
+  expression: string,
+  isFunction?: boolean,
+  arg: SerializedArgument,
+};
+export type WorkerEvaluateExpressionHandleOptions = {
+  isFunction?: boolean,
+};
+export type WorkerEvaluateExpressionHandleResult = {
+  handle: JSHandleChannel,
+};
+export type WorkerUpdateSubscriptionParams = {
+  event: 'console',
+  enabled: boolean,
+};
+export type WorkerUpdateSubscriptionOptions = {
 
 };
-export type JsonPipeSendResult = void;
-export type JsonPipeCloseParams = {};
-export type JsonPipeCloseOptions = {};
-export type JsonPipeCloseResult = void;
+export type WorkerUpdateSubscriptionResult = void;
 
-export interface JsonPipeEvents {
-  'message': JsonPipeMessageEvent;
-  'closed': JsonPipeClosedEvent;
+export interface WorkerEvents {
+  'console': WorkerConsoleEvent;
+  'close': WorkerCloseEvent;
 }
 

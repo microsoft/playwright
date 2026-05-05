@@ -19,7 +19,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const yaml = require('yaml');
 
 const channels = new Set();
 const inherits = new Map();
@@ -163,8 +162,7 @@ function objectType(props, indent, onlyOptional = false, parentName = '') {
   return { ts: `${indent}{${inner.ts}\n${indent}}`, scheme: `tObject({\n${inner.scheme}\n${indent}})` };
 }
 
-const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'protocol.yml'), 'utf-8');
-const protocol = yaml.parse(yml);
+const protocol = require('./protocol_spec').loadProtocol();
 
 for (const [name, value] of Object.entries(protocol)) {
   if (value.type === 'interface') {

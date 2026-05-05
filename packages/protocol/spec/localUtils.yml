@@ -1,0 +1,157 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+LocalUtils:
+  type: interface
+
+  initializer:
+    deviceDescriptors:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          descriptor:
+            type: object
+            properties:
+              userAgent: string
+              viewport:
+                type: object
+                properties:
+                  width: int
+                  height: int
+              screen:
+                type: object?
+                properties:
+                  width: int
+                  height: int
+              deviceScaleFactor: float
+              isMobile: boolean
+              hasTouch: boolean
+              defaultBrowserType:
+                type: enum
+                literals:
+                - chromium
+                - firefox
+                - webkit
+
+  commands:
+
+    zip:
+      internal: true
+      parameters:
+        zipFile: string
+        entries:
+          type: array
+          items: NameValue
+        stacksId: string?
+        mode:
+          type: enum
+          literals:
+            - write
+            - append
+        includeSources: boolean
+        additionalSources:
+          type: array?
+          items: string
+
+    harOpen:
+      internal: true
+      parameters:
+        file: string
+      returns:
+        harId: string?
+        error: string?
+
+    harLookup:
+      internal: true
+      parameters:
+        harId: string
+        url: string
+        method: string
+        headers:
+          type: array
+          items: NameValue
+        postData: binary?
+        isNavigationRequest: boolean
+      returns:
+        action:
+          type: enum
+          literals:
+          - error
+          - redirect
+          - fulfill
+          - noentry
+        message: string?
+        redirectURL: string?
+        status: int?
+        headers:
+          type: array?
+          items: NameValue
+        body: binary?
+
+    harClose:
+      internal: true
+      parameters:
+        harId: string
+
+    harUnzip:
+      internal: true
+      parameters:
+        zipFile: string
+        harFile: string
+        resourcesDir: string?
+
+    connect:
+      internal: true
+      parameters:
+        endpoint: string
+        headers: json?
+        exposeNetwork: string?
+        slowMo: float?
+        timeout: float
+        socksProxyRedirectPortForTest: int?
+      returns:
+        pipe: JsonPipe
+        headers:
+          type: array
+          items: NameValue
+
+    tracingStarted:
+      internal: true
+      parameters:
+        tracesDir: string?
+        traceName: string
+        live: boolean?
+      returns:
+        stacksId: string
+
+    addStackToTracingNoReply:
+      internal: true
+      parameters:
+        callData: ClientSideCallMetadata
+
+    traceDiscarded:
+      internal: true
+      parameters:
+        stacksId: string
+
+    globToRegex:
+      internal: true
+      parameters:
+        glob: string
+        baseURL: string?
+        webSocketUrl: boolean?
+      returns:
+        regex: string

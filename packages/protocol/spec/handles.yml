@@ -1,0 +1,582 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+JSHandle:
+  type: interface
+
+  initializer:
+    preview: string
+
+  commands:
+
+    dispose:
+      internal: true
+
+    evaluateExpression:
+      title: Evaluate
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      flags:
+        snapshot: true
+        pause: true
+
+    evaluateExpressionHandle:
+      title: Evaluate
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        handle: JSHandle
+      flags:
+        snapshot: true
+        pause: true
+
+    getPropertyList:
+      title: Get property list
+      group: getter
+      returns:
+        properties:
+          type: array
+          items:
+            type: object
+            properties:
+              name: string
+              value: JSHandle
+
+    getProperty:
+      title: Get JS property
+      group: getter
+      parameters:
+        name: string
+      returns:
+        handle: JSHandle
+
+    jsonValue:
+      title: Get JSON value
+      group: getter
+      returns:
+        value: SerializedValue
+
+  events:
+
+    previewUpdated:
+      parameters:
+        preview: string
+
+ElementHandle:
+  type: interface
+
+  extends: JSHandle
+
+  commands:
+
+    evalOnSelector:
+      title: Evaluate
+      parameters:
+        selector: string
+        strict: boolean?
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      flags:
+        snapshot: true
+        pause: true
+
+    evalOnSelectorAll:
+      title: Evaluate
+      parameters:
+        selector: string
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      flags:
+        snapshot: true
+        pause: true
+
+    boundingBox:
+      title: Get bounding box
+      returns:
+        value: Rect?
+      flags:
+        snapshot: true
+        pause: true
+
+    check:
+      title: Check
+      parameters:
+        force: boolean?
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    click:
+      title: Click
+      parameters:
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        delay: float?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: int?
+        timeout: float
+        trial: boolean?
+        steps: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    contentFrame:
+      title: Get content frame
+      group: getter
+      returns:
+        frame: Frame?
+
+    dblclick:
+      title: Double click
+      parameters:
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        delay: float?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        timeout: float
+        trial: boolean?
+        steps: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    dispatchEvent:
+      title: Dispatch event
+      parameters:
+        type: string
+        eventInit: SerializedArgument
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    fill:
+      title: Fill "{value}"
+      parameters:
+        value: string
+        force: boolean?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    focus:
+      title: Focus
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    getAttribute:
+      title: Get attribute
+      group: getter
+      parameters:
+        name: string
+      returns:
+        value: string?
+      flags:
+        snapshot: true
+        pause: true
+
+    hover:
+      title: Hover
+      parameters:
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    innerHTML:
+      title: Get HTML
+      group: getter
+      returns:
+        value: string
+      flags:
+        snapshot: true
+        pause: true
+
+    innerText:
+      title: Get inner text
+      group: getter
+      returns:
+        value: string
+      flags:
+        snapshot: true
+        pause: true
+
+    inputValue:
+      title: Get input value
+      group: getter
+      returns:
+        value: string
+      flags:
+        snapshot: true
+        pause: true
+
+    isChecked:
+      title: Is checked
+      group: getter
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isDisabled:
+      title: Is disabled
+      group: getter
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isEditable:
+      title: Is editable
+      group: getter
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isEnabled:
+      title: Is enabled
+      group: getter
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isHidden:
+      title: Is hidden
+      group: getter
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isVisible:
+      title: Is visible
+      group: getter
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    ownerFrame:
+      title: Get owner frame
+      group: getter
+      returns:
+        frame: Frame?
+
+    press:
+      title: Press "{key}"
+      parameters:
+        key: string
+        delay: float?
+        timeout: float
+        noWaitAfter: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    querySelector:
+      title: Query selector
+      parameters:
+        selector: string
+        strict: boolean?
+      returns:
+        element: ElementHandle?
+      flags:
+        snapshot: true
+
+    querySelectorAll:
+      title: Query selector all
+      parameters:
+        selector: string
+      returns:
+        elements:
+          type: array
+          items: ElementHandle
+      flags:
+        snapshot: true
+
+    screenshot:
+      title: Screenshot
+      parameters:
+        timeout: float
+        type:
+          type: enum?
+          literals:
+          - png
+          - jpeg
+        quality: int?
+        $mixin: CommonScreenshotOptions
+      returns:
+        binary: binary
+      flags:
+        snapshot: true
+        pause: true
+
+    scrollIntoViewIfNeeded:
+      title: Scroll into view
+      parameters:
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    selectOption:
+      title: Select option
+      parameters:
+        elements:
+          type: array?
+          items: ElementHandle
+        options:
+          type: array?
+          items:
+            type: object
+            properties:
+              valueOrLabel: string?
+              value: string?
+              label: string?
+              index: int?
+        force: boolean?
+        timeout: float
+      returns:
+        values:
+          type: array
+          items: string
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    selectText:
+      title: Select text
+      parameters:
+        force: boolean?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    setInputFiles:
+      title: Set input files
+      parameters:
+        # Only one of payloads, localPaths and streams should be present.
+        payloads:
+          type: array?
+          items:
+            type: object
+            properties:
+              name: string
+              mimeType: string?
+              buffer: binary
+        localDirectory: string?
+        directoryStream: WritableStream?
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    tap:
+      title: Tap
+      parameters:
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    textContent:
+      title: Get text content
+      group: getter
+      returns:
+        value: string?
+      flags:
+        snapshot: true
+        pause: true
+
+    type:
+      title: Type
+      parameters:
+        text: string
+        delay: float?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    uncheck:
+      title: Uncheck
+      parameters:
+        force: boolean?
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    waitForElementState:
+      title: Wait for state
+      parameters:
+        state:
+          type: enum
+          literals:
+          - visible
+          - hidden
+          - stable
+          - enabled
+          - disabled
+          - editable
+        timeout: float
+      flags:
+        snapshot: true
+        pause: true
+
+    waitForSelector:
+      title: Wait for selector
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+        state:
+          type: enum?
+          literals:
+          - attached
+          - detached
+          - visible
+          - hidden
+      returns:
+        element: ElementHandle?
+      flags:
+        snapshot: true

@@ -1,0 +1,100 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+APIRequestContext:
+  type: interface
+
+  initializer:
+    tracing: Tracing
+
+  commands:
+
+    fetch:
+      title: '{method} "{url}"'
+      parameters:
+        url: string
+        encodedParams: string?
+        params:
+          type: array?
+          items: NameValue
+        method: string?
+        headers:
+          type: array?
+          items: NameValue
+        postData: binary?
+        jsonData: string?
+        formData:
+          type: array?
+          items: NameValue
+        multipartData:
+          type: array?
+          items: FormField
+        timeout: float
+        failOnStatusCode: boolean?
+        ignoreHTTPSErrors: boolean?
+        maxRedirects: int?
+        maxRetries: int?
+      returns:
+        response: APIResponse
+
+    fetchResponseBody:
+      title: Get response body
+      group: getter
+      parameters:
+        fetchUid: string
+      returns:
+        binary: binary?
+
+    fetchLog:
+      internal: true
+      parameters:
+        fetchUid: string
+      returns:
+        log:
+          type: array
+          items: string
+
+    storageState:
+      title: Get storage state
+      group: configuration
+      parameters:
+        indexedDB: boolean?
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
+
+    disposeAPIResponse:
+      internal: true
+      parameters:
+        fetchUid: string
+
+    dispose:
+      internal: true
+      parameters:
+        reason: string?
+
+APIResponse:
+  type: object
+  properties:
+    fetchUid: string
+    url: string
+    status: int
+    statusText: string
+    headers:
+      type: array
+      items: NameValue

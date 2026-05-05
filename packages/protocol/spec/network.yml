@@ -1,0 +1,308 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+SetNetworkCookie:
+  type: object
+  properties:
+    name: string
+    value: string
+    url: string?
+    domain: string?
+    path: string?
+    expires: float?
+    httpOnly: boolean?
+    secure: boolean?
+    sameSite:
+      type: enum?
+      literals:
+      - Strict
+      - Lax
+      - None
+    partitionKey: string?
+    _crHasCrossSiteAncestor: boolean?
+
+NetworkCookie:
+  type: object
+  properties:
+    name: string
+    value: string
+    domain: string
+    path: string
+    expires: float
+    httpOnly: boolean
+    secure: boolean
+    sameSite:
+      type: enum
+      literals:
+      - Strict
+      - Lax
+      - None
+    partitionKey: string?
+    _crHasCrossSiteAncestor: boolean?
+
+Request:
+  type: interface
+
+  initializer:
+    frame: Frame?
+    serviceWorker: Worker?
+    url: string
+    resourceType: string
+    method: string
+    postData: binary?
+    headers:
+      type: array
+      items: NameValue
+    isNavigationRequest: boolean
+    redirectedFrom: Request?
+
+  commands:
+
+    response:
+      internal: true
+      returns:
+        response: Response?
+
+    rawRequestHeaders:
+      internal: true
+      returns:
+        headers:
+          type: array
+          items: NameValue
+
+Route:
+  type: interface
+
+  initializer:
+    request: Request
+
+  commands:
+
+    redirectNavigationRequest:
+      internal: true
+      parameters:
+        url: string
+
+    abort:
+      title: Abort request
+      group: route
+      parameters:
+        errorCode: string?
+
+    continue:
+      title: Continue request
+      group: route
+      parameters:
+        url: string?
+        method: string?
+        headers:
+          type: array?
+          items: NameValue
+        postData: binary?
+        isFallback: boolean
+
+    fulfill:
+      title: Fulfill request
+      group: route
+      parameters:
+        # default is 200
+        status: int?
+        headers:
+          type: array?
+          items: NameValue
+        body: string?
+        isBase64: boolean?
+        fetchResponseUid: string?
+
+WebSocketRoute:
+  type: interface
+
+  initializer:
+    url: string
+    protocols:
+      type: array
+      items: string
+
+  commands:
+
+    connect:
+      title: Connect WebSocket to server
+      group: route
+
+    ensureOpened:
+      internal: true
+
+    sendToPage:
+      title: Send WebSocket message
+      group: route
+      parameters:
+        message: string
+        isBase64: boolean
+
+    sendToServer:
+      title: Send WebSocket message
+      group: route
+      parameters:
+        message: string
+        isBase64: boolean
+
+    closePage:
+      internal: true
+      parameters:
+        code: int?
+        reason: string?
+        wasClean: boolean
+
+    closeServer:
+      internal: true
+      parameters:
+        code: int?
+        reason: string?
+        wasClean: boolean
+
+  events:
+
+    messageFromPage:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    messageFromServer:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    closePage:
+      parameters:
+        code: int?
+        reason: string?
+        wasClean: boolean
+
+    closeServer:
+      parameters:
+        code: int?
+        reason: string?
+        wasClean: boolean
+
+ResourceTiming:
+  type: object
+  properties:
+    startTime: float
+    domainLookupStart: float
+    domainLookupEnd: float
+    connectStart: float
+    secureConnectionStart: float
+    connectEnd: float
+    requestStart: float
+    responseStart: float
+
+Response:
+  type: interface
+
+  initializer:
+    request: Request
+    url: string
+    status: int
+    statusText: string
+    headers:
+      type: array
+      items: NameValue
+    timing: ResourceTiming
+    fromServiceWorker: boolean
+
+
+  commands:
+
+    body:
+      title: Get response body
+      group: getter
+      returns:
+        binary: binary
+
+    securityDetails:
+      internal: true
+      returns:
+        value: SecurityDetails?
+
+    serverAddr:
+      internal: true
+      returns:
+        value: RemoteAddr?
+
+    rawResponseHeaders:
+      internal: true
+      returns:
+        headers:
+          type: array
+          items: NameValue
+
+    httpVersion:
+      internal: true
+      returns:
+        value: string
+
+    sizes:
+      internal: true
+      returns:
+        sizes: RequestSizes
+
+SecurityDetails:
+  type: object
+  properties:
+    issuer: string?
+    protocol: string?
+    subjectName: string?
+    validFrom: float?
+    validTo: float?
+
+RequestSizes:
+  type: object
+  properties:
+    requestBodySize: int
+    requestHeadersSize: int
+    responseBodySize: int
+    responseHeadersSize: int
+
+RemoteAddr:
+  type: object
+  properties:
+    ipAddress: string
+    port: int
+
+WebSocket:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    url: string
+
+  events:
+    open:
+
+    frameSent:
+      parameters:
+        opcode: int
+        data: string
+
+    frameReceived:
+      parameters:
+        opcode: int
+        data: string
+
+    socketError:
+      parameters:
+        error: string
+
+    close:

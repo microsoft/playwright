@@ -16,7 +16,7 @@ node ../../utils/pack_package.js playwright-core ./output/playwright-core.tgz
 
 echo "Building api.json and protocol.yml"
 API_JSON_MODE=1 node ../../utils/doclint/generateApiJson.js > ./output/api.json
-cp ../../packages/protocol/src/protocol.yml ./output/
+node ../../utils/protocol_spec.js > ./output/protocol.yml
 
 function build {
   NODE_DIR=$1

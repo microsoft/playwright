@@ -1,0 +1,98 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Tracing:
+  type: interface
+
+  commands:
+
+    tracingStart:
+      title: Start tracing
+      group: configuration
+      parameters:
+        name: string?
+        snapshots: boolean?
+        screenshots: boolean?
+        live: boolean?
+
+    tracingStartChunk:
+      title: Start tracing
+      group: configuration
+      parameters:
+        name: string?
+        title: string?
+      returns:
+        traceName: string
+
+    tracingGroup:
+      title: Trace "{name}"
+      parameters:
+        name: string
+        location:
+          type: object?
+          properties:
+            file: string
+            line: int?
+            column: int?
+
+    tracingGroupEnd:
+      title: Group end
+
+    tracingStopChunk:
+      title: Stop tracing
+      group: configuration
+      parameters:
+        mode:
+          type: enum
+          literals:
+          - archive
+          - discard
+          - entries
+      returns:
+        # The artifact may be missing if the browser closes while tracing is being stopped.
+        # Or it can be missing if client-side compression is taking place.
+        artifact: Artifact?
+        # For local mode, these are all entries.
+        entries:
+          type: array?
+          items: NameValue
+
+    tracingStop:
+      title: Stop tracing
+      group: configuration
+
+    harStart:
+      internal: true
+      parameters:
+        page: Page?
+        options: RecordHarOptions
+      returns:
+        harId: string
+
+    harExport:
+      internal: true
+      parameters:
+        harId: string?
+        mode:
+          type: enum
+          literals:
+          - archive
+          - entries
+      returns:
+        # Present when mode is 'archive'.
+        artifact: Artifact?
+        # Present when mode is 'entries'.
+        entries:
+          type: array?
+          items: NameValue

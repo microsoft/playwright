@@ -1,0 +1,138 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Browser:
+  type: interface
+
+  initializer:
+    version: string
+    name: string
+    browserName:
+      type: enum
+      literals:
+        - chromium
+        - firefox
+        - webkit
+
+  commands:
+
+    startServer:
+      title: Start server
+      parameters:
+        title: string
+        workspaceDir: string?
+        metadata: json?
+        host: string?
+        port: int?
+      returns:
+        endpoint: string
+
+    stopServer:
+      title: Stop server
+
+    close:
+      title: Close browser
+      parameters:
+        reason: string?
+      flags:
+        pause: true
+
+    killForTests:
+      internal: true
+
+    defaultUserAgentForTest:
+      internal: true
+      returns:
+        userAgent: string
+
+    newContext:
+      title: Create context
+      parameters:
+        $mixin: ContextOptions
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: SetOriginStorage
+      returns:
+        context: BrowserContext
+
+    newContextForReuse:
+      internal: true
+      parameters:
+        $mixin: ContextOptions
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: SetOriginStorage
+      returns:
+        context: BrowserContext
+
+    disconnectFromReusedContext:
+      internal: true
+      parameters:
+        reason: string
+
+    newBrowserCDPSession:
+      title: Create CDP session
+      group: configuration
+      returns:
+        session: CDPSession
+
+    startTracing:
+      title: Start browser tracing
+      group: configuration
+      parameters:
+        page: Page?
+        screenshots: boolean?
+        categories:
+          type: array?
+          items: string
+
+    stopTracing:
+      title: Stop browser tracing
+      group: configuration
+      returns:
+        artifact: Artifact
+
+  events:
+
+    context:
+      parameters:
+        context: BrowserContext
+
+    close:

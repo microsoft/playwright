@@ -19,7 +19,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const yaml = require('yaml');
 
 const channels = new Map();
 const mixins = new Map();
@@ -184,8 +183,7 @@ const metainfo_ts = [
 
 const methodMetainfo = [];
 
-const yml = fs.readFileSync(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'protocol.yml'), 'utf-8');
-const protocol = yaml.parse(yml);
+const protocol = require('./protocol_spec').loadProtocol();
 
 function addScheme(name, s) {
   validator_ts.push(`scheme.${name} = ${s};`);
@@ -210,9 +208,28 @@ for (const [name, item] of Object.entries(protocol)) {
   }
 }
 
+// Trait-cascade order: each `T extends FooChannel ?` must be tested before any
+// of its ancestors via `extends`. Sort interfaces children-first so the cascade
+// is correct regardless of how the spec files are ordered on disk.
+const interfaceEntries = Object.entries(protocol).filter(([, v]) => v.type === 'interface');
+const interfaceDepth = new Map();
+function depthOf(name) {
+  if (interfaceDepth.has(name)) return interfaceDepth.get(name);
+  const ancestor = protocol[name] && protocol[name].extends;
+  const d = ancestor && protocol[ancestor] && protocol[ancestor].type === 'interface'
+    ? depthOf(ancestor) + 1 : 0;
+  interfaceDepth.set(name, d);
+  return d;
+}
+for (const [name] of interfaceEntries) depthOf(name);
+// Stable sort by descending depth — children before ancestors.
+const entriesInReverse = interfaceEntries
+  .map((e, i) => ({ e, i }))
+  .sort((a, b) => depthOf(b.e[0]) - depthOf(a.e[0]) || a.i - b.i)
+  .map(x => x.e);
+
 channels_ts.push(`// ----------- Initializer Traits -----------`);
 channels_ts.push(`export type InitializerTraits<T> =`);
-const entriesInReverse = Object.entries(protocol).reverse();
 for (const [name, item] of entriesInReverse) {
   if (item.type !== 'interface')
     continue;

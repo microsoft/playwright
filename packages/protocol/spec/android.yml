@@ -1,0 +1,324 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Android:
+  type: interface
+
+  commands:
+
+    devices:
+      internal: true
+      parameters:
+        host: string?
+        port: int?
+        omitDriverInstall: boolean?
+      returns:
+        devices:
+          type: array
+          items: AndroidDevice
+
+AndroidSocket:
+  type: interface
+
+  commands:
+    write:
+      internal: true
+      parameters:
+        data: binary
+
+    close:
+      internal: true
+
+  events:
+    data:
+      parameters:
+        data: binary
+    close:
+
+AndroidDevice:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    model: string
+    serial: string
+
+  commands:
+    wait:
+      title: Wait
+      parameters:
+        androidSelector: AndroidSelector
+        state:
+          type: enum?
+          literals:
+          - gone
+        timeout: float
+
+    fill:
+      title: Fill "{text}"
+      parameters:
+        androidSelector: AndroidSelector
+        text: string
+        timeout: float
+
+    tap:
+      title: Tap
+      parameters:
+        androidSelector: AndroidSelector
+        duration: float?
+        timeout: float
+
+    drag:
+      title: Drag
+      parameters:
+        androidSelector: AndroidSelector
+        dest: Point
+        speed: float?
+        timeout: float
+
+    fling:
+      title: Fling
+      parameters:
+        androidSelector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        speed: float?
+        timeout: float
+
+    longTap:
+      title: Long tap
+      parameters:
+        androidSelector: AndroidSelector
+        timeout: float
+
+    pinchClose:
+      title: Pinch close
+      parameters:
+        androidSelector: AndroidSelector
+        percent: float
+        speed: float?
+        timeout: float
+
+    pinchOpen:
+      title: Pinch open
+      parameters:
+        androidSelector: AndroidSelector
+        percent: float
+        speed: float?
+        timeout: float
+
+    scroll:
+      title: Scroll
+      parameters:
+        androidSelector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        percent: float
+        speed: float?
+        timeout: float
+
+    swipe:
+      title: Swipe
+      parameters:
+        androidSelector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        percent: float
+        speed: float?
+        timeout: float
+
+    info:
+      internal: true
+      parameters:
+        androidSelector: AndroidSelector
+      returns:
+        info: AndroidElementInfo
+
+    screenshot:
+      title: Screenshot
+      returns:
+        binary: binary
+
+    inputType:
+      title: Type
+      parameters:
+        text: string
+
+    inputPress:
+      title: Press
+      parameters:
+        key: string
+
+    inputTap:
+      title: Tap
+      parameters:
+        point: Point
+
+    inputSwipe:
+      title: Swipe
+      parameters:
+        segments:
+          type: array
+          items: Point
+        steps: int
+
+    inputDrag:
+      title: Drag
+      parameters:
+        from: Point
+        to: Point
+        steps: int
+
+    launchBrowser:
+      title: Launch browser
+      parameters:
+        $mixin: ContextOptions
+        pkg: string?
+        args:
+          type: array?
+          items: string
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+
+      returns:
+        context: BrowserContext
+
+    open:
+      title: Open app
+      parameters:
+        command: string
+      returns:
+        socket: AndroidSocket
+
+    shell:
+      title: Execute shell command
+      group: configuration
+      parameters:
+        command: string
+      returns:
+        result: binary
+
+    installApk:
+      title: Install apk
+      parameters:
+        file: binary
+        args:
+          type: array?
+          items: string
+
+    push:
+      title: Push
+      parameters:
+        file: binary
+        path: string
+        mode: int?
+
+    connectToWebView:
+      title: Connect to Web View
+      parameters:
+        socketName: string
+      returns:
+        context: BrowserContext
+
+    close:
+      internal: true
+
+  events:
+    close:
+
+    webViewAdded:
+      parameters:
+        webView: AndroidWebView
+
+    webViewRemoved:
+      parameters:
+        socketName: string
+
+AndroidWebView:
+  type: object
+  properties:
+    pid: int
+    pkg: string
+    socketName: string
+
+AndroidSelector:
+  type: object
+  properties:
+    checkable: boolean?
+    checked: boolean?
+    clazz: string?
+    clickable: boolean?
+    depth: int?
+    desc: string?
+    enabled: boolean?
+    focusable: boolean?
+    focused: boolean?
+    hasChild:
+      type: object?
+      properties:
+        androidSelector: AndroidSelector
+    hasDescendant:
+      type: object?
+      properties:
+        androidSelector: AndroidSelector
+        maxDepth: int?
+    longClickable: boolean?
+    pkg: string?
+    res: string?
+    scrollable: boolean?
+    selected: boolean?
+    text: string?
+
+AndroidElementInfo:
+  type: object
+  properties:
+    children:
+      type: array?
+      items: AndroidElementInfo
+    clazz: string
+    desc: string
+    res: string
+    pkg: string
+    text: string
+    bounds: Rect
+    checkable: boolean
+    checked: boolean
+    clickable: boolean
+    enabled: boolean
+    focusable: boolean
+    focused: boolean
+    longClickable: boolean
+    scrollable: boolean
+    selected: boolean

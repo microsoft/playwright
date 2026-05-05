@@ -1,0 +1,220 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+ShowActionsOptions:
+  type: mixin
+  properties:
+    duration: float?
+    position:
+      type: enum?
+      literals:
+      - top-left
+      - top
+      - top-right
+      - bottom-left
+      - bottom
+      - bottom-right
+    fontSize: int?
+
+CommonScreenshotOptions:
+  type: mixin
+  properties:
+    omitBackground: boolean?
+    caret:
+      type: enum?
+      literals:
+      - hide
+      - initial
+    animations:
+      type: enum?
+      literals:
+      - disabled
+      - allow
+    scale:
+      type: enum?
+      literals:
+      - css
+      - device
+    mask:
+      type: array?
+      items:
+        type: object
+        properties:
+          frame: Frame
+          selector: string
+    maskColor: string?
+    style: string?
+
+LaunchOptions:
+  type: mixin
+  properties:
+    channel: string?
+    executablePath: string?
+    args:
+      type: array?
+      items: string
+    ignoreAllDefaultArgs: boolean?
+    ignoreDefaultArgs:
+      type: array?
+      items: string
+    handleSIGINT: boolean?
+    handleSIGTERM: boolean?
+    handleSIGHUP: boolean?
+    timeout: float
+    env:
+      type: array?
+      items: NameValue
+    headless: boolean?
+    proxy:
+      type: object?
+      properties:
+        server: string
+        bypass: string?
+        username: string?
+        password: string?
+    downloadsPath: string?
+    tracesDir: string?
+    artifactsDir: string?
+    chromiumSandbox: boolean?
+    firefoxUserPrefs: json?
+    cdpPort: int?
+
+ContextOptions:
+  type: mixin
+  properties:
+    noDefaultViewport: boolean?
+    viewport:
+      type: object?
+      properties:
+        width: int
+        height: int
+    screen:
+      type: object?
+      properties:
+        width: int
+        height: int
+    ignoreHTTPSErrors: boolean?
+    clientCertificates:
+      type: array?
+      items:
+        type: object
+        properties:
+          origin: string
+          cert: binary?
+          key: binary?
+          passphrase: string?
+          pfx: binary?
+    javaScriptEnabled: boolean?
+    bypassCSP: boolean?
+    userAgent: string?
+    locale: string?
+    timezoneId: string?
+    geolocation:
+      type: object?
+      properties:
+        longitude: float
+        latitude: float
+        accuracy: float?
+    permissions:
+      type: array?
+      items: string
+    extraHTTPHeaders:
+      type: array?
+      items: NameValue
+    offline: boolean?
+    httpCredentials:
+      type: object?
+      properties:
+        username: string
+        password: string
+        origin: string?
+        send:
+          type: enum?
+          literals:
+          - always
+          - unauthorized
+    deviceScaleFactor: float?
+    isMobile: boolean?
+    hasTouch: boolean?
+    colorScheme:
+      type: enum?
+      literals:
+      - dark
+      - light
+      - no-preference
+      - no-override
+    reducedMotion:
+      type: enum?
+      literals:
+      - reduce
+      - no-preference
+      - no-override
+    forcedColors:
+      type: enum?
+      literals:
+      - active
+      - none
+      - no-override
+    acceptDownloads:
+      type: enum?
+      literals:
+      - accept
+      - deny
+      - internal-browser-default
+    contrast:
+      type: enum?
+      literals:
+      - no-preference
+      - more
+      - no-override
+    baseURL: string?
+    recordVideo:
+      type: object?
+      properties:
+        dir: string?
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+        showActions:
+          type: object?
+          properties:
+            $mixin: ShowActionsOptions
+    strictSelectors: boolean?
+    serviceWorkers:
+      type: enum?
+      literals:
+      - allow
+      - block
+    selectorEngines:
+      type: array?
+      items: SelectorEngine
+    testIdAttributeName: string?
+
+ConsoleMessage:
+  type: mixin
+  properties:
+    type: string
+    text: string
+    args:
+      type: array
+      items: JSHandle
+    location:
+      type: object
+      properties:
+        url: string
+        lineNumber: int
+        columnNumber: int
+    timestamp: float

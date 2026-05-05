@@ -1,0 +1,798 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Frame:
+  type: interface
+
+  initializer:
+    url: string
+    name: string
+    parentFrame: Frame?
+    loadStates:
+      type: array
+      items: LifecycleEvent
+
+  commands:
+
+    evalOnSelector:
+      title: Evaluate
+      parameters:
+        selector: string
+        strict: boolean?
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      flags:
+        snapshot: true
+        pause: true
+
+    evalOnSelectorAll:
+      title: Evaluate
+      parameters:
+        selector: string
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      flags:
+        snapshot: true
+        pause: true
+
+    addScriptTag:
+      title: Add script tag
+      parameters:
+        url: string?
+        content: string?
+        type: string?
+      returns:
+        element: ElementHandle
+      flags:
+        snapshot: true
+        pause: true
+
+    addStyleTag:
+      title: Add style tag
+      parameters:
+        url: string?
+        content: string?
+      returns:
+        element: ElementHandle
+      flags:
+        snapshot: true
+        pause: true
+
+    ariaSnapshot:
+      title: Aria snapshot
+      group: getter
+      parameters:
+        mode:
+          type: enum?
+          literals:
+            - ai
+            - default
+        # When track is present, an incremental snapshot is returned when possible.
+        track: string?
+        selector: string?
+        depth: int?
+        boxes: boolean?
+        timeout: float
+      returns:
+        snapshot: string
+
+    blur:
+      title: Blur
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    check:
+      title: Check
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    click:
+      title: Click
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        delay: float?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        clickCount: int?
+        timeout: float
+        trial: boolean?
+        steps: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    content:
+      title: Get content
+      returns:
+        value: string
+      flags:
+        snapshot: true
+        pause: true
+
+    dragAndDrop:
+      title: Drag and drop
+      parameters:
+        source: string
+        target: string
+        force: boolean?
+        timeout: float
+        trial: boolean?
+        sourcePosition: Point?
+        targetPosition: Point?
+        strict: boolean?
+        steps: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    drop:
+      title: Drop files or data onto an element
+      parameters:
+        selector: string
+        strict: boolean?
+        position: Point?
+        # Only one of payloads, localPaths and streams may be present.
+        payloads:
+          type: array?
+          items:
+            type: object
+            properties:
+              name: string
+              mimeType: string?
+              buffer: binary
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        data:
+          type: array?
+          items:
+            type: object
+            properties:
+              mimeType: string
+              value: string
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    dblclick:
+      title: Double click
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        delay: float?
+        button:
+          type: enum?
+          literals:
+          - left
+          - right
+          - middle
+        timeout: float
+        trial: boolean?
+        steps: int?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    dispatchEvent:
+      title: Dispatch "{type}"
+      parameters:
+        selector: string
+        strict: boolean?
+        type: string
+        eventInit: SerializedArgument
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    evaluateExpression:
+      title: Evaluate
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+      flags:
+        snapshot: true
+        pause: true
+
+    evaluateExpressionHandle:
+      title: Evaluate
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        handle: JSHandle
+      flags:
+        snapshot: true
+        pause: true
+
+    fill:
+      title: Fill "{value}"
+      parameters:
+        selector: string
+        strict: boolean?
+        value: string
+        force: boolean?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    focus:
+      title: Focus
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    frameElement:
+      title: Get frame element
+      group: getter
+      returns:
+        element: ElementHandle
+
+    resolveSelector:
+      internal: true
+      parameters:
+        selector: string
+      returns:
+        resolvedSelector: string
+
+    highlight:
+      internal: true
+      parameters:
+        selector: string
+        style: string?
+
+    hideHighlight:
+      internal: true
+      parameters:
+        selector: string
+
+    getAttribute:
+      title: Get attribute "{name}"
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        name: string
+        timeout: float
+      returns:
+        value: string?
+      flags:
+        snapshot: true
+        pause: true
+
+    goto:
+      title: Navigate to "{url}"
+      parameters:
+        url: string
+        timeout: float
+        waitUntil: LifecycleEvent?
+        referer: string?
+      returns:
+        response: Response?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+
+    hover:
+      title: Hover
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    innerHTML:
+      title: Get HTML
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: string
+      flags:
+        snapshot: true
+        pause: true
+
+    innerText:
+      title: Get inner text
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: string
+      flags:
+        snapshot: true
+        pause: true
+
+    inputValue:
+      title: Get input value
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: string
+      flags:
+        snapshot: true
+        pause: true
+
+    isChecked:
+      title: Is checked
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isDisabled:
+      title: Is disabled
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isEnabled:
+      title: Is enabled
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isHidden:
+      title: Is hidden
+      group: getter
+      parameters:
+        # Note: compared to other isFoo methods, isHidden is a one-shot operation without a timeout.
+        selector: string
+        strict: boolean?
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isVisible:
+      title: Is visible
+      group: getter
+      parameters:
+        # Note: compared to other isFoo methods, isVisible is a one-shot operation without a timeout.
+        selector: string
+        strict: boolean?
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    isEditable:
+      title: Is editable
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: boolean
+      flags:
+        snapshot: true
+        pause: true
+
+    press:
+      title: Press "{key}"
+      parameters:
+        selector: string
+        strict: boolean?
+        key: string
+        delay: float?
+        noWaitAfter: boolean?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    querySelector:
+      title: Query selector
+      parameters:
+        selector: string
+        strict: boolean?
+      returns:
+        element: ElementHandle?
+      flags:
+        snapshot: true
+
+    querySelectorAll:
+      title: Query selector all
+      parameters:
+        selector: string
+      returns:
+        elements:
+          type: array
+          items: ElementHandle
+      flags:
+        snapshot: true
+
+    queryCount:
+      title: Query count
+      parameters:
+        selector: string
+      returns:
+        value: int
+      flags:
+        snapshot: true
+        pause: true
+
+    selectOption:
+      title: Select option
+      parameters:
+        selector: string
+        strict: boolean?
+        elements:
+          type: array?
+          items: ElementHandle
+        options:
+          type: array?
+          items:
+            type: object
+            properties:
+              valueOrLabel: string?
+              value: string?
+              label: string?
+              index: int?
+        force: boolean?
+        timeout: float
+      returns:
+        values:
+          type: array
+          items: string
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    setContent:
+      title: Set content
+      parameters:
+        html: string
+        timeout: float
+        waitUntil: LifecycleEvent?
+      flags:
+        snapshot: true
+        pause: true
+
+    setInputFiles:
+      title: Set input files
+      parameters:
+        selector: string
+        strict: boolean?
+        # Only one of payloads, localPaths and streams should be present.
+        payloads:
+          type: array?
+          items:
+            type: object
+            properties:
+              name: string
+              mimeType: string?
+              buffer: binary
+        localDirectory: string?
+        directoryStream: WritableStream?
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    tap:
+      title: Tap
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - ControlOrMeta
+            - Meta
+            - Shift
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    textContent:
+      title: Get text content
+      group: getter
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+      returns:
+        value: string?
+      flags:
+        snapshot: true
+        pause: true
+
+    title:
+      title: Get page title
+      group: getter
+      returns:
+        value: string
+
+    type:
+      title: Type "{text}"
+      parameters:
+        selector: string
+        strict: boolean?
+        text: string
+        delay: float?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    uncheck:
+      title: Uncheck
+      parameters:
+        selector: string
+        strict: boolean?
+        force: boolean?
+        position: Point?
+        timeout: float
+        trial: boolean?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
+    waitForTimeout:
+      title: Wait for timeout
+      parameters:
+        waitTimeout: float
+      flags:
+        snapshot: true
+
+    waitForFunction:
+      title: Wait for function
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+        timeout: float
+        # When present, polls on interval. Otherwise, polls on raf.
+        pollingInterval: float?
+      returns:
+        handle: JSHandle
+      flags:
+        snapshot: true
+        pause: true
+
+    waitForSelector:
+      title: Wait for selector
+      parameters:
+        selector: string
+        strict: boolean?
+        timeout: float
+        state:
+          type: enum?
+          literals:
+          - attached
+          - detached
+          - visible
+          - hidden
+        omitReturnValue: boolean?
+      returns:
+        element: ElementHandle?
+      flags:
+        snapshot: true
+
+    expect:
+      title: Expect "{expression}"
+      parameters:
+        selector: string?
+        expression: string
+        expressionArg: json?
+        pseudo:
+          type: enum?
+          literals:
+          - before
+          - after
+        expectedText:
+          type: array?
+          items: ExpectedTextValue
+        expectedNumber: float?
+        expectedValue: SerializedArgument?
+        useInnerText: boolean?
+        isNot: boolean
+        timeout: float
+      returns:
+        matches: boolean
+        received:
+          type: object?
+          properties:
+            value: SerializedValue?
+            ariaSnapshot: string?
+        timedOut: boolean?
+        errorMessage: string?
+        log:
+          type: array?
+          items: string
+      flags:
+        snapshot: true
+        pause: true
+
+  events:
+
+    loadstate:
+      parameters:
+        add: LifecycleEvent?
+        remove: LifecycleEvent?
+
+    navigated:
+      parameters:
+        url: string
+        name: string
+        newDocument:
+          type: object?
+          properties:
+            request: Request?
+        error: string?

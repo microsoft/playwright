@@ -1,0 +1,493 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Root:
+  type: interface
+
+  commands:
+
+    initialize:
+      internal: true
+      parameters:
+        sdkLanguage: SDKLanguage
+      returns:
+        playwright: Playwright
+
+Playwright:
+  type: interface
+
+  initializer:
+    chromium: BrowserType
+    firefox: BrowserType
+    webkit: BrowserType
+    android: Android
+    utils: LocalUtils?
+    # Only present when connecting remotely via BrowserType.connect() method.
+    preLaunchedBrowser: Browser?
+    # Only present when connecting remotely via Android.connect() method.
+    preConnectedAndroidDevice: AndroidDevice?
+    # Only present when socks proxy is supported.
+    socksSupport: SocksSupport?
+
+  commands:
+    newRequest:
+      title: Create request context
+      parameters:
+        baseURL: string?
+        userAgent: string?
+        ignoreHTTPSErrors: boolean?
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        failOnStatusCode: boolean?
+        clientCertificates:
+          type: array?
+          items:
+            type: object
+            properties:
+              origin: string
+              cert: binary?
+              key: binary?
+              passphrase: string?
+              pfx: binary?
+        maxRedirects: int?
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+            origin: string?
+            send:
+              type: enum?
+              literals:
+              - always
+              - unauthorized
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: NetworkCookie
+            origins:
+              type: array?
+              items: SetOriginStorage
+        tracesDir: string?
+
+      returns:
+        request: APIRequestContext
+
+DebugController:
+  type: interface
+
+  commands:
+    initialize:
+      internal: true
+      parameters:
+        codegenId: string
+        sdkLanguage: SDKLanguage
+
+    setReportStateChanged:
+      internal: true
+      parameters:
+        enabled: boolean
+
+    setRecorderMode:
+      internal: true
+      parameters:
+        mode:
+          type: enum
+          literals:
+            - inspecting
+            - recording
+            - none
+        testIdAttributeName: string?
+        generateAutoExpect: boolean?
+
+    highlight:
+      internal: true
+      parameters:
+        selector: string?
+        ariaTemplate: string?
+
+    hideHighlight:
+      internal: true
+
+    resume:
+      internal: true
+
+    kill:
+      internal: true
+
+  events:
+    inspectRequested:
+      parameters:
+        selector: string
+        locator: string
+        ariaSnapshot: string
+
+    setModeRequested:
+      parameters:
+        mode: string
+
+    stateChanged:
+      parameters:
+        pageCount: int
+
+    sourceChanged:
+      parameters:
+        text: string
+        header: string?
+        footer: string?
+        actions:
+          type: array?
+          items: string
+
+    paused:
+      parameters:
+        paused: boolean
+
+SocksSupport:
+  type: interface
+
+  commands:
+    socksConnected:
+      internal: true
+      parameters:
+        uid: string
+        host: string
+        port: int
+
+    socksFailed:
+      internal: true
+      parameters:
+        uid: string
+        errorCode: string
+
+    socksData:
+      internal: true
+      parameters:
+        uid: string
+        data: binary
+
+    socksError:
+      internal: true
+      parameters:
+        uid: string
+        error: string
+
+    socksEnd:
+      internal: true
+      parameters:
+        uid: string
+
+  events:
+    socksRequested:
+      parameters:
+        uid: string
+        host: string
+        port: int
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksClosed:
+      parameters:
+        uid: string
+
+JsonPipe:
+  type: interface
+
+  commands:
+    send:
+      internal: true
+      parameters:
+        message: json
+
+    close:
+      internal: true
+
+  events:
+
+    message:
+      parameters:
+        message: json
+
+    closed:
+      parameters:
+        reason: string?
+
+ExpectedTextValue:
+  type: object
+  properties:
+    string: string?
+    regexSource: string?
+    regexFlags: string?
+    matchSubstring: boolean?
+    ignoreCase: boolean?
+    normalizeWhiteSpace: boolean?
+
+SelectorEngine:
+  type: object
+  properties:
+    name: string
+    source: string
+    contentScript: boolean?
+
+
+FormField:
+  type: object
+  properties:
+    name: string
+    value: string?
+    file:
+      type: object?
+      properties:
+        name: string
+        mimeType: string?
+        buffer: binary
+
+LifecycleEvent:
+  type: enum
+  literals:
+  - load
+  - domcontentloaded
+  - networkidle
+  - commit
+
+ConsoleMessagesFilter:
+  type: enum
+  literals:
+  - all
+  - since-navigation
+
+RecorderSource:
+  type: object
+  properties:
+    isRecorded: boolean
+    id: string
+    label: string
+    text: string
+    language: string
+    highlight:
+      type: array
+      items:
+        type: object
+        properties:
+          line: int
+          type: string
+    revealLine: int?
+    group: string?
+
+IndexedDBDatabase:
+  type: object
+  properties:
+    name: string
+    version: int
+    stores:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          autoIncrement: boolean
+          keyPath: string?
+          keyPathArray:
+            type: array?
+            items: string
+          records:
+            type: array
+            items:
+              type: object
+              properties:
+                key: json?
+                keyEncoded: json?
+                value: json?
+                valueEncoded: json?
+          indexes:
+            type: array
+            items:
+              type: object
+              properties:
+                name: string
+                keyPath: string?
+                keyPathArray:
+                  type: array?
+                  items: string
+                multiEntry: boolean
+                unique: boolean
+
+SetOriginStorage:
+  type: object
+  properties:
+    origin: string
+    localStorage:
+      type: array
+      items: NameValue
+    indexedDB:
+      type: array?
+      items: IndexedDBDatabase
+
+OriginStorage:
+  type: object
+  properties:
+    origin: string
+    localStorage:
+      type: array
+      items: NameValue
+    indexedDB:
+      type: array?
+      items: IndexedDBDatabase
+
+RecordHarOptions:
+  type: object
+  properties:
+    content:
+      type: enum?
+      literals:
+      - embed
+      - attach
+      - omit
+    mode:
+      type: enum?
+      literals:
+      - full
+      - minimal
+    urlGlob: string?
+    urlRegexSource: string?
+    urlRegexFlags: string?
+    harPath: string?
+    resourcesDir: string?
+
+CDPSession:
+  type: interface
+
+  commands:
+
+    send:
+      title: Send CDP command
+      group: configuration
+      parameters:
+        method: string
+        params: json?
+      returns:
+        result: json
+
+    detach:
+      title: Detach CDP session
+      group: configuration
+
+  events:
+
+    event:
+      parameters:
+        method: string
+        params: json?
+
+    close:
+
+BindingCall:
+  type: interface
+
+  initializer:
+    frame: Frame
+    name: string
+    args:
+      type: array
+      items: SerializedValue
+
+  commands:
+
+    reject:
+      internal: true
+      parameters:
+        error: SerializedError
+
+    resolve:
+      internal: true
+      parameters:
+        result: SerializedArgument
+
+Debugger:
+  type: interface
+
+  extends: EventTarget
+
+  commands:
+
+    requestPause:
+      title: Pause on next call
+      group: configuration
+
+    resume:
+      title: Resume
+      group: configuration
+
+    next:
+      title: Step to next call
+      group: configuration
+
+    runTo:
+      title: Run to location
+      group: configuration
+      parameters:
+        location:
+          type: object
+          properties:
+            file: string
+            line: int?
+            column: int?
+
+  events:
+
+    pausedStateChanged:
+      parameters:
+        pausedDetails:
+          type: object?
+          properties:
+            location:
+              type: object
+              properties:
+                file: string
+                line: int?
+                column: int?
+            title: string
+            stack: string?
+
+Dialog:
+  type: interface
+
+  initializer:
+    page: Page?
+    type: string
+    message: string
+    defaultValue: string
+
+  commands:
+
+    accept:
+      title: Accept dialog
+      parameters:
+        promptText: string?
+
+    dismiss:
+      title: Dismiss dialog
