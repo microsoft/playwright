@@ -169,7 +169,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     await use({
       endpoint: `http://localhost:${port}`,
       start: async () => {
-        if (browserContext)
+        if (browserContext && browserContext.browser()?.isConnected())
           throw new Error('CDP server already exists');
         browserContext = await chromium.launchPersistentContext(testInfo.outputPath('cdp-user-data-dir'), {
           channel: mcpBrowser,
@@ -181,7 +181,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         return browserContext;
       }
     });
-    await browserContext?.close();
+    await browserContext?.close().catch(() => {});
   },
 
   mcpHeadless: async ({ headless }, use) => {

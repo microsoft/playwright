@@ -29,12 +29,16 @@ export class BrowserBackend implements ServerBackend {
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
   private _config: ContextConfig;
+  private _disconnected = false;
   readonly browserContext: playwright.BrowserContext;
 
   constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[]) {
     this._config = config;
     this._tools = tools;
     this.browserContext = browserContext;
+    const markDisconnected = () => { this._disconnected = true; };
+    this.browserContext.once('close', markDisconnected);
+    this.browserContext.browser()?.once('disconnected', markDisconnected);
   }
 
   async initialize(clientInfo: ClientInfo): Promise<void> {
@@ -50,7 +54,7 @@ export class BrowserBackend implements ServerBackend {
     await this._context?.dispose().catch(e => debug('pw:tools:error')(e));
   }
 
-  async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult> {
+  async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments'] & { _meta?: Record<string, any> } = {}, signal?: AbortSignal): Promise<mcpServer.CallToolResult & { isClose?: boolean }> {
     const json = !!rawArguments._meta?.json;
     const formatError = (message: string): mcpServer.CallToolResult => ({
       content: [{ type: 'text' as const, text: json ? JSON.stringify({ isError: true, error: message }, null, 2) : `### Error\n${message}` }],
@@ -66,7 +70,7 @@ export class BrowserBackend implements ServerBackend {
     const context = this._context!;
     const response = new Response(context, name, parsedArguments, { relativeTo: cwd, raw, json });
     context.setRunningTool(name);
-    let responseObject: mcpServer.CallToolResult;
+    let responseObject: mcpServer.CallToolResult & { isClose?: boolean };
     try {
       await tool.handle(context, parsedArguments, response, signal);
       for (const reason of context.drainPendingUnhandledRejections())
@@ -75,10 +79,12 @@ export class BrowserBackend implements ServerBackend {
       this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
       const messages = [String(error), ...context.drainPendingUnhandledRejections().map(formatRejectionReason)];
-      return formatError(messages.join('\n\n'));
+      responseObject = formatError(messages.join('\n\n'));
     } finally {
       context.setRunningTool(undefined);
     }
+    if (this._disconnected)
+      responseObject.isClose = true;
     return responseObject;
   }
 }
