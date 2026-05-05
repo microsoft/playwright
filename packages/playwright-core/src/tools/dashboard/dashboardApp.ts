@@ -280,7 +280,9 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
     const server = net.createServer();
     server.listen(socketPath, () => resolve(server));
     server.on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code !== 'EADDRINUSE')
+      const isInUse = err.code === 'EADDRINUSE'
+          || (process.platform === 'win32' && (err.code === 'EACCES' || err.code === 'EBUSY'));
+      if (!isInUse)
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write(JSON.stringify(options) + '\n');
