@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { buildAnnotatedImage } from './annotationImage';
+import { buildAnnotatedImage, saveAnnotationAsDownload } from './annotationImage';
+import { buildAnnotationZip } from './annotationZip';
 
 import type { Annotation } from './annotations';
 import type { DashboardChannel, DashboardChannelEvents, MouseButton, SessionStatus, SubmittedAnnotationFrame, Tab } from './dashboardChannel';
@@ -45,6 +46,7 @@ export type AnnotateSession = {
   initiator: 'cli' | 'user';
   frames: AnnotateFrame[];
   selectedFrameId: string | null;
+  feedback: string;
 };
 
 export type DashboardState = {
@@ -244,6 +246,13 @@ export class DashboardModel {
     this._emit({ annotateSession: { ...session, frames } });
   }
 
+  updateFeedback(feedback: string) {
+    const session = this.state.annotateSession;
+    if (!session)
+      return;
+    this._emit({ annotateSession: { ...session, feedback } });
+  }
+
   completeAnnotation() {
     void this._completeAnnotation();
   }
@@ -289,12 +298,10 @@ export class DashboardModel {
       });
     }
     if (session.initiator === 'cli') {
-      await this._client.submitAnnotation({ frames });
+      await this._client.submitAnnotation({ frames, feedback: session.feedback });
     } else {
-      const { buildAnnotationZip } = await import('./annotationZip');
-      const blob = await buildAnnotationZip(frames);
+      const blob = await buildAnnotationZip(frames, session.feedback);
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const { saveAnnotationAsDownload } = await import('./annotationImage');
       await saveAnnotationAsDownload(blob, `annotations-${stamp}.zip`);
     }
     this.cancelAnnotate();
@@ -346,14 +353,14 @@ export class DashboardModel {
       viewportHeight: frameData.viewportHeight,
       ariaSnapshot: frameData.ariaSnapshot,
       sessionTitle: frameData.sessionTitle,
-      tabTitle: frameData.tabTitle,
-      url: frameData.url,
+      tabTitle: this.state.tabs?.find(t => t.selected)?.title ?? '',
+      url: this.state.tabs?.find(t => t.selected)?.url ?? '',
       annotations: [],
     };
     const existing = this.state.annotateSession;
     const session: AnnotateSession = existing
       ? { ...existing, frames: [...existing.frames, frame], selectedFrameId: frame.id }
-      : { initiator: initiator ?? 'user', frames: [frame], selectedFrameId: frame.id };
+      : { initiator: initiator ?? 'user', frames: [frame], selectedFrameId: frame.id, feedback: '' };
     this._emit({ annotateSession: session, pendingCapture: false, mode: 'annotate' });
   }
 
@@ -430,15 +437,7 @@ async function renderFrameToBase64Png(frame: AnnotateFrame): Promise<string | un
   if (!blob)
     return undefined;
   const buf = await blob.arrayBuffer();
-  return uint8ToBase64(new Uint8Array(buf));
-}
-
-function uint8ToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk)
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk) as unknown as number[]);
-  return btoa(binary);
+  return (new Uint8Array(buf) as any).toBase64() as string;
 }
 
 function base64ToBlob(base64: string, mime: string): Blob {

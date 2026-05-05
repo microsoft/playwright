@@ -263,6 +263,7 @@
 
 .annotate-sidebar-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 8px;
   display: flex;
@@ -272,6 +273,7 @@
 
 .annotate-sidebar-thumb {
   position: relative;
+  flex-shrink: 0;
   border: 1px solid var(--color-border-muted);
   border-radius: 6px;
   background: var(--color-canvas-default);
@@ -354,8 +356,50 @@
   opacity: 1;
 }
 
+/* auto-grow textarea: the wrapper mirrors content in ::after so the grid row
+   expands to fit, and the textarea fills the same cell */
+.annotate-sidebar-feedback-wrap {
+  display: grid;
+  margin: 8px 8px 4px;
+  flex-shrink: 0;
+}
+
+.annotate-sidebar-feedback-wrap::after {
+  content: attr(data-value) ' ';
+  white-space: pre-wrap;
+  word-break: break-word;
+  visibility: hidden;
+  /* same box-model as the textarea */
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  min-height: 56px;
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+.annotate-sidebar-feedback {
+  grid-area: 1 / 1 / 2 / 2;
+  padding: 6px 8px;
+  background: var(--vscode-input-background, #1e1e1e);
+  color: var(--vscode-input-foreground, #cccccc);
+  border: 1px solid var(--color-border-muted);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: none;
+  min-height: 56px;
+  overflow: hidden;
+  outline: none;
+}
+
+.annotate-sidebar-feedback:focus {
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
 .annotate-sidebar-submit {
-  margin: 8px;
+  margin: 4px 8px 8px;
   padding: 8px 12px;
   background: var(--color-accent-fg, #2f81f7);
   color: white;
@@ -364,6 +408,7 @@
   cursor: pointer;
   font-weight: 500;
   font-size: 13px;
+  flex-shrink: 0;
 }
 
 .annotate-sidebar-submit:hover:not(:disabled) {

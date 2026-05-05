@@ -26,7 +26,6 @@ import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
 import { minimist } from '../cli-client/minimist';
-import { saveOutputFile } from '../trace/traceUtils';
 import { DashboardConnection } from './dashboardController';
 import { RegistrySessionProvider } from './registrySessionProvider';
 import { IdentitySessionProvider } from './identitySessionProvider';
@@ -57,10 +56,10 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   let pendingAnnotate = false;
   const waitingSockets = new Set<net.Socket>();
 
-  const submitAnnotation = (frames: SubmittedAnnotationFrame[]) => {
+  const submitAnnotation = (frames: SubmittedAnnotationFrame[], feedback: string) => {
     if (waitingSockets.size === 0)
       return;
-    const payload = JSON.stringify({ frames });
+    const payload = JSON.stringify({ frames, feedback });
     for (const socket of waitingSockets) {
       socket.write(payload);
       socket.end();
@@ -429,39 +428,8 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   const text = Buffer.concat(chunks).toString();
   if (!text)
     return;
-  if (options.json) {
-    // eslint-disable-next-line no-console
-    console.log(text);
-    return;
-  }
-  const { frames } = JSON.parse(text) as { frames: SubmittedAnnotationFrame[] };
-  if (!frames || frames.length === 0)
-    return;
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const yamlChunks: string[] = [];
-  for (let i = 0; i < frames.length; i++) {
-    const frame = frames[i];
-    const idx = i + 1;
-    const session = frame.sessionTitle || 'session';
-    const tab = frame.tabTitle || 'tab';
-    // eslint-disable-next-line no-console
-    console.log(`screenshot ${idx}: ${session} / ${tab} @ ${frame.url} (${frame.viewportWidth}x${frame.viewportHeight})`);
-    for (const a of frame.annotations) {
-      // eslint-disable-next-line no-console
-      console.log(`  { x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
-    }
-    if (frame.data) {
-      const filePath = await saveOutputFile(`annotations-${timestamp}-${idx}.png`, Buffer.from(frame.data, 'base64'));
-      // eslint-disable-next-line no-console
-      console.log(`  image: ${path.relative(process.cwd(), filePath)}`);
-    }
-    yamlChunks.push(`--- # screenshot ${idx}: ${session} / ${tab} @ ${frame.url} (${frame.viewportWidth}x${frame.viewportHeight})\n${frame.ariaSnapshot ?? ''}`);
-  }
-  if (yamlChunks.length) {
-    const filePath = await saveOutputFile(`annotations-${timestamp}.yaml`, yamlChunks.join('\n'));
-    // eslint-disable-next-line no-console
-    console.log(`snapshot: ${path.relative(process.cwd(), filePath)}`);
-  }
+  // eslint-disable-next-line no-console
+  console.log(text);
 }
 
 function selfDestructOnParentGone() {

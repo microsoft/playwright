@@ -30,10 +30,12 @@ function base64ToUint8(b64: string): Uint8Array {
   return out;
 }
 
-export async function buildAnnotationZip(frames: SubmittedAnnotationFrame[]): Promise<Blob> {
+export async function buildAnnotationZip(frames: SubmittedAnnotationFrame[], feedback: string): Promise<Blob> {
   zipjs.configure({ useWebWorkers: false } as any);
   const writer = new zipjs.ZipWriter(new zipjs.BlobWriter('application/zip'));
   const yamlChunks: string[] = [];
+  if (feedback)
+    yamlChunks.push(`# feedback: ${feedback}\n`);
   for (let i = 0; i < frames.length; i++) {
     const idx = i + 1;
     const frame = frames[i];

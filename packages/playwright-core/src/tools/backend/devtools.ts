@@ -157,12 +157,14 @@ const annotate = defineTabTool({
       response.addTextResult('No annotations were submitted.');
       return;
     }
-    const { frames } = JSON.parse(text) as { frames: SubmittedAnnotationFrame[] };
+    const { frames, feedback } = JSON.parse(text) as { frames: SubmittedAnnotationFrame[]; feedback: string };
     if (!frames || frames.length === 0) {
       response.addTextResult('No annotations were submitted.');
       return;
     }
     const date = new Date();
+    if (feedback)
+      response.addTextResult(feedback);
     for (let i = 0; i < frames.length; i++) {
       const frame = frames[i];
       const idx = i + 1;
