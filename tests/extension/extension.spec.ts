@@ -58,8 +58,7 @@ test(`connect.html protocolVersion search param matches fixture option`, async (
   expect(url.searchParams.get('protocolVersion')).toBe(String(protocolVersion));
 });
 
-test(`protocolVersion defaults to 1`, async ({ startExtensionClient, server, protocolVersion }) => {
-  // test.fail(true, 'Server default is currently 2; this test guards the expected default of 1');
+test(`protocolVersion defaults to 2`, async ({ startExtensionClient, server, protocolVersion }) => {
   const saved = process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
   delete process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
 
@@ -76,7 +75,7 @@ test(`protocolVersion defaults to 1`, async ({ startExtensionClient, server, pro
 
   const selectorPage = await confirmationPagePromise;
   const url = new URL(selectorPage.url());
-  expect(url.searchParams.get('protocolVersion')).toBe('1');
+  expect(url.searchParams.get('protocolVersion')).toBe('2');
 
   process.env.PLAYWRIGHT_EXTENSION_PROTOCOL = saved;
 });

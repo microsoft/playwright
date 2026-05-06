@@ -21,7 +21,7 @@ export const LATEST_VERSION = 2;
 
 // The protocol version used by default when PLAYWRIGHT_EXTENSION_PROTOCOL is
 // not set. May lag behind LATEST_VERSION while a new version is rolling out.
-export const DEFAULT_VERSION = 1;
+export const DEFAULT_VERSION = 2;
 
 // Structural mirrors of @types/chrome shapes used over the wire. The extension
 // imports the real chrome.* types and they are structurally compatible.

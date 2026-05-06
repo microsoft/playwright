@@ -22,8 +22,8 @@
  * - /extension/guid - Extension connection
  *
  * Protocol version is controlled by PLAYWRIGHT_EXTENSION_PROTOCOL env variable:
- * - v1 (default): single-tab, extension manages debugger attachment
- * - v2: multi-tab, relay manages debugger via chrome.* APIs
+ * - v1: single-tab, extension manages debugger attachment
+ * - v2 (default): multi-tab, relay manages debugger via chrome.* APIs
  */
 
 import { spawn } from 'child_process';
