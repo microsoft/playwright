@@ -122,9 +122,21 @@ export class SnapshotRenderer {
         const hasUnsafeHttpEquiv = isMeta && attrs.some(a => a[0].toLowerCase() === 'http-equiv' && !kAllowedMetaHttpEquivs.has(a[1].trim().toLowerCase()));
         for (const [attr, value] of attrs) {
           let attrName = attr;
+          // Strip event handler attributes. The capture side already empties these,
+          // but a crafted trace file could include live handlers (e.g. onerror, onclick).
+          // escapeHTMLAttribute does not help because payloads like "alert(1)" contain
+          // no characters that need escaping.
+          if (attr.toLowerCase().startsWith('on'))
+            continue;
           if (isFrame && attr.toLowerCase() === 'src') {
             // Never set relative URLs as <iframe src> - they start fetching frames immediately.
             attrName = '__playwright_src__';
+          }
+          if (isFrame && (attr.toLowerCase() === 'srcdoc' || attr.toLowerCase() === 'sandbox')) {
+            // Neutralize srcdoc (could contain arbitrary HTML/script that executes
+            // automatically) and sandbox (could widen permissions on an inner iframe).
+            // The capture side already skips these, but a crafted trace could include them.
+            attrName = '__playwright_' + attr.toLowerCase() + '__';
           }
           if (isImg && attr === kCurrentSrcAttribute) {
             // Render currentSrc for images, so that trace viewer does not accidentally
