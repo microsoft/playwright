@@ -99,6 +99,10 @@ export class SnapshotRenderer {
         }
       } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
         const [name, nodeAttrs, ...children] = n;
+        // Filter SCRIPT elements. The capture side already strips these, but a
+        // crafted trace file could include them to achieve XSS.
+        if (name.toUpperCase() === 'SCRIPT')
+          return;
         // Element node.
         // Note that <noscript> will not be rendered by default in the trace viewer, because
         // JS is enabled. So rename it to <x-noscript>.
@@ -156,7 +160,10 @@ export class SnapshotRenderer {
     const snapshot = this._snapshot;
     const html = this._htmlCache.getOrCompute(this, () => {
       visit(snapshot.html, this._index, undefined, undefined);
-      const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
+      // Sanitize doctype to prevent injection from crafted trace files.
+      // Valid doctype names (from document.doctype.name) only contain alphanumeric characters.
+      const safeDoctype = snapshot.doctype?.replace(/[^a-zA-Z0-9]/g, '');
+      const prefix = safeDoctype ? `<!DOCTYPE ${safeDoctype}>` : '';
       const html = prefix + [
         // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
         '<style>*,*::before,*::after { visibility: hidden }</style>',
