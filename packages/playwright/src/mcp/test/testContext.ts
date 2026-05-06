@@ -21,7 +21,7 @@ import path from 'path';
 import { tools } from 'playwright-core/lib/coreBundle';
 import debug from 'debug';
 import { noColors } from '@isomorphic/colors';
-import { ManualPromise } from '@isomorphic/manualPromise';
+import { ManualPromise, signalToPromise } from '@isomorphic/manualPromise';
 import { escapeRegExp } from '@isomorphic/stringUtils';
 import { toPosixPath } from '@utils/fileUtils';
 
@@ -107,12 +107,9 @@ export class TestContext {
   }
 
   private async _enqueue<T>(fn: () => Promise<T>): Promise<T> {
-    let result!: T;
-    this._testOpQueue = this._testOpQueue.then(async () => {
-      result = await fn();
-    });
-    await this._testOpQueue;
-    return result;
+    const next = this._testOpQueue.then(fn);
+    this._testOpQueue = next.then(() => {});
+    return await next;
   }
 
   existingTestRunner(): testRunner.TestRunner | undefined {
@@ -236,13 +233,8 @@ export class TestContext {
       }
     };
 
-    const abortPromise: Promise<'interrupted'> = signal
-      ? new Promise(resolve => {
-        if (signal.aborted)
-          resolve('interrupted');
-        else
-          signal.addEventListener('abort', () => resolve('interrupted'), { once: true });
-      })
+    const abortPromise = signal
+      ? signalToPromise(signal).promise.then(() => 'interrupted' as const)
       : new Promise<never>(() => {});
 
     try {
