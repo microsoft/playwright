@@ -21,7 +21,7 @@ import * as React from 'react';
 import type { Boundaries } from './geometry';
 import { FilmStrip } from './filmStrip';
 import type { FilmStripPreviewPoint } from './filmStrip';
-import type { ActionTraceEventInContext, TraceModel } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext, TraceModel } from '@tracing/reader/traceModel';
 import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';

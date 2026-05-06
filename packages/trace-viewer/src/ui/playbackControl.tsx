@@ -16,7 +16,7 @@
 
 import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext } from '@tracing/reader/traceModel';
 import type { Boundaries } from './geometry';
 import './playbackControl.css';
 

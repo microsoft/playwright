@@ -19,7 +19,7 @@ import path from 'path';
 import { resolveWithinRoot } from '@utils/fileUtils';
 import { ZipFile } from '@utils/zipFile';
 
-import type { TraceLoaderBackend } from '@isomorphic/trace/traceLoader';
+import type { TraceLoaderBackend } from '@tracing/reader/traceLoader';
 
 export class DirTraceLoaderBackend implements TraceLoaderBackend {
   private _dir: string;

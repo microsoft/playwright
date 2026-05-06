@@ -30,7 +30,7 @@ import { filteredStackTrace } from '../util';
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
 import type { SerializedError, StackFrame } from '@protocol/channels';
-import type * as trace from '@trace/trace';
+import type * as trace from '@tracing/format/trace';
 import type EventEmitter from 'events';
 
 export type Attachment = TestInfo['attachments'][0];

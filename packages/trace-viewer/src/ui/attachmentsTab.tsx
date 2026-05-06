@@ -25,7 +25,7 @@ import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
 import { useTraceModel } from './traceModelContext';
 
-import type { Attachment, TraceModel } from '@isomorphic/trace/traceModel';
+import type { Attachment, TraceModel } from '@tracing/reader/traceModel';
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;

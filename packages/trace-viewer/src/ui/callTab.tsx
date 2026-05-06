@@ -15,7 +15,7 @@
  */
 
 import type { SerializedValue } from '@protocol/channels';
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent } from '@tracing/format/trace';
 import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
@@ -24,7 +24,7 @@ import { CopyToClipboard } from './copyToClipboard';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext } from '@tracing/reader/traceModel';
 import { renderTitleForCall } from './actionList';
 
 export const CallTab: React.FunctionComponent<{

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext } from '@tracing/reader/traceModel';
 import * as React from 'react';
 import { ListView } from '@web/components/listView';
 import { PlaceholderPanel } from './placeholderPanel';

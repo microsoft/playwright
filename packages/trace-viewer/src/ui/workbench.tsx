@@ -21,7 +21,7 @@ import { CallTab } from './callTab';
 import { LogTab } from './logTab';
 import { ErrorsTab, useErrorsTabModel } from './errorsTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
-import type { TraceModel, SourceLocation, ActionTraceEventInContext, SourceModel } from '@isomorphic/trace/traceModel';
+import type { TraceModel, SourceLocation, ActionTraceEventInContext, SourceModel } from '@tracing/reader/traceModel';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTabsView } from './snapshotTab';
 import { SourceTab } from './sourceTab';

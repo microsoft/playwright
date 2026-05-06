@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
-import { TraceLoader } from '@isomorphic/trace/traceLoader';
-import { TraceVersionError } from '@isomorphic/trace/traceModernizer';
+import { SnapshotServer } from '@tracing/reader/snapshotServer';
+import { TraceLoader } from '@tracing/reader/traceLoader';
+import { TraceVersionError } from '@tracing/reader/traceModernizer';
 
 import { Progress, splitProgress } from './progress';
 import { FetchTraceLoaderBackend, ZipTraceLoaderBackend } from './traceLoaderBackends';

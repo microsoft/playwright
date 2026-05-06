@@ -20,11 +20,11 @@ import './networkTab.css';
 import { NetworkResourceDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@isomorphic/formatUtils';
 import { PlaceholderPanel } from './placeholderPanel';
-import { context, type ResourceEntry } from '@isomorphic/trace/traceModel';
-import type { TraceModel } from '@isomorphic/trace/traceModel';
+import { context, type ResourceEntry } from '@tracing/reader/traceModel';
+import type { TraceModel } from '@tracing/reader/traceModel';
 import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
-import type { ContextEntry } from '@isomorphic/trace/entries';
+import type { ContextEntry } from '@tracing/reader/entries';
 import { NetworkFilters, defaultFilterState, type FilterState, type ResourceType } from './networkFilters';
 import type { Language } from '@isomorphic/locatorGenerators';
 

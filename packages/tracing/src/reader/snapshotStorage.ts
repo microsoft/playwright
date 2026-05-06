@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { LRUCache } from '@isomorphic/lruCache';
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
-import { LRUCache } from '../lruCache';
 
-import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
+import type { FrameSnapshot, ResourceSnapshot } from '@tracing/format/snapshot';
 import type { PageEntry } from './entries';
 
 

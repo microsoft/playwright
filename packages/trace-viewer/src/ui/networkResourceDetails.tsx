@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ResourceSnapshot } from '@trace/snapshot';
+import type { ResourceSnapshot } from '@tracing/format/snapshot';
 import * as React from 'react';
 import './networkResourceDetails.css';
 import { TabbedPane } from '@web/components/tabbedPane';
@@ -27,7 +27,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { isJsonMimeType, isXmlMimeType } from '@isomorphic/mimeType';
 import { useAsyncMemo, useSetting } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
-import type { Entry } from '@trace/har';
+import type { Entry } from '@tracing/format/har';
 import { useTraceModel } from './traceModelContext';
 import { Expandable } from '@web/components/expandable';
 import { Toolbar } from '@web/components/toolbar';

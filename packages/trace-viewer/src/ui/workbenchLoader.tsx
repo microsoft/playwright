@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import { TraceModel } from '@isomorphic/trace/traceModel';
+import { TraceModel } from '@tracing/reader/traceModel';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';

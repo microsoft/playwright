@@ -17,7 +17,7 @@
 import { msToString } from '@isomorphic/formatUtils';
 import { isHttpUrl } from '@isomorphic/urlMatch';
 import * as React from 'react';
-import type { TraceModel } from '@isomorphic/trace/traceModel';
+import type { TraceModel } from '@tracing/reader/traceModel';
 import './callTab.css';
 
 export const MetadataView: React.FunctionComponent<{

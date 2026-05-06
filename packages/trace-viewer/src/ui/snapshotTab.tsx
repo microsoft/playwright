@@ -16,16 +16,16 @@
 
 import './snapshotTab.css';
 import * as React from 'react';
-import type { ActionTraceEvent } from '@trace/trace';
-import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trace/traceModel';
-import type { TraceModel } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEvent } from '@tracing/format/trace';
+import { nextActionByStartTime, previousActionByEndTime } from '@tracing/reader/traceModel';
+import type { TraceModel } from '@tracing/reader/traceModel';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import { asLocator } from '@isomorphic/locatorGenerators';
-import { blankSnapshotUrl } from '@isomorphic/trace/snapshotRenderer';
+import { blankSnapshotUrl } from '@tracing/reader/snapshotRenderer';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';

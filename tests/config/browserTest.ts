@@ -25,7 +25,7 @@ import { createSkipTestPredicate } from '../bidi/expectationUtil';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { RemoteServerOptions, PlaywrightServer } from './remoteServer';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
-import type { Log } from '../../packages/trace/src/har';
+import type { Log } from '../../packages/tracing/src/format/har';
 import type { TestInfo } from '@playwright/test';
 
 const { removeFolders, hostPlatform } = utils;

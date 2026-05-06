@@ -20,7 +20,7 @@ import fs from 'fs';
 import path from 'path';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
-import type { Log } from '../../packages/trace/src/har';
+import type { Log } from '../../packages/tracing/src/format/har';
 import { parseHar } from '../config/utils';
 import { TestServer } from '../config/testserver';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';

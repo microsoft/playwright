@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import type { Entry as ResourceSnapshot } from '@trace/har';
+
+import type { Entry as ResourceSnapshot } from '../har';
 
 type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 type Point = { x: number, y: number };
@@ -94,14 +95,14 @@ type FrameSnapshot = {
   isMainFrame: boolean,
 };
 
-type BrowserContextEventOptions = {
+export type BrowserContextEventOptions = {
   viewport?: Size,
   deviceScaleFactor?: number,
   isMobile?: boolean,
   userAgent?: string,
 };
 
-type ContextCreatedTraceEvent = {
+export type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
   browserName: string,
@@ -114,7 +115,7 @@ type ContextCreatedTraceEvent = {
   testIdAttributeName?: string,
 };
 
-type ScreencastFrameTraceEvent = {
+export type ScreencastFrameTraceEvent = {
   type: 'screencast-frame',
   pageId: string,
   sha1: string,
@@ -123,7 +124,7 @@ type ScreencastFrameTraceEvent = {
   timestamp: number,
 };
 
-type BeforeActionTraceEvent = {
+export type BeforeActionTraceEvent = {
   type: 'before',
   callId: string;
   startTime: number;
@@ -138,14 +139,14 @@ type BeforeActionTraceEvent = {
   parentId?: string;
 };
 
-type InputActionTraceEvent = {
+export type InputActionTraceEvent = {
   type: 'input',
   callId: string;
   inputSnapshot?: string;
   point?: Point;
 };
 
-type AfterActionTraceEventAttachment = {
+export type AfterActionTraceEventAttachment = {
   name: string;
   contentType: string;
   path?: string;
@@ -153,7 +154,7 @@ type AfterActionTraceEventAttachment = {
   base64?: string;
 };
 
-type AfterActionTraceEvent = {
+export type AfterActionTraceEvent = {
   type: 'after',
   callId: string;
   endTime: number;
@@ -164,7 +165,7 @@ type AfterActionTraceEvent = {
   result?: any;
 };
 
-type EventTraceEvent = {
+export type EventTraceEvent = {
   type: 'event',
   time: number;
   class: string;
@@ -173,38 +174,37 @@ type EventTraceEvent = {
   pageId?: string;
 };
 
-type ConsoleMessageTraceEvent = {
-  type: 'object';
-  class: string;
-  initializer: {
-    type: string,
-    text: string,
-    location: {
-      url: string,
-      lineNumber: number,
-      columnNumber: number,
-    },
-  };
-  guid: string;
+export type ConsoleMessageTraceEvent = {
+  type: 'console';
+  time: number;
+  pageId?: string;
+  messageType: string,
+  text: string,
+  args?: { preview: string, value: any }[],
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
 };
 
-type ResourceSnapshotTraceEvent = {
+export type ResourceSnapshotTraceEvent = {
   type: 'resource-snapshot',
   snapshot: ResourceSnapshot,
 };
 
-type FrameSnapshotTraceEvent = {
+export type FrameSnapshotTraceEvent = {
   type: 'frame-snapshot',
   snapshot: FrameSnapshot,
 };
 
-type ActionTraceEvent = {
+export type ActionTraceEvent = {
   type: 'action',
 } & Omit<BeforeActionTraceEvent, 'type'>
   & Omit<AfterActionTraceEvent, 'type'>
   & Omit<InputActionTraceEvent, 'type'>;
 
-type StdioTraceEvent = {
+export type StdioTraceEvent = {
   type: 'stdout' | 'stderr';
   timestamp: number;
   text?: string;

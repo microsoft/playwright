@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Language } from '../locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
+import type { Language } from '@isomorphic/locatorGenerators';
+import type { ResourceSnapshot } from '@tracing/format/snapshot';
+import type * as trace from '@tracing/format/trace';
 
 // *Entry structures are used to pass the trace between the sw and the page.
 

@@ -43,7 +43,7 @@ import type { HeadersArray, ProxySettings } from './types';
 import type { HTTPCredentials } from '../../types/types';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as channels from '@protocol/channels';
-import type * as har from '@trace/har';
+import type * as har from '@tracing/format/har';
 import type { LookupAddress } from 'dns';
 import type { Readable, TransformCallback } from 'stream';
 

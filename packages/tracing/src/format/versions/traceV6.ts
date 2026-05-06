@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Entry as ResourceSnapshot } from '@trace/har';
+import type { Entry as ResourceSnapshot } from '../har';
 
 type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 type Point = { x: number, y: number };
@@ -27,8 +27,6 @@ type StackFrame = {
   function?: string,
 };
 
-type Binary = Buffer;
-
 type SerializedValue = {
   n?: number,
   b?: boolean,
@@ -37,15 +35,8 @@ type SerializedValue = {
   d?: string,
   u?: string,
   bi?: string,
-  ta?: {
-    b: Binary,
-    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
-  },
-  e?: {
-    m: string,
-    n: string,
-    s: string,
-  },
+  m?: SerializedValue,
+  se?: SerializedValue,
   r?: {
     p: string,
     f: string,
@@ -69,18 +60,18 @@ type SerializedError = {
   value?: SerializedValue,
 };
 
-// Text node.
-type TextNodeSnapshot = string;
-// Subtree reference, "x snapshots ago, node #y". Could point to a text node.
-// Only nodes that are not references are counted, starting from zero, using post-order traversal.
-type SubtreeReferenceSnapshot = [ [number, number] ];
-// Node name, and optional attributes and child nodes.
-type NodeNameAttributesChildNodesSnapshot = [ string ] | [ string, Record<string, string>, ...NodeSnapshot[] ];
-
 type NodeSnapshot =
-  TextNodeSnapshot |
-  SubtreeReferenceSnapshot |
-  NodeNameAttributesChildNodesSnapshot;
+  // Text node.
+  string |
+  // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
+  // Only nodes that are not references are counted, starting from zero, using post-order traversal.
+  [ [number, number] ] |
+  // Just node name.
+  [ string ] |
+  // Node name, attributes, child nodes.
+  // Unfortunately, we cannot make this type definition recursive, therefore "any".
+  [ string, { [attr: string]: string }, ...any ];
+
 
 type ResourceOverride = {
   url: string,
@@ -95,7 +86,6 @@ type FrameSnapshot = {
   frameId: string,
   frameUrl: string,
   timestamp: number,
-  wallTime?: number,
   collectionTime: number,
   doctype?: string,
   html: NodeSnapshot,
@@ -104,8 +94,7 @@ type FrameSnapshot = {
   isMainFrame: boolean,
 };
 
-type BrowserContextEventOptions = {
-  baseURL?: string,
+export type BrowserContextEventOptions = {
   viewport?: Size,
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -115,17 +104,14 @@ type BrowserContextEventOptions = {
 export type ContextCreatedTraceEvent = {
   version: number,
   type: 'context-options',
-  origin: 'testRunner' | 'library',
   browserName: string,
   channel?: string,
   platform: string,
   wallTime: number,
-  monotonicTime: number,
   title?: string,
   options: BrowserContextEventOptions,
   sdkLanguage?: Language,
   testIdAttributeName?: string,
-  contextId?: string,
 };
 
 export type ScreencastFrameTraceEvent = {
@@ -135,18 +121,17 @@ export type ScreencastFrameTraceEvent = {
   width: number,
   height: number,
   timestamp: number,
-  frameSwapWallTime?: number,
 };
 
 export type BeforeActionTraceEvent = {
   type: 'before',
   callId: string;
   startTime: number;
-  title?: string;
+  apiName: string;
   class: string;
   method: string;
   params: Record<string, any>;
-  stepId?: string;
+  wallTime: number;
   beforeSnapshot?: string;
   stack?: StackFrame[];
   pageId?: string;
@@ -168,11 +153,6 @@ export type AfterActionTraceEventAttachment = {
   base64?: string;
 };
 
-export type AfterActionTraceEventAnnotation = {
-  type: string,
-  description?: string
-};
-
 export type AfterActionTraceEvent = {
   type: 'after',
   callId: string;
@@ -180,7 +160,6 @@ export type AfterActionTraceEvent = {
   afterSnapshot?: string;
   error?: SerializedError['error'];
   attachments?: AfterActionTraceEventAttachment[];
-  annotations?: AfterActionTraceEventAnnotation[];
   result?: any;
   point?: Point;
 };

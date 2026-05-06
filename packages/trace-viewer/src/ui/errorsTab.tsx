@@ -16,7 +16,7 @@
 
 import { ErrorMessage } from '@web/components/errorMessage';
 import * as React from 'react';
-import type { TraceModel, ErrorDescription } from '@isomorphic/trace/traceModel';
+import type { TraceModel, ErrorDescription } from '@tracing/reader/traceModel';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';

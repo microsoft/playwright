@@ -17,13 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import { TraceModel, buildActionTree } from '@isomorphic/trace/traceModel';
-import { TraceLoader } from '@isomorphic/trace/traceLoader';
+import { TraceModel, buildActionTree } from '@tracing/reader/traceModel';
+import { TraceLoader } from '@tracing/reader/traceLoader';
 import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { resolveWithinRoot } from '@utils/fileUtils';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
-import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext } from '@tracing/reader/traceModel';
 
 const traceDir = path.join('.playwright-cli', 'trace');
 const cliOutputDir = '.playwright-cli';

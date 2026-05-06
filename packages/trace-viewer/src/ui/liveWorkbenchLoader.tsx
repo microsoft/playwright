@@ -15,11 +15,11 @@
 */
 
 import * as React from 'react';
-import { TraceModel } from '@isomorphic/trace/traceModel';
+import { TraceModel } from '@tracing/reader/traceModel';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 
-import type { ContextEntry } from '@isomorphic/trace/entries';
+import type { ContextEntry } from '@tracing/reader/entries';
 
 export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson }) => {
   const [model, setModel] = React.useState<TraceModel | undefined>(undefined);

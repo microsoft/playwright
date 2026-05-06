@@ -21,14 +21,14 @@ import path from 'path';
 import * as yauzl from 'yauzl';
 import * as yazl from 'yazl';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { serializeClientSideCallMetadata } from '@isomorphic/trace/traceUtils';
+import { serializeClientSideCallMetadata } from '@tracing/reader/traceUtils';
 import { assert } from '@isomorphic/assert';
 import { calculateSha1 } from '@utils/crypto';
 import { ZipFile } from '@utils/zipFile';
 import { removeFolders } from '@utils/fileUtils';
 import { HarBackend } from './harBackend';
 import type * as channels from '@protocol/channels';
-import type * as har from '@trace/har';
+import type * as har from '@tracing/format/har';
 import type EventEmitter from 'events';
 import type { Progress } from '@protocol/progress';
 

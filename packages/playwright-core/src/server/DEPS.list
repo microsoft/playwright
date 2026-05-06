@@ -1,5 +1,6 @@
 [*]
 @isomorphic/**
+@tracing/**
 @utils/**
 ../generated/
 ../package.ts

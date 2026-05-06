@@ -25,7 +25,7 @@ import '@web/third_party/vscode/codicon.css';
 import { msToString } from '@isomorphic/formatUtils';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
-import type { SourceLocation } from '@isomorphic/trace/traceModel';
+import type { SourceLocation } from '@tracing/reader/traceModel';
 import { testStatusIcon } from './testUtils';
 import './uiModeTestListView.css';
 import type { TestServerConnection } from '@testIsomorphic/testServerConnection';

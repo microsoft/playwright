@@ -35,7 +35,7 @@ import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
 import type { Page } from '../page';
 import type { Worker } from '../page';
 import type { HeadersArray, LifecycleEvent } from '../types';
-import type * as har from '@trace/har';
+import type * as har from '@tracing/format/har';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 

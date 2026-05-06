@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import * as React from 'react';
 import './consoleTab.css';
-import type { TraceModel } from '@isomorphic/trace/traceModel';
+import type { TraceModel } from '@tracing/reader/traceModel';
 import { ListView } from '@web/components/listView';
 import type { Boundaries } from './geometry';
 import { clsx } from '@web/uiUtils';

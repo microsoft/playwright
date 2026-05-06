@@ -22,7 +22,7 @@ import { isPathInside } from '@utils/fileUtils';
 import { ZipFile } from '@utils/zipFile';
 
 import type { HeadersArray } from '@isomorphic/types';
-import type * as har from '@trace/har';
+import type * as har from '@tracing/format/har';
 
 const redirectStatus = [301, 302, 303, 307, 308];
 

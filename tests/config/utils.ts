@@ -20,7 +20,7 @@ import { utils, iso } from '../../packages/playwright-core/lib/coreBundle';
 import type { iso as isoType } from '../../packages/playwright-core/lib/coreBundle';
 import type { Locator, Frame, Page } from 'playwright-core';
 import type { StackFrame } from '../../packages/protocol/src/channels';
-import type { ActionTraceEvent, TraceEvent } from '@trace/trace';
+import type { ActionTraceEvent, TraceEvent } from '@tracing/format/trace';
 
 const { TraceLoader, TraceModel } = iso;
 type TraceModel = InstanceType<typeof TraceModel>;

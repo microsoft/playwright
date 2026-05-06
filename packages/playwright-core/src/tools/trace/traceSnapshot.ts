@@ -16,10 +16,10 @@
 
 /* eslint-disable no-console */
 
-import { TraceLoader } from '@isomorphic/trace/traceLoader';
+import { TraceLoader } from '@tracing/reader/traceLoader';
 import { gracefullyCloseAll } from '@utils/processLauncher';
 import { HttpServer } from '@utils/httpServer';
-import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
+import { SnapshotServer } from '@tracing/reader/snapshotServer';
 import { BrowserBackend } from '../backend/browserBackend';
 import { browserTools } from '../backend/tools';
 import { playwright } from '../../inprocess';
@@ -28,7 +28,7 @@ import { minimist } from '../cli-client/minimist';
 import { commands } from '../cli-daemon/commands';
 import { loadTrace } from './traceUtils';
 
-import type { SnapshotStorage } from '@isomorphic/trace/snapshotStorage';
+import type { SnapshotStorage } from '@tracing/reader/snapshotStorage';
 
 export async function traceSnapshot(actionId: string, options: { name?: string, serve?: boolean, browserArgs?: string[] }): Promise<void> {
   const trace = await loadTrace();

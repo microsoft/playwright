@@ -1,6 +1,7 @@
 [*]
 ../../package.ts
 @isomorphic/**
+@tracing/**
 @utils/**
 
 [traceSnapshot.ts]

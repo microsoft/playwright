@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type * as trace from '@trace/trace';
-import type * as traceV3 from './versions/traceV3';
-import type * as traceV4 from './versions/traceV4';
-import type * as traceV5 from './versions/traceV5';
-import type * as traceV6 from './versions/traceV6';
-import type * as traceV7 from './versions/traceV7';
-import type * as traceV8 from './versions/traceV8';
+import type * as trace from '@tracing/format/trace';
+import type * as traceV3 from '@tracing/format/versions/traceV3';
+import type * as traceV4 from '@tracing/format/versions/traceV4';
+import type * as traceV5 from '@tracing/format/versions/traceV5';
+import type * as traceV6 from '@tracing/format/versions/traceV6';
+import type * as traceV7 from '@tracing/format/versions/traceV7';
+import type * as traceV8 from '@tracing/format/versions/traceV8';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 

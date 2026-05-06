@@ -15,9 +15,9 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { SnapshotRenderer } from '../../packages/isomorphic/trace/snapshotRenderer';
+import { SnapshotRenderer } from '../../packages/tracing/src/reader/snapshotRenderer';
 import { LRUCache } from '../../packages/isomorphic/lruCache';
-import type { FrameSnapshot } from '../../packages/trace/src/snapshot';
+import type { FrameSnapshot } from '../../packages/tracing/src/format/snapshot';
 
 function makeSnapshot(overrides: Partial<FrameSnapshot> = {}): FrameSnapshot {
   return {

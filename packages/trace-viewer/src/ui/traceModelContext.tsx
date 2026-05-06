@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import type { TraceModel } from '@isomorphic/trace/traceModel';
+import type { TraceModel } from '@tracing/reader/traceModel';
 
 export const TraceModelContext = React.createContext<TraceModel | undefined>(undefined);
 

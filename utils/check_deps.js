@@ -29,6 +29,7 @@ const packages = new Map();
 packages.set('web', packagesDir + '/web/src/');
 packages.set('injected', packagesDir + '/injected/src/');
 packages.set('isomorphic', packagesDir + '/isomorphic/');
+packages.set('tracing', packagesDir + '/tracing/src/');
 packages.set('utils', packagesDir + '/utils/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
 
@@ -42,7 +43,7 @@ async function checkDeps() {
   await innerCheckDeps(path.join(packagesDir, 'protocol'));
   await innerCheckDeps(path.join(packagesDir, 'recorder'));
   await innerCheckDeps(path.join(packagesDir, 'trace-viewer'));
-  await innerCheckDeps(path.join(packagesDir, 'trace'));
+  await innerCheckDeps(path.join(packagesDir, 'tracing'));
   await innerCheckDeps(path.join(packagesDir, 'web'));
   await innerCheckDeps(path.join(packagesDir, 'injected'));
 

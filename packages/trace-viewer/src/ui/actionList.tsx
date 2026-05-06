@@ -14,16 +14,16 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent } from '@tracing/format/trace';
 import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import './actionList.css';
-import { stats, buildActionTree } from '@isomorphic/trace/traceModel';
+import { stats, buildActionTree } from '@tracing/reader/traceModel';
 import { asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
-import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext, ActionTreeItem } from '@tracing/reader/traceModel';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';

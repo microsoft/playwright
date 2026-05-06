@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
+import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
 
-import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
+import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@tracing/format/snapshot';
 import type { PageEntry } from './entries';
-import type { LRUCache } from '../lruCache';
+import type { LRUCache } from '@isomorphic/lruCache';
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   return items.find((item, index) => {

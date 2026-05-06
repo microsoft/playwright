@@ -34,13 +34,15 @@ export * from './stringUtils';
 export * from './formatUtils';
 export * from './time';
 export * from './timeoutRunner';
-export * from './trace/snapshotServer';
 export * from './urlMatch';
 export * from './cssParser';
 export * from './locatorParser';
 export * from './selectorParser';
-export * from './trace/snapshotStorage';
-export * from './trace/traceLoader';
-export * from './trace/traceModel';
-export * from './trace/traceUtils';
+// Re-exports for the `iso` runtime namespace (see playwright-core/coreBundle.ts).
+// The code lives in packages/tracing/.
+export * from '@tracing/reader/snapshotServer';
+export * from '@tracing/reader/snapshotStorage';
+export * from '@tracing/reader/traceLoader';
+export * from '@tracing/reader/traceModel';
+export * from '@tracing/reader/traceUtils';
 export * from './yaml';
