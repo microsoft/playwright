@@ -280,9 +280,7 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
     const server = net.createServer();
     server.listen(socketPath, () => resolve(server));
     server.on('error', (err: NodeJS.ErrnoException) => {
-      const isInUse = err.code === 'EADDRINUSE'
-          || (process.platform === 'win32' && err.code === 'EBUSY');
-      if (!isInUse)
+      if (err.code !== 'EADDRINUSE')
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write(JSON.stringify(options) + '\n');
@@ -345,16 +343,21 @@ export async function openDashboardApp() {
         socket.end();
         return;
       }
+      if (parsed.kill) {
+        // Write our PID so the kill client can wait for the process to fully exit,
+        // which guarantees the named pipe is released (especially on Windows).
+        // Start graceful shutdown only after the socket data has been flushed, so the
+        // kill client is guaranteed to receive the PID before we begin tearing down.
+        server?.close();
+        socket.end(JSON.stringify({ pid: process.pid }) + '\n', () => gracefullyProcessExitDoNotHang(0));
+        return;
+      }
       void statePromise.then(({ page, server: dashboard }) => {
         if (parsed.annotate) {
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
-        } else if (parsed.kill) {
-          server?.close();
-          socket.end();
-          gracefullyProcessExitDoNotHang(0);
         } else {
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
@@ -384,14 +387,42 @@ export async function openDashboardForContext(context: api.BrowserContext): Prom
 
 async function runKillClient(): Promise<void> {
   const socketPath = dashboardSocketPath();
-  await new Promise<void>(resolve => {
-    const client = net.connect(socketPath);
-    client.once('connect', () => {
-      client.write(JSON.stringify({ kill: true }) + '\n');
+  let pid: number;
+  try {
+    pid = await new Promise<number>((resolve, reject) => {
+      const client = net.connect(socketPath);
+      let data = '';
+      client.once('connect', () => {
+        client.write(JSON.stringify({ kill: true }) + '\n');
+      });
+      client.on('data', chunk => { data += chunk; });
+      client.once('end', () => {
+        let pid: number | undefined;
+        try { pid = JSON.parse(data.trim()).pid; } catch { }
+        if (pid === undefined)
+          reject(new Error('Dashboard did not return its PID'));
+        else
+          resolve(pid);
+      });
+      client.once('error', () => reject(new Error('no dashboard running')));
     });
-    client.once('end', () => resolve());
-    client.once('error', () => resolve());
-  });
+  } catch (e: any) {
+    if (e?.message === 'no dashboard running')
+      return;
+    throw e;
+  }
+  // Poll until the daemon process exits — at that point the OS has released all
+  // its handles, including the named pipe, so the next acquisition won't see a stale pipe.
+  const deadline = Date.now() + 35000;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return;
+    }
+    await new Promise(r => setTimeout(r, 50));
+  }
+  throw new Error(`Dashboard process ${pid} did not exit within the deadline`);
 }
 
 async function runAnnotateClient(options: DashboardOptions): Promise<void> {
