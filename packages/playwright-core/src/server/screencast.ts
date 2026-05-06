@@ -40,6 +40,7 @@ type ActionOptions = {
 export class Screencast implements InstrumentationListener {
   readonly page: Page;
   private _clients = new Set<ScreencastClient>();
+  private _pendingAckResolvers = new Map<ScreencastClient, Set<() => void>>();
   private _actions: ActionOptions | undefined;
   private _size: types.Size | undefined;
   private _lastFrame: types.ScreencastFrame | undefined;
@@ -52,6 +53,7 @@ export class Screencast implements InstrumentationListener {
   async handlePageOrContextClose() {
     const clients = [...this._clients];
     this._clients.clear();
+    this._releaseAllPendingAcks();
     for (const client of clients) {
       if (client.gracefulClose)
         await client.gracefulClose();
@@ -62,7 +64,17 @@ export class Screencast implements InstrumentationListener {
     for (const client of this._clients)
       client.dispose();
     this._clients.clear();
+    this._releaseAllPendingAcks();
     this.page.instrumentation.removeListener(this);
+  }
+
+  private _releaseAllPendingAcks() {
+    const allResolvers = [...this._pendingAckResolvers.values()];
+    this._pendingAckResolvers.clear();
+    for (const resolvers of allResolvers) {
+      for (const resolve of resolvers)
+        resolve();
+    }
   }
 
   showActions(options: ActionOptions) {
@@ -95,6 +107,14 @@ export class Screencast implements InstrumentationListener {
     if (!this._clients.has(client))
       return;
     this._clients.delete(client);
+    // Release any pending ack waiters for this client so departing clients
+    // do not block frames forever.
+    const resolvers = this._pendingAckResolvers.get(client);
+    if (resolvers) {
+      this._pendingAckResolvers.delete(client);
+      for (const resolve of resolvers)
+        resolve();
+    }
     if (!this._clients.size)
       this._stopScreencast();
   }
@@ -133,8 +153,29 @@ export class Screencast implements InstrumentationListener {
     const asyncResults: Promise<void>[] = [];
     for (const client of this._clients) {
       const result = client.onFrame(frame);
-      if (result)
-        asyncResults.push(result);
+      if (!result)
+        continue;
+      // Wrap each client's promise so that:
+      // - rejections do not propagate (a failing client shouldn't block ack),
+      // - removing the client unblocks the ack via _pendingAckResolvers.
+      asyncResults.push(new Promise<void>(resolve => {
+        let resolvers = this._pendingAckResolvers.get(client);
+        if (!resolvers) {
+          resolvers = new Set();
+          this._pendingAckResolvers.set(client, resolvers);
+        }
+        const wrappedResolve = () => {
+          const set = this._pendingAckResolvers.get(client);
+          if (set) {
+            set.delete(wrappedResolve);
+            if (!set.size)
+              this._pendingAckResolvers.delete(client);
+          }
+          resolve();
+        };
+        resolvers.add(wrappedResolve);
+        Promise.resolve(result).then(wrappedResolve, wrappedResolve);
+      }));
     }
     if (ack) {
       // Ack when any client resolves (OR logic). This ensures that even if
