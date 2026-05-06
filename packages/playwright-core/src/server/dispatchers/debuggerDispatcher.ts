@@ -32,7 +32,7 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
   }
 
   constructor(scope: BrowserContextDispatcher, debugger_: Debugger) {
-    super(scope, debugger_, 'Debugger', {});
+    super(scope, debugger_, {});
     this.addObjectListener(Debugger.Events.PausedStateChanged, () => {
       this._dispatchEvent('pausedStateChanged', { pausedDetails: this._serializePausedDetails() });
     });

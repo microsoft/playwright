@@ -483,7 +483,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   readonly selectors: FrameSelectors;
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
-    super(page, 'frame');
+    super(page, 'Frame', 'frame');
     this.attribution.frame = this;
     this.seq = page.frameManager._allocateFrameSeq();
     this._id = id;
@@ -1433,7 +1433,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async type(progress: Progress, selector: string, text: string, options: { delay?: number, noAutoWaiting?: boolean } & types.StrictOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._type(progress, text, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._typeText(progress, text, options)));
   }
 
   async press(progress: Progress, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean, noAutoWaiting?: boolean } & types.StrictOptions) {

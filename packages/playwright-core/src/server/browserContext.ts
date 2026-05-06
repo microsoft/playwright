@@ -116,7 +116,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _consoleApiExposed = false;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
-    super(browser, 'browser-context');
+    super(browser, 'BrowserContext', 'browser-context');
     this.attribution.context = this;
     this._browser = browser;
     this._options = options;

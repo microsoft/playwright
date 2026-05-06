@@ -25,7 +25,7 @@ export class DisposableDispatcher extends Dispatcher<DisposableObject, channels.
   _type_Disposable = true;
 
   constructor(scope: DispatcherScope, disposable: DisposableObject) {
-    super(scope, disposable, 'Disposable', {});
+    super(scope, disposable, {});
   }
 
   async dispose(_: any, progress: Progress) {

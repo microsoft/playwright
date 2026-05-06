@@ -40,7 +40,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   private constructor(scope: DispatcherScope, artifact: Artifact) {
-    super(scope, artifact, 'Artifact', {
+    super(scope, artifact, {
       absolutePath: artifact.localPath(),
     });
   }

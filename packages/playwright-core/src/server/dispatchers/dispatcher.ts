@@ -61,7 +61,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   readonly _gcBucket: string;
   _object: Type;
 
-  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<ChannelType>, gcBucket?: string) {
+  constructor(parent: ParentScopeType | DispatcherConnection, object: Type, initializer: channels.InitializerTraits<ChannelType>, gcBucket?: string) {
     super();
 
     this.connection = parent instanceof DispatcherConnection ? parent : parent.connection;
@@ -69,9 +69,9 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
 
     const guid = object.guid;
     this._guid = guid;
-    this._type = type;
+    this._type = object._type;
     this._object = object;
-    this._gcBucket = gcBucket ?? type;
+    this._gcBucket = gcBucket ?? this._type;
 
     this.connection.registerDispatcher(this);
     if (this._parent) {
@@ -80,7 +80,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     }
 
     if (this._parent)
-      this.connection.sendCreate(this._parent, type, guid, initializer);
+      this.connection.sendCreate(this._parent, this._type, guid, initializer);
     this.connection.maybeDisposeStaleDispatchers(this._gcBucket);
   }
 
@@ -177,12 +177,13 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
 }
 
 export type DispatcherScope = Dispatcher<SdkObject, any, any>;
+export type DispatcherFactory = (scope: DispatcherScope, object: SdkObject) => DispatcherScope;
 
 export class RootDispatcher extends Dispatcher<SdkObject, any, any> {
   private _initialized = false;
 
   constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: RootDispatcher, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
-    super(connection, createRootSdkObject(), 'Root', {});
+    super(connection, createRootSdkObject(), {});
   }
 
   async initialize(params: channels.RootInitializeParams, progress: Progress): Promise<channels.RootInitializeResult> {
@@ -200,12 +201,28 @@ export class DispatcherConnection {
   readonly _dispatcherByGuid = new Map<string, DispatcherScope>();
   readonly _dispatcherByObject = new Map<any, DispatcherScope>();
   readonly _dispatchersByBucket = new Map<string, Set<string>>();
+  private _dispatcherFactories = new Map<string, DispatcherFactory>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
   private _isLocal: boolean;
 
   constructor(isLocal?: boolean) {
     this._isLocal = !!isLocal;
+  }
+
+  registerDispatcherFactories(factories: Record<string, DispatcherFactory>) {
+    for (const [type, factory] of Object.entries(factories))
+      this._dispatcherFactories.set(type, factory);
+  }
+
+  dispatcherFor<T = DispatcherScope>(object: SdkObject, scope: DispatcherScope): T {
+    const existing = this.existingDispatcher<T>(object);
+    if (existing)
+      return existing;
+    const factory = this._dispatcherFactories.get(object._type);
+    if (!factory)
+      throw new Error(`No dispatcher factory registered for type ${object._type}`);
+    return factory(scope, object) as T;
   }
 
   sendEvent(dispatcher: DispatcherScope, event: string, params: any) {

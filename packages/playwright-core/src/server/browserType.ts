@@ -50,7 +50,7 @@ export abstract class BrowserType extends SdkObject {
   private _name: BrowserName;
 
   constructor(parent: SdkObject, browserName: BrowserName) {
-    super(parent, 'browser-type');
+    super(parent, 'BrowserType', 'browser-type');
     this.attribution.browserType = this;
     this._name = browserName;
     this.logName = 'browser';

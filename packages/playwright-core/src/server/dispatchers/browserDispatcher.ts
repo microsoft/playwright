@@ -41,7 +41,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   private _isolatedContexts = new Set<BrowserContext>();
 
   constructor(scope: BrowserTypeDispatcher, browser: Browser, options: BrowserDispatcherOptions = {}) {
-    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name, browserName: browser.options.browserType });
+    super(scope, browser, { version: browser.version(), name: browser.options.name, browserName: browser.options.browserType });
     this._options = options;
 
     if (!options.isolateContexts) {

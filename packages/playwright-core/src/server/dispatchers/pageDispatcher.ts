@@ -85,7 +85,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // We will reparent it to the page below using adopt.
     const mainFrame = FrameDispatcher.from(parentScope, page.mainFrame());
 
-    super(parentScope, page, 'Page', {
+    super(parentScope, page, {
       mainFrame,
       viewportSize: page.emulatedSize()?.viewport,
       isClosed: page.isClosed(),
@@ -502,7 +502,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   constructor(scope: PageDispatcher | BrowserContextDispatcher | BrowserTypeDispatcher, worker: Worker) {
-    super(scope, worker, 'Worker', {
+    super(scope, worker, {
       url: worker.url
     });
     this.addObjectListener(Worker.Events.Console, (message: ConsoleMessage) => {
@@ -548,7 +548,7 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
 
   constructor(scope: PageDispatcher, name: string, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
     const frameDispatcher = FrameDispatcher.from(scope.parentScope(), source.frame);
-    super(scope, new SdkObject(scope._object, 'bindingCall'), 'BindingCall', {
+    super(scope, new SdkObject(scope._object, 'BindingCall', 'bindingCall'), {
       frame: frameDispatcher,
       name,
       args: args.map(serializeResult),

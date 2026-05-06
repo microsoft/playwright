@@ -203,7 +203,7 @@ export class Page extends SdkObject<PageEventMap> {
   _closeReason: string | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
-    super(browserContext, 'page');
+    super(browserContext, 'Page', 'page');
     this.attribution.page = this;
     this.delegate = delegate;
     this.browserContext = browserContext;
@@ -950,7 +950,7 @@ export class Worker extends SdkObject<WorkerEventMap> {
   _closeReason: string | undefined;
 
   constructor(parent: SdkObject, url: string, onDisconnect?: () => Promise<void>) {
-    super(parent, 'worker');
+    super(parent, 'Worker', 'worker');
     this.attribution.worker = this;
     this.url = url;
     this._onDisconnect = onDisconnect;

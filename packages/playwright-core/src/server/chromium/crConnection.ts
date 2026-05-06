@@ -53,7 +53,7 @@ export class CRConnection extends SdkObject {
   _closed = false;
 
   constructor(parent: SdkObject, transport: ConnectionTransport, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
-    super(parent, 'cr-connection');
+    super(parent, 'CRConnection', 'cr-connection');
     this.setMaxListeners(0);
     this._transport = transport;
     this._protocolLogger = protocolLogger;
@@ -116,7 +116,7 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
   private _closed = false;
 
   constructor(connection: CRConnection, parentSession: CRSession | null, sessionId: string, eventListener?: SessionEventListener) {
-    super(connection, 'cr-session');
+    super(connection, 'CRSession', 'cr-session');
     this.setMaxListeners(0);
     this._connection = connection;
     this._parentSession = parentSession;
@@ -207,7 +207,7 @@ export class CDPSession extends SdkObject {
   private _listeners: RegisteredListener[] = [];
 
   constructor(parentSession: CRSession, sessionId: string) {
-    super(parentSession, 'cdp-session');
+    super(parentSession, 'CDPSession', 'cdp-session');
     this._session = parentSession.createChildSession(sessionId, (method, params) => this.emit(CDPSession.Events.Event, { method, params }));
     this._listeners = [eventsHelper.addEventListener(parentSession, 'Target.detachedFromTarget', (event: Protocol.Target.detachedFromTargetPayload) => {
       if (event.sessionId === sessionId)

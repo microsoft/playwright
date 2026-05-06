@@ -4,6 +4,7 @@
 ../inprocess.ts
 ../package.ts
 ../server/
+../server/dispatchers/
 ../server/registry/
 ../remote/
 ../server/trace/viewer/

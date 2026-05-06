@@ -28,7 +28,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.Brow
   _type_BrowserType = true;
   private readonly _denyLaunch: boolean;
   constructor(scope: RootDispatcher, browserType: BrowserType, denyLaunch: boolean) {
-    super(scope, browserType, 'BrowserType', {
+    super(scope, browserType, {
       executablePath: browserType.executablePath(),
       name: browserType.name()
     });

@@ -41,11 +41,11 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   private _stackSessions = new Map<string, localUtils.StackSession>();
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
-    const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
+    const localUtils = new SdkObject(playwright, 'LocalUtils', 'localUtils', 'localUtils');
     localUtils.logName = 'browser';
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
-    super(scope, localUtils, 'LocalUtils', {
+    super(scope, localUtils, {
       deviceDescriptors,
     });
     this._type_LocalUtils = true;

@@ -28,7 +28,7 @@ export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel,
   constructor(scope: BrowserContextDispatcher, dialog: Dialog) {
     const page = PageDispatcher.fromNullable(scope, dialog.page().initializedOrUndefined());
     // Prefer scoping to the page, unless we don't have one.
-    super(page || scope, dialog, 'Dialog', {
+    super(page || scope, dialog, {
       page,
       type: dialog.type(),
       message: dialog.message(),

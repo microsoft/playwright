@@ -48,7 +48,7 @@ export class DebugController extends SdkObject {
   _generateAutoExpect = false;
 
   constructor(playwright: Playwright) {
-    super({ attribution: { isInternalPlaywright: true }, instrumentation: createInstrumentation() } as any, undefined, 'DebugController');
+    super({ attribution: { isInternalPlaywright: true }, instrumentation: createInstrumentation() } as any, 'DebugController', undefined, 'DebugController');
     this._playwright = playwright;
   }
 

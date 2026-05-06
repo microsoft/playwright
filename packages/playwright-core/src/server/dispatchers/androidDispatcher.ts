@@ -29,7 +29,7 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
   _type_Android = true;
   private readonly _denyLaunch: boolean;
   constructor(scope: RootDispatcher, android: Android, denyLaunch: boolean) {
-    super(scope, android, 'Android', {});
+    super(scope, android, {});
     this._denyLaunch = denyLaunch;
   }
 
@@ -53,7 +53,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   constructor(scope: AndroidDispatcher, device: AndroidDevice) {
-    super(scope, device, 'AndroidDevice', {
+    super(scope, device, {
       model: device.model,
       serial: device.serial,
     });
@@ -181,7 +181,7 @@ class SocketSdkObject extends SdkObject implements SocketBackend {
   private _eventListeners;
 
   constructor(parent: SdkObject, socket: SocketBackend) {
-    super(parent, 'socket');
+    super(parent, 'AndroidSocket', 'socket');
     this._socket = socket;
     this._eventListeners = [
       eventsHelper.addEventListener(socket, 'data', data => this.emit('data', data)),
@@ -205,7 +205,7 @@ export class AndroidSocketDispatcher extends Dispatcher<SocketSdkObject, channel
   _type_AndroidSocket = true;
 
   constructor(scope: AndroidDeviceDispatcher, socket: SocketSdkObject) {
-    super(scope, socket, 'AndroidSocket', {});
+    super(scope, socket, {});
     this.addObjectListener('data', (data: Buffer) => this._dispatchEvent('data', { data }));
     this.addObjectListener('close', () => {
       this._dispatchEvent('close');

@@ -28,16 +28,16 @@ export type DialogType = 'alert' | 'beforeunload' | 'confirm' | 'prompt';
 
 export class Dialog extends SdkObject {
   private _page: Page;
-  private _type: DialogType;
+  private _dialogType: DialogType;
   private _message: string;
   private _onHandle: OnHandle;
   private _handled = false;
   private _defaultValue: string;
 
   constructor(page: Page, type: DialogType, message: string, onHandle: OnHandle, defaultValue?: string) {
-    super(page, 'dialog');
+    super(page, 'Dialog', 'dialog');
     this._page = page;
-    this._type = type;
+    this._dialogType = type;
     this._message = message;
     this._onHandle = onHandle;
     this._defaultValue = defaultValue || '';
@@ -56,7 +56,7 @@ export class Dialog extends SdkObject {
   }
 
   type(): string {
-    return this._type;
+    return this._dialogType;
   }
 
   message(): string {
@@ -82,7 +82,7 @@ export class Dialog extends SdkObject {
   }
 
   async _close() {
-    if (this._type === 'beforeunload')
+    if (this._dialogType === 'beforeunload')
       await this._accept();
     else
       await this._dismiss();

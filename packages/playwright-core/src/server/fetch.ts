@@ -116,7 +116,7 @@ export abstract class APIRequestContext extends SdkObject {
   }
 
   constructor(parent: SdkObject) {
-    super(parent, 'request-context');
+    super(parent, 'APIRequestContext', 'request-context');
     APIRequestContext.allInstances.add(this);
   }
 

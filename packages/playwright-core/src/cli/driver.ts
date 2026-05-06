@@ -25,6 +25,7 @@ import { packageRoot } from '../package';
 import { playwright } from '../inprocess';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
+import { populateBuiltinDispatcherFactories } from '../server/dispatchers/builtinFactories';
 
 import type { BrowserType } from '../client/browserType';
 import type { LaunchServerOptions } from '../client/types';
@@ -36,6 +37,7 @@ export function printApiJson() {
 
 export function runDriver() {
   const dispatcherConnection = new DispatcherConnection();
+  populateBuiltinDispatcherFactories(dispatcherConnection);
   new RootDispatcher(dispatcherConnection, async (rootScope, { sdkLanguage }) => {
     const playwright = createPlaywright({ sdkLanguage });
     return new PlaywrightDispatcher(rootScope, playwright);

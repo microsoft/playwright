@@ -26,7 +26,7 @@ export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSes
   _type_CDPSession = true;
 
   constructor(scope: BrowserDispatcher | BrowserContextDispatcher, cdpSession: CDPSession) {
-    super(scope, cdpSession, 'CDPSession', {});
+    super(scope, cdpSession, {});
     this.addObjectListener(CDPSession.Events.Event, ({ method, params }) => this._dispatchEvent('event', { method, params }));
     this.addObjectListener(CDPSession.Events.Closed, () => {
       this._dispatchEvent('close');

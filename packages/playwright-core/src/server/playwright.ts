@@ -46,7 +46,7 @@ export class Playwright extends SdkObject {
   private _allBrowsers = new Set<Browser>();
 
   constructor(options: PlaywrightOptions) {
-    super(createRootSdkObject(), undefined, 'Playwright');
+    super(createRootSdkObject(), 'Playwright', undefined, 'Playwright');
     this.options = options;
     this.attribution.playwright = this;
     this.instrumentation.addListener({

@@ -73,7 +73,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const requestContext = APIRequestContextDispatcher.from(parentScope as BrowserContextDispatcher, context.fetchRequest);
     const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
-    super(parentScope, context, 'BrowserContext', {
+    super(parentScope, context, {
       debugger: debugger_,
       requestContext,
       tracing,

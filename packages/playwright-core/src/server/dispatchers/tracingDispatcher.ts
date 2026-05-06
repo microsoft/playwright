@@ -35,7 +35,7 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   }
 
   constructor(scope: BrowserContextDispatcher | APIRequestContextDispatcher, tracing: Tracing) {
-    super(scope, tracing, 'Tracing', {});
+    super(scope, tracing, {});
   }
 
   async tracingStart(params: channels.TracingTracingStartParams, progress: Progress): Promise<channels.TracingTracingStartResult> {

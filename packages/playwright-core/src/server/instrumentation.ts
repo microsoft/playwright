@@ -46,13 +46,15 @@ export type Attribution = {
 export type EventMap = Record<string | symbol, any[]>;
 
 export class SdkObject<EM extends EventMap = EventMap> extends EventEmitter<EM> {
+  readonly _type: string;
   guid: string;
   attribution: Attribution;
   instrumentation: Instrumentation;
   logName?: LogName;
 
-  constructor(parent: SdkObject, guidPrefix?: string, guid?: string) {
+  constructor(parent: SdkObject, type: string, guidPrefix?: string, guid?: string) {
     super();
+    this._type = type;
     this.guid = guid || `${guidPrefix || ''}@${createGuid()}`;
     this.setMaxListeners(0);
     this.attribution = { ...parent.attribution };
@@ -74,7 +76,7 @@ export class SdkObject<EM extends EventMap = EventMap> extends EventEmitter<EM> 
 
 export function createRootSdkObject() {
   const fakeParent = { attribution: {}, instrumentation: createInstrumentation() };
-  const root = new SdkObject(fakeParent as any);
+  const root = new SdkObject(fakeParent as any, 'Root');
   root.guid = '';
   return root;
 }

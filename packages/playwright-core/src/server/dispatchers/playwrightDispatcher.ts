@@ -76,7 +76,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
     if (options.preLaunchedAndroidDevice)
       initializer.preConnectedAndroidDevice = new AndroidDeviceDispatcher(android, options.preLaunchedAndroidDevice);
 
-    super(scope, playwright, 'Playwright', initializer);
+    super(scope, playwright, initializer);
     this._type_Playwright = true;
     this._browserDispatcher = browserDispatcher;
     this._denyLaunch = denyLaunch;
@@ -101,7 +101,7 @@ class SocksSupportDispatcher extends Dispatcher<SdkObject, channels.SocksSupport
   private _socksListeners: RegisteredListener[];
 
   constructor(scope: RootDispatcher, parent: SdkObject, socksProxy: SocksProxy) {
-    super(scope, new SdkObject(parent, 'socksSupport'), 'SocksSupport', {});
+    super(scope, new SdkObject(parent, 'SocksSupport', 'socksSupport'), {});
     this._type_SocksSupport = true;
     this._socksProxy = socksProxy;
     this._socksListeners = [

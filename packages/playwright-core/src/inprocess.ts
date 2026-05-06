@@ -19,6 +19,7 @@ import { AndroidServerLauncherImpl } from './androidServerImpl';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { Electron } from './electron/electron';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
+import { populateBuiltinDispatcherFactories } from './server/dispatchers/builtinFactories';
 import { Connection } from './client/connection';
 import { packageRoot } from './package';
 
@@ -30,6 +31,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   const clientConnection = new Connection(nodePlatform(packageRoot));
   clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* local */);
+  populateBuiltinDispatcherFactories(dispatcherConnection);
 
   // Dispatch synchronously at first.
   dispatcherConnection.onmessage = message => clientConnection.dispatch(message);

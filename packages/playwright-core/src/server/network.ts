@@ -197,7 +197,7 @@ export class Request extends SdkObject {
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: ResourceType, method: string, postData: Buffer | null, headers: HeadersArray) {
-    super(frame || context, 'request');
+    super(frame || context, 'Request', 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
     this._frame = frame;
@@ -342,7 +342,7 @@ export class Route extends SdkObject {
   private _futureHandlers: RouteHandler[] = [];
 
   constructor(request: Request, delegate: RouteDelegate) {
-    super(request._frame || request._context, 'route');
+    super(request._frame || request._context, 'Route', 'route');
     this._request = request;
     this._delegate = delegate;
     this._request._context.addRouteInFlight(this);
@@ -524,7 +524,7 @@ export class Response extends SdkObject {
   private _responseHeadersSizePromise = new ManualPromise<number | null>();
 
   constructor(request: Request, status: number, statusText: string, headers: HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, fromServiceWorker: boolean) {
-    super(request.frame() || request._context, 'response');
+    super(request.frame() || request._context, 'Response', 'response');
     this._request = request;
     this._timing = timing;
     this._status = status;
@@ -727,7 +727,7 @@ export class WebSocket extends SdkObject {
   };
 
   constructor(parent: SdkObject, url: string) {
-    super(parent, 'ws');
+    super(parent, 'WebSocket', 'ws');
     this._url = url;
   }
 

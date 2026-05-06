@@ -27,7 +27,7 @@ class StreamSdkObject extends SdkObject {
   readonly stream: stream.Readable;
 
   constructor(parent: SdkObject, stream: stream.Readable) {
-    super(parent, 'stream');
+    super(parent, 'Stream', 'stream');
     this.stream = stream;
   }
 }
@@ -37,7 +37,7 @@ export class StreamDispatcher extends Dispatcher<StreamSdkObject, channels.Strea
   private _ended: boolean = false;
 
   constructor(scope: ArtifactDispatcher, stream: stream.Readable) {
-    super(scope, new StreamSdkObject(scope._object, stream), 'Stream', {});
+    super(scope, new StreamSdkObject(scope._object, stream), {});
     // In Node v12.9.0+ we can use readableEnded.
     stream.once('end', () => this._ended =  true);
     stream.once('error', () => this._ended =  true);

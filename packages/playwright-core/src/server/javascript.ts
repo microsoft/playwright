@@ -62,7 +62,7 @@ export class ExecutionContext extends SdkObject {
   readonly worldNameForTest: string;
 
   constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string) {
-    super(parent, 'execution-context');
+    super(parent, 'ExecutionContext', 'execution-context');
     this.worldNameForTest = worldNameForTest;
     this.delegate = delegate;
   }
@@ -128,8 +128,8 @@ export class JSHandle<T = any> extends SdkObject {
   protected _preview: string;
   private _previewCallback: ((preview: string) => void) | undefined;
 
-  constructor(context: ExecutionContext, type: string, preview: string | undefined, objectId?: string, value?: any) {
-    super(context, 'handle');
+  constructor(context: ExecutionContext, type: string, preview: string | undefined, objectId?: string, value?: any, sdkType: string = 'JSHandle') {
+    super(context, sdkType, 'handle');
     this._context = context;
     this._objectId = objectId;
     this._value = value;

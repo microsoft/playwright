@@ -24,7 +24,7 @@ import type { Progress } from '@protocol/progress';
 export class JsonPipeDispatcher extends Dispatcher<SdkObject, channels.JsonPipeChannel, LocalUtilsDispatcher> implements channels.JsonPipeChannel {
   _type_JsonPipe = true;
   constructor(scope: LocalUtilsDispatcher) {
-    super(scope, new SdkObject(scope._object, 'jsonPipe'), 'JsonPipe', {});
+    super(scope, new SdkObject(scope._object, 'JsonPipe', 'jsonPipe'), {});
   }
 
   async send(params: channels.JsonPipeSendParams, progress: Progress): Promise<channels.JsonPipeSendResult> {

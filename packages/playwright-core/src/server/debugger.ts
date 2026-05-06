@@ -39,7 +39,7 @@ export class Debugger extends SdkObject implements InstrumentationListener {
   private _muted = false;
 
   constructor(context: BrowserContext) {
-    super(context, 'debugger');
+    super(context, 'Debugger', 'debugger');
     this._context = context;
     (this._context as any)[symbol] = this;
     context.instrumentation.addListener(this, context);

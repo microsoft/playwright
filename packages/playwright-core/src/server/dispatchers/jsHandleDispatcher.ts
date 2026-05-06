@@ -35,7 +35,7 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
 
   protected constructor(scope: ParentScope, jsHandle: js.JSHandle) {
     // Do not call this directly, use createHandle() instead.
-    super(scope, jsHandle, jsHandle.asElement() ? 'ElementHandle' : 'JSHandle', {
+    super(scope, jsHandle, {
       preview: jsHandle.toString(),
     });
     jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', { preview }));

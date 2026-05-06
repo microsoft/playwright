@@ -37,7 +37,7 @@ export class Artifact extends SdkObject {
   private _failureErrorValue: Error | undefined;
 
   constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string, cancelCallback?: CancelCallback) {
-    super(parent, 'artifact');
+    super(parent, 'Artifact', 'artifact');
     this._localPath = localPath;
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
     this._cancelCallback = cancelCallback;

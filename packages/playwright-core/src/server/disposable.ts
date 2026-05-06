@@ -27,7 +27,7 @@ export abstract class DisposableObject extends SdkObject implements Disposable {
   readonly parent: Page | BrowserContext;
 
   constructor(parent: Page | BrowserContext) {
-    super(parent, 'disposable');
+    super(parent, 'Disposable', 'disposable');
     this.parent = parent;
   }
 

@@ -50,7 +50,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     // Note: we cannot check parentFrame() here because it may be null after the frame has been detached.
     const gcBucket = frame._page.mainFrame() === frame ? 'MainFrame' : 'Frame';
     const pageDispatcher = scope.connection.existingDispatcher<PageDispatcher>(frame._page);
-    super(pageDispatcher || scope, frame, 'Frame', {
+    super(pageDispatcher || scope, frame, {
       url: frame.url(),
       name: frame.name(),
       parentFrame: FrameDispatcher.fromNullable(scope, frame.parentFrame()),

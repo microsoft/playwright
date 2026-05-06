@@ -68,7 +68,7 @@ export class Android extends SdkObject {
   private _devices = new Map<string, AndroidDevice>();
 
   constructor(parent: SdkObject, backend: Backend) {
-    super(parent, 'android');
+    super(parent, 'Android', 'android');
     this._backend = backend;
   }
 
@@ -115,7 +115,7 @@ export class AndroidDevice extends SdkObject {
   private _isClosed = false;
 
   constructor(android: Android, backend: DeviceBackend, model: string, options: channels.AndroidDevicesOptions) {
-    super(android, 'android-device');
+    super(android, 'AndroidDevice', 'android-device');
     this._android = android;
     this._backend = backend;
     this.model = model;

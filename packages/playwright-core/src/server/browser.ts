@@ -83,7 +83,7 @@ export abstract class Browser extends SdkObject {
   private _server: BrowserServer;
 
   constructor(parent: SdkObject, options: BrowserOptions) {
-    super(parent, 'browser');
+    super(parent, 'Browser', 'browser');
     this.attribution.browser = this;
     this.options = options;
     this.instrumentation.onBrowserOpen(this);

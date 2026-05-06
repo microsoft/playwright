@@ -49,7 +49,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
     const page = request.frame()?._page;
     const pageDispatcher = page ? scope.connection.existingDispatcher<PageDispatcher>(page) : null;
     const frameDispatcher = FrameDispatcher.fromNullable(scope, frame);
-    super(pageDispatcher || frameDispatcher || scope, request, 'Request', {
+    super(pageDispatcher || frameDispatcher || scope, request, {
       frame: frameDispatcher,
       serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
       url: request.url(),
@@ -89,7 +89,7 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   }
 
   private constructor(scope: RequestDispatcher, response: Response) {
-    super(scope, response, 'Response', {
+    super(scope, response, {
       // TODO: responses in popups can point to non-reported requests.
       request: scope,
       url: response.url(),
@@ -132,7 +132,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
   private _handled = false;
 
   constructor(scope: RequestDispatcher, route: Route) {
-    super(scope, route, 'Route', {
+    super(scope, route, {
       // Context route can point to a non-reported request, so we send the request in the initializer.
       request: scope
     });
@@ -179,7 +179,7 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
   _type_WebSocket = true;
 
   constructor(scope: PageDispatcher, webSocket: WebSocket) {
-    super(scope, webSocket, 'WebSocket', {
+    super(scope, webSocket, {
       url: webSocket.url(),
     });
     this.addObjectListener(WebSocket.Events.FrameSent, (event: { opcode: number, data: string }) => this._dispatchEvent('frameSent', event));
@@ -205,7 +205,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     // We will reparent these to the context below.
     const tracing = TracingDispatcher.from(parentScope as any as APIRequestContextDispatcher, request.tracing());
 
-    super(parentScope, request, 'APIRequestContext', {
+    super(parentScope, request, {
       tracing,
     });
 

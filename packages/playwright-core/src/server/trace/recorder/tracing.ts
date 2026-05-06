@@ -100,7 +100,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   readonly harRecorders = new Map<string, HarRecorder>();
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
-    super(context, 'tracing');
+    super(context, 'Tracing', 'tracing');
     this._context = context;
     this._precreatedTracesDir = tracesDir;
     this._harTracer = new HarTracer(context, null, this, {

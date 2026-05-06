@@ -123,7 +123,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   readonly _frame: frames.Frame;
 
   constructor(context: FrameExecutionContext, objectId: string) {
-    super(context, 'node', undefined, objectId);
+    super(context, 'node', undefined, objectId, undefined, 'ElementHandle');
     this._page = context.frame._page;
     this._frame = context.frame;
     this._initializePreview().catch(e => {});
@@ -784,11 +784,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<void> {
     await this._markAsTargetElement(progress);
-    const result = await this._type(progress, text, options);
+    const result = await this._typeText(progress, text, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async _type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
+  async _typeText(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
     await this._beforeNonPointerAction(progress);
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);

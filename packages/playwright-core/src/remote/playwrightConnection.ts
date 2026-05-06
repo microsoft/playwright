@@ -19,6 +19,7 @@ import { debugLogger } from '@utils/debugLogger';
 import { monotonicTime } from '@isomorphic/time';
 import { Semaphore } from '@isomorphic/semaphore';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher } from '../server';
+import { populateBuiltinDispatcherFactories } from '../server/dispatchers/builtinFactories';
 import { AndroidDevice } from '../server/android/android';
 import { Browser } from '../server/browser';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
@@ -50,6 +51,7 @@ export class PlaywrightConnection {
     const lock = this._semaphore.acquire();
 
     this._dispatcherConnection = new DispatcherConnection();
+    populateBuiltinDispatcherFactories(this._dispatcherConnection);
     this._dispatcherConnection.onmessage = async message => {
       await lock;
       if (!transport.isClosed()) {

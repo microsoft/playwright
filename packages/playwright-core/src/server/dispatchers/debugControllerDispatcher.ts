@@ -29,7 +29,7 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
   private _listeners: RegisteredListener[];
 
   constructor(connection: DispatcherConnection, debugController: DebugController) {
-    super(connection, debugController, 'DebugController', {});
+    super(connection, debugController, {});
     this._type_DebugController = true;
     this._listeners = [
       eventsHelper.addEventListener(this._object, DebugController.Events.StateChanged, params => {

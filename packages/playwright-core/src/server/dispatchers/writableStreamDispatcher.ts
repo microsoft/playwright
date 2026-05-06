@@ -28,7 +28,7 @@ class WritableStreamSdkObject extends SdkObject {
   readonly lastModifiedMs: number | undefined;
 
   constructor(parent: SdkObject, streamOrDirectory: fs.WriteStream | string, lastModifiedMs: number | undefined) {
-    super(parent, 'stream');
+    super(parent, 'WritableStream', 'stream');
     this.streamOrDirectory = streamOrDirectory;
     this.lastModifiedMs = lastModifiedMs;
   }
@@ -38,7 +38,7 @@ export class WritableStreamDispatcher extends Dispatcher<WritableStreamSdkObject
   _type_WritableStream = true;
 
   constructor(scope: BrowserContextDispatcher, streamOrDirectory: fs.WriteStream | string, lastModifiedMs?: number) {
-    super(scope, new WritableStreamSdkObject(scope._object, streamOrDirectory, lastModifiedMs), 'WritableStream', {});
+    super(scope, new WritableStreamSdkObject(scope._object, streamOrDirectory, lastModifiedMs), {});
   }
 
   async write(params: channels.WritableStreamWriteParams, progress: Progress): Promise<channels.WritableStreamWriteResult> {
