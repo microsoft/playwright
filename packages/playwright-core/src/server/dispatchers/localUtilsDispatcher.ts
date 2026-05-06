@@ -16,6 +16,8 @@
 
 import net from 'net';
 import { resolveGlobToRegexPattern } from '@isomorphic/urlMatch';
+import * as stackSession from '@tracing/writer/stackSession';
+import * as tracingZip from '@tracing/writer/zip';
 import { fetchData } from '../utils';
 import { getUserAgent } from '../userAgent';
 import { Dispatcher } from './dispatcher';
@@ -38,7 +40,7 @@ import type { HTTPRequestParams } from '@utils/network';
 export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
   private _harBackends = new Map<string, HarBackend>();
-  private _stackSessions = new Map<string, localUtils.StackSession>();
+  private _stackSessions = new Map<string, stackSession.StackSession>();
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
     const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
@@ -52,7 +54,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   }
 
   async zip(params: channels.LocalUtilsZipParams, progress: Progress): Promise<void> {
-    return await localUtils.zip(progress, this._stackSessions, params);
+    return await progress.race(tracingZip.zip(progress.signal, this._stackSessions, params));
   }
 
   async harOpen(params: channels.LocalUtilsHarOpenParams, progress: Progress): Promise<channels.LocalUtilsHarOpenResult> {
@@ -72,15 +74,15 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   }
 
   async tracingStarted(params: channels.LocalUtilsTracingStartedParams, progress: Progress): Promise<channels.LocalUtilsTracingStartedResult> {
-    return await localUtils.tracingStarted(progress, this._stackSessions, params);
+    return await progress.race(stackSession.tracingStarted(progress.signal, this._stackSessions, params));
   }
 
   async traceDiscarded(params: channels.LocalUtilsTraceDiscardedParams, progress: Progress): Promise<void> {
-    return await localUtils.traceDiscarded(progress, this._stackSessions, params);
+    return await progress.race(stackSession.traceDiscarded(progress.signal, this._stackSessions, params.stacksId));
   }
 
   async addStackToTracingNoReply(params: channels.LocalUtilsAddStackToTracingNoReplyParams, progress: Progress): Promise<void> {
-    localUtils.addStackToTracingNoReply(this._stackSessions, params);
+    stackSession.addStackToTracingNoReply(this._stackSessions, params.callData);
   }
 
   async connect(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {

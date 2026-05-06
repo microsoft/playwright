@@ -2,3 +2,10 @@
 @isomorphic/**
 @utils/**
 @tracing/**
+node_modules/fs
+node_modules/os
+node_modules/path
+node_modules/events
+node_modules/yauzl
+node_modules/yazl
+node_modules/mime

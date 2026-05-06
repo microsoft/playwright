@@ -3,5 +3,6 @@
 ../../protocol/
 @utils/**
 @isomorphic/**
+@tracing/**
 ../**
 node_modules/yaml
