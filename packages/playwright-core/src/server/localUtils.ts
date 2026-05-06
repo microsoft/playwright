@@ -129,6 +129,7 @@ async function deleteStackSession(progress: Progress, stackSessions: Map<string,
   const session = stacksId ? stackSessions.get(stacksId) : undefined;
   if (!session)
     return;
+  await progress.race(session.writer);
   stackSessions.delete(stacksId!);
   if (session.tmpDir)
     await progress.race(removeFolders([session.tmpDir]));
