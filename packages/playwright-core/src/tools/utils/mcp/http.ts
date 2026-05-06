@@ -22,6 +22,7 @@ import crypto from 'crypto';
 import debug from 'debug';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { urlHostFromAddress } from '@utils/httpServer';
 import { createHttpServer, startHttpServer } from '@utils/network';
 
 import * as mcpServer from './server';
@@ -49,7 +50,7 @@ export function addressToString(address: string | net.AddressInfo | null, option
   assert(address, 'Could not bind server socket');
   if (typeof address === 'string')
     throw new Error('Unexpected address type: ' + address);
-  let host = address.family === 'IPv4' ? address.address : `[${address.address}]`;
+  let host = urlHostFromAddress(address);
   if (options.normalizeLoopback && (host === '0.0.0.0' || host === '[::]' || host === '[::1]' || host === '127.0.0.1'))
     host = 'localhost';
   return `${options.protocol}://${host}:${address.port}`;
