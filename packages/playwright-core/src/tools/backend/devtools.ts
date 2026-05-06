@@ -135,7 +135,7 @@ const annotate = defineTabTool({
     daemon.unref();
 
     // Spawn the annotate client in JSON mode to capture the raw payload over stdout.
-    const client = spawn(process.execPath, [...daemonArgs, '--annotate', '--json'], {
+    const client = spawn(process.execPath, [...daemonArgs, '--annotate'], {
       stdio: ['pipe', 'pipe', 'inherit'],
     });
     const onAbort = () => client.kill();
@@ -165,18 +165,19 @@ const annotate = defineTabTool({
     const date = new Date();
     if (feedback)
       response.addTextResult(feedback);
+    const multi = frames.length > 1;
     for (let i = 0; i < frames.length; i++) {
       const frame = frames[i];
       const idx = i + 1;
       const session = frame.sessionTitle || 'session';
-      const tab = frame.tabTitle || 'tab';
-      response.addTextResult(`screenshot ${idx}: ${session} / ${tab} @ ${frame.url} (${frame.viewportWidth}x${frame.viewportHeight})`);
+      const tab = frame.title || 'tab';
+      response.addTextResult(`${multi ? `## Screenshot ${idx}\n` : ''}${session} / ${tab} @ ${frame.url} (${frame.viewportWidth}x${frame.viewportHeight})`);
       for (const a of frame.annotations)
         response.addTextResult(`  { x: ${a.x}, y: ${a.y}, width: ${a.width}, height: ${a.height} }: ${a.text}`);
       if (frame.data)
-        await response.addResult(`Annotation image ${idx}`, Buffer.from(frame.data, 'base64'), { prefix: `annotations-${idx}`, ext: 'png', date });
+        await response.addResult(`Annotation image${multi ? ' ' + idx : ''}`, Buffer.from(frame.data, 'base64'), { prefix: `annotations${multi ? '-' + idx : ''}`, ext: 'png', date });
       if (frame.ariaSnapshot)
-        await response.addResult(`Annotation snapshot ${idx}`, Buffer.from(frame.ariaSnapshot, 'utf8'), { prefix: `annotations-${idx}`, ext: 'yaml', date });
+        await response.addResult(`Annotation snapshot${multi ? ' ' + idx : ''}`, Buffer.from(frame.ariaSnapshot, 'utf8'), { prefix: `annotations${multi ? '-' + idx : ''}`, ext: 'yaml', date });
     }
   },
 });

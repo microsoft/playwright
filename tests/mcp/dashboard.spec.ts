@@ -18,6 +18,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import * as zipjs from '@zip.js/zip.js';
+
 import { test, expect } from './cli-fixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
@@ -145,17 +147,18 @@ async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page
   const y1 = box!.y + box!.height * 0.6;
   await dashboard.mouse.move(x0, y0);
   await dashboard.mouse.down();
-  await dashboard.mouse.move(x1, y1, { steps: 10 });
+  await dashboard.mouse.move(x1, y1);
   await dashboard.mouse.up();
   await dashboard.locator('.annotations-textarea').fill(text);
   await dashboard.locator('.annotations-textarea').press('Enter');
-  await dashboard.getByRole('button', { name: 'Submit', exact: true }).click();
+  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+  await dashboard.getByRole('button', { name: 'Submit' }).click();
 }
 
 function verifyAnnotateOutput(output: string, expectedText: string, outputDir: string) {
-  expect(output).toMatch(/screenshot 1: .* @ .* \(\d+x\d+\)/);
+  expect(output).toMatch(/.* @ .* \(\d+x\d+\)/);
   expect(output).toMatch(new RegExp(`\\{ x: \\d+, y: \\d+, width: \\d+, height: \\d+ \\}: ${expectedText}`));
-  const imageMatch = output.match(/- \[Annotation image 1\]\((\.playwright-cli[\\/]annotations-1-.*\.png)\)/);
+  const imageMatch = output.match(/- \[Annotation image\]\((\.playwright-cli[\\/]annotations-.*\.png)\)/);
   expect(imageMatch).not.toBeNull();
   const pngPath = path.resolve(outputDir, imageMatch![1]);
   expect(fs.existsSync(pngPath)).toBe(true);
@@ -186,7 +189,7 @@ test('should capture multiple screenshots in one annotation', async ({ connectTo
   await dashboard.locator('.annotations-textarea').press('Enter');
 
   // Deselect overlay (sidebar stays), then capture a second frame via the toolbar button.
-  await dashboard.getByRole('button', { name: 'Close screenshot' }).click();
+  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
   await expect(dashboard.locator('.annotate-overlay')).toHaveCount(0);
   await dashboard.getByRole('button', { name: /^(Take|Add) screenshot$/ }).click();
 
@@ -201,17 +204,154 @@ test('should capture multiple screenshots in one annotation', async ({ connectTo
   await dashboard.locator('.annotations-textarea').fill('second');
   await dashboard.locator('.annotations-textarea').press('Enter');
 
-  await dashboard.getByRole('button', { name: 'Submit', exact: true }).click();
+  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+  await dashboard.getByRole('button', { name: 'Submit' }).click();
 
   const { output, exitCode } = await annotatePromise;
   expect(done).toBe(true);
   expect(exitCode).toBe(0);
-  expect(output).toMatch(/screenshot 1: .* @ .* \(\d+x\d+\)/);
-  expect(output).toMatch(/screenshot 2: .* @ .* \(\d+x\d+\)/);
+  expect(output).toMatch(/## Screenshot 1/);
+  expect(output).toMatch(/## Screenshot 2/);
   expect(output).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: first/);
   expect(output).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: second/);
   expect(output).toMatch(/- \[Annotation image 1\]\(.*annotations-1-.*\.png\)/);
   expect(output).toMatch(/- \[Annotation image 2\]\(.*annotations-2-.*\.png\)/);
+});
+
+test('should abort annotation when last screenshot is removed', async ({ connectToDashboard, cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+
+  const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+
+  const annotatePromise = cli('show', '--annotate');
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
+
+  // Close the fullscreen overlay first so the sidebar remove button is accessible.
+  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+
+  // Remove the only screenshot — should abort the annotation
+  await dashboard.locator('.annotate-sidebar-thumb-remove').click();
+
+  const { output, exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+  expect(output).toContain('No annotations were submitted');
+});
+
+test('should abort MCP annotation when last screenshot is removed', async ({ connectToDashboard, boundBrowser, startClient, cliEnv }) => {
+  await boundBrowser.newPage();
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { client } = await startClient({
+    args: ['--endpoint=default', '--caps=devtools'],
+    env: {
+      ...cliEnv,
+      PWTEST_DASHBOARD_APP_BIND_TITLE: bindTitle,
+    },
+  });
+
+  const annotatePromise = client.callTool({ name: 'browser_annotate' });
+  let done = false;
+  void annotatePromise.then(() => { done = true; });
+
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
+
+    // Close the fullscreen overlay first so the sidebar remove button is accessible.
+    await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+
+    // Remove the only screenshot — should abort
+    await dashboard.locator('.annotate-sidebar-thumb-remove').click();
+  } finally {
+    await browser.close().catch(() => {});
+  }
+
+  const result = await annotatePromise;
+  expect(done).toBe(true);
+  const text = (result.content as any).map((c: any) => c.text ?? '').join('\n');
+  expect(text).toContain('No annotations were submitted');
+});
+
+test('user-initiated annotate downloads zip with feedback.md', async ({ connectToDashboard, cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+  const browser = await connectToDashboard(bindTitle);
+
+  const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+
+  // Inject a showSaveFilePicker stub that captures the blob bytes.
+  await dashboard.evaluate(() => {
+    (window as any).__capturedZipBytes = undefined as Uint8Array | undefined;
+    (window as any).showSaveFilePicker = async () => ({
+      createWritable: async () => {
+        const chunks: Uint8Array[] = [];
+        return {
+          write: async (chunk: Blob | BufferSource) => {
+            const buf = chunk instanceof Blob
+              ? new Uint8Array(await chunk.arrayBuffer())
+              : new Uint8Array(chunk instanceof ArrayBuffer ? chunk : (chunk as ArrayBufferView).buffer);
+            chunks.push(buf);
+          },
+          close: async () => {
+            const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+            const merged = new Uint8Array(total);
+            let off = 0;
+            for (const c of chunks) { merged.set(c, off); off += c.byteLength; }
+            (window as any).__capturedZipBytes = merged;
+          },
+        };
+      },
+    });
+  });
+
+  // Enter annotate via toolbar (user-initiated).
+  await dashboard.getByRole('button', { name: /^(Take|Add) screenshot$/ }).click();
+  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible();
+
+  // Draw an annotation.
+  const box = await dashboard.locator('.annotate-modal-image').boundingBox();
+  await dashboard.mouse.move(box!.x + box!.width * 0.2, box!.y + box!.height * 0.2);
+  await dashboard.mouse.down();
+  await dashboard.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5, { steps: 5 });
+  await dashboard.mouse.up();
+  await dashboard.locator('.annotations-textarea').fill('zip-test');
+  await dashboard.locator('.annotations-textarea').press('Enter');
+
+  // Close overlay, type feedback, and submit → triggers zip download via injected stub.
+  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+  await dashboard.locator('.annotate-sidebar-feedback').fill('My feedback');
+  await dashboard.getByRole('button', { name: 'Submit', exact: true }).click();
+
+  await expect.poll(
+      async () => dashboard.evaluate(() => !!(window as any).__capturedZipBytes),
+      { timeout: 10000 },
+  ).toBe(true);
+  const zipB64: string = await dashboard.evaluate(() => (window as any).__capturedZipBytes.toBase64());
+  const zipBytes = Buffer.from(zipB64, 'base64');
+
+  zipjs.configure({ useWebWorkers: false });
+  const entries = await new zipjs.ZipReader(new zipjs.Uint8ArrayReader(zipBytes)).getEntries();
+  const names = entries.map(e => e.filename);
+  expect(names).toContain('feedback.md');
+  expect(names).toContain('annotations-1.png');
+
+  const mdEntry = entries.find(e => e.filename === 'feedback.md')!;
+  const mdText = await mdEntry.getData!(new zipjs.TextWriter());
+  expect(mdText).toContain('My feedback');
+  expect(mdText).toContain('Screenshot 1');
+  expect(mdText).toContain('[Screenshot 1](annotations-1.png)');
+  expect(mdText).toMatch(/\d+x\d+/);
 });
 
 test('should capture annotations via show --annotate', async ({ connectToDashboard, cli, server }) => {
@@ -311,7 +451,7 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
   expect(done).toBe(true);
   const text = (result.content as any).map(c => c.text ?? '').join('\n');
   expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: direct-mcp/);
-  expect(text).toMatch(/- \[Annotation image 1\]\(.*\.png\)/);
+  expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
 });
 
 test('should annotate when context has no fixed viewport', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {
@@ -348,7 +488,7 @@ test('should annotate when context has no fixed viewport', async ({ connectToDas
   expect(done).toBe(true);
   const text = (result.content as any).map(c => c.text ?? '').join('\n');
   expect(text).toMatch(/\{ x: \d+, y: \d+, width: \d+, height: \d+ \}: no-viewport/);
-  expect(text).toMatch(/- \[Annotation image 1\]\(.*\.png\)/);
+  expect(text).toMatch(/- \[Annotation image\]\(.*\.png\)/);
 });
 
 test('should cancel browser_annotate when the MCP request is aborted', async ({ connectToDashboard, boundBrowser, startClient, cliEnv, server }) => {

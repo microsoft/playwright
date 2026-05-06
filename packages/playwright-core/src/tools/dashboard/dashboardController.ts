@@ -167,6 +167,10 @@ export class DashboardConnection implements Transport {
     this._onAnnotationSubmit?.(params.frames, params.feedback);
   }
 
+  async cancelAnnotation() {
+    this._onAnnotationSubmit?.([], '');
+  }
+
   async reveal(params: { path: string }) {
     switch (os.platform()) {
       case 'darwin':
@@ -232,14 +236,6 @@ export class DashboardConnection implements Transport {
         return entry.descriptor.browser.launchOptions.artifactsDir ?? this._recordingDir;
     }
     return this._recordingDir;
-  }
-
-  sessionTitleFor(context: api.BrowserContext): string {
-    for (const entry of this._provider.contextEntries()) {
-      if (entry.context === context)
-        return entry.descriptor.title ?? '';
-    }
-    return '';
   }
 
   _pushTabs() {
@@ -433,17 +429,15 @@ class AttachedPage {
     return { streamId };
   }
 
-  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string; sessionTitle: string }> {
+  async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string }> {
     const buffer = await this._page.screenshot({ type: 'png' });
     const vp = await this._viewportSize();
     const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
-    const sessionTitle = this._owner.sessionTitleFor(this._page.context());
     return {
       data: buffer.toString('base64'),
       viewportWidth: vp.width,
       viewportHeight: vp.height,
       ariaSnapshot,
-      sessionTitle,
     };
   }
 

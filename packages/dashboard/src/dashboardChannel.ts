@@ -37,7 +37,7 @@ export type SubmittedAnnotationFrame = {
   ariaSnapshot: string;
   annotations: AnnotationData[];
   sessionTitle: string;
-  tabTitle: string;
+  title: string;
   url: string;
   viewportWidth: number;
   viewportHeight: number;
@@ -73,8 +73,9 @@ export interface DashboardChannel {
   startRecording(): Promise<void>;
   stopRecording(): Promise<{ streamId: string }>;
   readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
-  screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string; sessionTitle: string }>;
+  screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string }>;
   submitAnnotation(params: { frames: SubmittedAnnotationFrame[]; feedback: string }): Promise<void>;
+  cancelAnnotation(): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

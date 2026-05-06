@@ -250,13 +250,12 @@ type DashboardOptions = {
   pageId?: string;
   kill?: boolean;
   annotate?: boolean;
-  json?: boolean;
   port?: number;
   host?: string;
 };
 
 function parseOpenArgs(): DashboardOptions {
-  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['annotate', 'kill', 'json'] });
+  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['annotate', 'kill'] });
   const portStr = args.port as string | undefined;
   return {
     sessionName: args.sessionName as string | undefined,
@@ -265,7 +264,6 @@ function parseOpenArgs(): DashboardOptions {
     port: portStr !== undefined ? Number(portStr) : undefined,
     host: args.host as string | undefined,
     annotate: !!args.annotate,
-    json: !!args.json,
     kill: !!args.kill,
   };
 }

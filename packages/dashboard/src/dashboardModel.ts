@@ -37,7 +37,7 @@ export type AnnotateFrame = {
   viewportHeight: number;
   ariaSnapshot: string;
   sessionTitle: string;
-  tabTitle: string;
+  title: string;
   url: string;
   annotations: Annotation[];
 };
@@ -46,6 +46,7 @@ export type AnnotateSession = {
   initiator: 'cli' | 'user';
   frames: AnnotateFrame[];
   selectedFrameId: string | null;
+  focusAnnotationId: string | null;
   feedback: string;
 };
 
@@ -92,7 +93,7 @@ export class DashboardModel {
     client.on('tabs', params => this._emit({ tabs: params.tabs }));
     client.on('frame', params => this._emit({ liveFrame: params }));
     client.on('annotate', () => this.enterAnnotate('cli'));
-    client.on('cancelAnnotate', () => this.cancelAnnotate());
+    client.on('cancelAnnotate', () => this.cancelAnnotate(false));
   }
 
   subscribe(listener: Listener): () => void {
@@ -176,10 +177,8 @@ export class DashboardModel {
 
   toggleInteractive() {
     const next: Mode = this.state.mode === 'interactive' ? 'readonly' : 'interactive';
-    // Switching to interactive deselects any active overlay; the annotate session
-    // (the sidebar) stays open.
-    if (next === 'interactive' && this.state.annotateSession?.selectedFrameId)
-      this._emit({ mode: next, annotateSession: { ...this.state.annotateSession, selectedFrameId: null } });
+    if (next === 'interactive')
+      void this._enterInteractive();
     else
       this._emit({ mode: next });
   }
@@ -201,11 +200,11 @@ export class DashboardModel {
     void this._addAnnotateFrame();
   }
 
-  selectAnnotateFrame(id: string) {
+  selectAnnotateFrame(id: string, focusAnnotationId?: string) {
     const session = this.state.annotateSession;
     if (!session || !session.frames.find(f => f.id === id))
       return;
-    this._emit({ annotateSession: { ...session, selectedFrameId: id }, mode: 'annotate' });
+    this._emit({ annotateSession: { ...session, selectedFrameId: id, focusAnnotationId: focusAnnotationId ?? null }, mode: 'annotate' });
   }
 
   toggleSelectFrame(id: string) {
@@ -213,7 +212,7 @@ export class DashboardModel {
     if (!session)
       return;
     if (session.selectedFrameId === id)
-      this._emit({ annotateSession: { ...session, selectedFrameId: null }, mode: 'readonly' });
+      this._emit({ annotateSession: { ...session, selectedFrameId: null, focusAnnotationId: null }, mode: 'readonly' });
     else
       this.selectAnnotateFrame(id);
   }
@@ -222,7 +221,7 @@ export class DashboardModel {
     const session = this.state.annotateSession;
     if (!session || session.selectedFrameId === null)
       return;
-    this._emit({ annotateSession: { ...session, selectedFrameId: null }, mode: 'readonly' });
+    this._emit({ annotateSession: { ...session, selectedFrameId: null, focusAnnotationId: null }, mode: 'readonly' });
   }
 
   removeAnnotateFrame(id: string) {
@@ -269,9 +268,11 @@ export class DashboardModel {
     void this._discardRecording();
   }
 
-  cancelAnnotate() {
+  cancelAnnotate(notifyServer = true) {
     this._requestId++;
     const s = this.state;
+    if (notifyServer && s.annotateSession?.initiator === 'cli')
+      void this._client.cancelAnnotation();
     this._emit({
       mode: s.mode === 'annotate' ? 'readonly' : s.mode,
       annotateSession: null,
@@ -291,7 +292,7 @@ export class DashboardModel {
         ariaSnapshot: frame.ariaSnapshot,
         annotations: frame.annotations.map(a => ({ x: a.x, y: a.y, width: a.width, height: a.height, text: a.text })),
         sessionTitle: frame.sessionTitle,
-        tabTitle: frame.tabTitle,
+        title: frame.title,
         url: frame.url,
         viewportWidth: frame.viewportWidth,
         viewportHeight: frame.viewportHeight,
@@ -308,12 +309,15 @@ export class DashboardModel {
   }
 
   private async _enterInteractive() {
+    const s = this.state;
     // Interactive coexists with the annotate sidebar; only the overlay is
     // dismissed so the live page is reachable.
-    const s = this.state;
-    if (s.annotateSession?.selectedFrameId)
-      this.deselectFrame();
-    this._emit({ mode: 'interactive' });
+    this._emit({
+      mode: 'interactive',
+      annotateSession: s.annotateSession?.selectedFrameId
+        ? { ...s.annotateSession, selectedFrameId: null, focusAnnotationId: null }
+        : s.annotateSession,
+    });
   }
 
   private async _enterAnnotate(initiator: 'cli' | 'user') {
@@ -346,21 +350,23 @@ export class DashboardModel {
       this._emit({ pendingCapture: false });
       return;
     }
+    const selectedTab = this.state.tabs?.find(t => t.selected);
+    const sessionTitle = this.state.sessions.find(s => s.browser.guid === selectedTab?.browser)?.title ?? '';
     const frame: AnnotateFrame = {
       id: 'frm-' + Math.random().toString(36).slice(2, 10),
       data: frameData.data,
       viewportWidth: frameData.viewportWidth,
       viewportHeight: frameData.viewportHeight,
       ariaSnapshot: frameData.ariaSnapshot,
-      sessionTitle: frameData.sessionTitle,
-      tabTitle: this.state.tabs?.find(t => t.selected)?.title ?? '',
-      url: this.state.tabs?.find(t => t.selected)?.url ?? '',
+      sessionTitle,
+      title: selectedTab?.title ?? '',
+      url: selectedTab?.url ?? '',
       annotations: [],
     };
     const existing = this.state.annotateSession;
     const session: AnnotateSession = existing
-      ? { ...existing, frames: [...existing.frames, frame], selectedFrameId: frame.id }
-      : { initiator: initiator ?? 'user', frames: [frame], selectedFrameId: frame.id, feedback: '' };
+      ? { ...existing, frames: [...existing.frames, frame], selectedFrameId: frame.id, focusAnnotationId: null }
+      : { initiator: initiator ?? 'user', frames: [frame], selectedFrameId: frame.id, focusAnnotationId: null, feedback: '' };
     this._emit({ annotateSession: session, pendingCapture: false, mode: 'annotate' });
   }
 
@@ -414,10 +420,6 @@ export class DashboardModel {
     this._emit({ recording: null });
   }
 
-  private async _cleanupOnModeSwitch() {
-    await this._discardRecording();
-  }
-
   private _emit(partial: Partial<DashboardState>) {
     this.state = { ...this.state, ...partial };
     for (const listener of this._listeners)
@@ -437,9 +439,9 @@ async function renderFrameToBase64Png(frame: AnnotateFrame): Promise<string | un
   if (!blob)
     return undefined;
   const buf = await blob.arrayBuffer();
-  return (new Uint8Array(buf) as any).toBase64() as string;
+  return new Uint8Array(buf).toBase64();
 }
 
 function base64ToBlob(base64: string, mime: string): Blob {
-  return new Blob([(Uint8Array as any).fromBase64(base64)], { type: mime });
+  return new Blob([Uint8Array.fromBase64(base64)], { type: mime });
 }

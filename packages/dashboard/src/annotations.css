@@ -333,6 +333,10 @@
   box-sizing: border-box;
 }
 
+.annotate-sidebar-thumb-rect.hovered {
+  background: rgb(var(--annotation-color) / 0.32);
+}
+
 .annotate-sidebar-thumb-remove.toolbar-button {
   position: absolute;
   top: 4px;
@@ -354,6 +358,40 @@
 .annotate-sidebar-thumb:hover .annotate-sidebar-thumb-remove,
 .annotate-sidebar-thumb-remove:focus-visible {
   opacity: 1;
+}
+
+.annotate-sidebar-comments {
+  list-style: none;
+  margin: 0;
+  padding: 4px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.annotate-sidebar-comment {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgb(var(--annotation-color) / 0.12);
+  border: 1px solid rgb(var(--annotation-color) / 0.35);
+  border-radius: 4px;
+  color: var(--color-fg-default);
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 3px 6px;
+  cursor: pointer;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.annotate-sidebar-comment:hover {
+  background: rgb(var(--annotation-color) / 0.2);
+}
+
+.annotate-sidebar-comment.empty {
+  color: var(--color-fg-muted);
+  font-style: italic;
 }
 
 /* auto-grow textarea: the wrapper mirrors content in ::after so the grid row
@@ -422,14 +460,14 @@
 
 /* -- Annotate overlay (drawn on top of the live screen) -- */
 .annotate-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: flex;
   align-items: stretch;
   justify-content: center;
   padding: 16px;
   background: rgba(0, 0, 0, 0.55);
-  z-index: 50;
+  z-index: 100;
   min-height: 0;
 }
 
@@ -466,19 +504,12 @@
   align-items: center;
   gap: 6px;
   height: 30px;
-  padding: 0 12px;
+  padding: 0 4px;
   font-size: 13px;
-  background: var(--color-canvas-inset);
   color: var(--color-fg-default);
-  border: 1px solid var(--color-border-default);
-  border-radius: 16px;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
-}
-
-:root.light-mode .annotate-overlay-titlebar {
-  background: var(--color-canvas-default);
 }
 
 .annotate-overlay-title-text {
@@ -514,12 +545,4 @@
   background: var(--color-canvas-default);
 }
 
-/* Fullscreen overlay (when a frame is selected): cover the entire main area, not just browser-window. */
-.dashboard-view.annotate-fullscreen .annotate-overlay {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 260px;
-  z-index: 100;
-}
+

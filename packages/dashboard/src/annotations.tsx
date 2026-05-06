@@ -114,6 +114,7 @@ type AnnotationsProps = {
   viewportHeight: number;
   annotations: Annotation[];
   onAnnotationsChange: (annotations: Annotation[]) => void;
+  focusAnnotationId?: string | null;
 };
 
 const ColorPicker: React.FC<{ color: string; onChange: (color: string) => void }> = ({ color, onChange }) => (
@@ -133,14 +134,7 @@ const ColorPicker: React.FC<{ color: string; onChange: (color: string) => void }
   </div>
 );
 
-export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>(({ active, displayRef, screenRef, viewportWidth, viewportHeight, annotations, onAnnotationsChange }, ref) => {
-  const setAnnotations = React.useCallback(
-      (updater: Annotation[] | ((prev: Annotation[]) => Annotation[])) => {
-        const next = typeof updater === 'function' ? (updater as (p: Annotation[]) => Annotation[])(annotations) : updater;
-        onAnnotationsChange(next);
-      },
-      [annotations, onAnnotationsChange],
-  );
+export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>(({ active, displayRef, screenRef, viewportWidth, viewportHeight, annotations, onAnnotationsChange, focusAnnotationId }, ref) => {
   const [draft, setDraft] = React.useState<{ startX: number; startY: number; x: number; y: number } | null>(null);
   const [selection, setSelection] = React.useState<Selection>(null);
   const [drag, setDrag] = React.useState<DragState | null>(null);
@@ -152,6 +146,14 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   const [, setTick] = React.useState(0);
   const forceRender = React.useCallback(() => setTick(t => t + 1), []);
   const layerRef = React.useRef<HTMLDivElement>(null);
+  // Refs kept in sync each render so effects can read current values without
+  // listing them as dependencies (avoids spurious effect re-runs).
+  const annotationsRef = React.useRef(annotations);
+  const focusAnnotationIdRef = React.useRef(focusAnnotationId);
+  React.useLayoutEffect(() => {
+    annotationsRef.current = annotations;
+    focusAnnotationIdRef.current = focusAnnotationId;
+  });
 
   const selectedId = selection?.id ?? null;
   const editingId = selection?.editing ? selection.id : null;
@@ -171,10 +173,20 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   }, [active, displayRef, forceRender]);
 
   React.useEffect(() => {
-    if (active)
+    if (active) {
+      const fid = focusAnnotationIdRef.current;
+      if (fid) {
+        const annotation = annotationsRef.current.find(a => a.id === fid);
+        if (annotation) {
+          setEditSnapshot({ ...annotation });
+          setSelection({ id: fid, editing: true });
+          return;
+        }
+      }
       layerRef.current?.focus();
-    else
+    } else {
       setSelection(null);
+    }
   }, [active]);
 
   React.useEffect(() => {
@@ -189,7 +201,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
       const dvy = vp.y - drag.startVy;
       if (dvx === 0 && dvy === 0)
         return;
-      setAnnotations(prev => prev.map(a => a.id === drag.id ? { ...a, ...applyDrag(drag.orig, drag.kind, dvx, dvy) } : a));
+      onAnnotationsChange(annotationsRef.current.map(a => a.id === drag.id ? { ...a, ...applyDrag(drag.orig, drag.kind, dvx, dvy) } : a));
     };
     const onUp = () => setDrag(null);
     window.addEventListener('mousemove', onMove);
@@ -198,7 +210,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [drag, displayRef, viewportWidth, viewportHeight, setAnnotations]);
+  }, [drag, displayRef, viewportWidth, viewportHeight, onAnnotationsChange]);
 
   function imgCoords(e: React.MouseEvent): { x: number; y: number } | null {
     if (!viewportWidth || !viewportHeight)
@@ -256,7 +268,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
     if (rect.width < MIN_ANNOTATION_SIZE || rect.height < MIN_ANNOTATION_SIZE)
       return;
     const id = newAnnotationId();
-    setAnnotations(prev => [...prev, { id, ...rect, text: '', color: activeColor }]);
+    onAnnotationsChange([...annotations, { id, ...rect, text: '', color: activeColor }]);
     setSelection({ id, editing: true });
   }
 
@@ -274,7 +286,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
   function nudgeSelected(dx: number, dy: number) {
     if (!selectedId)
       return;
-    setAnnotations(prev => prev.map(a => a.id === selectedId ? { ...a, x: a.x + dx, y: a.y + dy } : a));
+    onAnnotationsChange(annotations.map(a => a.id === selectedId ? { ...a, x: a.x + dx, y: a.y + dy } : a));
   }
 
   function closeEditor() {
@@ -295,7 +307,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
     }
     if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !editingId) {
       e.preventDefault();
-      setAnnotations(prev => prev.filter(a => a.id !== selectedId));
+      onAnnotationsChange(annotations.filter(a => a.id !== selectedId));
       setSelection(null);
       return;
     }
@@ -412,11 +424,12 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
             <textarea
               className='annotations-textarea'
               autoFocus
+              onFocus={e => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
               value={editingAnnotation.text}
               placeholder='Task or comment…'
               onChange={e => {
                 const text = e.target.value;
-                setAnnotations(prev => prev.map(a => a.id === editingAnnotation.id ? { ...a, text } : a));
+                onAnnotationsChange(annotations.map(a => a.id === editingAnnotation.id ? { ...a, text } : a));
               }}
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
@@ -434,7 +447,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
               <ColorPicker
                 color={editingAnnotation.color}
                 onChange={color => {
-                  setAnnotations(prev => prev.map(a => a.id === editingAnnotation.id ? { ...a, color } : a));
+                  onAnnotationsChange(annotations.map(a => a.id === editingAnnotation.id ? { ...a, color } : a));
                   setActiveColor(color);
                 }}
               />
@@ -445,7 +458,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
                       className='annotations-action-btn'
                       onClick={() => {
                         const snap = editSnapshot;
-                        setAnnotations(prev => prev.map(a => a.id === snap.id ? snap : a));
+                        onAnnotationsChange(annotations.map(a => a.id === snap.id ? snap : a));
                         setSelection(null);
                         layerRef.current?.focus();
                       }}
@@ -464,7 +477,7 @@ export const Annotations = React.forwardRef<AnnotationsHandle, AnnotationsProps>
                     <button
                       className='annotations-action-btn danger'
                       onClick={() => {
-                        setAnnotations(prev => prev.filter(a => a.id !== editingAnnotation.id));
+                        onAnnotationsChange(annotations.filter(a => a.id !== editingAnnotation.id));
                         setSelection(null);
                         layerRef.current?.focus();
                       }}

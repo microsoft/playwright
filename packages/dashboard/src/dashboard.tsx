@@ -132,10 +132,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
       interactiveBtnRef.current?.classList.remove('flash');
   }, [interactive]);
 
-  const onSubmitAnnotateSession = React.useCallback(async () => {
-    await model.submitAnnotateSession();
-  }, [model]);
-
   function flashInteractiveHint() {
     setFlashTick(tick => tick + 1);
   }
@@ -148,15 +144,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
     await writable.close();
     model.discardRecording();
   }, [model]);
-
-  const onCloseAnnotate = React.useCallback(() => {
-    if (!annotateSession)
-      return;
-    if (annotateSession.initiator === 'cli')
-      model.completeAnnotation();
-    else
-      model.cancelAnnotate();
-  }, [model, annotateSession]);
 
   const selectedTab = tabs?.find(t => t.selected);
   const ready = !!selectedTab;
@@ -248,7 +235,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
 
   const overlayOpen = !!selectedFrame;
   return (
-    <main className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotateActive ? ' has-annotate-sidebar' : '') + (overlayOpen ? ' annotate-fullscreen' : '')} aria-label={modeLabel}>
+    <main className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotateActive ? ' has-annotate-sidebar' : '')} aria-label={modeLabel}>
       <div className='dashboard-main'>
         {/* Toolbar */}
         <div ref={toolbarRef} className='toolbar' hidden={overlayOpen}>
@@ -380,24 +367,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
                   src={liveFrame ? 'data:image/jpeg;base64,' + liveFrame.data : undefined}
                 />
               </div>
-              {selectedFrame && (
-                <AnnotateOverlay
-                  key={selectedFrame.id}
-                  model={model}
-                  frame={selectedFrame}
-                />
-              )}
               {overlayText && <div className={'screen-overlay' + (liveFrame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
             </div>
           </div>
         </div>
       </div>
+      {selectedFrame && (
+        <AnnotateOverlay
+          key={selectedFrame.id + (annotateSession?.focusAnnotationId ?? '')}
+          model={model}
+          frame={selectedFrame}
+          focusAnnotationId={annotateSession?.focusAnnotationId}
+        />
+      )}
       {annotateSession && (
         <AnnotateSidebar
           model={model}
           session={annotateSession}
-          onSubmit={onSubmitAnnotateSession}
-          onClose={onCloseAnnotate}
+          onSubmit={() => model.submitAnnotateSession()}
         />
       )}
 
