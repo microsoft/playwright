@@ -65,7 +65,7 @@ it('should write descriptor on start and remove on stop', async ({ browser }) =>
 
 it('should start ws server with host/port and produce well-formed endpoint', async ({ browserType, browser }) => {
   const serverInfo = await browser.bind('default', { host: 'localhost', port: 0 });
-  expect(serverInfo.endpoint).toMatch(/^ws:\/\/localhost:\d+\/[a-f0-9]+$/);
+  expect(serverInfo.endpoint).toMatch(/^ws:\/\/(127\.0\.0\.1|\[::1\]):\d+\/[a-f0-9]+$/);
 
   const browser2 = await browserType.connect(serverInfo.endpoint);
   const page = await browser2.newPage();
