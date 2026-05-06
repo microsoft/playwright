@@ -200,7 +200,7 @@ test('should filter actions by text', async ({ showTraceViewer }) => {
   const fullCount = await traceViewer.actionTitles.count();
   await filterInput.fill('Click');
   await expect(traceViewer.actionTitles.filter({ hasText: 'Click' }).first()).toBeVisible();
-  expect(await traceViewer.actionTitles.count()).toBeLessThan(fullCount);
+  await expect.poll(() => traceViewer.actionTitles.count()).toBeLessThan(fullCount);
 
   await filterInput.fill('');
   await expect(traceViewer.actionTitles).toHaveCount(fullCount);

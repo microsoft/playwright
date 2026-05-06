@@ -114,7 +114,7 @@ Call log:
 test('should not miss element that appears between retries before the deadline', async ({ page }) => {
   await page.setContent(`<div id="target" style="display:none">content</div>`);
   await page.evaluate(() => {
-    setTimeout(() => {
+    window.builtins.setTimeout(() => {
       document.getElementById('target')!.style.display = 'block';
     }, 1500);
   });

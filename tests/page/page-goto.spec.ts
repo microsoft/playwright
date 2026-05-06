@@ -407,8 +407,8 @@ it('should fail when exceeding browser context navigation timeout', async ({ pag
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding default maximum timeout', async ({ page, server, playwright, isAndroid }) => {
-  it.skip(isAndroid, 'No context per test');
+it('should fail when exceeding default maximum timeout', async ({ page, server, playwright, isAndroid, isElectron }) => {
+  it.skip(isAndroid || isElectron, 'No context per test');
 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
@@ -423,8 +423,8 @@ it('should fail when exceeding default maximum timeout', async ({ page, server, 
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding browser context timeout', async ({ page, server, playwright, isAndroid }) => {
-  it.skip(isAndroid, 'No context per test');
+it('should fail when exceeding browser context timeout', async ({ page, server, playwright, isAndroid, isElectron }) => {
+  it.skip(isAndroid || isElectron, 'No context per test');
 
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });

@@ -64,8 +64,10 @@ it('should return uncompressed text', async ({ page, server }) => {
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should return uncompressed text for brotli encoding', async ({ page, server, browserName }) => {
+it('should return uncompressed text for brotli encoding', async ({ page, server, browserName, isAndroid }) => {
   it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/39160');
+  it.fixme(isAndroid, 'net::ERR_CONTENT_DECODING_FAILED');
+
   const text = '{"foo": "bar"}\n';
   const compressed = zlib.brotliCompressSync(Buffer.from(text));
   server.setRoute('/brotli.json', (req, res) => {
