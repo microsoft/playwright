@@ -22,6 +22,7 @@ import http from 'http';
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { monotonicTime } from '@isomorphic/time';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
@@ -387,34 +388,29 @@ export async function openDashboardForContext(context: api.BrowserContext): Prom
 
 async function runKillClient(): Promise<void> {
   const socketPath = dashboardSocketPath();
-  let pid: number;
-  try {
-    pid = await new Promise<number>((resolve, reject) => {
-      const client = net.connect(socketPath);
-      let data = '';
-      client.once('connect', () => {
-        client.write(JSON.stringify({ kill: true }) + '\n');
-      });
-      client.on('data', chunk => { data += chunk; });
-      client.once('end', () => {
-        let pid: number | undefined;
-        try { pid = JSON.parse(data.trim()).pid; } catch { }
-        if (pid === undefined)
-          reject(new Error('Dashboard did not return its PID'));
-        else
-          resolve(pid);
-      });
-      client.once('error', () => reject(new Error('no dashboard running')));
+  const pid = await new Promise<number | undefined>((resolve, reject) => {
+    const client = net.connect(socketPath);
+    let data = '';
+    client.once('connect', () => {
+      client.write(JSON.stringify({ kill: true }) + '\n');
     });
-  } catch (e: any) {
-    if (e?.message === 'no dashboard running')
-      return;
-    throw e;
-  }
+    client.on('data', chunk => { data += chunk; });
+    client.once('end', () => {
+      let pid: number | undefined;
+      try { pid = JSON.parse(data.trim()).pid; } catch { }
+      if (pid === undefined)
+        reject(new Error('Dashboard did not return its PID'));
+      else
+        resolve(pid);
+    });
+    client.once('error', () => resolve(undefined));
+  });
+  if (pid === undefined)
+    return;
   // Poll until the daemon process exits — at that point the OS has released all
   // its handles, including the named pipe, so the next acquisition won't see a stale pipe.
-  const deadline = Date.now() + 35000;
-  while (Date.now() < deadline) {
+  const deadline = monotonicTime() + 35000;
+  while (monotonicTime() < deadline) {
     try {
       process.kill(pid, 0);
     } catch {
