@@ -280,9 +280,7 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
     const server = net.createServer();
     server.listen(socketPath, () => resolve(server));
     server.on('error', (err: NodeJS.ErrnoException) => {
-      const isInUse = err.code === 'EADDRINUSE'
-          || (process.platform === 'win32' && err.code === 'EBUSY');
-      if (!isInUse)
+      if (err.code !== 'EADDRINUSE')
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write(JSON.stringify(options) + '\n');
@@ -352,7 +350,6 @@ export async function openDashboardApp() {
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
         } else if (parsed.kill) {
-          server?.close();
           socket.end();
           gracefullyProcessExitDoNotHang(0);
         } else {
