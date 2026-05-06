@@ -106,16 +106,17 @@ export class SnapshotRenderer {
         // Element node.
         // Note that <noscript> will not be rendered by default in the trace viewer, because
         // JS is enabled. So rename it to <x-noscript>.
-        const nodeName = name === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
+        const upperName = name.toUpperCase();
+        const nodeName = upperName === 'NOSCRIPT' ? 'X-NOSCRIPT' : name;
         const attrs = Object.entries(nodeAttrs || {});
         result.push('<', nodeName);
         const kCurrentSrcAttribute = '__playwright_current_src__';
-        const isFrame = nodeName === 'IFRAME' || nodeName === 'FRAME';
-        const isAnchor = nodeName === 'A';
-        const isImg = nodeName === 'IMG';
-        const isMeta = nodeName === 'META';
+        const isFrame = upperName === 'IFRAME' || upperName === 'FRAME';
+        const isAnchor = upperName === 'A';
+        const isImg = upperName === 'IMG';
+        const isMeta = upperName === 'META';
         const isImgWithCurrentSrc = isImg && attrs.some(a => a[0] === kCurrentSrcAttribute);
-        const isSourceInsidePictureWithCurrentSrc = nodeName === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
+        const isSourceInsidePictureWithCurrentSrc = upperName === 'SOURCE' && parentTag === 'PICTURE' && parentAttrs?.some(a => a[0] === kCurrentSrcAttribute);
         // For META, only allow a small whitelist of http-equiv directives so a malicious snapshot
         // cannot navigate the snapshot iframe via e.g. <meta http-equiv="refresh"> or otherwise
         // affect the trace viewer.
@@ -134,8 +135,9 @@ export class SnapshotRenderer {
           }
           if (isFrame && (attr.toLowerCase() === 'srcdoc' || attr.toLowerCase() === 'sandbox')) {
             // Neutralize srcdoc (could contain arbitrary HTML/script that executes
-            // automatically) and sandbox (could widen permissions on an inner iframe).
-            // The capture side already skips these, but a crafted trace could include them.
+            // automatically) and sandbox (attacker-controlled values could alter
+            // iframe security policy). The capture side already skips these, but a
+            // crafted trace could include them.
             attrName = '__playwright_' + attr.toLowerCase() + '__';
           }
           if (isImg && attr === kCurrentSrcAttribute) {

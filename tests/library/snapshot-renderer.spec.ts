@@ -46,3 +46,50 @@ for (const [name, overrides] of [
     expect(html.match(/<\/script>/g)).toHaveLength(1);
   });
 }
+
+test('snapshot renderer strips event handler attributes', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['IMG', { 'onerror': 'alert(1)', 'src': 'x' }]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain('onerror="alert(1)"');
+  expect(html).toContain('src="x"');
+});
+
+test('snapshot renderer strips onclick attributes', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['DIV', { 'onClick': 'alert(1)' }, 'click me']]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain('onClick');
+  expect(html).not.toContain('onclick');
+  expect(html).toContain('click me');
+});
+
+test('snapshot renderer neutralizes iframe srcdoc', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['IFRAME', { 'srcdoc': '<script>alert(1)</script>' }]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain(' srcdoc=');
+  expect(html).toContain('__playwright_srcdoc__');
+});
+
+test('snapshot renderer neutralizes iframe sandbox', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['IFRAME', { 'sandbox': 'allow-scripts allow-top-navigation' }]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain(' sandbox=');
+  expect(html).toContain('__playwright_sandbox__');
+});
+
+test('snapshot renderer handles case-insensitive iframe tag names', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['iframe', { 'srcdoc': '<script>alert(1)</script>', 'src': 'http://evil.com' }]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain(' srcdoc=');
+  expect(html).toContain('__playwright_srcdoc__');
+  expect(html).toContain('__playwright_src__');
+});
