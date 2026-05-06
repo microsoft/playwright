@@ -24,6 +24,7 @@ import { removeFolders } from '@utils/fileUtils';
 import { SerializedFS } from '@utils/serializedFS';
 
 import { race } from './race';
+import { sourceFileEntry } from './sourceFiles';
 
 import type { AfterActionTraceEvent, BeforeActionTraceEvent, ResourceSnapshotTraceEvent, TraceEvent } from '@tracing/format/trace';
 import type { Entry as HarEntry } from '@tracing/format/har';
@@ -40,6 +41,10 @@ type RecordingState = {
   chunkOrdinal: number;
   networkSha1s: Set<string>;
   traceSha1s: Set<string>;
+  // Source-file paths discovered from event.stack[] entries during the current
+  // chunk, embedded as resources/src@<pathSha1>.txt at chunk stop when
+  // options.sources is true.
+  sourceFiles: Set<string>;
   recording: boolean;
   groupStack: string[];
 };
@@ -67,6 +72,10 @@ export type TracingSessionOptions = {
 export type StartOptions = {
   name?: string;
   live?: boolean;
+  // When true, the session collects source-file paths from event.stack[]
+  // entries and embeds the files as `resources/src@<pathSha1>.txt` in the
+  // chunk archive at stopChunk time.
+  sources?: boolean;
 };
 
 export type StartChunkOptions = {
@@ -145,6 +154,7 @@ export class TracingSession {
       chunkOrdinal: 0,
       traceSha1s: new Set(),
       networkSha1s: new Set(),
+      sourceFiles: new Set(),
       recording: false,
       groupStack: [],
     };
@@ -194,9 +204,12 @@ export class TracingSession {
     entries.push({ name: 'trace.network', value: newNetworkFile });
     for (const sha1 of new Set([...this._state.traceSha1s, ...this._state.networkSha1s]))
       entries.push({ name: path.join('resources', sha1), value: path.join(this._state.resourcesDir, sha1) });
+    for (const file of this._state.sourceFiles)
+      entries.push(sourceFileEntry(file));
 
-    // Only reset trace sha1s; network resources are preserved between chunks.
+    // Reset per-chunk state. Network resources are preserved between chunks.
     this._state.traceSha1s = new Set();
+    this._state.sourceFiles = new Set();
 
     if (mode === 'discard') {
       this._isStopping = false;
@@ -248,6 +261,12 @@ export class TracingSession {
       return;
     if (event.type === 'before' && !event.parentId && this._state.groupStack.length)
       event.parentId = this._state.groupStack[this._state.groupStack.length - 1];
+    if (this._state.options.sources && (event.type === 'before' || event.type === 'error')) {
+      for (const frame of event.stack ?? []) {
+        if (frame.file)
+          this._state.sourceFiles.add(frame.file);
+      }
+    }
     const visited = transform(event, this._state.traceSha1s, this._options.replacer);
     const flush = this._state.options.live || (event.type !== 'event' && event.type !== 'console' && event.type !== 'log');
     this._fs.appendFile(this._state.traceFile, JSON.stringify(visited) + '\n', flush);

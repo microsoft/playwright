@@ -47,9 +47,6 @@ export class TestTracing {
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _didFinishTestFunctionAndAfterEachHooks = false;
   private _session: TracingSession;
-  // Track source files we've already emitted as resources, so each stack frame's
-  // source is only read and stored once per session.
-  private _emittedSourceFiles = new Set<string>();
 
   constructor(testInfo: TestInfoImpl, artifactsDir: string) {
     this._testInfo = testInfo;
@@ -118,7 +115,11 @@ export class TestTracing {
     // with playwright-core's per-context trace files which share tracesDir.
     const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
     const sessionTraceName = `${this._testInfo.testId}${retrySuffix}-test`;
-    this._session.start({ name: sessionTraceName, live: !!this._options.live });
+    this._session.start({
+      name: sessionTraceName,
+      live: !!this._options.live,
+      sources: !!this._options.sources,
+    });
     this._session.startChunk({ name: sessionTraceName });
     // Initial context-options. testTimeout is unknown until stopIfNeeded — we
     // re-emit it then with the final value (the reader processes events in
@@ -211,7 +212,6 @@ export class TestTracing {
   appendForError(error: TestInfoError) {
     const rawStack = error.stack?.split('\n') || [];
     const stack = rawStack ? filteredStackTrace(rawStack) : [];
-    this._appendSourcesFromStack(stack);
     this._session.appendTraceEvent({
       type: 'error',
       message: this._formatError(error),
@@ -236,7 +236,6 @@ export class TestTracing {
   }
 
   appendBeforeActionForStep(options: { stepId: string, parentId?: string, title: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[], group?: string }) {
-    this._appendSourcesFromStack(options.stack);
     this._session.appendTraceEvent({
       type: 'before',
       callId: options.stepId,
@@ -293,24 +292,6 @@ export class TestTracing {
     return result.length ? result : undefined;
   }
 
-  // For each new stack-frame source file, sync-read it and store as a
-  // src@<pathSha1>.txt resource in the session's resources directory.
-  private _appendSourcesFromStack(stack: StackFrame[] | undefined) {
-    if (!this._options?.sources || !stack)
-      return;
-    for (const frame of stack) {
-      if (this._emittedSourceFiles.has(frame.file))
-        continue;
-      this._emittedSourceFiles.add(frame.file);
-      let source: string;
-      try {
-        source = fs.readFileSync(frame.file, 'utf8');
-      } catch {
-        continue;
-      }
-      this._session.appendResource('src@' + calculateSha1(frame.file) + '.txt', Buffer.from(source));
-    }
-  }
 }
 
 function generatePreview(value: any, visited = new Set<any>()): string {

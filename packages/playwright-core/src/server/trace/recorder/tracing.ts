@@ -132,7 +132,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   start(progress: Progress, options: TracerOptions) {
     // Re-write for testing.
     this._contextCreatedEvent.sdkLanguage = this._sdkLanguage();
-    this._session.start({ name: options.name, live: options.live });
+    // Source files are embedded by the client (LocalUtils.zip) for context-side
+    // tracing, not by the session. Explicitly opt out so group-event stacks
+    // don't accidentally pull source files into the chunk zip server-side.
+    this._session.start({ name: options.name, live: options.live, sources: false });
     this._options = options;
     if (options.snapshots)
       this._harTracer.start({ omitScripts: !options.live });

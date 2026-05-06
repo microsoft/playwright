@@ -21,10 +21,10 @@ import * as yauzl from 'yauzl';
 import * as yazl from 'yazl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { assert } from '@isomorphic/assert';
-import { calculateSha1 } from '@utils/crypto';
 import { serializeClientSideCallMetadata } from '@tracing/reader/traceUtils';
 
 import { race } from './race';
+import { sourceFileEntry } from './sourceFiles';
 import { deleteStackSession } from './stackSession';
 
 import type { StackSession } from './stackSession';
@@ -73,8 +73,10 @@ export async function zip(signal: AbortSignal, stackSessions: Map<string, StackS
       for (const { file } of stack)
         sourceFiles.add(file);
     }
-    for (const sourceFile of sourceFiles)
-      addFile(sourceFile, 'resources/src@' + calculateSha1(sourceFile) + '.txt');
+    for (const sourceFile of sourceFiles) {
+      const entry = sourceFileEntry(sourceFile);
+      addFile(entry.value, entry.name);
+    }
   }
 
   if (params.mode === 'write') {
