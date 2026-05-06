@@ -17,11 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import * as yazl from 'yazl';
 import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
-import { SerializedFS } from '@utils/serializedFS';
 import { mergeTraceFiles } from '@tracing/writer/mergeTraceFiles';
+import { TracingSession } from '@tracing/writer/tracingSession';
 import { getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
 
 import { filteredStackTrace } from '../util';
@@ -42,13 +41,15 @@ type TraceOptions = { screenshots: boolean, snapshots: boolean, sources: boolean
 export class TestTracing {
   private _testInfo: TestInfoImpl;
   private _options: TraceOptions | undefined;
-  private _liveTraceFile: { file: string, fs: SerializedFS } | undefined;
-  private _traceEvents: trace.TraceEvent[] = [];
   private _temporaryTraceFiles: string[] = [];
   private _artifactsDir: string;
   private _tracesDir: string;
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _didFinishTestFunctionAndAfterEachHooks = false;
+  private _session: TracingSession;
+  // Track source files we've already emitted as resources, so each stack frame's
+  // source is only read and stored once per session.
+  private _emittedSourceFiles = new Set<string>();
 
   constructor(testInfo: TestInfoImpl, artifactsDir: string) {
     this._testInfo = testInfo;
@@ -66,7 +67,11 @@ export class TestTracing {
       monotonicTime: monotonicTime(),
       sdkLanguage: 'javascript',
     };
-    this._appendTraceEvent(this._contextCreatedEvent);
+    this._session = new TracingSession({
+      tracesDir: this._tracesDir,
+      preserveNetworkResources: false,
+      traceEntryName: testTraceEntryName,
+    });
   }
 
   private _shouldCaptureTrace() {
@@ -108,13 +113,17 @@ export class TestTracing {
       return;
     }
 
-    if (!this._liveTraceFile && this._options.live) {
-      // Note that trace name must start with testId for live tracing to work.
-      this._liveTraceFile = { file: path.join(this._tracesDir, `${this._testInfo.testId}-test.trace`), fs: new SerializedFS() };
-      this._liveTraceFile.fs.mkdir(path.dirname(this._liveTraceFile.file));
-      const data = this._traceEvents.map(e => JSON.stringify(e)).join('\n') + '\n';
-      this._liveTraceFile.fs.writeFile(this._liveTraceFile.file, data);
-    }
+    // Trace name for the session. Must start with testId so the live-trace
+    // viewer's testId-prefix scan picks it up. Suffix '-test' avoids colliding
+    // with playwright-core's per-context trace files which share tracesDir.
+    const retrySuffix = this._testInfo.retry ? `-retry${this._testInfo.retry}` : '';
+    const sessionTraceName = `${this._testInfo.testId}${retrySuffix}-test`;
+    this._session.start({ name: sessionTraceName, live: !!this._options.live });
+    this._session.startChunk({ name: sessionTraceName });
+    // Initial context-options. testTimeout is unknown until stopIfNeeded — we
+    // re-emit it then with the final value (the reader processes events in
+    // order, last-write-wins for context-options fields).
+    this._session.appendTraceEvent(this._contextCreatedEvent);
   }
 
   didFinishTestFunctionAndAfterEachHooks() {
@@ -175,72 +184,24 @@ export class TestTracing {
     if (!this._options)
       return;
 
-    const error = await this._liveTraceFile?.fs.syncAndGetError();
-    if (error)
-      throw error;
+    // Re-emit context-options now that testTimeout (and any other late-set
+    // fields) are final. The reader overwrites earlier values with these.
+    this._session.appendTraceEvent(this._contextCreatedEvent);
+
+    const signal = new AbortController().signal;
 
     if (this._shouldAbandonTrace()) {
+      await this._session.stopChunk(signal, 'discard');
+      await this._session.stop(signal);
       for (const file of this._temporaryTraceFiles)
         await fs.promises.unlink(file).catch(() => {});
       return;
     }
 
-    const zipFile = new yazl.ZipFile();
-
-    if (!this._options?.attachments) {
-      for (const event of this._traceEvents) {
-        if (event.type === 'after')
-          delete event.attachments;
-      }
-    }
-
-    if (this._options?.sources) {
-      const sourceFiles = new Set<string>();
-      for (const event of this._traceEvents) {
-        if (event.type === 'before') {
-          for (const frame of event.stack || [])
-            sourceFiles.add(frame.file);
-        }
-      }
-      for (const sourceFile of sourceFiles) {
-        await fs.promises.readFile(sourceFile, 'utf8').then(source => {
-          zipFile.addBuffer(Buffer.from(source), 'resources/src@' + calculateSha1(sourceFile) + '.txt');
-        }).catch(() => {});
-      }
-    }
-
-    const sha1s = new Set<string>();
-    for (const event of this._traceEvents.filter(e => e.type === 'after') as trace.AfterActionTraceEvent[]) {
-      for (const attachment of (event.attachments || [])) {
-        let contentPromise: Promise<Buffer | undefined> | undefined;
-        if (attachment.path)
-          contentPromise = fs.promises.readFile(attachment.path).catch(() => undefined);
-        else if (attachment.base64)
-          contentPromise = Promise.resolve(Buffer.from(attachment.base64, 'base64'));
-
-        const content = await contentPromise;
-        if (content === undefined)
-          continue;
-
-        const sha1 = calculateSha1(content);
-        attachment.sha1 = sha1;
-        delete attachment.path;
-        delete attachment.base64;
-        if (sha1s.has(sha1))
-          continue;
-        sha1s.add(sha1);
-        zipFile.addBuffer(content, 'resources/' + sha1);
-      }
-    }
-
-    const traceContent = Buffer.from(this._traceEvents.map(e => JSON.stringify(e)).join('\n'));
-    zipFile.addBuffer(traceContent, testTraceEntryName);
-
-    await new Promise(f => {
-      zipFile.end(undefined, () => {
-        zipFile.outputStream.pipe(fs.createWriteStream(this._generateNextTraceRecordingPath())).on('close', f);
-      });
-    });
+    const result = await this._session.stopChunk(signal, 'archive');
+    await this._session.stop(signal);
+    if (result.zipFile)
+      this._temporaryTraceFiles.push(result.zipFile);
 
     const tracePath = this._testInfo.outputPath('trace.zip');
     await mergeTraceFiles(tracePath, this._temporaryTraceFiles, { keepEntryName: testTraceEntryName });
@@ -250,7 +211,8 @@ export class TestTracing {
   appendForError(error: TestInfoError) {
     const rawStack = error.stack?.split('\n') || [];
     const stack = rawStack ? filteredStackTrace(rawStack) : [];
-    this._appendTraceEvent({
+    this._appendSourcesFromStack(stack);
+    this._session.appendTraceEvent({
       type: 'error',
       message: this._formatError(error),
       stack,
@@ -265,7 +227,7 @@ export class TestTracing {
   }
 
   appendStdioToTrace(type: 'stdout' | 'stderr', chunk: string | Buffer) {
-    this._appendTraceEvent({
+    this._session.appendTraceEvent({
       type,
       timestamp: monotonicTime(),
       text: typeof chunk === 'string' ? chunk : undefined,
@@ -274,7 +236,8 @@ export class TestTracing {
   }
 
   appendBeforeActionForStep(options: { stepId: string, parentId?: string, title: string, category: TestStepCategory, params?: Record<string, any>, stack: StackFrame[], group?: string }) {
-    this._appendTraceEvent({
+    this._appendSourcesFromStack(options.stack);
+    this._session.appendTraceEvent({
       type: 'before',
       callId: options.stepId,
       stepId: options.stepId,
@@ -290,34 +253,64 @@ export class TestTracing {
   }
 
   appendAfterActionForStep(callId: string, error?: SerializedError['error'], attachments: Attachment[] = [], annotations?: trace.AfterActionTraceEventAnnotation[]) {
-    this._appendTraceEvent({
+    const serializedAttachments = this._options?.attachments ? this._serializeAttachmentsToResources(attachments) : undefined;
+    this._session.appendTraceEvent({
       type: 'after',
       callId,
       endTime: monotonicTime(),
-      attachments: serializeAttachments(attachments),
+      attachments: serializedAttachments,
       annotations,
       error,
     });
   }
 
-  private _appendTraceEvent(event: trace.TraceEvent) {
-    this._traceEvents.push(event);
-    if (this._liveTraceFile)
-      this._liveTraceFile.fs.appendFile(this._liveTraceFile.file, JSON.stringify(event) + '\n', true);
+  // Pre-resolve each attachment's binary content (sync read) into a session
+  // resource keyed by content sha1, and return the trace-event-shaped
+  // attachment refs that point at those sha1s.
+  private _serializeAttachmentsToResources(attachments: Attachment[]): trace.AfterActionTraceEvent['attachments'] {
+    if (attachments.length === 0)
+      return undefined;
+    const result: NonNullable<trace.AfterActionTraceEvent['attachments']> = [];
+    for (const a of attachments) {
+      if (a.name === 'trace')
+        continue;
+      let buffer: Buffer | undefined;
+      if (a.body) {
+        buffer = a.body;
+      } else if (a.path) {
+        try {
+          buffer = fs.readFileSync(a.path);
+        } catch {
+          continue;
+        }
+      } else {
+        continue;
+      }
+      const sha1 = calculateSha1(buffer);
+      this._session.appendResource(sha1, buffer);
+      result.push({ name: a.name, contentType: a.contentType, sha1 });
+    }
+    return result.length ? result : undefined;
   }
-}
 
-function serializeAttachments(attachments: Attachment[]): trace.AfterActionTraceEvent['attachments'] {
-  if (attachments.length === 0)
-    return undefined;
-  return attachments.filter(a => a.name !== 'trace').map(a => {
-    return {
-      name: a.name,
-      contentType: a.contentType,
-      path: a.path,
-      base64: a.body?.toString('base64'),
-    };
-  });
+  // For each new stack-frame source file, sync-read it and store as a
+  // src@<pathSha1>.txt resource in the session's resources directory.
+  private _appendSourcesFromStack(stack: StackFrame[] | undefined) {
+    if (!this._options?.sources || !stack)
+      return;
+    for (const frame of stack) {
+      if (this._emittedSourceFiles.has(frame.file))
+        continue;
+      this._emittedSourceFiles.add(frame.file);
+      let source: string;
+      try {
+        source = fs.readFileSync(frame.file, 'utf8');
+      } catch {
+        continue;
+      }
+      this._session.appendResource('src@' + calculateSha1(frame.file) + '.txt', Buffer.from(source));
+    }
+  }
 }
 
 function generatePreview(value: any, visited = new Set<any>()): string {

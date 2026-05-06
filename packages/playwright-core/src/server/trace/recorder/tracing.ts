@@ -145,10 +145,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     this._callIds.clear();
 
-    const result = this._session.startChunk({
-      name: options.name,
+    const result = this._session.startChunk({ name: options.name });
+    this._session.appendTraceEvent({
+      ...this._contextCreatedEvent,
       title: options.title,
-      contextCreatedEvent: this._contextCreatedEvent,
+      wallTime: Date.now(),
+      monotonicTime: monotonicTime(),
     });
 
     this._context.instrumentation.addListener(this, this._context);

@@ -25,7 +25,7 @@ import { SerializedFS } from '@utils/serializedFS';
 
 import { race } from './race';
 
-import type { AfterActionTraceEvent, BeforeActionTraceEvent, ContextCreatedTraceEvent, ResourceSnapshotTraceEvent, TraceEvent } from '@tracing/format/trace';
+import type { AfterActionTraceEvent, BeforeActionTraceEvent, ResourceSnapshotTraceEvent, TraceEvent } from '@tracing/format/trace';
 import type { Entry as HarEntry } from '@tracing/format/har';
 import type { StackFrame } from '@tracing/format/protocolTypes';
 import type { NameValue } from '@isomorphic/types';
@@ -52,6 +52,10 @@ export type TracingSessionOptions = {
   // chunks) should be preserved between chunks. True for browser contexts,
   // false for API request contexts (each chunk starts a fresh network file).
   preserveNetworkResources?: boolean;
+  // Entry name for the primary trace stream when stopChunk produces an archive
+  // zip. Defaults to 'trace.trace'. The test runner uses 'test.trace' so its
+  // entry survives mergeTraceFiles unrenamed.
+  traceEntryName?: string;
   // Optional pre-write transformer applied to every event/entry before it is
   // walked for sha1 collection and JSON.stringified. Returning a value treats
   // it as a leaf (no further recursion). Used to redact non-serializable types
@@ -67,8 +71,6 @@ export type StartOptions = {
 
 export type StartChunkOptions = {
   name?: string;
-  title?: string;
-  contextCreatedEvent: ContextCreatedTraceEvent;
 };
 
 export type StopChunkResult = {
@@ -150,7 +152,7 @@ export class TracingSession {
     this._fs.writeFile(this._state.networkFile, '');
   }
 
-  startChunk(options: StartChunkOptions): { traceName: string } {
+  startChunk(options: StartChunkOptions = {}): { traceName: string } {
     if (!this._state)
       throw new Error('Must start tracing before starting a new chunk');
     if (this._state.recording)
@@ -168,13 +170,6 @@ export class TracingSession {
       this._fs.writeFile(this._state.networkFile, '');
 
     this._fs.mkdir(path.dirname(this._state.traceFile));
-    const event: TraceEvent = {
-      ...options.contextCreatedEvent,
-      title: options.title,
-      wallTime: Date.now(),
-      monotonicTime: monotonicTime(),
-    };
-    this.appendTraceEvent(event);
     return { traceName: this._state.traceName };
   }
 
@@ -195,7 +190,7 @@ export class TracingSession {
     const newNetworkFile = path.join(this._state.tracesDir, this._state.traceName + `-pwnetcopy-${this._state.chunkOrdinal}.network`);
 
     const entries: NameValue[] = [];
-    entries.push({ name: 'trace.trace', value: this._state.traceFile });
+    entries.push({ name: this._options.traceEntryName ?? 'trace.trace', value: this._state.traceFile });
     entries.push({ name: 'trace.network', value: newNetworkFile });
     for (const sha1 of new Set([...this._state.traceSha1s, ...this._state.networkSha1s]))
       entries.push({ name: path.join('resources', sha1), value: path.join(this._state.resourcesDir, sha1) });
