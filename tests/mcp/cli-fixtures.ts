@@ -261,3 +261,45 @@ export async function daemonFolder() {
   }
   return null;
 }
+
+export async function installSaveFilePickerMock(page: import('playwright-core').Page): Promise<() => Promise<Buffer>> {
+  await page.evaluate(() => {
+    (window as any).__testCaptureBytes = undefined as string | undefined;
+    (window as any).showSaveFilePicker = async () => ({
+      createWritable: async () => {
+        const chunks: Uint8Array[] = [];
+        return {
+          write: async (chunk: Blob | BufferSource) => {
+            const buf = chunk instanceof Blob
+              ? new Uint8Array(await chunk.arrayBuffer())
+              : new Uint8Array(chunk instanceof ArrayBuffer ? chunk : (chunk as ArrayBufferView).buffer);
+            chunks.push(buf);
+          },
+          close: async () => {
+            const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+            const merged = new Uint8Array(total);
+            let offset = 0;
+            for (const c of chunks) {
+              merged.set(c, offset);
+              offset += c.byteLength;
+            }
+            (window as any).__testCaptureBytes = (merged as any).toBase64();
+          },
+        };
+      },
+    });
+  });
+  return async () => {
+    await expect.poll(() => page.evaluate(() => !!(window as any).__testCaptureBytes), { timeout: 10000 }).toBe(true);
+    const b64: string = await page.evaluate(() => (window as any).__testCaptureBytes);
+    return Buffer.from(b64, 'base64');
+  };
+}
+
+export async function mockAbortingFilePicker(page: import('playwright-core').Page): Promise<void> {
+  await page.evaluate(() => {
+    (window as any).showSaveFilePicker = async () => {
+      throw new DOMException('The user aborted a request.', 'AbortError');
+    };
+  });
+}

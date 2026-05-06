@@ -430,11 +430,9 @@ class AttachedPage {
   }
 
   async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string }> {
-    const [buffer, ariaSnapshot, vp] = await Promise.all([
-      this._page.screenshot({ type: 'png' }),
-      this._page.ariaSnapshot({ boxes: true, mode: 'ai' }),
-      this._viewportSize(),
-    ]);
+    const buffer = await this._page.screenshot({ type: 'png' });
+    const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
+    const vp = await this._viewportSize();
     return {
       data: buffer.toString('base64'),
       viewportWidth: vp.width,
