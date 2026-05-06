@@ -246,6 +246,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return result.elements.map(e => ElementHandle.from(e) as ElementHandle<SVGElement | HTMLElement>);
   }
 
+  async _allBoundingBoxes(selector: string): Promise<{ x: number, y: number, width: number, height: number }[]> {
+    return (await this._channel.allBoundingBoxes({ selector })).boundingBoxes;
+  }
+
   async _queryCount(selector: string, options?: {}): Promise<number> {
     return (await this._channel.queryCount({ selector, ...options })).value;
   }

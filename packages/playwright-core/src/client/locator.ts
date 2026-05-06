@@ -376,6 +376,10 @@ export class Locator implements api.Locator {
     return new Array(await this.count()).fill(0).map((e, i) => this.nth(i));
   }
 
+  async allBoundingBoxes(): Promise<{ x: number, y: number, width: number, height: number }[]> {
+    return await this._frame._allBoundingBoxes(this._selector);
+  }
+
   async allInnerTexts(): Promise<string[]> {
     return await this._frame.$$eval(this._selector, ee => ee.map(e => (e as HTMLElement).innerText));
   }

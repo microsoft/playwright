@@ -12939,6 +12939,42 @@ export interface Locator {
   all(): Promise<Array<Locator>>;
 
   /**
+   * Returns an array of bounding boxes for all matching visible elements, each relative to the main frame viewport.
+   * Returns an empty array if no elements match or none are visible. Elements that are not visible are excluded from
+   * the result.
+   *
+   * This method performs a single round-trip to the browser instead of one per element.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const boxes = await page.getByRole('listitem').allBoundingBoxes();
+   * ```
+   *
+   */
+  allBoundingBoxes(): Promise<Array<{
+    /**
+     * the x coordinate of the element in pixels.
+     */
+    x: number;
+
+    /**
+     * the y coordinate of the element in pixels.
+     */
+    y: number;
+
+    /**
+     * the width of the element in pixels.
+     */
+    width: number;
+
+    /**
+     * the height of the element in pixels.
+     */
+    height: number;
+  }>>;
+
+  /**
    * Returns an array of `node.innerText` values for all matching nodes.
    *
    * **NOTE** If you need to assert text on the page, prefer

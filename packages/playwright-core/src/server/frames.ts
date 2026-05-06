@@ -887,6 +887,18 @@ export class Frame extends SdkObject<FrameEventMap> {
     return progress.race(this.selectors.queryAll(selector));
   }
 
+  async allBoundingBoxes(progress: Progress, selector: string): Promise<types.Rect[]> {
+    const elements = await progress.race(this.selectors.queryAll(selector));
+    const result: types.Rect[] = [];
+    for (const handle of elements) {
+      const box = await progress.race(this._page.delegate.getBoundingBox(handle));
+      handle.dispose();
+      if (box)
+        result.push(box);
+    }
+    return result;
+  }
+
   async queryCount(progress: Progress, selector: string, options: any): Promise<number> {
     try {
       return await progress.race(this.selectors.queryCount(selector, options));

@@ -548,6 +548,23 @@ Frame:
       flags:
         snapshot: true
 
+    allBoundingBoxes:
+      title: All bounding boxes
+      parameters:
+        selector: string
+      returns:
+        boundingBoxes:
+          type: array
+          items:
+            type: object
+            properties:
+              x: float
+              y: float
+              width: float
+              height: float
+      flags:
+        snapshot: true
+
     queryCount:
       title: Query count
       parameters:

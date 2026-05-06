@@ -2133,6 +2133,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   press(params: FramePressParams, progress?: Progress): Promise<FramePressResult>;
   querySelector(params: FrameQuerySelectorParams, progress?: Progress): Promise<FrameQuerySelectorResult>;
   querySelectorAll(params: FrameQuerySelectorAllParams, progress?: Progress): Promise<FrameQuerySelectorAllResult>;
+  allBoundingBoxes(params: FrameAllBoundingBoxesParams, progress?: Progress): Promise<FrameAllBoundingBoxesResult>;
   queryCount(params: FrameQueryCountParams, progress?: Progress): Promise<FrameQueryCountResult>;
   selectOption(params: FrameSelectOptionParams, progress?: Progress): Promise<FrameSelectOptionResult>;
   setContent(params: FrameSetContentParams, progress?: Progress): Promise<FrameSetContentResult>;
@@ -2613,6 +2614,20 @@ export type FrameQuerySelectorAllOptions = {
 };
 export type FrameQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
+};
+export type FrameAllBoundingBoxesParams = {
+  selector: string,
+};
+export type FrameAllBoundingBoxesOptions = {
+
+};
+export type FrameAllBoundingBoxesResult = {
+  boundingBoxes: {
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  }[],
 };
 export type FrameQueryCountParams = {
   selector: string,

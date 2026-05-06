@@ -182,6 +182,34 @@ it('allInnerTexts should work', async ({ page }) => {
   expect(await page.locator('div').allInnerTexts()).toEqual(['A', 'B', 'C']);
 });
 
+it('allBoundingBoxes should work', async ({ page }) => {
+  await page.setContent(`<style>* { margin: 0; padding: 0; } div { width: 100px; height: 50px; }</style>
+    <div>A</div><div>B</div><div>C</div>`);
+  const boxes = await page.locator('div').allBoundingBoxes();
+  expect(boxes).toEqual([
+    { x: 0, y: 0, width: 100, height: 50 },
+    { x: 0, y: 50, width: 100, height: 50 },
+    { x: 0, y: 100, width: 100, height: 50 },
+  ]);
+});
+
+it('allBoundingBoxes should return empty array for no matches', async ({ page }) => {
+  await page.setContent(`<div>A</div>`);
+  const boxes = await page.locator('.does-not-exist').allBoundingBoxes();
+  expect(boxes).toEqual([]);
+});
+
+it('allBoundingBoxes should match individual boundingBox calls', async ({ page }) => {
+  await page.setContent(`<style>* { margin: 0; padding: 0; } span { display: inline-block; width: 60px; height: 30px; }</style>
+    <span>A</span><span>B</span><span>C</span>`);
+  const locator = page.locator('span');
+  const boxes = await locator.allBoundingBoxes();
+  for (let i = 0; i < 3; i++) {
+    const individual = await locator.nth(i).boundingBox();
+    expect(boxes[i]).toEqual(individual);
+  }
+});
+
 it('should return page', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const outer = page.locator('#outer');

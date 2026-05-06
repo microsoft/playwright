@@ -115,6 +115,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return { elements: elements.map(e => ElementHandleDispatcher.from(this, e)) };
   }
 
+  async allBoundingBoxes(params: channels.FrameAllBoundingBoxesParams, progress: Progress): Promise<channels.FrameAllBoundingBoxesResult> {
+    return { boundingBoxes: await this._frame.allBoundingBoxes(progress, params.selector) };
+  }
+
   async queryCount(params: channels.FrameQueryCountParams, progress: Progress): Promise<channels.FrameQueryCountResult> {
     return { value: await this._frame.queryCount(progress, params.selector, params) };
   }

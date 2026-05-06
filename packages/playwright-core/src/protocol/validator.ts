@@ -1429,6 +1429,17 @@ scheme.FrameQuerySelectorAllParams = tObject({
 scheme.FrameQuerySelectorAllResult = tObject({
   elements: tArray(tChannel(['ElementHandle'])),
 });
+scheme.FrameAllBoundingBoxesParams = tObject({
+  selector: tString,
+});
+scheme.FrameAllBoundingBoxesResult = tObject({
+  boundingBoxes: tArray(tObject({
+    x: tFloat,
+    y: tFloat,
+    width: tFloat,
+    height: tFloat,
+  })),
+});
 scheme.FrameQueryCountParams = tObject({
   selector: tString,
 });

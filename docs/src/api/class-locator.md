@@ -47,6 +47,42 @@ foreach (var li in await page.GetByRole("listitem").AllAsync())
   await li.ClickAsync();
 ```
 
+## async method: Locator.allBoundingBoxes
+* since: v1.60
+- returns: <[Array]<[Object]>>
+  - `x` <[float]> the x coordinate of the element in pixels.
+  - `y` <[float]> the y coordinate of the element in pixels.
+  - `width` <[float]> the width of the element in pixels.
+  - `height` <[float]> the height of the element in pixels.
+
+Returns an array of bounding boxes for all matching visible elements, each relative to the main frame
+viewport. Returns an empty array if no elements match or none are visible. Elements that are not
+visible are excluded from the result.
+
+This method performs a single round-trip to the browser instead of one per element.
+
+**Usage**
+
+```js
+const boxes = await page.getByRole('listitem').allBoundingBoxes();
+```
+
+```python async
+boxes = await page.get_by_role("listitem").all_bounding_boxes()
+```
+
+```python sync
+boxes = page.get_by_role("listitem").all_bounding_boxes()
+```
+
+```java
+List<BoundingBox> boxes = page.getByRole(AriaRole.LISTITEM).allBoundingBoxes();
+```
+
+```csharp
+var boxes = await page.GetByRole(AriaRole.Listitem).AllBoundingBoxesAsync();
+```
+
 ## async method: Locator.allInnerTexts
 * since: v1.14
 - returns: <[Array]<[string]>>

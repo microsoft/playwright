@@ -155,6 +155,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Frame.press', { title: 'Press "{key}"', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],
   ['Frame.querySelector', { title: 'Query selector', snapshot: true, }],
   ['Frame.querySelectorAll', { title: 'Query selector all', snapshot: true, }],
+  ['Frame.allBoundingBoxes', { title: 'All bounding boxes', snapshot: true, }],
   ['Frame.queryCount', { title: 'Query count', snapshot: true, pause: true, }],
   ['Frame.selectOption', { title: 'Select option', slowMo: true, snapshot: true, pause: true, input: true, isAutoWaiting: true, }],
   ['Frame.setContent', { title: 'Set content', snapshot: true, pause: true, }],
