@@ -303,7 +303,9 @@ export class DashboardModel {
     } else {
       const blob = await buildAnnotationZip(frames, session.feedback);
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-      await saveAnnotationAsDownload(blob, `annotations-${stamp}.zip`);
+      const saved = await saveAnnotationAsDownload(blob, `annotations-${stamp}.zip`);
+      if (!saved)
+        return; // user cancelled the file picker — keep the session open
     }
     this.cancelAnnotate();
   }

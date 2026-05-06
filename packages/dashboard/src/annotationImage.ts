@@ -66,7 +66,7 @@ export async function buildAnnotatedImage(
   return await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
 }
 
-export async function saveAnnotationAsDownload(blob: Blob, suggestedName?: string): Promise<void> {
+export async function saveAnnotationAsDownload(blob: Blob, suggestedName?: string): Promise<boolean> {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const name = suggestedName ?? `annotations-${stamp}.png`;
   const ext = (name.match(/\.[^./\\]+$/)?.[0] ?? '.bin').toLowerCase();
@@ -90,10 +90,11 @@ export async function saveAnnotationAsDownload(blob: Blob, suggestedName?: strin
       await writable.write(blob);
       await writable.close();
     } catch (e: any) {
-      if (e?.name !== 'AbortError')
-        throw e;
+      if (e?.name === 'AbortError')
+        return false;
+      throw e;
     }
-    return;
+    return true;
   }
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -103,4 +104,5 @@ export async function saveAnnotationAsDownload(blob: Blob, suggestedName?: strin
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+  return true;
 }
