@@ -128,15 +128,16 @@ Defaults to `left`.
 
 ## input-files
 - `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-  - alias-csharp: FilePayload
-  - alias-java: FilePayload
+  - alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
 
 ## drop-payload
 - `payload` <[Object]>
+  - alias: DropPayload
   - `files` ?<[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
+    - alias: FilePayload
     - `name` <[string]> File name
     - `mimeType` <[string]> File type
     - `buffer` <[Buffer]> File content
