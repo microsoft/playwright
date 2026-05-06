@@ -373,7 +373,7 @@ function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowUnsafe: boo
     headless: options.headless,
     proxy: options.proxy,
     chromiumSandbox: allowUnsafe ? options.chromiumSandbox : undefined,
-    firefoxUserPrefs: allowUnsafe ? options.firefoxUserPrefs : undefined,
+    firefoxUserPrefs: (isUnderTest() || allowUnsafe) ? options.firefoxUserPrefs : undefined,
     slowMo: options.slowMo,
     executablePath: (isUnderTest() || allowUnsafe) ? options.executablePath : undefined,
     downloadsPath: allowUnsafe ? options.downloadsPath : undefined,
