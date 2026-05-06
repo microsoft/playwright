@@ -40,8 +40,7 @@ type ActionOptions = {
 
 export class Screencast implements InstrumentationListener {
   readonly page: Page;
-  private _clients = new Set<ScreencastClient>();
-  private _disconnected = new Map<ScreencastClient, ManualPromise<void>>();
+  private _clients = new Map<ScreencastClient, ManualPromise<void>>();
   private _actions: ActionOptions | undefined;
   private _size: types.Size | undefined;
   private _lastFrame: types.ScreencastFrame | undefined;
@@ -52,7 +51,7 @@ export class Screencast implements InstrumentationListener {
   }
 
   async handlePageOrContextClose() {
-    const clients = [...this._clients];
+    const clients = [...this._clients.keys()];
     this._clients.clear();
     for (const client of clients) {
       if (client.gracefulClose)
@@ -61,7 +60,7 @@ export class Screencast implements InstrumentationListener {
   }
 
   dispose() {
-    for (const client of this._clients)
+    for (const client of this._clients.keys())
       client.dispose();
     this._clients.clear();
     this.page.instrumentation.removeListener(this);
@@ -77,8 +76,7 @@ export class Screencast implements InstrumentationListener {
 
   addClient(client: ScreencastClient): { size: types.Size } {
     const isFirst = this._clients.size === 0;
-    this._clients.add(client);
-    this._disconnected.set(client, new ManualPromise<void>());
+    this._clients.set(client, new ManualPromise<void>());
     if (isFirst) {
       this._startScreencast(client.size, client.quality);
     } else if (this._lastFrame) {
@@ -95,12 +93,12 @@ export class Screencast implements InstrumentationListener {
   }
 
   removeClient(client: ScreencastClient) {
-    if (!this._clients.has(client))
+    const disconnected = this._clients.get(client);
+    if (!disconnected)
       return;
     this._clients.delete(client);
     // A departing client must not block frame acks for the remaining clients.
-    this._disconnected.get(client)!.resolve();
-    this._disconnected.delete(client);
+    disconnected.resolve();
     if (!this._clients.size)
       this._stopScreencast();
   }
@@ -137,11 +135,11 @@ export class Screencast implements InstrumentationListener {
   onScreencastFrame(frame: types.ScreencastFrame, ack?: () => void) {
     this._lastFrame = frame;
     const asyncResults: Promise<void>[] = [];
-    for (const client of this._clients) {
+    for (const [client, disconnected] of this._clients) {
       const result = client.onFrame(frame);
       if (!result)
         continue;
-      asyncResults.push(Promise.race([result.catch(() => {}), this._disconnected.get(client)!]));
+      asyncResults.push(Promise.race([result.catch(() => {}), disconnected]));
     }
     if (ack) {
       // Ack when any client resolves (OR logic). This ensures that even if
