@@ -147,7 +147,7 @@ export class Screencast implements InstrumentationListener {
     }
   }
 
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!this._actions)
       return;
     metadata.annotate = true;
