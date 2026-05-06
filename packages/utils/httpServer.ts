@@ -169,8 +169,7 @@ export class HttpServer {
       this._urlPrefixHumanReadable = address;
     } else {
       this._port = address.port;
-      const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
-      this._urlPrefixPrecise = `http://${resolvedHost}:${address.port}`;
+      this._urlPrefixPrecise = `http://${urlHostFromAddress(address)}:${address.port}`;
       this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
       this._allowedHosts = computeAllowedHosts(host, address.address);
     }
@@ -301,6 +300,11 @@ export function computeAllowedHosts(requested: string | undefined, bound: string
   if (!isLoopback(bound) && requested === undefined)
     return null;
   return new Set(['localhost', '127.0.0.1', '[::1]']);
+}
+
+// Bracket IPv6 literals so they can be used as the host part of a URL.
+export function urlHostFromAddress(address: { address: string, family: string }): string {
+  return address.family === 'IPv6' ? `[${address.address}]` : address.address;
 }
 
 export function hostnameFromHostHeader(host: string): string {
