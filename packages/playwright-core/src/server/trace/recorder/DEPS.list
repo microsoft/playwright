@@ -1,5 +1,6 @@
 [*]
 @isomorphic/**
+@tracing/**
 @utils/**
 ../../
 ../../har/

@@ -19,12 +19,12 @@ import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
 import { debugLogger } from '@utils/debugLogger';
 import { eventsHelper } from '@utils/eventsHelper';
-import { frameSnapshotStreamer } from './snapshotterInjected';
+import { frameSnapshotStreamer } from '@tracing/writer/snapshotterInjected';
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
 import { nullProgress } from '../../progress';
 
-import type { SnapshotData } from './snapshotterInjected';
+import type { SnapshotData } from '@tracing/writer/snapshotterInjected';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type { Frame } from '../../frames';
 import type { InitScript } from '../../page';

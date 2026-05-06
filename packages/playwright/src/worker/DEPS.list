@@ -1,5 +1,6 @@
 [*]
 @isomorphic/**
+@tracing/**
 @utils/**
 ../globals.ts
 ../common/
