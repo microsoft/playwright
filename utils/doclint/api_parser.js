@@ -322,6 +322,8 @@ function applyTemplates(body, params) {
       const template = paramsMap.get(key);
       if (!template)
         throw new Error('Bad template: ' + key);
+      if (!node.children)
+        node.children = [];
       // Insert right after all metadata options like "* since",
       // keeping any additional text like **Usage** below the template.
       let index = node.children.findIndex(child => child.type !== 'li');

@@ -766,12 +766,8 @@ await page.GetByRole(AriaRole.Button).ClickAsync();
 
 Name of the function on the window object.
 
-### param: BrowserContext.exposeBinding.callback
+### param: BrowserContext.exposeBinding.callback = %%-expose-binding-callback-%%
 * since: v1.8
-- `callback` <[function]>
-  - alias-java: BindingCallback
-
-Callback function that will be called in the Playwright's context.
 
 ## async method: BrowserContext.exposeFunction
 * since: v1.8
@@ -958,12 +954,8 @@ class BrowserContextExamples
 
 Name of the function on the window object.
 
-### param: BrowserContext.exposeFunction.callback
+### param: BrowserContext.exposeFunction.callback = %%-expose-function-callback-%%
 * since: v1.8
-- `callback` <[function]>
-  - alias-java: FunctionCallback
-
-Callback function that will be called in the Playwright's context.
 
 ## async method: BrowserContext.grantPermissions
 * since: v1.8

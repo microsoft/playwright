@@ -2665,7 +2665,7 @@ export interface Page {
    * ```
    *
    * @param name Name of the function on the window object
-   * @param callback Callback function which will be called in Playwright's context.
+   * @param callback Callback function that will be called in the Playwright's context.
    */
   exposeFunction(name: string, callback: Function): Promise<Disposable>;
 

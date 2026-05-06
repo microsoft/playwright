@@ -46,13 +46,8 @@ An object with the response HTTP headers. The header names are lower-cased.
 Note that this method does not return security-related headers, including cookie-related ones.
 You can use [`method: Response.allHeaders`] for complete list of headers that include `cookie` information.
 
-## async method: Response.headersArray
+## async method: Response.headersArray = %%-return-headers-array-%%
 * since: v1.15
-- returns: <[Array]<[Object]>>
-  - alias-csharp: Header
-  - alias-java: HttpHeader
-  - `name` <[string]> Name of the header.
-  - `value` <[string]> Value of the header.
 
 An array with all the request HTTP headers associated with this response. Unlike [`method: Response.allHeaders`], header names are NOT lower-cased.
 Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.

@@ -127,12 +127,7 @@ and Linux and to "Meta" on macOS.
 Defaults to `left`.
 
 ## input-files
-- `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-  - alias-csharp: FilePayload
-  - alias-java: FilePayload
-  - `name` <[string]> File name
-  - `mimeType` <[string]> File type
-  - `buffer` <[Buffer]> File content
+- `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>> = %%-file-payload-fields-%%
 
 ## drop-payload
 - `payload` <[Object]>
@@ -1302,6 +1297,32 @@ Specify the color of the overlay box for masked elements, in [CSS color format](
 
 When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
 `false`.
+
+## return-headers-array
+- returns: <[Array]<[Object]>>
+  - alias-csharp: Header
+  - alias-java: HttpHeader
+  - `name` <[string]> Name of the header.
+  - `value` <[string]> Value of the header.
+
+## file-payload-fields
+- alias-csharp: FilePayload
+- alias-java: FilePayload
+- `name` <[string]> File name
+- `mimeType` <[string]> File type
+- `buffer` <[Buffer]> File content
+
+## expose-binding-callback
+- `callback` <[function]>
+  - alias-java: BindingCallback
+
+Callback function that will be called in the Playwright's context.
+
+## expose-function-callback
+- `callback` <[function]>
+  - alias-java: FunctionCallback
+
+Callback function that will be called in the Playwright's context.
 
 ## screenshot-option-clip
 - `clip` <[Object]>

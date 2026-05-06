@@ -1826,12 +1826,8 @@ class PageExamples
 
 Name of the function on the window object.
 
-### param: Page.exposeBinding.callback
+### param: Page.exposeBinding.callback = %%-expose-binding-callback-%%
 * since: v1.8
-- `callback` <[function]>
-  - alias-java: BindingCallback
-
-Callback function that will be called in the Playwright's context.
 
 ## async method: Page.exposeFunction
 * since: v1.8
@@ -2020,12 +2016,8 @@ class PageExamples
 
 Name of the function on the window object
 
-### param: Page.exposeFunction.callback
+### param: Page.exposeFunction.callback = %%-expose-function-callback-%%
 * since: v1.8
-- `callback` <[function]>
-  - alias-java: FunctionCallback
-
-Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 * since: v1.8

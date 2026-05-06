@@ -55,13 +55,8 @@ Disposes the body of this response. If not called then the body will stay in mem
 
 An object with all the response HTTP headers associated with this response.
 
-## method: APIResponse.headersArray
+## method: APIResponse.headersArray = %%-return-headers-array-%%
 * since: v1.16
-- returns: <[Array]<[Object]>>
-  - alias-csharp: Header
-  - alias-java: HttpHeader
-  - `name` <[string]> Name of the header.
-  - `value` <[string]> Value of the header.
 
 An array with all the response HTTP headers associated with this response. Header names are not lower-cased.
 Headers with multiple entries, such as `Set-Cookie`, appear in the array multiple times.
