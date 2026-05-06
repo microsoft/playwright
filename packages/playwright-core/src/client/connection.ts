@@ -63,6 +63,8 @@ class Root extends ChannelOwner<channels.RootChannel> {
 class DummyChannelOwner extends ChannelOwner {
 }
 
+export type ChannelOwnerFactory = (parent: ChannelOwner, type: string, guid: string, initializer: any) => ChannelOwner;
+
 export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
@@ -79,6 +81,7 @@ export class Connection extends EventEmitter {
   readonly _instrumentation: ClientInstrumentation;
   // Used from @playwright/test fixtures -> TODO remove?
   readonly headers: HeadersArray;
+  private _objectFactories = new Map<string, ChannelOwnerFactory>();
 
   constructor(platform: Platform, localUtils?: LocalUtils, instrumentation?: ClientInstrumentation, headers: HeadersArray = []) {
     super(platform);
@@ -86,6 +89,48 @@ export class Connection extends EventEmitter {
     this._localUtils = localUtils;
     this._rootObject = new Root(this);
     this.headers = headers;
+    this.registerObjectFactories({
+      Android: (parent, type, guid, init) => new Android(parent, type, guid, init),
+      AndroidDevice: (parent, type, guid, init) => new AndroidDevice(parent, type, guid, init),
+      AndroidSocket: (parent, type, guid, init) => new AndroidSocket(parent, type, guid, init),
+      APIRequestContext: (parent, type, guid, init) => new APIRequestContext(parent, type, guid, init),
+      Artifact: (parent, type, guid, init) => new Artifact(parent, type, guid, init),
+      BindingCall: (parent, type, guid, init) => new BindingCall(parent, type, guid, init),
+      Browser: (parent, type, guid, init) => new Browser(parent, type, guid, init),
+      BrowserContext: (parent, type, guid, init) => new BrowserContext(parent, type, guid, init),
+      BrowserType: (parent, type, guid, init) => new BrowserType(parent, type, guid, init),
+      CDPSession: (parent, type, guid, init) => new CDPSession(parent, type, guid, init),
+      Debugger: (parent, type, guid, init) => new Debugger(parent, type, guid, init),
+      Dialog: (parent, type, guid, init) => new Dialog(parent, type, guid, init),
+      Disposable: (parent, type, guid, init) => new DisposableObject(parent, type, guid, init),
+      ElementHandle: (parent, type, guid, init) => new ElementHandle(parent, type, guid, init),
+      Frame: (parent, type, guid, init) => new Frame(parent, type, guid, init),
+      JSHandle: (parent, type, guid, init) => new JSHandle(parent, type, guid, init),
+      JsonPipe: (parent, type, guid, init) => new JsonPipe(parent, type, guid, init),
+      LocalUtils: (parent, type, guid, init) => {
+        const result = new LocalUtils(parent, type, guid, init);
+        if (!this._localUtils)
+          this._localUtils = result;
+        return result;
+      },
+      Page: (parent, type, guid, init) => new Page(parent, type, guid, init),
+      Playwright: (parent, type, guid, init) => new Playwright(parent, type, guid, init),
+      Request: (parent, type, guid, init) => new Request(parent, type, guid, init),
+      Response: (parent, type, guid, init) => new Response(parent, type, guid, init),
+      Route: (parent, type, guid, init) => new Route(parent, type, guid, init),
+      Stream: (parent, type, guid, init) => new Stream(parent, type, guid, init),
+      SocksSupport: (parent, type, guid, init) => new DummyChannelOwner(parent, type, guid, init),
+      Tracing: (parent, type, guid, init) => new Tracing(parent, type, guid, init),
+      WebSocket: (parent, type, guid, init) => new WebSocket(parent, type, guid, init),
+      WebSocketRoute: (parent, type, guid, init) => new WebSocketRoute(parent, type, guid, init),
+      Worker: (parent, type, guid, init) => new Worker(parent, type, guid, init),
+      WritableStream: (parent, type, guid, init) => new WritableStream(parent, type, guid, init),
+    });
+  }
+
+  registerObjectFactories(factories: Record<string, ChannelOwnerFactory>) {
+    for (const [type, factory] of Object.entries(factories))
+      this._objectFactories.set(type, factory);
   }
 
   markAsRemote() {
@@ -232,106 +277,12 @@ export class Connection extends EventEmitter {
     const parent = this._objects.get(parentGuid);
     if (!parent)
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
-    let result: ChannelOwner<any>;
     const validator = findValidator(type, '', 'Initializer');
     initializer = validator(initializer, '', this._validatorFromWireContext());
-    switch (type) {
-      case 'Android':
-        result = new Android(parent, type, guid, initializer);
-        break;
-      case 'AndroidSocket':
-        result = new AndroidSocket(parent, type, guid, initializer);
-        break;
-      case 'AndroidDevice':
-        result = new AndroidDevice(parent, type, guid, initializer);
-        break;
-      case 'APIRequestContext':
-        result = new APIRequestContext(parent, type, guid, initializer);
-        break;
-      case 'Artifact':
-        result = new Artifact(parent, type, guid, initializer);
-        break;
-      case 'BindingCall':
-        result = new BindingCall(parent, type, guid, initializer);
-        break;
-      case 'Browser':
-        result = new Browser(parent, type, guid, initializer);
-        break;
-      case 'BrowserContext':
-        result = new BrowserContext(parent, type, guid, initializer);
-        break;
-      case 'BrowserType':
-        result = new BrowserType(parent, type, guid, initializer);
-        break;
-      case 'CDPSession':
-        result = new CDPSession(parent, type, guid, initializer);
-        break;
-      case 'Debugger':
-        result = new Debugger(parent, type, guid, initializer);
-        break;
-      case 'Dialog':
-        result = new Dialog(parent, type, guid, initializer);
-        break;
-      case 'Disposable':
-        result = new DisposableObject(parent, type, guid, initializer);
-        break;
-      case 'ElementHandle':
-        result = new ElementHandle(parent, type, guid, initializer);
-        break;
-      case 'Frame':
-        result = new Frame(parent, type, guid, initializer);
-        break;
-      case 'JSHandle':
-        result = new JSHandle(parent, type, guid, initializer);
-        break;
-      case 'JsonPipe':
-        result = new JsonPipe(parent, type, guid, initializer);
-        break;
-      case 'LocalUtils':
-        result = new LocalUtils(parent, type, guid, initializer);
-        if (!this._localUtils)
-          this._localUtils = result as LocalUtils;
-        break;
-      case 'Page':
-        result = new Page(parent, type, guid, initializer);
-        break;
-      case 'Playwright':
-        result = new Playwright(parent, type, guid, initializer);
-        break;
-      case 'Request':
-        result = new Request(parent, type, guid, initializer);
-        break;
-      case 'Response':
-        result = new Response(parent, type, guid, initializer);
-        break;
-      case 'Route':
-        result = new Route(parent, type, guid, initializer);
-        break;
-      case 'Stream':
-        result = new Stream(parent, type, guid, initializer);
-        break;
-      case 'SocksSupport':
-        result = new DummyChannelOwner(parent, type, guid, initializer);
-        break;
-      case 'Tracing':
-        result = new Tracing(parent, type, guid, initializer);
-        break;
-      case 'WebSocket':
-        result = new WebSocket(parent, type, guid, initializer);
-        break;
-      case 'WebSocketRoute':
-        result = new WebSocketRoute(parent, type, guid, initializer);
-        break;
-      case 'Worker':
-        result = new Worker(parent, type, guid, initializer);
-        break;
-      case 'WritableStream':
-        result = new WritableStream(parent, type, guid, initializer);
-        break;
-      default:
-        throw new Error('Missing type ' + type);
-    }
-    return result;
+    const factory = this._objectFactories.get(type);
+    if (!factory)
+      throw new Error('Missing type ' + type);
+    return factory(parent, type, guid, initializer);
   }
 }
 
