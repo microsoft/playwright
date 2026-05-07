@@ -395,6 +395,27 @@ it.describe('pause', () => {
     expect(error.message).toContain('Not a checkbox or radio button');
   });
 
+  it('should populate log with expect failure', async ({ page, recorderPageGetter }) => {
+    await page.setContent('<button>Submit</button>');
+    const scriptPromise = (async () => {
+      // @ts-ignore
+      await page.pause({ __testHookKeepTestTimeout: true });
+      await expect(page.getByRole('button')).toHaveText('Other', { timeout: 1 });
+    })().catch(e => e);
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.click('[title="Resume (F8)"]');
+    await recorderPage.waitForSelector('.source-line-error-underline');
+    expect(await sanitizeLog(recorderPage)).toEqual([
+      'Pause- XXms',
+      'Expect "toHaveText"(page.getByRole(\'button\'))- XXms',
+      'Expect "toHaveText" with timeout 1ms',
+      'waiting for getByRole(\'button\')',
+      'error: Expect failed',
+    ]);
+    const error = await scriptPromise;
+    expect(error.message).toContain('toHaveText');
+  });
+
   it('should populate log with error in waitForEvent', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {

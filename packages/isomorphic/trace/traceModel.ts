@@ -167,12 +167,13 @@ export class TraceModel {
   private _errorDescriptorsFromActions(): ErrorDescription[] {
     const errors: ErrorDescription[] = [];
     for (const action of this.actions || []) {
-      if (!action.error?.message)
+      const message = actionErrorMessage(action);
+      if (!message)
         continue;
       errors.push({
         action,
         stack: action.stack,
-        message: action.error.message,
+        message,
       });
     }
     return errors;
@@ -385,6 +386,17 @@ export function previousActionByEndTime(action: ActionTraceEvent): ActionTraceEv
 
 export function nextActionByStartTime(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextByStartTimeSymbol];
+}
+
+// In library mode, `expect` returns a result instead of throwing, so its
+// "failed" outcome never lands in `action.error`. Recognize that case here so
+// the action shows up as an error in the trace viewer.
+export function actionErrorMessage(action: ActionTraceEvent): string | undefined {
+  if (action.error?.message)
+    return action.error.message;
+  if (action.method === 'expect' && action.result && action.params && action.result.matches === action.params.isNot)
+    return 'Expect failed';
+  return undefined;
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {

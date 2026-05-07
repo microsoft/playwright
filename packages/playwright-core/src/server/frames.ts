@@ -1455,11 +1455,6 @@ export class Frame extends SdkObject<FrameEventMap> {
   async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<ExpectResult> {
     progress.log(`${renderTitleForCall(progress.metadata)}${options.timeoutForLogs ? ` with timeout ${options.timeoutForLogs}ms` : ''}`);
     const lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string } = { isSet: false };
-    const fixupMetadataError = (result: ExpectResult) => {
-      // Library mode special case for the expect errors which are return values, not exceptions.
-      if (result.matches === options.isNot)
-        progress.metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
-    };
     try {
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       if (selector)
@@ -1493,7 +1488,6 @@ export class Frame extends SdkObject<FrameEventMap> {
         }
         return { matches, received };
       });
-      fixupMetadataError(result);
       return result;
     } catch (e) {
       // Q: Why not throw upon isNonRetriableError(e) as in other places?
@@ -1509,7 +1503,6 @@ export class Frame extends SdkObject<FrameEventMap> {
       }
       if (e instanceof TimeoutError)
         result.timedOut = true;
-      fixupMetadataError(result);
       return result;
     }
   }

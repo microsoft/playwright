@@ -30,9 +30,21 @@ export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
 }
 
+// In library mode, `expect` returns a result instead of throwing, so its
+// "failed" outcome never lands in `metadata.error`. Recognize that case here so
+// the action shows up as an error in the recorder UI.
+export function metadataError(metadata: CallMetadata): string | undefined {
+  if (metadata.error?.error?.message)
+    return metadata.error.error.message;
+  if (metadata.method === 'expect' && metadata.result && metadata.params && metadata.result.matches === metadata.params.isNot)
+    return 'Expect failed';
+  return undefined;
+}
+
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   const title = renderTitleForCall(metadata);
-  if (metadata.error)
+  const error = metadataError(metadata);
+  if (error)
     status = 'error';
   const params = {
     url: metadata.params?.url,
@@ -48,7 +60,7 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
     messages: metadata.log,
     title: title ?? '',
     status,
-    error: metadata.error?.error?.message,
+    error,
     params,
     duration,
   };

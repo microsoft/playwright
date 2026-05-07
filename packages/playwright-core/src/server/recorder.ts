@@ -25,7 +25,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { monotonicTime } from '@isomorphic/time';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
-import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
+import { buildFullSelector, generateFrameSelector, metadataError, metadataToCallLog } from './recorder/recorderUtils';
 import { nullProgress, ProgressController } from './progress';
 
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
@@ -417,7 +417,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._omitCallTracking || this._isRecording())
       return;
-    if (!metadata.error)
+    if (!metadataError(metadata))
       this._currentCallsMetadata.delete(metadata);
     this._updateUserSources();
     this._updateCallLog([metadata]);
@@ -442,7 +442,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       }
       if (line) {
         const paused = this._debugger.isPaused(metadata);
-        source.highlight.push({ line, type: metadata.error ? 'error' : (paused ? 'paused' : 'running') });
+        source.highlight.push({ line, type: metadataError(metadata) ? 'error' : (paused ? 'paused' : 'running') });
         source.revealLine = line;
       }
     }

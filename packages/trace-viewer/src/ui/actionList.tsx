@@ -19,7 +19,7 @@ import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import './actionList.css';
-import { stats, buildActionTree } from '@isomorphic/trace/traceModel';
+import { actionErrorMessage, stats, buildActionTree } from '@isomorphic/trace/traceModel';
 import { asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
@@ -71,7 +71,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [itemMap, selectedAction]);
 
   const isError = React.useCallback((item: ActionTreeItem) => {
-    return !!item.action.error?.message;
+    return !!actionErrorMessage(item.action);
   }, []);
 
   const onAccepted = React.useCallback((item: ActionTreeItem) => {
