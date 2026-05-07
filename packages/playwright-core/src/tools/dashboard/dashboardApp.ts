@@ -49,8 +49,8 @@ type DashboardServer = {
 };
 
 async function startDashboardServer(provider: SessionProvider, options: DashboardOptions): Promise<DashboardServer> {
-  const httpServer = new HttpServer();
   const dashboardDir = libPath('vite', 'dashboard');
+  const httpServer = new HttpServer(dashboardDir);
 
   const connections = new Set<DashboardConnection>();
   let currentReveal: DashboardOptions = options;
@@ -152,8 +152,6 @@ function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: strin
     const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
     const filePath = pathname === '/' ? 'index.html' : pathname.substring(1);
     const resolved = path.join(dashboardDir, filePath);
-    if (!resolved.startsWith(dashboardDir))
-      return false;
     return httpServer.serveFile(request, response, resolved);
   });
 }

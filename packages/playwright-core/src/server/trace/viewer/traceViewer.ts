@@ -89,7 +89,7 @@ function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | un
 }
 
 export async function startTraceViewerServer(options?: TraceViewerServerOptions): Promise<HttpServer> {
-  const server = new HttpServer();
+  const server = new HttpServer(libPath('vite', 'traceViewer'));
   const allowedRoots = (options?.allowedFileRoots ?? [process.cwd()]).map(r => path.resolve(r));
   const isAllowed = (filePath: string) => allowedRoots.some(root => isPathInside(root, filePath));
 
@@ -105,7 +105,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
         return true;
       }
       if (fs.existsSync(filePath))
-        return server.serveFile(request, response, filePath);
+        return server.serveFile(request, response, filePath, undefined, { skipRootCheck: true });
 
       // If .json is requested, we'll synthesize it for zip-less operation.
       if (filePath.endsWith('.json')) {
@@ -149,13 +149,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
       const relativePath = url.pathname.slice('/trace'.length);
       if (relativePath.startsWith('/file'))
         return serveTraceDataRoute(request, response, relativePath);
-      const traceViewerRoot = libPath('vite', 'traceViewer');
-      const absolutePath = path.join(traceViewerRoot, ...relativePath.split('/'));
-      if (!isPathInside(traceViewerRoot, absolutePath)) {
-        response.statusCode = 403;
-        response.end();
-        return true;
-      }
+      const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
       return server.serveFile(request, response, absolutePath);
     });
   }

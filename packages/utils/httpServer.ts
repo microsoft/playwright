@@ -54,9 +54,11 @@ export class HttpServer {
   private _wsGuid: string | undefined;
   // Allowed Host headers; null disables the check (host bound to a public address).
   private _allowedHosts: Set<string> | null = null;
+  private _staticRoot: string | undefined;
 
-  constructor() {
+  constructor(staticRoot?: string) {
     this._server = createHttpServer(this._onRequest.bind(this));
+    this._staticRoot = staticRoot ? path.resolve(staticRoot) : undefined;
   }
 
   server() {
@@ -183,7 +185,12 @@ export class HttpServer {
     return purpose === 'human-readable' ? this._urlPrefixHumanReadable : this._urlPrefixPrecise;
   }
 
-  serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
+  serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }, options?: { skipRootCheck?: boolean }): boolean {
+    if (this._staticRoot && !options?.skipRootCheck && !isPathInside(this._staticRoot, absoluteFilePath)) {
+      response.statusCode = 403;
+      response.end();
+      return true;
+    }
     try {
       for (const [name, value] of Object.entries(headers || {}))
         response.setHeader(name, value);
@@ -317,8 +324,7 @@ export function hostnameFromHostHeader(host: string): string {
 }
 
 export function serveFolder(folder: string): HttpServer {
-  const server = new HttpServer();
-  const folderRoot = path.resolve(folder);
+  const server = new HttpServer(folder);
   server.routePrefix('/', (request, response) => {
     let relativePath = new URL('http://localhost' + request.url).pathname;
     if (relativePath.startsWith('/trace/file')) {
@@ -327,11 +333,6 @@ export function serveFolder(folder: string): HttpServer {
       if (!requested)
         return false;
       const resolved = path.resolve(requested);
-      if (!isPathInside(folderRoot, resolved)) {
-        response.statusCode = 403;
-        response.end();
-        return true;
-      }
       try {
         return server.serveFile(request, response, resolved);
       } catch (e) {
@@ -341,11 +342,6 @@ export function serveFolder(folder: string): HttpServer {
     if (relativePath === '/')
       relativePath = '/index.html';
     const absolutePath = path.join(folder, ...relativePath.split('/'));
-    if (!isPathInside(folderRoot, absolutePath)) {
-      response.statusCode = 403;
-      response.end();
-      return true;
-    }
     return server.serveFile(request, response, absolutePath);
   });
   return server;
