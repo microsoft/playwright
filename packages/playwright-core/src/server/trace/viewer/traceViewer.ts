@@ -149,7 +149,13 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
       const relativePath = url.pathname.slice('/trace'.length);
       if (relativePath.startsWith('/file'))
         return serveTraceDataRoute(request, response, relativePath);
-      const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
+      const traceViewerRoot = libPath('vite', 'traceViewer');
+      const absolutePath = path.join(traceViewerRoot, ...relativePath.split('/'));
+      if (!isPathInside(traceViewerRoot, absolutePath)) {
+        response.statusCode = 403;
+        response.end();
+        return true;
+      }
       return server.serveFile(request, response, absolutePath);
     });
   }

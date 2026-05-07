@@ -341,6 +341,11 @@ export function serveFolder(folder: string): HttpServer {
     if (relativePath === '/')
       relativePath = '/index.html';
     const absolutePath = path.join(folder, ...relativePath.split('/'));
+    if (!isPathInside(folderRoot, absolutePath)) {
+      response.statusCode = 403;
+      response.end();
+      return true;
+    }
     return server.serveFile(request, response, absolutePath);
   });
   return server;
