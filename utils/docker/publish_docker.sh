@@ -32,6 +32,14 @@ NOBLE_TAGS=(
   "v${PW_VERSION}-noble"
 )
 
+tag_and_push() {
+  local source="$1"
+  local target="$2"
+  echo "-- tagging: $target"
+  docker buildx imagetools create --tag "$target" "$source"
+  attach_eol_manifest "$target"
+}
+
 attach_eol_manifest() {
   local image="$1"
   local today=$(date -u +'%Y-%m-%d')
@@ -71,25 +79,23 @@ publish_docker_images_with_arch_suffix() {
   # Prune docker images to avoid platform conflicts
   docker system prune -fa
 
-  # Build with zstd compression for smaller pull sizes and push directly.
-  local PUSH_TAGS=""
-  for ((i = 0; i < ${#TAGS[@]}; i++)) do
-    local TAG="${TAGS[$i]}"
-    PUSH_TAGS="${PUSH_TAGS} -t playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAG}-${ARCH}"
-  done
+  local CANONICAL_TAG="playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAGS[0]}-${ARCH}"
 
+  # Build and push the canonical tag with zstd compression.
   node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
   docker buildx build \
     --platform "linux/${ARCH}" \
     --output "type=image,compression=zstd,compression-level=19,oci-mediatypes=true,push=true" \
     -f "Dockerfile.${FLAVOR}" \
-    ${PUSH_TAGS} \
+    -t "${CANONICAL_TAG}" \
     .
   rm -f playwright-core.tar.gz
+  attach_eol_manifest "${CANONICAL_TAG}"
 
-  for ((i = 0; i < ${#TAGS[@]}; i++)) do
+  # Create additional tags via registry-side copy (no re-upload).
+  for ((i = 1; i < ${#TAGS[@]}; i++)) do
     local TAG="${TAGS[$i]}"
-    attach_eol_manifest "playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAG}-${ARCH}"
+    tag_and_push "${CANONICAL_TAG}" "playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAG}-${ARCH}"
   done
 }
 
