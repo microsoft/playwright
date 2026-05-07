@@ -32,15 +32,6 @@ NOBLE_TAGS=(
   "v${PW_VERSION}-noble"
 )
 
-tag_and_push() {
-  local source="$1"
-  local target="$2"
-  echo "-- tagging: $target"
-  docker tag $source $target
-  docker push $target
-  attach_eol_manifest $target
-}
-
 attach_eol_manifest() {
   local image="$1"
   local today=$(date -u +'%Y-%m-%d')
