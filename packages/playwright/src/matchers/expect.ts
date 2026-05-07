@@ -128,6 +128,7 @@ export type ExpectConfig = {
     scale?: 'css' | 'device';
     stylePath?: string | string[];
     pathTemplate?: string;
+    timeout?: number;
     _comparator?: string;
   };
   toMatchSnapshot?: {

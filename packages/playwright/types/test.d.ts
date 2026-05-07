@@ -237,6 +237,13 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
        * for details.
        */
       pathTemplate?: string;
+
+      /**
+       * Default timeout for
+       * [expect(page).toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
+       * in milliseconds, defaults to the global expect timeout. Setting to `0` disables the timeout.
+       */
+      timeout?: number;
     };
 
     /**
