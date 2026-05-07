@@ -39,5 +39,9 @@ export interface Progress {
   wait(timeout: number): Promise<void>; // timeout = 0 here means "wait 0 ms", not forever.
   signal: AbortSignal;
   metadata: CallMetadata;
+  // Resolved title for the call (already format-substituted), used when logging.
+  // Computed once at dispatch time so server code does not need to look up
+  // protocol metainfo / substitute params on every log line.
+  title: string;
   setAllowConcurrentOrNestedRaces(allow: boolean): void;
 }

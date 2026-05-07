@@ -17,6 +17,7 @@
 import { EventEmitter } from 'events';
 
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isUnderTest } from '@utils/debug';
 import { assert } from '@isomorphic/assert';
@@ -102,8 +103,8 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendAdopt(this, child);
   }
 
-  async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    const controller = ProgressController.createForSdkObject(this._object, callMetadata);
+  async _runCommand(callMetadata: CallMetadata, method: string, validParams: any, title: string) {
+    const controller = ProgressController.createForSdkObject(this._object, callMetadata, title);
     this._activeProgressControllers.add(controller);
     try {
       return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
@@ -378,7 +379,7 @@ export class DispatcherConnection {
       // If the dispatcher has been disposed while running the instrumentation call, error out.
       if (this._dispatcherByGuid.get(guid) !== dispatcher)
         throw new TargetClosedError(sdkObject.closeReason());
-      const result = await dispatcher._runCommand(callMetadata, method, validParams);
+      const result = await dispatcher._runCommand(callMetadata, method, validParams, renderTitleForCall(callMetadata));
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;

@@ -32,18 +32,20 @@ export class ProgressController {
   private _onCallLog?: (message: string) => void;
 
   readonly metadata: CallMetadata;
+  readonly title: string;
   private _controller: AbortController;
 
-  constructor(metadata?: CallMetadata, onCallLog?: (message: string) => void) {
+  constructor(metadata?: CallMetadata, title?: string, onCallLog?: (message: string) => void) {
     this.metadata = metadata || { id: '', startTime: 0, endTime: 0, type: 'Internal', method: '', params: {}, log: [], internal: true };
+    this.title = title ?? '';
     this._onCallLog = onCallLog;
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
     this._controller = new AbortController();
   }
 
-  static createForSdkObject(sdkObject: SdkObject, callMetadata: CallMetadata) {
+  static createForSdkObject(sdkObject: SdkObject, callMetadata: CallMetadata, title?: string) {
     const logName = sdkObject.logName || 'api';
-    return new ProgressController(callMetadata, message => {
+    return new ProgressController(callMetadata, title, message => {
       // Note: "attribution.playwright" is undefined in DebugController. Unfortunate!
       if (logName === 'api' && sdkObject.attribution.playwright?.options.isInternalPlaywright)
         return;
@@ -85,6 +87,7 @@ export class ProgressController {
         this._onCallLog?.(message);
       },
       metadata: this.metadata,
+      title: this.title,
       setAllowConcurrentOrNestedRaces: (allow: boolean) => {
         allowConcurrent = allow;
       },
@@ -186,5 +189,6 @@ export const nullProgress: Progress = {
     log: [],
     internal: true,
   },
+  title: '',
   setAllowConcurrentOrNestedRaces() { },
 };
