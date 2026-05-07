@@ -910,7 +910,7 @@ instead of "limited-quirks".
       error: ConnectionAllowlistError;
       request: AffectedRequest;
     }
-    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable"|"AutofillAndManualTextPolicyControlledFeaturesInfo"|"AutofillPolicyControlledFeatureInfo"|"ManualTextPolicyControlledFeatureInfo"|"FormModelContextParameterMissingTitleAndDescription";
+    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable"|"AutofillAndManualTextPolicyControlledFeaturesInfo"|"AutofillPolicyControlledFeatureInfo"|"ManualTextPolicyControlledFeatureInfo"|"FormModelContextParameterMissingTitleAndDescription"|"FormModelContextMissingToolName"|"FormModelContextMissingToolDescription"|"FormModelContextRequiredParameterMissingName"|"FormModelContextParameterMissingName";
     /**
      * Depending on the concrete errorType, different properties are set.
      */
@@ -4277,7 +4277,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"expand-icon"|"picker-icon"|"interest-hint"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon"|"overscroll-area-parent";
+    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"expand-icon"|"picker-icon"|"interest-button"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon"|"overscroll-area-parent";
     /**
      * Shadow root type.
      */
@@ -7701,8 +7701,6 @@ reported through Debugger domain, similarly to regular breakpoints being hit.
     
     /**
      * Runs an extension default action.
-Available if the client is connected using the --remote-debugging-pipe
-flag and the --enable-unsafe-extension-debugging flag is set.
      */
     export type triggerActionParameters = {
       /**
@@ -7719,9 +7717,7 @@ flag and the --enable-unsafe-extension-debugging flag is set.
     /**
      * Installs an unpacked extension from the filesystem similar to
 --load-extension CLI flags. Returns extension ID once the extension
-has been installed. Available if the client is connected using the
---remote-debugging-pipe flag and the --enable-unsafe-extension-debugging
-flag is set.
+has been installed.
      */
     export type loadUnpackedParameters = {
       /**
@@ -7741,8 +7737,6 @@ flag is set.
     }
     /**
      * Gets a list of all unpacked extensions.
-Available if the client is connected using the --remote-debugging-pipe flag
-and the --enable-unsafe-extension-debugging flag is set.
      */
     export type getExtensionsParameters = {
     }
@@ -7751,8 +7745,6 @@ and the --enable-unsafe-extension-debugging flag is set.
     }
     /**
      * Uninstalls an unpacked extension (others not supported) from the profile.
-Available if the client is connected using the --remote-debugging-pipe flag
-and the --enable-unsafe-extension-debugging.
      */
     export type uninstallParameters = {
       /**
@@ -11236,6 +11228,10 @@ matched (including p2p connections).
        * WebRTC packetReordering feature.
        */
       packetReordering?: boolean;
+      /**
+       * True to emulate internet disconnection.
+       */
+      offline?: boolean;
     }
     export interface BlockPattern {
       /**
@@ -11632,7 +11628,7 @@ one.
       /**
        * The result of a refresh.
        */
-      refreshResult: "Refreshed"|"InitializedService"|"Unreachable"|"ServerError"|"RefreshQuotaExceeded"|"FatalError"|"SigningQuotaExceeded";
+      refreshResult: "Refreshed"|"RefreshedAsWaiter"|"InitializedService"|"Unreachable"|"ServerError"|"RefreshQuotaExceeded"|"FatalError"|"SigningQuotaExceeded";
       /**
        * If there was a fetch attempt, the result of that.
        */
@@ -11659,7 +11655,7 @@ one.
       /**
        * The reason for a session being deleted.
        */
-      deletionReason: "Expired"|"FailedToRestoreKey"|"FailedToUnwrapKey"|"StoragePartitionCleared"|"ClearBrowsingData"|"ServerRequested"|"InvalidSessionParams"|"RefreshFatalError";
+      deletionReason: "Expired"|"FailedToRestoreKey"|"FailedToUnwrapKey"|"StoragePartitionCleared"|"ClearBrowsingData"|"ServerRequested"|"InvalidSessionParams"|"RefreshFatalError"|"DevTools";
     }
     /**
      * Session event details specific to challenges.
@@ -12685,9 +12681,14 @@ explicitly modify `navigator` behavior.
      */
     export type emulateNetworkConditionsByRuleParameters = {
       /**
-       * True to emulate internet disconnection.
+       * True to emulate internet disconnection. Deprecated, use the offline property in matchedNetworkConditions
+or emulateOfflineServiceWorker instead.
        */
-      offline: boolean;
+      offline?: boolean;
+      /**
+       * True to emulate offline service worker.
+       */
+      emulateOfflineServiceWorker?: boolean;
       /**
        * Configure conditions for matching requests. If multiple entries match a request, the first entry wins.  Global
 conditions can be configured by leaving the urlPattern for the conditions empty. These global conditions are
@@ -13156,6 +13157,14 @@ Enabling triggers 'reportingApiReportAdded' for all existing reports.
     export type enableDeviceBoundSessionsReturnValue = {
     }
     /**
+     * Deletes a device bound session.
+     */
+    export type deleteDeviceBoundSessionParameters = {
+      key: DeviceBoundSessionKey;
+    }
+    export type deleteDeviceBoundSessionReturnValue = {
+    }
+    /**
      * Fetches the schemeful site for a specific origin.
      */
     export type fetchSchemefulSiteParameters = {
@@ -13200,14 +13209,6 @@ Page reload is required before the new cookie behavior will be observed
        * Whether 3pc restriction is enabled.
        */
       enableThirdPartyCookieRestriction: boolean;
-      /**
-       * Whether 3pc grace period exception should be enabled; false by default.
-       */
-      disableThirdPartyCookieMetadata: boolean;
-      /**
-       * Whether 3pc heuristics exceptions should be enabled; false by default.
-       */
-      disableThirdPartyCookieHeuristics: boolean;
     }
     export type setCookieControlsReturnValue = {
     }
@@ -14280,7 +14281,7 @@ supported yet.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"tools"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -14879,7 +14880,7 @@ https://github.com/WICG/manifest-incubations/blob/gh-pages/scope_extensions-expl
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"ForwardCacheDisabled"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"SharedWorkerMessage"|"SharedWorkerWithNoActiveClient"|"WebLocks"|"WebLocksContention"|"WebHID"|"WebBluetooth"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCUsedWithCCNS"|"WebTransportUsedWithCCNS"|"WebSocketUsedWithCCNS"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"RequestedByWebViewClient"|"PostMessageByWebViewClient"|"CacheControlNoStoreDeviceBoundSessionTerminated"|"CacheLimitPrunedOnModerateMemoryPressure"|"CacheLimitPrunedOnCriticalMemoryPressure";
+    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"ForwardCacheDisabled"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"SharedWorkerMessage"|"SharedWorkerWithNoActiveClient"|"WebLocks"|"WebLocksContention"|"WebHID"|"WebBluetooth"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCUsedWithCCNS"|"WebTransportUsedWithCCNS"|"WebSocketUsedWithCCNS"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"EmbedderExtensionFrame"|"RequestedByWebViewClient"|"PostMessageByWebViewClient"|"CacheControlNoStoreDeviceBoundSessionTerminated"|"CacheLimitPrunedOnModerateMemoryPressure"|"CacheLimitPrunedOnCriticalMemoryPressure";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -18610,6 +18611,10 @@ supported.
        */
       attached: boolean;
       /**
+       * Id of the parent target, if any. For example, "iframe" target may have a "page" parent.
+       */
+      parentId?: TargetID;
+      /**
        * Opener target Id
        */
       openerId?: TargetID;
@@ -18622,7 +18627,8 @@ supported.
        */
       openerFrameId?: Page.FrameId;
       /**
-       * Id of the parent frame, only present for the "iframe" targets.
+       * Id of the parent frame, present for "iframe" and "worker" targets. For nested workers,
+this is the "ancestor" frame that created the first worker in the nested chain.
        */
       parentFrameId?: Page.FrameId;
       browserContextId?: Browser.BrowserContextID;
@@ -19942,6 +19948,10 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
        */
       readOnly?: boolean;
       /**
+       * A hint indicating that the tool output may contain untrusted content, ex: UGC, 3rd party data.
+       */
+      untrustedContent?: boolean;
+      /**
        * If the declarative tool was declared with the autosubmit attribute.
        */
       autosubmit?: boolean;
@@ -19949,7 +19959,7 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
     /**
      * Represents the status of a tool invocation.
      */
-    export type InvocationStatus = "Success"|"Canceled"|"Error";
+    export type InvocationStatus = "Completed"|"Canceled"|"Error";
     /**
      * Definition of a tool that can be invoked.
      */
@@ -19983,6 +19993,19 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
        */
       stackTrace?: Runtime.StackTrace;
     }
+    /**
+     * Definition of a tool that was removed.
+     */
+    export interface RemovedTool {
+      /**
+       * Tool name.
+       */
+      name: string;
+      /**
+       * Frame identifier associated with the tool registration.
+       */
+      frameId: Page.FrameId;
+    }
     
     /**
      * Event fired when new tools are added.
@@ -20000,7 +20023,7 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
       /**
        * Array of tools that were removed.
        */
-      tools: Tool[];
+      tools: RemovedTool[];
     }
     /**
      * Event fired when a tool invocation starts.
@@ -20036,7 +20059,8 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
        */
       status: InvocationStatus;
       /**
-       * Output or error delivered as delivered to the agent. Missing if `status` is anything other than Success.
+       * Output or error delivered as delivered to the agent. Missing if `status` is anything other than Completed.
+Note: The output is untrusted and poses a prompt injection risk. Clients should treat this as potentially malicious user input.
        */
       output?: any;
       /**
@@ -20063,6 +20087,40 @@ all currently registered tools.
     export type disableParameters = {
     }
     export type disableReturnValue = {
+    }
+    /**
+     * Invokes a registered tool.
+     */
+    export type invokeToolParameters = {
+      /**
+       * Frame in which to invoke the tool.
+       */
+      frameId: Page.FrameId;
+      /**
+       * Name of the tool to invoke.
+       */
+      toolName: string;
+      /**
+       * Input parameters for the tool, matching the tool's inputSchema.
+       */
+      input: { [key: string]: string };
+    }
+    export type invokeToolReturnValue = {
+      /**
+       * Unique identifier for this invocation. Response is sent before tool events.
+       */
+      invocationId: string;
+    }
+    /**
+     * Cancels a pending tool invocation.
+     */
+    export type cancelInvocationParameters = {
+      /**
+       * Invocation identifier to cancel.
+       */
+      invocationId: string;
+    }
+    export type cancelInvocationReturnValue = {
     }
   }
   
@@ -23595,6 +23653,7 @@ Error was thrown.
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusParameters;
     "Network.enableReportingApi": Network.enableReportingApiParameters;
     "Network.enableDeviceBoundSessions": Network.enableDeviceBoundSessionsParameters;
+    "Network.deleteDeviceBoundSession": Network.deleteDeviceBoundSessionParameters;
     "Network.fetchSchemefulSite": Network.fetchSchemefulSiteParameters;
     "Network.loadNetworkResource": Network.loadNetworkResourceParameters;
     "Network.setCookieControls": Network.setCookieControlsParameters;
@@ -23814,6 +23873,8 @@ Error was thrown.
     "WebAuthn.setCredentialProperties": WebAuthn.setCredentialPropertiesParameters;
     "WebMCP.enable": WebMCP.enableParameters;
     "WebMCP.disable": WebMCP.disableParameters;
+    "WebMCP.invokeTool": WebMCP.invokeToolParameters;
+    "WebMCP.cancelInvocation": WebMCP.cancelInvocationParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
     "Console.disable": Console.disableParameters;
     "Console.enable": Console.enableParameters;
@@ -24261,6 +24322,7 @@ Error was thrown.
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusReturnValue;
     "Network.enableReportingApi": Network.enableReportingApiReturnValue;
     "Network.enableDeviceBoundSessions": Network.enableDeviceBoundSessionsReturnValue;
+    "Network.deleteDeviceBoundSession": Network.deleteDeviceBoundSessionReturnValue;
     "Network.fetchSchemefulSite": Network.fetchSchemefulSiteReturnValue;
     "Network.loadNetworkResource": Network.loadNetworkResourceReturnValue;
     "Network.setCookieControls": Network.setCookieControlsReturnValue;
@@ -24480,6 +24542,8 @@ Error was thrown.
     "WebAuthn.setCredentialProperties": WebAuthn.setCredentialPropertiesReturnValue;
     "WebMCP.enable": WebMCP.enableReturnValue;
     "WebMCP.disable": WebMCP.disableReturnValue;
+    "WebMCP.invokeTool": WebMCP.invokeToolReturnValue;
+    "WebMCP.cancelInvocation": WebMCP.cancelInvocationReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;
     "Console.disable": Console.disableReturnValue;
     "Console.enable": Console.enableReturnValue;
