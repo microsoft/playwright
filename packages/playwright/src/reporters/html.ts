@@ -25,7 +25,7 @@ import open from 'open';
 import * as yazl from 'yazl';
 import { MultiMap } from '@isomorphic/multimap';
 import { calculateSha1 } from '@utils/crypto';
-import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@utils/fileUtils';
+import { copyFileAndMakeWritable, isPathInside, removeFolders, sanitizeForFilePath, toPosixPath } from '@utils/fileUtils';
 import { getPackageManagerExecCommand, isCodingAgent } from '@utils/env';
 import { HttpServer, serveFolder } from '@utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
@@ -314,7 +314,7 @@ async function serveHtmlReportWithHMR(folder: string): Promise<HttpServer> {
     // Serve attachments and the bundled trace-viewer copy from the generated
     // output folder first, falling through to Vite for source modules.
     const absolutePath = path.join(folder, ...url.pathname.split('/'));
-    if (absolutePath.startsWith(folder) && server.serveFile(request, response, absolutePath))
+    if (isPathInside(folder, absolutePath) && server.serveFile(request, response, absolutePath))
       return true;
     devServer.middlewares(request, response, HttpServer.notFoundFallback(response));
     return true;
