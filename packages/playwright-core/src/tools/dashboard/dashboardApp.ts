@@ -171,12 +171,11 @@ async function attachDashboardDevServer(httpServer: HttpServer) {
 
 async function innerOpenDashboardApp(options: DashboardOptions): Promise<{ page: api.Page; server: DashboardServer }> {
   const server = await startDashboardServer(new RegistrySessionProvider(), options);
-  const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
-  await page.goto(server.url);
+  const { page } = await launchApp('dashboard', { url: server.url, onClose: () => gracefullyProcessExitDoNotHang(0) });
   return { page, server };
 }
 
-async function launchApp(appName: string, options?: { onClose?: () => void }) {
+async function launchApp(appName: string, options: { url: string; onClose?: () => void }) {
   const channel = findChromiumChannelBestEffort('javascript');
   const context = await playwright.chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
@@ -190,8 +189,6 @@ async function launchApp(appName: string, options?: { onClose?: () => void }) {
     ],
     viewport: null,
   });
-  if (process.env.PWTEST_DASHBOARD_APP_BIND_TITLE)
-    await context.browser()?.bind(process.env.PWTEST_DASHBOARD_APP_BIND_TITLE, { workspaceDir: process.cwd() });
 
   const [page] = context.pages();
   // Chromium on macOS opens a new tab when clicking on the dock icon.
@@ -212,6 +209,9 @@ async function launchApp(appName: string, options?: { onClose?: () => void }) {
   // eslint-disable-next-line no-restricted-syntax -- it is not essential, can regress.
   await (page as any)._setDockTile?.(image);
   await syncLocalStorageWithSettings(page, appName);
+  await page.goto(options.url);
+  if (process.env.PWTEST_DASHBOARD_APP_BIND_TITLE)
+    await context.browser()?.bind(process.env.PWTEST_DASHBOARD_APP_BIND_TITLE, { workspaceDir: process.cwd() });
   return { context, page };
 }
 
@@ -378,9 +378,8 @@ export async function openDashboardForContext(context: api.BrowserContext): Prom
     await server.close();
   };
 
-  const { page } = await launchApp('dashboard', { onClose: () => { void close(); } });
+  const { page } = await launchApp('dashboard', { url: server.url, onClose: () => { void close(); } });
   context.on('close', () => { void close(); });
-  await page.goto(server.url);
 }
 
 async function runKillClient(): Promise<void> {
