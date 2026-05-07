@@ -37,7 +37,9 @@ let documentation = parseApi(path.join(documentationRoot, 'api'));
 if (language === 'js') {
   documentation = documentation
       .mergeWith(parseApi(path.join(documentationRoot, 'test-api'), path.join(documentationRoot, 'api', 'params.md')))
-      .mergeWith(parseApi(path.join(documentationRoot, 'test-reporter-api')));
+      .mergeWith(parseApi(path.join(documentationRoot, 'test-reporter-api')))
+      .mergeWith(parseApi(path.join(documentationRoot, 'electron-api'), path.join(documentationRoot, 'api', 'params.md')))
+      .mergeWith(parseApi(path.join(documentationRoot, 'mobile-api'), path.join(documentationRoot, 'api', 'params.md')));
 }
 
 documentation.setLinkRenderer(docsLinkRendererForLanguage(language, 'ReleaseNotesMd'));
