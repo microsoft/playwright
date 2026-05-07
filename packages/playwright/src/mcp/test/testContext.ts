@@ -108,7 +108,7 @@ export class TestContext {
 
   private async _enqueue<T>(fn: () => Promise<T>): Promise<T> {
     const next = this._testOpQueue.then(fn);
-    this._testOpQueue = next.then(() => {});
+    this._testOpQueue = next.then(() => {}, () => {});
     return await next;
   }
 
