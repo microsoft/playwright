@@ -498,12 +498,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Input
     return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
   }
 
-  onBeforeInputAction(progress: Progress, target: Page | ElementHandle) {
+  onBeforeInputAction(progress: Progress, target: Page | ElementHandle, point?: types.Point) {
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
     const metadata = progress.metadata;
     if (!this._state?.callIds.has(metadata.id))
       return Promise.resolve();
-    const event = createInputActionTraceEvent(metadata);
+    const event = createInputActionTraceEvent(metadata, point);
     if (!event)
       return Promise.resolve();
     const page = target instanceof Page ? target : target._page;
@@ -744,13 +744,13 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
   return event;
 }
 
-function createInputActionTraceEvent(metadata: CallMetadata): trace.InputActionTraceEvent | null {
+function createInputActionTraceEvent(metadata: CallMetadata, point: types.Point | undefined): trace.InputActionTraceEvent | null {
   if (metadata.internal || metadata.method.startsWith('tracing'))
     return null;
   return {
     type: 'input',
     callId: metadata.id,
-    point: metadata.point,
+    point,
   };
 }
 
@@ -774,7 +774,6 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     endTime: metadata.endTime,
     error: metadata.error?.error,
     result: metadata.result,
-    point: metadata.point,
   };
 }
 

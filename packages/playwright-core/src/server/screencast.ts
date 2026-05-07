@@ -154,7 +154,7 @@ export class Screencast implements InputActionObserver {
     }
   }
 
-  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle, box?: types.Rect): Promise<void> {
+  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle, point?: types.Point, box?: types.Rect): Promise<void> {
     if (!this._actions)
       return;
 
@@ -165,8 +165,7 @@ export class Screencast implements InputActionObserver {
     if (!box && !(target instanceof Page))
       box = await target.boundingBox(progress) || undefined;
 
-    const metadata = progress.metadata;
-    const actionTitle = renderTitleForCall(metadata);
+    const actionTitle = renderTitleForCall(progress.metadata);
     const utility = await progress.race(page.mainFrame().utilityContext());
 
     await progress.race(utility.evaluate(async options => {
@@ -177,7 +176,7 @@ export class Screencast implements InputActionObserver {
     }, {
       injected: await progress.race(utility.injectedScript()),
       duration: this._actions?.duration ?? 500,
-      point: metadata.point,
+      point,
       box,
       actionTitle,
       position: this._actions?.position,

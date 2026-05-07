@@ -214,8 +214,7 @@ export class Mouse {
   }
 
   async apiMove(progress: Progress, x: number, y: number, options: { steps?: number, forClick?: boolean } = {}) {
-    progress.metadata.point = { x, y };
-    await this._page.browserContext.performOnBeforeInputAction(progress, this._page);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this._page, { x, y });
     await this.move(progress, x, y, options);
   }
 
@@ -233,8 +232,7 @@ export class Mouse {
   }
 
   async apiDown(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
-    progress.metadata.point = this._currentPoint();
-    await this._page.browserContext.performOnBeforeInputAction(progress, this._page);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this._page, this._currentPoint());
     await this.down(progress, options);
   }
 
@@ -246,8 +244,7 @@ export class Mouse {
   }
 
   async apiUp(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
-    progress.metadata.point = this._currentPoint();
-    await this._page.browserContext.performOnBeforeInputAction(progress, this._page);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this._page, this._currentPoint());
     await this.up(progress, options);
   }
 
@@ -259,8 +256,7 @@ export class Mouse {
   }
 
   async apiClick(progress: Progress, x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number, steps?: number } = {}) {
-    progress.metadata.point = { x, y };
-    await this._page.browserContext.performOnBeforeInputAction(progress, this._page);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this._page, { x, y });
     await this.click(progress, x, y, options);
   }
 
@@ -374,7 +370,7 @@ export class Touchscreen {
   async apiTap(progress: Progress, x: number, y: number) {
     if (!this._page.browserContext._options.hasTouch)
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
-    await this._page.browserContext.performOnBeforeInputAction(progress, this._page);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this._page, { x, y });
     await this.tap(progress, x, y);
   }
 

@@ -67,7 +67,7 @@ const BrowserContextEvent = {
 } as const;
 
 export interface InputActionObserver {
-  onBeforeInputAction(progress: Progress, target: Page | ElementHandle, box?: types.Rect): Promise<void>;
+  onBeforeInputAction(progress: Progress, target: Page | ElementHandle, point?: types.Point, box?: types.Rect): Promise<void>;
 }
 
 export type BrowserContextEventMap = {
@@ -189,9 +189,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._inputActionObservers.delete(observer);
   }
 
-  async performOnBeforeInputAction(progress: Progress, target: Page | ElementHandle, box?: types.Rect) {
+  async performOnBeforeInputAction(progress: Progress, target: Page | ElementHandle, point?: types.Point, box?: types.Rect) {
     for (const observer of [...this._inputActionObservers])
-      await observer.onBeforeInputAction(progress, target, box);
+      await observer.onBeforeInputAction(progress, target, point, box);
   }
 
   async exposeConsoleApi(progress: Progress) {

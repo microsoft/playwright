@@ -449,8 +449,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (typeof maybeResult === 'string')
       return maybeResult;
     const point = roundPoint(maybeResult.point);
-    progress.metadata.point = point;
-    await this._page.browserContext.performOnBeforeInputAction(progress, this, maybeResult.box);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this, point, maybeResult.box);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
     if (force) {

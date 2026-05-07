@@ -325,7 +325,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async touchscreenTap(params: channels.PageTouchscreenTapParams, progress: Progress): Promise<void> {
-    progress.metadata.point = { x: params.x, y: params.y };
     await this._page.touchscreen.apiTap(progress, params.x, params.y);
   }
 
