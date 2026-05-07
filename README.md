@@ -37,6 +37,29 @@ npm i -D @playwright/test
 npx playwright install
 ```
 
+#### PowerShell Setup (Windows)
+
+For Windows users, you can use the PowerShell script to automate the setup process:
+
+```powershell
+# Download Initialize-Playwright.ps1 from the Playwright repository
+# Run from your project root
+.\Initialize-Playwright.ps1 [-LLM <Claude|Grok|Other>]
+```
+
+This script:
+- Initializes npm project (if needed)
+- Installs @playwright/test
+- Downloads browser binaries
+- Generates playwright.config.ts
+- Updates .gitignore
+- Optionally installs VS Code extension and configures agents/skills for AI assistants
+
+**Parameters:**
+- `-LLM`: Specify your AI assistant (e.g., "Claude", "Grok") to enable agent and skill configuration. If omitted, performs basic setup only.
+
+For the latest script, see [utils/Initialize-Playwright.ps1](utils/Initialize-Playwright.ps1).
+
 ### Write a test
 
 ```TypeScript
