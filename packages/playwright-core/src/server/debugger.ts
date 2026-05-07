@@ -19,14 +19,17 @@ import { monotonicTime } from '@isomorphic/time';
 import { SdkObject } from './instrumentation';
 import { BrowserContext } from './browserContext';
 
+import type { InputActionObserver } from './browserContext';
+import type { ElementHandle } from './dom';
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
+import type { Page } from './page';
 import type { Progress } from '@protocol/progress';
 
 const symbol = Symbol('Debugger');
 
 type PauseAt = { next?: boolean, location?: { file: string, line?: number, column?: number } };
 
-export class Debugger extends SdkObject implements InstrumentationListener {
+export class Debugger extends SdkObject implements InstrumentationListener, InputActionObserver {
   private _pauseAt: PauseAt = {};
   private _pausedCall: { metadata: CallMetadata, sdkObject: SdkObject, resolve: () => void } | undefined;
   private _enabled = false;
@@ -43,8 +46,10 @@ export class Debugger extends SdkObject implements InstrumentationListener {
     this._context = context;
     (this._context as any)[symbol] = this;
     context.instrumentation.addListener(this, context);
+    context.addInputActionObserver(this);
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
+      this._context.removeInputActionObserver(this);
     });
   }
 
@@ -92,13 +97,17 @@ export class Debugger extends SdkObject implements InstrumentationListener {
       await this._pause(sdkObject, metadata);
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle): Promise<void> {
+    const metadata = progress.metadata;
     if (this._muted || metadata.internal)
       return;
     const metainfo = getMetainfo(metadata);
     const pauseBeforeInput = !!this._pauseAt.next && !!metainfo?.pause && !!metainfo?.isAutoWaiting && !this._pauseBeforeWaitingActions;
-    if (pauseBeforeInput)
-      await this._pause(sdkObject, metadata);
+    if (pauseBeforeInput) {
+      // The debugger pause must block until explicitly resumed, regardless of progress timeout.
+      // eslint-disable-next-line progress/await-must-use-progress
+      await this._pause(target, metadata);
+    }
   }
 
   private async _pause(sdkObject: SdkObject, metadata: CallMetadata) {

@@ -451,7 +451,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const point = roundPoint(maybeResult.point);
     progress.metadata.point = point;
     progress.metadata.box = maybeResult.box;
-    await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
+    await this._page.browserContext.performOnBeforeInputAction(progress, this);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
     if (force) {
@@ -576,7 +576,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   private async _beforeNonPointerAction(progress: Progress) {
     if (progress.metadata.annotate)
       progress.metadata.box = await this.boundingBox(progress) || undefined;
-    await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
+    await this._page.browserContext.performOnBeforeInputAction(progress, this);
   }
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {

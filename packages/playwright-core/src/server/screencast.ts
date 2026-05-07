@@ -19,8 +19,11 @@ import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { debugLogger } from '@utils/debugLogger';
 import { Page } from './page';
 
+import type { InputActionObserver } from './browserContext';
+import type { ElementHandle } from './dom';
 import type * as types from './types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
+import type { Progress } from '@protocol/progress';
 
 export type ScreencastClient = {
   onFrame: (frame: types.ScreencastFrame) => Promise<void> | void;
@@ -38,7 +41,7 @@ type ActionOptions = {
   fontSize?: number,
 };
 
-export class Screencast implements InstrumentationListener {
+export class Screencast implements InstrumentationListener, InputActionObserver {
   readonly page: Page;
   private _clients = new Map<ScreencastClient, ManualPromise<void>>();
   private _actions: ActionOptions | undefined;
@@ -48,6 +51,7 @@ export class Screencast implements InstrumentationListener {
   constructor(page: Page) {
     this.page = page;
     this.page.instrumentation.addListener(this, page.browserContext);
+    this.page.browserContext.addInputActionObserver(this);
   }
 
   async handlePageOrContextClose() {
@@ -64,6 +68,7 @@ export class Screencast implements InstrumentationListener {
       client.dispose();
     this._clients.clear();
     this.page.instrumentation.removeListener(this);
+    this.page.browserContext.removeInputActionObserver(this);
   }
 
   showActions(options: ActionOptions) {
@@ -158,31 +163,31 @@ export class Screencast implements InstrumentationListener {
     metadata.annotate = true;
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle): Promise<void> {
     if (!this._actions)
       return;
 
-    const page = sdkObject.attribution.page;
-    if (!page)
+    const page = target instanceof Page ? target : target._page;
+    if (page !== this.page)
       return;
 
+    const metadata = progress.metadata;
     const actionTitle = renderTitleForCall(metadata);
-    const utility = await page.mainFrame().utilityContext();
+    const utility = await progress.race(page.mainFrame().utilityContext());
 
-    // Run this outside of the progress timer.
-    await utility.evaluate(async options => {
+    await progress.race(utility.evaluate(async options => {
       const { injected, duration } = options;
       injected.setScreencastAnnotation(options);
       await new Promise(f => injected.utils.builtins.setTimeout(f, duration));
       injected.setScreencastAnnotation(null);
     }, {
-      injected: await utility.injectedScript(),
+      injected: await progress.race(utility.injectedScript()),
       duration: this._actions?.duration ?? 500,
       point: metadata.point,
       box: metadata.box,
       actionTitle,
       position: this._actions?.position,
       fontSize: this._actions?.fontSize,
-    }).catch(e => debugLogger.log('error', e));
+    }).catch(e => debugLogger.log('error', e)));
   }
 }

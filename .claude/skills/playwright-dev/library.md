@@ -165,7 +165,9 @@ Key properties:
 - `instrumentation: Instrumentation` — hooks for tracing, debugging, test runner integration
 
 Attribution is inherited from parent on construction. Instrumentation hooks include:
-`onBeforeCall`, `onAfterCall`, `onBeforeInputAction`, `onCallLog`, `onPageOpen/Close`, `onBrowserOpen/Close`, `onDialog`, `onDownload`.
+`onBeforeCall`, `onAfterCall`, `onCallLog`, `onPageOpen/Close`, `onBrowserOpen/Close`, `onDialog`, `onDownload`.
+
+Input actions (click, fill, key press, mouse, etc.) are observed separately via `BrowserContext.addInputActionObserver(observer)` / `removeInputActionObserver(observer)`. An observer implements `onBeforeInputAction(progress: Progress, target: Page | ElementHandle)` and is invoked from `dom.ts` / `input.ts` right before the actual input is dispatched. `Tracing`, `Debugger`, and `Screencast` register themselves as input action observers.
 
 ### Key Server Classes
 

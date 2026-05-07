@@ -83,7 +83,6 @@ export interface Instrumentation {
   addListener(listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null): void;
   removeListener(listener: InstrumentationListener): void;
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void>;
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onPageOpen(page: Page): void;
@@ -96,7 +95,6 @@ export interface Instrumentation {
 
 export interface InstrumentationListener {
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void>;
-  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onCallLog?(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onPageOpen?(page: Page): void;

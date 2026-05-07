@@ -36,6 +36,7 @@ import { nullProgress } from './progress';
 
 import type { Browser, BrowserOptions } from './browser';
 import type { ConsoleMessage } from './console';
+import type { ElementHandle } from './dom';
 import type { Download } from './download';
 import type * as frames from './frames';
 import type { PageError } from './page';
@@ -64,6 +65,10 @@ const BrowserContextEvent = {
   PageClosed: 'pageclosed',
   InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
 } as const;
+
+export interface InputActionObserver {
+  onBeforeInputAction(progress: Progress, target: Page | ElementHandle): Promise<void>;
+}
 
 export type BrowserContextEventMap = {
   [BrowserContextEvent.Console]: [message: ConsoleMessage];
@@ -114,6 +119,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
   private _consoleApiExposed = false;
+  private _inputActionObservers = new Set<InputActionObserver>();
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -173,6 +179,19 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
   debugger(): Debugger {
     return this._debugger;
+  }
+
+  addInputActionObserver(observer: InputActionObserver) {
+    this._inputActionObservers.add(observer);
+  }
+
+  removeInputActionObserver(observer: InputActionObserver) {
+    this._inputActionObservers.delete(observer);
+  }
+
+  async performOnBeforeInputAction(progress: Progress, target: Page | ElementHandle) {
+    for (const observer of [...this._inputActionObservers])
+      await observer.onBeforeInputAction(progress, target);
   }
 
   async exposeConsoleApi(progress: Progress) {

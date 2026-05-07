@@ -359,10 +359,12 @@ export class Tracing extends SdkObject implements
 - "before" DOM snapshot
 - Associated page/frame IDs
 
-**2. Input Actions (`onBeforeInputAction`)**
+**2. Input Actions (`InputActionObserver.onBeforeInputAction`)**
 - Pointer coordinates
 - Input type
 - Snapshot of input
+
+`Tracing` is registered on the `BrowserContext` as an input action observer (see `BrowserContext.addInputActionObserver`). The observer fires from `dom.ts` / `input.ts` immediately before the action dispatch and receives the current `Progress` plus the `Page | ElementHandle` target.
 
 **3. Action Logs (`onCallLog`)**
 - API log messages

@@ -46,6 +46,8 @@ import type { Dialog } from '../../dialog';
 import type { Download } from '../../download';
 import type { APIRequestContext } from '../../fetch';
 import type { HarTracerDelegate } from '../../har/harTracer';
+import type { InputActionObserver } from '../../browserContext';
+import type { ElementHandle } from '../../dom';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
 import type { PageError } from '../../page';
 import type { RecordHarOptions, StackFrame, TracingTracingStopChunkParams } from '@protocol/channels';
@@ -80,7 +82,7 @@ type RecordingState = {
   groupStack: string[];
 };
 
-export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
+export class Tracing extends SdkObject implements InstrumentationListener, InputActionObserver, SnapshotterDelegate, HarTracerDelegate {
   private _fs = new SerializedFS();
   private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
@@ -216,6 +218,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._appendTraceEvent(event);
 
     this._context.instrumentation.addListener(this, this._context);
+    if (this._context instanceof BrowserContext)
+      this._context.addInputActionObserver(this);
     this._eventListeners.push(
         eventsHelper.addEventListener(this._context, BrowserContext.Events.Console, this._onConsoleMessage.bind(this)),
         eventsHelper.addEventListener(this._context, BrowserContext.Events.PageError, this._onPageError.bind(this)),
@@ -390,6 +394,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._closeAllGroups();
 
     this._context.instrumentation.removeListener(this);
+    if (this._context instanceof BrowserContext)
+      this._context.removeInputActionObserver(this);
     eventsHelper.removeEventListeners(this._eventListeners);
     if (this._state.options.screenshots)
       this._stopScreencast();
@@ -492,18 +498,20 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
   }
 
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
+  onBeforeInputAction(progress: Progress, target: Page | ElementHandle) {
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
+    const metadata = progress.metadata;
     if (!this._state?.callIds.has(metadata.id))
       return Promise.resolve();
     const event = createInputActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    this._temporarilyDisableThrottling(sdkObject.attribution.page);
-    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'input'))
+    const page = target instanceof Page ? target : target._page;
+    this._temporarilyDisableThrottling(page);
+    if (this._shouldCaptureSnapshot(target, metadata, 'input'))
       event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata);
+    return this._captureSnapshot(event.inputSnapshot, target, metadata);
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
