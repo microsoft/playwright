@@ -94,6 +94,7 @@ export class DashboardModel {
     client.on('frame', params => this._emit({ liveFrame: params }));
     client.on('annotate', () => this.enterAnnotate('cli'));
     client.on('cancelAnnotate', () => this.cancelAnnotate(false));
+    client.on('focus', () => window.focus());
   }
 
   subscribe(listener: Listener): () => void {

@@ -17,6 +17,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import crypto from 'crypto';
 
 import { test, expect, installSaveFilePickerMock } from './cli-fixtures';
 
@@ -76,8 +77,10 @@ test('should show current workspace sessions first', async ({ cli, server, start
   await cli('open', server.EMPTY_PAGE, { cwd: wsA });
   await cli('open', server.EMPTY_PAGE, { cwd: wsB });
 
+  const dashboard = await startDashboardServer({ cwd: wsA });
+
   const checkOrder = async (first: string, second: string) => {
-    const dashboard = await startDashboardServer({ cwd: first });
+    await cli('show', { cwd: first });
     const workspaceGroups = dashboard.getByRole('region', { name: /^Workspace / });
     await expect(workspaceGroups).toHaveCount(2);
 
@@ -177,4 +180,29 @@ test('save recording streams WebM bytes to the chosen file', async ({ cli, serve
   const bytes = await awaitBytes();
   // WebM files start with the EBML magic bytes.
   expect(bytes.subarray(0, 4)).toEqual(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
+});
+
+test('should error when server mode starts while app mode is running', async ({ cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  await cli('show', { bindTitle: `--playwright-internal--${crypto.randomUUID()}` });
+
+  const { error } = await cli('show', '--port=0');
+  expect(error).toContain('already running in app mode');
+});
+
+test('should focus browser and warn when no clients on server-mode reveal', async ({ cli, server, startDashboardServer }) => {
+  await cli('open', server.EMPTY_PAGE, '--session=my-session');
+  const dashboard = await startDashboardServer({ session: 'my-session' });
+
+  await test.step('focus is called when a browser has the dashboard open', async () => {
+    const focused = dashboard.evaluate(() => new Promise<void>(resolve => { window.focus = resolve; }));
+    await cli('show', '-s=my-session');
+    await focused;
+  });
+
+  await test.step('prints warning when no browser has the dashboard open', async () => {
+    await dashboard.goto('about:blank'); // disconnect WS client
+    const { error } = await cli('show', '--port=0', '-s=my-session');
+    expect(error).toContain('Nobody is looking');
+  });
 });

@@ -49,6 +49,7 @@ export type DashboardChannelEvents = {
   frame: { data: string; viewportWidth: number; viewportHeight: number };
   annotate: {};
   cancelAnnotate: {};
+  focus: {};
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';

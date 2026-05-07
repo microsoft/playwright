@@ -498,3 +498,20 @@ test('should disengage annotate mode when --annotate client disconnects', async 
 
   await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
 });
+
+test('should capture annotations via show --annotate with server-mode dashboard', async ({ startDashboardServer, cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+  const dashboard = await startDashboardServer();
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+
+  const annotatePromise = cli('show', '--annotate');
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  await drawAndSubmitAnnotation(dashboard, 'server-mode');
+
+  const { output, exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+  verifyAnnotateOutput(output, 'server-mode', test.info().outputDir);
+});

@@ -43,6 +43,7 @@ export class DashboardConnection implements Transport {
   private _pushTabsScheduled = false;
   private _visible = true;
   private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string } | undefined;
+  private _workspaceDir: string | undefined;
   private _annotateWaitingForAttach = false;
 
   _recordingDir: string;
@@ -54,6 +55,7 @@ export class DashboardConnection implements Transport {
     this._onconnected = onconnected;
     this._onAnnotationSubmit = onAnnotationSubmit;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
+    this._workspaceDir = createClientInfo().workspaceDir;
   }
 
   onconnect() {
@@ -135,6 +137,8 @@ export class DashboardConnection implements Transport {
 
   revealSession(sessionName: string, workspaceDir?: string) {
     this._pendingReveal = { sessionName, workspaceDir };
+    this._workspaceDir = workspaceDir;
+    this._pushSessions();
     void this._tryRevealPending();
   }
 
@@ -161,6 +165,7 @@ export class DashboardConnection implements Transport {
     this._pendingReveal = undefined;
     await this._switchAttachedTo(page);
     this._pushTabs();
+    this.emitFocus();
   }
 
   async submitAnnotation(params: { frames: SubmittedAnnotationFrame[]; feedback: string }) {
@@ -205,7 +210,7 @@ export class DashboardConnection implements Transport {
   }
 
   emitSessions(sessions: BrowserDescriptor[]) {
-    this.sendEvent?.('sessions', { sessions, clientInfo: createClientInfo() });
+    this.sendEvent?.('sessions', { sessions, clientInfo: { ...createClientInfo(), workspaceDir: this._workspaceDir } });
   }
 
   emitTabs(tabs: Tab[]) {
@@ -214,6 +219,10 @@ export class DashboardConnection implements Transport {
 
   emitFrame(data: string, viewportWidth: number, viewportHeight: number) {
     this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
+  }
+
+  emitFocus() {
+    this.sendEvent?.('focus', {});
   }
 
   emitAnnotate() {

@@ -42,7 +42,7 @@ declare const __PW_HMR__: boolean;
 
 type DashboardServer = {
   url: string;
-  reveal: (options: DashboardOptions) => void;
+  reveal: (options: DashboardOptions) => boolean;
   triggerAnnotate: () => void;
   registerAnnotateWaiter: (socket: net.Socket) => void;
   close: () => Promise<void>;
@@ -103,17 +103,18 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     attachDashboardStaticServer(httpServer, dashboardDir);
   await httpServer.start({ port: options.port, host: options.host });
 
-  const reveal = (next: DashboardOptions) => {
+  const reveal = (next: DashboardOptions): boolean => {
     currentReveal = next;
+    if (!connections.size)
+      return false;
     if (next.pageId) {
       for (const connection of connections)
         connection.revealPage(next.pageId);
-      return;
+    } else if (next.sessionName) {
+      for (const connection of connections)
+        connection.revealSession(next.sessionName, next.workspaceDir);
     }
-    if (!next.sessionName)
-      return;
-    for (const connection of connections)
-      connection.revealSession(next.sessionName, next.workspaceDir);
+    return true;
   };
 
   const triggerAnnotate = () => {
@@ -168,13 +169,6 @@ async function attachDashboardDevServer(httpServer: HttpServer) {
   });
 }
 // HMR end
-
-async function innerOpenDashboardApp(options: DashboardOptions): Promise<{ page: api.Page; server: DashboardServer }> {
-  const server = await startDashboardServer(new RegistrySessionProvider(), options);
-  const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
-  await page.goto(server.url);
-  return { page, server };
-}
 
 async function launchApp(appName: string, options?: { onClose?: () => void }) {
   const channel = findChromiumChannelBestEffort('javascript');
@@ -282,6 +276,17 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write(JSON.stringify(options) + '\n');
+      });
+      let responseData = '';
+      client.on('data', chunk => { responseData += chunk.toString(); });
+      client.on('end', () => {
+        let parsed: { error?: string } | undefined;
+        try { parsed = JSON.parse(responseData.trim()); } catch {}
+        if (parsed?.error) {
+          // eslint-disable-next-line no-console
+          console.error(parsed.error);
+          gracefullyProcessExitDoNotHang(1);
+        }
         reject(new Error('already running'));
       });
       client.on('error', () => {
@@ -307,22 +312,33 @@ export async function openDashboardApp() {
     // eslint-disable-next-line no-console
     console.error('Unhandled promise rejection:', error);
   });
-  if (options.port !== undefined) {
-    const { url } = await startDashboardServer(new RegistrySessionProvider(), options);
-    // eslint-disable-next-line no-console
-    console.log(`Listening on ${url}`);
-    selfDestructOnParentGone();
-    return;
-  }
-  let server: net.Server | undefined;
-  process.on('exit', () => server?.close());
+  const isServerMode = options.port !== undefined;
+  let socketServer: net.Server | undefined;
+  process.on('exit', () => socketServer?.close());
   try {
-    server = await acquireSingleton(options);
+    socketServer = await acquireSingleton(options);
   } catch {
     return;
   }
-  const statePromise = innerOpenDashboardApp(options);
-  server?.on('connection', socket => {
+
+  const dashboardPromise = startDashboardServer(new RegistrySessionProvider(), options);
+  let pagePromise: Promise<api.Page | undefined>;
+  if (isServerMode) {
+    void dashboardPromise.then(({ url }) => {
+      // eslint-disable-next-line no-console
+      console.log(`Listening on ${url}`);
+      selfDestructOnParentGone();
+    });
+    pagePromise = Promise.resolve(undefined);
+  } else {
+    pagePromise = dashboardPromise.then(async dashboard => {
+      const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
+      await page.goto(dashboard.url);
+      return page;
+    });
+  }
+
+  socketServer.on('connection', socket => {
     let buffer = '';
     socket.on('data', data => {
       buffer += data.toString();
@@ -341,30 +357,49 @@ export async function openDashboardApp() {
         socket.end();
         return;
       }
+
       if (parsed.kill) {
+        if (isServerMode) {
+          socket.end(JSON.stringify({ error: `Cannot kill a server-mode dashboard via --kill. Stop the process directly.` }) + '\n');
+          return;
+        }
         // Write our PID so the kill client can wait for the process to fully exit,
         // which guarantees the named pipe is released (especially on Windows).
         // Start graceful shutdown only after the socket data has been flushed, so the
         // kill client is guaranteed to receive the PID before we begin tearing down.
-        server?.close();
+        socketServer?.close();
         socket.end(JSON.stringify({ pid: process.pid }) + '\n', () => gracefullyProcessExitDoNotHang(0));
         return;
       }
-      void statePromise.then(({ page, server: dashboard }) => {
-        if (parsed.annotate) {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
+
+      // Cross-mode conflict: a server-mode launch attempt while app mode is running is rejected.
+      // A plain reveal (no port) is always allowed regardless of mode.
+      const incomingIsServer = parsed.port !== undefined;
+      if (!isServerMode && incomingIsServer) {
+        socket.end(JSON.stringify({ error: `Dashboard is already running in app mode. Use 'playwright show --kill' to stop it first.` }) + '\n');
+        return;
+      }
+
+      void Promise.all([dashboardPromise, pagePromise]).then(([dashboard, page]) => {
+        page?.bringToFront().catch(() => {});
+        if (parsed!.annotate) {
+          dashboard.reveal(parsed!);
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
         } else {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          socket.end();
+          const revealed = dashboard.reveal(parsed!);
+          if (isServerMode && !revealed) {
+            socket.end(JSON.stringify({ error: `Nobody is looking at the dashboard, cannot reveal session.` }) + '\n');
+            // TODO: queue the reveal for the next connecting client
+          } else {
+            socket.end();
+          }
         }
       });
     });
   });
-  await statePromise;
+
+  await Promise.all([dashboardPromise, pagePromise]);
 }
 
 export async function openDashboardForContext(context: api.BrowserContext): Promise<void> {
