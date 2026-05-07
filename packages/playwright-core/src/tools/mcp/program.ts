@@ -95,7 +95,7 @@ export function decorateMCPCommand(command: Command) {
         const config = await resolveCLIConfigForMCP(options);
         const tools = filteredTools(config);
         const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
-        let sharedBrowser: playwright.Browser | undefined;
+        let sharedBrowserPromise: Promise<playwright.Browser> | undefined;
         let clientCount = 0;
         const clientNameCounters = new Map<string, number>();
 
@@ -105,14 +105,19 @@ export function decorateMCPCommand(command: Command) {
           version,
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
-            if (useSharedBrowser && clientCount === 0) {
-              const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
-              sharedBrowser = browser;
-              if (canBind)
-                await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
+            if (useSharedBrowser && !sharedBrowserPromise) {
+              sharedBrowserPromise = (async () => {
+                const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
+                if (canBind)
+                  await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
+                return browser;
+              })().catch(error => {
+                sharedBrowserPromise = undefined;
+                throw error;
+              });
             }
             clientCount++;
-            const { browser, canBind } = sharedBrowser ? { browser: sharedBrowser, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
+            const { browser, canBind } = sharedBrowserPromise ? { browser: await sharedBrowserPromise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
             if (canBind) {
               const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
               clientNameCounters.set(clientInfo.clientName, count);
@@ -124,11 +129,11 @@ export function decorateMCPCommand(command: Command) {
           },
           disposed: async backend => {
             clientCount--;
-            if (sharedBrowser && clientCount > 0)
+            if (sharedBrowserPromise && clientCount > 0)
               return;
 
             testDebug('close browser');
-            sharedBrowser = undefined;
+            sharedBrowserPromise = undefined;
             const browserContext = (backend as BrowserBackend).browserContext;
             await browserContext.close().catch(() => { });
             await browserContext.browser()!.close().catch(() => { });
