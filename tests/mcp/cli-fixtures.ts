@@ -76,6 +76,7 @@ export const test = baseTest.extend<{
 
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
+    await fs.promises.mkdir(test.info().outputPath('cli-logs'), { recursive: true });
     const allPids: number[] = [];
 
     await use(async (...args: string[]) => {
@@ -99,6 +100,13 @@ export const test = baseTest.extend<{
         continue;
       }
     }
+
+    // Surface debug logs as test artifacts unconditionally (pass and fail) so
+    // we can diff a passing run vs. a flaky run when investigating cross-test
+    // contamination of the registry, sockets, or dashboard daemon.
+    await attachLogDir(test.info().outputPath('cli-logs'), 'cli-logs');
+    await attachLogDir(daemonDir, 'daemon', name => name.endsWith('.err') || name.endsWith('.session') || name.endsWith('.out'));
+    await attachLogDir(test.info().outputPath('registry'), 'registry');
   },
   boundBrowser: async ({ mcpBrowser, playwright }, use) => {
     const browserName = (mcpBrowser === 'chrome' || mcpBrowser === 'msedge') ? 'chromium' : mcpBrowser;
@@ -121,6 +129,15 @@ function cliEnv() {
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds-' + crypto.createHash('sha1').update(test.info().outputDir).digest('hex').slice(0, 16)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
+    // Capture playwright debug logs from spawned daemons / dashboard so we
+    // can diagnose flakiness around `cli show` and `connectToDashboard`.
+    // The `debug` package writes to stderr by default; spawned processes
+    // redirect their stderr to <PWTEST_CLI_LOG_DIR>/*.err.log (see program.ts
+    // daemonStdio()) and to <daemon>/<session>.err (see session.ts).
+    DEBUG: 'pw:*',
+    DEBUG_COLORS: '0',
+    DEBUG_HIDE_DATE: '0',
+    PWTEST_CLI_LOG_DIR: test.info().outputPath('cli-logs'),
   };
 }
 
@@ -170,6 +187,44 @@ function parseJsonPid(stdout: string) {
     return JSON.parse(stdout).pid;
   } catch {
   }
+}
+
+async function attachLogDir(dir: string, prefix: string, filter?: (basename: string) => boolean) {
+  const testInfo = test.info();
+  const walk = async (current: string, rel: string) => {
+    let entries: import('fs').Dirent[];
+    try {
+      entries = await fs.promises.readdir(current, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const full = path.join(current, entry.name);
+      const relName = rel ? `${rel}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        await walk(full, relName);
+        continue;
+      }
+      if (!entry.isFile())
+        continue;
+      if (filter && !filter(entry.name))
+        continue;
+      try {
+        const stat = await fs.promises.stat(full);
+        if (stat.size === 0) {
+          // Overwrite the empty file with a marker so it shows up in the
+          // attachments/ folder (path-based attachments) instead of being
+          // hidden inside the JSON report (body attachments). This makes
+          // "process produced no output" trivially distinguishable from
+          // "log file was missing entirely".
+          await fs.promises.writeFile(full, '<empty>');
+        }
+        await testInfo.attach(`${prefix}/${relName}`, { path: full, contentType: 'text/plain' });
+      } catch {
+      }
+    }
+  };
+  await walk(dir, '');
 }
 
 function loadAttachments(output: string) {

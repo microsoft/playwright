@@ -19,6 +19,7 @@
 import { execSync, spawn } from 'child_process';
 
 import crypto from 'crypto';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -213,7 +214,7 @@ export async function program(options?: { embedderVersion?: string}) {
         daemonArgs.push(`--host=${args.host as string}`);
       if (args.kill) {
         daemonArgs.push(`--kill`);
-        const child = spawn(process.execPath, daemonArgs, { stdio: 'ignore' });
+        const child = spawn(process.execPath, daemonArgs, { stdio: daemonStdio('ignore', 'dashboard-kill', sessionName) });
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
       }
@@ -229,7 +230,7 @@ export async function program(options?: { embedderVersion?: string}) {
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
-        stdio: foreground ? 'inherit' : 'ignore',
+        stdio: daemonStdio(foreground ? 'inherit' : 'ignore', 'dashboard', sessionName),
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
@@ -295,6 +296,25 @@ async function runInitWorkspace(args: MinimistArgs, output: Output) {
         reject(new Error(`Workspace initialization failed with exit code ${code}`));
     });
   });
+}
+
+// When PWTEST_CLI_LOG_DIR is set (test-only), redirect a spawned daemon's
+// stdout/stderr to log files in that directory so flakiness around `cli show`
+// is debuggable. Returns the input fallback ('ignore' | 'inherit') in
+// production.
+function daemonStdio(fallback: 'ignore' | 'inherit', label: string, sessionName: string): 'ignore' | 'inherit' | ('ignore' | number)[] {
+  const dir = process.env.PWTEST_CLI_LOG_DIR;
+  if (!dir)
+    return fallback;
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const stamp = `${Date.now()}-${process.pid}`;
+    const outFd = fs.openSync(path.join(dir, `${label}-${sessionName}-${stamp}.out.log`), 'w');
+    const errFd = fs.openSync(path.join(dir, `${label}-${sessionName}-${stamp}.err.log`), 'w');
+    return ['ignore', outFd, errFd];
+  } catch {
+    return fallback;
+  }
 }
 
 async function installBrowser() {
