@@ -37,9 +37,9 @@ npm i -D @playwright/test
 npx playwright install
 ```
 
-#### PowerShell Setup (Windows)
+#### PowerShell Setup (Cross-Platform)
 
-For Windows users, you can use the PowerShell script to automate the setup process:
+For users with PowerShell installed on Windows, macOS, or Linux, you can use the PowerShell script to automate the setup process:
 
 ```powershell
 # Download Initialize-Playwright.ps1 from the Playwright repository
