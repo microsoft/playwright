@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-import { spawn } from 'child_process';
-
 import * as z from 'zod';
 
-import { libPath } from '../../package';
 import { defineTabTool, defineTool } from './tool';
 import { elementSchema, optionalElementSchema } from './snapshot';
-
-import type { SubmittedAnnotationFrame } from '@dashboard/dashboardChannel';
 
 const resume = defineTool({
   capability: 'devtools',
@@ -125,39 +120,19 @@ const annotate = defineTabTool({
   },
 
   handle: async (tab, params, response, signal) => {
-    // eslint-disable-next-line no-restricted-syntax -- _guid is the cross-process page identifier shared with the dashboard daemon.
+    // eslint-disable-next-line no-restricted-syntax -- _guid is the cross-process page identifier shared with the dashboard.
     const pageId = (tab.page as any)._guid as string;
-    const daemonScript = libPath('entry', 'dashboardApp.js');
-    const daemonArgs = [daemonScript, `--pageId=${pageId}`];
-
-    // Spawn the dashboard daemon (idempotent — the singleton socket guards against duplicates).
-    const daemon = spawn(process.execPath, daemonArgs, { detached: true, stdio: 'ignore' });
-    daemon.unref();
-
-    // Spawn the annotate client in JSON mode to capture the raw payload over stdout.
-    const client = spawn(process.execPath, [...daemonArgs, '--annotate'], {
-      stdio: ['pipe', 'pipe', 'inherit'],
-    });
-    const onAbort = () => client.kill();
-    signal?.addEventListener('abort', onAbort);
-    const stdoutChunks: Buffer[] = [];
-    client.stdout!.on('data', chunk => stdoutChunks.push(chunk));
-    const exitCode = await new Promise<number | null>(resolve => client.on('exit', code => resolve(code)));
-    signal?.removeEventListener('abort', onAbort);
+    const dashboard = await tab.context.ensureDashboard();
+    const result = await dashboard.runAnnotate({ pageId, signal });
     if (signal?.aborted) {
       response.addTextResult('Annotation cancelled.');
       return;
     }
-    if (exitCode !== 0) {
-      response.addError(`Annotation client exited with code ${exitCode}`);
-      return;
-    }
-    const text = Buffer.concat(stdoutChunks).toString('utf8').trim();
-    if (!text) {
+    if (!result) {
       response.addTextResult('No annotations were submitted.');
       return;
     }
-    const { frames, feedback } = JSON.parse(text) as { frames: SubmittedAnnotationFrame[]; feedback: string };
+    const { frames, feedback } = result;
     if (!frames || frames.length === 0) {
       response.addTextResult('No annotations were submitted.');
       return;

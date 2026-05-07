@@ -29,7 +29,6 @@ import { findChromiumChannelBestEffort, registryDirectory } from '../../server/r
 import { minimist } from '../cli-client/minimist';
 import { DashboardConnection } from './dashboardController';
 import { RegistrySessionProvider } from './registrySessionProvider';
-import { IdentitySessionProvider } from './identitySessionProvider';
 
 import type * as api from '../../..';
 import type { SubmittedAnnotationFrame } from '@dashboard/dashboardChannel';
@@ -43,10 +42,11 @@ declare const __PW_HMR__: boolean;
 type DashboardServer = {
   url: string;
   reveal: (options: DashboardOptions) => void;
-  triggerAnnotate: () => void;
-  registerAnnotateWaiter: (socket: net.Socket) => void;
+  runAnnotate: (options: { pageId: string; signal?: AbortSignal }) => Promise<AnnotationResult | undefined>;
   close: () => Promise<void>;
 };
+
+type AnnotationResult = { frames: SubmittedAnnotationFrame[]; feedback: string };
 
 async function startDashboardServer(provider: SessionProvider, options: DashboardOptions): Promise<DashboardServer> {
   const httpServer = new HttpServer();
@@ -54,18 +54,10 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
 
   const connections = new Set<DashboardConnection>();
   let currentReveal: DashboardOptions = options;
-  let pendingAnnotate = false;
-  const waitingSockets = new Set<net.Socket>();
+  let currentWaiter: ((result: AnnotationResult | undefined) => void) | undefined;
 
   const submitAnnotation = (frames: SubmittedAnnotationFrame[], feedback: string) => {
-    if (waitingSockets.size === 0)
-      return;
-    const payload = JSON.stringify({ frames, feedback });
-    for (const socket of waitingSockets) {
-      socket.write(payload);
-      socket.end();
-    }
-    waitingSockets.clear();
+    currentWaiter?.({ frames, feedback });
   };
 
   httpServer.createWebSocket(() => {
@@ -76,10 +68,8 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
         connection.revealPage(currentReveal.pageId);
       else if (currentReveal.sessionName)
         connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
-      if (pendingAnnotate) {
-        pendingAnnotate = false;
+      if (currentWaiter)
         connection.emitAnnotate();
-      }
     }, submitAnnotation);
     connections.add(connection);
     return connection;
@@ -116,35 +106,32 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
       connection.revealSession(next.sessionName, next.workspaceDir);
   };
 
-  const triggerAnnotate = () => {
-    if (connections.size === 0) {
-      pendingAnnotate = true;
-      return;
-    }
-    for (const connection of connections)
-      connection.emitAnnotate();
-  };
-
-  const notifyAnnotateEnded = () => {
-    pendingAnnotate = false;
-    for (const connection of connections)
-      connection.emitCancelAnnotate();
-  };
-
-  const registerAnnotateWaiter = (socket: net.Socket) => {
-    waitingSockets.add(socket);
-    const cleanup = () => {
-      if (!waitingSockets.delete(socket))
-        return;
-      if (waitingSockets.size === 0)
-        notifyAnnotateEnded();
-    };
-    socket.on('close', cleanup);
-    socket.on('error', cleanup);
+  const runAnnotate = async ({ pageId, signal }: { pageId: string; signal?: AbortSignal }) => {
+    if (signal?.aborted)
+      return undefined;
+    if (currentWaiter)
+      throw new Error('Another annotation is already in progress');
+    reveal({ pageId });
+    return await new Promise<AnnotationResult | undefined>(resolve => {
+      const finish = (result: AnnotationResult | undefined) => {
+        if (currentWaiter !== finish)
+          return;
+        currentWaiter = undefined;
+        signal?.removeEventListener('abort', onAbort);
+        for (const connection of connections)
+          connection.emitCancelAnnotate();
+        resolve(result);
+      };
+      const onAbort = () => finish(undefined);
+      signal?.addEventListener('abort', onAbort);
+      currentWaiter = finish;
+      for (const connection of connections)
+        connection.emitAnnotate();
+    });
   };
 
   const close = () => httpServer.stop();
-  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter, close };
+  return { url: httpServer.urlPrefix('human-readable'), reveal, runAnnotate, close };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
@@ -250,13 +237,12 @@ type DashboardOptions = {
   workspaceDir?: string;
   pageId?: string;
   kill?: boolean;
-  annotate?: boolean;
   port?: number;
   host?: string;
 };
 
 function parseOpenArgs(): DashboardOptions {
-  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['annotate', 'kill'] });
+  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['kill'] });
   const portStr = args.port as string | undefined;
   return {
     sessionName: args.sessionName as string | undefined,
@@ -264,7 +250,6 @@ function parseOpenArgs(): DashboardOptions {
     pageId: args.pageId as string | undefined,
     port: portStr !== undefined ? Number(portStr) : undefined,
     host: args.host as string | undefined,
-    annotate: !!args.annotate,
     kill: !!args.kill,
   };
 }
@@ -297,10 +282,6 @@ export async function openDashboardApp() {
   const options = parseOpenArgs();
   if (options.kill) {
     await runKillClient();
-    return;
-  }
-  if (options.annotate) {
-    await runAnnotateClient(options);
     return;
   }
   process.on('unhandledRejection', error => {
@@ -351,36 +332,50 @@ export async function openDashboardApp() {
         return;
       }
       void statePromise.then(({ page, server: dashboard }) => {
-        if (parsed.annotate) {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          dashboard.triggerAnnotate();
-          dashboard.registerAnnotateWaiter(socket);
-        } else {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          socket.end();
-        }
+        page?.bringToFront().catch(() => {});
+        dashboard.reveal(parsed);
+        socket.end();
       });
     });
   });
   await statePromise;
 }
 
-export async function openDashboardForContext(context: api.BrowserContext): Promise<void> {
-  const server = await startDashboardServer(new IdentitySessionProvider(context), {});
+export type Dashboard = {
+  url: string;
+  closed: Promise<void>;
+  runAnnotate(options: { pageId: string; signal?: AbortSignal }): Promise<{ frames: SubmittedAnnotationFrame[]; feedback: string } | undefined>;
+  close(): Promise<void>;
+};
+
+export async function openDashboard(): Promise<Dashboard> {
+  const server = await startDashboardServer(new RegistrySessionProvider(), {});
 
   let closed = false;
+  let resolveClosed!: () => void;
+  const closedPromise = new Promise<void>(resolve => { resolveClosed = resolve; });
   const close = async () => {
     if (closed)
       return;
     closed = true;
     await server.close();
+    resolveClosed();
   };
 
-  const { page } = await launchApp('dashboard', { onClose: () => { void close(); } });
-  context.on('close', () => { void close(); });
-  await page.goto(server.url);
+  const { page: appPage } = await launchApp('dashboard', { onClose: () => { void close(); } });
+  await appPage.goto(server.url);
+
+  return {
+    url: server.url,
+    closed: closedPromise,
+    runAnnotate: async ({ pageId, signal }) => {
+      if (closed)
+        return undefined;
+      await appPage.bringToFront().catch(() => {});
+      return await server.runAnnotate({ pageId, signal });
+    },
+    close,
+  };
 }
 
 async function runKillClient(): Promise<void> {
@@ -416,45 +411,6 @@ async function runKillClient(): Promise<void> {
     await new Promise(r => setTimeout(r, 50));
   }
   throw new Error(`Dashboard process ${pid} did not exit within the deadline`);
-}
-
-async function runAnnotateClient(options: DashboardOptions): Promise<void> {
-  selfDestructOnParentGone();
-
-  const socketPath = dashboardSocketPath();
-  const tryConnect = () => new Promise<net.Socket | undefined>(resolve => {
-    const s = net.connect(socketPath);
-    const onError = () => { s.destroy(); resolve(undefined); };
-    s.once('connect', () => { s.off('error', onError); resolve(s); });
-    s.once('error', onError);
-  });
-  const deadline = Date.now() + 15000;
-  let socket: net.Socket | undefined;
-  while (Date.now() < deadline) {
-    socket = await tryConnect();
-    if (socket)
-      break;
-    await new Promise(r => setTimeout(r, 200));
-  }
-  if (!socket) {
-    // eslint-disable-next-line no-console
-    console.error('Dashboard did not start in time.');
-    gracefullyProcessExitDoNotHang(1);
-    return;
-  }
-  socket.write(JSON.stringify(options) + '\n');
-  const chunks: Buffer[] = [];
-  await new Promise<void>((resolve, reject) => {
-    socket!.on('data', chunk => chunks.push(chunk));
-    socket!.on('end', () => resolve());
-    socket!.on('error', reject);
-  });
-  socket.destroy();
-  const text = Buffer.concat(chunks).toString();
-  if (!text)
-    return;
-  // eslint-disable-next-line no-console
-  console.log(text);
 }
 
 function selfDestructOnParentGone() {

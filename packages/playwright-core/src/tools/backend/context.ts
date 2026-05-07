@@ -24,6 +24,7 @@ import { disposeAll } from '@isomorphic/disposable';
 import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
+import { openDashboard } from '../dashboard/dashboardApp';
 
 import { Tab } from './tab';
 
@@ -31,6 +32,7 @@ import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
 import type { Disposable } from '@isomorphic/disposable';
 import type { ToolCapability } from './tool';
+import type { Dashboard } from '../dashboard/dashboardApp';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -115,6 +117,8 @@ export class Context {
       listener(reason);
   };
 
+  private _dashboardPromise: Promise<Dashboard> | undefined;
+
   constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
     this.config = options.config;
     this.sessionLog = options.sessionLog;
@@ -132,6 +136,30 @@ export class Context {
     this._tabs.length = 0;
     this._currentTab = undefined;
     await this.stopVideoRecording();
+    if (this._dashboardPromise) {
+      const dashboard = this._dashboardPromise;
+      this._dashboardPromise = undefined;
+      await dashboard.then(d => d.close()).catch(() => {});
+    }
+  }
+
+  async ensureDashboard(): Promise<Dashboard> {
+    if (this._dashboardPromise)
+      return this._dashboardPromise;
+    const promise = (async () => {
+      const dashboard = await openDashboard();
+      void dashboard.closed.then(() => {
+        if (this._dashboardPromise === promise)
+          this._dashboardPromise = undefined;
+      });
+      return dashboard;
+    })();
+    this._dashboardPromise = promise;
+    promise.catch(() => {
+      if (this._dashboardPromise === promise)
+        this._dashboardPromise = undefined;
+    });
+    return promise;
   }
 
   drainPendingUnhandledRejections(): unknown[] {

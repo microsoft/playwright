@@ -20,7 +20,6 @@ import path from 'path';
 import * as zipjs from '@zip.js/zip.js';
 
 import { test, expect, installSaveFilePickerMock, mockAbortingFilePicker } from './cli-fixtures';
-import { inheritAndCleanEnv } from '../config/utils';
 
 function activeSession(dashboard: import('playwright-core').Page) {
   return dashboard.getByRole('region', { name: /^Session / }).filter({ has: dashboard.getByRole('option', { selected: true }) });
@@ -55,46 +54,47 @@ function verifyAnnotateOutput(output: string, expectedText: string, outputDir: s
 }
 
 test('should capture multiple screenshots in one annotation', async ({ connectToDashboard, cli, server }) => {
-  await cli('open', server.PREFIX + '/title.html');
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  await cli('show', { bindTitle });
-  const browser = await connectToDashboard(bindTitle);
-
-  const dashboard = browser.contexts()[0].pages()[0];
-  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+  await cli('open', server.PREFIX + '/title.html', { bindTitle });
 
   const annotatePromise = cli('show', '--annotate');
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible();
-  // First annotation on initial frame.
-  let box = await dashboard.locator('.annotate-modal-image').boundingBox();
-  await dashboard.mouse.move(box!.x + box!.width * 0.2, box!.y + box!.height * 0.2);
-  await dashboard.mouse.down();
-  await dashboard.mouse.move(box!.x + box!.width * 0.4, box!.y + box!.height * 0.4);
-  await dashboard.mouse.up();
-  await dashboard.locator('.annotations-textarea').fill('first');
-  await dashboard.locator('.annotations-textarea').press('Enter');
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.locator('.annotate-modal-image')).toBeVisible();
+    // First annotation on initial frame.
+    let box = await dashboard.locator('.annotate-modal-image').boundingBox();
+    await dashboard.mouse.move(box!.x + box!.width * 0.2, box!.y + box!.height * 0.2);
+    await dashboard.mouse.down();
+    await dashboard.mouse.move(box!.x + box!.width * 0.4, box!.y + box!.height * 0.4);
+    await dashboard.mouse.up();
+    await dashboard.locator('.annotations-textarea').fill('first');
+    await dashboard.locator('.annotations-textarea').press('Enter');
 
-  // Deselect overlay (sidebar stays), then capture a second frame via the toolbar button.
-  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
-  await expect(dashboard.locator('.annotate-overlay')).toHaveCount(0);
-  await dashboard.getByRole('button', { name: /^(Take|Add) screenshot$/ }).click();
+    // Deselect overlay (sidebar stays), then capture a second frame via the toolbar button.
+    await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+    await expect(dashboard.locator('.annotate-overlay')).toHaveCount(0);
+    await dashboard.getByRole('button', { name: /^(Take|Add) screenshot$/ }).click();
 
-  // New frame auto-selected; draw + label.
-  await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(2);
-  await expect(dashboard.locator('.annotate-overlay')).toBeVisible();
-  box = await dashboard.locator('.annotate-modal-image').boundingBox();
-  await dashboard.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5);
-  await dashboard.mouse.down();
-  await dashboard.mouse.move(box!.x + box!.width * 0.7, box!.y + box!.height * 0.7);
-  await dashboard.mouse.up();
-  await dashboard.locator('.annotations-textarea').fill('second');
-  await dashboard.locator('.annotations-textarea').press('Enter');
+    // New frame auto-selected; draw + label.
+    await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(2);
+    await expect(dashboard.locator('.annotate-overlay')).toBeVisible();
+    box = await dashboard.locator('.annotate-modal-image').boundingBox();
+    await dashboard.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.5);
+    await dashboard.mouse.down();
+    await dashboard.mouse.move(box!.x + box!.width * 0.7, box!.y + box!.height * 0.7);
+    await dashboard.mouse.up();
+    await dashboard.locator('.annotations-textarea').fill('second');
+    await dashboard.locator('.annotations-textarea').press('Enter');
 
-  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
-  await dashboard.getByRole('button', { name: 'Submit' }).click();
+    await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+    await dashboard.getByRole('button', { name: 'Submit' }).click();
+  } finally {
+    await browser.close().catch(() => {});
+  }
 
   const { output, exitCode } = await annotatePromise;
   expect(done).toBe(true);
@@ -108,25 +108,26 @@ test('should capture multiple screenshots in one annotation', async ({ connectTo
 });
 
 test('should abort annotation when last screenshot is removed', async ({ connectToDashboard, cli, server }) => {
-  await cli('open', server.EMPTY_PAGE);
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  await cli('show', { bindTitle });
-  const browser = await connectToDashboard(bindTitle);
-
-  const dashboard = browser.contexts()[0].pages()[0];
-  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+  await cli('open', server.EMPTY_PAGE, { bindTitle });
 
   const annotatePromise = cli('show', '--annotate');
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
+  const browser = await connectToDashboard(bindTitle);
+  try {
+    const dashboard = browser.contexts()[0].pages()[0];
+    await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
 
-  // Close the fullscreen overlay first so the sidebar remove button is accessible.
-  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+    // Close the fullscreen overlay first so the sidebar remove button is accessible.
+    await dashboard.getByRole('button', { name: 'Done annotating' }).click();
 
-  // Remove the only screenshot — should abort the annotation
-  await dashboard.locator('.annotate-sidebar-thumb-remove').click();
+    // Remove the only screenshot — should abort the annotation
+    await dashboard.locator('.annotate-sidebar-thumb-remove').click();
+  } finally {
+    await browser.close().catch(() => {});
+  }
 
   const { output, exitCode } = await annotatePromise;
   expect(done).toBe(true);
@@ -225,27 +226,6 @@ test('user-initiated annotate downloads zip with feedback.md', async ({ connectT
   expect(mdText).toContain('Screenshot 1');
   expect(mdText).toContain('[Screenshot 1](annotations-1.png)');
   expect(mdText).toMatch(/\d+x\d+/);
-});
-
-test('should capture annotations via show --annotate', async ({ connectToDashboard, cli, server }) => {
-  await cli('open', server.EMPTY_PAGE);
-  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  await cli('show', { bindTitle });
-  const browser = await connectToDashboard(bindTitle);
-
-  const dashboard = browser.contexts()[0].pages()[0];
-  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
-
-  const annotatePromise = cli('show', '--annotate');
-  let done = false;
-  void annotatePromise.finally(() => { done = true; });
-
-  await drawAndSubmitAnnotation(dashboard, 'hello');
-
-  const { output, exitCode } = await annotatePromise;
-  expect(done).toBe(true);
-  expect(exitCode).toBe(0);
-  verifyAnnotateOutput(output, 'hello', test.info().outputDir);
 });
 
 test('should start dashboard and annotate when no dashboard is running', async ({ connectToDashboard, cli, server }) => {
@@ -411,90 +391,11 @@ test('should cancel browser_annotate when the MCP client disconnects', async ({ 
   void client.callTool({ name: 'browser_annotate' }).catch(() => {});
 
   const browser = await connectToDashboard(bindTitle);
-  try {
-    const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
-
-    await client.close();
-
-    await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
-  } finally {
-    await browser.close().catch(() => {});
-  }
-});
-
-
-test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
-  server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');
-  server.setContent('/green', '<html><head><style>html,body{margin:0;height:100vh;background:#00ff00}</style></head><body></body></html>', 'text/html');
-
-  await cli('-s=first', 'open', server.PREFIX + '/red');
-  await cli('-s=second', 'open', server.PREFIX + '/green');
-
-  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  await cli('-s=first', 'show', { bindTitle });
-  const browser = await connectToDashboard(bindTitle);
   const dashboard = browser.contexts()[0].pages()[0];
-  await expect(dashboard.locator('#display')).toBeVisible();
-
-  const sampleCenter = () => dashboard.evaluate(() => {
-    const img = document.querySelector('#display') as HTMLImageElement | null;
-    if (!img || !img.naturalWidth)
-      return null;
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    const ctx = canvas.getContext('2d')!;
-    ctx.drawImage(img, img.naturalWidth / 2, img.naturalHeight / 2, 1, 1, 0, 0, 1, 1);
-    const [r, g] = ctx.getImageData(0, 0, 1, 1).data;
-    return { r, g };
-  });
-
-  await expect.poll(async () => {
-    const c = await sampleCenter();
-    return !!(c && c.r > 200 && c.g < 50);
-  }, { timeout: 15000 }).toBe(true);
-
-  const annotatePromise = cli('-s=second', 'show', '--annotate');
-  let done = false;
-  void annotatePromise.finally(() => { done = true; });
-
-  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
-  await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
-
-  await expect.poll(async () => {
-    const c = await sampleCenter();
-    return !!(c && c.g > 200 && c.r < 50);
-  }, { timeout: 15000 }).toBe(true);
-
-  await drawAndSubmitAnnotation(dashboard, 'session switch');
-  const { exitCode } = await annotatePromise;
-  expect(done).toBe(true);
-  expect(exitCode).toBe(0);
-});
-
-test('should disengage annotate mode when --annotate client disconnects', async ({ connectToDashboard, cli, childProcess, cliEnv, mcpBrowser, mcpHeadless, server }) => {
-  await cli('open', server.EMPTY_PAGE);
-  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
-  await cli('show', { bindTitle });
-  const browser = await connectToDashboard(bindTitle);
-
-  const dashboard = browser.contexts()[0].pages()[0];
-  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
-
-  const annotateClient = childProcess({
-    command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), 'show', '--annotate'],
-    cwd: test.info().outputPath(),
-    env: inheritAndCleanEnv({
-      ...cliEnv,
-      PLAYWRIGHT_MCP_BROWSER: mcpBrowser,
-      PLAYWRIGHT_MCP_HEADLESS: String(mcpHeadless),
-    }),
-  });
-
   await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
 
-  await annotateClient.kill();
+  // Disconnecting the MCP client tears down the MCP-owned dashboard window.
+  await client.close();
 
-  await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
+  await expect.poll(() => dashboard.isClosed()).toBe(true);
 });
