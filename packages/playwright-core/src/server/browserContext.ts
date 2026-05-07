@@ -192,6 +192,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   async performOnBeforeInputAction(progress: Progress, target: Page | ElementHandle, point?: types.Point, box?: types.Rect) {
     for (const observer of [...this._inputActionObservers])
       await observer.onBeforeInputAction(progress, target, point, box);
+    // Debugger pauses run last, after all observers have recorded their state — otherwise
+    // a pause would block subsequent observers (e.g. the recorder's action point) from running.
+    await this._debugger?.onBeforeInputAction(progress, target);
   }
 
   async exposeConsoleApi(progress: Progress) {
