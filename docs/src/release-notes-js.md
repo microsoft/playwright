@@ -10,14 +10,15 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### 📦 Standalone Electron package
 
-Electron support has moved into a dedicated [`@playwright/electron`](https://www.npmjs.com/package/@playwright/electron) package. Existing imports from `playwright` continue to work, but the new package ships its own test runner integration with `electronApp` and `electronApplication` fixtures:
+Electron support has moved into a dedicated [`@playwright/electron`](https://www.npmjs.com/package/@playwright/electron) package. The `_electron` import from `playwright` still works, but the new package ships its own test runner integration with `app`, `context`, and `page` fixtures:
 
 ```js
-// electron.spec.ts
+// example.spec.ts
 import { test, expect } from '@playwright/electron';
 
-test('launches the app', async ({ electronApp }) => {
-  const page = await electronApp.firstWindow();
+test.use({ appOptions: { args: ['main.js'] } });
+
+test('launches the app', async ({ page }) => {
   await expect(page).toHaveTitle(/My App/);
 });
 ```
