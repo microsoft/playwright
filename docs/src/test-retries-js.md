@@ -5,7 +5,7 @@ title: "Retries"
 
 ## Introduction
 
-Test retries are a way to automatically re-run a test when it fails. This is useful when a test is flaky and fails intermittently. Test retries are configured in the [configuration file](./test-configuration.md).
+Test retries are a way to automatically re-run a test when it fails. This is useful when a test is flaky and fails intermittently. Test retries are configured in the [configuration file](./test-configuration-js.md).
 
 ## Failures
 
