@@ -81,11 +81,11 @@ publish_docker_images_with_arch_suffix() {
 
   local CANONICAL_TAG="playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAGS[0]}-${ARCH}"
 
-  # Build and push the canonical tag with zstd compression.
+  # Build and push the canonical tag.
   node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
   docker buildx build \
     --platform "linux/${ARCH}" \
-    --output "type=image,compression=zstd,compression-level=19,oci-mediatypes=true,push=true" \
+    --push \
     -f "Dockerfile.${FLAVOR}" \
     -t "${CANONICAL_TAG}" \
     .
