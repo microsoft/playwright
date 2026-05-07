@@ -230,7 +230,10 @@ export async function program(options?: { embedderVersion?: string}) {
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
-        stdio: daemonStdio(foreground ? 'inherit' : 'ignore', 'dashboard', sessionName),
+        // Foreground mode pipes the daemon's stdout up to the caller (tests
+        // wait for "Listening on ..." on stdout); only redirect to log files
+        // when the daemon is detached and would otherwise drop output.
+        stdio: foreground ? 'inherit' : daemonStdio('ignore', 'dashboard', sessionName),
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
