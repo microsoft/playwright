@@ -35,26 +35,13 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 #    The package should be built beforehand from tip-of-tree Playwright.
 COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
 
-# 2. Set up playwright-core for browser installation.
+# 2. Set up playwright-core and install all system dependencies in one layer.
 RUN mkdir /ms-playwright && \
     mkdir /ms-playwright-agent && \
     cd /ms-playwright-agent && npm init -y && \
     npm i /tmp/playwright-core.tar.gz && \
-    npm exec --no -- playwright-core mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}"
-
-# 3. Install each browser in its own layer for parallel pulling.
-RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install --with-deps chromium chromium-headless-shell && \
-    rm -rf /var/lib/apt/lists/* && \
-    chmod -R 777 /ms-playwright/chromium-* /ms-playwright/chromium_headless_shell-*
-
-RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install --with-deps firefox && \
-    rm -rf /var/lib/apt/lists/* && \
-    chmod -R 777 /ms-playwright/firefox-*
-
-RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install --with-deps webkit && \
+    npm exec --no -- playwright-core mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}" && \
+    npm exec --no -- playwright-core install-deps chromium chromium-headless-shell firefox webkit && \
     # Workaround for https://github.com/microsoft/playwright/issues/27313
     # While the gstreamer plugin load process can be in-process, it ended up throwing
     # an error that it can't have libsoup2 and libsoup3 in the same process because
@@ -64,7 +51,19 @@ RUN cd /ms-playwright-agent && \
     else \
         rm /usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstwebrtc.so; \
     fi && \
-    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/lib/apt/lists/*
+
+# 3. Install each browser binary in its own layer for parallel pulling.
+RUN cd /ms-playwright-agent && \
+    npm exec --no -- playwright-core install chromium chromium-headless-shell && \
+    chmod -R 777 /ms-playwright/chromium-* /ms-playwright/chromium_headless_shell-*
+
+RUN cd /ms-playwright-agent && \
+    npm exec --no -- playwright-core install firefox && \
+    chmod -R 777 /ms-playwright/firefox-*
+
+RUN cd /ms-playwright-agent && \
+    npm exec --no -- playwright-core install webkit && \
     chmod -R 777 /ms-playwright/webkit-*
 
 # 4. Install ffmpeg and clean up.
