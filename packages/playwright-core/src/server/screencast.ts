@@ -22,7 +22,6 @@ import { Page } from './page';
 import type { InputActionObserver } from './browserContext';
 import type { ElementHandle } from './dom';
 import type * as types from './types';
-import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Progress } from '@protocol/progress';
 
 export type ScreencastClient = {
@@ -41,7 +40,7 @@ type ActionOptions = {
   fontSize?: number,
 };
 
-export class Screencast implements InstrumentationListener, InputActionObserver {
+export class Screencast implements InputActionObserver {
   readonly page: Page;
   private _clients = new Map<ScreencastClient, ManualPromise<void>>();
   private _actions: ActionOptions | undefined;
@@ -50,7 +49,6 @@ export class Screencast implements InstrumentationListener, InputActionObserver 
 
   constructor(page: Page) {
     this.page = page;
-    this.page.instrumentation.addListener(this, page.browserContext);
     this.page.browserContext.addInputActionObserver(this);
   }
 
@@ -67,7 +65,6 @@ export class Screencast implements InstrumentationListener, InputActionObserver 
     for (const client of this._clients.keys())
       client.dispose();
     this._clients.clear();
-    this.page.instrumentation.removeListener(this);
     this.page.browserContext.removeInputActionObserver(this);
   }
 
@@ -157,19 +154,16 @@ export class Screencast implements InstrumentationListener, InputActionObserver 
     }
   }
 
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
-    if (!this._actions)
-      return;
-    metadata.annotate = true;
-  }
-
-  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle): Promise<void> {
+  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle, box?: types.Rect): Promise<void> {
     if (!this._actions)
       return;
 
     const page = target instanceof Page ? target : target._page;
     if (page !== this.page)
       return;
+
+    if (!box && !(target instanceof Page))
+      box = await target.boundingBox(progress) || undefined;
 
     const metadata = progress.metadata;
     const actionTitle = renderTitleForCall(metadata);
@@ -184,7 +178,7 @@ export class Screencast implements InstrumentationListener, InputActionObserver 
       injected: await progress.race(utility.injectedScript()),
       duration: this._actions?.duration ?? 500,
       point: metadata.point,
-      box: metadata.box,
+      box,
       actionTitle,
       position: this._actions?.position,
       fontSize: this._actions?.fontSize,

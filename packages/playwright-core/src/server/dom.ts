@@ -450,8 +450,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return maybeResult;
     const point = roundPoint(maybeResult.point);
     progress.metadata.point = point;
-    progress.metadata.box = maybeResult.box;
-    await this._page.browserContext.performOnBeforeInputAction(progress, this);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this, maybeResult.box);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
     if (force) {
@@ -573,16 +572,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return throwRetargetableDOMError(result);
   }
 
-  private async _beforeNonPointerAction(progress: Progress) {
-    if (progress.metadata.annotate)
-      progress.metadata.box = await this.boundingBox(progress) || undefined;
-    await this._page.browserContext.performOnBeforeInputAction(progress, this);
-  }
-
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
     let resultingOptions: string[] = [];
     const result = await this._retryAction(progress, 'select option', async progress => {
-      await this._beforeNonPointerAction(progress);
+      await this._page.browserContext.performOnBeforeInputAction(progress, this);
       if (!options.force)
         progress.log(`  waiting for element to be visible and enabled`);
       const optionsToSelect = [...elements, ...values];
@@ -615,7 +608,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _fill(progress: Progress, value: string, options: types.CommonActionOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`  fill("${value}")`);
     return await this._retryAction(progress, 'fill', async progress => {
-      await this._beforeNonPointerAction(progress);
+      await this._page.browserContext.performOnBeforeInputAction(progress, this);
       if (!options.force)
         progress.log('  waiting for element to be visible, enabled and editable');
       const result = await progress.race(this.evaluateInUtility(async ([injected, node, { value, force }]) => {
@@ -749,7 +742,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (result === 'error:notconnected' || !result.asElement())
       return 'error:notconnected';
     const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
-    await this._beforeNonPointerAction(progress);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this);
     if (localPaths || localDirectory) {
       const localPathsOrDirectory = localDirectory ? [localDirectory] : localPaths!;
       await progress.race(Promise.all((localPathsOrDirectory).map(localPath => (
@@ -790,7 +783,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
-    await this._beforeNonPointerAction(progress);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this);
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
     if (result !== 'done')
       return result;
@@ -806,7 +799,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.press("${key}")`);
-    await this._beforeNonPointerAction(progress);
+    await this._page.browserContext.performOnBeforeInputAction(progress, this);
     return this._page.frameManager.waitForSignalsCreatedBy(progress, !options.noWaitAfter, async progress => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
