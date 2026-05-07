@@ -95,7 +95,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async dispatchEvent(params: channels.FrameDispatchEventParams, progress: Progress): Promise<void> {
-    return this._frame.dispatchEvent(progress, params.selector, params.type, parseArgument(params.eventInit), params);
+    return this._frame.dispatchEvent(progress, params.selector, params.type, parseArgument(params.eventInit), { ...params, markTargets: progress.metadata.id });
   }
 
   async evalOnSelector(params: channels.FrameEvalOnSelectorParams, progress: Progress): Promise<channels.FrameEvalOnSelectorResult> {
@@ -141,48 +141,48 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
 
   async click(params: channels.FrameClickParams, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
-    return await this._frame.click(progress, params.selector, params);
+    return await this._frame.click(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async dblclick(params: channels.FrameDblclickParams, progress: Progress): Promise<void> {
-    return await this._frame.dblclick(progress, params.selector, params);
+    return await this._frame.dblclick(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async dragAndDrop(params: channels.FrameDragAndDropParams, progress: Progress): Promise<void> {
-    return await this._frame.dragAndDrop(progress, params.source, params.target, params);
+    return await this._frame.dragAndDrop(progress, params.source, params.target, { ...params, markTargets: progress.metadata.id });
   }
 
   async drop(params: channels.FrameDropParams, progress: Progress): Promise<void> {
-    return await this._frame.drop(progress, params.selector, params, params);
+    return await this._frame.drop(progress, params.selector, params, { ...params, markTargets: progress.metadata.id });
   }
 
   async tap(params: channels.FrameTapParams, progress: Progress): Promise<void> {
-    return await this._frame.tap(progress, params.selector, params);
+    return await this._frame.tap(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async fill(params: channels.FrameFillParams, progress: Progress): Promise<void> {
-    return await this._frame.fill(progress, params.selector, params.value, params);
+    return await this._frame.fill(progress, params.selector, params.value, { ...params, markTargets: progress.metadata.id });
   }
 
   async focus(params: channels.FrameFocusParams, progress: Progress): Promise<void> {
-    await this._frame.focus(progress, params.selector, params);
+    await this._frame.focus(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async blur(params: channels.FrameBlurParams, progress: Progress): Promise<void> {
-    await this._frame.blur(progress, params.selector, params);
+    await this._frame.blur(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async textContent(params: channels.FrameTextContentParams, progress: Progress): Promise<channels.FrameTextContentResult> {
-    const value = await this._frame.textContent(progress, params.selector, params);
+    const value = await this._frame.textContent(progress, params.selector, { ...params, markTargets: progress.metadata.id });
     return { value: value === null ? undefined : value };
   }
 
   async innerText(params: channels.FrameInnerTextParams, progress: Progress): Promise<channels.FrameInnerTextResult> {
-    return { value: await this._frame.innerText(progress, params.selector, params) };
+    return { value: await this._frame.innerText(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async innerHTML(params: channels.FrameInnerHTMLParams, progress: Progress): Promise<channels.FrameInnerHTMLResult> {
-    return { value: await this._frame.innerHTML(progress, params.selector, params) };
+    return { value: await this._frame.innerHTML(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async resolveSelector(params: channels.FrameResolveSelectorParams, progress: Progress): Promise<channels.FrameResolveSelectorResult> {
@@ -190,66 +190,66 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async getAttribute(params: channels.FrameGetAttributeParams, progress: Progress): Promise<channels.FrameGetAttributeResult> {
-    const value = await this._frame.getAttribute(progress, params.selector, params.name, params);
+    const value = await this._frame.getAttribute(progress, params.selector, params.name, { ...params, markTargets: progress.metadata.id });
     return { value: value === null ? undefined : value };
   }
 
   async inputValue(params: channels.FrameInputValueParams, progress: Progress): Promise<channels.FrameInputValueResult> {
-    const value = await this._frame.inputValue(progress, params.selector, params);
+    const value = await this._frame.inputValue(progress, params.selector, { ...params, markTargets: progress.metadata.id });
     return { value };
   }
 
   async isChecked(params: channels.FrameIsCheckedParams, progress: Progress): Promise<channels.FrameIsCheckedResult> {
-    return { value: await this._frame.isChecked(progress, params.selector, params) };
+    return { value: await this._frame.isChecked(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async isDisabled(params: channels.FrameIsDisabledParams, progress: Progress): Promise<channels.FrameIsDisabledResult> {
-    return { value: await this._frame.isDisabled(progress, params.selector, params) };
+    return { value: await this._frame.isDisabled(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async isEditable(params: channels.FrameIsEditableParams, progress: Progress): Promise<channels.FrameIsEditableResult> {
-    return { value: await this._frame.isEditable(progress, params.selector, params) };
+    return { value: await this._frame.isEditable(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async isEnabled(params: channels.FrameIsEnabledParams, progress: Progress): Promise<channels.FrameIsEnabledResult> {
-    return { value: await this._frame.isEnabled(progress, params.selector, params) };
+    return { value: await this._frame.isEnabled(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async isHidden(params: channels.FrameIsHiddenParams, progress: Progress): Promise<channels.FrameIsHiddenResult> {
-    return { value: await this._frame.isHidden(progress, params.selector, params) };
+    return { value: await this._frame.isHidden(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async isVisible(params: channels.FrameIsVisibleParams, progress: Progress): Promise<channels.FrameIsVisibleResult> {
-    return { value: await this._frame.isVisible(progress, params.selector, params) };
+    return { value: await this._frame.isVisible(progress, params.selector, { ...params, markTargets: progress.metadata.id }) };
   }
 
   async hover(params: channels.FrameHoverParams, progress: Progress): Promise<void> {
-    return await this._frame.hover(progress, params.selector, params);
+    return await this._frame.hover(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async selectOption(params: channels.FrameSelectOptionParams, progress: Progress): Promise<channels.FrameSelectOptionResult> {
     const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
-    return { values: await this._frame.selectOption(progress, params.selector, elements, params.options || [], params) };
+    return { values: await this._frame.selectOption(progress, params.selector, elements, params.options || [], { ...params, markTargets: progress.metadata.id }) };
   }
 
   async setInputFiles(params: channels.FrameSetInputFilesParams, progress: Progress): Promise<channels.FrameSetInputFilesResult> {
-    return await this._frame.setInputFiles(progress, params.selector, params);
+    return await this._frame.setInputFiles(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async type(params: channels.FrameTypeParams, progress: Progress): Promise<void> {
-    return await this._frame.type(progress, params.selector, params.text, params);
+    return await this._frame.type(progress, params.selector, params.text, { ...params, markTargets: progress.metadata.id });
   }
 
   async press(params: channels.FramePressParams, progress: Progress): Promise<void> {
-    return await this._frame.press(progress, params.selector, params.key, params);
+    return await this._frame.press(progress, params.selector, params.key, { ...params, markTargets: progress.metadata.id });
   }
 
   async check(params: channels.FrameCheckParams, progress: Progress): Promise<void> {
-    return await this._frame.check(progress, params.selector, params);
+    return await this._frame.check(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async uncheck(params: channels.FrameUncheckParams, progress: Progress): Promise<void> {
-    return await this._frame.uncheck(progress, params.selector, params);
+    return await this._frame.uncheck(progress, params.selector, { ...params, markTargets: progress.metadata.id });
   }
 
   async waitForTimeout(params: channels.FrameWaitForTimeoutParams, progress: Progress): Promise<void> {
@@ -277,7 +277,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     if (params.expression === 'to.match.aria' && expectedValue)
       expectedValue = parseAriaSnapshotUnsafe(yaml, expectedValue);
-    const result = await this._frame.expect(progress, params.selector, { ...params, expectedValue, timeoutForLogs: params.timeout });
+    const result = await this._frame.expect(progress, params.selector, { ...params, markTargets: progress.metadata.id, expectedValue, timeoutForLogs: params.timeout });
     const channelResult: channels.FrameExpectResult = {
       matches: result.matches,
       log: result.log,

@@ -194,28 +194,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page.delegate.getContentFrame(this);
   }
 
-  async getAttribute(progress: Progress, name: string): Promise<string | null> {
-    return this._frame.getAttribute(progress, ':scope', name, {}, this);
+  async getAttribute(progress: Progress, name: string, options: types.MarkTargetsOptions = {}): Promise<string | null> {
+    return this._frame.getAttribute(progress, ':scope', name, options, this);
   }
 
-  async inputValue(progress: Progress): Promise<string> {
-    return this._frame.inputValue(progress, ':scope', {}, this);
+  async inputValue(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<string> {
+    return this._frame.inputValue(progress, ':scope', options, this);
   }
 
-  async textContent(progress: Progress): Promise<string | null> {
-    return this._frame.textContent(progress, ':scope', {}, this);
+  async textContent(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<string | null> {
+    return this._frame.textContent(progress, ':scope', options, this);
   }
 
-  async innerText(progress: Progress): Promise<string> {
-    return this._frame.innerText(progress, ':scope', {}, this);
+  async innerText(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<string> {
+    return this._frame.innerText(progress, ':scope', options, this);
   }
 
-  async innerHTML(progress: Progress): Promise<string> {
-    return this._frame.innerHTML(progress, ':scope', {}, this);
+  async innerHTML(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<string> {
+    return this._frame.innerHTML(progress, ':scope', options, this);
   }
 
-  async dispatchEvent(progress: Progress, type: string, eventInit: Object = {}) {
-    return this._frame.dispatchEvent(progress, ':scope', type, eventInit, {}, this);
+  async dispatchEvent(progress: Progress, type: string, eventInit: Object = {}, options: types.MarkTargetsOptions = {}) {
+    return this._frame.dispatchEvent(progress, ':scope', type, eventInit, options, this);
   }
 
   async _scrollRectIntoViewIfNeeded(progress: Progress, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -518,17 +518,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  private async _markAsTargetElement(progress: Progress) {
-    if (!progress.metadata.id)
+  private async _markAsTargetElement(progress: Progress, markTargets: string | undefined) {
+    if (!markTargets)
       return;
-    await progress.race(this.evaluateInUtility(([injected, node, callId]) => {
+    await progress.race(this.evaluateInUtility(([injected, node, markTargets]) => {
       if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
-        injected.markTargetElements(new Set([node as Node as Element]), callId);
-    }, progress.metadata.id));
+        injected.markTargetElements(new Set([node as Node as Element]), markTargets);
+    }, markTargets));
   }
 
   async hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._hover(progress, options);
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -538,7 +538,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async click(progress: Progress, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._click(progress, { ...options, waitAfter: !options.noWaitAfter });
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -548,7 +548,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<void> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._dblclick(progress, options);
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -558,7 +558,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<void> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._tap(progress, options);
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -568,7 +568,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._selectOption(progress, elements, values, options);
     return throwRetargetableDOMError(result);
   }
@@ -607,7 +607,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async fill(progress: Progress, value: string, options: types.CommonActionOptions): Promise<void> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._fill(progress, value, options);
     assertDone(throwRetargetableDOMError(result));
   }
@@ -654,9 +654,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     assertDone(throwRetargetableDOMError(result));
   }
 
-  async setInputFiles(progress: Progress, params: Omit<channels.ElementHandleSetInputFilesParams, 'timeout'>) {
+  async setInputFiles(progress: Progress, params: Omit<channels.ElementHandleSetInputFilesParams, 'timeout'> & types.MarkTargetsOptions) {
     const inputFileItems = await progress.race(prepareFilesForUpload(this._frame, params));
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, params.markTargets);
     const result = await this._setInputFiles(progress, inputFileItems);
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -768,8 +768,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async focus(progress: Progress): Promise<void> {
-    await this._markAsTargetElement(progress);
+  async focus(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<void> {
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._focus(progress);
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -783,7 +783,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<void> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._type(progress, text, options);
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -799,7 +799,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions): Promise<void> {
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const result = await this._press(progress, key, options);
     return assertDone(throwRetargetableDOMError(result));
   }
@@ -833,7 +833,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         throwElementIsNotAttached();
       return { matches: result.matches, isRadio: result.isRadio };
     };
-    await this._markAsTargetElement(progress);
+    await this._markAsTargetElement(progress, options.markTargets);
     const checkedState = await isChecked(progress);
     if (checkedState.matches === state)
       return 'done';
@@ -882,28 +882,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._frame.evalOnSelectorAll(progress, selector, expression, isFunction, arg, this);
   }
 
-  async isVisible(progress: Progress): Promise<boolean> {
-    return this._frame.isVisible(progress, ':scope', {}, this);
+  async isVisible(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<boolean> {
+    return this._frame.isVisible(progress, ':scope', options, this);
   }
 
-  async isHidden(progress: Progress): Promise<boolean> {
-    return this._frame.isHidden(progress, ':scope', {}, this);
+  async isHidden(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<boolean> {
+    return this._frame.isHidden(progress, ':scope', options, this);
   }
 
-  async isEnabled(progress: Progress): Promise<boolean> {
-    return this._frame.isEnabled(progress, ':scope', {}, this);
+  async isEnabled(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<boolean> {
+    return this._frame.isEnabled(progress, ':scope', options, this);
   }
 
-  async isDisabled(progress: Progress): Promise<boolean> {
-    return this._frame.isDisabled(progress, ':scope', {}, this);
+  async isDisabled(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<boolean> {
+    return this._frame.isDisabled(progress, ':scope', options, this);
   }
 
-  async isEditable(progress: Progress): Promise<boolean> {
-    return this._frame.isEditable(progress, ':scope', {}, this);
+  async isEditable(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<boolean> {
+    return this._frame.isEditable(progress, ':scope', options, this);
   }
 
-  async isChecked(progress: Progress): Promise<boolean> {
-    return this._frame.isChecked(progress, ':scope', {}, this);
+  async isChecked(progress: Progress, options: types.MarkTargetsOptions = {}): Promise<boolean> {
+    return this._frame.isChecked(progress, ':scope', options, this);
   }
 
   async waitForElementState(progress: Progress, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable'): Promise<void> {

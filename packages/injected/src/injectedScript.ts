@@ -49,6 +49,7 @@ export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'
   expectedValue?: any;
   timeoutForLogs?: number;
   noAutoWaiting?: boolean;
+  markTargets?: string;
 };
 
 export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
@@ -93,7 +94,7 @@ export class InjectedScript {
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
-  private _markedElements?: { callId: string, elements: Set<Element> };
+  private _markedElements?: { markTargets: string, elements: Set<Element> };
   readonly window: Window & typeof globalThis;
   readonly document: Document;
   readonly consoleApi: ConsoleAPI;
@@ -1379,15 +1380,15 @@ export class InjectedScript {
     }
   }
 
-  markTargetElements(markedElements: Set<Element>, callId: string) {
-    if (this._markedElements?.callId !== callId)
+  markTargetElements(markedElements: Set<Element>, markTargets: string) {
+    if (this._markedElements?.markTargets !== markTargets)
       this._markedElements = undefined;
     const previous = this._markedElements?.elements || new Set();
 
     const unmarkEvent = new CustomEvent('__playwright_unmark_target__', {
       bubbles: true,
       cancelable: true,
-      detail: callId,
+      detail: markTargets,
       composed: true,
     });
     for (const element of previous) {
@@ -1398,7 +1399,7 @@ export class InjectedScript {
     const markEvent = new CustomEvent('__playwright_mark_target__', {
       bubbles: true,
       cancelable: true,
-      detail: callId,
+      detail: markTargets,
       composed: true,
     });
     for (const element of markedElements) {
@@ -1406,7 +1407,7 @@ export class InjectedScript {
         element.dispatchEvent(markEvent);
     }
 
-    this._markedElements = { callId, elements: markedElements };
+    this._markedElements = { markTargets, elements: markedElements };
   }
 
   private _setupGlobalListenersRemovalDetection() {

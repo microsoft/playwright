@@ -66,54 +66,54 @@ export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher>
   }
 
   async getAttribute(params: channels.ElementHandleGetAttributeParams, progress: Progress): Promise<channels.ElementHandleGetAttributeResult> {
-    const value = await this._elementHandle.getAttribute(progress, params.name);
+    const value = await this._elementHandle.getAttribute(progress, params.name, { markTargets: progress.metadata.id });
     return { value: value === null ? undefined : value };
   }
 
   async inputValue(params: channels.ElementHandleInputValueParams, progress: Progress): Promise<channels.ElementHandleInputValueResult> {
-    const value = await this._elementHandle.inputValue(progress);
+    const value = await this._elementHandle.inputValue(progress, { markTargets: progress.metadata.id });
     return { value };
   }
 
   async textContent(params: channels.ElementHandleTextContentParams, progress: Progress): Promise<channels.ElementHandleTextContentResult> {
-    const value = await this._elementHandle.textContent(progress);
+    const value = await this._elementHandle.textContent(progress, { markTargets: progress.metadata.id });
     return { value: value === null ? undefined : value };
   }
 
   async innerText(params: channels.ElementHandleInnerTextParams, progress: Progress): Promise<channels.ElementHandleInnerTextResult> {
-    return { value: await this._elementHandle.innerText(progress) };
+    return { value: await this._elementHandle.innerText(progress, { markTargets: progress.metadata.id }) };
   }
 
   async innerHTML(params: channels.ElementHandleInnerHTMLParams, progress: Progress): Promise<channels.ElementHandleInnerHTMLResult> {
-    return { value: await this._elementHandle.innerHTML(progress) };
+    return { value: await this._elementHandle.innerHTML(progress, { markTargets: progress.metadata.id }) };
   }
 
   async isChecked(params: channels.ElementHandleIsCheckedParams, progress: Progress): Promise<channels.ElementHandleIsCheckedResult> {
-    return { value: await this._elementHandle.isChecked(progress) };
+    return { value: await this._elementHandle.isChecked(progress, { markTargets: progress.metadata.id }) };
   }
 
   async isDisabled(params: channels.ElementHandleIsDisabledParams, progress: Progress): Promise<channels.ElementHandleIsDisabledResult> {
-    return { value: await this._elementHandle.isDisabled(progress) };
+    return { value: await this._elementHandle.isDisabled(progress, { markTargets: progress.metadata.id }) };
   }
 
   async isEditable(params: channels.ElementHandleIsEditableParams, progress: Progress): Promise<channels.ElementHandleIsEditableResult> {
-    return { value: await this._elementHandle.isEditable(progress) };
+    return { value: await this._elementHandle.isEditable(progress, { markTargets: progress.metadata.id }) };
   }
 
   async isEnabled(params: channels.ElementHandleIsEnabledParams, progress: Progress): Promise<channels.ElementHandleIsEnabledResult> {
-    return { value: await this._elementHandle.isEnabled(progress) };
+    return { value: await this._elementHandle.isEnabled(progress, { markTargets: progress.metadata.id }) };
   }
 
   async isHidden(params: channels.ElementHandleIsHiddenParams, progress: Progress): Promise<channels.ElementHandleIsHiddenResult> {
-    return { value: await this._elementHandle.isHidden(progress) };
+    return { value: await this._elementHandle.isHidden(progress, { markTargets: progress.metadata.id }) };
   }
 
   async isVisible(params: channels.ElementHandleIsVisibleParams, progress: Progress): Promise<channels.ElementHandleIsVisibleResult> {
-    return { value: await this._elementHandle.isVisible(progress) };
+    return { value: await this._elementHandle.isVisible(progress, { markTargets: progress.metadata.id }) };
   }
 
   async dispatchEvent(params: channels.ElementHandleDispatchEventParams, progress: Progress): Promise<void> {
-    await this._elementHandle.dispatchEvent(progress, params.type, parseArgument(params.eventInit));
+    await this._elementHandle.dispatchEvent(progress, params.type, parseArgument(params.eventInit), { markTargets: progress.metadata.id });
   }
 
   async scrollIntoViewIfNeeded(params: channels.ElementHandleScrollIntoViewIfNeededParams, progress: Progress): Promise<void> {
@@ -121,28 +121,28 @@ export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher>
   }
 
   async hover(params: channels.ElementHandleHoverParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.hover(progress, params);
+    return await this._elementHandle.hover(progress, { ...params, markTargets: progress.metadata.id });
   }
 
   async click(params: channels.ElementHandleClickParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.click(progress, params);
+    return await this._elementHandle.click(progress, { ...params, markTargets: progress.metadata.id });
   }
 
   async dblclick(params: channels.ElementHandleDblclickParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.dblclick(progress, params);
+    return await this._elementHandle.dblclick(progress, { ...params, markTargets: progress.metadata.id });
   }
 
   async tap(params: channels.ElementHandleTapParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.tap(progress, params);
+    return await this._elementHandle.tap(progress, { ...params, markTargets: progress.metadata.id });
   }
 
   async selectOption(params: channels.ElementHandleSelectOptionParams, progress: Progress): Promise<channels.ElementHandleSelectOptionResult> {
     const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
-    return { values: await this._elementHandle.selectOption(progress, elements, params.options || [], params) };
+    return { values: await this._elementHandle.selectOption(progress, elements, params.options || [], { ...params, markTargets: progress.metadata.id }) };
   }
 
   async fill(params: channels.ElementHandleFillParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.fill(progress, params.value, params);
+    return await this._elementHandle.fill(progress, params.value, { ...params, markTargets: progress.metadata.id });
   }
 
   async selectText(params: channels.ElementHandleSelectTextParams, progress: Progress): Promise<void> {
@@ -150,27 +150,27 @@ export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher>
   }
 
   async setInputFiles(params: channels.ElementHandleSetInputFilesParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.setInputFiles(progress, params);
+    return await this._elementHandle.setInputFiles(progress, { ...params, markTargets: progress.metadata.id });
   }
 
   async focus(params: channels.ElementHandleFocusParams, progress: Progress): Promise<void> {
-    await this._elementHandle.focus(progress);
+    await this._elementHandle.focus(progress, { markTargets: progress.metadata.id });
   }
 
   async type(params: channels.ElementHandleTypeParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.type(progress, params.text, params);
+    return await this._elementHandle.type(progress, params.text, { ...params, markTargets: progress.metadata.id });
   }
 
   async press(params: channels.ElementHandlePressParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.press(progress, params.key, params);
+    return await this._elementHandle.press(progress, params.key, { ...params, markTargets: progress.metadata.id });
   }
 
   async check(params: channels.ElementHandleCheckParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.check(progress, params);
+    return await this._elementHandle.check(progress, { ...params, markTargets: progress.metadata.id });
   }
 
   async uncheck(params: channels.ElementHandleUncheckParams, progress: Progress): Promise<void> {
-    return await this._elementHandle.uncheck(progress, params);
+    return await this._elementHandle.uncheck(progress, { ...params, markTargets: progress.metadata.id });
   }
 
   async boundingBox(params: channels.ElementHandleBoundingBoxParams, progress: Progress): Promise<channels.ElementHandleBoundingBoxResult> {

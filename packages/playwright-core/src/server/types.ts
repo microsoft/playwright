@@ -20,7 +20,13 @@ export type { HeadersArray, Point, Quad, Rect, Size } from '@isomorphic/types';
 import type * as channels from '@protocol/channels';
 import type { ProxySettings } from '@utils/network';
 
-export type StrictOptions = {
+// When set, the action marks resolved DOM elements with this token via
+// injected.markTargetElements, so trace snapshots can highlight them.
+export type MarkTargetsOptions = {
+  markTargets?: string,
+};
+
+export type StrictOptions = MarkTargetsOptions & {
   strict?: boolean,
 };
 
