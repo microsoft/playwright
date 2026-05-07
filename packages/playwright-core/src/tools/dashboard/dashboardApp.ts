@@ -321,6 +321,21 @@ export async function openDashboardApp() {
     return;
   }
   const statePromise = innerOpenDashboardApp(options);
+  // Once the dashboard is fully started (server listening, browser launched
+  // + bound, page navigated), signal READY back to the parent process via
+  // fd 3. `cli show` in program.ts spawns this entry with a fourth 'pipe'
+  // stdio entry and blocks until it sees this byte. The try/catch handles
+  // EPIPE (parent closed early, e.g. timeout) and the developer-debug case
+  // of running `node dashboardApp.js` directly without an fd 3 attached.
+  void statePromise.then(() => {
+    try {
+      fs.writeSync(3, 'READY\n');
+      fs.closeSync(3);
+    } catch {
+      // No fd 3 attached, parent already closed it, or write failed - the
+      // dashboard is up regardless; nothing to do.
+    }
+  });
   server?.on('connection', socket => {
     let buffer = '';
     socket.on('data', data => {

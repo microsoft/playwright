@@ -31,6 +31,8 @@ import { libPath } from '../../package';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
 
+import type { ChildProcess, StdioOptions } from 'child_process';
+import type { Readable } from 'stream';
 import type { ListData, ListedBrowser, Output } from './output';
 import type { ClientInfo, SessionFile } from './registry';
 import type { MinimistArgs } from './minimist';
@@ -228,17 +230,27 @@ export async function program(options?: { embedderVersion?: string}) {
         return;
       }
       const foreground = args.port !== undefined;
+      const detachedStdio = daemonStdio('ignore', 'dashboard', sessionName);
+      // Append a 'pipe' for fd 3 so the detached daemon can signal READY back
+      // once the dashboard server is listening, the browser is launched and
+      // bound, and the dashboard page has finished navigating. Without this,
+      // `cli show` would return before the dashboard is usable, leaving
+      // callers (tests, scripts) to race against startup.
+      const stdioWithReady: StdioOptions = Array.isArray(detachedStdio)
+        ? [...detachedStdio, 'pipe']
+        : [detachedStdio, detachedStdio, detachedStdio, 'pipe'];
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
         // Foreground mode pipes the daemon's stdout up to the caller (tests
         // wait for "Listening on ..." on stdout); only redirect to log files
         // when the daemon is detached and would otherwise drop output.
-        stdio: foreground ? 'inherit' : daemonStdio('ignore', 'dashboard', sessionName),
+        stdio: foreground ? 'inherit' : stdioWithReady,
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
       }
+      await waitForDaemonReady(child);
       child.unref();
       output.show(sessionName, child.pid);
       return;
@@ -318,6 +330,44 @@ function daemonStdio(fallback: 'ignore' | 'inherit', label: string, sessionName:
   } catch {
     return fallback;
   }
+}
+
+// Wait for the detached dashboard daemon (spawned by `cli show`) to signal
+// READY on its fd 3. The child writes after the dashboard server is listening,
+// the browser is launched and bound, and the dashboard page navigation is
+// complete. Times out after 60s. Rejects if the child exits before signaling.
+function waitForDaemonReady(child: ChildProcess): Promise<void> {
+  // child.stdio is typed as a 3-tuple, but we passed a 4-entry stdio array so
+  // index 3 exists at runtime. Cast through unknown to access it without
+  // resorting to `any`.
+  const readyStream = (child.stdio as unknown as Array<Readable | null>)[3];
+  if (!readyStream)
+    return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      clearTimeout(timer);
+      readyStream.removeListener('data', onData);
+      readyStream.removeListener('end', onEnd);
+      readyStream.removeListener('error', onError);
+      child.removeListener('exit', onExit);
+    };
+    const settle = (err?: Error) => {
+      cleanup();
+      // Destroy the parent's read end so Windows can reap the pipe handle
+      // before we unref() the child. On POSIX this is a no-op.
+      try { readyStream.destroy(); } catch { /* noop */ }
+      err ? reject(err) : resolve();
+    };
+    const onData = () => settle();
+    const onEnd = () => settle(new Error('Dashboard daemon closed ready pipe before signaling READY'));
+    const onError = (err: Error) => settle(err);
+    const onExit = (code: number | null, signal: NodeJS.Signals | null) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY`));
+    const timer = setTimeout(() => settle(new Error('Dashboard daemon did not signal READY within 60s')), 60_000);
+    readyStream.once('data', onData);
+    readyStream.once('end', onEnd);
+    readyStream.once('error', onError);
+    child.once('exit', onExit);
+  });
 }
 
 async function installBrowser() {
