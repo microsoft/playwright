@@ -64,8 +64,9 @@ it('should return uncompressed text', async ({ page, server }) => {
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should return uncompressed text for brotli encoding', async ({ page, server, browserName, isAndroid }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/39160');
+it('should return uncompressed text for brotli encoding', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39160' },
+}, async ({ page, server, browserName, isAndroid }) => {
   it.fixme(isAndroid, 'net::ERR_CONTENT_DECODING_FAILED');
 
   const text = '{"foo": "bar"}\n';
