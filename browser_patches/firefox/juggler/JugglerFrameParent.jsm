@@ -20,21 +20,10 @@ export class JugglerFrameParent extends JSWindowActorParent {
     if (!this.manager?.isCurrentGlobal)
       return;
 
-    // Only interested in main frames for now.
-    if (this.browsingContext.parent)
-      return;
-
-    this._target = TargetRegistry.instance()?.targetForBrowserId(this.browsingContext.browserId);
-    if (!this._target)
-      return;
-
-    this.actorName = `browser::page[${this._target.id()}]/${this.browsingContext.browserId}/${this.browsingContext.id}/${this._target.nextActorSequenceNumber()}`;
-    this._target.setActor(this);
+    TargetRegistry.instance()?.onActorCreated(this);
   }
 
   didDestroy() {
-    if (!this._target)
-      return;
-    this._target.removeActor(this);
+    TargetRegistry.instance()?.onActorDestroyed(this);
   }
 }

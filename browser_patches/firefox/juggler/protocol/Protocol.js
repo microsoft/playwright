@@ -631,6 +631,7 @@ const Page = {
       frameId: t.String,
       message: t.String,
       stack: t.String,
+      location: runtimeTypes.ScriptLocation,
     },
     'frameAttached': {
       frameId: t.String,
@@ -753,6 +754,7 @@ const Page = {
     'setViewportSize': {
       params: {
         viewportSize: t.Nullable(pageTypes.Size),
+        deviceScaleFactor: t.Optional(t.Number),
       },
     },
     'setZoom': {

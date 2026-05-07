@@ -126,7 +126,7 @@ export class PageAgent {
         }
       }),
       helper.addObserver(this._onWindowOpen.bind(this), 'webNavigation-createdNavigationTarget-from-js'),
-      this._runtime.events.onErrorFromWorker((domWindow, message, stack) => {
+      this._runtime.events.onErrorFromWorker((domWindow, message, stack, location) => {
         const frame = this._frameTree.frameForDocShell(domWindow.docShell);
         if (!frame)
           return;
@@ -134,6 +134,7 @@ export class PageAgent {
           frameId: frame.id(),
           message,
           stack,
+          location,
         });
       }),
       this._runtime.events.onConsoleMessage(msg => this._browserPage.emit('runtimeConsole', msg)),
@@ -262,11 +263,12 @@ export class PageAgent {
     });
   }
 
-  _onRuntimeError({ executionContext, message, stack }) {
+  _onRuntimeError({ executionContext, message, stack, location }) {
     this._browserPage.emit('pageUncaughtError', {
       frameId: executionContext.auxData().frameId,
       message: message.toString(),
       stack: stack.toString(),
+      location,
     });
   }
 
@@ -307,6 +309,9 @@ export class PageAgent {
   }
 
   _onNavigationCommitted(frame) {
+    if (frame.domWindow().document.isUncommittedInitialDocument)
+      return;
+
     this._browserPage.emit('pageNavigationCommitted', {
       frameId: frame.id(),
       navigationId: frame.lastCommittedNavigationId() || undefined,
@@ -489,19 +494,22 @@ export class PageAgent {
 
   async _dispatchTouchEvent({type, touchPoints, modifiers}) {
     const frame = this._frameTree.mainFrame();
-    const defaultPrevented = frame.domWindow().windowUtils.sendTouchEvent(
+    const defaultPrevented = frame.domWindow().synthesizeTouchEvent(
       type.toLowerCase(),
-      touchPoints.map((point, id) => id),
-      touchPoints.map(point => point.x),
-      touchPoints.map(point => point.y),
-      touchPoints.map(point => point.radiusX === undefined ? 1.0 : point.radiusX),
-      touchPoints.map(point => point.radiusY === undefined ? 1.0 : point.radiusY),
-      touchPoints.map(point => point.rotationAngle === undefined ? 0.0 : point.rotationAngle),
-      touchPoints.map(point => point.force === undefined ? 1.0 : point.force),
-      touchPoints.map(point => 0),
-      touchPoints.map(point => 0),
-      touchPoints.map(point => 0),
-      modifiers);
+      touchPoints.map((point, id) => ({
+        identifier: id,
+        offsetX: point.x,
+        offsetY: point.y,
+        radiiX: point.radiusX ?? 1.0,
+        radiiY: point.radiusY ?? 1.0,
+        rotationAngle: point.rotationAngle ?? 0.0,
+        pressure: point.force ?? 1.0,
+        tiltX: 0,
+        tiltY: 0,
+        twist: 0,
+      })),
+      modifiers
+    );
     return {defaultPrevented};
   }
 
