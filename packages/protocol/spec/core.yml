@@ -50,25 +50,16 @@ Disposable:
     dispose:
       internal: true
 
-EventTarget:
-  type: interface
-
-  commands:
-    waitForEventInfo:
-      title: Wait for event "{info.event}"
-      parameters:
-        info:
-          type: object
-          properties:
-            waitId: string
-            phase:
-              type: enum
-              literals:
-              - before
-              - after
-              - log
-            event: string?
-            message: string?
-            error: string?
-      flags:
-        snapshot: true
+WaitInfo:
+  type: object
+  properties:
+    waitId: string
+    phase:
+      type: enum
+      literals:
+      - before
+      - after
+      - log
+    event: string?
+    message: string?
+    error: string?

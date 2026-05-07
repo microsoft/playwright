@@ -18,7 +18,7 @@
 
 import { scheme, tOptional, tObject, tBoolean, tInt, tFloat, tString, tAny, tEnum, tArray, tBinary, tChannel, tType } from './validatorPrimitives';
 export type { Validator, ValidatorContext } from './validatorPrimitives';
-export { ValidationError, findValidator, maybeFindValidator, createMetadataValidator } from './validatorPrimitives';
+export { ValidationError, findValidator, maybeFindValidator, createMetadataValidator, createWaitInfoValidator } from './validatorPrimitives';
 
 scheme.AndroidInitializer = tOptional(tObject({}));
 scheme.AndroidDevicesParams = tObject({
@@ -1089,31 +1089,13 @@ scheme.SDKLanguage = tEnum(['javascript', 'python', 'java', 'csharp']);
 scheme.DisposableInitializer = tOptional(tObject({}));
 scheme.DisposableDisposeParams = tOptional(tObject({}));
 scheme.DisposableDisposeResult = tOptional(tObject({}));
-scheme.EventTargetInitializer = tOptional(tObject({}));
-scheme.EventTargetWaitForEventInfoParams = tObject({
-  info: tObject({
-    waitId: tString,
-    phase: tEnum(['before', 'after', 'log']),
-    event: tOptional(tString),
-    message: tOptional(tString),
-    error: tOptional(tString),
-  }),
+scheme.WaitInfo = tObject({
+  waitId: tString,
+  phase: tEnum(['before', 'after', 'log']),
+  event: tOptional(tString),
+  message: tOptional(tString),
+  error: tOptional(tString),
 });
-scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.DebuggerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.WorkerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
-scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.DebuggerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.WorkerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.ElectronInitializer = tOptional(tObject({}));
 scheme.ElectronLaunchParams = tObject({
   executablePath: tOptional(tString),

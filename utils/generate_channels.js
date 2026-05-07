@@ -158,7 +158,7 @@ const validator_ts = [
 
 import { scheme, tOptional, tObject, tBoolean, tInt, tFloat, tString, tAny, tEnum, tArray, tBinary, tChannel, tType } from './validatorPrimitives';
 export type { Validator, ValidatorContext } from './validatorPrimitives';
-export { ValidationError, findValidator, maybeFindValidator, createMetadataValidator } from './validatorPrimitives';
+export { ValidationError, findValidator, maybeFindValidator, createMetadataValidator, createWaitInfoValidator } from './validatorPrimitives';
 `];
 
 const metainfo_ts = [

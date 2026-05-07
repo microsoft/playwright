@@ -27,26 +27,45 @@ export class Waiter {
   private _failures: Promise<any>[] = [];
   private _immediateError?: Error;
   private _logs: string[] = [];
-  private _channelOwner: ChannelOwner<channels.EventTargetChannel>;
+  private _channelOwner: ChannelOwner;
   private _waitId: string;
   private _error: string | undefined;
   private _savedZone: Zone;
 
-  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  constructor(channelOwner: ChannelOwner, event: string) {
     this._waitId = channelOwner._platform.createGuid();
     this._channelOwner = channelOwner;
     this._savedZone = channelOwner._platform.zones.current().pop();
 
-    this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
+    const title = `Wait for event "${event}"`;
+    this._sendWaitInfo({ waitId: this._waitId, phase: 'before', event }, { title });
     this._dispose = [
-      () => this._channelOwner._wrapApiCall(async () => {
-        await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } });
-      }, { internal: true }).catch(() => {}),
+      () => this._sendWaitInfo({ waitId: this._waitId, phase: 'after', error: this._error }, { internal: true }),
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  static createForEvent(channelOwner: ChannelOwner, event: string) {
     return new Waiter(channelOwner, event);
+  }
+
+  private _sendWaitInfo(info: channels.WaitInfo, options: { title?: string, internal?: boolean }): void {
+    // Fire-and-forget: server intentionally never replies, and we never throw to the caller.
+    const owner = this._channelOwner;
+    owner._wrapApiCall(async apiZone => {
+      if (apiZone.internal || apiZone.reported) {
+        void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, { internal: true });
+        return;
+      }
+      apiZone.reported = true;
+      // An outer `_wrapApiCall` may have set its own title (e.g. "Wait for navigation");
+      // fall back to ours only when the outer zone left it blank. The title is read both by
+      // `onApiCallBegin` (drives the test runner step title) and by `sendMessageToServer`
+      // (drives the trace viewer action title), so set it on the zone itself.
+      if (!apiZone.title)
+        apiZone.title = options.title;
+      owner._instrumentation.onApiCallBegin(apiZone, { type: owner._type, method: '__waitInfo__', params: info });
+      void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, apiZone);
+    }, options).catch(() => {});
   }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
@@ -95,9 +114,7 @@ export class Waiter {
 
   log(s: string) {
     this._logs.push(s);
-    this._channelOwner._wrapApiCall(async () => {
-      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } });
-    }, { internal: true }).catch(() => {});
+    this._sendWaitInfo({ waitId: this._waitId, phase: 'log', message: s }, { internal: true });
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {

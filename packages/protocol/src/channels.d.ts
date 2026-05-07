@@ -26,25 +26,20 @@ export interface Channel {
 
 // ----------- Initializer Traits -----------
 export type InitializerTraits<T> =
-    T extends AndroidDeviceChannel ? AndroidDeviceInitializer :
-    T extends BrowserContextChannel ? BrowserContextInitializer :
-    T extends ElectronApplicationChannel ? ElectronApplicationInitializer :
     T extends ElementHandleChannel ? ElementHandleInitializer :
-    T extends WebSocketChannel ? WebSocketInitializer :
-    T extends PageChannel ? PageInitializer :
-    T extends DebuggerChannel ? DebuggerInitializer :
-    T extends WorkerChannel ? WorkerInitializer :
     T extends AndroidChannel ? AndroidInitializer :
     T extends AndroidSocketChannel ? AndroidSocketInitializer :
+    T extends AndroidDeviceChannel ? AndroidDeviceInitializer :
     T extends APIRequestContextChannel ? APIRequestContextInitializer :
     T extends ArtifactChannel ? ArtifactInitializer :
     T extends StreamChannel ? StreamInitializer :
     T extends WritableStreamChannel ? WritableStreamInitializer :
     T extends BrowserChannel ? BrowserInitializer :
+    T extends BrowserContextChannel ? BrowserContextInitializer :
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
     T extends DisposableChannel ? DisposableInitializer :
-    T extends EventTargetChannel ? EventTargetInitializer :
     T extends ElectronChannel ? ElectronInitializer :
+    T extends ElectronApplicationChannel ? ElectronApplicationInitializer :
     T extends FrameChannel ? FrameInitializer :
     T extends JSHandleChannel ? JSHandleInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
@@ -52,6 +47,8 @@ export type InitializerTraits<T> =
     T extends RouteChannel ? RouteInitializer :
     T extends WebSocketRouteChannel ? WebSocketRouteInitializer :
     T extends ResponseChannel ? ResponseInitializer :
+    T extends WebSocketChannel ? WebSocketInitializer :
+    T extends PageChannel ? PageInitializer :
     T extends RootChannel ? RootInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends DebugControllerChannel ? DebugControllerInitializer :
@@ -59,31 +56,28 @@ export type InitializerTraits<T> =
     T extends JsonPipeChannel ? JsonPipeInitializer :
     T extends CDPSessionChannel ? CDPSessionInitializer :
     T extends BindingCallChannel ? BindingCallInitializer :
+    T extends DebuggerChannel ? DebuggerInitializer :
     T extends DialogChannel ? DialogInitializer :
     T extends TracingChannel ? TracingInitializer :
+    T extends WorkerChannel ? WorkerInitializer :
     object;
 
 // ----------- Event Traits -----------
 export type EventsTraits<T> =
-    T extends AndroidDeviceChannel ? AndroidDeviceEvents :
-    T extends BrowserContextChannel ? BrowserContextEvents :
-    T extends ElectronApplicationChannel ? ElectronApplicationEvents :
     T extends ElementHandleChannel ? ElementHandleEvents :
-    T extends WebSocketChannel ? WebSocketEvents :
-    T extends PageChannel ? PageEvents :
-    T extends DebuggerChannel ? DebuggerEvents :
-    T extends WorkerChannel ? WorkerEvents :
     T extends AndroidChannel ? AndroidEvents :
     T extends AndroidSocketChannel ? AndroidSocketEvents :
+    T extends AndroidDeviceChannel ? AndroidDeviceEvents :
     T extends APIRequestContextChannel ? APIRequestContextEvents :
     T extends ArtifactChannel ? ArtifactEvents :
     T extends StreamChannel ? StreamEvents :
     T extends WritableStreamChannel ? WritableStreamEvents :
     T extends BrowserChannel ? BrowserEvents :
+    T extends BrowserContextChannel ? BrowserContextEvents :
     T extends BrowserTypeChannel ? BrowserTypeEvents :
     T extends DisposableChannel ? DisposableEvents :
-    T extends EventTargetChannel ? EventTargetEvents :
     T extends ElectronChannel ? ElectronEvents :
+    T extends ElectronApplicationChannel ? ElectronApplicationEvents :
     T extends FrameChannel ? FrameEvents :
     T extends JSHandleChannel ? JSHandleEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
@@ -91,6 +85,8 @@ export type EventsTraits<T> =
     T extends RouteChannel ? RouteEvents :
     T extends WebSocketRouteChannel ? WebSocketRouteEvents :
     T extends ResponseChannel ? ResponseEvents :
+    T extends WebSocketChannel ? WebSocketEvents :
+    T extends PageChannel ? PageEvents :
     T extends RootChannel ? RootEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends DebugControllerChannel ? DebugControllerEvents :
@@ -98,31 +94,28 @@ export type EventsTraits<T> =
     T extends JsonPipeChannel ? JsonPipeEvents :
     T extends CDPSessionChannel ? CDPSessionEvents :
     T extends BindingCallChannel ? BindingCallEvents :
+    T extends DebuggerChannel ? DebuggerEvents :
     T extends DialogChannel ? DialogEvents :
     T extends TracingChannel ? TracingEvents :
+    T extends WorkerChannel ? WorkerEvents :
     undefined;
 
 // ----------- EventTarget Traits -----------
 export type EventTargetTraits<T> =
-    T extends AndroidDeviceChannel ? AndroidDeviceEventTarget :
-    T extends BrowserContextChannel ? BrowserContextEventTarget :
-    T extends ElectronApplicationChannel ? ElectronApplicationEventTarget :
     T extends ElementHandleChannel ? ElementHandleEventTarget :
-    T extends WebSocketChannel ? WebSocketEventTarget :
-    T extends PageChannel ? PageEventTarget :
-    T extends DebuggerChannel ? DebuggerEventTarget :
-    T extends WorkerChannel ? WorkerEventTarget :
     T extends AndroidChannel ? AndroidEventTarget :
     T extends AndroidSocketChannel ? AndroidSocketEventTarget :
+    T extends AndroidDeviceChannel ? AndroidDeviceEventTarget :
     T extends APIRequestContextChannel ? APIRequestContextEventTarget :
     T extends ArtifactChannel ? ArtifactEventTarget :
     T extends StreamChannel ? StreamEventTarget :
     T extends WritableStreamChannel ? WritableStreamEventTarget :
     T extends BrowserChannel ? BrowserEventTarget :
+    T extends BrowserContextChannel ? BrowserContextEventTarget :
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
     T extends DisposableChannel ? DisposableEventTarget :
-    T extends EventTargetChannel ? EventTargetEventTarget :
     T extends ElectronChannel ? ElectronEventTarget :
+    T extends ElectronApplicationChannel ? ElectronApplicationEventTarget :
     T extends FrameChannel ? FrameEventTarget :
     T extends JSHandleChannel ? JSHandleEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
@@ -130,6 +123,8 @@ export type EventTargetTraits<T> =
     T extends RouteChannel ? RouteEventTarget :
     T extends WebSocketRouteChannel ? WebSocketRouteEventTarget :
     T extends ResponseChannel ? ResponseEventTarget :
+    T extends WebSocketChannel ? WebSocketEventTarget :
+    T extends PageChannel ? PageEventTarget :
     T extends RootChannel ? RootEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends DebugControllerChannel ? DebugControllerEventTarget :
@@ -137,8 +132,10 @@ export type EventTargetTraits<T> =
     T extends JsonPipeChannel ? JsonPipeEventTarget :
     T extends CDPSessionChannel ? CDPSessionEventTarget :
     T extends BindingCallChannel ? BindingCallEventTarget :
+    T extends DebuggerChannel ? DebuggerEventTarget :
     T extends DialogChannel ? DialogEventTarget :
     T extends TracingChannel ? TracingEventTarget :
+    T extends WorkerChannel ? WorkerEventTarget :
     undefined;
 
 // ----------- Android -----------
@@ -207,7 +204,7 @@ export interface AndroidDeviceEventTarget {
   on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
   on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
 }
-export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, EventTargetChannel {
+export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, Channel {
   _type_AndroidDevice: boolean;
   wait(params: AndroidDeviceWaitParams, progress?: Progress): Promise<AndroidDeviceWaitResult>;
   fill(params: AndroidDeviceFillParams, progress?: Progress): Promise<AndroidDeviceFillResult>;
@@ -1321,7 +1318,7 @@ export interface BrowserContextEventTarget {
   on(event: 'response', callback: (params: BrowserContextResponseEvent) => void): this;
   on(event: 'recorderEvent', callback: (params: BrowserContextRecorderEventEvent) => void): this;
 }
-export interface BrowserContextChannel extends BrowserContextEventTarget, EventTargetChannel {
+export interface BrowserContextChannel extends BrowserContextEventTarget, Channel {
   _type_BrowserContext: boolean;
   addCookies(params: BrowserContextAddCookiesParams, progress?: Progress): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams, progress?: Progress): Promise<BrowserContextAddInitScriptResult>;
@@ -2065,30 +2062,13 @@ export type DisposableDisposeResult = void;
 export interface DisposableEvents {
 }
 
-// ----------- EventTarget -----------
-export type EventTargetInitializer = {};
-export interface EventTargetEventTarget {
-}
-export interface EventTargetChannel extends EventTargetEventTarget, Channel {
-  _type_EventTarget: boolean;
-  waitForEventInfo(params: EventTargetWaitForEventInfoParams, progress?: Progress): Promise<EventTargetWaitForEventInfoResult>;
-}
-export type EventTargetWaitForEventInfoParams = {
-  info: {
-    waitId: string,
-    phase: 'before' | 'after' | 'log',
-    event?: string,
-    message?: string,
-    error?: string,
-  },
+export type WaitInfo = {
+  waitId: string,
+  phase: 'before' | 'after' | 'log',
+  event?: string,
+  message?: string,
+  error?: string,
 };
-export type EventTargetWaitForEventInfoOptions = {
-
-};
-export type EventTargetWaitForEventInfoResult = void;
-
-export interface EventTargetEvents {
-}
 
 // ----------- Electron -----------
 export type ElectronInitializer = {};
@@ -3945,7 +3925,7 @@ export interface WebSocketEventTarget {
   on(event: 'socketError', callback: (params: WebSocketSocketErrorEvent) => void): this;
   on(event: 'close', callback: (params: WebSocketCloseEvent) => void): this;
 }
-export interface WebSocketChannel extends WebSocketEventTarget, EventTargetChannel {
+export interface WebSocketChannel extends WebSocketEventTarget, Channel {
   _type_WebSocket: boolean;
 }
 export type WebSocketOpenEvent = {};
@@ -3997,7 +3977,7 @@ export interface PageEventTarget {
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
 }
-export interface PageChannel extends PageEventTarget, EventTargetChannel {
+export interface PageChannel extends PageEventTarget, Channel {
   _type_Page: boolean;
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
@@ -5139,7 +5119,7 @@ export type DebuggerInitializer = {};
 export interface DebuggerEventTarget {
   on(event: 'pausedStateChanged', callback: (params: DebuggerPausedStateChangedEvent) => void): this;
 }
-export interface DebuggerChannel extends DebuggerEventTarget, EventTargetChannel {
+export interface DebuggerChannel extends DebuggerEventTarget, Channel {
   _type_Debugger: boolean;
   requestPause(params?: DebuggerRequestPauseParams, progress?: Progress): Promise<DebuggerRequestPauseResult>;
   resume(params?: DebuggerResumeParams, progress?: Progress): Promise<DebuggerResumeResult>;
@@ -5394,7 +5374,7 @@ export interface WorkerEventTarget {
   on(event: 'console', callback: (params: WorkerConsoleEvent) => void): this;
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
 }
-export interface WorkerChannel extends WorkerEventTarget, EventTargetChannel {
+export interface WorkerChannel extends WorkerEventTarget, Channel {
   _type_Worker: boolean;
   disconnect(params: WorkerDisconnectParams, progress?: Progress): Promise<WorkerDisconnectResult>;
   evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;

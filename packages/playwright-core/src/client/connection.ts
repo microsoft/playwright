@@ -192,6 +192,9 @@ export class Connection extends EventEmitter {
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
     this._platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
+    // Fire-and-forget: server intentionally never replies to __waitInfo__.
+    if (method === '__waitInfo__')
+      return;
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, title: options.title, type, method }));
   }
 

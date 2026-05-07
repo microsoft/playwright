@@ -15,8 +15,6 @@
 Worker:
   type: interface
 
-  extends: EventTarget
-
   initializer:
     url: string
 

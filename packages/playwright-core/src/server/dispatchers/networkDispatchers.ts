@@ -175,7 +175,6 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
 }
 
 export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketChannel, PageDispatcher> implements channels.WebSocketChannel {
-  _type_EventTarget = true;
   _type_WebSocket = true;
 
   constructor(scope: PageDispatcher, webSocket: WebSocket) {

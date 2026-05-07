@@ -23,7 +23,6 @@ import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 
 export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerChannel, BrowserContextDispatcher> implements channels.DebuggerChannel {
-  _type_EventTarget = true;
   _type_Debugger = true;
 
   static from(scope: BrowserContextDispatcher, debugger_: Debugger): DebuggerDispatcher {

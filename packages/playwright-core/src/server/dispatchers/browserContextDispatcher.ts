@@ -51,7 +51,6 @@ import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '@isomorphic/urlMatch';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
-  _type_EventTarget = true;
   _type_BrowserContext = true;
   private _context: BrowserContext;
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();

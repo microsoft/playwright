@@ -52,7 +52,6 @@ import type { ScreencastFrame } from '../types';
 import type { ScreencastClient } from '../screencast';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
-  _type_EventTarget = true;
   _type_Page = true;
   private _page: Page;
   _subscriptions = new Set<channels.PageUpdateSubscriptionParams['event']>();
@@ -490,7 +489,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
 export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher | BrowserTypeDispatcher> implements channels.WorkerChannel {
   _type_Worker = true;
-  _type_EventTarget = true;
 
   readonly _subscriptions = new Set<channels.WorkerUpdateSubscriptionParams['event']>();
 
