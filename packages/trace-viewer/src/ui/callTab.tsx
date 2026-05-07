@@ -32,7 +32,7 @@ export const CallTab: React.FunctionComponent<{
   startTimeOffset: number,
   sdkLanguage: Language | undefined,
 }> = ({ action, startTimeOffset, sdkLanguage }) => {
-  // We never need the waitForEventInfo (`info`).
+  // Legacy: filter out the waitForEventInfo `info` param from older traces.
   const paramKeys = React.useMemo(() => Object.keys(action?.params ?? {}).filter(name => name !== 'info'), [action]);
 
   if (!action)

@@ -15,8 +15,6 @@
 BrowserContext:
   type: interface
 
-  extends: EventTarget
-
   initializer:
     debugger: Debugger
     requestContext: APIRequestContext

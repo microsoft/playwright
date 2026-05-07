@@ -1080,6 +1080,13 @@ scheme.Metadata = tObject({
   title: tOptional(tString),
   internal: tOptional(tBoolean),
   stepId: tOptional(tString),
+  wait: tOptional(tObject({
+    waitId: tString,
+    phase: tEnum(['before', 'after', 'log']),
+    event: tOptional(tString),
+    message: tOptional(tString),
+    error: tOptional(tString),
+  })),
 });
 scheme.ClientSideCallMetadata = tObject({
   id: tInt,
@@ -1089,29 +1096,6 @@ scheme.SDKLanguage = tEnum(['javascript', 'python', 'java', 'csharp']);
 scheme.DisposableInitializer = tOptional(tObject({}));
 scheme.DisposableDisposeParams = tOptional(tObject({}));
 scheme.DisposableDisposeResult = tOptional(tObject({}));
-scheme.EventTargetInitializer = tOptional(tObject({}));
-scheme.EventTargetWaitForEventInfoParams = tObject({
-  info: tObject({
-    waitId: tString,
-    phase: tEnum(['before', 'after', 'log']),
-    event: tOptional(tString),
-    message: tOptional(tString),
-    error: tOptional(tString),
-  }),
-});
-scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.DebuggerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.WorkerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
-scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.DebuggerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.WorkerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,

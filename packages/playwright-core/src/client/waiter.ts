@@ -18,7 +18,6 @@ import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { TimeoutError } from './errors';
 
 import type { ChannelOwner } from './channelOwner';
-import type * as channels from '@protocol/channels';
 import type { EventEmitter } from 'events';
 import type { Zone } from '@isomorphic/platform';
 
@@ -27,25 +26,23 @@ export class Waiter {
   private _failures: Promise<any>[] = [];
   private _immediateError?: Error;
   private _logs: string[] = [];
-  private _channelOwner: ChannelOwner<channels.EventTargetChannel>;
+  private _channelOwner: ChannelOwner;
   private _waitId: string;
   private _error: string | undefined;
   private _savedZone: Zone;
 
-  constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  constructor(channelOwner: ChannelOwner, event: string) {
     this._waitId = channelOwner._platform.createGuid();
     this._channelOwner = channelOwner;
     this._savedZone = channelOwner._platform.zones.current().pop();
 
-    this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
+    this._channelOwner._connection.sendWaitMessage(this._channelOwner, { waitId: this._waitId, phase: 'before', event });
     this._dispose = [
-      () => this._channelOwner._wrapApiCall(async () => {
-        await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'after', error: this._error } });
-      }, { internal: true }).catch(() => {}),
+      () => this._channelOwner._connection.sendWaitMessage(this._channelOwner, { waitId: this._waitId, phase: 'after', error: this._error }),
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  static createForEvent(channelOwner: ChannelOwner, event: string) {
     return new Waiter(channelOwner, event);
   }
 
@@ -95,9 +92,7 @@ export class Waiter {
 
   log(s: string) {
     this._logs.push(s);
-    this._channelOwner._wrapApiCall(async () => {
-      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } });
-    }, { internal: true }).catch(() => {});
+    this._channelOwner._connection.sendWaitMessage(this._channelOwner, { waitId: this._waitId, phase: 'log', message: s });
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {

@@ -430,8 +430,6 @@ BindingCall:
 Debugger:
   type: interface
 
-  extends: EventTarget
-
   commands:
 
     requestPause:

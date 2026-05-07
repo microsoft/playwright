@@ -386,7 +386,7 @@ test('should report error from beforeAll timeout', async ({ runInlineTest }) => 
   expect(result.output).toContain(`8 |           page.getByText('More missing').textContent(),`);
 });
 
-test('should not report waitForEventInfo as pending', async ({ runInlineTest }) => {
+test('should not report waits as pending', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

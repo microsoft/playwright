@@ -44,7 +44,6 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChann
 }
 
 export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceChannel, AndroidDispatcher> implements channels.AndroidDeviceChannel {
-  _type_EventTarget = true;
   _type_AndroidDevice = true;
 
   static from(scope: AndroidDispatcher, device: AndroidDevice): AndroidDeviceDispatcher {

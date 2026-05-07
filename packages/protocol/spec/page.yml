@@ -15,8 +15,6 @@
 Page:
   type: interface
 
-  extends: EventTarget
-
   initializer:
     mainFrame: Frame
     viewportSize:

@@ -25,6 +25,22 @@ Metadata:
     internal: boolean?
     # Test runner step id.
     stepId: string?
+    # Set when the message represents a "wait for event" phase (before/log/after)
+    # rather than a method call. The dispatcher routes on this and ignores the
+    # method/params fields.
+    wait:
+      type: object?
+      properties:
+        waitId: string
+        phase:
+          type: enum
+          literals:
+          - before
+          - after
+          - log
+        event: string?
+        message: string?
+        error: string?
 
 ClientSideCallMetadata:
   type: object
@@ -50,25 +66,3 @@ Disposable:
     dispose:
       internal: true
 
-EventTarget:
-  type: interface
-
-  commands:
-    waitForEventInfo:
-      title: Wait for event "{info.event}"
-      parameters:
-        info:
-          type: object
-          properties:
-            waitId: string
-            phase:
-              type: enum
-              literals:
-              - before
-              - after
-              - log
-            event: string?
-            message: string?
-            error: string?
-      flags:
-        snapshot: true

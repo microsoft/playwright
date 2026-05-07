@@ -170,10 +170,6 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
       objects: Array.from(this._dispatchers.values()).map(o => o._debugScopeState()),
     };
   }
-
-  async waitForEventInfo(): Promise<void> {
-    // Instrumentation takes care of this.
-  }
 }
 
 export type DispatcherScope = Dispatcher<SdkObject, any, any>;
@@ -300,19 +296,33 @@ export class DispatcherConnection {
 
   async dispatch(message: object) {
     const { id, guid, method, params, metadata } = message as any;
+
+    let validMetadata: channels.Metadata;
+    try {
+      validMetadata = metadataValidator(metadata, '', this._validatorFromWireContext());
+    } catch (e) {
+      this.onmessage({ id, error: serializeError(e) });
+      return;
+    }
+
+    if (validMetadata.wait) {
+      // Wait messages are fire-and-forget; the helper handles missing dispatchers itself.
+      await this._handleWait(id, guid, validMetadata);
+      return;
+    }
+
     const dispatcher = this._dispatcherByGuid.get(guid);
     if (!dispatcher) {
       this.onmessage({ id, error: serializeError(new TargetClosedError(undefined)) });
       return;
     }
 
+    const sdkObject = dispatcher._object;
+
     let validParams: any;
-    let validMetadata: channels.Metadata;
     try {
       const validator = findValidator(dispatcher._type, method, 'Params');
-      const validatorContext = this._validatorFromWireContext();
-      validParams = validator(params, '', validatorContext);
-      validMetadata = metadataValidator(metadata, '', validatorContext);
+      validParams = validator(params, '', this._validatorFromWireContext());
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
     } catch (e) {
@@ -327,7 +337,6 @@ export class DispatcherConnection {
       validMetadata.internal = true;
     }
 
-    const sdkObject = dispatcher._object;
     const callMetadata: CallMetadata = {
       id: `call@${id}`,
       location: validMetadata.location,
@@ -344,33 +353,6 @@ export class DispatcherConnection {
       params: params || {},
       log: [],
     };
-
-    if (params?.info?.waitId) {
-      // Process logs for waitForNavigation/waitForLoadState/etc.
-      const info = params.info;
-      switch (info.phase) {
-        case 'before': {
-          this._waitOperations.set(info.waitId, callMetadata);
-          await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
-          this.onmessage({ id });
-          return;
-        } case 'log': {
-          const originalMetadata = this._waitOperations.get(info.waitId)!;
-          originalMetadata.log.push(info.message);
-          sdkObject.instrumentation.onCallLog(sdkObject, originalMetadata, 'api', info.message);
-          this.onmessage({ id });
-          return;
-        } case 'after': {
-          const originalMetadata = this._waitOperations.get(info.waitId)!;
-          originalMetadata.endTime = monotonicTime();
-          originalMetadata.error = info.error ? { error: { name: 'Error', message: info.error } } : undefined;
-          this._waitOperations.delete(info.waitId);
-          await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata);
-          this.onmessage({ id });
-          return;
-        }
-      }
-    }
 
     await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
     const response: any = { id };
@@ -406,6 +388,57 @@ export class DispatcherConnection {
     if (response.error)
       response.log = compressCallLog(callMetadata.log);
     this.onmessage(response);
+  }
+
+  private async _handleWait(id: number, guid: string, validMetadata: channels.Metadata): Promise<void> {
+    // Wait messages do not invoke a method on the dispatcher; they only feed
+    // before/log/after phases of a wait operation into instrumentation.
+    // They are fire-and-forget: the client does not expect a reply, so we bail
+    // silently when state we need is missing (e.g., dispatcher disposed mid-wait).
+    const dispatcher = this._dispatcherByGuid.get(guid);
+    if (!dispatcher)
+      return;
+    const sdkObject = dispatcher._object;
+    const wait = validMetadata.wait!;
+    switch (wait.phase) {
+      case 'before': {
+        const callMetadata: CallMetadata = {
+          id: `call@${id}`,
+          location: validMetadata.location,
+          title: validMetadata.title || (wait.event ? `Wait for event "${wait.event}"` : undefined),
+          internal: validMetadata.internal,
+          stepId: validMetadata.stepId,
+          objectId: sdkObject.guid,
+          pageId: sdkObject.attribution?.page?.guid,
+          frameId: sdkObject.attribution?.frame?.guid,
+          startTime: monotonicTime(),
+          endTime: 0,
+          type: dispatcher._type,
+          method: 'waitForEvent',
+          params: {},
+          log: [],
+        };
+        this._waitOperations.set(wait.waitId, callMetadata);
+        await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
+        return;
+      } case 'log': {
+        const originalMetadata = this._waitOperations.get(wait.waitId);
+        if (!originalMetadata || wait.message === undefined)
+          return;
+        originalMetadata.log.push(wait.message);
+        sdkObject.instrumentation.onCallLog(sdkObject, originalMetadata, 'api', wait.message);
+        return;
+      } case 'after': {
+        const originalMetadata = this._waitOperations.get(wait.waitId);
+        if (!originalMetadata)
+          return;
+        originalMetadata.endTime = monotonicTime();
+        originalMetadata.error = wait.error ? { error: { name: 'Error', message: wait.error } } : undefined;
+        this._waitOperations.delete(wait.waitId);
+        await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata);
+        return;
+      }
+    }
   }
 
   private async _doSlowMo(sdkObject: SdkObject): Promise<void> {

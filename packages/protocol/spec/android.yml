@@ -49,8 +49,6 @@ AndroidSocket:
 AndroidDevice:
   type: interface
 
-  extends: EventTarget
-
   initializer:
     model: string
     serial: string

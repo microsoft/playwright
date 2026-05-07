@@ -283,8 +283,6 @@ RemoteAddr:
 WebSocket:
   type: interface
 
-  extends: EventTarget
-
   initializer:
     url: string
 

@@ -168,7 +168,7 @@ export class Connection extends EventEmitter {
       this._tracingCount--;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], stepId?: string }): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], stepId?: string, wait?: channels.Metadata['wait'], noReply?: boolean }): Promise<any> {
     if (this._closedError)
       throw this._closedError;
     if (object._wasCollected)
@@ -183,13 +183,28 @@ export class Connection extends EventEmitter {
       this._platform.log('channel', 'SEND> ' + JSON.stringify(message));
     }
     const location = options.frames?.[0] ? { file: options.frames[0].file, line: options.frames[0].line, column: options.frames[0].column } : undefined;
-    const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, stepId: options.stepId };
+    const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, stepId: options.stepId, wait: options.wait };
     if (this._tracingCount && options.frames && type !== 'LocalUtils')
       this._localUtils?.addStackToTracingNoReply({ callData: { stack: options.frames ?? [], id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
     this._platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
+    if (options.noReply)
+      return;
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, title: options.title, type, method }));
+  }
+
+  sendWaitMessage(object: ChannelOwner, wait: NonNullable<channels.Metadata['wait']>): void {
+    // Wait messages are fire-and-forget: the server consumes them via metadata.wait
+    // and never replies. Empty `method` keeps the wire frame uniform with normal calls.
+    const apiZone = this._platform.zones.current().data<{ frames?: channels.StackFrame[], stepId?: string, title?: string }>();
+    this.sendMessageToServer(object, '', {}, {
+      title: apiZone?.title,
+      frames: apiZone?.frames,
+      stepId: apiZone?.stepId,
+      wait,
+      noReply: true,
+    }).catch(() => {});
   }
 
   private _validatorFromWireContext(): ValidatorContext {
