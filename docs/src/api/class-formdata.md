@@ -114,7 +114,7 @@ Field name.
 
 ### param: FormData.append.value
 * since: v1.44
-- `value` <[string]|[boolean]|[int]|[Path]|[Object]>
+- `value` <[string]|[boolean]|[int]|[path]|[Object]>
   - alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
@@ -215,7 +215,7 @@ Field name.
 
 ### param: FormData.set.value
 * since: v1.18
-- `value` <[string]|[boolean]|[int]|[Path]|[Object]>
+- `value` <[string]|[boolean]|[int]|[path]|[Object]>
   - alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
