@@ -8,23 +8,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.60
 
-### 📦 Standalone Electron package
-
-Electron support has moved into a dedicated [`@playwright/electron`](https://www.npmjs.com/package/@playwright/electron) package. The `_electron` import from `playwright` still works, but the new package ships its own test runner integration with `app`, `context`, and `page` fixtures:
-
-```js
-// example.spec.ts
-import { test, expect } from '@playwright/electron';
-
-test.use({ appOptions: { args: ['main.js'] } });
-
-test('launches the app', async ({ page }) => {
-  await expect(page).toHaveTitle(/My App/);
-});
-```
-
-[`method: ElectronApplication.close`] now accepts a `timeout` option that force-kills the underlying process if it does not exit cleanly — useful for apps with `before-quit` handlers or leaky IPC.
-
 ### 🌐 HAR recording on Tracing
 
 [`method: Tracing.startHar`] / [`method: Tracing.stopHar`] expose HAR recording as a first-class tracing API, with the same `content`, `mode` and `urlFilter` options as `recordHar`. The returned [Disposable] makes it easy to scope a recording with `await using`:
@@ -112,7 +95,6 @@ test('does not publish to the shared page', async ({ page }) => {
 
 ### Breaking Changes ⚠️
 
-- [`method: BrowserType.launchServer`] and the `playwright run-server` CLI now default to `localhost` instead of `0.0.0.0`. Pass `host: '0.0.0.0'` (or another address) explicitly to accept connections from the network — be aware this exposes the browser RPC.
 - Removed long-deprecated APIs:
   - `Locator.ariaRef()` — use the standard [`method: Locator.ariaSnapshot`] pipeline.
   - `handle` option on `BrowserContext.exposeBinding` and `Page.exposeBinding`.
