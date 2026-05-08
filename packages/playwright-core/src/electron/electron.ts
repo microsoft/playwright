@@ -180,7 +180,7 @@ export class Electron implements api.Electron {
       const chromeMatch = await Promise.race([chromeMatchPromise, waitForXserverError]);
       const browser = await chromium.connectOverCDP(chromeMatch[1], { timeout: progress.timeUntilDeadline(), isLocal: true });
 
-      app = new ElectronApplication(worker, browser, launchedProcess, kill);
+      app = new ElectronApplication(worker, browser, launchedProcess);
       await progress.race(app._initialize());
       return app;
     } catch (error) {
@@ -194,13 +194,12 @@ export class ElectronApplication extends EventEmitter implements api.ElectronApp
   private _worker: Worker;
   private _browser: Browser;
   private _process: childProcess.ChildProcess;
-  private _kill: () => Promise<void>;
   private _context: BrowserContext;
   private _windows = new Map<Page, JSHandle<BrowserWindow> | undefined>();
   private _appHandlePromise = new ManualPromise<JSHandle<ElectronAppType>>();
   private _closedPromise: Promise<void> | undefined;
 
-  constructor(worker: Worker, browser: Browser, process: childProcess.ChildProcess, kill: () => Promise<void>) {
+  constructor(worker: Worker, browser: Browser, process: childProcess.ChildProcess) {
     super();
 
     this._worker = worker;
@@ -215,7 +214,6 @@ export class ElectronApplication extends EventEmitter implements api.ElectronApp
     this._context.close = () => this.close();
 
     this._process = process;
-    this._kill = kill;
   }
 
   _onClose() {
@@ -251,24 +249,13 @@ export class ElectronApplication extends EventEmitter implements api.ElectronApp
     await this.close();
   }
 
-  async close(options: { timeout?: number } = {}) {
+  async close() {
     if (!this._closedPromise) {
       this._closedPromise = new Promise<void>(f => this.once(Events.ElectronApplication.Close, f));
       await this._browser.close();
       const appHandle = await this._appHandlePromise;
       await appHandle.evaluate(({ app }) => app.quit()).catch(() => {});
       await this._worker._disconnect();
-    }
-    if (options.timeout) {
-      let timer: NodeJS.Timeout | undefined;
-      const timedOut = new Promise<boolean>(resolve => {
-        timer = setTimeout(() => resolve(true), options.timeout);
-      });
-      const exited = this._closedPromise.then(() => false);
-      const didTimeout = await Promise.race([exited, timedOut]);
-      clearTimeout(timer);
-      if (didTimeout)
-        await this._kill();
     }
     await this._closedPromise;
   }

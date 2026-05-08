@@ -69,32 +69,6 @@ test('should fire close event when the app quits itself', async ({ launchElectro
   expect([...events].sort()).toEqual(['application(close)', 'context(close)', 'process(exit)']);
 });
 
-test('should force-kill the app when close timeout fires', async ({ launchElectronApp }) => {
-  const electronApp = await launchElectronApp('electron-app-hang-on-close.js');
-  const events = [];
-  electronApp.on('close', () => events.push('application(close)'));
-  electronApp.process().on('exit', () => events.push('process(exit)'));
-  const start = Date.now();
-  await electronApp.close({ timeout: 1000 });
-  const elapsed = Date.now() - start;
-  // Should not wait much longer than the timeout itself.
-  expect(elapsed).toBeLessThan(10000);
-  expect([...events].sort()).toEqual(['application(close)', 'process(exit)']);
-  // A second call should be a noop and not throw.
-  await electronApp.close({ timeout: 1000 });
-});
-
-test('should not force-kill the app when close completes within timeout', async ({ launchElectronApp }) => {
-  const electronApp = await launchElectronApp('electron-app.js');
-  const events = [];
-  electronApp.on('close', () => events.push('application(close)'));
-  electronApp.process().on('exit', code => events.push(`process(exit:${code})`));
-  await electronApp.close({ timeout: 30000 });
-  expect(events).toContain('application(close)');
-  // Exit code 0 indicates a graceful shutdown (force-kill would yield null).
-  expect(events).toContain('process(exit:0)');
-});
-
 test('should fire console events', async ({ launchElectronApp }) => {
   const electronApp = await launchElectronApp('electron-app.js');
   const messages = [];

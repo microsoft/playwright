@@ -85,16 +85,6 @@ Page to retrieve the window for.
 
 Closes Electron application.
 
-### option: ElectronApplication.close.timeout
-* since: v1.60
-- `timeout` <[float]>
-
-Maximum time in milliseconds to wait for the Electron application to gracefully close before forcefully terminating it.
-By default, [`method: ElectronApplication.close`] waits indefinitely for the application to exit, which can hang if the
-app has `before-quit` handlers that prevent shutdown, leaky IPC handlers, or child processes that keep it alive. When
-specified, the underlying process is force-killed (SIGKILL on POSIX, `taskkill /T /F` on Windows) if it does not exit
-within the given timeout.
-
 ## method: ElectronApplication.context
 * since: v1.9
 - returns: <[BrowserContext]>
