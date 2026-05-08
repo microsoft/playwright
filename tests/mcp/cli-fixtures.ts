@@ -82,7 +82,10 @@ export const test = baseTest.extend<{
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      const result = await test.step(
+          `cli ${cliArgs.join(' ')}`,
+          () => runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless })
+      );
       if (result.daemonPid)
         allPids.push(result.daemonPid);
       if (result.dashboardPid)
