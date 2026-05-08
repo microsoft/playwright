@@ -237,17 +237,28 @@ export async function program(options?: { embedderVersion?: string}) {
         return;
       }
       const readyStream = (child.stdio as unknown as Readable[])[3];
-      await new Promise<void>((resolve, reject) => {
-        const settle = (err?: Error) => {
-          clearTimeout(timer);
-          readyStream.destroy();
-          err ? reject(err) : resolve();
-        };
-        const timer = setTimeout(() => settle(new Error('Dashboard daemon did not signal READY within 60s')), 60_000);
-        readyStream.once('data', () => settle());
-        readyStream.once('error', err => settle(err));
-        child.once('exit', (code, signal) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY`)));
-      });
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const settle = (err?: Error) => {
+            clearTimeout(timer);
+            readyStream.destroy();
+            if (err)
+              reject(err);
+            else
+              resolve();
+          };
+          const timer = setTimeout(() => settle(new Error('Dashboard daemon did not spin up within 60s, killing it')), 60_000);
+          readyStream.once('data', () => settle());
+          readyStream.once('error', err => settle(err));
+          child.once('exit', (code, signal) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY`)));
+        });
+      } catch (err) {
+        if (child.exitCode === null && child.signalCode === null) {
+          child.kill('SIGKILL');
+          await new Promise<void>(resolve => child.once('exit', () => resolve()));
+        }
+        throw err;
+      }
       child.unref();
       output.show(sessionName, child.pid);
       return;
