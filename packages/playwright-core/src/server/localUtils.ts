@@ -204,6 +204,8 @@ export async function tracingStarted(progress: Progress, stackSessions: Map<stri
   let tmpDir = undefined;
   if (!params.tracesDir)
     tmpDir = await progress.race(fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-')));
+  else
+    await progress.race(fs.promises.mkdir(params.tracesDir, { recursive: true }));
   const traceStacksFile = path.join(params.tracesDir || tmpDir!, params.traceName + '.stacks');
   stackSessions.set(traceStacksFile, { callStacks: [], file: traceStacksFile, writer: Promise.resolve(), tmpDir, live: params.live });
   return { stacksId: traceStacksFile };
