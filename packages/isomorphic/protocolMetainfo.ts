@@ -268,6 +268,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Page.keyboardInsertText', { title: 'Insert "{text}"', slowMo: true, snapshot: true, pause: true, input: true, }],
   ['Page.keyboardType', { title: 'Type "{text}"', slowMo: true, snapshot: true, pause: true, input: true, }],
   ['Page.keyboardPress', { title: 'Press "{key}"', slowMo: true, snapshot: true, pause: true, input: true, }],
+  ['Page.keyboardPressSequence', { title: 'Press sequence', slowMo: true, snapshot: true, pause: true, input: true, }],
   ['Page.mouseMove', { title: 'Mouse move', slowMo: true, snapshot: true, pause: true, input: true, }],
   ['Page.mouseDown', { title: 'Mouse down', slowMo: true, snapshot: true, pause: true, input: true, }],
   ['Page.mouseUp', { title: 'Mouse up', slowMo: true, snapshot: true, pause: true, input: true, }],

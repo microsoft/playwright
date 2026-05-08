@@ -284,6 +284,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.keyboard.apiPress(progress, params.key, params);
   }
 
+  async keyboardPressSequence(params: channels.PageKeyboardPressSequenceParams, progress: Progress): Promise<void> {
+    await this._page.keyboard.apiPressSequence(progress, params.keys, params);
+  }
+
   async clearConsoleMessages(params: channels.PageClearConsoleMessagesParams, progress: Progress): Promise<channels.PageClearConsoleMessagesResult> {
     this._page.clearConsoleMessages();
   }

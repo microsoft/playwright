@@ -299,6 +299,64 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
+## async method: Keyboard.pressSequence
+* since: v1.61
+
+Presses each key in the [`param: keys`] array sequentially. Each key press is equivalent to calling
+[`method: Keyboard.press`] for that key. When [`option: delay`] is specified, there is a pause between
+consecutive key presses.
+
+Unlike calling [`method: Keyboard.press`] in a loop, this method sends the entire sequence in a single
+protocol message, reducing round-trip overhead when multiple keys need to be pressed in quick succession.
+
+[`param: keys`] entries follow the same format as [`method: Keyboard.press`], including modifier shortcuts
+like `"Control+A"`.
+
+**Usage**
+
+```js
+// Keyboard-based drag: grab, move down twice, drop
+await page.keyboard.pressSequence(['Space', 'ArrowDown', 'ArrowDown', 'Space'], { delay: 100 });
+
+// Select all and delete
+await page.keyboard.pressSequence(['ControlOrMeta+A', 'Backspace']);
+```
+
+```java
+// Keyboard-based drag: grab, move down twice, drop
+page.keyboard().pressSequence(Arrays.asList("Space", "ArrowDown", "ArrowDown", "Space"),
+    new Keyboard.PressSequenceOptions().setDelay(100));
+```
+
+```python async
+# Keyboard-based drag: grab, move down twice, drop
+await page.keyboard.press_sequence(["Space", "ArrowDown", "ArrowDown", "Space"], delay=100)
+```
+
+```python sync
+# Keyboard-based drag: grab, move down twice, drop
+page.keyboard.press_sequence(["Space", "ArrowDown", "ArrowDown", "Space"], delay=100)
+```
+
+```csharp
+// Keyboard-based drag: grab, move down twice, drop
+await page.Keyboard.PressSequenceAsync(
+    new[] { "Space", "ArrowDown", "ArrowDown", "Space" },
+    new() { Delay = 100 });
+```
+
+### param: Keyboard.pressSequence.keys
+* since: v1.61
+- `keys` <[Array]<[string]>>
+
+Array of key names to press sequentially. Each key follows the same format as [`method: Keyboard.press`].
+
+### option: Keyboard.pressSequence.delay
+* since: v1.61
+- `delay` <[float]>
+
+Time to wait between consecutive key presses in milliseconds. Defaults to 0.
+
 ## async method: Keyboard.type
 * since: v1.8
 

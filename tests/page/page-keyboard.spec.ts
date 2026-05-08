@@ -757,3 +757,83 @@ it('should close dialog on Escape key press in contenteditable', {
   await expect(dialog).toHaveJSProperty('open', false);
   await expect(widget).not.toBeVisible();
 });
+
+it('pressSequence should press keys in order', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.type('Hello World!');
+  // Select all and delete using pressSequence
+  await page.keyboard.pressSequence(['ControlOrMeta+A', 'Backspace']);
+  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('');
+});
+
+it('pressSequence should respect delay between keys', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.type('Hello');
+  const startTime = Date.now();
+  await page.keyboard.pressSequence(['ArrowLeft', 'ArrowLeft', 'ArrowLeft'], { delay: 100 });
+  const elapsed = Date.now() - startTime;
+  // 3 keys with delay=100 between them means 2 delays = at least 200ms
+  expect(elapsed).toBeGreaterThanOrEqual(150);
+  await page.keyboard.type('_');
+  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('He_llo');
+});
+
+it('pressSequence should work with empty array', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.type('Hello');
+  // Empty array should be a no-op
+  await page.keyboard.pressSequence([]);
+  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('Hello');
+});
+
+it('pressSequence should work with single key', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.pressSequence(['a']);
+  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('a');
+});
+
+it('pressSequence should handle modifier combinations', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.type('abcdef');
+  // Move to beginning, select 3 chars, delete
+  await page.keyboard.pressSequence(['Home', 'Shift+ArrowRight', 'Shift+ArrowRight', 'Shift+ArrowRight', 'Backspace']);
+  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('def');
+});
+
+it('pressSequence should produce correct key events', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+    (window as any).events = [];
+    textarea.addEventListener('keydown', e => (window as any).events.push('down:' + e.key));
+    textarea.addEventListener('keyup', e => (window as any).events.push('up:' + e.key));
+  });
+  await page.keyboard.pressSequence(['a', 'b', 'c']);
+  const events = await page.evaluate(() => (window as any).events);
+  expect(events).toEqual([
+    'down:a', 'up:a',
+    'down:b', 'up:b',
+    'down:c', 'up:c',
+  ]);
+});

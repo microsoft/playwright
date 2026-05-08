@@ -3845,6 +3845,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   keyboardInsertText(params: PageKeyboardInsertTextParams, progress?: Progress): Promise<PageKeyboardInsertTextResult>;
   keyboardType(params: PageKeyboardTypeParams, progress?: Progress): Promise<PageKeyboardTypeResult>;
   keyboardPress(params: PageKeyboardPressParams, progress?: Progress): Promise<PageKeyboardPressResult>;
+  keyboardPressSequence(params: PageKeyboardPressSequenceParams, progress?: Progress): Promise<PageKeyboardPressSequenceResult>;
   mouseMove(params: PageMouseMoveParams, progress?: Progress): Promise<PageMouseMoveResult>;
   mouseDown(params: PageMouseDownParams, progress?: Progress): Promise<PageMouseDownResult>;
   mouseUp(params: PageMouseUpParams, progress?: Progress): Promise<PageMouseUpResult>;
@@ -4212,6 +4213,14 @@ export type PageKeyboardPressOptions = {
   delay?: number,
 };
 export type PageKeyboardPressResult = void;
+export type PageKeyboardPressSequenceParams = {
+  keys: string[],
+  delay?: number,
+};
+export type PageKeyboardPressSequenceOptions = {
+  delay?: number,
+};
+export type PageKeyboardPressSequenceResult = void;
 export type PageMouseMoveParams = {
   x: number,
   y: number,

@@ -2387,6 +2387,11 @@ scheme.PageKeyboardPressParams = tObject({
   delay: tOptional(tFloat),
 });
 scheme.PageKeyboardPressResult = tOptional(tObject({}));
+scheme.PageKeyboardPressSequenceParams = tObject({
+  keys: tArray(tString),
+  delay: tOptional(tFloat),
+});
+scheme.PageKeyboardPressSequenceResult = tOptional(tObject({}));
 scheme.PageMouseMoveParams = tObject({
   x: tFloat,
   y: tFloat,

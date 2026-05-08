@@ -19606,6 +19606,43 @@ export interface Keyboard {
   }): Promise<void>;
 
   /**
+   * Presses each key in the
+   * [`keys`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-sequence-option-keys) array sequentially.
+   * Each key press is equivalent to calling
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press) for that key. When
+   * [`delay`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-sequence-option-delay) is specified, there
+   * is a pause between consecutive key presses.
+   *
+   * Unlike calling [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press) in a
+   * loop, this method sends the entire sequence in a single protocol message, reducing round-trip overhead when
+   * multiple keys need to be pressed in quick succession.
+   *
+   * [`keys`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-sequence-option-keys) entries follow the
+   * same format as [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press),
+   * including modifier shortcuts like `"Control+A"`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Keyboard-based drag: grab, move down twice, drop
+   * await page.keyboard.pressSequence(['Space', 'ArrowDown', 'ArrowDown', 'Space'], { delay: 100 });
+   *
+   * // Select all and delete
+   * await page.keyboard.pressSequence(['ControlOrMeta+A', 'Backspace']);
+   * ```
+   *
+   * @param keys Array of key names to press sequentially. Each key follows the same format as
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
+   * @param options
+   */
+  pressSequence(keys: ReadonlyArray<string>, options?: {
+    /**
+     * Time to wait between consecutive key presses in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+  }): Promise<void>;
+
+  /**
    * **NOTE** In most cases, you should use
    * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
    * to press keys one by one if there is special keyboard handling on the page - in this case use
