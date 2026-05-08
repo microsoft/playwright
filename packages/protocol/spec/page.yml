@@ -318,7 +318,7 @@ Page:
         input: true
 
     keyboardPressSequence:
-      title: Press sequence
+      title: Press key sequence
       parameters:
         keys:
           type: array

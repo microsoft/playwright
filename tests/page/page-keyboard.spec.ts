@@ -820,6 +820,11 @@ it('pressSequence should handle modifier combinations', async ({ page }) => {
   expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('def');
 });
 
+it('pressSequence should throw on invalid key', async ({ page }) => {
+  const error = await page.keyboard.pressSequence(['a', 'FakeKeyThatDoesNotExist', 'b']).catch(e => e);
+  expect(error.message).toContain('Unknown key');
+});
+
 it('pressSequence should produce correct key events', async ({ page }) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
