@@ -23,7 +23,6 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
 import { makeWaitForNextTask } from '@utils/task';
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
 import { TimeoutError } from './errors';
@@ -1453,7 +1452,6 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<ExpectResult> {
-    progress.log(`${renderTitleForCall(progress.metadata)}${options.timeoutForLogs ? ` with timeout ${options.timeoutForLogs}ms` : ''}`);
     const lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string } = { isSet: false };
     const fixupMetadataError = (result: ExpectResult) => {
       // Library mode special case for the expect errors which are return values, not exceptions.

@@ -16,6 +16,7 @@
 
 import yaml from 'yaml';
 import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { Frame } from '../frames';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -277,7 +278,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     if (params.expression === 'to.match.aria' && expectedValue)
       expectedValue = parseAriaSnapshotUnsafe(yaml, expectedValue);
-    const result = await this._frame.expect(progress, params.selector, { ...params, expectedValue, timeoutForLogs: params.timeout });
+    progress.log(`${renderTitleForCall(progress.metadata)}${params.timeout ? ` with timeout ${params.timeout}ms` : ''}`);
+    const result = await this._frame.expect(progress, params.selector, { ...params, expectedValue });
     const channelResult: channels.FrameExpectResult = {
       matches: result.matches,
       log: result.log,

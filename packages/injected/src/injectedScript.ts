@@ -47,7 +47,6 @@ import type { Builtins } from './utilityScript';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue' | 'timeout'> & {
   expectedValue?: any;
-  timeoutForLogs?: number;
   noAutoWaiting?: boolean;
 };
 

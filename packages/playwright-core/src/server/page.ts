@@ -22,7 +22,6 @@ import { getComparator } from '@utils/comparators';
 import { debugLogger } from '@utils/debugLogger';
 import { LongStandingScope } from '@isomorphic/manualPromise';
 import { assert } from '@isomorphic/assert';
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { trimStringWithEllipsis } from '@isomorphic/stringUtils';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { BrowserContext } from './browserContext';
@@ -739,7 +738,6 @@ export class Page extends SdkObject<PageEventMap> {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
-      progress.log(`${renderTitleForCall(progress.metadata)}${options.timeout ? ` with timeout ${options.timeout}ms` : ''}`);
       if (options.expected)
         progress.log(`  verifying given screenshot expectation`);
       else
