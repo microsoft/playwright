@@ -204,8 +204,10 @@ test('user-initiated annotate downloads zip with feedback.md', async ({ connectT
   await expect(dashboard.locator('.annotate-sidebar')).toBeVisible();
   await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
   // Wait until the in-flight (aborted) submit fully resolves and the button is re-enabled,
-  // otherwise installing the next picker mid-flight would race.
-  await expect(dashboard.getByRole('button', { name: 'Submit', exact: true })).toBeEnabled();
+  // otherwise installing the next picker mid-flight would race. The on-page work
+  // (PNG render + zip build + picker reject) can take longer than the default 5s
+  // poll on slow CI shards — see https://github.com/microsoft/playwright/actions/runs/25559486702.
+  await expect(dashboard.getByRole('button', { name: 'Submit', exact: true })).toBeEnabled({ timeout: 15000 });
 
   // Now install a capturing picker and submit for real.
   const awaitZipBytes = await installSaveFilePickerMock(dashboard);
