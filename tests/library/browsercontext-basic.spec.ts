@@ -69,8 +69,8 @@ it('should be able to click across browser contexts', async function({ browser }
   await page2.close();
 });
 
-it('should be able to hover across browser contexts in parallel', async function({ browser, browserName }) {
-  it.fixme(browserName === 'firefox');
+it('should be able to hover across browser contexts in parallel', async function({ browser, browserName, isBidi }) {
+  it.fixme(browserName === 'firefox' && !isBidi);
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40562' });
 
   const html = `
