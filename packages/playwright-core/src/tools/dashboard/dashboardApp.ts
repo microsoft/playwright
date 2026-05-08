@@ -358,6 +358,7 @@ export async function openDashboardApp() {
     });
   });
   await statePromise;
+  try { fs.writeSync(3, '.'); fs.closeSync(3); } catch {}
 }
 
 export async function openDashboardForContext(context: api.BrowserContext): Promise<void> {

@@ -54,6 +54,9 @@ export default defineConfig<TestOptions>({
   workers: undefined,
   reporter: reporters(),
   tag: process.env.PW_TAG,
+  // Persistent context launch (the MCP default) is genuinely slow on Windows;
+  // most tests in this suite use it.
+  timeout: process.platform === 'win32' ? 60000 : 30000,
   projects: [
     { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' }, testDir },
     { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },

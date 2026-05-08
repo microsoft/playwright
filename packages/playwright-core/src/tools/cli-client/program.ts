@@ -33,6 +33,7 @@ import { minimist } from './minimist';
 import type { ListData, ListedBrowser, Output } from './output';
 import type { ClientInfo, SessionFile } from './registry';
 import type { MinimistArgs } from './minimist';
+import type { Readable } from 'stream';
 
 type GlobalOptions = {
   help?: boolean;
@@ -229,12 +230,24 @@ export async function program(options?: { embedderVersion?: string}) {
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
-        stdio: foreground ? 'inherit' : 'ignore',
+        stdio: foreground ? 'inherit' : ['ignore', 'ignore', 'ignore', 'pipe'],
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
       }
+      const readyStream = (child.stdio as unknown as Readable[])[3];
+      await new Promise<void>((resolve, reject) => {
+        const settle = (err?: Error) => {
+          clearTimeout(timer);
+          readyStream.destroy();
+          err ? reject(err) : resolve();
+        };
+        const timer = setTimeout(() => settle(new Error('Dashboard daemon did not signal READY within 60s')), 60_000);
+        readyStream.once('data', () => settle());
+        readyStream.once('error', err => settle(err));
+        child.once('exit', (code, signal) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY`)));
+      });
       child.unref();
       output.show(sessionName, child.pid);
       return;
