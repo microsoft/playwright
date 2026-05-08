@@ -34,9 +34,7 @@ import { Frame } from './frames';
 import { Page } from './page';
 import { performAction } from './recorder/recorderRunner';
 
-import type { InputActionObserver } from './browserContext';
 import type { Language } from './codegen/types';
-import type { ElementHandle } from './dom';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Point } from '@isomorphic/types';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
@@ -75,7 +73,7 @@ export type RecorderEventMap = {
   [RecorderEvent.ContextClosed]: [];
 };
 
-export class Recorder extends EventEmitter<RecorderEventMap> implements InstrumentationListener, InputActionObserver {
+export class Recorder extends EventEmitter<RecorderEventMap> implements InstrumentationListener {
   readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
   private _params: RecorderParams;
@@ -151,7 +149,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._omitCallTracking = !!params.omitCallTracking;
     this._debugger = context.debugger();
     context.instrumentation.addListener(this, context);
-    context.addInputActionObserver(this);
 
     if (isUnderTest()) {
       // Most of our tests put elements at the top left, so get out of the way.
@@ -166,7 +163,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._context.once(BrowserContext.Events.Close, () => {
       eventsHelper.removeEventListeners(this._listeners);
       this._context.instrumentation.removeListener(this);
-      this._context.removeInputActionObserver(this);
       this.emit(RecorderEvent.ContextClosed);
     });
 
@@ -429,9 +425,9 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._updateCallLog([metadata]);
   }
 
-  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle, point?: Point): Promise<void> {
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: Point): Promise<void> {
     if (point)
-      this._actionPoints.set(progress.metadata.id, point);
+      this._actionPoints.set(metadata.id, point);
   }
 
   private _updateUserSources() {

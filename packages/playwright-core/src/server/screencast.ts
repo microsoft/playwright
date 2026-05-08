@@ -18,11 +18,11 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { debugLogger } from '@utils/debugLogger';
 import { Page } from './page';
+import { nullProgress } from './progress';
+import { ElementHandle } from './dom';
 
-import type { InputActionObserver } from './browserContext';
-import type { ElementHandle } from './dom';
+import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type * as types from './types';
-import type { Progress } from '@protocol/progress';
 
 export type ScreencastClient = {
   onFrame: (frame: types.ScreencastFrame) => Promise<void> | void;
@@ -40,7 +40,7 @@ type ActionOptions = {
   fontSize?: number,
 };
 
-export class Screencast implements InputActionObserver {
+export class Screencast implements InstrumentationListener {
   readonly page: Page;
   private _clients = new Map<ScreencastClient, ManualPromise<void>>();
   private _actions: ActionOptions | undefined;
@@ -49,7 +49,7 @@ export class Screencast implements InputActionObserver {
 
   constructor(page: Page) {
     this.page = page;
-    this.page.browserContext.addInputActionObserver(this);
+    this.page.instrumentation.addListener(this, this.page.browserContext);
   }
 
   async handlePageOrContextClose() {
@@ -65,7 +65,7 @@ export class Screencast implements InputActionObserver {
     for (const client of this._clients.keys())
       client.dispose();
     this._clients.clear();
-    this.page.browserContext.removeInputActionObserver(this);
+    this.page.instrumentation.removeListener(this);
   }
 
   showActions(options: ActionOptions) {
@@ -154,33 +154,34 @@ export class Screencast implements InputActionObserver {
     }
   }
 
-  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle, point?: types.Point, box?: types.Rect): Promise<void> {
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: types.Point, box?: types.Rect): Promise<void> {
     if (!this._actions)
       return;
 
-    const page = target instanceof Page ? target : target._page;
+    const page = sdkObject.attribution.page;
     if (page !== this.page)
       return;
 
-    if (!box && !(target instanceof Page))
-      box = await target.boundingBox(progress) || undefined;
+    if (!box && (sdkObject instanceof ElementHandle))
+      box = await sdkObject.boundingBox(nullProgress) || undefined;
 
-    const actionTitle = renderTitleForCall(progress.metadata);
-    const utility = await progress.race(page.mainFrame().utilityContext());
+    const actionTitle = renderTitleForCall(metadata);
+    const utility = await page.mainFrame().utilityContext();
 
-    await progress.race(utility.evaluate(async options => {
+    // Run this outside of the progress timer.
+    await utility.evaluate(async options => {
       const { injected, duration } = options;
       injected.setScreencastAnnotation(options);
       await new Promise(f => injected.utils.builtins.setTimeout(f, duration));
       injected.setScreencastAnnotation(null);
     }, {
-      injected: await progress.race(utility.injectedScript()),
+      injected: await utility.injectedScript(),
       duration: this._actions?.duration ?? 500,
       point,
       box,
       actionTitle,
       position: this._actions?.position,
       fontSize: this._actions?.fontSize,
-    }).catch(e => debugLogger.log('error', e)));
+    }).catch(e => debugLogger.log('error', e));
   }
 }

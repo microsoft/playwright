@@ -19,9 +19,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { SdkObject } from './instrumentation';
 import { BrowserContext } from './browserContext';
 
-import type { ElementHandle } from './dom';
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
-import type { Page } from './page';
 import type { Progress } from '@protocol/progress';
 
 const symbol = Symbol('Debugger');
@@ -44,7 +42,9 @@ export class Debugger extends SdkObject implements InstrumentationListener {
     super(context, 'debugger');
     this._context = context;
     (this._context as any)[symbol] = this;
-    context.instrumentation.addListener(this, context);
+    // Register as a last listener so the debugger pause runs after other listeners
+    // (e.g. recorder action-point capture) have recorded their state.
+    context.instrumentation.addListener(this, context, { order: 'last' });
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
     });
@@ -94,17 +94,13 @@ export class Debugger extends SdkObject implements InstrumentationListener {
       await this._pause(sdkObject, metadata);
   }
 
-  async onBeforeInputAction(progress: Progress, target: Page | ElementHandle): Promise<void> {
-    const metadata = progress.metadata;
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._muted || metadata.internal)
       return;
     const metainfo = getMetainfo(metadata);
     const pauseBeforeInput = !!this._pauseAt.next && !!metainfo?.pause && !!metainfo?.isAutoWaiting && !this._pauseBeforeWaitingActions;
-    if (pauseBeforeInput) {
-      // The debugger pause must block until explicitly resumed, regardless of progress timeout.
-      // eslint-disable-next-line progress/await-must-use-progress
-      await this._pause(target, metadata);
-    }
+    if (pauseBeforeInput)
+      await this._pause(sdkObject, metadata);
   }
 
   private async _pause(sdkObject: SdkObject, metadata: CallMetadata) {
