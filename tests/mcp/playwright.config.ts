@@ -54,6 +54,10 @@ export default defineConfig<TestOptions>({
   workers: undefined,
   reporter: reporters(),
   tag: process.env.PW_TAG,
+  timeout: process.platform === 'win32' ? 60000 : 30000,
+  expect: {
+    timeout: process.platform === 'win32' ? 10000 : 5000,
+  },
   projects: [
     { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' }, testDir },
     { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },
