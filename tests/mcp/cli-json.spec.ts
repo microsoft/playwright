@@ -204,8 +204,6 @@ test('request and per-part commands return JSON result', async ({ cli, server })
   const { output: list } = await cli('requests');
   const num = list.match(/^(\d+)\. \[POST\] [^ ]+\/api =>/m)![1];
 
-  console.error(list);
-
   expect(JSON.parse((await cli('--json', 'request-headers', num)).output).result).toContain('x-custom-header: test-value');
   expect(JSON.parse((await cli('--json', 'request-body', num)).output)).toEqual({ result: '{"key":"value"}' });
   expect(JSON.parse((await cli('--json', 'response-headers', num)).output).result).toContain('x-custom-response: response-value');
