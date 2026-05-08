@@ -34,6 +34,12 @@ test('close', async ({ cli, server }) => {
   expect(output).toContain(`Browser 'default' closed`);
 });
 
+test('preserves URL with & query params', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/403' } }, async ({ cli, server }) => {
+  const url = `${server.HELLO_WORLD}?a=1&b=2`;
+  const { output } = await cli('open', url);
+  expect(output).toContain(`Page URL: ${url}`);
+});
+
 test('click button', async ({ cli, server }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
 
