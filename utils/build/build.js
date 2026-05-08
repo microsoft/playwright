@@ -561,10 +561,6 @@ steps.push(new EsbuildStep({
     filePath('packages/playwright-core/src/entry/mcp.ts'),
     filePath('packages/playwright-core/src/entry/oopBrowserDownload.ts'),
 
-    // Electron loader — preloaded inside the Electron main process via `-r`.
-    // Self-contained (no @utils/@isomorphic imports) — emitted as a thin shim.
-    filePath('packages/playwright-core/src/electron/loader.ts'),
-
     // CLI client tools, should be a separate bundle.
     filePath('packages/playwright-core/src/tools/cli-client/*.ts'),
     filePath('packages/playwright-core/src/package.ts'),
