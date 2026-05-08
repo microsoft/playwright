@@ -245,7 +245,7 @@ export class AndroidDevice extends SdkObject {
       delete params.androidSelector;
     }
     const driver = await this._driver();
-    if (!driver)
+    if (!driver || this._isClosed)
       throw new Error('Device is closed');
     const id = ++this._lastId;
     const result = new Promise((fulfill, reject) => this._callbacks.set(id, { fulfill, reject }));
