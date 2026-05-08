@@ -61,6 +61,7 @@ test('should capture multiple screenshots in one annotation', async ({ connectTo
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.waitForLoadState('load');
   await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
 
   const annotatePromise = cli('show', '--annotate');
@@ -114,6 +115,7 @@ test('should abort annotation when last screenshot is removed', async ({ connect
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.waitForLoadState('load');
   await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
 
   const annotatePromise = cli('show', '--annotate');
@@ -153,6 +155,7 @@ test('should abort MCP annotation when last screenshot is removed', async ({ con
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
+    await dashboard.waitForLoadState('load');
     await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
 
     // Close the fullscreen overlay first so the sidebar remove button is accessible.
@@ -177,6 +180,7 @@ test('user-initiated annotate downloads zip with feedback.md', async ({ connectT
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.waitForLoadState('load');
   await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
 
   // Start with an aborting picker to verify cancellation keeps the session intact.
@@ -234,6 +238,7 @@ test('should capture annotations via show --annotate', async ({ connectToDashboa
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.waitForLoadState('load');
   await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
 
   const annotatePromise = cli('show', '--annotate');
@@ -259,6 +264,7 @@ test('should start dashboard and annotate when no dashboard is running', async (
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
+    await dashboard.waitForLoadState('load');
     await drawAndSubmitAnnotation(dashboard, 'hi');
   } finally {
     await browser.close().catch(() => {});
@@ -282,6 +288,7 @@ test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
+    await dashboard.waitForLoadState('load');
     await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
     await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
     await drawAndSubmitAnnotation(dashboard, 'fresh');
@@ -314,6 +321,7 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
+    await dashboard.waitForLoadState('load');
     await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
     await drawAndSubmitAnnotation(dashboard, 'direct-mcp');
   } finally {
@@ -351,6 +359,7 @@ test('should annotate when context has no fixed viewport', async ({ connectToDas
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
+    await dashboard.waitForLoadState('load');
     await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
     await drawAndSubmitAnnotation(dashboard, 'no-viewport');
   } finally {
@@ -383,6 +392,7 @@ test('should cancel browser_annotate when the MCP request is aborted', async ({ 
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
+    await dashboard.waitForLoadState('load');
     await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
 
     controller.abort();
@@ -413,6 +423,7 @@ test('should cancel browser_annotate when the MCP client disconnects', async ({ 
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
+    await dashboard.waitForLoadState('load');
     await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
 
     await client.close();
@@ -435,6 +446,7 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   await cli('-s=first', 'show', { bindTitle });
   const browser = await connectToDashboard(bindTitle);
   const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.waitForLoadState('load');
   await expect(dashboard.locator('#display')).toBeVisible();
 
   const sampleCenter = () => dashboard.evaluate(() => {
@@ -480,6 +492,7 @@ test('should disengage annotate mode when --annotate client disconnects', async 
   const browser = await connectToDashboard(bindTitle);
 
   const dashboard = browser.contexts()[0].pages()[0];
+  await dashboard.waitForLoadState('load');
   await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
 
   const annotateClient = childProcess({
