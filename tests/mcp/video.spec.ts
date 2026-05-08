@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { test, expect } from './fixtures';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
@@ -40,6 +43,28 @@ for (const mode of ['isolated', 'persistent']) {
     await navigateToTestPage(client, server);
     await produceFrames(client);
     await closeBrowser(client);
+  });
+
+  test(`should record video via saveVideo (${mode})`, async ({ startClient, server }, testInfo) => {
+    const outputDir = testInfo.outputPath('output');
+
+    const { client } = await startClient({
+      config: {
+        outputDir,
+        saveVideo: { width: 800, height: 600 },
+      },
+      args: [
+        ...(mode === 'isolated' ? ['--isolated'] : []),
+      ],
+    });
+
+    await navigateToTestPage(client, server);
+    await produceFrames(client);
+    await closeBrowser(client);
+
+    const videosDir = path.join(outputDir, 'videos');
+    const files = await fs.promises.readdir(videosDir);
+    expect(files.some(f => f.endsWith('.webm'))).toBe(true);
   });
 }
 

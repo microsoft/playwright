@@ -138,6 +138,12 @@ export type Config = {
   saveSession?: boolean;
 
   /**
+   * Record video of the browser session at the given size, saved under
+   * `<outputDir>/videos`. When unset, video is not recorded automatically.
+   */
+  saveVideo?: { width: number; height: number };
+
+  /**
    * Reuse the same browser context between all connected HTTP clients.
    */
   sharedBrowserContext?: boolean;

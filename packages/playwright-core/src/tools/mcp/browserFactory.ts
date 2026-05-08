@@ -76,6 +76,17 @@ export interface BrowserContextFactory {
   createContext(clientInfo: ClientInfo): Promise<playwrightTypes.BrowserContext>;
 }
 
+export function browserContextOptionsFromConfig(config: FullConfig, clientInfo: ClientInfo): playwrightTypes.BrowserContextOptions {
+  const result: playwrightTypes.BrowserContextOptions = { ...config.browser.contextOptions };
+  if (config.saveVideo && !result.recordVideo) {
+    result.recordVideo = {
+      dir: path.resolve(outputDir({ config, cwd: clientInfo.cwd }), 'videos'),
+      size: config.saveVideo,
+    };
+  }
+  return result;
+}
+
 function browserInfo(browser: playwrightTypes.Browser, config: FullConfig): BrowserInfo {
   return {
     // eslint-disable-next-line no-restricted-syntax
@@ -151,7 +162,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
   const launchOptions: playwrightTypes.LaunchOptions & playwrightTypes.BrowserContextOptions = {
     tracesDir,
     ...config.browser.launchOptions,
-    ...config.browser.contextOptions,
+    ...browserContextOptionsFromConfig(config, clientInfo),
     handleSIGINT: false,
     handleSIGTERM: false,
     ignoreDefaultArgs: configIgnoreDefaultArgs === true

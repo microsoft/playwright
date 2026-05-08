@@ -64,6 +64,7 @@ export type CLIOptions = {
   proxyBypass?: string;
   proxyServer?: string;
   saveSession?: boolean;
+  saveVideo?: ViewportSize;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
   snapshotMode?: 'full' | 'none';
@@ -350,6 +351,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     allowUnrestrictedFileAccess: cliOptions.allowUnrestrictedFileAccess,
     codegen: cliOptions.codegen,
     saveSession: cliOptions.saveSession,
+    saveVideo: cliOptions.saveVideo,
     secrets: cliOptions.secrets,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
     snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
@@ -410,6 +412,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.userAgent = envToString(e.PLAYWRIGHT_MCP_USER_AGENT);
   options.userDataDir = envToString(e.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', e.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
+  options.saveVideo = resolutionParser('--save-video', e.PLAYWRIGHT_MCP_SAVE_VIDEO);
   return configFromCLIOptions(options);
 }
 
