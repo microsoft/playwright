@@ -172,6 +172,10 @@ export class Connection extends EventEmitter {
   }
 
   async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], stepId?: string }): Promise<any> {
+    // Fire-and-forget: server intentionally never replies to __waitInfo__,
+    // so silently drop it after the connection is closed or the object was collected.
+    if (method === '__waitInfo__' && (this._closedError || object._wasCollected))
+      return;
     if (this._closedError)
       throw this._closedError;
     if (object._wasCollected)

@@ -829,6 +829,7 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
       {
         type: 'before',
         callId: expect.any(Number),
+        title: 'Wait for event "console"',
       },
       {
         type: 'after',
