@@ -376,7 +376,7 @@ test('should report downloads', async ({ launchElectronApp, electronMajorVersion
     res.end(`Hello world`);
   });
 
-  const app = await launchElectronApp('electron-window-app.js');
+  const app = await launchElectronApp('electron-window-app.js', [], { acceptDownloads: true });
   const window = await app.firstWindow();
   await window.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [download] = await Promise.all([
