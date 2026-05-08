@@ -25,6 +25,7 @@ node_modules/yazl
 ./android/
 ./bidi/
 ./chromium/
+./electron/
 ./firefox/
 ./webkit/
 
