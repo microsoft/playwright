@@ -124,6 +124,7 @@ Running 2 tests using 1 worker
 });
 
 test('test_run should stop when aborted', async ({ startClient }) => {
+  test.slow(true, 'Drives two full test-runner lifecycles (abort + restart)');
   await writeFiles({
     'slow.test.ts': `
       import { test } from '@playwright/test';
