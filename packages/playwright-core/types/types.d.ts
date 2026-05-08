@@ -17045,19 +17045,8 @@ export interface ElectronApplication {
 
   /**
    * Closes Electron application.
-   * @param options
    */
-  close(options?: {
-    /**
-     * Maximum time in milliseconds to wait for the Electron application to gracefully close before forcefully terminating
-     * it. By default,
-     * [electronApplication.close([options])](https://playwright.dev/docs/api/class-electronapplication#electron-application-close)
-     * waits indefinitely for the application to exit, which can hang if the app has `before-quit` handlers that prevent
-     * shutdown, leaky IPC handlers, or child processes that keep it alive. When specified, the underlying process is
-     * force-killed (SIGKILL on POSIX, `taskkill /T /F` on Windows) if it does not exit within the given timeout.
-     */
-    timeout?: number;
-  }): Promise<void>;
+  close(): Promise<void>;
 
   /**
    * This method returns browser context that can be used for setting up context-wide routing, etc.
