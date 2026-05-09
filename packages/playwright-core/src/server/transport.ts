@@ -193,13 +193,15 @@ export class WebSocketTransport implements ConnectionTransport {
     this._ws.close();
   }
 
-  async closeAndWait(timeoutMs: number = 30000) {
+  async closeAndWait() {
     if (this._ws.readyState === ws.CLOSED)
       return;
     const closePromise = new Promise(f => this._ws.once('close', f));
     this.close();
-    const timeout = new Promise(f => setTimeout(f, timeoutMs));
+    let timer: NodeJS.Timeout;
+    const timeout = new Promise(f => timer = setTimeout(f, 30000));
     await Promise.race([closePromise, timeout]);
+    clearTimeout(timer!);
   }
 }
 
