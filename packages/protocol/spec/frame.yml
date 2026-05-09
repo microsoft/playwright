@@ -527,6 +527,23 @@ Frame:
         input: true
         isAutoWaiting: true
 
+    pressSequentially:
+      title: Press keys sequentially
+      parameters:
+        selector: string
+        strict: boolean?
+        keys:
+          type: array
+          items: string
+        delay: float?
+        timeout: float
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+        isAutoWaiting: true
+
     querySelector:
       title: Query selector
       parameters:

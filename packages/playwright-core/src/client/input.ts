@@ -45,6 +45,13 @@ export class Keyboard implements api.Keyboard {
   async press(key: string, options: channels.PageKeyboardPressOptions = {}) {
     await this._page._channel.keyboardPress({ key, ...options });
   }
+
+  async pressSequentially(text: string | string[], options: channels.PageKeyboardPressSequentiallyOptions & channels.PageKeyboardTypeOptions = {}) {
+    if (Array.isArray(text))
+      await this._page._channel.keyboardPressSequentially({ keys: text, ...options });
+    else
+      await this._page._channel.keyboardType({ text, ...options });
+  }
 }
 
 export class Mouse implements api.Mouse {

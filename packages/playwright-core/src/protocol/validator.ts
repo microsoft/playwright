@@ -1489,6 +1489,14 @@ scheme.FramePressParams = tObject({
   timeout: tFloat,
 });
 scheme.FramePressResult = tOptional(tObject({}));
+scheme.FramePressSequentiallyParams = tObject({
+  selector: tString,
+  strict: tOptional(tBoolean),
+  keys: tArray(tString),
+  delay: tOptional(tFloat),
+  timeout: tFloat,
+});
+scheme.FramePressSequentiallyResult = tOptional(tObject({}));
 scheme.FrameQuerySelectorParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -2461,6 +2469,11 @@ scheme.PageKeyboardPressParams = tObject({
   delay: tOptional(tFloat),
 });
 scheme.PageKeyboardPressResult = tOptional(tObject({}));
+scheme.PageKeyboardPressSequentiallyParams = tObject({
+  keys: tArray(tString),
+  delay: tOptional(tFloat),
+});
+scheme.PageKeyboardPressSequentiallyResult = tOptional(tObject({}));
 scheme.PageMouseMoveParams = tObject({
   x: tFloat,
   y: tFloat,

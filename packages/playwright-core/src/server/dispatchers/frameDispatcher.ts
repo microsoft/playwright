@@ -245,6 +245,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     return await this._frame.press(progress, params.selector, params.key, params);
   }
 
+  async pressSequentially(params: channels.FramePressSequentiallyParams, progress: Progress): Promise<void> {
+    return await this._frame.pressSequentially(progress, params.selector, params.keys, params);
+  }
+
   async check(params: channels.FrameCheckParams, progress: Progress): Promise<void> {
     return await this._frame.check(progress, params.selector, params);
   }

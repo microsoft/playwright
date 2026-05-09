@@ -2103,6 +2103,8 @@ In most cases, you should use [`method: Locator.fill`] instead. You only need to
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
+When [`param: text`] is an array of strings, each element is treated as a key name (same format as [`method: Locator.press`]) and pressed sequentially with optional [`option: delay`] between key presses.
+
 To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
 
 **Usage**
@@ -2110,26 +2112,41 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.pre
 ```js
 await locator.pressSequentially('Hello'); // Types instantly
 await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
+
+// Press a sequence of keys
+await locator.pressSequentially(['Control+A', 'Delete', 'H', 'e', 'l', 'l', 'o']);
 ```
 
 ```java
 locator.pressSequentially("Hello"); // Types instantly
 locator.pressSequentially("World", new Locator.pressSequentiallyOptions().setDelay(100)); // Types slower, like a user
+
+// Press a sequence of keys
+locator.pressSequentially(Arrays.asList("Control+A", "Delete", "H", "e", "l", "l", "o"));
 ```
 
 ```python async
 await locator.press_sequentially("hello") # types instantly
 await locator.press_sequentially("world", delay=100) # types slower, like a user
+
+# Press a sequence of keys
+await locator.press_sequentially(["Control+A", "Delete", "H", "e", "l", "l", "o"])
 ```
 
 ```python sync
 locator.press_sequentially("hello") # types instantly
 locator.press_sequentially("world", delay=100) # types slower, like a user
+
+# Press a sequence of keys
+locator.press_sequentially(["Control+A", "Delete", "H", "e", "l", "l", "o"])
 ```
 
 ```csharp
 await locator.PressSequentiallyAsync("Hello"); // Types instantly
 await locator.PressSequentiallyAsync("World", new() { Delay = 100 }); // Types slower, like a user
+
+// Press a sequence of keys
+await locator.PressSequentiallyAsync(new[] { "Control+A", "Delete", "H", "e", "l", "l", "o" });
 ```
 
 An example of typing into a text field and then submitting the form:
@@ -2166,9 +2183,9 @@ await locator.PressAsync("Enter");
 
 ### param: Locator.pressSequentially.text
 * since: v1.38
-- `text` <[string]>
+- `text` <[string]|[Array]<[string]>>
 
-String of characters to sequentially press into a focused element.
+String of characters to sequentially press into a focused element, or an array of key names to press sequentially. Key names follow the same format as [`method: Locator.press`].
 
 ### option: Locator.pressSequentially.delay
 * since: v1.38

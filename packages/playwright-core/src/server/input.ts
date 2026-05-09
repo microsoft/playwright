@@ -126,6 +126,20 @@ export class Keyboard {
     await this.press(progress, key, options);
   }
 
+  async apiPressSequentially(progress: Progress, keys: string[], options?: { delay?: number }) {
+    await progress.race(this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata));
+    await this.pressSequentially(progress, keys, options);
+  }
+
+  async pressSequentially(progress: Progress, keys: string[], options?: { delay?: number }) {
+    const delay = (options && options.delay) || undefined;
+    for (const key of keys) {
+      if (delay)
+        await progress.wait(delay);
+      await this.press(progress, key, { delay: undefined });
+    }
+  }
+
   async press(progress: Progress, key: string, options: { delay?: number } = {}) {
     function split(keyString: string) {
       const keys = [];

@@ -1438,6 +1438,10 @@ export class Frame extends SdkObject<FrameEventMap> {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._press(progress, key, options)));
   }
 
+  async pressSequentially(progress: Progress, selector: string, keys: string[], options: { delay?: number } & types.StrictOptions) {
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._pressSequentially(progress, keys, options)));
+  }
+
   async check(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._setChecked(progress, true, options)));
   }

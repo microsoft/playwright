@@ -319,6 +319,19 @@ Page:
         pause: true
         input: true
 
+    keyboardPressSequentially:
+      title: Press keys sequentially
+      parameters:
+        keys:
+          type: array
+          items: string
+        delay: float?
+      flags:
+        slowMo: true
+        snapshot: true
+        pause: true
+        input: true
+
     mouseMove:
       title: Mouse move
       parameters:

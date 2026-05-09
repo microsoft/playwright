@@ -364,7 +364,9 @@ export class Locator implements api.Locator {
     return await this._frame.type(this._selector, text, { strict: true, ...options });
   }
 
-  async pressSequentially(text: string, options: channels.ElementHandleTypeOptions & TimeoutOptions = {}): Promise<void> {
+  async pressSequentially(text: string | string[], options: channels.ElementHandleTypeOptions & TimeoutOptions = {}): Promise<void> {
+    if (Array.isArray(text))
+      return await this._frame.pressSequentially(this._selector, text, { strict: true, ...options });
     return await this.type(text, options);
   }
 

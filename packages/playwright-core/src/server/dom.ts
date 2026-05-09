@@ -806,6 +806,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     });
   }
 
+  async _pressSequentially(progress: Progress, keys: string[], options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
+    progress.log(`elementHandle.pressSequentially([${keys.map(k => `"${k}"`).join(', ')}])`);
+    await this._beforeNonPointerAction(progress);
+    const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
+    if (result !== 'done')
+      return result;
+    await this._page.keyboard.pressSequentially(progress, keys, options);
+    return 'done';
+  }
+
   async check(progress: Progress, options: { position?: types.Point } & types.PointerActionWaitOptions) {
     const result = await this._setChecked(progress, true, options);
     return assertDone(throwRetargetableDOMError(result));

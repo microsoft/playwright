@@ -757,3 +757,60 @@ it('should close dialog on Escape key press in contenteditable', {
   await expect(dialog).toHaveJSProperty('open', false);
   await expect(widget).not.toBeVisible();
 });
+
+it('should pressSequentially with string', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.pressSequentially('Hello');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello');
+});
+
+it('should pressSequentially with array of keys', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.pressSequentially(['H', 'e', 'l', 'l', 'o']);
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello');
+});
+
+it('should pressSequentially with modifier keys in array', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.pressSequentially('Hello World');
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello World');
+  await page.keyboard.pressSequentially(['Control+A', 'Delete']);
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('');
+});
+
+it('should pressSequentially with delay', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  const start = Date.now();
+  await page.keyboard.pressSequentially(['H', 'i'], { delay: 100 });
+  const elapsed = Date.now() - start;
+  expect(elapsed).toBeGreaterThanOrEqual(200);
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hi');
+});
+
+it('locator should pressSequentially with array of keys', async ({ page }) => {
+  await page.setContent(`<input type='text' />`);
+  await page.locator('input').pressSequentially(['H', 'e', 'l', 'l', 'o']);
+  expect(await page.$eval('input', input => input.value)).toBe('Hello');
+});
+
+it('locator should pressSequentially with modifier keys in array', async ({ page }) => {
+  await page.setContent(`<input type='text' value='Hello World' />`);
+  await page.locator('input').pressSequentially(['Control+A', 'Delete']);
+  expect(await page.$eval('input', input => input.value)).toBe('');
+});
