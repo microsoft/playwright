@@ -828,7 +828,7 @@ const networkRequests = declareCommand({
   args: z.object({}),
   options: z.object({
     static: z.boolean().optional().describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
-    filter: z.string().optional().refine(v => { if (!v) return true; try { new RegExp(v); return true; } catch { return false; } }, { message: 'Invalid regular expression' }).describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
+    filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
     clear: z.boolean().optional().describe('Whether to clear the network list'),
   }),
   toolName: ({ clear }) => clear ? 'browser_network_clear' : 'browser_network_requests',
