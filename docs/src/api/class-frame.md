@@ -1434,6 +1434,36 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 ### option: Frame.press.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
+## async method: Frame.pressSequentially
+* since: v1.61
+* discouraged: Use locator-based [`method: Locator.pressSequentially`] instead. Read more about [locators](../locators.md).
+
+Focuses the element, and then presses each key from the [`param: keys`] array sequentially with optional [`option: delay`] between key presses. Each element is treated as a key name (same format as [`method: Keyboard.press`]).
+
+### param: Frame.pressSequentially.selector = %%-input-selector-%%
+* since: v1.61
+
+### param: Frame.pressSequentially.keys
+* since: v1.61
+- `keys` <[Array]<[string]>>
+
+Array of key names to press sequentially. Key names follow the same format as [`method: Keyboard.press`].
+
+### option: Frame.pressSequentially.delay
+* since: v1.61
+- `delay` <[float]>
+
+Time to wait between key presses in milliseconds. Defaults to 0.
+
+### option: Frame.pressSequentially.strict = %%-input-strict-%%
+* since: v1.61
+
+### option: Frame.pressSequentially.timeout = %%-input-timeout-%%
+* since: v1.61
+
+### option: Frame.pressSequentially.timeout = %%-input-timeout-js-%%
+* since: v1.61
+
 ## async method: Frame.querySelector
 * since: v1.9
 * discouraged: Use locator-based [`method: Frame.locator`] instead. Read more about [locators](../locators.md).
