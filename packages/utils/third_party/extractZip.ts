@@ -31,12 +31,12 @@ import { promisify } from 'util';
 
 import debugPkg from 'debug';
 import getStream from 'get-stream';
-import yauzl from 'yauzl';
-import type { Entry, ZipFile } from 'yauzl';
+import yauzl from './yauzl';
+import type { Entry, Options as YauzlOptions, ZipFile } from './yauzl';
 
 const debug = debugPkg('extract-zip');
 
-const openZip = promisify<string, yauzl.Options, ZipFile>(yauzl.open);
+const openZip = promisify<string, YauzlOptions, ZipFile>(yauzl.open);
 const pipeline = promisify(stream.pipeline);
 
 export interface Options {

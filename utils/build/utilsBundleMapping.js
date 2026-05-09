@@ -33,7 +33,6 @@ const MAPPING = {
   'chokidar': { default: 'chokidar' },
   'get-east-asian-width': { namespace: 'getEastAsianWidth' },
   'yazl': { namespace: 'yazl' },
-  'yauzl': { default: 'yauzl', namespace: 'yauzl' },
   'zod': { namespace: 'z' },
   'zod-to-json-schema': { named: { zodToJsonSchema: 'zodToJsonSchema' } },
   '@modelcontextprotocol/sdk/client/index.js': { named: { Client: 'Client' } },

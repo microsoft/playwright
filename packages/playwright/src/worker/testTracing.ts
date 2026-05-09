@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import * as yazl from 'yazl';
-import * as yauzl from 'yauzl';
+import * as yauzl from '@utils/third_party/yauzl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
