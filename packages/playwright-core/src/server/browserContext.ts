@@ -527,7 +527,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   }
 
   private async _deleteAllTempDirs(): Promise<void> {
-    await Promise.all(this._tempDirs.map(async dir => await fs.promises.unlink(dir).catch(e => {})));
+    await Promise.all(this._tempDirs.map(async dir => await fs.promises.rm(dir, { recursive: true, force: true }).catch(e => {})));
   }
 
   setCustomCloseHandler(handler: (() => Promise<any>) | undefined) {
