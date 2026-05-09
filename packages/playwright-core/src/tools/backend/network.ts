@@ -42,7 +42,14 @@ const requests = defineTabTool({
 
   handle: async (tab, params, response) => {
     const allRequests = await tab.requests();
-    const filter = params.filter ? new RegExp(params.filter) : undefined;
+    let filter: RegExp | undefined;
+    if (params.filter) {
+      try {
+        filter = new RegExp(params.filter);
+      } catch {
+        throw new Error(`Invalid filter pattern: ${params.filter}`);
+      }
+    }
     const lines: string[] = [];
     let hiddenStaticCount = 0;
     for (let i = 0; i < allRequests.length; i++) {
