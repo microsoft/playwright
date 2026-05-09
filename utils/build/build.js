@@ -539,29 +539,13 @@ for (const pkg of workspace.packages()) {
   // playwright-client is built as a bundle.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  if (pkg.name === 'playwright-core' || pkg.name === 'playwright' || pkg.name === '@playwright/electron')
+  if (pkg.name === 'playwright-core' || pkg.name === 'playwright')
     continue;
 
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
     outdir: `${path.join(pkg.path, 'lib')}`,
     plugins: [dynamicImportToRequirePlugin],
-  }));
-}
-
-// playwright-electron/lib/index.js — thin test-runner integration shim that
-// re-exports `playwright._electron`. Resolved at runtime against the parent
-// `playwright` install.
-{
-  const electronPkg = filePath('packages/playwright-electron');
-  steps.push(new EsbuildStep({
-    bundle: true,
-    entryPoints: [path.join(electronPkg, 'src/index.ts')],
-    outfile: path.join(electronPkg, 'lib/index.js'),
-    external: [
-      'playwright',
-      'playwright/*',
-    ],
   }));
 }
 
@@ -576,10 +560,6 @@ steps.push(new EsbuildStep({
     filePath('packages/playwright-core/src/entry/dashboardApp.ts'),
     filePath('packages/playwright-core/src/entry/mcp.ts'),
     filePath('packages/playwright-core/src/entry/oopBrowserDownload.ts'),
-
-    // Electron loader — preloaded inside the Electron main process via `-r`.
-    // Self-contained (no @utils/@isomorphic imports) — emitted as a thin shim.
-    filePath('packages/playwright-core/src/electron/loader.ts'),
 
     // CLI client tools, should be a separate bundle.
     filePath('packages/playwright-core/src/tools/cli-client/*.ts'),
@@ -817,6 +797,16 @@ steps.push(new EsbuildStep({
   ],
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
+
+// Build the Electron preload loader as a standalone CJS file. It runs inside
+// the Electron process (via `electron -r loader.js`) and must not depend on
+// coreBundle. `electron` is resolved at runtime by the Electron process.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright-core/src/server/electron/loader.ts')],
+  outfile: filePath('packages/playwright-core/lib/server/electron/loader.js'),
+  external: ['electron'],
+}, [playwrightCoreSrc]));
 
 function copyXdgOpen() {
   const outdir = filePath('packages/playwright-core/lib');

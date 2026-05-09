@@ -27,6 +27,7 @@ import { createInstrumentation } from './clientInstrumentation';
 import { Debugger } from './debugger';
 import { Dialog } from './dialog';
 import { DisposableObject } from './disposable';
+import { Electron, ElectronApplication } from './electron';
 import { ElementHandle } from './elementHandle';
 import { TargetClosedError, parseError } from './errors';
 import { APIRequestContext } from './fetch';
@@ -103,6 +104,8 @@ export class Connection extends EventEmitter {
       Debugger: (parent, type, guid, init) => new Debugger(parent, type, guid, init),
       Dialog: (parent, type, guid, init) => new Dialog(parent, type, guid, init),
       Disposable: (parent, type, guid, init) => new DisposableObject(parent, type, guid, init),
+      Electron: (parent, type, guid, init) => new Electron(parent, type, guid, init),
+      ElectronApplication: (parent, type, guid, init) => new ElectronApplication(parent, type, guid, init),
       ElementHandle: (parent, type, guid, init) => new ElementHandle(parent, type, guid, init),
       Frame: (parent, type, guid, init) => new Frame(parent, type, guid, init),
       JSHandle: (parent, type, guid, init) => new JSHandle(parent, type, guid, init),

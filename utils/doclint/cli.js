@@ -272,6 +272,7 @@ async function run() {
   // Check for missing docs
   {
     const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'))
+        .mergeWith(parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'electron-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md')))
         .mergeWith(parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'mobile-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md')));
     apiDocumentation.filterForLanguage('js');
     const srcClient = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'client');
