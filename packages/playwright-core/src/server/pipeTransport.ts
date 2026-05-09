@@ -74,8 +74,15 @@ export class PipeTransport implements ConnectionTransport {
     this._pendingBuffers.push(buffer.slice(0, end));
     const message = Buffer.concat(this._pendingBuffers).toString();
     this._waitForNextTask(() => {
+      let parsedMessage;
+      try {
+        parsedMessage = JSON.parse(message);
+      } catch (e) {
+        debugLogger.log('error', `PipeTransport: failed to parse message: ${e}`);
+        return;
+      }
       if (this.onmessage)
-        this.onmessage.call(null, JSON.parse(message));
+        this.onmessage.call(null, parsedMessage);
     });
 
     let start = end + 1;
@@ -83,8 +90,15 @@ export class PipeTransport implements ConnectionTransport {
     while (end !== -1) {
       const message = buffer.toString(undefined, start, end);
       this._waitForNextTask(() => {
+        let parsedMessage;
+        try {
+          parsedMessage = JSON.parse(message);
+        } catch (e) {
+          debugLogger.log('error', `PipeTransport: failed to parse message: ${e}`);
+          return;
+        }
         if (this.onmessage)
-          this.onmessage.call(null, JSON.parse(message));
+          this.onmessage.call(null, parsedMessage);
       });
       start = end + 1;
       end = buffer.indexOf('\0', start);

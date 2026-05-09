@@ -158,6 +158,22 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
     });
 
+    test('should not crash on malformed json frame', async ({ connect, startRemoteServer }) => {
+      const remoteServer = await startRemoteServer(kind);
+      const ws = new WebSocket(remoteServer.wsEndpoint());
+      await new Promise<void>((resolve, reject) => {
+        ws.once('open', resolve);
+        ws.once('error', reject);
+      });
+      ws.send(']');
+      await new Promise<void>(resolve => ws.once('close', () => resolve()));
+      // Server should still be alive and accept new connections.
+      const browser = await connect(remoteServer.wsEndpoint());
+      const page = await browser.newPage();
+      expect(await page.evaluate('1 + 2')).toBe(3);
+      await browser.close();
+    });
+
     test('should be able to visit ipv6', async ({ connect, startRemoteServer, ipV6ServerPort, channel }) => {
       test.fail(!!process.env.INSIDE_DOCKER, 'docker does not support IPv6 by default');
       test.fail(channel === 'webkit-wsl', 'WebKit on WSL does not support IPv6: https://github.com/microsoft/WSL/issues/10803');
