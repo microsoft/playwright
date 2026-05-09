@@ -1507,7 +1507,7 @@ export function findChromiumChannelBestEffort(sdkLanguage: string): string | und
   for (const name of ['chromium', 'chrome', 'msedge']) {
     try {
       registry.findExecutable(name)!.executablePathOrDie(sdkLanguage);
-      channel = name === 'chromium' ? undefined : name;
+      channel = name === 'chromium' ? 'chrome-for-testing' : name;
       break;
     } catch (e) {
     }

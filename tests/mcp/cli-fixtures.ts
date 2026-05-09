@@ -64,7 +64,7 @@ export const test = baseTest.extend<{
     await use(async (bindTitle: string) => {
       let endpoint = '';
       await expect(async () => {
-        const { output } = await cli('list', '--all', '--json');
+        const { output } = await cli('list', '--all', '--json', '--no-check-alive');
         const { servers } = JSON.parse(output);
         const server = servers.find(s => s.title === bindTitle);
         endpoint = server.endpoint;

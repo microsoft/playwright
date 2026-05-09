@@ -1022,7 +1022,8 @@ const sessionList = declareCommand({
   category: 'browsers',
   args: z.object({}),
   options: z.object({
-    all: z.boolean().optional().describe('List all browser sessions across all workspaces'),
+    'all': z.boolean().optional().describe('List all browser sessions across all workspaces'),
+    'check-alive': z.boolean().optional().describe('Probe each session to verify it is reachable, dropping unreachable ones (default: true). Use --no-check-alive to list registry entries without connecting.'),
   }),
   toolName: '',
   toolParams: () => ({}),

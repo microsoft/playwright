@@ -33,7 +33,6 @@ import { minimist } from './minimist';
 import type { ListData, ListedBrowser, Output } from './output';
 import type { ClientInfo, SessionFile } from './registry';
 import type { MinimistArgs } from './minimist';
-import type { Readable } from 'stream';
 
 type GlobalOptions = {
   help?: boolean;
@@ -118,7 +117,8 @@ export async function program(options?: { embedderVersion?: string}) {
 
   switch (commandName) {
     case 'list': {
-      const data = await collectList(registry, clientInfo, !!args.all);
+      const checkAlive = args['check-alive'] !== false;
+      const data = await collectList(registry, clientInfo, !!args.all, checkAlive);
       output.list(data);
       return;
     }
@@ -230,34 +230,11 @@ export async function program(options?: { embedderVersion?: string}) {
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
-        stdio: foreground ? 'inherit' : ['ignore', 'ignore', 'ignore', 'pipe'],
+        stdio: foreground ? 'inherit' : 'ignore',
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
-      }
-      const readyStream = (child.stdio as unknown as Readable[])[3];
-      try {
-        await new Promise<void>((resolve, reject) => {
-          const settle = (err?: Error) => {
-            clearTimeout(timer);
-            readyStream.destroy();
-            if (err)
-              reject(err);
-            else
-              resolve();
-          };
-          const timer = setTimeout(() => settle(new Error('Dashboard daemon did not spin up within 60s, killing it')), 60_000);
-          readyStream.once('data', () => settle());
-          readyStream.once('error', err => settle(err));
-          child.once('exit', (code, signal) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY`)));
-        });
-      } catch (err) {
-        if (child.exitCode === null && child.signalCode === null) {
-          child.kill('SIGKILL');
-          await new Promise<void>(resolve => child.once('exit', () => resolve()));
-        }
-        throw err;
       }
       child.unref();
       output.show(sessionName, child.pid);
@@ -383,29 +360,29 @@ async function killAllDaemons(): Promise<number[]> {
   return killed;
 }
 
-async function collectList(registry: Registry, clientInfo: ClientInfo, all: boolean): Promise<ListData> {
+async function collectList(registry: Registry, clientInfo: ClientInfo, all: boolean, checkAlive: boolean): Promise<ListData> {
   const browsers: ListedBrowser[] = [];
   const entries = registry.entryMap();
 
-  // List early to GC.
-  const serverEntries = await serverRegistry.list();
   const key = clientKey(clientInfo);
   for (const [workspaceKey, list] of entries) {
     if (!all && workspaceKey !== key)
       continue;
     for (const entry of list) {
       const session = new Session(entry);
-      const canConnect = await session.canConnect();
-      if (!canConnect) {
-        await session.deleteSessionConfig();
-        continue;
+      if (checkAlive) {
+        const canConnect = await session.canConnect();
+        if (!canConnect) {
+          await session.deleteSessionConfig();
+          continue;
+        }
       }
       const config = session.config;
       const channel = config.browser?.launchOptions.channel ?? config.browser?.browserName;
       browsers.push({
         name: session.name,
         workspace: workspaceKey,
-        status: canConnect ? 'open' : 'closed',
+        status: 'open',
         browserType: channel,
         userDataDir: config.browser?.userDataDir ?? null,
         headed: config.browser ? !config.browser.launchOptions.headless : undefined,
@@ -420,6 +397,7 @@ async function collectList(registry: Registry, clientInfo: ClientInfo, all: bool
   if (!all)
     return { all, browsers };
 
+  const serverEntries = await serverRegistry.list();
   const servers = [...serverEntries.values()].flat();
   return { all, browsers, servers, channelSessions: await listChannelSessions() };
 }

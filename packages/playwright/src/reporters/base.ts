@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 import { Writable } from 'stream';
 
@@ -420,6 +421,14 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
       if (attachment.name === 'error-context' && attachment.path) {
         resultLines.push('');
         resultLines.push(screen.colors.dim(`    Error Context: ${relativeFilePath(screen, config, attachment.path)}`));
+        if (process.env.CI) {
+          try {
+            const content = fs.readFileSync(attachment.path, 'utf8');
+            for (const line of content.split('\n'))
+              resultLines.push(screen.colors.dim(`    ${line}`));
+          } catch {
+          }
+        }
         continue;
       }
 
