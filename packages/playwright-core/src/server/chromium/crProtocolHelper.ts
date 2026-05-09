@@ -56,8 +56,8 @@ export async function saveProtocolStream(client: CRSession, handle: string, path
     }
   } finally {
     await fd.close();
+    await client.send('IO.close', { handle }).catch(() => {});
   }
-  await client.send('IO.close', { handle });
 }
 
 export async function readProtocolStream(client: CRSession, handle: string): Promise<Buffer> {
