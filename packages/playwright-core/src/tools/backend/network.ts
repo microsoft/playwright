@@ -46,8 +46,8 @@ const requests = defineTabTool({
     if (params.filter) {
       try {
         filter = new RegExp(params.filter);
-      } catch {
-        throw new Error(`Invalid filter pattern: ${params.filter}`);
+      } catch (e) {
+        throw new Error(`Invalid filter pattern: ${params.filter}: ${(e as Error).message}`);
       }
     }
     const lines: string[] = [];

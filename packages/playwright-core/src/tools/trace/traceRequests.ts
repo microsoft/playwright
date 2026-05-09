@@ -31,8 +31,8 @@ export async function traceRequests(options: { grep?: string, method?: string, s
     let pattern: RegExp;
     try {
       pattern = new RegExp(options.grep, 'i');
-    } catch {
-      throw new Error(`Invalid grep pattern: ${options.grep}`);
+    } catch (e) {
+      throw new Error(`Invalid grep pattern: ${options.grep}: ${(e as Error).message}`);
     }
     indexed = indexed.filter(({ resource: r }) => pattern.test(r.request.url));
   }

@@ -57,8 +57,8 @@ function filterActions(actions: ActionTraceEventInContext[], options: { grep?: s
     let pattern: RegExp;
     try {
       pattern = new RegExp(options.grep, 'i');
-    } catch {
-      throw new Error(`Invalid grep pattern: ${options.grep}`);
+    } catch (e) {
+      throw new Error(`Invalid grep pattern: ${options.grep}: ${(e as Error).message}`);
     }
     result = result.filter(a => pattern.test(actionTitle(a)) || pattern.test(actionLocator(a) || ''));
   }
