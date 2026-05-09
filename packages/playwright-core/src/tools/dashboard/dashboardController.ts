@@ -84,6 +84,7 @@ export class DashboardConnection implements Transport {
           .catch(() => {});
     }
     this._streams.clear();
+    void fs.promises.rm(this._recordingDir, { recursive: true, force: true }).catch(() => {});
     this._onclose();
   }
 
