@@ -34,7 +34,7 @@ const requests = defineTabTool({
     description: 'Returns a numbered list of network requests since loading the page. Use browser_network_request with the number to get full details.',
     inputSchema: z.object({
       static: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
-      filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
+      filter: z.string().optional().refine(v => { if (!v) return true; try { new RegExp(v); return true; } catch { return false; } }, { message: 'Invalid regular expression' }).describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
     type: 'readOnly',
@@ -42,14 +42,7 @@ const requests = defineTabTool({
 
   handle: async (tab, params, response) => {
     const allRequests = await tab.requests();
-    let filter: RegExp | undefined;
-    if (params.filter) {
-      try {
-        filter = new RegExp(params.filter);
-      } catch (e) {
-        throw new Error(`Invalid filter pattern: ${params.filter}: ${(e as Error).message}`);
-      }
-    }
+    const filter = params.filter ? new RegExp(params.filter) : undefined;
     const lines: string[] = [];
     let hiddenStaticCount = 0;
     for (let i = 0; i < allRequests.length; i++) {

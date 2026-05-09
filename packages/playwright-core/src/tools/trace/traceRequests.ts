@@ -28,12 +28,7 @@ export async function traceRequests(options: { grep?: string, method?: string, s
   let indexed = model.resources.map((r, i) => ({ resource: r, ordinal: i + 1 }));
 
   if (options.grep) {
-    let pattern: RegExp;
-    try {
-      pattern = new RegExp(options.grep, 'i');
-    } catch (e) {
-      throw new Error(`Invalid grep pattern: ${options.grep}: ${(e as Error).message}`);
-    }
+    const pattern = new RegExp(options.grep, 'i');
     indexed = indexed.filter(({ resource: r }) => pattern.test(r.request.url));
   }
   if (options.method)

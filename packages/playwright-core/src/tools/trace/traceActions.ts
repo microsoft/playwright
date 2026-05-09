@@ -54,12 +54,7 @@ export async function traceActions(options: { grep?: string, errorsOnly?: boolea
 function filterActions(actions: ActionTraceEventInContext[], options: { grep?: string, errorsOnly?: boolean }): ActionTraceEventInContext[] {
   let result = actions.filter(a => a.group !== 'configuration');
   if (options.grep) {
-    let pattern: RegExp;
-    try {
-      pattern = new RegExp(options.grep, 'i');
-    } catch (e) {
-      throw new Error(`Invalid grep pattern: ${options.grep}: ${(e as Error).message}`);
-    }
+    const pattern = new RegExp(options.grep, 'i');
     result = result.filter(a => pattern.test(actionTitle(a)) || pattern.test(actionLocator(a) || ''));
   }
   if (options.errorsOnly)
