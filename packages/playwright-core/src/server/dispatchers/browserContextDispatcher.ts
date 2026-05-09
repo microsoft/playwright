@@ -19,7 +19,7 @@ import path from 'path';
 
 import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { createGuid } from '@utils/crypto';
-import { isPathInside } from '@utils/fileUtils';
+import { resolveWithinRoot } from '@utils/fileUtils';
 import { BrowserContext } from '../browserContext';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DebuggerDispatcher } from './debuggerDispatcher';
@@ -233,8 +233,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return {
       rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
       writableStreams: await Promise.all(params.items.map(async item => {
-        const itemPath = path.join(tempDirWithRootName, item.name);
-        if (!isPathInside(tempDirWithRootName, itemPath))
+        const itemPath = resolveWithinRoot(tempDirWithRootName, item.name);
+        if (!itemPath)
           throw new Error(`Invalid file name: ${item.name}`);
         await progress.race(fs.promises.mkdir(path.dirname(itemPath), { recursive: true }));
         const file = fs.createWriteStream(itemPath);
