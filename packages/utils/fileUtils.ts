@@ -93,6 +93,13 @@ export function resolveWithinRoot(root: string, fileName: string): string | null
   return isPathInside(root, resolvedFile) ? resolvedFile : null;
 }
 
+export function throwingResolveWithinRoot(root: string, fileName: string): string {
+  const resolved = resolveWithinRoot(root, fileName);
+  if (!resolved)
+    throw new Error(`Path '${fileName}' escapes root directory`);
+  return resolved;
+}
+
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
