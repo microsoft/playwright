@@ -18,8 +18,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import * as yauzl from 'yauzl';
 import * as yazl from 'yazl';
+import * as yauzl from '@utils/third_party/yauzl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { serializeClientSideCallMetadata } from '@isomorphic/trace/traceUtils';
 import { assert } from '@isomorphic/assert';

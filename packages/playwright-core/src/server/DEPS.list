@@ -16,7 +16,6 @@ node_modules/pngjs
 node_modules/proxy-from-env
 node_modules/ws
 node_modules/yaml
-node_modules/yauzl
 node_modules/yazl
 
 [devtoolsController.ts]

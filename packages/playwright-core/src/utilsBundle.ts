@@ -81,7 +81,6 @@ import * as getEastAsianWidthLibrary from 'get-east-asian-width';
 export const getEastAsianWidth = getEastAsianWidthLibrary;
 
 export * as yazl from 'yazl';
-export * as yauzl from 'yauzl';
 
 // @ts-expect-error untyped vendored module
 import * as gracefulFsLibrary from 'graceful-fs';
