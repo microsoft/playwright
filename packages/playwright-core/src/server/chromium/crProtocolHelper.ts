@@ -55,7 +55,7 @@ export async function saveProtocolStream(client: CRSession, handle: string, path
       await fd.write(buf);
     }
   } finally {
-    await fd.close();
+    await fd.close().catch(() => {});
     await client.send('IO.close', { handle }).catch(() => {});
   }
 }
@@ -63,13 +63,16 @@ export async function saveProtocolStream(client: CRSession, handle: string, path
 export async function readProtocolStream(client: CRSession, handle: string): Promise<Buffer> {
   let eof = false;
   const chunks = [];
-  while (!eof) {
-    const response = await client.send('IO.read', { handle });
-    eof = response.eof;
-    const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
-    chunks.push(buf);
+  try {
+    while (!eof) {
+      const response = await client.send('IO.read', { handle });
+      eof = response.eof;
+      const buf = Buffer.from(response.data, response.base64Encoded ? 'base64' : undefined);
+      chunks.push(buf);
+    }
+  } finally {
+    await client.send('IO.close', { handle }).catch(() => {});
   }
-  await client.send('IO.close', { handle });
   return Buffer.concat(chunks);
 }
 
