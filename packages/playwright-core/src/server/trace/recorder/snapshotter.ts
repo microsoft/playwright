@@ -102,11 +102,12 @@ export class Snapshotter {
     eventsHelper.removeEventListeners(this._eventListeners);
   }
 
-  private async _captureFrameSnapshot(frame: Frame): Promise<SnapshotData | void> {
+  private async _captureFrameSnapshot(frame: Frame, resetTargets: boolean): Promise<SnapshotData | void> {
     // Prepare expression synchronously.
-    const needsReset = !!(frame as any)[kNeedsResetSymbol];
+    const needsHistoryReset = !!(frame as any)[kNeedsResetSymbol];
     (frame as any)[kNeedsResetSymbol] = false;
-    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${needsReset ? 'true' : 'false'})`;
+    const reset = needsHistoryReset ? 'history' : (resetTargets ? 'targets' : undefined);
+    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(reset)})`;
     try {
       return await frame.nonStallingRawEvaluateInExistingMainContext(expression);
     } catch (e) {
@@ -118,10 +119,10 @@ export class Snapshotter {
     }
   }
 
-  async captureSnapshot(page: Page, callId: string, snapshotName: string): Promise<void> {
+  async captureSnapshot(page: Page, callId: string, snapshotName: string, resetTargets: boolean): Promise<void> {
     // In each frame, in a non-stalling manner, capture the snapshots.
     const snapshots = page.frames().map(async frame => {
-      const data = await this._captureFrameSnapshot(frame);
+      const data = await this._captureFrameSnapshot(frame, resetTargets);
       // Something went wrong -> bail out, our snapshots are best-efforty.
       if (!data || !this._started)
         return;

@@ -519,12 +519,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   private async _markAsTargetElement(progress: Progress) {
-    if (!progress.metadata.id)
-      return;
-    await progress.race(this.evaluateInUtility(([injected, node, callId]) => {
+    await progress.race(this.evaluateInUtility(([injected, node]) => {
       if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
-        injected.markTargetElements(new Set([node as Node as Element]), callId);
-    }, progress.metadata.id));
+        injected.markTargetElements(new Set([node as Node as Element]));
+    }, {}));
   }
 
   async hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {

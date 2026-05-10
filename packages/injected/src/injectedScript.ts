@@ -93,7 +93,6 @@ export class InjectedScript {
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
-  private _markedElements?: { callId: string, elements: Set<Element> };
   readonly window: Window & typeof globalThis;
   readonly document: Document;
   readonly consoleApi: ConsoleAPI;
@@ -1379,34 +1378,21 @@ export class InjectedScript {
     }
   }
 
-  markTargetElements(markedElements: Set<Element>, callId: string) {
-    if (this._markedElements?.callId !== callId)
-      this._markedElements = undefined;
-    const previous = this._markedElements?.elements || new Set();
-
-    const unmarkEvent = new CustomEvent('__playwright_unmark_target__', {
+  markTargetElements(markedElements: Set<Element>) {
+    const resetEvent = new CustomEvent('__playwright_reset_targets__', {
       bubbles: true,
       cancelable: true,
-      detail: callId,
       composed: true,
     });
-    for (const element of previous) {
-      if (!markedElements.has(element))
-        element.dispatchEvent(unmarkEvent);
-    }
+    this.document.dispatchEvent(resetEvent);
 
     const markEvent = new CustomEvent('__playwright_mark_target__', {
       bubbles: true,
       cancelable: true,
-      detail: callId,
       composed: true,
     });
-    for (const element of markedElements) {
-      if (!previous.has(element))
-        element.dispatchEvent(markEvent);
-    }
-
-    this._markedElements = { callId, elements: markedElements };
+    for (const element of markedElements)
+      element.dispatchEvent(markEvent);
   }
 
   private _setupGlobalListenersRemovalDetection() {
