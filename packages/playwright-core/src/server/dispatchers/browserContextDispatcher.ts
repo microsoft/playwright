@@ -230,15 +230,25 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const tempDirWithRootName = params.rootDirName ? path.join(tmpDir, path.basename(params.rootDirName)) : tmpDir;
     await progress.race(fs.promises.mkdir(tempDirWithRootName, { recursive: true }));
     this._context._tempDirs.push(tmpDir);
-    return {
-      rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
-      writableStreams: await Promise.all(params.items.map(async item => {
+
+    const streams: fs.WriteStream[] = [];
+    try {
+      const writableStreams = await Promise.all(params.items.map(async item => {
         const itemPath = throwingResolveWithinRoot(tempDirWithRootName, item.name);
         await progress.race(fs.promises.mkdir(path.dirname(itemPath), { recursive: true }));
         const file = fs.createWriteStream(itemPath);
+        streams.push(file);
         return new WritableStreamDispatcher(this, file, item.lastModifiedMs);
-      }))
-    };
+      }));
+      return {
+        rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
+        writableStreams,
+      };
+    } catch (e) {
+      for (const stream of streams)
+        stream.destroy();
+      throw e;
+    }
   }
 
   async exposeBinding(params: channels.BrowserContextExposeBindingParams, progress: Progress): Promise<channels.BrowserContextExposeBindingResult> {
