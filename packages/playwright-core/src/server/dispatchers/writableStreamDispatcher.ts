@@ -69,4 +69,9 @@ export class WritableStreamDispatcher extends Dispatcher<WritableStreamSdkObject
       return this._object.streamOrDirectory;
     return this._object.streamOrDirectory.path as string;
   }
+
+  override _onDispose() {
+    if (typeof this._object.streamOrDirectory !== 'string')
+      this._object.streamOrDirectory.destroy();
+  }
 }
