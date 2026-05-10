@@ -101,7 +101,26 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
       return;
     }
     assert(inZipFile);
+    inZipFile.on('error', error => promise.reject(error));
     let pendingEntries = inZipFile.entryCount;
+
+    const finalizeRepack = () => {
+      zipFile.end(undefined, () => {
+        zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile))
+            .on('close', () => {
+              fs.promises.unlink(tempFile).then(() => {
+                promise.resolve();
+              }).catch(error => promise.reject(error));
+            })
+            .on('error', error => promise.reject(error));
+      });
+    };
+
+    if (pendingEntries === 0) {
+      finalizeRepack();
+      return;
+    }
+
     inZipFile.on('entry', entry => {
       inZipFile.openReadStream(entry, (err, readStream) => {
         if (err) {
@@ -109,15 +128,8 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
           return;
         }
         zipFile.addReadStream(readStream!, entry.fileName);
-        if (--pendingEntries === 0) {
-          zipFile.end(undefined, () => {
-            zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile)).on('close', () => {
-              fs.promises.unlink(tempFile).then(() => {
-                promise.resolve();
-              }).catch(error => promise.reject(error));
-            });
-          });
-        }
+        if (--pendingEntries === 0)
+          finalizeRepack();
       });
     });
   });
