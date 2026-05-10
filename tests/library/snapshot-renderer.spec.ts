@@ -84,6 +84,24 @@ test('snapshot renderer neutralizes iframe sandbox', () => {
   expect(html).toContain('__playwright_sandbox__');
 });
 
+test('snapshot renderer neutralizes object data attribute', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['OBJECT', { 'data': '/sha1/malicious', 'type': 'text/html' }]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain(' data=');
+  expect(html).toContain('__playwright_data__');
+});
+
+test('snapshot renderer neutralizes embed src attribute', () => {
+  const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
+    html: ['HTML', {}, ['BODY', {}, ['EMBED', { 'src': '/sha1/malicious', 'type': 'text/html' }]]],
+  })], [], 0);
+  const { html } = renderer.render();
+  expect(html).not.toContain(' src=');
+  expect(html).toContain('__playwright_src__');
+});
+
 test('snapshot renderer handles case-insensitive iframe tag names', () => {
   const renderer = new SnapshotRenderer(new LRUCache(1_000_000), [], [makeSnapshot({
     html: ['HTML', {}, ['BODY', {}, ['iframe', { 'srcdoc': '<script>alert(1)</script>', 'src': 'http://evil.com' }]]],

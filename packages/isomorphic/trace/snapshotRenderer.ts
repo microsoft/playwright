@@ -140,6 +140,17 @@ export class SnapshotRenderer {
             // crafted trace could include them.
             attrName = '__playwright_' + attr.toLowerCase() + '__';
           }
+          if (upperName === 'OBJECT' && attr.toLowerCase() === 'data') {
+            // Neutralize <object data> - it can load arbitrary HTML in the trace
+            // viewer's origin (e.g. via /sha1/ resources), bypassing script and
+            // iframe sanitization.
+            attrName = '__playwright_data__';
+          }
+          if (upperName === 'EMBED' && attr.toLowerCase() === 'src') {
+            // Neutralize <embed src> for the same reason as <object data>.
+            // The URL rewrite on line 158 does not catch relative URLs.
+            attrName = '__playwright_src__';
+          }
           if (isImg && attr === kCurrentSrcAttribute) {
             // Render currentSrc for images, so that trace viewer does not accidentally
             // resolve srcset to a different source.
