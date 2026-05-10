@@ -189,7 +189,10 @@ export function parseRegex(regex: string): RegExp {
   return new RegExp(source, flags);
 }
 
-export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
+// Semicolons removed from [[\]()#;?] to avoid polynomial backtracking
+// when both that group and (?:;...)* can match runs of semicolons.
+// \d{1,4} relaxed to \d{0,4} so empty params (e.g. ESC[;H) still match.
+export const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{0,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
 export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }
