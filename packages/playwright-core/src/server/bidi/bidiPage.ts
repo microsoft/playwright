@@ -194,14 +194,17 @@ export class BidiPage implements PageDelegate {
 
   private _onNavigationStarted(params: bidi.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
-    this._page.frameManager.frameRequestedNavigation(frameId, params.navigation!);
+    this._page.frameManager.frameRequestedNavigation(frameId, params.navigation || undefined);
   }
 
   private _onNavigationCommitted(params: bidi.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
-    const frame = this._page.frameManager.frame(frameId)!;
+    const frame = this._page.frameManager.frame(frameId);
+    if (!frame)
+      return;
     this._browserContext.doGrantGlobalPermissionsForURL(params.url).catch(error => debugLogger.log('error', error));
-    this._page.frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, frame._name, params.navigation!, /* initial */ false);
+    if (params.navigation)
+      this._page.frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, frame._name, params.navigation, /* initial */ false);
   }
 
   private _onDomContentLoaded(params: bidi.BrowsingContext.NavigationInfo) {
