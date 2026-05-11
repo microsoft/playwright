@@ -61,7 +61,10 @@ export class DashboardConnection implements Transport {
       this._pushSessions();
       void this._tryRevealPending();
     });
-    this._provider.on(SessionProviderEvent.TabsChanged, () => this._pushTabs());
+    this._provider.on(SessionProviderEvent.TabsChanged, () => {
+      this._pushTabs();
+      void this._tryRevealPending();
+    });
     this._provider.on(SessionProviderEvent.ContextClosed, context => {
       if (this._attachedPage?.page.context() === context) {
         this._attachedPage.dispose();
