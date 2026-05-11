@@ -16,6 +16,7 @@
 
 import { setupSocksForwardingServer } from '../config/proxy';
 import { playwrightTest as it, expect } from '../config/browserTest';
+import http from 'http';
 import net from 'net';
 
 it.skip(({ mode }) => mode.startsWith('service'));
@@ -162,6 +163,64 @@ it('should authenticate', async ({ browserType, server }) => {
   await page.goto('http://non-existent.com/target.html');
   expect(await page.title()).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
   await browser.close();
+});
+
+it('should reconnect with credentials after CONNECT 407 closes the socket', async ({ browserType, httpsServer }) => {
+  // Reproduces https://github.com/microsoft/playwright/issues/40768: some HTTP
+  // proxies send 407 and destroy the socket on the first CONNECT, expecting
+  // the client to reconnect on a new TCP connection with Proxy-Authorization.
+  httpsServer.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by https server via proxy</title></html>');
+  });
+
+  const connectAttempts: { hadAuth: boolean }[] = [];
+  const proxySockets = new Set<net.Socket>();
+  const proxy = http.createServer();
+  proxy.on('connection', socket => {
+    proxySockets.add(socket);
+    socket.on('close', () => proxySockets.delete(socket));
+  });
+  proxy.on('connect', (req, clientSocket, head) => {
+    const auth = req.headers['proxy-authorization'];
+    connectAttempts.push({ hadAuth: !!auth });
+    if (!auth) {
+      clientSocket.on('error', () => {});
+      clientSocket.end(
+          'HTTP/1.1 407 Proxy Authentication Required\r\n' +
+          'Proxy-Authenticate: Basic realm="proxy"\r\n' +
+          'Content-Length: 0\r\n' +
+          'Connection: close\r\n' +
+          '\r\n', () => clientSocket.destroy());
+      return;
+    }
+    const target = net.connect(httpsServer.PORT, '127.0.0.1', () => {
+      clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+      if (head && head.length)
+        target.write(head);
+      clientSocket.pipe(target).pipe(clientSocket);
+    });
+    target.on('error', () => clientSocket.destroy());
+    clientSocket.on('error', () => target.destroy());
+  });
+  await new Promise<void>(f => proxy.listen(0, '127.0.0.1', f));
+  const proxyPort = (proxy.address() as net.AddressInfo).port;
+
+  const browser = await browserType.launch({
+    proxy: { server: `http://127.0.0.1:${proxyPort}`, username: 'user', password: 'secret' },
+  });
+  try {
+    const page = await browser.newPage({ ignoreHTTPSErrors: true });
+    await page.goto('https://non-existent.com/target.html');
+    expect(await page.title()).toBe('Served by https server via proxy');
+    expect(connectAttempts.length).toBeGreaterThanOrEqual(2);
+    expect(connectAttempts[0].hadAuth).toBe(false);
+    expect(connectAttempts.some(a => a.hadAuth)).toBe(true);
+  } finally {
+    await browser.close();
+    for (const socket of proxySockets)
+      socket.destroy();
+    await new Promise<void>(f => proxy.close(() => f()));
+  }
 });
 
 it('should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
