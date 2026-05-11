@@ -74,6 +74,20 @@ test('dblclick', async ({ cli, server }) => {
   expect(snapshot).toContain('dblclick 0');
 });
 
+test('click with single --modifiers', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/406' } }, async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('click', 'e2', '--modifiers', 'Control');
+  expect(output).toContain(`modifiers: ['Control']`);
+});
+
+test('click with repeated --modifiers', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('click', 'e2', '--modifiers', 'Control', '--modifiers', 'Shift');
+  expect(output).toContain(`modifiers: ['Control', 'Shift']`);
+});
+
 test('type', async ({ cli, server }) => {
   server.setContent('/', `<input type=text>`, 'text/html');
   const { snapshot } = await cli('open', server.PREFIX);

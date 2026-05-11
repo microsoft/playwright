@@ -235,7 +235,7 @@ const click = declareCommand({
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
-    modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
+    modifiers: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Modifier key to press (repeatable)'),
   }),
   toolName: 'browser_click',
   toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers }),
@@ -250,7 +250,7 @@ const doubleClick = declareCommand({
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
-    modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
+    modifiers: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Modifier key to press (repeatable)'),
   }),
   toolName: 'browser_click',
   toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers, doubleClick: true }),
