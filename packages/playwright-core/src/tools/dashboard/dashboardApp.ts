@@ -383,20 +383,18 @@ async function startApp(server: net.Server, options: DashboardOptions) {
         return;
       }
       void statePromise.then(({ page, server: dashboard }) => {
-        const ack = JSON.stringify({ pid: process.pid }) + '\n';
         if (parsed.annotate) {
-          socket.write(ack);
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
         } else if (parsed.kill) {
-          socket.end(ack);
+          socket.end();
           gracefullyProcessExitDoNotHang(0);
         } else {
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
-          socket.end(ack);
+          socket.end(JSON.stringify({ pid: process.pid }) + '\n');
         }
       });
     });
