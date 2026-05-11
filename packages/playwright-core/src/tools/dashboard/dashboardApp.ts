@@ -266,25 +266,37 @@ function parseOpenArgs(): DashboardOptions {
   };
 }
 
-async function acquireSingleton(options: DashboardOptions): Promise<net.Server> {
+async function acquireSingleton(options: DashboardOptions): Promise<{ server: net.Server } | { pid: number }> {
   const socketPath = dashboardSocketPath();
   if (process.platform !== 'win32')
     await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
-    server.listen(socketPath, () => resolve(server));
+    server.listen(socketPath, () => resolve({ server }));
     server.on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code !== 'EADDRINUSE')
+      if (err.code !== 'EADDRINUSE' && err.code !== 'EEXIST')
         return reject(err);
-      const client = net.connect(socketPath, () => {
+      const client = net.connect(socketPath);
+      let buffer = '';
+      client.on('data', data => {
+        buffer += data.toString();
+      });
+      client.on('end', () => {
+        try {
+          const { pid } = JSON.parse(buffer);
+          resolve({ pid });
+        } catch {
+          reject(new Error(`Invalid handshake response: ${buffer}`));
+        }
+      });
+      client.on('connect', () => {
         client.write(JSON.stringify(options) + '\n');
-        reject(new Error('already running'));
       });
       client.on('error', () => {
         if (process.platform !== 'win32')
           fs.unlinkSync(socketPath);
-        server.listen(socketPath, () => resolve(server));
+        server.listen(socketPath, () => resolve({ server }));
       });
     });
   });
@@ -314,26 +326,24 @@ export async function openDashboardApp() {
   // Self-destruct if the parent CLI dies before we signal READY. Unregistered
   // before we signal so the daemon outlives the parent.
   const stopSelfDestruct = selfDestructOnParentGone();
-  let server: net.Server;
   try {
-    server = await acquireSingleton(options);
-  } catch {
-    // Another daemon is already running; acquireSingleton forwarded our
-    // options to it. Signal success so the parent doesn't treat our clean
-    // exit as a startup failure.
+    const acquired = await acquireSingleton(options);
+    if ('pid' in acquired) {
+      // Another daemon is already running; acquireSingleton forwarded our
+      // options to it. Signal success so the parent doesn't treat our clean
+      // exit as a startup failure.
+      stopSelfDestruct();
+      // eslint-disable-next-line no-console
+      console.log(`### Success\nDashboard already running pid=${acquired.pid}`);
+      // eslint-disable-next-line no-console
+      console.log('<EOF>');
+      return;
+    }
+    process.on('exit', () => acquired.server.close());
+    await startApp(acquired.server, options);
     stopSelfDestruct();
     // eslint-disable-next-line no-console
-    console.log('### Success\nDashboard already running');
-    // eslint-disable-next-line no-console
-    console.log('<EOF>');
-    return;
-  }
-  process.on('exit', () => server.close());
-  try {
-    await startApp(server, options);
-    stopSelfDestruct();
-    // eslint-disable-next-line no-console
-    console.log('### Success\nDashboard ready');
+    console.log(`### Success\nDashboard ready pid=${process.pid}`);
     // eslint-disable-next-line no-console
     console.log('<EOF>');
   } catch (error) {
@@ -379,7 +389,7 @@ async function startApp(server: net.Server, options: DashboardOptions) {
         } else {
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
-          socket.end();
+          socket.end(JSON.stringify({ pid: process.pid }) + '\n');
         }
       });
     });
