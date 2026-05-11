@@ -452,7 +452,6 @@ class AttachedPage {
   }
 
   private async _startScreencast(page: api.Page) {
-    const vp = await this._viewportSize();
     await page.screencast.start({
       onFrame: ({ data, viewportWidth, viewportHeight }) => {
         if (this._disposed)

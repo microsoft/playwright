@@ -321,23 +321,23 @@ export async function openDashboardApp() {
       if (contexts.length === 0) {
         // eslint-disable-next-line no-console
         console.error('No browser contexts found. Please open a page in the browser first.');
-        process.exit(1);
+        gracefullyProcessExitDoNotHang(1);
       }
       // eslint-disable-next-line no-console
       console.log(`Connected to CDP browser with ${contexts.length} context(s)`);
-      
+
       // Log disconnection events
       cdpBrowser.on('disconnected', () => {
         // eslint-disable-next-line no-console
         console.error('CDP browser disconnected!');
       });
-      
+
       sessionProvider = new IdentitySessionProvider(contexts[0]);
       // Keep browser connection alive until process exits
       process.on('exit', () => cdpBrowser?.close().catch(() => {}));
       process.on('SIGINT', () => {
         cdpBrowser?.close().catch(() => {});
-        process.exit(0);
+        gracefullyProcessExitDoNotHang(0);
       });
     } else {
       // Use local registry browsers
