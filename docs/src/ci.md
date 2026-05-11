@@ -24,7 +24,7 @@ configurations for common CI providers.
    playwright install --with-deps
    ```
    ```bash java
-   mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
+   mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
    ```
    ```bash csharp
    dotnet build
@@ -155,9 +155,9 @@ jobs:
         distribution: 'temurin'
         java-version: '25'
     - name: Build & Install
-      run: mvn -B install -D skipTests --no-transfer-progress
+      run: mvn -B install -DskipTests --no-transfer-progress
     - name: Ensure browsers are installed
-      run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
+      run: mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
     - name: Run tests
       run: mvn test
 ```
@@ -271,7 +271,7 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
       - name: Build & Install
-        run: mvn -B install -D skipTests --no-transfer-progress
+        run: mvn -B install -DskipTests --no-transfer-progress
       - name: Run tests
         run: mvn test
 ```
@@ -373,9 +373,9 @@ jobs:
         distribution: 'temurin'
         java-version: '25'
     - name: Build & Install
-      run: mvn -B install -D skipTests --no-transfer-progress
+      run: mvn -B install -DskipTests --no-transfer-progress
     - name: Install Playwright
-      run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
+      run: mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
     - name: Run tests
       run: mvn test
       env:
@@ -524,9 +524,9 @@ steps:
     versionSpec: '25'
     jdkArchitectureOption: 'x64'
     jdkSourceOption: AzureStorage
-- script: mvn -B install -D skipTests --no-transfer-progress
+- script: mvn -B install -DskipTests --no-transfer-progress
   displayName: 'Build and install'
-- script: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
+- script: mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
   displayName: 'Install Playwright browsers'
 - script: mvn test
   displayName: 'Run tests'
@@ -725,7 +725,7 @@ steps:
     jdkArchitectureOption: 'x64'
     jdkSourceOption: AzureStorage
 
-- script: mvn -B install -D skipTests --no-transfer-progress
+- script: mvn -B install -DskipTests --no-transfer-progress
   displayName: 'Build and install'
 - script: mvn test
   displayName: 'Run tests'
@@ -838,7 +838,7 @@ pipeline {
    stages {
       stage('e2e-tests') {
          steps {
-            sh 'mvn -B install -D skipTests --no-transfer-progress'
+            sh 'mvn -B install -DskipTests --no-transfer-progress'
             sh 'mvn test'
          }
       }

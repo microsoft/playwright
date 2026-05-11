@@ -132,9 +132,9 @@ jobs:
         distribution: 'temurin'
         java-version: '25'
     - name: Build & Install
-      run: mvn -B install -D skipTests --no-transfer-progress
+      run: mvn -B install -DskipTests --no-transfer-progress
     - name: Ensure browsers are installed
-      run: mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps"
+      run: mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
     - name: Run tests
       run: mvn test
 ```

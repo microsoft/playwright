@@ -18,7 +18,7 @@ npx playwright install
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash python
@@ -36,7 +36,7 @@ npx playwright install webkit
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install webkit"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install webkit"
 ```
 
 ```bash python
@@ -54,7 +54,7 @@ npx playwright install --help
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --help"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --help"
 ```
 
 ```bash python
@@ -87,7 +87,7 @@ npx playwright install-deps
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
 ```
 
 ```bash python
@@ -105,7 +105,7 @@ npx playwright install-deps chromium
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps chromium"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps chromium"
 ```
 
 ```bash python
@@ -123,7 +123,7 @@ npx playwright install --with-deps chromium
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps chromium"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
 ```
 
 ```bash python
@@ -351,7 +351,7 @@ npx playwright install --with-deps --only-shell
 
 ```bash java
 # only running tests headlessly
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps --only-shell"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps --only-shell"
 ```
 
 ```bash python
@@ -428,7 +428,7 @@ npx playwright install --with-deps --no-shell
 
 ```bash java
 # only running tests headlessly
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps --no-shell"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps --no-shell"
 ```
 
 ```bash python
@@ -543,7 +543,7 @@ pwsh bin/Debug/netX/playwright.ps1 install msedge
 ```
 
 ```batch lang=java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install msedge"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install msedge"
 ```
 
 :::warning
@@ -630,17 +630,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-HTTPS_PROXY=https://192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+HTTPS_PROXY=https://192.0.2.1 mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set HTTPS_PROXY=https://192.0.2.1
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $Env:HTTPS_PROXY="https://192.0.2.1"
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -705,17 +705,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000 mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $Env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT="120000"
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -739,7 +739,7 @@ sudo HTTPS_PROXY=https://192.0.2.1 npx playwright install-deps
 ```
 
 ```bash java
-sudo HTTPS_PROXY=https://192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install-deps"
+sudo HTTPS_PROXY=https://192.0.2.1 mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
 ```
 
 ```bash python
@@ -790,17 +790,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -856,19 +856,19 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3 PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1 mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=http://203.0.113.3
 set PLAYWRIGHT_DOWNLOAD_HOST=http://192.0.2.1
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $Env:PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST="http://203.0.113.3"
 $Env:PLAYWRIGHT_DOWNLOAD_HOST="http://192.0.2.1"
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -923,17 +923,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+PLAYWRIGHT_NODEJS_PATH="/usr/local/bin/node" mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_NODEJS_PATH=C:\Program Files\nodejs\node.exe
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $Env:PLAYWRIGHT_NODEJS_PATH="C:\Program Files\nodejs\node.exe"
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -1001,17 +1001,17 @@ playwright install
 ```
 
 ```bash tab=bash-bash lang=java
-PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```batch tab=bash-batch lang=java
 set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```powershell tab=bash-powershell lang=java
 $Env:PLAYWRIGHT_BROWSERS_PATH="$Env:USERPROFILE\pw-browsers"
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 ```
 
 ```bash tab=bash-bash lang=csharp
@@ -1157,7 +1157,7 @@ npx playwright install --list
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --list"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --list"
 ```
 
 ```bash python
@@ -1177,7 +1177,7 @@ npx playwright uninstall
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="uninstall"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="uninstall"
 ```
 
 ```bash python
@@ -1195,7 +1195,7 @@ npx playwright uninstall --all
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="uninstall --all"
+mvn exec:java -e -Dexec.classpathScope=test -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="uninstall --all"
 ```
 
 ```bash python
