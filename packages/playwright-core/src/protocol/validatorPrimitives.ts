@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
+import { parseSerializedValue, serializeValue } from './serializers';
+
 export class ValidationError extends Error {}
 export type Validator = (arg: any, path: string, context: ValidatorContext) => any;
 export type ValidatorContext = {
   tChannelImpl: (names: '*' | string[], arg: any, path: string, context: ValidatorContext) => any;
-  binary: 'toBase64' | 'fromBase64' | 'buffer';
+  // Used by tSerializedArgument in the to-wire direction: given a raw value, returns the channel
+  // when it is a handle, otherwise undefined. Optional; default treats no value as a handle.
+  tHandleToChannel?: (value: any, path: string, context: ValidatorContext) => any | undefined;
+  // Used by tSerializedArgument in the from-wire direction: given an already-resolved channel,
+  // returns the user-side object. Optional; default is identity.
+  tChannelToHandle?: (channel: any, path: string, context: ValidatorContext) => any;
+  direction: 'toWire' | 'fromWire';
+  // When true, Buffer values are passed through as-is by tBinary (used for in-process connections).
+  keepBuffers?: boolean;
   isUnderTest: () => boolean;
 };
 export const scheme: { [key: string]: Validator } = {};
@@ -74,25 +84,22 @@ export const tString: Validator = (arg: any, path: string, context: ValidatorCon
   throw new ValidationError(`${path}: expected string, got ${typeof arg}`);
 };
 export const tBinary: Validator = (arg: any, path: string, context: ValidatorContext) => {
-  if (context.binary === 'fromBase64') {
+  if (context.keepBuffers) {
+    // TODO: support custom binary types.
+    if (!(arg instanceof Buffer) && !(arg instanceof Object))
+      throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
+    return arg;
+  }
+  if (context.direction === 'fromWire') {
     if (arg instanceof String)
       return Buffer.from(arg.valueOf(), 'base64');
     if (typeof arg === 'string')
       return Buffer.from(arg, 'base64');
     throw new ValidationError(`${path}: expected base64-encoded buffer, got ${typeof arg}`);
   }
-  if (context.binary === 'toBase64') {
-    if (!(arg instanceof Buffer))
-      throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
-    return (arg as Buffer).toString('base64');
-  }
-  if (context.binary === 'buffer') {
-    // TODO: support custom binary types.
-    if (!(arg instanceof Buffer) && !(arg instanceof Object))
-      throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
-    return arg;
-  }
-  throw new ValidationError(`Unsupported binary behavior "${context.binary}"`);
+  if (!(arg instanceof Buffer))
+    throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
+  return (arg as Buffer).toString('base64');
 };
 export const tUndefined: Validator = (arg: any, path: string, context: ValidatorContext) => {
   if (Object.is(arg, undefined))
@@ -148,6 +155,33 @@ export const tChannel = (names: '*' | string[]): Validator => {
   return (arg: any, path: string, context: ValidatorContext) => {
     return context.tChannelImpl(names, arg, path, context);
   };
+};
+export const tSerializedValue: Validator = (arg: any, path: string, context: ValidatorContext) => {
+  if (context.direction === 'fromWire')
+    return parseSerializedValue(arg, undefined);
+  return serializeValue(arg, value => ({ fallThrough: value }));
+};
+export const tSerializedArgument: Validator = (arg: any, path: string, context: ValidatorContext) => {
+  if (context.direction === 'fromWire') {
+    if (!arg || typeof arg !== 'object' || !Array.isArray(arg.handles))
+      throw new ValidationError(`${path}: expected SerializedArgument, got ${typeof arg}`);
+    const resolvedHandles = (arg.handles as any[]).map((h, i) => {
+      const handlePath = `${path}.handles[${i}]`;
+      const channel = context.tChannelImpl('*', h, handlePath, context);
+      return context.tChannelToHandle ? context.tChannelToHandle(channel, handlePath, context) : channel;
+    });
+    return parseSerializedValue(arg.value, resolvedHandles);
+  }
+  const handles: any[] = [];
+  const value = serializeValue(arg, v => {
+    const channel = context.tHandleToChannel ? context.tHandleToChannel(v, path, context) : undefined;
+    if (channel !== undefined) {
+      handles.push(context.tChannelImpl('*', channel, path, context));
+      return { h: handles.length - 1 };
+    }
+    return { fallThrough: v };
+  });
+  return { value, handles };
 };
 export const tType = (name: string): Validator => {
   return (arg: any, path: string, context: ValidatorContext) => {

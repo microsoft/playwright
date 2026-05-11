@@ -20,7 +20,6 @@ import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { Frame } from '../frames';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
 import type { Progress } from '../progress';
@@ -84,11 +83,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async evaluateExpression(params: channels.FrameEvaluateExpressionParams, progress: Progress): Promise<channels.FrameEvaluateExpressionResult> {
-    return { value: serializeResult(await this._frame.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
+    return { value: await this._frame.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, params.arg) };
   }
 
   async evaluateExpressionHandle(params: channels.FrameEvaluateExpressionHandleParams, progress: Progress): Promise<channels.FrameEvaluateExpressionHandleResult> {
-    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction }, params.arg)) };
   }
 
   async waitForSelector(params: channels.FrameWaitForSelectorParams, progress: Progress): Promise<channels.FrameWaitForSelectorResult> {
@@ -96,15 +95,15 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async dispatchEvent(params: channels.FrameDispatchEventParams, progress: Progress): Promise<void> {
-    return this._frame.dispatchEvent(progress, params.selector, params.type, parseArgument(params.eventInit), params);
+    return this._frame.dispatchEvent(progress, params.selector, params.type, params.eventInit, params);
   }
 
   async evalOnSelector(params: channels.FrameEvalOnSelectorParams, progress: Progress): Promise<channels.FrameEvalOnSelectorResult> {
-    return { value: serializeResult(await this._frame.evalOnSelector(progress, params.selector, !!params.strict, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: await this._frame.evalOnSelector(progress, params.selector, !!params.strict, params.expression, params.isFunction, params.arg) };
   }
 
   async evalOnSelectorAll(params: channels.FrameEvalOnSelectorAllParams, progress: Progress): Promise<channels.FrameEvalOnSelectorAllResult> {
-    return { value: serializeResult(await this._frame.evalOnSelectorAll(progress, params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: await this._frame.evalOnSelectorAll(progress, params.selector, params.expression, params.isFunction, params.arg) };
   }
 
   async querySelector(params: channels.FrameQuerySelectorParams, progress: Progress): Promise<channels.FrameQuerySelectorResult> {
@@ -258,7 +257,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async waitForFunction(params: channels.FrameWaitForFunctionParams, progress: Progress): Promise<channels.FrameWaitForFunctionResult> {
-    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.waitForFunctionExpression(progress, params.expression, params.isFunction, parseArgument(params.arg), params)) };
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.waitForFunctionExpression(progress, params.expression, params.isFunction, params.arg, params)) };
   }
 
   async title(params: channels.FrameTitleParams, progress: Progress): Promise<channels.FrameTitleResult> {
@@ -275,23 +274,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
 
   async expect(params: channels.FrameExpectParams, progress: Progress): Promise<channels.FrameExpectResult> {
     progress.metadata.potentiallyClosesScope = true;
-    let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
+    let expectedValue = params.expectedValue;
     if (params.expression === 'to.match.aria' && expectedValue)
       expectedValue = parseAriaSnapshotUnsafe(yaml, expectedValue);
     progress.log(`${renderTitleForCall(progress.metadata)}${params.timeout ? ` with timeout ${params.timeout}ms` : ''}`);
-    const result = await this._frame.expect(progress, params.selector, { ...params, expectedValue });
-    const channelResult: channels.FrameExpectResult = {
-      matches: result.matches,
-      log: result.log,
-      timedOut: result.timedOut,
-      errorMessage: result.errorMessage,
-    };
-    if (result.received !== undefined) {
-      channelResult.received = {
-        value: result.received.value !== undefined ? serializeResult(result.received.value) : undefined,
-        ariaSnapshot: result.received.ariaSnapshot,
-      };
-    }
-    return channelResult;
+    return await this._frame.expect(progress, params.selector, { ...params, expectedValue });
   }
 }

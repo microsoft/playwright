@@ -228,7 +228,8 @@ export class DispatcherConnection {
   private _validatorToWireContext(): ValidatorContext {
     return {
       tChannelImpl: this._tChannelImplToWire.bind(this),
-      binary: this._isLocal ? 'buffer' : 'toBase64',
+      direction: 'toWire',
+      keepBuffers: this._isLocal,
       isUnderTest,
     };
   }
@@ -236,7 +237,9 @@ export class DispatcherConnection {
   private _validatorFromWireContext(): ValidatorContext {
     return {
       tChannelImpl: this._tChannelImplFromWire.bind(this),
-      binary: this._isLocal ? 'buffer' : 'fromBase64',
+      tChannelToHandle: tChannelToHandleOnServer,
+      direction: 'fromWire',
+      keepBuffers: this._isLocal,
       isUnderTest,
     };
   }
@@ -440,4 +443,8 @@ export class DispatcherConnection {
       await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata).catch(() => {});
     }
   }
+}
+
+function tChannelToHandleOnServer(channel: any): any {
+  return channel._object;
 }

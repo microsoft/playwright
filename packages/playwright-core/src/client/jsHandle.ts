@@ -16,7 +16,6 @@
 
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
-import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -37,12 +36,12 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<R> {
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg });
+    return result.value;
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg });
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
@@ -59,7 +58,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   }
 
   async jsonValue(): Promise<T> {
-    return parseResult((await this._channel.jsonValue()).value);
+    return (await this._channel.jsonValue()).value;
   }
 
   asElement(): T extends Node ? api.ElementHandle<T> : null {
@@ -83,26 +82,6 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   override toString(): string {
     return this._preview;
   }
-}
-
-// This function takes care of converting all JSHandles to their channels,
-// so that generic channel serializer converts them to guids.
-export function serializeArgument(arg: any): channels.SerializedArgument {
-  const handles: channels.Channel[] = [];
-  const pushHandle = (channel: channels.Channel): number => {
-    handles.push(channel);
-    return handles.length - 1;
-  };
-  const value = serializeValue(arg, value => {
-    if (value instanceof JSHandle)
-      return { h: pushHandle(value._channel) };
-    return { fallThrough: value };
-  });
-  return { value, handles };
-}
-
-export function parseResult(value: channels.SerializedValue): any {
-  return parseSerializedValue(value, undefined);
 }
 
 export function assertMaxArguments(count: number, max: number): asserts count {

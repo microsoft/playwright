@@ -20,7 +20,7 @@ import { envObjectToArray } from './clientHelper';
 import { ConsoleMessage } from './consoleMessage';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
-import { JSHandle, parseResult, serializeArgument } from './jsHandle';
+import { JSHandle } from './jsHandle';
 import { Waiter } from './waiter';
 import { TimeoutSettings } from './timeoutSettings';
 
@@ -158,12 +158,12 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<R> {
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg });
+    return result.value;
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg });
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }

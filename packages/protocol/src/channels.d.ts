@@ -21,6 +21,11 @@ import type { Progress } from './progress';
 
 export type Binary = Buffer;
 
+// SerializedValue / SerializedArgument round-trip through validators that produce raw JS
+// values; their post-validation runtime types are aliased as 'any' under these names.
+export type UnserializedValue = any;
+export type UnserializedArgument = any;
+
 export interface Channel {
 }
 
@@ -2209,18 +2214,18 @@ export type ElectronApplicationBrowserWindowResult = {
 export type ElectronApplicationEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type ElectronApplicationEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type ElectronApplicationEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type ElectronApplicationEvaluateExpressionHandleParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type ElectronApplicationEvaluateExpressionHandleOptions = {
   isFunction?: boolean,
@@ -2322,26 +2327,26 @@ export type FrameEvalOnSelectorParams = {
   strict?: boolean,
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type FrameEvalOnSelectorOptions = {
   strict?: boolean,
   isFunction?: boolean,
 };
 export type FrameEvalOnSelectorResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type FrameEvalOnSelectorAllParams = {
   selector: string,
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type FrameEvalOnSelectorAllOptions = {
   isFunction?: boolean,
 };
 export type FrameEvalOnSelectorAllResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type FrameAddScriptTagParams = {
   url?: string,
@@ -2521,7 +2526,7 @@ export type FrameDispatchEventParams = {
   selector: string,
   strict?: boolean,
   type: string,
-  eventInit: SerializedArgument,
+  eventInit: UnserializedArgument,
   timeout: number,
 };
 export type FrameDispatchEventOptions = {
@@ -2531,18 +2536,18 @@ export type FrameDispatchEventResult = void;
 export type FrameEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type FrameEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type FrameEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type FrameEvaluateExpressionHandleParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type FrameEvaluateExpressionHandleOptions = {
   isFunction?: boolean,
@@ -2914,7 +2919,7 @@ export type FrameWaitForTimeoutResult = void;
 export type FrameWaitForFunctionParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
   timeout: number,
   pollingInterval?: number,
 };
@@ -2947,7 +2952,7 @@ export type FrameExpectParams = {
   pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
-  expectedValue?: SerializedArgument,
+  expectedValue?: UnserializedArgument,
   useInnerText?: boolean,
   isNot: boolean,
   timeout: number,
@@ -2958,13 +2963,13 @@ export type FrameExpectOptions = {
   pseudo?: 'before' | 'after',
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
-  expectedValue?: SerializedArgument,
+  expectedValue?: UnserializedArgument,
   useInnerText?: boolean,
 };
 export type FrameExpectResult = {
   matches: boolean,
   received?: {
-    value?: SerializedValue,
+    value?: UnserializedValue,
     ariaSnapshot?: string,
   },
   timedOut?: boolean,
@@ -3002,18 +3007,18 @@ export type JSHandleDisposeResult = void;
 export type JSHandleEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type JSHandleEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type JSHandleEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type JSHandleEvaluateExpressionHandleParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type JSHandleEvaluateExpressionHandleOptions = {
   isFunction?: boolean,
@@ -3041,7 +3046,7 @@ export type JSHandleGetPropertyResult = {
 export type JSHandleJsonValueParams = {};
 export type JSHandleJsonValueOptions = {};
 export type JSHandleJsonValueResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 
 export interface JSHandleEvents {
@@ -3096,26 +3101,26 @@ export type ElementHandleEvalOnSelectorParams = {
   strict?: boolean,
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type ElementHandleEvalOnSelectorOptions = {
   strict?: boolean,
   isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type ElementHandleEvalOnSelectorAllParams = {
   selector: string,
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type ElementHandleEvalOnSelectorAllOptions = {
   isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorAllResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type ElementHandleBoundingBoxParams = {};
 export type ElementHandleBoundingBoxOptions = {};
@@ -3185,7 +3190,7 @@ export type ElementHandleDblclickOptions = {
 export type ElementHandleDblclickResult = void;
 export type ElementHandleDispatchEventParams = {
   type: string,
-  eventInit: SerializedArgument,
+  eventInit: UnserializedArgument,
 };
 export type ElementHandleDispatchEventOptions = {
 
@@ -5087,7 +5092,7 @@ export interface CDPSessionEvents {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  args: SerializedValue[],
+  args: UnserializedValue[],
 };
 export interface BindingCallEventTarget {
 }
@@ -5104,7 +5109,7 @@ export type BindingCallRejectOptions = {
 };
 export type BindingCallRejectResult = void;
 export type BindingCallResolveParams = {
-  result: SerializedArgument,
+  result: UnserializedArgument,
 };
 export type BindingCallResolveOptions = {
 
@@ -5232,7 +5237,7 @@ export type SerializedError = {
     name: string,
     stack?: string,
   },
-  value?: SerializedValue,
+  value?: UnserializedValue,
 };
 
 export type StackFrame = {
@@ -5403,18 +5408,18 @@ export type WorkerDisconnectResult = void;
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type WorkerEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type WorkerEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type WorkerEvaluateExpressionHandleParams = {
   expression: string,
   isFunction?: boolean,
-  arg: SerializedArgument,
+  arg: UnserializedArgument,
 };
 export type WorkerEvaluateExpressionHandleOptions = {
   isFunction?: boolean,

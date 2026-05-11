@@ -43,7 +43,7 @@ export class SocksInterceptor {
             const id = --lastId;
             this._ids.add(id);
             const validator = findValidator('SocksSupport', prop, 'Params');
-            params = validator(params, '', { tChannelImpl: tChannelForSocks, binary: 'toBase64', isUnderTest });
+            params = validator(params, '', { tChannelImpl: tChannelForSocks, direction: 'toWire', isUnderTest });
             transport.send({ id, guid: this._socksSupportObjectGuid, method: prop, params, metadata: { stack: [], apiName: '', internal: true } } as any);
           } catch (e) {
           }
@@ -75,7 +75,7 @@ export class SocksInterceptor {
     }
     if (this._socksSupportObjectGuid && message.guid === this._socksSupportObjectGuid) {
       const validator = findValidator('SocksSupport', message.method, 'Event');
-      const params = validator(message.params, '', { tChannelImpl: tChannelForSocks, binary: 'fromBase64', isUnderTest });
+      const params = validator(message.params, '', { tChannelImpl: tChannelForSocks, direction: 'fromWire', isUnderTest });
       this._channel.emit(message.method, params);
       return true;
     }

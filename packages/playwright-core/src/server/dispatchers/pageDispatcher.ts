@@ -22,7 +22,7 @@ import { parseError, serializeError } from '../errors';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
+import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
@@ -525,11 +525,11 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionResult> {
-    return { value: serializeResult(await this._object.evaluateExpression(progress, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: await this._object.evaluateExpression(progress, params.expression, params.isFunction, params.arg) };
   }
 
   async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionHandleResult> {
-    return { handle: JSHandleDispatcher.fromJSHandle(this, await this._object.evaluateExpressionHandle(progress, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { handle: JSHandleDispatcher.fromJSHandle(this, await this._object.evaluateExpressionHandle(progress, params.expression, params.isFunction, params.arg)) };
   }
 
   async updateSubscription(params: channels.WorkerUpdateSubscriptionParams, progress: Progress): Promise<void> {
@@ -551,7 +551,7 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
     super(scope, new SdkObject(scope._object, 'bindingCall'), 'BindingCall', {
       frame: frameDispatcher,
       name,
-      args: args.map(serializeResult),
+      args,
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;
@@ -564,7 +564,7 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
   }
 
   async resolve(params: channels.BindingCallResolveParams, progress: Progress): Promise<void> {
-    this._resolve!(parseArgument(params.result));
+    this._resolve!(params.result);
     this._dispose();
   }
 

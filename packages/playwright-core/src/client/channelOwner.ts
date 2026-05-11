@@ -137,7 +137,9 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   private _validatorToWireContext(): ValidatorContext {
     return {
       tChannelImpl: tChannelImplToWire,
-      binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64',
+      tHandleToChannel: tHandleToChannelOnClient,
+      direction: 'toWire',
+      keepBuffers: this._connection.rawBuffers(),
       isUnderTest: () => this._platform.isUnderTest(),
     };
   }
@@ -229,6 +231,12 @@ function tChannelImplToWire(names: '*' | string[], arg: any, path: string, conte
   if (arg._object instanceof ChannelOwner && (names === '*' || names.includes(arg._object._type)))
     return { guid: arg._object._guid };
   throw new ValidationError(`${path}: expected channel ${names.toString()}`);
+}
+
+function tHandleToChannelOnClient(value: any): any | undefined {
+  if (value instanceof ChannelOwner && (value._type === 'JSHandle' || value._type === 'ElementHandle'))
+    return value._channel;
+  return undefined;
 }
 
 type ApiZone = {

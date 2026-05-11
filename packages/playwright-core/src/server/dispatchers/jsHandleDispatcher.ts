@@ -16,7 +16,6 @@
 
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
 
 import type * as js from '../javascript';
 import type { ElectronApplicationDispatcher } from './electronDispatcher';
@@ -43,12 +42,11 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
   }
 
   async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionResult> {
-    const jsHandle = await this._object.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
-    return { value: serializeResult(jsHandle) };
+    return { value: await this._object.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, params.arg) };
   }
 
   async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
-    const jsHandle = await this._object.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
+    const jsHandle = await this._object.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction }, params.arg);
     // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
     return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, jsHandle) };
   }
@@ -70,7 +68,7 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
   }
 
   async jsonValue(params: channels.JSHandleJsonValueParams, progress: Progress): Promise<channels.JSHandleJsonValueResult> {
-    return { value: serializeResult(await this._object.jsonValue(progress)) };
+    return { value: await this._object.jsonValue(progress) };
   }
 
   async dispose(_: any, progress: Progress) {
@@ -78,18 +76,4 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
     this._object.dispose();
     this._dispose();
   }
-}
-
-// Generic channel parser converts guids to JSHandleDispatchers,
-// and this function takes care of converting them into underlying JSHandles.
-export function parseArgument(arg: channels.SerializedArgument): any {
-  return parseSerializedValue(arg.value, arg.handles.map(a => (a as JSHandleDispatcher)._object));
-}
-
-export function parseValue(v: channels.SerializedValue): any {
-  return parseSerializedValue(v, []);
-}
-
-export function serializeResult(arg: any): channels.SerializedValue {
-  return serializeValue(arg, value => ({ fallThrough: value }));
 }
