@@ -272,9 +272,7 @@ async function acquireSingleton(options: DashboardOptions): Promise<{ server: ne
     await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
-    const server = net.createServer(socket => {
-      socket.write(JSON.stringify({ pid: process.pid }) + '\n');
-    });
+    const server = net.createServer();
     server.listen(socketPath, () => {
       process.on('exit', () => server.close());
       resolve({ server });
@@ -282,22 +280,21 @@ async function acquireSingleton(options: DashboardOptions): Promise<{ server: ne
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code !== 'EADDRINUSE' && err.code !== 'EEXIST')
         return reject(err);
-      const client = net.connect(socketPath, () => {
-        let buffer = '';
-        client.on('data', data => {
-          buffer += data.toString();
-          const newlineIndex = buffer.indexOf('\n');
-          if (newlineIndex === -1)
-            return;
-          client.removeAllListeners('data');
-          try {
-            const { pid } = JSON.parse(buffer.slice(0, newlineIndex));
-            client.write(JSON.stringify(options) + '\n');
-            resolve({ peerPid: pid });
-          } catch (e) {
-            reject(e);
-          }
-        });
+      const client = net.connect(socketPath);
+      let buffer = '';
+      client.on('data', data => {
+        buffer += data.toString();
+      });
+      client.on('end', () => {
+        try {
+          const { pid } = JSON.parse(buffer);
+          resolve({ peerPid: pid });
+        } catch (e) {
+          reject(e);
+        }
+      });
+      client.on('connect', () => {
+        client.write(JSON.stringify(options) + '\n');
       });
       client.on('error', () => {
         if (process.platform !== 'win32')
@@ -386,18 +383,20 @@ async function startApp(server: net.Server, options: DashboardOptions) {
         return;
       }
       void statePromise.then(({ page, server: dashboard }) => {
+        const ack = JSON.stringify({ pid: process.pid }) + '\n';
         if (parsed.annotate) {
+          socket.write(ack);
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
           dashboard.triggerAnnotate();
           dashboard.registerAnnotateWaiter(socket);
         } else if (parsed.kill) {
-          socket.end();
+          socket.end(ack);
           gracefullyProcessExitDoNotHang(0);
         } else {
           page?.bringToFront().catch(() => {});
           dashboard.reveal(parsed);
-          socket.end();
+          socket.end(ack);
         }
       });
     });
