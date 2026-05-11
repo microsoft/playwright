@@ -3981,6 +3981,7 @@ export interface PageChannel extends PageEventTarget, Channel {
   _type_Page: boolean;
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
+  runBeforeUnload(params?: PageRunBeforeUnloadParams, progress?: Progress): Promise<PageRunBeforeUnloadResult>;
   clearConsoleMessages(params?: PageClearConsoleMessagesParams, progress?: Progress): Promise<PageClearConsoleMessagesResult>;
   consoleMessages(params: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
   emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
@@ -4088,14 +4089,15 @@ export type PageAddInitScriptResult = {
   disposable: DisposableChannel,
 };
 export type PageCloseParams = {
-  runBeforeUnload?: boolean,
   reason?: string,
 };
 export type PageCloseOptions = {
-  runBeforeUnload?: boolean,
   reason?: string,
 };
 export type PageCloseResult = void;
+export type PageRunBeforeUnloadParams = {};
+export type PageRunBeforeUnloadOptions = {};
+export type PageRunBeforeUnloadResult = void;
 export type PageClearConsoleMessagesParams = {};
 export type PageClearConsoleMessagesOptions = {};
 export type PageClearConsoleMessagesResult = void;

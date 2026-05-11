@@ -244,6 +244,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Response.sizes', { internal: true, }],
   ['Page.addInitScript', { title: 'Add init script', group: 'configuration', }],
   ['Page.close', { title: 'Close page', pause: true, }],
+  ['Page.runBeforeUnload', { title: 'Run beforeunload', pause: true, }],
   ['Page.clearConsoleMessages', { title: 'Clear console messages', }],
   ['Page.consoleMessages', { title: 'Get console messages', group: 'getter', }],
   ['Page.emulateMedia', { title: 'Emulate media', snapshot: true, pause: true, }],

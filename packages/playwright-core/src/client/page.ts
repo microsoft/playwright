@@ -647,8 +647,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     try {
       if (this._ownedContext)
         await this._ownedContext.close();
+      else if (options.runBeforeUnload)
+        await this._channel.runBeforeUnload();
       else
-        await this._channel.close(options);
+        await this._channel.close({ reason: options.reason });
     } catch (e) {
       if (isTargetClosedError(e) && !options.runBeforeUnload)
         return;

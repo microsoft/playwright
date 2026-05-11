@@ -250,9 +250,12 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async close(params: channels.PageCloseParams, progress: Progress): Promise<void> {
-    if (!params.runBeforeUnload)
-      progress.metadata.potentiallyClosesScope = true;
+    progress.metadata.potentiallyClosesScope = true;
     await this._page.close(progress, params);
+  }
+
+  async runBeforeUnload(params: channels.PageRunBeforeUnloadParams, progress: Progress): Promise<void> {
+    await this._page.runBeforeUnload(progress);
   }
 
   async updateSubscription(params: channels.PageUpdateSubscriptionParams, progress: Progress): Promise<void> {
