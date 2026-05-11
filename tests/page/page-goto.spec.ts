@@ -254,6 +254,44 @@ it('should navigate to about:blank', async ({ page, server }) => {
   expect(response).toBe(null);
 });
 
+it('should handle BiDi navigationCommitted with null navigation id', async ({ page, server, toImpl, isBidi }) => {
+  it.skip(!isBidi, 'BiDi-specific test');
+
+  await page.goto(server.EMPTY_PAGE);
+
+  // Access internal BiDi page to simulate a spec-compliant event.
+  // W3C BiDi spec defines BaseNavigationInfo.navigation as
+  // "Navigation | null" — null when navigation is canceled before
+  // making progress (w3c/webdriver-bidi#766).
+  const pageImpl = toImpl(page);
+  const mainFrame = pageImpl.mainFrame();
+  const bidiPage = pageImpl.delegate;
+  const browserContext = bidiPage._browserContext;
+
+  // Stub doGrantGlobalPermissionsForURL to prevent async BiDi commands
+  // that would race with test teardown.
+  const origGrant = browserContext.doGrantGlobalPermissionsForURL.bind(browserContext);
+  browserContext.doGrantGlobalPermissionsForURL = async () => {};
+
+  try {
+    // Call handler with navigation: null.
+    // Without the null guard, frameCommittedNewDocumentNavigation() runs,
+    // overwriting frame._url and clearing lifecycle events.
+    bidiPage._onNavigationCommitted({
+      context: mainFrame._id,
+      navigation: null,
+      timestamp: Date.now(),
+      url: server.PREFIX + '/injected',
+    });
+
+    // Without the fix: frame._url was overwritten to server.PREFIX + '/injected'
+    // With the fix: the if (params.navigation) guard skips the call entirely.
+    expect(mainFrame._url).toBe(server.EMPTY_PAGE);
+  } finally {
+    browserContext.doGrantGlobalPermissionsForURL = origGrant;
+  }
+});
+
 it('should return response when page changes its URL after load', async ({ page, server }) => {
   const response = await page.goto(server.PREFIX + '/historyapi.html');
   expect(response.status()).toBe(200);
