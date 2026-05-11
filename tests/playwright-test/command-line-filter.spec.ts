@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
 import { test, expect } from './playwright-test-fixtures';
 
 test('should filter by file name', async ({ runInlineTest }) => {
