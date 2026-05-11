@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import url from 'url';
 import util from 'util';
 
 import debug from 'debug';
@@ -114,12 +113,12 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
         return true;
     }
     // Windows might still receive unix style paths from Cygwin or Git Bash.
-    // Check against the file url as well.
+    // Check against the forward-slash form as well.
     if (path.sep === '\\') {
-      const fileURL = url.pathToFileURL(filePath).href;
+      const unixPath = filePath.split(path.sep).join('/');
       for (const re of reList) {
         re.lastIndex = 0;
-        if (re.test(fileURL))
+        if (re.test(unixPath))
           return true;
       }
     }
