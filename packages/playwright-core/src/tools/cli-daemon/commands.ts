@@ -47,7 +47,7 @@ const open = declareCommand({
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
     headed: z.boolean().optional().describe('Run browser in headed mode'),
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
-    profile: z.string().optional().describe('Path to a persistent user data directory.'),
+    profile: z.string().optional().describe('Path to the browser user data directory (parent of Default/Profile N folders); always uses the Default profile.'),
   }),
   toolName: '',
   toolParams: () => ({}),

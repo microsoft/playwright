@@ -37,7 +37,7 @@ export function decorateProgram(program: Command) {
       .option('--extension', 'run with the extension')
       .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
       .option('--persistent', 'use a persistent browser context')
-      .option('--profile <path>', 'path to the user data dir')
+      .option('--profile <path>', 'path to the browser user data directory (parent of Default/Profile N folders); always uses the Default profile')
       .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
       .option('--cdp <url>', 'connect to an existing browser via CDP endpoint URL')
       .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
