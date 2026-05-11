@@ -235,7 +235,6 @@ export async function program(options?: { embedderVersion?: string}) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
       }
-      let dashboardPid: number | undefined;
       try {
         await new Promise<void>((resolve, reject) => {
           let outLog = '';
@@ -253,13 +252,10 @@ export async function program(options?: { embedderVersion?: string}) {
             outLog += data.toString();
             if (!outLog.includes('<EOF>'))
               return;
-            const successMatch = outLog.match(/### Success\n[^\n]*pid=(\d+)[^\n]*\n<EOF>/);
-            if (successMatch) {
-              dashboardPid = +successMatch[1];
+            if (outLog.match(/### Success\n[\s\S]*<EOF>/))
               settle();
-            } else {
+            else
               settle(new Error(outLog.trim()));
-            }
           });
           child.stdout!.once('error', err => settle(err));
           child.once('exit', (code, signal) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY${outLog ? '\n' + outLog : ''}`)));
@@ -274,7 +270,7 @@ export async function program(options?: { embedderVersion?: string}) {
       child.stdin!.destroy();
       child.stdout!.destroy();
       child.unref();
-      output.show(sessionName, dashboardPid);
+      output.show(sessionName, child.pid);
       return;
     }
     default: {
