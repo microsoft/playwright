@@ -71,13 +71,18 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
     connection = new DashboardConnection(provider, () => connections.delete(connection), () => {
-      if (currentReveal.pageId)
-        connection.revealPage(currentReveal.pageId);
-      else if (currentReveal.sessionName)
-        connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
-      if (pendingAnnotate) {
-        pendingAnnotate = false;
-        connection.emitAnnotate();
+      try {
+        if (currentReveal.pageId)
+          connection.revealPage(currentReveal.pageId);
+        else if (currentReveal.sessionName)
+          connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
+        if (pendingAnnotate) {
+          pendingAnnotate = false;
+          connection.emitAnnotate();
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('Error during connection initialization:', e);
       }
     }, submitAnnotation);
     connections.add(connection);
@@ -85,7 +90,7 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   });
 
   const wsGuid = httpServer.wsGuid()!;
-  httpServer.routePath('/', (_, response) => {
+  httpServer.routePath('/', (request, response) => {
     response.statusCode = 302;
     response.setHeader('Location', `/index.html?ws=${wsGuid}`);
     response.end();
@@ -250,10 +255,11 @@ type DashboardOptions = {
   annotate?: boolean;
   port?: number;
   host?: string;
+  cdp?: string;
 };
 
 function parseOpenArgs(): DashboardOptions {
-  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId'], boolean: ['annotate', 'kill'] });
+  const args = minimist(process.argv.slice(2), { string: ['sessionName', 'workspaceDir', 'host', 'pageId', 'cdp'], boolean: ['annotate', 'kill'] });
   const portStr = args.port as string | undefined;
   return {
     sessionName: args.sessionName as string | undefined,
@@ -261,6 +267,7 @@ function parseOpenArgs(): DashboardOptions {
     pageId: args.pageId as string | undefined,
     port: portStr !== undefined ? Number(portStr) : undefined,
     host: args.host as string | undefined,
+    cdp: args.cdp as string | undefined,
     annotate: !!args.annotate,
     kill: !!args.kill,
   };
@@ -305,7 +312,38 @@ export async function openDashboardApp() {
     console.error('Unhandled promise rejection:', error);
   });
   if (options.port !== undefined) {
-    const { url } = await startDashboardServer(new RegistrySessionProvider(), options);
+    let sessionProvider: SessionProvider;
+    let cdpBrowser: api.Browser | undefined;
+    if (options.cdp) {
+      // Connect to remote browser via CDP and use IdentitySessionProvider
+      cdpBrowser = await playwright.chromium.connectOverCDP(options.cdp);
+      const contexts = cdpBrowser.contexts();
+      if (contexts.length === 0) {
+        // eslint-disable-next-line no-console
+        console.error('No browser contexts found. Please open a page in the browser first.');
+        process.exit(1);
+      }
+      // eslint-disable-next-line no-console
+      console.log(`Connected to CDP browser with ${contexts.length} context(s)`);
+      
+      // Log disconnection events
+      cdpBrowser.on('disconnected', () => {
+        // eslint-disable-next-line no-console
+        console.error('CDP browser disconnected!');
+      });
+      
+      sessionProvider = new IdentitySessionProvider(contexts[0]);
+      // Keep browser connection alive until process exits
+      process.on('exit', () => cdpBrowser?.close().catch(() => {}));
+      process.on('SIGINT', () => {
+        cdpBrowser?.close().catch(() => {});
+        process.exit(0);
+      });
+    } else {
+      // Use local registry browsers
+      sessionProvider = new RegistrySessionProvider();
+    }
+    const { url } = await startDashboardServer(sessionProvider, options);
     // eslint-disable-next-line no-console
     console.log(`Listening on ${url}`);
     selfDestructOnParentGone();

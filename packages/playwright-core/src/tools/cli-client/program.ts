@@ -212,6 +212,8 @@ export async function program(options?: { embedderVersion?: string}) {
         daemonArgs.push(`--port=${args.port}`);
       if (args.host !== undefined)
         daemonArgs.push(`--host=${args.host as string}`);
+      if (args.cdp !== undefined)
+        daemonArgs.push(`--cdp=${args.cdp as string}`);
       if (args.kill) {
         daemonArgs.push(`--kill`);
         const child = spawn(process.execPath, daemonArgs, { stdio: 'ignore' });
