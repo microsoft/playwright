@@ -18,6 +18,7 @@ import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRendere
 import { LRUCache } from '../lruCache';
 
 import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
+import type { BrowserContextEventOptions } from '@trace/trace';
 import type { PageEntry } from './entries';
 
 
@@ -35,7 +36,7 @@ export class SnapshotStorage {
     this._ensureResourcesForContext(contextId).push(resource);
   }
 
-  addFrameSnapshot(contextId: string, snapshot: FrameSnapshot, screencastFrames: PageEntry['screencastFrames']) {
+  addFrameSnapshot(contextId: string, snapshot: FrameSnapshot, screencastFrames: PageEntry['screencastFrames'], contextOptions?: BrowserContextEventOptions) {
     for (const override of snapshot.resourceOverrides)
       override.url = rewriteURLForCustomProtocol(override.url);
     let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
@@ -50,7 +51,7 @@ export class SnapshotStorage {
     }
     frameSnapshots.raw.push(snapshot);
     const resources = this._ensureResourcesForContext(contextId);
-    const renderer = new SnapshotRenderer(this._cache, resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1);
+    const renderer = new SnapshotRenderer(this._cache, resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1, contextOptions);
     frameSnapshots.renderers.push(renderer);
     return renderer;
   }

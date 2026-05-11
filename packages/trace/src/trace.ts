@@ -29,6 +29,10 @@ export type BrowserContextEventOptions = {
   deviceScaleFactor?: number,
   isMobile?: boolean,
   userAgent?: string,
+  colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
+  reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
+  forcedColors?: 'active' | 'none' | 'no-override',
+  contrast?: 'no-preference' | 'more' | 'no-override',
 };
 
 export type ContextCreatedTraceEvent = {

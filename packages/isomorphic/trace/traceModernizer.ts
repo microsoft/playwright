@@ -167,7 +167,7 @@ export class TraceModernizer {
         contextEntry.resources.push(event.snapshot);
         break;
       case 'frame-snapshot':
-        this._snapshotStorage.addFrameSnapshot(this._contextEntry.contextId, event.snapshot, this._pageEntry(event.snapshot.pageId).screencastFrames);
+        this._snapshotStorage.addFrameSnapshot(this._contextEntry.contextId, event.snapshot, this._pageEntry(event.snapshot.pageId).screencastFrames, this._contextEntry.options);
         break;
     }
     // Make sure there is a page entry for each page, even without screencast frames,

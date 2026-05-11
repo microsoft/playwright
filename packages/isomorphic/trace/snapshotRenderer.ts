@@ -17,8 +17,33 @@
 import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
 
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
+import type { BrowserContextEventOptions } from '@trace/trace';
 import type { PageEntry } from './entries';
 import type { LRUCache } from '../lruCache';
+
+type EmulatedMedia = {
+  reducedMotion?: 'reduce' | 'no-preference';
+  colorScheme?: 'dark' | 'light' | 'no-preference';
+  forcedColors?: 'active' | 'none';
+  contrast?: 'no-preference' | 'more';
+};
+
+function emulatedMediaFromOptions(options: BrowserContextEventOptions | undefined): EmulatedMedia | undefined {
+  if (!options)
+    return undefined;
+  const result: EmulatedMedia = {};
+  if (options.reducedMotion && options.reducedMotion !== 'no-override')
+    result.reducedMotion = options.reducedMotion;
+  if (options.colorScheme && options.colorScheme !== 'no-override')
+    result.colorScheme = options.colorScheme;
+  if (options.forcedColors && options.forcedColors !== 'no-override')
+    result.forcedColors = options.forcedColors;
+  if (options.contrast && options.contrast !== 'no-override')
+    result.contrast = options.contrast;
+  if (!Object.keys(result).length)
+    return undefined;
+  return result;
+}
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   return items.find((item, index) => {
@@ -46,8 +71,9 @@ export class SnapshotRenderer {
   private _snapshot: FrameSnapshot;
   private _callId: string;
   private _screencastFrames: PageEntry['screencastFrames'];
+  private _emulatedMedia: EmulatedMedia | undefined;
 
-  constructor(htmlCache: LRUCache<SnapshotRenderer, string>, resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
+  constructor(htmlCache: LRUCache<SnapshotRenderer, string>, resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number, contextOptions?: BrowserContextEventOptions) {
     this._htmlCache = htmlCache;
     this._resources = resources;
     this._snapshots = snapshots;
@@ -56,6 +82,7 @@ export class SnapshotRenderer {
     this._callId = snapshots[index].callId;
     this._screencastFrames = screencastFrames;
     this.snapshotName = snapshots[index].snapshotName;
+    this._emulatedMedia = emulatedMediaFromOptions(contextOptions);
   }
 
   snapshot(): FrameSnapshot {
@@ -185,7 +212,7 @@ export class SnapshotRenderer {
       const html = prefix + [
         // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
         '<style>*,*::before,*::after { visibility: hidden }</style>',
-        `<script>${snapshotScript(this.viewport(), this._callId, this.snapshotName)}</script>`
+        `<script>${snapshotScript(this.viewport(), this._emulatedMedia, this._callId, this.snapshotName)}</script>`
       ].join('') + result.join('');
       return { value: html, size: html.length };
     });
@@ -294,8 +321,8 @@ declare global {
   }
 }
 
-function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(blankSnapshotUrl: string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
+function snapshotScript(viewport: ViewportSize, emulatedMedia: EmulatedMedia | undefined, ...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(blankSnapshotUrl: string, viewport: ViewportSize, emulatedMedia: EmulatedMedia | null, ...targetIds: (string | undefined)[]) {
     // eslint-disable-next-line no-restricted-globals
     const win = window;
     const searchParams = new URLSearchParams(win.location.search);
@@ -322,6 +349,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
     const canvasElements: HTMLCanvasElement[] = [];
+    const shadowRoots: ShadowRoot[] = [];
 
     let topSnapshotWindow: Window = win;
     while (topSnapshotWindow !== topSnapshotWindow.parent && !topSnapshotWindow.location.pathname.match(/\/page@[a-z0-9]+$/))
@@ -410,6 +438,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         const shadowRoot = template.parentElement!.attachShadow({ mode: 'open' });
         shadowRoot.appendChild(template.content);
         template.remove();
+        shadowRoots.push(shadowRoot);
         visit(shadowRoot);
       }
 
@@ -430,8 +459,75 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
       canvasElements.push(...root.querySelectorAll('canvas'));
     };
 
+    // Per-feature truthy-form matcher: `(feature)` without a value matches when
+    // the emulated value is "set" (semantics differ slightly per feature).
+    const featureMatchers: { [feature: string]: { value: string | undefined, truthy: (v: string) => boolean } } = !emulatedMedia ? {} : {
+      'prefers-reduced-motion': { value: emulatedMedia.reducedMotion, truthy: v => v === 'reduce' },
+      'prefers-color-scheme':   { value: emulatedMedia.colorScheme,   truthy: v => v !== 'no-preference' },
+      'forced-colors':          { value: emulatedMedia.forcedColors,  truthy: v => v === 'active' },
+      'prefers-contrast':       { value: emulatedMedia.contrast,      truthy: v => v !== 'no-preference' },
+    };
+
+    const featureMatches = (feature: string, value: string | undefined): boolean | undefined => {
+      const entry = featureMatchers[feature];
+      if (!entry || entry.value === undefined)
+        return undefined;
+      return value === undefined ? entry.truthy(entry.value) : entry.value === value;
+    };
+
+    const rewriteMediaText = (mediaText: string): string => {
+      // `(width)` always matches; `(width: 0)` never matches. Surrounding `not`/`and`/`or` is preserved.
+      return mediaText.replace(
+          /\(\s*(prefers-reduced-motion|prefers-color-scheme|forced-colors|prefers-contrast)(?:\s*:\s*([\w-]+))?\s*\)/gi,
+          (match, feature, value) => {
+            const matches = featureMatches(feature.toLowerCase(), value?.toLowerCase());
+            if (matches === undefined)
+              return match;
+            return matches ? '(width)' : '(width: 0)';
+          });
+    };
+
+    const rewriteMediaInRules = (rules: CSSRuleList) => {
+      for (const rule of rules) {
+        if (rule instanceof CSSMediaRule) {
+          const newText = rewriteMediaText(rule.media.mediaText);
+          if (newText !== rule.media.mediaText) {
+            try {
+              rule.media.mediaText = newText;
+            } catch {
+            }
+          }
+        }
+        if (rule instanceof CSSGroupingRule)
+          rewriteMediaInRules(rule.cssRules);
+      }
+    };
+
+    const rewriteMediaInSheet = (sheet: CSSStyleSheet) => {
+      try {
+        rewriteMediaInRules(sheet.cssRules);
+      } catch {
+        // Cross-origin stylesheet or other access error.
+      }
+    };
+
+    const rewriteMediaInRoot = (root: Document | ShadowRoot) => {
+      for (const sheet of root.styleSheets)
+        rewriteMediaInSheet(sheet);
+      if ('adoptedStyleSheets' in root) {
+        for (const sheet of root.adoptedStyleSheets)
+          rewriteMediaInSheet(sheet);
+      }
+    };
+
     const onLoad = () => {
       win.removeEventListener('load', onLoad);
+      // Apply media emulation before unhiding to avoid layout flashes.
+      if (emulatedMedia) {
+        rewriteMediaInRoot(win.document);
+        for (const root of shadowRoots)
+          rewriteMediaInRoot(root);
+      }
       for (const element of scrollTops) {
         element.scrollTop = +element.getAttribute('__playwright_scroll_top_')!;
         element.removeAttribute('__playwright_scroll_top_');
@@ -596,7 +692,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
   // Trace data is untrusted; escape `<` so attacker-controlled targetIds/viewport
   // cannot terminate the surrounding <script> tag with "</script>".
   const safe = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
-  return `\n(${applyPlaywrightAttributes.toString()})(${safe(blankSnapshotUrl)},${safe(viewport)}${targetIds.map(id => `, ${safe(String(id))}`).join('')})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${safe(blankSnapshotUrl)},${safe(viewport)},${safe(emulatedMedia ?? null)}${targetIds.map(id => `, ${safe(String(id))}`).join('')})`;
 }
 
 

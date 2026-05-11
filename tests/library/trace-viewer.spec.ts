@@ -829,6 +829,35 @@ test('should work with nesting CSS selectors', async ({ page, runAndTrace }) => 
   }
 });
 
+test('should respect emulated media context options in snapshot preview', async ({ browser, showTraceViewer }, testInfo) => {
+  const context = await browser.newContext({ reducedMotion: 'reduce' });
+  await context.tracing.start({ snapshots: true, screenshots: true });
+  const page = await context.newPage();
+  await page.setContent(`<!DOCTYPE html>
+    <style>
+      body { background: rgb(0, 128, 0); }
+      #prefers-yes { display: none; }
+      #prefers-not { display: inline; }
+      @media (prefers-reduced-motion: reduce) {
+        body { background: rgb(0, 0, 255); }
+        #prefers-yes { display: inline; }
+        #prefers-not { display: none; }
+      }
+    </style>
+    <span id="prefers-yes">Prefers yes</span>
+    <span id="prefers-not">Prefers not</span>`);
+  await page.evaluate(() => { });
+  const traceFile = testInfo.outputPath('trace.zip');
+  await context.tracing.stop({ path: traceFile });
+  await context.close();
+
+  const traceViewer = await showTraceViewer(traceFile);
+  const frame = await traceViewer.snapshotFrame('Evaluate', 0);
+  await expect(frame.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
+  await expect(frame.locator('#prefers-yes')).toBeVisible();
+  await expect(frame.locator('#prefers-not')).toBeHidden();
+});
+
 test('should restore scroll positions', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
