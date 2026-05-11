@@ -109,13 +109,16 @@ test.describe('browserName and channel', () => {
 test.describe('sandbox', () => {
   test('chromium sandbox enabled for chrome channel', async () => {
     const config = await resolveCLIConfigForMCP({ browser: 'chrome' }, emptyEnv);
-    expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
+    if (process.platform === 'win32')
+      expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
+    else
+      expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
   });
 
   test('chromium sandbox for chrome-for-testing channel', async () => {
     const config = await resolveCLIConfigForMCP({ browser: 'chromium' }, emptyEnv);
     expect(config.browser.launchOptions.channel).toBe('chrome-for-testing');
-    if (process.platform === 'linux')
+    if (process.platform === 'linux' || process.platform === 'win32')
       expect(config.browser.launchOptions.chromiumSandbox).toBe(false);
     else
       expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
