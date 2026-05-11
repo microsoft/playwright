@@ -266,25 +266,46 @@ function parseOpenArgs(): DashboardOptions {
   };
 }
 
-async function acquireSingleton(options: DashboardOptions): Promise<net.Server> {
+async function acquireSingleton(options: DashboardOptions): Promise<{ server: net.Server } | { peerPid: number }> {
   const socketPath = dashboardSocketPath();
   if (process.platform !== 'win32')
     await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.listen(socketPath, () => resolve(server));
+    const server = net.createServer(socket => {
+      socket.write(JSON.stringify({ pid: process.pid }) + '\n');
+    });
+    server.listen(socketPath, () => {
+      process.on('exit', () => server.close());
+      resolve({ server });
+    });
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code !== 'EADDRINUSE')
         return reject(err);
       const client = net.connect(socketPath, () => {
-        client.write(JSON.stringify(options) + '\n');
-        reject(new Error('already running'));
+        let buffer = '';
+        client.on('data', data => {
+          buffer += data.toString();
+          const newlineIndex = buffer.indexOf('\n');
+          if (newlineIndex === -1)
+            return;
+          client.removeAllListeners('data');
+          try {
+            const { pid } = JSON.parse(buffer.slice(0, newlineIndex));
+            client.write(JSON.stringify(options) + '\n');
+            resolve({ peerPid: pid });
+          } catch (e) {
+            reject(e);
+          }
+        });
       });
       client.on('error', () => {
         if (process.platform !== 'win32')
           fs.unlinkSync(socketPath);
-        server.listen(socketPath, () => resolve(server));
+        server.listen(socketPath, () => {
+          process.on('exit', () => server.close());
+          resolve({ server });
+        });
       });
     });
   });
@@ -312,75 +333,76 @@ export async function openDashboardApp() {
     return;
   }
   // Self-destruct if the parent CLI dies before we signal READY. Unregistered
-  // after success so the daemon outlives the parent.
+  // before we signal so the daemon outlives the parent.
   const stopSelfDestruct = selfDestructOnParentGone();
   try {
-    let server: net.Server;
-    try {
-      server = await acquireSingleton(options);
-    } catch {
+    const acquired = await acquireSingleton(options);
+    if ('peerPid' in acquired) {
       // Another daemon is already running; acquireSingleton forwarded our
       // options to it. Signal success so the parent doesn't treat our clean
       // exit as a startup failure.
+      stopSelfDestruct();
       // eslint-disable-next-line no-console
-      console.log('### Success\nDashboard already running');
+      console.log(`### Success\nDashboard already running pid=${acquired.peerPid}`);
       // eslint-disable-next-line no-console
       console.log('<EOF>');
       return;
     }
-    process.on('exit', () => server.close());
-    const statePromise = innerOpenDashboardApp(options);
-    server.on('connection', socket => {
-      let buffer = '';
-      socket.on('data', data => {
-        buffer += data.toString();
-        const newlineIndex = buffer.indexOf('\n');
-        if (newlineIndex === -1)
-          return;
-        const line = buffer.slice(0, newlineIndex);
-        buffer = buffer.slice(newlineIndex + 1);
-        let parsed: DashboardOptions | undefined;
-        try {
-          parsed = JSON.parse(line);
-        } catch {
-          // no-op
-        }
-        if (!parsed) {
-          socket.end();
-          return;
-        }
-        void statePromise.then(({ page, server: dashboard }) => {
-          if (parsed.annotate) {
-            page?.bringToFront().catch(() => {});
-            dashboard.reveal(parsed);
-            dashboard.triggerAnnotate();
-            dashboard.registerAnnotateWaiter(socket);
-          } else if (parsed.kill) {
-            socket.end();
-            gracefullyProcessExitDoNotHang(0);
-          } else {
-            page?.bringToFront().catch(() => {});
-            dashboard.reveal(parsed);
-            socket.end();
-          }
-        });
-      });
-    });
-    await statePromise;
+    await startApp(acquired.server, options);
+    stopSelfDestruct();
     // eslint-disable-next-line no-console
-    console.log('### Success\nDashboard ready');
+    console.log(`### Success\nDashboard ready pid=${process.pid}`);
     // eslint-disable-next-line no-console
     console.log('<EOF>');
   } catch (error) {
-    const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
+    const message = (error as Error).stack || (error as Error).message;
     // eslint-disable-next-line no-console
     console.log(`### Error\n${message}`);
     // eslint-disable-next-line no-console
     console.log('<EOF>');
     gracefullyProcessExitDoNotHang(1);
-    return;
   }
-  stopSelfDestruct();
+}
+
+async function startApp(server: net.Server, options: DashboardOptions) {
+  const statePromise = innerOpenDashboardApp(options);
+  server.on('connection', socket => {
+    let buffer = '';
+    socket.on('data', data => {
+      buffer += data.toString();
+      const newlineIndex = buffer.indexOf('\n');
+      if (newlineIndex === -1)
+        return;
+      const line = buffer.slice(0, newlineIndex);
+      buffer = buffer.slice(newlineIndex + 1);
+      let parsed: DashboardOptions | undefined;
+      try {
+        parsed = JSON.parse(line);
+      } catch {
+        // no-op
+      }
+      if (!parsed) {
+        socket.end();
+        return;
+      }
+      void statePromise.then(({ page, server: dashboard }) => {
+        if (parsed.annotate) {
+          page?.bringToFront().catch(() => {});
+          dashboard.reveal(parsed);
+          dashboard.triggerAnnotate();
+          dashboard.registerAnnotateWaiter(socket);
+        } else if (parsed.kill) {
+          socket.end();
+          gracefullyProcessExitDoNotHang(0);
+        } else {
+          page?.bringToFront().catch(() => {});
+          dashboard.reveal(parsed);
+          socket.end();
+        }
+      });
+    });
+  });
+  await statePromise;
 }
 
 export async function openDashboardForContext(context: api.BrowserContext): Promise<void> {
