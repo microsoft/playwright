@@ -273,10 +273,7 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
 
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
-    server.listen(socketPath, () => {
-      process.on('exit', () => server.close());
-      resolve(server);
-    });
+    server.listen(socketPath, () => resolve(server));
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code !== 'EADDRINUSE')
         return reject(err);
@@ -287,10 +284,7 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
       client.on('error', () => {
         if (process.platform !== 'win32')
           fs.unlinkSync(socketPath);
-        server.listen(socketPath, () => {
-          process.on('exit', () => server.close());
-          resolve(server);
-        });
+        server.listen(socketPath, () => resolve(server));
       });
     });
   });
@@ -334,6 +328,7 @@ export async function openDashboardApp() {
     console.log('<EOF>');
     return;
   }
+  process.on('exit', () => server.close());
   try {
     await startApp(server, options);
     stopSelfDestruct();
