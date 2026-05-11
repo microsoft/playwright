@@ -280,7 +280,7 @@ async function acquireSingleton(options: DashboardOptions): Promise<{ server: ne
       resolve({ server });
     });
     server.on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code !== 'EADDRINUSE')
+      if (err.code !== 'EADDRINUSE' && err.code !== 'EEXIST')
         return reject(err);
       const client = net.connect(socketPath, () => {
         let buffer = '';
