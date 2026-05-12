@@ -336,6 +336,10 @@ jobs:
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
+    - name: Check KVM availability
+      run: |
+        echo "CPU virt flags: $(grep -Eoc '(vmx|svm)' /proc/cpuinfo)"
+        ls -la /dev/kvm || echo "/dev/kvm is missing"
     - uses: actions/setup-node@v4
       with:
         node-version: 22
