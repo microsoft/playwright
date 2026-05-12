@@ -33,9 +33,14 @@ export class LastRunReporter implements ReporterV2 {
 
   constructor(filteredProjects: commonConfig.FullProjectInternal[], listMode?: boolean) {
     this._listMode = !!listMode;
-    const [project] = filteredProjects;
-    if (project)
-      this._lastRunFile = path.join(project.project.outputDir, '.last-run.json');
+    const lastRunFromEnv = process.env.PLAYWRIGHT_LAST_RUN_OUTPUT_FILE;
+    if (lastRunFromEnv) {
+      this._lastRunFile = path.resolve(process.cwd(), lastRunFromEnv);
+    } else {
+      const [project] = filteredProjects;
+      if (project)
+        this._lastRunFile = path.join(project.project.outputDir, '.last-run.json');
+    }
   }
 
   async filterLastFailed(): Promise<string[]> {
