@@ -1489,14 +1489,6 @@ scheme.FramePressParams = tObject({
   timeout: tFloat,
 });
 scheme.FramePressResult = tOptional(tObject({}));
-scheme.FramePressSequentiallyParams = tObject({
-  selector: tString,
-  strict: tOptional(tBoolean),
-  keys: tArray(tString),
-  delay: tOptional(tFloat),
-  timeout: tFloat,
-});
-scheme.FramePressSequentiallyResult = tOptional(tObject({}));
 scheme.FrameQuerySelectorParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
@@ -1580,6 +1572,7 @@ scheme.FrameTypeParams = tObject({
   strict: tOptional(tBoolean),
   text: tString,
   delay: tOptional(tFloat),
+  namedKeys: tOptional(tBoolean),
   timeout: tFloat,
 });
 scheme.FrameTypeResult = tOptional(tObject({}));
@@ -2462,6 +2455,7 @@ scheme.PageKeyboardInsertTextResult = tOptional(tObject({}));
 scheme.PageKeyboardTypeParams = tObject({
   text: tString,
   delay: tOptional(tFloat),
+  namedKeys: tOptional(tBoolean),
 });
 scheme.PageKeyboardTypeResult = tOptional(tObject({}));
 scheme.PageKeyboardPressParams = tObject({
@@ -2469,11 +2463,6 @@ scheme.PageKeyboardPressParams = tObject({
   delay: tOptional(tFloat),
 });
 scheme.PageKeyboardPressResult = tOptional(tObject({}));
-scheme.PageKeyboardPressSequentiallyParams = tObject({
-  keys: tArray(tString),
-  delay: tOptional(tFloat),
-});
-scheme.PageKeyboardPressSequentiallyResult = tOptional(tObject({}));
 scheme.PageMouseMoveParams = tObject({
   x: tFloat,
   y: tFloat,

@@ -772,13 +772,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await progress.race(this.evaluateInUtility(([injected, node]) => injected.blurNode(node), {}));
   }
 
-  async type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<void> {
+  async type(progress: Progress, text: string, options: { delay?: number, namedKeys?: boolean } & types.StrictOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._type(progress, text, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async _type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
+  async _type(progress: Progress, text: string, options: { delay?: number, namedKeys?: boolean } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
     await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
@@ -804,16 +804,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page.keyboard.press(progress, key, options);
       return 'done';
     });
-  }
-
-  async _pressSequentially(progress: Progress, keys: string[], options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
-    progress.log(`elementHandle.pressSequentially([${keys.map(k => `"${k}"`).join(', ')}])`);
-    await this._beforeNonPointerAction(progress);
-    const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
-    if (result !== 'done')
-      return result;
-    await this._page.keyboard.pressSequentially(progress, keys, options);
-    return 'done';
   }
 
   async check(progress: Progress, options: { position?: types.Point } & types.PointerActionWaitOptions) {

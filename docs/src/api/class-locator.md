@@ -2103,7 +2103,7 @@ In most cases, you should use [`method: Locator.fill`] instead. You only need to
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
-When [`param: text`] is an array of strings, each element is treated as a key name (same format as [`method: Locator.press`]) and pressed sequentially with optional [`option: delay`] between key presses.
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]). Use `{{` and `}}` to type literal brace characters.
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
 
@@ -2113,40 +2113,42 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.pre
 await locator.pressSequentially('Hello'); // Types instantly
 await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
 
-// Press a sequence of keys
-await locator.pressSequentially(['Control+A', 'Delete', 'H', 'e', 'l', 'l', 'o']);
+// Mix characters and named keys
+await locator.pressSequentially('Hello{Enter}World', { namedKeys: true });
+// Use modifier combos
+await locator.pressSequentially('{Control+A}{Delete}Hello', { namedKeys: true });
 ```
 
 ```java
 locator.pressSequentially("Hello"); // Types instantly
 locator.pressSequentially("World", new Locator.pressSequentiallyOptions().setDelay(100)); // Types slower, like a user
 
-// Press a sequence of keys
-locator.pressSequentially(Arrays.asList("Control+A", "Delete", "H", "e", "l", "l", "o"));
+// Mix characters and named keys
+locator.pressSequentially("Hello{Enter}World", new Locator.pressSequentiallyOptions().setNamedKeys(true));
 ```
 
 ```python async
 await locator.press_sequentially("hello") # types instantly
 await locator.press_sequentially("world", delay=100) # types slower, like a user
 
-# Press a sequence of keys
-await locator.press_sequentially(["Control+A", "Delete", "H", "e", "l", "l", "o"])
+# Mix characters and named keys
+await locator.press_sequentially("Hello{Enter}World", named_keys=True)
 ```
 
 ```python sync
 locator.press_sequentially("hello") # types instantly
 locator.press_sequentially("world", delay=100) # types slower, like a user
 
-# Press a sequence of keys
-locator.press_sequentially(["Control+A", "Delete", "H", "e", "l", "l", "o"])
+# Mix characters and named keys
+locator.press_sequentially("Hello{Enter}World", named_keys=True)
 ```
 
 ```csharp
 await locator.PressSequentiallyAsync("Hello"); // Types instantly
 await locator.PressSequentiallyAsync("World", new() { Delay = 100 }); // Types slower, like a user
 
-// Press a sequence of keys
-await locator.PressSequentiallyAsync(new[] { "Control+A", "Delete", "H", "e", "l", "l", "o" });
+// Mix characters and named keys
+await locator.PressSequentiallyAsync("Hello{Enter}World", new() { NamedKeys = true });
 ```
 
 An example of typing into a text field and then submitting the form:
@@ -2183,15 +2185,23 @@ await locator.PressAsync("Enter");
 
 ### param: Locator.pressSequentially.text
 * since: v1.38
-- `text` <[string]|[Array]<[string]>>
+- `text` <[string]>
 
-String of characters to sequentially press into a focused element, or an array of key names to press sequentially. Key names follow the same format as [`method: Locator.press`].
+String of characters to sequentially press into a focused element. When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]). Use `{{` and `}}` to type literal brace characters.
 
 ### option: Locator.pressSequentially.delay
 * since: v1.38
 - `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
+
+### option: Locator.pressSequentially.namedKeys
+* since: v1.61
+- `namedKeys` <[boolean]>
+
+When `true`, anything inside `{}` in the text is treated as a key name (same format as [`method: Locator.press`]),
+allowing you to mix regular characters with special keys like `{Enter}`, `{ArrowDown}`, or modifier combos like `{Control+A}`.
+Use `{{` and `}}` to type literal brace characters. Defaults to `false`.
 
 ### option: Locator.pressSequentially.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.38

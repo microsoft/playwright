@@ -299,73 +299,6 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
-## async method: Keyboard.pressSequentially
-* since: v1.61
-
-:::tip
-In most cases, you should use [`method: Locator.fill`] instead. You only need to press keys one by one if there is special keyboard handling on the page - in this case use [`method: Locator.pressSequentially`].
-:::
-
-When [`param: text`] is a string, focuses the keyboard and sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
-
-When [`param: text`] is an array of strings, each element is treated as a key name (same format as [`method: Keyboard.press`]) and pressed sequentially with optional [`option: delay`] between key presses.
-
-**Usage**
-
-```js
-await page.keyboard.pressSequentially('Hello'); // Types instantly
-await page.keyboard.pressSequentially('World', { delay: 100 }); // Types slower, like a user
-
-// Press a sequence of keys
-await page.keyboard.pressSequentially(['Control+A', 'Delete', 'H', 'e', 'l', 'l', 'o']);
-```
-
-```java
-// Types instantly
-page.keyboard().pressSequentially("Hello");
-// Types slower, like a user
-page.keyboard().pressSequentially("World", new Keyboard.PressSequentiallyOptions().setDelay(100));
-
-// Press a sequence of keys
-page.keyboard().pressSequentially(Arrays.asList("Control+A", "Delete", "H", "e", "l", "l", "o"));
-```
-
-```python async
-await page.keyboard.press_sequentially("Hello") # types instantly
-await page.keyboard.press_sequentially("World", delay=100) # types slower, like a user
-
-# Press a sequence of keys
-await page.keyboard.press_sequentially(["Control+A", "Delete", "H", "e", "l", "l", "o"])
-```
-
-```python sync
-page.keyboard.press_sequentially("Hello") # types instantly
-page.keyboard.press_sequentially("World", delay=100) # types slower, like a user
-
-# Press a sequence of keys
-page.keyboard.press_sequentially(["Control+A", "Delete", "H", "e", "l", "l", "o"])
-```
-
-```csharp
-await page.Keyboard.PressSequentiallyAsync("Hello"); // Types instantly
-await page.Keyboard.PressSequentiallyAsync("World", new() { Delay = 100 }); // Types slower, like a user
-
-// Press a sequence of keys
-await page.Keyboard.PressSequentiallyAsync(new[] { "Control+A", "Delete", "H", "e", "l", "l", "o" });
-```
-
-### param: Keyboard.pressSequentially.text
-* since: v1.61
-- `text` <[string]|[Array]<[string]>>
-
-String of characters to sequentially press, or an array of key names to press sequentially. Key names follow the same format as [`method: Keyboard.press`].
-
-### option: Keyboard.pressSequentially.delay
-* since: v1.61
-- `delay` <[float]>
-
-Time to wait between key presses in milliseconds. Defaults to 0.
-
 ## async method: Keyboard.type
 * since: v1.8
 
@@ -374,6 +307,8 @@ In most cases, you should use [`method: Locator.fill`] instead. You only need to
 :::
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Keyboard.press`]). Use `{{` and `}}` to type literal brace characters.
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
@@ -425,6 +360,14 @@ A text to type into a focused element.
 - `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
+
+### option: Keyboard.type.namedKeys
+* since: v1.61
+- `namedKeys` <[boolean]>
+
+When `true`, anything inside `{}` in the text is treated as a key name (same format as [`method: Keyboard.press`]),
+allowing you to mix regular characters with special keys like `{Enter}`, `{ArrowDown}`, or modifier combos like `{Control+A}`.
+Use `{{` and `}}` to type literal brace characters. Defaults to `false`.
 
 ## async method: Keyboard.up
 * since: v1.8

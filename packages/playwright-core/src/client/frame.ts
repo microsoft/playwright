@@ -450,10 +450,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     await this._channel.press({ selector, key, ...options, timeout: this._timeout(options) });
   }
 
-  async pressSequentially(selector: string, keys: string[], options: channels.FramePressSequentiallyOptions & TimeoutOptions = {}) {
-    await this._channel.pressSequentially({ selector, keys, ...options, timeout: this._timeout(options) });
-  }
-
   async check(selector: string, options: channels.FrameCheckOptions & TimeoutOptions = {}) {
     await this._channel.check({ selector, ...options, timeout: this._timeout(options) });
   }

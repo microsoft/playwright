@@ -14701,12 +14701,10 @@ export interface Locator {
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the
    * text.
    *
-   * When [`text`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-text) is an array of
-   * strings, each element is treated as a key name (same format as
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)) and pressed
-   * sequentially with optional
-   * [`delay`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-delay) between key
-   * presses.
+   * When [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
+   * `true`, anything inside `{}` is treated as a key name (same format as
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)). Use `{{` and `}}` to
+   * type literal brace characters.
    *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
@@ -14717,8 +14715,10 @@ export interface Locator {
    * await locator.pressSequentially('Hello'); // Types instantly
    * await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
    *
-   * // Press a sequence of keys
-   * await locator.pressSequentially(['Control+A', 'Delete', 'H', 'e', 'l', 'l', 'o']);
+   * // Mix characters and named keys
+   * await locator.pressSequentially('Hello{Enter}World', { namedKeys: true });
+   * // Use modifier combos
+   * await locator.pressSequentially('{Control+A}{Delete}Hello', { namedKeys: true });
    * ```
    *
    * An example of typing into a text field and then submitting the form:
@@ -14729,16 +14729,26 @@ export interface Locator {
    * await locator.press('Enter');
    * ```
    *
-   * @param text String of characters to sequentially press into a focused element, or an array of key names to press sequentially.
-   * Key names follow the same format as
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
+   * @param text String of characters to sequentially press into a focused element. When
+   * [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
+   * `true`, anything inside `{}` is treated as a key name (same format as
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)). Use `{{` and `}}` to
+   * type literal brace characters.
    * @param options
    */
-  pressSequentially(text: string|ReadonlyArray<string>, options?: {
+  pressSequentially(text: string, options?: {
     /**
      * Time to wait between key presses in milliseconds. Defaults to 0.
      */
     delay?: number;
+
+    /**
+     * When `true`, anything inside `{}` in the text is treated as a key name (same format as
+     * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)), allowing you to mix
+     * regular characters with special keys like `{Enter}`, `{ArrowDown}`, or modifier combos like `{Control+A}`. Use `{{`
+     * and `}}` to type literal brace characters. Defaults to `false`.
+     */
+    namedKeys?: boolean;
 
     /**
      * This option has no effect.
@@ -20184,44 +20194,12 @@ export interface Keyboard {
    * to press keys one by one if there is special keyboard handling on the page - in this case use
    * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
    *
-   * When [`text`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-sequentially-option-text) is a string,
-   * focuses the keyboard and sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
-   *
-   * When [`text`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-sequentially-option-text) is an array
-   * of strings, each element is treated as a key name (same format as
-   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)) and pressed
-   * sequentially with optional
-   * [`delay`](https://playwright.dev/docs/api/class-keyboard#keyboard-press-sequentially-option-delay) between key
-   * presses.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.keyboard.pressSequentially('Hello'); // Types instantly
-   * await page.keyboard.pressSequentially('World', { delay: 100 }); // Types slower, like a user
-   *
-   * // Press a sequence of keys
-   * await page.keyboard.pressSequentially(['Control+A', 'Delete', 'H', 'e', 'l', 'l', 'o']);
-   * ```
-   *
-   * @param text String of characters to sequentially press, or an array of key names to press sequentially. Key names follow the
-   * same format as [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
-   * @param options
-   */
-  pressSequentially(text: string|ReadonlyArray<string>, options?: {
-    /**
-     * Time to wait between key presses in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-  }): Promise<void>;
-
-  /**
-   * **NOTE** In most cases, you should use
-   * [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill) instead. You only need
-   * to press keys one by one if there is special keyboard handling on the page - in this case use
-   * [locator.pressSequentially(text[, options])](https://playwright.dev/docs/api/class-locator#locator-press-sequentially).
-   *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+   *
+   * When [`namedKeys`](https://playwright.dev/docs/api/class-keyboard#keyboard-type-option-named-keys) is `true`,
+   * anything inside `{}` is treated as a key name (same format as
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)). Use `{{` and `}}`
+   * to type literal brace characters.
    *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
@@ -20245,6 +20223,14 @@ export interface Keyboard {
      * Time to wait between key presses in milliseconds. Defaults to 0.
      */
     delay?: number;
+
+    /**
+     * When `true`, anything inside `{}` in the text is treated as a key name (same format as
+     * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)), allowing you to
+     * mix regular characters with special keys like `{Enter}`, `{ArrowDown}`, or modifier combos like `{Control+A}`. Use
+     * `{{` and `}}` to type literal brace characters. Defaults to `false`.
+     */
+    namedKeys?: boolean;
   }): Promise<void>;
 
   /**

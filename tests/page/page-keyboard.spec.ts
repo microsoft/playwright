@@ -758,59 +758,59 @@ it('should close dialog on Escape key press in contenteditable', {
   await expect(widget).not.toBeVisible();
 });
 
-it('should pressSequentially with string', async ({ page }) => {
+it('should type with namedKeys', async ({ page }) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
     textarea.focus();
   });
-  await page.keyboard.pressSequentially('Hello');
-  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello');
+  await page.keyboard.type('Hello{Enter}World', { namedKeys: true });
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello\nWorld');
 });
 
-it('should pressSequentially with array of keys', async ({ page }) => {
+it('should type with namedKeys and modifier combos', async ({ page }) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
     textarea.focus();
   });
-  await page.keyboard.pressSequentially(['H', 'e', 'l', 'l', 'o']);
-  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello');
-});
-
-it('should pressSequentially with modifier keys in array', async ({ page }) => {
-  await page.evaluate(() => {
-    const textarea = document.createElement('textarea');
-    document.body.appendChild(textarea);
-    textarea.focus();
-  });
-  await page.keyboard.pressSequentially('Hello World');
+  await page.keyboard.type('Hello World');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello World');
-  await page.keyboard.pressSequentially(['Control+A', 'Delete']);
+  await page.keyboard.type('{Control+A}{Delete}', { namedKeys: true });
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('');
 });
 
-it('should pressSequentially with delay', async ({ page }) => {
+it('should type with namedKeys and escaped braces', async ({ page }) => {
+  await page.evaluate(() => {
+    const textarea = document.createElement('textarea');
+    document.body.appendChild(textarea);
+    textarea.focus();
+  });
+  await page.keyboard.type('Hello {{World}}', { namedKeys: true });
+  expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello {World}');
+});
+
+it('should type with namedKeys and delay', async ({ page }) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
     textarea.focus();
   });
   const start = Date.now();
-  await page.keyboard.pressSequentially(['H', 'i'], { delay: 100 });
+  await page.keyboard.type('Hi', { delay: 100, namedKeys: true });
   const elapsed = Date.now() - start;
   expect(elapsed).toBeGreaterThanOrEqual(200);
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hi');
 });
 
-it('locator should pressSequentially with array of keys', async ({ page }) => {
+it('locator should pressSequentially with namedKeys', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
-  await page.locator('input').pressSequentially(['H', 'e', 'l', 'l', 'o']);
+  await page.locator('input').pressSequentially('Hello{Enter}', { namedKeys: true });
   expect(await page.$eval('input', input => input.value)).toBe('Hello');
 });
 
-it('locator should pressSequentially with modifier keys in array', async ({ page }) => {
+it('locator should pressSequentially with namedKeys modifier combos', async ({ page }) => {
   await page.setContent(`<input type='text' value='Hello World' />`);
-  await page.locator('input').pressSequentially(['Control+A', 'Delete']);
+  await page.locator('input').pressSequentially('{Control+A}{Delete}', { namedKeys: true });
   expect(await page.$eval('input', input => input.value)).toBe('');
 });

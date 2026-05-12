@@ -302,6 +302,7 @@ Page:
       parameters:
         text: string
         delay: float?
+        namedKeys: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -312,19 +313,6 @@ Page:
       title: Press "{key}"
       parameters:
         key: string
-        delay: float?
-      flags:
-        slowMo: true
-        snapshot: true
-        pause: true
-        input: true
-
-    keyboardPressSequentially:
-      title: Press keys sequentially
-      parameters:
-        keys:
-          type: array
-          items: string
         delay: float?
       flags:
         slowMo: true

@@ -1430,16 +1430,12 @@ export class Frame extends SdkObject<FrameEventMap> {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._drop(progress, inputFileItems, data, options)));
   }
 
-  async type(progress: Progress, selector: string, text: string, options: { delay?: number, noAutoWaiting?: boolean } & types.StrictOptions) {
+  async type(progress: Progress, selector: string, text: string, options: { delay?: number, namedKeys?: boolean, noAutoWaiting?: boolean } & types.StrictOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._type(progress, text, options)));
   }
 
   async press(progress: Progress, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean, noAutoWaiting?: boolean } & types.StrictOptions) {
     return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._press(progress, key, options)));
-  }
-
-  async pressSequentially(progress: Progress, selector: string, keys: string[], options: { delay?: number } & types.StrictOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, (progress, handle) => handle._pressSequentially(progress, keys, options)));
   }
 
   async check(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {

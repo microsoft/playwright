@@ -2289,7 +2289,6 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   isVisible(params: FrameIsVisibleParams, progress?: Progress): Promise<FrameIsVisibleResult>;
   isEditable(params: FrameIsEditableParams, progress?: Progress): Promise<FrameIsEditableResult>;
   press(params: FramePressParams, progress?: Progress): Promise<FramePressResult>;
-  pressSequentially(params: FramePressSequentiallyParams, progress?: Progress): Promise<FramePressSequentiallyResult>;
   querySelector(params: FrameQuerySelectorParams, progress?: Progress): Promise<FrameQuerySelectorResult>;
   querySelectorAll(params: FrameQuerySelectorAllParams, progress?: Progress): Promise<FrameQuerySelectorAllResult>;
   queryCount(params: FrameQueryCountParams, progress?: Progress): Promise<FrameQueryCountResult>;
@@ -2754,18 +2753,6 @@ export type FramePressOptions = {
   noWaitAfter?: boolean,
 };
 export type FramePressResult = void;
-export type FramePressSequentiallyParams = {
-  selector: string,
-  strict?: boolean,
-  keys: string[],
-  delay?: number,
-  timeout: number,
-};
-export type FramePressSequentiallyOptions = {
-  strict?: boolean,
-  delay?: number,
-};
-export type FramePressSequentiallyResult = void;
 export type FrameQuerySelectorParams = {
   selector: string,
   strict?: boolean,
@@ -2895,11 +2882,13 @@ export type FrameTypeParams = {
   strict?: boolean,
   text: string,
   delay?: number,
+  namedKeys?: boolean,
   timeout: number,
 };
 export type FrameTypeOptions = {
   strict?: boolean,
   delay?: number,
+  namedKeys?: boolean,
 };
 export type FrameTypeResult = void;
 export type FrameUncheckParams = {
@@ -4017,7 +4006,6 @@ export interface PageChannel extends PageEventTarget, Channel {
   keyboardInsertText(params: PageKeyboardInsertTextParams, progress?: Progress): Promise<PageKeyboardInsertTextResult>;
   keyboardType(params: PageKeyboardTypeParams, progress?: Progress): Promise<PageKeyboardTypeResult>;
   keyboardPress(params: PageKeyboardPressParams, progress?: Progress): Promise<PageKeyboardPressResult>;
-  keyboardPressSequentially(params: PageKeyboardPressSequentiallyParams, progress?: Progress): Promise<PageKeyboardPressSequentiallyResult>;
   mouseMove(params: PageMouseMoveParams, progress?: Progress): Promise<PageMouseMoveResult>;
   mouseDown(params: PageMouseDownParams, progress?: Progress): Promise<PageMouseDownResult>;
   mouseUp(params: PageMouseUpParams, progress?: Progress): Promise<PageMouseUpResult>;
@@ -4373,9 +4361,11 @@ export type PageKeyboardInsertTextResult = void;
 export type PageKeyboardTypeParams = {
   text: string,
   delay?: number,
+  namedKeys?: boolean,
 };
 export type PageKeyboardTypeOptions = {
   delay?: number,
+  namedKeys?: boolean,
 };
 export type PageKeyboardTypeResult = void;
 export type PageKeyboardPressParams = {
@@ -4386,14 +4376,6 @@ export type PageKeyboardPressOptions = {
   delay?: number,
 };
 export type PageKeyboardPressResult = void;
-export type PageKeyboardPressSequentiallyParams = {
-  keys: string[],
-  delay?: number,
-};
-export type PageKeyboardPressSequentiallyOptions = {
-  delay?: number,
-};
-export type PageKeyboardPressSequentiallyResult = void;
 export type PageMouseMoveParams = {
   x: number,
   y: number,
