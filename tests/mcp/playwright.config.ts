@@ -51,7 +51,7 @@ export default defineConfig<TestOptions>({
   testDir: rootTestDir,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  workers: undefined,
+  workers: process.env.CI ? 1 : undefined,
   reporter: reporters(),
   tag: process.env.PW_TAG,
   // Persistent context launch (the MCP default) is genuinely slow on Windows;
