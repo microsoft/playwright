@@ -20,10 +20,11 @@ import fs from 'fs';
 let didFailToReadOSRelease = false;
 let osRelease: {
   id: string,
+  idLike: string[],
   version: string,
 } | undefined;
 
-export function getLinuxDistributionInfoSync(): { id: string, version: string } | undefined {
+export function getLinuxDistributionInfoSync(): { id: string, idLike: string[], version: string } | undefined {
   if (process.platform !== 'linux')
     return undefined;
   if (!osRelease && !didFailToReadOSRelease) {
@@ -34,6 +35,7 @@ export function getLinuxDistributionInfoSync(): { id: string, version: string } 
       const fields = parseOSReleaseText(osReleaseText);
       osRelease = {
         id: fields.get('id') ?? '',
+        idLike: (fields.get('id_like') ?? '').split(/\s+/).filter(Boolean),
         version: fields.get('version_id') ?? '',
       };
     } catch (e) {
@@ -41,6 +43,19 @@ export function getLinuxDistributionInfoSync(): { id: string, version: string } 
     }
   }
   return osRelease;
+}
+
+// Distributions that use dnf as their package manager. Covers Fedora and the
+// RHEL family (RHEL, CentOS Stream, Rocky, Alma, Oracle, Amazon Linux 2023).
+const DNF_DISTRO_IDS = new Set(['fedora', 'rhel', 'centos', 'rocky', 'almalinux', 'ol', 'amzn']);
+
+export function isDnfBasedDistroSync(): boolean {
+  const info = getLinuxDistributionInfoSync();
+  if (!info)
+    return false;
+  if (DNF_DISTRO_IDS.has(info.id))
+    return true;
+  return info.idLike.some(id => DNF_DISTRO_IDS.has(id));
 }
 
 function parseOSReleaseText(osReleaseText: string): Map<string, string> {

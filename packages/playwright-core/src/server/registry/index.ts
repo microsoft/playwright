@@ -28,10 +28,11 @@ import { spawnAsync } from '@utils/spawnAsync';
 import { canAccessFile, existsAsync, removeFolders } from '@utils/fileUtils';
 import { calculateSha1 } from '@utils/crypto';
 import { getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '@utils/env';
+import { isDnfBasedDistroSync } from '@utils/linuxUtils';
 import { lock } from '@utils/third_party/lockfile';
 import { fetchData } from '../utils';
 import { getEmbedderName } from '../userAgent';
-import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import { installDependenciesFedora, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 import { packageRoot, binPath } from '../../package';
@@ -595,6 +596,7 @@ interface ExecutableImpl extends Executable {
   _install?: (force: boolean) => Promise<void>;
   _dependencyGroup?: DependencyGroup;
   _isHermeticInstallation?: boolean;
+  _linuxValidation?: { lddDirectories: string[], dlOpenLibraries: string[] };
 }
 
 export class Registry {
@@ -660,7 +662,8 @@ export class Registry {
       executablePath: () => chromiumExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromium.dir, ['chrome-linux'], [], ['chrome-win']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromium.dir, ['chrome-linux', 'chrome-linux64'], [], ['chrome-win']),
+      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-linux64'], dlOpenLibraries: [] },
       downloadURLs: this._downloadURLs(chromium),
       title: chromium.title,
       revision: chromium.revision,
@@ -679,7 +682,8 @@ export class Registry {
       executablePath: () => chromiumHeadlessShellExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumHeadlessShellExecutable, chromiumHeadlessShell.installByDefault, sdkLanguage),
       installType: chromiumHeadlessShell.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, ['chrome-linux'], [], ['chrome-win']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, ['chrome-linux', 'chrome-headless-shell-linux64'], [], ['chrome-win']),
+      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-headless-shell-linux64'], dlOpenLibraries: [] },
       downloadURLs: this._downloadURLs(chromiumHeadlessShell),
       title: chromiumHeadlessShell.title,
       revision: chromiumHeadlessShell.revision,
@@ -698,7 +702,8 @@ export class Registry {
       executablePath: () => chromiumTipOfTreeHeadlessShellExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumTipOfTreeHeadlessShellExecutable, chromiumTipOfTreeHeadlessShell.installByDefault, sdkLanguage),
       installType: chromiumTipOfTreeHeadlessShell.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTreeHeadlessShell.dir, ['chrome-linux'], [], ['chrome-win']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTreeHeadlessShell.dir, ['chrome-linux', 'chrome-headless-shell-linux64'], [], ['chrome-win']),
+      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-headless-shell-linux64'], dlOpenLibraries: [] },
       downloadURLs: this._downloadURLs(chromiumTipOfTreeHeadlessShell),
       title: chromiumTipOfTreeHeadlessShell.title,
       revision: chromiumTipOfTreeHeadlessShell.revision,
@@ -717,7 +722,8 @@ export class Registry {
       executablePath: () => chromiumTipOfTreeExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-tip-of-tree', chromiumTipOfTreeExecutable, chromiumTipOfTree.installByDefault, sdkLanguage),
       installType: chromiumTipOfTree.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTree.dir, ['chrome-linux', 'chrome-linux64'], [], ['chrome-win']),
+      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-linux64'], dlOpenLibraries: [] },
       downloadURLs: this._downloadURLs(chromiumTipOfTree),
       title: chromiumTipOfTree.title,
       revision: chromiumTipOfTree.revision,
@@ -821,6 +827,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox', firefoxExecutable, firefox.installByDefault, sdkLanguage),
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefox.dir, ['firefox'], [], ['firefox']),
+      _linuxValidation: { lddDirectories: ['firefox'], dlOpenLibraries: [] },
       downloadURLs: this._downloadURLs(firefox),
       title: firefox.title,
       revision: firefox.revision,
@@ -840,6 +847,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault, sdkLanguage),
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefoxBeta.dir, ['firefox'], [], ['firefox']),
+      _linuxValidation: { lddDirectories: ['firefox'], dlOpenLibraries: [] },
       downloadURLs: this._downloadURLs(firefoxBeta),
       title: firefoxBeta.title,
       revision: firefoxBeta.revision,
@@ -869,6 +877,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault, sdkLanguage),
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
+      _linuxValidation: { lddDirectories: webkitLinuxLddDirectories, dlOpenLibraries: ['libGLESv2.so.2', 'libx264.so'] },
       downloadURLs: this._downloadURLs(webkit),
       title: webkit.title,
       revision: webkit.revision,
@@ -1070,8 +1079,20 @@ export class Registry {
     targets.add('tools');
     if (os.platform() === 'win32')
       return await installDependenciesWindows(targets, dryRun);
-    if (os.platform() === 'linux')
+    if (os.platform() === 'linux') {
+      if (isDnfBasedDistroSync()) {
+        const browsers = executables
+            .filter((e: ExecutableImpl) => !!e._linuxValidation && !!e.directory)
+            .map((e: ExecutableImpl) => ({
+              name: e.name,
+              browserDirectory: e.directory!,
+              linuxLddDirectories: e._linuxValidation!.lddDirectories.map(d => path.join(e.directory!, d)),
+              dlOpenLibraries: e._linuxValidation!.dlOpenLibraries,
+            }));
+        return await installDependenciesFedora(process.env.PW_LANG_NAME || 'javascript', browsers, dryRun);
+      }
       return await installDependenciesLinux(targets, dryRun);
+    }
   }
 
   async install(executablesToInstall: Executable[], options?: { force?: boolean }) {

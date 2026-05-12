@@ -21,6 +21,7 @@ import path from 'path';
 
 import { wrapInASCIIBox } from '@utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
+import { isDnfBasedDistroSync } from '@utils/linuxUtils';
 import { spawnAsync } from '@utils/spawnAsync';
 import { getPlaywrightVersion } from '../userAgent';
 import { deps } from './nativeDeps';
@@ -210,12 +211,11 @@ export async function validateDependenciesWindows(sdkLanguage: string, windowsEx
   }
 }
 
-export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDirectories: string[], dlOpenLibraries: string[]) {
-  const directoryPaths = linuxLddDirectories;
+async function findMissingLinuxLibraries(linuxLddDirectories: string[], dlOpenLibraries: string[]): Promise<Set<string>> {
   const lddPaths: string[] = [];
-  for (const directoryPath of directoryPaths)
+  for (const directoryPath of linuxLddDirectories)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
-  const missingDepsPerFile = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, directoryPaths)));
+  const missingDepsPerFile = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, linuxLddDirectories)));
   const missingDeps: Set<string> = new Set();
   for (const deps of missingDepsPerFile) {
     for (const dep of deps)
@@ -223,6 +223,36 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   }
   for (const dep of (await missingDLOPENLibraries(dlOpenLibraries)))
     missingDeps.add(dep);
+  return missingDeps;
+}
+
+async function resolveLibrariesWithDnf(libraries: string[]): Promise<{ libToPackage: Map<string, string>, unresolved: string[] }> {
+  const libToPackage = new Map<string, string>();
+  const unresolved: string[] = [];
+  // `dnf repoquery --whatprovides <soname>` returns one line per package
+  // providing that library. Run per-library in parallel so we know the mapping.
+  await Promise.all(libraries.map(async lib => {
+    const { stdout, code, error } = await spawnAsync('dnf', ['-q', 'repoquery', '--queryformat', '%{name}\n', '--whatprovides', lib], {});
+    if (error || code !== 0) {
+      unresolved.push(lib);
+      return;
+    }
+    const candidates = stdout.split('\n').map(s => s.trim()).filter(Boolean)
+        .filter(name => !name.endsWith('-devel') && !name.endsWith('-debuginfo') && !name.endsWith('-debugsource'));
+    if (!candidates.length) {
+      unresolved.push(lib);
+      return;
+    }
+    // Prefer the alphabetically first/shortest match — avoids picking the
+    // i686 variant on x86_64 hosts and longer subpackage names.
+    candidates.sort((a, b) => a.length - b.length || a.localeCompare(b));
+    libToPackage.set(lib, candidates[0]);
+  }));
+  return { libToPackage, unresolved };
+}
+
+export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDirectories: string[], dlOpenLibraries: string[]) {
+  const missingDeps = await findMissingLinuxLibraries(linuxLddDirectories, dlOpenLibraries);
   if (!missingDeps.size)
     return;
   const allMissingDeps = new Set(missingDeps);
@@ -284,6 +314,34 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       ``,
       `<3 Playwright Team`,
     ]);
+  } else if (isDnfBasedDistroSync()) {
+    // Fedora and the RHEL family — ask dnf which packages provide the missing libraries.
+    const { libToPackage, unresolved } = await resolveLibrariesWithDnf([...allMissingDeps]);
+    const dnfPackages = Array.from(new Set(libToPackage.values())).sort();
+    if (dnfPackages.length) {
+      errorLines.push(...[
+        `Please install them with the following command:`,
+        ``,
+        `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
+        ``,
+        `Alternatively, use dnf:`,
+        `    ${maybeSudo}dnf install ${dnfPackages.join(' \\\n        ')}`,
+        ``,
+      ]);
+      if (unresolved.length) {
+        errorLines.push(...[
+          `Could not find a dnf package for the following libraries (install manually):`,
+          ...unresolved.map(dep => '    ' + dep),
+          ``,
+        ]);
+      }
+      errorLines.push(`<3 Playwright Team`);
+    } else {
+      errorLines.push(...[
+        `Missing libraries:`,
+        ...[...allMissingDeps].map(dep => '    ' + dep),
+      ]);
+    }
   } else {
     // Unhappy path: we either run on unknown distribution, or we failed to resolve all missing
     // libraries to package names.
@@ -295,6 +353,74 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   }
 
   throw new Error('\n' + wrapInASCIIBox(errorLines.join('\n'), 1));
+}
+
+export type LinuxBrowserToInstall = {
+  name: string,
+  browserDirectory: string,
+  linuxLddDirectories: string[],
+  dlOpenLibraries: string[],
+};
+
+export async function installDependenciesFedora(sdkLanguage: string, browsers: LinuxBrowserToInstall[], dryRun: boolean) {
+  const browsersWithMissingBinaries = browsers.filter(b => !fs.existsSync(b.browserDirectory));
+  if (browsersWithMissingBinaries.length) {
+    const installCommand = buildPlaywrightCLICommand(sdkLanguage, 'install');
+    throw new Error('\n' + wrapInASCIIBox([
+      `Cannot detect system dependencies for ${browsersWithMissingBinaries.map(b => b.name).join(', ')}: browser binaries are not installed.`,
+      ``,
+      `On Fedora and the RHEL family, Playwright resolves dependencies by inspecting`,
+      `installed browser binaries. Please install browsers first:`,
+      ``,
+      `    ${installCommand}`,
+      ``,
+      `Then re-run "install-deps".`,
+      ``,
+      `<3 Playwright Team`,
+    ].join('\n'), 1));
+  }
+  const missingLibraries = new Set<string>();
+  for (const b of browsers) {
+    for (const lib of await findMissingLinuxLibraries(b.linuxLddDirectories, b.dlOpenLibraries))
+      missingLibraries.add(lib);
+  }
+  if (!missingLibraries.size) {
+    console.log('All system dependencies are installed.'); // eslint-disable-line no-console
+    return;
+  }
+  const { libToPackage, unresolved } = await resolveLibrariesWithDnf([...missingLibraries]);
+  const packages = Array.from(new Set(libToPackage.values())).sort();
+  if (dryRun) {
+    if (packages.length) {
+      // eslint-disable-next-line no-console
+      console.log(`Missing system dependencies (${packages.length}):\n${packages.map(p => `  ${p}`).join('\n')}`);
+    }
+    if (unresolved.length) {
+      // eslint-disable-next-line no-console
+      console.warn(`Could not resolve dnf packages for libraries:\n${unresolved.map(l => `  ${l}`).join('\n')}`);
+    }
+    if (packages.length || unresolved.length)
+      process.exitCode = 1;
+    return;
+  }
+  if (!packages.length)
+    throw new Error(`Could not resolve dnf packages for missing libraries:\n${unresolved.map(l => `  ${l}`).join('\n')}`);
+  console.log(`Installing dependencies...`); // eslint-disable-line no-console
+  const commands: string[] = [
+    ['dnf', 'install', '-y', ...packages].join(' '),
+  ];
+  const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
+  if (elevatedPermissions)
+    console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
+  const child = childProcess.spawn(command, args, { stdio: 'inherit' });
+  await new Promise<void>((resolve, reject) => {
+    child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
+    child.on('error', reject);
+  });
+  if (unresolved.length) {
+    // eslint-disable-next-line no-console
+    console.warn(`Note: could not resolve dnf packages for libraries:\n${unresolved.map(l => `  ${l}`).join('\n')}`);
+  }
 }
 
 function isSharedLib(basename: string) {
