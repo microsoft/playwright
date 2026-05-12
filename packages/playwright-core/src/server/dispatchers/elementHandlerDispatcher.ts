@@ -16,7 +16,7 @@
 
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
+import { JSHandleDispatcher, parseArgument } from './jsHandleDispatcher';
 
 import type { ElementHandle } from '../dom';
 import type { Frame } from '../frames';
@@ -197,11 +197,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher>
   }
 
   async evalOnSelector(params: channels.ElementHandleEvalOnSelectorParams, progress: Progress): Promise<channels.ElementHandleEvalOnSelectorResult> {
-    return { value: serializeResult(await this._elementHandle.evalOnSelector(progress, params.selector, !!params.strict, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: await this._elementHandle.evalOnSelector(progress, params.selector, !!params.strict, params.expression, params.isFunction, parseArgument(params.arg)) };
   }
 
   async evalOnSelectorAll(params: channels.ElementHandleEvalOnSelectorAllParams, progress: Progress): Promise<channels.ElementHandleEvalOnSelectorAllResult> {
-    return { value: serializeResult(await this._elementHandle.evalOnSelectorAll(progress, params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: await this._elementHandle.evalOnSelectorAll(progress, params.selector, params.expression, params.isFunction, parseArgument(params.arg)) };
   }
 
   async waitForElementState(params: channels.ElementHandleWaitForElementStateParams, progress: Progress): Promise<void> {

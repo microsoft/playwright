@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/channels';
+import type { SerializedArgumentValue } from '@protocol/channels';
 
-export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
-  return innerParseSerializedValue(value, handles, new Map(), []);
+export function parseSerializedValue(value: SerializedArgumentValue, handles: any[] | undefined): any {
+  return innerParseSerializedArgumentValue(value, handles, new Map(), []);
 }
 
-function innerParseSerializedValue(value: SerializedValue, handles: any[] | undefined, refs: Map<number, object>, accessChain: Array<string | number>): any {
+function innerParseSerializedArgumentValue(value: SerializedArgumentValue, handles: any[] | undefined, refs: Map<number, object>, accessChain: Array<string | number>): any {
   if (value.ref !== undefined)
     return refs.get(value.ref);
   if (value.n !== undefined)
@@ -66,14 +66,14 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
     const result: any[] = [];
     refs.set(value.id!, result);
     for (let i = 0; i < value.a.length; i++)
-      result.push(innerParseSerializedValue(value.a[i], handles, refs, [...accessChain, i]));
+      result.push(innerParseSerializedArgumentValue(value.a[i], handles, refs, [...accessChain, i]));
     return result;
   }
   if (value.o !== undefined) {
     const result: any = {};
     refs.set(value.id!, result);
     for (const { k, v } of value.o)
-      result[k] = innerParseSerializedValue(v, handles, refs, [...accessChain, k]);
+      result[k] = innerParseSerializedArgumentValue(v, handles, refs, [...accessChain, k]);
     return result;
   }
   if (value.h !== undefined) {
@@ -90,15 +90,15 @@ type VisitorInfo = {
   lastId: number;
 };
 
-export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
+export function serializeValue(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedArgumentValue {
   return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map() }, []);
 }
 
-export function serializePlainValue(arg: any): SerializedValue {
+export function serializePlainValue(arg: any): SerializedArgumentValue {
   return serializeValue(arg, value => ({ fallThrough: value }));
 }
 
-function innerSerializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo, accessChain: Array<string | number>): SerializedValue {
+function innerSerializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo, accessChain: Array<string | number>): SerializedArgumentValue {
   const handle = handleSerializer(value);
   if ('fallThrough' in handle)
     value = handle.fallThrough;
@@ -153,7 +153,7 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
     return { a, id };
   }
   if (typeof value === 'object') {
-    const o: { k: string, v: SerializedValue }[] = [];
+    const o: { k: string, v: SerializedArgumentValue }[] = [];
     const id = ++visitorInfo.lastId;
     visitorInfo.visited.set(value, id);
     for (const name of Object.keys(value))
@@ -192,7 +192,7 @@ function isError(obj: any): obj is Error {
 }
 
 
-type TypedArrayKind = NonNullable<SerializedValue['ta']>['k'];
+type TypedArrayKind = NonNullable<SerializedArgumentValue['ta']>['k'];
 const typedArrayKindToConstructor: Record<TypedArrayKind, Function> = {
   i8: Int8Array,
   ui8: Uint8Array,

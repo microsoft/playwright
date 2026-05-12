@@ -23,7 +23,7 @@ import { ChannelOwner } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
 import { Events } from './events';
-import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
+import { JSHandle, assertMaxArguments, serializeArgument } from './jsHandle';
 import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
@@ -200,13 +200,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    return result.value;
   }
 
   async _evaluateExposeUtilityScript<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    return result.value;
   }
 
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
@@ -232,13 +232,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    return result.value;
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    return result.value;
   }
 
   async $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> {
@@ -499,7 +499,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     };
     if (channelResult.received !== undefined && channelResult.matches === !!options.isNot) {
       result.received = {
-        value: channelResult.received.value !== undefined ? parseResult(channelResult.received.value) : undefined,
+        value: channelResult.received.value,
         ariaSnapshot: channelResult.received.ariaSnapshot,
       };
     }

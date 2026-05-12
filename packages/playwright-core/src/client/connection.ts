@@ -205,7 +205,8 @@ export class Connection extends EventEmitter {
   private _validatorFromWireContext(): ValidatorContext {
     return {
       tChannelImpl: this._tChannelImplFromWire.bind(this),
-      binary: this._rawBuffers ? 'buffer' : 'fromBase64',
+      direction: 'fromWire',
+      rawBuffers: this._rawBuffers,
       isUnderTest: () => this._platform.isUnderTest(),
     };
   }

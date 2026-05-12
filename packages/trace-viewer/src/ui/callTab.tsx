@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/channels';
+import type { SerializedArgumentValue } from '@protocol/channels';
 import type { ActionTraceEvent } from '@trace/trace';
 import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
@@ -127,7 +127,7 @@ function propertyToString(event: ActionTraceEvent, name: string, value: any, sdk
   return { text: JSON.stringify(value), type: 'object', name };
 }
 
-function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
+function parseSerializedValue(value: SerializedArgumentValue, handles: any[] | undefined): any {
   if (value.n !== undefined)
     return value.n;
   if (value.s !== undefined)

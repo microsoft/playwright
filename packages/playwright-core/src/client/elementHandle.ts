@@ -18,7 +18,7 @@ import { assert } from '@isomorphic/assert';
 import { isString } from '@isomorphic/rtti';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { Frame } from './frame';
-import { JSHandle, parseResult, serializeArgument } from './jsHandle';
+import { JSHandle, serializeArgument } from './jsHandle';
 import { fileUploadSizeLimit, mkdirIfNeeded } from './fileUtils';
 import { WritableStream } from './writableStream';
 
@@ -214,12 +214,12 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
     const result = await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    return result.value;
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
     const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    return result.value;
   }
 
   async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: TimeoutOptions = {}): Promise<void> {

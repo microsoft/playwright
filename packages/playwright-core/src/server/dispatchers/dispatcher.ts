@@ -229,7 +229,8 @@ export class DispatcherConnection {
   private _validatorToWireContext(): ValidatorContext {
     return {
       tChannelImpl: this._tChannelImplToWire.bind(this),
-      binary: this._isLocal ? 'buffer' : 'toBase64',
+      direction: 'toWire',
+      rawBuffers: this._isLocal,
       isUnderTest,
     };
   }
@@ -237,7 +238,8 @@ export class DispatcherConnection {
   private _validatorFromWireContext(): ValidatorContext {
     return {
       tChannelImpl: this._tChannelImplFromWire.bind(this),
-      binary: this._isLocal ? 'buffer' : 'fromBase64',
+      direction: 'fromWire',
+      rawBuffers: this._isLocal,
       isUnderTest,
     };
   }

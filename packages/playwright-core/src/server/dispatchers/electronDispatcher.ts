@@ -16,7 +16,7 @@
 
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { Dispatcher } from './dispatcher';
-import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
+import { JSHandleDispatcher, parseArgument } from './jsHandleDispatcher';
 import { ElectronApplication } from '../electron/electron';
 
 import type { RootDispatcher } from './dispatcher';
@@ -77,7 +77,7 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
 
   async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams, progress: Progress): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
     const handle = await progress.race(this._object._nodeElectronHandlePromise);
-    return { value: serializeResult(await handle.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg))) };
+    return { value: await handle.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)) };
   }
 
   async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams, progress: Progress): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {

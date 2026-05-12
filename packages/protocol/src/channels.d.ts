@@ -20,6 +20,7 @@ import type { CallMetadata } from './callMetadata';
 import type { Progress } from './progress';
 
 export type Binary = Buffer;
+export type UnserializedValue = any;
 
 export interface Channel {
 }
@@ -2217,7 +2218,7 @@ export type ElectronApplicationEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type ElectronApplicationEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type ElectronApplicationEvaluateExpressionHandleParams = {
   expression: string,
@@ -2331,7 +2332,7 @@ export type FrameEvalOnSelectorOptions = {
   isFunction?: boolean,
 };
 export type FrameEvalOnSelectorResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type FrameEvalOnSelectorAllParams = {
   selector: string,
@@ -2343,7 +2344,7 @@ export type FrameEvalOnSelectorAllOptions = {
   isFunction?: boolean,
 };
 export type FrameEvalOnSelectorAllResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type FrameAddScriptTagParams = {
   url?: string,
@@ -2539,7 +2540,7 @@ export type FrameEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type FrameEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type FrameEvaluateExpressionHandleParams = {
   expression: string,
@@ -2966,7 +2967,7 @@ export type FrameExpectOptions = {
 export type FrameExpectResult = {
   matches: boolean,
   received?: {
-    value?: SerializedValue,
+    value?: UnserializedValue,
     ariaSnapshot?: string,
   },
   timedOut?: boolean,
@@ -3010,7 +3011,7 @@ export type JSHandleEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type JSHandleEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type JSHandleEvaluateExpressionHandleParams = {
   expression: string,
@@ -3043,7 +3044,7 @@ export type JSHandleGetPropertyResult = {
 export type JSHandleJsonValueParams = {};
 export type JSHandleJsonValueOptions = {};
 export type JSHandleJsonValueResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 
 export interface JSHandleEvents {
@@ -3105,7 +3106,7 @@ export type ElementHandleEvalOnSelectorOptions = {
   isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type ElementHandleEvalOnSelectorAllParams = {
   selector: string,
@@ -3117,7 +3118,7 @@ export type ElementHandleEvalOnSelectorAllOptions = {
   isFunction?: boolean,
 };
 export type ElementHandleEvalOnSelectorAllResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type ElementHandleBoundingBoxParams = {};
 export type ElementHandleBoundingBoxOptions = {};
@@ -5139,7 +5140,7 @@ export interface CDPSessionEvents {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  args: SerializedValue[],
+  args: UnserializedValue[],
 };
 export interface BindingCallEventTarget {
 }
@@ -5242,7 +5243,7 @@ export type DialogDismissResult = void;
 export interface DialogEvents {
 }
 
-export type SerializedValue = {
+export type SerializedArgumentValue = {
   n?: number,
   b?: boolean,
   s?: string,
@@ -5263,10 +5264,10 @@ export type SerializedValue = {
     p: string,
     f: string,
   },
-  a?: SerializedValue[],
+  a?: SerializedArgumentValue[],
   o?: {
     k: string,
-    v: SerializedValue,
+    v: SerializedArgumentValue,
   }[],
   h?: number,
   id?: number,
@@ -5274,7 +5275,7 @@ export type SerializedValue = {
 };
 
 export type SerializedArgument = {
-  value: SerializedValue,
+  value: SerializedArgumentValue,
   handles: Channel[],
 };
 
@@ -5284,7 +5285,7 @@ export type SerializedError = {
     name: string,
     stack?: string,
   },
-  value?: SerializedValue,
+  value?: UnserializedValue,
 };
 
 export type StackFrame = {
@@ -5461,7 +5462,7 @@ export type WorkerEvaluateExpressionOptions = {
   isFunction?: boolean,
 };
 export type WorkerEvaluateExpressionResult = {
-  value: SerializedValue,
+  value: UnserializedValue,
 };
 export type WorkerEvaluateExpressionHandleParams = {
   expression: string,

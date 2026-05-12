@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SerializedValue:
+SerializedArgumentValue:
   type: object
   # Exactly one of the properties must be present.
   properties:
@@ -68,7 +68,7 @@ SerializedValue:
         f: string
     a:
       type: array?
-      items: SerializedValue
+      items: SerializedArgumentValue
     # Object with keys and values.
     o:
       type: array?
@@ -76,7 +76,7 @@ SerializedValue:
         type: object
         properties:
           k: string
-          v: SerializedValue
+          v: SerializedArgumentValue
     # An index in the handles array from SerializedArgument.
     h: int?
     # Index of the object in value-type for circular reference resolution.
@@ -87,7 +87,7 @@ SerializedValue:
 SerializedArgument:
   type: object
   properties:
-    value: SerializedValue
+    value: SerializedArgumentValue
     handles:
       type: array
       items: Channel
