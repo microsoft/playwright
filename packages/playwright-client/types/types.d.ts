@@ -23532,6 +23532,11 @@ export interface LaunchOptions {
 
 export interface ConnectOverCDPOptions {
   /**
+   * If specified, browser artifacts (such as traces and downloads) are saved into this directory.
+   */
+  artifactsDir?: string;
+
+  /**
    * @deprecated Use the first argument instead.
    */
   endpointURL?: string;

@@ -51,7 +51,7 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
   let canBind = false;
   let ownership: 'attached' | 'own' = 'own';
   if (config.browser.cdpEndpoint) {
-    browser = await createCDPBrowser(config);
+    browser = await createCDPBrowser(config, clientInfo);
     canBind = true;
     ownership = 'attached';
   } else if (config.browser.isolated) {
@@ -103,11 +103,13 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
   return browser;
 }
 
-async function createCDPBrowser(config: FullConfig): Promise<playwrightTypes.Browser> {
+async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (cdp)');
+  const artifactsDir = await computeTracesDir(config, clientInfo);
   const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
     headers: config.browser.cdpHeaders,
-    timeout: config.browser.cdpTimeout
+    timeout: config.browser.cdpTimeout,
+    artifactsDir,
   });
   return browser;
 }

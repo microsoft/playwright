@@ -18,6 +18,7 @@
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
 import fs from 'fs';
+import path from 'path';
 import { getUserAgent, server as coreServer } from '../../../packages/playwright-core/lib/coreBundle';
 import { suppressCertificateWarning } from '../../config/utils';
 
@@ -58,6 +59,41 @@ test('should cleanup artifacts dir after connectOverCDP disconnects due to ws cl
   const exists2 = fs.existsSync(dir);
   expect(exists1).toBe(true);
   expect(exists2).toBe(false);
+});
+
+test('should write traces to provided artifactsDir on connectOverCDP', async ({ browserType, toImpl }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  const artifactsDir = testInfo.outputPath('custom-artifacts');
+  try {
+    const cdpBrowser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+      artifactsDir,
+    });
+    expect(toImpl(cdpBrowser).options.artifactsDir).toBe(artifactsDir);
+    expect(toImpl(cdpBrowser).options.tracesDir).toBe(artifactsDir);
+
+    const context = cdpBrowser.contexts()[0];
+    await context.tracing.start({ name: 'cdp-trace', snapshots: true, screenshots: true });
+    const page = await context.newPage();
+    await page.setContent('<button>Hello</button>');
+    await context.tracing.stopChunk();
+
+    expect(fs.existsSync(path.join(artifactsDir, 'cdp-trace.trace'))).toBe(true);
+    expect(fs.existsSync(path.join(artifactsDir, 'cdp-trace.network'))).toBe(true);
+    expect(fs.existsSync(path.join(artifactsDir, 'resources'))).toBe(true);
+
+    await Promise.all([
+      new Promise(f => cdpBrowser.on('disconnected', f)),
+      browserServer.close()
+    ]);
+
+    expect(fs.existsSync(artifactsDir)).toBe(true);
+  } finally {
+    await browserServer.close().catch(() => {});
+  }
 });
 
 test('should connectOverCDP and manage downloads in default context', async ({ browserType, mode, server }, testInfo) => {

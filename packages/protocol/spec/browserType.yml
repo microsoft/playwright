@@ -51,6 +51,7 @@ BrowserType:
         timeout: float
         isLocal: boolean?
         noDefaults: boolean?
+        artifactsDir: string?
       returns:
         browser: Browser
         defaultContext: BrowserContext?

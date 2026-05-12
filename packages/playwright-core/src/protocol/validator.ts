@@ -1059,6 +1059,7 @@ scheme.BrowserTypeConnectOverCDPParams = tObject({
   timeout: tFloat,
   isLocal: tOptional(tBoolean),
   noDefaults: tOptional(tBoolean),
+  artifactsDir: tOptional(tString),
 });
 scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),

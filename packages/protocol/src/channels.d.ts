@@ -2005,12 +2005,14 @@ export type BrowserTypeConnectOverCDPParams = {
   timeout: number,
   isLocal?: boolean,
   noDefaults?: boolean,
+  artifactsDir?: string,
 };
 export type BrowserTypeConnectOverCDPOptions = {
   headers?: NameValue[],
   slowMo?: number,
   isLocal?: boolean,
   noDefaults?: boolean,
+  artifactsDir?: string,
 };
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
