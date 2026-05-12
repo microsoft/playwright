@@ -206,6 +206,29 @@ test('should filter actions by text', async ({ showTraceViewer }) => {
   await expect(traceViewer.actionTitles).toHaveCount(fullCount);
 });
 
+test('should keep selected action in view after Show all', async ({ runAndTrace, page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40808' });
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<div>hello</div>');
+    for (let i = 0; i < 50; i++)
+      await page.evaluate(x => x, i);
+  });
+
+  const treeItems = traceViewer.actionsTree.getByRole('treeitem');
+  const deepAction = treeItems.filter({ hasText: 'Evaluate' }).nth(40);
+  await deepAction.scrollIntoViewIfNeeded();
+  await deepAction.dblclick();
+
+  const showAll = traceViewer.page.locator('.action-list-show-all');
+  await expect(showAll).toBeVisible();
+  await showAll.click();
+  await expect(showAll).toBeHidden();
+
+  const selected = traceViewer.actionsTree.locator('[role="treeitem"][aria-selected="true"]');
+  await expect(selected).toHaveCount(1);
+  await expect(selected).toBeInViewport();
+});
+
 test('should open uncompressed trace directory', async ({ showTraceViewer }) => {
   const traceDir = test.info().outputPath('unzipped-trace');
   await extractZip(traceFile, { dir: traceDir });

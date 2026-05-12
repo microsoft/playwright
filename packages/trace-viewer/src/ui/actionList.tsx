@@ -102,8 +102,14 @@ export const ActionList: React.FC<ActionListProps> = ({
     onHighlighted?.(item?.action);
   }, [onHighlighted]);
 
+  const [showAllCounter, setShowAllCounter] = React.useState<number>();
+  const onShowAll = React.useCallback(() => {
+    setSelectedTime(undefined);
+    setShowAllCounter(n => (n ?? 0) + 1);
+  }, [setSelectedTime]);
+
   return <div className='vbox action-list-container'>
-    {selectedTime && <div className='action-list-show-all' onClick={() => setSelectedTime(undefined)}><span className='codicon codicon-triangle-left'></span>Show all</div>}
+    {selectedTime && <div className='action-list-show-all' onClick={onShowAll}><span className='codicon codicon-triangle-left'></span>Show all</div>}
     <ActionTreeView
       name='actions'
       rootItem={rootItem}
@@ -117,6 +123,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       isVisible={isVisible}
       render={render}
       autoExpandDepth={actionFilterText?.trim() ? 5 : 0}
+      revealSelectedKey={showAllCounter}
     />
   </div>;
 };
