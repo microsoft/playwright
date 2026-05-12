@@ -490,25 +490,14 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<ExpectResult> {
     const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
     params.expectedValue = serializeArgument(options.expectedValue);
-    const channelResult = await this._channel.expect(params);
-    const result: ExpectResult = {
-      matches: channelResult.matches,
-      log: channelResult.log,
-      timedOut: channelResult.timedOut,
-      errorMessage: channelResult.errorMessage,
-    };
-    if (channelResult.received !== undefined && channelResult.matches === !!options.isNot) {
-      result.received = {
-        value: channelResult.received.value,
-        ariaSnapshot: channelResult.received.ariaSnapshot,
-      };
-    }
+    const result = await this._channel.expect(params);
+    if (result.matches !== !!options.isNot)
+      delete result.received;
     return result;
   }
 }
 
-export type ExpectReceived = { value?: any, ariaSnapshot?: string };
-export type ExpectResult = { matches: boolean, received?: ExpectReceived, log?: string[], timedOut?: boolean, errorMessage?: string };
+export type ExpectResult = channels.FrameExpectResult;
 
 export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
   if (waitUntil as unknown === 'networkidle0')

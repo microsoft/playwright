@@ -360,7 +360,7 @@ export class DispatcherConnection {
       const result = await dispatcher._runCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
-      callMetadata.result = result;
+      callMetadata.result = response.result; // Use the wire-format result for the trace recorder.
     } catch (e) {
       if (isTargetClosedError(e)) {
         const reason = sdkObject.closeReason();
