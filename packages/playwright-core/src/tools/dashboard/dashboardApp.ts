@@ -308,6 +308,8 @@ export async function openDashboardApp() {
     const { url } = await startDashboardServer(new RegistrySessionProvider(), options);
     // eslint-disable-next-line no-console
     console.log(`Listening on ${url}`);
+    // eslint-disable-next-line no-restricted-properties
+    await new Promise(f => process.stdout.write('', f));  // Make sure stdout is flushed.
     selfDestructOnParentGone();
     return;
   }
@@ -318,14 +320,12 @@ export async function openDashboardApp() {
   try {
     server = await acquireSingleton(options);
   } catch {
-    // Another daemon is already running; acquireSingleton forwarded our
-    // options to it. Signal success so the parent doesn't treat our clean
-    // exit as a startup failure.
+    // Another daemon is already running, signal success.
     stopSelfDestruct();
     // eslint-disable-next-line no-console
-    console.log('### Success\nDashboard already running');
-    // eslint-disable-next-line no-console
-    console.log('<EOF>');
+    console.log('Dashboard is running');
+    // eslint-disable-next-line no-restricted-properties
+    await new Promise(f => process.stdout.write('', f));  // Make sure stdout is flushed.
     return;
   }
   process.on('exit', () => server.close());
@@ -333,15 +333,10 @@ export async function openDashboardApp() {
     await startApp(server, options);
     stopSelfDestruct();
     // eslint-disable-next-line no-console
-    console.log('### Success\nDashboard ready');
-    // eslint-disable-next-line no-console
-    console.log('<EOF>');
+    console.log('Dashboard is running');
   } catch (error) {
-    const message = (error as Error).stack || (error as Error).message;
     // eslint-disable-next-line no-console
-    console.log(`### Error\n${message}`);
-    // eslint-disable-next-line no-console
-    console.log('<EOF>');
+    console.log(error);
     gracefullyProcessExitDoNotHang(1);
   }
 }

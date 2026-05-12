@@ -235,41 +235,24 @@ export async function program(options?: { embedderVersion?: string}) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
       }
+      const timer = setTimeout(() => child.stdin!.destroy(), 60_000);
+      child.unref();
       try {
         await new Promise<void>((resolve, reject) => {
           let outLog = '';
-          const settle = (err?: Error) => {
-            clearTimeout(timer);
-            child.stdout!.removeAllListeners();
-            child.removeAllListeners('exit');
-            if (err)
-              reject(err);
-            else
-              resolve();
-          };
-          const timer = setTimeout(() => settle(new Error('Dashboard daemon did not spin up within 60s')), 60_000);
           child.stdout!.on('data', data => {
             outLog += data.toString();
-            if (!outLog.includes('<EOF>'))
-              return;
-            if (outLog.match(/### Success\n[\s\S]*<EOF>/))
-              settle();
-            else
-              settle(new Error(outLog.trim()));
+            if (outLog.includes('Dashboard is running'))
+              resolve();
           });
-          child.stdout!.once('error', err => settle(err));
-          child.once('exit', (code, signal) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY${outLog ? '\n' + outLog : ''}`)));
+          child.once('exit', (code, signal) => reject(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY${outLog ? '\n' + outLog : ''}`)));
         });
-      } catch (err) {
+      } finally {
+        clearTimeout(timer);
+        child.removeAllListeners('exit');
         child.stdin!.destroy();
         child.stdout!.destroy();
-        if (child.exitCode === null && child.signalCode === null)
-          await new Promise<void>(resolve => child.once('exit', () => resolve()));
-        throw err;
       }
-      child.stdin!.destroy();
-      child.stdout!.destroy();
-      child.unref();
       output.show(sessionName, child.pid);
       return;
     }

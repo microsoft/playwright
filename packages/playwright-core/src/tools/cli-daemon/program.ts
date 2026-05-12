@@ -67,12 +67,9 @@ export function decorateProgram(program: Command) {
             throw new Error('Error: unable to connect to a browser that does not have any contexts');
           const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
           const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true, ownership });
-          console.log(`### Success\nDaemon listening on ${socketPath}`);
-          console.log('<EOF>');
+          console.log(`Daemon listening on ${socketPath}\n`);
         } catch (error) {
-          const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
-          console.log(`### Error\n${message}`);
-          console.log('<EOF>');
+          console.log(error);
           gracefullyProcessExitDoNotHang(1);
         }
       });
