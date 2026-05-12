@@ -149,6 +149,25 @@ it('should return body with compression', async ({ page, server, asset }) => {
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
+it('should return binary body with text content-type', async ({ page, server }) => {
+  // Binary data with bytes that are invalid UTF-8.
+  const binaryData = Buffer.from([0x80, 0x81, 0x82, 0xFF, 0xFE, 0x00, 0x01, 0x02]);
+  server.setRoute('/binary-as-text', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain;charset=UTF-8',
+      'Content-Length': binaryData.length,
+    });
+    res.end(binaryData);
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const [response] = await Promise.all([
+    page.waitForResponse(server.PREFIX + '/binary-as-text'),
+    page.evaluate(url => fetch(url), server.PREFIX + '/binary-as-text'),
+  ]);
+  const body = await response.body();
+  expect(body.equals(binaryData)).toBe(true);
+});
+
 it('should return status text', async ({ page, server }) => {
   server.setRoute('/cool', (req, res) => {
     res.writeHead(200, 'cool!');

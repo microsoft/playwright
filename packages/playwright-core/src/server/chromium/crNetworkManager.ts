@@ -382,14 +382,22 @@ export class CRNetworkManager {
 
       const session = request.session;
       const response = await session.send('Network.getResponseBody', { requestId: request._requestId });
-      if (response.body || !expectedLength)
-        return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+      if (response.body || !expectedLength) {
+        const buffer = Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+        // When CDP returns non-base64 text for a response with Content-Length,
+        // it may have decoded binary data as UTF-8, corrupting non-UTF-8 bytes.
+        // Detect this by comparing Content-Length with actual byte length,
+        // and fall through to re-fetch via loadNetworkResource.
+        if (response.base64Encoded || !expectedLength || buffer.byteLength === expectedLength)
+          return buffer;
+      }
 
       // Make sure no network requests sent while reading the body for fulfilled requests.
       if (request._originalRequestRoute?._fulfilled)
         return Buffer.from('');
 
-      // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
+      // Re-fetch the content from cache via loadNetworkResource.
+      // This path is also used for <link prefetch> which returns an empty body.
       const resource = await session.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
       const chunks: Buffer[] = [];
       while (resource.resource.stream) {
