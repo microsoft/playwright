@@ -36,8 +36,9 @@ tag_and_push() {
   local source="$1"
   local target="$2"
   echo "-- tagging: $target"
-  docker buildx imagetools create --tag "$target" "$source"
-  attach_eol_manifest "$target"
+  docker tag $source $target
+  docker push $target
+  attach_eol_manifest $target
 }
 
 attach_eol_manifest() {
@@ -78,24 +79,11 @@ publish_docker_images_with_arch_suffix() {
   fi
   # Prune docker images to avoid platform conflicts
   docker system prune -fa
+  ./build.sh "--${ARCH}" "${FLAVOR}" playwright:localbuild
 
-  local CANONICAL_TAG="playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAGS[0]}-${ARCH}"
-
-  # Build and push the canonical tag.
-  node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
-  docker buildx build \
-    --platform "linux/${ARCH}" \
-    --push \
-    -f "Dockerfile.${FLAVOR}" \
-    -t "${CANONICAL_TAG}" \
-    .
-  rm -f playwright-core.tar.gz
-  attach_eol_manifest "${CANONICAL_TAG}"
-
-  # Create additional tags via registry-side copy (no re-upload).
-  for ((i = 1; i < ${#TAGS[@]}; i++)) do
+  for ((i = 0; i < ${#TAGS[@]}; i++)) do
     local TAG="${TAGS[$i]}"
-    tag_and_push "${CANONICAL_TAG}" "playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAG}-${ARCH}"
+    tag_and_push playwright:localbuild "playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAG}-${ARCH}"
   done
 }
 

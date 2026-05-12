@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 FROM ubuntu:noble
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -41,13 +40,14 @@ RUN mkdir /ms-playwright && \
     cd /ms-playwright-agent && npm init -y && \
     npm i /tmp/playwright-core.tar.gz && \
     npm exec --no -- playwright-core mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}" && \
-    npm exec --no -- playwright-core install-deps chromium chromium-headless-shell firefox webkit && \
+    npm exec --no -- playwright-core install-deps && \
     rm -rf /var/lib/apt/lists/*
 
 # 3. Install each browser binary in its own layer for parallel pulling.
+# Note: installing chromium also installs chromium-headless-shell and ffmpeg.
 RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install chromium chromium-headless-shell && \
-    chmod -R 777 /ms-playwright/chromium-* /ms-playwright/chromium_headless_shell-*
+    npm exec --no -- playwright-core install chromium && \
+    chmod -R 777 /ms-playwright/chromium-* /ms-playwright/chromium_headless_shell-* /ms-playwright/ffmpeg-*
 
 RUN cd /ms-playwright-agent && \
     npm exec --no -- playwright-core install firefox && \
@@ -55,12 +55,7 @@ RUN cd /ms-playwright-agent && \
 
 RUN cd /ms-playwright-agent && \
     npm exec --no -- playwright-core install webkit && \
-    chmod -R 777 /ms-playwright/webkit-*
-
-# 4. Install ffmpeg and clean up.
-RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install ffmpeg && \
     rm /tmp/playwright-core.tar.gz && \
     rm -rf /ms-playwright-agent && \
     rm -rf ~/.npm/ && \
-    chmod -R 777 /ms-playwright/ffmpeg-*
+    chmod -R 777 /ms-playwright/webkit-*

@@ -27,8 +27,6 @@ jobs:
       uses: docker/setup-qemu-action@v4
       with:
         platforms: arm64
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
     - run: npm ci
     - run: npm run build
     - name: Azure Login
