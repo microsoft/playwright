@@ -197,6 +197,7 @@ test('should filter actions by text', async ({ showTraceViewer }) => {
   const filterInput = traceViewer.page.getByRole('searchbox', { name: 'Filter actions' });
   await expect(filterInput).toBeVisible();
 
+  await expect(traceViewer.actionTitles.filter({ hasText: 'Close page' })).toBeVisible();
   const fullCount = await traceViewer.actionTitles.count();
   await filterInput.fill('Click');
   await expect(traceViewer.actionTitles.filter({ hasText: 'Click' }).first()).toBeVisible();
