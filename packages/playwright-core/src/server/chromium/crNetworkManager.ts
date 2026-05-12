@@ -827,13 +827,18 @@ class ResponseExtraInfoTracker {
     if (!info.loadingFinished && !info.loadingFailed)
       return;
 
-    if (info.responses.length <= info.responseReceivedExtraInfo.length) {
-      // We have extra info for each response.
-      this._stopTracking(info.requestId);
-      return;
+    if (info.responses.length > info.responseReceivedExtraInfo.length) {
+      // Use provisional headers for responses that never received extra info,
+      // e.g. worker scripts in iframes where CDP does not deliver the event.
+      for (let i = info.responseReceivedExtraInfo.length; i < info.responses.length; i++) {
+        if (!info.responses[i])
+          continue;
+        info.responses[i].request().setRawRequestHeaders(null);
+        info.responses[i].setResponseHeadersSize(null);
+        info.responses[i].setRawResponseHeaders(null);
+      }
     }
-
-    // We are not done yet.
+    this._stopTracking(info.requestId);
   }
 
   private _stopTracking(requestId: string) {

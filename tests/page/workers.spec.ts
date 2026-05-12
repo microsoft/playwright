@@ -260,6 +260,19 @@ it('should report worker script as network request', {
   expect(text).toContain(`console.log('hello from the worker');`);
 });
 
+it('should resolve allHeaders for worker script in iframe', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39948' },
+}, async function({ page, server }) {
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForEvent('requestfinished', r => r.url().includes('worker.js')),
+    attachFrame(page, 'frame1', server.PREFIX + '/worker/worker.html'),
+  ]);
+  const response = await request.response();
+  const headers = await response!.allHeaders();
+  expect(headers['content-type']).toBeTruthy();
+});
+
 it('should report worker script as network request after redirect', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35678' },
 }, async ({ page, server, browserName }) => {
