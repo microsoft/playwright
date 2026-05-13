@@ -90,6 +90,55 @@ export class ClaudeGenerator {
   }
 }
 
+export class CodexGenerator {
+  static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
+    await initRepo(fullConfig, projectName, {
+      promptsFolder: prompts ? '.codex/prompts' : undefined,
+    });
+
+    const agents = await loadAgentSpecs();
+
+    await fs.promises.mkdir('.codex/agents', { recursive: true });
+    for (const agent of agents)
+      await writeFile(`.codex/agents/${agent.name}.toml`, CodexGenerator.agentSpec(agent), '🤖', 'agent definition');
+
+    initRepoDone();
+  }
+
+  static agentSpec(agent: AgentSpec): string {
+    const mcpName = 'playwright-test';
+    const enabledTools: string[] = [];
+    for (const tool of agent.tools) {
+      const [first, second] = tool.split('/');
+      if (second && first === mcpName)
+        enabledTools.push(second);
+    }
+
+    const sandboxMode = agent.tools.includes('edit') ? 'workspace-write' : 'read-only';
+    const mcpServer = process.platform === 'win32'
+      ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
+      : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
+
+    const examples = agent.examples.length
+      ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`
+      : '';
+
+    const lines: string[] = [];
+    lines.push(`name = ${tomlBasicString(agent.name)}`);
+    lines.push(`description = ${tomlBasicString(agent.description + examples)}`);
+    lines.push(`sandbox_mode = ${tomlBasicString(sandboxMode)}`);
+    lines.push(`developer_instructions = ${tomlMultilineString(agent.instructions)}`);
+    lines.push('');
+    lines.push(`[mcp_servers.${mcpName}]`);
+    lines.push(`command = ${tomlBasicString(mcpServer.command)}`);
+    lines.push(`args = ${tomlArray(mcpServer.args)}`);
+    if (enabledTools.length)
+      lines.push(`enabled_tools = ${tomlArray(enabledTools)}`);
+    lines.push('');
+    return lines.join('\n');
+  }
+}
+
 export class OpencodeGenerator {
   static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
     await initRepo(fullConfig, projectName, {
@@ -155,6 +204,7 @@ export class OpencodeGenerator {
     return JSON.stringify(result, null, 2);
   }
 }
+
 export class CopilotGenerator {
   static async init(fullConfig: FullConfigInternal, projectName: string, prompts: boolean) {
 
@@ -315,6 +365,21 @@ export class VSCodeGenerator {
     lines.push('');
     return lines.join('\n');
   }
+}
+
+function tomlBasicString(value: string): string {
+  // JSON.stringify produces valid TOML basic strings: escapes \", \\, \n, \r, \t and uses \uXXXX for control chars.
+  return JSON.stringify(value);
+}
+
+function tomlArray(values: string[]): string {
+  return `[${values.map(value => tomlBasicString(value)).join(', ')}]`;
+}
+
+function tomlMultilineString(value: string): string {
+  // Triple-quoted basic string: escape backslashes first, then any literal """ sequences.
+  const escaped = value.replace(/\\/g, '\\\\').replace(/"""/g, '\\"\\"\\"');
+  return `"""\n${escaped}\n"""`;
 }
 
 async function writeFile(filePath: string, content: string, icon: string, description: string) {
