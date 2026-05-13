@@ -32,7 +32,7 @@ import { isDnfBasedDistroSync } from '@utils/linuxUtils';
 import { lock } from '@utils/third_party/lockfile';
 import { fetchData } from '../utils';
 import { getEmbedderName } from '../userAgent';
-import { installDependenciesFedora, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import { installDependenciesDnf, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 import { packageRoot, binPath } from '../../package';
@@ -655,6 +655,7 @@ export class Registry {
 
     const chromium = descriptors.find(d => d.name === 'chromium')!;
     const chromiumExecutable = findExecutablePath(chromium.dir, 'chromium');
+    const chromiumLinuxValidation = { lddDirectories: ['chrome-linux', 'chrome-linux64'], dlOpenLibraries: [] };
     this._executables.push({
       name: 'chromium',
       browserName: 'chromium',
@@ -662,8 +663,8 @@ export class Registry {
       executablePath: () => chromiumExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
       installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromium.dir, ['chrome-linux', 'chrome-linux64'], [], ['chrome-win']),
-      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-linux64'], dlOpenLibraries: [] },
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromium.dir, chromiumLinuxValidation, ['chrome-win']),
+      _linuxValidation: chromiumLinuxValidation,
       downloadURLs: this._downloadURLs(chromium),
       title: chromium.title,
       revision: chromium.revision,
@@ -675,6 +676,7 @@ export class Registry {
 
     const chromiumHeadlessShell = descriptors.find(d => d.name === 'chromium-headless-shell')!;
     const chromiumHeadlessShellExecutable = findExecutablePath(chromiumHeadlessShell.dir, 'chromium-headless-shell');
+    const chromiumHeadlessShellLinuxValidation = { lddDirectories: ['chrome-linux', 'chrome-headless-shell-linux64'], dlOpenLibraries: [] };
     this._executables.push({
       name: 'chromium-headless-shell',
       browserName: 'chromium',
@@ -682,8 +684,8 @@ export class Registry {
       executablePath: () => chromiumHeadlessShellExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumHeadlessShellExecutable, chromiumHeadlessShell.installByDefault, sdkLanguage),
       installType: chromiumHeadlessShell.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, ['chrome-linux', 'chrome-headless-shell-linux64'], [], ['chrome-win']),
-      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-headless-shell-linux64'], dlOpenLibraries: [] },
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, chromiumHeadlessShellLinuxValidation, ['chrome-win']),
+      _linuxValidation: chromiumHeadlessShellLinuxValidation,
       downloadURLs: this._downloadURLs(chromiumHeadlessShell),
       title: chromiumHeadlessShell.title,
       revision: chromiumHeadlessShell.revision,
@@ -695,6 +697,7 @@ export class Registry {
 
     const chromiumTipOfTreeHeadlessShell = descriptors.find(d => d.name === 'chromium-tip-of-tree-headless-shell')!;
     const chromiumTipOfTreeHeadlessShellExecutable = findExecutablePath(chromiumTipOfTreeHeadlessShell.dir, 'chromium-tip-of-tree-headless-shell');
+    const chromiumTipOfTreeHeadlessShellLinuxValidation = { lddDirectories: ['chrome-linux', 'chrome-headless-shell-linux64'], dlOpenLibraries: [] };
     this._executables.push({
       name: 'chromium-tip-of-tree-headless-shell',
       browserName: 'chromium',
@@ -702,8 +705,8 @@ export class Registry {
       executablePath: () => chromiumTipOfTreeHeadlessShellExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumTipOfTreeHeadlessShellExecutable, chromiumTipOfTreeHeadlessShell.installByDefault, sdkLanguage),
       installType: chromiumTipOfTreeHeadlessShell.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTreeHeadlessShell.dir, ['chrome-linux', 'chrome-headless-shell-linux64'], [], ['chrome-win']),
-      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-headless-shell-linux64'], dlOpenLibraries: [] },
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTreeHeadlessShell.dir, chromiumTipOfTreeHeadlessShellLinuxValidation, ['chrome-win']),
+      _linuxValidation: chromiumTipOfTreeHeadlessShellLinuxValidation,
       downloadURLs: this._downloadURLs(chromiumTipOfTreeHeadlessShell),
       title: chromiumTipOfTreeHeadlessShell.title,
       revision: chromiumTipOfTreeHeadlessShell.revision,
@@ -715,6 +718,7 @@ export class Registry {
 
     const chromiumTipOfTree = descriptors.find(d => d.name === 'chromium-tip-of-tree')!;
     const chromiumTipOfTreeExecutable = findExecutablePath(chromiumTipOfTree.dir, 'chromium-tip-of-tree');
+    const chromiumTipOfTreeLinuxValidation = { lddDirectories: ['chrome-linux', 'chrome-linux64'], dlOpenLibraries: [] };
     this._executables.push({
       name: 'chromium-tip-of-tree',
       browserName: 'chromium',
@@ -722,8 +726,8 @@ export class Registry {
       executablePath: () => chromiumTipOfTreeExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-tip-of-tree', chromiumTipOfTreeExecutable, chromiumTipOfTree.installByDefault, sdkLanguage),
       installType: chromiumTipOfTree.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTree.dir, ['chrome-linux', 'chrome-linux64'], [], ['chrome-win']),
-      _linuxValidation: { lddDirectories: ['chrome-linux', 'chrome-linux64'], dlOpenLibraries: [] },
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTree.dir, chromiumTipOfTreeLinuxValidation, ['chrome-win']),
+      _linuxValidation: chromiumTipOfTreeLinuxValidation,
       downloadURLs: this._downloadURLs(chromiumTipOfTree),
       title: chromiumTipOfTree.title,
       revision: chromiumTipOfTree.revision,
@@ -819,6 +823,7 @@ export class Registry {
 
     const firefox = descriptors.find(d => d.name === 'firefox')!;
     const firefoxExecutable = findExecutablePath(firefox.dir, 'firefox');
+    const firefoxLinuxValidation = { lddDirectories: ['firefox'], dlOpenLibraries: [] };
     this._executables.push({
       name: 'firefox',
       browserName: 'firefox',
@@ -826,8 +831,8 @@ export class Registry {
       executablePath: () => firefoxExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox', firefoxExecutable, firefox.installByDefault, sdkLanguage),
       installType: firefox.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefox.dir, ['firefox'], [], ['firefox']),
-      _linuxValidation: { lddDirectories: ['firefox'], dlOpenLibraries: [] },
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefox.dir, firefoxLinuxValidation, ['firefox']),
+      _linuxValidation: firefoxLinuxValidation,
       downloadURLs: this._downloadURLs(firefox),
       title: firefox.title,
       revision: firefox.revision,
@@ -839,6 +844,7 @@ export class Registry {
 
     const firefoxBeta = descriptors.find(d => d.name === 'firefox-beta')!;
     const firefoxBetaExecutable = findExecutablePath(firefoxBeta.dir, 'firefox');
+    const firefoxBetaLinuxValidation = { lddDirectories: ['firefox'], dlOpenLibraries: [] };
     this._executables.push({
       name: 'firefox-beta',
       browserName: 'firefox',
@@ -846,8 +852,8 @@ export class Registry {
       executablePath: () => firefoxBetaExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('firefox-beta', firefoxBetaExecutable, firefoxBeta.installByDefault, sdkLanguage),
       installType: firefoxBeta.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefoxBeta.dir, ['firefox'], [], ['firefox']),
-      _linuxValidation: { lddDirectories: ['firefox'], dlOpenLibraries: [] },
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefoxBeta.dir, firefoxBetaLinuxValidation, ['firefox']),
+      _linuxValidation: firefoxBetaLinuxValidation,
       downloadURLs: this._downloadURLs(firefoxBeta),
       title: firefoxBeta.title,
       revision: firefoxBeta.revision,
@@ -859,16 +865,19 @@ export class Registry {
 
     const webkit = descriptors.find(d => d.name === 'webkit')!;
     const webkitExecutable = findExecutablePath(webkit.dir, 'webkit');
-    const webkitLinuxLddDirectories = [
-      path.join('minibrowser-gtk'),
-      path.join('minibrowser-gtk', 'bin'),
-      path.join('minibrowser-gtk', 'lib'),
-      path.join('minibrowser-gtk', 'sys', 'lib'),
-      path.join('minibrowser-wpe'),
-      path.join('minibrowser-wpe', 'bin'),
-      path.join('minibrowser-wpe', 'lib'),
-      path.join('minibrowser-wpe', 'sys', 'lib'),
-    ];
+    const webkitLinuxValidation = {
+      lddDirectories: [
+        path.join('minibrowser-gtk'),
+        path.join('minibrowser-gtk', 'bin'),
+        path.join('minibrowser-gtk', 'lib'),
+        path.join('minibrowser-gtk', 'sys', 'lib'),
+        path.join('minibrowser-wpe'),
+        path.join('minibrowser-wpe', 'bin'),
+        path.join('minibrowser-wpe', 'lib'),
+        path.join('minibrowser-wpe', 'sys', 'lib'),
+      ],
+      dlOpenLibraries: ['libGLESv2.so.2', 'libx264.so'],
+    };
     this._executables.push({
       name: 'webkit',
       browserName: 'webkit',
@@ -876,8 +885,8 @@ export class Registry {
       executablePath: () => webkitExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault, sdkLanguage),
       installType: webkit.installByDefault ? 'download-by-default' : 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
-      _linuxValidation: { lddDirectories: webkitLinuxLddDirectories, dlOpenLibraries: ['libGLESv2.so.2', 'libx264.so'] },
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, webkit.dir, webkitLinuxValidation, ['']),
+      _linuxValidation: webkitLinuxValidation,
       downloadURLs: this._downloadURLs(webkit),
       title: webkit.title,
       revision: webkit.revision,
@@ -1062,9 +1071,9 @@ export class Registry {
     return Array.from(new Set(executables as ExecutableImpl[]));
   }
 
-  private async _validateHostRequirements(sdkLanguage: string, browserDirectory: string, linuxLddDirectories: string[], dlOpenLibraries: string[], windowsExeAndDllDirectories: string[]) {
+  private async _validateHostRequirements(sdkLanguage: string, browserDirectory: string, linuxValidation: { lddDirectories: string[], dlOpenLibraries: string[] }, windowsExeAndDllDirectories: string[]) {
     if (os.platform() === 'linux')
-      return await validateDependenciesLinux(sdkLanguage, linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
+      return await validateDependenciesLinux(sdkLanguage, linuxValidation.lddDirectories.map(d => path.join(browserDirectory, d)), linuxValidation.dlOpenLibraries);
     if (os.platform() === 'win32' && os.arch() === 'x64')
       return await validateDependenciesWindows(sdkLanguage, windowsExeAndDllDirectories.map(d => path.join(browserDirectory, d)));
   }
@@ -1089,7 +1098,7 @@ export class Registry {
               linuxLddDirectories: e._linuxValidation!.lddDirectories.map(d => path.join(e.directory!, d)),
               dlOpenLibraries: e._linuxValidation!.dlOpenLibraries,
             }));
-        return await installDependenciesFedora(process.env.PW_LANG_NAME || 'javascript', browsers, dryRun);
+        return await installDependenciesDnf(getEmbedderName().embedderName, browsers, dryRun);
       }
       return await installDependenciesLinux(targets, dryRun);
     }

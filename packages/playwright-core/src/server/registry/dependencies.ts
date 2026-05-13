@@ -108,12 +108,14 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     await reportMissingDependenciesLinux(uniqueLibraries);
     return;
   }
+  await runPackageInstall([
+    'apt-get update',
+    ['apt-get', 'install', '-y', '--no-install-recommends', ...uniqueLibraries].join(' '),
+  ]);
+}
+
+async function runPackageInstall(commands: string[]) {
   console.log(`Installing dependencies...`);  // eslint-disable-line no-console
-  const commands: string[] = [];
-  commands.push('apt-get update');
-  commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
-    ...uniqueLibraries,
-  ].join(' '));
   const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
   if (elevatedPermissions)
     console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
@@ -229,22 +231,22 @@ async function findMissingLinuxLibraries(linuxLddDirectories: string[], dlOpenLi
 async function resolveLibrariesWithDnf(libraries: string[]): Promise<{ libToPackage: Map<string, string>, unresolved: string[] }> {
   const libToPackage = new Map<string, string>();
   const unresolved: string[] = [];
-  // `dnf repoquery --whatprovides <soname>` returns one line per package
-  // providing that library. Run per-library in parallel so we know the mapping.
   await Promise.all(libraries.map(async lib => {
     const { stdout, code, error } = await spawnAsync('dnf', ['-q', 'repoquery', '--queryformat', '%{name}\n', '--whatprovides', lib], {});
     if (error || code !== 0) {
       unresolved.push(lib);
       return;
     }
+    // -devel/-debuginfo/-debugsource subpackages ship the same SONAMEs in their
+    // file lists but are not runtime install targets.
     const candidates = stdout.split('\n').map(s => s.trim()).filter(Boolean)
         .filter(name => !name.endsWith('-devel') && !name.endsWith('-debuginfo') && !name.endsWith('-debugsource'));
     if (!candidates.length) {
       unresolved.push(lib);
       return;
     }
-    // Prefer the alphabetically first/shortest match — avoids picking the
-    // i686 variant on x86_64 hosts and longer subpackage names.
+    // Prefer the shortest match: avoids picking the i686 variant on x86_64 hosts
+    // (e.g. `glibc` over `glibc-langpack-en`) and longer subpackage names.
     candidates.sort((a, b) => a.length - b.length || a.localeCompare(b));
     libToPackage.set(lib, candidates[0]);
   }));
@@ -315,7 +317,6 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       `<3 Playwright Team`,
     ]);
   } else if (isDnfBasedDistroSync()) {
-    // Fedora and the RHEL family — ask dnf which packages provide the missing libraries.
     const { libToPackage, unresolved } = await resolveLibrariesWithDnf([...allMissingDeps]);
     const dnfPackages = Array.from(new Set(libToPackage.values())).sort();
     if (dnfPackages.length) {
@@ -362,26 +363,27 @@ export type LinuxBrowserToInstall = {
   dlOpenLibraries: string[],
 };
 
-export async function installDependenciesFedora(sdkLanguage: string, browsers: LinuxBrowserToInstall[], dryRun: boolean) {
+export async function installDependenciesDnf(sdkLanguage: string, browsers: LinuxBrowserToInstall[], dryRun: boolean) {
   const browsersWithMissingBinaries = browsers.filter(b => !fs.existsSync(b.browserDirectory));
   if (browsersWithMissingBinaries.length) {
-    const installCommand = buildPlaywrightCLICommand(sdkLanguage, 'install');
     throw new Error('\n' + wrapInASCIIBox([
       `Cannot detect system dependencies for ${browsersWithMissingBinaries.map(b => b.name).join(', ')}: browser binaries are not installed.`,
       ``,
       `On Fedora and the RHEL family, Playwright resolves dependencies by inspecting`,
       `installed browser binaries. Please install browsers first:`,
       ``,
-      `    ${installCommand}`,
+      `    ${buildPlaywrightCLICommand(sdkLanguage, 'install')}`,
       ``,
       `Then re-run "install-deps".`,
       ``,
       `<3 Playwright Team`,
     ].join('\n'), 1));
   }
+
+  const perBrowser = await Promise.all(browsers.map(b => findMissingLinuxLibraries(b.linuxLddDirectories, b.dlOpenLibraries)));
   const missingLibraries = new Set<string>();
-  for (const b of browsers) {
-    for (const lib of await findMissingLinuxLibraries(b.linuxLddDirectories, b.dlOpenLibraries))
+  for (const libs of perBrowser) {
+    for (const lib of libs)
       missingLibraries.add(lib);
   }
   if (!missingLibraries.size) {
@@ -391,36 +393,29 @@ export async function installDependenciesFedora(sdkLanguage: string, browsers: L
   const { libToPackage, unresolved } = await resolveLibrariesWithDnf([...missingLibraries]);
   const packages = Array.from(new Set(libToPackage.values())).sort();
   if (dryRun) {
-    if (packages.length) {
-      // eslint-disable-next-line no-console
-      console.log(`Missing system dependencies (${packages.length}):\n${packages.map(p => `  ${p}`).join('\n')}`);
-    }
-    if (unresolved.length) {
-      // eslint-disable-next-line no-console
-      console.warn(`Could not resolve dnf packages for libraries:\n${unresolved.map(l => `  ${l}`).join('\n')}`);
-    }
-    if (packages.length || unresolved.length)
-      process.exitCode = 1;
+    reportDnfResolution(packages, unresolved);
     return;
   }
   if (!packages.length)
     throw new Error(`Could not resolve dnf packages for missing libraries:\n${unresolved.map(l => `  ${l}`).join('\n')}`);
-  console.log(`Installing dependencies...`); // eslint-disable-line no-console
-  const commands: string[] = [
-    ['dnf', 'install', '-y', ...packages].join(' '),
-  ];
-  const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
-  if (elevatedPermissions)
-    console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
-  const child = childProcess.spawn(command, args, { stdio: 'inherit' });
-  await new Promise<void>((resolve, reject) => {
-    child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
-    child.on('error', reject);
-  });
+  await runPackageInstall([['dnf', 'install', '-y', ...packages].join(' ')]);
   if (unresolved.length) {
     // eslint-disable-next-line no-console
     console.warn(`Note: could not resolve dnf packages for libraries:\n${unresolved.map(l => `  ${l}`).join('\n')}`);
   }
+}
+
+function reportDnfResolution(packages: string[], unresolved: string[]) {
+  if (packages.length) {
+    // eslint-disable-next-line no-console
+    console.log(`Missing system dependencies (${packages.length}):\n${packages.map(p => `  ${p}`).join('\n')}`);
+  }
+  if (unresolved.length) {
+    // eslint-disable-next-line no-console
+    console.warn(`Could not resolve dnf packages for libraries:\n${unresolved.map(l => `  ${l}`).join('\n')}`);
+  }
+  if (packages.length || unresolved.length)
+    process.exitCode = 1;
 }
 
 function isSharedLib(basename: string) {
