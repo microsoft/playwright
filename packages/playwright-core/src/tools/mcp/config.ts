@@ -32,22 +32,6 @@ async function fileExistsAsync(resolved: string) {
 
 type ViewportSize = { width: number; height: number };
 
-// LegacyConfig accepts the old field locations (browser.cdpEndpoint, top-level
-// extension, etc.) that pre-`attach`/`page` clients still pass at runtime. The
-// public Config type no longer exposes these; `normalizeConfig` strips them and
-// folds them into the canonical `attach` / `page` groups before merging.
-type LegacyConfig = Config & {
-  browser?: NonNullable<Config['browser']> & {
-    cdpEndpoint?: string;
-    cdpHeaders?: Record<string, string>;
-    cdpTimeout?: number;
-    remoteEndpoint?: string;
-    initPage?: string[];
-    initScript?: string[];
-  };
-  extension?: boolean;
-};
-
 export type CLIOptions = {
   allowedHosts?: string[];
   allowedOrigins?: string[];
@@ -126,7 +110,7 @@ export type FullConfig = MergedConfig & {
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
-  const merged = mergeConfig(defaultConfig, normalizeConfig(config as LegacyConfig));
+  const merged = mergeConfig(defaultConfig, normalizeConfig(config));
   const browser = await validateBrowserConfig(merged.browser);
   await validatePageConfig(merged.page);
   validateAttach(merged.attach);
@@ -299,38 +283,48 @@ async function validatePageConfig(page: NonNullable<Config['page']>) {
   }
 }
 
-// Maps each legacy `browser.*` field to its new home (`attach` or `page`).
-const LEGACY_BROWSER_FIELDS = {
-  cdpEndpoint: 'attach',
-  cdpHeaders: 'attach',
-  cdpTimeout: 'attach',
-  remoteEndpoint: 'attach',
-  initPage: 'page',
-  initScript: 'page',
-} as const;
-
 // Backward-compat: convert old field locations (browser.cdpEndpoint, top-level
-// extension, browser.initPage, etc.) into the new `attach` / `page` groups.
+// `extension`, browser.initPage, etc.) into the new `attach` / `page` groups.
 // New locations win when both are set on the same input.
-function normalizeConfig(input: LegacyConfig): Config {
-  const { extension, browser: legacyBrowser, ...rest } = input;
-  if (!legacyBrowser && !extension)
-    return rest;
-  const browser: Record<string, any> | undefined = legacyBrowser ? { ...legacyBrowser } : undefined;
-  const attach: Record<string, any> = { ...rest.attach };
-  const page: Record<string, any> = { ...rest.page };
-  const targets = { attach, page };
-  if (browser) {
-    for (const [field, target] of Object.entries(LEGACY_BROWSER_FIELDS)) {
-      if (browser[field] === undefined)
-        continue;
-      targets[target][field] ??= browser[field];
-      delete browser[field];
-    }
+function normalizeConfig<T extends Config>(config: T): T {
+  // eslint-disable-next-line no-restricted-syntax -- legacy fields are not on the public Config type
+  const c = config as any;
+  if (!c.browser?.cdpEndpoint && !c.browser?.cdpHeaders && c.browser?.cdpTimeout === undefined
+      && !c.browser?.remoteEndpoint && !c.browser?.initPage && !c.browser?.initScript
+      && c.extension === undefined)
+    return config;
+  const browser = c.browser ? { ...c.browser } : undefined;
+  const attach = { ...c.attach };
+  const page = { ...c.page };
+  if (browser?.cdpEndpoint !== undefined) {
+    attach.cdpEndpoint ??= browser.cdpEndpoint;
+    delete browser.cdpEndpoint;
   }
-  if (extension)
-    attach.extension ??= true;
-  return { ...rest, browser, attach, page } as Config;
+  if (browser?.cdpHeaders !== undefined) {
+    attach.cdpHeaders ??= browser.cdpHeaders;
+    delete browser.cdpHeaders;
+  }
+  if (browser?.cdpTimeout !== undefined) {
+    attach.cdpTimeout ??= browser.cdpTimeout;
+    delete browser.cdpTimeout;
+  }
+  if (browser?.remoteEndpoint !== undefined) {
+    attach.remoteEndpoint ??= browser.remoteEndpoint;
+    delete browser.remoteEndpoint;
+  }
+  if (browser?.initPage !== undefined) {
+    page.initPage ??= browser.initPage;
+    delete browser.initPage;
+  }
+  if (browser?.initScript !== undefined) {
+    page.initScript ??= browser.initScript;
+    delete browser.initScript;
+  }
+  if (c.extension !== undefined)
+    attach.extension ??= c.extension;
+  const result = { ...c, browser, attach, page };
+  delete result.extension;
+  return result;
 }
 
 function resolveBrowserParam(browserOption: string | undefined): { browserName?: 'chromium' | 'firefox' | 'webkit', channel?: string } {
@@ -502,7 +496,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   return configFromCLIOptions(options);
 }
 
-export async function loadConfig(configFile: string | undefined): Promise<LegacyConfig> {
+export async function loadConfig(configFile: string | undefined): Promise<Config> {
   if (!configFile)
     return {};
 
