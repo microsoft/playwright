@@ -101,8 +101,8 @@ test('codex generates agent toml files', async ({  }) => {
   const agentsDir = path.join(baseDir, '.codex', 'agents');
   expect(fs.existsSync(agentsDir)).toBe(true);
 
-  const plannerToml = fs.readFileSync(path.join(agentsDir, 'playwright-test-planner.toml'), 'utf-8');
-  expect(plannerToml).toContain(`name = "playwright-test-planner"`);
+  const plannerToml = fs.readFileSync(path.join(agentsDir, 'playwright_test_planner.toml'), 'utf-8');
+  expect(plannerToml).toContain(`name = "playwright_test_planner"`);
   expect(plannerToml).toContain(`[mcp_servers.playwright-test]`);
   expect(plannerToml).toContain(`developer_instructions = """`);
   if (process.platform === 'win32') {
@@ -113,7 +113,7 @@ test('codex generates agent toml files', async ({  }) => {
     expect(plannerToml).toContain(`args = ["playwright", "run-test-mcp-server"]`);
   }
 
-  const healerToml = fs.readFileSync(path.join(agentsDir, 'playwright-test-healer.toml'), 'utf-8');
+  const healerToml = fs.readFileSync(path.join(agentsDir, 'playwright_test_healer.toml'), 'utf-8');
   expect(healerToml).toContain(`sandbox_mode = "workspace-write"`);
 
   expect(plannerToml).toContain(`sandbox_mode = "read-only"`);

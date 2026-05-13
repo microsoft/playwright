@@ -99,8 +99,10 @@ export class CodexGenerator {
     const agents = await loadAgentSpecs();
 
     await fs.promises.mkdir('.codex/agents', { recursive: true });
-    for (const agent of agents)
-      await writeFile(`.codex/agents/${agent.name}.toml`, CodexGenerator.agentSpec(agent), '🤖', 'agent definition');
+    for (const agent of agents) {
+      const codexName = agent.name.replace(/-/g, '_');
+      await writeFile(`.codex/agents/${codexName}.toml`, CodexGenerator.agentSpec(agent), '🤖', 'agent definition');
+    }
 
     initRepoDone();
   }
@@ -123,8 +125,11 @@ export class CodexGenerator {
       ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`
       : '';
 
+    // Codex agent identifiers must be underscored — hyphens cause `unknown agent_type` errors on spawn.
+    const codexName = agent.name.replace(/-/g, '_');
+
     const lines: string[] = [];
-    lines.push(`name = ${tomlBasicString(agent.name)}`);
+    lines.push(`name = ${tomlBasicString(codexName)}`);
     lines.push(`description = ${tomlBasicString(agent.description + examples)}`);
     lines.push(`sandbox_mode = ${tomlBasicString(sandboxMode)}`);
     lines.push(`developer_instructions = ${tomlMultilineString(agent.instructions)}`);
