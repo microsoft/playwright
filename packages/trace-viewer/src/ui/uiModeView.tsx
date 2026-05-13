@@ -77,20 +77,13 @@ function escapeRegex(text: string) {
 function renderStatusLine(progress: TeleSuiteUpdaterProgress, total: number, isRunning: boolean) {
   const finished = progress.passed + progress.failed + progress.skipped;
   const pct = total ? (finished / total) * 100 | 0 : 0;
-  const segments: React.ReactNode[] = [];
-  if (isRunning)
-    segments.push('Running');
-  if (progress.passed > 0)
-    segments.push(`${progress.passed} passed`);
-  if (progress.failed > 0)
-    segments.push(<span key='failed' className='status-line-failed'>{progress.failed} failed</span>);
-  if (progress.skipped > 0)
-    segments.push(`${progress.skipped} skipped`);
   return <div data-testid='status-line' className='status-line'>
     <div>
-      {segments.map((segment, i) => <React.Fragment key={i}>{i > 0 ? ' · ' : ''}{segment}</React.Fragment>)}
-      {segments.length > 0 ? ' — ' : ''}
-      {finished}/{total} ({pct}%)
+      {isRunning && <><span>Running</span>{' '}</>}
+      <span>{finished}/{total} ({pct}%)</span>
+      {progress.passed > 0 && <>{' '}<span className='status-line-count'>{progress.passed} passed</span></>}
+      {progress.failed > 0 && <>{' '}<span className='status-line-count status-line-failed'>{progress.failed} failed</span></>}
+      {progress.skipped > 0 && <>{' '}<span className='status-line-count'>{progress.skipped} skipped</span></>}
     </div>
   </div>;
 }

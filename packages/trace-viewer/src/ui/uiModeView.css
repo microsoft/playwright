@@ -98,6 +98,10 @@
   text-overflow: ellipsis;
 }
 
+.status-line .status-line-count {
+  margin-left: 6px;
+}
+
 .status-line .status-line-failed {
   color: var(--vscode-testing-iconFailed);
 }
