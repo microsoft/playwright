@@ -12,9 +12,9 @@ Emitted when the debugger pauses or resumes.
 ## method: Debugger.pausedDetails
 * since: v1.59
 - returns: <[null]|[Object]>
-  - alias: DebuggerPausedDetails
+  * alias: DebuggerPausedDetails
   - `location` <[Object]>
-    - alias-java: Location
+    * alias: Location
     - `file` <[string]>
     - `line` ?<[int]>
     - `column` ?<[int]>
@@ -49,7 +49,7 @@ Resumes script execution and pauses when an action originates from the given sou
 ### param: Debugger.runTo.location
 * since: v1.59
 - `location` <[Object]>
-  - alias-java: Location
+  * alias: Location
   - `file` <[string]>
   - `line` ?<[int]>
   - `column` ?<[int]>
