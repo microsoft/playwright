@@ -16390,7 +16390,7 @@ index 0000000000000000000000000000000000000000..e6d3a8764ef084790a4ca4e9891b09dd
 +    }
 +    int clickCount = optionalClickCount ? *optionalClickCount : 0;
 +
-+    NSTimeInterval timestamp = [NSDate timeIntervalSinceReferenceDate];
++    NSTimeInterval timestamp = MonotonicTime::now().secondsSinceEpoch().value();
 +    NSWindow *window = m_page.platformWindow();
 +    NSInteger windowNumber = window.windowNumber;
 +
