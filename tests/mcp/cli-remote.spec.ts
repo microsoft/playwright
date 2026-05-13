@@ -17,7 +17,7 @@
 import fs from 'fs';
 import { test, expect } from './cli-fixtures';
 
-test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'Tests only run with the chromium browser.');
+test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium', 'Run only on the chromium project; the remote server connection is browser-agnostic.');
 
 test('attach to run-server endpoint with remoteHeaders from config', async ({ cli, runServerEndpoint, server }, testInfo) => {
   const configPath = testInfo.outputPath('config.json');

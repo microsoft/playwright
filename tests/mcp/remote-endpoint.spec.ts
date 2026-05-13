@@ -16,7 +16,7 @@
 
 import { test, expect } from './fixtures';
 
-test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'Tests only run with the chromium browser.');
+test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium', 'Run only on the chromium project; the remote server connection is browser-agnostic.');
 
 test('remoteHeaders selects the browser on run-server endpoint', async ({ startClient, server, runServerEndpoint }) => {
   const { client } = await startClient({
