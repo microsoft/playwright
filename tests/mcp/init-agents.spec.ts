@@ -113,8 +113,11 @@ test('codex generates agent toml files', async ({  }) => {
     expect(plannerToml).toContain(`args = ["playwright", "run-test-mcp-server"]`);
   }
 
+  expect(plannerToml).toContain(`sandbox_mode = "read-only"`);
+  expect(plannerToml).toMatch(/enabled_tools = \[[^\]]*"planner_save_plan"[^\]]*\]/);
+  expect(plannerToml).toMatch(/enabled_tools = \[[^\]]*"browser_navigate"[^\]]*\]/);
+
   const healerToml = fs.readFileSync(path.join(agentsDir, 'playwright_test_healer.toml'), 'utf-8');
   expect(healerToml).toContain(`sandbox_mode = "workspace-write"`);
-
-  expect(plannerToml).toContain(`sandbox_mode = "read-only"`);
+  expect(healerToml).toMatch(/enabled_tools = \[[^\]]*"test_debug"[^\]]*\]/);
 });
