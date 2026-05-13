@@ -81,7 +81,7 @@ test('should run visible', async ({ runUITest }) => {
           - treeitem "[icon-circle-slash] skipped"
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('8/8 (100%) 4 passed 3 failed 1 skipped');
+  await expect(page.getByTestId('status-line')).toHaveText('8/8 (100%) — 4 passed, 3 failed, 1 skipped');
 });
 
 test('should show running progress', async ({ runUITest }) => {
@@ -96,9 +96,9 @@ test('should show running progress', async ({ runUITest }) => {
   });
 
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 (25%) 1 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 (25%) — 1 passed');
   await page.getByTestId('stop-button').click();
-  await expect(page.getByTestId('status-line')).toHaveText('2/4 (50%) 1 passed 1 skipped');
+  await expect(page.getByTestId('status-line')).toHaveText('2/4 (50%) — 1 passed, 1 skipped');
   await page.getByTitle('Reload').click();
   await expect(page.getByTestId('status-line')).toBeHidden();
 });
@@ -491,7 +491,7 @@ test('should show time', async ({ runUITest }) => {
           - treeitem "[icon-circle-slash] skipped"
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('8/8 (100%) 4 passed 3 failed 1 skipped');
+  await expect(page.getByTestId('status-line')).toHaveText('8/8 (100%) — 4 passed, 3 failed, 1 skipped');
 });
 
 test('should show test.fail as passing', async ({ runUITest }) => {
@@ -522,7 +522,7 @@ test('should show test.fail as passing', async ({ runUITest }) => {
           - treeitem ${/\[icon-check\] should fail \d+m?s/}
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) 1 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 });
 
 test('should ignore repeatEach', async ({ runUITest }) => {
@@ -558,7 +558,7 @@ test('should ignore repeatEach', async ({ runUITest }) => {
           - treeitem ${/\[icon-check\] should pass/}
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) 1 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 });
 
 test('should remove output folder before test run', async ({ runUITest }) => {
@@ -593,7 +593,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
           - treeitem ${/\[icon-check\] should pass/}
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) 1 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
   await page.getByTitle('Run all').click();
   await expect.poll(dumpTestTree(page)).toBe(`
@@ -608,7 +608,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
           - treeitem ${/\[icon-check\] should pass/}
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) 1 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 });
 
 test('should show proper total when using deps', async ({ runUITest }) => {
@@ -660,7 +660,7 @@ test('should show proper total when using deps', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] run @chromium chromium"
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) 1 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
   await page.getByTitle('run @chromium').dblclick();
   await expect.poll(dumpTestTree(page)).toBe(`
@@ -680,7 +680,7 @@ test('should show proper total when using deps', async ({ runUITest }) => {
             - button "Watch"
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('2/2 (100%) 2 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('2/2 (100%) — 2 passed');
 });
 
 test('should respect --tsconfig option', {
@@ -746,7 +746,7 @@ test('should respect --tsconfig option', {
           - treeitem ${/\[icon-check\] test/}
   `);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) 1 passed');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 });
 
 test('should respect --ignore-snapshots option', {
