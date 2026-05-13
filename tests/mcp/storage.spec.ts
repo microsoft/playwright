@@ -202,6 +202,31 @@ test('--storage-state option works with remote endpoint in config', async ({ sta
   });
 });
 
+test('remote endpoint config connects to run-server with configured browser', async ({ startClient, server, childProcess }) => {
+  const runServer = childProcess({
+    command: ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'cli.js'), 'run-server'],
+    env: { NODE_OPTIONS: process.env.NODE_OPTIONS },
+  });
+  await runServer.waitForOutput('Listening on ');
+  const wsEndpoint = runServer.output.match(/Listening on (ws:\/\/[^\s]+)/)![1];
+
+  const { client } = await startClient({
+    config: { browser: { browserName: 'chromium', remoteEndpoint: wsEndpoint, isolated: true } },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const result = await client.callTool({
+    name: 'browser_snapshot',
+  });
+  expect(result).toHaveResponse({
+    inlineSnapshot: expect.stringContaining('Hello, world!'),
+  });
+});
+
 test('browser_storage_state and browser_set_storage_state roundtrip', async ({ startClient, server, mcpBrowser }, testInfo) => {
   const { client } = await startClient({
     config: { capabilities: ['storage'] },

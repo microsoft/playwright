@@ -132,8 +132,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
 
   const endpoint = config.browser.remoteEndpoint!;
   const playwrightObject = playwright as Playwright;
-  // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
-  const browser = await connectToBrowser(playwrightObject, { endpoint });
+  const browser = await connectToBrowser(playwrightObject, { endpoint, browserName: config.browser.browserName });
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
   return { browser, browserInfo: browserInfo(browser, config), canBind: false, ownership: 'attached' };
 }
