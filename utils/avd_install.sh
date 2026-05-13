@@ -16,7 +16,7 @@ cd ${ANDROID_HOME}/cmdline-tools
 COMMAND_LINE_TOOLS_ZIP=${ANDROID_HOME}/commandlinetools.zip
 # https://developer.android.com/studio
 curl https://dl.google.com/android/repository/commandlinetools-mac-11076708_latest.zip -o ${COMMAND_LINE_TOOLS_ZIP}
-unzip ${COMMAND_LINE_TOOLS_ZIP} 
+unzip ${COMMAND_LINE_TOOLS_ZIP}
 rm ${COMMAND_LINE_TOOLS_ZIP}
 mv cmdline-tools latest
 

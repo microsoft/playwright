@@ -18,25 +18,9 @@ if [[ "${PWTEST_ANDROID_NO_ACCEL}" == "1" ]]; then
     EMULATOR_EXTRA_ARGS+=(-accel off -gpu swiftshader_indirect)
 fi
 
-EMULATOR_LOG="${PWD}/emulator.log"
-echo "Starting emulator (log: ${EMULATOR_LOG})"
-nohup ${ANDROID_HOME}/emulator/emulator -avd android35 -no-audio -no-window -no-boot-anim -no-snapshot "${EMULATOR_EXTRA_ARGS[@]}" >"${EMULATOR_LOG}" 2>&1 &
-EMULATOR_PID=$!
-
-BOOT_TIMEOUT_SECONDS="${PWTEST_ANDROID_BOOT_TIMEOUT:-600}"
-echo "Waiting up to ${BOOT_TIMEOUT_SECONDS}s for boot_completed"
-if ! timeout "${BOOT_TIMEOUT_SECONDS}" ${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'; then
-    echo "Emulator failed to boot within ${BOOT_TIMEOUT_SECONDS}s"
-    if kill -0 "${EMULATOR_PID}" 2>/dev/null; then
-        echo "Emulator process ${EMULATOR_PID} still running"
-    else
-        echo "Emulator process ${EMULATOR_PID} exited"
-    fi
-    echo "----- emulator.log -----"
-    cat "${EMULATOR_LOG}" || true
-    echo "----- end emulator.log -----"
-    exit 1
-fi
+echo "Starting emulator"
+nohup ${ANDROID_HOME}/emulator/emulator -avd android35 -no-audio -no-window -no-boot-anim -no-snapshot "${EMULATOR_EXTRA_ARGS[@]}" &
+${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
 ${ANDROID_HOME}/platform-tools/adb devices
 echo "Emulator started"
 
