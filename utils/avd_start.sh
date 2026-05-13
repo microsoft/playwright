@@ -6,6 +6,10 @@ if [[ -z "${ANDROID_HOME}" ]]; then
     export ANDROID_HOME="$PWD/.android-sdk"
 fi
 
+# Keep in sync with avd_recreate.sh — both tools must agree on the AVD path.
+export ANDROID_USER_HOME="$HOME/.android"
+export ANDROID_AVD_HOME="$HOME/.android/avd"
+
 bash $PWD/utils/avd_stop.sh
 
 EMULATOR_EXTRA_ARGS=()
