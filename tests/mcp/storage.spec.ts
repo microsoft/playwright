@@ -183,7 +183,7 @@ test('--storage-state option works with remote endpoint in config', async ({ sta
   await fs.promises.writeFile(stateFile, JSON.stringify(storageState));
 
   const { client } = await startClient({
-    config: { browser: { remoteEndpoint: wsEndpoint, isolated: true } },
+    config: { browser: { isolated: true }, attach: { remoteEndpoint: wsEndpoint } },
     args: ['--storage-state', stateFile],
   });
 

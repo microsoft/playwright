@@ -236,17 +236,31 @@ test.describe('merge order', () => {
     expect(config.browser.browserName).toBe('firefox');
   });
 
-  test('file browser.cdpHeaders preserved when env unset', async ({}, testInfo) => {
+  test('file attach.cdpHeaders preserved when env unset', async ({}, testInfo) => {
     const configFile = testInfo.outputPath('config.json');
     const fileConfig: Config = {
-      browser: {
+      attach: {
         cdpEndpoint: 'ws://example.invalid',
         cdpHeaders: { Authorization: 'Bearer token-from-file' },
       },
     };
     await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
     const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
-    expect(config.browser.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
+    expect(config.attach.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
+  });
+
+  test('legacy browser.cdpHeaders folded into attach for back-compat', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    // Old shape — written verbatim to JSON; resolver normalizes into `attach`.
+    await fs.promises.writeFile(configFile, JSON.stringify({
+      browser: {
+        cdpEndpoint: 'ws://example.invalid',
+        cdpHeaders: { Authorization: 'Bearer token-from-file' },
+      },
+    }));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
+    expect(config.attach.cdpEndpoint).toBe('ws://example.invalid');
+    expect(config.attach.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
   });
 });
 
@@ -519,7 +533,7 @@ test.describe('resolveCLIConfigForCLI - config file discovery', () => {
 test.describe('resolveCLIConfigForCLI - extension', () => {
   test('--extension disables isolated', async ({}, testInfo) => {
     const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { extension: true }) as any;
-    expect(config.extension).toBe(true);
+    expect(config.attach.extension).toBe(true);
     expect(config.browser.isolated).toBe(false);
   });
 });

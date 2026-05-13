@@ -32,6 +32,22 @@ async function fileExistsAsync(resolved: string) {
 
 type ViewportSize = { width: number; height: number };
 
+// LegacyConfig accepts the old field locations (browser.cdpEndpoint, top-level
+// extension, etc.) that pre-`attach`/`page` clients still pass at runtime. The
+// public Config type no longer exposes these; `normalizeConfig` strips them and
+// folds them into the canonical `attach` / `page` groups before merging.
+type LegacyConfig = Config & {
+  browser?: NonNullable<Config['browser']> & {
+    cdpEndpoint?: string;
+    cdpHeaders?: Record<string, string>;
+    cdpTimeout?: number;
+    remoteEndpoint?: string;
+    initPage?: string[];
+    initScript?: string[];
+  };
+  extension?: boolean;
+};
+
 export type CLIOptions = {
   allowedHosts?: string[];
   allowedOrigins?: string[];
@@ -81,6 +97,8 @@ const defaultConfig: MergedConfig = {
     launchOptions: {},
     contextOptions: {},
   },
+  attach: {},
+  page: {},
   timeouts: {
     action: 5000,
     navigation: 60000,
@@ -94,20 +112,24 @@ export type MergedConfig = Config & {
   browser: BrowserUserConfig & {
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
-  }
+  };
+  attach: NonNullable<Config['attach']>;
+  page: NonNullable<Config['page']>;
 };
 
 export type FullConfig = MergedConfig & {
   browser: MergedConfig['browser'] & {
     browserName: 'chromium' | 'firefox' | 'webkit';
-  },
+  };
   skillMode?: boolean;
   configFile?: string;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
-  const merged = mergeConfig(defaultConfig, config);
+  const merged = mergeConfig(defaultConfig, normalizeConfig(config as LegacyConfig));
   const browser = await validateBrowserConfig(merged.browser);
+  await validatePageConfig(merged.page);
+  validateAttach(merged.attach);
   return { ...merged, browser };
 }
 
@@ -119,15 +141,17 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJ
   const configDir = configFile ? path.dirname(path.resolve(configFile)) : process.cwd();
 
   let result = defaultConfig;
-  result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
-  result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
-  result = mergeConfig(result, resolveConfigPaths(cliOverrides, process.cwd()));
+  result = mergeConfig(result, resolveConfigPaths(normalizeConfig(configInFile), configDir));
+  result = mergeConfig(result, resolveConfigPaths(normalizeConfig(envOverrides), process.cwd()));
+  result = mergeConfig(result, resolveConfigPaths(normalizeConfig(cliOverrides), process.cwd()));
 
   const browser = await validateBrowserConfig(result.browser);
   if (browser.launchOptions.headless === undefined)
     browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;
 
+  await validatePageConfig(result.page);
   validateOutputDir(result.outputDir);
+  validateAttach(result.attach);
 
   return { ...result, browser, configFile };
 }
@@ -169,22 +193,26 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   const globalConfigDir = globalConfigExists ? path.dirname(globalConfigPath) : process.cwd();
 
   let result = defaultConfig;
-  result = mergeConfig(result, resolveConfigPaths(globalConfigInFile, globalConfigDir));
-  result = mergeConfig(result, resolveConfigPaths(configInFile, configDir));
-  result = mergeConfig(result, resolveConfigPaths(envOverrides, process.cwd()));
-  result = mergeConfig(result, resolveConfigPaths(daemonOverrides, process.cwd()));
+  result = mergeConfig(result, resolveConfigPaths(normalizeConfig(globalConfigInFile), globalConfigDir));
+  result = mergeConfig(result, resolveConfigPaths(normalizeConfig(configInFile), configDir));
+  result = mergeConfig(result, resolveConfigPaths(normalizeConfig(envOverrides), process.cwd()));
+  result = mergeConfig(result, resolveConfigPaths(normalizeConfig(daemonOverrides), process.cwd()));
+
+  validateAttach(result.attach);
+  const isAttaching = attachIsSet(result.attach);
 
   if (result.browser.isolated === undefined)
-    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
+    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !isAttaching;
 
   if (result.browser.launchOptions.headless === undefined)
     result.browser.launchOptions.headless = true;
 
   const browser = await validateBrowserConfig(result.browser);
+  await validatePageConfig(result.page);
 
   validateOutputDir(result.outputDir);
 
-  if (!result.extension && !browser.isolated && !browser.userDataDir && !browser.remoteEndpoint && !browser.cdpEndpoint) {
+  if (!isAttaching && !browser.isolated && !browser.userDataDir) {
     // No custom value provided, use the daemon data dir.
     const browserToken = browser.launchOptions?.channel ?? browser?.browserName;
     const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
@@ -220,18 +248,6 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
   if (browser.isolated && browser.userDataDir)
     throw new Error('Browser userDataDir is not supported in isolated mode.');
 
-  if (browser.initScript) {
-    for (const script of browser.initScript) {
-      if (!await fileExistsAsync(script))
-        throw new Error(`Init script file does not exist: ${script}`);
-    }
-  }
-  if (browser.initPage) {
-    for (const page of browser.initPage) {
-      if (!await fileExistsAsync(page))
-        throw new Error(`Init page file does not exist: ${page}`);
-    }
-  }
   if (browser.contextOptions.viewport === undefined) {
     if (browser.launchOptions.headless)
       browser.contextOptions.viewport = { width: 1280, height: 720 };
@@ -246,6 +262,75 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
   }
 
   return { ...browser, browserName };
+}
+
+type AttachConfig = NonNullable<Config['attach']>;
+
+function attachIsSet(attach: AttachConfig): boolean {
+  return !!(attach.cdpEndpoint || attach.remoteEndpoint || attach.extension);
+}
+
+// `attach.cdpEndpoint`, `attach.remoteEndpoint`, and `attach.extension` select
+// mutually-exclusive attach modes; throw if more than one is set.
+function validateAttach(attach: AttachConfig) {
+  const set: string[] = [];
+  if (attach.cdpEndpoint !== undefined)
+    set.push('cdpEndpoint');
+  if (attach.remoteEndpoint !== undefined)
+    set.push('remoteEndpoint');
+  if (attach.extension)
+    set.push('extension');
+  if (set.length > 1)
+    throw new Error(`attach: set at most one of cdpEndpoint, remoteEndpoint, extension (got: ${set.join(', ')}).`);
+}
+
+async function validatePageConfig(page: NonNullable<Config['page']>) {
+  if (page.initScript) {
+    for (const script of page.initScript) {
+      if (!await fileExistsAsync(script))
+        throw new Error(`Init script file does not exist: ${script}`);
+    }
+  }
+  if (page.initPage) {
+    for (const file of page.initPage) {
+      if (!await fileExistsAsync(file))
+        throw new Error(`Init page file does not exist: ${file}`);
+    }
+  }
+}
+
+// Maps each legacy `browser.*` field to its new home (`attach` or `page`).
+const LEGACY_BROWSER_FIELDS = {
+  cdpEndpoint: 'attach',
+  cdpHeaders: 'attach',
+  cdpTimeout: 'attach',
+  remoteEndpoint: 'attach',
+  initPage: 'page',
+  initScript: 'page',
+} as const;
+
+// Backward-compat: convert old field locations (browser.cdpEndpoint, top-level
+// extension, browser.initPage, etc.) into the new `attach` / `page` groups.
+// New locations win when both are set on the same input.
+function normalizeConfig(input: LegacyConfig): Config {
+  const { extension, browser: legacyBrowser, ...rest } = input;
+  if (!legacyBrowser && !extension)
+    return rest;
+  const browser: Record<string, any> | undefined = legacyBrowser ? { ...legacyBrowser } : undefined;
+  const attach: Record<string, any> = { ...rest.attach };
+  const page: Record<string, any> = { ...rest.page };
+  const targets = { attach, page };
+  if (browser) {
+    for (const [field, target] of Object.entries(LEGACY_BROWSER_FIELDS)) {
+      if (browser[field] === undefined)
+        continue;
+      targets[target][field] ??= browser[field];
+      delete browser[field];
+    }
+  }
+  if (extension)
+    attach.extension ??= true;
+  return { ...rest, browser, attach, page } as Config;
 }
 
 function resolveBrowserParam(browserOption: string | undefined): { browserName?: 'chromium' | 'firefox' | 'webkit', channel?: string } {
@@ -326,14 +411,18 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       userDataDir: cliOptions.userDataDir,
       launchOptions,
       contextOptions,
+    },
+    attach: {
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
       cdpTimeout: cliOptions.cdpTimeout,
+      remoteEndpoint: cliOptions.endpoint,
+      extension: cliOptions.extension,
+    },
+    page: {
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
-      remoteEndpoint: cliOptions.endpoint,
     },
-    extension: cliOptions.extension,
     server: {
       port: cliOptions.port,
       host: cliOptions.host,
@@ -413,7 +502,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   return configFromCLIOptions(options);
 }
 
-export async function loadConfig(configFile: string | undefined): Promise<Config> {
+export async function loadConfig(configFile: string | undefined): Promise<LegacyConfig> {
   if (!configFile)
     return {};
 
@@ -433,10 +522,10 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
 // supplied via CLI flags or PLAYWRIGHT_MCP_INIT_* env vars) so they keep
 // working when the CLI is invoked from a different cwd.
 function resolveConfigPaths(config: Config, baseDir: string): Config {
-  if (config.browser?.initPage)
-    config.browser.initPage = config.browser.initPage.map(p => path.resolve(baseDir, p));
-  if (config.browser?.initScript)
-    config.browser.initScript = config.browser.initScript.map(p => path.resolve(baseDir, p));
+  if (config.page?.initPage)
+    config.page.initPage = config.page.initPage.map(p => path.resolve(baseDir, p));
+  if (config.page?.initScript)
+    config.page.initScript = config.page.initScript.map(p => path.resolve(baseDir, p));
   return config;
 }
 
@@ -469,6 +558,14 @@ function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
     ...pickDefined(base),
     ...pickDefined(overrides),
     browser,
+    attach: {
+      ...pickDefined(base.attach),
+      ...pickDefined(overrides.attach),
+    },
+    page: {
+      ...pickDefined(base.page),
+      ...pickDefined(overrides.page),
+    },
     console: {
       ...pickDefined(base.console),
       ...pickDefined(overrides.console),
@@ -489,7 +586,7 @@ function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
       ...pickDefined(base.timeouts),
       ...pickDefined(overrides.timeouts),
     },
-  } as FullConfig;
+  } as MergedConfig;
 }
 
 export function semicolonSeparatedList(value: string | undefined): string[] | undefined {

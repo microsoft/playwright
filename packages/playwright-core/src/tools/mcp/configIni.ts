@@ -105,11 +105,23 @@ const longhandTypes: Record<string, LonghandType> = {
   'browser.browserName': 'string',
   'browser.isolated': 'boolean',
   'browser.userDataDir': 'string',
+  // Deprecated browser-scoped fields. Read-through for back-compat; new code should
+  // use the matching `attach.*` / `page.*` paths below.
   'browser.cdpEndpoint': 'string',
   'browser.cdpTimeout': 'number',
   'browser.remoteEndpoint': 'string',
   'browser.initPage': 'string[]',
   'browser.initScript': 'string[]',
+
+  // attach
+  'attach.cdpEndpoint': 'string',
+  'attach.cdpTimeout': 'number',
+  'attach.remoteEndpoint': 'string',
+  'attach.extension': 'boolean',
+
+  // page
+  'page.initPage': 'string[]',
+  'page.initScript': 'string[]',
 
   // browser.launchOptions
   'browser.launchOptions.channel': 'string',
@@ -154,6 +166,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'browser.contextOptions.viewport': 'size',
 
   // top-level
+  // Deprecated. Use `attach.extension`.
   'extension': 'boolean',
   'capabilities': 'string[]',
   'saveSession': 'boolean',

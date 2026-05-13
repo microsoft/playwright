@@ -168,7 +168,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const requests = await this.page.requests().catch(() => []);
     for (const request of requests.filter(r => r.existingResponse() || r.failure()))
       this._requests.push(request);
-    for (const initPage of this.context.config.browser?.initPage || []) {
+    for (const initPage of this.context.config.page?.initPage || []) {
       try {
         const { default: func } = require(initPage);
         await func({ page: this.page });

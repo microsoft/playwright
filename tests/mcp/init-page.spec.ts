@@ -43,7 +43,7 @@ test('init-page relative path from --config resolves against the config dir', as
   // cwd (or the require() caller), not the config file's directory. We put
   // the config + init page in a sibling subdir of cwd so a cwd-based
   // resolution would miss the file. Same resolution path also covers
-  // browser.initScript.
+  // page.initScript.
   const configDir = test.info().outputPath('cfg');
   const cwd = test.info().outputPath('cwd');
   await fs.promises.mkdir(configDir, { recursive: true });
@@ -57,7 +57,7 @@ test('init-page relative path from --config resolves against the config dir', as
   `);
   const configPath = path.join(configDir, 'config.json');
   await fs.promises.writeFile(configPath, JSON.stringify({
-    browser: { initPage: ['./initPage.ts'] },
+    page: { initPage: ['./initPage.ts'] },
   }));
 
   const { client } = await startClient({

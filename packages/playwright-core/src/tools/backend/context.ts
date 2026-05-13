@@ -58,7 +58,7 @@ export type ContextConfig = {
     navigation?: number;
     expect?: number;
   };
-  browser?: {
+  page?: {
     initScript?: string[];
     initPage?: string[];
   };
@@ -339,7 +339,7 @@ export class Context {
         },
       });
     }
-    for (const initScript of this.config.browser?.initScript || [])
+    for (const initScript of this.config.page?.initScript || [])
       this._disposables.push(await browserContext.addInitScript({ path: path.resolve(this.options.cwd, initScript) }));
 
     for (const page of browserContext.pages())

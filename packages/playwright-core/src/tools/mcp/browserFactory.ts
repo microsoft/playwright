@@ -44,13 +44,13 @@ type BrowserWithInfo = {
 };
 
 export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfo, cliOptions: CLIOptions): Promise<BrowserWithInfo> {
-  if (config.browser.remoteEndpoint)
+  if (config.attach?.remoteEndpoint)
     return await createRemoteBrowser(config);
 
   let browser: playwrightTypes.Browser;
   let canBind = false;
   let ownership: 'attached' | 'own' = 'own';
-  if (config.browser.cdpEndpoint) {
+  if (config.attach?.cdpEndpoint) {
     browser = await createCDPBrowser(config, clientInfo);
     canBind = true;
     ownership = 'attached';
@@ -58,7 +58,7 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
     browser = await createIsolatedBrowser(config, clientInfo);
     canBind = true;
     ownership = 'own';
-  } else if (config.extension) {
+  } else if (config.attach?.extension) {
     const { channel, executablePath } = resolveExtensionOptions(cliOptions);
     browser = await createExtensionBrowser(channel, executablePath, clientInfo.clientName);
     ownership = 'attached';
@@ -106,9 +106,9 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
 async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (cdp)');
   const artifactsDir = await computeTracesDir(config, clientInfo);
-  const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
-    headers: config.browser.cdpHeaders,
-    timeout: config.browser.cdpTimeout,
+  const browser = await playwright.chromium.connectOverCDP(config.attach!.cdpEndpoint!, {
+    headers: config.attach!.cdpHeaders,
+    timeout: config.attach!.cdpTimeout,
     artifactsDir,
   });
   return browser;
@@ -116,7 +116,8 @@ async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Pro
 
 async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
   testDebug('create browser (remote)');
-  const descriptor = await serverRegistry.find(config.browser.remoteEndpoint!);
+  const endpoint = config.attach!.remoteEndpoint!;
+  const descriptor = await serverRegistry.find(endpoint);
   if (descriptor) {
     const browser = await connectToBrowserAcrossVersions(descriptor);
     return {
@@ -131,8 +132,6 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
       ownership: 'attached'
     };
   }
-
-  const endpoint = config.browser.remoteEndpoint!;
   const playwrightObject = playwright as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
   const browser = await connectToBrowser(playwrightObject, { endpoint });

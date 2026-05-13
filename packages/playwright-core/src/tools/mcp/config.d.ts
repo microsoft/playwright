@@ -32,7 +32,7 @@ export type ToolCapability =
 
 export type Config = {
   /**
-   * The browser to use.
+   * Options for launching a new browser. Ignored when `attach` selects an existing browser.
    */
   browser?: {
     /**
@@ -65,9 +65,18 @@ export type Config = {
      * This is useful for settings options like `viewport`.
      */
     contextOptions?: playwright.BrowserContextOptions;
+  },
 
+  /**
+   * Attach to an existing browser instead of launching one. When set, the `browser`
+   * section's launch options (other than `browserName`/`launchOptions.channel` used to
+   * identify the target) are ignored. Set at most one of `cdpEndpoint`, `remoteEndpoint`,
+   * or `extension`.
+   */
+  attach?: {
     /**
-     * Chrome DevTools Protocol endpoint to connect to an existing browser instance in case of Chromium family browsers.
+     * Chrome DevTools Protocol endpoint to connect to an existing browser instance in
+     * case of Chromium family browsers.
      */
     cdpEndpoint?: string;
 
@@ -87,6 +96,17 @@ export type Config = {
     remoteEndpoint?: string;
 
     /**
+     * Connect to a running browser instance (Edge/Chrome only).
+     * Requires the "Playwright Extension" to be installed.
+     */
+    extension?: boolean;
+  },
+
+  /**
+   * Per-page setup applied to every page in the session.
+   */
+  page?: {
+    /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
      */
     initPage?: string[];
@@ -97,13 +117,6 @@ export type Config = {
      */
     initScript?: string[];
   },
-
-  /**
-   * Connect to a running browser instance (Edge/Chrome only). If specified, `browser`
-   * config is ignored.
-   * Requires the "Playwright Extension" to be installed.
-   */
-  extension?: boolean;
 
   server?: {
     /**
