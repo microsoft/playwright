@@ -314,6 +314,40 @@ BrowserContext:
         timeNumber: float?
         timeString: string?
 
+    credentialsInstall:
+      title: Install virtual WebAuthn authenticator
+
+    credentialsCreate:
+      title: Create virtual credential for "{rpId}"
+      parameters:
+        rpId: string
+        id: string?
+        userHandle: string?
+        privateKey: string?
+        publicKey: string?
+      returns:
+        credential: VirtualCredential
+
+    credentialsGet:
+      title: Get virtual credentials
+      parameters:
+        rpId: string?
+        id: string?
+      returns:
+        credentials:
+          type: array
+          items: VirtualCredential
+
+    credentialsDelete:
+      title: Delete virtual credential
+      parameters:
+        id: string
+
+    credentialsSetUserVerified:
+      title: Set virtual authenticator user verified
+      parameters:
+        value: boolean
+
   events:
 
     bindingCall:

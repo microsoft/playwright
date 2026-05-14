@@ -74,6 +74,13 @@ This event is not emitted.
 
 Playwright has ability to mock clock and passage of time.
 
+## property: BrowserContext.credentials
+* since: v1.61
+- type: <[Credentials]>
+
+Virtual WebAuthn authenticator for this context. Lets tests seed credentials and intercept
+`navigator.credentials.create()` / `navigator.credentials.get()` ceremonies.
+
 ## property: BrowserContext.debugger
 * since: v1.59
 - type: <[Debugger]>

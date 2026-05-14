@@ -927,6 +927,33 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
+scheme.BrowserContextCredentialsInstallParams = tOptional(tObject({}));
+scheme.BrowserContextCredentialsInstallResult = tOptional(tObject({}));
+scheme.BrowserContextCredentialsCreateParams = tObject({
+  rpId: tString,
+  id: tOptional(tString),
+  userHandle: tOptional(tString),
+  privateKey: tOptional(tString),
+  publicKey: tOptional(tString),
+});
+scheme.BrowserContextCredentialsCreateResult = tObject({
+  credential: tType('VirtualCredential'),
+});
+scheme.BrowserContextCredentialsGetParams = tObject({
+  rpId: tOptional(tString),
+  id: tOptional(tString),
+});
+scheme.BrowserContextCredentialsGetResult = tObject({
+  credentials: tArray(tType('VirtualCredential')),
+});
+scheme.BrowserContextCredentialsDeleteParams = tObject({
+  id: tString,
+});
+scheme.BrowserContextCredentialsDeleteResult = tOptional(tObject({}));
+scheme.BrowserContextCredentialsSetUserVerifiedParams = tObject({
+  value: tBoolean,
+});
+scheme.BrowserContextCredentialsSetUserVerifiedResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
@@ -2974,6 +3001,13 @@ scheme.StackFrame = tObject({
   line: tInt,
   column: tInt,
   function: tOptional(tString),
+});
+scheme.VirtualCredential = tObject({
+  id: tString,
+  rpId: tString,
+  userHandle: tString,
+  privateKey: tString,
+  publicKey: tString,
 });
 scheme.Point = tObject({
   x: tFloat,

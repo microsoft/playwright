@@ -1353,6 +1353,11 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   clockRunFor(params: BrowserContextClockRunForParams, progress?: Progress): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, progress?: Progress): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, progress?: Progress): Promise<BrowserContextClockSetSystemTimeResult>;
+  credentialsInstall(params?: BrowserContextCredentialsInstallParams, progress?: Progress): Promise<BrowserContextCredentialsInstallResult>;
+  credentialsCreate(params: BrowserContextCredentialsCreateParams, progress?: Progress): Promise<BrowserContextCredentialsCreateResult>;
+  credentialsGet(params: BrowserContextCredentialsGetParams, progress?: Progress): Promise<BrowserContextCredentialsGetResult>;
+  credentialsDelete(params: BrowserContextCredentialsDeleteParams, progress?: Progress): Promise<BrowserContextCredentialsDeleteResult>;
+  credentialsSetUserVerified(params: BrowserContextCredentialsSetUserVerifiedParams, progress?: Progress): Promise<BrowserContextCredentialsSetUserVerifiedResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1734,6 +1739,50 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
+export type BrowserContextCredentialsInstallParams = {};
+export type BrowserContextCredentialsInstallOptions = {};
+export type BrowserContextCredentialsInstallResult = void;
+export type BrowserContextCredentialsCreateParams = {
+  rpId: string,
+  id?: string,
+  userHandle?: string,
+  privateKey?: string,
+  publicKey?: string,
+};
+export type BrowserContextCredentialsCreateOptions = {
+  id?: string,
+  userHandle?: string,
+  privateKey?: string,
+  publicKey?: string,
+};
+export type BrowserContextCredentialsCreateResult = {
+  credential: VirtualCredential,
+};
+export type BrowserContextCredentialsGetParams = {
+  rpId?: string,
+  id?: string,
+};
+export type BrowserContextCredentialsGetOptions = {
+  rpId?: string,
+  id?: string,
+};
+export type BrowserContextCredentialsGetResult = {
+  credentials: VirtualCredential[],
+};
+export type BrowserContextCredentialsDeleteParams = {
+  id: string,
+};
+export type BrowserContextCredentialsDeleteOptions = {
+
+};
+export type BrowserContextCredentialsDeleteResult = void;
+export type BrowserContextCredentialsSetUserVerifiedParams = {
+  value: boolean,
+};
+export type BrowserContextCredentialsSetUserVerifiedOptions = {
+
+};
+export type BrowserContextCredentialsSetUserVerifiedResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
@@ -5244,6 +5293,14 @@ export type StackFrame = {
   line: number,
   column: number,
   function?: string,
+};
+
+export type VirtualCredential = {
+  id: string,
+  rpId: string,
+  userHandle: string,
+  privateKey: string,
+  publicKey: string,
 };
 
 export type Point = {

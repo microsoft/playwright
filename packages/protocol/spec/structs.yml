@@ -20,6 +20,15 @@ StackFrame:
     column: int
     function: string?
 
+VirtualCredential:
+  type: object
+  properties:
+    id: string
+    rpId: string
+    userHandle: string
+    privateKey: string
+    publicKey: string
+
 Point:
   type: object
   properties:

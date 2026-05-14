@@ -25,6 +25,7 @@ import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Clock } from './clock';
 import { ConsoleMessage } from './consoleMessage';
+import { Credentials } from './credentials';
 import { Debugger } from './debugger';
 import { Dialog } from './dialog';
 import { DisposableObject, DisposableStub } from './disposable';
@@ -73,6 +74,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
   readonly clock: Clock;
+  readonly credentials: Credentials;
 
   readonly _serviceWorkers = new Set<Worker>();
   private _closingStatus: 'none' | 'closing' | 'closed' = 'none';
@@ -98,6 +100,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.request = APIRequestContext.from(initializer.requestContext);
     this.request._timeoutSettings = this._timeoutSettings;
     this.clock = new Clock(this);
+    this.credentials = new Credentials(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());

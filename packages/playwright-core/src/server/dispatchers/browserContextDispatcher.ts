@@ -404,6 +404,28 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await progress.race(this._context.clock.setSystemTime(params.timeString ?? params.timeNumber ?? 0));
   }
 
+  async credentialsInstall(params: channels.BrowserContextCredentialsInstallParams, progress: Progress): Promise<channels.BrowserContextCredentialsInstallResult> {
+    await this._context.credentials.install(progress);
+  }
+
+  async credentialsCreate(params: channels.BrowserContextCredentialsCreateParams, progress: Progress): Promise<channels.BrowserContextCredentialsCreateResult> {
+    const credential = await progress.race(this._context.credentials.create(params));
+    return { credential };
+  }
+
+  async credentialsGet(params: channels.BrowserContextCredentialsGetParams, progress: Progress): Promise<channels.BrowserContextCredentialsGetResult> {
+    const credentials = await progress.race(this._context.credentials.get(params));
+    return { credentials };
+  }
+
+  async credentialsDelete(params: channels.BrowserContextCredentialsDeleteParams, progress: Progress): Promise<channels.BrowserContextCredentialsDeleteResult> {
+    await progress.race(this._context.credentials.delete(params.id));
+  }
+
+  async credentialsSetUserVerified(params: channels.BrowserContextCredentialsSetUserVerifiedParams, progress: Progress): Promise<channels.BrowserContextCredentialsSetUserVerifiedResult> {
+    this._context.credentials.setUserVerified(params.value);
+  }
+
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, progress: Progress): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);
