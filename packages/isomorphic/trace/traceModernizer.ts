@@ -438,5 +438,4 @@ export class TraceModernizer {
     }
     return result;
   }
-
 }

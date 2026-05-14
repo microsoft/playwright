@@ -50,7 +50,7 @@ export class Selectors {
       '_react', '_vue',
     ]);
     this._engines = new Map();
-    this._testIdAttributeName = testIdAttributeName || 'data-testid';
+    this._testIdAttributeName = testIdAttributeName ?? 'data-testid';
     for (const engine of engines)
       this.register(engine);
   }
