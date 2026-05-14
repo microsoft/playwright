@@ -15,5 +15,5 @@
  * limitations under the License.
  */
 
-const { program } = require('playwright/lib/program');
-program.parse(process.argv);
+const { program, argvForCommander } = require('playwright/lib/program');
+program.parse(argvForCommander);

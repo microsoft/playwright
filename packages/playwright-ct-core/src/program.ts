@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export { program } from 'playwright/lib/program';
+export { program, argvForCommander } from 'playwright/lib/program';

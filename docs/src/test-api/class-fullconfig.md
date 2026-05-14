@@ -4,6 +4,16 @@
 
 Resolved configuration which is accessible via [`property: TestInfo.config`] and is passed to the test reporters. To see the format of Playwright configuration file, please see [TestConfig] instead.
 
+## property: FullConfig.cliArgs
+* since: v1.61
+- type: <[Array]<[string]>>
+
+Custom command-line arguments passed after the `--` separator, for example
+`npx playwright test -- --build-path=./out --env=staging` exposes
+`['--build-path=./out', '--env=staging']`. Playwright does not parse these;
+your test, [`property: TestConfig.globalSetup`], or reporter is free to
+interpret them with any argument-parsing library.
+
 ## property: FullConfig.configFile
 * since: v1.20
 - type: ?<[string]>

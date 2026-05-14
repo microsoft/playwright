@@ -788,3 +788,87 @@ test('should throw on invalid --tsconfig', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`--tsconfig "does-not-exist.json" does not exist`);
 });
+
+test('should expose CLI args after -- as config.cliArgs', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        expect(testInfo.config.cliArgs).toEqual(['--build-path=/foo', '--env=staging', 'positional']);
+      });
+    `
+  }, {}, {}, { additionalArgs: ['--', '--build-path=/foo', '--env=staging', 'positional'] });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('config.cliArgs should be empty array when no -- separator is used', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        expect(testInfo.config.cliArgs).toEqual([]);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('config.cliArgs should be visible in globalSetup and reporter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: './global-setup.ts',
+        reporter: './my-reporter.ts',
+      };
+    `,
+    'global-setup.ts': `
+      module.exports = async (config) => {
+        console.log('GLOBAL_SETUP_CLI_ARGS=' + JSON.stringify(config.cliArgs));
+      };
+    `,
+    'my-reporter.ts': `
+      class MyReporter {
+        onBegin(config) {
+          console.log('REPORTER_CLI_ARGS=' + JSON.stringify(config.cliArgs));
+        }
+      }
+      module.exports = MyReporter;
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+    `
+  }, { reporter: '' }, {}, { additionalArgs: ['--', '--build-path=/foo'] });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(`GLOBAL_SETUP_CLI_ARGS=["--build-path=/foo"]`);
+  expect(result.output).toContain(`REPORTER_CLI_ARGS=["--build-path=/foo"]`);
+});
+
+test('built-in flags before -- should still be parsed normally', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        expect(testInfo.timeout).toBe(7777);
+        expect(testInfo.config.cliArgs).toEqual(['--unknown=value']);
+      });
+    `
+  }, { timeout: '7777' }, {}, { additionalArgs: ['--', '--unknown=value'] });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

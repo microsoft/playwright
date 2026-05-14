@@ -22,13 +22,17 @@ import { libCli, tools } from 'playwright-core/lib/coreBundle';
 import { program } from 'commander';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, config, configLoader } from './common';
+import { argvForCommander } from './cli/cliArgs';
 import { runTests, clearCache, runTestServerAction } from './cli/testActions';
 import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 import { packageJSON } from './package';
 
-export { program };
+// `argvForCommander` is process.argv with the `--` separator and everything
+// after it stripped; cli.js entry points pass it to `program.parse` so that
+// custom user args don't conflict with commander's flag validation.
+export { program, argvForCommander };
 
 import type { TraceMode } from '../types/test';
 import type { Command } from 'commander';
