@@ -56,7 +56,7 @@ import type { Progress } from '@protocol/progress';
 import type * as types from '../../types';
 import type { Screencast, ScreencastClient } from '../../screencast';
 
-const version: trace.VERSION = 9;
+const version: trace.VERSION = 8;
 
 export type TracerOptions = {
   name?: string;
@@ -109,7 +109,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       recordRequestOverrides: false,
       waitForContentOnStop: false,
     });
-    const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName() : undefined;
+    const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName().join(',') : undefined;
     this._contextCreatedEvent = {
       version,
       type: 'context-options',

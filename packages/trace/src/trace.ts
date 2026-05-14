@@ -21,7 +21,7 @@ import type { Point, SerializedError, StackFrame } from '@protocol/channels';
 export type Size = { width: number, height: number };
 
 // Make sure you add _modernize_N_to_N1(event: any) to traceModernizer.ts.
-export type VERSION = 9;
+export type VERSION = 8;
 
 export type BrowserContextEventOptions = {
   baseURL?: string,
@@ -44,7 +44,7 @@ export type ContextCreatedTraceEvent = {
   title?: string,
   options: BrowserContextEventOptions,
   sdkLanguage?: Language,
-  testIdAttributeName?: string[],
+  testIdAttributeName?: string,
   contextId?: string,
   testTimeout?: number,
 };

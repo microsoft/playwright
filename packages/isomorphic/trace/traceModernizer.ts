@@ -21,7 +21,6 @@ import type * as traceV5 from './versions/traceV5';
 import type * as traceV6 from './versions/traceV6';
 import type * as traceV7 from './versions/traceV7';
 import type * as traceV8 from './versions/traceV8';
-import type * as traceV9 from './versions/traceV9';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
@@ -34,8 +33,7 @@ export class TraceVersionError extends Error {
 
 // 6 => 10/2023 ~1.40
 // 7 => 05/2024 ~1.45
-// 9 => 05/2026 ~1.62
-const latestVersion: trace.VERSION = 9;
+const latestVersion: trace.VERSION = 8;
 
 export class TraceModernizer {
   private _contextEntry: ContextEntry;
@@ -441,18 +439,4 @@ export class TraceModernizer {
     return result;
   }
 
-  _modernize_8_to_9(events: traceV8.TraceEvent[]): traceV9.TraceEvent[] {
-    const result: traceV9.TraceEvent[] = [];
-    for (const event of events) {
-      if (event.type === 'context-options') {
-        const eventAsV8 = event as traceV8.ContextCreatedTraceEvent;
-        const eventAsV9 = event as traceV9.ContextCreatedTraceEvent;
-        eventAsV9.testIdAttributeName = eventAsV8.testIdAttributeName ? [eventAsV8.testIdAttributeName] : undefined;
-        result.push(eventAsV9);
-      } else {
-        result.push(event);
-      }
-    }
-    return result;
-  }
 }

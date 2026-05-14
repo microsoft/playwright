@@ -84,7 +84,7 @@ export class TraceModel {
   readonly hasSource: boolean;
   readonly hasStepData: boolean;
   readonly sdkLanguage: Language | undefined;
-  readonly testIdAttributeName: string[] | undefined;
+  readonly testIdAttributeName: string | undefined;
   readonly sources: Map<string, SourceModel>;
   resources: ResourceEntry[];
   readonly actionCounters: Map<string, number>;
