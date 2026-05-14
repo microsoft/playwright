@@ -277,7 +277,7 @@ export abstract class BrowserType extends SdkObject {
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
       } else {
         const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-        transport = new PipeTransport(stdio[3], stdio[4]);
+        transport = new PipeTransport(stdio[3], stdio[4], this.pipeProtocol());
       }
       return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport, wsEndpoint };
     } catch (error) {
@@ -339,6 +339,10 @@ export abstract class BrowserType extends SdkObject {
 
   supportsPipeTransport(): boolean {
     return true;
+  }
+
+  pipeProtocol(): 'json' | 'cbor' {
+    return 'json';
   }
 
   getExecutableName(options: types.LaunchOptions): string {

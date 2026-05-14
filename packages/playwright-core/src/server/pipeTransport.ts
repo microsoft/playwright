@@ -18,22 +18,31 @@
 import { debugLogger } from '@utils/debugLogger';
 import { makeWaitForNextTask } from '@utils/task';
 
+import { decodeCdpMessage, encodeCdpMessage, kEnvelopeHeaderSize, readEnvelopeBodyLength } from './cborCodec';
+
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeRead: NodeJS.ReadableStream;
   private _pipeWrite: NodeJS.WritableStream;
   private _pendingBuffers: Buffer[] = [];
+  private _cborChunks: Buffer[] = [];
+  private _cborChunksLength: number = 0;
   private _waitForNextTask = makeWaitForNextTask();
   private _closed = false;
   private _onclose?: (reason?: string) => void;
+  private _protocol: 'json' | 'cbor';
 
   onmessage?: (message: ProtocolResponse) => void;
 
-  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
+  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream, protocol: 'json' | 'cbor' = 'json') {
     this._pipeRead = pipeRead;
     this._pipeWrite = pipeWrite;
-    pipeRead.on('data', buffer => this._dispatch(buffer));
+    this._protocol = protocol;
+    const dispatch = protocol === 'cbor'
+      ? (buffer: Buffer) => this._dispatchCbor(buffer)
+      : (buffer: Buffer) => this._dispatch(buffer);
+    pipeRead.on('data', dispatch);
     pipeRead.on('close', () => {
       this._closed = true;
       if (this._onclose)
@@ -57,8 +66,12 @@ export class PipeTransport implements ConnectionTransport {
   send(message: ProtocolRequest) {
     if (this._closed)
       throw new Error('Pipe has been closed');
-    this._pipeWrite.write(JSON.stringify(message));
-    this._pipeWrite.write('\0');
+    if (this._protocol === 'cbor') {
+      this._pipeWrite.write(encodeCdpMessage(message));
+    } else {
+      this._pipeWrite.write(JSON.stringify(message));
+      this._pipeWrite.write('\0');
+    }
   }
 
   close() {
@@ -90,5 +103,45 @@ export class PipeTransport implements ConnectionTransport {
       end = buffer.indexOf('\0', start);
     }
     this._pendingBuffers = [buffer.slice(start)];
+  }
+
+  _dispatchCbor(chunk: Buffer) {
+    this._cborChunks.push(chunk);
+    this._cborChunksLength += chunk.length;
+
+    while (this._cborChunksLength >= kEnvelopeHeaderSize) {
+      // Need at least the 7-byte envelope header in the first chunk to read the body length.
+      if (this._cborChunks[0].length < kEnvelopeHeaderSize) {
+        const merged = Buffer.concat(this._cborChunks, this._cborChunksLength);
+        this._cborChunks = [merged];
+      }
+      const bodyLen = readEnvelopeBodyLength(this._cborChunks[0], 0);
+      const total = kEnvelopeHeaderSize + bodyLen;
+      if (this._cborChunksLength < total)
+        break;
+
+      // Carve `total` bytes from the front of the chunk list without concatenating tail data.
+      const parts: Buffer[] = [];
+      let remaining = total;
+      while (remaining > 0) {
+        const head = this._cborChunks[0];
+        if (head.length <= remaining) {
+          parts.push(head);
+          remaining -= head.length;
+          this._cborChunks.shift();
+        } else {
+          parts.push(head.subarray(0, remaining));
+          this._cborChunks[0] = head.subarray(remaining);
+          remaining = 0;
+        }
+      }
+      this._cborChunksLength -= total;
+      const envelope = parts.length === 1 ? parts[0] : Buffer.concat(parts, total);
+
+      this._waitForNextTask(() => {
+        if (this.onmessage)
+          this.onmessage.call(null, decodeCdpMessage(envelope));
+      });
+    }
   }
 }

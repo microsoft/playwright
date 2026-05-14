@@ -352,12 +352,16 @@ export class Chromium extends BrowserType {
   override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    chromeArguments.push('--remote-debugging-pipe');
+    chromeArguments.push(this.pipeProtocol() === 'cbor' ? '--remote-debugging-pipe=cbor' : '--remote-debugging-pipe');
     if (isPersistent)
       chromeArguments.push('about:blank');
     else
       chromeArguments.push('--no-startup-window');
     return chromeArguments;
+  }
+
+  override pipeProtocol(): 'json' | 'cbor' {
+    return process.env.PLAYWRIGHT_CHROMIUM_CBOR ? 'cbor' : 'json';
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
