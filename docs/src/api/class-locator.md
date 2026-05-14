@@ -2103,7 +2103,7 @@ In most cases, you should use [`method: Locator.fill`] instead. You only need to
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
-When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]). Use `{{` and `}}` to type literal brace characters.
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]).
 
 To press a special key, like `Control` or `ArrowDown`, use [`method: Locator.press`].
 
@@ -2187,7 +2187,7 @@ await locator.PressAsync("Enter");
 * since: v1.38
 - `text` <[string]>
 
-String of characters to sequentially press into a focused element. When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]). Use `{{` and `}}` to type literal brace characters.
+String of characters to sequentially press into a focused element. When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]).
 
 ### option: Locator.pressSequentially.delay
 * since: v1.38
@@ -2199,9 +2199,8 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 * since: v1.61
 - `namedKeys` <[boolean]>
 
-When `true`, anything inside `{}` in the text is treated as a key name (same format as [`method: Locator.press`]),
-allowing you to mix regular characters with special keys like `{Enter}`, `{ArrowDown}`, or modifier combos like `{Control+A}`.
-Use `{{` and `}}` to type literal brace characters. Defaults to `false`.
+When [`option: namedKeys`] is `true`, anything inside `{}` is treated as a key name (same format as [`method: Locator.press`]).
+Use `{{` to type a literal brace character. Defaults to `false`.
 
 ### option: Locator.pressSequentially.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.38

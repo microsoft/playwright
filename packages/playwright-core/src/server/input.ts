@@ -110,30 +110,18 @@ export class Keyboard {
 
   async type(progress: Progress, text: string, options?: { delay?: number, namedKeys?: boolean }) {
     const delay = (options && options.delay) || undefined;
-    if (options?.namedKeys) {
-      for (const token of parseNamedKeys(text)) {
-        if (token.type === 'key') {
-          if (delay)
-            await progress.wait(delay);
-          await this.press(progress, token.value, { delay: undefined });
-        } else {
-          if (usKeyboardLayout.has(token.value)) {
-            await this.press(progress, token.value, { delay });
-          } else {
-            if (delay)
-              await progress.wait(delay);
-            await this.insertText(progress, token.value);
-          }
-        }
-      }
-    } else {
-      for (const char of text) {
-        if (usKeyboardLayout.has(char)) {
-          await this.press(progress, char, { delay });
+    for (const token of parseNamedKeys(text, !!options?.namedKeys)) {
+      if (token.type === 'key') {
+        if (delay)
+          await progress.wait(delay);
+        await this.press(progress, token.value, { delay });
+      } else {
+        if (usKeyboardLayout.has(token.value)) {
+          await this.press(progress, token.value, { delay });
         } else {
           if (delay)
             await progress.wait(delay);
-          await this.insertText(progress, char);
+          await this.insertText(progress, token.value);
         }
       }
     }
@@ -372,36 +360,32 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
   return result;
 }
 
-function* parseNamedKeys(text: string): Generator<{ type: 'key' | 'char', value: string }> {
+function parseNamedKeys(text: string, namedKeys: boolean): Array<{ type: 'key' | 'char', value: string }> {
+  if (!namedKeys)
+    return [...text].map(value => ({ type: 'char' as const, value }));
+  const result: Array<{ type: 'key' | 'char', value: string }> = [];
   let i = 0;
   while (i < text.length) {
     if (text[i] === '{') {
       if (i + 1 < text.length && text[i + 1] === '{') {
-        yield { type: 'char', value: '{' };
+        result.push({ type: 'char', value: '{' });
         i += 2;
       } else {
         const end = text.indexOf('}', i + 1);
         if (end === -1) {
-          yield { type: 'char', value: '{' };
+          result.push({ type: 'char', value: '{' });
           i += 1;
         } else {
-          yield { type: 'key', value: text.substring(i + 1, end) };
+          result.push({ type: 'key', value: text.substring(i + 1, end) });
           i = end + 1;
         }
       }
-    } else if (text[i] === '}') {
-      if (i + 1 < text.length && text[i + 1] === '}') {
-        yield { type: 'char', value: '}' };
-        i += 2;
-      } else {
-        yield { type: 'char', value: '}' };
-        i += 1;
-      }
     } else {
-      yield { type: 'char', value: text[i] };
+      result.push({ type: 'char', value: text[i] });
       i += 1;
     }
   }
+  return result;
 }
 
 export interface RawTouchscreen {
