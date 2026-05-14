@@ -1,0 +1,86 @@
+name: tests Fedora
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+    paths:
+      - 'packages/playwright-core/browsers.json'
+      - '.github/workflows/tests_fedora.yml'
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - 'packages/playwright-core/browsers.json'
+      - '.github/workflows/tests_fedora.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  test_fedora:
+    name: Fedora ${{ matrix.fedora_tag }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        fedora_tag: [latest]
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 22
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm ci
+    - run: npm run build
+    - name: Launch Fedora container
+      run: |
+        docker run \
+          --rm \
+          --name fedora-tests \
+          --platform linux/amd64 \
+          --workdir /root \
+          --env CI \
+          --env FORCE_COLOR \
+          -d \
+          -t \
+          fedora:${{ matrix.fedora_tag }} /bin/bash
+    - name: Copy repository into container
+      run: |
+        docker cp . fedora-tests:/root/playwright
+    - name: Install Node.js and Xvfb in container
+      run: |
+        docker exec fedora-tests bash -c '
+          set -euo pipefail
+          dnf install -y --setopt=install_weak_deps=False nodejs npm xorg-x11-server-Xvfb glibc
+          node --version
+          npm --version
+        '
+    - name: Install browsers and system dependencies via install-deps
+      run: |
+        docker exec --workdir /root/playwright fedora-tests bash -c '
+          set -euo pipefail
+          node packages/playwright-core/cli.js install chromium firefox webkit ffmpeg
+          node packages/playwright-core/cli.js install-deps chromium firefox webkit
+        '
+    - name: Run @smoke tests inside Fedora
+      run: |
+        docker exec --workdir /root/playwright fedora-tests \
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" \
+          npm run test -- --grep "@smoke"
+    - name: Copy test results from container
+      if: ${{ always() }}
+      run: docker cp fedora-tests:/root/playwright/test-results ./test-results || true
+    - name: Upload test results
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: fedora-${{ matrix.fedora_tag }}-test-results
+        path: ./test-results
