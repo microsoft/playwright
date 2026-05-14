@@ -39,6 +39,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
     projectFilter: opts.project || undefined,
     passWithNoTests: !!opts.passWithNoTests,
     lastFailed: !!opts.lastFailed,
+    lastRunFile: opts.lastRunFile,
     testList: opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined,
     testListInvert: opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined,
     shardWeights: resolveShardWeightsOption(),

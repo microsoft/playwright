@@ -91,6 +91,7 @@ npx playwright test --ui
 | `--ignore-snapshots` | Ignore screenshot and snapshot expectations. |
 | `-j <workers>` or `--workers <workers>` | Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%). |
 | `--last-failed` | Only re-run the failures. |
+| `--last-run-file <file>` | Path of the last-run JSON file used with `--last-failed`. |
 | `--list` | Collect all the tests and report them, but do not run. |
 | `--max-failures <N>` or `-x` | Stop after the first `N` failures. Passing `-x` stops after the first failure. |
 | `--no-deps` | Do not run project dependencies. |

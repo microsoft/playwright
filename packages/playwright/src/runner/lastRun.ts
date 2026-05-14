@@ -31,11 +31,11 @@ export class LastRunReporter implements ReporterV2 {
   private _suite: Suite | undefined;
   private _listMode: boolean;
 
-  constructor(filteredProjects: commonConfig.FullProjectInternal[], listMode?: boolean) {
+  constructor(filteredProjects: commonConfig.FullProjectInternal[], listMode?: boolean, lastRunFileOverride?: string) {
     this._listMode = !!listMode;
-    const lastRunFromEnv = process.env.PLAYWRIGHT_LAST_RUN_OUTPUT_FILE;
-    if (lastRunFromEnv) {
-      this._lastRunFile = path.resolve(process.cwd(), lastRunFromEnv);
+    const override = lastRunFileOverride ?? process.env.PLAYWRIGHT_LAST_RUN_OUTPUT_FILE;
+    if (override) {
+      this._lastRunFile = path.resolve(process.cwd(), override);
     } else {
       const [project] = filteredProjects;
       if (project)

@@ -192,6 +192,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--headed', { description: `Run tests in headed browsers (default: headless)` }],
   ['--ignore-snapshots', { description: `Ignore screenshot and snapshot expectations` }],
   ['--last-failed', { description: `Only re-run the failures` }],
+  ['--last-run-file <file>', { description: `Path of the last-run JSON file used by --last-failed (also configurable via PLAYWRIGHT_LAST_RUN_OUTPUT_FILE).` }],
   ['--list', { description: `Collect all the tests and report them, but do not run` }],
   ['--max-failures <N>', { description: `Stop after the first N failures` }],
   ['--no-deps', { description: `Do not run project dependencies` }],
