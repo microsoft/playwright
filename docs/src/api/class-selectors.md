@@ -247,5 +247,4 @@ Defines custom attribute name to be used in [`method: Page.getByTestId`]. `data-
 * since: v1.27
 - `attributeName` <[string]>
 
-Test id attribute name. To match elements with any of several attributes, pass them as a
-comma-separated list, e.g. `"data-pw,data-ti"`.
+Test id attribute name.
