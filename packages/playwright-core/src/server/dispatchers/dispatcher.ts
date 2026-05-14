@@ -145,7 +145,8 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   private _disposeRecursively(error: Error) {
     assert(!this._disposed, `${this._guid} is disposed more than once`);
     for (const controller of this._activeProgressControllers) {
-      if (!controller.metadata.potentiallyClosesScope)
+      const metainfo = getMetainfo({ type: controller.metadata.type, method: controller.metadata.method });
+      if (!metainfo?.potentiallyClosesScope)
         controller.abort(error).catch(() => {});
     }
     this._onDispose();

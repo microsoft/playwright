@@ -250,7 +250,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async close(params: channels.PageCloseParams, progress: Progress): Promise<void> {
-    progress.metadata.potentiallyClosesScope = true;
     await this._page.close(progress, params);
   }
 
@@ -522,7 +521,6 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   async disconnect(params: channels.WorkerDisconnectParams, progress: Progress): Promise<void> {
-    progress.metadata.potentiallyClosesScope = true;
     await this._object.disconnect(progress, params);
   }
 

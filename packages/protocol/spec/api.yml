@@ -87,6 +87,8 @@ APIRequestContext:
       internal: true
       parameters:
         reason: string?
+      flags:
+        potentiallyClosesScope: true
 
 APIResponse:
   type: object

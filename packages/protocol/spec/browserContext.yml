@@ -66,6 +66,7 @@ BrowserContext:
         reason: string?
       flags:
         pause: true
+        potentiallyClosesScope: true
 
     cookies:
       title: Get cookies

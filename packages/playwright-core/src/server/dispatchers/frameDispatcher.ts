@@ -141,7 +141,6 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async click(params: channels.FrameClickParams, progress: Progress): Promise<void> {
-    progress.metadata.potentiallyClosesScope = true;
     return await this._frame.click(progress, params.selector, params);
   }
 
@@ -274,7 +273,6 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async expect(params: channels.FrameExpectParams, progress: Progress): Promise<channels.FrameExpectResult> {
-    progress.metadata.potentiallyClosesScope = true;
     let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     if (params.expression === 'to.match.aria' && expectedValue)
       expectedValue = parseAriaSnapshotUnsafe(yaml, expectedValue);

@@ -42,6 +42,7 @@ Page:
         reason: string?
       flags:
         pause: true
+        potentiallyClosesScope: true
 
     runBeforeUnload:
       title: Run beforeunload
