@@ -109,7 +109,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       recordRequestOverrides: false,
       waitForContentOnStop: false,
     });
-    const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName().join(',') : undefined;
+    const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName() : undefined;
     this._contextCreatedEvent = {
       version,
       type: 'context-options',

@@ -15,13 +15,14 @@
  */
 
 import { asLocators } from './locatorGenerators';
+import { splitTestIdAttributeNames } from './locatorUtils';
 import { parseSelector } from './selectorParser';
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
 import type { Language, Quote } from './locatorGenerators';
 
 type TemplateParams = { quote: string, text: string }[];
-function parseLocator(locator: string, testIdAttributeName: string[]): { selector: string, preferredQuote: Quote | undefined } {
+function parseLocator(locator: string, testIdAttributeName: string): { selector: string, preferredQuote: Quote | undefined } {
   locator = locator
       .replace(/AriaRole\s*\.\s*([\w]+)/g, (_, group) => group.toLowerCase())
       .replace(/(get_by_role|getByRole)\s*\(\s*(?:["'`])([^'"`]+)['"`]/g, (_, group1, group2) => `${group1}(${group2.toLowerCase()}`);
@@ -107,7 +108,7 @@ function shiftParams(template: string, sub: number) {
   return template.replace(/\$(\d+)/g, (_, ordinal) => `$${ordinal - sub}`);
 }
 
-function transform(template: string, params: TemplateParams, testIdAttributeName: string[]): string {
+function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
   // Recursively handle filter(has=, hasnot=, sethas(), sethasnot()).
   // TODO: handle and(locator), or(locator), locator(locator), locator(has=, hasnot=, sethas(), sethasnot()).
   while (true) {
@@ -165,7 +166,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
       .replace(/getbylabel\(([^)]+)\)/g, 'internal:label=$1')
-      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=${testIdAttributeName.map(n => `[${n}=$1]`).join('')}`)
+      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=${splitTestIdAttributeNames(testIdAttributeName).map(n => `[${n}=$1]`).join('')}`)
       .replace(/getby(placeholder|alt|title)(?:text)?\(([^)]+)\)/g, 'internal:attr=[$1=$2]')
       .replace(/first(\(\))?/g, 'nth=0')
       .replace(/last(\(\))?/g, 'nth=-1')
@@ -219,7 +220,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
   }).join(' >> ');
 }
 
-export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string[]): string {
+export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
   try {
     return unsafeLocatorOrSelectorAsSelector(language, locator, testIdAttributeName);
   } catch (e) {
@@ -227,7 +228,7 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   }
 }
 
-export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string[]): string {
+export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
   try {
     parseSelector(locator);
     return locator;

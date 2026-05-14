@@ -109,9 +109,7 @@ BrowserContext:
     setTestIdAttributeName:
       internal: true
       parameters:
-        testIdAttributeName:
-          type: array
-          items: string
+        testIdAttributeName: string
 
     setExtraHTTPHeaders:
       title: Set extra HTTP headers
@@ -221,9 +219,7 @@ BrowserContext:
           - default
           - api
         pauseOnNextStatement: boolean?
-        testIdAttributeName:
-          type: array?
-          items: string
+        testIdAttributeName: string?
         launchOptions: json?
         contextOptions: json?
         device: string?

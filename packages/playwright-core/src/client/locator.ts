@@ -473,14 +473,14 @@ export class FrameLocator implements api.FrameLocator {
   }
 }
 
-let _testIdAttributeName: string[] = ['data-testid'];
+let _testIdAttributeName: string = 'data-testid';
 
-export function testIdAttributeName(): string[] {
+export function testIdAttributeName(): string {
   return _testIdAttributeName;
 }
 
-export function setTestIdAttribute(attributeName: string | string[]) {
-  _testIdAttributeName = Array.isArray(attributeName) ? attributeName : [attributeName];
+export function setTestIdAttribute(attributeName: string) {
+  _testIdAttributeName = attributeName;
 }
 
 function cssObjectToString(style: Record<string, string | number>): string {

@@ -33,9 +33,16 @@ function getByAttributeTextSelector(attrName: string, text: string | RegExp, opt
   return `internal:attr=[${attrName}=${escapeForAttributeSelector(text, options?.exact || false)}]`;
 }
 
-export function getByTestIdSelector(testIdAttributeName: string[], testId: string | RegExp): string {
+// Multiple test id attribute names are joined with a comma. Attribute names cannot contain commas.
+export const testIdAttributeNameSeparator = ',';
+
+export function splitTestIdAttributeNames(testIdAttributeName: string): string[] {
+  return testIdAttributeName.split(testIdAttributeNameSeparator);
+}
+
+export function getByTestIdSelector(testIdAttributeName: string, testId: string | RegExp): string {
   const escapedTestId = escapeForAttributeSelector(testId, true);
-  return `internal:testid=${testIdAttributeName.map(name => `[${name}=${escapedTestId}]`).join('')}`;
+  return `internal:testid=${splitTestIdAttributeNames(testIdAttributeName).map(name => `[${name}=${escapedTestId}]`).join('')}`;
 }
 
 export function getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {

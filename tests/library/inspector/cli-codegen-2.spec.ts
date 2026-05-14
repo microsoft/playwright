@@ -481,7 +481,7 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
   });
 
   test('should --test-id-attribute', async ({ openRecorder }) => {
-    const { page, recorder } = await openRecorder({ testIdAttributeName: ['my-test-id'] });
+    const { page, recorder } = await openRecorder({ testIdAttributeName: 'my-test-id' });
 
     await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
     await page.click('[my-test-id=foo]');
@@ -495,7 +495,7 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
   });
 
   test('should generate getByTestId for any of the configured testIdAttributes', async ({ openRecorder }) => {
-    const { page, recorder } = await openRecorder({ testIdAttributeName: ['data-pw', 'data-ti'] });
+    const { page, recorder } = await openRecorder({ testIdAttributeName: 'data-pw,data-ti' });
 
     await recorder.setContentAndWait(`
       <button data-pw="primary">First</button>

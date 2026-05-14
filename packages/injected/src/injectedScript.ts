@@ -71,7 +71,7 @@ export type InjectedScriptOptions = {
   isUnderTest: boolean;
   sdkLanguage: Language;
   // For strict error and codegen
-  testIdAttributeName: string[];
+  testIdAttributeName: string;
   stableRafCount: number;
   browserName: string;
   shouldPrependErrorPrefix?: boolean;
@@ -91,7 +91,7 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
-  private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string[] = ['data-testid'];
+  private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
   readonly window: Window & typeof globalThis;
   readonly document: Document;
   readonly consoleApi: ConsoleAPI;
@@ -253,7 +253,7 @@ export class InjectedScript {
     return this.window.eval(expression);
   }
 
-  testIdAttributeNameForStrictErrorAndConsoleCodegen(): string[] {
+  testIdAttributeNameForStrictErrorAndConsoleCodegen(): string {
     return this._testIdAttributeNameForStrictErrorAndConsoleCodegen;
   }
 

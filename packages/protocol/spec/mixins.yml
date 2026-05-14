@@ -201,9 +201,7 @@ ContextOptions:
     selectorEngines:
       type: array?
       items: SelectorEngine
-    testIdAttributeName:
-      type: array?
-      items: string
+    testIdAttributeName: string?
 
 ConsoleMessage:
   type: mixin

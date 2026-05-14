@@ -245,15 +245,7 @@ Defines custom attribute name to be used in [`method: Page.getByTestId`]. `data-
 
 ### param: Selectors.setTestIdAttribute.attributeName
 * since: v1.27
-* langs: java, python, csharp
 - `attributeName` <[string]>
 
-Test id attribute name.
-
-### param: Selectors.setTestIdAttribute.attributeName
-* since: v1.27
-* langs: js
-- `attributeName` <[string]|[Array]<[string]>>
-
-Test id attribute name. When an array of names is provided, [`method: Page.getByTestId`] matches
-elements with any of the listed attributes.
+Test id attribute name. To match elements with any of several attributes, pass them as a
+comma-separated list, e.g. `"data-pw,data-ti"`.

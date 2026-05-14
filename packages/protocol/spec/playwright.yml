@@ -119,9 +119,7 @@ DebugController:
             - inspecting
             - recording
             - none
-        testIdAttributeName:
-          type: array?
-          items: string
+        testIdAttributeName: string?
         generateAutoExpect: boolean?
 
     highlight:

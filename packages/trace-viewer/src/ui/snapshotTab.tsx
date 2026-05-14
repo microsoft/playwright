@@ -46,7 +46,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
   model?: TraceModel,
   sdkLanguage: Language,
-  testIdAttributeName: string[],
+  testIdAttributeName: string,
   isInspecting: boolean,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
@@ -106,7 +106,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
 export const SnapshotView: React.FunctionComponent<{
   snapshotUrls: SnapshotUrls | undefined,
   sdkLanguage: Language,
-  testIdAttributeName: string[],
+  testIdAttributeName: string,
   isInspecting: boolean,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
@@ -250,7 +250,7 @@ export const InspectModeController: React.FunctionComponent<{
   iframe: HTMLIFrameElement | null,
   isInspecting: boolean,
   sdkLanguage: Language,
-  testIdAttributeName: string[],
+  testIdAttributeName: string,
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
   iteration: number,
@@ -300,7 +300,7 @@ export const InspectModeController: React.FunctionComponent<{
   return <></>;
 };
 
-function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], force: boolean, sdkLanguage: Language, testIdAttributeName: string[], isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
+function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], force: boolean, sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
   if (!frameWindow)
     return;
   const win = frameWindow as any;

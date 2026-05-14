@@ -207,12 +207,12 @@ test('should respect testIdAttribute', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test('should respect testIdAttribute as array', async ({ runInlineTest }) => {
+test('should respect testIdAttribute with multiple comma-separated names', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
         use: {
-          testIdAttribute: ['data-pw', 'data-ti'],
+          testIdAttribute: 'data-pw,data-ti',
         }
       };
     `,

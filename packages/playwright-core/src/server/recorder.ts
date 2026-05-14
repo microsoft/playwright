@@ -564,10 +564,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     };
   }
 
-  private _testIdAttributeName(): string[] {
-    if (this._params.testIdAttributeName?.length)
-      return this._params.testIdAttributeName;
-    return this._context.selectors().testIdAttributeName();
+  private _testIdAttributeName(): string {
+    return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
   private async _createActionInContext(progress: Progress, frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {

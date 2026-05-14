@@ -31,7 +31,7 @@ it('getByTestId with custom testId should work', async ({ page, playwright }) =>
   await expect(page.locator('div').getByTestId('Hello')).toHaveText('Hello world');
 });
 
-it('getByTestId with array of custom testIds should match any', async ({ page, playwright }) => {
+it('getByTestId with comma-separated testIdAttributes should match any', async ({ page, playwright }) => {
   await page.setContent(`
     <section>
       <div data-pw="Hello">first</div>
@@ -39,17 +39,11 @@ it('getByTestId with array of custom testIds should match any', async ({ page, p
       <div data-testid="Hello">third</div>
     </section>
   `);
-  playwright.selectors.setTestIdAttribute(['data-pw', 'data-ti']);
+  playwright.selectors.setTestIdAttribute('data-pw,data-ti');
   await expect(page.getByTestId('Hello')).toHaveCount(2);
   await expect(page.getByTestId('Hello')).toHaveText(['first', 'second']);
   await expect(page.mainFrame().getByTestId('Hello')).toHaveCount(2);
   await expect(page.locator('section').getByTestId('Hello')).toHaveCount(2);
-});
-
-it('getByTestId with single-element array should work', async ({ page, playwright }) => {
-  await page.setContent('<div><div data-my-custom-testid="Hello">Hello world</div></div>');
-  playwright.selectors.setTestIdAttribute(['data-my-custom-testid']);
-  await expect(page.getByTestId('Hello')).toHaveText('Hello world');
 });
 
 it('getByTestId should escape id', async ({ page }) => {

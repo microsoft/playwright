@@ -27,7 +27,7 @@ export { expect } from '@playwright/test';
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
-  openRecorder: (options?: { testIdAttributeName?: string[], language?: string }) => Promise<{ recorder: Recorder, page: Page }>;
+  openRecorder: (options?: { testIdAttributeName?: string, language?: string }) => Promise<{ recorder: Recorder, page: Page }>;
   runCLI: (args: string[]) => CLIMock;
 };
 

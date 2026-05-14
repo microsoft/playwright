@@ -7581,9 +7581,7 @@ export interface PlaywrightTestOptions {
   /**
    * Custom attribute to be used in
    * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
-   * by default. When an array of attribute names is provided,
-   * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id) matches elements with
-   * any of the listed attributes.
+   * by default. To match elements with any of several attributes, pass them as a comma-separated list.
    *
    * **Usage**
    *
@@ -7598,7 +7596,7 @@ export interface PlaywrightTestOptions {
    * });
    * ```
    *
-   * Multiple attributes are also supported:
+   * Multiple attributes:
    *
    * ```js
    * // playwright.config.ts
@@ -7606,13 +7604,13 @@ export interface PlaywrightTestOptions {
    *
    * export default defineConfig({
    *   use: {
-   *     testIdAttribute: ['data-pw', 'data-ti'],
+   *     testIdAttribute: 'data-pw,data-ti',
    *   },
    * });
    * ```
    *
    */
-  testIdAttribute: string | string[];
+  testIdAttribute: string;
 }
 
 

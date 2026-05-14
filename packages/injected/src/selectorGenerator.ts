@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { splitTestIdAttributeNames } from '@isomorphic/locatorUtils';
 import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { beginDOMCaches, closestCrossShadow, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
@@ -67,7 +68,7 @@ const kCSSFallbackScore = 10000000;
 const kScoreThresholdForTextExpect = 1000;
 
 export type GenerateSelectorOptions = {
-  testIdAttributeName: string[];
+  testIdAttributeName: string;
   omitInternalEngines?: boolean;
   root?: Element | Document;
   forTextExpect?: boolean;
@@ -231,11 +232,12 @@ function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targe
 
 function buildNoTextCandidates(injectedScript: InjectedScript, element: Element, options: InternalOptions): SelectorToken[] {
   const candidates: SelectorToken[] = [];
+  const testIdAttributeNames = splitTestIdAttributeNames(options.testIdAttributeName);
 
   // CSS selectors are applicable to elements via locator() and iframes via frameLocator().
   {
     for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
-      if (!options.testIdAttributeName.includes(attr) && element.getAttribute(attr))
+      if (!testIdAttributeNames.includes(attr) && element.getAttribute(attr))
         candidates.push({ engine: 'css', selector: `[${attr}=${quoteCSSAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
     }
 
@@ -255,7 +257,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
     }
 
     // Locate by testId via CSS selector.
-    for (const testIdAttr of options.testIdAttributeName) {
+    for (const testIdAttr of testIdAttributeNames) {
       if (element.getAttribute(testIdAttr))
         candidates.push({ engine: 'css', selector: `[${testIdAttr}=${quoteCSSAttributeValue(element.getAttribute(testIdAttr)!)}]`, score: kTestIdScore });
     }
@@ -265,7 +267,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
   }
 
   // Everything below is not applicable to iframes (getBy* methods).
-  for (const testIdAttr of options.testIdAttributeName) {
+  for (const testIdAttr of testIdAttributeNames) {
     if (element.getAttribute(testIdAttr))
       candidates.push({ engine: 'internal:testid', selector: `[${testIdAttr}=${escapeForAttributeSelector(element.getAttribute(testIdAttr)!, true)}]`, score: kTestIdScore });
   }

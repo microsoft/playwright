@@ -457,7 +457,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._initializedPromise;
     return Promise.all(params.map(async param => {
       if (!param.target.match(/^(f\d+)?e\d+$/)) {
-        const selector = locatorOrSelectorAsSelector('javascript', param.target, [this.context.config.testIdAttribute || 'data-testid']);
+        const selector = locatorOrSelectorAsSelector('javascript', param.target, this.context.config.testIdAttribute || 'data-testid');
         const handle = await this.page.$(selector);
         if (!handle)
           throw new Error(`"${param.target}" does not match any elements.`);

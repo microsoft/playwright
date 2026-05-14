@@ -1381,7 +1381,7 @@ export class Recorder {
   private _stylesheet: CSSStyleSheet;
   state: UIState = {
     mode: 'none',
-    testIdAttributeName: ['data-testid'],
+    testIdAttributeName: 'data-testid',
     language: 'javascript',
     overlay: { offsetX: 0 },
   };
