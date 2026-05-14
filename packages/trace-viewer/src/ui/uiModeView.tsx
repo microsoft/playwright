@@ -267,12 +267,6 @@ export const UIModeView: React.FC<{}> = ({
       setProgress(undefined);
   }, [testModel, isRunningTest]);
 
-  // Stop on first failure.
-  React.useEffect(() => {
-    if (isRunningTest && stopOnFailure && progress?.failed)
-      testServerConnection?.stopTestsNoReply({});
-  }, [isRunningTest, stopOnFailure, progress?.failed, testServerConnection]);
-
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
     if (!testModel)
@@ -327,6 +321,7 @@ export const UIModeView: React.FC<{}> = ({
         updateSnapshots,
         reporters: queryParams.reporters,
         workers: singleWorker ? 1 : undefined,
+        maxFailures: stopOnFailure ? 1 : undefined,
         trace: 'on',
       });
       // Clear pending tests in case of interrupt.
@@ -337,7 +332,7 @@ export const UIModeView: React.FC<{}> = ({
       setTestModel({ ...testModel });
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
-  }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, singleWorker]);
+  }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, singleWorker, stopOnFailure]);
 
   const runVisibleTests = React.useCallback(() => runTests('bounce-if-busy', testTree.collectTestIds(testTree.rootItem)), [runTests, testTree]);
 

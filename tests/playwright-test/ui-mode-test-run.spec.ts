@@ -118,8 +118,8 @@ test('should stop on first failure', async ({ runUITest }) => {
   await page.getByLabel('Stop on first failure').check();
 
   await page.getByTitle('Run all').click();
-  // After test 2 fails, the run is stopped. Test 4 does not start.
-  await expect(page.getByTestId('status-line')).toHaveText('3/4 (75%) — 1 passed, 1 failed, 1 skipped');
+  // After test 2 fails, the runner stops dispatching: tests 3 and 4 never start.
+  await expect(page.getByTestId('status-line')).toHaveText('2/4 (50%) — 1 passed, 1 failed');
 });
 
 test('should run on hover', async ({ runUITest }) => {

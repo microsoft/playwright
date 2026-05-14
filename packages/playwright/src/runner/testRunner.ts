@@ -69,6 +69,7 @@ export type RunTestsParams = {
   testIds?: string[];
   headed?: boolean;
   workers?: number | string;
+  maxFailures?: number;
   updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
   updateSourceMethod?: 'overwrite' | 'patch' | '3way';
   reporters?: string[],
@@ -309,6 +310,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),
       ...(params.workers ? { workers: params.workers } : {}),
+      ...(params.maxFailures ? { maxFailures: params.maxFailures } : {}),
     };
 
     const config = await this._loadConfigOrReportError(new InternalReporter([userReporter]), overrides);
