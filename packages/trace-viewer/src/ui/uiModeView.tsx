@@ -130,6 +130,7 @@ export const UIModeView: React.FC<{}> = ({
   const [singleWorker, setSingleWorker] = useSetting<boolean>('single-worker', false);
   const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
   const [onlyChanged, setOnlyChanged] = useSetting<boolean>('only-changed', false);
+  const [stopOnFailure, setStopOnFailure] = useSetting<boolean>('stop-on-failure', false);
   const [mergeFiles] = useSetting('mergeFiles', false);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -265,6 +266,12 @@ export const UIModeView: React.FC<{}> = ({
     else if (!testModel)
       setProgress(undefined);
   }, [testModel, isRunningTest]);
+
+  // Stop on first failure.
+  React.useEffect(() => {
+    if (isRunningTest && stopOnFailure && progress?.failed)
+      testServerConnection?.stopTestsNoReply({});
+  }, [isRunningTest, stopOnFailure, progress?.failed, testServerConnection]);
 
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
@@ -547,6 +554,7 @@ export const UIModeView: React.FC<{}> = ({
         </Toolbar>
         {testingOptionsVisible && <SettingsView settings={[
           { type: 'check', value: singleWorker, set: setSingleWorker, name: 'Single worker' },
+          { type: 'check', value: stopOnFailure, set: setStopOnFailure, name: 'Stop on first failure' },
           { type: 'select', options: [
             { label: 'All', value: 'all' },
             { label: 'Changed', value: 'changed' },
