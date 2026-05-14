@@ -32,6 +32,7 @@ import { PipeTransport } from './pipeTransport';
 import { isProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import { SocksUpstreamAuthProxy, needsSocksAuthInterception } from './socksProxyAuthInterceptor';
 import { WebSocketTransport } from './transport';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
@@ -69,25 +70,44 @@ export abstract class BrowserType extends SdkObject {
     const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
     if (seleniumHubUrl)
       return this.launchWithSeleniumHub(progress, seleniumHubUrl, options);
-    return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupLog(e); });
+    let socksAuthProxy: SocksUpstreamAuthProxy | undefined;
+    if (needsSocksAuthInterception(options.proxy)) {
+      socksAuthProxy = await SocksUpstreamAuthProxy.create(progress, options.proxy!);
+      options = { ...options };
+      options.proxyOverride = socksAuthProxy.proxySettings();
+    }
+    try {
+      const browser = await this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupLog(e); });
+      browser._socksAuthProxy = socksAuthProxy;
+      return browser;
+    } catch (error) {
+      await socksAuthProxy?.close().catch(() => {});
+      throw error;
+    }
   }
 
   async launchPersistentContext(progress: Progress, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { internalIgnoreHTTPSErrors?: boolean, socksProxyPort?: number }): Promise<BrowserContext> {
     const launchOptions = this._validateLaunchOptions(options);
     // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
     let clientCertificatesProxy: ClientCertificatesProxy | undefined;
+    let socksAuthProxy: SocksUpstreamAuthProxy | undefined;
     if (options.clientCertificates?.length) {
       clientCertificatesProxy = await ClientCertificatesProxy.create(progress, options);
       launchOptions.proxyOverride = clientCertificatesProxy.proxySettings();
       options = { ...options };
       options.internalIgnoreHTTPSErrors = true;
+    } else if (needsSocksAuthInterception(options.proxy)) {
+      socksAuthProxy = await SocksUpstreamAuthProxy.create(progress, options.proxy!);
+      launchOptions.proxyOverride = socksAuthProxy.proxySettings();
     }
     try {
       const browser = await this._innerLaunchWithRetries(progress, launchOptions, options, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
       browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
+      browser._defaultContext!._socksAuthProxy = socksAuthProxy;
       return browser._defaultContext!;
     } catch (error) {
       await clientCertificatesProxy?.close().catch(() => {});
+      await socksAuthProxy?.close().catch(() => {});
       throw error;
     }
   }

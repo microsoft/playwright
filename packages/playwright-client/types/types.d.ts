@@ -10368,12 +10368,12 @@ export interface Browser {
       bypass?: string;
 
       /**
-       * Optional username to use if HTTP proxy requires authentication.
+       * Optional username to use if HTTP or SOCKS5 proxy requires authentication.
        */
       username?: string;
 
       /**
-       * Optional password to use if HTTP proxy requires authentication.
+       * Optional password to use if HTTP or SOCKS5 proxy requires authentication.
        */
       password?: string;
     };
@@ -15769,12 +15769,12 @@ export interface BrowserType<Unused = {}> {
       bypass?: string;
 
       /**
-       * Optional username to use if HTTP proxy requires authentication.
+       * Optional username to use if HTTP or SOCKS5 proxy requires authentication.
        */
       username?: string;
 
       /**
-       * Optional password to use if HTTP proxy requires authentication.
+       * Optional password to use if HTTP or SOCKS5 proxy requires authentication.
        */
       password?: string;
     };
@@ -16107,12 +16107,12 @@ export interface BrowserType<Unused = {}> {
       bypass?: string;
 
       /**
-       * Optional username to use if HTTP proxy requires authentication.
+       * Optional username to use if HTTP or SOCKS5 proxy requires authentication.
        */
       username?: string;
 
       /**
-       * Optional password to use if HTTP proxy requires authentication.
+       * Optional password to use if HTTP or SOCKS5 proxy requires authentication.
        */
       password?: string;
     };
@@ -17852,12 +17852,12 @@ export interface APIRequest {
       bypass?: string;
 
       /**
-       * Optional username to use if HTTP proxy requires authentication.
+       * Optional username to use if HTTP or SOCKS5 proxy requires authentication.
        */
       username?: string;
 
       /**
-       * Optional password to use if HTTP proxy requires authentication.
+       * Optional password to use if HTTP or SOCKS5 proxy requires authentication.
        */
       password?: string;
     };
@@ -22739,12 +22739,12 @@ export interface AndroidDevice {
       bypass?: string;
 
       /**
-       * Optional username to use if HTTP proxy requires authentication.
+       * Optional username to use if HTTP or SOCKS5 proxy requires authentication.
        */
       username?: string;
 
       /**
-       * Optional password to use if HTTP proxy requires authentication.
+       * Optional password to use if HTTP or SOCKS5 proxy requires authentication.
        */
       password?: string;
     };
@@ -23502,12 +23502,12 @@ export interface LaunchOptions {
     bypass?: string;
 
     /**
-     * Optional username to use if HTTP proxy requires authentication.
+     * Optional username to use if HTTP or SOCKS5 proxy requires authentication.
      */
     username?: string;
 
     /**
-     * Optional password to use if HTTP proxy requires authentication.
+     * Optional password to use if HTTP or SOCKS5 proxy requires authentication.
      */
     password?: string;
   };
@@ -23919,12 +23919,12 @@ export interface BrowserContextOptions {
     bypass?: string;
 
     /**
-     * Optional username to use if HTTP proxy requires authentication.
+     * Optional username to use if HTTP or SOCKS5 proxy requires authentication.
      */
     username?: string;
 
     /**
-     * Optional password to use if HTTP proxy requires authentication.
+     * Optional password to use if HTTP or SOCKS5 proxy requires authentication.
      */
     password?: string;
   };

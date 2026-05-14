@@ -41,6 +41,7 @@ import type * as frames from './frames';
 import type { PageError } from './page';
 import type { Progress } from './progress';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import type { SocksUpstreamAuthProxy } from './socksProxyAuthInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
@@ -111,6 +112,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   _closeReason: string | undefined;
   readonly clock: Clock;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
+  _socksAuthProxy: SocksUpstreamAuthProxy | undefined;
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
   private _consoleApiExposed = false;
@@ -259,6 +261,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       return;
     }
     this._clientCertificatesProxy?.close().catch(() => {});
+    this._socksAuthProxy?.close().catch(() => {});
     this.tracing.abort();
     if (this._isPersistentContext)
       this.onClosePersistent();
@@ -785,8 +788,6 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
   }
   if (url.protocol === 'socks4:' && (proxy.username || proxy.password))
     throw new Error(`Socks4 proxy protocol does not support authentication`);
-  if (url.protocol === 'socks5:' && (proxy.username || proxy.password))
-    throw new Error(`Browser does not support socks5 proxy authentication`);
   server = url.protocol + '//' + url.host;
   if (bypass)
     bypass = bypass.split(',').map(t => t.trim()).join(',');

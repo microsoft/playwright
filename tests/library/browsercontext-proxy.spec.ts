@@ -15,6 +15,7 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
+import { setupAuthSocksForwardingServer } from '../config/proxy';
 
 it.skip(({ mode }) => mode.startsWith('service'));
 
@@ -248,11 +249,47 @@ it('should work with IP:PORT notion', async ({ contextFactory, server, proxyServ
   await context.close();
 });
 
-it('should throw for socks5 authentication', async ({ contextFactory }) => {
-  const error = await contextFactory({
-    proxy: { server: `socks5://localhost:1234`, username: 'user', password: 'secret' }
-  }).catch(e => e);
-  expect(error.message).toContain('Browser does not support socks5 proxy authentication');
+it('should authenticate with socks5 proxy', async ({ contextFactory, server }) => {
+  const { proxyServerAddr, closeProxyServer, authAttempts } = await setupAuthSocksForwardingServer({
+    port: it.info().workerIndex + 2048 + 20,
+    forwardPort: server.PORT,
+    allowedTargetPort: 1337,
+    username: 'user',
+    password: 'secret',
+  });
+  try {
+    const context = await contextFactory({
+      proxy: { server: proxyServerAddr, username: 'user', password: 'secret' }
+    });
+    const page = await context.newPage();
+    await page.goto('http://fake-localhost-127-0-0-1.nip.io:1337/target.html');
+    expect(await page.title()).toBe('Served by the proxy');
+    expect(authAttempts).toContainEqual({ username: 'user', password: 'secret' });
+    await context.close();
+  } finally {
+    await closeProxyServer();
+  }
+});
+
+it('should fail with wrong socks5 credentials', async ({ contextFactory, server, browserName }) => {
+  const { proxyServerAddr, closeProxyServer } = await setupAuthSocksForwardingServer({
+    port: it.info().workerIndex + 2048 + 21,
+    forwardPort: server.PORT,
+    allowedTargetPort: 1337,
+    username: 'user',
+    password: 'secret',
+  });
+  try {
+    const context = await contextFactory({
+      proxy: { server: proxyServerAddr, username: 'user', password: 'WRONG' }
+    });
+    const page = await context.newPage();
+    const error = await page.goto('http://fake-localhost-127-0-0-1.nip.io:1337/target.html').catch(e => e);
+    expect(error).toBeInstanceOf(Error);
+    await context.close();
+  } finally {
+    await closeProxyServer();
+  }
 });
 
 it('should throw for socks4 authentication', async ({ contextFactory }) => {

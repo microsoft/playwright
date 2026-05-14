@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { setupSocksForwardingServer } from '../config/proxy';
+import { setupAuthSocksForwardingServer, setupSocksForwardingServer } from '../config/proxy';
 import { playwrightTest as it, expect } from '../config/browserTest';
 import net from 'net';
 
@@ -329,6 +329,31 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
   expect(requestText).toContain('MyUserAgent');
 });
 
+
+it('should authenticate with SOCKS5 proxy at launch', async ({ browserType, server }) => {
+  const { proxyServerAddr, closeProxyServer, authAttempts } = await setupAuthSocksForwardingServer({
+    port: it.info().workerIndex + 2048 + 4,
+    forwardPort: server.PORT,
+    allowedTargetPort: 1337,
+    username: 'user',
+    password: 'secret',
+  });
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  const browser = await browserType.launch({
+    proxy: { server: proxyServerAddr, username: 'user', password: 'secret' }
+  });
+  try {
+    const page = await browser.newPage();
+    await page.goto('http://fake-localhost-127-0-0-1.nip.io:1337/target.html');
+    expect(await page.title()).toBe('Served by the proxy');
+    expect(authAttempts).toContainEqual({ username: 'user', password: 'secret' });
+  } finally {
+    await browser.close();
+    await closeProxyServer();
+  }
+});
 
 it('should use SOCKS proxy for websocket requests', async ({ browserType, server }) => {
   const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer({

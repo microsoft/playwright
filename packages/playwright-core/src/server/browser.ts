@@ -23,6 +23,7 @@ import { Download } from './download';
 import { SdkObject } from './instrumentation';
 import { Page } from './page';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import { SocksUpstreamAuthProxy, needsSocksAuthInterception } from './socksProxyAuthInterceptor';
 import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
 import { BrowserInfo, serverRegistry } from '../serverRegistry';
@@ -80,6 +81,7 @@ export abstract class Browser extends SdkObject {
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
   _closeReason: string | undefined;
   _isCollocatedWithServer: boolean = true;
+  _socksAuthProxy: SocksUpstreamAuthProxy | undefined;
   private _server: BrowserServer;
 
   constructor(parent: SdkObject, options: BrowserOptions) {
@@ -103,6 +105,7 @@ export abstract class Browser extends SdkObject {
   async newContext(progress: Progress, options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     let clientCertificatesProxy: ClientCertificatesProxy | undefined;
+    let socksAuthProxy: SocksUpstreamAuthProxy | undefined;
     let context: BrowserContext | undefined;
     try {
       if (options.clientCertificates?.length) {
@@ -110,9 +113,16 @@ export abstract class Browser extends SdkObject {
         options = { ...options };
         options.proxyOverride = clientCertificatesProxy.proxySettings();
         options.internalIgnoreHTTPSErrors = true;
+      } else if (needsSocksAuthInterception(options.proxy)) {
+        // Browsers do not support RFC 1929; we front the authenticated upstream with a local
+        // unauthenticated SOCKS5 server and forward connections through.
+        socksAuthProxy = await SocksUpstreamAuthProxy.create(progress, options.proxy!);
+        options = { ...options };
+        options.proxyOverride = socksAuthProxy.proxySettings();
       }
       context = await progress.race(this.doCreateNewContext(options));
       context._clientCertificatesProxy = clientCertificatesProxy;
+      context._socksAuthProxy = socksAuthProxy;
       if ((options as any).__testHookBeforeSetStorageState)
         await progress.race((options as any).__testHookBeforeSetStorageState());
       await context.setStorageState(progress, options.storageState, 'initial');
@@ -121,6 +131,7 @@ export abstract class Browser extends SdkObject {
     } catch (error) {
       await context?.close(progress, { reason: 'Failed to create context' }).catch(() => {});
       await clientCertificatesProxy?.close().catch(() => {});
+      await socksAuthProxy?.close().catch(() => {});
       throw error;
     }
   }
@@ -174,6 +185,7 @@ export abstract class Browser extends SdkObject {
       context.browserClosed();
     if (this._defaultContext)
       this._defaultContext.browserClosed();
+    this._socksAuthProxy?.close().catch(() => {});
     this.stopServer(nullProgress).catch(() => {});
     this.emit(Browser.Events.Disconnected);
     this.instrumentation.onBrowserClose(this);

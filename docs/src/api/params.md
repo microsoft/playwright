@@ -259,8 +259,8 @@ Dangerous option; use with care. Defaults to `false`.
     proxy.
   - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org,
     .domain.com"`.
-  - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
+  - `username` ?<[string]> Optional username to use if HTTP or SOCKS5 proxy requires authentication.
+  - `password` ?<[string]> Optional password to use if HTTP or SOCKS5 proxy requires authentication.
 
 Network proxy settings.
 
@@ -857,8 +857,8 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
   - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-  - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
+  - `username` ?<[string]> Optional username to use if HTTP or SOCKS5 proxy requires authentication.
+  - `password` ?<[string]> Optional password to use if HTTP or SOCKS5 proxy requires authentication.
 
 Network proxy settings to use with this context. Defaults to none.
 

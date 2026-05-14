@@ -127,6 +127,10 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
     return;
 
   const proxyURL = normalizeProxyURL(proxy.server);
+  if (proxy.username) {
+    proxyURL.username = encodeURIComponent(proxy.username);
+    proxyURL.password = encodeURIComponent(proxy.password || '');
+  }
   if (proxyURL.protocol?.startsWith('socks')) {
     // SocksProxyAgent distinguishes between socks5 and socks5h.
     // socks5h is what we want, it means that hostnames are resolved by the proxy.
@@ -137,10 +141,6 @@ export function createProxyAgent(proxy?: ProxySettings, forUrl?: URL) {
       proxyURL.protocol = 'socks4a:';
 
     return new SocksProxyAgent(proxyURL);
-  }
-  if (proxy.username) {
-    proxyURL.username = proxy.username;
-    proxyURL.password = proxy.password || '';
   }
 
   if (forUrl && ['ws:', 'wss:'].includes(forUrl.protocol)) {

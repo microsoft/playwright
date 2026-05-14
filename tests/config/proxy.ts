@@ -139,6 +139,138 @@ export class TestProxy {
   }
 }
 
+export async function setupAuthSocksForwardingServer({
+  port, forwardPort, allowedTargetPort, username, password,
+}: {
+  port: number, forwardPort: number, allowedTargetPort: number, username: string, password: string,
+}) {
+  // Hand-rolled SOCKS5 server (RFC 1928) that requires RFC 1929 username/password auth.
+  // Used only by tests; the production code path runs a separate local server in front of an authenticated upstream.
+  const authAttempts: { username: string, password: string }[] = [];
+  const sockets = new Set<net.Socket>();
+
+  const server = net.createServer(socket => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+    socket.on('error', () => {});
+
+    let buffer = Buffer.alloc(0);
+    let state: 'greeting' | 'auth' | 'request' | 'tunnel' = 'greeting';
+    let target: net.Socket | undefined;
+
+    const tryRead = () => {
+      while (true) {
+        if (state === 'greeting') {
+          if (buffer.length < 2)
+            return;
+          const ver = buffer[0];
+          const nMethods = buffer[1];
+          if (buffer.length < 2 + nMethods)
+            return;
+          const methods = buffer.subarray(2, 2 + nMethods);
+          buffer = buffer.subarray(2 + nMethods);
+          if (ver !== 0x05 || !methods.includes(0x02)) {
+            socket.end(Buffer.from([0x05, 0xff])); // No acceptable methods.
+            return;
+          }
+          socket.write(Buffer.from([0x05, 0x02])); // Choose USERNAME/PASSWORD.
+          state = 'auth';
+        } else if (state === 'auth') {
+          if (buffer.length < 2)
+            return;
+          const ulen = buffer[1];
+          if (buffer.length < 2 + ulen + 1)
+            return;
+          const plen = buffer[2 + ulen];
+          if (buffer.length < 2 + ulen + 1 + plen)
+            return;
+          const u = buffer.subarray(2, 2 + ulen).toString();
+          const p = buffer.subarray(3 + ulen, 3 + ulen + plen).toString();
+          buffer = buffer.subarray(3 + ulen + plen);
+          authAttempts.push({ username: u, password: p });
+          if (u !== username || p !== password) {
+            socket.end(Buffer.from([0x01, 0x01])); // Auth failure.
+            return;
+          }
+          socket.write(Buffer.from([0x01, 0x00])); // Auth success.
+          state = 'request';
+        } else if (state === 'request') {
+          if (buffer.length < 4)
+            return;
+          const cmd = buffer[1];
+          const atyp = buffer[3];
+          let addrLen: number;
+          if (atyp === 0x01) {
+            addrLen = 4;
+          } else if (atyp === 0x03) {
+            if (buffer.length < 5)
+              return;
+            addrLen = buffer[4] + 1;
+          } else if (atyp === 0x04) {
+            addrLen = 16;
+          } else {
+            socket.end();
+            return;
+          }
+          if (buffer.length < 4 + addrLen + 2)
+            return;
+          let host: string;
+          if (atyp === 0x01)
+            host = Array.from(buffer.subarray(4, 8)).join('.');
+          else if (atyp === 0x03)
+            host = buffer.subarray(5, 5 + buffer[4]).toString();
+          else
+            host = 'ipv6';
+          const portStart = atyp === 0x03 ? 5 + buffer[4] : 4 + addrLen;
+          const targetPort = buffer.readUInt16BE(portStart);
+          buffer = buffer.subarray(portStart + 2);
+          if (cmd !== 0x01) {
+            socket.end(Buffer.from([0x05, 0x07, 0x00, 0x01, 0, 0, 0, 0, 0, 0]));
+            return;
+          }
+          if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io', 'localhost'].includes(host) || targetPort !== allowedTargetPort) {
+            socket.end(Buffer.from([0x05, 0x05, 0x00, 0x01, 0, 0, 0, 0, 0, 0])); // Connection refused.
+            return;
+          }
+          target = new net.Socket();
+          target.on('error', () => socket.destroy());
+          target.connect(forwardPort, '127.0.0.1', () => {
+            socket.write(Buffer.from([0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0])); // Success.
+            state = 'tunnel';
+            target!.pipe(socket);
+            socket.pipe(target!);
+            if (buffer.length) {
+              target!.write(buffer);
+              buffer = Buffer.alloc(0);
+            }
+          });
+          return;
+        } else {
+          return;
+        }
+      }
+    };
+
+    socket.on('data', data => {
+      if (state === 'tunnel')
+        return; // pipes handle data
+      buffer = Buffer.concat([buffer, data]);
+      tryRead();
+    });
+  });
+
+  await new Promise<void>(resolve => server.listen(port, '127.0.0.1', resolve));
+  return {
+    closeProxyServer: async () => {
+      for (const s of sockets)
+        s.destroy();
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    },
+    proxyServerAddr: `socks5://127.0.0.1:${port}`,
+    authAttempts,
+  };
+}
+
 export async function setupSocksForwardingServer({
   port, forwardPort, allowedTargetPort
 }: {
