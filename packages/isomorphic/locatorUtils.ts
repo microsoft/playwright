@@ -38,9 +38,12 @@ export function splitTestIdAttributeNames(testIdAttributeName: string): string[]
   return testIdAttributeName.split(',');
 }
 
+export function encodeTestIdAttributeName(testIdAttributeName: string): string {
+  return testIdAttributeName.includes(',') ? JSON.stringify(testIdAttributeName) : testIdAttributeName;
+}
+
 export function getByTestIdSelector(testIdAttributeName: string, testId: string | RegExp): string {
-  const name = testIdAttributeName.includes(',') ? JSON.stringify(testIdAttributeName) : testIdAttributeName;
-  return `internal:testid=[${name}=${escapeForAttributeSelector(testId, true)}]`;
+  return `internal:testid=[${encodeTestIdAttributeName(testIdAttributeName)}=${escapeForAttributeSelector(testId, true)}]`;
 }
 
 export function getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {
