@@ -67,8 +67,8 @@ jobs:
       run: |
         docker exec --workdir /root/playwright fedora-tests bash -c '
           set -euo pipefail
-          node packages/playwright-core/cli.js install chromium firefox webkit ffmpeg
-          node packages/playwright-core/cli.js install-deps chromium firefox webkit
+          node packages/playwright-core/cli.js install
+          node packages/playwright-core/cli.js install-deps
         '
     - name: Run @smoke tests inside Fedora
       run: |
