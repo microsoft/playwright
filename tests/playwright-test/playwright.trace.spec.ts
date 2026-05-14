@@ -386,7 +386,7 @@ test('should respect --trace', async ({ runInlineTest }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
 });
 
-for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries', 'retain-on-first-failure', 'retain-on-failure-and-retries']) {
+for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries', 'retain-on-first-failure', 'retain-on-failure-and-retries', 'retain-all-failures']) {
   test(`trace:${mode} should not create trace zip artifact if page test passed`, async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.spec.ts': `
@@ -1186,6 +1186,48 @@ test('trace:retain-on-failure-and-retries should keep all traces when test fails
       });
     `,
   }, { trace: 'retain-on-failure-and-retries', retries: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const firstRunTracePath = testInfo.outputPath('test-results', 'a-fail', 'trace.zip');
+  expect(fs.existsSync(firstRunTracePath)).toBeTruthy();
+  const retryTracePath = testInfo.outputPath('test-results', 'a-fail-retry1', 'trace.zip');
+  expect(fs.existsSync(retryTracePath)).toBeTruthy();
+});
+
+test('trace:retain-all-failures should keep traces only for failed attempts when test is flaky', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('flaky', async ({ page }) => {
+        await page.goto('about:blank');
+        expect(test.info().retry).toBe(2);
+      });
+    `,
+  }, { trace: 'retain-all-failures', retries: 2 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+
+  const firstRunTracePath = testInfo.outputPath('test-results', 'a-flaky', 'trace.zip');
+  expect(fs.existsSync(firstRunTracePath)).toBeTruthy();
+  const retry1TracePath = testInfo.outputPath('test-results', 'a-flaky-retry1', 'trace.zip');
+  expect(fs.existsSync(retry1TracePath)).toBeTruthy();
+  const retry2TracePath = testInfo.outputPath('test-results', 'a-flaky-retry2', 'trace.zip');
+  expect(fs.existsSync(retry2TracePath)).toBeFalsy();
+});
+
+test('trace:retain-all-failures should keep all traces when test fails on every attempt', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.goto('about:blank');
+        expect(true).toBe(false);
+      });
+    `,
+  }, { trace: 'retain-all-failures', retries: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);

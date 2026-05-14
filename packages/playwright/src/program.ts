@@ -175,7 +175,7 @@ function addInitAgentsCommand(program: Command) {
   });
 }
 
-const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure', 'retain-on-failure-and-retries'];
+const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure', 'retain-on-failure-and-retries', 'retain-all-failures'];
 
 // Note: update docs/src/test-cli-js.md when you update this, program is the source of truth.
 
