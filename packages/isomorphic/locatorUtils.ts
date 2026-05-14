@@ -33,16 +33,14 @@ function getByAttributeTextSelector(attrName: string, text: string | RegExp, opt
   return `internal:attr=[${attrName}=${escapeForAttributeSelector(text, options?.exact || false)}]`;
 }
 
-// Multiple test id attribute names are joined with a comma. Attribute names cannot contain commas.
-export const testIdAttributeNameSeparator = ',';
-
+// Multiple test id attribute names can be joined with a comma. Attribute names cannot contain commas.
 export function splitTestIdAttributeNames(testIdAttributeName: string): string[] {
-  return testIdAttributeName.split(testIdAttributeNameSeparator);
+  return testIdAttributeName.split(',');
 }
 
 export function getByTestIdSelector(testIdAttributeName: string, testId: string | RegExp): string {
-  const escapedTestId = escapeForAttributeSelector(testId, true);
-  return `internal:testid=${splitTestIdAttributeNames(testIdAttributeName).map(name => `[${name}=${escapedTestId}]`).join('')}`;
+  const name = testIdAttributeName.includes(',') ? JSON.stringify(testIdAttributeName) : testIdAttributeName;
+  return `internal:testid=[${name}=${escapeForAttributeSelector(testId, true)}]`;
 }
 
 export function getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {

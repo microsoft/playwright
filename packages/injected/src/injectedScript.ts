@@ -16,6 +16,7 @@
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 import { asLocator } from '@isomorphic/locatorGenerators';
+import { splitTestIdAttributeNames } from '@isomorphic/locatorUtils';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
@@ -501,13 +502,14 @@ export class InjectedScript {
   private _createTestIdEngine(): SelectorEngine {
     const queryAll = (root: SelectorRoot, selector: string): Element[] => {
       const parsed = parseAttributeSelector(selector, true);
-      if (parsed.name || !parsed.attributes.length)
+      if (parsed.name || parsed.attributes.length !== 1)
         throw new Error('Malformed test id selector: ' + selector);
-      const matchers = parsed.attributes.map(a => ({ name: a.name, matcher: createAttributeMatcher(a) }));
-      const cssQuery = matchers.map(m => `[${m.name}]`).join(',');
+      const names = splitTestIdAttributeNames(parsed.attributes[0].name);
+      const matcher = createAttributeMatcher(parsed.attributes[0]);
+      const cssQuery = names.map(n => `[${n}]`).join(',');
       const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, cssQuery);
-      return elements.filter(e => matchers.some(({ name, matcher }) => {
-        const actual = e.getAttribute(name);
+      return elements.filter(e => names.some(n => {
+        const actual = e.getAttribute(n);
         return actual !== null && matcher(actual);
       }));
     };

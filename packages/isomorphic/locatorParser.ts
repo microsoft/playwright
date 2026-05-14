@@ -15,7 +15,6 @@
  */
 
 import { asLocators } from './locatorGenerators';
-import { splitTestIdAttributeNames } from './locatorUtils';
 import { parseSelector } from './selectorParser';
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
@@ -166,7 +165,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
       .replace(/getbylabel\(([^)]+)\)/g, 'internal:label=$1')
-      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=${splitTestIdAttributeNames(testIdAttributeName).map(n => `[${n}=$1]`).join('')}`)
+      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${testIdAttributeName.includes(',') ? JSON.stringify(testIdAttributeName) : testIdAttributeName}=$1]`)
       .replace(/getby(placeholder|alt|title)(?:text)?\(([^)]+)\)/g, 'internal:attr=[$1=$2]')
       .replace(/first(\(\))?/g, 'nth=0')
       .replace(/last(\(\))?/g, 'nth=-1')
