@@ -789,7 +789,7 @@ test('should throw on invalid --tsconfig', async ({ runInlineTest }) => {
   expect(result.output).toContain(`--tsconfig "does-not-exist.json" does not exist`);
 });
 
-test('should expose CLI args after -- as config.cliArgs', async ({ runInlineTest }) => {
+test('should expose CLI args after -- as config.cliArgs and not affect built-in flag parsing', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {};
@@ -797,10 +797,11 @@ test('should expose CLI args after -- as config.cliArgs', async ({ runInlineTest
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
+        expect(testInfo.timeout).toBe(7777);
         expect(testInfo.config.cliArgs).toEqual(['--build-path=/foo', '--env=staging', 'positional']);
       });
     `
-  }, {}, {}, { additionalArgs: ['--', '--build-path=/foo', '--env=staging', 'positional'] });
+  }, { timeout: '7777' }, {}, { additionalArgs: ['--', '--build-path=/foo', '--env=staging', 'positional'] });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
@@ -853,22 +854,4 @@ test('config.cliArgs should be visible in globalSetup and reporter', async ({ ru
   expect(result.exitCode).toBe(0);
   expect(result.output).toContain(`GLOBAL_SETUP_CLI_ARGS=["--build-path=/foo"]`);
   expect(result.output).toContain(`REPORTER_CLI_ARGS=["--build-path=/foo"]`);
-});
-
-test('built-in flags before -- should still be parsed normally', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {};
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({}, testInfo) => {
-        expect(testInfo.timeout).toBe(7777);
-        expect(testInfo.config.cliArgs).toEqual(['--unknown=value']);
-      });
-    `
-  }, { timeout: '7777' }, {}, { additionalArgs: ['--', '--unknown=value'] });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
 });

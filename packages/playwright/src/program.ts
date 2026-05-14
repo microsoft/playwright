@@ -29,9 +29,6 @@ import { TestServerBackend, testServerBackendTools } from './mcp/test/testBacken
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 import { packageJSON } from './package';
 
-// `argvForCommander` is process.argv with the `--` separator and everything
-// after it stripped; cli.js entry points pass it to `program.parse` so that
-// custom user args don't conflict with commander's flag validation.
 export { program, argvForCommander };
 
 import type { TraceMode } from '../types/test';

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-// Custom command-line arguments: anything after `--` on the command line is
-// captured here verbatim and surfaced as FullConfig.cliArgs. We strip these
-// from the argv passed to commander so that built-in flag validation is
-// unaffected and so that post-`--` items are not interpreted as test filters.
-const _dashDashIndex = process.argv.indexOf('--');
-export const cliArgs: string[] = _dashDashIndex >= 0 ? process.argv.slice(_dashDashIndex + 1) : [];
-export const argvForCommander: string[] = _dashDashIndex >= 0 ? process.argv.slice(0, _dashDashIndex) : process.argv;
+// Strip `--` and anything after it before commander parses, so user-supplied
+// args are not validated as flags or treated as test filters.
+const dashDashIndex = process.argv.indexOf('--');
+export const cliArgs: string[] = dashDashIndex >= 0 ? process.argv.slice(dashDashIndex + 1) : [];
+export const argvForCommander: string[] = dashDashIndex >= 0 ? process.argv.slice(0, dashDashIndex) : process.argv;
