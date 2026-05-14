@@ -34,6 +34,7 @@ import { FileChooser } from './fileChooser';
 import { Frame, verifyLoadState } from './frame';
 import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
+import { WebStorage } from './webStorage';
 import { assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { Request, Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
@@ -97,6 +98,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly touchscreen: Touchscreen;
   readonly clock: Clock;
   readonly screencast: Screencast;
+  readonly localStorage: WebStorage;
+  readonly sessionStorage: WebStorage;
 
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -128,6 +131,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.request = this._browserContext.request;
     this.touchscreen = new Touchscreen(this);
     this.clock = this._browserContext.clock;
+    this.localStorage = new WebStorage(this, 'local');
+    this.sessionStorage = new WebStorage(this, 'session');
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;

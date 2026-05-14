@@ -4034,6 +4034,11 @@ export interface PageChannel extends PageEventTarget, Channel {
   screencastStop(params?: PageScreencastStopParams, progress?: Progress): Promise<PageScreencastStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
   setDockTile(params: PageSetDockTileParams, progress?: Progress): Promise<PageSetDockTileResult>;
+  webStorageItems(params: PageWebStorageItemsParams, progress?: Progress): Promise<PageWebStorageItemsResult>;
+  webStorageGetItem(params: PageWebStorageGetItemParams, progress?: Progress): Promise<PageWebStorageGetItemResult>;
+  webStorageSetItem(params: PageWebStorageSetItemParams, progress?: Progress): Promise<PageWebStorageSetItemResult>;
+  webStorageRemoveItem(params: PageWebStorageRemoveItemParams, progress?: Progress): Promise<PageWebStorageRemoveItemResult>;
+  webStorageClear(params: PageWebStorageClearParams, progress?: Progress): Promise<PageWebStorageClearResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -4639,6 +4644,49 @@ export type PageSetDockTileOptions = {
 
 };
 export type PageSetDockTileResult = void;
+export type PageWebStorageItemsParams = {
+  kind: 'local' | 'session',
+};
+export type PageWebStorageItemsOptions = {
+
+};
+export type PageWebStorageItemsResult = {
+  items: NameValue[],
+};
+export type PageWebStorageGetItemParams = {
+  kind: 'local' | 'session',
+  name: string,
+};
+export type PageWebStorageGetItemOptions = {
+
+};
+export type PageWebStorageGetItemResult = {
+  value?: string,
+};
+export type PageWebStorageSetItemParams = {
+  kind: 'local' | 'session',
+  name: string,
+  value: string,
+};
+export type PageWebStorageSetItemOptions = {
+
+};
+export type PageWebStorageSetItemResult = void;
+export type PageWebStorageRemoveItemParams = {
+  kind: 'local' | 'session',
+  name: string,
+};
+export type PageWebStorageRemoveItemOptions = {
+
+};
+export type PageWebStorageRemoveItemResult = void;
+export type PageWebStorageClearParams = {
+  kind: 'local' | 'session',
+};
+export type PageWebStorageClearOptions = {
+
+};
+export type PageWebStorageClearResult = void;
 
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;

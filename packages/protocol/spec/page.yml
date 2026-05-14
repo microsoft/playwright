@@ -607,6 +607,66 @@ Page:
       parameters:
         image: binary
 
+    webStorageItems:
+      title: Get WebStorage items
+      group: getter
+      parameters:
+        kind:
+          type: enum
+          literals:
+          - local
+          - session
+      returns:
+        items:
+          type: array
+          items: NameValue
+
+    webStorageGetItem:
+      title: Get WebStorage item
+      group: getter
+      parameters:
+        kind:
+          type: enum
+          literals:
+          - local
+          - session
+        name: string
+      returns:
+        value: string?
+
+    webStorageSetItem:
+      title: Set WebStorage item
+      group: configuration
+      parameters:
+        kind:
+          type: enum
+          literals:
+          - local
+          - session
+        name: string
+        value: string
+
+    webStorageRemoveItem:
+      title: Remove WebStorage item
+      group: configuration
+      parameters:
+        kind:
+          type: enum
+          literals:
+          - local
+          - session
+        name: string
+
+    webStorageClear:
+      title: Clear WebStorage
+      group: configuration
+      parameters:
+        kind:
+          type: enum
+          literals:
+          - local
+          - session
+
   events:
 
     bindingCall:

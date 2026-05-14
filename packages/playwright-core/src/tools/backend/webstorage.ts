@@ -29,21 +29,13 @@ const localStorageList = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const items = await tab.page.evaluate(() => {
-      const result: { key: string; value: string }[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key !== null)
-          result.push({ key, value: localStorage.getItem(key) || '' });
-      }
-      return result;
-    });
+    const items = await tab.page.localStorage.items();
 
     if (items.length === 0)
       response.addTextResult('No localStorage items found');
     else
-      response.addTextResult(items.map(item => `${item.key}=${item.value}`).join('\n'));
-    response.addCode(`await page.evaluate(() => ({ ...localStorage }));`);
+      response.addTextResult(items.map(item => `${item.name}=${item.value}`).join('\n'));
+    response.addCode(`await page.localStorage.items();`);
   },
 });
 
@@ -61,13 +53,13 @@ const localStorageGet = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const value = await tab.page.evaluate(key => localStorage.getItem(key), params.key);
+    const value = await tab.page.localStorage.getItem(params.key);
 
     if (value === null)
       response.addTextResult(`localStorage key '${params.key}' not found`);
     else
       response.addTextResult(`${params.key}=${value}`);
-    response.addCode(`await page.evaluate(() => localStorage.getItem('${params.key}'));`);
+    response.addCode(`await page.localStorage.getItem('${params.key}');`);
   },
 });
 
@@ -86,8 +78,8 @@ const localStorageSet = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    await tab.page.evaluate(({ key, value }) => localStorage.setItem(key, value), params);
-    response.addCode(`await page.evaluate(() => localStorage.setItem('${params.key}', '${params.value}'));`);
+    await tab.page.localStorage.setItem(params.key, params.value);
+    response.addCode(`await page.localStorage.setItem('${params.key}', '${params.value}');`);
   },
 });
 
@@ -105,8 +97,8 @@ const localStorageDelete = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    await tab.page.evaluate(key => localStorage.removeItem(key), params.key);
-    response.addCode(`await page.evaluate(() => localStorage.removeItem('${params.key}'));`);
+    await tab.page.localStorage.removeItem(params.key);
+    response.addCode(`await page.localStorage.removeItem('${params.key}');`);
   },
 });
 
@@ -122,8 +114,8 @@ const localStorageClear = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    await tab.page.evaluate(() => localStorage.clear());
-    response.addCode(`await page.evaluate(() => localStorage.clear());`);
+    await tab.page.localStorage.clear();
+    response.addCode(`await page.localStorage.clear();`);
   },
 });
 
@@ -141,21 +133,13 @@ const sessionStorageList = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const items = await tab.page.evaluate(() => {
-      const result: { key: string; value: string }[] = [];
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
-        if (key !== null)
-          result.push({ key, value: sessionStorage.getItem(key) || '' });
-      }
-      return result;
-    });
+    const items = await tab.page.sessionStorage.items();
 
     if (items.length === 0)
       response.addTextResult('No sessionStorage items found');
     else
-      response.addTextResult(items.map(item => `${item.key}=${item.value}`).join('\n'));
-    response.addCode(`await page.evaluate(() => ({ ...sessionStorage }));`);
+      response.addTextResult(items.map(item => `${item.name}=${item.value}`).join('\n'));
+    response.addCode(`await page.sessionStorage.items();`);
   },
 });
 
@@ -173,13 +157,13 @@ const sessionStorageGet = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const value = await tab.page.evaluate(key => sessionStorage.getItem(key), params.key);
+    const value = await tab.page.sessionStorage.getItem(params.key);
 
     if (value === null)
       response.addTextResult(`sessionStorage key '${params.key}' not found`);
     else
       response.addTextResult(`${params.key}=${value}`);
-    response.addCode(`await page.evaluate(() => sessionStorage.getItem('${params.key}'));`);
+    response.addCode(`await page.sessionStorage.getItem('${params.key}');`);
   },
 });
 
@@ -198,8 +182,8 @@ const sessionStorageSet = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    await tab.page.evaluate(({ key, value }) => sessionStorage.setItem(key, value), params);
-    response.addCode(`await page.evaluate(() => sessionStorage.setItem('${params.key}', '${params.value}'));`);
+    await tab.page.sessionStorage.setItem(params.key, params.value);
+    response.addCode(`await page.sessionStorage.setItem('${params.key}', '${params.value}');`);
   },
 });
 
@@ -217,8 +201,8 @@ const sessionStorageDelete = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    await tab.page.evaluate(key => sessionStorage.removeItem(key), params.key);
-    response.addCode(`await page.evaluate(() => sessionStorage.removeItem('${params.key}'));`);
+    await tab.page.sessionStorage.removeItem(params.key);
+    response.addCode(`await page.sessionStorage.removeItem('${params.key}');`);
   },
 });
 
@@ -234,8 +218,8 @@ const sessionStorageClear = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    await tab.page.evaluate(() => sessionStorage.clear());
-    response.addCode(`await page.evaluate(() => sessionStorage.clear());`);
+    await tab.page.sessionStorage.clear();
+    response.addCode(`await page.sessionStorage.clear();`);
   },
 });
 

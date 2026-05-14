@@ -929,6 +929,36 @@ export class Page extends SdkObject<PageEventMap> {
   async setDockTile(image: Buffer) {
     await this.delegate.setDockTile(image);
   }
+
+  async webStorageItems(progress: Progress, kind: 'local' | 'session'): Promise<{ name: string, value: string }[]> {
+    const storage = `${kind}Storage`;
+    return await this.mainFrame().evaluateExpression(progress, `(() => {
+      const result = [];
+      for (let i = 0; i < ${storage}.length; i++) {
+        const name = ${storage}.key(i);
+        if (name !== null)
+          result.push({ name, value: ${storage}.getItem(name) ?? '' });
+      }
+      return result;
+    })()`, { world: 'utility' });
+  }
+
+  async webStorageGetItem(progress: Progress, kind: 'local' | 'session', name: string): Promise<string | undefined> {
+    const value = await this.mainFrame().evaluateExpression(progress, `${kind}Storage.getItem(${JSON.stringify(name)})`, { world: 'utility' });
+    return value === null ? undefined : value;
+  }
+
+  async webStorageSetItem(progress: Progress, kind: 'local' | 'session', name: string, value: string): Promise<void> {
+    await this.mainFrame().evaluateExpression(progress, `${kind}Storage.setItem(${JSON.stringify(name)}, ${JSON.stringify(value)})`, { world: 'utility' });
+  }
+
+  async webStorageRemoveItem(progress: Progress, kind: 'local' | 'session', name: string): Promise<void> {
+    await this.mainFrame().evaluateExpression(progress, `${kind}Storage.removeItem(${JSON.stringify(name)})`, { world: 'utility' });
+  }
+
+  async webStorageClear(progress: Progress, kind: 'local' | 'session'): Promise<void> {
+    await this.mainFrame().evaluateExpression(progress, `${kind}Storage.clear()`, { world: 'utility' });
+  }
 }
 
 export const WorkerEvent = {

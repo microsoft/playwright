@@ -2694,6 +2694,28 @@ Clears all stored console messages from this page. Subsequent calls to [`method:
 
 Clears all stored page errors from this page. Subsequent calls to [`method: Page.pageErrors`] will only return errors thrown after the clear.
 
+## property: Page.localStorage
+* since: v1.61
+- type: <[WebStorage]>
+
+Provides access to the page's `localStorage` for the current origin. See [WebStorage].
+
+```js
+await page.localStorage.setItem('token', 'abc');
+const token = await page.localStorage.getItem('token');
+```
+
+## property: Page.sessionStorage
+* since: v1.61
+- type: <[WebStorage]>
+
+Provides access to the page's `sessionStorage` for the current origin. See [WebStorage].
+
+```js
+await page.sessionStorage.setItem('flag', '1');
+const flag = await page.sessionStorage.getItem('flag');
+```
+
 ## async method: Page.consoleMessages
 * since: v1.56
 - returns: <[Array]<[ConsoleMessage]>>

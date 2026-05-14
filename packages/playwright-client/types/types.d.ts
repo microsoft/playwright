@@ -5244,6 +5244,18 @@ export interface Page {
 
   keyboard: Keyboard;
 
+  /**
+   * Provides access to the page's `localStorage` for the current origin. See
+   * [WebStorage](https://playwright.dev/docs/api/class-webstorage).
+   *
+   * ```js
+   * await page.localStorage.setItem('token', 'abc');
+   * const token = await page.localStorage.getItem('token');
+   * ```
+   *
+   */
+  localStorage: WebStorage;
+
   mouse: Mouse;
 
   /**
@@ -5271,6 +5283,18 @@ export interface Page {
    *
    */
   screencast: Screencast;
+
+  /**
+   * Provides access to the page's `sessionStorage` for the current origin. See
+   * [WebStorage](https://playwright.dev/docs/api/class-webstorage).
+   *
+   * ```js
+   * await page.sessionStorage.setItem('flag', '1');
+   * const flag = await page.sessionStorage.getItem('flag');
+   * ```
+   *
+   */
+  sessionStorage: WebStorage;
 
   touchscreen: Touchscreen;
 
@@ -21886,6 +21910,58 @@ export interface WebSocket {
    */
   waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: string) => boolean | Promise<boolean>, timeout?: number } | ((string: string) => boolean | Promise<boolean>)): Promise<string>;
 
+}
+
+/**
+ * WebStorage exposes the page's `localStorage` or `sessionStorage` for the current origin via an async,
+ * [browser-consistent](https://developer.mozilla.org/en-US/docs/Web/API/Storage) API.
+ *
+ * Instances are accessed through [page.localStorage](https://playwright.dev/docs/api/class-page#page-local-storage)
+ * and [page.sessionStorage](https://playwright.dev/docs/api/class-page#page-session-storage).
+ *
+ * ```js
+ * await page.goto('https://example.com');
+ * await page.localStorage.setItem('token', 'abc');
+ * const token = await page.localStorage.getItem('token');
+ * const all = await page.localStorage.items();
+ * await page.localStorage.removeItem('token');
+ * await page.localStorage.clear();
+ * ```
+ *
+ */
+export interface WebStorage {
+  /**
+   * Removes all items from the storage.
+   */
+  clear(): Promise<void>;
+
+  /**
+   * Returns the value for the given `name`, or `null` if the key is not present.
+   * @param name Name of the item to retrieve.
+   */
+  getItem(name: string): Promise<null|string>;
+
+  /**
+   * Returns all items in the storage as `name`/`value` pairs.
+   */
+  items(): Promise<Array<{
+    name: string;
+
+    value: string;
+  }>>;
+
+  /**
+   * Removes the item with the given `name`. No-op if the item is absent.
+   * @param name Name of the item to remove.
+   */
+  removeItem(name: string): Promise<void>;
+
+  /**
+   * Sets the value for the given `name`. Overwrites any existing value for that name.
+   * @param name Name of the item to set.
+   * @param value New value for the item.
+   */
+  setItem(name: string, value: string): Promise<void>;
 }
 
 /**

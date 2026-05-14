@@ -2631,6 +2631,34 @@ scheme.PageSetDockTileParams = tObject({
   image: tBinary,
 });
 scheme.PageSetDockTileResult = tOptional(tObject({}));
+scheme.PageWebStorageItemsParams = tObject({
+  kind: tEnum(['local', 'session']),
+});
+scheme.PageWebStorageItemsResult = tObject({
+  items: tArray(tType('NameValue')),
+});
+scheme.PageWebStorageGetItemParams = tObject({
+  kind: tEnum(['local', 'session']),
+  name: tString,
+});
+scheme.PageWebStorageGetItemResult = tObject({
+  value: tOptional(tString),
+});
+scheme.PageWebStorageSetItemParams = tObject({
+  kind: tEnum(['local', 'session']),
+  name: tString,
+  value: tString,
+});
+scheme.PageWebStorageSetItemResult = tOptional(tObject({}));
+scheme.PageWebStorageRemoveItemParams = tObject({
+  kind: tEnum(['local', 'session']),
+  name: tString,
+});
+scheme.PageWebStorageRemoveItemResult = tOptional(tObject({}));
+scheme.PageWebStorageClearParams = tObject({
+  kind: tEnum(['local', 'session']),
+});
+scheme.PageWebStorageClearResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
