@@ -57,7 +57,7 @@ export type UIState = {
   actionSelector?: string;
   ariaTemplate?: AriaTemplateNode;
   language: Language;
-  testIdAttributeName: string;
+  testIdAttributeName: string[];
   overlay: OverlayState;
 };
 

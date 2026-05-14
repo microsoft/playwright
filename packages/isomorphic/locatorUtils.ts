@@ -33,8 +33,9 @@ function getByAttributeTextSelector(attrName: string, text: string | RegExp, opt
   return `internal:attr=[${attrName}=${escapeForAttributeSelector(text, options?.exact || false)}]`;
 }
 
-export function getByTestIdSelector(testIdAttributeName: string, testId: string | RegExp): string {
-  return `internal:testid=[${testIdAttributeName}=${escapeForAttributeSelector(testId, true)}]`;
+export function getByTestIdSelector(testIdAttributeName: string[], testId: string | RegExp): string {
+  const escapedTestId = escapeForAttributeSelector(testId, true);
+  return `internal:testid=${testIdAttributeName.map(name => `[${name}=${escapedTestId}]`).join('')}`;
 }
 
 export function getByLabelSelector(text: string | RegExp, options?: { exact?: boolean }): string {

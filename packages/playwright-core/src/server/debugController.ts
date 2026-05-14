@@ -78,7 +78,7 @@ export class DebugController extends SdkObject {
     }
   }
 
-  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string, generateAutoExpect?: boolean }) {
+  async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string[], generateAutoExpect?: boolean }) {
     await this._closeBrowsersWithoutPages(progress);
     this._generateAutoExpect = !!params.generateAutoExpect;
 
@@ -116,7 +116,7 @@ export class DebugController extends SdkObject {
   async highlight(progress: Progress, params: { selector?: string, ariaTemplate?: string }) {
     // Assert parameters validity.
     if (params.selector)
-      unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, 'data-testid');
+      unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, ['data-testid']);
     const ariaTemplate = params.ariaTemplate ? parseAriaSnapshotUnsafe(yaml, params.ariaTemplate) : undefined;
     const promises = [];
     for (const recorder of await progress.race(this._allRecorders())) {

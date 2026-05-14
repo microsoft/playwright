@@ -221,7 +221,7 @@ test('should record custom data-testid', async ({ backend, connectedBrowser }) =
   await page.setContent(`<div data-custom-id='one'>One</div>`);
 
   // 2. "Record at cursor".
-  await backend.setRecorderMode({ mode: 'recording', testIdAttributeName: 'data-custom-id' });
+  await backend.setRecorderMode({ mode: 'recording', testIdAttributeName: ['data-custom-id'] });
 
   // 3. Record a click action.
   await page.locator('div').click();

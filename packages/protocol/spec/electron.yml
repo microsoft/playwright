@@ -81,7 +81,9 @@ Electron:
         selectorEngines:
           type: array?
           items: SelectorEngine
-        testIdAttributeName: string?
+        testIdAttributeName:
+          type: array?
+          items: string
 
       returns:
         electronApplication: ElectronApplication

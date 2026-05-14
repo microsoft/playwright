@@ -35,7 +35,7 @@ import type EventEmitter from 'events';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
-const version: trace.VERSION = 8;
+const version: trace.VERSION = 9;
 let traceOrdinal = 0;
 
 type TraceFixtureValue =  PlaywrightWorkerOptions['trace'] | undefined;

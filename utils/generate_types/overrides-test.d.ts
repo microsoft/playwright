@@ -294,7 +294,7 @@ export interface PlaywrightTestOptions {
   actionTimeout: number;
   navigationTimeout: number;
   serviceWorkers: ServiceWorkerPolicy;
-  testIdAttribute: string;
+  testIdAttribute: string | string[];
 }
 
 

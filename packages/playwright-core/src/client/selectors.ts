@@ -26,7 +26,7 @@ import type { Platform } from '@isomorphic/platform';
 export class Selectors implements api.Selectors {
   private _platform: Platform;
   private _selectorEngines: channels.SelectorEngine[] = [];
-  private _testIdAttributeName: string | undefined;
+  private _testIdAttributeName: string[] | undefined;
   readonly _contextsForSelectors = new Set<BrowserContext>();
 
   constructor(platform: Platform) {
@@ -44,12 +44,13 @@ export class Selectors implements api.Selectors {
     this._selectorEngines.push(selectorEngine);
   }
 
-  setTestIdAttribute(attributeName: string) {
-    this._testIdAttributeName = attributeName;
+  setTestIdAttribute(attributeName: string | string[]) {
+    const names = Array.isArray(attributeName) ? attributeName : [attributeName];
+    this._testIdAttributeName = names;
     setTestIdAttribute(attributeName);
     for (const context of this._contextsForSelectors) {
-      context._options.testIdAttributeName = attributeName;
-      context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
+      context._options.testIdAttributeName = names;
+      context._channel.setTestIdAttributeName({ testIdAttributeName: names }).catch(() => {});
     }
   }
 

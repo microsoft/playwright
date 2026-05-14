@@ -67,7 +67,7 @@ const kCSSFallbackScore = 10000000;
 const kScoreThresholdForTextExpect = 1000;
 
 export type GenerateSelectorOptions = {
-  testIdAttributeName: string;
+  testIdAttributeName: string[];
   omitInternalEngines?: boolean;
   root?: Element | Document;
   forTextExpect?: boolean;
@@ -235,7 +235,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
   // CSS selectors are applicable to elements via locator() and iframes via frameLocator().
   {
     for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
-      if (attr !== options.testIdAttributeName && element.getAttribute(attr))
+      if (!options.testIdAttributeName.includes(attr) && element.getAttribute(attr))
         candidates.push({ engine: 'css', selector: `[${attr}=${quoteCSSAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
     }
 
@@ -255,16 +255,20 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
     }
 
     // Locate by testId via CSS selector.
-    if (element.getAttribute(options.testIdAttributeName))
-      candidates.push({ engine: 'css', selector: `[${options.testIdAttributeName}=${quoteCSSAttributeValue(element.getAttribute(options.testIdAttributeName)!)}]`, score: kTestIdScore });
+    for (const testIdAttr of options.testIdAttributeName) {
+      if (element.getAttribute(testIdAttr))
+        candidates.push({ engine: 'css', selector: `[${testIdAttr}=${quoteCSSAttributeValue(element.getAttribute(testIdAttr)!)}]`, score: kTestIdScore });
+    }
 
     penalizeScoreForLength([candidates]);
     return candidates;
   }
 
   // Everything below is not applicable to iframes (getBy* methods).
-  if (element.getAttribute(options.testIdAttributeName))
-    candidates.push({ engine: 'internal:testid', selector: `[${options.testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(options.testIdAttributeName)!, true)}]`, score: kTestIdScore });
+  for (const testIdAttr of options.testIdAttributeName) {
+    if (element.getAttribute(testIdAttr))
+      candidates.push({ engine: 'internal:testid', selector: `[${testIdAttr}=${escapeForAttributeSelector(element.getAttribute(testIdAttr)!, true)}]`, score: kTestIdScore });
+  }
 
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;

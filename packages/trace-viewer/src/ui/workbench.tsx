@@ -381,7 +381,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
           action={activeAction}
           model={model}
           sdkLanguage={sdkLanguage}
-          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+          testIdAttributeName={model?.testIdAttributeName?.length ? model.testIdAttributeName : ['data-testid']}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           highlightedElement={highlightedElement}

@@ -255,7 +255,7 @@ export async function codegen(options: Options & { target: string, output?: stri
     device: options.device,
     saveStorage: options.saveStorage,
     mode: 'recording',
-    testIdAttributeName,
+    testIdAttributeName: testIdAttributeName ? [testIdAttributeName] : undefined,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
   });

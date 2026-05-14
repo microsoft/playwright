@@ -25,9 +25,9 @@ export class Selectors {
   private readonly _builtinEnginesInMainWorld: Set<string>;
   readonly _engines: Map<string, channels.SelectorEngine>;
   readonly guid = `selectors@${createGuid()}`;
-  private _testIdAttributeName: string;
+  private _testIdAttributeName: string[];
 
-  constructor(engines: channels.SelectorEngine[], testIdAttributeName: string | undefined) {
+  constructor(engines: channels.SelectorEngine[], testIdAttributeName: string[] | undefined) {
     // Note: keep in sync with InjectedScript class.
     this._builtinEngines = new Set([
       'css', 'css:light',
@@ -50,7 +50,9 @@ export class Selectors {
       '_react', '_vue',
     ]);
     this._engines = new Map();
-    this._testIdAttributeName = testIdAttributeName ?? 'data-testid';
+    this._testIdAttributeName = ['data-testid'];
+    if (testIdAttributeName)
+      this.setTestIdAttributeName(testIdAttributeName);
     for (const engine of engines)
       this.register(engine);
   }
@@ -66,12 +68,12 @@ export class Selectors {
     this._engines.set(engine.name, engine);
   }
 
-  testIdAttributeName(): string {
+  testIdAttributeName(): string[] {
     return this._testIdAttributeName;
   }
 
-  setTestIdAttributeName(testIdAttributeName: string) {
-    this._testIdAttributeName = testIdAttributeName;
+  setTestIdAttributeName(testIdAttributeName: string[]) {
+    this._testIdAttributeName = testIdAttributeName.length ? testIdAttributeName : ['data-testid'];
   }
 
   parseSelector(selector: string | ParsedSelector, strict: boolean) {
