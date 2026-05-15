@@ -609,14 +609,21 @@ test('should report error in YAML', async ({ page }) => {
     const error = await expect(page).toMatchAriaSnapshot(`
       heading "title"
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Aria snapshot must be a YAML sequence, elements starting with " -"`);
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "heading \\"title\\""
+Error: Aria snapshot must be a YAML sequence, elements starting with " -"
+`);
   }
 
   {
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading: a:
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Nested mappings are not allowed in compact mappings at line 1, column 12:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading: a:"
+Error: Nested mappings are not allowed in compact mappings at line 1, column 12:
 
 - heading: a:
            ^
@@ -631,7 +638,10 @@ test('should report error in YAML keys', async ({ page }) => {
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading "title
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated string:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading \\"title"
+Error: Unterminated string:
 
 heading "title
               ^
@@ -642,7 +652,10 @@ heading "title
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading /title
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated regex:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading /title"
+Error: Unterminated regex:
 
 heading /title
               ^
@@ -653,7 +666,10 @@ heading /title
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading [level=a]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading [level=a]"
+Error: Value of "level" attribute must be a number:
 
 heading [level=a]
                ^
@@ -664,7 +680,10 @@ heading [level=a]
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading [expanded=FALSE]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "expanded" attribute must be a boolean:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading [expanded=FALSE]"
+Error: Value of "expanded" attribute must be a boolean:
 
 heading [expanded=FALSE]
                   ^
@@ -675,7 +694,10 @@ heading [expanded=FALSE]
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading [checked=foo]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "checked" attribute must be a boolean or "mixed":
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading [checked=foo]"
+Error: Value of "checked" attribute must be a boolean or "mixed":
 
 heading [checked=foo]
                  ^
@@ -686,7 +708,10 @@ heading [checked=foo]
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading [level=]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading [level=]"
+Error: Value of "level" attribute must be a number:
 
 heading [level=]
                ^
@@ -697,7 +722,10 @@ heading [level=]
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading [bogus]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unsupported attribute [bogus]:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading [bogus]"
+Error: Unsupported attribute [bogus]:
 
 heading [bogus]
          ^
@@ -708,7 +736,10 @@ heading [bogus]
     const error = await expect(page).toMatchAriaSnapshot(`
       - heading invalid
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unexpected input:
+    expect.soft(stripAnsi(error.message)).toBe(`expect(page).toMatchAriaSnapshot(expected) failed
+
+Expected: "- heading invalid"
+Error: Unexpected input:
 
 heading invalid
         ^

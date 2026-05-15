@@ -48,7 +48,6 @@ import type { Builtins } from './utilityScript';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue' | 'timeout'> & {
   expectedValue?: any;
-  noAutoWaiting?: boolean;
 };
 
 export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';

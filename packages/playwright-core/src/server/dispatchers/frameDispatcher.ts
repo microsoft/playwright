@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import yaml from 'yaml';
-import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
-import { Frame } from '../frames';
+import { ExpectError, Frame } from '../frames';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
@@ -273,23 +270,15 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async expect(params: channels.FrameExpectParams, progress: Progress): Promise<channels.FrameExpectResult> {
-    let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
-    if (params.expression === 'to.match.aria' && expectedValue)
-      expectedValue = parseAriaSnapshotUnsafe(yaml, expectedValue);
-    progress.log(`${renderTitleForCall(progress.metadata)}${params.timeout ? ` with timeout ${params.timeout}ms` : ''}`);
-    const result = await this._frame.expect(progress, params.selector, { ...params, expectedValue });
-    const channelResult: channels.FrameExpectResult = {
-      matches: result.matches,
-      log: result.log,
-      timedOut: result.timedOut,
-      errorMessage: result.errorMessage,
-    };
-    if (result.received !== undefined) {
-      channelResult.received = {
-        value: result.received.value !== undefined ? serializeResult(result.received.value) : undefined,
-        ariaSnapshot: result.received.ariaSnapshot,
-      };
+    const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
+    try {
+      await this._frame.expect(progress, params.selector, { ...params, expectedValue });
+    } catch (e) {
+      // Without auto-serialization in validators, the received value must be
+      // serialized into a SerializedValue before it crosses the wire.
+      if (e instanceof ExpectError && e.details.received && 'value' in e.details.received)
+        e.details.received.value = serializeResult(e.details.received.value);
+      throw e;
     }
-    return channelResult;
   }
 }

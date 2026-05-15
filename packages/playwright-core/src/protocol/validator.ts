@@ -1658,15 +1658,14 @@ scheme.FrameExpectParams = tObject({
   isNot: tBoolean,
   timeout: tFloat,
 });
-scheme.FrameExpectResult = tObject({
-  matches: tBoolean,
+scheme.FrameExpectResult = tOptional(tObject({}));
+scheme.FrameExpectErrorDetails = tObject({
   received: tOptional(tObject({
     value: tOptional(tType('SerializedValue')),
     ariaSnapshot: tOptional(tString),
   })),
   timedOut: tOptional(tBoolean),
-  errorMessage: tOptional(tString),
-  log: tOptional(tArray(tString)),
+  customErrorMessage: tOptional(tString),
 });
 scheme.JSHandleInitializer = tObject({
   preview: tString,
@@ -2421,8 +2420,10 @@ scheme.PageExpectScreenshotParams = tObject({
   style: tOptional(tString),
 });
 scheme.PageExpectScreenshotResult = tObject({
+  actual: tOptional(tBinary),
+});
+scheme.PageExpectScreenshotErrorDetails = tObject({
   diff: tOptional(tBinary),
-  errorMessage: tOptional(tString),
   actual: tOptional(tBinary),
   previous: tOptional(tBinary),
   timedOut: tOptional(tBoolean),

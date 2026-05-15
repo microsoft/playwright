@@ -28,7 +28,7 @@ import { Coverage } from './coverage';
 import { DisposableObject, DisposableStub } from './disposable';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
-import { TargetClosedError, isTargetClosedError, parseError, serializeError } from './errors';
+import { PlaywrightError, TargetClosedError, isTargetClosedError, parseError, serializeError } from './errors';
 import { Events } from './events';
 import { FileChooser } from './fileChooser';
 import { Frame, verifyLoadState } from './frame';
@@ -627,12 +627,20 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       frame: (options.locator as Locator)._frame._channel,
       selector: (options.locator as Locator)._selector,
     } : undefined;
-    return await this._channel.expectScreenshot({
-      ...options,
-      isNot: !!options.isNot,
-      locator,
-      mask,
-    });
+    try {
+      const result = await this._channel.expectScreenshot({
+        ...options,
+        isNot: !!options.isNot,
+        locator,
+        mask,
+      });
+      return { actual: result.actual };
+    } catch (e) {
+      if (!(e instanceof PlaywrightError) || !e.details)
+        throw e;
+      const details = e.details as channels.PageExpectScreenshotErrorDetails;
+      return { ...details, errorMessage: e.message };
+    }
   }
 
   async title(): Promise<string> {

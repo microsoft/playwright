@@ -3030,15 +3030,14 @@ export type FrameExpectOptions = {
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
 };
-export type FrameExpectResult = {
-  matches: boolean,
+export type FrameExpectResult = void;
+export type FrameExpectErrorDetails = {
   received?: {
     value?: SerializedValue,
     ariaSnapshot?: string,
   },
   timedOut?: boolean,
-  errorMessage?: string,
-  log?: string[],
+  customErrorMessage?: string,
 };
 
 export interface FrameEvents {
@@ -4325,8 +4324,10 @@ export type PageExpectScreenshotOptions = {
   style?: string,
 };
 export type PageExpectScreenshotResult = {
+  actual?: Binary,
+};
+export type PageExpectScreenshotErrorDetails = {
   diff?: Binary,
-  errorMessage?: string,
   actual?: Binary,
   previous?: Binary,
   timedOut?: boolean,

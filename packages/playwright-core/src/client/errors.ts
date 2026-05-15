@@ -19,14 +19,23 @@ import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
 import type { SerializedError } from '@protocol/channels';
 
-export class TimeoutError extends Error {
+// Base class for errors that have crossed the wire. `log` is always populated
+// from the response; `details` is set by `Connection.dispatch` when the
+// response carries a `errorDetails` payload validated against the protocol's
+// `<Method>ErrorDetails` schema.
+export class PlaywrightError extends Error {
+  log: string[] = [];
+  details?: any;
+}
+
+export class TimeoutError extends PlaywrightError {
   constructor(message: string) {
     super(message);
     this.name = 'TimeoutError';
   }
 }
 
-export class TargetClosedError extends Error {
+export class TargetClosedError extends PlaywrightError {
   constructor(cause?: string) {
     super(cause || 'Target page, context or browser has been closed');
   }
@@ -42,24 +51,19 @@ export function serializeError(e: any): SerializedError {
   return { value: serializeValue(e, value => ({ fallThrough: value })) };
 }
 
-export function parseError(error: SerializedError): Error {
+export function parseError(error: SerializedError): PlaywrightError {
   if (!error.error) {
     if (error.value === undefined)
       throw new Error('Serialized error must have either an error or a value');
     return parseSerializedValue(error.value, undefined);
   }
-  if (error.error.name === 'TimeoutError') {
-    const e = new TimeoutError(error.error.message);
-    e.stack = error.error.stack || '';
-    return e;
-  }
-  if (error.error.name === 'TargetClosedError') {
-    const e = new TargetClosedError(error.error.message);
-    e.stack = error.error.stack || '';
-    return e;
-  }
-  const e = new Error(error.error.message);
+  let e: PlaywrightError;
+  if (error.error.name === 'TimeoutError')
+    e = new TimeoutError(error.error.message);
+  else if (error.error.name === 'TargetClosedError')
+    e = new TargetClosedError(error.error.message);
+  else
+    e = Object.assign(new PlaywrightError(error.error.message), { name: error.error.name });
   e.stack = error.error.stack || '';
-  e.name = error.error.name;
   return e;
 }

@@ -403,8 +403,6 @@ test('should show params and return value', async ({ showTraceViewer }) => {
     /locator:locator\('button'\)/,
     /expression:"to.have.text"/,
     /timeout:10000/,
-    /matches:true/,
-    /received:"Click"/,
   ]);
 });
 

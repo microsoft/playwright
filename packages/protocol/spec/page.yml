@@ -189,8 +189,9 @@ Page:
         clip: Rect?
         $mixin: CommonScreenshotOptions
       returns:
+        actual: binary?
+      errorDetails:
         diff: binary?
-        errorMessage: string?
         actual: binary?
         previous: binary?
         timedOut: boolean?

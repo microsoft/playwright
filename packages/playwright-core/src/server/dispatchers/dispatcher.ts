@@ -22,7 +22,7 @@ import { isUnderTest } from '@utils/debug';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
-import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator  } from '../../protocol/validator';
+import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '../../protocol/validator';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
@@ -366,6 +366,9 @@ export class DispatcherConnection {
           rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
       }
       response.error = serializeError(e);
+      const detailsValidator = maybeFindValidator(dispatcher._type, method, 'ErrorDetails');
+      if (detailsValidator)
+        response.errorDetails = detailsValidator((e as any)?.details ?? {}, '', this._validatorToWireContext());
       // The command handler could have set error in the metadata, do not reset it if there was no exception.
       callMetadata.error = response.error;
     } finally {

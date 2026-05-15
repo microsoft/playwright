@@ -582,9 +582,12 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private async _performAction(progress: Progress, frame: Frame, action: actions.PerformOnRecordAction) {
     const actionInContext = await this._createActionInContext(progress, frame, action);
     this._signalProcessor.addAction(actionInContext);
-    if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
-      await performAction(progress, this._pageAliases, actionInContext);
-    actionInContext.endTime = monotonicTime();
+    try {
+      if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
+        await performAction(progress, this._pageAliases, actionInContext);
+    } finally {
+      actionInContext.endTime = monotonicTime();
+    }
   }
 
   private async _recordAction(progress: Progress, frame: Frame, action: actions.Action) {
