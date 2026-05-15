@@ -22,14 +22,13 @@ import { libCli, tools } from 'playwright-core/lib/coreBundle';
 import { program } from 'commander';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, config, configLoader } from './common';
-import { argvForCommander } from './cli/cliArgs';
 import { runTests, clearCache, runTestServerAction } from './cli/testActions';
 import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 import { packageJSON } from './package';
 
-export { program, argvForCommander };
+export { program };
 
 import type { TraceMode } from '../types/test';
 import type { Command } from 'commander';

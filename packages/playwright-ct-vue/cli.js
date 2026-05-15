@@ -15,6 +15,6 @@
  * limitations under the License.
  */
 
-const { program, argvForCommander } = require('@playwright/experimental-ct-core/lib/program');
+const { program } = require('@playwright/experimental-ct-core/lib/program');
 
-program.parse(argvForCommander);
+program.parse(process.argv);

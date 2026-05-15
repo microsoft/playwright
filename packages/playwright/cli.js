@@ -15,5 +15,5 @@
  * limitations under the License.
  */
 
-const { program, argvForCommander } = require('./lib/program');
-program.parse(argvForCommander);
+const { program } = require('./lib/program');
+program.parse(process.argv);

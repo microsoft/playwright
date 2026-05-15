@@ -2019,15 +2019,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   webServer: TestConfigWebServer | null;
   /**
-   * Custom command-line arguments passed after the `--` separator, for example `npx playwright test --
-   * --build-path=./out --env=staging` exposes `['--build-path=./out', '--env=staging']`. Playwright does not parse
-   * these; your test,
-   * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup), or reporter is
-   * free to interpret them with any argument-parsing library.
-   */
-  cliArgs: Array<string>;
-
-  /**
    * Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
    */
   configFile?: string;
@@ -2081,6 +2072,13 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * See [testConfig.preserveOutput](https://playwright.dev/docs/api/class-testconfig#test-config-preserve-output).
    */
   preserveOutput: "always"|"never"|"failures-only";
+
+  /**
+   * Snapshot of [`process.argv`](https://nodejs.org/api/process.html#processargv) captured in the runner process when
+   * tests started. Useful for inspecting custom command-line arguments passed by the user. Playwright does not parse
+   * these; consumers can use any argument-parsing library.
+   */
+  processArgv: Array<string>;
 
   /**
    * See [testConfig.quiet](https://playwright.dev/docs/api/class-testconfig#test-config-quiet).
