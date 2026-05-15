@@ -50,6 +50,8 @@ export type HighlightEntry = {
   cssStyle?: string,
 };
 
+type OverlayTheme = 'dark-mode' | 'light-mode';
+
 export class Highlight {
   private _glassPaneElement: HTMLElement;
   private _glassPaneShadow: ShadowRoot;
@@ -64,6 +66,7 @@ export class Highlight {
   private _rafRequest: number | undefined;
   private _language: Language = 'javascript';
   private _elementHighlightSelectors = new Map<string, { selector: ParsedSelector, cssStyle?: string }>();
+  private _overlayTheme: OverlayTheme = 'light-mode';
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -104,6 +107,13 @@ export class Highlight {
     this._glassPaneShadow.appendChild(this._actionPointElement);
     this._glassPaneShadow.appendChild(this._titleElement);
     this._glassPaneShadow.appendChild(this._userOverlayContainer);
+  }
+
+  setOverlayTheme(theme: OverlayTheme) {
+    if (this._overlayTheme === theme)
+      return;
+    this._overlayTheme = theme;
+    this._glassPaneElement.classList.toggle('dark-mode', theme === 'dark-mode');
   }
 
   install() {

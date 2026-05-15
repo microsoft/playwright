@@ -51,6 +51,8 @@ export type OverlayState = {
   offsetX: number;
 };
 
+export type OverlayTheme = 'dark-mode' | 'light-mode';
+
 export type UIState = {
   mode: Mode;
   actionPoint?: Point;
@@ -59,6 +61,7 @@ export type UIState = {
   language: Language;
   testIdAttributeName: string;
   overlay: OverlayState;
+  overlayTheme?: OverlayTheme;
 };
 
 export type CallLogStatus = 'in-progress' | 'done' | 'error' | 'paused';
@@ -108,6 +111,7 @@ declare global {
 export interface RecorderBackend {
   setMode(params: { mode: Mode }): Promise<void>;
   setAutoExpect(params: { autoExpect: boolean }): Promise<void>;
+  setOverlayTheme(params: { theme: OverlayTheme }): Promise<void>;
   resume(): Promise<void>;
   pause(): Promise<void>;
   step(): Promise<void>;

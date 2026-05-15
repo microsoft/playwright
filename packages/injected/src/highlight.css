@@ -365,3 +365,61 @@ x-pw-action-item:last-child {
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
 }
+
+:host(.dark-mode) {
+  color: #cccccc;
+  color-scheme: dark;
+}
+
+:host(.dark-mode) x-pw-tooltip,
+:host(.dark-mode) x-pw-dialog {
+  background-color: #252526;
+  box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.6);
+}
+
+:host(.dark-mode) x-pw-tooltip-footer {
+  color: rgba(204, 204, 204, 0.7);
+}
+
+:host(.dark-mode) x-pw-tools-list {
+  border-bottom: 1px solid #3c3c3c;
+}
+
+:host(.dark-mode) x-pw-overlay x-pw-tools-list {
+  background-color: #252526dd;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 5px 5px;
+}
+
+:host(.dark-mode) x-pw-tool-item:not(.disabled):hover,
+:host(.dark-mode) x-pw-tool-item.record.toggled:not(.disabled):hover {
+  background-color: hsl(0, 0%, 25%);
+}
+
+:host(.dark-mode) x-pw-tool-item > x-div {
+  background-color: #c5c5c5;
+}
+
+:host(.dark-mode) x-pw-tool-item.disabled > x-div {
+  background-color: rgba(197, 197, 197, 0.4);
+}
+
+:host(.dark-mode) x-pw-tool-gripper > x-div {
+  background-color: #969696;
+}
+
+:host(.dark-mode) x-pw-tool-item.record.toggled > x-div {
+  background-color: #f48771;
+}
+
+:host(.dark-mode) textarea.text-editor {
+  color: #cccccc;
+  background-color: transparent;
+}
+
+:host(.dark-mode) x-locator-editor {
+  border-bottom: 1px solid #3c3c3c;
+}
+
+:host(.dark-mode) x-pw-action-item:hover {
+  background-color: hsl(0, 0%, 20%);
+}

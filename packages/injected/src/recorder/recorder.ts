@@ -1488,6 +1488,7 @@ export class Recorder {
 
     this.state = state;
     this.highlight.setLanguage(state.language);
+    this.highlight.setOverlayTheme(state.overlayTheme ?? 'light-mode');
     this._switchCurrentTool();
     this.overlay?.setUIState(state);
 

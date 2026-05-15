@@ -41,7 +41,7 @@ import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { Progress } from './progress';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
-import type { CallLog, CallLogStatus, ElementInfo, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
+import type { CallLog, CallLogStatus, ElementInfo, Mode, OverlayState, OverlayTheme, Source, UIState } from '@recorder/recorderTypes';
 import type { RegisteredListener } from '@utils/eventsHelper';
 
 const recorderSymbol = Symbol('recorderSymbol');
@@ -80,6 +80,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private _mode: Mode;
   private _highlightedElement: { selector?: string, ariaTemplate?: AriaTemplateNode } = {};
   private _overlayState: OverlayState = { offsetX: 0 };
+  private _overlayTheme: OverlayTheme = 'light-mode';
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _actionPoints = new Map<string, Point>();
   private _userSources = new Map<string, Source>();
@@ -192,6 +193,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
           language: this._currentLanguage,
           testIdAttributeName: this._testIdAttributeName(),
           overlay: this._overlayState,
+          overlayTheme: this._overlayTheme,
         };
         return uiState;
       });
@@ -255,6 +257,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
   mode() {
     return this._mode;
+  }
+
+  setOverlayTheme(theme: OverlayTheme) {
+    this._overlayTheme = theme;
   }
 
   async setMode(mode: Mode) {

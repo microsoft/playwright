@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-type DocumentTheme = 'dark-mode' | 'light-mode';
+export type DocumentTheme = 'dark-mode' | 'light-mode';
 export type Theme = DocumentTheme | 'system';
 
 const kDefaultTheme: Theme = 'system';
@@ -102,4 +102,13 @@ export function useThemeSetting(): [Theme, (value: Theme) => void] {
   }, [theme]);
 
   return [theme, setTheme];
+}
+
+export function useDocumentTheme(): DocumentTheme {
+  const [theme, setTheme] = React.useState<DocumentTheme>(() => currentDocumentTheme() ?? 'light-mode');
+  React.useEffect(() => {
+    addThemeListener(setTheme);
+    return () => removeThemeListener(setTheme);
+  }, []);
+  return theme;
 }

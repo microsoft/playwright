@@ -32,7 +32,7 @@ import { BrowserContext } from '../browserContext';
 
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
-import type { CallLog, ElementInfo, Mode, RecorderBackend, RecorderFrontend, Source } from '@recorder/recorderTypes';
+import type { CallLog, ElementInfo, Mode, OverlayTheme, RecorderBackend, RecorderFrontend, Source } from '@recorder/recorderTypes';
 import type { Language, LanguageGeneratorOptions } from '../codegen/types';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '../progress';
@@ -149,6 +149,9 @@ export class RecorderApp {
       setAutoExpect: async (params: { autoExpect: boolean }) => {
         this._languageGeneratorOptions.generateAutoExpect = params.autoExpect;
         this._updateActions();
+      },
+      setOverlayTheme: async (params: { theme: OverlayTheme }) => {
+        this._recorder.setOverlayTheme(params.theme);
       },
       setMode: async (params: { mode: Mode }) => {
         await this._recorder.setMode(params.mode);
