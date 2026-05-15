@@ -23,6 +23,7 @@ test('browser_click', async ({ client, server }) => {
     <script>
       const button = document.querySelector('button');
       button.addEventListener('click', () => {
+        window.highlightedDuringClick = !!document.querySelector('x-pw-glass')?.shadowRoot?.querySelector('x-pw-highlight');
         button.focus(); // without manual focus, webkit focuses body
       });
     </script>
@@ -42,6 +43,15 @@ test('browser_click', async ({ client, server }) => {
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
     snapshot: expect.stringContaining(`button "Submit" [active] [ref=e2]`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '() => ({ highlightedDuringClick: window.highlightedDuringClick, remainingHighlights: document.querySelector("x-pw-glass")?.shadowRoot?.querySelectorAll("x-pw-highlight").length ?? 0 })',
+    },
+  })).toHaveResponse({
+    result: JSON.stringify({ highlightedDuringClick: true, remainingHighlights: 0 }, null, 2),
   });
 });
 

@@ -21,6 +21,7 @@ import { defineTabTool } from './tool';
 import type * as playwright from '../../..';
 
 const elementTargetDescription = 'Exact target element reference from the page snapshot, or a unique element selector';
+const actionHighlightStyle = 'outline: 2px solid #1a73e8; background-color: rgba(26, 115, 232, 0.10)';
 
 export const optionalElementSchema = z.object({
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
@@ -88,10 +89,12 @@ const click = defineTabTool({
       response.addCode(`await page.${resolved}.click(${optionsArg});`);
 
     await tab.waitForCompletion(async () => {
-      if (params.doubleClick)
-        await locator.dblclick(options);
-      else
-        await locator.click(options);
+      await withActionHighlight(locator, async () => {
+        if (params.doubleClick)
+          await locator.dblclick(options);
+        else
+          await locator.click(options);
+      });
     });
   },
 });
@@ -234,3 +237,12 @@ export default [
   check,
   uncheck,
 ];
+
+async function withActionHighlight(locator: playwright.Locator, action: () => Promise<void>) {
+  await locator.highlight({ style: actionHighlightStyle }).catch(() => {});
+  try {
+    await action();
+  } finally {
+    await locator.hideHighlight().catch(() => {});
+  }
+}
