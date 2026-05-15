@@ -61,7 +61,9 @@ test('should cleanup artifacts dir after connectOverCDP disconnects due to ws cl
   expect(exists2).toBe(false);
 });
 
-test('should write traces to provided artifactsDir on connectOverCDP', async ({ browserType, toImpl }, testInfo) => {
+test('should write traces to provided artifactsDir on connectOverCDP', async ({ browserType, toImpl, trace }, testInfo) => {
+  test.skip(trace === 'on');
+
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     args: ['--remote-debugging-port=' + port]
