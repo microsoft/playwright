@@ -165,6 +165,27 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).toContain('afterAll executed successfully');
     });
 
+    test('should print AggregateError nested errors', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+    
+          test('foobar', async () => {
+            throw new AggregateError([
+              new Error('inner-message-1'),
+              new Error('inner-message-2'),
+            ], 'aggregate-message');
+          });
+        `
+      });
+    
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+      expect(result.output).toContain('AggregateError: aggregate-message');
+      expect(result.output).toContain('inner-message-1');
+      expect(result.output).toContain('inner-message-2');
+    });
+
     test('should print codeframe from a helper', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'helper.ts': `

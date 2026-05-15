@@ -36,17 +36,22 @@ import type { TestCase } from './common/test';
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
 
-export function filterStackTrace(e: Error): { message: string, stack: string, cause?: ReturnType<typeof filterStackTrace> } {
+export function filterStackTrace(e: Error): { message: string, stack: string, cause?: ReturnType<typeof filterStackTrace>, errors?: ReturnType<typeof filterStackTrace>[] } {
   const name = e.name ? e.name + ': ' : '';
   const cause = e.cause instanceof Error ? filterStackTrace(e.cause) : undefined;
+  const errors = e instanceof AggregateError
+    ? e.errors.filter(error => error instanceof Error).map(error => filterStackTrace(error))
+    : undefined;
+
   if (process.env.PWDEBUGIMPL)
-    return { message: name + e.message, stack: e.stack || '', cause };
+    return { message: name + e.message, stack: e.stack || '', cause, errors };
 
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   return {
     message: name + e.message,
     stack: `${name}${e.message}${stackLines.map(line => '\n' + line).join('')}`,
     cause,
+    errors,
   };
 }
 
