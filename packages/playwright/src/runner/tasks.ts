@@ -25,7 +25,7 @@ import { removeFolders } from '@utils/fileUtils';
 
 import { Dispatcher  } from './dispatcher';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook, loadTestList } from './loadUtils';
-import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
+import { buildDependentProjects, buildProjectsClosure, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
 import { TaskRunner } from './taskRunner';
 import { detectChangedTestFiles } from './vcs';
@@ -95,12 +95,28 @@ export class TestRun {
   readonly loadFileFilters: Matcher[] = [];
   readonly preOnlyTestFilters: TestCaseFilter[] = [];
   readonly postShardTestFilters: TestCaseFilter[] = [];
+  readonly projectClosureIds: Set<string>;
 
   constructor(config: FullConfigInternal, reporter: InternalReporter, options?: TestRunOptions) {
     this.config = config;
     this.options = options ?? {};
     this.reporter = reporter;
     this.filteredProjects = filterProjects(config.projects, this.options.projectFilter);
+    this.projectClosureIds = new Set();
+    for (const project of buildProjectsClosure(this.filteredProjects).keys())
+      this.projectClosureIds.add(project.id);
+  }
+
+  activePlugins(): TestRunnerPluginRegistration[] {
+    return this.config.plugins.filter(plugin => {
+      if (!plugin.projectIds)
+        return true;
+      for (const id of plugin.projectIds) {
+        if (this.projectClosureIds.has(id))
+          return true;
+      }
+      return false;
+    });
   }
 
   onTestPaused(params: TestPausedParams) {
@@ -148,20 +164,20 @@ async function finishTaskRun(testRun: TestRun, status: FullResult['status']) {
   return status;
 }
 
-export function createGlobalSetupTasks(config: FullConfigInternal) {
+export function createGlobalSetupTasks(config: FullConfigInternal, testRun: TestRun) {
   return [
     createRemoveOutputDirsTask(),
-    ...createPluginSetupTasks(config),
+    ...createPluginSetupTasks(config, testRun),
     ...config.globalTeardowns.map(file => createGlobalTeardownTask(file, config)).reverse(),
     ...config.globalSetups.map(file => createGlobalSetupTask(file, config)),
   ];
 }
 
-export function createRunTestsTasks(config: FullConfigInternal) {
+export function createRunTestsTasks(config: FullConfigInternal, testRun: TestRun) {
   return [
     createPhasesTask(),
     createReportBeginTask(),
-    ...config.plugins.map(plugin => createPluginBeginTask(plugin)),
+    ...testRun.activePlugins().map(plugin => createPluginBeginTask(plugin)),
     createRunTestsTask(),
   ];
 }
@@ -187,15 +203,15 @@ export function createReportBeginTask(): Task<TestRun> {
   };
 }
 
-export function createPluginSetupTasks(config: FullConfigInternal): Task<TestRun>[] {
-  return config.plugins.map(plugin => ({
+export function createPluginSetupTasks(config: FullConfigInternal, testRun: TestRun): Task<TestRun>[] {
+  return testRun.activePlugins().map(plugin => ({
     title: 'plugin setup',
-    setup: async ({ reporter }) => {
+    setup: async testRun => {
       if (typeof plugin.factory === 'function')
         plugin.instance = await plugin.factory();
       else
         plugin.instance = plugin.factory;
-      await plugin.instance?.setup?.(config.config, config.configDir, reporter);
+      await plugin.instance?.setup?.(config.config, config.configDir, testRun.reporter);
     },
     teardown: async () => {
       await plugin.instance?.teardown?.();
@@ -340,7 +356,7 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
 
       if (testRun.options.onlyChanged || options.populateDependencies) {
-        for (const plugin of testRun.config.plugins)
+        for (const plugin of testRun.activePlugins())
           await plugin.instance?.populateDependencies?.();
       }
 

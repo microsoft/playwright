@@ -990,3 +990,190 @@ for (const stdio of ['stdout', 'stderr']) {
     expect(result.output).toContain('My server port is 123');
   });
 }
+
+test.describe('per-project webServer', () => {
+  test('should launch only servers for the selected project', async ({ runInlineTest }, { workerIndex }) => {
+    const portA = workerIndex * 4 + 10600;
+    const portB = workerIndex * 4 + 10601;
+    const result = await runInlineTest({
+      'test.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('connect', async ({ baseURL, page }) => {
+          await page.goto('/hello');
+          expect(await page.textContent('body')).toBe('hello');
+        });
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            {
+              name: 'with-server',
+              use: { baseURL: 'http://localhost:${portA}' },
+              webServer: {
+                command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${portA}',
+                url: 'http://localhost:${portA}/hello',
+                name: 'ServerA',
+              },
+            },
+            {
+              name: 'no-server',
+              use: { baseURL: 'http://localhost:${portB}' },
+              webServer: {
+                command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${portB}',
+                url: 'http://localhost:${portB}/hello',
+                name: 'ServerB',
+              },
+            },
+          ],
+        };
+      `,
+    }, { project: 'with-server' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(result.output).toContain('[ServerA]');
+    expect(result.output).not.toContain('[ServerB]');
+  });
+
+  test('should launch a per-project server for a project running as dependency', async ({ runInlineTest }, { workerIndex }) => {
+    const port = workerIndex * 2 + 10610;
+    const result = await runInlineTest({
+      'setup.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('warm up', async ({ baseURL, request }) => {
+          const r = await request.get('/hello');
+          expect(await r.text()).toBe('hello');
+        });
+      `,
+      'test.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('use', async ({ baseURL, page }) => {
+          await page.goto('/hello');
+          expect(await page.textContent('body')).toBe('hello');
+        });
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          use: { baseURL: 'http://localhost:${port}' },
+          projects: [
+            {
+              name: 'setup',
+              testMatch: /setup\\.spec\\.ts/,
+              webServer: {
+                command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+                url: 'http://localhost:${port}/hello',
+                name: 'SetupServer',
+              },
+            },
+            {
+              name: 'main',
+              testMatch: /test\\.spec\\.ts/,
+              dependencies: ['setup'],
+            },
+          ],
+        };
+      `,
+    }, { project: 'main' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(2);
+    expect(result.output).toContain('[SetupServer]');
+  });
+
+  test('should launch top-level webServer regardless of selected project', async ({ runInlineTest }, { workerIndex }) => {
+    const topPort = workerIndex * 2 + 10620;
+    const projPort = workerIndex * 2 + 10621;
+    const result = await runInlineTest({
+      'test.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('check both', async ({ request }) => {
+          expect((await (await request.get('http://localhost:${topPort}/hello')).text())).toBe('hello');
+        });
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          webServer: {
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${topPort}',
+            url: 'http://localhost:${topPort}/hello',
+            name: 'TopServer',
+          },
+          projects: [
+            {
+              name: 'A',
+              webServer: {
+                command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${projPort}',
+                url: 'http://localhost:${projPort}/hello',
+                name: 'ProjAServer',
+              },
+            },
+            {
+              name: 'B',
+            },
+          ],
+        };
+      `,
+    }, { project: 'B' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(result.output).toContain('[TopServer]');
+    expect(result.output).not.toContain('[ProjAServer]');
+  });
+
+  test('should accept an array of webServer per project', async ({ runInlineTest }, { workerIndex }) => {
+    const port1 = workerIndex * 2 + 10630;
+    const port2 = workerIndex * 2 + 10631;
+    const result = await runInlineTest({
+      'test.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('connect', async ({ request }) => {
+          expect(await (await request.get('http://localhost:${port1}/hello')).text()).toBe('hello');
+          expect(await (await request.get('http://localhost:${port2}/hello')).text()).toBe('hello');
+        });
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            {
+              name: 'A',
+              webServer: [
+                {
+                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port1}',
+                  url: 'http://localhost:${port1}/hello',
+                  name: 'ServerOne',
+                },
+                {
+                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port2}',
+                  url: 'http://localhost:${port2}/hello',
+                  name: 'ServerTwo',
+                },
+              ],
+            },
+          ],
+        };
+      `,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(result.output).toContain('[ServerOne]');
+    expect(result.output).toContain('[ServerTwo]');
+  });
+
+  test('should validate project.webServer.command', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'test.spec.ts': `
+        import { test } from '@playwright/test';
+        test('pass', async ({}) => {});
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          projects: [
+            {
+              name: 'A',
+              webServer: { command: '', url: 'http://localhost:1' },
+            },
+          ],
+        };
+      `,
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('webServer.command must be a non-empty string');
+  });
+});

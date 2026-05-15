@@ -328,6 +328,20 @@ function validateProject(file: string, project: Project, title: string) {
     else if (typeof project.workers === 'string' && !project.workers.endsWith('%'))
       throw errorWithFile(file, `${title}.workers must be a number or percentage`);
   }
+
+  // Top-level webServer's command-empty case is reported at runtime instead.
+  if (title !== 'config' && 'webServer' in project && project.webServer !== undefined) {
+    const webServer = project.webServer;
+    const isArray = Array.isArray(webServer);
+    const items = isArray ? webServer : [webServer];
+    items.forEach((item, index) => {
+      const itemTitle = isArray ? `${title}.webServer[${index}]` : `${title}.webServer`;
+      if (!item || typeof item !== 'object')
+        throw errorWithFile(file, `${itemTitle} must be an object`);
+      if (typeof item.command !== 'string' || !item.command)
+        throw errorWithFile(file, `${itemTitle}.command must be a non-empty string`);
+    });
+  }
 }
 
 export function resolveConfigLocation(configFile: string | undefined): ConfigLocation {

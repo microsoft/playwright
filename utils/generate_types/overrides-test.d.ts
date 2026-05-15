@@ -50,6 +50,7 @@ type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 interface TestProject<TestArgs = {}, WorkerArgs = {}> {
   use?: UseOptions<TestArgs, WorkerArgs>;
+  webServer?: TestConfigWebServer | TestConfigWebServer[];
 }
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject<TestArgs, WorkerArgs> {
