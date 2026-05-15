@@ -137,8 +137,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   private _validatorToWireContext(): ValidatorContext {
     return {
       tChannelImpl: tChannelImplToWire,
-      direction: 'toWire',
-      rawBuffers: this._connection.rawBuffers(),
+      binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64',
       isUnderTest: () => this._platform.isUnderTest(),
     };
   }

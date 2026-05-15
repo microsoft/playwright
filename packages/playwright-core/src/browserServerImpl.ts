@@ -46,8 +46,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       tChannelImpl: (names: '*' | string[], arg: any, path: string) => {
         throw new validatorPrimitives.ValidationError(`${path}: channels are not expected in launchServer`);
       },
-      direction: 'fromWire',
-      rawBuffers: true,
+      binary: 'buffer',
       isUnderTest,
     } satisfies validatorPrimitives.ValidatorContext;
     let launchOptions = {

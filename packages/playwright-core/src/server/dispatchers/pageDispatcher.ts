@@ -22,7 +22,7 @@ import { parseError, serializeError } from '../errors';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { JSHandleDispatcher, parseArgument } from './jsHandleDispatcher';
+import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
 import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
@@ -545,7 +545,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionResult> {
-    return { value: await this._object.evaluateExpression(progress, params.expression, params.isFunction, parseArgument(params.arg)) };
+    return { value: serializeResult(await this._object.evaluateExpression(progress, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
   async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionHandleResult> {
@@ -571,7 +571,7 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
     super(scope, new SdkObject(scope._object, 'bindingCall'), 'BindingCall', {
       frame: frameDispatcher,
       name,
-      args,
+      args: args.map(serializeResult),
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

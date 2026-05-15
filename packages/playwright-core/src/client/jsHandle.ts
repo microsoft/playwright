@@ -16,7 +16,7 @@
 
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
-import { serializeValue } from '../protocol/serializers';
+import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
@@ -38,7 +38,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<R> {
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return result.value;
+    return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
@@ -59,7 +59,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   }
 
   async jsonValue(): Promise<T> {
-    return (await this._channel.jsonValue()).value;
+    return parseResult((await this._channel.jsonValue()).value);
   }
 
   asElement(): T extends Node ? api.ElementHandle<T> : null {
@@ -99,6 +99,10 @@ export function serializeArgument(arg: any): channels.SerializedArgument {
     return { fallThrough: value };
   });
   return { value, handles };
+}
+
+export function parseResult(value: channels.SerializedValue): any {
+  return parseSerializedValue(value, undefined);
 }
 
 export function assertMaxArguments(count: number, max: number): asserts count {

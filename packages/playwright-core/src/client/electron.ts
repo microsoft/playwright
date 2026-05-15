@@ -20,7 +20,7 @@ import { envObjectToArray } from './clientHelper';
 import { ConsoleMessage } from './consoleMessage';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
-import { JSHandle, serializeArgument } from './jsHandle';
+import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Waiter } from './waiter';
 import { TimeoutSettings } from './timeoutSettings';
 
@@ -159,7 +159,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<R> {
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return result.value;
+    return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
