@@ -97,6 +97,10 @@ export function shouldMergeAction(action: actions.ActionInContext, lastAction: a
       return isSameAction(action, lastAction);
     case 'click':
       return isSameAction(action, lastAction) && isSameSelector(action, lastAction) && isShortlyAfter(action, lastAction) && action.action.clickCount > (lastAction.action as actions.ClickAction).clickCount;
+    case 'setInputFiles':
+      // Drop the click that opens the file picker — setInputFiles already does it,
+      // and on replay the leftover click() opens an extra picker that never closes.
+      return lastAction.action.name === 'click' && isSameSelector(action, lastAction) && isShortlyAfter(action, lastAction);
   }
   return false;
 }

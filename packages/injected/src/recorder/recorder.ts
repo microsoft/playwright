@@ -262,16 +262,7 @@ class RecordActionTool implements RecorderTool {
       return;
     }
 
-    const target = this._recorder.deepEventTarget(event);
-    if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
-      // Clicking the file input opens the file picker; a setInputFiles action will be
-      // recorded from the resulting change event. Recording the click here would also
-      // emit click() in the output, which opens an extra picker on replay that never closes.
-      this._cancelPendingClickAction();
-      return;
-    }
-
-    const checkbox = asCheckbox(target);
+    const checkbox = asCheckbox(this._recorder.deepEventTarget(event));
     if (checkbox && event.detail === 1) {
       // Interestingly, inputElement.checked is reversed inside this event handler.
       this._performAction({

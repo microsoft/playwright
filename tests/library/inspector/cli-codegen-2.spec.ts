@@ -110,14 +110,18 @@ await page.CloseAsync();`);
     </form>
   `);
 
-    await page.focus('input[type=file]');
-    await page.setInputFiles('input[type=file]', asset('file-to-upload.txt'));
-    await page.click('input[type=file]');
+    await recorder.hoverOverElement('input[type=file]');
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      recorder.trustedClick(),
+    ]);
+    await chooser.setFiles(asset('file-to-upload.txt'));
 
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
 
     expect(sources.get('JavaScript')!.text).toContain(`
   await page.getByRole('button', { name: 'Choose File' }).setInputFiles('file-to-upload.txt');`);
+    expect(sources.get('JavaScript')!.text).not.toContain(`click()`);
 
     expect(sources.get('Java')!.text).toContain(`
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Choose File")).setInputFiles(Paths.get("file-to-upload.txt"));`);
