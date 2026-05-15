@@ -25,10 +25,10 @@ import { base, projectUtils, testServer, watchMode, testRunner, runnerReporters 
 import type { ReporterDescription } from '../../types/test';
 import type { TestRunOptions } from '../runner/tasks';
 
-export async function runTests(args: string[], opts: { [key: string]: any }, argv: string[]) {
+export async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
-  cliOverrides.argv = argv;
+  cliOverrides.argv = process.argv;
 
   const config = await configLoader.loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
   const options: TestRunOptions = {

@@ -2019,11 +2019,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   webServer: TestConfigWebServer | null;
   /**
-   * Custom command-line arguments passed after the `--` separator, for example `npx playwright test --
-   * --build-path=./out --env=staging` exposes `['--build-path=./out', '--env=staging']`. Playwright does not parse
-   * these; your test,
-   * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup), or reporter is
-   * free to interpret them with any argument-parsing library.
+   * Snapshot of [`process.argv`](https://nodejs.org/api/process.html#processargv) captured in the runner process.
+   * Useful for reading custom command-line arguments — for example, args supplied after the `--` separator (`npx
+   * playwright test -- --build-path=./out`). Playwright does not parse these; consumers are responsible for slicing and
+   * interpreting them with any argument-parsing library.
    */
   argv: Array<string>;
 
