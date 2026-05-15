@@ -28,10 +28,6 @@ import { TestServerBackend, testServerBackendTools } from './mcp/test/testBacken
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 import { packageJSON } from './package';
 
-// argv runs as a side-effect import: it slices `--` and trailing args out of
-// process.argv so commander never sees them as test-filter regexes.
-import './cli/argv';
-
 export { program };
 
 import type { TraceMode } from '../types/test';
@@ -55,8 +51,14 @@ function addTestCommand(program: Command) {
     return command;
   });
   command.action(async (args, opts) => {
+    // Args supplied after `--` are appended to the variadic [test-filter...]
+    // by commander. Pull them off the end so they aren't used as filter regexes
+    // and surface them via FullConfig.argv for tests/globalSetup/reporters to read.
+    const dashDashIndex = process.argv.indexOf('--');
+    const argv = dashDashIndex >= 0 ? process.argv.slice(dashDashIndex + 1) : [];
+    const testFilters = argv.length ? args.slice(0, args.length - argv.length) : args;
     try {
-      await runTests(args, opts);
+      await runTests(testFilters, opts, argv);
     } catch (e) {
       console.error(e);
       gracefullyProcessExitDoNotHang(1);
