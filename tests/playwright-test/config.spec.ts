@@ -789,7 +789,7 @@ test('should throw on invalid --tsconfig', async ({ runInlineTest }) => {
   expect(result.output).toContain(`--tsconfig "does-not-exist.json" does not exist`);
 });
 
-test('should expose runner process.argv as config.processArgv', async ({ runInlineTest }) => {
+test('should expose args after -- as config.argv and not pollute test discovery', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {};
@@ -798,17 +798,33 @@ test('should expose runner process.argv as config.processArgv', async ({ runInli
       import { test, expect } from '@playwright/test';
       test('pass', async ({}, testInfo) => {
         expect(testInfo.timeout).toBe(7777);
-        expect(testInfo.config.processArgv).toContain('--build-path=/foo');
-        expect(testInfo.config.processArgv).toContain('--env=staging');
+        expect(testInfo.config.argv).toEqual(['--build-path=/foo', '--env=staging', 'positional']);
       });
     `
-  }, { timeout: '7777' }, {}, { additionalArgs: ['a.test', '--', '--build-path=/foo', '--env=staging'] });
+  }, { timeout: '7777' }, {}, { additionalArgs: ['--', '--build-path=/foo', '--env=staging', 'positional'] });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
 
-test('config.processArgv should be visible in globalSetup and reporter', async ({ runInlineTest }) => {
+test('config.argv should be empty array when no -- separator is used', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        expect(testInfo.config.argv).toEqual([]);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('config.argv should be visible in globalSetup and reporter', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -818,13 +834,13 @@ test('config.processArgv should be visible in globalSetup and reporter', async (
     `,
     'global-setup.ts': `
       module.exports = async (config) => {
-        console.log('GLOBAL_SETUP_HAS_ARG=' + config.processArgv.includes('--build-path=/foo'));
+        console.log('GLOBAL_SETUP_ARGV=' + JSON.stringify(config.argv));
       };
     `,
     'my-reporter.ts': `
       class MyReporter {
         onBegin(config) {
-          console.log('REPORTER_HAS_ARG=' + config.processArgv.includes('--build-path=/foo'));
+          console.log('REPORTER_ARGV=' + JSON.stringify(config.argv));
         }
       }
       module.exports = MyReporter;
@@ -833,9 +849,9 @@ test('config.processArgv should be visible in globalSetup and reporter', async (
       import { test, expect } from '@playwright/test';
       test('pass', async () => {});
     `
-  }, { reporter: '' }, {}, { additionalArgs: ['a.test', '--', '--build-path=/foo'] });
+  }, { reporter: '' }, {}, { additionalArgs: ['--', '--build-path=/foo'] });
 
   expect(result.exitCode).toBe(0);
-  expect(result.output).toContain(`GLOBAL_SETUP_HAS_ARG=true`);
-  expect(result.output).toContain(`REPORTER_HAS_ARG=true`);
+  expect(result.output).toContain(`GLOBAL_SETUP_ARGV=["--build-path=/foo"]`);
+  expect(result.output).toContain(`REPORTER_ARGV=["--build-path=/foo"]`);
 });

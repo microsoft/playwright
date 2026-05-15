@@ -4,6 +4,16 @@
 
 Resolved configuration which is accessible via [`property: TestInfo.config`] and is passed to the test reporters. To see the format of Playwright configuration file, please see [TestConfig] instead.
 
+## property: FullConfig.argv
+* since: v1.61
+- type: <[Array]<[string]>>
+
+Custom command-line arguments passed after the `--` separator, for example
+`npx playwright test -- --build-path=./out --env=staging` exposes
+`['--build-path=./out', '--env=staging']`. Playwright does not parse these;
+your test, [`property: TestConfig.globalSetup`], or reporter is free to
+interpret them with any argument-parsing library.
+
 ## property: FullConfig.configFile
 * since: v1.20
 - type: ?<[string]>
@@ -69,15 +79,6 @@ See [`property: TestConfig.metadata`].
 - type: <[PreserveOutput]<"always"|"never"|"failures-only">>
 
 See [`property: TestConfig.preserveOutput`].
-
-## property: FullConfig.processArgv
-* since: v1.61
-- type: <[Array]<[string]>>
-
-Snapshot of [`process.argv`](https://nodejs.org/api/process.html#processargv)
-captured in the runner process when tests started. Useful for inspecting
-custom command-line arguments passed by the user. Playwright does not parse
-these; consumers can use any argument-parsing library.
 
 ## property: FullConfig.projects
 * since: v1.10

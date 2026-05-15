@@ -28,6 +28,10 @@ import { TestServerBackend, testServerBackendTools } from './mcp/test/testBacken
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 import { packageJSON } from './package';
 
+// argv runs as a side-effect import: it slices `--` and trailing args out of
+// process.argv so commander never sees them as test-filter regexes.
+import './cli/argv';
+
 export { program };
 
 import type { TraceMode } from '../types/test';

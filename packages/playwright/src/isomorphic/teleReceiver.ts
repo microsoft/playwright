@@ -779,7 +779,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
 export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
-  processArgv: [],
+  argv: [],
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,

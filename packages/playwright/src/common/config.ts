@@ -84,7 +84,7 @@ export class FullConfigInternal {
     }
 
     this.config = {
-      processArgv: configCLIOverrides.processArgv ?? [],
+      argv: configCLIOverrides.argv ?? [],
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),

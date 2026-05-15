@@ -22,13 +22,14 @@ import { startProfiling, stopProfiling } from '@utils/profiler';
 
 import { builtInReporters, configLoader, ipc } from '../common';
 import { base, projectUtils, testServer, watchMode, testRunner, runnerReporters } from '../runner';
+import { argv } from './argv';
 import type { ReporterDescription } from '../../types/test';
 import type { TestRunOptions } from '../runner/tasks';
 
 export async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
-  cliOverrides.processArgv = process.argv;
+  cliOverrides.argv = argv;
 
   const config = await configLoader.loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
   const options: TestRunOptions = {
