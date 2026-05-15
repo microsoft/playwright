@@ -100,7 +100,9 @@ export function shouldMergeAction(action: actions.ActionInContext, lastAction: a
     case 'setInputFiles':
       // Drop the click that opens the file picker — setInputFiles already does it,
       // and on replay the leftover click() opens an extra picker that never closes.
-      return lastAction.action.name === 'click' && isSameSelector(action, lastAction) && isShortlyAfter(action, lastAction);
+      // No time check: picking a file from the OS dialog can take many seconds and
+      // no other recorder actions can run while the dialog is open.
+      return lastAction.action.name === 'click' && isSameSelector(action, lastAction);
   }
   return false;
 }

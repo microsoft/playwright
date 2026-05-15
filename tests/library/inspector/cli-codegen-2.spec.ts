@@ -115,6 +115,9 @@ await page.CloseAsync();`);
       page.waitForEvent('filechooser'),
       recorder.trustedClick(),
     ]);
+    // Simulate the time a real user takes to pick a file from the OS dialog
+    // so the merge logic cannot rely on a short delay between click and setInputFiles.
+    await new Promise(f => setTimeout(f, 1000));
     await chooser.setFiles(asset('file-to-upload.txt'));
 
     const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
