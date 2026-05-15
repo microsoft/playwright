@@ -56,7 +56,7 @@ function addTestCommand(program: Command) {
     // and surface them via FullConfig.argv for tests/globalSetup/reporters to read.
     const dashDashIndex = process.argv.indexOf('--');
     const argv = dashDashIndex >= 0 ? process.argv.slice(dashDashIndex + 1) : [];
-    const testFilters = argv.length ? args.slice(0, args.length - argv.length) : args;
+    const testFilters = args.slice(0, args.length - argv.length);
     try {
       await runTests(testFilters, opts, argv);
     } catch (e) {
