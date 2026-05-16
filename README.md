@@ -152,7 +152,7 @@ playwright-cli show
 
 <!-- TODO: screenshot of playwright-cli show dashboard -->
 
-[Full CLI documentation](https://playwright.dev/docs/cli-agent) | [GitHub](https://github.com/microsoft/playwright-cli)
+[Full CLI documentation](https://playwright.dev/agent-cli/introduction) | [GitHub](https://github.com/microsoft/playwright-cli)
 
 ---
 
