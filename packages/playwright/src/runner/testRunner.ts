@@ -168,7 +168,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
     const testRun = new TestRun(config, reporter);
     const { status, cleanup } = await runTasksDeferCleanup(testRun, [
-      ...createGlobalSetupTasks(config, testRun),
+      ...createGlobalSetupTasks(config),
     ]);
 
     const env: [string, string | null][] = [];
@@ -198,7 +198,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       return { status: 'failed' };
     const testRun = new TestRun(config, reporter);
     const status = await runTasks(testRun, [
-      ...createPluginSetupTasks(config, testRun),
+      ...createPluginSetupTasks(config),
       createClearCacheTask(config),
     ]);
     return { status };
@@ -342,7 +342,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     const tasks = [
       createApplyRebaselinesTask(),
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: !!params.failOnLoadErrors, doNotRunDepsOutsideProjectFilter: params.doNotRunDepsOutsideProjectFilter }),
-      ...createRunTestsTasks(config, testRun),
+      ...createRunTestsTasks(config),
     ];
     const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
@@ -369,7 +369,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       return { errors: errorReporter.errors(), testFiles: [] };
     const testRun = new TestRun(config, reporter);
     const status = await runTasks(testRun, [
-      ...createPluginSetupTasks(config, testRun),
+      ...createPluginSetupTasks(config),
       createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
     ]);
     if (status !== 'passed')
@@ -463,9 +463,9 @@ export async function runAllTestsWithConfig(config: FullConfigInternal, options:
     createReportBeginTask(),
   ] : [
     createApplyRebaselinesTask(),
-    ...createGlobalSetupTasks(config, testRun),
+    ...createGlobalSetupTasks(config),
     createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }),
-    ...createRunTestsTasks(config, testRun),
+    ...createRunTestsTasks(config),
   ];
 
   const status = await runTasks(testRun, tasks, config.config.globalTimeout);

@@ -107,18 +107,6 @@ export class TestRun {
       this.projectClosureIds.add(project.id);
   }
 
-  activePlugins(): TestRunnerPluginRegistration[] {
-    return this.config.plugins.filter(plugin => {
-      if (!plugin.projectIds)
-        return true;
-      for (const id of plugin.projectIds) {
-        if (this.projectClosureIds.has(id))
-          return true;
-      }
-      return false;
-    });
-  }
-
   onTestPaused(params: TestPausedParams) {
     this.options.onTestPaused?.(params);
   }
@@ -164,20 +152,20 @@ async function finishTaskRun(testRun: TestRun, status: FullResult['status']) {
   return status;
 }
 
-export function createGlobalSetupTasks(config: FullConfigInternal, testRun: TestRun) {
+export function createGlobalSetupTasks(config: FullConfigInternal) {
   return [
     createRemoveOutputDirsTask(),
-    ...createPluginSetupTasks(config, testRun),
+    ...createPluginSetupTasks(config),
     ...config.globalTeardowns.map(file => createGlobalTeardownTask(file, config)).reverse(),
     ...config.globalSetups.map(file => createGlobalSetupTask(file, config)),
   ];
 }
 
-export function createRunTestsTasks(config: FullConfigInternal, testRun: TestRun) {
+export function createRunTestsTasks(config: FullConfigInternal) {
   return [
     createPhasesTask(),
     createReportBeginTask(),
-    ...testRun.activePlugins().map(plugin => createPluginBeginTask(plugin)),
+    ...config.plugins.map(plugin => createPluginBeginTask(plugin)),
     createRunTestsTask(),
   ];
 }
@@ -203,10 +191,12 @@ export function createReportBeginTask(): Task<TestRun> {
   };
 }
 
-export function createPluginSetupTasks(config: FullConfigInternal, testRun: TestRun): Task<TestRun>[] {
-  return testRun.activePlugins().map(plugin => ({
+export function createPluginSetupTasks(config: FullConfigInternal): Task<TestRun>[] {
+  return config.plugins.map(plugin => ({
     title: 'plugin setup',
     setup: async testRun => {
+      if (plugin.projectId && !testRun.projectClosureIds.has(plugin.projectId))
+        return;
       if (typeof plugin.factory === 'function')
         plugin.instance = await plugin.factory();
       else
@@ -223,6 +213,8 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestR
   return {
     title: 'plugin begin',
     setup: async testRun => {
+      if (plugin.projectId && !testRun.projectClosureIds.has(plugin.projectId))
+        return;
       await plugin.instance?.begin?.(testRun.rootSuite!);
     },
     teardown: async () => {
@@ -356,7 +348,7 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
 
       if (testRun.options.onlyChanged || options.populateDependencies) {
-        for (const plugin of testRun.activePlugins())
+        for (const plugin of testRun.config.plugins)
           await plugin.instance?.populateDependencies?.();
       }
 

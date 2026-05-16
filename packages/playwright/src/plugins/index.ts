@@ -30,9 +30,9 @@ export interface TestRunnerPlugin {
 export type TestRunnerPluginRegistration = {
   factory: TestRunnerPlugin | (() => TestRunnerPlugin | Promise<TestRunnerPlugin>);
   instance?: TestRunnerPlugin;
-  // When set, the plugin is only set up when one of these projects (or their
+  // When set, the plugin is only set up when the project (or their
   // transitive closure of dependencies/teardowns) is selected to run.
-  projectIds?: Set<string>;
+  projectId?: string;
 };
 
 export { webServer } from './webServerPlugin';

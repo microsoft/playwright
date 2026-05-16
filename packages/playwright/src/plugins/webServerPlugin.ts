@@ -266,7 +266,7 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
 
   for (const project of config.projects) {
     for (const webServerConfig of project.webServers)
-      plugins.push({ factory: createWebServerPlugin(webServerConfig, false), projectIds: new Set([project.id]) });
+      plugins.push({ factory: createWebServerPlugin(webServerConfig, false), projectId: project.id });
   }
 
   return plugins;
