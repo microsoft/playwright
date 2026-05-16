@@ -81,8 +81,6 @@ test('shardingMode defaults to partition (regression)', async ({ runInlineTest }
 });
 
 test('shardingMode=timings: balances by per-file duration', async ({ runInlineTest }, testInfo) => {
-  // Big file = a (1000ms), small files = b..f (1ms each). With 2 shards, LPT puts `a` alone in
-  // one shard and the rest in the other.
   const timingsPath = testInfo.outputPath('timings.json');
   require('fs').writeFileSync(timingsPath, JSON.stringify({
     'a.spec.ts': 1000,
@@ -113,7 +111,6 @@ test('shardingMode=timings: falls back to partition when file is missing', async
     };`,
   }, { shard: '1/3', workers: 1 });
   expect(result.exitCode).toBe(0);
-  // Partition fallback: same as default partition for shard 1/3 → a1, b1.
   expect(result.outputLines.sort()).toEqual(['a1', 'b1']);
   expect(result.output).toContain('timings file not found');
 });
@@ -122,7 +119,6 @@ test('shardingMode={ sequencer }: custom function controls assignment', async ({
   const sequencerPath = testInfo.outputPath('seq.js');
   require('fs').writeFileSync(sequencerPath, `
     module.exports = function(groups, shard) {
-      // Send only the last group to shard 1, nothing to shard 2.
       if (shard.current === 1)
         return new Set([groups[groups.length - 1]]);
       return new Set();

@@ -168,7 +168,6 @@ export function filterForShard(
   if (typeof mode === 'object' && mode !== null && 'sequencer' in mode)
     return filterForShardCustom(shard, testGroups, mode.sequencer, options.configDir);
 
-  // Default: partition (contiguous range).
   return filterForShardPartition(shard, weights, testGroups);
 }
 
@@ -215,8 +214,6 @@ export function filterForShardPartition(shard: { total: number, current: number 
 }
 
 export function filterForShardRoundRobin(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
-  // Each group is assigned to a shard by its index modulo the shard total.
-  // Better balance than partition when test durations are uneven across the input order.
   const result = new Set<TestGroup>();
   for (let i = 0; i < testGroups.length; i++) {
     if ((i % shard.total) === (shard.current - 1))
@@ -231,8 +228,6 @@ export function filterForShardTimings(
   timingsFile: string | undefined,
   configDir: string | undefined,
 ): Set<TestGroup> {
-  // Bin-pack groups into shards using LPT (Longest Processing Time first).
-  // Falls back to partition if the timings file is missing/empty.
   const timings = loadTimingsFile(timingsFile, configDir);
   if (!timings)
     return filterForShardPartition(shard, undefined, testGroups);
@@ -244,7 +239,6 @@ export function filterForShardTimings(
       ?? timings.get(path.relative(base, requireFile));
   };
   const groupDuration = (group: TestGroup): number => {
-    // Sum known per-test durations; missing tests contribute 0 (we warn once below).
     let total = 0;
     const fileTiming = lookupFileTiming(group.requireFile);
     for (const test of group.tests) {
@@ -257,7 +251,6 @@ export function filterForShardTimings(
   const decorated = testGroups.map(group => ({ group, duration: groupDuration(group) }));
   decorated.sort((a, b) => b.duration - a.duration);
 
-  // Greedy LPT bin packing.
   const bins: { groups: TestGroup[], load: number }[] = Array.from({ length: shard.total }, () => ({ groups: [], load: 0 }));
   for (const { group, duration } of decorated) {
     let bestIndex = 0;

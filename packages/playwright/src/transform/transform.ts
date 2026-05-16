@@ -320,8 +320,7 @@ function installTransformIfNeeded() {
   }
   (Module as any)._resolveFilename = resolveFilename;
 
-  // Bun handles TypeScript natively and intercepting require() can confuse its loader.
-  // Mirrors the early-return in esmLoaderHost.registerESMLoader().
+  // Bun handles TypeScript natively; registering this require hook confuses its loader.
   if (isBun())
     return;
 

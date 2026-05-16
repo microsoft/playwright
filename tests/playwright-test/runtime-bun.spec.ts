@@ -16,7 +16,6 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-// PW_RUNTIME is always set on workers regardless of the host runtime; under Node it should be 'node'.
 test('PW_RUNTIME env var is set to "node" by default on workers', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
@@ -30,7 +29,6 @@ test('PW_RUNTIME env var is set to "node" by default on workers', async ({ runIn
   expect(result.outputLines).toContain('PW_RUNTIME=node');
 });
 
-// Smoke test that runs only when actually invoked under bun. Off-by-default in Node CI.
 test('basic test executes under bun', async ({ runInlineTest }) => {
   test.skip(!process.versions.bun, 'requires bun runtime');
   const result = await runInlineTest({

@@ -44,7 +44,6 @@ test('skipFixtures=true: static test.skip() does not run fixture setup', async (
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(1);
-  // Setup runs once (for the non-skipped test).
   expect(result.outputLines.filter(l => l === 'SETUP-tracked').length).toBe(1);
   expect(result.outputLines).toContain('BODY');
 });
@@ -77,7 +76,6 @@ test('skipFixtures=true: as last test in worker, still no fixture setup', async 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(1);
-  // Exactly one setup, for the non-skipped test.
   expect(result.outputLines.filter(l => l === 'SETUP-tracked').length).toBe(1);
 });
 
@@ -94,7 +92,7 @@ test('skipFixtures=true: runtime test.skip() inside body still runs fixtures (do
   });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
-  // The fixture was set up because the body started executing before deciding to skip.
+  // Body must start running before test.skip() is reached, so the fixture has already been set up.
   expect(result.outputLines.filter(l => l === 'SETUP-tracked').length).toBe(1);
 });
 
