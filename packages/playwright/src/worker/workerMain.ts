@@ -357,6 +357,24 @@ export class WorkerMain extends ProcessRunner {
       this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
       return;
     }
+    if (isSkipped && this._config.config.skipFixtures) {
+      // Extended fast path: with `skipFixtures: true`, we never want to enter the slow path
+      // (which still constructs a trace fixture, allocates a Before Hooks step, etc.) for a
+      // skipped test. Run any pending afterAll for suites that won't be shared with the next
+      // test, then emit testEnd and return without touching any user fixtures.
+      for (const suite of reversedSuites) {
+        if (this._activeSuites.has(suite) && !nextSuites.has(suite)) {
+          try {
+            await this._runAfterAllHooksForSuite(suite, testInfo);
+          } catch {
+            // Errors are already captured in testInfo; do not block other afterAll hooks.
+          }
+        }
+      }
+      testInfo.status = 'skipped';
+      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
+      return;
+    }
 
     this._totalRunningTests++;
     this._lastRunningTests.push(test);

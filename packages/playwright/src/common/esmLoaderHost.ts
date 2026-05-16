@@ -19,6 +19,7 @@ import url from 'url';
 import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import { PortTransport } from '../transform/portTransport';
 import { singleTSConfig, transformConfig } from '../transform/transform';
+import { isBun } from './runtime';
 
 let loaderChannel: PortTransport | undefined;
 
@@ -29,7 +30,7 @@ export function registerESMLoader() {
 
   // Transpilation in `bun` is not necessary, and trying to register a hook would cause issues.
   // https://github.com/oven-sh/bun/issues/8222#issuecomment-3665364677
-  if ('Bun' in globalThis)
+  if (isBun())
     return true;
 
   if (loaderChannel)

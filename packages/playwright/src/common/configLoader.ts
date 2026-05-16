@@ -251,6 +251,29 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.shard.current must be a positive number, not greater than config.shard.total`);
   }
 
+  if ('shardingMode' in config && config.shardingMode !== undefined) {
+    const mode = config.shardingMode;
+    if (typeof mode === 'string') {
+      if (!['partition', 'round-robin', 'timings'].includes(mode))
+        throw errorWithFile(file, `config.shardingMode must be one of 'partition', 'round-robin', 'timings', or { sequencer: string }`);
+    } else if (typeof mode === 'object' && mode !== null) {
+      if (typeof (mode as { sequencer?: unknown }).sequencer !== 'string')
+        throw errorWithFile(file, `config.shardingMode.sequencer must be a string path to a module`);
+    } else {
+      throw errorWithFile(file, `config.shardingMode must be a string or { sequencer: string }`);
+    }
+  }
+
+  if ('shardingTimingsFile' in config && config.shardingTimingsFile !== undefined) {
+    if (typeof config.shardingTimingsFile !== 'string')
+      throw errorWithFile(file, `config.shardingTimingsFile must be a string`);
+  }
+
+  if ('skipFixtures' in config && config.skipFixtures !== undefined) {
+    if (typeof config.skipFixtures !== 'boolean')
+      throw errorWithFile(file, `config.skipFixtures must be a boolean`);
+  }
+
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
     if (typeof config.updateSnapshots !== 'string' || !['all', 'changed', 'missing', 'none'].includes(config.updateSnapshots))
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "changed", "missing" or "none"`);

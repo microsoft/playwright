@@ -7,6 +7,9 @@
 node_modules/json5
 node_modules/source-map-support
 
+[transform.ts]
+../common/runtime.ts
+
 [babelBundle.ts]
 node_modules/@babel/core
 node_modules/@babel/traverse
