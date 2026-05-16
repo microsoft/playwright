@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import type { test } from '../common';
 
 export type TestGroup = {
@@ -23,6 +26,24 @@ export type TestGroup = {
   projectId: string;
   tests: test.TestCase[];
 };
+
+export type ShardingMode =
+  | 'partition'
+  | 'round-robin'
+  | 'timings'
+  | { sequencer: string };
+
+export type ShardingOptions = {
+  mode?: ShardingMode;
+  weights?: number[];
+  timingsFile?: string;
+  configDir?: string;
+};
+
+export type CustomSequencer = (
+  groups: TestGroup[],
+  shard: { current: number, total: number },
+) => Set<TestGroup> | TestGroup[];
 
 export function createTestGroups(projectSuite: test.Suite, expectedParallelism: number): TestGroup[] {
   // This function groups tests that can be run together.
@@ -130,7 +151,27 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
   return result;
 }
 
-export function filterForShard(shard: { total: number, current: number }, weights: number[] | undefined, testGroups: TestGroup[]): Set<TestGroup> {
+export function filterForShard(
+  shard: { total: number, current: number },
+  weights: number[] | undefined,
+  testGroups: TestGroup[],
+  options: ShardingOptions = {},
+): Set<TestGroup> {
+  const mode = options.mode ?? 'partition';
+
+  if (mode === 'round-robin')
+    return filterForShardRoundRobin(shard, testGroups);
+
+  if (mode === 'timings')
+    return filterForShardTimings(shard, testGroups, options.timingsFile, options.configDir);
+
+  if (typeof mode === 'object' && mode !== null && 'sequencer' in mode)
+    return filterForShardCustom(shard, testGroups, mode.sequencer, options.configDir);
+
+  return filterForShardPartition(shard, weights, testGroups);
+}
+
+export function filterForShardPartition(shard: { total: number, current: number }, weights: number[] | undefined, testGroups: TestGroup[]): Set<TestGroup> {
   weights ??= Array.from({ length: shard.total }, () => 1);
   if (weights.length !== shard.total)
     throw new Error(`PWTEST_SHARD_WEIGHTS number of weights must match the shard total of ${shard.total}`);
@@ -170,4 +211,98 @@ export function filterForShard(shard: { total: number, current: number }, weight
     current += group.tests.length;
   }
   return result;
+}
+
+export function filterForShardRoundRobin(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
+  const result = new Set<TestGroup>();
+  for (let i = 0; i < testGroups.length; i++) {
+    if ((i % shard.total) === (shard.current - 1))
+      result.add(testGroups[i]);
+  }
+  return result;
+}
+
+export function filterForShardTimings(
+  shard: { total: number, current: number },
+  testGroups: TestGroup[],
+  timingsFile: string | undefined,
+  configDir: string | undefined,
+): Set<TestGroup> {
+  const timings = loadTimingsFile(timingsFile, configDir);
+  if (!timings)
+    return filterForShardPartition(shard, undefined, testGroups);
+
+  const base = configDir ?? process.cwd();
+  const lookupFileTiming = (requireFile: string): number | undefined => {
+    return timings.get(requireFile)
+      ?? timings.get(path.basename(requireFile))
+      ?? timings.get(path.relative(base, requireFile));
+  };
+  const groupDuration = (group: TestGroup): number => {
+    let total = 0;
+    const fileTiming = lookupFileTiming(group.requireFile);
+    for (const test of group.tests) {
+      const byId = timings.get(test.id);
+      total += byId ?? (fileTiming !== undefined ? fileTiming / Math.max(group.tests.length, 1) : 0);
+    }
+    return total;
+  };
+
+  const decorated = testGroups.map(group => ({ group, duration: groupDuration(group) }));
+  decorated.sort((a, b) => b.duration - a.duration);
+
+  const bins: { groups: TestGroup[], load: number }[] = Array.from({ length: shard.total }, () => ({ groups: [], load: 0 }));
+  for (const { group, duration } of decorated) {
+    let bestIndex = 0;
+    for (let i = 1; i < bins.length; i++) {
+      if (bins[i].load < bins[bestIndex].load)
+        bestIndex = i;
+    }
+    bins[bestIndex].groups.push(group);
+    bins[bestIndex].load += duration;
+  }
+
+  return new Set(bins[shard.current - 1].groups);
+}
+
+function loadTimingsFile(timingsFile: string | undefined, configDir: string | undefined): Map<string, number> | undefined {
+  if (!timingsFile)
+    return undefined;
+  const resolved = path.isAbsolute(timingsFile) ? timingsFile : path.resolve(configDir ?? process.cwd(), timingsFile);
+  if (!fs.existsSync(resolved)) {
+    // eslint-disable-next-line no-restricted-properties
+    process.stderr.write(`[playwright] shardingMode: 'timings' — timings file not found at ${resolved}, falling back to partition.\n`);
+    return undefined;
+  }
+  let parsed: any;
+  try {
+    parsed = JSON.parse(fs.readFileSync(resolved, 'utf8'));
+  } catch (e) {
+    // eslint-disable-next-line no-restricted-properties
+    process.stderr.write(`[playwright] shardingMode: 'timings' — failed to parse ${resolved}: ${(e as Error).message}. Falling back to partition.\n`);
+    return undefined;
+  }
+  if (!parsed || typeof parsed !== 'object')
+    return undefined;
+  const map = new Map<string, number>();
+  for (const [key, value] of Object.entries(parsed)) {
+    if (typeof value === 'number' && value >= 0)
+      map.set(key, value);
+  }
+  return map.size ? map : undefined;
+}
+
+export function filterForShardCustom(
+  shard: { total: number, current: number },
+  testGroups: TestGroup[],
+  sequencerPath: string,
+  configDir: string | undefined,
+): Set<TestGroup> {
+  const resolved = path.isAbsolute(sequencerPath) ? sequencerPath : path.resolve(configDir ?? process.cwd(), sequencerPath);
+  const mod = require(resolved);
+  const fn: CustomSequencer = mod && mod.default ? mod.default : mod;
+  if (typeof fn !== 'function')
+    throw new Error(`[playwright] shardingMode sequencer at ${resolved} must export a function (default export or module.exports).`);
+  const result = fn(testGroups, shard);
+  return result instanceof Set ? result : new Set(result);
 }

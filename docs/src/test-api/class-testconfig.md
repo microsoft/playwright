@@ -536,6 +536,55 @@ export default defineConfig({
 ```
 
 
+## property: TestConfig.skipFixtures
+* since: v1.61
+- type: ?<[boolean]>
+
+When `true`, skipped tests will not initialize any user fixtures and will not emit Before/After Hooks
+steps. Static `test.skip()` and `test.fixme()` annotations benefit the most; conditional skips inside
+`beforeAll` modifiers that depend on worker fixtures are not optimized.
+
+Default: `false` (preserves the current behavior, which already avoids most fixture setup for
+skipped tests but does not guarantee a fast-path return).
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  skipFixtures: true,
+});
+```
+
+
+## property: TestConfig.shardingMode
+* since: v1.61
+- type: ?<[string]|[Object]>
+
+Algorithm used to assign test groups to shards. Only applies when [`property: TestConfig.shard`] is set. Sharding always stays group-atomic — groups are never split between shards.
+
+Accepted values: the string `'partition'` (default; contiguous slice of tests per shard, preserving the current behavior); the string `'round-robin'` (each group i is assigned to shard `(i % total) + 1`, often more balanced when individual test durations are uneven); the string `'timings'` (bin-pack groups using LPT against the JSON file at [`property: TestConfig.shardingTimingsFile`], falls back to partition when the file is missing or empty); or an object of the form `{ sequencer: 'path/to/file' }` (load the module and call its default export as `(groups, shard) => Set<TestGroup> | TestGroup[]`, useful when an external system such as Bazel needs to drive sharding programmatically).
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  shard: { total: 10, current: 3 },
+  shardingMode: 'round-robin',
+});
+```
+
+
+## property: TestConfig.shardingTimingsFile
+* since: v1.61
+- type: ?<[string]>
+
+Path to a JSON file mapping `{ testId | filePath: durationMs }`, consumed by `shardingMode: 'timings'`. Relative paths resolve from the config directory.
+
+
 ## property: TestConfig.tag
 * since: v1.57
 - type: ?<[string]|[Array]<[string]>>
@@ -626,7 +675,7 @@ export default defineConfig({
 ```
 
 ## property: TestConfig.tsconfig
-* since: v1.49
+* since: v1.61
 - type: ?<[string]>
 
 Path to a single `tsconfig` applicable to all imported files. By default, `tsconfig` for each imported file is looked up separately. Note that `tsconfig` property has no effect while the configuration file or any of its dependencies are loaded. Ignored when `--tsconfig` command line option is specified.

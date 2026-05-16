@@ -22,6 +22,8 @@ import { assert } from '@isomorphic/assert';
 import { monotonicTime, timeOrigin } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 
+import { runtimeName } from '../common/runtime';
+
 import type { ipc, processRunner } from '../common';
 
 export type ProcessExitData = {
@@ -59,6 +61,7 @@ export class ProcessHost extends EventEmitter {
       detached: false,
       env: {
         ...process.env,
+        PW_RUNTIME: runtimeName(),
         ...this._extraEnv,
       },
       stdio: [

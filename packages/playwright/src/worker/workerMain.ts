@@ -357,6 +357,20 @@ export class WorkerMain extends ProcessRunner {
       this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
       return;
     }
+    if (isSkipped && this._config.config.skipFixtures) {
+      for (const suite of reversedSuites) {
+        if (this._activeSuites.has(suite) && !nextSuites.has(suite)) {
+          try {
+            await this._runAfterAllHooksForSuite(suite, testInfo);
+          } catch {
+            // Continue running "afterAll" hooks even after some of them timeout.
+          }
+        }
+      }
+      testInfo.status = 'skipped';
+      this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
+      return;
+    }
 
     this._totalRunningTests++;
     this._lastRunningTests.push(test);

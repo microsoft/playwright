@@ -1670,6 +1670,63 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
+   * Algorithm used to assign test groups to shards. Only applies when
+   * [testConfig.shard](https://playwright.dev/docs/api/class-testconfig#test-config-shard) is set. Sharding always
+   * stays group-atomic — groups are never split between shards.
+   *
+   * Accepted values: the string `'partition'` (default; contiguous slice of tests per shard, preserving the current
+   * behavior); the string `'round-robin'` (each group i is assigned to shard `(i % total) + 1`, often more balanced
+   * when individual test durations are uneven); the string `'timings'` (bin-pack groups using LPT against the JSON file
+   * at
+   * [testConfig.shardingTimingsFile](https://playwright.dev/docs/api/class-testconfig#test-config-sharding-timings-file),
+   * falls back to partition when the file is missing or empty); or an object of the form `{ sequencer: 'path/to/file'
+   * }` (load the module and call its default export as `(groups, shard) => Set<TestGroup> | TestGroup[]`, useful when
+   * an external system such as Bazel needs to drive sharding programmatically).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   shard: { total: 10, current: 3 },
+   *   shardingMode: 'round-robin',
+   * });
+   * ```
+   *
+   */
+  shardingMode?: string|Object;
+
+  /**
+   * Path to a JSON file mapping `{ testId | filePath: durationMs }`, consumed by `shardingMode: 'timings'`. Relative
+   * paths resolve from the config directory.
+   */
+  shardingTimingsFile?: string;
+
+  /**
+   * When `true`, skipped tests will not initialize any user fixtures and will not emit Before/After Hooks steps. Static
+   * `test.skip()` and `test.fixme()` annotations benefit the most; conditional skips inside `beforeAll` modifiers that
+   * depend on worker fixtures are not optimized.
+   *
+   * Default: `false` (preserves the current behavior, which already avoids most fixture setup for skipped tests but
+   * does not guarantee a fast-path return).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   skipFixtures: true,
+   * });
+   * ```
+   *
+   */
+  skipFixtures?: boolean;
+
+  /**
    * **NOTE** Use
    * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
    * to configure snapshot paths.

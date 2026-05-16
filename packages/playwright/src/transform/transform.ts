@@ -27,6 +27,7 @@ import { libPath, packageJSON } from '../package';
 import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
 import { addHook } from './pirates';
+import { isBun } from '../common/runtime';
 
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import type { Location } from '../../types/testReporter';
@@ -318,6 +319,10 @@ function installTransformIfNeeded() {
     return originalResolveFilename.call(this, specifier, parent, ...rest);
   }
   (Module as any)._resolveFilename = resolveFilename;
+
+  // Bun handles TypeScript natively; registering this require hook confuses its loader.
+  if (isBun())
+    return;
 
   // Hopefully, one day we can migrate to synchronous loader hooks instead, similar to our esmLoader...
   addHook((code, filename) => {

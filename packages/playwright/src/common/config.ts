@@ -39,8 +39,14 @@ export type FixturesWithLocation = {
 
 export const defaultTimeout = 30000;
 
+export type InternalConfigExtras = {
+  shardingMode: 'partition' | 'round-robin' | 'timings' | { sequencer: string };
+  shardingTimingsFile: string | null;
+  skipFixtures: boolean;
+};
+
 export class FullConfigInternal {
-  readonly config: FullConfig;
+  readonly config: FullConfig & InternalConfigExtras;
   readonly configDir: string;
   readonly configCLIOverrides: ConfigCLIOverrides;
   readonly webServers: NonNullable<FullConfig['webServer']>[];
@@ -102,6 +108,9 @@ export class FullConfigInternal {
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
+      shardingMode: takeFirst(configCLIOverrides.shardingMode, userConfig.shardingMode as InternalConfigExtras['shardingMode'] | undefined, 'partition'),
+      shardingTimingsFile: takeFirst(configCLIOverrides.shardingTimingsFile, userConfig.shardingTimingsFile, null),
+      skipFixtures: takeFirst(userConfig.skipFixtures, false),
       tags: globalTags,
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),
       updateSourceMethod: takeFirst(configCLIOverrides.updateSourceMethod, userConfig.updateSourceMethod, 'patch'),

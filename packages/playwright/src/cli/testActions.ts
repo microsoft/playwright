@@ -126,6 +126,8 @@ function overridesFromOptions(options: { [key: string]: any }): ipc.ConfigCLIOve
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: resolveShardOption(options.shard),
+    shardingMode: options.shardingMode,
+    shardingTimingsFile: options.shardTimingsFile ? path.resolve(process.cwd(), options.shardTimingsFile) : undefined,
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
