@@ -412,9 +412,13 @@ class RecordActionTool implements RecorderTool {
     const target = this._recorder.deepEventTarget(event);
 
     if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
+      const { selector } = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      if (!selector)
+        return;
+      this._cancelPendingClickAction();
       this._recordAction({
         name: 'setInputFiles',
-        selector: this._activeModel!.selector,
+        selector,
         signals: [],
         files: [...((target as HTMLInputElement).files || [])].map(file => file.name),
       });
@@ -618,7 +622,7 @@ class RecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['date', 'range', 'file'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
@@ -895,7 +899,7 @@ class JsonRecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['date', 'range', 'file'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
