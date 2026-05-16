@@ -16,7 +16,7 @@
 
 import path from 'path';
 import readline from 'readline';
-import { EventEmitter } from 'stream';
+import { EventEmitter } from 'events';
 
 import { remote } from 'playwright-core/lib/coreBundle';
 import colors from 'colors/safe';
