@@ -87,6 +87,26 @@ export type BrowserContextEventMap = {
 export abstract class BrowserContext<EM extends EventMap = EventMap> extends SdkObject<BrowserContextEventMap | EM> {
   static Events = BrowserContextEvent;
 
+  // The `EM` generic forces Node's EventEmitter typings to keep the event-map as a
+  // union, which defeats IfEventMap and rejects emit/on calls for events that live
+  // only in `BrowserContextEventMap`. Concentrate the cast in these helpers so the
+  // call sites stay typed against `BrowserContextEventMap` directly.
+  protected _emitCtx<K extends keyof BrowserContextEventMap>(
+    event: K,
+    ...args: BrowserContextEventMap[K]
+  ): void {
+    const emit = this.emit as unknown as (e: K, ...args: BrowserContextEventMap[K]) => void;
+    emit(event, ...args);
+  }
+
+  protected _onCtx<K extends keyof BrowserContextEventMap>(
+    event: K,
+    listener: (...args: BrowserContextEventMap[K]) => void,
+  ): this {
+    const on = this.on as unknown as (e: K, l: (...args: BrowserContextEventMap[K]) => void) => this;
+    return on.call(this, event, listener);
+  }
+
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
   readonly requestInterceptors: network.RouteHandler[] = [];
@@ -267,7 +287,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (this._isPersistentContext)
       this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
-    (this.emit as any)(BrowserContext.Events.Close);
+    this._emitCtx(BrowserContext.Events.Close);
   }
 
   pages(): Page[] {
@@ -542,7 +562,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (this._closedStatus === 'open') {
       if (options.reason)
         this._closeReason = options.reason;
-      (this.emit as any)(BrowserContext.Events.BeforeClose);
+      this._emitCtx(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
       await progress.race(this.tracing.flush());
@@ -704,7 +724,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));
     };
-    this.on(BrowserContext.Events.Page, ((page: Page) => { void installInPage(page); }) as any);
+    this._onCtx(BrowserContext.Events.Page, (page: Page) => { void installInPage(page); });
     return Promise.all(this.pages().map(installInPage));
   }
 
