@@ -64,7 +64,7 @@ export type TestRunOptions = {
   listMode?: boolean;
   passWithNoTests?: boolean;
   lastFailed?: boolean;
-  lastRunFile?: string;
+  lastFailedFile?: string;
   testList?: string;
   testListInvert?: string;
   lastFailedTestIds?: string[];

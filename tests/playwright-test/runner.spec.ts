@@ -917,11 +917,11 @@ test('should run last failed tests in a shard with PLAYWRIGHT_LAST_RUN_OUTPUT_FI
   expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
 });
 
-test('should run last failed tests in a shard with --last-run-file', async ({ runInlineTest }, testInfo) => {
+test('should run last failed tests in a shard with --last-failed-file', async ({ runInlineTest }, testInfo) => {
   const customRel = '.cache/shard-2-cli-last-run.json';
   const customAbs = path.join(testInfo.outputPath(), customRel);
   const defaultLastRun = path.join(testInfo.outputPath(), 'test-results', '.last-run.json');
-  const lastRunArgs = ['--last-failed', `--last-run-file=${customRel}`];
+  const lastRunArgs = ['--last-failed', `--last-failed-file=${customRel}`];
   const workspace = {
     'a.spec.js': `
       import { test, expect } from '@playwright/test';

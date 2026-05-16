@@ -31,9 +31,9 @@ export class LastRunReporter implements ReporterV2 {
   private _suite: Suite | undefined;
   private _listMode: boolean;
 
-  constructor(filteredProjects: commonConfig.FullProjectInternal[], listMode?: boolean, lastRunFileOverride?: string) {
+  constructor(filteredProjects: commonConfig.FullProjectInternal[], listMode?: boolean, lastFailedFileOverride?: string) {
     this._listMode = !!listMode;
-    const override = lastRunFileOverride ?? process.env.PLAYWRIGHT_LAST_RUN_OUTPUT_FILE;
+    const override = lastFailedFileOverride ?? process.env.PLAYWRIGHT_LAST_RUN_OUTPUT_FILE;
     if (override) {
       this._lastRunFile = path.resolve(process.cwd(), override);
     } else {
