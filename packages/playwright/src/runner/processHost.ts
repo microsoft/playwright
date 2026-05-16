@@ -118,11 +118,19 @@ export class ProcessHost extends EventEmitter {
     if (options.onStdErr)
       this.process.stderr?.on('data', options.onStdErr);
 
-    const error = await new Promise<ProcessExitData | undefined>(resolve => {
+    const readyTimeout = +(process.env.PWTEST_WORKER_READY_TIMEOUT || 60 * 1000);
+    const result = await raceAgainstDeadline(() => new Promise<ProcessExitData | undefined>(resolve => {
       this.process!.once('exit', (code, signal) => resolve({ unexpectedly: true, code, signal }));
       this.once('ready', () => resolve(undefined));
-    });
+    }), monotonicTime() + readyTimeout);
 
+    if (result.timedOut) {
+      this.emit('processError', { message: `Error: ${this._processName} process did not become ready within ${readyTimeout}ms. Set PWTEST_WORKER_READY_TIMEOUT to increase the timeout.` });
+      this._forceKill();
+      return { unexpectedly: true, code: null, signal: null };
+    }
+
+    const error = result.result;
     if (error)
       return error;
 
