@@ -128,7 +128,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
     this._command = command;
     this._socket = socket;
     this._connectPromise = new Promise(f => this._socket.on('connect', f));
-    this._socket.on('data', data => {
+    this._socket.on('data', (data: Buffer) => {
       debug('pw:adb:data')(data.toString());
       if (this._isSocket) {
         this.emit('data', data);

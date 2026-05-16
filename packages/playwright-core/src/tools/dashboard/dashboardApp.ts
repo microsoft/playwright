@@ -437,7 +437,7 @@ async function runAnnotateClient(options: DashboardOptions): Promise<void> {
   socket.write(JSON.stringify(options) + '\n');
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
-    socket!.on('data', chunk => chunks.push(chunk));
+    socket!.on('data', (chunk: Buffer) => chunks.push(chunk));
     socket!.on('end', () => resolve());
     socket!.on('error', reject);
   });

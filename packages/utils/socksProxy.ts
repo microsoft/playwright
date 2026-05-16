@@ -234,7 +234,7 @@ class SocksConnection {
       ...ipToSocksAddress(host), // ATYP, Address
       port >> 8, port & 0xFF // Port
     ]));
-    this._socket.on('data', data => this._client.onSocketData({ uid: this._uid, data }));
+    this._socket.on('data', (data: Buffer) => this._client.onSocketData({ uid: this._uid, data }));
   }
 
   socketFailed(errorCode: string) {
@@ -412,7 +412,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   private async _handleDirect(request: SocksSocketRequestedPayload) {
     try {
       const socket = await createSocket(request.host, request.port);
-      socket.on('data', data => this._connections.get(request.uid)?.sendData(data));
+      socket.on('data', (data: Buffer) => this._connections.get(request.uid)?.sendData(data));
       socket.on('error', error => {
         this._connections.get(request.uid)?.error(error.message);
         this._directSockets.delete(request.uid);
@@ -541,7 +541,7 @@ export class SocksProxyHandler extends EventEmitter {
       if (this._redirectPortForTest)
         port = this._redirectPortForTest;
       const socket = await createSocket(host, port);
-      socket.on('data', data => {
+      socket.on('data', (data: Buffer) => {
         const payload: SocksSocketDataPayload = { uid, data };
         this.emit(SocksProxyHandler.Events.SocksData, payload);
       });

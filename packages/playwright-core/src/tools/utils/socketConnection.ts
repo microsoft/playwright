@@ -25,7 +25,7 @@ export class SocketConnection {
 
   constructor(socket: net.Socket) {
     this._socket = socket;
-    socket.on('data', buffer => this._onData(buffer));
+    socket.on('data', (buffer: Buffer) => this._onData(buffer));
     socket.on('close', () => {
       this.onclose?.();
     });

@@ -95,7 +95,7 @@
     "@types/ini": "^4.1.1",
     "@types/mime": "^2.0.3",
     "@types/minimatch": "^3.0.5",
-    "@types/node": "22.19.19",
+    "@types/node": "25.8.0",
     "@types/pngjs": "^6.0.1",
     "@types/progress": "^2.0.5",
     "@types/proxy-from-env": "^1.0.1",

@@ -56,13 +56,13 @@ const test = base.extend<TestOptions>({
         parts.push({ key: 'servername', value: tlsSocket.servername });
         const cert = tlsSocket.getPeerCertificate();
         if (tlsSocket.authorized) {
-          res.writeHead(200, { 'Content-Type': 'text/html' });
+          (res.writeHead as any)(200, { 'Content-Type': 'text/html' });
           parts.push({ key: 'message', value: `Hello ${cert.subject.CN}, your certificate was issued by ${cert.issuer.CN}!` });
         } else if (cert.subject) {
-          res.writeHead(403, { 'Content-Type': 'text/html' });
+          (res.writeHead as any)(403, { 'Content-Type': 'text/html' });
           parts.push({ key: 'message', value: `Sorry ${cert.subject.CN}, certificates from ${cert.issuer.CN} are not welcome here.` });
         } else {
-          res.writeHead(401, { 'Content-Type': 'text/html' });
+          (res.writeHead as any)(401, { 'Content-Type': 'text/html' });
           parts.push({ key: 'message', value: `Sorry, but you need to provide a client certificate to continue.` });
         }
         res.end(parts.map(({ key, value }) => `<div data-testid="${key}">${value}</div>`).join(''));
@@ -163,7 +163,7 @@ test.describe('fetch', () => {
       key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
       cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
     }, (req, res) => {
-      res.writeHead(302, { Location: targetURL });
+      (res.writeHead as any)(302, { Location: targetURL });
       res.end();
     });
     await new Promise<void>(f => redirectServer.listen(0, '127.0.0.1', () => f()));
@@ -327,7 +327,7 @@ test.describe('browser', () => {
 
   test('should pass through to non-matching origin with self-signed cert', async ({ browser, asset, httpsServer }) => {
     httpsServer.setRoute('/hello.html', (req, res) => {
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      (res.writeHead as any)(200, { 'Content-Type': 'text/html' });
       res.end('<html><body><div data-testid="message">hello</div></body></html>');
     });
     const page = await browser.newPage({
@@ -576,10 +576,10 @@ test.describe('browser', () => {
         });
       });
       if (req.url === '/') {
-        res.writeHead(200, { 'Content-Type': 'text/html', 'connection': 'close' });
+        (res.writeHead as any)(200, { 'Content-Type': 'text/html', 'connection': 'close' });
         res.end();
       } else if (req.url === '/from-fetch-api') {
-        res.writeHead(200, {
+        (res.writeHead as any)(200, {
           'Content-Type': 'text/plain',
           'Transfer-Encoding': 'chunked'
         });
@@ -598,7 +598,7 @@ test.describe('browser', () => {
         }
         res.end('server closed the connection');
       } else if (req.url === '/style.css') {
-        res.writeHead(200, {
+        (res.writeHead as any)(200, {
           'Content-Type': 'text/css',
           'Content-Encoding': 'gzip',
           'Transfer-Encoding': 'chunked'
@@ -628,7 +628,7 @@ test.describe('browser', () => {
         }
         res.end();
       } else {
-        res.writeHead(404);
+        (res.writeHead as any)(404);
         res.end();
       }
     });
@@ -848,7 +848,7 @@ test.describe('browser', () => {
       ca: [fs.readFileSync(asset('client-certificates/server/server_cert.pem'))],
       requestCert: true,
     }, async (req: http2.Http2ServerRequest, res: http2.Http2ServerResponse) => {
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      (res.writeHead as any)(200, { 'Content-Type': 'text/html' });
       res.end('Hello world');
     });
 

@@ -267,7 +267,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (this._isPersistentContext)
       this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
-    this.emit(BrowserContext.Events.Close);
+    (this.emit as any)(BrowserContext.Events.Close);
   }
 
   pages(): Page[] {
@@ -542,7 +542,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (this._closedStatus === 'open') {
       if (options.reason)
         this._closeReason = options.reason;
-      this.emit(BrowserContext.Events.BeforeClose);
+      (this.emit as any)(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
       await progress.race(this.tracing.flush());
@@ -704,7 +704,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));
     };
-    this.on(BrowserContext.Events.Page, installInPage);
+    this.on(BrowserContext.Events.Page, ((page: Page) => { void installInPage(page); }) as any);
     return Promise.all(this.pages().map(installInPage));
   }
 

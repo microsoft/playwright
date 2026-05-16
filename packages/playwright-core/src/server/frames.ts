@@ -181,7 +181,8 @@ export class FrameManager {
       await progress.race(this._page.delegate.inputActionEpilogue());
       await barrier.waitFor(progress);
       // Resolve in the next task, after all waitForNavigations.
-      await new Promise<void>(makeWaitForNextTask());
+      const waitForNextTask = makeWaitForNextTask();
+      await new Promise<void>(resolve => waitForNextTask(() => resolve()));
       return result;
     } finally {
       this._signalBarriers.delete(barrier);
