@@ -556,12 +556,14 @@ export abstract class APIRequestContext extends SdkObject {
 
               if (socket instanceof TLSSocket) {
                 const peerCertificate = socket.getPeerCertificate();
+                const subjectCN = peerCertificate.subject?.CN;
+                const issuerCN = peerCertificate.issuer?.CN;
                 securityDetails = {
                   protocol: socket.getProtocol() ?? undefined,
-                  subjectName: peerCertificate.subject.CN,
+                  subjectName: Array.isArray(subjectCN) ? subjectCN[0] : subjectCN,
                   validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
                   validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
-                  issuer: peerCertificate.issuer.CN
+                  issuer: Array.isArray(issuerCN) ? issuerCN[0] : issuerCN,
                 };
               }
             }),

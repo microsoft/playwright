@@ -18,6 +18,7 @@ import dns from 'dns';
 import http from 'http';
 import https from 'https';
 import net from 'net';
+import stream from 'stream';
 import tls from 'tls';
 
 import { assert } from '@isomorphic/assert';
@@ -33,21 +34,25 @@ const connectionAttemptDelayMs = 300;
 const kDNSLookupAt = Symbol('kDNSLookupAt');
 const kTCPConnectionAt = Symbol('kTCPConnectionAt');
 
+type DuplexCallback = (err: Error | null, socket: stream.Duplex) => void;
+type SocketCallback = (err: Error | null, socket?: net.Socket) => void;
+type TlsCallback = (err: Error | null, socket?: tls.TLSSocket) => void;
+
 class HttpHappyEyeballsAgent extends http.Agent {
-  createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
-    // There is no ambiguity in case of IP address.
+  override createConnection(options: http.ClientRequestArgs, oncreate?: DuplexCallback): stream.Duplex | null | undefined {
     if (net.isIP(clientRequestArgsToHostName(options)))
       return net.createConnection(options as net.NetConnectOpts);
-    createConnectionAsync(options, oncreate, /* useTLS */ false).catch(err => oncreate?.(err));
+    createConnectionAsync(options, oncreate as SocketCallback | undefined, /* useTLS */ false).catch(err => oncreate?.(err, null as unknown as stream.Duplex));
+    return null;
   }
 }
 
 class HttpsHappyEyeballsAgent extends https.Agent {
-  createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
-    // There is no ambiguity in case of IP address.
+  override createConnection(options: http.ClientRequestArgs, oncreate?: DuplexCallback): stream.Duplex | null | undefined {
     if (net.isIP(clientRequestArgsToHostName(options)))
       return tls.connect(options as tls.ConnectionOptions);
-    createConnectionAsync(options, oncreate, /* useTLS */ true).catch(err => oncreate?.(err));
+    createConnectionAsync(options, oncreate as TlsCallback | undefined, /* useTLS */ true).catch(err => oncreate?.(err, null as unknown as stream.Duplex));
+    return null;
   }
 }
 

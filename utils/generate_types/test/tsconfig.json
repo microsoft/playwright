@@ -3,7 +3,8 @@
     "strict": true,
     "target": "ESNext",
     "noEmit": true,
-    "moduleResolution": "node",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
     "ignoreDeprecations": "6.0"

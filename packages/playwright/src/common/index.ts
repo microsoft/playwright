@@ -22,6 +22,7 @@ export * as fixtures from './fixtures';
 export * as ipc from './ipc';
 export * as poolBuilder from './poolBuilder';
 export * as processRunner from './process';
+export * as runtime from './runtime';
 export * as suiteUtils from './suiteUtils';
 export * as test from './test';
 export * as testLoader from './testLoader';

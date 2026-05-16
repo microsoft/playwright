@@ -82,9 +82,9 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
           resolve({ stream });
           // Block the Artifact until the stream is consumed.
           await new Promise<void>(resolve => {
-            readable.on('close', resolve);
-            readable.on('end', resolve);
-            readable.on('error', resolve);
+            readable.on('close', () => resolve());
+            readable.on('end', () => resolve());
+            readable.on('error', () => resolve());
           });
         } catch (e) {
           reject(e);

@@ -43,3 +43,49 @@ test('basic test executes under bun', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toContain('PW_RUNTIME=bun');
 });
+
+test('test failure stack frame points at source .ts under bun', async ({ runInlineTest }) => {
+  test.skip(!process.versions.bun, 'requires bun runtime');
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('throws here', () => {
+        expect(1).toBe(2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  // Stack trace must reference the .ts source file and the line of the expect call (line 4).
+  expect(result.output).toMatch(/a\.spec\.ts:4/);
+});
+
+test('custom babelPlugins applies under bun', async ({ runInlineTest }) => {
+  test.skip(!process.versions.bun, 'requires bun runtime');
+  const result = await runInlineTest({
+    'plugin.js': `
+      module.exports = function () {
+        return {
+          visitor: {
+            Program(path) {
+              path.unshift(this.file.path.hub.file.scope.buildUndefinedNode());
+            },
+          },
+        };
+      };
+    `,
+    'playwright.config.js': `
+      module.exports = {
+        '@playwright/test': {
+          babelPlugins: [[require.resolve('./plugin.js')]],
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('runs with custom plugin', () => {
+        expect(1).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});

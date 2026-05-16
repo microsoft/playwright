@@ -15,26 +15,30 @@
  */
 
 import { resolve } from 'path';
-import { defineConfig } from 'vite';
+import { copyFileSync, cpSync, mkdirSync } from 'fs';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
+
+function copyExtensionAssets(): Plugin {
+  return {
+    name: 'playwright-copy-extension-assets',
+    closeBundle: {
+      sequential: true,
+      handler() {
+        const dist = resolve(__dirname, 'dist');
+        mkdirSync(resolve(dist, 'icons'), { recursive: true });
+        cpSync(resolve(__dirname, 'icons'), resolve(dist, 'icons'), { recursive: true });
+        copyFileSync(resolve(__dirname, 'manifest.json'), resolve(dist, 'manifest.json'));
+      },
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: '../../icons/*',
-          dest: 'icons'
-        },
-        {
-          src: '../../manifest.json',
-          dest: '.'
-        }
-      ]
-    })
+    copyExtensionAssets(),
   ],
   root: resolve(__dirname, 'src/ui'),
   build: {

@@ -19,7 +19,7 @@ import path from 'path';
 
 import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import type { IssueCommentEdge, Repository } from '@octokit/graphql-schema';
-import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '@playwright/test/reporter';
+import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestError } from '@playwright/test/reporter';
 
 type MarkdownReporterOptions = {
   configDir: string, // TODO: make it public?
