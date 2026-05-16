@@ -931,7 +931,7 @@ test('should throw helpful error when command is empty', async ({ runInlineTest 
   `,
   }, undefined);
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('config.webServer.command cannot be empty');
+  expect(result.output).toContain('webServer[0].command must be a non-empty string');
 });
 
 for (const stdio of ['stdout', 'stderr']) {

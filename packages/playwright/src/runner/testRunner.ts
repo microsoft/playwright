@@ -166,8 +166,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     if (!config)
       return { status: 'failed', env: [] };
 
-    const testRun = new TestRun(config, reporter);
-    const { status, cleanup } = await runTasksDeferCleanup(testRun, [
+    const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
       ...createGlobalSetupTasks(config),
     ]);
 
@@ -196,8 +195,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
       return { status: 'failed' };
-    const testRun = new TestRun(config, reporter);
-    const status = await runTasks(testRun, [
+    const status = await runTasks(new TestRun(config, reporter), [
       ...createPluginSetupTasks(config),
       createClearCacheTask(config),
     ]);
@@ -367,8 +365,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
       return { errors: errorReporter.errors(), testFiles: [] };
-    const testRun = new TestRun(config, reporter);
-    const status = await runTasks(testRun, [
+    const status = await runTasks(new TestRun(config, reporter), [
       ...createPluginSetupTasks(config),
       createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
     ]);
@@ -457,7 +454,6 @@ export async function runAllTestsWithConfig(config: FullConfigInternal, options:
   }
 
   const reporter = new InternalReporter([...reporters, lastRun]);
-  const testRun = new TestRun(config, reporter, { ...options, pauseAtEnd: config.configCLIOverrides.pause, pauseOnError: config.configCLIOverrides.pause });
   const tasks = options.listMode ? [
     createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false }),
     createReportBeginTask(),
@@ -468,6 +464,7 @@ export async function runAllTestsWithConfig(config: FullConfigInternal, options:
     ...createRunTestsTasks(config),
   ];
 
+  const testRun = new TestRun(config, reporter, { ...options, pauseAtEnd: config.configCLIOverrides.pause, pauseOnError: config.configCLIOverrides.pause });
   const status = await runTasks(testRun, tasks, config.config.globalTimeout);
 
   // Calling process.exit() might truncate large stdout/stderr output.

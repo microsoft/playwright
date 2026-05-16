@@ -329,8 +329,7 @@ function validateProject(file: string, project: Project, title: string) {
       throw errorWithFile(file, `${title}.workers must be a number or percentage`);
   }
 
-  // Top-level webServer's command-empty case is reported at runtime instead.
-  if (title !== 'config' && 'webServer' in project && project.webServer !== undefined) {
+  if ('webServer' in project && project.webServer !== undefined) {
     const webServer = project.webServer;
     const isArray = Array.isArray(webServer);
     const items = isArray ? webServer : [webServer];
