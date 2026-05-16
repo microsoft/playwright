@@ -21,7 +21,7 @@ import 'playwright-core/lib/bootstrap';
 import { libCli, tools } from 'playwright-core/lib/coreBundle';
 import { program } from 'commander';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
-import { builtInReporters, config, configLoader } from './common';
+import { builtInReporters, config, configLoader, runtime } from './common';
 import { runTests, clearCache, runTestServerAction } from './cli/testActions';
 import { showReport, mergeReports } from './cli/reportActions';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
@@ -32,6 +32,8 @@ export { program };
 
 import type { TraceMode } from '../types/test';
 import type { Command } from 'commander';
+
+runtime.requireMinimumBunVersion();
 
 libCli.decorateProgram(program);
 

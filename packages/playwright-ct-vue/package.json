@@ -8,7 +8,7 @@
   },
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=18"
+    "node": ">=22.12.0"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@playwright/experimental-ct-core": "1.61.0-next",
-    "@vitejs/plugin-vue": "^5.2.0"
+    "@vitejs/plugin-vue": "^6.0.7"
   },
   "bin": {
     "playwright": "cli.js"

@@ -28,7 +28,7 @@ import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromT
 import type http from 'http';
 import type { AddressInfo } from 'net';
 import type { FullConfig, Suite } from 'playwright/types/testReporter';
-import type { PluginContext } from 'rollup';
+import type { PluginContext } from 'rolldown';
 import type { Plugin, ResolveFn, ResolvedConfig } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';
 import type { ImportInfo } from './tsxTransform';

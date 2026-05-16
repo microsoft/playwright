@@ -15,7 +15,7 @@
  */
 
 // @ts-ignore
-import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-deflate.js';
+import * as zipImport from '@zip.js/zip.js/lib/zip-core-writer.js';
 
 import type * as zip from '@zip.js/zip.js';
 import type { SubmittedAnnotationFrame } from './dashboardChannel';

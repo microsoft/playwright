@@ -259,7 +259,10 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
 }
 
 function calculateHash(content: string, filePath: string, isModule: boolean, pluginsPrologue: BabelPlugin[], pluginsEpilogue: BabelPlugin[]): string {
-  const hash = crypto.createHash('sha1')
+  const hasher: { update(s: string): any, digest(enc: 'hex'): string } = isBun()
+    ? new Bun.CryptoHasher('sha1')
+    : crypto.createHash('sha1');
+  return hasher
       .update(isModule ? 'esm' : 'no_esm')
       .update(content)
       .update(filePath)
@@ -267,7 +270,6 @@ function calculateHash(content: string, filePath: string, isModule: boolean, plu
       .update(pluginsPrologue.map(p => p[0]).join(','))
       .update(pluginsEpilogue.map(p => p[0]).join(','))
       .digest('hex');
-  return hash;
 }
 
 export async function requireOrImport(file: string) {
@@ -320,9 +322,11 @@ function installTransformIfNeeded() {
   }
   (Module as any)._resolveFilename = resolveFilename;
 
-  // Bun handles TypeScript natively; registering this require hook confuses its loader.
-  if (isBun())
+  if (isBun()) {
+    const { registerBunPlugin } = require('./bunPlugin') as typeof import('./bunPlugin');
+    registerBunPlugin();
     return;
+  }
 
   // Hopefully, one day we can migrate to synchronous loader hooks instead, similar to our esmLoader...
   addHook((code, filename) => {

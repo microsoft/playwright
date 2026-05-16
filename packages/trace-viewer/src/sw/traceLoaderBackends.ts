@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // @ts-ignore
-import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
+import * as zipImport from '@zip.js/zip.js/lib/zip-core-reader.js';
 
 import type * as zip from '@zip.js/zip.js';
 import type { TraceLoaderBackend } from '@isomorphic/trace/traceLoader';
@@ -63,21 +63,21 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
 
   async readText(entryName: string): Promise<string | undefined> {
     const entries = await this._entriesPromise;
-    const entry = entries.get(entryName);
+    const entry = entries.get(entryName) as zip.FileEntry | undefined;
     if (!entry)
       return;
     const writer = new zipjs.TextWriter();
-    await entry.getData?.(writer);
+    await entry.getData(writer);
     return writer.getData();
   }
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
     const entries = await this._entriesPromise;
-    const entry = entries.get(entryName);
+    const entry = entries.get(entryName) as zip.FileEntry | undefined;
     if (!entry)
       return;
     const writer = new zipjs.BlobWriter() as zip.BlobWriter;
-    await entry.getData!(writer);
+    await entry.getData(writer);
     return writer.getData();
   }
 }

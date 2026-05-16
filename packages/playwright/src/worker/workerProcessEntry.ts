@@ -15,6 +15,8 @@
  */
 
 import { startProcessRunner } from '../common';
+import { requireMinimumBunVersion } from '../common/runtime';
 import { create } from './workerMain';
 
+requireMinimumBunVersion();
 startProcessRunner(create);

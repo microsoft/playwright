@@ -17,7 +17,7 @@
 import type { HTMLReport } from './types';
 import type * as zip from '@zip.js/zip.js';
 // @ts-ignore
-import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
+import * as zipImport from '@zip.js/zip.js/lib/zip-core-reader.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import './colors.css';
@@ -72,9 +72,9 @@ class ZipReport implements LoadedReport {
   }
 
   async entry(name: string): Promise<Object> {
-    const reportEntry = this._entries.get(name);
+    const reportEntry = this._entries.get(name) as zip.FileEntry;
     const writer = new zipjs.TextWriter() as zip.TextWriter;
-    await reportEntry!.getData!(writer);
+    await reportEntry.getData(writer);
     return JSON.parse(await writer.getData());
   }
 }
