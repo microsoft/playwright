@@ -8,7 +8,7 @@
   },
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=26.1.0"
   },
   "author": {
     "name": "Microsoft Corporation"
