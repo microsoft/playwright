@@ -764,8 +764,8 @@ it('should type with namedKeys', async ({ page }) => {
     document.body.appendChild(textarea);
     textarea.focus();
   });
-  await page.keyboard.type('Hello{Enter}World', { namedKeys: true });
-  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('Hello\nWorld');
+  await page.keyboard.type('He{{ll}o{Enter}Wor{ld', { namedKeys: true });
+  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('He{ll}o\nWor{ld');
 });
 
 it('locator should pressSequentially with namedKeys', async ({ page }) => {

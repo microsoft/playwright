@@ -14703,8 +14703,7 @@ export interface Locator {
    *
    * When [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
    * `true`, anything inside `{}` is treated as a key name (same format as
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)). Use `{{` and `}}` to
-   * type literal brace characters.
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)).
    *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
@@ -14732,8 +14731,7 @@ export interface Locator {
    * @param text String of characters to sequentially press into a focused element. When
    * [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
    * `true`, anything inside `{}` is treated as a key name (same format as
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)). Use `{{` and `}}` to
-   * type literal brace characters.
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)).
    * @param options
    */
   pressSequentially(text: string, options?: {
@@ -14743,10 +14741,10 @@ export interface Locator {
     delay?: number;
 
     /**
-     * When `true`, anything inside `{}` in the text is treated as a key name (same format as
-     * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)), allowing you to mix
-     * regular characters with special keys like `{Enter}`, `{ArrowDown}`, or modifier combos like `{Control+A}`. Use `{{`
-     * and `}}` to type literal brace characters. Defaults to `false`.
+     * When [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
+     * `true`, anything inside `{}` is treated as a key name (same format as
+     * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)). Use `{{` to type a
+     * literal brace character. Defaults to `false`.
      */
     namedKeys?: boolean;
 
@@ -20198,8 +20196,7 @@ export interface Keyboard {
    *
    * When [`namedKeys`](https://playwright.dev/docs/api/class-keyboard#keyboard-type-option-named-keys) is `true`,
    * anything inside `{}` is treated as a key name (same format as
-   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)). Use `{{` and `}}`
-   * to type literal brace characters.
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)).
    *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
@@ -20209,6 +20206,9 @@ export interface Keyboard {
    * ```js
    * await page.keyboard.type('Hello'); // Types instantly
    * await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
+   *
+   * // Mix text and special keys
+   * await page.keyboard.type('Hello{Enter}World', { namedKeys: true });
    * ```
    *
    * **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
@@ -20225,10 +20225,10 @@ export interface Keyboard {
     delay?: number;
 
     /**
-     * When `true`, anything inside `{}` in the text is treated as a key name (same format as
-     * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)), allowing you to
-     * mix regular characters with special keys like `{Enter}`, `{ArrowDown}`, or modifier combos like `{Control+A}`. Use
-     * `{{` and `}}` to type literal brace characters. Defaults to `false`.
+     * When [`namedKeys`](https://playwright.dev/docs/api/class-keyboard#keyboard-type-option-named-keys) is `true`,
+     * anything inside `{}` is treated as a key name (same format as
+     * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)). Use `{{` to type
+     * a literal brace character. Defaults to `false`.
      */
     namedKeys?: boolean;
   }): Promise<void>;

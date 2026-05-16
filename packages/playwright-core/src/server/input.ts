@@ -112,8 +112,6 @@ export class Keyboard {
     const delay = (options && options.delay) || undefined;
     for (const token of parseNamedKeys(text, !!options?.namedKeys)) {
       if (token.type === 'key') {
-        if (delay)
-          await progress.wait(delay);
         await this.press(progress, token.value, { delay });
       } else {
         if (usKeyboardLayout.has(token.value)) {
