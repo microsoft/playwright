@@ -93,7 +93,7 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '22.04' };
       if (major < 26)
         return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '24.04' };
-      return { hostPlatform: ('ubuntu' + distroInfo.version + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+       return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     }
     // Linux Mint is ubuntu-based but does not have the same versions
     if (distroInfo?.id === 'linuxmint') {
