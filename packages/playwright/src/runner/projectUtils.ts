@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { promisify } from 'util';
 
 import minimatch from 'minimatch';
 import { escapeRegExp } from '@isomorphic/stringUtils';
@@ -25,9 +24,6 @@ import { createFileMatcher } from '../util';
 
 import type { config as commonConfig, FullConfigInternal } from '../common';
 
-
-const readFileAsync = promisify(fs.readFile);
-const readDirAsync = promisify(fs.readdir);
 
 function wildcardPatternToRegExp(pattern: string): RegExp {
   return new RegExp('^' + pattern.split('*').map(escapeRegExp).join('.*') + '$', 'ig');
@@ -208,13 +204,13 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
   const files: string[] = [];
 
   const visit = async (dir: string, rules: Rule[], status: IgnoreStatus) => {
-    const entries = await readDirAsync(dir, { withFileTypes: true });
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
     if (respectGitIgnore) {
       const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
       if (gitignore) {
-        const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
+        const content = await fs.promises.readFile(path.join(dir, gitignore.name), 'utf8');
         const newRules: Rule[] = content.split(/\r?\n/).map(s => {
           s = s.trim();
           if (!s)

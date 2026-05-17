@@ -35,7 +35,6 @@
     "noEmit": true,
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": false,
-    "useDefineForClassFields": false,
     "skipLibCheck": true,
   },
   "compileOnSave": true,

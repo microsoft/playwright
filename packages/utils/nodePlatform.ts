@@ -18,7 +18,8 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import * as util from 'util';
-import { Readable, Writable, pipeline } from 'stream';
+import { Readable, Writable } from 'stream';
+import { pipeline } from 'stream/promises';
 import { EventEmitter } from 'events';
 
 import colors from 'colors/safe';
@@ -30,7 +31,6 @@ import type { Platform, Zone } from '@isomorphic/platform';
 import type { Zone as ZoneImpl } from './zones';
 import type * as channels from '@protocol/channels';
 
-const pipelineAsync = util.promisify(pipeline);
 
 class NodeZone implements Zone {
   private _zone: ZoneImpl;
@@ -110,7 +110,7 @@ export const nodePlatform: (coreDir: string) => Platform = coreDir => ({
   showInternalStackFrames: () => !!process.env.PWDEBUGIMPL,
 
   async streamFile(path: string, stream: Writable): Promise<void> {
-    await pipelineAsync(fs.createReadStream(path), stream);
+    await pipeline(fs.createReadStream(path), stream);
   },
 
   streamReadable: (channel: channels.StreamChannel) => {

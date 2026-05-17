@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { promisify } from 'util';
 
 import debug from 'debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
@@ -42,7 +41,6 @@ import type { FullResult, TestError } from '../../types/testReporter';
 import type { Matcher, TestCaseFilter } from '../util';
 import type { InternalReporter } from '../reporters/internalReporter';
 
-const readDirAsync = promisify(fs.readdir);
 
 type ProjectWithTestGroups = {
   project: commonConfig.FullProjectInternal;
@@ -264,7 +262,7 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
           // We failed to remove folder, might be due to the whole folder being mounted inside a container:
           //   https://github.com/microsoft/playwright/issues/12106
           // Do a best-effort to remove all files inside of it instead.
-          const entries = await readDirAsync(outputDir).catch(e => []);
+          const entries = await fs.promises.readdir(outputDir).catch(e => []);
           await Promise.all(entries.map(entry => removeFolders([path.join(outputDir, entry)])));
         } else {
           throw error;

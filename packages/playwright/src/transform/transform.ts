@@ -276,21 +276,15 @@ export async function requireOrImport(file: string) {
   installTransformIfNeeded();
   const isModule = fileIsModule(file);
   if (isModule) {
-    const fileName = url.pathToFileURL(file);
-    const esmImport = () => eval(`import(${JSON.stringify(fileName)})`);
+    const fileUrl = url.pathToFileURL(file).toString();
 
-    // For ESM imports, issue a preflight to populate the compilation cache with the
-    // source maps. This allows inline test() calls to resolve wrapFunctionWithLocation.
-    await eval(`import(${JSON.stringify(fileName + '.esm.preflight')})`)
+    // Preflight: drive the ESM loader hook so source maps reach the main thread
+    // before a real import below might throw. Compilation cache is populated in a
+    // post task, so flush microtasks via nextTask before returning either way.
+    await import(fileUrl + '.esm.preflight')
         .catch((error: any) => debugTest('Failed to load preflight for ' + file + ', source maps may be missing for errors thrown during loading.', error))
         .finally(nextTask);
-
-    // Compilation cache, which includes source maps, is populated in a post task.
-    // When importing a module results in an error, the very next access to `error.stack`
-    // will need source maps. To make sure source maps have arrived, we insert a task
-    // that will be processed after compilation cache and guarantee that
-    // source maps are available, before `error.stack` is accessed.
-    return await esmImport().finally(nextTask);
+    return await import(fileUrl).finally(nextTask);
   }
   const result = require(file);
   const depsCollector = currentFileDepsCollector();
