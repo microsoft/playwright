@@ -15,8 +15,46 @@
  */
 
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { registerESMLoaderOnModuleForTest } from '../../packages/playwright/src/common/esmLoaderHost';
 import path from 'path';
 import url from 'url';
+
+test('should prefer module.registerHooks when available for playwright ESM loader registration', () => {
+  const calls: string[] = [];
+  const hooks = {
+    resolve: () => {},
+    load: () => {},
+    resolveSync: () => {},
+    loadSync: () => {},
+  };
+
+  const mode = registerESMLoaderOnModuleForTest({
+    registerHooks: registeredHooks => {
+      expect(registeredHooks).toEqual({ resolve: hooks.resolveSync, load: hooks.loadSync });
+      calls.push('registerHooks');
+    },
+    register: () => calls.push('register'),
+  }, hooks, () => calls.push('register'));
+
+  expect(mode).toBe('registerHooks');
+  expect(calls).toEqual(['registerHooks']);
+});
+
+test('should fall back to module.register when registerHooks is unavailable for playwright ESM loader registration', () => {
+  const calls: string[] = [];
+
+  const mode = registerESMLoaderOnModuleForTest({
+    register: () => calls.push('nodeModule.register'),
+  }, {
+    resolve: () => {},
+    load: () => {},
+    resolveSync: () => {},
+    loadSync: () => {},
+  }, () => calls.push('register'));
+
+  expect(mode).toBe('register');
+  expect(calls).toEqual(['register']);
+});
 
 test('should return the location of a syntax error', async ({ runInlineTest }) => {
   const result = await runInlineTest({

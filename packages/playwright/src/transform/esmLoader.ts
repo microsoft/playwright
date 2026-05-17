@@ -23,12 +23,10 @@ import { resolveHook, setSingleTSConfig, setTransformConfig, shouldTransform, tr
 import { fileIsModule } from '../util';
 
 // Before each import of the ESM module, a preflight request with the .esm.preflight extension is issued.
-// When handled, it is resolved similarly to the reqular import, but loading it yields empty content.
+// When handled, it is resolved similarly to the regular import, but loading it yields empty content.
 const esmPreflightExtension = '.esm.preflight';
 
-// Node < 18.6: defaultResolve takes 3 arguments.
-// Node >= 18.6: nextResolve from the chain takes 2 arguments.
-async function resolve(originalSpecifier: string, context: { parentURL?: string }, defaultResolve: Function) {
+function resolveSpecifier(originalSpecifier: string, context: { parentURL?: string }) {
   let specifier = originalSpecifier.replace(esmPreflightExtension, '');
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
@@ -36,7 +34,10 @@ async function resolve(originalSpecifier: string, context: { parentURL?: string 
     if (resolved !== undefined)
       specifier = url.pathToFileURL(resolved).toString();
   }
-  const result = await defaultResolve(specifier, context, defaultResolve);
+  return specifier;
+}
+
+function finishResolve(originalSpecifier: string, result: { url?: string }) {
   // Note: we collect dependencies here that will be sent to the main thread
   // (and optionally runner process) after the loading finishes.
   if (result?.url && result.url.startsWith('file://'))
@@ -45,6 +46,18 @@ async function resolve(originalSpecifier: string, context: { parentURL?: string 
   if (originalSpecifier.endsWith(esmPreflightExtension))
     result.url = result.url + esmPreflightExtension;
   return result;
+}
+
+// Node < 18.6: defaultResolve takes 3 arguments.
+// Node >= 18.6: nextResolve from the chain takes 2 arguments.
+async function resolve(originalSpecifier: string, context: { parentURL?: string }, defaultResolve: Function) {
+  const specifier = resolveSpecifier(originalSpecifier, context);
+  return finishResolve(originalSpecifier, await defaultResolve(specifier, context, defaultResolve));
+}
+
+function resolveSync(originalSpecifier: string, context: { parentURL?: string }, defaultResolve: Function) {
+  const specifier = resolveSpecifier(originalSpecifier, context);
+  return finishResolve(originalSpecifier, defaultResolve(specifier, context, defaultResolve));
 }
 
 // non-js files have undefined
@@ -59,9 +72,7 @@ const kSupportedFormats = new Map([
   [undefined, undefined]
 ]);
 
-// Node < 18.6: defaultLoad takes 3 arguments.
-// Node >= 18.6: nextLoad from the chain takes 2 arguments.
-async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
+function loadSync(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
   // Bail out for wasm, json, etc.
   if (!kSupportedFormats.has(context.format))
     return defaultLoad(moduleUrl, context, defaultLoad);
@@ -94,6 +105,12 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
     source: isPreflight ? `void 0;` : transformed.code,
     shortCircuit: true,
   };
+}
+
+// Node < 18.6: defaultLoad takes 3 arguments.
+// Node >= 18.6: nextLoad from the chain takes 2 arguments.
+async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
+  return loadSync(moduleUrl, context, defaultLoad);
 }
 
 let transport: PortTransport | undefined;
@@ -135,4 +152,4 @@ function createTransport(port: MessagePort) {
 }
 
 
-module.exports = { initialize, load, resolve };
+module.exports = { initialize, load, loadSync, resolve, resolveSync };

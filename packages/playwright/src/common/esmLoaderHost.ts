@@ -21,6 +21,33 @@ import { PortTransport } from '../transform/portTransport';
 import { singleTSConfig, transformConfig } from '../transform/transform';
 
 let loaderChannel: PortTransport | undefined;
+let loaderRegisteredWithRegisterHooks = false;
+
+type NodeModuleWithRegisterHooks = {
+  register?: (specifier: any, options: any) => unknown;
+  registerHooks?: (hooks: { resolve: Function, load: Function }) => unknown;
+};
+
+type ESMHooks = {
+  resolve: Function;
+  load: Function;
+  resolveSync: Function;
+  loadSync: Function;
+};
+
+export function registerESMLoaderOnModuleForTest(nodeModule: NodeModuleWithRegisterHooks, hooks: ESMHooks, registerFallback: () => void): 'registerHooks' | 'register' | undefined {
+  // Node 26 prefers registerHooks for module loader hooks. Keep module.register
+  // as a fallback for older supported Node versions that do not expose it.
+  if (typeof nodeModule.registerHooks === 'function') {
+    nodeModule.registerHooks({ resolve: hooks.resolveSync, load: hooks.loadSync });
+    return 'registerHooks';
+  }
+
+  if (typeof nodeModule.register === 'function') {
+    registerFallback();
+    return 'register';
+  }
+}
 
 export function registerESMLoader() {
   // Opt-out switch.
@@ -32,20 +59,26 @@ export function registerESMLoader() {
   if ('Bun' in globalThis)
     return true;
 
-  if (loaderChannel)
+  if (loaderChannel || loaderRegisteredWithRegisterHooks)
     return true;
 
-  const register = require('node:module').register;
-  if (!register)
+  const nodeModule = require('node:module') as NodeModuleWithRegisterHooks;
+  const esmLoader = require('../transform/esmLoader.js') as ESMHooks;
+  const mode = registerESMLoaderOnModuleForTest(nodeModule, esmLoader, () => {
+    const { port1, port2 } = new MessageChannel();
+    // register will wait until the loader is initialized.
+    nodeModule.register!(url.pathToFileURL(require.resolve('../transform/esmLoader.js')), {
+      data: { port: port2 },
+      transferList: [port2],
+    });
+    loaderChannel = createPortTransport(port1);
+  });
+  if (!mode)
     return false;
 
-  const { port1, port2 } = new MessageChannel();
-  // register will wait until the loader is initialized.
-  register(url.pathToFileURL(require.resolve('../transform/esmLoader.js')), {
-    data: { port: port2 },
-    transferList: [port2],
-  });
-  loaderChannel = createPortTransport(port1);
+  if (mode === 'registerHooks')
+    loaderRegisteredWithRegisterHooks = true;
+
   return true;
 }
 
