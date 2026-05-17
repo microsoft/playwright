@@ -95,11 +95,11 @@ async function generatePausedMessage(tools: typeof import('playwright-core/lib/c
         `- Page Title: ${await page.title()}`.trim()
     );
     // Only print console errors when pausing on error, not when everything works as expected.
-    let console = testInfo.errors.length ? await tools.Tab.collectConsoleMessages(page) : [];
-    console = console.filter(msg => msg.type === 'error');
-    if (console.length) {
+    let consoleMessages = testInfo.errors.length ? await tools.Tab.collectConsoleMessages(page) : [];
+    consoleMessages = consoleMessages.filter(msg => msg.type === 'error');
+    if (consoleMessages.length) {
       lines.push('- Console Messages:');
-      for (const message of console)
+      for (const message of consoleMessages)
         lines.push(`  - ${message.toString()}`);
     }
     lines.push(

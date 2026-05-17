@@ -68,8 +68,8 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   };
 
   httpServer.createWebSocket(() => {
+    // oxlint-disable-next-line prefer-const
     let connection: DashboardConnection;
-    // eslint-disable-next-line prefer-const
     connection = new DashboardConnection(provider, () => connections.delete(connection), () => {
       if (currentReveal.pageId)
         connection.revealPage(currentReveal.pageId);

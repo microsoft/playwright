@@ -43,7 +43,7 @@ export function addHook(transformHook: (code: string, filename: string) => strin
     function newLoader(this: any, mod: any, filename: string, ...loaderArgs: any[]) {
       if (allSupportedExtensions.has(path.extname(filename)) && shouldTransform(filename)) {
         const oldCompile = mod._compile;
-        function newCompile(this: any, code: string, file: string, ...ignoredArgs: any[]) {
+        function newCompile(this: any, code: string, file: string) {
           // Note: we do not pass |args| downstream to make sure "esm modules" loaded through here
           // are treated as "commonjs", for example for ".mjs" files.
           // In theory, we should fix this, but it is a breaking change, even for playwright's own tests.

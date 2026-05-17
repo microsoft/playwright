@@ -1,0 +1,92 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "react"],
+  "jsPlugins": ["eslint-plugin-notice"],
+  "categories": {
+    "correctness": "off",
+    "suspicious": "off",
+    "perf": "off",
+    "pedantic": "off",
+    "style": "off",
+    "nursery": "off",
+    "restriction": "off"
+  },
+  "rules": {
+    "eqeqeq": "error",
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-with": "error",
+    "no-multi-str": "error",
+    "no-caller": "error",
+    "no-implied-eval": "error",
+    "no-labels": "error",
+    "no-self-compare": "error",
+    "no-cond-assign": "error",
+    "no-debugger": "error",
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-empty-character-class": "error",
+    "no-unreachable": "error",
+    "no-unsafe-negation": "error",
+    "radix": "error",
+    "valid-typeof": "error",
+    "no-unused-expressions": ["error", { "allowShortCircuit": true, "allowTernary": true, "allowTaggedTemplates": true }],
+    "no-proto": "error",
+    "require-yield": "error",
+    "accessor-pairs": ["error", { "getWithoutSet": false, "setWithoutGet": false }],
+    "eslint/no-unused-vars": "off",
+    "typescript/no-unused-vars": ["error", { "args": "none", "caughtErrors": "none" }],
+    "react/react-in-jsx-scope": "off",
+    "notice/notice": ["error", { "mustMatch": "Copyright", "templateFile": "./utils/copyright.js" }]
+  },
+  "overrides": [
+    {
+      "files": ["packages/**/*.ts"],
+      "rules": {
+        "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+        "no-console": "error",
+        "curly": ["error", "multi-or-nest", "consistent"]
+      }
+    },
+    {
+      "files": ["packages/playwright-core/src/**/*.ts"],
+      "rules": {
+        "no-restricted-properties": [
+          "error",
+          { "object": "process", "property": "exit", "message": "Please use gracefullyProcessExitDoNotHang function to exit the process." },
+          { "object": "process", "property": "stdout" },
+          { "object": "process", "property": "stderr" }
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": [
+    ".github/",
+    "*.js",
+    "**/.cache/",
+    "**/*.d.ts",
+    "index.d.ts",
+    "node_modules/",
+    "output/",
+    "**/playwright-report/",
+    "examples",
+    "packages/*/lib/",
+    "packages/playwright-core/bundles/utils/src/third_party/",
+    "packages/playwright-core/src/generated/*",
+    "packages/playwright-core/src/third_party/",
+    "packages/playwright-core/types/*",
+    "packages/playwright-ct-core/src/generated/*",
+    "packages/playwright/bundles/expect/third_party/",
+    "packages/html-reporter/bundle.ts",
+    "packages/html-reporter/playwright.config.ts",
+    "packages/html-reporter/playwright/*",
+    "packages/html-reporter/vite.config.ts",
+    "test-results/",
+    "tests/assets/",
+    "tests/components/",
+    "tests/installation/fixture-scripts/",
+    "tests/third_party/",
+    "utils/",
+    "browser_patches/"
+  ]
+}
