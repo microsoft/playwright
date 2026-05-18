@@ -164,6 +164,44 @@ it('should authenticate', async ({ browserType, server }) => {
   await browser.close();
 });
 
+it('should reconnect with credentials after CONNECT 407 closes the socket', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40768' }
+}, async ({ browserType, httpsServer, proxyServer }) => {
+  // Some HTTP proxies send 407 and close the socket on the first CONNECT, expecting
+  // the client to reconnect on a new TCP connection with Proxy-Authorization.
+  httpsServer.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by https server via proxy</title></html>');
+  });
+  proxyServer.forwardTo(httpsServer.PORT, { allowConnectRequests: true });
+
+  const connectAttempts: { hadAuth: boolean }[] = [];
+  let closedFirstConnect = false;
+  proxyServer.setAuthHandler(req => {
+    // WebKit on Windows uses libcurl and sends Proxy-Authorization preemptively
+    // on every CONNECT, while libsoup on Linux/macOS sends it only after a 407.
+    // Force the first CONNECT to fail regardless to deterministically exercise
+    // the reconnect path on all platforms.
+    if (req.method !== 'CONNECT' || !req.headers.host?.startsWith('non-existent.com'))
+      return true;
+    connectAttempts.push({ hadAuth: !!req.headers['proxy-authorization'] });
+    if (!closedFirstConnect) {
+      closedFirstConnect = true;
+      return false;
+    }
+    return !!req.headers['proxy-authorization'];
+  });
+
+  const browser = await browserType.launch({
+    proxy: { server: proxyServer.HOST, username: 'user', password: 'secret' },
+  });
+  const page = await browser.newPage({ ignoreHTTPSErrors: true });
+  await page.goto('https://non-existent.com/target.html');
+  expect(await page.title()).toBe('Served by https server via proxy');
+  expect(connectAttempts.length).toBeGreaterThanOrEqual(2);
+  expect(connectAttempts.some(a => a.hadAuth)).toBe(true);
+  await browser.close();
+});
+
 it('should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
   function hasAuth(req, res) {
     const auth = req.headers['proxy-authorization'];
