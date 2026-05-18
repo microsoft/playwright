@@ -18,9 +18,11 @@ import url from 'url';
 
 import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import { PortTransport } from '../transform/portTransport';
-import { singleTSConfig, transformConfig } from '../transform/transform';
+import * as esmLoaderSync from '../transform/esmLoaderSync';
+import { setNeedsPreflightAndPirates, singleTSConfig, transformConfig } from '../transform/transform';
 
 let loaderChannel: PortTransport | undefined;
+let esmLoaderRegistered = false;
 
 export function registerESMLoader() {
   // Opt-out switch.
@@ -32,10 +34,18 @@ export function registerESMLoader() {
   if ('Bun' in globalThis)
     return true;
 
-  if (loaderChannel)
+  if (esmLoaderRegistered)
     return true;
 
-  const register = require('node:module').register;
+  const nodeModule = require('node:module');
+
+  if (nodeModule.registerHooks && !process.env.PLAYWRIGHT_FORCE_ASYNC_LOADER) {
+    nodeModule.registerHooks({ resolve: esmLoaderSync.resolve, load: esmLoaderSync.load });
+    esmLoaderRegistered = true;
+    return true;
+  }
+
+  const register = nodeModule.register;
   if (!register)
     return false;
 
@@ -46,6 +56,8 @@ export function registerESMLoader() {
     transferList: [port2],
   });
   loaderChannel = createPortTransport(port1);
+  esmLoaderRegistered = true;
+  setNeedsPreflightAndPirates();
   return true;
 }
 

@@ -61,6 +61,12 @@ export function setTransformConfig(config: TransformConfig) {
   _externalMatcher = createFileMatcher(_transformConfig.external);
 }
 
+let _needsPreflightAndPirates = false;
+
+export function setNeedsPreflightAndPirates() {
+  _needsPreflightAndPirates = true;
+}
+
 export function transformConfig(): TransformConfig {
   return _transformConfig;
 }
@@ -276,11 +282,15 @@ export async function requireOrImport(file: string) {
     const fileName = url.pathToFileURL(file);
     const esmImport = () => eval(`import(${JSON.stringify(fileName)})`);
 
-    // For ESM imports, issue a preflight to populate the compilation cache with the
-    // source maps. This allows inline test() calls to resolve wrapFunctionWithLocation.
-    await eval(`import(${JSON.stringify(fileName + '.esm.preflight')})`)
-        .catch((error: any) => debugTest('Failed to load preflight for ' + file + ', source maps may be missing for errors thrown during loading.', error))
-        .finally(nextTask);
+    // For ESM imports handled by the asynchronous loader, issue a preflight to populate
+    // the compilation cache with the source maps. This allows inline test() calls to
+    // resolve wrapFunctionWithLocation. The synchronous loader populates the cache
+    // in-process, so no preflight is needed.
+    if (_needsPreflightAndPirates) {
+      await eval(`import(${JSON.stringify(fileName + '.esm.preflight')})`)
+          .catch((error: any) => debugTest('Failed to load preflight for ' + file + ', source maps may be missing for errors thrown during loading.', error))
+          .finally(nextTask);
+    }
 
     // Compilation cache, which includes source maps, is populated in a post task.
     // When importing a module results in an error, the very next access to `error.stack`
@@ -308,6 +318,9 @@ function installTransformIfNeeded() {
 
   installSourceMapSupport();
 
+  if (!_needsPreflightAndPirates)
+    return;
+
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
     if (parent) {
@@ -319,7 +332,6 @@ function installTransformIfNeeded() {
   }
   (Module as any)._resolveFilename = resolveFilename;
 
-  // Hopefully, one day we can migrate to synchronous loader hooks instead, similar to our esmLoader...
   addHook((code, filename) => {
     return transformHook(code, filename).code;
   }, shouldTransform, ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts']);
