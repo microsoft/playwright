@@ -149,7 +149,8 @@ it('should return body with compression', async ({ page, server, asset }) => {
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return binary body with text content-type', async ({ page, server }) => {
+it('should return binary body with text content-type', async ({ page, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'Binary body preservation is currently Chromium-specific');
   // Binary data with bytes that are invalid UTF-8.
   const binaryData = Buffer.from([0x80, 0x81, 0x82, 0xFF, 0xFE, 0x00, 0x01, 0x02]);
   server.setRoute('/binary-as-text', (req, res) => {

@@ -379,6 +379,7 @@ export class CRNetworkManager {
     const getResponseBody = async () => {
       const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
       const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
+      const hasContentEncoding = Object.keys(responsePayload.headers).some(h => h.toLowerCase() === 'content-encoding');
 
       const session = request.session;
       const response = await session.send('Network.getResponseBody', { requestId: request._requestId });
@@ -388,7 +389,9 @@ export class CRNetworkManager {
         // it may have decoded binary data as UTF-8, corrupting non-UTF-8 bytes.
         // Detect this by comparing Content-Length with actual byte length,
         // and fall through to re-fetch via loadNetworkResource.
-        if (response.base64Encoded || !expectedLength || buffer.byteLength === expectedLength)
+        // Skip the check when Content-Encoding is present (gzip, br, etc.)
+        // because Content-Length refers to the encoded size, not the decoded body.
+        if (response.base64Encoded || !expectedLength || hasContentEncoding || buffer.byteLength === expectedLength)
           return buffer;
       }
 

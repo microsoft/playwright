@@ -745,8 +745,7 @@ it('should work with lazy loading iframes', async ({ page, server, isAndroid }) 
 });
 
 it('should report raw buffer for main resource', async ({ page, server, browserName, platform, channel }) => {
-  it.fail(browserName === 'chromium', 'Chromium sends main resource as text');
-  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl', 'Same here');
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl', 'WebKit on Windows sends main resource as text');
 
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 200;
