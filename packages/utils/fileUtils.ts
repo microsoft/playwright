@@ -113,7 +113,13 @@ export function makeSocketPath(domain: string, name: string): string {
   }
   const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
   const dir = path.join(baseDir, domain);
-  const result = path.join(dir, `${name}.sock`);
   fs.mkdirSync(dir, { recursive: true });
+  let result = path.join(dir, `${name}.sock`);
+  // sockaddr_un.sun_path caps unix socket paths at 104 bytes on macOS/BSD and
+  // 108 on Linux. A longer path fails with EINVAL or binds to a truncated
+  // path, so fall back to a hashed name to stay within the limit.
+  const maxSocketPathLength = process.platform === 'linux' ? 107 : 103;
+  if (Buffer.byteLength(result) > maxSocketPathLength)
+    result = path.join(dir, `${calculateSha1(name).slice(0, 16)}.sock`);
   return result;
 }
