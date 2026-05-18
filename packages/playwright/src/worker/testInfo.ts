@@ -22,11 +22,11 @@ import { captureRawStack, stringifyStackFrames } from '@isomorphic/stackTrace';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { monotonicTime } from '@isomorphic/time';
 import { createGuid } from '@utils/crypto';
-import { sanitizeForFilePath } from '@utils/fileUtils';
+import { sanitizeForFilePath, trimLongString } from '@utils/fileUtils';
 import { currentZone } from '@utils/zones';
 
 import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
-import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { ipc, transform } from '../common';

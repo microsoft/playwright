@@ -186,16 +186,6 @@ export function expectTypes(receiver: any, types: ('APIResponse' | 'Page' | 'Loc
 
 export const windowsFilesystemFriendlyLength = 60;
 
-export function trimLongString(s: string, length = 100) {
-  if (s.length <= length)
-    return s;
-  const hash = calculateSha1(s);
-  const middle = `-${hash.substring(0, 5)}-`;
-  const start = Math.floor((length - middle.length) / 2);
-  const end = length - middle.length - start;
-  return s.substring(0, start) + middle + s.slice(-end);
-}
-
 export function addSuffixToFilePath(filePath: string, suffix: string): string {
   const ext = path.extname(filePath);
   const base = filePath.substring(0, filePath.length - ext.length);

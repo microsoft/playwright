@@ -78,6 +78,16 @@ export function sanitizeForFilePath(s: string) {
   return s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
 }
 
+export function trimLongString(s: string, length = 100) {
+  if (s.length <= length)
+    return s;
+  const hash = calculateSha1(s);
+  const middle = `-${hash.substring(0, 5)}-`;
+  const start = Math.floor((length - middle.length) / 2);
+  const end = length - middle.length - start;
+  return s.substring(0, start) + middle + s.slice(-end);
+}
+
 export function isPathInside(root: string, candidate: string): boolean {
   const resolvedRoot = path.resolve(root);
   const resolvedCandidate = path.resolve(candidate);
@@ -104,6 +114,9 @@ export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
+// macOS sun_path is 104 bytes (Linux is 108) including the NUL terminator. Use the lower bound.
+const UNIX_SOCKET_PATH_MAX = 103;
+
 export function makeSocketPath(domain: string, name: string): string {
   const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
   if (process.platform === 'win32') {
@@ -113,7 +126,12 @@ export function makeSocketPath(domain: string, name: string): string {
   }
   const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
   const dir = path.join(baseDir, domain);
-  const result = path.join(dir, `${name}.sock`);
+  const suffix = '.sock';
+  const maxNameLength = UNIX_SOCKET_PATH_MAX - dir.length - path.sep.length - suffix.length;
+  if (maxNameLength < 1)
+    throw new Error(`Socket directory path is too long (${dir.length} chars); set PLAYWRIGHT_SOCKETS_DIR to a shorter location.`);
+  const fsFriendlyName = trimLongString(sanitizeForFilePath(name), maxNameLength);
+  const result = path.join(dir, `${fsFriendlyName}${suffix}`);
   fs.mkdirSync(dir, { recursive: true });
   return result;
 }
