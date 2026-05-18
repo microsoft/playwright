@@ -28,7 +28,7 @@ it.beforeEach(({}, testInfo) => {
 it('should start and stop pipe server', async ({ browserType, browser }) => {
   const serverInfo = await browser.bind('default', {});
   expect(serverInfo).toEqual(expect.objectContaining({
-    endpoint: expect.stringMatching(/browser@/),
+    endpoint: expect.stringMatching(/browser-/),
   }));
 
   const browser2 = await browserType.connect(serverInfo.endpoint);
