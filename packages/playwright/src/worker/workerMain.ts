@@ -123,7 +123,7 @@ export class WorkerMain extends ProcessRunner {
       // Close any other browsers launched in this process. This includes anything launched
       // manually in the test/hooks and internal browsers like Playwright Inspector.
       await fakeTestInfo._runWithTimeout(runnable, () => gracefullyCloseAll()).catch(() => {});
-      this._fatalErrors.push(...fakeTestInfo.errors);
+      this._fatalErrors.push(...fakeTestInfo._errorTree);
     } catch (e) {
       this._fatalErrors.push(testInfoError(e));
     }
@@ -649,7 +649,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl): ipc.TestEndPayload {
     testId: testInfo.testId,
     duration: testInfo.duration,
     status: testInfo.status!,
-    errors: testInfo.errors.map(ipc.toTestInfoErrorPayload),
+    errors: testInfo._errorTree.map(ipc.toTestInfoErrorPayload),
     hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,

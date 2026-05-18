@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { flattenErrorTree } from '@isomorphic/testErrors';
 import type { Metadata, TestAnnotation } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -376,7 +377,7 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
 
-    result.errors.push(...errors);
+    result.errors.push(...flattenErrorTree(errors));
     result.error = result.errors[0];
     void this._reporter.onTestPaused?.(test, result);
   }
@@ -388,7 +389,7 @@ export class TeleReporterReceiver {
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
-    result.errors.push(...payload.errors ?? []);
+    result.errors.push(...flattenErrorTree(payload.errors ?? []));
     result.error = result.errors[0];
     // Attachments are only present here from legacy blobs. These override all _onAttach events
     if (!!payload.attachments)

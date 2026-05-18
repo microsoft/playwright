@@ -10025,6 +10025,13 @@ export interface TestInfoError {
   errorContext?: string;
 
   /**
+   * Sub-errors. Set when an
+   * [AggregateError](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AggregateError)
+   * (or any error that exposes an `errors` array of [Error] instances) was thrown.
+   */
+  errors?: Array<TestInfoError>;
+
+  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;

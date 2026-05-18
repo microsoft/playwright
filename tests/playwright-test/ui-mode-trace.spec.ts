@@ -381,6 +381,28 @@ test('should show errors with causes in the error tab', async ({ runUITest }) =>
 [cause]: SpecialError: my-message`);
 });
 
+test('should show errors with sub-errors in the error tab', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        throw new AggregateError(
+          [new Error('cleanup-1-broken'), new Error('cleanup-2-broken')],
+          'teardown-broken'
+        );
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
+
+  await page.getByText('Errors', { exact: true }).click();
+  await expect(page.locator('.tab-errors')).toContainText(`AggregateError: teardown-broken
+[error]: Error: cleanup-1-broken
+[error]: Error: cleanup-2-broken`);
+});
+
 test('should reveal errors in the sourcetab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `

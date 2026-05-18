@@ -10,6 +10,12 @@ Information about an error thrown during test execution.
 
 Error cause. Set when there is a [cause](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause) for the error. Will be `undefined` if there is no cause or if the cause is not an instance of [Error].
 
+## property: TestInfoError.errors
+* since: v1.61
+- type: ?<[Array]<[TestInfoError]>>
+
+Sub-errors. Set when an [AggregateError](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AggregateError) (or any error that exposes an `errors` array of [Error] instances) was thrown.
+
 ## property: TestInfoError.message
 * since: v1.10
 - type: ?<[string]>

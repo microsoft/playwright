@@ -263,6 +263,8 @@ export class TestTracing {
     const parts: string[] = [error.message || String(error.value)];
     if (error.cause)
       parts.push('[cause]: ' + this._formatError(error.cause));
+    for (const sub of error.errors ?? [])
+      parts.push('[error]: ' + this._formatError(sub));
     return parts.join('\n');
   }
 

@@ -31,6 +31,7 @@ export * from './rtti';
 export * from './semaphore';
 export * from './stackTrace';
 export * from './stringUtils';
+export * from './testErrors';
 export * from './formatUtils';
 export * from './time';
 export * from './timeoutRunner';

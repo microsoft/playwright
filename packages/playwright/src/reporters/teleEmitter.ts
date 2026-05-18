@@ -18,6 +18,7 @@ import path from 'path';
 
 import { createGuid } from '@utils/crypto';
 
+import { dedupErrorTree } from '@isomorphic/testErrors';
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
 import type { ReporterV2 } from './reporterV2';
@@ -80,7 +81,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       params: {
         testId: test.id,
         resultId,
-        errors: result.errors,
+        errors: dedupErrorTree(result.errors),
       }
     });
     // keep the test paused until externally resumed
@@ -276,7 +277,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       id,
       duration: result.duration,
       status: result.status,
-      errors: this._resultKnownErrorCounts.has(id) ? result.errors.slice(this._resultKnownAttachmentCounts.get(id)) : result.errors,
+      errors: dedupErrorTree(this._resultKnownErrorCounts.has(id) ? result.errors.slice(this._resultKnownAttachmentCounts.get(id)) : result.errors),
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
   }

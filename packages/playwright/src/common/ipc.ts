@@ -88,6 +88,7 @@ export type TestInfoErrorPayload = {
   stack?: string;
   value?: string;
   cause?: TestInfoErrorPayload;
+  errors?: TestInfoErrorPayload[];
 };
 
 export type TestPausedPayload = {
@@ -198,5 +199,7 @@ export function toTestInfoErrorPayload(error: TestInfoError): TestInfoErrorPaylo
     result.value = error.value;
   if (error.cause !== undefined)
     result.cause = toTestInfoErrorPayload(error.cause);
+  if (error.errors !== undefined)
+    result.errors = error.errors.map(toTestInfoErrorPayload);
   return result;
 }

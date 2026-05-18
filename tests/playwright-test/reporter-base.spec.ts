@@ -165,6 +165,47 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).toContain('afterAll executed successfully');
     });
 
+    test('should print sub-errors of an AggregateError', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+
+          test('aggregate', async () => {
+            throw new AggregateError(
+              [new Error('cleanup-1-broken'), new Error('cleanup-2-broken')],
+              'teardown-broken'
+            );
+          });
+          test.afterAll(() => {
+            // Sub-errors are flattened into testInfo.errors so every reporter renders them.
+            console.log('%%count: ' + test.info().errors.length);
+            console.log('%%msg-0: ' + test.info().errors[0].message);
+            console.log('%%msg-1: ' + test.info().errors[1].message);
+            console.log('%%msg-2: ' + test.info().errors[2].message);
+            // The parent's tree is preserved with the same object references as the
+            // flat entries, so smart reporters can dedupe by identity.
+            console.log('%%tree-count: ' + test.info().errors[0].errors.length);
+            console.log('%%identity-0: ' + (test.info().errors[0].errors[0] === test.info().errors[1]));
+            console.log('%%identity-1: ' + (test.info().errors[0].errors[1] === test.info().errors[2]));
+          })
+        `
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+      expect(result.outputLines).toEqual([
+        'count: 3',
+        'msg-0: AggregateError: teardown-broken',
+        'msg-1: Error: cleanup-1-broken',
+        'msg-2: Error: cleanup-2-broken',
+        'tree-count: 2',
+        'identity-0: true',
+        'identity-1: true',
+      ]);
+      expect(result.output).toContain('AggregateError: teardown-broken');
+      expect(result.output).toContain('Error: cleanup-1-broken');
+      expect(result.output).toContain('Error: cleanup-2-broken');
+    });
+
     test('should print codeframe from a helper', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'helper.ts': `

@@ -579,10 +579,19 @@ class PathSeparatorPatcher {
   }
 
   private _updateErrorLocations(error: TestError | undefined) {
-    while (error) {
-      this._updateLocation(error.location);
-      error = error.cause;
-    }
+    const visited = new Set<TestError>();
+    const visit = (e: TestError | undefined) => {
+      if (!e || visited.has(e))
+        return;
+      visited.add(e);
+      this._updateLocation(e.location);
+      visit(e.cause);
+      if (e.errors) {
+        for (const sub of e.errors)
+          visit(sub);
+      }
+    };
+    visit(error);
   }
 
   private _updateAnnotationLocation(annotation: TestAnnotation) {

@@ -18,6 +18,7 @@ import colors from 'colors/safe';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 
+import { flattenErrorTree } from '@isomorphic/testErrors';
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
 import { ipc, test as testNs } from '../common';
@@ -249,7 +250,7 @@ export class Dispatcher {
         workerIndex: worker.workerIndex,
         parallelIndex: worker.parallelIndex,
       };
-      for (const error of params.fatalErrors)
+      for (const error of flattenErrorTree(params.fatalErrors))
         this._testRun.reporter.onError?.(error, workerInfo);
     });
     worker.on('processError', (error: TestError) => {
@@ -329,7 +330,7 @@ class JobDispatcher {
     this._remainingByTestId.delete(params.testId);
     const { result, test } = data;
     result.duration = params.duration;
-    result.errors = params.errors;
+    result.errors = flattenErrorTree(params.errors);
     result.error = result.errors[0];
     result.status = params.status;
     result.annotations = params.annotations;
@@ -482,7 +483,7 @@ class JobDispatcher {
     if (params.fatalErrors.length) {
       // In case of fatal errors, report first remaining test as failing with these errors,
       // and all others as skipped.
-      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), params.fatalErrors);
+      this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), flattenErrorTree(params.fatalErrors));
     }
     // Handle tests that should be skipped because of the setup failure.
     this._massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
@@ -603,7 +604,7 @@ class JobDispatcher {
     };
 
     result.status = params.status;
-    result.errors = params.errors;
+    result.errors = flattenErrorTree(params.errors);
     result.error = result.errors[0];
 
     void this._testRun.reporter.onTestPaused?.(test, result).then(() => {

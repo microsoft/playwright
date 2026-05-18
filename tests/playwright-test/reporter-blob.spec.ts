@@ -86,6 +86,57 @@ class EchoReporter {
 module.exports = EchoReporter;
 `;
 
+test('should preserve AggregateError sub-errors through blob round-trip', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const customReporterJs = `
+    class StructureReporter {
+      onTestEnd(test, result) {
+        const [parent, leaf1, leaf2] = result.errors;
+        console.log('%%count: ' + result.errors.length);
+        console.log('%%parent: ' + (parent.message || '').split('\\n')[0]);
+        console.log('%%leaf1: ' + (leaf1.message || '').split('\\n')[0]);
+        console.log('%%leaf2: ' + (leaf2.message || '').split('\\n')[0]);
+        console.log('%%tree-count: ' + (parent.errors ? parent.errors.length : 0));
+        console.log('%%identity-0: ' + (parent.errors && parent.errors[0] === leaf1));
+        console.log('%%identity-1: ' + (parent.errors && parent.errors[1] === leaf2));
+      }
+    }
+    module.exports = StructureReporter;
+  `;
+  const files = {
+    'structure-reporter.js': customReporterJs,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('aggregate', async () => {
+        throw new AggregateError(
+          [new Error('cleanup-1-broken'), new Error('cleanup-2-broken')],
+          'teardown-broken'
+        );
+      });
+    `,
+  };
+  await runInlineTest(files);
+  const { exitCode, outputLines } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('structure-reporter.js')] });
+  expect(exitCode).toBe(0);
+  expect(outputLines).toEqual([
+    'count: 3',
+    'parent: AggregateError: teardown-broken',
+    'leaf1: Error: cleanup-1-broken',
+    'leaf2: Error: cleanup-2-broken',
+    'tree-count: 2',
+    // The structural `errors[]` tree on the parent survives the blob round-trip
+    // and shares object identity with the flat leaf entries, so smart reporters
+    // can dedupe the tree against the flat list using `===`.
+    'identity-0: true',
+    'identity-1: true',
+  ]);
+});
+
 test('should call methods in right order', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {

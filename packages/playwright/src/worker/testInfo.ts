@@ -24,6 +24,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { createGuid } from '@utils/crypto';
 import { sanitizeForFilePath } from '@utils/fileUtils';
 import { currentZone } from '@utils/zones';
+import { flattenErrorTree } from '@isomorphic/testErrors';
 
 import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
@@ -138,6 +139,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoError[] = [];
+  _errorTree: TestInfoError[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: ipc.WorkerInitParams;
   private _ignoreTimeoutsCounter = 0;
@@ -149,7 +151,8 @@ export class TestInfoImpl implements TestInfo {
   set error(e: TestInfoError | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
-    this.errors[0] = e;
+    this._errorTree[0] = e;
+    this.errors.splice(0, this.errors.length, ...flattenErrorTree(this._errorTree));
   }
 
   get timeout(): number {
@@ -420,8 +423,21 @@ export class TestInfoImpl implements TestInfo {
     const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
     if (step && step.boxedStack)
       serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
-    this.errors.push(serialized);
+    this._appendFlattened(serialized);
+    this._errorTree.push(serialized);
     this._tracing.appendForError(serialized);
+  }
+
+  private _appendFlattened(error: TestInfoError) {
+    const visited = new Set<TestInfoError>();
+    const visit = (error: TestInfoError) => {
+      if (visited.has(error))
+        return;
+      visited.add(error);
+      this.errors.push(error);
+      error.errors?.forEach(sub => visit(sub));
+    };
+    visit(error);
   }
 
   async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, group?: string }, cb: () => Promise<any>) {
@@ -484,7 +500,7 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       await Promise.race([
-        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors.map(ipc.toTestInfoErrorPayload) : [], status: this.status }),
+        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this._errorTree.map(ipc.toTestInfoErrorPayload) : [], status: this.status }),
         this._interruptedPromise,
       ]);
     }
