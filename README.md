@@ -152,7 +152,7 @@ playwright-cli show
 
 <!-- TODO: screenshot of playwright-cli show dashboard -->
 
-[Full CLI documentation](https://playwright.dev/docs/cli-agent) | [GitHub](https://github.com/microsoft/playwright-cli)
+[Full CLI documentation](https://playwright.dev/agent-cli/introduction) | [GitHub](https://github.com/microsoft/playwright-cli)
 
 ---
 
@@ -205,7 +205,7 @@ The agent sees the page as a structured accessibility tree:
 
 It uses element refs like `e5` and `e10` to click, type, and interact — deterministically and without visual ambiguity. Tools cover navigation, form filling, screenshots, network mocking, storage management, and more.
 
-[Full MCP documentation](https://playwright.dev/docs/mcp) | [GitHub](https://github.com/microsoft/playwright-mcp)
+[Full MCP documentation](https://playwright.dev/mcp/introduction) | [GitHub](https://github.com/microsoft/playwright-mcp)
 
 ---
 
