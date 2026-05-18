@@ -175,9 +175,19 @@ it('should reconnect with credentials after CONNECT 407 closes the socket', {
   proxyServer.forwardTo(httpsServer.PORT, { allowConnectRequests: true });
 
   const connectAttempts: { hadAuth: boolean }[] = [];
+  let closedFirstConnect = false;
   proxyServer.setAuthHandler(req => {
-    if (req.method === 'CONNECT')
-      connectAttempts.push({ hadAuth: !!req.headers['proxy-authorization'] });
+    // WebKit on Windows uses libcurl and sends Proxy-Authorization preemptively
+    // on every CONNECT, while libsoup on Linux/macOS sends it only after a 407.
+    // Force the first CONNECT to fail regardless to deterministically exercise
+    // the reconnect path on all platforms.
+    if (req.method !== 'CONNECT' || !req.headers.host?.startsWith('non-existent.com'))
+      return true;
+    connectAttempts.push({ hadAuth: !!req.headers['proxy-authorization'] });
+    if (!closedFirstConnect) {
+      closedFirstConnect = true;
+      return false;
+    }
     return !!req.headers['proxy-authorization'];
   });
 
@@ -188,7 +198,6 @@ it('should reconnect with credentials after CONNECT 407 closes the socket', {
   await page.goto('https://non-existent.com/target.html');
   expect(await page.title()).toBe('Served by https server via proxy');
   expect(connectAttempts.length).toBeGreaterThanOrEqual(2);
-  expect(connectAttempts[0].hadAuth).toBe(false);
   expect(connectAttempts.some(a => a.hadAuth)).toBe(true);
   await browser.close();
 });
