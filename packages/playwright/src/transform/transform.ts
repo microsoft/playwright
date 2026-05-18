@@ -318,8 +318,16 @@ function installTransformIfNeeded() {
 
   installSourceMapSupport();
 
-  if (!_needsPreflightAndPirates)
+  if (!_needsPreflightAndPirates) {
+    // The synchronous module customization hooks intercept `require()`, but not the
+    // `require.resolve(id, { paths })` form. The mere presence of these dummy loaders
+    // teaches the default resolver that our extensions should be considered.
+    // Hopefully, one day `registerHooks({ resolve })` will also handle `require.resolve()`.
+    const extensions = (Module as any)._extensions;
+    for (const ext of ['.ts', '.cts', '.tsx', '.jsx'])
+      extensions[ext] = extensions['.js'];
     return;
+  }
 
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
