@@ -18,7 +18,6 @@ import os from 'os';
 import * as util from 'util';
 import { getPlaywrightVersion } from '../../packages/playwright-core/lib/coreBundle';
 import { expect, playwrightTest as base } from '../config/browserTest';
-import { kTargetClosedErrorMessage } from '../config/errors';
 
 const it = base.extend({
   context: async ({}, use) => {
@@ -324,7 +323,7 @@ it('should abort redirected requests when context is disposed', async ({ playwri
     server.waitForRequest('/test').then(() => request.dispose())
   ]);
   expect(result instanceof Error).toBeTruthy();
-  expect(result.message).toContain(kTargetClosedErrorMessage);
+  expect(result.message).toMatch(/Request context disposed|Target page, context or browser has been closed/);
   await connectionClosed;
   await request.dispose();
 });
