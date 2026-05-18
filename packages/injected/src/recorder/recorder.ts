@@ -619,7 +619,7 @@ class RecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range', 'file'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['color', 'date', 'datetime-local', 'file', 'month', 'range', 'time', 'week'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
@@ -896,7 +896,7 @@ class JsonRecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range', 'file'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['color', 'date', 'datetime-local', 'file', 'month', 'range', 'time', 'week'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
