@@ -414,7 +414,8 @@ class RecordActionTool implements RecorderTool {
     if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
       this._recordAction({
         name: 'setInputFiles',
-        selector: this._activeModel!.selector,
+        // webkit doesn't focus file inputs on click, so activeModel is unreliable here.
+        selector: this._hoveredModel!.selector,
         signals: [],
         files: [...((target as HTMLInputElement).files || [])].map(file => file.name),
       });
@@ -618,7 +619,7 @@ class RecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['date', 'range', 'file'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
@@ -895,7 +896,7 @@ class JsonRecordActionTool implements RecorderTool {
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT' || nodeName === 'OPTION')
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type))
+    if (nodeName === 'INPUT' && ['date', 'range', 'file'].includes((target as HTMLInputElement).type))
       return true;
     return false;
   }
