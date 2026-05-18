@@ -2427,6 +2427,7 @@ scheme.PageExpectScreenshotErrorDetails = tObject({
   actual: tOptional(tBinary),
   previous: tOptional(tBinary),
   timedOut: tOptional(tBoolean),
+  customErrorMessage: tOptional(tString),
   log: tOptional(tArray(tString)),
 });
 scheme.PageScreenshotParams = tObject({

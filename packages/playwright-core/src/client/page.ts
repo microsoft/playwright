@@ -639,7 +639,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (!(e instanceof PlaywrightError) || !e.details)
         throw e;
       const details = e.details as channels.PageExpectScreenshotErrorDetails;
-      return { ...details, errorMessage: e.message };
+      return { ...details, errorMessage: details.customErrorMessage };
     }
   }
 

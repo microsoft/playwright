@@ -799,8 +799,9 @@ export class Page extends SdkObject<PageEventMap> {
         previous: intermediateResult?.previous,
         diff: intermediateResult?.diff,
         timedOut: (e instanceof TimeoutError),
+        customErrorMessage: errorMessage,
       };
-      const error = new Error(errorMessage);
+      const error = new Error('Expect failed');
       (error as any).details = details;
       throw error;
     }
