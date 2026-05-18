@@ -446,7 +446,7 @@ export async function runAllTestsWithConfig(config: FullConfigInternal, options:
 
   const filteredProjects = filterProjects(config.projects, options.projectFilter);
   const reporters = await createReporters(config, options.listMode ? 'list' : 'test', undefined, options);
-  const lastRun = new LastRunReporter(filteredProjects, options.listMode);
+  const lastRun = new LastRunReporter(filteredProjects, options.listMode, options.lastFailedFile);
   if (options.lastFailed) {
     const lastFailedTestIds = await lastRun.filterLastFailed();
     if (lastFailedTestIds.length)
