@@ -24,7 +24,7 @@ import type { Highlight, HighlightEntry } from '../highlight';
 import type { InjectedScript } from '../injectedScript';
 import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
-import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode, UIState } from '@recorder/recorderTypes';
 import type { Language } from '@isomorphic/locatorGenerators';
 
 const HighlightColors = {
@@ -39,7 +39,7 @@ export interface RecorderDelegate {
   recordAction?(action: actions.Action): Promise<void>;
   elementPicked?(elementInfo: ElementInfo): Promise<void>;
   setMode?(mode: Mode): Promise<void>;
-  setOverlayState?(state: OverlayState): Promise<void>;
+  setOverlayState?(state: { offsetX: number }): Promise<void>;
   highlightUpdated?(): void;
 }
 
@@ -1383,7 +1383,7 @@ export class Recorder {
     mode: 'none',
     testIdAttributeName: 'data-testid',
     language: 'javascript',
-    overlay: { offsetX: 0 },
+    overlay: { offsetX: 0, theme: 'light-mode' },
   };
   readonly document: Document;
   private _delegate: RecorderDelegate = {};
@@ -1488,7 +1488,7 @@ export class Recorder {
 
     this.state = state;
     this.highlight.setLanguage(state.language);
-    this.highlight.setOverlayTheme(state.overlayTheme ?? 'light-mode');
+    this.highlight.setOverlayTheme(state.overlay.theme);
     this._switchCurrentTool();
     this.overlay?.setUIState(state);
 

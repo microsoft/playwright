@@ -279,7 +279,7 @@ export const InspectModeController: React.FunctionComponent<{
         ariaTemplate,
         language: sdkLanguage,
         testIdAttributeName,
-        overlay: { offsetX: 0 },
+        overlay: { offsetX: 0, theme: 'light-mode' },
       }, {
         async elementPicked(elementInfo: ElementInfo) {
           setHighlightedElement({

@@ -93,22 +93,19 @@ export function currentDocumentTheme(): DocumentTheme | null {
   return null;
 }
 
-export function useThemeSetting(): [Theme, (value: Theme) => void] {
+export function useThemeSetting(): [Theme, DocumentTheme, (value: Theme) => void] {
   const [theme, setTheme] = React.useState<Theme>(currentTheme());
+  const [documentTheme, setDocumentTheme] = React.useState<DocumentTheme>(() => currentDocumentTheme() ?? 'light-mode');
 
   React.useEffect(() => {
     settings.setString(kThemeSettingsKey, theme);
     updateDocumentTheme(theme);
   }, [theme]);
 
-  return [theme, setTheme];
-}
-
-export function useDocumentTheme(): DocumentTheme {
-  const [theme, setTheme] = React.useState<DocumentTheme>(() => currentDocumentTheme() ?? 'light-mode');
   React.useEffect(() => {
-    addThemeListener(setTheme);
-    return () => removeThemeListener(setTheme);
+    addThemeListener(setDocumentTheme);
+    return () => removeThemeListener(setDocumentTheme);
   }, []);
-  return theme;
+
+  return [theme, documentTheme, setTheme];
 }

@@ -29,7 +29,7 @@ export const DefaultSettingsView: React.FC<{
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
   ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
-  const [theme, setTheme] = useThemeSetting();
+  const [theme, , setTheme] = useThemeSetting();
   const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
 
   return (

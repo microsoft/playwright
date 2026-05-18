@@ -26,7 +26,7 @@ import * as React from 'react';
 import { CallLogView } from './callLog';
 import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
-import { kThemeOptions, type Theme, useDocumentTheme, useThemeSetting } from '@web/theme';
+import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
@@ -44,8 +44,7 @@ export const Recorder: React.FC = ({}) => {
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const [theme, setTheme] = useThemeSetting();
-  const documentTheme = useDocumentTheme();
+  const [theme, documentTheme, setTheme] = useThemeSetting();
   const [autoExpect, setAutoExpect] = useSetting<boolean>('autoExpect', false);
   const settingsButtonRef = React.useRef<HTMLButtonElement>(null);
   const backend = React.useMemo(createRecorderBackend, []);

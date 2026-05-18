@@ -131,7 +131,7 @@ const NavLink: React.FC<{
 const SettingsButton: React.FC = () => {
   const settingsRef = React.useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const [theme, setTheme] = useThemeSetting();
+  const [theme, , setTheme] = useThemeSetting();
   const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
 
   return <>

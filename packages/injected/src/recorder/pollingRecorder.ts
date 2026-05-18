@@ -19,7 +19,7 @@ import { Recorder } from './recorder';
 import type { InjectedScript } from '../injectedScript';
 import type { RecorderDelegate } from './recorder';
 import type * as actions from '@recorder/actions';
-import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode, UIState } from '@recorder/recorderTypes';
 
 interface Embedder {
   __pw_recorderPerformAction(action: actions.PerformOnRecordAction): Promise<void>;
@@ -27,7 +27,7 @@ interface Embedder {
   __pw_recorderState(): Promise<UIState>;
   __pw_recorderElementPicked(element: { selector: string, ariaSnapshot?: string }): Promise<void>;
   __pw_recorderSetMode(mode: Mode): Promise<void>;
-  __pw_recorderSetOverlayState(state: OverlayState): Promise<void>;
+  __pw_recorderSetOverlayState(state: { offsetX: number }): Promise<void>;
   __pw_refreshOverlay(): void;
 }
 
@@ -92,7 +92,7 @@ export class PollingRecorder implements RecorderDelegate {
     await this._embedder.__pw_recorderSetMode(mode);
   }
 
-  async setOverlayState(state: OverlayState): Promise<void> {
+  async setOverlayState(state: { offsetX: number }): Promise<void> {
     await this._embedder.__pw_recorderSetOverlayState(state);
   }
 }

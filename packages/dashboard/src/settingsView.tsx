@@ -22,7 +22,7 @@ import { GearIcon } from './icons';
 
 export const SettingsButton: React.FC = () => {
   const [open, setOpen] = React.useState(false);
-  const [theme, setTheme] = useThemeSetting();
+  const [theme, , setTheme] = useThemeSetting();
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {

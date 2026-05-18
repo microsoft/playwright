@@ -79,8 +79,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private _params: RecorderParams;
   private _mode: Mode;
   private _highlightedElement: { selector?: string, ariaTemplate?: AriaTemplateNode } = {};
-  private _overlayState: OverlayState = { offsetX: 0 };
-  private _overlayTheme: OverlayTheme = 'light-mode';
+  private _overlayState: OverlayState = { offsetX: 0, theme: 'light-mode' };
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _actionPoints = new Map<string, Point>();
   private _userSources = new Map<string, Source>();
@@ -193,7 +192,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
           language: this._currentLanguage,
           testIdAttributeName: this._testIdAttributeName(),
           overlay: this._overlayState,
-          overlayTheme: this._overlayTheme,
         };
         return uiState;
       });
@@ -209,10 +207,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         await this.setMode(mode);
       });
 
-      await this._context.exposeBinding(progress, '__pw_recorderSetOverlayState', async ({ frame }, state: OverlayState) => {
+      await this._context.exposeBinding(progress, '__pw_recorderSetOverlayState', async ({ frame }, state: { offsetX: number }) => {
         if (frame.parentFrame())
           return;
-        this._overlayState = state;
+        this._overlayState = { ...this._overlayState, ...state };
       });
 
       await this._context.exposeBinding(progress, '__pw_resume', () => {
@@ -260,7 +258,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   setOverlayTheme(theme: OverlayTheme) {
-    this._overlayTheme = theme;
+    this._overlayState = { ...this._overlayState, theme };
   }
 
   async setMode(mode: Mode) {
