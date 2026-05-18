@@ -96,8 +96,7 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
     handleSIGINT: false,
     handleSIGTERM: false,
   }).catch(error => {
-    if (error.message.includes('Executable doesn\'t exist'))
-      throwBrowserIsNotInstalledError(config);
+    throwIfExecutableMissing(error, config);
     throw error;
   });
   return browser;
@@ -171,8 +170,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
     const browser = browserContext.browser()!;
     return browser;
   } catch (error: any) {
-    if (error.message.includes('Executable doesn\'t exist'))
-      throwBrowserIsNotInstalledError(config);
+    throwIfExecutableMissing(error, config);
     if (error.message.includes('cannot open shared object file: No such file or directory')) {
       const browserName = launchOptions.channel ?? config.browser.browserName;
       throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
@@ -236,10 +234,15 @@ export function isProfileLocked(userDataDir: string): boolean {
   }
 }
 
-function throwBrowserIsNotInstalledError(config: FullConfig): never {
-  const channel = config.browser.launchOptions?.channel ?? config.browser.browserName;
+function throwIfExecutableMissing(error: Error, config: FullConfig): void {
+  // The "Executable doesn't exist" prefix is shared by all managed binaries
+  // (browser, ffmpeg, winldd). Disambiguate by the path so the user is told
+  // which dependency to install.
+  if (!error.message.includes(`Executable doesn't exist`))
+    return;
+  const target = error.message.includes('ffmpeg') ? 'ffmpeg' : (config.browser.launchOptions?.channel ?? config.browser.browserName);
+  const label = target === 'ffmpeg' ? 'FFmpeg' : `Browser "${target}"`;
   if (config.skillMode)
-    throw new Error(`Browser "${channel}" is not installed. Run \`playwright-cli install-browser ${channel}\` to install`);
-  else
-    throw new Error(`Browser "${channel}" is not installed. Run \`npx @playwright/mcp install-browser ${channel}\` to install`);
+    throw new Error(`${label} is not installed. Run \`playwright-cli install-browser ${target}\` to install`);
+  throw new Error(`${label} is not installed. Run \`npx @playwright/mcp install-browser ${target}\` to install`);
 }
