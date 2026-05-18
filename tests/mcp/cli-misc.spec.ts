@@ -67,3 +67,12 @@ test('install handles browser detection', async ({ cli }) => {
   if (foundMatch?.[1] !== 'chrome')
     expect(output).toContain(`Created default config for ${foundMatch?.[1] ?? 'chromium'}.`);
 });
+
+test('open with very long session name (issue 40878)', async ({ cli, server }) => {
+  // Long session names push the unix socket path past sun_path's 104-byte limit on macOS.
+  const longSessionName = 'awesome-coding-agent-orchestrators-with-an-overlong-suffix-for-testing';
+  const result = await cli(`-s=${longSessionName}`, 'open', server.PREFIX);
+  expect(result.error).toBe('');
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('Page URL');
+});

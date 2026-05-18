@@ -143,8 +143,8 @@ export class Registry {
 }
 
 export const baseDaemonDir = (() => {
-  if (process.env.PLAYWRIGHT_DAEMON_SESSION_DIR)
-    return process.env.PLAYWRIGHT_DAEMON_SESSION_DIR;
+  if (process.env.PWTEST_DAEMON_SESSION_DIR)
+    return process.env.PWTEST_DAEMON_SESSION_DIR;
 
   let localCacheDir: string | undefined;
   if (process.platform === 'linux')
