@@ -39,7 +39,6 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-    - uses: ./.github/actions/enable-microphone-access
     - run: |
         echo "::group::npm ci"
         npm ci
