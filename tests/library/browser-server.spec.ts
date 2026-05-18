@@ -22,7 +22,7 @@ import { browserTest as it, expect } from '../config/browserTest';
 it.skip(({ mode }) => mode !== 'default');
 
 it.beforeEach(({}, testInfo) => {
-  process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
+  process.env.PWTEST_SERVER_REGISTRY = testInfo.outputPath('registry');
 });
 
 it('should start and stop pipe server', async ({ browserType, browser }) => {

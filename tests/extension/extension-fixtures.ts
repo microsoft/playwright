@@ -146,11 +146,11 @@ export const testWithOldExtensionVersion = test.extend({
 
 function cliEnv() {
   return {
-    PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
-    PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
+    PWTEST_SERVER_REGISTRY: test.info().outputPath('registry'),
+    PWTEST_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
     // Short path because macOS caps unix socket paths at 104 chars; the
     // long `project.outputDir` path overflows and causes EADDRINUSE.
-    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'pwmcp-sock', String(test.info().parallelIndex)),
+    PWTEST_SOCKETS_DIR: path.join(os.tmpdir(), 'pwmcp-sock', String(test.info().parallelIndex)),
   };
 }
 

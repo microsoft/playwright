@@ -120,16 +120,16 @@ const UNIX_SOCKET_PATH_MAX = 103;
 export function makeSocketPath(domain: string, name: string): string {
   const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
   if (process.platform === 'win32') {
-    const socketsDir = process.env.PLAYWRIGHT_SOCKETS_DIR;
+    const socketsDir = process.env.PWTEST_SOCKETS_DIR;
     const suffix = socketsDir ? `-${calculateSha1(socketsDir).slice(0, 8)}` : '';
     return `\\\\.\\pipe\\pw-${userNameHash}-${domain}-${name}${suffix}`;
   }
-  const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
+  const baseDir = process.env.PWTEST_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
   const dir = path.join(baseDir, domain);
   const suffix = '.sock';
   const maxNameLength = UNIX_SOCKET_PATH_MAX - dir.length - path.sep.length - suffix.length;
   if (maxNameLength < 1)
-    throw new Error(`Socket directory path is too long (${dir.length} chars); set PLAYWRIGHT_SOCKETS_DIR to a shorter location.`);
+    throw new Error(`Socket directory path is too long (${dir.length} chars); set PWTEST_SOCKETS_DIR to a shorter location.`);
   const fsFriendlyName = trimLongString(sanitizeForFilePath(name), maxNameLength);
   const result = path.join(dir, `${fsFriendlyName}${suffix}`);
   fs.mkdirSync(dir, { recursive: true });

@@ -30,7 +30,7 @@ function displayPath(p: string): string {
 }
 
 test.beforeEach(({}, testInfo) => {
-  process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
+  process.env.PWTEST_SERVER_REGISTRY = testInfo.outputPath('registry');
 });
 
 test('should show browser session chip', async ({ cli, server, startDashboardServer }) => {
