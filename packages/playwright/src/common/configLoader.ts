@@ -337,7 +337,7 @@ function validateProject(file: string, project: Project, title: string) {
       const itemTitle = isArray ? `${title}.webServer[${index}]` : `${title}.webServer`;
       if (!item || typeof item !== 'object')
         throw errorWithFile(file, `${itemTitle} must be an object`);
-      if (typeof item.command !== 'string' || !item.command)
+      if (item.command !== undefined && (typeof item.command !== 'string' || !item.command))
         throw errorWithFile(file, `${itemTitle}.command must be a non-empty string`);
     });
   }
