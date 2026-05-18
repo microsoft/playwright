@@ -1600,6 +1600,7 @@ scheme.FrameTypeParams = tObject({
   strict: tOptional(tBoolean),
   text: tString,
   delay: tOptional(tFloat),
+  namedKeys: tOptional(tBoolean),
   timeout: tFloat,
 });
 scheme.FrameTypeResult = tOptional(tObject({}));
@@ -2482,6 +2483,7 @@ scheme.PageKeyboardInsertTextResult = tOptional(tObject({}));
 scheme.PageKeyboardTypeParams = tObject({
   text: tString,
   delay: tOptional(tFloat),
+  namedKeys: tOptional(tBoolean),
 });
 scheme.PageKeyboardTypeResult = tOptional(tObject({}));
 scheme.PageKeyboardPressParams = tObject({

@@ -681,6 +681,7 @@ Frame:
         strict: boolean?
         text: string
         delay: float?
+        namedKeys: boolean?
         timeout: float
       flags:
         slowMo: true

@@ -2933,11 +2933,13 @@ export type FrameTypeParams = {
   strict?: boolean,
   text: string,
   delay?: number,
+  namedKeys?: boolean,
   timeout: number,
 };
 export type FrameTypeOptions = {
   strict?: boolean,
   delay?: number,
+  namedKeys?: boolean,
 };
 export type FrameTypeResult = void;
 export type FrameUncheckParams = {
@@ -4415,9 +4417,11 @@ export type PageKeyboardInsertTextResult = void;
 export type PageKeyboardTypeParams = {
   text: string,
   delay?: number,
+  namedKeys?: boolean,
 };
 export type PageKeyboardTypeOptions = {
   delay?: number,
+  namedKeys?: boolean,
 };
 export type PageKeyboardTypeResult = void;
 export type PageKeyboardPressParams = {

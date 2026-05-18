@@ -772,13 +772,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await progress.race(this.evaluateInUtility(([injected, node]) => injected.blurNode(node), {}));
   }
 
-  async type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<void> {
+  async type(progress: Progress, text: string, options: { delay?: number, namedKeys?: boolean } & types.StrictOptions): Promise<void> {
     await this._markAsTargetElement(progress);
     const result = await this._type(progress, text, options);
     return assertDone(throwRetargetableDOMError(result));
   }
 
-  async _type(progress: Progress, text: string, options: { delay?: number } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
+  async _type(progress: Progress, text: string, options: { delay?: number, namedKeys?: boolean } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.type("${text}")`);
     await progress.race(this.instrumentation.onBeforeInputAction(this, progress.metadata));
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);

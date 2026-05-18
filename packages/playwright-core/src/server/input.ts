@@ -103,20 +103,24 @@ export class Keyboard {
     await this._raw.sendText(progress, text);
   }
 
-  async apiType(progress: Progress, text: string, options?: { delay?: number }) {
+  async apiType(progress: Progress, text: string, options?: { delay?: number, namedKeys?: boolean }) {
     await progress.race(this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata));
     await this.type(progress, text, options);
   }
 
-  async type(progress: Progress, text: string, options?: { delay?: number }) {
+  async type(progress: Progress, text: string, options?: { delay?: number, namedKeys?: boolean }) {
     const delay = (options && options.delay) || undefined;
-    for (const char of text) {
-      if (usKeyboardLayout.has(char)) {
-        await this.press(progress, char, { delay });
+    for (const token of parseNamedKeys(text, !!options?.namedKeys)) {
+      if (token.type === 'key') {
+        await this.press(progress, token.value, { delay });
       } else {
-        if (delay)
-          await progress.wait(delay);
-        await this.insertText(progress, char);
+        if (usKeyboardLayout.has(token.value)) {
+          await this.press(progress, token.value, { delay });
+        } else {
+          if (delay)
+            await progress.wait(delay);
+          await this.insertText(progress, token.value);
+        }
       }
     }
   }
@@ -350,6 +354,34 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
     // Map from shiftKey, no shifted
     if (shiftedDescription)
       result.set(shiftedDescription.key, { ...shiftedDescription, shifted: undefined });
+  }
+  return result;
+}
+
+function parseNamedKeys(text: string, namedKeys: boolean): Array<{ type: 'key' | 'char', value: string }> {
+  if (!namedKeys)
+    return [...text].map(value => ({ type: 'char' as const, value }));
+  const result: Array<{ type: 'key' | 'char', value: string }> = [];
+  let i = 0;
+  while (i < text.length) {
+    if (text[i] === '{') {
+      if (i + 1 < text.length && text[i + 1] === '{') {
+        result.push({ type: 'char', value: '{' });
+        i += 2;
+      } else {
+        const end = text.indexOf('}', i + 1);
+        if (end === -1) {
+          result.push({ type: 'char', value: '{' });
+          i += 1;
+        } else {
+          result.push({ type: 'key', value: text.substring(i + 1, end) });
+          i = end + 1;
+        }
+      }
+    } else {
+      result.push({ type: 'char', value: text[i] });
+      i += 1;
+    }
   }
   return result;
 }
