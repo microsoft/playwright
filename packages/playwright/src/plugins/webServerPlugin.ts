@@ -24,7 +24,7 @@ import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { isURLAvailable } from '@utils/network';
 import { launchProcess } from '@utils/processLauncher';
 
-import type { TestRunnerPlugin } from '.';
+import type { TestRunnerPlugin, TestRunnerPluginRegistration } from '.';
 import type { FullConfig } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -258,26 +258,34 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
   return new WebServerPlugin(options, false);
 };
 
-export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPlugin[] => {
+export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunnerPluginRegistration[] => {
   const shouldSetBaseUrl = !!config.config.webServer;
-  const webServerPlugins = [];
-  for (const webServerConfig of config.webServers) {
-    if (webServerConfig.port && webServerConfig.url)
-      throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
+  const plugins: TestRunnerPluginRegistration[] = [];
+  for (const webServerConfig of config.webServers)
+    plugins.push({ factory: createWebServerPlugin(webServerConfig, shouldSetBaseUrl) });
 
-    let url: string | undefined;
-    if (webServerConfig.port || webServerConfig.url) {
-      url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
-
-      // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-      if (shouldSetBaseUrl && !webServerConfig.url)
-        process.env.PLAYWRIGHT_TEST_BASE_URL = url;
-    }
-    webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined));
+  for (const project of config.projects) {
+    for (const webServerConfig of project.webServers)
+      plugins.push({ factory: createWebServerPlugin(webServerConfig, false), projectId: project.id });
   }
 
-  return webServerPlugins;
+  return plugins;
 };
+
+function createWebServerPlugin(webServerConfig: WebServerPluginOptions & { port?: number }, shouldSetBaseUrl: boolean): TestRunnerPlugin {
+  if (webServerConfig.port && webServerConfig.url)
+    throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
+
+  let url: string | undefined;
+  if (webServerConfig.port || webServerConfig.url) {
+    url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
+
+    // We only set base url when only the port is given. That's a legacy mode we have regrets about.
+    if (shouldSetBaseUrl && !webServerConfig.url)
+      process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+  }
+  return new WebServerPlugin({ ...webServerConfig, url }, webServerConfig.port !== undefined);
+}
 
 function prefixOutputLines(output: string, prefixName: string = 'WebServer'): string {
   const lastIsNewLine = output[output.length - 1] === '\n';

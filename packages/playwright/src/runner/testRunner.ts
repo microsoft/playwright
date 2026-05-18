@@ -392,7 +392,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       const config = await configLoader.loadConfig(this.configLocation, overrides);
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
-        webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+        config.plugins.push(...webServerPluginsForConfig(config));
         addGitCommitInfoPlugin(config);
         this._plugins = config.plugins || [];
       } else {
@@ -442,7 +442,7 @@ export async function runAllTestsWithConfig(config: FullConfigInternal, options:
   addGitCommitInfoPlugin(config);
 
   // Legacy webServer support.
-  webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+  config.plugins.push(...webServerPluginsForConfig(config));
 
   const filteredProjects = filterProjects(config.projects, options.projectFilter);
   const reporters = await createReporters(config, options.listMode ? 'list' : 'test', undefined, options);
