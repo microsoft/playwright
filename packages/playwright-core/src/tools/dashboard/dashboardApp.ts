@@ -274,8 +274,12 @@ async function acquireSingleton(options: DashboardOptions): Promise<AcquireResul
       });
       client.on('data', chunk => { ackBuffer += chunk.toString(); });
       client.on('end', () => {
-        const { pid } = JSON.parse(ackBuffer.trim());
-        resolve({ role: 'loser', daemonPid: pid });
+        try {
+          const { pid } = JSON.parse(ackBuffer.trim());
+          resolve({ role: 'loser', daemonPid: pid });
+        } catch (e) {
+          reject(e);
+        }
       });
       client.on('error', () => {
         if (process.platform !== 'win32')
