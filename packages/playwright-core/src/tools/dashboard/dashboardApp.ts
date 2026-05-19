@@ -100,14 +100,13 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
 
   const reveal = async (next: DashboardOptions): Promise<void> => {
     await connectionLanded;
-    await Promise.any([...connections].map(async c => {
+    await Promise.all([...connections].map(async c => {
       if (next.pageId)
         await c.revealPage(next.pageId);
       else if (next.sessionName)
         await c.revealSession(next.sessionName, next.workspaceDir);
     }));
   };
-  void reveal(options).catch(() => {});
 
   const triggerAnnotate = async (socket: net.Socket) => {
     waitingSockets.add(socket);
@@ -155,6 +154,7 @@ async function attachDashboardDevServer(httpServer: HttpServer) {
 
 async function innerOpenDashboardApp(options: DashboardOptions): Promise<{ page: api.Page; server: DashboardServer }> {
   const server = await startDashboardServer(new RegistrySessionProvider(), options);
+  void server.reveal(options).catch(() => {});
   const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
   await page.goto(server.url);
   return { page, server };
@@ -292,9 +292,10 @@ export async function openDashboardApp() {
     console.error('Unhandled promise rejection:', error);
   });
   if (options.port !== undefined) {
-    const { url } = await startDashboardServer(new RegistrySessionProvider(), options);
+    const server = await startDashboardServer(new RegistrySessionProvider(), options);
+    void server.reveal(options).catch(() => {});
     // eslint-disable-next-line no-console
-    console.log(`Listening on ${url}`);
+    console.log(`Listening on ${server.url}`);
     // eslint-disable-next-line no-restricted-properties
     await new Promise(f => process.stdout.write('', f));  // Make sure stdout is flushed.
     selfDestructOnParentGone();
