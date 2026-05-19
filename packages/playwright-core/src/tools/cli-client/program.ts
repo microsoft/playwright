@@ -204,9 +204,16 @@ export async function program(options?: { embedderVersion?: string}) {
       const daemonScript = libPath('entry', 'dashboardApp.js');
       const daemonArgs = [
         daemonScript,
-        `--sessionName=${sessionName}`,
         `--workspaceDir=${clientInfo.workspaceDir ?? ''}`,
       ];
+      // Only pass --sessionName when the user explicitly requested a session
+      // (via -s/--session or PLAYWRIGHT_CLI_SESSION). Bare `playwright cli show`
+      // opens the dashboard generically, with no specific session to reveal,
+      // so the daemon should ack as soon as it's ready rather than waiting for
+      // a reveal that was never asked for.
+      const explicit = explicitSessionName(args.session as string);
+      if (explicit)
+        daemonArgs.push(`--sessionName=${explicit}`);
       if (args.port !== undefined)
         daemonArgs.push(`--port=${args.port}`);
       if (args.host !== undefined)

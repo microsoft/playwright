@@ -22,6 +22,7 @@ import http from 'http';
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
@@ -41,9 +42,8 @@ declare const __PW_HMR__: boolean;
 
 type DashboardServer = {
   url: string;
-  reveal: (options: DashboardOptions) => void;
-  triggerAnnotate: () => void;
-  registerAnnotateWaiter: (socket: net.Socket) => void;
+  reveal: (options: DashboardOptions) => Promise<void>;
+  triggerAnnotate: (socket: net.Socket) => Promise<void>;
   close: () => Promise<void>;
 };
 
@@ -52,8 +52,7 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   const httpServer = new HttpServer(dashboardDir);
 
   const connections = new Set<DashboardConnection>();
-  let currentReveal: DashboardOptions = options;
-  let pendingAnnotate = false;
+  let connectionLanded = new ManualPromise<void>();
   const waitingSockets = new Set<net.Socket>();
 
   const submitAnnotation = (frames: SubmittedAnnotationFrame[], feedback: string) => {
@@ -70,15 +69,12 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(provider, () => connections.delete(connection), () => {
-      if (currentReveal.pageId)
-        connection.revealPage(currentReveal.pageId);
-      else if (currentReveal.sessionName)
-        connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
-      if (pendingAnnotate) {
-        pendingAnnotate = false;
-        connection.emitAnnotate();
-      }
+    connection = new DashboardConnection(provider, () => {
+      connections.delete(connection);
+      if (connections.size === 0)
+        connectionLanded = new ManualPromise<void>();
+    }, () => {
+      connectionLanded.resolve();
     }, submitAnnotation);
     connections.add(connection);
     return connection;
@@ -102,48 +98,38 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     attachDashboardStaticServer(httpServer, dashboardDir);
   await httpServer.start({ port: options.port, host: options.host });
 
-  const reveal = (next: DashboardOptions) => {
-    currentReveal = next;
-    if (next.pageId) {
-      for (const connection of connections)
-        connection.revealPage(next.pageId);
-      return;
-    }
-    if (!next.sessionName)
-      return;
-    for (const connection of connections)
-      connection.revealSession(next.sessionName, next.workspaceDir);
+  const reveal = async (next: DashboardOptions): Promise<void> => {
+    await connectionLanded;
+    await Promise.all([...connections].map(async c => {
+      if (next.pageId)
+        await c.revealPage(next.pageId);
+      else if (next.sessionName)
+        await c.revealSession(next.sessionName, next.workspaceDir);
+    }));
   };
 
-  const triggerAnnotate = () => {
-    if (connections.size === 0) {
-      pendingAnnotate = true;
-      return;
-    }
-    for (const connection of connections)
-      connection.emitAnnotate();
-  };
-
-  const notifyAnnotateEnded = () => {
-    pendingAnnotate = false;
-    for (const connection of connections)
-      connection.emitCancelAnnotate();
-  };
-
-  const registerAnnotateWaiter = (socket: net.Socket) => {
+  const triggerAnnotate = async (socket: net.Socket) => {
     waitingSockets.add(socket);
     const cleanup = () => {
       if (!waitingSockets.delete(socket))
         return;
-      if (waitingSockets.size === 0)
-        notifyAnnotateEnded();
+      if (waitingSockets.size === 0) {
+        for (const connection of connections)
+          connection.emitCancelAnnotate();
+      }
     };
     socket.on('close', cleanup);
     socket.on('error', cleanup);
+
+    await connectionLanded;
+    if (waitingSockets.size === 0)
+      return;
+    for (const connection of connections)
+      connection.emitAnnotate();
   };
 
   const close = () => httpServer.stop();
-  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter, close };
+  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, close };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
@@ -168,6 +154,7 @@ async function attachDashboardDevServer(httpServer: HttpServer) {
 
 async function innerOpenDashboardApp(options: DashboardOptions): Promise<{ page: api.Page; server: DashboardServer }> {
   const server = await startDashboardServer(new RegistrySessionProvider(), options);
+  void server.reveal(options).catch(() => {});
   const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
   await page.goto(server.url);
   return { page, server };
@@ -279,8 +266,8 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write(JSON.stringify(options) + '\n');
-        reject(new Error('already running'));
       });
+      client.on('end', () => reject(new Error('already running')));
       client.on('error', () => {
         if (process.platform !== 'win32')
           fs.unlinkSync(socketPath);
@@ -305,9 +292,10 @@ export async function openDashboardApp() {
     console.error('Unhandled promise rejection:', error);
   });
   if (options.port !== undefined) {
-    const { url } = await startDashboardServer(new RegistrySessionProvider(), options);
+    const server = await startDashboardServer(new RegistrySessionProvider(), options);
+    void server.reveal(options).catch(() => {});
     // eslint-disable-next-line no-console
-    console.log(`Listening on ${url}`);
+    console.log(`Listening on ${server.url}`);
     // eslint-disable-next-line no-restricted-properties
     await new Promise(f => process.stdout.write('', f));  // Make sure stdout is flushed.
     selfDestructOnParentGone();
@@ -345,7 +333,7 @@ async function startApp(server: net.Server, options: DashboardOptions) {
   const statePromise = innerOpenDashboardApp(options);
   server.on('connection', socket => {
     let buffer = '';
-    socket.on('data', data => {
+    socket.on('data', async data => {
       buffer += data.toString();
       const newlineIndex = buffer.indexOf('\n');
       if (newlineIndex === -1)
@@ -362,21 +350,27 @@ async function startApp(server: net.Server, options: DashboardOptions) {
         socket.end();
         return;
       }
-      void statePromise.then(({ page, server: dashboard }) => {
-        if (parsed.annotate) {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          dashboard.triggerAnnotate();
-          dashboard.registerAnnotateWaiter(socket);
-        } else if (parsed.kill) {
-          socket.end();
-          gracefullyProcessExitDoNotHang(0);
-        } else {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          socket.end();
+      const { page, server: dashboard } = await statePromise;
+      if (parsed.annotate) {
+        try {
+          await page?.bringToFront();
+          await dashboard.reveal(parsed);
+          await dashboard.triggerAnnotate(socket);
+        } catch (e) {
+          socket.end(e);
         }
-      });
+      } else if (parsed.kill) {
+        socket.end();
+        gracefullyProcessExitDoNotHang(0);
+      } else {
+        try {
+          await page?.bringToFront();
+          await dashboard.reveal(parsed);
+          socket.end();
+        } catch (e) {
+          socket.end(e);
+        }
+      }
     });
   });
   await statePromise;
