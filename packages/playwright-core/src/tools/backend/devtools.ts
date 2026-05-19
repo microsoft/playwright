@@ -22,7 +22,7 @@ import { libPath } from '../../package';
 import { defineTabTool, defineTool } from './tool';
 import { elementSchema, optionalElementSchema } from './snapshot';
 
-import type { SubmittedAnnotationFrame } from '@dashboard/dashboardChannel';
+import type { AnnotateResult } from '../dashboard/dashboardController';
 
 const resume = defineTool({
   capability: 'devtools',
@@ -157,11 +157,12 @@ const annotate = defineTabTool({
       response.addTextResult('No annotations were submitted.');
       return;
     }
-    const { frames, feedback } = JSON.parse(text) as { frames: SubmittedAnnotationFrame[]; feedback: string };
-    if (!frames || frames.length === 0) {
+    const result = JSON.parse(text) as AnnotateResult;
+    if (result.type !== 'submitted' || result.frames.length === 0) {
       response.addTextResult('No annotations were submitted.');
       return;
     }
+    const { frames, feedback } = result;
     const date = new Date();
     if (feedback)
       response.addTextResult(feedback);

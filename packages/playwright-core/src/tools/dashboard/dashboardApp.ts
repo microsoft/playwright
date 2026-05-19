@@ -32,7 +32,7 @@ import { RegistrySessionProvider } from './registrySessionProvider';
 import { IdentitySessionProvider } from './identitySessionProvider';
 
 import type * as api from '../../..';
-import type { SubmittedAnnotationFrame } from '@dashboard/dashboardChannel';
+import type { AnnotateResult } from './dashboardController';
 import type { SessionProvider } from './sessionProvider';
 
 // HMR: build-time flag — `true` in watch builds, `false` in release. esbuild
@@ -43,7 +43,7 @@ declare const __PW_HMR__: boolean;
 type DashboardServer = {
   url: string;
   reveal: (options: DashboardOptions) => Promise<void>;
-  triggerAnnotate: (socket: net.Socket) => Promise<void>;
+  triggerAnnotate: (signal: AbortSignal) => Promise<AnnotateResult>;
   close: () => Promise<void>;
 };
 
@@ -53,18 +53,6 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
 
   const connections = new Set<DashboardConnection>();
   let connectionLanded = new ManualPromise<void>();
-  const waitingSockets = new Set<net.Socket>();
-
-  const submitAnnotation = (frames: SubmittedAnnotationFrame[], feedback: string) => {
-    if (waitingSockets.size === 0)
-      return;
-    const payload = JSON.stringify({ frames, feedback });
-    for (const socket of waitingSockets) {
-      socket.write(payload);
-      socket.end();
-    }
-    waitingSockets.clear();
-  };
 
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
@@ -75,7 +63,7 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
         connectionLanded = new ManualPromise<void>();
     }, () => {
       connectionLanded.resolve();
-    }, submitAnnotation);
+    });
     connections.add(connection);
     return connection;
   });
@@ -108,24 +96,15 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     }));
   };
 
-  const triggerAnnotate = async (socket: net.Socket) => {
-    waitingSockets.add(socket);
-    const cleanup = () => {
-      if (!waitingSockets.delete(socket))
-        return;
-      if (waitingSockets.size === 0) {
-        for (const connection of connections)
-          connection.emitCancelAnnotate();
-      }
-    };
-    socket.on('close', cleanup);
-    socket.on('error', cleanup);
-
+  const triggerAnnotate = async (cancellation: AbortSignal): Promise<AnnotateResult> => {
     await connectionLanded;
-    if (waitingSockets.size === 0)
-      return;
-    for (const connection of connections)
-      connection.emitAnnotate();
+    if (cancellation.aborted || connections.size === 0)
+      return { type: 'cancelled' };
+    // Multiple dashboard connections is theoretical today (one UI per daemon), server mode does not support annotate.
+    // If two ever land, the first to submit wins but the losers stay in
+    // annotation mode until their UI reloads — revisit if that becomes a real
+    // scenario.
+    return await Promise.race([...connections].map(c => c.emitAnnotate({ signal: cancellation })));
   };
 
   const close = () => httpServer.stop();
@@ -352,10 +331,14 @@ async function startApp(server: net.Server, options: DashboardOptions) {
       }
       const { page, server: dashboard } = await statePromise;
       if (parsed.annotate) {
+        const cancellation = new AbortController();
+        socket.on('close', () => cancellation.abort());
+        socket.on('error', () => cancellation.abort());
         try {
           await page?.bringToFront();
           await dashboard.reveal(parsed);
-          await dashboard.triggerAnnotate(socket);
+          const result = await dashboard.triggerAnnotate(cancellation.signal);
+          socket.end(JSON.stringify(result));
         } catch (e) {
           socket.end(e);
         }

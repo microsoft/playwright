@@ -32,6 +32,10 @@ import type { SubmittedAnnotationFrame, Tab } from '@dashboard/dashboardChannel'
 import type { BrowserDescriptor } from '../../serverRegistry';
 import type { SessionProvider } from './sessionProvider';
 
+export type AnnotateResult =
+  | { type: 'submitted', frames: SubmittedAnnotationFrame[], feedback: string }
+  | { type: 'cancelled' };
+
 export class DashboardConnection implements Transport {
   sendEvent?: (method: string, params: any) => void;
   close?: () => void;
@@ -40,20 +44,18 @@ export class DashboardConnection implements Transport {
   private _attachedPage: AttachedPage | undefined;
   private _onclose: () => void;
   private _onconnected?: () => void;
-  private _onAnnotationSubmit?: (frames: SubmittedAnnotationFrame[], feedback: string) => void;
   private _pushTabsScheduled = false;
   private _visible = true;
   private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string; done: ManualPromise<void> } | undefined;
-  private _annotateWaitingForAttach = false;
+  private _pendingAnnotate: { resolve: (result: AnnotateResult) => void; dispose: () => void } | undefined;
 
   _recordingDir: string;
   _streams = new Map<string, { handle: fs.promises.FileHandle; path: string }>();
 
-  constructor(provider: SessionProvider, onclose: () => void, onconnected?: () => void, onAnnotationSubmit?: (frames: SubmittedAnnotationFrame[], feedback: string) => void) {
+  constructor(provider: SessionProvider, onclose: () => void, onconnected?: () => void) {
     this._provider = provider;
     this._onclose = onclose;
     this._onconnected = onconnected;
-    this._onAnnotationSubmit = onAnnotationSubmit;
     this._recordingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-recordings-'));
   }
 
@@ -84,6 +86,7 @@ export class DashboardConnection implements Transport {
     // Reject any in-flight reveal so callers awaiting it don't hang.
     this._pendingReveal?.done.reject(new Error('Dashboard connection closed'));
     this._pendingReveal = undefined;
+    this._resolvePendingAnnotate({ type: 'cancelled' });
     for (const stream of this._streams.values()) {
       void stream.handle.close()
           .catch(() => {})
@@ -193,11 +196,11 @@ export class DashboardConnection implements Transport {
   }
 
   async submitAnnotation(params: { frames: SubmittedAnnotationFrame[]; feedback: string }) {
-    this._onAnnotationSubmit?.(params.frames, params.feedback);
+    this._resolvePendingAnnotate({ type: 'submitted', frames: params.frames, feedback: params.feedback });
   }
 
   async cancelAnnotation() {
-    this._onAnnotationSubmit?.([], '');
+    this._resolvePendingAnnotate({ type: 'cancelled' });
   }
 
   async reveal(params: { path: string }) {
@@ -245,18 +248,43 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
   }
 
-  emitAnnotate() {
+  emitAnnotate({ signal }: { signal: AbortSignal }): Promise<AnnotateResult> {
+    return new Promise<AnnotateResult>(resolve => {
+      if (signal.aborted) {
+        resolve({ type: 'cancelled' });
+        return;
+      }
+      // Latest emitAnnotate supersedes any in-flight one on the same connection.
+      this._resolvePendingAnnotate({ type: 'cancelled' });
+      const onAbort = () => {
+        if (this._pendingAnnotate !== pending)
+          return;
+        this._pendingAnnotate = undefined;
+        pending.dispose();
+        this.sendEvent?.('cancelAnnotate', {});
+        resolve({ type: 'cancelled' });
+      };
+      const pending: NonNullable<typeof this._pendingAnnotate> = {
+        resolve,
+        dispose: () => signal.removeEventListener('abort', onAbort),
+      };
+      this._pendingAnnotate = pending;
+      signal.addEventListener('abort', onAbort);
+      this._tryFireAnnotate();
+    });
+  }
+
+  private _tryFireAnnotate() {
     // Defer until a page is attached so the client can fetch a screenshot.
-    if (!this._attachedPage) {
-      this._annotateWaitingForAttach = true;
+    if (!this._pendingAnnotate || !this._attachedPage)
       return;
-    }
     this.sendEvent?.('annotate', {});
   }
 
-  emitCancelAnnotate() {
-    this._annotateWaitingForAttach = false;
-    this.sendEvent?.('cancelAnnotate', {});
+  private _resolvePendingAnnotate(result: AnnotateResult) {
+    this._pendingAnnotate?.resolve(result);
+    this._pendingAnnotate?.dispose();
+    this._pendingAnnotate = undefined;
   }
 
   artifactsDirFor(context: api.BrowserContext): string {
@@ -326,10 +354,8 @@ export class DashboardConnection implements Transport {
       attached.dispose();
       throw e;
     }
-    if (this._annotateWaitingForAttach && this._attachedPage === attached) {
-      this._annotateWaitingForAttach = false;
-      this.sendEvent?.('annotate', {});
-    }
+    if (this._attachedPage === attached)
+      this._tryFireAnnotate();
   }
 
   _handleAttachedPageClose(context: api.BrowserContext) {
