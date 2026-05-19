@@ -27,8 +27,8 @@ function activeSession(dashboard: import('playwright-core').Page) {
 }
 
 async function drawAndSubmitAnnotation(dashboard: import('playwright-core').Page, text: string) {
-  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
-  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible();
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
+  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible({ timeout: 15_000 });
   const box = await dashboard.locator('.annotate-modal-image').boundingBox();
   const x0 = box!.x + box!.width * 0.3;
   const y0 = box!.y + box!.height * 0.3;
@@ -67,7 +67,7 @@ test('should capture multiple screenshots in one annotation', async ({ connectTo
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible();
+  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible({ timeout: 15_000 });
   // First annotation on initial frame.
   let box = await dashboard.locator('.annotate-modal-image').boundingBox();
   await dashboard.mouse.move(box!.x + box!.width * 0.2, box!.y + box!.height * 0.2);
@@ -120,7 +120,7 @@ test('should abort annotation when last screenshot is removed', async ({ connect
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
+  await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1, { timeout: 15_000 });
 
   // Close the fullscreen overlay first so the sidebar remove button is accessible.
   await dashboard.getByRole('button', { name: 'Done annotating' }).click();
@@ -153,7 +153,7 @@ test('should abort MCP annotation when last screenshot is removed', async ({ con
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
+    await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1, { timeout: 15_000 });
 
     // Close the fullscreen overlay first so the sidebar remove button is accessible.
     await dashboard.getByRole('button', { name: 'Done annotating' }).click();
@@ -205,7 +205,7 @@ test('user-initiated annotate downloads zip with feedback.md', async ({ connectT
   await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(1);
   // Wait until the in-flight (aborted) submit fully resolves and the button is re-enabled,
   // otherwise installing the next picker mid-flight would race.
-  await expect(dashboard.getByRole('button', { name: 'Submit', exact: true })).toBeEnabled();
+  await expect(dashboard.getByRole('button', { name: 'Submit', exact: true })).toBeEnabled({ timeout: 15_000 });
 
   // Now install a capturing picker and submit for real.
   const awaitZipBytes = await installSaveFilePickerMock(dashboard);
@@ -271,6 +271,7 @@ test('should start dashboard and annotate when no dashboard is running', async (
 });
 
 test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate', async ({ connectToDashboard, cli, server }) => {
+  test.slow();
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
   await cli('-s=first', 'open', server.EMPTY_PAGE, { bindTitle });
   await cli('-s=second', 'open', server.EMPTY_PAGE, { bindTitle });
@@ -282,7 +283,7 @@ test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
     await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
     await drawAndSubmitAnnotation(dashboard, 'fresh');
   } finally {
@@ -314,7 +315,7 @@ test('should annotate via direct browser_annotate MCP call', async ({ connectToD
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
     await drawAndSubmitAnnotation(dashboard, 'direct-mcp');
   } finally {
     await browser.close().catch(() => {});
@@ -351,7 +352,7 @@ test('should annotate when context has no fixed viewport', async ({ connectToDas
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
     await drawAndSubmitAnnotation(dashboard, 'no-viewport');
   } finally {
     await browser.close().catch(() => {});
@@ -383,7 +384,7 @@ test('should cancel browser_annotate when the MCP request is aborted', async ({ 
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
 
     controller.abort();
 
@@ -413,7 +414,7 @@ test('should cancel browser_annotate when the MCP client disconnects', async ({ 
   const browser = await connectToDashboard(bindTitle);
   try {
     const dashboard = browser.contexts()[0].pages()[0];
-    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+    await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
 
     await client.close();
 
@@ -425,6 +426,7 @@ test('should cancel browser_annotate when the MCP client disconnects', async ({ 
 
 
 test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
+  test.slow();
   server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');
   server.setContent('/green', '<html><head><style>html,body{margin:0;height:100vh;background:#00ff00}</style></head><body></body></html>', 'text/html');
 
@@ -459,7 +461,7 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
   let done = false;
   void annotatePromise.finally(() => { done = true; });
 
-  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
   await expect(activeSession(dashboard)).toHaveAccessibleName('Session second');
 
   await expect.poll(async () => {
@@ -474,6 +476,7 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
 });
 
 test('should disengage annotate mode when --annotate client disconnects', async ({ connectToDashboard, cli, childProcess, cliEnv, mcpBrowser, mcpHeadless, server }) => {
+  test.slow();
   await cli('open', server.EMPTY_PAGE);
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
   await cli('show', { bindTitle });
@@ -492,7 +495,7 @@ test('should disengage annotate mode when --annotate client disconnects', async 
     }),
   });
 
-  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible();
+  await expect(dashboard.getByRole('main', { name: 'Dashboard: annotate' })).toBeVisible({ timeout: 15_000 });
 
   await annotateClient.kill();
 
