@@ -1447,7 +1447,17 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async waitForTimeout(progress: Progress, timeout: number) {
-    return progress.wait(timeout);
+    let timer: NodeJS.Timeout;
+    const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
+    try {
+      // Make sure we react to page close or frame detach.
+      await progress.race(LongStandingScope.raceMultiple([
+        this._page.openScope,
+        this._detachedScope,
+      ], promise));
+    } finally {
+      clearTimeout(timer!);
+    }
   }
 
   async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<ExpectResult> {

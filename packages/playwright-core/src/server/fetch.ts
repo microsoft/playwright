@@ -31,6 +31,7 @@ import { getUserAgent } from './userAgent';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
+import { TargetClosedError } from './errors';
 import { SdkObject } from './instrumentation';
 import { isAbortError } from './progress';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
@@ -530,7 +531,7 @@ export abstract class APIRequestContext extends SdkObject {
 
       listeners.push(
           eventsHelper.addEventListener(this, APIRequestContext.Events.Dispose, () => {
-            reject(new Error('Request context disposed.'));
+            reject(new TargetClosedError(this._closeReason || 'Request context disposed.'));
             request.destroy();
           })
       );

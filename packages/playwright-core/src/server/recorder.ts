@@ -301,7 +301,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
         await this.setMode('inspecting');
         return await selectorPromise;
       };
-      return await progress.race(doPickLocator());
+      return await progress.race(page.openScope.race(doPickLocator()));
     } finally {
       eventsHelper.removeEventListeners(listeners);
       this._pickLocatorPage = undefined;
