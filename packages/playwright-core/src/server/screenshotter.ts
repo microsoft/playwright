@@ -218,7 +218,7 @@ export class Screenshotter {
         const viewportRect = options.clip ? trimClipToSize(options.clip, viewportSize) : { x: 0, y: 0, ...viewportSize };
         return await this._screenshot(progress, format, undefined, viewportRect, true, options);
       } finally {
-        await this._restorePageAfterScreenshot();
+        await progress.race(this._restorePageAfterScreenshot()).catch(() => {});
       }
     });
   }
@@ -245,7 +245,7 @@ export class Screenshotter {
         documentRect.y += scrollOffset.y;
         return await this._screenshot(progress, format, helper.enclosingIntRect(documentRect), undefined, fitsViewport, options);
       } finally {
-        await this._restorePageAfterScreenshot();
+        await progress.race(this._restorePageAfterScreenshot()).catch(() => {});
       }
     });
   }
