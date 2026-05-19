@@ -38,6 +38,7 @@ type ActionOptions = {
   duration?: number,
   position?: AnnotatePosition,
   fontSize?: number,
+  cursor?: 'none' | 'pointer',
 };
 
 export class Screencast implements InstrumentationListener {
@@ -182,6 +183,7 @@ export class Screencast implements InstrumentationListener {
       actionTitle,
       position: this._actions?.position,
       fontSize: this._actions?.fontSize,
+      cursor: this._actions?.cursor ?? 'pointer',
     }).catch(e => debugLogger.log('error', e));
   }
 }

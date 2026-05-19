@@ -973,6 +973,7 @@ const videoChapter = declareCommand({
 });
 
 const actionPositionArg = z.enum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']);
+const actionCursorArg = z.enum(['none', 'pointer']);
 
 const videoShowActions = declareCommand({
   name: 'video-show-actions',
@@ -982,9 +983,10 @@ const videoShowActions = declareCommand({
   options: z.object({
     duration: numberArg.optional().describe('How long each action annotation stays on screen, in milliseconds. Defaults to 500.'),
     position: actionPositionArg.optional().describe('Where to place the action title: top-left, top, top-right, bottom-left, bottom, bottom-right. Defaults to top-right.'),
+    cursor: actionCursorArg.optional().describe('Cursor decoration: "pointer" (default) animates a mouse pointer between action points; "none" disables it.'),
   }),
   toolName: 'browser_video_show_actions',
-  toolParams: ({ duration, position }) => ({ duration, position }),
+  toolParams: ({ duration, position, cursor }) => ({ duration, position, cursor }),
 });
 
 const videoHideActions = declareCommand({

@@ -1337,12 +1337,13 @@ export class InjectedScript {
     highlight.removeElementHighlight(selector);
   }
 
-  setScreencastAnnotation(annotation: { point?: channels.Point, box?: channels.Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number } | null) {
+  setScreencastAnnotation(annotation: { point?: channels.Point, box?: channels.Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number, cursor?: 'none' | 'pointer' } | null) {
     const highlight = this._ensureHighlight();
     if (!annotation) {
       highlight.updateHighlight([]);
       highlight.hideActionPoint();
       highlight.hideActionTitle();
+      highlight.hideActionCursor();
       return;
     }
     const fadeDuration = annotation.duration ?? 500;
@@ -1355,8 +1356,11 @@ export class InjectedScript {
         fadeDuration,
       }]);
     }
-    if (annotation.point)
+    if (annotation.point) {
+      if (annotation.cursor !== 'none')
+        highlight.moveActionCursor(annotation.point.x, annotation.point.y, fadeDuration);
       highlight.showActionPoint(annotation.point.x, annotation.point.y, fadeDuration);
+    }
     if (annotation.actionTitle)
       highlight.showActionTitle(annotation.actionTitle, fadeDuration, annotation.position, annotation.fontSize);
   }
