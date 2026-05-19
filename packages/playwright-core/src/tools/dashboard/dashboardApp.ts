@@ -44,7 +44,7 @@ declare const __PW_HMR__: boolean;
 type DashboardServer = {
   url: string;
   reveal: (options: DashboardOptions) => Promise<void>;
-  triggerAnnotate: () => void;
+  triggerAnnotate: () => Promise<void>;
   registerAnnotateWaiter: (socket: net.Socket) => void;
   close: () => Promise<void>;
 };
@@ -55,7 +55,6 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
 
   const connections = new Set<DashboardConnection>();
   let connectionLanded = new ManualPromise<void>();
-  let pendingAnnotate = false;
   const waitingSockets = new Set<net.Socket>();
 
   const submitAnnotation = (base64Png: string | undefined, ariaSnapshot: string, annotations: AnnotationData[]) => {
@@ -78,10 +77,6 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
         connectionLanded = new ManualPromise<void>();
     }, () => {
       connectionLanded.resolve();
-      if (pendingAnnotate) {
-        pendingAnnotate = false;
-        connection.emitAnnotate();
-      }
     }, submitAnnotation);
     connections.add(connection);
     return connection;
@@ -116,17 +111,15 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   };
   void reveal(options).catch(() => {});
 
-  const triggerAnnotate = () => {
-    if (connections.size === 0) {
-      pendingAnnotate = true;
+  const triggerAnnotate = async () => {
+    await connectionLanded;
+    if (waitingSockets.size === 0)
       return;
-    }
     for (const connection of connections)
       connection.emitAnnotate();
   };
 
   const notifyAnnotateEnded = () => {
-    pendingAnnotate = false;
     for (const connection of connections)
       connection.emitCancelAnnotate();
   };
@@ -349,7 +342,7 @@ export async function openDashboardApp() {
       if (parsed.annotate) {
         page?.bringToFront().catch(() => {});
         void dashboard.reveal(parsed);
-        dashboard.triggerAnnotate();
+        void dashboard.triggerAnnotate();
         dashboard.registerAnnotateWaiter(socket);
       } else if (parsed.kill) {
         server?.close();
