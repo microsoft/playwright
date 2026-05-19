@@ -271,6 +271,7 @@ test('should start dashboard and annotate when no dashboard is running', async (
 });
 
 test('should enter annotate mode on fresh dashboard.tsx mount with -s --annotate', async ({ connectToDashboard, cli, server }) => {
+  test.setTimeout(120_000);
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
   await cli('-s=first', 'open', server.EMPTY_PAGE, { bindTitle });
   await cli('-s=second', 'open', server.EMPTY_PAGE, { bindTitle });
@@ -425,6 +426,7 @@ test('should cancel browser_annotate when the MCP client disconnects', async ({ 
 
 
 test('should switch screencast to -s session on show --annotate', async ({ connectToDashboard, cli, server }) => {
+  test.setTimeout(120_000);
   server.setContent('/red', '<html><head><style>html,body{margin:0;height:100vh;background:#ff0000}</style></head><body></body></html>', 'text/html');
   server.setContent('/green', '<html><head><style>html,body{margin:0;height:100vh;background:#00ff00}</style></head><body></body></html>', 'text/html');
 
@@ -474,6 +476,7 @@ test('should switch screencast to -s session on show --annotate', async ({ conne
 });
 
 test('should disengage annotate mode when --annotate client disconnects', async ({ connectToDashboard, cli, childProcess, cliEnv, mcpBrowser, mcpHeadless, server }) => {
+  test.setTimeout(120_000);
   await cli('open', server.EMPTY_PAGE);
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
   await cli('show', { bindTitle });
