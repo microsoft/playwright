@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Point, Rect, SerializedError } from './channels';
+import type { SerializedError } from './channels';
 
 export type CallMetadata = {
   id: string;
@@ -35,11 +35,7 @@ export type CallMetadata = {
   log: string[];
   error?: SerializedError;
   result?: any;
-  point?: Point;
-  box? : Rect;
   objectId?: string;
   pageId?: string;
   frameId?: string;
-  potentiallyClosesScope?: boolean;
-  annotate?: boolean;
 };

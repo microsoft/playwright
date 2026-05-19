@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { debugLogger } from '@utils/debugLogger';
 import { Page } from './page';
+import { nullProgress } from './progress';
+import { ElementHandle } from './dom';
 
-import type * as types from './types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
+import type * as types from './types';
 
 export type ScreencastClient = {
   onFrame: (frame: types.ScreencastFrame) => Promise<void> | void;
@@ -39,18 +42,18 @@ type ActionOptions = {
 
 export class Screencast implements InstrumentationListener {
   readonly page: Page;
-  private _clients = new Set<ScreencastClient>();
+  private _clients = new Map<ScreencastClient, ManualPromise<void>>();
   private _actions: ActionOptions | undefined;
   private _size: types.Size | undefined;
   private _lastFrame: types.ScreencastFrame | undefined;
 
   constructor(page: Page) {
     this.page = page;
-    this.page.instrumentation.addListener(this, page.browserContext);
+    this.page.instrumentation.addListener(this, this.page.browserContext);
   }
 
   async handlePageOrContextClose() {
-    const clients = [...this._clients];
+    const clients = [...this._clients.keys()];
     this._clients.clear();
     for (const client of clients) {
       if (client.gracefulClose)
@@ -59,7 +62,7 @@ export class Screencast implements InstrumentationListener {
   }
 
   dispose() {
-    for (const client of this._clients)
+    for (const client of this._clients.keys())
       client.dispose();
     this._clients.clear();
     this.page.instrumentation.removeListener(this);
@@ -75,7 +78,7 @@ export class Screencast implements InstrumentationListener {
 
   addClient(client: ScreencastClient): { size: types.Size } {
     const isFirst = this._clients.size === 0;
-    this._clients.add(client);
+    this._clients.set(client, new ManualPromise<void>());
     if (isFirst) {
       this._startScreencast(client.size, client.quality);
     } else if (this._lastFrame) {
@@ -92,9 +95,12 @@ export class Screencast implements InstrumentationListener {
   }
 
   removeClient(client: ScreencastClient) {
-    if (!this._clients.has(client))
+    const disconnected = this._clients.get(client);
+    if (!disconnected)
       return;
     this._clients.delete(client);
+    // A departing client must not block frame acks for the remaining clients.
+    disconnected.resolve();
     if (!this._clients.size)
       this._stopScreencast();
   }
@@ -131,10 +137,11 @@ export class Screencast implements InstrumentationListener {
   onScreencastFrame(frame: types.ScreencastFrame, ack?: () => void) {
     this._lastFrame = frame;
     const asyncResults: Promise<void>[] = [];
-    for (const client of this._clients) {
+    for (const [client, disconnected] of this._clients) {
       const result = client.onFrame(frame);
-      if (result)
-        asyncResults.push(result);
+      if (!result)
+        continue;
+      asyncResults.push(Promise.race([result.catch(() => {}), disconnected]));
     }
     if (ack) {
       // Ack when any client resolves (OR logic). This ensures that even if
@@ -147,19 +154,16 @@ export class Screencast implements InstrumentationListener {
     }
   }
 
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
-    if (!this._actions)
-      return;
-    metadata.annotate = true;
-  }
-
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: types.Point, box?: types.Rect): Promise<void> {
     if (!this._actions)
       return;
 
     const page = sdkObject.attribution.page;
-    if (!page)
+    if (page !== this.page)
       return;
+
+    if (!box && (sdkObject instanceof ElementHandle))
+      box = await sdkObject.boundingBox(nullProgress) || undefined;
 
     const actionTitle = renderTitleForCall(metadata);
     const utility = await page.mainFrame().utilityContext();
@@ -173,8 +177,8 @@ export class Screencast implements InstrumentationListener {
     }, {
       injected: await utility.injectedScript(),
       duration: this._actions?.duration ?? 500,
-      point: metadata.point,
-      box: metadata.box,
+      point,
+      box,
       actionTitle,
       position: this._actions?.position,
       fontSize: this._actions?.fontSize,

@@ -171,7 +171,7 @@ class ServerRegistry extends EventEmitter {
   }
 
   private _browsersDir() {
-    return process.env.PLAYWRIGHT_SERVER_REGISTRY || registryDirectory;
+    return process.env.PWTEST_SERVER_REGISTRY || registryDirectory;
   }
 
   private _startWatcher() {

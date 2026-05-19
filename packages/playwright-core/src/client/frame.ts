@@ -497,7 +497,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       timedOut: channelResult.timedOut,
       errorMessage: channelResult.errorMessage,
     };
-    if (channelResult.received !== undefined) {
+    if (channelResult.received !== undefined && channelResult.matches === !!options.isNot) {
       result.received = {
         value: channelResult.received.value !== undefined ? parseResult(channelResult.received.value) : undefined,
         ariaSnapshot: channelResult.received.ariaSnapshot,

@@ -90,6 +90,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
     private _fakeBase: HTMLBaseElement;
     private _observer: MutationObserver;
+    private _targetGeneration = 0;
 
     constructor() {
       const invalidateCSSGroupingRule = (rule: CSSGroupingRule) => {
@@ -148,17 +149,13 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
     private _refreshListeners() {
       (document as any).addEventListener('__playwright_mark_target__', (event: CustomEvent) => {
-        if (!event.detail)
+        const target = event.composedPath()[0] as Element;
+        if (target?.nodeType !== Node.ELEMENT_NODE)
           return;
-        const callId = event.detail as string;
-        (event.composedPath()[0] as any).__playwright_target__ = callId;
+        (target as any).__playwright_target__ = this._targetGeneration;
       });
-      (document as any).addEventListener('__playwright_unmark_target__', (event: CustomEvent) => {
-        if (!event.detail)
-          return;
-        const callId = event.detail as string;
-        if ((event.composedPath()[0] as any).__playwright_target__ === callId)
-          delete (event.composedPath()[0] as any).__playwright_target__;
+      (document as any).addEventListener('__playwright_reset_targets__', () => {
+        ++this._targetGeneration;
       });
     }
 
@@ -255,7 +252,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       (iframeElement as any)[kSnapshotFrameId] = frameId;
     }
 
-    reset() {
+    resetHistory() {
       this._staleStyleSheets.clear();
 
       const visitNode = (node: Node | ShadowRoot) => {
@@ -339,11 +336,13 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       }
     }
 
-    captureSnapshot(needsReset: boolean): SnapshotData | undefined {
+    captureSnapshot(reset?: 'history' | 'targets'): SnapshotData | undefined {
       const timestamp = performance.now();
       const snapshotNumber = ++this._lastSnapshotNumber;
-      if (needsReset)
-        this.reset();
+      if (reset === 'history')
+        this.resetHistory();
+      if (reset)
+        ++this._targetGeneration;
       let nodeCounter = 0;
       let shadowDomNesting = 0;
       let headNesting = 0;
@@ -506,10 +505,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             visitChild(element.shadowRoot);
             --shadowDomNesting;
           }
-          if ('__playwright_target__' in element) {
+          if ((element as any).__playwright_target__ === this._targetGeneration) {
             expectValue(kTargetAttribute);
-            expectValue(element['__playwright_target__']);
-            attrs[kTargetAttribute] = element['__playwright_target__'] as string;
+            attrs[kTargetAttribute] = '';
           }
         }
 

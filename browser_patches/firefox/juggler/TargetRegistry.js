@@ -117,6 +117,8 @@ export class TargetRegistry {
     this._browserToTarget = new Map();
     this._browserIdToTarget = new Map();
 
+    this._browserIdToActor = new Map();
+
     this._proxiesWithClashingAuthCacheKeys = new Set();
     this._browserProxy = null;
 
@@ -192,7 +194,7 @@ export class TargetRegistry {
       //
       // In this case, we want to keep this callback synchronous so that we will call
       // `onTabOpenListener` synchronously and before the sync IPc message `juggler:content-ready`.
-      if (domWindow.document.readyState === 'uninitialized' || domWindow.document.readyState === 'loading') {
+      if (domWindow.document.readyState === 'uninitialized' || domWindow.document.readyState === 'loading' || domWindow.document.isUncommittedInitialDocument) {
         // For non-initialized windows, DOMContentLoaded initializes gBrowser
         // and starts tab loading (see //browser/base/content/browser.js), so we
         // are guaranteed to call `onTabOpenListener` before the sync IPC message
@@ -233,6 +235,27 @@ export class TargetRegistry {
     for (const win of Services.wm.getEnumerator(null))
       onOpenWindow(win);
   }
+
+  onActorCreated(actor) {
+    // Only interested in main frames for now.
+    if (actor.browsingContext.parent)
+      return;
+
+    const browserId = actor.browsingContext.browserId;
+    this._browserIdToActor.set(browserId, actor);
+
+    const target = this._browserIdToTarget.get(browserId);
+    target?.setActor(actor);
+  }
+
+  onActorDestroyed(actor) {
+    const browserId = actor.browsingContext.browserId;
+    const target = this._browserIdToTarget.get(browserId);
+    target?.removeActor(actor);
+    if (this._browserIdToActor.get(browserId) === actor)
+      this._browserIdToActor.delete(browserId);
+  }
+
 
   // Firefox uses nsHttpAuthCache to cache authentication to the proxy.
   // If we're provided with a single proxy with a multiple different authentications, then
@@ -390,12 +413,12 @@ export class PageTarget {
     this._linkedBrowser = tab.linkedBrowser;
     this._browserContext = browserContext;
     this._viewportSize = undefined;
+    this._deviceScaleFactor = undefined;
     this._zoom = 1;
     this._initialDPPX = this._linkedBrowser.browsingContext.overrideDPPX;
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
     this._actor = undefined;
-    this._actorSequenceNumber = 0;
     this._channel = new SimpleChannel(`browser::page[${this._targetId}]`, 'target-' + this._targetId);
     this._screencastId = undefined;
     this._dialogs = new Map();
@@ -422,7 +445,12 @@ export class PageTarget {
     this._disposed = false;
     browserContext.pages.add(this);
     this._registry._browserToTarget.set(this._linkedBrowser, this);
-    this._registry._browserIdToTarget.set(this._linkedBrowser.browsingContext.browserId, this);
+
+    const browserId = this._linkedBrowser.browsingContext.browserId;
+    this._registry._browserIdToTarget.set(browserId, this);
+    const actor = this._registry._browserIdToActor.get(browserId);
+    if (actor)
+      this.setActor(actor);
 
     this._registry.emit(TargetRegistry.Events.TargetCreated, this);
   }
@@ -453,10 +481,6 @@ export class PageTarget {
 
   frameIdToBrowsingContext(frameId) {
     return helper.collectAllBrowsingContexts(this._linkedBrowser.browsingContext).find(bc => helper.browsingContextToFrameId(bc) === frameId);
-  }
-
-  nextActorSequenceNumber() {
-    return ++this._actorSequenceNumber;
   }
 
   setActor(actor) {
@@ -553,7 +577,8 @@ export class PageTarget {
 
   updateDPPXOverride(browsingContext = undefined) {
     browsingContext ||= this._linkedBrowser.browsingContext;
-    const dppx = this._zoom * (this._browserContext.deviceScaleFactor || this._initialDPPX);
+    const deviceScaleFactor = this._deviceScaleFactor ?? this._browserContext.deviceScaleFactor;
+    const dppx = this._zoom * (deviceScaleFactor || this._initialDPPX);
     browsingContext.overrideDPPX = dppx;
   }
 
@@ -681,8 +706,9 @@ export class PageTarget {
     await this._channel.connect('').send('setInterceptFileChooserDialog', enabled).catch(e => {});
   }
 
-  async setViewportSize(viewportSize) {
+  async setViewportSize(viewportSize, deviceScaleFactor) {
     this._viewportSize = viewportSize;
+    this._deviceScaleFactor = deviceScaleFactor;
     await this.updateViewportSize();
   }
 

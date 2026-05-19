@@ -58,12 +58,12 @@ export class TestServerBackend extends EventEmitter implements tools.ServerBacke
     this._context = new TestContext(clientInfo, this._configPath, this._options);
   }
 
-  async callTool(name: string, args: tools.CallToolRequest['params']['arguments']): Promise<tools.CallToolResult> {
+  async callTool(name: string, args: tools.CallToolRequest['params']['arguments'], signal: AbortSignal): Promise<tools.CallToolResult> {
     const tool = testServerBackendTools.find(tool => tool.schema.name === name);
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${testServerBackendTools.map(tool => tool.schema.name).join(', ')}`);
     try {
-      return await tool.handle(this._context!, tool.schema.inputSchema.parse(args || {}));
+      return await tool.handle(this._context!, tool.schema.inputSchema.parse(args || {}), signal);
     } catch (e) {
       return { content: [{ type: 'text', text: String(e) }], isError: true };
     }
@@ -83,7 +83,7 @@ function wrapBrowserTool(tool: tools.Tool): TestTool {
       ...tool.schema,
       inputSchema,
     },
-    handle: async (context: TestContext, params: any) => {
+    handle: async (context: TestContext, params: any, _signal?: AbortSignal) => {
       const response = await context.sendMessageToPausedTest({ callTool: { name: tool.schema.name, arguments: params } });
       return response.callTool!;
     },

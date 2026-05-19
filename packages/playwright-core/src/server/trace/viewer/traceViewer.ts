@@ -89,7 +89,7 @@ function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | un
 }
 
 export async function startTraceViewerServer(options?: TraceViewerServerOptions): Promise<HttpServer> {
-  const server = new HttpServer();
+  const server = new HttpServer(libPath('vite', 'traceViewer'));
   const allowedRoots = (options?.allowedFileRoots ?? [process.cwd()]).map(r => path.resolve(r));
   const isAllowed = (filePath: string) => allowedRoots.some(root => isPathInside(root, filePath));
 
@@ -105,7 +105,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
         return true;
       }
       if (fs.existsSync(filePath))
-        return server.serveFile(request, response, filePath);
+        return server.serveFile(request, response, filePath, undefined, { skipRootCheck: true });
 
       // If .json is requested, we'll synthesize it for zip-less operation.
       if (filePath.endsWith('.json')) {

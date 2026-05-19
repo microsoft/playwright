@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect } from './fixtures';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
@@ -59,6 +61,39 @@ async function closeBrowser(client: Client) {
     code: expect.stringContaining(`page.close()`),
   });
 }
+
+test('reports missing ffmpeg, not missing browser, when recordVideo is enabled', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40862' },
+}, async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser !== 'chrome' && mcpBrowser !== 'msedge', 'Channel browsers use system-installed binaries; bundled browsers would also be missing under an empty PLAYWRIGHT_BROWSERS_PATH');
+
+  const emptyBrowsersPath = testInfo.outputPath('empty-browsers');
+  await fs.promises.mkdir(emptyBrowsersPath, { recursive: true });
+
+  const { client } = await startClient({
+    env: { PLAYWRIGHT_BROWSERS_PATH: emptyBrowsersPath },
+    config: {
+      browser: {
+        contextOptions: {
+          recordVideo: { dir: testInfo.outputPath('videos') },
+        },
+      },
+    },
+  });
+
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  expect.soft(response).toHaveResponse({
+    isError: true,
+    error: expect.stringContaining('FFmpeg is not installed'),
+  });
+  expect.soft(response).toHaveResponse({
+    isError: true,
+    error: expect.not.stringContaining(`Browser "${mcpBrowser}" is not installed`),
+  });
+});
 
 async function produceFrames(client: Client) {
   expect(await client.callTool({

@@ -114,8 +114,8 @@ Field name.
 
 ### param: FormData.append.value
 * since: v1.44
-- `value` <[string]|[boolean]|[int]|[Path]|[Object]>
-  - alias: FilePayload
+- `value` <[string]|[boolean]|[int]|[path]|[Object]>
+  * alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -126,7 +126,7 @@ Field value.
 * since: v1.44
 * langs: csharp
 - `value` <[string]|[boolean]|[int]|[Object]>
-  - alias-csharp: FilePayload
+  * alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -215,8 +215,8 @@ Field name.
 
 ### param: FormData.set.value
 * since: v1.18
-- `value` <[string]|[boolean]|[int]|[Path]|[Object]>
-  - alias: FilePayload
+- `value` <[string]|[boolean]|[int]|[path]|[Object]>
+  * alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
@@ -227,7 +227,7 @@ Field value.
 * since: v1.18
 * langs: csharp
 - `value` <[string]|[boolean]|[int]|[Object]>
-  - alias-csharp: FilePayload
+  * alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content

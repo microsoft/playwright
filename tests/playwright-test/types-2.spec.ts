@@ -108,6 +108,17 @@ test('can return anything from hooks', async ({ runTSC }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('can return anything from test body', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('sync body', () => 123);
+      test('async body', async () => ({ ok: true }));
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('test.extend options should check types', async ({ runTSC }) => {
   const result = await runTSC({
     'helper.ts': `

@@ -1,0 +1,140 @@
+# Copyright (c) Microsoft Corporation.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+Electron:
+  type: interface
+
+  commands:
+
+    launch:
+      title: Launch electron
+      parameters:
+        executablePath: string?
+        args:
+          type: array?
+          items: string
+        chromiumSandbox: boolean?
+        cwd: string?
+        env:
+          type: array?
+          items: NameValue
+        timeout: float
+        acceptDownloads:
+          type: enum?
+          literals:
+          - accept
+          - deny
+          - internal-browser-default
+        bypassCSP: boolean?
+        colorScheme:
+          type: enum?
+          literals:
+          - dark
+          - light
+          - no-preference
+          - no-override
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        geolocation:
+          type: object?
+          properties:
+            longitude: float
+            latitude: float
+            accuracy: float?
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+            origin: string?
+        ignoreHTTPSErrors: boolean?
+        locale: string?
+        offline: boolean?
+        recordVideo:
+          type: object?
+          properties:
+            dir: string?
+            size:
+              type: object?
+              properties:
+                width: int
+                height: int
+            showActions:
+              type: object?
+              properties:
+                $mixin: ShowActionsOptions
+        strictSelectors: boolean?
+        timezoneId: string?
+        tracesDir: string?
+        artifactsDir: string?
+        selectorEngines:
+          type: array?
+          items: SelectorEngine
+        testIdAttributeName: string?
+
+      returns:
+        electronApplication: ElectronApplication
+
+
+ElectronApplication:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    context: BrowserContext
+
+  commands:
+
+    browserWindow:
+      internal: true
+      parameters:
+        page: Page
+      returns:
+        handle: JSHandle
+
+    evaluateExpression:
+      title: Evaluate
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        value: SerializedValue
+
+    evaluateExpressionHandle:
+      title: Evaluate
+      parameters:
+        expression: string
+        isFunction: boolean?
+        arg: SerializedArgument
+      returns:
+        handle: JSHandle
+
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
+
+  events:
+    close:
+    console:
+      parameters:
+        $mixin: ConsoleMessage
+
+

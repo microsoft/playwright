@@ -81,6 +81,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private _highlightedElement: { selector?: string, ariaTemplate?: AriaTemplateNode } = {};
   private _overlayState: OverlayState = { offsetX: 0 };
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
+  private _actionPoints = new Map<string, Point>();
   private _userSources = new Map<string, Source>();
   private _debugger: Debugger;
   private _omitCallTracking = false;
@@ -175,7 +176,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
           actionSelector = await this._scopeHighlightedSelectorToFrame(source.frame);
           for (const [metadata, sdkObject] of this._currentCallsMetadata) {
             if (source.page === sdkObject.attribution.page) {
-              actionPoint = metadata.point || actionPoint;
+              actionPoint = this._actionPoints.get(metadata.id) || actionPoint;
               actionSelector = actionSelector || metadata.params.selector;
             }
           }
@@ -415,12 +416,18 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    this._actionPoints.delete(metadata.id);
     if (this._omitCallTracking || this._isRecording())
       return;
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._updateUserSources();
     this._updateCallLog([metadata]);
+  }
+
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: Point): Promise<void> {
+    if (point)
+      this._actionPoints.set(metadata.id, point);
   }
 
   private _updateUserSources() {

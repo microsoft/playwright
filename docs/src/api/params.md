@@ -97,7 +97,7 @@ A selector to search for an element to drop onto. If there are multiple elements
 
 ## input-position
 - `position` <[Object]>
-  - alias-java: Position
+  * alias: Position
   - `x` <[float]>
   - `y` <[float]>
 
@@ -128,16 +128,16 @@ Defaults to `left`.
 
 ## input-files
 - `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-  - alias: FilePayload
+  * alias: FilePayload
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
 
 ## drop-payload
 - `payload` <[Object]>
-  - alias: DropPayload
+  * alias: DropPayload
   - `files` ?<[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-    - alias: FilePayload
+    * alias: FilePayload
     - `name` <[string]> File name
     - `mimeType` <[string]> File type
     - `buffer` <[Buffer]> File content
@@ -169,7 +169,7 @@ When set, this method only performs the [actionability](../actionability.md) che
 
 ## input-source-position
 - `sourcePosition` <[Object]>
-  - alias-java: Position
+  * alias-java: Position
   - `x` <[float]>
   - `y` <[float]>
 
@@ -177,7 +177,7 @@ Clicks on the source element at this point relative to the top-left corner of th
 
 ## input-target-position
 - `targetPosition` <[Object]>
-  - alias-java: Position
+  * alias-java: Position
   - `x` <[float]>
   - `y` <[float]>
 
@@ -253,7 +253,7 @@ Dangerous option; use with care. Defaults to `false`.
 
 ## browser-option-proxy
 - `proxy` <[Object]>
-  - alias-java: Proxy
+  * alias: Proxy
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
     proxy.
@@ -350,7 +350,7 @@ When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitFor
 * langs: js, java
   - alias-java: viewportSize
 - `viewport` <[null]|[Object]>
-  - alias-java: ViewportSize
+  * alias: ViewportSize
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -384,7 +384,7 @@ It makes the execution of the tests non-deterministic.
   - alias-java: screenSize
   - alias-csharp: screenSize
 - `screen` <[Object]>
-  - alias-java: ScreenSize
+  * alias: ScreenSize
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
@@ -616,7 +616,7 @@ Does not enforce fixed viewport, allows resizing window in the headed mode.
 
 ## context-option-clientCertificates
 - `clientCertificates` <[Array]<[Object]>>
-  - alias-java: ClientCertificate
+  * alias: ClientCertificate
   - `origin` <[string]> Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
   - `certPath` ?<[path]> Path to the file with the certificate in PEM format.
   - `cert` ?<[Buffer]> Direct value of the certificate in PEM format.
@@ -671,7 +671,7 @@ for a list of supported timezone IDs. Defaults to the system timezone.
 
 ## context-option-geolocation
 - `geolocation` <[Object]>
-  - alias-java: Geolocation
+  * alias: Geolocation
   - `latitude` <[float]> Latitude between -90 and 90.
   - `longitude` <[float]> Longitude between -180 and 180.
   - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.
@@ -699,7 +699,7 @@ Whether to emulate network being offline. Defaults to `false`. Learn more about 
 
 ## context-option-httpcredentials
 - `httpCredentials` <[Object]>
-  - alias-java: HttpCredentials
+  * alias: HttpCredentials
   - `username` <[string]>
   - `password` <[string]>
   - `origin` ?<[string]> Restrain sending http credentials on specific origin (scheme://host:port).
@@ -821,11 +821,9 @@ When set to `minimal`, only record information necessary for routing from HAR. T
   - `size` ?<[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
     scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
     Actual picture of each page will be scaled down if necessary to fit the specified size.
-    - alias-csharp: RecordVideoSize
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
   - `showActions` ?<[Object]> If specified, enables visual annotations on interacted elements during video recording.
-    - alias-csharp: ShowActionsOptions
     - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
     - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
     - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
@@ -845,7 +843,7 @@ not recorded. Make sure to call [`method: BrowserContext.close`] for videos to b
 * langs: csharp, java, python
   - alias-python: record_video_size
 - `recordVideoSize` <[Object]>
-  - alias-java: RecordVideoSize
+  * alias-java: RecordVideoSize
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
@@ -855,7 +853,7 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 
 ## context-option-proxy
 - `proxy` <[Object]>
-  - alias-java: Proxy
+  * alias: Proxy
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
   - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
@@ -903,7 +901,7 @@ Specifies whether to wait for already running handlers and what to do if they th
 ## select-options-values
 * langs: java, js, csharp
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - alias-java: SelectOption
+  * alias-java: SelectOption
   - `value` ?<[string]> Matches by `option.value`. Optional.
   - `label` ?<[string]> Matches by `option.label`. Optional.
   - `index` ?<[int]> Matches by the index. Optional.
@@ -1306,7 +1304,7 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 
 ## screenshot-option-clip
 - `clip` <[Object]>
-  - alias-java: Clip
+  * alias-java: Clip
   - `x` <[float]> x-coordinate of top-left corner of clip area
   - `y` <[float]> y-coordinate of top-left corner of clip area
   - `width` <[float]> width of clipping area
@@ -1966,4 +1964,25 @@ In this config:
 1. Second project **does** have a name, so its snapshots will be stored in `<configDir>/__screenshots__/chromium/example.spec.ts/..`.
 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
 1. Forward slashes `"/"` can be used as path separators on any platform.
+
+## test-config-web-server-options
+* langs: js
+- type: ?<[Object]|[Array]<[Object]>>
+  - `command` <[string]> Shell command to start. For example `npm run start`..
+  - `cwd` ?<[string]> Current working directory of the spawned process, defaults to the directory of the configuration file.
+  - `env` ?<[Object]<[string], [string]>> Environment variables to set for the command, `process.env` by default.
+  - `gracefulShutdown` ?<[Object]> How to shut down the process. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ signal: 'SIGTERM', timeout: 500 }`, the process group is sent a `SIGTERM` signal, followed by `SIGKILL` if it doesn't exit within 500ms. You can also use `SIGINT` as the signal instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGTERM` and `SIGINT` signals, so this option is ignored on Windows. Note that shutting down a Docker container requires `SIGTERM`.
+    - `signal` <["SIGINT"|"SIGTERM"]>
+    - `timeout` <[int]>
+  - `ignoreHTTPSErrors` ?<[boolean]> Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
+  - `name` ?<[string]> Specifies a custom name for the web server. This name will be prefixed to log messages. Defaults to `[WebServer]`.
+  - `port` ?<[int]> The port that your http server is expected to appear on. It does wait until it accepts connections. Either `port` or `url` should be specified.
+  - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
+  - `stderr` ?<["pipe"|"ignore"]> Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
+  - `stdout` ?<["pipe"|"ignore"]> If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`.
+  - `wait` ?<[Object]> Consider command started only when given output has been produced.
+    - `stdout` ?<[RegExp]> Regular expression to wait for in the `stdout` of the command output. Named capture groups are stored in the environment, for example `/Listening on port (?<my_server_port>\d+)/` will store the port number in `process.env['MY_SERVER_PORT']`.
+    - `stderr` ?<[RegExp]> Regular expression to wait for in the `stderr` of the command output. Named capture groups are stored in the environment, for example `/Listening on port (?<my_server_port>\d+)/` will store the port number in `process.env['MY_SERVER_PORT']`.
+  - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+  - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
 

@@ -19,6 +19,7 @@ import fs from 'fs';
 import * as z from 'zod';
 
 import { getExtensionForMimeType, isTextualMimeType } from '@isomorphic/mimeType';
+import { isRegexString } from '@isomorphic/rtti';
 
 import { defineTool, defineTabTool } from './tool';
 
@@ -34,7 +35,7 @@ const requests = defineTabTool({
     description: 'Returns a numbered list of network requests since loading the page. Use browser_network_request with the number to get full details.',
     inputSchema: z.object({
       static: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
-      filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
+      filter: z.string().optional().refine(v => !v || isRegexString(v), { message: 'Invalid regular expression' }).describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
     type: 'readOnly',

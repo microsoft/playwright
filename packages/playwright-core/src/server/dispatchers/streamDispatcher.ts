@@ -65,6 +65,10 @@ export class StreamDispatcher extends Dispatcher<StreamSdkObject, channels.Strea
     return { binary: buffer || Buffer.from('') };
   }
 
+  override _onDispose() {
+    this._object.stream.destroy();
+  }
+
   async close(params: channels.StreamCloseParams, progress: Progress): Promise<void> {
     this._object.stream.destroy();
   }

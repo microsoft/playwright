@@ -44,15 +44,21 @@ export const test = baseTest
         const page = await context.newPage();
         server.setContent('/', `
           <html>
-            <head><title>Test Page</title></head>
+            <head>
+              <title>Test Page</title>
+              <link rel="stylesheet" href="/style.css">
+            </head>
             <body>
               <h1>Hello World</h1>
               <button id="btn">Click me</button>
               <input id="search" type="text" placeholder="Search..." />
               <a href="/page2">Go to page 2</a>
+              <div id="styled">Styled text</div>
             </body>
           </html>
         `, 'text/html');
+
+        server.setContent('/style.css', '#styled { color: rgb(255, 0, 0); }', 'text/css');
 
         server.setContent('/page2', `
           <html>
@@ -113,6 +119,8 @@ export const test = baseTest
         const tracePath = path.join(tmpDir, 'trace.zip');
         await context.tracing.stop({ path: tracePath });
         await browser.close();
+
+        server.reset();
 
         await use(tracePath);
 

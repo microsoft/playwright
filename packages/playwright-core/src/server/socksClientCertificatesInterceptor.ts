@@ -180,14 +180,19 @@ class SocksProxyConnection {
     const browserALPNProtocols = parseALPNFromClientHello(clientHello) || ['http/1.1'];
     debugLogger.log('client-certificates', `Browser->Proxy ${this.host}:${this.port} offers ALPN ${browserALPNProtocols}`);
 
+    const secureContext = this.socksProxy.secureContextMap.get(normalizeOrigin(`https://${this.host}:${this.port}`));
+    // Without a matching client certificate the proxy is a transparent pass-through, so let the
+    // browser validate the server cert instead of failing here on e.g. self-signed certs.
+    const rejectUnauthorized = !!secureContext && !this.socksProxy.ignoreHTTPSErrors;
+
     const serverDecrypted = tls.connect({
       socket: this._serverEncrypted,
       host: this.host,
       port: this.port,
-      rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
+      rejectUnauthorized,
       ALPNProtocols: browserALPNProtocols,
       servername: !net.isIP(this.host) ? this.host : undefined,
-      secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
+      secureContext,
     }, async () => {
       const browserDecrypted = await this._upgradeToTLSIfNeeded(browserEncrypted, serverDecrypted.alpnProtocol);
       debugLogger.log('client-certificates', `Proxy->Server ${this.host}:${this.port} chooses ALPN ${browserDecrypted.alpnProtocol}`);

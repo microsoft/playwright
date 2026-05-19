@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
 import { assert } from '@isomorphic/assert';
+import { resolveWithinRoot } from '@utils/fileUtils';
 import { Page } from './page';
 import { Artifact } from './artifact';
 
@@ -29,7 +28,9 @@ export class Download {
 
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string, downloadFilename?: string) {
     const unaccessibleErrorMessage = page.browserContext._options.acceptDownloads === 'deny' ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
-    const downloadPath = path.join(downloadsPath, downloadFilename ?? uuid);
+    const downloadPath = resolveWithinRoot(downloadsPath, downloadFilename ?? uuid);
+    if (!downloadPath)
+      throw new Error(`Download filename '${downloadFilename}' escapes download directory`);
     this.artifact = new Artifact(page, downloadPath, unaccessibleErrorMessage, () => this.cancel());
     this._page = page;
     this.url = url;

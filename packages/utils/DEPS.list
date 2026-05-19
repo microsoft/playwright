@@ -10,7 +10,6 @@ node_modules/pngjs
 node_modules/proxy-from-env
 node_modules/socks-proxy-agent
 node_modules/ws
-node_modules/yauzl
 node_modules/yazl
 
 [comparators.ts]

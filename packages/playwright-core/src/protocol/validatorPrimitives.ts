@@ -36,6 +36,9 @@ export function maybeFindValidator(type: string, method: string, kind: 'Initiali
 export function createMetadataValidator(): Validator {
   return tOptional(scheme['Metadata']);
 }
+export function createWaitInfoValidator(): Validator {
+  return scheme['WaitInfo'];
+}
 
 export const tFloat: Validator = (arg: any, path: string, context: ValidatorContext) => {
   if (arg instanceof Number)

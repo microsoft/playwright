@@ -26,6 +26,7 @@ import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import { commonFixtures } from '../config/commonFixtures';
+import { RunServer } from '../config/remoteServer';
 import { inheritAndCleanEnv } from '../config/utils';
 
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
@@ -67,6 +68,7 @@ type TestFixtures = {
   client: Client;
   startClient: StartClient;
   wsEndpoint: string;
+  runServerEndpoint: string;
   cdpServer: CDPServer;
   server: TestServer;
   httpsServer: TestServer;
@@ -161,6 +163,13 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     await browserServer.close();
   },
 
+  runServerEndpoint: async ({ childProcess }, use) => {
+    const runServer = new RunServer();
+    await runServer.start(childProcess);
+    await use(runServer.wsEndpoint());
+    await runServer.close();
+  },
+
   cdpServer: async ({ mcpBrowser }, use, testInfo) => {
     test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser!), 'CDP is not supported for non-Chromium browsers');
 
@@ -169,7 +178,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
     await use({
       endpoint: `http://localhost:${port}`,
       start: async () => {
-        if (browserContext)
+        if (browserContext && browserContext.browser()?.isConnected())
           throw new Error('CDP server already exists');
         browserContext = await chromium.launchPersistentContext(testInfo.outputPath('cdp-user-data-dir'), {
           channel: mcpBrowser,
@@ -181,7 +190,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         return browserContext;
       }
     });
-    await browserContext?.close();
+    await browserContext?.close().catch(() => {});
   },
 
   mcpHeadless: async ({ headless }, use) => {

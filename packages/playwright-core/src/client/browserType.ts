@@ -157,6 +157,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       timeout: new TimeoutSettings(this._platform).timeout(params),
       isLocal: params.isLocal,
       noDefaults: params.noDefaults,
+      artifactsDir: params.artifactsDir,
     });
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, undefined);

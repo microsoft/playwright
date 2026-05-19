@@ -98,6 +98,10 @@
   text-overflow: ellipsis;
 }
 
+.status-line .status-line-failed {
+  color: var(--vscode-testing-iconFailed);
+}
+
 .ui-mode-sidebar input[type=search] {
   flex: auto;
   padding: 0 5px;

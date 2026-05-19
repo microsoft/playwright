@@ -34,7 +34,7 @@ await page.screencast.stop();
 ### option: Screencast.start.onFrame
 * since: v1.59
 - `onFrame` <[function]\([Object]\): [Promise]>
-  - alias: ScreencastFrame
+  * alias: ScreencastFrame
   - `data` <[Buffer]> JPEG-encoded frame data.
   - `viewportWidth` <[int]> Width of the page viewport at the time the frame was captured.
   - `viewportHeight` <[int]> Height of the page viewport at the time the frame was captured.
@@ -57,7 +57,7 @@ The quality of the image, between 0-100.
 * since: v1.59
 * langs: js
 - `size` ?<[Object]>
-  - alias-csharp: ScreencastSize
+  * alias-csharp: ScreencastSize
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 

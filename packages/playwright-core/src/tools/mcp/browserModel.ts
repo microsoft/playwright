@@ -150,6 +150,21 @@ export class BrowserModel {
     return this._findTabSession(s => s.sessionId === sessionId)?.targetInfo;
   }
 
+  // Forward a browser-level CDP command (Storage.*, Browser.*, etc.) that is
+  // not associated with a specific tab. chrome.debugger.sendCommand requires a
+  // target, so we route through any attached tab; the command itself is
+  // browser-scoped and returns the same result regardless of which tab is used.
+  async sendBrowserCommand(method: string, params: any): Promise<any> {
+    const tabSession = this._tabSessions.values().next().value;
+    if (!tabSession)
+      throw new Error(`No attached tab to forward browser-level command: ${method}`);
+    return await this._sendToExtension('chrome.debugger.sendCommand', [
+      { tabId: tabSession.tabId },
+      method,
+      params,
+    ]);
+  }
+
   // Forward a CDP command from Playwright to the tab its sessionId resolves to.
   async sendCommand(sessionId: string, method: string, params: any): Promise<any> {
     // Two cases:

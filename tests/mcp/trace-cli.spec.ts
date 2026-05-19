@@ -15,9 +15,9 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { test, expect } from './trace-cli-fixtures';
-import path from 'path';
 
 test.skip(({ mcpBrowser }) => mcpBrowser !== 'chrome', 'Chrome-only');
 
@@ -183,6 +183,20 @@ test('trace snapshot resolves inner frames', async ({ runTraceCli }) => {
 
   const { stdout } = await runTraceCli(['snapshot', '--name', 'after', anchorClickOrdinal]);
   expect(stdout).toContain('Innermost');
+});
+
+test('trace snapshot replays sub-resource stylesheets from the archive', async ({ runTraceCli }) => {
+  const { stdout: listOutput } = await runTraceCli(['actions', '--grep', 'Click']);
+  const match = listOutput.match(/^\s+(\d+)\.\s/m);
+  expect(match).toBeTruthy();
+  const ordinal = match![1];
+
+  const { stdout, exitCode } = await runTraceCli([
+    'snapshot', '--name', 'before', ordinal,
+    '--', 'eval', 'el => getComputedStyle(el).color', '#styled',
+  ]);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('rgb(255, 0, 0)');
 });
 
 test('trace screenshot saves image file', async ({ runTraceCli }, testInfo) => {

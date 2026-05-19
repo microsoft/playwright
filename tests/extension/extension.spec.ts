@@ -16,7 +16,7 @@
 
 import fs from 'fs/promises';
 
-import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, startWithExtensionFlag } from './extension-fixtures';
+import { test, testWithOldExtensionVersion, expect, extensionId, clickAllowAndSelect, connectAndNavigate, startWithExtensionFlag } from './extension-fixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
 const { defaultUserDataDirForChannel } = utils;
@@ -58,8 +58,7 @@ test(`connect.html protocolVersion search param matches fixture option`, async (
   expect(url.searchParams.get('protocolVersion')).toBe(String(protocolVersion));
 });
 
-test(`protocolVersion defaults to 1`, async ({ startExtensionClient, server, protocolVersion }) => {
-  // test.fail(true, 'Server default is currently 2; this test guards the expected default of 1');
+test(`protocolVersion defaults to 2`, async ({ startExtensionClient, server, protocolVersion }) => {
   const saved = process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
   delete process.env.PLAYWRIGHT_EXTENSION_PROTOCOL;
 
@@ -76,7 +75,7 @@ test(`protocolVersion defaults to 1`, async ({ startExtensionClient, server, pro
 
   const selectorPage = await confirmationPagePromise;
   const url = new URL(selectorPage.url());
-  expect(url.searchParams.get('protocolVersion')).toBe('1');
+  expect(url.searchParams.get('protocolVersion')).toBe('2');
 
   process.env.PLAYWRIGHT_EXTENSION_PROTOCOL = saved;
 });
@@ -288,6 +287,36 @@ test(`--browser <channel> selects channel-specific userDataDir`, {
   })).toHaveResponse({
     error: expect.stringContaining(`Playwright Extension not found in "${expectedUserDataDir}"`),
     isError: true,
+  });
+});
+
+test(`browser_cookie_list and browser_cookie_set work in extension mode`, {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40687' },
+}, async ({ browserWithExtension, startClient, server }) => {
+  const browserContext = await browserWithExtension.launch();
+  const { client } = await startClient({
+    args: [`--extension`],
+    config: { capabilities: ['storage'] },
+    env: {
+      PWTEST_EXTENSION_USER_DATA_DIR: browserWithExtension.userDataDir,
+    },
+  });
+
+  await connectAndNavigate(browserContext, client, server.HELLO_WORLD);
+
+  // Storage.setCookie / Storage.getCookies are browser-level CDP commands
+  // (no sessionId) and used to be rejected outright by the v2 relay.
+  await client.callTool({
+    name: 'browser_cookie_set',
+    arguments: { name: 'extCookie', value: 'extValue' },
+  });
+  const result = await client.callTool({
+    name: 'browser_cookie_list',
+    arguments: {},
+  });
+
+  expect(result).toHaveResponse({
+    result: expect.stringContaining('extCookie=extValue'),
   });
 });
 

@@ -25,6 +25,18 @@
   position: relative;
 }
 
+.dashboard-view.has-annotate-sidebar {
+  flex-direction: row;
+}
+
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* -- Mode toggle buttons (interactive / record) -- */
 .mode-toggle.toolbar-button.toggled,
 .mode-toggle.toolbar-button.toggled > .codicon {

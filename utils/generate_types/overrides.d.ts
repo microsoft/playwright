@@ -277,6 +277,17 @@ class TimeoutError extends Error {}
 
 export const devices: Devices;
 
+//@ts-ignore this will be any if electron is not installed
+type ElectronType = typeof import('electron');
+
+export interface ElectronApplication {
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<R>;
+
+  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
+}
+
 export type AndroidElementInfo = {
   clazz: string;
   desc: string;
@@ -382,17 +393,19 @@ export type AndroidKey =
   'Copy' |
   'Paste';
 
+export const _electron: Electron;
 export const _android: Android;
 
 //@ts-ignore this will be any if electron is not installed
 type ElectronType = typeof import('electron');
 
 export interface ElectronApplication {
-  evaluate: JSHandle<ElectronType>['evaluate'];
-  evaluateHandle: JSHandle<ElectronType>['evaluateHandle'];
-}
+  evaluate<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<R>;
+  evaluate<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<R>;
 
-export const _electron: Electron;
+  evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
+  evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
+}
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

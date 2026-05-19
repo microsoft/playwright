@@ -18,15 +18,15 @@ import { baseTest } from '../config/baseTest';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import type { ElectronApplication, Electron, Page } from '@playwright/electron';
-import { electron } from '@playwright/electron';
+import type { ElectronApplication, Electron, Page } from 'playwright';
+import { _electron as electron } from 'playwright';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import { utils } from '../../packages/playwright-core/lib/coreBundle';
 import { inheritAndCleanEnv } from '../config/utils';
 
-export { expect, selectors } from '@playwright/electron';
+export { expect, selectors } from '@playwright/test';
 
 const { removeFolders } = utils;
 

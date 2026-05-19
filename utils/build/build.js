@@ -539,29 +539,13 @@ for (const pkg of workspace.packages()) {
   // playwright-client is built as a bundle.
   if (['@playwright/client'].includes(pkg.name))
     continue;
-  if (pkg.name === 'playwright-core' || pkg.name === 'playwright' || pkg.name === '@playwright/electron')
+  if (pkg.name === 'playwright-core' || pkg.name === 'playwright')
     continue;
 
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
     outdir: `${path.join(pkg.path, 'lib')}`,
     plugins: [dynamicImportToRequirePlugin],
-  }));
-}
-
-// playwright-electron/lib/index.js — thin test-runner integration shim that
-// re-exports `playwright._electron`. Resolved at runtime against the parent
-// `playwright` install.
-{
-  const electronPkg = filePath('packages/playwright-electron');
-  steps.push(new EsbuildStep({
-    bundle: true,
-    entryPoints: [path.join(electronPkg, 'src/index.ts')],
-    outfile: path.join(electronPkg, 'lib/index.js'),
-    external: [
-      'playwright',
-      'playwright/*',
-    ],
   }));
 }
 
@@ -576,10 +560,6 @@ steps.push(new EsbuildStep({
     filePath('packages/playwright-core/src/entry/dashboardApp.ts'),
     filePath('packages/playwright-core/src/entry/mcp.ts'),
     filePath('packages/playwright-core/src/entry/oopBrowserDownload.ts'),
-
-    // Electron loader — preloaded inside the Electron main process via `-r`.
-    // Self-contained (no @utils/@isomorphic imports) — emitted as a thin shim.
-    filePath('packages/playwright-core/src/electron/loader.ts'),
 
     // CLI client tools, should be a separate bundle.
     filePath('packages/playwright-core/src/tools/cli-client/*.ts'),
@@ -818,6 +798,16 @@ steps.push(new EsbuildStep({
   plugins: [dynamicImportToRequirePlugin],
 }, [filePath('packages/playwright/src')]));
 
+// Build the Electron preload loader as a standalone CJS file. It runs inside
+// the Electron process (via `electron -r loader.js`) and must not depend on
+// coreBundle. `electron` is resolved at runtime by the Electron process.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright-core/src/server/electron/loader.ts')],
+  outfile: filePath('packages/playwright-core/lib/server/electron/loader.js'),
+  external: ['electron'],
+}, [playwrightCoreSrc]));
+
 function copyXdgOpen() {
   const outdir = filePath('packages/playwright-core/lib');
   if (!fs.existsSync(outdir))
@@ -880,17 +870,14 @@ steps.push(new ProgramStep({
   concurrent: true,
 }));
 
-// Build/watch web packages.
-// HMR: in watch mode the dashboard, html-reporter, and trace viewer (incl. UI
-// mode) are served by embedded Vite dev servers, so skip their
-// `vite build --watch` steps. Set PW_HMR_STATIC=1 to keep the watch builds for
-// testing the bundled output. Recorder is not yet HMR'd. The trace viewer
-// service worker still builds via vite.sw.config.ts above — that step is not
-// in this loop.
-const hmrReplacesWebBuilds = watchMode && process.env.PW_HMR_STATIC !== '1';
-const hmrHandledPackages = new Set(['dashboard', 'html-reporter', 'trace-viewer']);
-const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard']
-    .filter(pkg => !(hmrReplacesWebBuilds && hmrHandledPackages.has(pkg)));
+// Build/watch web packages. The html-reporter, trace-viewer, and dashboard
+// also have embedded Vite dev servers used when viewing reports/traces/the
+// dashboard live, but their bundled output is consumed as a static artifact
+// in other code paths (e.g. HtmlBuilder.build() reads lib/vite/htmlReport/
+// and lib/vite/traceViewer/), so we always keep the static build alongside
+// HMR. Recorder is not yet HMR'd. The trace viewer service worker still
+// builds via vite.sw.config.ts above — that step is not in this loop.
+const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard'];
 for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
     command: 'npx',

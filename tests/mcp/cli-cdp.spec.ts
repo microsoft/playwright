@@ -109,3 +109,23 @@ test('attach via cdp', async ({ cdpServer, cli, server }) => {
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
 });
+
+test('tracing-start-stop over cdp', async ({ cdpServer, cli, server }, testInfo) => {
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.goto(server.HELLO_WORLD);
+
+  await cli('attach', `--cdp=${cdpServer.endpoint}`);
+
+  const { output } = await cli('tracing-start');
+  expect(output).toContain('Trace recording started');
+  await cli('eval', '() => fetch("/hello-world")');
+
+  const { output: tracingStopOutput } = await cli('tracing-stop');
+  expect(tracingStopOutput).toContain('Trace recording stopped');
+  const [, timestamp] = tracingStopOutput.match(/trace-(\d+)\.trace/);
+
+  expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', 'resources'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.trace`))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.network`))).toBeTruthy();
+});

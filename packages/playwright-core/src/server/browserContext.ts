@@ -20,6 +20,7 @@ import fs from 'fs';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { debugMode, isUnderTest } from '@utils/debug';
 import { Clock } from './clock';
+import { Credentials } from './credentials';
 import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
@@ -110,6 +111,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _debugger!: Debugger;
   _closeReason: string | undefined;
   readonly clock: Clock;
+  readonly credentials: Credentials;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
@@ -128,6 +130,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
     this.tracing = new Tracing(this, browser.options.tracesDir);
     this.clock = new Clock(this);
+    this.credentials = new Credentials(this);
     this.dialogManager = new DialogManager(this.instrumentation);
   }
 
@@ -238,6 +241,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
     // All other properties force a new context.
     await this.clock.uninstall(progress);
+    await this.credentials.dispose(progress);
     await progress.race(this.setUserAgent(this._options.userAgent));
     await progress.race(this.doUpdateDefaultEmulatedMedia());
     await progress.race(this.doUpdateDefaultViewport());
@@ -527,7 +531,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   }
 
   private async _deleteAllTempDirs(): Promise<void> {
-    await Promise.all(this._tempDirs.map(async dir => await fs.promises.unlink(dir).catch(e => {})));
+    await Promise.all(this._tempDirs.map(async dir => await fs.promises.rm(dir, { recursive: true, force: true }).catch(e => {})));
   }
 
   setCustomCloseHandler(handler: (() => Promise<any>) | undefined) {
@@ -726,8 +730,13 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && !!options.isMobile)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
-  if (options.acceptDownloads === undefined)
+  if (options.acceptDownloads === undefined && browserOptions.name !== 'electron')
     options.acceptDownloads = 'accept';
+  // Electron requires explicit acceptDownloads: true since we wait for
+  // https://github.com/electron/electron/pull/41718 to be widely shipped.
+  // In 6-12 months, we can remove this check.
+  else if (options.acceptDownloads === undefined && browserOptions.name === 'electron')
+    options.acceptDownloads = 'internal-browser-default';
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   if (options.proxy)

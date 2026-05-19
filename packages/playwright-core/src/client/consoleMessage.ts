@@ -26,9 +26,9 @@ export class ConsoleMessage implements api.ConsoleMessage {
 
   private _page: Page | null;
   private _worker: Worker | null;
-  private _event: channels.BrowserContextConsoleEvent | channels.WorkerConsoleEvent;
+  private _event: channels.BrowserContextConsoleEvent | channels.WorkerConsoleEvent | channels.ElectronApplicationConsoleEvent;
 
-  constructor(platform: Platform, event: channels.BrowserContextConsoleEvent | channels.WorkerConsoleEvent, page: Page | null, worker: Worker | null) {
+  constructor(platform: Platform, event: channels.BrowserContextConsoleEvent | channels.WorkerConsoleEvent | channels.ElectronApplicationConsoleEvent, page: Page | null, worker: Worker | null) {
     this._page = page;
     this._worker = worker;
     this._event = event;

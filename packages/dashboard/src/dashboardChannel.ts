@@ -32,6 +32,17 @@ export type Tab = {
 
 export type AnnotationData = { x: number; y: number; width: number; height: number; text: string };
 
+export type SubmittedAnnotationFrame = {
+  data: string;
+  ariaSnapshot: string;
+  annotations: AnnotationData[];
+  sessionTitle: string;
+  title: string;
+  url: string;
+  viewportWidth: number;
+  viewportHeight: number;
+};
+
 export type DashboardChannelEvents = {
   sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
   tabs: { tabs: Tab[] };
@@ -62,8 +73,9 @@ export interface DashboardChannel {
   startRecording(): Promise<void>;
   stopRecording(): Promise<{ streamId: string }>;
   readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
-  screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number, ariaSnapshot: string }>;
-  submitAnnotation(params: { data: string | undefined; annotations: AnnotationData[], ariaSnapshot: string }): Promise<void>;
+  screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string }>;
+  submitAnnotation(params: { frames: SubmittedAnnotationFrame[]; feedback: string }): Promise<void>;
+  cancelAnnotation(): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

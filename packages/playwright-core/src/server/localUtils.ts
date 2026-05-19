@@ -18,14 +18,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import * as yauzl from 'yauzl';
 import * as yazl from 'yazl';
+import * as yauzl from '@utils/third_party/yauzl';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { serializeClientSideCallMetadata } from '@isomorphic/trace/traceUtils';
 import { assert } from '@isomorphic/assert';
 import { calculateSha1 } from '@utils/crypto';
 import { ZipFile } from '@utils/zipFile';
-import { removeFolders } from '@utils/fileUtils';
+import { removeFolders, resolveWithinRoot } from '@utils/fileUtils';
 import { HarBackend } from './harBackend';
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
@@ -101,7 +101,26 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
       return;
     }
     assert(inZipFile);
+    inZipFile.on('error', error => promise.reject(error));
     let pendingEntries = inZipFile.entryCount;
+
+    const finalizeRepack = () => {
+      zipFile.end(undefined, () => {
+        zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile))
+            .on('close', () => {
+              fs.promises.unlink(tempFile).then(() => {
+                promise.resolve();
+              }).catch(error => promise.reject(error));
+            })
+            .on('error', error => promise.reject(error));
+      });
+    };
+
+    if (pendingEntries === 0) {
+      finalizeRepack();
+      return;
+    }
+
     inZipFile.on('entry', entry => {
       inZipFile.openReadStream(entry, (err, readStream) => {
         if (err) {
@@ -109,15 +128,8 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
           return;
         }
         zipFile.addReadStream(readStream!, entry.fileName);
-        if (--pendingEntries === 0) {
-          zipFile.end(undefined, () => {
-            zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile)).on('close', () => {
-              fs.promises.unlink(tempFile).then(() => {
-                promise.resolve();
-              }).catch(error => promise.reject(error));
-            });
-          });
-        }
+        if (--pendingEntries === 0)
+          finalizeRepack();
       });
     });
   });
@@ -129,6 +141,7 @@ async function deleteStackSession(progress: Progress, stackSessions: Map<string,
   const session = stacksId ? stackSessions.get(stacksId) : undefined;
   if (!session)
     return;
+  await progress.race(session.writer);
   stackSessions.delete(stacksId!);
   if (session.tmpDir)
     await progress.race(removeFolders([session.tmpDir]));
@@ -187,7 +200,10 @@ export async function harUnzip(progress: Progress, params: channels.LocalUtilsHa
           await progress.race(fs.promises.mkdir(resourcesDir, { recursive: true }));
           resourcesDirCreated = true;
         }
-        await progress.race(fs.promises.writeFile(path.join(resourcesDir, entry), buffer));
+        const outPath = resolveWithinRoot(resourcesDir, entry);
+        if (!outPath)
+          throw new Error(`HAR zip entry '${entry}' escapes output directory`);
+        await progress.race(fs.promises.writeFile(outPath, buffer));
       }
     }
     await progress.race(fs.promises.unlink(params.zipFile));
@@ -201,6 +217,9 @@ export async function tracingStarted(progress: Progress, stackSessions: Map<stri
   if (!params.tracesDir)
     tmpDir = await progress.race(fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-')));
   const traceStacksFile = path.join(params.tracesDir || tmpDir!, params.traceName + '.stacks');
+  // Ensure the directory exists before addStackToTracingNoReply races ahead of
+  // the tracing recorder's own (separately queued) mkdir.
+  await progress.race(fs.promises.mkdir(path.dirname(traceStacksFile), { recursive: true }));
   stackSessions.set(traceStacksFile, { callStacks: [], file: traceStacksFile, writer: Promise.resolve(), tmpDir, live: params.live });
   return { stacksId: traceStacksFile };
 }

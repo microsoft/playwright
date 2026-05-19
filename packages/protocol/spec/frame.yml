@@ -155,6 +155,7 @@ Frame:
         pause: true
         input: true
         isAutoWaiting: true
+        potentiallyClosesScope: true
 
     content:
       title: Get content
@@ -680,6 +681,7 @@ Frame:
         strict: boolean?
         text: string
         delay: float?
+        namedKeys: boolean?
         timeout: float
       flags:
         slowMo: true

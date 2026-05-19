@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { splitTestIdAttributeNames } from '@isomorphic/locatorUtils';
 import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { beginDOMCaches, closestCrossShadow, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
@@ -231,11 +232,12 @@ function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targe
 
 function buildNoTextCandidates(injectedScript: InjectedScript, element: Element, options: InternalOptions): SelectorToken[] {
   const candidates: SelectorToken[] = [];
+  const testIdAttributeNames = splitTestIdAttributeNames(options.testIdAttributeName);
 
   // CSS selectors are applicable to elements via locator() and iframes via frameLocator().
   {
     for (const attr of ['data-testid', 'data-test-id', 'data-test']) {
-      if (attr !== options.testIdAttributeName && element.getAttribute(attr))
+      if (!testIdAttributeNames.includes(attr) && element.getAttribute(attr))
         candidates.push({ engine: 'css', selector: `[${attr}=${quoteCSSAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
     }
 
@@ -255,16 +257,20 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
     }
 
     // Locate by testId via CSS selector.
-    if (element.getAttribute(options.testIdAttributeName))
-      candidates.push({ engine: 'css', selector: `[${options.testIdAttributeName}=${quoteCSSAttributeValue(element.getAttribute(options.testIdAttributeName)!)}]`, score: kTestIdScore });
+    for (const testIdAttr of testIdAttributeNames) {
+      if (element.getAttribute(testIdAttr))
+        candidates.push({ engine: 'css', selector: `[${testIdAttr}=${quoteCSSAttributeValue(element.getAttribute(testIdAttr)!)}]`, score: kTestIdScore });
+    }
 
     penalizeScoreForLength([candidates]);
     return candidates;
   }
 
   // Everything below is not applicable to iframes (getBy* methods).
-  if (element.getAttribute(options.testIdAttributeName))
-    candidates.push({ engine: 'internal:testid', selector: `[${options.testIdAttributeName}=${escapeForAttributeSelector(element.getAttribute(options.testIdAttributeName)!, true)}]`, score: kTestIdScore });
+  for (const testIdAttr of testIdAttributeNames) {
+    if (element.getAttribute(testIdAttr))
+      candidates.push({ engine: 'internal:testid', selector: `[${testIdAttr}=${escapeForAttributeSelector(element.getAttribute(testIdAttr)!, true)}]`, score: kTestIdScore });
+  }
 
   if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
     const input = element as HTMLInputElement | HTMLTextAreaElement;

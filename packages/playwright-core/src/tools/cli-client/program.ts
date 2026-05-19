@@ -236,13 +236,30 @@ export async function program(options?: { embedderVersion?: string}) {
       const foreground = args.port !== undefined;
       const child = spawn(process.execPath, daemonArgs, {
         detached: !foreground,
-        stdio: foreground ? 'inherit' : 'ignore',
+        stdio: foreground ? 'inherit' : ['pipe', 'pipe', 'ignore'],
       });
       if (foreground) {
         await new Promise<void>(resolve => child.on('exit', () => resolve()));
         return;
       }
+      const timer = setTimeout(() => child.stdin!.destroy(), 60_000);
       child.unref();
+      try {
+        await new Promise<void>((resolve, reject) => {
+          let outLog = '';
+          child.stdout!.on('data', data => {
+            outLog += data.toString();
+            if (outLog.includes('Dashboard is running'))
+              resolve();
+          });
+          child.once('exit', (code, signal) => reject(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY${outLog ? '\n' + outLog : ''}`)));
+        });
+      } finally {
+        clearTimeout(timer);
+        child.removeAllListeners('exit');
+        child.stdin!.destroy();
+        child.stdout!.destroy();
+      }
       output.show(sessionName, child.pid);
       return;
     }

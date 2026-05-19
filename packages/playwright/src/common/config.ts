@@ -84,6 +84,7 @@ export class FullConfigInternal {
     }
 
     this.config = {
+      argv: configCLIOverrides.argv ?? [],
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),
@@ -128,7 +129,8 @@ export class FullConfigInternal {
     }
 
     // When no projects are defined, do not use config.workers as a hard limit for project.workers.
-    const projectConfigs = configCLIOverrides.projects || userConfig.projects || [{ ...userConfig, workers: undefined }];
+    // Strip webServer from the implicit default project — it is already accounted for at the top level.
+    const projectConfigs = configCLIOverrides.projects || userConfig.projects || [{ ...userConfig, workers: undefined, webServer: undefined }];
     this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, packageJsonDir));
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
@@ -160,6 +162,7 @@ export class FullProjectInternal {
   readonly respectGitIgnore: boolean;
   readonly snapshotPathTemplate: string | undefined;
   readonly workers: number | undefined;
+  readonly webServers: NonNullable<FullConfig['webServer']>[];
   id = '';
   deps: FullProjectInternal[] = [];
   teardown: FullProjectInternal | undefined;
@@ -168,6 +171,8 @@ export class FullProjectInternal {
     this.fullConfig = fullConfig;
     const testDir = takeFirst(pathResolve(configDir, projectConfig.testDir), pathResolve(configDir, config.testDir), fullConfig.configDir);
     this.snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate);
+    const webServer = projectConfig.webServer;
+    this.webServers = Array.isArray(webServer) ? webServer : webServer ? [webServer] : [];
 
     this.project = {
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),

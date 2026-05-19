@@ -45,6 +45,7 @@ export type TreeViewProps<T> = {
   treeState: TreeState,
   setTreeState: (treeState: TreeState) => void,
   autoExpandDepth?: number,
+  revealSelectedKey?: number,
 };
 
 const scrollPositions = new Map<string, number>();
@@ -66,6 +67,7 @@ export function TreeView<T extends TreeItem>({
   noItemsMessage,
   dataTestId,
   autoExpandDepth,
+  revealSelectedKey,
 }: TreeViewProps<T>) {
   const treeItems = React.useMemo(() => {
     return indexTree<T>(rootItem, selectedItem, treeState.expandedItems, autoExpandDepth || 0, isVisible);
@@ -93,6 +95,14 @@ export function TreeView<T extends TreeItem>({
     if (itemListRef.current)
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
   }, [name]);
+
+  React.useEffect(() => {
+    if (revealSelectedKey === undefined)
+      return;
+    const selectedEl = itemListRef.current?.querySelector('[aria-selected="true"]');
+    if (selectedEl)
+      scrollIntoViewIfNeeded(selectedEl);
+  }, [revealSelectedKey]);
 
   const toggleExpanded = React.useCallback((item: T) => {
     const { expanded } = treeItems.get(item)!;

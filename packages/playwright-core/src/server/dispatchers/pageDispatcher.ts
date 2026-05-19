@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { Page, Worker } from '../page';
 import { Dispatcher } from './dispatcher';
@@ -52,7 +53,6 @@ import type { ScreencastFrame } from '../types';
 import type { ScreencastClient } from '../screencast';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
-  _type_EventTarget = true;
   _type_Page = true;
   private _page: Page;
   _subscriptions = new Set<channels.PageUpdateSubscriptionParams['event']>();
@@ -233,6 +233,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       frame: (params.locator.frame as FrameDispatcher)._object,
       selector: params.locator.selector,
     } : undefined;
+    progress.log(`${renderTitleForCall(progress.metadata)}${params.timeout ? ` with timeout ${params.timeout}ms` : ''}`);
     return await this._page.expectScreenshot(progress, {
       ...params,
       locator,
@@ -249,9 +250,11 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async close(params: channels.PageCloseParams, progress: Progress): Promise<void> {
-    if (!params.runBeforeUnload)
-      progress.metadata.potentiallyClosesScope = true;
     await this._page.close(progress, params);
+  }
+
+  async runBeforeUnload(params: channels.PageRunBeforeUnloadParams, progress: Progress): Promise<void> {
+    await this._page.runBeforeUnload(progress);
   }
 
   async updateSubscription(params: channels.PageUpdateSubscriptionParams, progress: Progress): Promise<void> {
@@ -325,7 +328,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async touchscreenTap(params: channels.PageTouchscreenTapParams, progress: Progress): Promise<void> {
-    progress.metadata.point = { x: params.x, y: params.y };
     await this._page.touchscreen.apiTap(progress, params.x, params.y);
   }
 
@@ -485,12 +487,31 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async setDockTile(params: channels.PageSetDockTileParams): Promise<void> {
     await this._page.setDockTile(params.image);
   }
+
+  async webStorageItems(params: channels.PageWebStorageItemsParams, progress: Progress): Promise<channels.PageWebStorageItemsResult> {
+    return { items: await this._page.webStorageItems(progress, params.kind) };
+  }
+
+  async webStorageGetItem(params: channels.PageWebStorageGetItemParams, progress: Progress): Promise<channels.PageWebStorageGetItemResult> {
+    return { value: await this._page.webStorageGetItem(progress, params.kind, params.name) };
+  }
+
+  async webStorageSetItem(params: channels.PageWebStorageSetItemParams, progress: Progress): Promise<void> {
+    await this._page.webStorageSetItem(progress, params.kind, params.name, params.value);
+  }
+
+  async webStorageRemoveItem(params: channels.PageWebStorageRemoveItemParams, progress: Progress): Promise<void> {
+    await this._page.webStorageRemoveItem(progress, params.kind, params.name);
+  }
+
+  async webStorageClear(params: channels.PageWebStorageClearParams, progress: Progress): Promise<void> {
+    await this._page.webStorageClear(progress, params.kind);
+  }
 }
 
 
 export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher | BrowserTypeDispatcher> implements channels.WorkerChannel {
   _type_Worker = true;
-  _type_EventTarget = true;
 
   readonly _subscriptions = new Set<channels.WorkerUpdateSubscriptionParams['event']>();
 
@@ -520,7 +541,6 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   async disconnect(params: channels.WorkerDisconnectParams, progress: Progress): Promise<void> {
-    progress.metadata.potentiallyClosesScope = true;
     await this._object.disconnect(progress, params);
   }
 

@@ -788,3 +788,55 @@ test('should throw on invalid --tsconfig', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`--tsconfig "does-not-exist.json" does not exist`);
 });
+
+test('should expose process.argv as config.argv and not pollute test discovery', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {};
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        expect(testInfo.timeout).toBe(7777);
+        expect(testInfo.config.argv).toContain('--build-path=/foo');
+        expect(testInfo.config.argv).toContain('--env=staging');
+        expect(testInfo.config.argv).toContain('--');
+      });
+    `
+  }, { timeout: '7777' }, {}, { additionalArgs: ['--', '--build-path=/foo', '--env=staging'] });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('config.argv should be visible in globalSetup and reporter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: './global-setup.ts',
+        reporter: './my-reporter.ts',
+      };
+    `,
+    'global-setup.ts': `
+      module.exports = async (config) => {
+        console.log('GLOBAL_SETUP_HAS_ARG=' + config.argv.includes('--build-path=/foo'));
+      };
+    `,
+    'my-reporter.ts': `
+      class MyReporter {
+        onBegin(config) {
+          console.log('REPORTER_HAS_ARG=' + config.argv.includes('--build-path=/foo'));
+        }
+      }
+      module.exports = MyReporter;
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+    `
+  }, { reporter: '' }, {}, { additionalArgs: ['--', '--build-path=/foo'] });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(`GLOBAL_SETUP_HAS_ARG=true`);
+  expect(result.output).toContain(`REPORTER_HAS_ARG=true`);
+});

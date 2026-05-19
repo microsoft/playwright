@@ -232,3 +232,317 @@
   -webkit-user-drag: none;
   box-shadow: 0 0 0 1px var(--color-border-muted), 0 0 8px var(--color-border-muted);
 }
+
+
+/* -- Annotate sidebar -- */
+.annotate-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-canvas-subtle);
+  border-left: 1px solid var(--color-border-muted);
+  min-height: 0;
+}
+
+.annotate-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--color-border-muted);
+  background: var(--color-canvas-overlay);
+}
+
+:root.light-mode .annotate-sidebar-header {
+  background: var(--color-canvas-subtle);
+}
+
+.annotate-sidebar-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.annotate-sidebar-thumb {
+  position: relative;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border-muted);
+  border-radius: 6px;
+  background: var(--color-canvas-default);
+  overflow: hidden;
+}
+
+.annotate-sidebar-thumb:hover {
+  border-color: var(--color-border-default);
+}
+
+.annotate-sidebar-thumb.selected {
+  border-color: var(--color-accent-fg, #2f81f7);
+  box-shadow: 0 0 0 1px var(--color-accent-fg, #2f81f7);
+}
+
+.annotate-sidebar-thumb-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.annotate-sidebar-thumb-img-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: var(--color-canvas-overlay);
+  overflow: hidden;
+}
+
+.annotate-sidebar-thumb-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.annotate-sidebar-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.annotate-sidebar-thumb-rect {
+  position: absolute;
+  border: 1.5px solid rgb(var(--annotation-color));
+  background: rgb(var(--annotation-color) / 0.12);
+  border-radius: 2px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.annotate-sidebar-thumb-rect.hovered {
+  background: rgb(var(--annotation-color) / 0.32);
+}
+
+.annotate-sidebar-thumb-remove.toolbar-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  z-index: 1;
+}
+
+.annotate-sidebar-thumb-remove.toolbar-button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+}
+
+.annotate-sidebar-thumb:hover .annotate-sidebar-thumb-remove,
+.annotate-sidebar-thumb-remove:focus-visible {
+  opacity: 1;
+}
+
+.annotate-sidebar-comments {
+  list-style: none;
+  margin: 0;
+  padding: 4px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.annotate-sidebar-comment {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: rgb(var(--annotation-color) / 0.12);
+  border: 1px solid rgb(var(--annotation-color) / 0.35);
+  border-radius: 4px;
+  color: var(--color-fg-default);
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 3px 6px;
+  cursor: pointer;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.annotate-sidebar-comment:hover {
+  background: rgb(var(--annotation-color) / 0.2);
+}
+
+.annotate-sidebar-comment.empty {
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+/* auto-grow textarea: the wrapper mirrors content in ::after so the grid row
+   expands to fit, and the textarea fills the same cell */
+.annotate-sidebar-feedback-wrap {
+  display: grid;
+  margin: 8px 8px 4px;
+  flex-shrink: 0;
+}
+
+.annotate-sidebar-feedback-wrap::after {
+  content: attr(data-value) ' ';
+  white-space: pre-wrap;
+  word-break: break-word;
+  visibility: hidden;
+  /* same box-model as the textarea */
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  min-height: 56px;
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+.annotate-sidebar-feedback {
+  grid-area: 1 / 1 / 2 / 2;
+  padding: 6px 8px;
+  background: var(--vscode-input-background, #1e1e1e);
+  color: var(--vscode-input-foreground, #cccccc);
+  border: 1px solid var(--color-border-muted);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: none;
+  min-height: 56px;
+  overflow: hidden;
+  outline: none;
+}
+
+.annotate-sidebar-feedback:focus {
+  border-color: var(--vscode-focusBorder, #007fd4);
+}
+
+.annotate-sidebar-submit {
+  margin: 4px 8px 8px;
+  padding: 8px 12px;
+  background: var(--color-accent-fg, #2f81f7);
+  color: white;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.annotate-sidebar-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.annotate-sidebar-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* -- Annotate overlay (drawn on top of the live screen) -- */
+.annotate-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 100;
+  min-height: 0;
+}
+
+.annotate-overlay-window {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  background: var(--color-canvas-default);
+  min-height: 0;
+}
+
+.annotate-overlay-chrome {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  background: var(--color-canvas-overlay);
+  border-bottom: 1px solid var(--color-border-muted);
+}
+
+:root.light-mode .annotate-overlay-chrome {
+  background: var(--color-canvas-subtle);
+}
+
+.annotate-overlay-titlebar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--color-fg-default);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.annotate-overlay-title-text {
+  font-weight: 500;
+  color: var(--color-fg-default);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 40%;
+}
+
+.annotate-overlay-title-sep {
+  color: var(--color-fg-subtle);
+}
+
+.annotate-overlay-title-url {
+  flex: 1;
+  font-family: var(--monospace-font, monospace);
+  font-size: 12px;
+  color: var(--color-fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.annotate-overlay-canvas {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 12px;
+  background: var(--color-canvas-default);
+}
+
+

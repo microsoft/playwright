@@ -251,8 +251,6 @@ export class Response {
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
       addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
     }
-    if (this._context.tabs().length === 0)
-      this._isClose = true;
 
     // Handle modal states.
     if (tabSnapshot?.modalStates.length)

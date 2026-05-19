@@ -106,8 +106,9 @@ export class ExtensionProtocolV2 implements ExtensionProtocolHandler {
   }
 
   async forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any> {
+    // Browser-level commands (Storage.*, Browser.*) have no sessionId.
     if (!sessionId)
-      throw new Error(`Unsupported command without sessionId: ${method}`);
+      return await this._model.sendBrowserCommand(method, params);
     return await this._model.sendCommand(sessionId, method, params);
   }
 }

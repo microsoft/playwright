@@ -94,6 +94,21 @@ test('browser_network_requests filter', async ({ client, server }) => {
   }
 });
 
+test('browser_network_requests rejects invalid regex filter', async ({ client, server }) => {
+  server.setContent('/', '', 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const response = await client.callTool({
+    name: 'browser_network_requests',
+    arguments: { filter: '[invalid(' },
+  });
+  expect(response.isError).toBe(true);
+});
+
 test('browser_network_requests numbers requests with stable indexes', async ({ client, server }) => {
   server.setContent('/', '', 'text/html');
 

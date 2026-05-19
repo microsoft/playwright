@@ -109,7 +109,6 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async delete(params: channels.ArtifactDeleteParams, progress: Progress): Promise<void> {
-    progress.metadata.potentiallyClosesScope = true;
     await this._object.delete(progress);
     this._dispose();
   }

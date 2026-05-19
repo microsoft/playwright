@@ -39,7 +39,6 @@ export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSes
   }
 
   async detach(_: any, progress: Progress): Promise<void> {
-    progress.metadata.potentiallyClosesScope = true;
     await this._object.detach(progress);
   }
 }

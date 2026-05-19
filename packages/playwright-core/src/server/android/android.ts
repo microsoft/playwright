@@ -245,7 +245,7 @@ export class AndroidDevice extends SdkObject {
       delete params.androidSelector;
     }
     const driver = await this._driver();
-    if (!driver)
+    if (!driver || this._isClosed)
       throw new Error('Device is closed');
     const id = ++this._lastId;
     const result = new Promise((fulfill, reject) => this._callbacks.set(id, { fulfill, reject }));
@@ -265,6 +265,9 @@ export class AndroidDevice extends SdkObject {
       clearTimeout(this._pollingWebViews);
     for (const connection of this._browserConnections)
       await connection.close();
+    for (const callback of this._callbacks.values())
+      callback.reject(new Error('Device closed'));
+    this._callbacks.clear();
     if (this._driverPromise) {
       const driver = await this._driver();
       driver?.close();

@@ -458,10 +458,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { artifact };
   }
 
-  private async _captureSnapshot(snapshotName: string | undefined, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  private async _captureSnapshot(snapshotName: string | undefined, sdkObject: SdkObject, metadata: CallMetadata, resetTargets: boolean): Promise<void> {
     if (!snapshotName || !sdkObject.attribution.page)
       return;
-    await this._snapshotter?.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName).catch(() => {});
+    await this._snapshotter?.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName, resetTargets).catch(() => {});
   }
 
   private _shouldCaptureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'input') {
@@ -489,21 +489,21 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
+    return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata, true);
   }
 
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
+  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: types.Point) {
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
     if (!this._state?.callIds.has(metadata.id))
       return Promise.resolve();
-    const event = createInputActionTraceEvent(metadata);
+    const event = createInputActionTraceEvent(metadata, point);
     if (!event)
       return Promise.resolve();
     this._temporarilyDisableThrottling(sdkObject.attribution.page);
     if (this._shouldCaptureSnapshot(sdkObject, metadata, 'input'))
       event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata);
+    return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata, false);
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
@@ -530,7 +530,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._shouldCaptureSnapshot(sdkObject, metadata, 'after'))
       event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata);
+    return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata, false);
   }
 
   onEntryStarted(entry: har.Entry) {
@@ -736,13 +736,13 @@ function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string)
   return event;
 }
 
-function createInputActionTraceEvent(metadata: CallMetadata): trace.InputActionTraceEvent | null {
+function createInputActionTraceEvent(metadata: CallMetadata, point: types.Point | undefined): trace.InputActionTraceEvent | null {
   if (metadata.internal || metadata.method.startsWith('tracing'))
     return null;
   return {
     type: 'input',
     callId: metadata.id,
-    point: metadata.point,
+    point,
   };
 }
 
@@ -766,7 +766,6 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
     endTime: metadata.endTime,
     error: metadata.error?.error,
     result: metadata.result,
-    point: metadata.point,
   };
 }
 

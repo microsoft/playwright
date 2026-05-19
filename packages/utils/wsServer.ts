@@ -15,7 +15,7 @@
  */
 
 import { WebSocketServer as wsServer } from 'ws';
-import { computeAllowedHosts, hostnameFromHostHeader } from './httpServer';
+import { computeAllowedHosts, hostnameFromHostHeader, urlHostFromAddress } from './httpServer';
 import { createHttpServer } from './network';
 import { debugLogger } from './debugLogger';
 
@@ -78,11 +78,15 @@ export class WSServer {
           reject(new Error('Could not bind server socket'));
           return;
         }
-        const urlHost = hostname.includes(':') && !hostname.startsWith('[') ? `[${hostname}]` : hostname;
-        const wsEndpoint = typeof address === 'string' ? `${address}${path}` : `ws://${urlHost}:${address.port}${path}`;
-        if (typeof address !== 'string')
-          this._allowedHosts = computeAllowedHosts(hostname, address.address);
-        resolve(wsEndpoint);
+        if (typeof address === 'string') {
+          resolve(`${address}${path}`);
+          return;
+        }
+        // Advertise the bound IP literal in the wsEndpoint so the client connects to
+        // the same address family the server bound to. Otherwise the client and
+        // server resolvers can disagree on what 'localhost' means (see #40605).
+        this._allowedHosts = computeAllowedHosts(hostname, address.address);
+        resolve(`ws://${urlHostFromAddress(address)}:${address.port}${path}`);
       }).on('error', reject);
     });
 

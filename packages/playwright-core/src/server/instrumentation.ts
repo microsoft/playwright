@@ -28,6 +28,7 @@ import type { APIRequestContext } from './fetch';
 import type { Frame } from './frames';
 import type { Page, Worker } from './page';
 import type { Playwright } from './playwright';
+import type * as types from './types';
 import type { CallMetadata } from '@protocol/callMetadata';
 export type { CallMetadata } from '@protocol/callMetadata';
 import type { LogName } from '@utils/debugLogger';
@@ -79,11 +80,13 @@ export function createRootSdkObject() {
   return root;
 }
 
+export type AddListenerOptions = { order?: 'last' };
+
 export interface Instrumentation {
-  addListener(listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null): void;
+  addListener(listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null, options?: AddListenerOptions): void;
   removeListener(listener: InstrumentationListener): void;
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void>;
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: types.Point, box?: types.Rect): Promise<void>;
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onPageOpen(page: Page): void;
@@ -96,7 +99,7 @@ export interface Instrumentation {
 
 export interface InstrumentationListener {
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void>;
-  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
+  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, point?: types.Point, box?: types.Rect): Promise<void>;
   onCallLog?(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onPageOpen?(page: Page): void;
@@ -109,18 +112,33 @@ export interface InstrumentationListener {
 
 export function createInstrumentation(): Instrumentation {
   const listeners = new Map<InstrumentationListener, BrowserContext | APIRequestContext | null>();
+  const lastListeners = new Map<InstrumentationListener, BrowserContext | APIRequestContext | null>();
   return new Proxy({}, {
     get: (obj: any, prop: string | symbol) => {
       if (typeof prop !== 'string')
         return obj[prop];
-      if (prop === 'addListener')
-        return (listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null) => listeners.set(listener, context);
-      if (prop === 'removeListener')
-        return (listener: InstrumentationListener) => listeners.delete(listener);
+      if (prop === 'addListener') {
+        return (listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null, options?: AddListenerOptions) => {
+          if (options?.order === 'last')
+            lastListeners.set(listener, context);
+          else
+            listeners.set(listener, context);
+        };
+      }
+      if (prop === 'removeListener') {
+        return (listener: InstrumentationListener) => {
+          listeners.delete(listener);
+          lastListeners.delete(listener);
+        };
+      }
       if (!prop.startsWith('on'))
         return obj[prop];
       return async (sdkObject: SdkObject, ...params: any[]) => {
         for (const [listener, context] of listeners) {
+          if (!context || sdkObject.attribution.context === context)
+            await (listener as any)[prop]?.(sdkObject, ...params);
+        }
+        for (const [listener, context] of lastListeners) {
           if (!context || sdkObject.attribution.context === context)
             await (listener as any)[prop]?.(sdkObject, ...params);
         }

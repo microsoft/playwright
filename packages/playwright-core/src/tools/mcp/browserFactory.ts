@@ -51,7 +51,7 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
   let canBind = false;
   let ownership: 'attached' | 'own' = 'own';
   if (config.browser.cdpEndpoint) {
-    browser = await createCDPBrowser(config);
+    browser = await createCDPBrowser(config, clientInfo);
     canBind = true;
     ownership = 'attached';
   } else if (config.browser.isolated) {
@@ -96,18 +96,19 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
     handleSIGINT: false,
     handleSIGTERM: false,
   }).catch(error => {
-    if (error.message.includes('Executable doesn\'t exist'))
-      throwBrowserIsNotInstalledError(config);
+    throwIfExecutableMissing(error, config);
     throw error;
   });
   return browser;
 }
 
-async function createCDPBrowser(config: FullConfig): Promise<playwrightTypes.Browser> {
+async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (cdp)');
+  const artifactsDir = await computeTracesDir(config, clientInfo);
   const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
     headers: config.browser.cdpHeaders,
-    timeout: config.browser.cdpTimeout
+    timeout: config.browser.cdpTimeout,
+    artifactsDir,
   });
   return browser;
 }
@@ -133,7 +134,10 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   const endpoint = config.browser.remoteEndpoint!;
   const playwrightObject = playwright as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
-  const browser = await connectToBrowser(playwrightObject, { endpoint });
+  const browser = await connectToBrowser(playwrightObject, {
+    endpoint,
+    headers: config.browser.remoteHeaders,
+  });
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
   return { browser, browserInfo: browserInfo(browser, config), canBind: false, ownership: 'attached' };
 }
@@ -166,8 +170,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
     const browser = browserContext.browser()!;
     return browser;
   } catch (error: any) {
-    if (error.message.includes('Executable doesn\'t exist'))
-      throwBrowserIsNotInstalledError(config);
+    throwIfExecutableMissing(error, config);
     if (error.message.includes('cannot open shared object file: No such file or directory')) {
       const browserName = launchOptions.channel ?? config.browser.browserName;
       throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
@@ -231,10 +234,15 @@ export function isProfileLocked(userDataDir: string): boolean {
   }
 }
 
-function throwBrowserIsNotInstalledError(config: FullConfig): never {
-  const channel = config.browser.launchOptions?.channel ?? config.browser.browserName;
+function throwIfExecutableMissing(error: Error, config: FullConfig): void {
+  // The "Executable doesn't exist" prefix is shared by all managed binaries
+  // (browser, ffmpeg, winldd). Disambiguate by the path so the user is told
+  // which dependency to install.
+  if (!error.message.includes(`Executable doesn't exist`))
+    return;
+  const target = error.message.includes('ffmpeg') ? 'ffmpeg' : (config.browser.launchOptions?.channel ?? config.browser.browserName);
+  const label = target === 'ffmpeg' ? 'FFmpeg' : `Browser "${target}"`;
   if (config.skillMode)
-    throw new Error(`Browser "${channel}" is not installed. Run \`playwright-cli install-browser ${channel}\` to install`);
-  else
-    throw new Error(`Browser "${channel}" is not installed. Run \`npx @playwright/mcp install-browser ${channel}\` to install`);
+    throw new Error(`${label} is not installed. Run \`playwright-cli install-browser ${target}\` to install`);
+  throw new Error(`${label} is not installed. Run \`npx @playwright/mcp install-browser ${target}\` to install`);
 }

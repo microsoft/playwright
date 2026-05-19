@@ -444,7 +444,7 @@ Group name shown in the trace viewer.
 ### option: Tracing.group.location
 * since: v1.49
 - `location` ?<[Object]>
-  - alias-java: Location
+  * alias: Location
   - `file` <[string]>
   - `line` ?<[int]>
   - `column` ?<[int]>

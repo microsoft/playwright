@@ -54,9 +54,11 @@ export class HttpServer {
   private _wsGuid: string | undefined;
   // Allowed Host headers; null disables the check (host bound to a public address).
   private _allowedHosts: Set<string> | null = null;
+  private _staticRoot: string | undefined;
 
-  constructor() {
+  constructor(staticRoot?: string) {
     this._server = createHttpServer(this._onRequest.bind(this));
+    this._staticRoot = staticRoot ? path.resolve(staticRoot) : undefined;
   }
 
   server() {
@@ -169,8 +171,7 @@ export class HttpServer {
       this._urlPrefixHumanReadable = address;
     } else {
       this._port = address.port;
-      const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
-      this._urlPrefixPrecise = `http://${resolvedHost}:${address.port}`;
+      this._urlPrefixPrecise = `http://${urlHostFromAddress(address)}:${address.port}`;
       this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
       this._allowedHosts = computeAllowedHosts(host, address.address);
     }
@@ -184,7 +185,12 @@ export class HttpServer {
     return purpose === 'human-readable' ? this._urlPrefixHumanReadable : this._urlPrefixPrecise;
   }
 
-  serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
+  serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }, options?: { skipRootCheck?: boolean }): boolean {
+    if (this._staticRoot && !options?.skipRootCheck && !isPathInside(this._staticRoot, absoluteFilePath)) {
+      response.statusCode = 403;
+      response.end();
+      return true;
+    }
     try {
       for (const [name, value] of Object.entries(headers || {}))
         response.setHeader(name, value);
@@ -303,6 +309,11 @@ export function computeAllowedHosts(requested: string | undefined, bound: string
   return new Set(['localhost', '127.0.0.1', '[::1]']);
 }
 
+// Bracket IPv6 literals so they can be used as the host part of a URL.
+export function urlHostFromAddress(address: { address: string, family: string }): string {
+  return address.family === 'IPv6' ? `[${address.address}]` : address.address;
+}
+
 export function hostnameFromHostHeader(host: string): string {
   if (host.startsWith('[')) {
     const end = host.indexOf(']');
@@ -313,8 +324,7 @@ export function hostnameFromHostHeader(host: string): string {
 }
 
 export function serveFolder(folder: string): HttpServer {
-  const server = new HttpServer();
-  const folderRoot = path.resolve(folder);
+  const server = new HttpServer(folder);
   server.routePrefix('/', (request, response) => {
     let relativePath = new URL('http://localhost' + request.url).pathname;
     if (relativePath.startsWith('/trace/file')) {
@@ -323,11 +333,6 @@ export function serveFolder(folder: string): HttpServer {
       if (!requested)
         return false;
       const resolved = path.resolve(requested);
-      if (!isPathInside(folderRoot, resolved)) {
-        response.statusCode = 403;
-        response.end();
-        return true;
-      }
       try {
         return server.serveFile(request, response, resolved);
       } catch (e) {

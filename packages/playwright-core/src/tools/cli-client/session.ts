@@ -166,23 +166,13 @@ export class Session {
     await new Promise<void>((resolve, reject) => {
       child.stdout!.on('data', data => {
         outLog += data.toString();
-        if (!outLog.includes('<EOF>'))
-          return;
-        const errorMatch = outLog.match(/### Error\n([\s\S]*)<EOF>/);
-        const error = errorMatch ? errorMatch[1].trim() : undefined;
-        if (error) {
-          const errLogContent = fs.readFileSync(errLog, 'utf-8');
-          rejectWithPid(reject, error + (errLogContent ? '\n' + errLogContent : ''));
-        }
-
-        const successMatch = outLog.match(/### Success\nDaemon listening on (.*)\n<EOF>/);
-        if (successMatch)
+        if (outLog.includes('Daemon listening on'))
           resolve();
       });
       child.on('close', code => {
         if (!signalled) {
           const errLogContent = fs.readFileSync(errLog, 'utf-8');
-          rejectWithPid(reject, `Daemon process exited with code ${code}` + (errLogContent ? '\n' + errLogContent : ''));
+          rejectWithPid(reject, `Daemon process exited with code ${code}` + (outLog ? '\n' + outLog : '') + (errLogContent ? '\n' + errLogContent : ''));
         }
       });
     });

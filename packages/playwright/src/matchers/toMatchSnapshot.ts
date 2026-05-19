@@ -40,6 +40,7 @@ type ToHaveScreenshotConfigOptions = ImageComparatorOptions & {
   caret?: 'hide' | 'initial';
   scale?: 'css' | 'device';
   stylePath?: string | string[];
+  timeout?: number;
   _comparator?: string;
 };
 
@@ -54,7 +55,6 @@ type ToHaveScreenshotOptions = ToHaveScreenshotConfigOptions & {
   mask?: Array<Locator>;
   maskColor?: string;
   omitBackground?: boolean;
-  timeout?: number;
 };
 
 // Keep in sync with above (begin).
@@ -64,7 +64,6 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
   'mask',
   'maskColor',
   'omitBackground',
-  'timeout',
 ];
 // Keep in sync with above (end).
 

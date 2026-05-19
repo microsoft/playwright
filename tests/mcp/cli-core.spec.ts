@@ -34,6 +34,12 @@ test('close', async ({ cli, server }) => {
   expect(output).toContain(`Browser 'default' closed`);
 });
 
+test('preserves URL with & query params', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/403' } }, async ({ cli, server }) => {
+  const url = `${server.HELLO_WORLD}?a=1&b=2`;
+  const { output } = await cli('open', url);
+  expect(output).toContain(`Page URL: ${url}`);
+});
+
 test('click button', async ({ cli, server }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
 
@@ -66,6 +72,17 @@ test('dblclick', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   const { snapshot } = await cli('dblclick', 'e2');
   expect(snapshot).toContain('dblclick 0');
+});
+
+test('click with --modifiers', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/406' } }, async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+
+  const single = await cli('click', 'e2', '--modifiers', 'Control');
+  expect(single.output).toContain(`await page.getByRole('button', { name: 'Submit' }).click({\n  modifiers: ['Control']\n});`);
+
+  const repeated = await cli('click', 'e2', '--modifiers', 'Control', '--modifiers', 'Shift');
+  expect(repeated.output).toContain(`await page.getByRole('button', { name: 'Submit' }).click({\n  modifiers: ['Control', 'Shift']\n});`);
 });
 
 test('type', async ({ cli, server }) => {

@@ -27,82 +27,84 @@ export function ansi2html(text: string, defaultColors: { bg: string, fg: string 
   while ((match = regex.exec(text)) !== null) {
     const [, , codeStr, , text] = match;
     if (codeStr) {
-      const code = +codeStr;
-      switch (code) {
-        case 0: style = {}; break;
-        case 1: style['font-weight'] = 'bold'; break;
-        case 2: style['opacity'] = '0.8'; break;
-        case 3: style['font-style'] = 'italic'; break;
-        case 4: style['text-decoration'] = 'underline'; break;
-        case 7:
-          reverse = true;
-          break;
-        case 8: style.display = 'none'; break;
-        case 9: style['text-decoration'] = 'line-through'; break;
-        case 22:
-          delete style['font-weight'];
-          delete style['font-style'];
-          delete style['opacity'];
-          delete style['text-decoration'];
-          break;
-        case 23:
-          delete style['font-weight'];
-          delete style['font-style'];
-          delete style['opacity'];
-          break;
-        case 24:
-          delete style['text-decoration'];
-          break;
-        case 27:
-          reverse = false;
-          break;
-        case 30:
-        case 31:
-        case 32:
-        case 33:
-        case 34:
-        case 35:
-        case 36:
-        case 37:
-          fg = ansiColors[code - 30];
-          break;
-        case 39:
-          fg = defaultColors?.fg;
-          break;
-        case 40:
-        case 41:
-        case 42:
-        case 43:
-        case 44:
-        case 45:
-        case 46:
-        case 47:
-          bg = ansiColors[code - 40];
-          break;
-        case 49:
-          bg = defaultColors?.bg;
-          break;
-        case 53: style['text-decoration'] = 'overline'; break;
-        case 90:
-        case 91:
-        case 92:
-        case 93:
-        case 94:
-        case 95:
-        case 96:
-        case 97:
-          fg = brightAnsiColors[code - 90];
-          break;
-        case 100:
-        case 101:
-        case 102:
-        case 103:
-        case 104:
-        case 105:
-        case 106:
-        case 107:
-          bg = brightAnsiColors[code - 100];
-          break;
+      for (const segment of codeStr.split(';')) {
+        const code = +segment;
+        switch (code) {
+          case 0: style = {}; break;
+          case 1: style['font-weight'] = 'bold'; break;
+          case 2: style['opacity'] = '0.8'; break;
+          case 3: style['font-style'] = 'italic'; break;
+          case 4: style['text-decoration'] = 'underline'; break;
+          case 7:
+            reverse = true;
+            break;
+          case 8: style.display = 'none'; break;
+          case 9: style['text-decoration'] = 'line-through'; break;
+          case 22:
+            delete style['font-weight'];
+            delete style['font-style'];
+            delete style['opacity'];
+            delete style['text-decoration'];
+            break;
+          case 23:
+            delete style['font-weight'];
+            delete style['font-style'];
+            delete style['opacity'];
+            break;
+          case 24:
+            delete style['text-decoration'];
+            break;
+          case 27:
+            reverse = false;
+            break;
+          case 30:
+          case 31:
+          case 32:
+          case 33:
+          case 34:
+          case 35:
+          case 36:
+          case 37:
+            fg = ansiColors[code - 30];
+            break;
+          case 39:
+            fg = defaultColors?.fg;
+            break;
+          case 40:
+          case 41:
+          case 42:
+          case 43:
+          case 44:
+          case 45:
+          case 46:
+          case 47:
+            bg = ansiColors[code - 40];
+            break;
+          case 49:
+            bg = defaultColors?.bg;
+            break;
+          case 53: style['text-decoration'] = 'overline'; break;
+          case 90:
+          case 91:
+          case 92:
+          case 93:
+          case 94:
+          case 95:
+          case 96:
+          case 97:
+            fg = brightAnsiColors[code - 90];
+            break;
+          case 100:
+          case 101:
+          case 102:
+          case 103:
+          case 104:
+          case 105:
+          case 106:
+          case 107:
+            bg = brightAnsiColors[code - 100];
+            break;
+        }
       }
     } else if (text) {
       const styleCopy = { ...style };

@@ -32,6 +32,7 @@ Playwright:
     firefox: BrowserType
     webkit: BrowserType
     android: Android
+    electron: Electron
     utils: LocalUtils?
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
@@ -395,6 +396,8 @@ CDPSession:
     detach:
       title: Detach CDP session
       group: configuration
+      flags:
+        potentiallyClosesScope: true
 
   events:
 
@@ -429,8 +432,6 @@ BindingCall:
 
 Debugger:
   type: interface
-
-  extends: EventTarget
 
   commands:
 

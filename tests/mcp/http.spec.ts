@@ -203,6 +203,35 @@ test('http transport browser lifecycle (isolated, multiclient)', async ({ server
   });
 });
 
+test('http transport browser lifecycle (isolated, concurrent clients)', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1607' } }, async ({ serverEndpoint, server }) => {
+  const { url, stderr } = await serverEndpoint({ args: ['--isolated'] });
+
+  const clients = await Promise.all([1, 2, 3].map(async () => {
+    const transport = new StreamableHTTPClientTransport(new URL('/mcp', url));
+    const client = new Client({ name: 'test', version: '1.0.0' });
+    await client.connect(transport);
+    return { transport, client };
+  }));
+
+  await Promise.all(clients.map(({ client }) => client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })));
+
+  for (const { transport, client } of clients) {
+    await transport.terminateSession();
+    await client.close();
+  }
+
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create http session': 3,
+    'delete http session': 3,
+    'create context': 3,
+    'create browser (isolated)': 1,
+    'close browser': 1,
+  });
+});
+
 test('http transport browser lifecycle (persistent)', async ({ serverEndpoint, server }) => {
   const { url, stderr } = await serverEndpoint();
 

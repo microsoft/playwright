@@ -229,12 +229,14 @@ it('do not update console count on unhandled rejections', async ({ page }) => {
 it('should have timestamp', async ({ page, isAndroid }) => {
   it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
 
-  const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
+  // Generous slack to absorb host wall-clock resolution (e.g. ~15.6ms on Windows)
+  // vs sub-millisecond browser timestamps.
+  const before = Date.now() - 100;
   const [message] = await Promise.all([
     page.waitForEvent('console'),
     page.evaluate(() => console.log('timestamp test')),
   ]);
-  const after = Date.now() + 1;  // Account for the rounding of fractional timestamps.
+  const after = Date.now() + 100;
   expect(message.timestamp()).toBeGreaterThanOrEqual(before);
   expect(message.timestamp()).toBeLessThanOrEqual(after);
 });
@@ -255,9 +257,11 @@ it('should have increasing timestamps', async ({ page }) => {
 it('should have timestamp in consoleMessages', async ({ page, isAndroid }) => {
   it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
 
-  const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
+  // Generous slack to absorb host wall-clock resolution (e.g. ~15.6ms on Windows)
+  // vs sub-millisecond browser timestamps.
+  const before = Date.now() - 100;
   await page.evaluate(() => console.log('stored message'));
-  const after = Date.now() + 1;  // Account for the rounding of fractional timestamps.
+  const after = Date.now() + 100;
   const messages = await page.consoleMessages();
   expect(messages.length).toBeGreaterThanOrEqual(1);
   const last = messages[messages.length - 1];

@@ -133,8 +133,15 @@ class Runtime {
           return;
         }
         const errorWindow = Services.wm.getOuterWindowWithId(message.outerWindowID);
+        // Note: error locations are one-based, while console locations are zero-based in Firefox.
+        // We want to report all of them as zero-based.
+        const errorLocation = {
+          lineNumber: message.lineNumber - 1,
+          columnNumber: message.columnNumber - 1,
+          url: message.sourceName,
+        };
         if (message.category === 'Web Worker' && message.logLevel === Ci.nsIConsoleMessage.error) {
-          emitEvent(this.events.onErrorFromWorker, errorWindow, message.message, '' + message.stack);
+          emitEvent(this.events.onErrorFromWorker, errorWindow, message.message, '' + message.stack, errorLocation);
           return;
         }
         const executionContext = this._windowToExecutionContext.get(errorWindow);
@@ -165,6 +172,7 @@ class Runtime {
             executionContext,
             message: message.errorMessage,
             stack: message.stack ? message.stack.toString() : '',
+            location: errorLocation,
           });
         }
       },
@@ -239,8 +247,9 @@ class Runtime {
       return {success: true, obj: obj.promiseValue};
     if (obj.promiseState === 'rejected') {
       const debuggee = executionContext._debuggee;
-      exceptionDetails.text = debuggee.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}, {useInnerBindings: true}).return;
-      exceptionDetails.stack = debuggee.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}, {useInnerBindings: true}).return;
+      const errorInfo = debuggee.executeInGlobalWithBindings('({m: e?.message, s: e?.stack})', {e: obj.promiseReason}, {useInnerBindings: true}).return;
+      exceptionDetails.text = errorInfo.getOwnPropertyDescriptor('m').value;
+      exceptionDetails.stack = errorInfo.getOwnPropertyDescriptor('s').value;
       return {success: false, obj: null};
     }
     let resolve, reject;
@@ -267,8 +276,9 @@ class Runtime {
       return;
     };
     const debuggee = pendingPromise.executionContext._debuggee;
-    pendingPromise.exceptionDetails.text = debuggee.executeInGlobalWithBindings('e.message', {e: obj.promiseReason}, {useInnerBindings: true}).return;
-    pendingPromise.exceptionDetails.stack = debuggee.executeInGlobalWithBindings('e.stack', {e: obj.promiseReason}, {useInnerBindings: true}).return;
+    const errorInfo = debuggee.executeInGlobalWithBindings('({m: e?.message, s: e?.stack})', {e: obj.promiseReason}, {useInnerBindings: true}).return;
+    pendingPromise.exceptionDetails.text = errorInfo.getOwnPropertyDescriptor('m').value;
+    pendingPromise.exceptionDetails.stack = errorInfo.getOwnPropertyDescriptor('s').value;
     pendingPromise.resolve({success: false, obj: null});
   }
 
@@ -357,7 +367,7 @@ class ExecutionContext {
     if (this._domWindow && this._domWindow.document)
       this._domWindow.document.notifyUserGestureActivation();
 
-    let {success, obj} = this._getResult(this._debuggee.executeInGlobal(script), exceptionDetails);
+    let {success, obj} = this._getResult(this._debuggee.executeInGlobal(script, {bypassCSP: true}), exceptionDetails);
     userInputHelper && userInputHelper.destruct();
     if (!success)
       return null;
@@ -372,18 +382,13 @@ class ExecutionContext {
 
   evaluateScriptSafely(script) {
     try {
-      this._debuggee.executeInGlobal(script);
+      this._debuggee.executeInGlobal(script, {bypassCSP: true});
     } catch (e) {
       dump(`WARNING: ${e.message}\n${e.stack}\n`);
     }
   }
 
   async evaluateFunction(functionText, args, exceptionDetails = {}) {
-    const funEvaluation = this._getResult(this._debuggee.executeInGlobal('(' + functionText + ')'), exceptionDetails);
-    if (!funEvaluation.success)
-      return null;
-    if (!funEvaluation.obj.callable)
-      throw new Error('functionText does not evaluate to a function!');
     args = args.map(arg => {
       if (arg.objectId) {
         if (!this._remoteObjects.has(arg.objectId))
@@ -401,7 +406,15 @@ class ExecutionContext {
     const userInputHelper = this._domWindow ? this._domWindow.windowUtils.setHandlingUserInput(true) : null;
     if (this._domWindow && this._domWindow.document)
       this._domWindow.document.notifyUserGestureActivation();
-    let {success, obj} = this._getResult(funEvaluation.obj.apply(null, args), exceptionDetails);
+    // Invoke via executeInGlobalWithBindings so bypassCSP scopes the call (Debugger.Object.apply has no bypassCSP option).
+    const callBindings = {};
+    const argNames = [];
+    for (let i = 0; i < args.length; i++) {
+      const name = '__pwArg' + i;
+      callBindings[name] = args[i];
+      argNames.push(name);
+    }
+    let {success, obj} = this._getResult(this._debuggee.executeInGlobalWithBindings('(' + functionText + ')(' + argNames.join(',') + ')', callBindings, {useInnerBindings: true, bypassCSP: true}), exceptionDetails);
     userInputHelper && userInputHelper.destruct();
     if (!success)
       return null;
@@ -438,12 +451,6 @@ class ExecutionContext {
     return this._createRemoteObject(debuggerObj);
   }
 
-  _instanceOf(debuggerObj, rawObj, className) {
-    if (this._domWindow)
-      return rawObj instanceof this._domWindow[className];
-    return this._debuggee.executeInGlobalWithBindings('o instanceof this[className]', {o: debuggerObj, className: this._debuggee.makeDebuggeeValue(className)}, {useInnerBindings: true}).return;
-  }
-
   _createRemoteObject(debuggerObj) {
     if (debuggerObj instanceof Debugger.Object) {
       const objectId = generateId();
@@ -451,36 +458,33 @@ class ExecutionContext {
       const rawObj = debuggerObj.unsafeDereference();
       const type = typeof rawObj;
       let subtype = undefined;
-      if (debuggerObj.isProxy)
+      if (debuggerObj.isProxy) {
         subtype = 'proxy';
-      else if (Array.isArray(rawObj))
-        subtype = 'array';
-      else if (Object.is(rawObj, null))
-        subtype = 'null';
-      else if (typeof Node !== 'undefined' && Node.isInstance(rawObj))
+      } else if (typeof Node !== 'undefined' && Node.isInstance(rawObj)) {
         subtype = 'node';
-      else if (this._instanceOf(debuggerObj, rawObj, 'RegExp'))
-        subtype = 'regexp';
-      else if (this._instanceOf(debuggerObj, rawObj, 'Date'))
-        subtype = 'date';
-      else if (this._instanceOf(debuggerObj, rawObj, 'Map'))
-        subtype = 'map';
-      else if (this._instanceOf(debuggerObj, rawObj, 'Set'))
-        subtype = 'set';
-      else if (this._instanceOf(debuggerObj, rawObj, 'WeakMap'))
-        subtype = 'weakmap';
-      else if (this._instanceOf(debuggerObj, rawObj, 'WeakSet'))
-        subtype = 'weakset';
-      else if (this._instanceOf(debuggerObj, rawObj, 'Error'))
-        subtype = 'error';
-      else if (this._instanceOf(debuggerObj, rawObj, 'Promise'))
-        subtype = 'promise';
-      else if ((this._instanceOf(debuggerObj, rawObj, 'Int8Array')) || (this._instanceOf(debuggerObj, rawObj, 'Uint8Array')) ||
-               (this._instanceOf(debuggerObj, rawObj, 'Uint8ClampedArray')) || (this._instanceOf(debuggerObj, rawObj, 'Int16Array')) ||
-               (this._instanceOf(debuggerObj, rawObj, 'Uint16Array')) || (this._instanceOf(debuggerObj, rawObj, 'Int32Array')) ||
-               (this._instanceOf(debuggerObj, rawObj, 'Uint32Array')) || (this._instanceOf(debuggerObj, rawObj, 'Float32Array')) ||
-               (this._instanceOf(debuggerObj, rawObj, 'Float64Array'))) {
-        subtype = 'typedarray';
+      } else {
+        switch (debuggerObj.class) {
+          case 'Array': subtype = 'array'; break;
+          case 'RegExp': subtype = 'regexp'; break;
+          case 'Date': subtype = 'date'; break;
+          case 'Map': subtype = 'map'; break;
+          case 'Set': subtype = 'set'; break;
+          case 'WeakMap': subtype = 'weakmap'; break;
+          case 'WeakSet': subtype = 'weakset'; break;
+          case 'Error': subtype = 'error'; break;
+          case 'Promise': subtype = 'promise'; break;
+          case 'Int8Array':
+          case 'Uint8Array':
+          case 'Uint8ClampedArray':
+          case 'Int16Array':
+          case 'Uint16Array':
+          case 'Int32Array':
+          case 'Uint32Array':
+          case 'Float32Array':
+          case 'Float64Array':
+            subtype = 'typedarray';
+            break;
+        }
       }
       return {objectId, type, subtype};
     }
@@ -563,9 +567,10 @@ class ExecutionContext {
     if (!completionValue)
       throw new Error('evaluation terminated');
     if (completionValue.throw) {
-      if (this._debuggee.executeInGlobalWithBindings('e instanceof Error', {e: completionValue.throw}, {useInnerBindings: true}).return) {
-        exceptionDetails.text = this._debuggee.executeInGlobalWithBindings('e.message', {e: completionValue.throw}, {useInnerBindings: true}).return;
-        exceptionDetails.stack = this._debuggee.executeInGlobalWithBindings('e.stack', {e: completionValue.throw}, {useInnerBindings: true}).return;
+      const errorInfo = this._debuggee.executeInGlobalWithBindings('e instanceof Error ? ({m: e.message, s: e.stack}) : null', {e: completionValue.throw}, {useInnerBindings: true}).return;
+      if (errorInfo) {
+        exceptionDetails.text = errorInfo.getOwnPropertyDescriptor('m').value;
+        exceptionDetails.stack = errorInfo.getOwnPropertyDescriptor('s').value;
       } else {
         exceptionDetails.value = this._serialize(completionValue.throw);
       }

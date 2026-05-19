@@ -145,10 +145,6 @@ Manages the client-server transport:
 | `Locator` | `locator.ts` | Delegates to `Frame` methods with selector + `strict: true` |
 | `ElementHandle` | `elementHandle.ts` | DOM element reference |
 
-### Public API Exports
-
-`packages/playwright-core/src/client/api.ts` exports all public classes.
-
 ## Server Layer
 
 ### SdkObject — Base Class

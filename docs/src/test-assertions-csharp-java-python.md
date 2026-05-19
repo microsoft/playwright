@@ -36,6 +36,28 @@ title: "Assertions"
 | [`method: PageAssertions.toHaveURL`] | Page has a URL |
 | [`method: APIResponseAssertions.toBeOK`] | Response has an OK status |
 
+## Soft assertions
+* langs: python
+
+By default, failed assertion will terminate test execution. Playwright also
+supports *soft assertions*: failed soft assertions **do not** terminate test
+execution, but mark the test as failed.
+
+```python
+# Make a few checks that will not stop the test when failed...
+expect.soft(page.get_by_test_id("status")).to_have_text("Success")
+expect.soft(page.get_by_test_id("eta")).to_have_text("1 day")
+
+# ... and continue the test to check more things.
+page.get_by_role("link", name="next page").click()
+expect.soft(page.get_by_role("heading", name="Make another order")).to_be_visible()
+```
+
+Note that soft assertions only work with the
+[`pytest-playwright`](https://pypi.org/project/pytest-playwright/) (or
+[`pytest-playwright-asyncio`](https://pypi.org/project/pytest-playwright-asyncio/))
+plugin, version `0.7.3` or newer.
+
 ## Custom Expect Message
 * langs: python, csharp
 

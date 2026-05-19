@@ -268,7 +268,7 @@ test('older client with newer daemon - list shows incompatible warning', async (
 test.describe('browser server', () => {
   test.beforeEach(async ({ mcpBrowser }, testInfo) => {
     test.skip(!['chrome', 'chromium', 'webkit', 'firefox'].includes(mcpBrowser));
-    process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
+    process.env.PWTEST_SERVER_REGISTRY = testInfo.outputPath('registry');
   });
 
   test('list browser servers', async ({ cli, mcpBrowser }) => {

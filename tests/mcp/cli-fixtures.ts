@@ -81,7 +81,10 @@ export const test = baseTest.extend<{
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      const result = await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      const result = await test.step(
+          `cli ${cliArgs.join(' ')}`,
+          () => runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless })
+      );
       if (result.daemonPid)
         allPids.push(result.daemonPid);
       if (result.dashboardPid)
@@ -116,14 +119,10 @@ export const test = baseTest.extend<{
 
 function cliEnv() {
   return {
-    PLAYWRIGHT_SERVER_REGISTRY: test.info().outputPath('registry'),
+    PWTEST_SERVER_REGISTRY: test.info().outputPath('registry'),
     PWTEST_DASHBOARD_SETTINGS_FILE: test.info().outputPath('dashboard.settings.json'),
-    PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    // Include a short hash of outputDir so that concurrent runs from different
-    // checkouts use different socket directories, while runs within the same
-    // checkout share them (which helps surface race conditions and cleanup
-    // issues). The hash is kept short to stay clear of socket path length limits.
-    PLAYWRIGHT_SOCKETS_DIR: path.join(os.tmpdir(), 'ds' + String(test.info().workerIndex) + '-' + crypto.createHash('sha1').update(test.info().outputDir).digest('hex').slice(0, 8)),
+    PWTEST_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
+    PWTEST_SOCKETS_DIR: path.join(os.tmpdir(), 'ds-' + crypto.createHash('sha1').update(test.info().outputDir).digest('hex').slice(0, 16)),
     PWTEST_CLI_CHANNEL_SCAN_DISABLED_FOR_TEST: '1',
   };
 }
@@ -260,4 +259,46 @@ export async function daemonFolder() {
       return fullName;
   }
   return null;
+}
+
+export async function installSaveFilePickerMock(page: import('playwright-core').Page): Promise<() => Promise<Buffer>> {
+  await page.evaluate(() => {
+    (window as any).__testCaptureBytes = undefined as string | undefined;
+    (window as any).showSaveFilePicker = async () => ({
+      createWritable: async () => {
+        const chunks: Uint8Array[] = [];
+        return {
+          write: async (chunk: Blob | BufferSource) => {
+            const buf = chunk instanceof Blob
+              ? new Uint8Array(await chunk.arrayBuffer())
+              : new Uint8Array(chunk instanceof ArrayBuffer ? chunk : (chunk as ArrayBufferView).buffer);
+            chunks.push(buf);
+          },
+          close: async () => {
+            const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+            const merged = new Uint8Array(total);
+            let offset = 0;
+            for (const c of chunks) {
+              merged.set(c, offset);
+              offset += c.byteLength;
+            }
+            (window as any).__testCaptureBytes = (merged as any).toBase64();
+          },
+        };
+      },
+    });
+  });
+  return async () => {
+    await expect.poll(() => page.evaluate(() => !!(window as any).__testCaptureBytes), { timeout: 10000 }).toBe(true);
+    const b64: string = await page.evaluate(() => (window as any).__testCaptureBytes);
+    return Buffer.from(b64, 'base64');
+  };
+}
+
+export async function mockAbortingFilePicker(page: import('playwright-core').Page): Promise<void> {
+  await page.evaluate(() => {
+    (window as any).showSaveFilePicker = async () => {
+      throw new DOMException('The user aborted a request.', 'AbortError');
+    };
+  });
 }

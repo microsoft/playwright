@@ -33,7 +33,7 @@ test('should contain text attachment', async ({ runUITest }) => {
   });
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
   await page.getByText('Attachments').click();
 
   await page.locator('.tab-attachments').getByText('text attachment').click();
@@ -69,7 +69,7 @@ test('should contain binary attachment', async ({ runUITest }) => {
   });
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
   await page.getByText('Attachments').click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('link', { name: 'download' }).click();
@@ -89,7 +89,7 @@ test('should contain string attachment', async ({ runUITest }) => {
   });
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
   await page.getByText('Attachments').click();
   await page.getByText('note', { exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
@@ -116,7 +116,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   });
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
   await page.getByText('Attachments').click();
 
   const attachmentsPane = page.locator('.attachments-tab');
@@ -162,7 +162,7 @@ test('should link from attachment step to attachments view', async ({ runUITest 
 
   await page.getByText('attach test').click();
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
   await page.getByRole('tab', { name: 'Attachments' }).click();
 
   const panel = page.getByRole('tabpanel', { name: 'Attachments' });
@@ -193,7 +193,7 @@ test('attachments from inside boxed fixture should be visible', { annotation: { 
   }, { reporter: 'line' }, {});
   await page.getByText('my test').click();
   await page.getByTitle('Run all').click();
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
   await page.getByRole('treeitem', { name: 'attach "my attachment"' }).getByLabel('Open Attachment').click();
   await expect(page.getByRole('tabpanel', { name: 'Attachments' })).toMatchAriaSnapshot(`

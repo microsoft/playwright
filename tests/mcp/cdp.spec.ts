@@ -71,7 +71,7 @@ test('should throw connection error and allow re-connecting', async ({ cdpServer
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    error: expect.stringContaining(`Error: connect ECONNREFUSED`),
+    error: expect.stringContaining(`connect ECONNREFUSED`),
     isError: true,
   });
   await cdpServer.start();
@@ -80,6 +80,40 @@ test('should throw connection error and allow re-connecting', async ({ cdpServer
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
+  });
+});
+
+test('auto-recover when remote browser disconnects mid-session', async ({ cdpServer, startClient, server }) => {
+  const browserContext = await cdpServer.start();
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  // Simulate the remote browser dying mid-session (e.g. CDP endpoint session timeout).
+  await browserContext.close();
+
+  // The next call hits the dead backend; it must error and let the MCP server discard
+  // the backend so the next call can transparently establish a fresh connection.
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    isError: true,
+  });
+
+  // Bring the CDP endpoint back. The next call should reconnect transparently —
+  // no manual browser_close needed (regression test for playwright-mcp#1588).
+  await cdpServer.start();
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
   });
 });
 
