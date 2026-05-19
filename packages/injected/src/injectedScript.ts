@@ -16,6 +16,7 @@
 
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 import { asLocator } from '@isomorphic/locatorGenerators';
+import { splitTestIdAttributeNames } from '@isomorphic/locatorUtils';
 import { parseAttributeSelector, parseSelector, stringifySelector, visitAllSelectorParts } from '@isomorphic/selectorParser';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '@isomorphic/stringUtils';
 
@@ -35,7 +36,7 @@ import { UtilityScript } from './utilityScript';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
+import type { AttributeSelectorPart, NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
 import type * as channels from '@protocol/channels';
 import type { AriaSnapshot, AriaTreeOptions } from './ariaSnapshot';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
@@ -92,7 +93,6 @@ export class InjectedScript {
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
-  private _markedElements?: { callId: string, elements: Set<Element> };
   readonly window: Window & typeof globalThis;
   readonly document: Document;
   readonly consoleApi: ConsoleAPI;
@@ -229,7 +229,7 @@ export class InjectedScript {
     this._engines.set('internal:has-text', this._createInternalHasTextEngine());
     this._engines.set('internal:has-not-text', this._createInternalHasNotTextEngine());
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
-    this._engines.set('internal:testid', this._createNamedAttributeEngine());
+    this._engines.set('internal:testid', this._createTestIdEngine());
     this._engines.set('internal:role', createRoleEngine(true));
     this._engines.set('internal:describe', this._createDescribeEngine());
     this._engines.set('aria-ref', this._createAriaRefEngine());
@@ -491,17 +491,27 @@ export class InjectedScript {
       const parsed = parseAttributeSelector(selector, true);
       if (parsed.name || parsed.attributes.length !== 1)
         throw new Error('Malformed attribute selector: ' + selector);
-      const { name, value, caseSensitive } = parsed.attributes[0];
-      const lowerCaseValue = caseSensitive ? null : value.toLowerCase();
-      let matcher: (s: string) => boolean;
-      if (value instanceof RegExp)
-        matcher = s => !!s.match(value);
-      else if (caseSensitive)
-        matcher = s => s === value;
-      else
-        matcher = s => s.toLowerCase().includes(lowerCaseValue!);
+      const { name } = parsed.attributes[0];
+      const matcher = createAttributeMatcher(parsed.attributes[0]);
       const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, `[${name}]`);
       return elements.filter(e => matcher(e.getAttribute(name)!));
+    };
+    return { queryAll };
+  }
+
+  private _createTestIdEngine(): SelectorEngine {
+    const queryAll = (root: SelectorRoot, selector: string): Element[] => {
+      const parsed = parseAttributeSelector(selector, true);
+      if (parsed.name || parsed.attributes.length !== 1)
+        throw new Error('Malformed test id selector: ' + selector);
+      const names = splitTestIdAttributeNames(parsed.attributes[0].name);
+      const matcher = createAttributeMatcher(parsed.attributes[0]);
+      const cssQuery = names.map(n => `[${n}]`).join(',');
+      const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: true }, cssQuery);
+      return elements.filter(e => names.some(n => {
+        const actual = e.getAttribute(n);
+        return actual !== null && matcher(actual);
+      }));
     };
     return { queryAll };
   }
@@ -1378,34 +1388,21 @@ export class InjectedScript {
     }
   }
 
-  markTargetElements(markedElements: Set<Element>, callId: string) {
-    if (this._markedElements?.callId !== callId)
-      this._markedElements = undefined;
-    const previous = this._markedElements?.elements || new Set();
-
-    const unmarkEvent = new CustomEvent('__playwright_unmark_target__', {
+  markTargetElements(markedElements: Set<Element>) {
+    const resetEvent = new CustomEvent('__playwright_reset_targets__', {
       bubbles: true,
       cancelable: true,
-      detail: callId,
       composed: true,
     });
-    for (const element of previous) {
-      if (!markedElements.has(element))
-        element.dispatchEvent(unmarkEvent);
-    }
+    this.document.dispatchEvent(resetEvent);
 
     const markEvent = new CustomEvent('__playwright_mark_target__', {
       bubbles: true,
       cancelable: true,
-      detail: callId,
       composed: true,
     });
-    for (const element of markedElements) {
-      if (!previous.has(element))
-        element.dispatchEvent(markEvent);
-    }
-
-    this._markedElements = { callId, elements: markedElements };
+    for (const element of markedElements)
+      element.dispatchEvent(markEvent);
   }
 
   private _setupGlobalListenersRemovalDetection() {
@@ -1739,6 +1736,16 @@ export class InjectedScript {
 
 function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
+}
+
+function createAttributeMatcher(part: AttributeSelectorPart): (s: string) => boolean {
+  const { value, caseSensitive } = part;
+  if (value instanceof RegExp)
+    return s => !!s.match(value);
+  if (caseSensitive)
+    return s => s === value;
+  const lowerCaseValue = value.toLowerCase();
+  return s => s.toLowerCase().includes(lowerCaseValue);
 }
 
 function cssUnquote(s: string): string {

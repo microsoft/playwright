@@ -33,6 +33,9 @@ const numberArg = z.preprocess((val, ctx) => {
   return number;
 }, z.number());
 
+// Minimist returns a string for a single occurrence and an array for repeated.
+const stringArrayArg = z.union([z.string(), z.array(z.string())]).transform(v => Array.isArray(v) ? v : [v]);
+
 // Navigation commands
 
 const open = declareCommand({
@@ -235,7 +238,7 @@ const click = declareCommand({
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
-    modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
+    modifiers: stringArrayArg.optional().describe('Modifier key to press (repeatable)'),
   }),
   toolName: 'browser_click',
   toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers }),
@@ -250,7 +253,7 @@ const doubleClick = declareCommand({
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
-    modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
+    modifiers: stringArrayArg.optional().describe('Modifier key to press (repeatable)'),
   }),
   toolName: 'browser_click',
   toolParams: ({ target, button, modifiers }) => ({ target, button, modifiers, doubleClick: true }),
@@ -276,8 +279,8 @@ const drop = declareCommand({
     target: z.string().describe(elementTargetDescription),
   }),
   options: z.object({
-    path: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Absolute path to a file to drop onto the element (repeatable)'),
-    data: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Data to drop in "mime/type=value" format, e.g. --data "text/plain=hello" (repeatable)'),
+    path: stringArrayArg.optional().describe('Absolute path to a file to drop onto the element (repeatable)'),
+    data: stringArrayArg.optional().describe('Data to drop in "mime/type=value" format, e.g. --data "text/plain=hello" (repeatable)'),
   }),
   toolName: 'browser_drop',
   toolParams: ({ target, path, data }) => {
@@ -730,7 +733,7 @@ const routeMock = declareCommand({
     status: numberArg.optional().describe('HTTP status code (default: 200)'),
     body: z.string().optional().describe('Response body (text or JSON string)'),
     ['content-type']: z.string().optional().describe('Content-Type header'),
-    header: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Header to add in "Name: Value" format (repeatable)'),
+    header: stringArrayArg.optional().describe('Header to add in "Name: Value" format (repeatable)'),
     ['remove-header']: z.string().optional().describe('Comma-separated header names to remove'),
   }),
   toolName: 'browser_route',

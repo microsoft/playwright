@@ -870,17 +870,14 @@ steps.push(new ProgramStep({
   concurrent: true,
 }));
 
-// Build/watch web packages.
-// HMR: in watch mode the dashboard, html-reporter, and trace viewer (incl. UI
-// mode) are served by embedded Vite dev servers, so skip their
-// `vite build --watch` steps. Set PW_HMR_STATIC=1 to keep the watch builds for
-// testing the bundled output. Recorder is not yet HMR'd. The trace viewer
-// service worker still builds via vite.sw.config.ts above — that step is not
-// in this loop.
-const hmrReplacesWebBuilds = watchMode && process.env.PW_HMR_STATIC !== '1';
-const hmrHandledPackages = new Set(['dashboard', 'html-reporter', 'trace-viewer']);
-const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard']
-    .filter(pkg => !(hmrReplacesWebBuilds && hmrHandledPackages.has(pkg)));
+// Build/watch web packages. The html-reporter, trace-viewer, and dashboard
+// also have embedded Vite dev servers used when viewing reports/traces/the
+// dashboard live, but their bundled output is consumed as a static artifact
+// in other code paths (e.g. HtmlBuilder.build() reads lib/vite/htmlReport/
+// and lib/vite/traceViewer/), so we always keep the static build alongside
+// HMR. Recorder is not yet HMR'd. The trace viewer service worker still
+// builds via vite.sw.config.ts above — that step is not in this loop.
+const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard'];
 for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
     command: 'npx',

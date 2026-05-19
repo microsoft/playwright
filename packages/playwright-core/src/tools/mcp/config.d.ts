@@ -87,6 +87,11 @@ export type Config = {
     remoteEndpoint?: string;
 
     /**
+     * Headers to send with the remote endpoint connect request.
+     */
+    remoteHeaders?: Record<string, string>;
+
+    /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
      */
     initPage?: string[];

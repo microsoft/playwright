@@ -366,13 +366,22 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         element.removeAttribute('__playwright_dialog_open_');
       }
 
+      // Highlight targets marked by the current snapshotter, which sets `__playwright_target__`
+      // to an empty string on the active target elements. For traces produced by older versions,
+      // also match by callId/snapshotName, which used to be stored as the attribute value.
+      const highlightTarget = (target: Element) => {
+        const style = (target as HTMLElement).style;
+        style.outline = '2px solid #006ab1';
+        style.backgroundColor = '#6fa8dc7f';
+        targetElements.push(target);
+      };
+      for (const target of root.querySelectorAll(`[__playwright_target__=""]`))
+        highlightTarget(target);
       for (const targetId of targetIds) {
-        for (const target of root.querySelectorAll(`[__playwright_target__="${targetId}"]`)) {
-          const style = (target as HTMLElement).style;
-          style.outline = '2px solid #006ab1';
-          style.backgroundColor = '#6fa8dc7f';
-          targetElements.push(target);
-        }
+        if (!targetId)
+          continue;
+        for (const target of root.querySelectorAll(`[__playwright_target__="${targetId}"]`))
+          highlightTarget(target);
       }
 
       for (const iframe of root.querySelectorAll('iframe, frame')) {

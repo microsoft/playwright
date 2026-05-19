@@ -236,44 +236,27 @@ export async function program(options?: { embedderVersion?: string}) {
         return;
       }
       let dashboardPid: number | undefined;
+      const timer = setTimeout(() => child.stdin!.destroy(), 60_000);
+      child.unref();
       try {
         await new Promise<void>((resolve, reject) => {
           let outLog = '';
-          const settle = (err?: Error) => {
-            clearTimeout(timer);
-            child.stdout!.removeAllListeners();
-            child.removeAllListeners('exit');
-            if (err)
-              reject(err);
-            else
-              resolve();
-          };
-          const timer = setTimeout(() => settle(new Error('Dashboard daemon did not spin up within 60s')), 60_000);
           child.stdout!.on('data', data => {
             outLog += data.toString();
-            if (!outLog.includes('<EOF>'))
-              return;
-            const successMatch = outLog.match(/### Success\n[^\n]*pid=(\d+)[^\n]*\n<EOF>/);
+            const successMatch = outLog.match(/Dashboard is running pid=(\d+)/);
             if (successMatch) {
               dashboardPid = +successMatch[1];
-              settle();
-            } else {
-              settle(new Error(outLog.trim()));
+              resolve();
             }
           });
-          child.stdout!.once('error', err => settle(err));
-          child.once('exit', (code, signal) => settle(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY${outLog ? '\n' + outLog : ''}`)));
+          child.once('exit', (code, signal) => reject(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY${outLog ? '\n' + outLog : ''}`)));
         });
-      } catch (err) {
+      } finally {
+        clearTimeout(timer);
+        child.removeAllListeners('exit');
         child.stdin!.destroy();
         child.stdout!.destroy();
-        if (child.exitCode === null && child.signalCode === null)
-          await new Promise<void>(resolve => child.once('exit', () => resolve()));
-        throw err;
       }
-      child.stdin!.destroy();
-      child.stdout!.destroy();
-      child.unref();
       output.show(sessionName, dashboardPid);
       return;
     }

@@ -236,6 +236,12 @@ emulation is not enabled, and media emulation options (such as [`option: Browser
 browser where these overrides would interfere with existing browser state. New contexts created via
 [`method: Browser.newContext`] are not affected. Defaults to `false`.
 
+### option: BrowserType.connectOverCDP.artifactsDir
+* since: v1.61
+- `artifactsDir` <[path]>
+
+If specified, browser artifacts (such as traces and downloads) are saved into this directory.
+
 
 ## method: BrowserType.executablePath
 * since: v1.8

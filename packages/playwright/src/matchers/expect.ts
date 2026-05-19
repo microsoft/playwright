@@ -268,9 +268,11 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
     return createExpect(newInfo);
   };
 
-  expectFn.soft = (actual: unknown, messageOrOptions?: ExpectMessage) => {
-    return createMatchers(actual, { ... info, isSoft: true }, messageOrOptions);
-  };
+  Object.defineProperty(expectFn, 'soft', {
+    configurable: true,
+    enumerable: true,
+    get: () => info.isSoft ? expectFn : createExpect({ ...info, isSoft: true }),
+  });
 
   expectFn.poll = (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
     const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};

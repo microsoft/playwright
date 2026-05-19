@@ -28,6 +28,7 @@ import type { TestRunOptions } from '../runner/tasks';
 export async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
+  cliOverrides.argv = process.argv;
 
   const config = await configLoader.loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
   const options: TestRunOptions = {
@@ -39,6 +40,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
     projectFilter: opts.project || undefined,
     passWithNoTests: !!opts.passWithNoTests,
     lastFailed: !!opts.lastFailed,
+    lastFailedFile: opts.lastFailedFile,
     testList: opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined,
     testListInvert: opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined,
     shardWeights: resolveShardWeightsOption(),

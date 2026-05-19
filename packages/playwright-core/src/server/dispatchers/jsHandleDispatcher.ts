@@ -74,7 +74,6 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
   }
 
   async dispose(_: any, progress: Progress) {
-    progress.metadata.potentiallyClosesScope = true;
     this._object.dispose();
     this._dispose();
   }

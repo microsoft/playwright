@@ -304,7 +304,8 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 ## async method: Browser.bind
 * since: v1.59
 - returns: <[Object]>
-  - alias: BindResult
+  * alias: BindResult
+  * alias-csharp: BrowserBindResult
   - `endpoint` <[string]>
 
 Binds the browser to a named pipe or web socket, making it available for other clients to connect to.

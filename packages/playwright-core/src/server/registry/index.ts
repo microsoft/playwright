@@ -1457,7 +1457,7 @@ export class Registry {
 
     if (faultyArguments.length)
       throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${this.suggestedBrowsersToInstall()}`);
-    return executables;
+    return [...new Set(executables)];
   }
 }
 

@@ -321,7 +321,8 @@ for (const [name, item] of Object.entries(protocol)) {
         const pauseProp = method.flags?.pause ? ` pause: ${method.flags.pause},` : '';
         const inputProp = method.flags?.input ? ` input: ${method.flags.input},` : '';
         const isAutoWaitingProp = method.flags?.isAutoWaiting ? ` isAutoWaiting: ${method.flags.isAutoWaiting},` : '';
-        methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp}${inputProp}${isAutoWaitingProp}${groupProp} }]`);
+        const potentiallyClosesScopeProp = method.flags?.potentiallyClosesScope ? ` potentiallyClosesScope: ${method.flags.potentiallyClosesScope},` : '';
+        methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp}${inputProp}${isAutoWaitingProp}${potentiallyClosesScopeProp}${groupProp} }]`);
       }
 
       const parameters = objectType(method.parameters || {}, '');
@@ -365,7 +366,7 @@ for (const [name, item] of Object.entries(protocol)) {
   }
 }
 
-metainfo_ts.push(`export type MethodMetainfo = { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pause?: boolean, isAutoWaiting?: boolean, input?: boolean, group?: string };
+metainfo_ts.push(`export type MethodMetainfo = { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pause?: boolean, isAutoWaiting?: boolean, input?: boolean, potentiallyClosesScope?: boolean, group?: string };
 
 export const methodMetainfo = new Map<string, MethodMetainfo>([
   ${methodMetainfo.join(`,\n  `)}

@@ -1829,7 +1829,7 @@ Name of the function on the window object.
 ### param: Page.exposeBinding.callback
 * since: v1.8
 - `callback` <[function]>
-  - alias-java: BindingCallback
+  * alias: BindingCallback
 
 Callback function that will be called in the Playwright's context.
 
@@ -2023,7 +2023,7 @@ Name of the function on the window object
 ### param: Page.exposeFunction.callback
 * since: v1.8
 - `callback` <[function]>
-  - alias-java: FunctionCallback
+  * alias: FunctionCallback
 
 Callback function which will be called in Playwright's context.
 
@@ -2694,6 +2694,28 @@ Clears all stored console messages from this page. Subsequent calls to [`method:
 
 Clears all stored page errors from this page. Subsequent calls to [`method: Page.pageErrors`] will only return errors thrown after the clear.
 
+## property: Page.localStorage
+* since: v1.61
+- type: <[WebStorage]>
+
+Provides access to the page's `localStorage` for the current origin. See [WebStorage].
+
+```js
+await page.localStorage.setItem('token', 'abc');
+const token = await page.localStorage.getItem('token');
+```
+
+## property: Page.sessionStorage
+* since: v1.61
+- type: <[WebStorage]>
+
+Provides access to the page's `sessionStorage` for the current origin. See [WebStorage].
+
+```js
+await page.sessionStorage.setItem('flag', '1');
+const flag = await page.sessionStorage.getItem('flag');
+```
+
 ## async method: Page.consoleMessages
 * since: v1.56
 - returns: <[Array]<[ConsoleMessage]>>
@@ -3006,7 +3028,7 @@ Paper margins, defaults to none.
 * since: v1.8
 * langs: csharp, java
 - `margin` <[Object]>
-  - alias-java: Margin
+  * alias-java: Margin
   - `top` ?<[string]> Top margin, accepts values labeled with units. Defaults to `0`.
   - `right` ?<[string]> Right margin, accepts values labeled with units. Defaults to `0`.
   - `bottom` ?<[string]> Bottom margin, accepts values labeled with units. Defaults to `0`.
@@ -4471,8 +4493,8 @@ Video object associated with this page. Can be used to access the video file whe
 ## method: Page.viewportSize
 * since: v1.8
 - returns: <[null]|[Object]>
-  - alias-csharp: PageViewportSizeResult
-  - alias-java: ViewportSize
+  * alias: ViewportSize
+  * alias-csharp: PageViewportSizeResult
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 

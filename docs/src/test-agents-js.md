@@ -39,6 +39,10 @@ npx playwright init-agents --loop=vscode
 npx playwright init-agents --loop=claude
 ```
 
+```bash tab=bash-codex
+npx playwright init-agents --loop=codex
+```
+
 ```bash tab=bash-opencode
 npx playwright init-agents --loop=opencode
 ```

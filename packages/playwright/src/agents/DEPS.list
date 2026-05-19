@@ -1,4 +1,5 @@
 [*]
+@isomorphic/**
 @utils/**
 ../mcp/test/
 node_modules/colors/safe

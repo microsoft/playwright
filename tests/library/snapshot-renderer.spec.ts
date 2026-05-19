@@ -17,6 +17,7 @@
 import { test, expect } from '@playwright/test';
 import { SnapshotRenderer } from '../../packages/isomorphic/trace/snapshotRenderer';
 import { LRUCache } from '../../packages/isomorphic/lruCache';
+import { stripAnsiEscapes } from '../../packages/isomorphic/stringUtils';
 import type { FrameSnapshot } from '../../packages/trace/src/snapshot';
 
 function makeSnapshot(overrides: Partial<FrameSnapshot> = {}): FrameSnapshot {
@@ -110,4 +111,22 @@ test('snapshot renderer handles case-insensitive iframe tag names', () => {
   expect(html).not.toContain(' srcdoc=');
   expect(html).toContain('__playwright_srcdoc__');
   expect(html).toContain('__playwright_src__');
+});
+
+test('stripAnsiEscapes should not exhibit polynomial backtracking', () => {
+  // \x1b[ + 50000 semicolons + non-terminal character.
+  // Before the fix this took >3 seconds due to O(n^2) backtracking.
+  const payload = '\x1b[' + ';'.repeat(50000) + '!';
+  const result = stripAnsiEscapes(payload);
+  // The ESC[ prefix is not a complete ANSI sequence, so it stays in the output.
+  expect(result).toContain('!');
+});
+
+test('stripAnsiEscapes handles common ANSI sequences after fix', () => {
+  expect(stripAnsiEscapes('\x1b[31mred\x1b[0m')).toBe('red');
+  expect(stripAnsiEscapes('\x1b[0;31mbold red\x1b[0m')).toBe('bold red');
+  expect(stripAnsiEscapes('\x1b[;H')).toBe('');
+  expect(stripAnsiEscapes('\x1b[2J')).toBe('');
+  expect(stripAnsiEscapes('\x1b[38;2;255;0;0mcolored\x1b[0m')).toBe('colored');
+  expect(stripAnsiEscapes('hello\x1b[32mworld\x1b[0m!')).toBe('helloworld!');
 });

@@ -40,6 +40,7 @@ const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightT
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    ['blob'],
   ] : 'line',
   projects: [],
 };

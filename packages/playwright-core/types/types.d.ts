@@ -5244,6 +5244,18 @@ export interface Page {
 
   keyboard: Keyboard;
 
+  /**
+   * Provides access to the page's `localStorage` for the current origin. See
+   * [WebStorage](https://playwright.dev/docs/api/class-webstorage).
+   *
+   * ```js
+   * await page.localStorage.setItem('token', 'abc');
+   * const token = await page.localStorage.getItem('token');
+   * ```
+   *
+   */
+  localStorage: WebStorage;
+
   mouse: Mouse;
 
   /**
@@ -5271,6 +5283,18 @@ export interface Page {
    *
    */
   screencast: Screencast;
+
+  /**
+   * Provides access to the page's `sessionStorage` for the current origin. See
+   * [WebStorage](https://playwright.dev/docs/api/class-webstorage).
+   *
+   * ```js
+   * await page.sessionStorage.setItem('flag', '1');
+   * const flag = await page.sessionStorage.getItem('flag');
+   * ```
+   *
+   */
+  sessionStorage: WebStorage;
 
   touchscreen: Touchscreen;
 
@@ -9882,6 +9906,12 @@ export interface BrowserContext {
    * Playwright has ability to mock clock and passage of time.
    */
   clock: Clock;
+
+  /**
+   * Virtual WebAuthn authenticator for this context. Lets tests seed credentials and intercept
+   * `navigator.credentials.create()` / `navigator.credentials.get()` ceremonies.
+   */
+  credentials: Credentials;
 
   /**
    * Debugger allows to pause and resume the execution.
@@ -14701,6 +14731,10 @@ export interface Locator {
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the
    * text.
    *
+   * When [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
+   * `true`, anything inside `{}` is treated as a key name (same format as
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)).
+   *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
    *
@@ -14709,6 +14743,11 @@ export interface Locator {
    * ```js
    * await locator.pressSequentially('Hello'); // Types instantly
    * await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
+   *
+   * // Mix characters and named keys
+   * await locator.pressSequentially('Hello{Enter}World', { namedKeys: true });
+   * // Use modifier combos
+   * await locator.pressSequentially('{Control+A}{Delete}Hello', { namedKeys: true });
    * ```
    *
    * An example of typing into a text field and then submitting the form:
@@ -14719,7 +14758,10 @@ export interface Locator {
    * await locator.press('Enter');
    * ```
    *
-   * @param text String of characters to sequentially press into a focused element.
+   * @param text String of characters to sequentially press into a focused element. When
+   * [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
+   * `true`, anything inside `{}` is treated as a key name (same format as
+   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)).
    * @param options
    */
   pressSequentially(text: string, options?: {
@@ -14727,6 +14769,14 @@ export interface Locator {
      * Time to wait between key presses in milliseconds. Defaults to 0.
      */
     delay?: number;
+
+    /**
+     * When [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
+     * `true`, anything inside `{}` is treated as a key name (same format as
+     * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)). Use `{{` to type a
+     * literal brace character. Defaults to `false`.
+     */
+    namedKeys?: boolean;
 
     /**
      * This option has no effect.
@@ -19218,6 +19268,139 @@ export interface Coverage {
 }
 
 /**
+ * `Credentials` provides a virtual WebAuthn authenticator scoped to a
+ * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext). It lets tests seed credentials, intercept
+ * `navigator.credentials.create()` / `navigator.credentials.get()` calls in pages, and complete WebAuthn ceremonies
+ * without a real authenticator.
+ *
+ * Implemented in userland via an injected script, so it works across Chromium, Firefox and WebKit.
+ *
+ * **Usage**
+ *
+ * ```js
+ * const context = await browser.newContext();
+ * await context.credentials.install();
+ * await context.credentials.create({ rpId: 'example.com' });
+ * const page = await context.newPage();
+ * await page.goto('https://example.com/login');
+ * // Page's navigator.credentials.get() will be answered using the seeded credential.
+ * ```
+ *
+ */
+export interface Credentials {
+  /**
+   * Seeds a virtual WebAuthn credential. With only `rpId`, generates a fresh ECDSA P-256 keypair, credential id and
+   * user handle. To import a pre-registered credential (e.g. authenticating as an existing test user the server already
+   * knows about), supply all four of `id`, `userHandle`, `privateKey` and `publicKey` together. Call
+   * [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install) before navigating to
+   * a page that uses WebAuthn.
+   * @param options
+   */
+  create(options: {
+    /**
+     * Base64url-encoded credential id. Auto-generated if omitted.
+     */
+    id?: string;
+
+    /**
+     * Base64url-encoded PKCS#8 (DER) private key. Auto-generated if omitted.
+     */
+    privateKey?: string;
+
+    /**
+     * Base64url-encoded SPKI (DER) public key. Auto-generated if omitted.
+     */
+    publicKey?: string;
+
+    /**
+     * Relying party id (typically the site's effective domain).
+     */
+    rpId: string;
+
+    /**
+     * Base64url-encoded user handle. Auto-generated if omitted.
+     */
+    userHandle?: string;
+  }): Promise<{
+    /**
+     * Base64url-encoded credential id.
+     */
+    id: string;
+
+    /**
+     * Relying party id.
+     */
+    rpId: string;
+
+    /**
+     * Base64url-encoded user handle.
+     */
+    userHandle: string;
+
+    /**
+     * Base64url-encoded PKCS#8 (DER) private key.
+     */
+    privateKey: string;
+
+    /**
+     * Base64url-encoded SPKI (DER) public key.
+     */
+    publicKey: string;
+  }>;
+
+  /**
+   * Removes a previously seeded credential.
+   * @param id Base64url-encoded credential id.
+   */
+  delete(id: string): Promise<void>;
+
+  /**
+   * Returns seeded credentials, optionally filtered by `rpId` or `id`.
+   * @param options
+   */
+  get(options?: {
+    /**
+     * Only return the credential with this base64url-encoded id.
+     */
+    id?: string;
+
+    /**
+     * Only return credentials for this relying party id.
+     */
+    rpId?: string;
+  }): Promise<Array<{
+    id: string;
+
+    rpId: string;
+
+    userHandle: string;
+
+    privateKey: string;
+
+    publicKey: string;
+  }>>;
+
+  /**
+   * Installs the virtual WebAuthn authenticator into the context, overriding `navigator.credentials.create()` and
+   * `navigator.credentials.get()` in all current and future pages. Call this before the page first touches
+   * `navigator.credentials`.
+   *
+   * Required: until `install()` is called, no interception is in place and the page sees the platform's native (or
+   * absent) WebAuthn behaviour. Seeding credentials with
+   * [credentials.create(options)](https://playwright.dev/docs/api/class-credentials#credentials-create) without
+   * `install()` populates the registry but the page will never see those credentials.
+   */
+  install(): Promise<void>;
+
+  /**
+   * Toggles whether the virtual authenticator auto-approves user-verification prompts. Useful for simulating a user
+   * denying biometric verification.
+   * @param value `true` to auto-approve user verification (default), `false` to refuse.
+   */
+  setUserVerified(value: boolean): Promise<void>;
+}
+
+/**
  * API for controlling the Playwright debugger. The debugger allows pausing script execution and inspecting the page.
  * Obtain the debugger instance via
  * [browserContext.debugger](https://playwright.dev/docs/api/class-browsercontext#browser-context-debugger).
@@ -20174,6 +20357,10 @@ export interface Keyboard {
    *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
    *
+   * When [`namedKeys`](https://playwright.dev/docs/api/class-keyboard#keyboard-type-option-named-keys) is `true`,
+   * anything inside `{}` is treated as a key name (same format as
+   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)).
+   *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
    *
@@ -20182,6 +20369,9 @@ export interface Keyboard {
    * ```js
    * await page.keyboard.type('Hello'); // Types instantly
    * await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
+   *
+   * // Mix text and special keys
+   * await page.keyboard.type('Hello{Enter}World', { namedKeys: true });
    * ```
    *
    * **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
@@ -20196,6 +20386,14 @@ export interface Keyboard {
      * Time to wait between key presses in milliseconds. Defaults to 0.
      */
     delay?: number;
+
+    /**
+     * When [`namedKeys`](https://playwright.dev/docs/api/class-keyboard#keyboard-type-option-named-keys) is `true`,
+     * anything inside `{}` is treated as a key name (same format as
+     * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)). Use `{{` to type
+     * a literal brace character. Defaults to `false`.
+     */
+    namedKeys?: boolean;
   }): Promise<void>;
 
   /**
@@ -21280,7 +21478,8 @@ export interface Selectors {
    * Defines custom attribute name to be used in
    * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
    * by default.
-   * @param attributeName Test id attribute name.
+   * @param attributeName Test id attribute name. To match elements with any of several attributes, pass them as a comma-separated list, e.g.
+   * `"data-pw,data-ti"`.
    */
   setTestIdAttribute(attributeName: string): void;
 }
@@ -21886,6 +22085,58 @@ export interface WebSocket {
    */
   waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: string) => boolean | Promise<boolean>, timeout?: number } | ((string: string) => boolean | Promise<boolean>)): Promise<string>;
 
+}
+
+/**
+ * WebStorage exposes the page's `localStorage` or `sessionStorage` for the current origin via an async,
+ * [browser-consistent](https://developer.mozilla.org/en-US/docs/Web/API/Storage) API.
+ *
+ * Instances are accessed through [page.localStorage](https://playwright.dev/docs/api/class-page#page-local-storage)
+ * and [page.sessionStorage](https://playwright.dev/docs/api/class-page#page-session-storage).
+ *
+ * ```js
+ * await page.goto('https://example.com');
+ * await page.localStorage.setItem('token', 'abc');
+ * const token = await page.localStorage.getItem('token');
+ * const all = await page.localStorage.items();
+ * await page.localStorage.removeItem('token');
+ * await page.localStorage.clear();
+ * ```
+ *
+ */
+export interface WebStorage {
+  /**
+   * Removes all items from the storage.
+   */
+  clear(): Promise<void>;
+
+  /**
+   * Returns the value for the given `name`, or `null` if the key is not present.
+   * @param name Name of the item to retrieve.
+   */
+  getItem(name: string): Promise<null|string>;
+
+  /**
+   * Returns all items in the storage as `name`/`value` pairs.
+   */
+  items(): Promise<Array<{
+    name: string;
+
+    value: string;
+  }>>;
+
+  /**
+   * Removes the item with the given `name`. No-op if the item is absent.
+   * @param name Name of the item to remove.
+   */
+  removeItem(name: string): Promise<void>;
+
+  /**
+   * Sets the value for the given `name`. Overwrites any existing value for that name.
+   * @param name Name of the item to set.
+   * @param value New value for the item.
+   */
+  setItem(name: string, value: string): Promise<void>;
 }
 
 /**
@@ -23531,6 +23782,11 @@ export interface LaunchOptions {
 }
 
 export interface ConnectOverCDPOptions {
+  /**
+   * If specified, browser artifacts (such as traces and downloads) are saved into this directory.
+   */
+  artifactsDir?: string;
+
   /**
    * @deprecated Use the first argument instead.
    */

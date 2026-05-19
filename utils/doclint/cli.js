@@ -21,7 +21,6 @@ const playwright = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
 const { parseApi } = require('./api_parser');
-const missingDocs = require('./missingDocs');
 const md = require('../markdown');
 const docs = require('./documentation');
 const toKebabCase = require('lodash/kebabCase')
@@ -266,24 +265,6 @@ async function run() {
         e.message = `While processing "${lang}"\n` + e.message;
         throw e;
       }
-    }
-  }
-
-  // Check for missing docs
-  {
-    const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'))
-        .mergeWith(parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'electron-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md')))
-        .mergeWith(parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'mobile-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md')));
-    apiDocumentation.filterForLanguage('js');
-    const srcClient = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'client');
-    const sources = fs.readdirSync(srcClient).map(n => path.join(srcClient, n));
-    const errors = missingDocs(apiDocumentation, sources, path.join(srcClient, 'api.ts'));
-    if (errors.length) {
-      console.log('============================');
-      console.log('ERROR: missing documentation:');
-      errors.forEach(e => console.log(e));
-      console.log('============================')
-      process.exit(1);
     }
   }
 

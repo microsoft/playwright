@@ -744,7 +744,7 @@ test('should be able to create and dispose APIRequestContext inside Promise.all'
   await page.getByText('create api request contexts').dblclick();
   await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed');
 
   await page.getByText('Errors', { exact: true }).click();
   await expect(page.locator('.tab-errors')).toHaveText('No errors');

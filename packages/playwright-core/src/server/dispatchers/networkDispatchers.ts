@@ -216,7 +216,6 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async dispose(params: channels.APIRequestContextDisposeParams, progress: Progress): Promise<void> {
-    progress.metadata.potentiallyClosesScope = true;
     await progress.race(this._object.dispose(params));
     this._dispose();
   }

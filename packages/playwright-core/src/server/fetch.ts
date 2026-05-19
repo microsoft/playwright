@@ -91,7 +91,11 @@ type SendRequestOptions = https.RequestOptions & {
   __testHookLookup?: (hostname: string) => LookupAddress[]
 };
 
-type SendRequestResult = Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer };
+type SendRequestResult = {
+  body: Buffer,
+  log: string[],
+  response: Omit<channels.APIResponse, 'fetchUid'>,
+};
 
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
@@ -216,21 +220,21 @@ export abstract class APIRequestContext extends SdkObject {
     const postData = serializePostData(params, headers);
     if (postData)
       setHeader(headers, 'content-length', String(postData.byteLength));
-    const fetchResponse = await this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
-    const fetchUid = this._storeResponseBody(fetchResponse.body);
-    this.fetchLog.set(fetchUid, progress.metadata.log);
+    const { body, log, response } = await this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
     const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.failOnStatusCode;
-    if (failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
+    if (failOnStatusCode && (response.status < 200 || response.status >= 400)) {
       let responseText = '';
-      if (fetchResponse.body.byteLength) {
-        let text = fetchResponse.body.toString('utf8');
+      if (body.byteLength) {
+        let text = body.toString('utf8');
         if (text.length > 1000)
           text = text.substring(0, 997) + '...';
         responseText = `\nResponse text:\n${text}`;
       }
-      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}${responseText}`);
+      throw new Error(`${response.status} ${response.statusText}${responseText}`);
     }
-    return { ...fetchResponse, fetchUid };
+    const fetchUid = this._storeResponseBody(body);
+    this.fetchLog.set(fetchUid, log);
+    return { ...response, fetchUid };
   }
 
   private _parseSetCookieHeader(responseUrl: string, setCookie: string[] | undefined): channels.NetworkCookie[] {
@@ -274,12 +278,13 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries?: number): Promise<SendRequestResult>{
+  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries?: number): Promise<SendRequestResult> {
+    const log: string[] = [];
     maxRetries ??= 0;
     let backoff = 250;
     for (let i = 0; i <= maxRetries; i++) {
       try {
-        return await this._sendRequest(progress, url, options, postData);
+        return await this._sendRequest(progress, log, url, options, postData);
       } catch (e) {
         if (isAbortError(e))
           throw e;
@@ -291,7 +296,9 @@ export abstract class APIRequestContext extends SdkObject {
         // Retry on connection reset only.
         if (e.code !== 'ECONNRESET')
           throw e;
-        progress.log(`  Received ECONNRESET, will retry after ${backoff}ms.`);
+        const message = `  Received ECONNRESET, will retry after ${backoff}ms.`;
+        log.push(message);
+        progress.log(message);
         await progress.wait(backoff);
         backoff *= 2;
       }
@@ -299,7 +306,11 @@ export abstract class APIRequestContext extends SdkObject {
     throw new Error('Unreachable');
   }
 
-  private async _sendRequest(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer): Promise<SendRequestResult>{
+  private async _sendRequest(progress: Progress, log: string[], url: URL, options: SendRequestOptions, postData?: Buffer): Promise<SendRequestResult>{
+    const fetchLog = (message: string) => {
+      log.push(message);
+      progress.log(message);
+    };
     await this._updateRequestCookieHeader(progress, url, options.headers);
 
     const requestCookies = getHeader(options.headers, 'cookie')?.split(';').map(p => {
@@ -372,9 +383,9 @@ export abstract class APIRequestContext extends SdkObject {
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
         };
-        progress.log(`← ${response.statusCode} ${response.statusMessage}`);
+        fetchLog(`← ${response.statusCode} ${response.statusMessage}`);
         for (const [name, value] of Object.entries(response.headers))
-          progress.log(`  ${name}: ${value}`);
+          fetchLog(`  ${name}: ${value}`);
 
         const cookies = this._parseSetCookieHeader(response.url || url.toString(), response.headers['set-cookie']) ;
         if (cookies.length) {
@@ -449,7 +460,7 @@ export abstract class APIRequestContext extends SdkObject {
                 getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, locationURL.origin));
 
             notifyRequestFinished();
-            fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
+            fulfill(this._sendRequest(progress, log, locationURL, redirectOptions, postData));
             request.destroy();
             return;
           }
@@ -460,7 +471,7 @@ export abstract class APIRequestContext extends SdkObject {
           if (auth?.trim().startsWith('Basic') && credentials) {
             setBasicAuthorizationHeader(options.headers, credentials);
             notifyRequestFinished();
-            fulfill(this._sendRequest(progress, url, options, postData));
+            fulfill(this._sendRequest(progress, log, url, options, postData));
             request.destroy();
             return;
           }
@@ -472,11 +483,14 @@ export abstract class APIRequestContext extends SdkObject {
           const body = Buffer.concat(chunks);
           notifyRequestFinished(body);
           fulfill({
-            url: response.url || url.toString(),
-            status: response.statusCode || 0,
-            statusText: response.statusMessage || '',
-            headers: toHeadersArray(response.rawHeaders),
-            body
+            body,
+            log,
+            response: {
+              url: response.url || url.toString(),
+              status: response.statusCode || 0,
+              statusText: response.statusMessage || '',
+              headers: toHeadersArray(response.rawHeaders),
+            },
           });
         };
 
@@ -558,10 +572,10 @@ export abstract class APIRequestContext extends SdkObject {
       });
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 
-      progress.log(`→ ${options.method} ${url.toString()}`);
+      fetchLog(`→ ${options.method} ${url.toString()}`);
       if (options.headers) {
         for (const [name, value] of Object.entries(options.headers))
-          progress.log(`  ${name}: ${value}`);
+          fetchLog(`  ${name}: ${value}`);
       }
 
       if (postData)

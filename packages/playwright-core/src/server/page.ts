@@ -804,31 +804,36 @@ export class Page extends SdkObject<PageEventMap> {
     return await this.screenshotter.screenshotPage(progress, options);
   }
 
-  async close(progress: Progress, options: { runBeforeUnload?: boolean, reason?: string } = {}) {
+  async close(progress: Progress, options: { reason?: string } = {}) {
     await progress.race(this._close(options));
   }
 
-  private async _close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
+  private async _close(options: { reason?: string } = {}) {
     if (this._closedState === 'closed')
       return;
 
     if (options.reason)
       this._closeReason = options.reason;
-    const runBeforeUnload = !!options.runBeforeUnload;
 
-    if (!runBeforeUnload)
-      await this.screencast.handlePageOrContextClose();
+    await this.screencast.handlePageOrContextClose();
 
     if (this._closedState !== 'closing') {
-      // If runBeforeUnload is true, we don't know if we will close, so don't modify the state
-      if (!runBeforeUnload)
-        this._closedState = 'closing';
+      this._closedState = 'closing';
       // This might throw if the browser context containing the page closes
       // while we are trying to close the page.
-      await this.delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
+      await this.delegate.closePage(false).catch(e => debugLogger.log('error', e));
     }
-    if (!runBeforeUnload)
-      await this.closedPromise;
+    await this.closedPromise;
+  }
+
+  async runBeforeUnload(progress: Progress) {
+    await progress.race(this._runBeforeUnload());
+  }
+
+  private async _runBeforeUnload() {
+    // This might throw if the browser context containing the page closes
+    // while we are trying to close the page.
+    await this.delegate.closePage(true).catch(e => debugLogger.log('error', e));
   }
 
   isClosed(): boolean {
@@ -923,6 +928,36 @@ export class Page extends SdkObject<PageEventMap> {
 
   async setDockTile(image: Buffer) {
     await this.delegate.setDockTile(image);
+  }
+
+  async webStorageItems(progress: Progress, kind: 'local' | 'session'): Promise<{ name: string, value: string }[]> {
+    const storage = `${kind}Storage`;
+    return await this.mainFrame().evaluateExpression(progress, `(() => {
+      const result = [];
+      for (let i = 0; i < ${storage}.length; i++) {
+        const name = ${storage}.key(i);
+        if (name !== null)
+          result.push({ name, value: ${storage}.getItem(name) ?? '' });
+      }
+      return result;
+    })()`, { world: 'utility' });
+  }
+
+  async webStorageGetItem(progress: Progress, kind: 'local' | 'session', name: string): Promise<string | undefined> {
+    const value = await this.mainFrame().evaluateExpression(progress, `${kind}Storage.getItem(${JSON.stringify(name)})`, { world: 'utility' });
+    return value === null ? undefined : value;
+  }
+
+  async webStorageSetItem(progress: Progress, kind: 'local' | 'session', name: string, value: string): Promise<void> {
+    await this.mainFrame().evaluateExpression(progress, `${kind}Storage.setItem(${JSON.stringify(name)}, ${JSON.stringify(value)})`, { world: 'utility' });
+  }
+
+  async webStorageRemoveItem(progress: Progress, kind: 'local' | 'session', name: string): Promise<void> {
+    await this.mainFrame().evaluateExpression(progress, `${kind}Storage.removeItem(${JSON.stringify(name)})`, { world: 'utility' });
+  }
+
+  async webStorageClear(progress: Progress, kind: 'local' | 'session'): Promise<void> {
+    await this.mainFrame().evaluateExpression(progress, `${kind}Storage.clear()`, { world: 'utility' });
   }
 }
 

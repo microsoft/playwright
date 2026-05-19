@@ -1353,6 +1353,11 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   clockRunFor(params: BrowserContextClockRunForParams, progress?: Progress): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, progress?: Progress): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, progress?: Progress): Promise<BrowserContextClockSetSystemTimeResult>;
+  credentialsInstall(params?: BrowserContextCredentialsInstallParams, progress?: Progress): Promise<BrowserContextCredentialsInstallResult>;
+  credentialsCreate(params: BrowserContextCredentialsCreateParams, progress?: Progress): Promise<BrowserContextCredentialsCreateResult>;
+  credentialsGet(params: BrowserContextCredentialsGetParams, progress?: Progress): Promise<BrowserContextCredentialsGetResult>;
+  credentialsDelete(params: BrowserContextCredentialsDeleteParams, progress?: Progress): Promise<BrowserContextCredentialsDeleteResult>;
+  credentialsSetUserVerified(params: BrowserContextCredentialsSetUserVerifiedParams, progress?: Progress): Promise<BrowserContextCredentialsSetUserVerifiedResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1734,6 +1739,50 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
+export type BrowserContextCredentialsInstallParams = {};
+export type BrowserContextCredentialsInstallOptions = {};
+export type BrowserContextCredentialsInstallResult = void;
+export type BrowserContextCredentialsCreateParams = {
+  rpId: string,
+  id?: string,
+  userHandle?: string,
+  privateKey?: string,
+  publicKey?: string,
+};
+export type BrowserContextCredentialsCreateOptions = {
+  id?: string,
+  userHandle?: string,
+  privateKey?: string,
+  publicKey?: string,
+};
+export type BrowserContextCredentialsCreateResult = {
+  credential: VirtualCredential,
+};
+export type BrowserContextCredentialsGetParams = {
+  rpId?: string,
+  id?: string,
+};
+export type BrowserContextCredentialsGetOptions = {
+  rpId?: string,
+  id?: string,
+};
+export type BrowserContextCredentialsGetResult = {
+  credentials: VirtualCredential[],
+};
+export type BrowserContextCredentialsDeleteParams = {
+  id: string,
+};
+export type BrowserContextCredentialsDeleteOptions = {
+
+};
+export type BrowserContextCredentialsDeleteResult = void;
+export type BrowserContextCredentialsSetUserVerifiedParams = {
+  value: boolean,
+};
+export type BrowserContextCredentialsSetUserVerifiedOptions = {
+
+};
+export type BrowserContextCredentialsSetUserVerifiedResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
@@ -2005,12 +2054,14 @@ export type BrowserTypeConnectOverCDPParams = {
   timeout: number,
   isLocal?: boolean,
   noDefaults?: boolean,
+  artifactsDir?: string,
 };
 export type BrowserTypeConnectOverCDPOptions = {
   headers?: NameValue[],
   slowMo?: number,
   isLocal?: boolean,
   noDefaults?: boolean,
+  artifactsDir?: string,
 };
 export type BrowserTypeConnectOverCDPResult = {
   browser: BrowserChannel,
@@ -2882,11 +2933,13 @@ export type FrameTypeParams = {
   strict?: boolean,
   text: string,
   delay?: number,
+  namedKeys?: boolean,
   timeout: number,
 };
 export type FrameTypeOptions = {
   strict?: boolean,
   delay?: number,
+  namedKeys?: boolean,
 };
 export type FrameTypeResult = void;
 export type FrameUncheckParams = {
@@ -3981,6 +4034,7 @@ export interface PageChannel extends PageEventTarget, Channel {
   _type_Page: boolean;
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
+  runBeforeUnload(params?: PageRunBeforeUnloadParams, progress?: Progress): Promise<PageRunBeforeUnloadResult>;
   clearConsoleMessages(params?: PageClearConsoleMessagesParams, progress?: Progress): Promise<PageClearConsoleMessagesResult>;
   consoleMessages(params: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
   emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
@@ -4031,6 +4085,11 @@ export interface PageChannel extends PageEventTarget, Channel {
   screencastStop(params?: PageScreencastStopParams, progress?: Progress): Promise<PageScreencastStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
   setDockTile(params: PageSetDockTileParams, progress?: Progress): Promise<PageSetDockTileResult>;
+  webStorageItems(params: PageWebStorageItemsParams, progress?: Progress): Promise<PageWebStorageItemsResult>;
+  webStorageGetItem(params: PageWebStorageGetItemParams, progress?: Progress): Promise<PageWebStorageGetItemResult>;
+  webStorageSetItem(params: PageWebStorageSetItemParams, progress?: Progress): Promise<PageWebStorageSetItemResult>;
+  webStorageRemoveItem(params: PageWebStorageRemoveItemParams, progress?: Progress): Promise<PageWebStorageRemoveItemResult>;
+  webStorageClear(params: PageWebStorageClearParams, progress?: Progress): Promise<PageWebStorageClearResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -4088,14 +4147,15 @@ export type PageAddInitScriptResult = {
   disposable: DisposableChannel,
 };
 export type PageCloseParams = {
-  runBeforeUnload?: boolean,
   reason?: string,
 };
 export type PageCloseOptions = {
-  runBeforeUnload?: boolean,
   reason?: string,
 };
 export type PageCloseResult = void;
+export type PageRunBeforeUnloadParams = {};
+export type PageRunBeforeUnloadOptions = {};
+export type PageRunBeforeUnloadResult = void;
 export type PageClearConsoleMessagesParams = {};
 export type PageClearConsoleMessagesOptions = {};
 export type PageClearConsoleMessagesResult = void;
@@ -4357,9 +4417,11 @@ export type PageKeyboardInsertTextResult = void;
 export type PageKeyboardTypeParams = {
   text: string,
   delay?: number,
+  namedKeys?: boolean,
 };
 export type PageKeyboardTypeOptions = {
   delay?: number,
+  namedKeys?: boolean,
 };
 export type PageKeyboardTypeResult = void;
 export type PageKeyboardPressParams = {
@@ -4635,6 +4697,49 @@ export type PageSetDockTileOptions = {
 
 };
 export type PageSetDockTileResult = void;
+export type PageWebStorageItemsParams = {
+  kind: 'local' | 'session',
+};
+export type PageWebStorageItemsOptions = {
+
+};
+export type PageWebStorageItemsResult = {
+  items: NameValue[],
+};
+export type PageWebStorageGetItemParams = {
+  kind: 'local' | 'session',
+  name: string,
+};
+export type PageWebStorageGetItemOptions = {
+
+};
+export type PageWebStorageGetItemResult = {
+  value?: string,
+};
+export type PageWebStorageSetItemParams = {
+  kind: 'local' | 'session',
+  name: string,
+  value: string,
+};
+export type PageWebStorageSetItemOptions = {
+
+};
+export type PageWebStorageSetItemResult = void;
+export type PageWebStorageRemoveItemParams = {
+  kind: 'local' | 'session',
+  name: string,
+};
+export type PageWebStorageRemoveItemOptions = {
+
+};
+export type PageWebStorageRemoveItemResult = void;
+export type PageWebStorageClearParams = {
+  kind: 'local' | 'session',
+};
+export type PageWebStorageClearOptions = {
+
+};
+export type PageWebStorageClearResult = void;
 
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;
@@ -5240,6 +5345,14 @@ export type StackFrame = {
   line: number,
   column: number,
   function?: string,
+};
+
+export type VirtualCredential = {
+  id: string,
+  rpId: string,
+  userHandle: string,
+  privateKey: string,
+  publicKey: string,
 };
 
 export type Point = {

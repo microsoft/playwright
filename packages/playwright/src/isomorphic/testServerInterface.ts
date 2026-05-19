@@ -86,6 +86,7 @@ export interface TestServerInterface {
     testIds?: string[];
     headed?: boolean;
     workers?: number | string;
+    maxFailures?: number;
     updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
     updateSourceMethod?: 'overwrite' | 'patch' | '3way';
     reporters?: string[],

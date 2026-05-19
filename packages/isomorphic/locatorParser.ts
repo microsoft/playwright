@@ -15,6 +15,7 @@
  */
 
 import { asLocators } from './locatorGenerators';
+import { encodeTestIdAttributeName } from './locatorUtils';
 import { parseSelector } from './selectorParser';
 import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
@@ -165,7 +166,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/getbyrole\(([^)]+)\)/g, 'internal:role=$1')
       .replace(/getbytext\(([^)]+)\)/g, 'internal:text=$1')
       .replace(/getbylabel\(([^)]+)\)/g, 'internal:label=$1')
-      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${testIdAttributeName}=$1]`)
+      .replace(/getbytestid\(([^)]+)\)/g, `internal:testid=[${encodeTestIdAttributeName(testIdAttributeName)}=$1]`)
       .replace(/getby(placeholder|alt|title)(?:text)?\(([^)]+)\)/g, 'internal:attr=[$1=$2]')
       .replace(/first(\(\))?/g, 'nth=0')
       .replace(/last(\(\))?/g, 'nth=-1')
@@ -219,7 +220,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
   }).join(' >> ');
 }
 
-export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
+export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string = 'data-testid'): string {
   try {
     return unsafeLocatorOrSelectorAsSelector(language, locator, testIdAttributeName);
   } catch (e) {
@@ -227,7 +228,7 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
   }
 }
 
-export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
+export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string = 'data-testid'): string {
   try {
     parseSelector(locator);
     return locator;

@@ -172,6 +172,23 @@ test('should focus a single nested test spec', async ({ runInlineTest }) => {
   expect(result.report.suites[1].suites[0].suites[0].specs[0].title).toEqual('pass2');
 });
 
+test('should accept unix file path containing a space', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'dir with space/a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => { expect(1).toBe(1); });
+    `,
+    'dir with space/b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('not picked', () => { expect(1).toBe(2); });
+    `,
+  }, undefined, undefined, { additionalArgs: ['dir with space/a.spec.ts'] });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.report.suites).toHaveLength(1);
+  expect(result.report.suites[0].specs[0].title).toBe('passes');
+});
+
 test('should focus a single test suite', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'foo.test.ts': `

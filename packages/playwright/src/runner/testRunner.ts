@@ -69,6 +69,7 @@ export type RunTestsParams = {
   testIds?: string[];
   headed?: boolean;
   workers?: number | string;
+  maxFailures?: number;
   updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
   updateSourceMethod?: 'overwrite' | 'patch' | '3way';
   reporters?: string[],
@@ -309,6 +310,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),
       ...(params.workers ? { workers: params.workers } : {}),
+      ...(params.maxFailures ? { maxFailures: params.maxFailures } : {}),
     };
 
     const config = await this._loadConfigOrReportError(new InternalReporter([userReporter]), overrides);
@@ -390,7 +392,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       const config = await configLoader.loadConfig(this.configLocation, overrides);
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
-        webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+        config.plugins.push(...webServerPluginsForConfig(config));
         addGitCommitInfoPlugin(config);
         this._plugins = config.plugins || [];
       } else {
@@ -440,11 +442,11 @@ export async function runAllTestsWithConfig(config: FullConfigInternal, options:
   addGitCommitInfoPlugin(config);
 
   // Legacy webServer support.
-  webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+  config.plugins.push(...webServerPluginsForConfig(config));
 
   const filteredProjects = filterProjects(config.projects, options.projectFilter);
   const reporters = await createReporters(config, options.listMode ? 'list' : 'test', undefined, options);
-  const lastRun = new LastRunReporter(filteredProjects, options.listMode);
+  const lastRun = new LastRunReporter(filteredProjects, options.listMode, options.lastFailedFile);
   if (options.lastFailed) {
     const lastFailedTestIds = await lastRun.filterLastFailed();
     if (lastFailedTestIds.length)

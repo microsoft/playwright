@@ -206,3 +206,30 @@ test('should respect testIdAttribute', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should respect testIdAttribute with multiple comma-separated names', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          testIdAttribute: 'data-pw,data-ti',
+        }
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent(\`
+          <div data-pw="myid">A</div>
+          <div data-ti="myid">B</div>
+          <div data-testid="myid">C</div>
+        \`);
+        await expect(page.getByTestId('myid')).toHaveCount(2);
+        await expect(page.getByTestId('myid')).toHaveText(['A', 'B']);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

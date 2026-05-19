@@ -25,7 +25,7 @@ Worker:
       parameters:
         reason: string?
       flags:
-        pausesBeforeAction: true
+        potentiallyClosesScope: true
 
     evaluateExpression:
       title: Evaluate

@@ -927,6 +927,33 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
+scheme.BrowserContextCredentialsInstallParams = tOptional(tObject({}));
+scheme.BrowserContextCredentialsInstallResult = tOptional(tObject({}));
+scheme.BrowserContextCredentialsCreateParams = tObject({
+  rpId: tString,
+  id: tOptional(tString),
+  userHandle: tOptional(tString),
+  privateKey: tOptional(tString),
+  publicKey: tOptional(tString),
+});
+scheme.BrowserContextCredentialsCreateResult = tObject({
+  credential: tType('VirtualCredential'),
+});
+scheme.BrowserContextCredentialsGetParams = tObject({
+  rpId: tOptional(tString),
+  id: tOptional(tString),
+});
+scheme.BrowserContextCredentialsGetResult = tObject({
+  credentials: tArray(tType('VirtualCredential')),
+});
+scheme.BrowserContextCredentialsDeleteParams = tObject({
+  id: tString,
+});
+scheme.BrowserContextCredentialsDeleteResult = tOptional(tObject({}));
+scheme.BrowserContextCredentialsSetUserVerifiedParams = tObject({
+  value: tBoolean,
+});
+scheme.BrowserContextCredentialsSetUserVerifiedResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
@@ -1059,6 +1086,7 @@ scheme.BrowserTypeConnectOverCDPParams = tObject({
   timeout: tFloat,
   isLocal: tOptional(tBoolean),
   noDefaults: tOptional(tBoolean),
+  artifactsDir: tOptional(tString),
 });
 scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),
@@ -1572,6 +1600,7 @@ scheme.FrameTypeParams = tObject({
   strict: tOptional(tBoolean),
   text: tString,
   delay: tOptional(tFloat),
+  namedKeys: tOptional(tBoolean),
   timeout: tFloat,
 });
 scheme.FrameTypeResult = tOptional(tObject({}));
@@ -2281,10 +2310,11 @@ scheme.PageAddInitScriptResult = tObject({
   disposable: tChannel(['Disposable']),
 });
 scheme.PageCloseParams = tObject({
-  runBeforeUnload: tOptional(tBoolean),
   reason: tOptional(tString),
 });
 scheme.PageCloseResult = tOptional(tObject({}));
+scheme.PageRunBeforeUnloadParams = tOptional(tObject({}));
+scheme.PageRunBeforeUnloadResult = tOptional(tObject({}));
 scheme.PageClearConsoleMessagesParams = tOptional(tObject({}));
 scheme.PageClearConsoleMessagesResult = tOptional(tObject({}));
 scheme.PageConsoleMessagesParams = tObject({
@@ -2453,6 +2483,7 @@ scheme.PageKeyboardInsertTextResult = tOptional(tObject({}));
 scheme.PageKeyboardTypeParams = tObject({
   text: tString,
   delay: tOptional(tFloat),
+  namedKeys: tOptional(tBoolean),
 });
 scheme.PageKeyboardTypeResult = tOptional(tObject({}));
 scheme.PageKeyboardPressParams = tObject({
@@ -2629,6 +2660,34 @@ scheme.PageSetDockTileParams = tObject({
   image: tBinary,
 });
 scheme.PageSetDockTileResult = tOptional(tObject({}));
+scheme.PageWebStorageItemsParams = tObject({
+  kind: tEnum(['local', 'session']),
+});
+scheme.PageWebStorageItemsResult = tObject({
+  items: tArray(tType('NameValue')),
+});
+scheme.PageWebStorageGetItemParams = tObject({
+  kind: tEnum(['local', 'session']),
+  name: tString,
+});
+scheme.PageWebStorageGetItemResult = tObject({
+  value: tOptional(tString),
+});
+scheme.PageWebStorageSetItemParams = tObject({
+  kind: tEnum(['local', 'session']),
+  name: tString,
+  value: tString,
+});
+scheme.PageWebStorageSetItemResult = tOptional(tObject({}));
+scheme.PageWebStorageRemoveItemParams = tObject({
+  kind: tEnum(['local', 'session']),
+  name: tString,
+});
+scheme.PageWebStorageRemoveItemResult = tOptional(tObject({}));
+scheme.PageWebStorageClearParams = tObject({
+  kind: tEnum(['local', 'session']),
+});
+scheme.PageWebStorageClearResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tType('SDKLanguage'),
@@ -2972,6 +3031,13 @@ scheme.StackFrame = tObject({
   line: tInt,
   column: tInt,
   function: tOptional(tString),
+});
+scheme.VirtualCredential = tObject({
+  id: tString,
+  rpId: tString,
+  userHandle: tString,
+  privateKey: tString,
+  publicKey: tString,
 });
 scheme.Point = tObject({
   x: tFloat,
