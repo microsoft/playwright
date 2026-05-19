@@ -972,6 +972,29 @@ const videoChapter = declareCommand({
   toolParams: ({ title, description, duration }) => ({ title, description, duration }),
 });
 
+const actionPositionArg = z.enum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']);
+
+const videoShowActions = declareCommand({
+  name: 'video-show-actions',
+  description: 'Annotate subsequent CLI/MCP actions on the page with a callout that names the action and highlights the target element',
+  category: 'devtools',
+  args: z.object({}),
+  options: z.object({
+    duration: numberArg.optional().describe('How long each action annotation stays on screen, in milliseconds. Defaults to 500.'),
+    position: actionPositionArg.optional().describe('Where to place the action title: top-left, top, top-right, bottom-left, bottom, bottom-right. Defaults to top-right.'),
+  }),
+  toolName: 'browser_video_show_actions',
+  toolParams: ({ duration, position }) => ({ duration, position }),
+});
+
+const videoHideActions = declareCommand({
+  name: 'video-hide-actions',
+  description: 'Stop annotating actions performed on the page',
+  category: 'devtools',
+  toolName: 'browser_video_hide_actions',
+  toolParams: () => ({}),
+});
+
 const dashboardShow = declareCommand({
   name: 'show',
   description: 'Show Playwright Dashboard',
@@ -1201,6 +1224,8 @@ const commandsArray: AnyCommandSchema[] = [
   videoStart,
   videoStop,
   videoChapter,
+  videoShowActions,
+  videoHideActions,
   dashboardShow,
   pauseAt,
   resume,

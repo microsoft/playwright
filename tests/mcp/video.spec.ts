@@ -95,6 +95,49 @@ test('reports missing ffmpeg, not missing browser, when recordVideo is enabled',
   });
 });
 
+test.describe('action overlays', () => {
+  test.use({ mcpArgs: ['--caps=devtools'] });
+
+  test('browser_video_show_actions and browser_video_hide_actions', async ({ client, server }) => {
+    expect(await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.HELLO_WORLD },
+    })).toHaveResponse({
+      code: expect.stringContaining(`page.goto('http://localhost`),
+    });
+
+    expect(await client.callTool({
+      name: 'browser_video_show_actions',
+      arguments: { duration: 200, position: 'bottom-right' },
+    })).toHaveResponse({
+      result: 'Action annotations enabled.',
+    });
+
+    expect(await client.callTool({
+      name: 'browser_video_hide_actions',
+      arguments: {},
+    })).toHaveResponse({
+      result: 'Action annotations disabled.',
+    });
+  });
+
+  test('browser_video_show_actions rejects invalid position', async ({ client, server }) => {
+    expect(await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.HELLO_WORLD },
+    })).toHaveResponse({
+      code: expect.stringContaining(`page.goto('http://localhost`),
+    });
+
+    expect(await client.callTool({
+      name: 'browser_video_show_actions',
+      arguments: { position: 'middle' },
+    })).toHaveResponse({
+      isError: true,
+    });
+  });
+});
+
 async function produceFrames(client: Client) {
   expect(await client.callTool({
     name: 'browser_evaluate',

@@ -236,6 +236,21 @@ test('video-chapter', async ({ cli, server }) => {
   await cli('video-stop');
 });
 
+test('video-show-actions and video-hide-actions', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { output: showOutput } = await cli('video-show-actions', '--duration=200', '--position=bottom-right');
+  expect(showOutput).toContain('Action annotations enabled.');
+  const { output: hideOutput } = await cli('video-hide-actions');
+  expect(hideOutput).toContain('Action annotations disabled.');
+});
+
+test('video-show-actions rejects invalid position', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { error, exitCode } = await cli('video-show-actions', '--position=middle');
+  expect(exitCode).not.toBe(0);
+  expect(error).toContain('position');
+});
+
 test('generate-locator', async ({ cli, server }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
   await cli('open', server.PREFIX);
