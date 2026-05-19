@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { ExpectError, Frame } from '../frames';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -270,12 +271,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async expect(params: channels.FrameExpectParams, progress: Progress): Promise<channels.FrameExpectResult> {
+    progress.log(`${renderTitleForCall(progress.metadata)}${params.timeout ? ` with timeout ${params.timeout}ms` : ''}`);
     const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     try {
       await this._frame.expect(progress, params.selector, { ...params, expectedValue });
     } catch (e) {
-      // Without auto-serialization in validators, the received value must be
-      // serialized into a SerializedValue before it crosses the wire.
       if (e instanceof ExpectError && e.details.received && 'value' in e.details.received)
         e.details.received.value = serializeResult(e.details.received.value);
       throw e;

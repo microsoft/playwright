@@ -192,10 +192,10 @@ Page:
         actual: binary?
       errorDetails:
         diff: binary?
+        customErrorMessage: string?
         actual: binary?
         previous: binary?
         timedOut: boolean?
-        customErrorMessage: string?
         log:
           type: array?
           items: string

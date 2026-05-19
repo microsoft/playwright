@@ -19,13 +19,9 @@ import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
 import type { SerializedError } from '@protocol/channels';
 
-// Base class for errors that have crossed the wire. `log` is always populated
-// from the response; `details` is set by `Connection.dispatch` when the
-// response carries a `errorDetails` payload validated against the protocol's
-// `<Method>ErrorDetails` schema.
 export class PlaywrightError extends Error {
   log: string[] = [];
-  details?: any;
+  details?: any;  // As declared in the protocol.
 }
 
 export class TimeoutError extends PlaywrightError {

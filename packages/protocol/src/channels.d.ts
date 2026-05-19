@@ -4328,10 +4328,10 @@ export type PageExpectScreenshotResult = {
 };
 export type PageExpectScreenshotErrorDetails = {
   diff?: Binary,
+  customErrorMessage?: string,
   actual?: Binary,
   previous?: Binary,
   timedOut?: boolean,
-  customErrorMessage?: string,
   log?: string[],
 };
 export type PageScreenshotParams = {

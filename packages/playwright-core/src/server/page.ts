@@ -716,11 +716,6 @@ export class Page extends SdkObject<PageEventMap> {
     };
 
     const comparator = getComparator('image/png');
-    if (!options.expected && options.isNot)
-      throw new Error('"not" matcher requires expected result');
-    const format = validateScreenshotOptions(options || {});
-    if (format !== 'png')
-      throw new Error('Only PNG screenshots are supported');
     let intermediateResult: {
       actual?: Buffer,
       previous?: Buffer,
@@ -737,6 +732,11 @@ export class Page extends SdkObject<PageEventMap> {
     };
 
     try {
+      if (!options.expected && options.isNot)
+        throw new Error('"not" matcher requires expected result');
+      const format = validateScreenshotOptions(options || {});
+      if (format !== 'png')
+        throw new Error('Only PNG screenshots are supported');
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];

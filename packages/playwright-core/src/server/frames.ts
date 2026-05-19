@@ -16,9 +16,7 @@
  */
 
 import yaml from 'yaml';
-
 import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
-import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { isInvalidSelectorError } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
@@ -98,19 +96,14 @@ export class NavigationAbortedError extends Error {
   }
 }
 
-export type ExpectReceived = { value?: any, ariaSnapshot?: string };
+type ExpectReceived = { value?: any, ariaSnapshot?: string };
 
-export type ExpectErrorDetails = {
+type ExpectErrorDetails = {
   received?: ExpectReceived;
   timedOut?: boolean;
   customErrorMessage?: string;
 };
 
-// Thrown by `Frame.expect` on mismatch. `details` is typed against the
-// `FrameExpectErrorDetails` schema in protocol.yml; the dispatcher validates
-// and serializes it onto `response.errorDetails` for the wire. The error
-// message is always a fixed placeholder - any human-readable text travels in
-// `details.customErrorMessage` so the client can format it itself.
 export class ExpectError extends Error {
   readonly details: ExpectErrorDetails;
 
@@ -1512,12 +1505,9 @@ export class Frame extends SdkObject<FrameEventMap> {
       try {
         options = { ...options, expectedValue: parseAriaSnapshotUnsafe(yaml, options.expectedValue) };
       } catch (e) {
-        // An invalid aria snapshot is a user error - surface it as a typed
-        // matcher failure instead of letting it escape as a raw rejection.
         throw new ExpectError({ customErrorMessage: e.message });
       }
     }
-    progress.log(`${renderTitleForCall(progress.metadata)}${progress.timeout ? ` with timeout ${progress.timeout}ms` : ''}`);
     // `isSet` distinguishes "not collected yet" from "collected with received: undefined".
     const lastIntermediateResult: { isSet: boolean, received?: ExpectReceived, errorMessage?: string } = { isSet: false };
     try {
@@ -1542,14 +1532,14 @@ export class Frame extends SdkObject<FrameEventMap> {
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
       await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
         await this._page.performActionPreChecks(progress);
-        const { matches } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
+        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
         if (matches === options.isNot) {
           // Keep waiting in these cases:
           // expect(locator).conditionThatDoesNotMatch
           // expect(locator).not.conditionThatDoesMatch
           return continuePolling;
         }
-        return true;
+        return { matches, received };
       });
     } catch (e) {
       const details: ExpectErrorDetails = {};
@@ -1559,8 +1549,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         details.customErrorMessage = e.message.startsWith('Error: ') ? e.message.substring('Error: '.length) : e.message;
       } else if (lastIntermediateResult.isSet) {
         details.received = lastIntermediateResult.received;
-        if (lastIntermediateResult.errorMessage)
-          details.customErrorMessage = lastIntermediateResult.errorMessage;
+        details.customErrorMessage = lastIntermediateResult.errorMessage;
       }
       if (e instanceof TimeoutError)
         details.timedOut = true;
@@ -1568,7 +1557,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { isSet: boolean, received?: ExpectReceived, errorMessage?: string }, noAbort: boolean) {
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
     const progressLog = (text: string) => progress.log(text);
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
     if (noAbort)

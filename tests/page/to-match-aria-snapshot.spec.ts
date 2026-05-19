@@ -613,6 +613,9 @@ test('should report error in YAML', async ({ page }) => {
 
 Expected: "heading \\"title\\""
 Error: Aria snapshot must be a YAML sequence, elements starting with " -"
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -627,6 +630,9 @@ Error: Nested mappings are not allowed in compact mappings at line 1, column 12:
 
 - heading: a:
            ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 });
@@ -645,6 +651,9 @@ Error: Unterminated string:
 
 heading "title
               ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -659,6 +668,9 @@ Error: Unterminated regex:
 
 heading /title
               ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -673,6 +685,9 @@ Error: Value of "level" attribute must be a number:
 
 heading [level=a]
                ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -687,6 +702,9 @@ Error: Value of "expanded" attribute must be a boolean:
 
 heading [expanded=FALSE]
                   ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -701,6 +719,9 @@ Error: Value of "checked" attribute must be a boolean or "mixed":
 
 heading [checked=foo]
                  ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -715,6 +736,9 @@ Error: Value of "level" attribute must be a number:
 
 heading [level=]
                ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -729,6 +753,9 @@ Error: Unsupported attribute [bogus]:
 
 heading [bogus]
          ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 
@@ -743,6 +770,9 @@ Error: Unexpected input:
 
 heading invalid
         ^
+
+Call log:
+  - Expect "toMatchAriaSnapshot" with timeout 10000ms
 `);
   }
 });

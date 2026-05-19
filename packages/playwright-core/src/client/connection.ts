@@ -15,7 +15,6 @@
  */
 
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
-
 import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
@@ -227,11 +226,9 @@ export class Connection extends EventEmitter {
         const parsedError = parseError(error);
         parsedError.log = log || [];
         rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this._platform, log));
-        if (errorDetails !== undefined) {
-          const detailsValidator = maybeFindValidator(callback.type, callback.method, 'ErrorDetails');
-          if (detailsValidator)
-            parsedError.details = detailsValidator(errorDetails, '', this._validatorFromWireContext());
-        }
+        const detailsValidator = maybeFindValidator(callback.type, callback.method, 'ErrorDetails');
+        if (detailsValidator)
+          parsedError.details = detailsValidator(errorDetails ?? {}, '', this._validatorFromWireContext());
         callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');

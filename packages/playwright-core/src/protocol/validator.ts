@@ -2424,10 +2424,10 @@ scheme.PageExpectScreenshotResult = tObject({
 });
 scheme.PageExpectScreenshotErrorDetails = tObject({
   diff: tOptional(tBinary),
+  customErrorMessage: tOptional(tString),
   actual: tOptional(tBinary),
   previous: tOptional(tBinary),
   timedOut: tOptional(tBoolean),
-  customErrorMessage: tOptional(tString),
   log: tOptional(tArray(tString)),
 });
 scheme.PageScreenshotParams = tObject({

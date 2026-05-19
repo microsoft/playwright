@@ -498,7 +498,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       await this._channel.expect(params);
       return { matches: !params.isNot };
     } catch (e) {
-      if (!(e instanceof PlaywrightError) || !e.details)
+      if (!(e instanceof PlaywrightError))
         throw e;
       const details = e.details as channels.FrameExpectErrorDetails;
       const received = details.received ? {
