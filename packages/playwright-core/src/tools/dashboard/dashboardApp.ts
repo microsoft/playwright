@@ -22,6 +22,7 @@ import http from 'http';
 import { HttpServer } from '@utils/httpServer';
 import { makeSocketPath } from '@utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { libPath } from '../../package';
 import { playwright } from '../../inprocess';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
@@ -42,7 +43,7 @@ declare const __PW_HMR__: boolean;
 
 type DashboardServer = {
   url: string;
-  reveal: (options: DashboardOptions) => void;
+  reveal: (options: DashboardOptions) => Promise<void>;
   triggerAnnotate: () => void;
   registerAnnotateWaiter: (socket: net.Socket) => void;
   close: () => Promise<void>;
@@ -53,7 +54,7 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   const dashboardDir = libPath('vite', 'dashboard');
 
   const connections = new Set<DashboardConnection>();
-  let currentReveal: DashboardOptions = options;
+  let connectionLanded = new ManualPromise<void>();
   let pendingAnnotate = false;
   const waitingSockets = new Set<net.Socket>();
 
@@ -71,11 +72,12 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   httpServer.createWebSocket(() => {
     let connection: DashboardConnection;
     // eslint-disable-next-line prefer-const
-    connection = new DashboardConnection(provider, () => connections.delete(connection), () => {
-      if (currentReveal.pageId)
-        connection.revealPage(currentReveal.pageId);
-      else if (currentReveal.sessionName)
-        connection.revealSession(currentReveal.sessionName, currentReveal.workspaceDir);
+    connection = new DashboardConnection(provider, () => {
+      connections.delete(connection);
+      if (connections.size === 0)
+        connectionLanded = new ManualPromise<void>();
+    }, () => {
+      connectionLanded.resolve();
       if (pendingAnnotate) {
         pendingAnnotate = false;
         connection.emitAnnotate();
@@ -103,18 +105,16 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     attachDashboardStaticServer(httpServer, dashboardDir);
   await httpServer.start({ port: options.port, host: options.host });
 
-  const reveal = (next: DashboardOptions) => {
-    currentReveal = next;
-    if (next.pageId) {
-      for (const connection of connections)
-        connection.revealPage(next.pageId);
-      return;
-    }
-    if (!next.sessionName)
-      return;
-    for (const connection of connections)
-      connection.revealSession(next.sessionName, next.workspaceDir);
+  const reveal = async (next: DashboardOptions): Promise<void> => {
+    await connectionLanded;
+    await Promise.any([...connections].map(async c => {
+      if (next.pageId)
+        await c.revealPage(next.pageId);
+      else if (next.sessionName)
+        await c.revealSession(next.sessionName, next.workspaceDir);
+    }));
   };
+  void reveal(options).catch(() => {});
 
   const triggerAnnotate = () => {
     if (connections.size === 0) {
@@ -286,8 +286,8 @@ async function acquireSingleton(options: DashboardOptions): Promise<net.Server> 
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write(JSON.stringify(options) + '\n');
-        reject(new Error('already running'));
       });
+      client.on('end', () => reject(new Error('already running')));
       client.on('error', () => {
         if (process.platform !== 'win32')
           fs.unlinkSync(socketPath);
@@ -328,7 +328,7 @@ export async function openDashboardApp() {
   const statePromise = innerOpenDashboardApp(options);
   server?.on('connection', socket => {
     let buffer = '';
-    socket.on('data', data => {
+    socket.on('data', async data => {
       buffer += data.toString();
       const newlineIndex = buffer.indexOf('\n');
       if (newlineIndex === -1)
@@ -345,22 +345,25 @@ export async function openDashboardApp() {
         socket.end();
         return;
       }
-      void statePromise.then(({ page, server: dashboard }) => {
-        if (parsed.annotate) {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          dashboard.triggerAnnotate();
-          dashboard.registerAnnotateWaiter(socket);
-        } else if (parsed.kill) {
-          server?.close();
+      const { page, server: dashboard } = await statePromise;
+      if (parsed.annotate) {
+        page?.bringToFront().catch(() => {});
+        void dashboard.reveal(parsed);
+        dashboard.triggerAnnotate();
+        dashboard.registerAnnotateWaiter(socket);
+      } else if (parsed.kill) {
+        server?.close();
+        socket.end();
+        gracefullyProcessExitDoNotHang(0);
+      } else {
+        try {
+          await page?.bringToFront();
+          await dashboard.reveal(parsed);
           socket.end();
-          gracefullyProcessExitDoNotHang(0);
-        } else {
-          page?.bringToFront().catch(() => {});
-          dashboard.reveal(parsed);
-          socket.end();
+        } catch (e) {
+          socket.end(e);
         }
-      });
+      }
     });
   });
   await statePromise;

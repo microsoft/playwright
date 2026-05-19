@@ -474,6 +474,22 @@ async function installSaveFilePickerMock(page: import('playwright-core').Page): 
   };
 }
 
+test('daemon show: -s blocks until the dashboard finishes revealing the session', async ({ cli, server, connectToDashboard }) => {
+  await cli('-s=sessA', 'open', server.EMPTY_PAGE);
+  await cli('-s=sessB', 'open', server.EMPTY_PAGE);
+
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  const { exitCode } = await cli('-s=sessB', 'show', { bindTitle });
+  expect(exitCode).toBe(0);
+
+  // The CLI is contractually only allowed to return after the dashboard
+  // browser has acked the reveal, so the active session must already be
+  // sessB at this point — no polling required.
+  const dashboard = await connectToDashboard(bindTitle);
+  const dashboardPage = dashboard.contexts()[0].pages()[0];
+  await expect(activeSession(dashboardPage)).toHaveAccessibleName('Session sessB');
+});
+
 test('should allow typing in omnibox in interactive mode', async ({ cli, server, startDashboardServer }) => {
   server.setContent('/page1', '<html><body>Page 1</body></html>', 'text/html');
   server.setContent('/page2', '<html><body>Page 2</body></html>', 'text/html');
