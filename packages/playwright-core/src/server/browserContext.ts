@@ -264,7 +264,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     }
     this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
-    this._debugger.resume();
     if (this._isPersistentContext)
       this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
