@@ -244,13 +244,17 @@ export async function program(options?: { embedderVersion?: string}) {
       }
       const timer = setTimeout(() => child.stdin!.destroy(), 60_000);
       child.unref();
+      let daemonPid: number;
       try {
         await new Promise<void>((resolve, reject) => {
           let outLog = '';
           child.stdout!.on('data', data => {
             outLog += data.toString();
-            if (outLog.includes('Dashboard is running'))
+            const match = outLog.match(/Dashboard is running pid=(\d+)/);
+            if (match) {
+              daemonPid = Number(match[1]);
               resolve();
+            }
           });
           child.once('exit', (code, signal) => reject(new Error(`Dashboard daemon exited (code=${code}, signal=${signal}) before signaling READY${outLog ? '\n' + outLog : ''}`)));
         });
@@ -260,7 +264,7 @@ export async function program(options?: { embedderVersion?: string}) {
         child.stdin!.destroy();
         child.stdout!.destroy();
       }
-      output.show(sessionName, child.pid);
+      output.show(sessionName, daemonPid!);
       return;
     }
     default: {
