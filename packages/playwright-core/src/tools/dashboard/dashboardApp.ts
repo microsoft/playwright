@@ -44,8 +44,7 @@ declare const __PW_HMR__: boolean;
 type DashboardServer = {
   url: string;
   reveal: (options: DashboardOptions) => Promise<void>;
-  triggerAnnotate: () => Promise<void>;
-  registerAnnotateWaiter: (socket: net.Socket) => void;
+  triggerAnnotate: (socket: net.Socket) => Promise<void>;
   close: () => Promise<void>;
 };
 
@@ -111,7 +110,19 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
   };
   void reveal(options).catch(() => {});
 
-  const triggerAnnotate = async () => {
+  const triggerAnnotate = async (socket: net.Socket) => {
+    waitingSockets.add(socket);
+    const cleanup = () => {
+      if (!waitingSockets.delete(socket))
+        return;
+      if (waitingSockets.size === 0) {
+        for (const connection of connections)
+          connection.emitCancelAnnotate();
+      }
+    };
+    socket.on('close', cleanup);
+    socket.on('error', cleanup);
+
     await connectionLanded;
     if (waitingSockets.size === 0)
       return;
@@ -119,25 +130,8 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
       connection.emitAnnotate();
   };
 
-  const notifyAnnotateEnded = () => {
-    for (const connection of connections)
-      connection.emitCancelAnnotate();
-  };
-
-  const registerAnnotateWaiter = (socket: net.Socket) => {
-    waitingSockets.add(socket);
-    const cleanup = () => {
-      if (!waitingSockets.delete(socket))
-        return;
-      if (waitingSockets.size === 0)
-        notifyAnnotateEnded();
-    };
-    socket.on('close', cleanup);
-    socket.on('error', cleanup);
-  };
-
   const close = () => httpServer.stop();
-  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, registerAnnotateWaiter, close };
+  return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, close };
 }
 
 function attachDashboardStaticServer(httpServer: HttpServer, dashboardDir: string) {
@@ -342,8 +336,7 @@ export async function openDashboardApp() {
       if (parsed.annotate) {
         page?.bringToFront().catch(() => {});
         void dashboard.reveal(parsed);
-        void dashboard.triggerAnnotate();
-        dashboard.registerAnnotateWaiter(socket);
+        void dashboard.triggerAnnotate(socket);
       } else if (parsed.kill) {
         server?.close();
         socket.end();
