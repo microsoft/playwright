@@ -94,8 +94,54 @@ const videoChapter = defineTool({
   },
 });
 
+const actionPosition = z.enum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']);
+
+const videoShowActions = defineTool({
+  capability: 'devtools',
+
+  schema: {
+    name: 'browser_video_show_actions',
+    title: 'Show action overlays',
+    description: 'Annotate subsequent actions performed on the page with a callout that names the action and highlights the target element. Useful while video recording or screencasting.',
+    inputSchema: z.object({
+      duration: z.number().optional().describe('How long each action annotation stays on screen, in milliseconds. Defaults to 500.'),
+      position: actionPosition.optional().describe('Where to place the action title relative to the page. Defaults to top-right.'),
+    }),
+    type: 'readOnly',
+  },
+
+  handle: async (context, params, response) => {
+    const tab = context.currentTabOrDie();
+    await tab.page.screencast.showActions({
+      duration: params.duration,
+      position: params.position,
+    });
+    response.addTextResult('Action annotations enabled.');
+  },
+});
+
+const videoHideActions = defineTool({
+  capability: 'devtools',
+
+  schema: {
+    name: 'browser_video_hide_actions',
+    title: 'Hide action overlays',
+    description: 'Stop annotating actions performed on the page.',
+    inputSchema: z.object({}),
+    type: 'readOnly',
+  },
+
+  handle: async (context, params, response) => {
+    const tab = context.currentTabOrDie();
+    await tab.page.screencast.hideActions();
+    response.addTextResult('Action annotations disabled.');
+  },
+});
+
 export default [
   videoStart,
   videoStop,
   videoChapter,
+  videoShowActions,
+  videoHideActions,
 ];
