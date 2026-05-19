@@ -334,9 +334,13 @@ export async function openDashboardApp() {
       }
       const { page, server: dashboard } = await statePromise;
       if (parsed.annotate) {
-        page?.bringToFront().catch(() => {});
-        void dashboard.reveal(parsed);
-        void dashboard.triggerAnnotate(socket);
+        try {
+          await page?.bringToFront();
+          await dashboard.reveal(parsed);
+          await dashboard.triggerAnnotate(socket);
+        } catch (e) {
+          socket.end(e);
+        }
       } else if (parsed.kill) {
         server?.close();
         socket.end();
