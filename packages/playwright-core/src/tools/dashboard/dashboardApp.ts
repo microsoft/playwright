@@ -253,25 +253,34 @@ function parseOpenArgs(): DashboardOptions {
   };
 }
 
-async function acquireSingleton(options: DashboardOptions): Promise<net.Server> {
+type AcquireResult =
+  | { role: 'winner', server: net.Server }
+  | { role: 'loser', daemonPid: number };
+
+async function acquireSingleton(options: DashboardOptions): Promise<AcquireResult> {
   const socketPath = dashboardSocketPath();
   if (process.platform !== 'win32')
     await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
-    server.listen(socketPath, () => resolve(server));
+    server.listen(socketPath, () => resolve({ role: 'winner', server }));
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code !== 'EADDRINUSE')
         return reject(err);
+      let ackBuffer = '';
       const client = net.connect(socketPath, () => {
         client.write(JSON.stringify(options) + '\n');
       });
-      client.on('end', () => reject(new Error('already running')));
+      client.on('data', chunk => { ackBuffer += chunk.toString(); });
+      client.on('end', () => {
+        const { pid } = JSON.parse(ackBuffer.trim());
+        resolve({ role: 'loser', daemonPid: pid });
+      });
       client.on('error', () => {
         if (process.platform !== 'win32')
           fs.unlinkSync(socketPath);
-        server.listen(socketPath, () => resolve(server));
+        server.listen(socketPath, () => resolve({ role: 'winner', server }));
       });
     });
   });
@@ -304,24 +313,23 @@ export async function openDashboardApp() {
   // Self-destruct if the parent CLI dies before we signal READY. Unregistered
   // before we signal so the daemon outlives the parent.
   const stopSelfDestruct = selfDestructOnParentGone();
-  let server: net.Server;
-  try {
-    server = await acquireSingleton(options);
-  } catch {
+  const acquired = await acquireSingleton(options);
+  if (acquired.role === 'loser') {
     // Another daemon is already running, signal success.
     stopSelfDestruct();
     // eslint-disable-next-line no-console
-    console.log('Dashboard is running');
+    console.log(`Dashboard is running pid=${acquired.daemonPid}`);
     // eslint-disable-next-line no-restricted-properties
     await new Promise(f => process.stdout.write('', f));  // Make sure stdout is flushed.
     return;
   }
+  const { server } = acquired;
   process.on('exit', () => server.close());
   try {
     await startApp(server, options);
     stopSelfDestruct();
     // eslint-disable-next-line no-console
-    console.log('Dashboard is running');
+    console.log(`Dashboard is running pid=${process.pid}`);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(error);
@@ -366,7 +374,7 @@ async function startApp(server: net.Server, options: DashboardOptions) {
         try {
           await page?.bringToFront();
           await dashboard.reveal(parsed);
-          socket.end();
+          socket.end(JSON.stringify({ pid: process.pid }) + '\n');
         } catch (e) {
           socket.end(e);
         }
