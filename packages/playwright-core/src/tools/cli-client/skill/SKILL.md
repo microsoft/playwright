@@ -1,6 +1,11 @@
 ---
 name: playwright-cli
-description: Automate browser interactions, test web pages and work with Playwright tests.
+description: >
+  Use when the user says: "go to this URL", "click this button",
+  "fill this form", "take a screenshot", "scrape this page",
+  "log in to X", "run my Playwright tests", "this test is failing",
+  "write a test for", "mock this API", "record a demo". The skill
+  opens a live browser with Playwright and drives it.
 allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
 ---
 
