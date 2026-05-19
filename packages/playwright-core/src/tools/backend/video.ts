@@ -95,6 +95,7 @@ const videoChapter = defineTool({
 });
 
 const actionPosition = z.enum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right']);
+const actionCursor = z.enum(['none', 'pointer']);
 
 const videoShowActions = defineTool({
   capability: 'devtools',
@@ -106,6 +107,7 @@ const videoShowActions = defineTool({
     inputSchema: z.object({
       duration: z.number().optional().describe('How long each action annotation stays on screen, in milliseconds. Defaults to 500.'),
       position: actionPosition.optional().describe('Where to place the action title relative to the page. Defaults to top-right.'),
+      cursor: actionCursor.optional().describe('Cursor decoration for pointer actions. "pointer" (default) animates a mouse pointer from the previous action point to the next one; "none" disables the cursor decoration.'),
     }),
     type: 'readOnly',
   },
@@ -115,6 +117,7 @@ const videoShowActions = defineTool({
     await tab.page.screencast.showActions({
       duration: params.duration,
       position: params.position,
+      cursor: params.cursor,
     });
     response.addTextResult('Action annotations enabled.');
   },

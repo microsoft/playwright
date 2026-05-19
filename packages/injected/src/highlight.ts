@@ -55,6 +55,7 @@ export class Highlight {
   private _glassPaneShadow: ShadowRoot;
   private _renderedEntries: RenderedHighlightEntry[] = [];
   private _actionPointElement: HTMLElement;
+  private _actionCursorElement: HTMLElement;
   private _titleElement: HTMLElement;
   private _userOverlayContainer: HTMLElement;
   private _userOverlays = new Map<string, HTMLElement>();
@@ -85,6 +86,9 @@ export class Highlight {
     this._glassPaneElement.style.backgroundColor = 'transparent';
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
+    this._actionCursorElement = document.createElement('x-pw-action-cursor');
+    this._actionCursorElement.style.visibility = 'hidden';
+    this._actionCursorElement.appendChild(this._createCursorSvg(document));
     this._titleElement = document.createElement('x-pw-title');
     this._titleElement.setAttribute('hidden', 'true');
     this._userOverlayContainer = document.createElement('x-pw-user-overlays');
@@ -102,6 +106,7 @@ export class Highlight {
       this._glassPaneShadow.appendChild(styleElement);
     }
     this._glassPaneShadow.appendChild(this._actionPointElement);
+    this._glassPaneShadow.appendChild(this._actionCursorElement);
     this._glassPaneShadow.appendChild(this._titleElement);
     this._glassPaneShadow.appendChild(this._userOverlayContainer);
   }
@@ -184,6 +189,32 @@ export class Highlight {
 
   hideActionPoint() {
     this._actionPointElement.hidden = true;
+  }
+
+  moveActionCursor(x: number, y: number, fadeDuration?: number) {
+    const moveDuration = fadeDuration ? Math.max(80, Math.min(fadeDuration * 0.6, 400)) : 0;
+    this._actionCursorElement.style.transition = `top ${moveDuration}ms ease, left ${moveDuration}ms ease`;
+    this._actionCursorElement.style.left = x + 'px';
+    this._actionCursorElement.style.top = y + 'px';
+    this._actionCursorElement.style.visibility = 'visible';
+  }
+
+  hideActionCursor() {
+    this._actionCursorElement.style.visibility = 'hidden';
+  }
+
+  private _createCursorSvg(document: Document): SVGSVGElement {
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNs, 'svg');
+    svg.setAttribute('viewBox', '0 0 18 22');
+    const path = document.createElementNS(svgNs, 'path');
+    path.setAttribute('d', 'M1 1 L1 17 L5.5 13 L8 20.5 L11 19.5 L8.5 12 L15 12 Z');
+    path.setAttribute('fill', 'white');
+    path.setAttribute('stroke', 'black');
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(path);
+    return svg;
   }
 
   showActionTitle(text: string, fadeDuration: number, position?: string, fontSize?: number) {

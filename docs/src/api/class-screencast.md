@@ -135,6 +135,14 @@ Position of the action title overlay. Defaults to `"top-right"`.
 
 Font size of the action title in pixels. Defaults to `24`.
 
+### option: Screencast.showActions.cursor
+* since: v1.61
+- `cursor` ?<[ScreencastCursor]<"none"|"pointer">>
+
+Cursor decoration shown for pointer actions. `"pointer"` (the default) renders
+a mouse pointer that animates from the previous action point to the next one.
+`"none"` disables the cursor decoration.
+
 ## async method: Screencast.showOverlays
 * since: v1.59
 

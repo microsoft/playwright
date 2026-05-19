@@ -384,7 +384,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async screencastShowActions(params: channels.PageScreencastShowActionsParams): Promise<channels.PageScreencastShowActionsResult> {
-    this._page.screencast.showActions({ duration: params.duration, position: params.position, fontSize: params.fontSize });
+    this._page.screencast.showActions({ duration: params.duration, position: params.position, fontSize: params.fontSize, cursor: params.cursor });
   }
 
   async screencastHideActions(): Promise<channels.PageScreencastHideActionsResult> {

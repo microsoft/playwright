@@ -16648,6 +16648,12 @@ export interface Screencast {
    */
   showActions(options?: {
     /**
+     * Cursor decoration shown for pointer actions. `"pointer"` (the default) renders a mouse pointer that animates from
+     * the previous action point to the next one. `"none"` disables the cursor decoration.
+     */
+    cursor?: "none"|"pointer";
+
+    /**
      * How long each annotation is displayed in milliseconds. Defaults to `500`.
      */
     duration?: number;

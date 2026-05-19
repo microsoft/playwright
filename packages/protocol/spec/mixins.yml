@@ -26,6 +26,11 @@ ShowActionsOptions:
       - bottom
       - bottom-right
     fontSize: int?
+    cursor:
+      type: enum?
+      literals:
+      - none
+      - pointer
 
 CommonScreenshotOptions:
   type: mixin

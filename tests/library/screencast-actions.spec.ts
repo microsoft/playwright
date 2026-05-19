@@ -182,6 +182,65 @@ test('should stop showing actions after hideActions', async ({ browser, server }
   await context.close();
 });
 
+test('should render an action cursor that animates to the click point', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/input/button.html');
+
+  await page.screencast.showActions({ duration: 5000 });
+  page.click('button').catch(() => {});
+
+  const cursor = page.locator('x-pw-action-cursor');
+  await expect(cursor).toBeVisible();
+
+  const initial = await cursor.evaluate((el: HTMLElement) => ({
+    top: el.style.top,
+    left: el.style.left,
+  }));
+  expect(initial.top).toMatch(/\d+px/);
+  expect(initial.left).toMatch(/\d+px/);
+
+  await context.close();
+});
+
+test('cursor moves between two pointer actions', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.setContent(`
+    <div style="position: fixed; top: 20px; left: 20px; width: 60px; height: 60px;" id="a">A</div>
+    <div style="position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px;" id="b">B</div>
+  `);
+
+  await page.screencast.showActions({ duration: 5000 });
+  const cursor = page.locator('x-pw-action-cursor');
+
+  page.click('#a', { force: true }).catch(() => {});
+  await expect(cursor).toBeVisible();
+  const first = await cursor.evaluate((el: HTMLElement) => ({ top: el.style.top, left: el.style.left }));
+
+  page.click('#b', { force: true }).catch(() => {});
+  await expect.poll(async () => {
+    return await cursor.evaluate((el: HTMLElement) => ({ top: el.style.top, left: el.style.left }));
+  }).not.toEqual(first);
+
+  await context.close();
+});
+
+test('cursor: "none" suppresses the action cursor decoration', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/input/button.html');
+
+  await page.screencast.showActions({ duration: 5000, cursor: 'none' });
+  page.click('button').catch(() => {});
+
+  // The click marker still renders, but the cursor does not.
+  await expect(page.locator('x-pw-action-point')).toBeVisible();
+  await expect(page.locator('x-pw-action-cursor')).toBeHidden();
+
+  await context.close();
+});
+
 test('should survive navigation', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
