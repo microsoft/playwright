@@ -50,6 +50,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
   const kBoundingRectAttribute = '__playwright_bounding_rect__';
   const kPopoverOpenAttribute = '__playwright_popover_open_';
   const kDialogOpenAttribute = '__playwright_dialog_open_';
+  const kAnimationStyleAttribute = '__playwright_animation_style_';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -81,6 +82,77 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     } catch (e) {
       return url;
     }
+  }
+
+  // Collect the effective values of properties driven by script-created Web Animations
+  // (Element.animate()). The snapshot serializes the DOM and stylesheets but not running
+  // animations, so without this an animated element renders in its resting CSS state.
+  function computeAnimatedStyles(): Map<Element, string> {
+    const result = new Map<Element, string>();
+    try {
+      // getAnimations() does not cross shadow boundaries, so collect every root.
+      const roots: (Document | ShadowRoot)[] = [document];
+      const collectShadowRoots = (node: Node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const shadowRoot = (node as Element).shadowRoot;
+          if (shadowRoot) {
+            roots.push(shadowRoot);
+            collectShadowRoots(shadowRoot);
+          }
+        }
+        for (let child = node.firstChild; child; child = child.nextSibling)
+          collectShadowRoots(child);
+      };
+      if (document.documentElement)
+        collectShadowRoots(document.documentElement);
+      const animations: Animation[] = [];
+      for (const root of roots) {
+        if (typeof root.getAnimations === 'function')
+          animations.push(...root.getAnimations());
+      }
+
+      const propertiesByElement = new Map<Element, Set<string>>();
+      for (const animation of animations) {
+        // CSS animations and transitions survive in the captured stylesheets; only
+        // script-created animations need to be baked in.
+        if ((window.CSSAnimation && animation instanceof window.CSSAnimation) ||
+            (window.CSSTransition && animation instanceof window.CSSTransition))
+          continue;
+        const effect = animation.effect;
+        if (!effect || !(effect instanceof window.KeyframeEffect) || !(effect.target instanceof Element) || effect.pseudoElement)
+          continue;
+        // Skip animations that are not currently contributing to the computed style.
+        if (effect.getComputedTiming().progress === null)
+          continue;
+        let properties = propertiesByElement.get(effect.target);
+        if (!properties) {
+          properties = new Set();
+          propertiesByElement.set(effect.target, properties);
+        }
+        for (const keyframe of effect.getKeyframes()) {
+          for (const property of Object.keys(keyframe)) {
+            if (property !== 'offset' && property !== 'computedOffset' && property !== 'easing' && property !== 'composite')
+              properties.add(property);
+          }
+        }
+      }
+      for (const [element, properties] of propertiesByElement) {
+        const style = window.getComputedStyle(element);
+        const declarations: [string, string][] = [];
+        for (const property of properties) {
+          // Keyframe property names are camelCased, except for CSS custom properties.
+          const name = property.startsWith('--') ? property : property.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
+          const value = style.getPropertyValue(name);
+          if (value)
+            declarations.push([name, value]);
+        }
+        if (declarations.length)
+          result.set(element, JSON.stringify(declarations));
+      }
+    } catch {
+      // Web Animations are a best-effort enhancement; never fail the snapshot over them.
+    }
+    return result;
   }
 
   class Streamer {
@@ -352,6 +424,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
       const definedCustomElements = new Set<string>();
 
+      // Web Animations created via Element.animate() leave no trace in the DOM or in
+      // stylesheets, so the element reverts to its resting CSS in the rendered snapshot.
+      // Bake the effective animated values into an inline style for each animated element.
+      const animatedStyles = computeAnimatedStyles();
+
       const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
         const nodeType = node.nodeType;
         const nodeName = nodeType === Node.DOCUMENT_FRAGMENT_NODE ? 'template' : node.nodeName;
@@ -489,6 +566,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(kDialogOpenAttribute);
             expectValue(value);
             attrs[kDialogOpenAttribute] = value;
+          }
+          const animationStyle = animatedStyles.get(element);
+          if (animationStyle) {
+            expectValue(kAnimationStyleAttribute);
+            expectValue(animationStyle);
+            attrs[kAnimationStyleAttribute] = animationStyle;
           }
           if (element.scrollTop) {
             expectValue(kScrollTopAttribute);

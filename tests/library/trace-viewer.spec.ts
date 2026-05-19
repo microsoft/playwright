@@ -1914,6 +1914,59 @@ test('should show a modal dialog', async ({ runAndTrace, page, platform, browser
   await expect.poll(() => dialog.evaluate(e => e.matches(':modal'))).toBe(true);
 });
 
+test('should show element held in place by a web animation', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40224' },
+}, async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <style>
+        #box {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100px;
+          height: 100px;
+          background: rgb(255, 0, 0);
+          /* Resting CSS places the box off-screen above the viewport. */
+          transform: translateY(-200px);
+        }
+      </style>
+      <div id="box"></div>
+      <div id="host"></div>
+    `);
+    await page.evaluate(() => {
+      // A fill:forwards animation holds the box at translateY(0) — on-screen.
+      document.getElementById('box').animate(
+          [{ transform: 'translateY(0px)' }],
+          { duration: 1, fill: 'forwards' });
+
+      const shadow = document.getElementById('host').attachShadow({ mode: 'open' });
+      shadow.innerHTML = `
+        <style>
+          #box2 {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100px;
+            height: 100px;
+            background: rgb(255, 0, 0);
+            transform: translateY(-200px);
+          }
+        </style>
+        <div id="box2"></div>`;
+      shadow.getElementById('box2').animate(
+          [{ transform: 'translateY(0px)' }],
+          { duration: 1, fill: 'forwards' });
+    });
+    await expect(page.locator('#box')).toBeInViewport();
+    await expect(page.locator('#box2')).toBeInViewport();
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('Expect');
+  await expect(snapshot.locator('#box')).toBeInViewport();
+  await expect(snapshot.locator('#box2')).toBeInViewport();
+});
+
 test('should open settings dialog', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');

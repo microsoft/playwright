@@ -365,6 +365,17 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         }
         element.removeAttribute('__playwright_dialog_open_');
       }
+      // Restore the effective values of script-created Web Animations, which are not
+      // otherwise represented in the serialized DOM or stylesheets.
+      for (const element of root.querySelectorAll(`[__playwright_animation_style_]`)) {
+        try {
+          const declarations = JSON.parse(element.getAttribute('__playwright_animation_style_')!) as [string, string][];
+          for (const [name, value] of declarations)
+            (element as HTMLElement).style.setProperty(name, value, 'important');
+        } catch {
+        }
+        element.removeAttribute('__playwright_animation_style_');
+      }
 
       // Highlight targets marked by the current snapshotter, which sets `__playwright_target__`
       // to an empty string on the active target elements. For traces produced by older versions,
