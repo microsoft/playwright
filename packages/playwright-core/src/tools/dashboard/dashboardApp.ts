@@ -266,7 +266,7 @@ async function acquireSingleton(options: DashboardOptions): Promise<AcquireResul
     const server = net.createServer();
     server.listen(socketPath, () => resolve({ role: 'winner', server }));
     server.on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code !== 'EADDRINUSE')
+      if (err.code !== 'EADDRINUSE' && err.code !== 'EEXIST')
         return reject(err);
       let ackBuffer = '';
       const client = net.connect(socketPath, () => {
