@@ -177,14 +177,13 @@ export class DashboardConnection implements Transport {
     }
     if (!page)
       return;
-    const pendingDone = pending.done;
     this._pendingReveal = undefined;
     try {
       await this._switchAttachedTo(page);
       this._pushTabs();
-      pendingDone.resolve();
+      pending.done.resolve();
     } catch (e) {
-      pendingDone.reject(e instanceof Error ? e : new Error(String(e)));
+      pending.done.reject(e instanceof Error ? e : new Error(String(e)));
       throw e;
     }
   }
