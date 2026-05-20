@@ -1,8 +1,9 @@
 // This was adapted from https://github.com/andrewrk/node-fd-slicer by Andrew Kelley under the MIT License.
 // Originally vendored from https://github.com/thejoshwolfe/yauzl at 3.2.1.
-// Modified to apply the destroy() lifecycle fix from
-// https://github.com/thejoshwolfe/yauzl/pull/168 (HoJeong Go) so async iteration
-// over `openReadStream` properly emits 'close' on modern Node.
+// Modified to apply the stream lifecycle fix from
+// https://github.com/seia-soto/yauzl/tree/fix-early-exit-1 (HoJeong Go), which
+// references https://github.com/thejoshwolfe/yauzl/pull/168#issuecomment-4488785274,
+// so async iteration over `openReadStream` completes correctly on modern Node.
 var fs = require('fs');
 var util = require('util');
 var stream = require('stream');
@@ -88,38 +89,37 @@ function ReadStream(context, options) {
 
   this.context = context;
   this.context.ref();
+  this._hasRef = true;
 
   this.start = options.start || 0;
   this.endOffset = options.end;
   this.pos = this.start;
-  this._destroyed = false;
+
+  this.once('end', this._unref);
 }
 
 ReadStream.prototype._read = function(n) {
   var self = this;
-  if (self._destroyed) return;
+  if (self.destroyed) return;
 
   var toRead = Math.min(self._readableState.highWaterMark, n);
   if (self.endOffset != null) {
     toRead = Math.min(toRead, self.endOffset - self.pos);
   }
   if (toRead <= 0) {
-    self._destroyed = true;
     self.push(null);
-    self.context.unref();
     return;
   }
   self.context.pend.go(function(cb) {
-    if (self._destroyed) return cb();
+    if (self.destroyed) return cb();
     var buffer = Buffer.allocUnsafe(toRead);
     fs.read(self.context.fd, buffer, 0, toRead, self.pos, function(err, bytesRead) {
-      if (self._destroyed) return cb();
-      if (err) {
+      if (self.destroyed) {
+        // ignore
+      } else if (err) {
         self.destroy(err);
       } else if (bytesRead === 0) {
-        self._destroyed = true;
         self.push(null);
-        self.context.unref();
       } else {
         self.pos += bytesRead;
         self.push(buffer.slice(0, bytesRead));
@@ -129,19 +129,16 @@ ReadStream.prototype._read = function(n) {
   });
 };
 
-ReadStream.prototype.destroy = function(err) {
-  if (err == null && !this.readableEnded) {
-    err = new Error("stream destroyed");
-  }
-  return Readable.prototype.destroy.call(this, err);
-};
-
-ReadStream.prototype._destroy = function(err, cb) {
-  if (!this._destroyed) {
-    this._destroyed = true;
+ReadStream.prototype._unref = function() {
+  if (this._hasRef) {
+    this._hasRef = false;
     this.context.unref();
   }
-  cb(err);
+};
+
+ReadStream.prototype._destroy = function(err, callback) {
+  this._unref();
+  callback(err);
 };
 
 util.inherits(WriteStream, Writable);
@@ -151,19 +148,19 @@ function WriteStream(context, options) {
 
   this.context = context;
   this.context.ref();
+  this._hasRef = true;
 
   this.start = options.start || 0;
   this.endOffset = (options.end == null) ? Infinity : +options.end;
   this.bytesWritten = 0;
   this.pos = this.start;
-  this._destroyed = false;
 
-  this.on('finish', this.destroy.bind(this));
+  this.once('finish', this._unref);
 }
 
 WriteStream.prototype._write = function(buffer, encoding, callback) {
   var self = this;
-  if (self._destroyed) return;
+  if (self.destroyed) return;
 
   if (self.pos + buffer.length > self.endOffset) {
     var err = new Error("maximum file length exceeded");
@@ -173,7 +170,7 @@ WriteStream.prototype._write = function(buffer, encoding, callback) {
     return;
   }
   self.context.pend.go(function(cb) {
-    if (self._destroyed) return cb();
+    if (self.destroyed) return cb();
     fs.write(self.context.fd, buffer, 0, buffer.length, self.pos, function(err, bytes) {
       if (err) {
         self.destroy();
@@ -190,12 +187,16 @@ WriteStream.prototype._write = function(buffer, encoding, callback) {
   });
 };
 
-WriteStream.prototype._destroy = function(err, cb) {
-  if (!this._destroyed) {
-    this._destroyed = true;
+WriteStream.prototype._unref = function() {
+  if (this._hasRef) {
+    this._hasRef = false;
     this.context.unref();
   }
-  cb(err);
+};
+
+WriteStream.prototype._destroy = function(err, callback) {
+  this._unref();
+  callback(err);
 };
 
 util.inherits(BufferSlicer, EventEmitter);
@@ -245,7 +246,6 @@ BufferSlicer.prototype.write = function(buffer, offset, length, position, callba
 BufferSlicer.prototype.createReadStream = function(options) {
   options = options || {};
   var readStream = new PassThrough(options);
-  readStream._destroyed = false;
   readStream.start = options.start || 0;
   readStream.endOffset = options.end;
   // by the time this function returns, we'll be done.
@@ -268,10 +268,6 @@ BufferSlicer.prototype.createReadStream = function(options) {
   }
 
   readStream.end();
-  readStream._destroy = function(err, cb) {
-    readStream._destroyed = true;
-    PassThrough.prototype._destroy.call(readStream, err, cb);
-  };
   return readStream;
 };
 
@@ -283,15 +279,14 @@ BufferSlicer.prototype.createWriteStream = function(options) {
   writeStream.endOffset = (options.end == null) ? this.buffer.length : +options.end;
   writeStream.bytesWritten = 0;
   writeStream.pos = writeStream.start;
-  writeStream._destroyed = false;
   writeStream._write = function(buffer, encoding, callback) {
-    if (writeStream._destroyed) return;
+    if (writeStream.destroyed) return;
 
     var end = writeStream.pos + buffer.length;
     if (end > writeStream.endOffset) {
       var err = new Error("maximum file length exceeded");
       err.code = 'ETOOBIG';
-      writeStream._destroyed = true;
+      writeStream.destroy();
       callback(err);
       return;
     }
@@ -301,10 +296,6 @@ BufferSlicer.prototype.createWriteStream = function(options) {
     writeStream.pos = end;
     writeStream.emit('progress');
     callback();
-  };
-  writeStream._destroy = function(err, cb) {
-    writeStream._destroyed = true;
-    cb(err);
   };
   return writeStream;
 };
