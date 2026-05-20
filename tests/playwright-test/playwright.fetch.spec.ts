@@ -91,6 +91,8 @@ test('should hint unrouteAll if failed in the handler', async ({ runInlineTest, 
         await page.route('**/empty.html', async route => {
           await route.continue();
           await closedPromise;
+          // Wait for the page to actually close before calling route.fetch().
+          await new Promise(f => setTimeout(f, 500));
           await route.fetch();
         });
         await page.goto('${server.EMPTY_PAGE}');
@@ -99,7 +101,7 @@ test('should hint unrouteAll if failed in the handler', async ({ runInlineTest, 
 
       test('second test', async ({ page }) => {
         // Wait enough for the worker to be killed.
-        await new Promise(f => setTimeout(f, 1000));
+        await new Promise(f => setTimeout(f, 2000));
       });
     `,
   }, { workers: 1 });
