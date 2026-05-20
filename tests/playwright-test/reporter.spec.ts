@@ -915,3 +915,50 @@ test('should have static annotations on result when all tests are skipped', asyn
     'annotation: skip',
   ]);
 });
+
+test('AggregateError sub-errors are spread into testInfo.errors', async ({ runInlineTest }) => {
+  class TestReporter implements Reporter {
+    onTestEnd(test: TestCase, result: TestResult): void {
+      for (const error of result.errors)
+        console.log(`%%${error.message ?? error.value}`);
+    }
+  }
+
+  const result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('basic', () => {
+        throw new AggregateError([new Error('a'), new Error('b')], 'parent');
+      });
+      test('nested', () => {
+        throw new AggregateError([
+          new AggregateError([new Error('a'), new Error('b')], 'inner'),
+          new Error('c'),
+        ], 'outer');
+      });
+      test('non-error entries', () => {
+        const err: any = new Error('parent');
+        err.errors = ['oops', { foo: 1 }, new Error('real')];
+        throw err;
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toEqual([
+    'AggregateError: parent',
+    'Error: a',
+    'Error: b',
+    'AggregateError: outer',
+    'AggregateError: inner',
+    'Error: a',
+    'Error: b',
+    'Error: c',
+    'Error: parent',
+    `'oops'`,
+    '{ foo: 1 }',
+    'Error: real',
+  ]);
+});
