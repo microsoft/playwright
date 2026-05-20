@@ -22,6 +22,7 @@ import type { Route } from 'playwright-core';
 import path from 'path';
 import fs from 'fs';
 import { comparePNGs } from '../config/comparator';
+import { PNG } from 'playwright-core/lib/utilsBundle';
 
 it.describe('page screenshot', () => {
   it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
@@ -238,6 +239,60 @@ it.describe('page screenshot', () => {
     const screenshot = await page.screenshot({ fullPage: true });
     expect(screenshot).toBeInstanceOf(Buffer);
     await verifyViewport(page, 500, 500);
+  });
+
+  it.describe('loadLazyContent', () => {
+    // A 200px viewport with a 600px spacer above a target that only turns red
+    // once an IntersectionObserver sees it scroll into view.
+    const lazyContentPage = `
+      <style>html, body { margin: 0; }</style>
+      <div style="height: 600px; background: rgb(0, 0, 255);"></div>
+      <div id="target" style="height: 200px; background: rgb(0, 255, 0);"></div>
+      <script>
+        const target = document.getElementById('target');
+        new IntersectionObserver((entries, observer) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              target.style.background = 'rgb(255, 0, 0)';
+              observer.disconnect();
+            }
+          }
+        }).observe(target);
+      </script>
+    `;
+
+    function pixelInTarget(buffer: Buffer) {
+      const png = PNG.sync.read(buffer);
+      // Target occupies the bottom quarter of the 800px-tall page.
+      const x = Math.floor(png.width / 2);
+      const y = Math.floor(png.height * 7 / 8);
+      const idx = (png.width * y + x) * 4;
+      return { r: png.data[idx], g: png.data[idx + 1], b: png.data[idx + 2] };
+    }
+
+    it('should not load lazy content by default', async ({ page }) => {
+      await page.setViewportSize({ width: 200, height: 200 });
+      await page.setContent(lazyContentPage);
+      const screenshot = await page.screenshot({ fullPage: true });
+      // IntersectionObserver never fired: the target keeps its initial green.
+      expect(pixelInTarget(screenshot)).toEqual({ r: 0, g: 255, b: 0 });
+    });
+
+    it('should load lazy content when requested', async ({ page }) => {
+      await page.setViewportSize({ width: 200, height: 200 });
+      await page.setContent(lazyContentPage);
+      const screenshot = await page.screenshot({ fullPage: true, loadLazyContent: true });
+      // Scrolling through the page fired the IntersectionObserver, turning the target red.
+      expect(pixelInTarget(screenshot)).toEqual({ r: 255, g: 0, b: 0 });
+    });
+
+    it('should restore scroll position after loading lazy content', async ({ page }) => {
+      await page.setViewportSize({ width: 200, height: 200 });
+      await page.setContent(lazyContentPage);
+      await page.evaluate(() => window.scrollTo(0, 120));
+      await page.screenshot({ fullPage: true, loadLazyContent: true });
+      expect(await page.evaluate(() => window.scrollY)).toBe(120);
+    });
   });
 
   it('should allow transparency', async ({ page, browserName, isBidi }) => {

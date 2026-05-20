@@ -1302,6 +1302,15 @@ Specify the color of the overlay box for masked elements, in [CSS color format](
 When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
 `false`.
 
+## screenshot-option-load-lazy-content
+- `loadLazyContent` <[boolean]>
+
+When true, Playwright scrolls through the whole page before taking the screenshot. This gives lazily-loaded
+content a chance to render — for example images with `loading="lazy"` and content revealed by an
+[`IntersectionObserver`](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver). The page is
+scrolled back to its original position afterwards. Most useful together with [`option: fullPage`]. Defaults to
+`false`.
+
 ## screenshot-option-clip
 - `clip` <[Object]>
   * alias-java: Clip

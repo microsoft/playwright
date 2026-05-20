@@ -52,6 +52,7 @@ type ToHaveScreenshotOptions = ToHaveScreenshotConfigOptions & {
     height: number;
   };
   fullPage?: boolean;
+  loadLazyContent?: boolean;
   mask?: Array<Locator>;
   maskColor?: string;
   omitBackground?: boolean;
@@ -61,6 +62,7 @@ type ToHaveScreenshotOptions = ToHaveScreenshotConfigOptions & {
 const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
   'clip',
   'fullPage',
+  'loadLazyContent',
   'mask',
   'maskColor',
   'omitBackground',
@@ -353,6 +355,7 @@ export async function toHaveScreenshot(
     caret: helper.options.caret ?? 'hide',
     clip: helper.options.clip,
     fullPage: helper.options.fullPage,
+    loadLazyContent: helper.options.loadLazyContent,
     mask: helper.options.mask,
     maskColor: helper.options.maskColor,
     omitBackground: helper.options.omitBackground,

@@ -24564,6 +24564,15 @@ export interface PageScreenshotOptions {
   fullPage?: boolean;
 
   /**
+   * When true, Playwright scrolls through the whole page before taking the screenshot. This gives lazily-loaded content
+   * a chance to render — for example images with `loading="lazy"` and content revealed by an
+   * [`IntersectionObserver`](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver). The page is
+   * scrolled back to its original position afterwards. Most useful together with
+   * [`fullPage`](https://playwright.dev/docs/api/class-page#page-screenshot-option-full-page). Defaults to `false`.
+   */
+  loadLazyContent?: boolean;
+
+  /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
    * box `#FF00FF` (customized by
    * [`maskColor`](https://playwright.dev/docs/api/class-page#page-screenshot-option-mask-color)) that completely covers

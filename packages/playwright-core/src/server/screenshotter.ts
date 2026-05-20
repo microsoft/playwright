@@ -42,6 +42,7 @@ export type ScreenshotOptions = {
   mask?: { frame: Frame, selector: string}[];
   maskColor?: string;
   fullPage?: boolean;
+  loadLazyContent?: boolean;
   clip?: Rect;
   scale?: 'css' | 'device';
   caret?: 'hide' | 'initial';
@@ -164,6 +165,41 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
   };
 }
 
+async function inPageScrollThroughPage() {
+  const scrollingElement = (document.scrollingElement || document.documentElement) as HTMLElement | null;
+  if (!scrollingElement)
+    return;
+
+  const nextFrame = () => new Promise<void>(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+
+  const startTop = scrollingElement.scrollTop;
+  const startLeft = scrollingElement.scrollLeft;
+  const step = Math.max(window.innerHeight, 1);
+
+  // Scroll from top to bottom in viewport-sized steps so that IntersectionObserver-driven
+  // and loading="lazy" content gets a chance to render. Stop once scrolling no longer moves.
+  let previousTop = -1;
+  for (let guard = 0; guard < 1000 && scrollingElement.scrollTop !== previousTop; ++guard) {
+    previousTop = scrollingElement.scrollTop;
+    scrollingElement.scrollTop = previousTop + step;
+    await nextFrame();
+  }
+
+  // Give lazily-loaded images a chance to decode, capped so a slow or never-resolving
+  // image cannot hang the screenshot.
+  const images = Array.from(document.querySelectorAll('img')).filter(image => !image.complete);
+  await Promise.race([
+    Promise.all(images.map(image => image.decode().catch(() => {}))),
+    new Promise<void>(resolve => setTimeout(resolve, 1000)),
+  ]);
+
+  scrollingElement.scrollTop = startTop;
+  scrollingElement.scrollLeft = startLeft;
+  await nextFrame();
+}
+
 export class Screenshotter {
   private _queue = new TaskQueue();
   private _page: Page;
@@ -205,6 +241,8 @@ export class Screenshotter {
     return this._queue._postTask(async () => {
       progress.log('taking page screenshot');
       const viewportSize = await this._originalViewportSize(progress);
+      if (options.loadLazyContent)
+        await this._scrollThroughPage(progress);
       await this._preparePageForScreenshot(progress, this._page.mainFrame(), options.style, options.caret !== 'initial', options.animations === 'disabled');
       try {
         if (options.fullPage) {
@@ -248,6 +286,11 @@ export class Screenshotter {
         await this._restorePageAfterScreenshot();
       }
     });
+  }
+
+  private async _scrollThroughPage(progress: Progress) {
+    progress.log('  scrolling through the page to load lazy content');
+    await this._page.mainFrame().evaluateExpression(progress, '(' + inPageScrollThroughPage.toString() + ')()', { world: 'utility' });
   }
 
   private async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {

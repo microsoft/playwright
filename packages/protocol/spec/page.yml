@@ -186,6 +186,7 @@ Page:
         maxDiffPixelRatio: float?
         threshold: float?
         fullPage: boolean?
+        loadLazyContent: boolean?
         clip: Rect?
         $mixin: CommonScreenshotOptions
       returns:
@@ -212,6 +213,7 @@ Page:
           - jpeg
         quality: int?
         fullPage: boolean?
+        loadLazyContent: boolean?
         clip: Rect?
         $mixin: CommonScreenshotOptions
       returns:

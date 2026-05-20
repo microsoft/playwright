@@ -3934,6 +3934,9 @@ Returns the buffer with the captured screenshot.
 ### option: Page.screenshot.fullPage = %%-screenshot-option-full-page-%%
 * since: v1.8
 
+### option: Page.screenshot.loadLazyContent = %%-screenshot-option-load-lazy-content-%%
+* since: v1.61
+
 ### option: Page.screenshot.clip = %%-screenshot-option-clip-%%
 * since: v1.8
 

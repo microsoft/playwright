@@ -261,6 +261,9 @@ Snapshot name.
 ### option: PageAssertions.toHaveScreenshot#1.fullPage = %%-screenshot-option-full-page-%%
 * since: v1.23
 
+### option: PageAssertions.toHaveScreenshot#1.loadLazyContent = %%-screenshot-option-load-lazy-content-%%
+* since: v1.61
+
 ### option: PageAssertions.toHaveScreenshot#1.mask = %%-screenshot-option-mask-%%
 * since: v1.23
 
@@ -314,6 +317,9 @@ Note that screenshot assertions only work with Playwright test runner.
 
 ### option: PageAssertions.toHaveScreenshot#2.fullPage = %%-screenshot-option-full-page-%%
 * since: v1.23
+
+### option: PageAssertions.toHaveScreenshot#2.loadLazyContent = %%-screenshot-option-load-lazy-content-%%
+* since: v1.61
 
 ### option: PageAssertions.toHaveScreenshot#2.mask = %%-screenshot-option-mask-%%
 * since: v1.23
