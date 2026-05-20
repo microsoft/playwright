@@ -17,6 +17,7 @@
 import { defineConfig } from '@playwright/test';
 
 process.env.PWTEST_UNDER_TEST = '1';
+const channel = process.env.PWTEST_CHANNEL as any;
 
 export default defineConfig({
   forbidOnly: !!process.env.CI,
@@ -25,7 +26,8 @@ export default defineConfig({
     {
       name: 'chromium',
       use: {
-        browserName: 'chromium'
+        browserName: 'chromium',
+        channel,
       },
     },
 
@@ -33,13 +35,15 @@ export default defineConfig({
       name: 'firefox',
       use: {
         browserName: 'firefox',
+        channel,
       },
     },
 
     {
       name: 'webkit',
       use: {
-        browserName: 'webkit'
+        browserName: 'webkit',
+        channel,
       },
     },
   ]
