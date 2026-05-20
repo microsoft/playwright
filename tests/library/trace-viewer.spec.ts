@@ -743,6 +743,28 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
   await expect(frame.locator('span')).toHaveCSS('color', 'rgb(0, 0, 255)');
 });
 
+test('should capture web animations computed style', async ({ page, runAndTrace }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <style>
+        #target { width: 0; height: 0; background: red; overflow: hidden; }
+      </style>
+      <div id="target"></div>
+    `);
+    await page.evaluate(async () => {
+      const target = document.getElementById('target')!;
+      const animation = target.animate(
+          [{ width: '0px', height: '0px' }, { width: '120px', height: '40px' }],
+          { duration: 50, fill: 'forwards' });
+      await animation.finished;
+    });
+  });
+
+  const frame = await traceViewer.snapshotFrame('Evaluate');
+  await expect(frame.locator('#target')).toHaveCSS('width', '120px');
+  await expect(frame.locator('#target')).toHaveCSS('height', '40px');
+});
+
 test('should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
