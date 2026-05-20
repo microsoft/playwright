@@ -2080,6 +2080,12 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   configFile?: string;
 
   /**
+   * See
+   * [testConfig.failOnFlakyTests](https://playwright.dev/docs/api/class-testconfig#test-config-fail-on-flaky-tests).
+   */
+  failOnFlakyTests: boolean;
+
+  /**
    * See [testConfig.forbidOnly](https://playwright.dev/docs/api/class-testconfig#test-config-forbid-only).
    */
   forbidOnly: boolean;

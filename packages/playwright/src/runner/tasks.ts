@@ -120,7 +120,7 @@ export class TestRun {
   result(): 'failed' | 'passed' {
     const hasFailedTests = this.rootSuite?.allTests().some(test => !test.ok());
     const hasFlakyTests = this.rootSuite?.allTests().some(test => test.outcome() === 'flaky');
-    return this.hasWorkerErrors || this.hasReachedMaxFailures() || hasFailedTests || (this.config.failOnFlakyTests && hasFlakyTests) ? 'failed' : 'passed';
+    return this.hasWorkerErrors || this.hasReachedMaxFailures() || hasFailedTests || (this.config.config.failOnFlakyTests && hasFlakyTests) ? 'failed' : 'passed';
   }
 }
 

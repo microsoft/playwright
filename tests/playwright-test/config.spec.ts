@@ -77,8 +77,16 @@ test('should support failOnFlakyTests config option', async ({ runInlineTest }) 
     'playwright.config.ts': `
         module.exports = {
           failOnFlakyTests: true,
-          retries: 1
+          retries: 1,
+          reporter: [['line'], ['./reporter.js']],
         };
+    `,
+    'reporter.js': `
+      module.exports = class Reporter {
+        onBegin(config) {
+          console.log('reporter.failOnFlakyTests:', config.failOnFlakyTests);
+        }
+      };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -89,6 +97,7 @@ test('should support failOnFlakyTests config option', async ({ runInlineTest }) 
   }, { 'retries': 1 });
   expect(result.exitCode).not.toBe(0);
   expect(result.flaky).toBe(1);
+  expect(result.output).toContain('reporter.failOnFlakyTests: true');
 });
 
 test('should read config from --config, resolve relative testDir', async ({ runInlineTest }) => {
