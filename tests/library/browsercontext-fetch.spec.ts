@@ -1256,7 +1256,7 @@ it('should abort requests when browser context closes', async ({ contextFactory,
     server.waitForRequest('/empty.html').then(() => context.close())
   ]);
   expect(error instanceof Error).toBeTruthy();
-  expect(error.message).toContain(kTargetClosedErrorMessage);
+  expect(error.message).toMatch(/Request context disposed|Target page, context or browser has been closed/);
   await connectionClosed;
 });
 

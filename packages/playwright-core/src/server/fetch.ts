@@ -31,6 +31,7 @@ import { getUserAgent } from './userAgent';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { Cookie, CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
+import { TargetClosedError } from './errors';
 import { SdkObject } from './instrumentation';
 import { isAbortError } from './progress';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
@@ -109,6 +110,7 @@ export abstract class APIRequestContext extends SdkObject {
   readonly fetchLog: Map<string, string[]> = new Map();
   protected static allInstances: Set<APIRequestContext> = new Set();
   _closeReason: string | undefined;
+  private _disposed = false;
 
   static findResponseBody(guid: string): Buffer | undefined {
     for (const request of APIRequestContext.allInstances) {
@@ -147,6 +149,7 @@ export abstract class APIRequestContext extends SdkObject {
   abstract cookies(progress: Progress, url: URL): Promise<channels.NetworkCookie[]>;
 
   protected _disposeImpl() {
+    this._disposed = true;
     APIRequestContext.allInstances.delete(this);
     this.fetchResponses.clear();
     this.fetchLog.clear();
@@ -327,6 +330,9 @@ export abstract class APIRequestContext extends SdkObject {
       postData
     };
     this.emit(APIRequestContext.Events.Request, requestEvent);
+
+    if (this._disposed)
+      throw new TargetClosedError(this._closeReason || 'Request context disposed.');
 
     let destroyRequest: (() => void) | undefined;
     progress.setAllowConcurrentOrNestedRaces(true);
@@ -530,7 +536,7 @@ export abstract class APIRequestContext extends SdkObject {
 
       listeners.push(
           eventsHelper.addEventListener(this, APIRequestContext.Events.Dispose, () => {
-            reject(new Error('Request context disposed.'));
+            reject(new TargetClosedError(this._closeReason || 'Request context disposed.'));
             request.destroy();
           })
       );

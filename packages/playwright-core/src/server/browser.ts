@@ -27,6 +27,7 @@ import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
 import { BrowserInfo, serverRegistry } from '../serverRegistry';
 import { nullProgress } from './progress';
+import { TargetClosedError } from './errors';
 
 import type * as types from './types';
 import type { ProxySettings } from './types';
@@ -174,6 +175,8 @@ export abstract class Browser extends SdkObject {
       context.browserClosed();
     if (this._defaultContext)
       this._defaultContext.browserClosed();
+    for (const download of this._downloads.values())
+      download.artifact.reportFinished(new TargetClosedError(undefined));
     this.stopServer(nullProgress).catch(() => {});
     this.emit(Browser.Events.Disconnected);
     this.instrumentation.onBrowserClose(this);

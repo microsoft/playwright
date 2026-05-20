@@ -214,12 +214,19 @@ export class Request extends SdkObject {
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
+  async raceWithPageClosure<T>(progress: Progress, promise: Promise<T>): Promise<T> {
+    const scope = this._serviceWorker?.openScope ?? this._frame?._page.openScope;
+    if (scope)
+      return await progress.race(scope.race(promise));
+    return await progress.race(promise);
+  }
+
   async rawRequestHeaders(progress: Progress): Promise<HeadersArray> {
-    return await progress.race(this._rawRequestHeaders());
+    return await this.raceWithPageClosure(progress, this._rawRequestHeaders());
   }
 
   async response(progress: Progress): Promise<Response | null> {
-    return await progress.race(this._waitForResponse());
+    return await this.raceWithPageClosure(progress, this._waitForResponse());
   }
 
   _setFailureText(failureText: string) {
@@ -539,27 +546,27 @@ export class Response extends SdkObject {
   }
 
   async body(progress: Progress): Promise<Buffer> {
-    return await progress.race(this.internalBody());
+    return await this._request.raceWithPageClosure(progress, this.internalBody());
   }
 
   async securityDetails(progress: Progress): Promise<SecurityDetails | null> {
-    return await progress.race(this.internalSecurityDetails());
+    return await this._request.raceWithPageClosure(progress, this.internalSecurityDetails());
   }
 
   async serverAddr(progress: Progress): Promise<RemoteAddr | null> {
-    return (await progress.race(this._serverAddrPromise)) || null;
+    return (await this._request.raceWithPageClosure(progress, this._serverAddrPromise)) || null;
   }
 
   async rawResponseHeaders(progress: Progress): Promise<NameValue[]> {
-    return await progress.race(this._rawResponseHeadersPromise);
+    return await this._request.raceWithPageClosure(progress, this._rawResponseHeadersPromise);
   }
 
   async httpVersion(progress: Progress): Promise<string> {
-    return await progress.race(this._httpVersion());
+    return await this._request.raceWithPageClosure(progress, this._httpVersion());
   }
 
   async sizes(progress: Progress): Promise<ResourceSizes> {
-    return await progress.race(this._sizes());
+    return await this._request.raceWithPageClosure(progress, this._sizes());
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
