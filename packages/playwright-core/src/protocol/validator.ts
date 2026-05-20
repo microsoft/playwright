@@ -359,6 +359,8 @@ scheme.APIResponse = tObject({
   status: tInt,
   statusText: tString,
   headers: tArray(tType('NameValue')),
+  securityDetails: tOptional(tType('SecurityDetails')),
+  serverAddr: tOptional(tType('RemoteAddr')),
 });
 scheme.ArtifactInitializer = tObject({
   absolutePath: tString,

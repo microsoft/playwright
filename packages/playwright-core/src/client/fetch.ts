@@ -26,7 +26,7 @@ import { mkdirIfNeeded } from './fileUtils';
 import { TimeoutSettings } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
-import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState, TimeoutOptions } from './types';
+import type { ClientCertificate, FilePayload, Headers, RemoteAddr, SecurityDetails, SetStorageState, StorageState, TimeoutOptions } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '@isomorphic/types';
@@ -338,6 +338,14 @@ export class APIResponse implements api.APIResponse {
 
   headersArray(): HeadersArray {
     return this._headers.headersArray();
+  }
+
+  async securityDetails(): Promise<SecurityDetails | null> {
+    return this._initializer.securityDetails ?? null;
+  }
+
+  async serverAddr(): Promise<RemoteAddr | null> {
+    return this._initializer.serverAddr ?? null;
   }
 
   async body(): Promise<Buffer> {

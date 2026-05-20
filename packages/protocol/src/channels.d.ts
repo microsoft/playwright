@@ -738,6 +738,8 @@ export type APIResponse = {
   status: number,
   statusText: string,
   headers: NameValue[],
+  securityDetails?: SecurityDetails,
+  serverAddr?: RemoteAddr,
 };
 
 // ----------- Artifact -----------
