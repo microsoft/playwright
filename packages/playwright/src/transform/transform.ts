@@ -303,8 +303,17 @@ export async function requireOrImport(file: string) {
   const depsCollector = currentFileDepsCollector();
   if (depsCollector) {
     const module = require.cache[file];
-    if (module)
-      collectCJSDependencies(module, depsCollector);
+    if (module) {
+      // Walk the CJS module tree into a fresh set, then merge into the global
+      // collector. We can't pass `depsCollector` directly: the sync loader's
+      // resolve hook pre-populates it, and Node short-circuits that hook for
+      // already-resolved (parent_dir, request) pairs via its relativeResolveCache,
+      // so the walker would skip transitive deps the hook missed.
+      const cjsDeps = new Set<string>();
+      collectCJSDependencies(module, cjsDeps);
+      for (const dep of cjsDeps)
+        depsCollector.add(dep);
+    }
   }
   return result;
 }
