@@ -350,6 +350,68 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       // Ensure we are up to date.
       this._handleMutations(this._observer.takeRecords());
 
+      // Web Animations and CSS transitions produce computed style values that
+      // do not appear in the element's `style` attribute. Without this, animated
+      // properties (e.g. a slide-in panel using `element.animate(...)`) are not
+      // serialized and the snapshot renders without the effect applied.
+      // For every element with an active animation, collect the names of
+      // animated CSS properties and force re-reading attributes so the values
+      // captured at this snapshot reflect the current animation state.
+      const animatedProperties = new Map<Element, string[]>();
+      const getAnimations = (document as any).getAnimations as undefined | (() => Animation[]);
+      if (typeof getAnimations === 'function') {
+        for (const animation of getAnimations.call(document)) {
+          if (animation.playState !== 'running' && animation.playState !== 'finished')
+            continue;
+          const effect = animation.effect;
+          if (!effect || !(effect instanceof KeyframeEffect))
+            continue;
+          const target = effect.target;
+          if (!target)
+            continue;
+          let keyframes: Keyframe[];
+          try {
+            keyframes = effect.getKeyframes();
+          } catch {
+            continue;
+          }
+          let props = animatedProperties.get(target);
+          for (const keyframe of keyframes) {
+            for (const key of Object.keys(keyframe)) {
+              // KeyframeEffect.getKeyframes() returns each keyframe with
+              // timing metadata mixed in alongside the animated properties.
+              if (key === 'offset' || key === 'easing' || key === 'composite' || key === 'computedOffset')
+                continue;
+              const cssName = key.replace(/[A-Z]/g, c => '-' + c.toLowerCase());
+              if (!props) {
+                props = [];
+                animatedProperties.set(target, props);
+              }
+              if (props.indexOf(cssName) === -1)
+                props.push(cssName);
+            }
+          }
+          if (props && props.length)
+            ensureCachedData(target).attributesCached = undefined;
+        }
+      }
+
+      const appendAnimatedStyleValues = (element: Element, baseStyle: string, props: string[]): string => {
+        const computed = getComputedStyle(element);
+        let result = baseStyle;
+        for (const prop of props) {
+          const propValue = computed.getPropertyValue(prop);
+          if (!propValue)
+            continue;
+          if (result && !result.replace(/\s+$/, '').endsWith(';'))
+            result += ';';
+          result += `${prop}:${propValue}`;
+        }
+        if (result && !result.replace(/\s+$/, '').endsWith(';'))
+          result += ';';
+        return result;
+      };
+
       const definedCustomElements = new Set<string>();
 
       const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
@@ -567,6 +629,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
+          const elementAnimatedProps = animatedProperties.get(element);
+          let styleAttributeSeen = false;
           for (let i = 0; i < element.attributes.length; i++) {
             const name = element.attributes[i].name;
             if (nodeName === 'LINK' && name === 'integrity')
@@ -578,21 +642,33 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             if (nodeName === 'DIALOG' && name === 'open')
               continue;
             let value = element.attributes[i].value;
-            if (nodeName === 'META')
+            if (nodeName === 'META') {
               value = this.__sanitizeMetaAttribute(name, value, (node as HTMLMetaElement).httpEquiv);
-            else if (name === 'src' && (nodeName === 'IMG'))
+            } else if (name === 'src' && (nodeName === 'IMG')) {
               value = this._sanitizeUrl(value);
-            else if (name === 'srcset' && (nodeName === 'IMG'))
+            } else if (name === 'srcset' && (nodeName === 'IMG')) {
               value = this._sanitizeSrcSet(value);
-            else if (name === 'srcset' && (nodeName === 'SOURCE'))
+            } else if (name === 'srcset' && (nodeName === 'SOURCE')) {
               value = this._sanitizeSrcSet(value);
-            else if (name === 'href' && (nodeName === 'LINK'))
+            } else if (name === 'href' && (nodeName === 'LINK')) {
               value = this._sanitizeUrl(value);
-            else if (name.startsWith('on'))
+            } else if (name.startsWith('on')) {
               value = '';
+            } else if (name === 'style' && elementAnimatedProps) {
+              value = appendAnimatedStyleValues(element, value, elementAnimatedProps);
+              styleAttributeSeen = true;
+            }
             expectValue(name);
             expectValue(value);
             attrs[name] = value;
+          }
+          if (elementAnimatedProps && !styleAttributeSeen) {
+            const value = appendAnimatedStyleValues(element, '', elementAnimatedProps);
+            if (value) {
+              expectValue('style');
+              expectValue(value);
+              attrs['style'] = value;
+            }
           }
           expectValue(kEndOfList);
         }
