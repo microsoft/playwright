@@ -19,6 +19,9 @@ import './dashboard.css';
 import { ChevronLeftIcon, ChevronRightIcon, LockIcon, LockOpenIcon, ReloadIcon, ScreenshotRegionIcon } from './icons';
 import { clientToViewport, getImageLayout } from './imageLayout';
 import { Recording } from './recording';
+import { HistoryPlayer } from './historyPlayer';
+import type { HistoryPlayback } from './historyPlayback';
+import { HistoryScrubber } from './historyScrubber';
 import { AnnotateSidebar, AnnotateOverlay } from './annotateView';
 
 import { ToolbarButton } from '@web/components/toolbarButton';
@@ -66,7 +69,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   const [, setRevision] = React.useState(0);
   React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), [model]);
 
-  const { tabs, mode, recording, liveFrame, annotateSession, pendingCapture } = model.state;
+  const { tabs, mode, recording, liveFrame, annotateSession, pendingCapture, history } = model.state;
   const interactive = mode === 'interactive';
   const annotateActive = !!annotateSession;
   const selectedFrame = annotateSession?.frames.find(f => f.id === annotateSession.selectedFrameId) ?? null;
@@ -79,6 +82,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   const viewportMainRef = React.useRef<HTMLDivElement>(null);
   const browserChromeRef = React.useRef<HTMLDivElement>(null);
   const interactiveBtnRef = React.useRef<HTMLButtonElement>(null);
+  const historyVideoRef = React.useRef<HTMLVideoElement>(null);
+  const historyPlaybackRef = React.useRef<HistoryPlayback | null>(null);
   const moveThrottleRef = React.useRef(0);
 
   const aspect = liveFrame && liveFrame.viewportWidth && liveFrame.viewportHeight
@@ -259,7 +264,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
             title={annotateActive ? 'Add screenshot' : 'Take screenshot'}
             disabled={!ready || pendingCapture}
             onClick={() => {
-              if (annotateActive)
+              if (history.scrubMode)
+                void model.addHistoryAnnotateFrame(historyVideoRef.current);
+              else if (annotateActive)
                 model.addAnnotateFrame();
               else
                 model.enterAnnotate('user');
@@ -368,6 +375,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
                 />
               </div>
               {overlayText && <div className={'screen-overlay' + (liveFrame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
+              {history.scrubMode && <HistoryPlayer videoRef={historyVideoRef} playbackRef={historyPlaybackRef} model={model} time={history.scrubTime} />}
+              {history.enabled && <HistoryScrubber model={model} history={history} videoRef={historyVideoRef} playbackRef={historyPlaybackRef} />}
             </div>
           </div>
         </div>

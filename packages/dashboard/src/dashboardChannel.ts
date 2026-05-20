@@ -34,21 +34,39 @@ export type AnnotationData = { x: number; y: number; width: number; height: numb
 
 export type SubmittedAnnotationFrame = {
   data: string;
-  ariaSnapshot: string;
+  ariaSnapshot?: string;
   annotations: AnnotationData[];
-  sessionTitle: string;
-  title: string;
-  url: string;
+  sessionTitle?: string;
+  title?: string;
+  url?: string;
   viewportWidth: number;
   viewportHeight: number;
+  timestamp: number;
+};
+
+export type HistorySnapshot =
+  | { enabled: false }
+  | { enabled: true; init: string };
+
+// Cluster manifest entry shipped per cluster. Coverage end is derived
+// on the frontend as `clusters[idx+1]?.startWallMs ?? Date.now()` —
+// the live cluster grows up to "now" as frames are written.
+export type HistoryCluster = {
+  // Wallclock ms of this cluster's first frame.
+  startWallMs: number;
+  // Byte position of the cluster's first byte within the recorder webm.
+  fileOffset: number;
+  byteLen: number;
 };
 
 export type DashboardChannelEvents = {
   sessions: { sessions: SessionStatus[]; clientInfo: ClientInfo };
   tabs: { tabs: Tab[] };
-  frame: { data: string; viewportWidth: number; viewportHeight: number };
+  frame: { data: string; viewportWidth: number; viewportHeight: number; timestamp: number };
   annotate: {};
   cancelAnnotate: {};
+  history: HistorySnapshot;
+  historyCluster: HistoryCluster;
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';
@@ -73,6 +91,7 @@ export interface DashboardChannel {
   startRecording(): Promise<void>;
   stopRecording(): Promise<{ streamId: string }>;
   readStream(params: { streamId: string }): Promise<{ data: string; eof: boolean }>;
+  recorderReadBytes(params: { offset: number; length: number }): Promise<{ data: string }>;
   screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string }>;
   submitAnnotation(params: { frames: SubmittedAnnotationFrame[]; feedback: string }): Promise<void>;
   cancelAnnotation(): Promise<void>;

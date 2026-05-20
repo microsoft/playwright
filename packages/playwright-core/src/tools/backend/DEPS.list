@@ -1,6 +1,7 @@
 [*]
 ../../..
 ../..
+../../server/registry/index.ts
 @utils/**
 @utils/**
 @isomorphic/**

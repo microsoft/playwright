@@ -31,7 +31,7 @@ export type LaunchProcessOptions = {
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  stdio: 'pipe' | 'stdin',
+  stdio: 'pipe' | 'stdin' | childProcess.StdioOptions,
   tempDirectories: string[],
 
   cwd?: string,
@@ -129,7 +129,11 @@ function removeProcessHandlersIfNeeded() {
 }
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
-  const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
+  const stdio: childProcess.StdioOptions = Array.isArray(options.stdio)
+    ? options.stdio
+    : options.stdio === 'pipe'
+      ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe']
+      : ['pipe', 'pipe', 'pipe'];
   options.log(`<launching> ${options.command} ${options.args ? options.args.join(' ') : ''}`);
   const spawnOptions: childProcess.SpawnOptions = {
     // On non-windows platforms, `detached: true` makes child process a leader of a new
@@ -169,15 +173,24 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   }
   options.log(`<launched> pid=${spawnedProcess.pid}`);
 
-  const stdout = readline.createInterface({ input: spawnedProcess.stdout! });
-  stdout.on('line', (data: string) => {
-    options.log(`[pid=${spawnedProcess.pid}][out] ` + data);
-  });
+  // When caller provides a raw stdio array, they may want direct access
+  // to stdout (e.g. binary stream) — skip the readline wrapper that would
+  // consume it. Still log stderr line-by-line if stderr is piped.
+  const rawStdio = Array.isArray(options.stdio);
+  if (!rawStdio) {
+    const stdout = readline.createInterface({ input: spawnedProcess.stdout! });
+    stdout.on('line', (data: string) => {
+      options.log(`[pid=${spawnedProcess.pid}][out] ` + data);
+    });
+  }
 
-  const stderr = readline.createInterface({ input: spawnedProcess.stderr! });
-  stderr.on('line', (data: string) => {
-    options.log(`[pid=${spawnedProcess.pid}][err] ` + data);
-  });
+  const stderrSlot = rawStdio ? (options.stdio as childProcess.StdioOptions as any)[2] : 'pipe';
+  if (stderrSlot === 'pipe') {
+    const stderr = readline.createInterface({ input: spawnedProcess.stderr! });
+    stderr.on('line', (data: string) => {
+      options.log(`[pid=${spawnedProcess.pid}][err] ` + data);
+    });
+  }
 
   let processClosed = false;
   let fulfillCleanup = () => {};

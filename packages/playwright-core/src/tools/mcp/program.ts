@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
+import os from 'os';
+import path from 'path';
+
 import { Option as ProgramOption } from 'commander';
 import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
@@ -24,6 +28,7 @@ import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
 import { packageJSON } from '../../package';
 
+import type { ContextConfig } from '../backend/context';
 import type { Command } from 'commander';
 import type { ClientInfo } from '../utils/mcp/server';
 import type * as playwright from '../../..';
@@ -118,15 +123,23 @@ export function decorateMCPCommand(command: Command) {
               });
             }
             clientCount++;
+            const contextConfig: ContextConfig = config;
             const { browser, canBind } = sharedBrowserPromise ? { browser: await sharedBrowserPromise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
             if (canBind) {
               const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
               clientNameCounters.set(clientInfo.clientName, count);
               const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
-              await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
+              if (contextConfig.recordVideo)
+                contextConfig.recordVideo.dir = path.join(os.tmpdir(), 'pw-recordings-' + crypto.randomBytes(6).toString('hex'));
+              await browser.bind(sessionName, {
+                workspaceDir: clientInfo.cwd,
+                metadata: {
+                  recordingDir: contextConfig.recordVideo?.dir
+                },
+              });
             }
             const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-            return new BrowserBackend(config, browserContext, tools);
+            return new BrowserBackend(contextConfig, browserContext, tools);
           },
           disposed: async backend => {
             clientCount--;

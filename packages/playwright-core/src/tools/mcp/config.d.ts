@@ -143,6 +143,16 @@ export type Config = {
   saveSession?: boolean;
 
   /**
+   * Record videos into outputDir. Enables scrubback support in Dashboard.
+   */
+  recordVideo?: {
+    /**
+     * Dimensions of the recorded video.
+     */
+    size?: { width: number; height: number };
+  };
+
+  /**
    * Reuse the same browser context between all connected HTTP clients.
    */
   sharedBrowserContext?: boolean;

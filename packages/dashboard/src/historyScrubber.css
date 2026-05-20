@@ -1,0 +1,257 @@
+/*
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* The scrubber idles as a hairline at the bottom of the viewport — barely
+   visible, just enough to communicate "history exists". On hover, focus, or
+   while scrubbing, it expands to a full chrome strip with controls. */
+.history-scrubber {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  color: #ddd;
+  font-size: 12px;
+  z-index: 30;
+  user-select: none;
+  transition: height 120ms ease, padding 120ms ease, gap 120ms ease, background 120ms ease;
+}
+
+.history-scrubber:hover,
+.history-scrubber:focus-within,
+.history-scrubber.expanded {
+  height: 32px;
+  padding: 0 10px;
+  gap: 8px;
+  background: rgba(20, 20, 20, 0.78);
+  align-items: center;
+}
+
+.history-play-btn {
+  background: transparent;
+  color: #eee;
+  border: 1px solid #666;
+  border-radius: 3px;
+  width: 0;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  flex: 0 0 auto;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-width: 0;
+  transition: opacity 120ms ease, width 120ms ease, border-width 120ms ease;
+}
+
+.history-scrubber:hover .history-play-btn,
+.history-scrubber:focus-within .history-play-btn,
+.history-scrubber.expanded .history-play-btn {
+  width: 26px;
+  opacity: 1;
+  pointer-events: auto;
+  border-width: 1px;
+}
+
+.history-play-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.history-play-btn:hover:not(:disabled) {
+  color: #fff;
+  border-color: #fff;
+}
+
+.history-track {
+  position: relative;
+  flex: 1;
+  /* Hairline state: the track _is_ the scrubber. */
+  height: 100%;
+  background: transparent;
+  border-radius: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.history-scrubber:hover .history-track,
+.history-scrubber:focus-within .history-track,
+.history-scrubber.expanded .history-track {
+  height: 14px;
+  background: #2a2a2a;
+  border-radius: 3px;
+}
+
+.history-track:focus-visible {
+  box-shadow: 0 0 0 2px #4a90e2;
+}
+
+/* Single contiguous coverage span. The actual <video> source MIME chunks are
+   an implementation detail and not surfaced here. */
+.history-coverage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: #4a90e2;
+  opacity: 0;
+  border-radius: inherit;
+  transition: opacity 120ms ease;
+}
+
+.history-scrubber:hover .history-coverage,
+.history-scrubber:focus-within .history-coverage,
+.history-scrubber.expanded .history-coverage {
+  top: 2px;
+  bottom: 2px;
+  opacity: 0.55;
+}
+
+.history-cursor {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: #fff;
+  pointer-events: none;
+  transform: translateX(-1px);
+  transition: opacity 0.1s;
+}
+
+.history-time {
+  position: relative;
+  min-width: 0;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #aaa;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+  white-space: nowrap;
+  cursor: default;
+  transition: opacity 120ms ease, width 120ms ease;
+}
+
+.history-scrubber:hover .history-time,
+.history-scrubber:focus-within .history-time,
+.history-scrubber.expanded .history-time {
+  width: auto;
+  min-width: 56px;
+  opacity: 1;
+}
+
+.history-time-rel {
+  color: #ddd;
+}
+
+.history-time-abs {
+  font-size: 10px;
+  color: #777;
+}
+
+.history-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 20;
+  object-fit: contain;
+}
+
+.history-thumb {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  width: 200px;
+  height: 112px;
+  transform: translateX(-50%);
+  background: #000;
+  border: 1px solid #444;
+  border-radius: 4px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.history-thumb.hidden {
+  visibility: hidden;
+}
+
+.history-thumb-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.history-thumb-time {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #ddd;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.history-live-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  background: rgba(20, 20, 20, 0.95);
+  color: #ff4d4d;
+  border: 1px solid #ff4d4d;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.history-time:hover .history-live-btn,
+.history-time:focus-within .history-live-btn,
+.history-live-btn:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.history-live-btn:hover {
+  color: #fff;
+  background: #ff4d4d;
+}

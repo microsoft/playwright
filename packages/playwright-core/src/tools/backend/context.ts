@@ -25,6 +25,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
+import { PageRecorder } from './pageRecorder';
 import { Tab } from './tab';
 
 import type * as playwrightTypes from '../../..';
@@ -53,6 +54,10 @@ export type ContextConfig = {
     mode?: 'full' | 'none';
   };
   testIdAttribute?: string;
+  recordVideo?: {
+    size?: { width: number; height: number };
+    dir?: string;
+  };
   timeouts?: {
     action?: number;
     navigation?: number;
@@ -104,6 +109,7 @@ export class Context {
     fileNames: string[];
     fileName: string;
   } | undefined;
+  private _pageRecorders = new Map<playwrightTypes.Page, PageRecorder>();
   private _disposables: Disposable[] = [];
 
   private _runningToolName: string | undefined;
@@ -225,22 +231,42 @@ export class Context {
       return [];
     const video = this._video;
     for (const page of this._rawBrowserContext.pages())
-      await page.screencast.stop();
+      await this._stopPageVideo(page);
     this._video = undefined;
     return [...video.fileNames];
+  }
+
+  private _nextVideoFileName(): string {
+    if (!this._video)
+      throw new Error('No active video session');
+    const suffix = this._video.fileNames.length ? `-${this._video.fileNames.length}` : '';
+    let fileName = this._video.fileName;
+    if (suffix) {
+      const ext = path.extname(fileName);
+      fileName = path.basename(fileName, ext) + suffix + ext;
+    }
+    this._video.fileNames.push(fileName);
+    return fileName;
   }
 
   private async _startPageVideo(page: playwrightTypes.Page) {
     if (!this._video)
       return;
-    const suffix = this._video.fileNames.length ? `-${this._video.fileNames.length}` : '';
-    let fileName = this._video.fileName;
-    if (fileName && suffix) {
-      const ext = path.extname(fileName);
-      fileName = path.basename(fileName, ext) + suffix + ext;
+    const fileName = this._nextVideoFileName();
+    const recorder = this._pageRecorders.get(page);
+    if (recorder) {
+      await page.screencast.stop();
+      await page.screencast.start({ onFrame: frame => recorder.writeFrame(frame.data, Date.now()), path: fileName, ...this._video.params });
+    } else {
+      await page.screencast.start({ path: fileName, ...this._video.params });
     }
-    this._video.fileNames.push(fileName);
-    await page.screencast.start({ path: fileName, ...this._video.params });
+  }
+
+  private async _stopPageVideo(page: playwrightTypes.Page) {
+    const recorder = this._pageRecorders.get(page);
+    await page.screencast.stop();
+    if (recorder)
+      await page.screencast.start({ onFrame: frame => recorder.writeFrame(frame.data, Date.now()) });
   }
 
   private _onPageCreated(page: playwrightTypes.Page) {
@@ -248,7 +274,10 @@ export class Context {
     this._tabs.push(tab);
     if (!this._currentTab)
       this._currentTab = tab;
-    this._startPageVideo(page).catch(() => {});
+    if (this.config.recordVideo?.dir)
+      void this._startPageRecorder(page);
+    else if (this._video)
+      this._startPageVideo(page).catch(() => {});
   }
 
   private _onPageClosed(tab: Tab) {
@@ -259,6 +288,12 @@ export class Context {
 
     if (this._currentTab === tab)
       this._currentTab = this._tabs[Math.min(index, this._tabs.length - 1)];
+
+    const recorder = this._pageRecorders.get(tab.page);
+    if (recorder) {
+      this._pageRecorders.delete(tab.page);
+      recorder.stop().catch(e => testDebug(`PageRecorder stop failed: ${(e as Error).message}`));
+    }
   }
 
   routes(): RouteEntry[] {
@@ -342,11 +377,45 @@ export class Context {
     for (const initScript of this.config.browser?.initScript || [])
       this._disposables.push(await browserContext.addInitScript({ path: path.resolve(this.options.cwd, initScript) }));
 
+    if (this.config.recordVideo?.dir)
+      this._setupRecording();
+
     for (const page of browserContext.pages())
       this._onPageCreated(page);
     this._disposables.push(eventsHelper.addEventListener(browserContext, 'page', page => this._onPageCreated(page)));
 
     return browserContext;
+  }
+
+  private _setupRecording() {
+    const dir = this.config.recordVideo!.dir!;
+    fs.mkdirSync(dir, { recursive: true });
+    this._rawBrowserContext.once('close', () => {
+      for (const recorder of this._pageRecorders.values())
+        recorder.stop().catch(() => {});
+      this._pageRecorders.clear();
+      fs.rmSync(dir, { recursive: true, force: true });
+    });
+  }
+
+  // TODO: review this
+  private async _startPageRecorder(page: playwrightTypes.Page) {
+    const dir = this.config.recordVideo!.dir!;
+    // Default size when not provided: fall back to a reasonable 1280x720
+    // (matches Playwright's screencast default). We need a concrete size
+    // up-front because ffmpeg's filter chain is fixed at launch.
+    const recordSize = this.config.recordVideo!.size ?? { width: 1280, height: 720 };
+    // eslint-disable-next-line no-restricted-syntax -- _guid is conservative.
+    const guid = (page as any)._guid as string;
+    try {
+      const recorder = await PageRecorder.create({ recordingDir: dir, pageId: guid, size: recordSize });
+      this._pageRecorders.set(page, recorder);
+      const videoPath = this._video ? this._nextVideoFileName() : undefined;
+      await page.screencast.start({ onFrame: frame => recorder.writeFrame(frame.data, Date.now()), size: recordSize, path: videoPath, ...(this._video?.params ?? {}) });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(`Failed to start video recording for page ${guid}:`, (e as Error).message);
+    }
   }
 
   checkUrlAllowed(url: string) {

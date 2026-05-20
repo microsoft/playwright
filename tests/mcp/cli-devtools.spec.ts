@@ -228,6 +228,18 @@ test('video-start-stop', async ({ cli, server }) => {
   expect(videoStopOutput).toContain(`### Result\n- [Video](./video.webm)\n- [Video](./video-1.webm)`);
 });
 
+test('video-start-stop with daemon recordVideo active', async ({ cli, server }, testInfo) => {
+  const configPath = testInfo.outputPath('config.json');
+  await fs.promises.writeFile(configPath, JSON.stringify({ recordVideo: {} }));
+  await cli('open', `--config=${configPath}`, server.HELLO_WORLD);
+  await new Promise(r => setTimeout(r, 1500));
+  const { output: startOutput } = await cli('video-start', 'video.webm');
+  expect(startOutput).toContain('Video recording started.');
+  await new Promise(r => setTimeout(r, 1500));
+  const { output: stopOutput } = await cli('video-stop');
+  expect(stopOutput).toContain('[Video](./video.webm)');
+});
+
 test('video-chapter', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   await cli('video-start', 'video.webm');

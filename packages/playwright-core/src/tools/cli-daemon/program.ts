@@ -16,6 +16,7 @@
 
 /* eslint-disable no-console */
 
+import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -29,6 +30,7 @@ import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { registry as browserRegistry } from '../../server/registry/index';
+import { ContextConfig } from '../backend/context';
 import type { Command } from 'commander';
 
 export function decorateProgram(program: Command) {
@@ -60,13 +62,22 @@ export function decorateProgram(program: Command) {
 
         try {
           const { browser, browserInfo, canBind, ownership } = await createBrowserWithInfo(mcpConfig, mcpClientInfo, options);
-          if (canBind)
-            await browser.bind(sessionName, { workspaceDir: clientInfo.workspaceDir });
+          const contextConfig: ContextConfig = mcpConfig;
+          if (canBind) {
+            if (contextConfig.recordVideo)
+              contextConfig.recordVideo.dir = path.join(os.tmpdir(), 'pw-recordings-' + crypto.randomBytes(6).toString('hex'));
+            await browser.bind(sessionName, {
+              workspaceDir: clientInfo.workspaceDir,
+              metadata: {
+                recordingDir: contextConfig.recordVideo?.dir
+              },
+            });
+          }
           const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
           if (!browserContext)
             throw new Error('Error: unable to connect to a browser that does not have any contexts');
           const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
-          const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true, ownership });
+          const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, contextConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true, ownership });
           console.log(`Daemon listening on ${socketPath}\n`);
         } catch (error) {
           console.log(error);

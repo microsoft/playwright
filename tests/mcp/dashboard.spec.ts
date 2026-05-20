@@ -179,6 +179,51 @@ test('save recording streams WebM bytes to the chosen file', async ({ cli, serve
   expect(bytes.subarray(0, 4)).toEqual(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
 });
 
+test('history scrubber replays a frame from the past when recordVideo is on', async ({ cli, connectToDashboard, startDashboardServer }, testInfo) => {
+  test.slow();
+
+  const configPath = testInfo.outputPath('config.json');
+  await fs.promises.writeFile(configPath, JSON.stringify({ recordVideo: {} }));
+
+  await cli('open', `--config=${configPath}`, 'about:blank');
+  const browser = await connectToDashboard('default');
+  const context = browser.contexts()[0];
+  const page = context.pages()[0];
+  await page.setContent(`<body style="background: rgb(0,0,255); margin: 0; height: 100vh">
+    <div id=t style="color: white; font-size: 48px"></div>
+    <script>setInterval(() => t.textContent = Date.now(), 50);</script>`);
+
+  const dashboard = await startDashboardServer();
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+  await expect(dashboard.locator('img#display')).toBeVisible();
+
+  await page.waitForTimeout(3500);
+  await page.evaluate(() => document.body.style.background = 'rgb(255,0,0)');
+  await page.waitForTimeout(3500);
+
+  const track = dashboard.locator('.history-track');
+  await expect.poll(
+      async () => track.evaluate(el => Number(el.getAttribute('aria-valuemax')) - Number(el.getAttribute('aria-valuemin'))),
+      { timeout: 15_000 }).toBeGreaterThanOrEqual(3000);
+
+  const box = (await track.boundingBox())!;
+  await dashboard.mouse.click(box.x + box.width * 0.25, box.y + box.height / 2);
+
+  // Scrubber should be displaying a blue frame (early period) — sample the
+  // centre pixel of the <video>.
+  await expect.poll(async () => dashboard.locator('video.history-player').evaluate((v: HTMLVideoElement) => {
+    if (!v.videoWidth || !v.videoHeight)
+      return false;
+    const canvas = document.createElement('canvas');
+    canvas.width = v.videoWidth;
+    canvas.height = v.videoHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(v, 0, 0);
+    const d = ctx.getImageData(Math.floor(v.videoWidth / 2), Math.floor(v.videoHeight / 2), 1, 1).data;
+    return d[2] > 150 && d[0] < 80;
+  }), { timeout: 15_000 }).toBe(true);
+});
+
 test('two concurrent cli show invocations both succeed', async ({ cli }) => {
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
   const [first, second] = await Promise.all([cli('show', { bindTitle }), cli('show', { bindTitle })]);

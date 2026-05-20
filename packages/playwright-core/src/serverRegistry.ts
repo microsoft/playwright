@@ -132,6 +132,7 @@ class ServerRegistry extends EventEmitter {
       browser,
       endpoint: endpoint.endpoint,
       workspaceDir: endpoint.workspaceDir,
+      metadata: endpoint.metadata,
     };
     await fs.promises.writeFile(file, JSON.stringify(descriptor, null, 2), 'utf-8');
   }

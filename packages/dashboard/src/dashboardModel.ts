@@ -16,9 +16,10 @@
 
 import { buildAnnotatedImage, saveAnnotationAsDownload } from './annotationImage';
 import { buildAnnotationZip } from './annotationZip';
+import { captureVideoFrameAsPng } from './historyPlayback';
 
 import type { Annotation } from './annotations';
-import type { DashboardChannel, DashboardChannelEvents, MouseButton, SessionStatus, SubmittedAnnotationFrame, Tab } from './dashboardChannel';
+import type { DashboardChannel, DashboardChannelEvents, HistoryCluster, HistorySnapshot, MouseButton, SessionStatus, SubmittedAnnotationFrame, Tab } from './dashboardChannel';
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
 import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
 
@@ -35,10 +36,13 @@ export type AnnotateFrame = {
   data: string;
   viewportWidth: number;
   viewportHeight: number;
-  ariaSnapshot: string;
-  sessionTitle: string;
-  title: string;
-  url: string;
+  // Wall-clock ms since epoch — same coordinate space as live frame
+  // timestamps, so live and historical frames are directly comparable.
+  timestamp: number;
+  ariaSnapshot?: string;
+  sessionTitle?: string;
+  title?: string;
+  url?: string;
   annotations: Annotation[];
 };
 
@@ -48,6 +52,28 @@ export type AnnotateSession = {
   selectedFrameId: string | null;
   focusAnnotationId: string | null;
   feedback: string;
+};
+
+export type HistoryState = {
+  enabled: boolean;
+  // True when the user is in scrub mode (history player visible).
+  scrubMode: boolean;
+  // Currently scrubbed time, in wall-clock ms.
+  scrubTime: number;
+  // While scrubbing, the bar's right edge is frozen here so the cursor
+  // doesn't drift left as the wall clock keeps advancing.
+  // null = use the live edge.
+  scrubFrozenEndMs: number | null;
+  // Cluster manifest pushed by the daemon. Each entry describes a
+  // wallclock start and an exact byte range in the webm, so the frontend
+  // knows precisely what's available and where to fetch it from. Reset
+  // on every `history` event; rebuilt from subsequent `historyCluster`
+  // events.
+  clusters: HistoryCluster[];
+  // Webm init segment bytes for the current recording, decoded once
+  // from the base64 in the `history` event. null when no recording is
+  // active. The MSE pipeline appends this verbatim before any cluster.
+  init: Uint8Array | null;
 };
 
 export type DashboardState = {
@@ -62,6 +88,7 @@ export type DashboardState = {
   pendingCapture: boolean;
   mode: Mode;
   recording: RecordingState | null;
+  history: HistoryState;
 };
 
 type Listener = () => void;
@@ -76,7 +103,25 @@ const initialState: DashboardState = {
   pendingCapture: false,
   mode: 'readonly',
   recording: null,
+  history: { enabled: false, scrubMode: false, scrubTime: 0, scrubFrozenEndMs: null, clusters: [], init: null },
 };
+
+// Returns the wall-clock range visible to the history scrubber. `startMs` is
+// the first cluster's wallclock; `endMs` is the frozen scrub-entry time while
+// scrubbing (so the cursor doesn't drift as wall-clock advances), or the
+// live edge otherwise (max of latest frame and wall clock now).
+export function historyTimeRange(history: HistoryState, liveFrame: { timestamp: number } | undefined): { startMs: number; endMs: number } {
+  const liveEdge = Math.max(liveFrame?.timestamp ?? 0, Date.now());
+  const end = history.scrubFrozenEndMs ?? liveEdge;
+  const start = history.clusters[0]?.startWallMs ?? end;
+  return { startMs: start, endMs: Math.max(start, end) };
+}
+
+function clamp(v: number, min: number, max: number): number {
+  if (max < min)
+    return min;
+  return Math.min(Math.max(v, min), max);
+}
 
 export class DashboardModel {
   state: DashboardState = initialState;
@@ -86,6 +131,7 @@ export class DashboardModel {
   // Monotonic token to invalidate in-flight screenshot requests when
   // pendingAnnotate is cleared or replaced.
   private _requestId = 0;
+  private _bytesCache = new Map<number, Promise<Uint8Array>>();
 
   constructor(client: DashboardChannel) {
     this._client = client;
@@ -94,6 +140,76 @@ export class DashboardModel {
     client.on('frame', params => this._emit({ liveFrame: params }));
     client.on('annotate', () => this.enterAnnotate('cli'));
     client.on('cancelAnnotate', () => this.cancelAnnotate(false));
+    client.on('history', snapshot => this._onHistorySnapshot(snapshot));
+    client.on('historyCluster', params => this._onHistoryCluster(params));
+  }
+
+  private _onHistorySnapshot(snapshot: HistorySnapshot) {
+    this._bytesCache.clear();
+    const initialState = {
+      enabled: false,
+      scrubMode: false,
+      scrubTime: 0,
+      scrubFrozenEndMs: null,
+      clusters: [],
+      init: null
+    };
+    if (!snapshot.enabled) {
+      this._emit({ history: initialState });
+      return;
+    }
+    this._emit({ history: { ...initialState, enabled: true, init: Uint8Array.fromBase64(snapshot.init) } });
+  }
+
+  private _onHistoryCluster(c: HistoryCluster) {
+    const { history } = this.state;
+    if (!history.enabled)
+      return;
+    history.clusters.push(c);
+    this._emit({ history });
+  }
+
+  enterScrub(timeMs?: number) {
+    const h = this.state.history;
+    if (!h.enabled || h.clusters.length === 0)
+      return;
+    // Freeze the bar's right edge so the cursor stays where the user
+    // put it as wall time keeps advancing.
+    const frozenEnd = Math.max(this.state.liveFrame?.timestamp ?? 0, Date.now());
+    const start = h.clusters[0].startWallMs;
+    const t = clamp(timeMs ?? frozenEnd, start, frozenEnd);
+    this._emit({ history: { ...h, scrubMode: true, scrubTime: t, scrubFrozenEndMs: frozenEnd } });
+  }
+
+  exitScrub() {
+    const h = this.state.history;
+    if (!h.scrubMode)
+      return;
+    this._emit({ history: { ...h, scrubMode: false, scrubFrozenEndMs: null } });
+  }
+
+  setScrubTime(timeMs: number) {
+    const h = this.state.history;
+    if (!h.scrubMode)
+      return;
+    const range = historyTimeRange(h, this.state.liveFrame);
+    const t = clamp(timeMs, range.startMs, range.endMs);
+    if (t === h.scrubTime)
+      return;
+    this._emit({ history: { ...h, scrubTime: t } });
+  }
+
+  readBytes(offset: number, length: number): Promise<Uint8Array | null> {
+    const cached = this._bytesCache.get(offset);
+    if (cached)
+      return cached;
+    const p = (async () => {
+      const result = await this._client.recorderReadBytes({ offset, length });
+      return Uint8Array.fromBase64(result.data);
+    })();
+    this._bytesCache.set(offset, p);
+    p.catch(() => this._bytesCache.delete(offset));
+    return p;
   }
 
   subscribe(listener: Listener): () => void {
@@ -296,6 +412,7 @@ export class DashboardModel {
         url: frame.url,
         viewportWidth: frame.viewportWidth,
         viewportHeight: frame.viewportHeight,
+        timestamp: frame.timestamp,
       });
     }
     if (session.initiator === 'cli') {
@@ -359,12 +476,36 @@ export class DashboardModel {
       data: frameData.data,
       viewportWidth: frameData.viewportWidth,
       viewportHeight: frameData.viewportHeight,
+      timestamp: Date.now(),
       ariaSnapshot: frameData.ariaSnapshot,
       sessionTitle,
       title: selectedTab?.title ?? '',
       url: selectedTab?.url ?? '',
       annotations: [],
     };
+    this._pushAnnotateFrame(frame, initiator);
+  }
+
+  async addHistoryAnnotateFrame(video: HTMLVideoElement | null) {
+    if (!video || this.state.pendingCapture)
+      return;
+    const captured = await captureVideoFrameAsPng(video);
+    if (!captured)
+      return;
+    if (!this.state.annotateSession)
+      await this._discardRecording();
+    const frame: AnnotateFrame = {
+      id: 'frm-' + Math.random().toString(36).slice(2, 10),
+      data: captured.data,
+      viewportWidth: captured.viewportWidth,
+      viewportHeight: captured.viewportHeight,
+      timestamp: this.state.history.scrubTime,
+      annotations: [],
+    };
+    this._pushAnnotateFrame(frame, 'user');
+  }
+
+  private _pushAnnotateFrame(frame: AnnotateFrame, initiator?: 'cli' | 'user') {
     const existing = this.state.annotateSession;
     const session: AnnotateSession = existing
       ? { ...existing, frames: [...existing.frames, frame], selectedFrameId: frame.id, focusAnnotationId: null }

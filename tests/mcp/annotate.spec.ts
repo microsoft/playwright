@@ -501,3 +501,108 @@ test('should disengage annotate mode when --annotate client disconnects', async 
 
   await expect(dashboard.getByRole('main', { name: 'Dashboard', exact: true })).toBeVisible();
 });
+
+test('--annotate can capture a historic frame from the scrubber', async ({ connectToDashboard, cli }, testInfo) => {
+  test.slow();
+
+  const configPath = testInfo.outputPath('config.json');
+  await fs.promises.writeFile(configPath, JSON.stringify({ recordVideo: {} }));
+
+  // Open the backend daemon with recordVideo enabled, then start a
+  // dashboard webapp with a known bind title we'll later --annotate.
+  await cli('open', `--config=${configPath}`, 'about:blank');
+  const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
+  await cli('show', { bindTitle });
+
+  // Two connections: one to the daemon (default) for direct page control,
+  // one to the dashboard webapp for UI interaction.
+  const backend = await connectToDashboard('default');
+  const dashboardBrowser = await connectToDashboard(bindTitle);
+  const page = backend.contexts()[0].pages()[0];
+  // Page starts blue. We'll let the recorder accumulate enough blue
+  // history for ffmpeg to flush a cluster (VP8's default keyframe
+  // interval is ~10s — clusters only land on keyframes, so a shorter
+  // warm-up may leave the file with no readable clusters at all).
+  // After that, flip to red so the LIVE frame (auto-captured first by
+  // --annotate) is red and the HISTORIC frame captured via the
+  // scrubber is blue.
+  await page.setContent(`<body style="background: rgb(0,0,255); margin: 0; height: 100vh">
+    <div id=t style="color: white; font-size: 48px"></div>
+    <script>setInterval(() => t.textContent = Date.now(), 50);</script>`);
+
+  const dashboard = dashboardBrowser.contexts()[0].pages()[0];
+  await dashboard.getByRole('navigation', { name: 'Sessions' }).getByRole('option').first().click();
+  await expect(dashboard.locator('img#display')).toBeVisible();
+
+  await page.waitForTimeout(12_000);
+  await page.evaluate(() => document.body.style.background = 'rgb(255,0,0)');
+  await page.waitForTimeout(3500);
+
+  const track = dashboard.locator('.history-track');
+  await expect.poll(
+      async () => track.evaluate(el => Number(el.getAttribute('aria-valuemax')) - Number(el.getAttribute('aria-valuemin'))),
+      { timeout: 15_000 }).toBeGreaterThanOrEqual(3000);
+
+  // --annotate auto-captures the current (red) live frame as Screenshot 1.
+  const annotatePromise = cli('show', '--annotate', { bindTitle });
+  let done = false;
+  void annotatePromise.finally(() => { done = true; });
+
+  await expect(dashboard.locator('.annotate-modal-image')).toBeVisible();
+  // Dismiss the overlay so the scrubber is reachable; sidebar stays.
+  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+  await expect(dashboard.locator('.annotate-overlay')).toHaveCount(0);
+
+  const box = (await track.boundingBox())!;
+  await dashboard.mouse.click(box.x + box.width * 0.25, box.y + box.height / 2);
+
+  // Wait until the scrubber player actually shows blue (avoids capturing
+  // a black/transitional frame).
+  await expect.poll(async () => dashboard.locator('video.history-player').evaluate((v: HTMLVideoElement) => {
+    if (!v.videoWidth || !v.videoHeight)
+      return false;
+    const canvas = document.createElement('canvas');
+    canvas.width = v.videoWidth;
+    canvas.height = v.videoHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(v, 0, 0);
+    const d = ctx.getImageData(Math.floor(v.videoWidth / 2), Math.floor(v.videoHeight / 2), 1, 1).data;
+    return d[2] > 150 && d[0] < 80;
+  }), { timeout: 15_000 }).toBe(true);
+
+  // Capture the historic (blue) frame — `scrubMode` is on so this routes
+  // to `addHistoryAnnotateFrame`.
+  await dashboard.getByRole('button', { name: /^(Take|Add) screenshot$/ }).click();
+  await expect(dashboard.locator('.annotate-sidebar-thumb')).toHaveCount(2);
+
+  await expect(dashboard.locator('.annotate-overlay')).toBeVisible();
+  await dashboard.getByRole('button', { name: 'Done annotating' }).click();
+  await dashboard.getByRole('button', { name: 'Submit', exact: true }).click();
+
+  const { output, exitCode } = await annotatePromise;
+  expect(done).toBe(true);
+  expect(exitCode).toBe(0);
+  expect(output).toMatch(/## Screenshot 1/);
+  expect(output).toMatch(/## Screenshot 2/);
+
+  // Screenshot 2 (the historic capture) must still be blue when decoded.
+  const match = output.match(/- \[Annotation image 2\]\((\.playwright-cli[\\/]annotations-2-.*\.png)\)/);
+  expect(match, `output:\n${output}`).not.toBeNull();
+  const pngPath = path.resolve(testInfo.outputDir, match![1]);
+  expect(fs.existsSync(pngPath)).toBe(true);
+
+  const centerColor = await dashboard.evaluate(async (b64: string) => {
+    const img = new Image();
+    img.src = 'data:image/png;base64,' + b64;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, 0, 0);
+    const d = ctx.getImageData(Math.floor(img.naturalWidth / 2), Math.floor(img.naturalHeight / 2), 1, 1).data;
+    return { r: d[0], g: d[1], b: d[2] };
+  }, fs.readFileSync(pngPath).toString('base64'));
+  expect(centerColor.b).toBeGreaterThan(150);
+  expect(centerColor.r).toBeLessThan(80);
+});
