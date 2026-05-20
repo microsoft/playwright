@@ -486,6 +486,25 @@ test('should use env proxy with connectOverCDP discovery request', async ({ brow
   }
 });
 
+test('should send target Host header when using env HTTP proxy with connectOverCDP', async ({ browserType, server, proxyServer, mode }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40811' });
+  test.skip(mode !== 'default'); // Out of process transport does not allow us to set env vars dynamically.
+  proxyServer.forwardTo(server.PORT);
+
+  const oldValue = process.env.HTTP_PROXY;
+  try {
+    process.env.HTTP_PROXY = proxyServer.URL;
+    const error = await browserType.connectOverCDP(server.PREFIX).catch(e => e);
+    expect(error.message).toContain(`Unexpected status 404 when connecting to ${server.PREFIX}/json/version/`);
+    expect(proxyServer.requestHosts).toEqual([new URL(server.PREFIX).host]);
+  } finally {
+    if (oldValue === undefined)
+      delete process.env.HTTP_PROXY;
+    else
+      process.env.HTTP_PROXY = oldValue;
+  }
+});
+
 test('should be able to connect via localhost', async ({ browserType }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
