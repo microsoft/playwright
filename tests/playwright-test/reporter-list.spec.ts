@@ -568,6 +568,21 @@ test('strips ansi from test stdout when FORCE_COLOR=0', async ({ runInlineTest }
   expect(result.rawOutput).toContain('GREENDOTEND');
 });
 
+test('strips ansi from test stdout when NO_COLOR is set', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', async ({}) => {
+        console.log('\\u001b[31mRED\\u001b[39mWHITE');
+        process.stderr.write('GREEN\\u001b[32mDOT\\u001b[39mEND\\n');
+      });
+    `,
+  }, { reporter: 'list' }, { NO_COLOR: '1', FORCE_COLOR: '', PLAYWRIGHT_FORCE_TTY: '80' });
+  expect(result.exitCode).toBe(0);
+  expect(result.rawOutput).toContain('REDWHITE');
+  expect(result.rawOutput).toContain('GREENDOTEND');
+});
+
 function simpleAnsiRenderer(text, ttyWidth) {
   let lineNumber = 0;
   let columnNumber = 0;
