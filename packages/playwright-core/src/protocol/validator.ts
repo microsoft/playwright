@@ -1192,6 +1192,12 @@ scheme.ElectronApplicationConsoleEvent = tObject({
   }),
   timestamp: tFloat,
 });
+scheme.ElectronApplicationDialogEvent = tObject({
+  dialog: tChannel(['ElectronDialog']),
+});
+scheme.ElectronApplicationFileChooserEvent = tObject({
+  fileChooser: tChannel(['ElectronFileChooser']),
+});
 scheme.ElectronApplicationBrowserWindowParams = tObject({
   page: tChannel(['Page']),
 });
@@ -1215,10 +1221,30 @@ scheme.ElectronApplicationEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
 });
 scheme.ElectronApplicationUpdateSubscriptionParams = tObject({
-  event: tEnum(['console']),
+  event: tEnum(['console', 'dialog', 'fileChooser']),
   enabled: tBoolean,
 });
 scheme.ElectronApplicationUpdateSubscriptionResult = tOptional(tObject({}));
+scheme.ElectronDialogInitializer = tObject({
+  method: tEnum(['showMessageBox', 'showCertificateTrustDialog']),
+  options: tAny,
+});
+scheme.ElectronDialogAcceptParams = tObject({
+  result: tAny,
+});
+scheme.ElectronDialogAcceptResult = tOptional(tObject({}));
+scheme.ElectronDialogDismissParams = tOptional(tObject({}));
+scheme.ElectronDialogDismissResult = tOptional(tObject({}));
+scheme.ElectronFileChooserInitializer = tObject({
+  method: tEnum(['showOpenDialog', 'showSaveDialog']),
+  options: tAny,
+});
+scheme.ElectronFileChooserSetFilesParams = tObject({
+  filePaths: tArray(tString),
+});
+scheme.ElectronFileChooserSetFilesResult = tOptional(tObject({}));
+scheme.ElectronFileChooserCancelParams = tOptional(tObject({}));
+scheme.ElectronFileChooserCancelResult = tOptional(tObject({}));
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,

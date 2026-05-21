@@ -41,6 +41,45 @@ const { _electron: electron } = require('playwright');
 
 This event is issued when the application process has been terminated.
 
+## event: ElectronApplication.dialog
+* since: v1.61
+- argument: <[ElectronDialog]>
+
+Emitted when the Electron main process invokes a message dialog method —
+`dialog.showMessageBox` or `dialog.showCertificateTrustDialog`. The handler is expected to
+either [`method: ElectronDialog.accept`] with the desired result or
+[`method: ElectronDialog.dismiss`] the dialog. If no handler is attached, the original
+Electron dialog methods are called as usual.
+
+For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+[`event: ElectronApplication.fileChooser`].
+
+**Usage**
+
+```js
+electronApp.on('dialog', async dialog => {
+  await dialog.accept({ response: 0, checkboxChecked: false });
+});
+```
+
+## event: ElectronApplication.fileChooser
+* since: v1.61
+- argument: <[ElectronFileChooser]>
+
+Emitted when the Electron main process invokes a file dialog method —
+`dialog.showOpenDialog` or `dialog.showSaveDialog`. The handler is expected to either
+[`method: ElectronFileChooser.setFiles`] to fulfill the dialog with file paths or
+[`method: ElectronFileChooser.cancel`] to cancel it. If no handler is attached, the
+original Electron dialog methods are called as usual.
+
+**Usage**
+
+```js
+electronApp.on('fileChooser', async chooser => {
+  await chooser.setFiles(['/path/to/file.txt']);
+});
+```
+
 ## event: ElectronApplication.console
 * since: v1.42
 - argument: <[ConsoleMessage]>

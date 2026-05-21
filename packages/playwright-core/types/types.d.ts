@@ -16999,6 +16999,47 @@ export interface ElectronApplication {
   on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  on(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  on(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
+
+  /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
    * [Page](https://playwright.dev/docs/api/class-page) that can be used for Playwright automation.
    */
@@ -17013,6 +17054,16 @@ export interface ElectronApplication {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -17047,6 +17098,47 @@ export interface ElectronApplication {
   addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  addListener(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  addListener(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
+
+  /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
    * [Page](https://playwright.dev/docs/api/class-page) that can be used for Playwright automation.
    */
@@ -17065,6 +17157,16 @@ export interface ElectronApplication {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'window', listener: (page: Page) => any): this;
 
   /**
@@ -17076,6 +17178,16 @@ export interface ElectronApplication {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -17108,6 +17220,47 @@ export interface ElectronApplication {
    *
    */
   prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  prependListener(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  prependListener(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
@@ -17186,6 +17339,47 @@ export interface ElectronApplication {
    *
    */
   waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
+  /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (electronDialog: ElectronDialog) => boolean | Promise<boolean>, timeout?: number } | ((electronDialog: ElectronDialog) => boolean | Promise<boolean>)): Promise<ElectronDialog>;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  waitForEvent(event: 'filechooser', optionsOrPredicate?: { predicate?: (electronFileChooser: ElectronFileChooser) => boolean | Promise<boolean>, timeout?: number } | ((electronFileChooser: ElectronFileChooser) => boolean | Promise<boolean>)): Promise<ElectronFileChooser>;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
@@ -17551,6 +17745,47 @@ export interface ElectronApplication {
   on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  on(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  on(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
+
+  /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
    * [Page](https://playwright.dev/docs/api/class-page) that can be used for Playwright automation.
    */
@@ -17565,6 +17800,16 @@ export interface ElectronApplication {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -17599,6 +17844,47 @@ export interface ElectronApplication {
   addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  addListener(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  addListener(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
+
+  /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
    * [Page](https://playwright.dev/docs/api/class-page) that can be used for Playwright automation.
    */
@@ -17617,6 +17903,16 @@ export interface ElectronApplication {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'window', listener: (page: Page) => any): this;
 
   /**
@@ -17628,6 +17924,16 @@ export interface ElectronApplication {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -17660,6 +17966,47 @@ export interface ElectronApplication {
    *
    */
   prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  prependListener(event: 'dialog', listener: (electronDialog: ElectronDialog) => any): this;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  prependListener(event: 'filechooser', listener: (electronFileChooser: ElectronFileChooser) => any): this;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
@@ -17738,6 +18085,47 @@ export interface ElectronApplication {
    *
    */
   waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
+  /**
+   * Emitted when the Electron main process invokes a message dialog method — `dialog.showMessageBox` or
+   * `dialog.showCertificateTrustDialog`. The handler is expected to either
+   * [electronDialog.accept(result)](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-accept) with
+   * the desired result or
+   * [electronDialog.dismiss()](https://playwright.dev/docs/api/class-electrondialog#electron-dialog-dismiss) the
+   * dialog. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+   * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser).
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('dialog', async dialog => {
+   *   await dialog.accept({ response: 0, checkboxChecked: false });
+   * });
+   * ```
+   *
+   */
+  waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (electronDialog: ElectronDialog) => boolean | Promise<boolean>, timeout?: number } | ((electronDialog: ElectronDialog) => boolean | Promise<boolean>)): Promise<ElectronDialog>;
+
+  /**
+   * Emitted when the Electron main process invokes a file dialog method — `dialog.showOpenDialog` or
+   * `dialog.showSaveDialog`. The handler is expected to either
+   * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+   * to fulfill the dialog with file paths or
+   * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+   * to cancel it. If no handler is attached, the original Electron dialog methods are called as usual.
+   *
+   * **Usage**
+   *
+   * ```js
+   * electronApp.on('fileChooser', async chooser => {
+   *   await chooser.setFiles(['/path/to/file.txt']);
+   * });
+   * ```
+   *
+   */
+  waitForEvent(event: 'filechooser', optionsOrPredicate?: { predicate?: (electronFileChooser: ElectronFileChooser) => boolean | Promise<boolean>, timeout?: number } | ((electronFileChooser: ElectronFileChooser) => boolean | Promise<boolean>)): Promise<ElectronFileChooser>;
 
   /**
    * This event is issued for every window that is created **and loaded** in Electron. It contains a
@@ -22429,6 +22817,100 @@ export interface Electron {
      */
     tracesDir?: string;
   }): Promise<ElectronApplication>;
+}
+
+/**
+ * Represents a message dialog initiated by the Electron main process via
+ * [`dialog.showMessageBox`](https://www.electronjs.org/docs/latest/api/dialog#dialogshowmessageboxbrowserwindow-options)
+ * or
+ * [`dialog.showCertificateTrustDialog`](https://www.electronjs.org/docs/latest/api/dialog#dialogshowcertificatetrustdialogbrowserwindow-options-macos-windows).
+ *
+ * Instances of this class are received via the
+ * [electronApplication.on('dialog')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-dialog)
+ * event. For file selection dialogs (`showOpenDialog`/`showSaveDialog`) see
+ * [ElectronFileChooser](https://playwright.dev/docs/api/class-electronfilechooser).
+ *
+ * ```js
+ * electronApp.on('dialog', async dialog => {
+ *   // dialog.method() === 'showMessageBox' | 'showCertificateTrustDialog'
+ *   await dialog.accept({ response: 1, checkboxChecked: false });
+ * });
+ * ```
+ *
+ */
+export interface ElectronDialog {
+  /**
+   * Resolves the underlying Electron dialog with the provided result. For `showMessageBox` the expected shape is `{
+   * response: number, checkboxChecked?: boolean }`.
+   * @param result The value to resolve the dialog with.
+   */
+  accept(result: Serializable): Promise<void>;
+
+  /**
+   * Dismisses the dialog. The Electron dialog method resolves with a default value — for `showMessageBox` that is `{
+   * response: 0, checkboxChecked: false }`.
+   */
+  dismiss(): Promise<void>;
+
+  /**
+   * The name of the [Electron dialog method](https://www.electronjs.org/docs/latest/api/dialog) that triggered the
+   * event.
+   */
+  method(): "showMessageBox"|"showCertificateTrustDialog";
+
+  /**
+   * The options object that was passed to the underlying Electron dialog method.
+   */
+  options(): Serializable;
+}
+
+/**
+ * Represents a file selection dialog initiated by the Electron main process via
+ * [`dialog.showOpenDialog`](https://www.electronjs.org/docs/latest/api/dialog#dialogshowopendialogbrowserwindow-options)
+ * or
+ * [`dialog.showSaveDialog`](https://www.electronjs.org/docs/latest/api/dialog#dialogshowsavedialogbrowserwindow-options).
+ *
+ * Instances of this class are received via the
+ * [electronApplication.on('filechooser')](https://playwright.dev/docs/api/class-electronapplication#electron-application-event-file-chooser)
+ * event. Tests can call
+ * [electronFileChooser.setFiles(filePaths)](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-set-files)
+ * to fulfill the dialog with the given file paths, or
+ * [electronFileChooser.cancel()](https://playwright.dev/docs/api/class-electronfilechooser#electron-file-chooser-cancel)
+ * to cancel the dialog.
+ *
+ * ```js
+ * electronApp.on('fileChooser', async chooser => {
+ *   await chooser.setFiles(['/path/to/file.txt']);
+ * });
+ * ```
+ *
+ */
+export interface ElectronFileChooser {
+  /**
+   * Cancels the file dialog. The Electron dialog method resolves with `{ canceled: true, filePaths: [] }` for
+   * `showOpenDialog`, or `{ canceled: true, filePath: '' }` for `showSaveDialog`.
+   */
+  cancel(): Promise<void>;
+
+  /**
+   * The name of the [Electron dialog method](https://www.electronjs.org/docs/latest/api/dialog) that triggered the
+   * event.
+   */
+  method(): "showOpenDialog"|"showSaveDialog";
+
+  /**
+   * The options object that was passed to the underlying Electron dialog method.
+   */
+  options(): Serializable;
+
+  /**
+   * Resolves the underlying Electron file dialog with the provided paths.
+   *
+   * For [`dialog.showOpenDialog`] the dialog resolves with `{ canceled: false, filePaths: [...] }`. For
+   * [`dialog.showSaveDialog`] the dialog resolves with `{ canceled: false, filePath: filePaths[0] }`.
+   * @param filePaths The file path(s) to provide to the Electron dialog.
+   */
+  setFiles(filePaths: string|ReadonlyArray<string>): Promise<void>;
 }
 
 /**

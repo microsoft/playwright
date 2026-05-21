@@ -129,6 +129,8 @@ ElectronApplication:
           type: enum
           literals:
           - console
+          - dialog
+          - fileChooser
         enabled: boolean
 
   events:
@@ -136,5 +138,57 @@ ElectronApplication:
     console:
       parameters:
         $mixin: ConsoleMessage
+    dialog:
+      parameters:
+        dialog: ElectronDialog
+    fileChooser:
+      parameters:
+        fileChooser: ElectronFileChooser
+
+
+ElectronDialog:
+  type: interface
+
+  initializer:
+    method:
+      type: enum
+      literals:
+      - showMessageBox
+      - showCertificateTrustDialog
+    options: json
+
+  commands:
+
+    accept:
+      title: Accept dialog
+      parameters:
+        result: json
+
+    dismiss:
+      title: Dismiss dialog
+
+
+ElectronFileChooser:
+  type: interface
+
+  initializer:
+    method:
+      type: enum
+      literals:
+      - showOpenDialog
+      - showSaveDialog
+    options: json
+
+  commands:
+
+    setFiles:
+      title: Set files for the dialog
+      parameters:
+        filePaths:
+          type: array
+          items: string
+
+    cancel:
+      title: Cancel the file chooser
 
 

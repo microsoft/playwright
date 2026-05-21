@@ -33,6 +33,71 @@ import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
 import type { Playwright } from './playwright';
 
+export class ElectronDialog extends ChannelOwner<channels.ElectronDialogChannel> implements api.ElectronDialog {
+  static from(dialog: channels.ElectronDialogChannel): ElectronDialog {
+    return (dialog as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronDialogInitializer) {
+    super(parent, type, guid, initializer);
+  }
+
+  method(): channels.ElectronDialogInitializer['method'] {
+    return this._initializer.method;
+  }
+
+  options(): any {
+    return this._initializer.options;
+  }
+
+  async accept(result: any): Promise<void> {
+    await this._channel.accept({ result });
+  }
+
+  async dismiss(): Promise<void> {
+    try {
+      await this._channel.dismiss();
+    } catch (e) {
+      if (isTargetClosedError(e))
+        return;
+      throw e;
+    }
+  }
+}
+
+export class ElectronFileChooser extends ChannelOwner<channels.ElectronFileChooserChannel> implements api.ElectronFileChooser {
+  static from(fileChooser: channels.ElectronFileChooserChannel): ElectronFileChooser {
+    return (fileChooser as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronFileChooserInitializer) {
+    super(parent, type, guid, initializer);
+  }
+
+  method(): channels.ElectronFileChooserInitializer['method'] {
+    return this._initializer.method;
+  }
+
+  options(): any {
+    return this._initializer.options;
+  }
+
+  async setFiles(filePaths: string | string[]): Promise<void> {
+    const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
+    await this._channel.setFiles({ filePaths: paths });
+  }
+
+  async cancel(): Promise<void> {
+    try {
+      await this._channel.cancel();
+    } catch (e) {
+      if (isTargetClosedError(e))
+        return;
+      throw e;
+    }
+  }
+}
+
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
   env?: NodeJS.ProcessEnv,
   extraHTTPHeaders?: Headers,
@@ -94,8 +159,12 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       this.emit(Events.ElectronApplication.Close);
     });
     this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(this._platform, event, null, null)));
+    this._channel.on('dialog', event => this.emit(Events.ElectronApplication.Dialog, ElectronDialog.from(event.dialog)));
+    this._channel.on('fileChooser', event => this.emit(Events.ElectronApplication.FileChooser, ElectronFileChooser.from(event.fileChooser)));
     this._setEventToSubscriptionMapping(new Map<string, channels.ElectronApplicationUpdateSubscriptionParams['event']>([
       [Events.ElectronApplication.Console, 'console'],
+      [Events.ElectronApplication.Dialog, 'dialog'],
+      [Events.ElectronApplication.FileChooser, 'fileChooser'],
     ]));
   }
 

@@ -31,12 +31,15 @@ import { CRConnection } from '../chromium/crConnection';
 import { createHandle, CRExecutionContext } from '../chromium/crExecutionContext';
 import { stackTraceToLocation } from '../chromium/crProtocolHelper';
 import { ConsoleMessage } from '../console';
+import { installDialogInterception } from './dialogInterception';
+import { ElectronDialog, ElectronFileChooser } from './electronDialogs';
 import { helper } from '../helper';
 import { SdkObject } from '../instrumentation';
 import * as js from '../javascript';
 import { WebSocketTransport } from '../transport';
 import { nullProgress } from '../progress';
 
+import type { ElectronInterceptedMethod } from './electronDialogs';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { BrowserContext } from '../browserContext';
 import type { CRBrowserContext } from '../chromium/crBrowser';
@@ -52,11 +55,14 @@ import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
+const kDialogBindingName = '__pw_dialog_call';
 
 export class ElectronApplication extends SdkObject {
   static Events = {
     Close: 'close',
     Console: 'console',
+    Dialog: 'dialog',
+    FileChooser: 'fileChooser',
   };
 
   private _browserContext: CRBrowserContext;
@@ -65,6 +71,8 @@ export class ElectronApplication extends SdkObject {
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: ManualPromise<js.JSHandle<typeof import('electron')>> = new ManualPromise();
   private _process: childProcess.ChildProcess;
+  private _dialogInterceptors = { dialog: false, fileChooser: false };
+  private _dialogBindingInstalled = false;
 
   constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
     super(parent, 'electron-app');
@@ -86,6 +94,7 @@ export class ElectronApplication extends SdkObject {
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
+    this._nodeSession.on('Runtime.bindingCalled', event => this._onBindingCalled(event));
     const appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._browserContext.setCustomCloseHandler(async () => {
       const electronHandle = await this._nodeElectronHandlePromise;
@@ -119,8 +128,47 @@ export class ElectronApplication extends SdkObject {
     this.emit(ElectronApplication.Events.Console, message);
   }
 
+  private _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
+    if (event.name !== kDialogBindingName)
+      return;
+    try {
+      const { id, method, options } = JSON.parse(event.payload) as { id: number, method: ElectronInterceptedMethod, options: any };
+      const onResolve = (result: any) => this._resolveInterceptedDialog(id, result);
+      if (method === 'showOpenDialog' || method === 'showSaveDialog')
+        this.emit(ElectronApplication.Events.FileChooser, new ElectronFileChooser(this, method, options, onResolve));
+      else
+        this.emit(ElectronApplication.Events.Dialog, new ElectronDialog(this, method, options, onResolve));
+    } catch {
+    }
+  }
+
+  async setDialogInterception(kind: 'dialog' | 'fileChooser', enabled: boolean) {
+    if (this._dialogInterceptors[kind] === enabled)
+      return;
+    this._dialogInterceptors[kind] = enabled;
+    if (!this._dialogBindingInstalled) {
+      await this._nodeSession.send('Runtime.addBinding', { name: kDialogBindingName }).catch(() => {});
+      this._dialogBindingInstalled = true;
+    }
+    await this._nodeSession.send('Runtime.evaluate', {
+      expression: `Object.assign(globalThis.__pw_dialog_interceptors, ${JSON.stringify(this._dialogInterceptors)})`,
+    }).catch(() => {});
+  }
+
+  private async _resolveInterceptedDialog(id: number, result: any) {
+    const serializedResult = JSON.stringify(result === undefined ? null : result);
+    await this._nodeSession.send('Runtime.evaluate', {
+      expression: `globalThis.__pw_resolve_dialog(${id}, ${serializedResult})`,
+    });
+  }
+
   async initialize() {
     await this._nodeSession.send('Runtime.enable', {});
+    await this._nodeSession.send('Runtime.evaluate', {
+      expression: `(${installDialogInterception.toString()})()`,
+      // Needed for `require` access on Electron 28+, see https://github.com/microsoft/playwright/issues/28048.
+      includeCommandLineAPI: true,
+    }).catch(() => {});
     // Delay loading the app until browser is started and the browser targets are configured to auto-attach.
     await this._nodeSession.send('Runtime.evaluate', { expression: '__playwright_run()' });
   }

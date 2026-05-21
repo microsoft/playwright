@@ -40,6 +40,8 @@ export type InitializerTraits<T> =
     T extends DisposableChannel ? DisposableInitializer :
     T extends ElectronChannel ? ElectronInitializer :
     T extends ElectronApplicationChannel ? ElectronApplicationInitializer :
+    T extends ElectronDialogChannel ? ElectronDialogInitializer :
+    T extends ElectronFileChooserChannel ? ElectronFileChooserInitializer :
     T extends FrameChannel ? FrameInitializer :
     T extends JSHandleChannel ? JSHandleInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
@@ -78,6 +80,8 @@ export type EventsTraits<T> =
     T extends DisposableChannel ? DisposableEvents :
     T extends ElectronChannel ? ElectronEvents :
     T extends ElectronApplicationChannel ? ElectronApplicationEvents :
+    T extends ElectronDialogChannel ? ElectronDialogEvents :
+    T extends ElectronFileChooserChannel ? ElectronFileChooserEvents :
     T extends FrameChannel ? FrameEvents :
     T extends JSHandleChannel ? JSHandleEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
@@ -116,6 +120,8 @@ export type EventTargetTraits<T> =
     T extends DisposableChannel ? DisposableEventTarget :
     T extends ElectronChannel ? ElectronEventTarget :
     T extends ElectronApplicationChannel ? ElectronApplicationEventTarget :
+    T extends ElectronDialogChannel ? ElectronDialogEventTarget :
+    T extends ElectronFileChooserChannel ? ElectronFileChooserEventTarget :
     T extends FrameChannel ? FrameEventTarget :
     T extends JSHandleChannel ? JSHandleEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
@@ -2239,6 +2245,8 @@ export type ElectronApplicationInitializer = {
 export interface ElectronApplicationEventTarget {
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   on(event: 'console', callback: (params: ElectronApplicationConsoleEvent) => void): this;
+  on(event: 'dialog', callback: (params: ElectronApplicationDialogEvent) => void): this;
+  on(event: 'fileChooser', callback: (params: ElectronApplicationFileChooserEvent) => void): this;
 }
 export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, EventTargetChannel {
   _type_ElectronApplication: boolean;
@@ -2258,6 +2266,12 @@ export type ElectronApplicationConsoleEvent = {
     columnNumber: number,
   },
   timestamp: number,
+};
+export type ElectronApplicationDialogEvent = {
+  dialog: ElectronDialogChannel,
+};
+export type ElectronApplicationFileChooserEvent = {
+  fileChooser: ElectronFileChooserChannel,
 };
 export type ElectronApplicationBrowserWindowParams = {
   page: PageChannel,
@@ -2291,7 +2305,7 @@ export type ElectronApplicationEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
 export type ElectronApplicationUpdateSubscriptionParams = {
-  event: 'console',
+  event: 'console' | 'dialog' | 'fileChooser',
   enabled: boolean,
 };
 export type ElectronApplicationUpdateSubscriptionOptions = {
@@ -2302,6 +2316,60 @@ export type ElectronApplicationUpdateSubscriptionResult = void;
 export interface ElectronApplicationEvents {
   'close': ElectronApplicationCloseEvent;
   'console': ElectronApplicationConsoleEvent;
+  'dialog': ElectronApplicationDialogEvent;
+  'fileChooser': ElectronApplicationFileChooserEvent;
+}
+
+// ----------- ElectronDialog -----------
+export type ElectronDialogInitializer = {
+  method: 'showMessageBox' | 'showCertificateTrustDialog',
+  options: any,
+};
+export interface ElectronDialogEventTarget {
+}
+export interface ElectronDialogChannel extends ElectronDialogEventTarget, Channel {
+  _type_ElectronDialog: boolean;
+  accept(params: ElectronDialogAcceptParams, progress?: Progress): Promise<ElectronDialogAcceptResult>;
+  dismiss(params?: ElectronDialogDismissParams, progress?: Progress): Promise<ElectronDialogDismissResult>;
+}
+export type ElectronDialogAcceptParams = {
+  result: any,
+};
+export type ElectronDialogAcceptOptions = {
+
+};
+export type ElectronDialogAcceptResult = void;
+export type ElectronDialogDismissParams = {};
+export type ElectronDialogDismissOptions = {};
+export type ElectronDialogDismissResult = void;
+
+export interface ElectronDialogEvents {
+}
+
+// ----------- ElectronFileChooser -----------
+export type ElectronFileChooserInitializer = {
+  method: 'showOpenDialog' | 'showSaveDialog',
+  options: any,
+};
+export interface ElectronFileChooserEventTarget {
+}
+export interface ElectronFileChooserChannel extends ElectronFileChooserEventTarget, Channel {
+  _type_ElectronFileChooser: boolean;
+  setFiles(params: ElectronFileChooserSetFilesParams, progress?: Progress): Promise<ElectronFileChooserSetFilesResult>;
+  cancel(params?: ElectronFileChooserCancelParams, progress?: Progress): Promise<ElectronFileChooserCancelResult>;
+}
+export type ElectronFileChooserSetFilesParams = {
+  filePaths: string[],
+};
+export type ElectronFileChooserSetFilesOptions = {
+
+};
+export type ElectronFileChooserSetFilesResult = void;
+export type ElectronFileChooserCancelParams = {};
+export type ElectronFileChooserCancelOptions = {};
+export type ElectronFileChooserCancelResult = void;
+
+export interface ElectronFileChooserEvents {
 }
 
 // ----------- Frame -----------

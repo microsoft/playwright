@@ -104,6 +104,8 @@ export const Events = {
   ElectronApplication: {
     Close: 'close',
     Console: 'console',
+    Dialog: 'dialog',
+    FileChooser: 'filechooser',
     Window: 'window',
   },
 };

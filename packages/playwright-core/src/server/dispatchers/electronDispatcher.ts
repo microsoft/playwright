@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@ import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { Dispatcher } from './dispatcher';
 import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ElectronApplication } from '../electron/electron';
+import { ElectronDialog, ElectronFileChooser } from '../electron/electronDialogs';
 
 import type { RootDispatcher } from './dispatcher';
 import type { PageDispatcher } from './pageDispatcher';
@@ -68,6 +69,20 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
         timestamp: message.timestamp(),
       });
     });
+    this.addObjectListener(ElectronApplication.Events.Dialog, (dialog: ElectronDialog) => {
+      if (!this._subscriptions.has('dialog')) {
+        dialog.dismiss().catch(() => {});
+        return;
+      }
+      this._dispatchEvent('dialog', { dialog: new ElectronDialogDispatcher(this, dialog) });
+    });
+    this.addObjectListener(ElectronApplication.Events.FileChooser, (fileChooser: ElectronFileChooser) => {
+      if (!this._subscriptions.has('fileChooser')) {
+        fileChooser.cancel().catch(() => {});
+        return;
+      }
+      this._dispatchEvent('fileChooser', { fileChooser: new ElectronFileChooserDispatcher(this, fileChooser) });
+    });
   }
 
   async browserWindow(params: channels.ElectronApplicationBrowserWindowParams, progress: Progress): Promise<channels.ElectronApplicationBrowserWindowResult> {
@@ -91,5 +106,45 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
       this._subscriptions.add(params.event);
     else
       this._subscriptions.delete(params.event);
+    if (params.event === 'dialog' || params.event === 'fileChooser')
+      await progress.race(this._object.setDialogInterception(params.event, params.enabled));
+  }
+}
+
+class ElectronDialogDispatcher extends Dispatcher<ElectronDialog, channels.ElectronDialogChannel, ElectronApplicationDispatcher> implements channels.ElectronDialogChannel {
+  _type_ElectronDialog = true;
+
+  constructor(scope: ElectronApplicationDispatcher, dialog: ElectronDialog) {
+    super(scope, dialog, 'ElectronDialog', {
+      method: dialog.method(),
+      options: dialog.options(),
+    });
+  }
+
+  async accept(params: channels.ElectronDialogAcceptParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.accept(params.result));
+  }
+
+  async dismiss(_: channels.ElectronDialogDismissParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.dismiss());
+  }
+}
+
+class ElectronFileChooserDispatcher extends Dispatcher<ElectronFileChooser, channels.ElectronFileChooserChannel, ElectronApplicationDispatcher> implements channels.ElectronFileChooserChannel {
+  _type_ElectronFileChooser = true;
+
+  constructor(scope: ElectronApplicationDispatcher, fileChooser: ElectronFileChooser) {
+    super(scope, fileChooser, 'ElectronFileChooser', {
+      method: fileChooser.method(),
+      options: fileChooser.options(),
+    });
+  }
+
+  async setFiles(params: channels.ElectronFileChooserSetFilesParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.setFiles(params.filePaths));
+  }
+
+  async cancel(_: channels.ElectronFileChooserCancelParams, progress: Progress): Promise<void> {
+    await progress.race(this._object.cancel());
   }
 }
