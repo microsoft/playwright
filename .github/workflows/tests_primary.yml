@@ -137,6 +137,16 @@ jobs:
             shardIndex: 2
             shardTotal: 2
             shardWeights: '58:42'
+          - os: ubuntu-latest
+            node-version: 26
+            shardIndex: 1
+            shardTotal: 2
+            shardWeights: '58:42'
+          - os: ubuntu-latest
+            node-version: 26
+            shardIndex: 2
+            shardTotal: 2
+            shardWeights: '58:42'
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -221,6 +231,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         command: npm run itest
+        node-version: 22
         bot-name: "package-installations-${{ matrix.os }}"
         shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
