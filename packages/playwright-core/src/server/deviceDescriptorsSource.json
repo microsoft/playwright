@@ -1620,7 +1620,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 6": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 915
@@ -1635,7 +1635,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 6 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 915,
       "height": 412
@@ -1650,7 +1650,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 6 Pro": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 892
@@ -1665,7 +1665,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 6 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 892,
       "height": 412
@@ -1680,7 +1680,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 6a": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 915
@@ -1695,7 +1695,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 6a landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 12; Pixel 6a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 915,
       "height": 412
@@ -1740,7 +1740,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 7 Pro": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 892
@@ -1755,7 +1755,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 7 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 892,
       "height": 412
@@ -1770,7 +1770,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 7a": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 915
@@ -1785,7 +1785,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 7a landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 13; Pixel 7a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 915,
       "height": 412
@@ -1800,7 +1800,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 8": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 915
@@ -1815,7 +1815,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 8 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 915,
       "height": 412
@@ -1830,7 +1830,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 8 Pro": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 448,
       "height": 997
@@ -1845,7 +1845,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 8 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 997,
       "height": 448
@@ -1860,7 +1860,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 8a": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 412,
       "height": 915
@@ -1875,7 +1875,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 8a landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8a) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 915,
       "height": 412
@@ -1890,7 +1890,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 9": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 360,
       "height": 808
@@ -1905,7 +1905,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 9 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 808,
       "height": 360
@@ -1920,7 +1920,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 9 Pro": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 427,
       "height": 952
@@ -1935,7 +1935,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 9 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 952,
       "height": 427
@@ -1950,7 +1950,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 9 Pro XL": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 448,
       "height": 997
@@ -1965,7 +1965,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 9 Pro XL landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 9 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 997,
       "height": 448
@@ -1980,7 +1980,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 10": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 360,
       "height": 808
@@ -1995,7 +1995,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 10 landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 808,
       "height": 360
@@ -2010,7 +2010,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 10 Pro": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 427,
       "height": 952
@@ -2025,7 +2025,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 10 Pro landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 952,
       "height": 427
@@ -2040,7 +2040,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 10 Pro XL": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 448,
       "height": 997
@@ -2055,7 +2055,7 @@
     "defaultBrowserType": "chromium"
   },
   "Pixel 10 Pro XL landscape": {
-    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.3 Mobile Safari/537.36",
+    "userAgent": "Mozilla/5.0 (Linux; Android 16; Pixel 10 Pro XL) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.14 Mobile Safari/537.36",
     "screen": {
       "width": 997,
       "height": 448
