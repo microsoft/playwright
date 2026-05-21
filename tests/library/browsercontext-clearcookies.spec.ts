@@ -164,3 +164,45 @@ it('should remove cookies by name and domain', async ({ context, page, server })
   await page.goto(server.CROSS_PROCESS_PREFIX);
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1');
 });
+
+it('should not transiently delete non-matching cookies when filtering', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40953' },
+}, async ({ context, page, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'cookieStore API is only available in Chromium');
+
+  await context.addCookies([{
+    name: 'keep_me',
+    value: '1',
+    domain: new URL(server.PREFIX).hostname,
+    path: '/',
+  },
+  {
+    name: 'delete_me',
+    value: '2',
+    domain: new URL(server.PREFIX).hostname,
+    path: '/',
+  }
+  ]);
+  await page.goto(server.PREFIX);
+
+  await page.evaluate(() => {
+    (window as any).__cookieEvents = [];
+    (window as any).cookieStore.addEventListener('change', (event: any) => {
+      for (const changed of event.changed)
+        (window as any).__cookieEvents.push({ kind: 'changed', name: changed.name });
+      for (const deleted of event.deleted)
+        (window as any).__cookieEvents.push({ kind: 'deleted', name: deleted.name });
+    });
+  });
+
+  await context.clearCookies({ name: 'delete_me' });
+
+  // Flush microtasks so any change events fired during clearCookies are observed.
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 50)));
+
+  const events: { kind: string, name: string }[] = await page.evaluate(() => (window as any).__cookieEvents);
+
+  // The kept cookie must never appear in a deletion event.
+  expect(events.filter(e => e.kind === 'deleted' && e.name === 'keep_me')).toEqual([]);
+  expect(await page.evaluate('document.cookie')).toBe('keep_me=1');
+});
