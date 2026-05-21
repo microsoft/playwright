@@ -118,30 +118,13 @@ Contains a boolean stating whether the response was successful (status in the ra
 
 Returns the matching [Request] object.
 
-## async method: Response.securityDetails
+## async method: Response.securityDetails = %%-response-security-details-%%
 * since: v1.13
-- returns: <[null]|[Object]>
-  * alias: SecurityDetails
-  * alias-csharp: ResponseSecurityDetailsResult
-  - `issuer` ?<[string]> Common Name component of the Issuer field.
-    from the certificate. This should only be used for informational purposes. Optional.
-  - `protocol` ?<[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
-  - `subjectName` ?<[string]> Common Name component of the Subject
-    field from the certificate. This should only be used for informational purposes. Optional.
-  - `validFrom` ?<[float]> Unix timestamp (in seconds) specifying
-    when this cert becomes valid. Optional.
-  - `validTo` ?<[float]> Unix timestamp (in seconds) specifying
-    when this cert becomes invalid. Optional.
 
 Returns SSL and other security information.
 
-## async method: Response.serverAddr
+## async method: Response.serverAddr = %%-response-server-addr-%%
 * since: v1.13
-- returns: <[null]|[Object]>
-  * alias-csharp: ResponseServerAddrResult
-  * alias-java: ServerAddr
-  - `ipAddress` <[string]> IPv4 or IPV6 address of the server.
-  - `port` <[int]>
 
 Returns the IP address and port of the server.
 

@@ -90,30 +90,13 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 
 Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
 
-## async method: APIResponse.securityDetails
+## async method: APIResponse.securityDetails = %%-response-security-details-%%
 * since: v1.61
-- returns: <[null]|[Object]>
-  * alias: SecurityDetails
-  * alias-csharp: ResponseSecurityDetailsResult
-  - `issuer` ?<[string]> Common Name component of the Issuer field.
-    from the certificate. This should only be used for informational purposes. Optional.
-  - `protocol` ?<[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
-  - `subjectName` ?<[string]> Common Name component of the Subject
-    field from the certificate. This should only be used for informational purposes. Optional.
-  - `validFrom` ?<[float]> Unix timestamp (in seconds) specifying
-    when this cert becomes valid. Optional.
-  - `validTo` ?<[float]> Unix timestamp (in seconds) specifying
-    when this cert becomes invalid. Optional.
 
 Returns SSL and other security information. Resolves to `null` for non-HTTPS responses. For redirected requests, returns the information for the last request in the redirect chain.
 
-## async method: APIResponse.serverAddr
+## async method: APIResponse.serverAddr = %%-response-server-addr-%%
 * since: v1.61
-- returns: <[null]|[Object]>
-  * alias-csharp: ResponseServerAddrResult
-  * alias-java: ServerAddr
-  - `ipAddress` <[string]> IPv4 or IPV6 address of the server.
-  - `port` <[int]>
 
 Returns the IP address and port of the server. Resolves to `null` if the server address is not available. For redirected requests, returns the information for the last request in the redirect chain.
 

@@ -1986,3 +1986,24 @@ In this config:
   - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
   - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
 
+## response-security-details
+- returns: <[null]|[Object]>
+  * alias: SecurityDetails
+  * alias-csharp: ResponseSecurityDetailsResult
+  - `issuer` ?<[string]> Common Name component of the Issuer field.
+    from the certificate. This should only be used for informational purposes. Optional.
+  - `protocol` ?<[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+  - `subjectName` ?<[string]> Common Name component of the Subject
+    field from the certificate. This should only be used for informational purposes. Optional.
+  - `validFrom` ?<[float]> Unix timestamp (in seconds) specifying
+    when this cert becomes valid. Optional.
+  - `validTo` ?<[float]> Unix timestamp (in seconds) specifying
+    when this cert becomes invalid. Optional.
+
+## response-server-addr
+- returns: <[null]|[Object]>
+  * alias-csharp: ResponseServerAddrResult
+  * alias-java: ServerAddr
+  - `ipAddress` <[string]> IPv4 or IPV6 address of the server.
+  - `port` <[int]>
+
