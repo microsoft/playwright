@@ -51,6 +51,34 @@ If you are not able to launch Electron and it will end up in timeouts during lau
 
 * Ensure that `nodeCliInspect` ([FuseV1Options.EnableNodeCliInspectArguments](https://www.electronjs.org/docs/latest/tutorial/fuses#nodecliinspect)) fuse is **not** set to `false`.
 
+**Mocking native dialogs:**
+
+Playwright does not intercept the native Electron [dialog](https://www.electronjs.org/docs/latest/api/dialog) API
+(`dialog.showOpenDialog`, `dialog.showSaveDialog`, `dialog.showMessageBox`, etc.) because those calls happen in the
+Electron main process and go straight to OS APIs. Use [`method: ElectronApplication.evaluate`] to replace the
+relevant methods in the main process so tests run deterministically without any OS-level UI:
+
+```js
+// Stub the open dialog to always return a fixed path.
+await electronApp.evaluate(({ dialog }, filePaths) => {
+  dialog.showOpenDialog = () => Promise.resolve({ canceled: false, filePaths });
+}, ['/path/to/file.txt']);
+
+// Stub the save dialog.
+await electronApp.evaluate(({ dialog }, filePath) => {
+  dialog.showSaveDialog = () => Promise.resolve({ canceled: false, filePath });
+}, '/path/to/saved.txt');
+
+// Stub showMessageBox to click the first button.
+await electronApp.evaluate(({ dialog }) => {
+  dialog.showMessageBox = () => Promise.resolve({ response: 0, checkboxChecked: false });
+});
+```
+
+The replacement persists until the application is closed. Synchronous variants
+(`showOpenDialogSync`, `showSaveDialogSync`, `showMessageBoxSync`) can be stubbed the same way — just return the
+value directly instead of a `Promise`.
+
 ## async method: Electron.launch
 * since: v1.9
 - returns: <[ElectronApplication]>
