@@ -65,6 +65,11 @@ let _needsPreflightAndPirates = false;
 
 export function setNeedsPreflightAndPirates() {
   _needsPreflightAndPirates = true;
+  // If the light install ran before the loader decision was settled
+  // (e.g. loadReporter(null, …) is called before loadConfig), pirates
+  // never got installed. Make sure it does now.
+  if (transformInstalled)
+    installPirates();
 }
 
 export function transformConfig(): TransformConfig {
@@ -319,6 +324,7 @@ export async function requireOrImport(file: string) {
 }
 
 let transformInstalled = false;
+let piratesInstalled = false;
 
 function installTransformIfNeeded() {
   if (transformInstalled)
@@ -327,16 +333,23 @@ function installTransformIfNeeded() {
 
   installSourceMapSupport();
 
-  if (!_needsPreflightAndPirates) {
-    // The synchronous module customization hooks intercept `require()`, but not the
-    // `require.resolve(id, { paths })` form. The mere presence of these dummy loaders
-    // teaches the default resolver that our extensions should be considered.
-    // Hopefully, one day `registerHooks({ resolve })` will also handle `require.resolve()`.
-    const extensions = (Module as any)._extensions;
-    for (const ext of ['.ts', '.cts', '.tsx', '.jsx'])
-      extensions[ext] = extensions['.js'];
+  // The synchronous module customization hooks intercept `require()`, but not the
+  // `require.resolve(id, { paths })` form. The mere presence of these dummy loaders
+  // teaches the default resolver that our extensions should be considered.
+  // Hopefully, one day `registerHooks({ resolve })` will also handle `require.resolve()`.
+  // When pirates is installed below, it overrides these shortcuts with full transforms.
+  const extensions = (Module as any)._extensions;
+  for (const ext of ['.ts', '.cts', '.tsx', '.jsx'])
+    extensions[ext] = extensions['.js'];
+
+  if (_needsPreflightAndPirates)
+    installPirates();
+}
+
+function installPirates() {
+  if (piratesInstalled)
     return;
-  }
+  piratesInstalled = true;
 
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
