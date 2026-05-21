@@ -1185,6 +1185,306 @@
     "hasTouch": true,
     "defaultBrowserType": "webkit"
   },
+  "iPhone 16": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 393,
+      "height": 852
+    },
+    "viewport": {
+      "width": 393,
+      "height": 659
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16 landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 393,
+      "height": 852
+    },
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16 Plus": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 430,
+      "height": 932
+    },
+    "viewport": {
+      "width": 430,
+      "height": 739
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16 Plus landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 430,
+      "height": 932
+    },
+    "viewport": {
+      "width": 814,
+      "height": 380
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16 Pro": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 402,
+      "height": 874
+    },
+    "viewport": {
+      "width": 402,
+      "height": 681
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16 Pro landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 402,
+      "height": 874
+    },
+    "viewport": {
+      "width": 756,
+      "height": 352
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16 Pro Max": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 440,
+      "height": 956
+    },
+    "viewport": {
+      "width": 440,
+      "height": 763
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16 Pro Max landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 440,
+      "height": 956
+    },
+    "viewport": {
+      "width": 838,
+      "height": 390
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16e": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 390,
+      "height": 844
+    },
+    "viewport": {
+      "width": 390,
+      "height": 651
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 16e landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 390,
+      "height": 844
+    },
+    "viewport": {
+      "width": 726,
+      "height": 340
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 402,
+      "height": 874
+    },
+    "viewport": {
+      "width": 402,
+      "height": 681
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17 landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 402,
+      "height": 874
+    },
+    "viewport": {
+      "width": 756,
+      "height": 352
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone Air": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 420,
+      "height": 912
+    },
+    "viewport": {
+      "width": 420,
+      "height": 719
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone Air landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 420,
+      "height": 912
+    },
+    "viewport": {
+      "width": 794,
+      "height": 370
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17 Pro": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 402,
+      "height": 874
+    },
+    "viewport": {
+      "width": 402,
+      "height": 681
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17 Pro landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 402,
+      "height": 874
+    },
+    "viewport": {
+      "width": 756,
+      "height": 352
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17 Pro Max": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 440,
+      "height": 956
+    },
+    "viewport": {
+      "width": 440,
+      "height": 763
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17 Pro Max landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 440,
+      "height": 956
+    },
+    "viewport": {
+      "width": 838,
+      "height": 390
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17e": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 390,
+      "height": 844
+    },
+    "viewport": {
+      "width": 390,
+      "height": 651
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 17e landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 390,
+      "height": 844
+    },
+    "viewport": {
+      "width": 726,
+      "height": 340
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
   "Kindle Fire HDX": {
     "userAgent": "Mozilla/5.0 (Linux; U; en-us; KFAPWI Build/JDQ39) AppleWebKit/535.19 (KHTML, like Gecko) Silk/3.13 Safari/535.19 Silk-Accelerated=true",
     "viewport": {
