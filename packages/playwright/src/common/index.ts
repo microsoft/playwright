@@ -17,7 +17,6 @@
 export * as cc from '../transform/compilationCache';
 export * as config from './config';
 export * as configLoader from './configLoader';
-export * as esm from './esmLoaderHost';
 export * as fixtures from './fixtures';
 export * as ipc from './ipc';
 export * as poolBuilder from './poolBuilder';

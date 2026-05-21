@@ -18,15 +18,15 @@ import fs from 'fs';
 import Module from 'module';
 import path from 'path';
 import url from 'url';
-
 import crypto from 'crypto';
-
 import sourceMapSupport from 'source-map-support';
 import { loadTsConfig } from './tsconfig-loader';
 import { libPath, packageJSON } from '../package';
 import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
-import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
+import * as cc from './compilationCache';
+import * as esmLoaderSync from './esmLoaderSync';
 import { addHook } from './pirates';
+import { PortTransport } from './portTransport';
 
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import type { Location } from '../../types/testReporter';
@@ -56,35 +56,20 @@ let _transformConfig: TransformConfig = {
 
 let _externalMatcher: Matcher = () => false;
 
-export function setTransformConfig(config: TransformConfig) {
+export async function setTransformConfig(config: TransformConfig) {
   _transformConfig = config;
   _externalMatcher = createFileMatcher(_transformConfig.external);
-}
-
-let _needsPreflightAndPirates = false;
-
-export function setNeedsPreflightAndPirates() {
-  _needsPreflightAndPirates = true;
-  // If the light install ran before the loader decision was settled
-  // (e.g. loadReporter(null, …) is called before loadConfig), pirates
-  // never got installed. Make sure it does now.
-  if (transformInstalled)
-    installPirates();
-}
-
-export function transformConfig(): TransformConfig {
-  return _transformConfig;
+  if (loaderChannel)
+    await loaderChannel.send('setTransformConfig', { config });
 }
 
 let _singleTSConfigPath: string | undefined;
 let _singleTSConfig: ParsedTsConfigData[] | undefined;
 
-export function setSingleTSConfig(value: string | undefined) {
+export async function setSingleTSConfig(value: string | undefined) {
   _singleTSConfigPath = value;
-}
-
-export function singleTSConfig(): string | undefined {
-  return _singleTSConfigPath;
+  if (loaderChannel)
+    await loaderChannel.send('setSingleTSConfig', { tsconfig: value });
 }
 
 function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
@@ -223,7 +208,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
 export function shouldTransform(filename: string): boolean {
   if (_externalMatcher(filename))
     return false;
-  return !belongsToNodeModules(filename);
+  return !cc.belongsToNodeModules(filename);
 }
 
 let transformData: Map<string, any>;
@@ -240,7 +225,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const pluginsPrologue = _transformConfig.babelPlugins;
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
   const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-  const { cachedCode, addToCache, serializedCache } = getFromCompilationCache(filename, hash, moduleUrl);
+  const { cachedCode, addToCache, serializedCache } = cc.getFromCompilationCache(filename, hash, moduleUrl);
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
 
@@ -291,7 +276,7 @@ export async function requireOrImport(file: string) {
     // the compilation cache with the source maps. This allows inline test() calls to
     // resolve wrapFunctionWithLocation. The synchronous loader populates the cache
     // in-process, so no preflight is needed.
-    if (_needsPreflightAndPirates) {
+    if (loaderChannel) {
       await eval(`import(${JSON.stringify(fileName + '.esm.preflight')})`)
           .catch((error: any) => debugTest('Failed to load preflight for ' + file + ', source maps may be missing for errors thrown during loading.', error))
           .finally(nextTask);
@@ -305,7 +290,7 @@ export async function requireOrImport(file: string) {
     return await esmImport().finally(nextTask);
   }
   const result = require(file);
-  const depsCollector = currentFileDepsCollector();
+  const depsCollector = cc.currentFileDepsCollector();
   if (depsCollector) {
     const module = require.cache[file];
     if (module) {
@@ -324,33 +309,31 @@ export async function requireOrImport(file: string) {
 }
 
 let transformInstalled = false;
-let piratesInstalled = false;
 
 function installTransformIfNeeded() {
   if (transformInstalled)
     return;
   transformInstalled = true;
 
-  installSourceMapSupport();
+  registerESMLoader();
+  cc.installSourceMapSupport();
 
-  // The synchronous module customization hooks intercept `require()`, but not the
-  // `require.resolve(id, { paths })` form. The mere presence of these dummy loaders
-  // teaches the default resolver that our extensions should be considered.
+  // Async ESM loader ony covers "import", so install CJS hooks to cover "require".
+  if (loaderChannel) {
+    installCJSHooks();
+    return;
+  }
+
+  // Sync hooks intercept `require()`, but not the `require.resolve(id, { paths })` form.
+  // The mere presence of these dummy loaders teaches the default resolver that our extensions
+  // should be considered.
   // Hopefully, one day `registerHooks({ resolve })` will also handle `require.resolve()`.
-  // When pirates is installed below, it overrides these shortcuts with full transforms.
   const extensions = (Module as any)._extensions;
   for (const ext of ['.ts', '.cts', '.tsx', '.jsx'])
     extensions[ext] = extensions['.js'];
-
-  if (_needsPreflightAndPirates)
-    installPirates();
 }
 
-function installPirates() {
-  if (piratesInstalled)
-    return;
-  piratesInstalled = true;
-
+function installCJSHooks() {
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
     if (parent) {
@@ -369,7 +352,7 @@ function installPirates() {
 
 const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {
   module.children.forEach(child => {
-    if (!belongsToNodeModules(child.filename) && !dependencies.has(child.filename)) {
+    if (!cc.belongsToNodeModules(child.filename) && !dependencies.has(child.filename)) {
       dependencies.add(child.filename);
       collectCJSDependencies(child, dependencies);
     }
@@ -407,4 +390,66 @@ function isRelativeSpecifier(specifier: string) {
 
 async function nextTask() {
   return new Promise(resolve => setTimeout(resolve, 0));
+}
+
+let loaderChannel: PortTransport | undefined;
+
+function registerESMLoader() {
+  // Opt-out switch.
+  if (process.env.PW_DISABLE_TS_ESM)
+    return;
+
+  // Transpilation in `bun` is not necessary, and trying to register a hook would cause issues.
+  // https://github.com/oven-sh/bun/issues/8222#issuecomment-3665364677
+  if ('Bun' in globalThis)
+    return;
+
+  const nodeModule = require('node:module');
+
+  if (nodeModule.registerHooks && !process.env.PLAYWRIGHT_FORCE_ASYNC_LOADER) {
+    nodeModule.registerHooks({ resolve: esmLoaderSync.resolve, load: esmLoaderSync.load });
+    return;
+  }
+
+  if (!nodeModule.register)
+    return;
+
+  const { port1, port2 } = new MessageChannel();
+  // register will wait until the loader is initialized. The path is relative to
+  // the bundle output layout (lib/common/index.js → ../transform/esmLoader.js),
+  // not the source layout — esmLoader.js is its own esbuild entry point.
+  nodeModule.register(url.pathToFileURL(require.resolve('../transform/esmLoader.js')), {
+    data: { port: port2 },
+    transferList: [port2],
+  });
+  loaderChannel = new PortTransport(port1, async (method, params) => {
+    if (method === 'pushToCompilationCache')
+      cc.addToCompilationCache(params.cache);
+  });
+  // Seed the loader thread with the state accumulated so far. Subsequent updates
+  // are pushed by setSingleTSConfig() / setTransformConfig() / startCollectingFileDeps().
+  void loaderChannel.send('setSingleTSConfig', { tsconfig: _singleTSConfigPath });
+  void loaderChannel.send('setTransformConfig', { config: _transformConfig });
+  void loaderChannel.send('addToCompilationCache', { cache: cc.serializeCompilationCache() });
+}
+
+export async function startCollectingFileDeps() {
+  cc.startCollectingFileDeps();
+  if (loaderChannel)
+    await loaderChannel.send('startCollectingFileDeps', {});
+}
+
+export async function stopCollectingFileDeps(file: string) {
+  cc.stopCollectingFileDeps(file);
+  if (loaderChannel)
+    await loaderChannel.send('stopCollectingFileDeps', { file });
+}
+
+export async function incorporateCompilationCache() {
+  if (!loaderChannel)
+    return;
+  // Gather dependency information from the esm loader that was populated by
+  // its resolve hook. We don't push this proactively during load — only at end.
+  const result = await loaderChannel.send('getCompilationCache', {});
+  cc.addToCompilationCache(result.cache);
 }

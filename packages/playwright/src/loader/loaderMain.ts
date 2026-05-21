@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { cc, configLoader, esm, FullConfigInternal, ipc, poolBuilder, ProcessRunner, testLoader } from '../common';
+import { cc, configLoader, FullConfigInternal, ipc, poolBuilder, ProcessRunner, testLoader, transform } from '../common';
 
 import type { TestError } from '../../types/testReporter';
 
@@ -43,7 +43,7 @@ export class LoaderMain extends ProcessRunner {
   }
 
   async getCompilationCacheFromLoader() {
-    await esm.incorporateCompilationCache();
+    await transform.incorporateCompilationCache();
     return cc.serializeCompilationCache();
   }
 }
