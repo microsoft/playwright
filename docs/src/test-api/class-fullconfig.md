@@ -21,6 +21,12 @@ any argument-parsing library.
 
 Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
 
+## property: FullConfig.failOnFlakyTests
+* since: v1.61
+- type: <[boolean]>
+
+See [`property: TestConfig.failOnFlakyTests`].
+
 ## property: FullConfig.forbidOnly
 * since: v1.10
 - type: <[boolean]>

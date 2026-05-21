@@ -29,6 +29,7 @@ export type JsonConfig = Pick<reporterTypes.FullConfig, 'configFile' | 'globalTi
   // optional for backwards compatibility
   tags?: reporterTypes.FullConfig['tags'],
   webServer?: reporterTypes.FullConfig['webServer'],
+  failOnFlakyTests?: reporterTypes.FullConfig['failOnFlakyTests'],
 };
 
 export type JsonPattern = {
@@ -780,6 +781,7 @@ export type TeleFullProject = reporterTypes.FullProject;
 
 export const baseFullConfig: reporterTypes.FullConfig = {
   argv: [],
+  failOnFlakyTests: false,
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,

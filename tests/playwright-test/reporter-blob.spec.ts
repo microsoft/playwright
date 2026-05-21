@@ -972,6 +972,7 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
   const config: PlaywrightTestConfig = {
     // Runner options:
     globalTimeout: 202300,
+    failOnFlakyTests: true,
     maxFailures: 3,
     metadata: {
       'a': 'b',
@@ -1043,6 +1044,7 @@ test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
   expect(json.rootDir).toBe(test.info().outputDir);
   expect(json.globalTimeout).toBe(config.globalTimeout);
   expect(json.maxFailures).toBe(config.maxFailures);
+  expect(json.failOnFlakyTests).toBe(config.failOnFlakyTests);
   expect(json.metadata).toEqual(expect.objectContaining(config.metadata));
   expect(json.workers).toBe(2);
   expect(json.version).toBeTruthy();

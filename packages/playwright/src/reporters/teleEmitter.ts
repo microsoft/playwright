@@ -200,6 +200,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       globalTeardown: config.globalTeardown,
       tags: config.tags,
       webServer: config.webServer,
+      failOnFlakyTests: config.failOnFlakyTests,
     };
   }
 
