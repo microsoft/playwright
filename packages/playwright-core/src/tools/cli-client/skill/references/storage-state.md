@@ -38,7 +38,7 @@ The saved file contains:
       "value": "abc123",
       "domain": "example.com",
       "path": "/",
-      "expires": 1735689600,
+      "expires": 1893456000,
       "httpOnly": true,
       "secure": true,
       "sameSite": "Lax"
@@ -92,7 +92,7 @@ playwright-cli cookie-set session abc123
 playwright-cli cookie-set session abc123 --domain=example.com --path=/ --httpOnly --secure --sameSite=Lax
 
 # Cookie with expiration (Unix timestamp)
-playwright-cli cookie-set remember_me token123 --expires=1735689600
+playwright-cli cookie-set remember_me token123 --expires=1893456000
 ```
 
 ### Delete a Cookie
