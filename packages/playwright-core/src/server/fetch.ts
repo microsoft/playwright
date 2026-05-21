@@ -496,6 +496,8 @@ export abstract class APIRequestContext extends SdkObject {
               status: response.statusCode || 0,
               statusText: response.statusMessage || '',
               headers: toHeadersArray(response.rawHeaders),
+              securityDetails,
+              serverAddr: serverIPAddress !== undefined && serverPort !== undefined ? { ipAddress: serverIPAddress, port: serverPort } : undefined,
             },
           });
         };

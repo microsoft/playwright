@@ -90,6 +90,16 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 
 Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
 
+## async method: APIResponse.securityDetails = %%-response-security-details-%%
+* since: v1.61
+
+Returns SSL and other security information. Resolves to `null` for non-HTTPS responses. For redirected requests, returns the information for the last request in the redirect chain.
+
+## async method: APIResponse.serverAddr = %%-response-server-addr-%%
+* since: v1.61
+
+Returns the IP address and port of the server. Resolves to `null` if the server address is not available. For redirected requests, returns the information for the last request in the redirect chain.
+
 ## method: APIResponse.status
 * since: v1.16
 - returns: <[int]>

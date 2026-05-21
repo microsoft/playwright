@@ -100,3 +100,5 @@ APIResponse:
     headers:
       type: array
       items: NameValue
+    securityDetails: SecurityDetails?
+    serverAddr: RemoteAddr?

@@ -234,6 +234,29 @@ it('should propagate ignoreHTTPSErrors on redirects', async ({ playwright, https
   await request.dispose();
 });
 
+it('should return server address from response', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const response = await request.get(server.EMPTY_PAGE);
+  const addr = await response.serverAddr();
+  expect(addr!.ipAddress).toMatch(/^(127\.0\.0\.1|::1)$/);
+  expect(addr!.port).toBe(server.PORT);
+  await request.dispose();
+});
+
+it('should return security details from response', async ({ playwright, httpsServer }) => {
+  const request = await playwright.request.newContext({ ignoreHTTPSErrors: true });
+  const response = await request.get(httpsServer.EMPTY_PAGE);
+  expect(await response.securityDetails()).toEqual({ issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
+  await request.dispose();
+});
+
+it('should return null security details for http response', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  const response = await request.get(server.EMPTY_PAGE);
+  expect(await response.securityDetails()).toBeNull();
+  await request.dispose();
+});
+
 it('should resolve url relative to global baseURL option', async ({ playwright, server }) => {
   const request = await playwright.request.newContext({ baseURL: server.PREFIX });
   const response = await request.get('/empty.html');
