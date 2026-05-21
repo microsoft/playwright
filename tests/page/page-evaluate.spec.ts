@@ -439,6 +439,18 @@ it('should throw for too deep reference chain', {
   }, 1000)).rejects.toThrow('Cannot serialize result: object reference chain is too long.');
 });
 
+it('should throw for too deep reference chain 2', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40940' }
+}, async ({ page, browserName }) => {
+  it.skip(browserName !== 'chromium', 'this is a chromium-only limitation');
+  await expect(page.evaluate(depth => {
+    let node = {};
+    for (let i = 0; i < depth; i++)
+      node = { child: node };
+    return node;
+  }, 200)).rejects.toThrow('Cannot serialize result: object reference chain is too long.');
+});
+
 it('should throw usable message for unserializable shallow function', async ({ page }) => {
   await expect(() => page.evaluate(arg => arg, () => { }))
       .rejects.toThrow(/Attempting to serialize unexpected value: \(\) => {}/);
