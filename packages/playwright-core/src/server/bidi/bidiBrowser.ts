@@ -272,7 +272,10 @@ export class BidiBrowserContext extends BrowserContext {
       type: bidi.BrowsingContext.CreateType.Window,
       userContext: this._browserContextId,
     });
-    return this._browser._bidiPages.get(context)!._page;
+    const page = this._browser._bidiPages.get(context)!._page;
+    page.frameManager.frameLifecycleEvent(context, 'domcontentloaded');
+    page.frameManager.frameLifecycleEvent(context, 'load');
+    return page;
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
