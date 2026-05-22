@@ -1099,6 +1099,13 @@ scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),
   defaultContext: tOptional(tChannel(['BrowserContext'])),
 });
+scheme.BrowserTypeConnectOverCDPTransportParams = tObject({
+  transport: tBinary,
+});
+scheme.BrowserTypeConnectOverCDPTransportResult = tObject({
+  browser: tChannel(['Browser']),
+  defaultContext: tOptional(tChannel(['BrowserContext'])),
+});
 scheme.BrowserTypeConnectToWorkerParams = tObject({
   endpoint: tString,
   timeout: tFloat,

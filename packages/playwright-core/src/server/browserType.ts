@@ -290,6 +290,10 @@ export abstract class BrowserType extends SdkObject {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
+  async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport): Promise<Browser> {
+    throw new Error('CDP connections are only supported by Chromium');
+  }
+
   async connectToWorker(progress: Progress, endpoint: string): Promise<Worker> {
     throw new Error('CDP connections are only supported by Chromium');
   }
