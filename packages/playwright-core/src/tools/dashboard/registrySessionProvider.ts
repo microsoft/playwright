@@ -68,6 +68,7 @@ class BrowserTracker {
     for (const listeners of this._contextListeners.values())
       listeners.forEach(d => d.dispose());
     this._contextListeners.clear();
+    void this.browser.close().catch(() => {});
   }
 
   private _wireContext(context: api.BrowserContext) {
