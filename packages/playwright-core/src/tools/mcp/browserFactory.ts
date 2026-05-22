@@ -115,7 +115,16 @@ async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Pro
 
 async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
   testDebug('create browser (remote)');
-  const descriptor = await serverRegistry.find(config.browser.remoteEndpoint!);
+  // `remoteEndpoint` may be a plain URL string or a ConnectOptions object that
+  // carries additional fields such as `exposeNetwork`, `headers`, `slowMo`, and
+  // `timeout`. Normalize once so the rest of the function deals with a single
+  // shape.
+  const remote = config.browser.remoteEndpoint!;
+  const remoteOptions = typeof remote === 'string'
+    ? { endpoint: remote, headers: config.browser.remoteHeaders }
+    : remote;
+
+  const descriptor = await serverRegistry.find(remoteOptions.endpoint);
   if (descriptor) {
     const browser = await connectToBrowserAcrossVersions(descriptor);
     return {
@@ -131,13 +140,9 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
     };
   }
 
-  const endpoint = config.browser.remoteEndpoint!;
   const playwrightObject = playwright as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
-  const browser = await connectToBrowser(playwrightObject, {
-    endpoint,
-    headers: config.browser.remoteHeaders,
-  });
+  const browser = await connectToBrowser(playwrightObject, remoteOptions);
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
   return { browser, browserInfo: browserInfo(browser, config), canBind: false, ownership: 'attached' };
 }
