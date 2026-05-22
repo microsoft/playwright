@@ -1112,8 +1112,9 @@ export class InjectedScript {
         return;
 
       // Playwright only issues trusted events, so allow any custom events originating from
-      // the page or content scripts.
-      if (!event.isTrusted)
+      // the page or content scripts. The WebView backend cannot produce trusted events, so
+      // it marks synthetic events with __pwTrustedSynthetic to opt back into interception.
+      if (!event.isTrusted && !(event as any).__pwTrustedSynthetic)
         return;
 
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.

@@ -1,0 +1,10 @@
+[*]
+@isomorphic/**
+@utils/**
+../
+../registry/
+node_modules/jpeg-js
+node_modules/pngjs
+
+[webkit.ts]
+./webview/wvBrowser.ts
