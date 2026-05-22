@@ -40,6 +40,7 @@ import * as rawBindingsControllerSource from '../generated/bindingsControllerSou
 import { Overlay } from './overlay';
 import { NonRecoverableDOMError } from './dom';
 import { Screencast } from './screencast';
+import { saveGlobalsSnapshotSource } from './javascript';
 
 import type { Artifact } from './artifact';
 import type { BrowserContextEventMap } from './browserContext';
@@ -92,6 +93,7 @@ export interface PageDelegate {
 
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
+  noUtilityWorld?: () => boolean;
 
   // Work around WebKit's raf issues on Windows.
   rafCountForStablePosition(): number;
@@ -220,6 +222,10 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   async reportAsNew(opener: Page | undefined, error?: Error) {
+    if (this.delegate.noUtilityWorld?.()) {
+      await this._addInitScript(saveGlobalsSnapshotSource);
+      await this.safeNonStallingEvaluateInAllFrames(saveGlobalsSnapshotSource, 'main');
+    }
     if (opener) {
       const openerPageOrError = await opener.waitForInitializedOrError();
       if (openerPageOrError instanceof Page && !openerPageOrError.isClosed())

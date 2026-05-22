@@ -60,10 +60,12 @@ export class ExecutionContext extends SdkObject {
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
   private _contextDestroyedScope = new LongStandingScope();
   readonly worldNameForTest: string;
+  private _noUtilityWorld: boolean | undefined;
 
-  constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string) {
+  constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string, options?: { noUtilityWorld?: boolean }) {
     super(parent, 'execution-context');
     this.worldNameForTest = worldNameForTest;
+    this._noUtilityWorld = options?.noUtilityWorld;
     this.delegate = delegate;
   }
 
@@ -102,8 +104,10 @@ export class ExecutionContext extends SdkObject {
 
   private _utilityScript(): Promise<JSHandle<UtilityScript>> {
     if (!this._utilityScriptPromise) {
+      const globalsSnapshot = this._noUtilityWorld ? mainWorldGlobalsSnapshotSource : '';
       const source = `
       (() => {
+        ${globalsSnapshot}
         const module = {};
         ${rawUtilityScriptSource.source}
         return new (module.exports.UtilityScript())(globalThis, ${isUnderTest()});
@@ -357,3 +361,28 @@ export function sparseArrayToString(entries: { name: string, value?: any }[]): s
 
   return '[' + tokens.join(', ') + ']';
 }
+
+// Builtins that are frequently replaced or polyfilled by libraries (Prototype.js, MooTools,
+// core-js, es6-shim, Sentry/Bugsnag, XRegExp, Web Components / Promise polyfills, etc.).
+// Snapshotting the constructor reference protects the injected bundle from those overrides.
+const snapshottedFunctionBuiltins = [
+  // DOM
+  'Node', 'Element', 'NodeFilter', 'HTMLElement', 'Document', 'ShadowRoot',
+  'MutationObserver', 'Event', 'CustomEvent', 'EventTarget',
+  // JS standard
+  'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'Symbol',
+  'Error', 'TypeError', 'RegExp', 'Array', 'Object',
+];
+
+// Non-callable globals (objects) — Prototype.js historically replaced JSON.
+const snapshottedObjectBuiltins = ['JSON', 'Math'];
+
+export const saveGlobalsSnapshotSource = `window.__pwSnapshotGlobals = {
+${[...snapshottedFunctionBuiltins, ...snapshottedObjectBuiltins].map(n => `  ${n}: window.${n}`).join(',\n')}
+};`;
+
+export const mainWorldGlobalsSnapshotSource = `
+  const __snap = globalThis.__pwSnapshotGlobals || {};
+${snapshottedFunctionBuiltins.map(n => `  const ${n} = (typeof globalThis.${n} === 'function' ? globalThis.${n} : __snap.${n});`).join('\n')}
+${snapshottedObjectBuiltins.map(n => `  const ${n} = (typeof globalThis.${n} === 'object' && globalThis.${n} ? globalThis.${n} : __snap.${n});`).join('\n')}
+`;

@@ -54,7 +54,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   readonly world: types.World | null;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame, world: types.World|null) {
-    super(frame, delegate, world || 'content-script');
+    super(frame, delegate, world || 'content-script', { noUtilityWorld: frame._page.delegate.noUtilityWorld?.() });
     this.frame = frame;
     this.world = world;
   }
@@ -98,8 +98,10 @@ export class FrameExecutionContext extends js.ExecutionContext {
         isUtilityWorld: this.world === 'utility',
         customEngines,
       };
+      const globalsSnapshot = this.frame._page.delegate.noUtilityWorld?.() ? js.mainWorldGlobalsSnapshotSource : '';
       const source = `
         (() => {
+        ${globalsSnapshot}
         const module = {};
         ${rawInjectedScriptSource.source}
         return new (module.exports.InjectedScript())(globalThis, ${JSON.stringify(options)});
