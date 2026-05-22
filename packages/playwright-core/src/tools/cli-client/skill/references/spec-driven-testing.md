@@ -191,7 +191,7 @@ Collect the generated code and write the test file at the path given in the spec
 // seed: tests/seed.spec.ts
 import { test, expect } from './fixtures';   // or '@playwright/test' if no fixtures file
 
-test.describe('Singing in and out', () => {
+test.describe('Signing in and out', () => {
   test('should sign in', async ({ page }) => {
     // 1. Navigate to the application
     // (handled by the seed fixture)
