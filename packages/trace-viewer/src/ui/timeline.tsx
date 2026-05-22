@@ -32,9 +32,10 @@ export const Timeline: React.FunctionComponent<{
   onSelected: (action: ActionTraceEventInContext) => void,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
+  highlightedTime?: Boundaries,
   sdkLanguage: Language,
   scrubber?: React.ReactNode,
-}> = ({ model, boundaries, onSelected, selectedTime, setSelectedTime, sdkLanguage, scrubber }) => {
+}> = ({ model, boundaries, onSelected, selectedTime, setSelectedTime, highlightedTime, sdkLanguage, scrubber }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
@@ -54,6 +55,14 @@ export const Timeline: React.FunctionComponent<{
   }, [selectedTime, boundaries, dragWindow, measure]);
 
   const actions = React.useMemo(() => model?.filteredActions(actionsFilter), [model, actionsFilter]);
+
+  const highlight = React.useMemo(() => {
+    if (!highlightedTime)
+      return undefined;
+    const left = timeToPosition(measure.width, boundaries, highlightedTime.minimum);
+    const right = timeToPosition(measure.width, boundaries, highlightedTime.maximum);
+    return { left, width: Math.max(2, right - left) };
+  }, [highlightedTime, boundaries, measure]);
 
   const onMouseDown = React.useCallback((event: React.MouseEvent) => {
     setPreviewPoint(undefined);
@@ -179,6 +188,7 @@ export const Timeline: React.FunctionComponent<{
       }</div>
       <FilmStrip boundaries={boundaries} previewPoint={previewPoint} />
       {scrubber}
+      {highlight && <div className='timeline-highlight' style={{ left: highlight.left, width: highlight.width }}></div>}
       {selectedTime && <div className='timeline-window'>
         <div className='timeline-window-curtain left' style={{ width: curtainLeft }}></div>
         <div className='timeline-window-resizer' style={{ left: -5 }}></div>

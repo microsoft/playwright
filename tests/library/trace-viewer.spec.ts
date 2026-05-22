@@ -365,6 +365,15 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   await expect(listViews.filter({ hasText: 'Cheers!' })).toHaveClass('list-view-entry');
 });
 
+test('should highlight console message on timeline on hover', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.showConsoleTab();
+  const highlight = traceViewer.page.locator('.timeline-highlight');
+  await expect(highlight).toBeHidden();
+  await traceViewer.consoleLines.filter({ hasText: 'Info' }).hover();
+  await expect(highlight).toBeVisible();
+});
+
 test('should open console errors on click', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await expect(traceViewer.actionIconsText('Evaluate')).toHaveText(['2', '1']);
@@ -466,6 +475,16 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests).toContainText([/404GET404text\/plain/]);
   await expect(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript/]);
   await expect(traceViewer.networkRequests.filter({ hasText: '404GET404text' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
+});
+
+test('should highlight network request on timeline on hover', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.showNetworkTab();
+  const highlight = traceViewer.page.locator('.timeline-highlight');
+  await expect(highlight).toBeHidden();
+  await traceViewer.networkRequests.filter({ hasText: 'frame.html' }).hover();
+  await expect(highlight).toBeVisible();
 });
 
 test('should filter network requests by resource type', async ({ page, runAndTrace, server }) => {
