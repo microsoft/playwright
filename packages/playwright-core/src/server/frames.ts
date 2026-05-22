@@ -23,6 +23,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
 import { makeWaitForNextTask } from '@utils/task';
+import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
 import { TimeoutError } from './errors';
@@ -475,7 +476,6 @@ export class Frame extends SdkObject<FrameEventMap> {
   _name = '';
   _inflightRequests = new Set<network.Request>();
   private _networkIdleTimer: NodeJS.Timeout | undefined;
-  private _setContentCounter = 0;
   readonly _detachedScope = new LongStandingScope();
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
   readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
@@ -735,6 +735,8 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   context(world: types.World): Promise<dom.FrameExecutionContext> {
+    if (this._page.delegate.noUtilityWorld?.())
+      world = 'main';
     return this._contextData.get(world)!.contextPromise.then(contextOrDestroyedReason => {
       if (contextOrDestroyedReason instanceof js.ExecutionContext)
         return contextOrDestroyedReason;
@@ -919,7 +921,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async setContent(progress: Progress, html: string, options: types.NavigateOptions): Promise<void> {
-    const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
+    const tag = `--playwright--set--content--${createGuid()}--`;
     await this.raceNavigationAction(progress, async () => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
       progress.log(`setting frame content, waiting until "${waitUntil}"`);
