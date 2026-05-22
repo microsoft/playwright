@@ -32,6 +32,7 @@ export type HostPlatform = 'win64' |
                            'ubuntu20.04-x64' | 'ubuntu20.04-arm64' |
                            'ubuntu22.04-x64' | 'ubuntu22.04-arm64' |
                            'ubuntu24.04-x64' | 'ubuntu24.04-arm64' |
+                           'ubuntu26.04-x64' | 'ubuntu26.04-arm64' |
                            'debian11-x64' | 'debian11-arm64' |
                            'debian12-x64' | 'debian12-arm64' |
                            'debian13-x64' | 'debian13-arm64' |
@@ -93,6 +94,8 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '22.04' };
       if (major < 26)
         return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '24.04' };
+      if (major < 28)
+        return { hostPlatform: ('ubuntu26.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: isUbuntu && version === '26.04' };
       return { hostPlatform: ('ubuntu' + distroInfo.version + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     }
     // Linux Mint is ubuntu-based but does not have the same versions
