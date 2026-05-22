@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { playwright } from '../../inprocess';
-import { registryDirectory } from '../../server/registry/index';
+import { defaultCacheDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../backend/context';
 import { createExtensionBrowser } from './extensionContextFactory';
@@ -182,7 +182,10 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
 }
 
 async function createUserDataDir(config: FullConfig, clientInfo: ClientInfo) {
-  const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? registryDirectory;
+  // Profile data must be writable, so we never derive it from PLAYWRIGHT_BROWSERS_PATH
+  // (which often points at a read-only browser binary cache on NixOS, immutable Docker
+  // mounts, or shared filesystems). Use the platform's user cache directory instead.
+  const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? path.join(defaultCacheDirectory, 'ms-playwright-mcp');
   const browserToken = config.browser.launchOptions?.channel ?? config.browser?.browserName;
   // Hesitant putting hundreds of files into the user's workspace, so using it for hashing instead.
   const rootPathToken = createHash(clientInfo.cwd);
