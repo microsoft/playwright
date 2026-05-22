@@ -216,6 +216,7 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
+  connectOverCDP(transport: ConnectionTransport): Promise<Browser>;
   connect(wsEndpoint: string, options?: ConnectOptions): Promise<Browser>;
   /**
    * wsEndpoint in options is deprecated. Instead use `wsEndpoint`.
@@ -224,6 +225,13 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   connect(options: ConnectOptions & { wsEndpoint?: string }): Promise<Browser>;
+}
+
+export interface ConnectionTransport {
+  send(message: object): void;
+  close(): void;
+  onmessage?: (message: object) => void;
+  onclose?: (reason?: string) => void;
 }
 
 export interface CDPSession {

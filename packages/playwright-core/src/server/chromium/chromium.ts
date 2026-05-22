@@ -166,6 +166,11 @@ export class Chromium extends BrowserType {
     }
   }
 
+  override async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport) {
+    const closeAndWait = async () => transport.close();
+    return this._connectOverCDPImpl(progress, transport, closeAndWait, { isLocal: true });
+  }
+
   override async connectToWorker(progress: Progress, endpoint: string) {
     const wsEndpoint = await urlToWSEndpoint(progress, endpoint, {});
     const transport = await WebSocketTransport.connect(progress, wsEndpoint);

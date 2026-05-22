@@ -138,12 +138,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   async connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
   async connectOverCDP(endpointURL: string, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
-  async connectOverCDP(endpointURLOrOptions: (api.ConnectOverCDPOptions & { wsEndpoint?: string })|string, options?: api.ConnectOverCDPOptions) {
+  async connectOverCDP(transport: api.ConnectionTransport): Promise<api.Browser>;
+  async connectOverCDP(endpointURLOrOptions: (api.ConnectOverCDPOptions & { wsEndpoint?: string })|string|api.ConnectionTransport, options?: api.ConnectOverCDPOptions) {
     if (typeof endpointURLOrOptions === 'string')
       return await this._connectOverCDP(endpointURLOrOptions, options);
+    if (isConnectionTransport(endpointURLOrOptions))
+      return await this._connectOverCDPTransport(endpointURLOrOptions);
     const endpointURL = 'endpointURL' in endpointURLOrOptions ? endpointURLOrOptions.endpointURL : endpointURLOrOptions.wsEndpoint;
     assert(endpointURL, 'Cannot connect over CDP without wsEndpoint.');
-    return await this.connectOverCDP(endpointURL, endpointURLOrOptions);
+    return await this._connectOverCDP(endpointURL, endpointURLOrOptions);
   }
 
   async _connectOverCDP(endpointURL: string, params: api.ConnectOverCDPOptions = {}): Promise<Browser>  {
@@ -159,6 +162,17 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       noDefaults: params.noDefaults,
       artifactsDir: params.artifactsDir,
     });
+    return await this._browserFromConnectResult(result);
+  }
+
+  async _connectOverCDPTransport(transport: api.ConnectionTransport): Promise<Browser> {
+    if (this.name() !== 'chromium')
+      throw new Error('Connecting over CDP is only supported in Chromium.');
+    const result = await this._channel.connectOverCDPTransport({ transport: transport as any });
+    return await this._browserFromConnectResult(result);
+  }
+
+  private async _browserFromConnectResult(result: { browser: channels.BrowserChannel, defaultContext?: channels.BrowserContextChannel }): Promise<Browser> {
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, undefined);
     if (result.defaultContext)
@@ -175,5 +189,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
     return Worker.from(result.worker);
   }
+}
 
+function isConnectionTransport(value: any): value is api.ConnectionTransport {
+  return !!value && typeof value === 'object' && typeof value.send === 'function' && typeof value.close === 'function';
 }
