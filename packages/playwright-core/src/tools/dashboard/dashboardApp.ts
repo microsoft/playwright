@@ -107,7 +107,11 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     return await Promise.race([...connections].map(c => c.emitAnnotate({ signal: cancellation })));
   };
 
-  const close = () => httpServer.stop();
+  const close = async () => {
+    for (const c of connections)
+      c.close?.();
+    await httpServer.stop();
+  };
   return { url: httpServer.urlPrefix('human-readable'), reveal, triggerAnnotate, close };
 }
 
@@ -355,8 +359,8 @@ async function startApp(server: net.Server, options: DashboardOptions) {
           socket.end(e);
         }
       } else if (parsed.kill) {
-        socket.end();
-        gracefullyProcessExitDoNotHang(0);
+        await dashboard.close().catch(() => {});
+        gracefullyProcessExitDoNotHang(0, () => new Promise(r => socket.end(r)));
       } else {
         try {
           await page?.bringToFront();
