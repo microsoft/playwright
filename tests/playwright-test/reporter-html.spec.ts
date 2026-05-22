@@ -1843,6 +1843,31 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.label')).toHaveText('webkit');
       });
 
+      test('tag matching project name should not duplicate the project badge', async ({ runInlineTest, showReport, page }) => {
+        const result = await runInlineTest({
+          'playwright.config.js': `
+            module.exports = {
+              projects: [
+                { name: 'ad2', use: { browserName: 'chromium' } },
+              ],
+            };
+          `,
+          'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test('pass', { tag: ['@ad2', '@smoke'] }, async ({}) => {
+              expect(1).toBe(1);
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(1);
+
+        await showReport();
+
+        await expect(page.locator('.test-file-test', { has: page.getByText('pass', { exact: true }) }).locator('.label')).toHaveText(['ad2', 'smoke']);
+      });
+
       test('project label should not show if there are no explicit projects', async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({
           'a.test.js': `

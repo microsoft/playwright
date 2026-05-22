@@ -46,11 +46,19 @@ export const ProjectAndTagLabelsView: React.FC<{
   // We can have an empty project name if we have no projects specified in the config
   const hasProjectNames = projectNames.length > 0 && !!activeProjectName;
 
-  return (hasProjectNames || otherLabels.length > 0) && <span className='label-row' style={style}>
+  // Drop tag labels that render identically to the project chip already shown next to them
+  // (e.g. project "ad2" plus tag "@ad2") to avoid a confusing duplicate badge.
+  const dedupedLabels = hasProjectNames ? otherLabels.filter(label => stripLeadingAt(label) !== activeProjectName) : otherLabels;
+
+  return (hasProjectNames || dedupedLabels.length > 0) && <span className='label-row' style={style}>
     {hasProjectNames && <ProjectLink projectNames={projectNames} projectName={activeProjectName} />}
-    <LabelsClickView labels={otherLabels} />
+    <LabelsClickView labels={dedupedLabels} />
   </span>;
 };
+
+function stripLeadingAt(label: string): string {
+  return label.startsWith('@') ? label.slice(1) : label;
+}
 
 const LabelsClickView: React.FC<{
   labels: string[],
