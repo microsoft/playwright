@@ -1739,7 +1739,7 @@ export class InjectedScript {
 }
 
 function oneLine(s: string): string {
-  return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
+  return s.replace(/\n/g, '↵').replace(/\t/g, '⇆').replace(/[\x00-\x1f\x7f-\x9f]/g, '�');
 }
 
 function createAttributeMatcher(part: AttributeSelectorPart): (s: string) => boolean {

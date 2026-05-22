@@ -119,3 +119,12 @@ it('should escape tag names', async ({ page }) => {
   expect(error.message).toContain(`getByText('special test description').first()`);
   expect(error.message).toContain(`locator('q\\\\:template').filter({ hasText: 'special test description' })`);
 });
+
+it('should strip ANSI/control characters from element preview in strict mode error', async ({ page }) => {
+  await page.setContent(`<span data-x="a\x1b[31mRED\x1b[0m">one</span><span>two</span>`);
+  const error = await page.textContent('span', { strict: true }).catch(e => e);
+  expect(error.message).toContain('strict mode violation');
+  expect(error.message).toContain('data-x="a�[31mRED�[0m"');
+  const previewLine = error.message.split('\n').find((l: string) => l.includes('data-x='))!;
+  expect(previewLine).not.toContain('\x1b');
+});
