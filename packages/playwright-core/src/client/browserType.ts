@@ -139,14 +139,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   async connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
   async connectOverCDP(endpointURL: string, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
   async connectOverCDP(transport: api.ConnectionTransport): Promise<api.Browser>;
-  async connectOverCDP(endpointURLOrOptionsOrTransport: (api.ConnectOverCDPOptions & { wsEndpoint?: string })|string|api.ConnectionTransport, options?: api.ConnectOverCDPOptions) {
-    if (typeof endpointURLOrOptionsOrTransport === 'string')
-      return await this._connectOverCDP(endpointURLOrOptionsOrTransport, options);
-    if (isConnectionTransport(endpointURLOrOptionsOrTransport))
-      return await this._connectOverCDPTransport(endpointURLOrOptionsOrTransport);
-    const endpointURL = 'endpointURL' in endpointURLOrOptionsOrTransport ? endpointURLOrOptionsOrTransport.endpointURL : endpointURLOrOptionsOrTransport.wsEndpoint;
+  async connectOverCDP(endpointURLOrOptions: (api.ConnectOverCDPOptions & { wsEndpoint?: string })|string|api.ConnectionTransport, options?: api.ConnectOverCDPOptions) {
+    if (typeof endpointURLOrOptions === 'string')
+      return await this._connectOverCDP(endpointURLOrOptions, options);
+    if (isConnectionTransport(endpointURLOrOptions))
+      return await this._connectOverCDPTransport(endpointURLOrOptions);
+    const endpointURL = 'endpointURL' in endpointURLOrOptions ? endpointURLOrOptions.endpointURL : endpointURLOrOptions.wsEndpoint;
     assert(endpointURL, 'Cannot connect over CDP without wsEndpoint.');
-    return await this.connectOverCDP(endpointURL, endpointURLOrOptionsOrTransport);
+    return await this._connectOverCDP(endpointURL, endpointURLOrOptions);
   }
 
   async _connectOverCDP(endpointURL: string, params: api.ConnectOverCDPOptions = {}): Promise<Browser>  {
@@ -162,6 +162,17 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       noDefaults: params.noDefaults,
       artifactsDir: params.artifactsDir,
     });
+    return await this._browserFromConnectResult(result);
+  }
+
+  async _connectOverCDPTransport(transport: api.ConnectionTransport): Promise<Browser> {
+    if (this.name() !== 'chromium')
+      throw new Error('Connecting over CDP is only supported in Chromium.');
+    const result = await this._channel.connectOverCDPTransport({ transport: transport as any });
+    return await this._browserFromConnectResult(result);
+  }
+
+  private async _browserFromConnectResult(result: { browser: channels.BrowserChannel, defaultContext?: channels.BrowserContextChannel }): Promise<Browser> {
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, undefined);
     if (result.defaultContext)
@@ -177,17 +188,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       timeout: new TimeoutSettings(this._platform).timeout(options),
     });
     return Worker.from(result.worker);
-  }
-
-  async _connectOverCDPTransport(transport: api.ConnectionTransport): Promise<Browser> {
-    if (this.name() !== 'chromium')
-      throw new Error('Connecting over CDP is only supported in Chromium.');
-    const result = await this._channel.connectOverCDPTransport({ transport: transport as any });
-    const browser = Browser.from(result.browser);
-    browser._connectToBrowserType(this, {}, undefined);
-    if (result.defaultContext)
-      await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
-    return browser;
   }
 }
 
