@@ -2043,6 +2043,55 @@ test('should render blob trace received from message', async ({ showTraceViewer 
   ]);
 });
 
+test('should render cross-origin blob trace received from message with postMessageToken', async ({ showTraceViewer, server }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40960' });
+
+  const postMessageToken = 'report-token';
+  const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
+  const viewerURL = new URL(traceViewer.page.url());
+  viewerURL.searchParams.set('postMessageToken', postMessageToken);
+  const viewerOrigin = viewerURL.origin;
+  const trace = fs.readFileSync(traceFile, 'base64');
+
+  await traceViewer.page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await traceViewer.page.setContent(`<iframe id="viewer" src="${viewerURL}"></iframe>`);
+
+  const frame = traceViewer.page.frameLocator('#viewer');
+  await expect(frame.locator('.drop-target')).toBeVisible();
+  await expect(frame.locator('.action-title')).not.toBeVisible();
+
+  const postTrace = async (token?: string) => {
+    await traceViewer.page.evaluate(({ trace, token, viewerOrigin }) => {
+      const uint8Array = Uint8Array.from(atob(trace), c => c.charCodeAt(0));
+      const params: { trace: Blob, postMessageToken?: string } = {
+        trace: new Blob([uint8Array], { type: 'application/zip' }),
+      };
+      if (token !== undefined)
+        params.postMessageToken = token;
+      document.querySelector<HTMLIFrameElement>('#viewer')!.contentWindow!.postMessage({
+        method: 'load',
+        params,
+      }, viewerOrigin);
+    }, { trace, token, viewerOrigin });
+  };
+
+  const expectNoTraceLoaded = async (token?: string) => {
+    const contextsRequest = traceViewer.page.waitForRequest(request => request.url().includes('/contexts?'), { timeout: 1000 }).then(() => true).catch(() => false);
+    await postTrace(token);
+    expect(await contextsRequest).toBe(false);
+    await expect(frame.locator('.drop-target')).toBeVisible();
+    await expect(frame.locator('.action-title')).not.toBeVisible();
+  };
+
+  await expectNoTraceLoaded();
+  await expectNoTraceLoaded('wrong-token');
+
+  await postTrace(postMessageToken);
+
+  await expect(frame.locator('.drop-target')).not.toBeVisible();
+  await expect(frame.locator('.action-title')).toContainText([/Create page/]);
+});
+
 test("shouldn't render not-blob trace received from message", async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
 

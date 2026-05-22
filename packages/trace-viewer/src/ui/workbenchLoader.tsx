@@ -69,12 +69,15 @@ export const WorkbenchLoader: React.FunctionComponent<{
   });
   React.useEffect(() => {
     const listener = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin)
-        return;
       const { method, params } = e.data;
 
       if (method !== 'load' || !(params?.trace instanceof Blob))
         return;
+      if (e.origin !== window.location.origin) {
+        const postMessageToken = new URL(window.location.href).searchParams.get('postMessageToken');
+        if (!postMessageToken || params.postMessageToken !== postMessageToken)
+          return;
+      }
 
       const traceFile = new File([params.trace], 'trace.zip', { type: 'application/zip' });
       const dataTransfer = new DataTransfer();

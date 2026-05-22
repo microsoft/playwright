@@ -45,6 +45,24 @@ Trace Viewer loads the trace entirely in your browser and does not transmit any 
 
 <img height="1684" width="2238" alt="Drop Playwright Trace to load" src="https://user-images.githubusercontent.com/13063165/194577918-b4d45726-2692-4093-8a28-9e73552617ef.png" />
 
+### Embedding Trace Viewer
+
+Reports that embed Trace Viewer and already have the trace available as a `Blob` can pass it with `postMessage`. Use an unguessable `postMessageToken` value for every embedded viewer instance.
+
+```html
+<iframe id="viewer" src="https://trace.playwright.dev/?postMessageToken=<token>"></iframe>
+```
+
+```js
+viewer.contentWindow.postMessage({
+  method: 'load',
+  params: {
+    trace: traceBlob,
+    postMessageToken: '<token>',
+  },
+}, 'https://trace.playwright.dev');
+```
+
 ### Viewing remote traces
 
 You can open remote traces directly using its URL. This makes it easy to view the remote trace without having to manually download the file from CI runs, for example.
