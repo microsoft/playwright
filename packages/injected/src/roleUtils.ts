@@ -559,7 +559,26 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
-function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
+// Roles where `aria-invalid` is conceptually meaningful per WAI-ARIA 1.2.
+// See https://www.w3.org/TR/wai-aria-1.2/#aria-invalid for the supported list.
+export const kAriaInvalidRoles = [
+  'application',
+  'checkbox',
+  'columnheader',
+  'combobox',
+  'gridcell',
+  'listbox',
+  'radiogroup',
+  'rowheader',
+  'searchbox',
+  'slider',
+  'spinbutton',
+  'switch',
+  'textbox',
+  'tree',
+];
+
+export function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
   // This state is being deprecated as a global state in ARIA 1.2.
   // In future versions it will only be allowed on roles where it is specifically supported.

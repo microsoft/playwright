@@ -564,7 +564,7 @@ Groups capture nested elements, such as `<details>` elements with summary conten
 
 ### Attributes and states
 
-Commonly used ARIA attributes, like `checked`, `disabled`, `expanded`, `level`, `pressed`, and `selected`, represent
+Commonly used ARIA attributes, like `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, and `selected`, represent
 control states.
 
 #### Checkbox with `checked` attribute
@@ -585,4 +585,14 @@ control states.
 
 ```yaml title="aria snapshot"
 - button "Toggle" [pressed=true]
+```
+
+#### Input with `aria-invalid` attribute
+
+```html
+<input type="text" aria-label="Email" aria-invalid="true" value="not-an-email">
+```
+
+```yaml title="aria snapshot"
+- textbox "Email" [invalid]: not-an-email
 ```
