@@ -193,9 +193,9 @@ class GHAMarkdownReporter extends MarkdownReporter {
   private async collapsePreviousComments(prNumber: number) {
     const { owner, repo } = this.context.repo;
     const data = await this.octokit.graphql<{ repository: Repository }>(`
-      query {
-        repository(owner: "${owner}", name: "${repo}") {
-          pullRequest(number: ${prNumber}) {
+      query($owner: String!, $repo: String!, $prNumber: Int!) {
+        repository(owner: $owner, name: $repo) {
+          pullRequest(number: $prNumber) {
             id
             comments(last: 100) {
               nodes {
@@ -210,7 +210,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
           }
         }
       }
-    `);
+    `, { owner, repo, prNumber });
     const comments = data.repository.pullRequest?.comments.nodes?.filter(comment =>
       comment?.author?.__typename === 'Bot' &&
       comment?.author?.login === 'github-actions' &&
@@ -218,13 +218,15 @@ class GHAMarkdownReporter extends MarkdownReporter {
     const prId = data.repository.pullRequest?.id;
     if (!comments?.length)
       return prId;
-    const mutations = comments.map((comment, i) =>
-      `m${i}: minimizeComment(input: { subjectId: "${comment!.id}", classifier: OUTDATED }) { clientMutationId }`);
+    const variableDecls = comments.map((_, i) => `$id${i}: ID!`).join(', ');
+    const mutations = comments.map((_, i) =>
+      `m${i}: minimizeComment(input: { subjectId: $id${i}, classifier: OUTDATED }) { clientMutationId }`);
+    const subjectIds = Object.fromEntries(comments.map((comment, i) => [`id${i}`, comment!.id]));
     await this.octokit.graphql(`
-      mutation {
+      mutation(${variableDecls}) {
         ${mutations.join('\n')}
       }
-    `);
+    `, subjectIds);
     return prId;
   }
 
@@ -257,8 +259,8 @@ class GHAMarkdownReporter extends MarkdownReporter {
     ]);
 
     const response = await this.octokit.graphql<{ addComment: { commentEdge: IssueCommentEdge } }>(`
-      mutation {
-        addComment(input: {subjectId: "${prNodeId}", body: """${body}"""}) {
+      mutation($subjectId: ID!, $body: String!) {
+        addComment(input: {subjectId: $subjectId, body: $body}) {
           commentEdge {
             node {
               ... on IssueComment {
@@ -268,7 +270,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
           }
         }
       }
-    `);
+    `, { subjectId: prNodeId, body });
     this.core.info(`Posted comment:  ${response.addComment.commentEdge.node?.url}`);
   }
 
