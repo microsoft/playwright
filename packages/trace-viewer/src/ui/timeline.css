@@ -59,6 +59,16 @@
   left: 0;
 }
 
+.timeline-highlight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-color: #1a85ff33;
+  border-left: 2px solid var(--vscode-charts-blue);
+  border-right: 2px solid var(--vscode-charts-blue);
+}
+
 .timeline-window {
   display: flex;
   position: absolute;

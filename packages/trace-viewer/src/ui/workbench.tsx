@@ -95,6 +95,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   // Transient state
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [isInspecting, setIsInspectingState] = React.useState(false);
+  const [highlightedTime, setHighlightedTime] = React.useState<Boundaries | undefined>(undefined);
 
   const setSelectedAction = React.useCallback((action: ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -264,6 +265,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
       consoleModel={consoleModel}
       boundaries={boundaries}
       selectedTime={selectedTime}
+      onEntryHovered={setHighlightedTime}
       onAccepted={m => setSelectedTime({ minimum: m.timestamp, maximum: m.timestamp })}
     />
   };
@@ -271,7 +273,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     id: 'network',
     title: 'Network',
     count: networkModel.resources.length,
-    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} sdkLanguage={model?.sdkLanguage ?? 'javascript'} />
+    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} onResourceHovered={setHighlightedTime} sdkLanguage={model?.sdkLanguage ?? 'javascript'} />
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
@@ -367,6 +369,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
       sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
+      highlightedTime={highlightedTime}
       scrubber={<PlaybackScrubber playback={playback} />}
     />}
     <SplitView

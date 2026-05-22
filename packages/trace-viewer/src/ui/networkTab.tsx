@@ -68,7 +68,7 @@ export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: 
 export const NetworkTab: React.FunctionComponent<{
   boundaries: Boundaries,
   networkModel: NetworkTabModel,
-  onResourceHovered?: (key: string | undefined) => void,
+  onResourceHovered?: (time: Boundaries | undefined) => void,
   sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onResourceHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
@@ -102,7 +102,7 @@ export const NetworkTab: React.FunctionComponent<{
     items={renderedEntries}
     selectedItem={visibleSelectedEntry}
     onSelected={item => setSelectedResourceKey(item.resource.id)}
-    onHighlighted={item => onResourceHovered?.(item?.resource.id)}
+    onHighlighted={item => onResourceHovered?.(item ? resourceTimeRange(item.resource) : undefined)}
     columns={visibleColumns(!!visibleSelectedEntry, renderedEntries)}
     columnTitle={columnTitle}
     columnWidths={columnWidths}
@@ -296,6 +296,12 @@ const renderEntry = (resource: ResourceEntry, boundaries: Boundaries, contextIdG
     contextId: contextIdGenerator.contextId(resource),
   };
 };
+
+function resourceTimeRange(resource: ResourceEntry): Boundaries | undefined {
+  if (!resource._monotonicTime)
+    return undefined;
+  return { minimum: resource._monotonicTime, maximum: resource._monotonicTime + resource.time };
+}
 
 function formatRouteStatus(request: ResourceEntry): string {
   if (request._wasAborted)
