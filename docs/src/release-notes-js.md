@@ -377,6 +377,7 @@ await using page = await context.newPage();
 
 - Removed macOS 14 support for WebKit. We recommend upgrading your macOS version, or keeping an older Playwright version.
 - Removed `@playwright/experimental-ct-svelte` package.
+- `junit` test reporter now differentiates between types of errors, so some of the previous `<failure>`s are now reported as `<error>`s.
 
 ### Browser Versions
 
