@@ -2062,6 +2062,71 @@ test("shouldn't render not-blob trace received from message", async ({ showTrace
   await expect(traceViewer.actionTitles).not.toBeVisible();
 });
 
+test('should ignore cross-origin blob trace by default', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40960' },
+}, async ({ showTraceViewer, server }) => {
+  const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
+  const viewerURL = traceViewer.page.url();
+
+  // Host an embedder page on a different origin than the viewer and have it
+  // iframe the viewer, then push a Blob to it via postMessage. Without an
+  // explicit opt-in the viewer must ignore cross-origin messages.
+  server.setRoute('/embed-trace-viewer.html', (_, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<!DOCTYPE html><iframe id="viewer" src="${viewerURL}"></iframe>`);
+  });
+  await traceViewer.page.goto(`${server.PREFIX}/embed-trace-viewer.html`);
+  await traceViewer.page.frameLocator('#viewer').locator('.drop-target').waitFor();
+
+  await traceViewer.page.evaluate(trace => {
+    const uint8Array = Uint8Array.from(atob(trace), c => c.charCodeAt(0));
+    const iframe = document.getElementById('viewer') as HTMLIFrameElement;
+    iframe.contentWindow!.postMessage({
+      method: 'load',
+      params: {
+        trace: new Blob([uint8Array], { type: 'application/zip' }),
+      }
+    }, '*');
+  }, fs.readFileSync(traceFile, 'base64'));
+
+  // Drop target should remain visible inside the iframe, meaning the load was rejected.
+  const viewerFrame = traceViewer.page.frameLocator('#viewer');
+  // Give the listener a chance to run before asserting nothing happened.
+  await traceViewer.page.waitForTimeout(500);
+  await expect(viewerFrame.locator('.drop-target')).toBeVisible();
+  await expect(viewerFrame.locator('.action-title')).not.toBeVisible();
+});
+
+test('should accept cross-origin blob trace when allowPostMessageOrigin matches', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40960' },
+}, async ({ showTraceViewer, server }) => {
+  const traceViewer = await showTraceViewer(undefined, { host: 'localhost' });
+  const viewerURL = new URL(traceViewer.page.url());
+  viewerURL.searchParams.set('allowPostMessageOrigin', server.PREFIX);
+
+  server.setRoute('/embed-trace-viewer.html', (_, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<!DOCTYPE html><iframe id="viewer" src="${viewerURL.toString()}"></iframe>`);
+  });
+  await traceViewer.page.goto(`${server.PREFIX}/embed-trace-viewer.html`);
+  const viewerFrame = traceViewer.page.frameLocator('#viewer');
+  await viewerFrame.locator('.drop-target').waitFor();
+
+  await traceViewer.page.evaluate(trace => {
+    const uint8Array = Uint8Array.from(atob(trace), c => c.charCodeAt(0));
+    const iframe = document.getElementById('viewer') as HTMLIFrameElement;
+    iframe.contentWindow!.postMessage({
+      method: 'load',
+      params: {
+        trace: new Blob([uint8Array], { type: 'application/zip' }),
+      }
+    }, '*');
+  }, fs.readFileSync(traceFile, 'base64'));
+
+  await expect(viewerFrame.locator('.drop-target')).not.toBeVisible();
+  await expect(viewerFrame.locator('.action-title').first()).toBeVisible();
+});
+
 test('should not trip over complex urls in style tags', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35681' },
 }, async ({ runAndTrace, page }) => {

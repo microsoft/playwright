@@ -68,8 +68,19 @@ export const WorkbenchLoader: React.FunctionComponent<{
     return () => document.removeEventListener('paste', listener);
   });
   React.useEffect(() => {
+    const allowedOrigins = new Set<string>([window.location.origin]);
+    const allowParam = new URL(window.location.href).searchParams.get('allowPostMessageOrigin');
+    if (allowParam) {
+      try {
+        // Normalize via the URL parser so callers cannot smuggle in paths or
+        // wildcards, and so we compare on the same shape MessageEvent.origin uses.
+        allowedOrigins.add(new URL(allowParam).origin);
+      } catch {
+        // Ignore malformed values; default same-origin policy still applies.
+      }
+    }
     const listener = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin)
+      if (!allowedOrigins.has(e.origin))
         return;
       const { method, params } = e.data;
 
