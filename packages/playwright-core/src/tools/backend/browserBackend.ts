@@ -63,8 +63,12 @@ export class BrowserBackend implements ServerBackend {
     const tool = this._tools.find(tool => tool.schema.name === name)!;
     if (!tool)
       return formatError(`Tool "${name}" not found`);
-    // eslint-disable-next-line no-restricted-syntax
-    const parsedArguments = tool.schema.inputSchema.parse(rawArguments) as any;
+    let parsedArguments: any;
+    try {
+      parsedArguments = tool.schema.inputSchema.parse(rawArguments);
+    } catch (error) {
+      return formatError(formatValidationError(name, error));
+    }
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
     const context = this._context!;
@@ -93,4 +97,47 @@ function formatRejectionReason(reason: unknown): string {
   if (reason instanceof Error)
     return reason.stack ?? reason.message;
   return String(reason);
+}
+
+type ValidationIssue = {
+  path?: unknown[];
+  message?: string;
+};
+
+function isValidationError(error: unknown): error is { issues: ValidationIssue[] } {
+  return !!error && typeof error === 'object' && Array.isArray((error as { issues?: unknown }).issues);
+}
+
+function formatValidationError(toolName: string, error: unknown): string {
+  if (!isValidationError(error))
+    return String(error);
+
+  const lines = error.issues.map(issue => `- ${formatIssuePath(issue.path)}: ${issue.message || 'Invalid input'}`);
+  if (!lines.length)
+    return `Invalid arguments for tool "${toolName}".`;
+  return [
+    `Invalid arguments for tool "${toolName}":`,
+    ...lines,
+  ].join('\n');
+}
+
+function formatIssuePath(path: unknown[] | undefined): string {
+  if (!path?.length)
+    return '<root>';
+
+  let result = '';
+  for (const segment of path) {
+    if (typeof segment === 'number') {
+      result += `[${segment}]`;
+      continue;
+    }
+    const text = String(segment);
+    if (!result)
+      result = text;
+    else if (/^[a-zA-Z_$][\w$]*$/.test(text))
+      result += `.${text}`;
+    else
+      result += `[${JSON.stringify(text)}]`;
+  }
+  return result;
 }
