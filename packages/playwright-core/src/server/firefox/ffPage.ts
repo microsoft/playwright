@@ -222,7 +222,7 @@ export class FFPage implements PageDelegate {
     const error = new Error(message);
     error.stack = params.message + '\n' + params.stack.split('\n').filter(Boolean).map(a => a.replace(/([^@]*)@(.*)/, '    at $1 ($2)')).join('\n');
     error.name = name;
-    this._page.addPageError(error, params.location);
+    this._page.addPageError(error, params.location ?? { url: '', lineNumber: 0, columnNumber: 0 });
   }
 
   _onConsole(payload: Protocol.Runtime.consolePayload) {

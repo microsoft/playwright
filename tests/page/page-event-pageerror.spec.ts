@@ -230,3 +230,17 @@ it('should fire illegal character error', {
   else
     expect(error.message).toContain('illegal character');
 });
+
+it('should keep driver alive after firefox page error', async ({ page, browserName }) => {
+  // Smoke test for the FFPage._onUncaughtError -> addPageError -> dispatcher path.
+  // Older Firefox builds (~v1475) sometimes delivered Page.uncaughtError with an
+  // undefined location, and the unguarded location.url access killed the Node
+  // driver. A subsequent evaluate would then throw a connection error.
+  it.skip(browserName !== 'firefox');
+  const [error] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.setContent(`<script>throw new Error('no-location')</script>`),
+  ]);
+  expect(error.message).toContain('no-location');
+  expect(await page.evaluate('1 + 1')).toBe(2);
+});
