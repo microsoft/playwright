@@ -1509,7 +1509,7 @@ export class InjectedScript {
       if (options.expression === 'to.match.aria' && !options.selector) {
         if (!this.document.body)
           return { matches: options.isNot, missingReceived: true };
-        const result = matchesExpectAriaTemplate(this.document.body, options.expectedValue);
+        const result = matchesExpectAriaTemplate(this.document.body, options.expectedValue, options.expressionArg);
         return {
           received: result.received,
           matches: !!result.matches.length,
@@ -1627,7 +1627,7 @@ export class InjectedScript {
 
     {
       if (expression === 'to.match.aria') {
-        const result = matchesExpectAriaTemplate(element, options.expectedValue);
+        const result = matchesExpectAriaTemplate(element, options.expectedValue, options.expressionArg);
         return {
           received: result.received,
           matches: !!result.matches.length,

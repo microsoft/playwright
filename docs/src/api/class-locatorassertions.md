@@ -2383,6 +2383,13 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 ### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.49
 
+### option: LocatorAssertions.toMatchAriaSnapshot.numberSubstitution
+* since: v1.55
+* langs: js
+- `numberSubstitution` <["regex"|"static"]>
+
+Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+
 ## async method: LocatorAssertions.toMatchAriaSnapshot#2
 * since: v1.50
 * langs: js
@@ -2411,3 +2418,10 @@ Generates sequential names if not specified.
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.50
+
+### option: LocatorAssertions.toMatchAriaSnapshot#2.numberSubstitution
+* since: v1.55
+* langs: js
+- `numberSubstitution` <["regex"|"static"]>
+
+Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.

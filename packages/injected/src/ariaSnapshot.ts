@@ -42,6 +42,7 @@ export type AriaTreeOptions = {
   doNotRenderActive?: boolean;
   depth?: number;
   boxes?: boolean;
+  numberSubstitution?: 'regex' | 'static';
 };
 
 type InternalOptions = {
@@ -74,8 +75,11 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
     return { visibility: 'ariaAndVisible', refs: 'none', renderBoxes };
   }
   if (options.mode === 'codegen') {
-    // To generate aria assertion with regex heurisitcs.
-    return { visibility: 'aria', refs: 'none', renderStringsAsRegex: true, renderBoxes };
+    // To generate aria assertion with regex heuristics. The numberSubstitution
+    // option (default 'regex') lets callers opt out of auto-converting numbers
+    // and dates into \d+ regexes when the baseline values are stable.
+    const renderStringsAsRegex = options.numberSubstitution !== 'static';
+    return { visibility: 'aria', refs: 'none', renderStringsAsRegex, renderBoxes };
   }
   // To match aria snapshot.
   return { visibility: 'aria', refs: 'none', renderBoxes };
@@ -390,14 +394,14 @@ export type MatcherReceived = {
   regex: string;
 };
 
-export function matchesExpectAriaTemplate(rootElement: Element, template: aria.AriaTemplateNode): { matches: aria.AriaNode[], received: MatcherReceived } {
+export function matchesExpectAriaTemplate(rootElement: Element, template: aria.AriaTemplateNode, options?: { numberSubstitution?: 'regex' | 'static' }): { matches: aria.AriaNode[], received: MatcherReceived } {
   const snapshot = generateAriaTree(rootElement, { mode: 'default' });
   const matches = matchesNodeDeep(snapshot.root, template, false, false);
   return {
     matches,
     received: {
       raw: renderAriaTree(snapshot, { mode: 'default' }).text,
-      regex: renderAriaTree(snapshot, { mode: 'codegen' }).text,
+      regex: renderAriaTree(snapshot, { mode: 'codegen', numberSubstitution: options?.numberSubstitution }).text,
     }
   };
 }

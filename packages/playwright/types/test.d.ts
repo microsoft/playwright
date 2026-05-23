@@ -313,6 +313,14 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
        * including an explicit `/children` property.
        */
       children?: "contain"|"equal"|"deep-equal";
+
+      /**
+       * Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to
+       * `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep
+       * the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+       * Individual assertions can override this via the per-call option.
+       */
+      numberSubstitution?: "regex"|"static";
     };
 
     /**
@@ -1253,6 +1261,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
        * including an explicit `/children` property.
        */
       children?: "contain"|"equal"|"deep-equal";
+
+      /**
+       * Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to
+       * `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep
+       * the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+       * Individual assertions can override this via the per-call option.
+       */
+      numberSubstitution?: "regex"|"static";
     };
 
     /**
@@ -9718,6 +9734,13 @@ interface LocatorAssertions {
    */
   toMatchAriaSnapshot(expected: string, options?: {
     /**
+     * Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to
+     * `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep
+     * the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+     */
+    numberSubstitution?: "regex"|"static";
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9744,6 +9767,13 @@ interface LocatorAssertions {
      * specified.
      */
     name?: string;
+
+    /**
+     * Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to
+     * `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep
+     * the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+     */
+    numberSubstitution?: "regex"|"static";
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
@@ -9895,6 +9925,13 @@ interface PageAssertions {
    */
   toMatchAriaSnapshot(expected: string, options?: {
     /**
+     * Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to
+     * `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep
+     * the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+     */
+    numberSubstitution?: "regex"|"static";
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9921,6 +9958,13 @@ interface PageAssertions {
      * specified.
      */
     name?: string;
+
+    /**
+     * Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to
+     * `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep
+     * the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+     */
+    numberSubstitution?: "regex"|"static";
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.

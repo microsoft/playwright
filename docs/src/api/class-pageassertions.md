@@ -186,6 +186,13 @@ assertThat(page).matchesAriaSnapshot("""
 ### option: PageAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.60
 
+### option: PageAssertions.toMatchAriaSnapshot.numberSubstitution
+* since: v1.55
+* langs: js
+- `numberSubstitution` <["regex"|"static"]>
+
+Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
+
 ## async method: PageAssertions.NotToMatchAriaSnapshot
 * since: v1.60
 * langs: python
@@ -224,6 +231,13 @@ Generates sequential names if not specified.
 
 ### option: PageAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.60
+
+### option: PageAssertions.toMatchAriaSnapshot#2.numberSubstitution
+* since: v1.55
+* langs: js
+- `numberSubstitution` <["regex"|"static"]>
+
+Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data.
 
 ## async method: PageAssertions.toHaveScreenshot#1
 * since: v1.23

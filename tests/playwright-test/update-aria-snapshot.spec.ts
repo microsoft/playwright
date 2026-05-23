@@ -223,6 +223,145 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
   expect(result2.exitCode).toBe(0);
 });
 
+test('should generate baseline with static numbers when numberSubstitution is static (per-call)', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    '.git/marker': '',
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<ul>
+          <li>Item 1</li>
+          <li>Time 15:30</li>
+          <li>Year 2022</li>
+          <li>Duration 12ms</li>
+          <li>Total 22</li>
+        </ul>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`, { numberSubstitution: 'static' });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  const data = fs.readFileSync(patchPath, 'utf-8');
+  expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
+--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -8,6 +8,13 @@
+           <li>Duration 12ms</li>
+           <li>Total 22</li>
+         </ul>\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`, { numberSubstitution: 'static' });
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - list:
++            - listitem: Item 1
++            - listitem: Time 15:30
++            - listitem: Year 2022
++            - listitem: Duration 12ms
++            - listitem: Total 22
++        \`, { numberSubstitution: 'static' });
+       });
+
+\\ No newline at end of file
+`);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
+});
+
+test('should generate baseline with static numbers when numberSubstitution is static (global config)', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    '.git/marker': '',
+    'playwright.config.ts': `
+      export default {
+        expect: { toMatchAriaSnapshot: { numberSubstitution: 'static' } },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<ul>
+          <li>Item 1</li>
+          <li>Time 15:30</li>
+          <li>Year 2022</li>
+        </ul>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  const data = fs.readFileSync(patchPath, 'utf-8');
+  expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
+--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -6,6 +6,11 @@
+           <li>Time 15:30</li>
+           <li>Year 2022</li>
+         </ul>\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - list:
++            - listitem: Item 1
++            - listitem: Time 15:30
++            - listitem: Year 2022
++        \`);
+       });
+
+\\ No newline at end of file
+`);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
+});
+
+test('per-call numberSubstitution should override the global setting', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    '.git/marker': '',
+    'playwright.config.ts': `
+      export default {
+        expect: { toMatchAriaSnapshot: { numberSubstitution: 'static' } },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<ul>
+          <li>Total 22</li>
+        </ul>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`, { numberSubstitution: 'regex' });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  const data = fs.readFileSync(patchPath, 'utf-8');
+  expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
+--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -4,6 +4,9 @@
+         await page.setContent(\`<ul>
+           <li>Total 22</li>
+         </ul>\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`, { numberSubstitution: 'regex' });
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - list:
++            - listitem: /Total \\\\d+/
++        \`, { numberSubstitution: 'regex' });
+       });
+
+\\ No newline at end of file
+`);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
+});
+
 test('should generate baseline with special characters', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     '.git/marker': '',

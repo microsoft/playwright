@@ -84,6 +84,7 @@ The structure of the git commit metadata is subject to change.
   - `toMatchAriaSnapshot` ?<[Object]> Configuration for the [`method: LocatorAssertions.toMatchAriaSnapshot#2`] method.
     - `pathTemplate` ?<[string]> A template controlling location of the aria snapshots. See [`property: TestConfig.snapshotPathTemplate`] for details.
     - `children` ?<["contain" | "equal" | "deep-equal"]> Controls how children of the snapshot root are matched against the actual accessibility tree. This is equivalent to adding a `/children` property at the top of every aria snapshot template. Individual snapshots can override this by including an explicit `/children` property.
+    - `numberSubstitution` ?<["regex" | "static"]> Controls how numbers and dates are rendered when generating or updating the aria-snapshot baseline. Defaults to `'regex'`, which rewrites numeric runs into `\d+` patterns so live UIs match across runs. Set to `'static'` to keep the actual values in the baseline, which is useful when the UI is driven by mocked or otherwise stable data. Individual assertions can override this via the per-call option.
   - `toMatchSnapshot` ?<[Object]> Configuration for the [`method: SnapshotAssertions.toMatchSnapshot#1`] method.
     - `maxDiffPixels` ?<[int]> An acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.

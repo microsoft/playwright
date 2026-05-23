@@ -42,7 +42,7 @@ export async function toMatchAriaSnapshot(
   this: ExpectMatcherStateInternal,
   receiver: LocatorEx | Page,
   expectedParam?: ToMatchAriaSnapshotExpected,
-  options: { timeout?: number } = {},
+  options: { timeout?: number, numberSubstitution?: 'regex' | 'static' } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
   expectTypes(receiver, ['Page', 'Locator'], matcherName);
@@ -91,7 +91,9 @@ export async function toMatchAriaSnapshot(
   if (globalChildren && !expected.match(/^- \/children:/m))
     expected = `- /children: ${globalChildren}\n` + expected;
 
-  const expectParams = { expectedValue: expected, isNot: this.isNot, timeout };
+  const numberSubstitution = options.numberSubstitution ?? expectConfig().toMatchAriaSnapshot?.numberSubstitution ?? 'regex';
+  const expressionArg = numberSubstitution === 'static' ? { numberSubstitution } : undefined;
+  const expectParams = { expectedValue: expected, expressionArg, isNot: this.isNot, timeout };
   const { matches: pass, received, log, timedOut, errorMessage } = locator ?
     await (locator as LocatorEx)._expect('to.match.aria', expectParams) :
     await ((receiver as Page).mainFrame() as FrameEx)._expect('to.match.aria', expectParams);
