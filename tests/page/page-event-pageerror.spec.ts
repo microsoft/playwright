@@ -231,7 +231,9 @@ it('should fire illegal character error', {
     expect(error.message).toContain('illegal character');
 });
 
-it('should keep driver alive after firefox page error', async ({ page, browserName }) => {
+it('should keep driver alive after firefox page error', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40978' },
+}, async ({ page, browserName }) => {
   // Smoke test for the FFPage._onUncaughtError -> addPageError -> dispatcher path.
   // Older Firefox builds (~v1475) sometimes delivered Page.uncaughtError with an
   // undefined location, and the unguarded location.url access killed the Node
