@@ -38,11 +38,14 @@ class ListReporter extends TerminalReporter {
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private _printSteps: boolean;
+  private _printFailuresInline: boolean;
+  private _failureIndex = 0;
   private _paused = new Set<TestResult>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super(options);
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
+    this._printFailuresInline = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE', options?.printFailuresInline);
   }
 
   override onBegin(suite: Suite) {
@@ -191,6 +194,15 @@ class ListReporter extends TerminalReporter {
     const wasPaused = this._paused.delete(result);
     if (!wasPaused)
       this._updateTestLine(test, result);
+    if (!wasPaused && this._printFailuresInline && !this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted'))
+      this._printFailure(test);
+  }
+
+  private _printFailure(test: TestCase) {
+    this._maybeWriteNewLine();
+    const message = '\n' + this.formatFailure(test, ++this._failureIndex) + '\n';
+    this._updateLineCountAndNewLineFlagForOutput(message);
+    this.screen.stdout.write(message);
   }
 
   private _updateTestLine(test: TestCase, result: TestResult) {
@@ -290,7 +302,7 @@ class ListReporter extends TerminalReporter {
   override async onEnd(result: FullResult) {
     await super.onEnd(result);
     this.screen.stdout.write('\n');
-    this.epilogue(true);
+    this.epilogue(!this._printFailuresInline);
   }
 }
 

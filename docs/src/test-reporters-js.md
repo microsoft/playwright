@@ -70,7 +70,7 @@ export default defineConfig({
 });
 ```
 
-Here is an example output in the middle of a test run. Failures will be listed at the end.
+Here is an example output in the middle of a test run. Failures will be listed at the end by default.
 ```bash
 npx playwright test --reporter=list
 Running 124 tests using 6 workers
@@ -97,11 +97,22 @@ export default defineConfig({
 });
 ```
 
+You can print failures inline as soon as they are available instead of waiting until the end of the run:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [['list', { printFailuresInline: true }]],
+});
+```
+
 List report supports the following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
 |---|---|---|---|
 | `PLAYWRIGHT_LIST_PRINT_STEPS` | `printSteps` | Whether to print each step on its own line. | `false`
+| `PLAYWRIGHT_LIST_PRINT_FAILURES_INLINE` | `printFailuresInline` | Whether to print failure details immediately after a failed test instead of at the end. | `false`
 | `PLAYWRIGHT_FORCE_TTY` | | Whether to produce output suitable for a live terminal. Supports `true`, `1`, `false`, `0`, `[WIDTH]`, and `[WIDTH]x[HEIGHT]`. `[WIDTH]` and `[WIDTH]x[HEIGHT]` specifies the TTY dimensions. | `true` when terminal is in TTY mode, `false` otherwise.
 | `FORCE_COLOR` | | Whether to produce colored output. | `true` when terminal is in TTY mode, `false` otherwise.
 | `NO_COLOR` | | Whether to disable colored output ([no-color.org](https://no-color.org/)). Any non-empty value disables colors. | unset

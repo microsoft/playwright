@@ -259,6 +259,35 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
+    test('print failures inline with option', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list', { printFailuresInline: true }]],
+            workers: 1,
+          };
+        `,
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('fails early', async ({}) => {
+            expect(1).toBe(2);
+          });
+          test('runs later', async ({}) => {
+          });
+        `,
+      });
+      const text = result.output;
+      const failureHeader = '1) a.test.ts:3:15 › fails early';
+      const laterTestStatus = `${POSITIVE_STATUS_MARK} 2 a.test.ts:6:15 › runs later`;
+      const failureIndex = text.indexOf(failureHeader);
+      const laterTestIndex = text.indexOf(laterTestStatus);
+      expect(failureIndex).toBeGreaterThan(-1);
+      expect(laterTestIndex).toBeGreaterThan(failureIndex);
+      expect(text.indexOf('Error: expect(received).toBe(expected)', failureIndex)).toBeGreaterThan(failureIndex);
+      expect(text.indexOf(failureHeader, failureIndex + 1)).toBe(-1);
+      expect(result.exitCode).toBe(1);
+    });
+
     test('print stdio', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `
