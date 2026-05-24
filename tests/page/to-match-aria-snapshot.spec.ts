@@ -934,3 +934,27 @@ test('treat bad regex as a string', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain('-   - /url: /[a/');
   expect(stripAnsi(error.message)).toContain('+   - /url: /foo');
 });
+
+test('regex lines that match are not shown as diff (issue 34555)', async ({ page }) => {
+  await page.setContent(`
+    <div>
+      <p>34 % match</p>
+      <button>Colore neutro + 0 EUR</button>
+      <p>Tanta memoria 256 GB</p>
+    </div>
+  `);
+  const error = await expect(page).toMatchAriaSnapshot(`
+    - paragraph: /\\d+ % match/
+    - button "Colore neutro + 1 EUR"
+    - paragraph: /Tanta memoria \\d+ GB/
+  `, { timeout: 1000 }).catch(e => e);
+  const message = stripAnsi(error.message);
+  expect(message).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
+  // The literal mismatch should appear as -/+ lines in the diff.
+  expect(message).toContain('- - button "Colore neutro + 1 EUR"');
+  expect(message).toContain('+ - button "Colore neutro + 0 EUR"');
+  // Regex lines that actually match the received text should be rendered as
+  // unchanged context, so they must NOT appear as -/+ entries.
+  expect(message).not.toMatch(/^-\s+- paragraph: \/\\d\+ % match\//m);
+  expect(message).not.toMatch(/^-\s+- paragraph: \/Tanta memoria \\d\+ GB\//m);
+});

@@ -108,7 +108,8 @@ export async function toMatchAriaSnapshot(
       printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
       printedReceived = `Received: ${receivedString}`;
     } else {
-      printedDiff = this.utils.printDiffOrStringify(expected, typedReceived.raw, 'Expected', 'Received', false);
+      const receivedForDiff = mergeRegexMatchedLines(expected, typedReceived.raw);
+      printedDiff = this.utils.printDiffOrStringify(expected, receivedForDiff, 'Expected', 'Received', false);
     }
     return formatMatcherMessage(this.utils, {
       isNot: this.isNot,
@@ -180,4 +181,136 @@ function unshift(snapshot: string): string {
 
 function indent(snapshot: string, indent: string): string {
   return snapshot.split('\n').map(line => indent + line).join('\n');
+}
+
+// Rewrites `received` so that any line that the corresponding `expected`
+// line's regexes match is replaced with the expected line verbatim. The
+// downstream jest text differ then treats those lines as unchanged context
+// rather than -/+ noise, which keeps the real mismatch visible. See #34555.
+export function mergeRegexMatchedLines(expected: string, received: string): string {
+  const expectedLines = expected.split('\n');
+  const receivedLines = received.split('\n');
+  const expectedRegexes = expectedLines.map(toFullLineRegex);
+
+  const linesMatch = (i: number, j: number): boolean => {
+    if (expectedLines[i] === receivedLines[j])
+      return true;
+    const regex = expectedRegexes[i];
+    return !!(regex && regex.test(receivedLines[j]));
+  };
+
+  // LCS over equality-or-regex-match keeps alignment robust when lengths drift.
+  const n = expectedLines.length;
+  const m = receivedLines.length;
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--)
+      dp[i][j] = linesMatch(i, j) ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  }
+
+  const result: string[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (linesMatch(i, j)) {
+      result.push(expectedLines[i]);
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      i++;
+    } else {
+      result.push(receivedLines[j]);
+      j++;
+    }
+  }
+  while (j < m)
+    result.push(receivedLines[j++]);
+  return result.join('\n');
+}
+
+// Builds a full-line RegExp from an expected aria-snapshot line. Any `/.../`
+// segments outside of quoted strings become regex bodies; everything else is
+// matched as plain text. Returns null when the line contains no regex.
+function toFullLineRegex(line: string): RegExp | null {
+  const escapeMeta = (s: string) => s.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+  let pattern = '';
+  let i = 0;
+  let inString = false;
+  let foundRegex = false;
+  while (i < line.length) {
+    const ch = line[i];
+    if (inString) {
+      if (ch === '\\' && i + 1 < line.length) {
+        pattern += escapeMeta(ch + line[i + 1]);
+        i += 2;
+        continue;
+      }
+      if (ch === '"')
+        inString = false;
+      pattern += escapeMeta(ch);
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      pattern += escapeMeta(ch);
+      i++;
+      continue;
+    }
+    if (ch === '/') {
+      const body = readRegexBody(line, i + 1);
+      if (body) {
+        // Role names render quoted in received output even when the
+        // expected line uses the regex form, so allow optional quotes.
+        pattern += '"?(?:' + body.source + ')"?';
+        i = body.endIndex;
+        foundRegex = true;
+        continue;
+      }
+    }
+    pattern += escapeMeta(ch);
+    i++;
+  }
+  if (!foundRegex)
+    return null;
+  try {
+    return new RegExp('^' + pattern + '$');
+  } catch {
+    return null;
+  }
+}
+
+// Reads a `/.../` body starting just after the opening slash, returning the
+// regex source and the index just past the closing slash, or null on no match.
+function readRegexBody(line: string, start: number): { source: string, endIndex: number } | null {
+  let source = '';
+  let escaped = false;
+  let inClass = false;
+  for (let j = start; j < line.length; j++) {
+    const c = line[j];
+    if (escaped) {
+      source += c;
+      escaped = false;
+      continue;
+    }
+    if (c === '\\') {
+      source += c;
+      escaped = true;
+      continue;
+    }
+    if (c === '[') {
+      inClass = true;
+      source += c;
+      continue;
+    }
+    if (c === ']' && inClass) {
+      inClass = false;
+      source += c;
+      continue;
+    }
+    if (c === '/' && !inClass)
+      return { source, endIndex: j + 1 };
+    source += c;
+  }
+  return null;
 }
