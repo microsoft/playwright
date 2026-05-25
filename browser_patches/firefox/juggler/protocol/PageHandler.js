@@ -482,6 +482,9 @@ export class PageHandler {
 
   async ['Page.dispatchMouseEvent']({type, x, y, button, clickCount, modifiers, buttons}) {
     const win = this._pageTarget._window;
+    // Keep synthetic pointer state page-local so parallel hovers in different tabs
+    // do not send pointerleave to each other when Firefox switches active tabs.
+    const pointerId = this._pageTarget._linkedBrowser.browsingContext.browserId;
     const sendEvents = async (types) => {
       // 1. Scroll element to the desired location first; the coordinates are relative to the element.
       this._pageTarget._linkedBrowser.scrollRectIntoViewIfNeeded(x, y, 0, 0);
@@ -498,7 +501,7 @@ export class PageHandler {
           x + boundingBox.left,
           y + boundingBox.top,
           {
-            identifier: win.windowUtils.DEFAULT_MOUSE_POINTER_ID,
+            identifier: pointerId,
             button,
             buttons,
             clickCount,
@@ -537,7 +540,7 @@ export class PageHandler {
           0 /* x */,
           0 /* y */,
           {
-            identifier: win.windowUtils.DEFAULT_MOUSE_POINTER_ID,
+            identifier: pointerId,
             button,
             clickCount,
             modifiers,
