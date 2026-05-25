@@ -1509,6 +1509,32 @@ test('merge-reports should throw if report version is from the future', async ({
 
 });
 
+test('merge-reports should fail when reporter fails', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob']]
+      };
+    `,
+    'tests/a.test.js': `
+      import { test } from '@playwright/test';
+      test('test 1', async ({}) => {});
+    `,
+  });
+
+  const outputFile = test.info().outputPath('json-report');
+  await fs.promises.mkdir(outputFile);
+  await fs.promises.writeFile(test.info().outputPath('merge.config.ts'), `module.exports = {
+    reporter: [['json', { outputFile: ${JSON.stringify(outputFile)} }]],
+  };`);
+
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--config', test.info().outputPath('merge.config.ts')] });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('Error in reporter');
+  expect(output).toContain(outputFile);
+});
+
 test('merge-reports should merge old attachments (pre-1.53)', async ({ runInlineTest, mergeReports }) => {
   const reportDir = test.info().outputPath('blob-report');
 
