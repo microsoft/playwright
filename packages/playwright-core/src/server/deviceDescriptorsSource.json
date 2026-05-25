@@ -263,6 +263,246 @@
     "hasTouch": true,
     "defaultBrowserType": "chromium"
   },
+  "Galaxy Z Fold 6": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 928,
+      "height": 1080
+    },
+    "viewport": {
+      "width": 928,
+      "height": 1004
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Fold 6 landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 1080,
+      "height": 928
+    },
+    "viewport": {
+      "width": 1028,
+      "height": 876
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Fold 6 Cover": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 484,
+      "height": 1188
+    },
+    "viewport": {
+      "width": 484,
+      "height": 1112
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Fold 6 Cover landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F956U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 1188,
+      "height": 484
+    },
+    "viewport": {
+      "width": 1136,
+      "height": 432
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Fold 7": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 984,
+      "height": 1092
+    },
+    "viewport": {
+      "width": 984,
+      "height": 1016
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Fold 7 landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 1092,
+      "height": 984
+    },
+    "viewport": {
+      "width": 1040,
+      "height": 932
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Fold 7 Cover": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 360,
+      "height": 840
+    },
+    "viewport": {
+      "width": 360,
+      "height": 764
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Fold 7 Cover landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F966U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 840,
+      "height": 360
+    },
+    "viewport": {
+      "width": 788,
+      "height": 308
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 6": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 360,
+      "height": 880
+    },
+    "viewport": {
+      "width": 360,
+      "height": 804
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 6 landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 880,
+      "height": 360
+    },
+    "viewport": {
+      "width": 828,
+      "height": 308
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 6 Cover": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 360,
+      "height": 374
+    },
+    "viewport": {
+      "width": 360,
+      "height": 298
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 6 Cover landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F741U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 374,
+      "height": 360
+    },
+    "viewport": {
+      "width": 322,
+      "height": 308
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 7": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 360,
+      "height": 840
+    },
+    "viewport": {
+      "width": 360,
+      "height": 764
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 7 landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 840,
+      "height": 360
+    },
+    "viewport": {
+      "width": 788,
+      "height": 308
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 7 Cover": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 474,
+      "height": 524
+    },
+    "viewport": {
+      "width": 474,
+      "height": 448
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
+  "Galaxy Z Flip 7 Cover landscape": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; SM-F761U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.22 Mobile Safari/537.36",
+    "screen": {
+      "width": 524,
+      "height": 474
+    },
+    "viewport": {
+      "width": 472,
+      "height": 422
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "chromium"
+  },
   "iPad (gen 5)": {
     "userAgent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Mobile/15E148 Safari/604.1",
     "viewport": {
