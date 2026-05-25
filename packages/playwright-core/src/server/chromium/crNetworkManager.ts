@@ -489,7 +489,7 @@ export class CRNetworkManager {
   }
 
   _onLoadingFinished(sessionInfo: SessionInfo, event: Protocol.Network.loadingFinishedPayload) {
-    this._responseExtraInfoTracker.loadingFinished(event);
+    this._responseExtraInfoTracker.loadingFinished(event, !!sessionInfo.workerFrame);
 
     const request = this._requestIdToRequest.get(event.requestId);
     // For certain requestIds we never receive requestWillBeSent event.
@@ -511,7 +511,7 @@ export class CRNetworkManager {
   }
 
   _onLoadingFailed(sessionInfo: SessionInfo, event: Protocol.Network.loadingFailedPayload) {
-    this._responseExtraInfoTracker.loadingFailed(event);
+    this._responseExtraInfoTracker.loadingFailed(event, !!sessionInfo.workerFrame);
 
     let request = this._requestIdToRequest.get(event.requestId);
 
@@ -778,20 +778,20 @@ class ResponseExtraInfoTracker {
     this._patchHeaders(info, info.responses.length - 1);
   }
 
-  loadingFinished(event: Protocol.Network.loadingFinishedPayload) {
+  loadingFinished(event: Protocol.Network.loadingFinishedPayload, finishedOnWorkerTarget: boolean) {
     const info = this._requests.get(event.requestId);
     if (!info)
       return;
     info.loadingFinished = event;
-    this._checkFinished(info);
+    this._checkFinished(info, finishedOnWorkerTarget);
   }
 
-  loadingFailed(event: Protocol.Network.loadingFailedPayload) {
+  loadingFailed(event: Protocol.Network.loadingFailedPayload, finishedOnWorkerTarget: boolean) {
     const info = this._requests.get(event.requestId);
     if (!info)
       return;
     info.loadingFailed = event;
-    this._checkFinished(info);
+    this._checkFinished(info, finishedOnWorkerTarget);
   }
 
   _getOrCreateEntry(requestId: string): RequestInfo {
@@ -823,12 +823,23 @@ class ResponseExtraInfoTracker {
     }
   }
 
-  private _checkFinished(info: RequestInfo) {
+  private _checkFinished(info: RequestInfo, finishedOnWorkerTarget?: boolean) {
     if (!info.loadingFinished && !info.loadingFailed)
       return;
 
     if (info.responses.length <= info.responseReceivedExtraInfo.length) {
       // We have extra info for each response.
+      this._stopTracking(info.requestId);
+      return;
+    }
+
+    if (finishedOnWorkerTarget) {
+      for (let i = info.responseReceivedExtraInfo.length; i < info.responses.length; ++i) {
+        const response = info.responses[i];
+        response.request().setRawRequestHeaders(null);
+        response.setResponseHeadersSize(null);
+        response.setRawResponseHeaders(null);
+      }
       this._stopTracking(info.requestId);
       return;
     }

@@ -260,6 +260,35 @@ it('should report worker script as network request', {
   expect(text).toContain(`console.log('hello from the worker');`);
 });
 
+it('should resolve allHeaders for worker script inside iframe', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39948' },
+}, async ({ page, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'Chromium-specific regression');
+
+  server.setRoute('/iframe-worker.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end(`<script>new Worker('/iframe-worker.js')</script>`);
+  });
+  server.setRoute('/iframe-worker.js', (req, res) => {
+    res.setHeader('Content-Type', 'text/javascript');
+    res.setHeader('x-worker-script', 'loaded');
+    res.end(`console.log('hello from iframe worker');`);
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForEvent('request', r => r.url().endsWith('/iframe-worker.js')),
+    page.waitForEvent('requestfinished', r => r.url().endsWith('/iframe-worker.js')),
+    attachFrame(page, 'frame1', server.PREFIX + '/iframe-worker.html'),
+  ]);
+  const response = await request.response();
+  const headers = await Promise.race([
+    response.allHeaders(),
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timed out waiting for worker script response headers')), 3000)),
+  ]);
+  expect(headers['x-worker-script']).toBe('loaded');
+});
+
 it('should report worker script as network request after redirect', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35678' },
 }, async ({ page, server, browserName }) => {
