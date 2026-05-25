@@ -46,6 +46,7 @@ export type ContextConfig = {
   };
   outputDir?: string;
   outputMode?: 'file' | 'stdout';
+  outputTtl?: number;
   saveSession?: boolean;
   saveTrace?: boolean;
   secrets?: Record<string, string>;
@@ -402,11 +403,38 @@ export function outputDir(options: ContextOptions): string {
 }
 
 export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
+  await pruneOutputDir(options);
   const resolvedFile = path.resolve(outputDir(options), fileName);
   await checkFile(options, resolvedFile, flags);
   await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
   debug('pw:mcp:file')(resolvedFile);
   return resolvedFile;
+}
+
+let lastPruneTime = 0;
+const pruneIntervalMs = 60_000;
+
+async function pruneOutputDir(options: ContextOptions) {
+  const ttl = options.config.outputTtl;
+  if (!ttl)
+    return;
+  const now = Date.now();
+  if (now - lastPruneTime < pruneIntervalMs)
+    return;
+  lastPruneTime = now;
+  const dir = outputDir(options);
+  try {
+    const entries = await fs.promises.readdir(dir);
+    const cutoff = now - ttl * 1000;
+    await Promise.all(entries.map(async name => {
+      const fullPath = path.join(dir, name);
+      const stat = await fs.promises.stat(fullPath).catch(() => null);
+      if (!stat || stat.mtimeMs >= cutoff)
+        return;
+      await fs.promises.rm(fullPath, { recursive: true, force: true });
+    }));
+  } catch {
+  }
 }
 
 async function checkFile(options: ContextOptions, resolvedFilename: string, flags: { origin: 'code' | 'llm' }) {

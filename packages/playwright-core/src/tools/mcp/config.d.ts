@@ -159,6 +159,13 @@ export type Config = {
    */
   outputDir?: string;
 
+  /**
+   * Time-to-live in seconds for output artifacts. Files older than this
+   * are deleted on startup and periodically during the session.
+   * Disabled by default (no cleanup).
+   */
+  outputTtl?: number;
+
   console?: {
     /**
      * The level of console messages to return. Each level includes the messages of more severe levels. Defaults to "info".
