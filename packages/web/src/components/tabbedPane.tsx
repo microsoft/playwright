@@ -102,7 +102,8 @@ export const TabbedPaneTab: React.FunctionComponent<{
   onSelect?: (id: string) => void,
   ariaControls?: string,
 }> = ({ id, title, count, errorCount, selected, onSelect, ariaControls }) => {
-  return <div className={clsx('tabbed-pane-tab', selected && 'selected')}
+  return <button className={clsx('tabbed-pane-tab', selected && 'selected')}
+    type='button'
     onClick={() => onSelect?.(id)}
     role='tab'
     title={title}
@@ -111,5 +112,5 @@ export const TabbedPaneTab: React.FunctionComponent<{
     <div className='tabbed-pane-tab-label'>{title}</div>
     {!!count && <div className='tabbed-pane-tab-counter'>{count}</div>}
     {!!errorCount && <div className='tabbed-pane-tab-counter error'>{errorCount}</div>}
-  </div>;
+  </button>;
 };

@@ -40,6 +40,10 @@
 }
 
 .tabbed-pane-tab-element {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
   padding: 4px 8px 0 8px;
   margin-right: 4px;
   cursor: pointer;

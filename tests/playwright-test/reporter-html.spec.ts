@@ -1036,7 +1036,14 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('tab', { name: 'Retry #1' }).click();
       await expect(page.getByTestId('test-case-annotations')).toContainText('foo: retry #1');
 
-      await page.getByRole('tab', { name: 'Retry #3' }).click();
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('tab', { name: 'Retry #2' })).toBeFocused();
+      await page.keyboard.press('Space');
+      await expect(page.getByTestId('test-case-annotations')).toContainText('foo: retry #2');
+
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('tab', { name: 'Retry #3' })).toBeFocused();
+      await page.keyboard.press('Enter');
       await expect(page.getByTestId('test-case-annotations')).toContainText('foo: retry #3');
 
       await expect(page.getByTestId('test-case-annotations').getByText('static value')).toHaveCount(1);

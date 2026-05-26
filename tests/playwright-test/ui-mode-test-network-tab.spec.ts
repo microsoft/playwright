@@ -160,7 +160,14 @@ test('should pretty-print JSON request body', async ({ runUITest, server }) => {
   await page.getByText('Network', { exact: true }).click();
 
   await page.getByText('post-data-1').click();
-  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
+  const networkPanel = page.getByRole('tabpanel', { name: 'Network' });
+  await networkPanel.getByRole('tab', { name: 'Payload' }).click();
+  await page.keyboard.press('Tab');
+  await expect(networkPanel.getByRole('tab', { name: 'Response' })).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(page.getByRole('tabpanel', { name: 'Response' })).toBeVisible();
+
+  await networkPanel.getByRole('tab', { name: 'Payload' }).click();
   const payloadPanel = page.getByRole('tabpanel', { name: 'Payload' });
   await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{',

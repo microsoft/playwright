@@ -33,6 +33,10 @@
 }
 
 .tabbed-pane-tab {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
   padding: 2px 6px 0 6px;
   cursor: pointer;
   display: flex;
