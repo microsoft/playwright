@@ -121,7 +121,7 @@ export interface Page {
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate):
    *
    * ```js
-   * const bodyHandle = await page.evaluate('document.body');
+   * const bodyHandle = await page.evaluateHandle('document.body');
    * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) =>
    *   body.innerHTML + suffix, [bodyHandle, 'hello']
    * );
@@ -172,7 +172,7 @@ export interface Page {
    * [page.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate):
    *
    * ```js
-   * const bodyHandle = await page.evaluate('document.body');
+   * const bodyHandle = await page.evaluateHandle('document.body');
    * const html = await page.evaluate<string, HTMLElement>(([body, suffix]) =>
    *   body.innerHTML + suffix, [bodyHandle, 'hello']
    * );
@@ -5372,7 +5372,7 @@ export interface Frame {
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
    *
    * ```js
-   * const bodyHandle = await frame.evaluate('document.body');
+   * const bodyHandle = await frame.evaluateHandle('document.body');
    * const html = await frame.evaluate(([body, suffix]) =>
    *   body.innerHTML + suffix, [bodyHandle, 'hello'],
    * );
@@ -5419,7 +5419,7 @@ export interface Frame {
    * [frame.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frame-evaluate):
    *
    * ```js
-   * const bodyHandle = await frame.evaluate('document.body');
+   * const bodyHandle = await frame.evaluateHandle('document.body');
    * const html = await frame.evaluate(([body, suffix]) =>
    *   body.innerHTML + suffix, [bodyHandle, 'hello'],
    * );
