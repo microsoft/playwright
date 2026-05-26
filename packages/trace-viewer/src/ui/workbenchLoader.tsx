@@ -69,8 +69,6 @@ export const WorkbenchLoader: React.FunctionComponent<{
   });
   React.useEffect(() => {
     const listener = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin)
-        return;
       const { method, params } = e.data;
 
       if (method !== 'load' || !(params?.trace instanceof Blob))
