@@ -115,7 +115,6 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['BrowserType.launch', { title: 'Launch browser', }],
   ['BrowserType.launchPersistentContext', { title: 'Launch persistent context', }],
   ['BrowserType.connectOverCDP', { title: 'Connect over CDP', }],
-  ['BrowserType.connectOverCDPTransport', { title: 'Connect over CDP transport', }],
   ['BrowserType.connectToWorker', { title: 'Connect to worker', }],
   ['Disposable.dispose', { internal: true, potentiallyClosesScope: true, }],
   ['Electron.launch', { title: 'Launch electron', }],

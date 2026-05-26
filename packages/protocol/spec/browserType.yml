@@ -43,7 +43,7 @@ BrowserType:
     connectOverCDP:
       title: Connect over CDP
       parameters:
-        endpointURL: string
+        endpointURL: string?
         headers:
           type: array?
           items: NameValue
@@ -52,14 +52,7 @@ BrowserType:
         isLocal: boolean?
         noDefaults: boolean?
         artifactsDir: string?
-      returns:
-        browser: Browser
-        defaultContext: BrowserContext?
-
-    connectOverCDPTransport:
-      title: Connect over CDP transport
-      parameters:
-        transport: binary
+        transport: binary?
       returns:
         browser: Browser
         defaultContext: BrowserContext?
