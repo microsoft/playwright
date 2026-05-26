@@ -168,6 +168,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   async _connectOverCDPTransport(transport: api.ConnectionTransport): Promise<Browser> {
     if (this.name() !== 'chromium')
       throw new Error('Connecting over CDP is only supported in Chromium.');
+    if (this._connection.isRemote())
+      throw new Error('Passing a ConnectionTransport to connectOverCDP is not supported when connecting remotely.');
     const result = await this._channel.connectOverCDPTransport({ transport: transport as any });
     return await this._browserFromConnectResult(result);
   }
