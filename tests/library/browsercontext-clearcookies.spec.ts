@@ -215,6 +215,17 @@ it.describe('clearCookies with filter preserves cookie identity', () => {
     expect(await context.cookies()).toEqual([expect.objectContaining({ name: 'keep_me' })]);
   });
 
+  it('should remove __Host- prefixed cookies by name', async ({ context, httpsServer }) => {
+    await context.addCookies([
+      { name: '__Host-delete_me', value: '1', url: httpsServer.PREFIX, secure: true, sameSite: 'None' },
+      { name: 'keep_me', value: '2', url: httpsServer.PREFIX, secure: true, sameSite: 'None' },
+    ]);
+    expect((await context.cookies()).map(c => c.name).sort()).toEqual(['__Host-delete_me', 'keep_me']);
+
+    await context.clearCookies({ name: '__Host-delete_me' });
+    expect(await context.cookies()).toEqual([expect.objectContaining({ name: 'keep_me' })]);
+  });
+
   it('should remove partitioned cookies by name', async ({ context, httpsServer, browserName }) => {
     it.skip(browserName !== 'chromium', 'Partitioned cookies (CHIPS) are Chromium-specific');
     await context.addCookies([
