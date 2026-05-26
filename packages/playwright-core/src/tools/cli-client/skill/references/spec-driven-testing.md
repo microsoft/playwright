@@ -261,7 +261,7 @@ The test is paused at the start. Step forward or run to until just before the fa
 ```bash
 playwright-cli snapshot                # did the element change / move / rename?
 playwright-cli console                 # app-side errors?
-playwright-cli network                 # failed request? wrong payload?
+playwright-cli requests                # failed request? wrong payload?
 playwright-cli show --annotate         # ask the user to point somewhere
 ```
 
