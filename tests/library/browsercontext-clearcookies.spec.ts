@@ -167,9 +167,7 @@ it('should remove cookies by name and domain', async ({ context, page, server })
 
 it('should not transiently delete non-matching cookies when filtering', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40953' },
-}, async ({ context, page, server, browserName }) => {
-  it.skip(browserName !== 'chromium', 'cookieStore API is only available in Chromium');
-
+}, async ({ context, page, server }) => {
   await context.addCookies([{
     name: 'keep_me',
     value: '1',
@@ -185,24 +183,58 @@ it('should not transiently delete non-matching cookies when filtering', {
   ]);
   await page.goto(server.PREFIX);
 
-  await page.evaluate(() => {
-    (window as any).__cookieEvents = [];
-    (window as any).cookieStore.addEventListener('change', (event: any) => {
+  const eventsHandle = await page.evaluateHandle(() => {
+    const events: { kind: string, name: string }[] = [];
+    cookieStore.addEventListener('change', event => {
       for (const changed of event.changed)
-        (window as any).__cookieEvents.push({ kind: 'changed', name: changed.name });
+        events.push({ kind: 'changed', name: changed.name });
       for (const deleted of event.deleted)
-        (window as any).__cookieEvents.push({ kind: 'deleted', name: deleted.name });
+        events.push({ kind: 'deleted', name: deleted.name });
     });
+    return events;
   });
 
   await context.clearCookies({ name: 'delete_me' });
+  await expect.poll(() => eventsHandle.jsonValue()).toContainEqual({ kind: 'deleted', name: 'delete_me' });
 
-  // Flush microtasks so any change events fired during clearCookies are observed.
-  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 50)));
-
-  const events: { kind: string, name: string }[] = await page.evaluate(() => (window as any).__cookieEvents);
-
-  // The kept cookie must never appear in a deletion event.
-  expect(events.filter(e => e.kind === 'deleted' && e.name === 'keep_me')).toEqual([]);
+  expect(await eventsHandle.jsonValue()).not.toContainEqual({ kind: 'deleted', name: 'keep_me' });
   expect(await page.evaluate('document.cookie')).toBe('keep_me=1');
+});
+
+it.describe('clearCookies with filter preserves cookie identity', () => {
+  it.use({ ignoreHTTPSErrors: true });
+
+  it('should remove __Secure- prefixed cookies by name', async ({ context, httpsServer }) => {
+    await context.addCookies([
+      { name: '__Secure-delete_me', value: '1', domain: httpsServer.HOSTNAME, path: '/', secure: true, sameSite: 'None' },
+      { name: 'keep_me', value: '2', domain: httpsServer.HOSTNAME, path: '/', secure: true, sameSite: 'None' },
+    ]);
+    expect((await context.cookies()).map(c => c.name).sort()).toEqual(['__Secure-delete_me', 'keep_me']);
+
+    await context.clearCookies({ name: '__Secure-delete_me' });
+    expect(await context.cookies()).toEqual([expect.objectContaining({ name: 'keep_me' })]);
+  });
+
+  it('should remove partitioned cookies by name', async ({ context, httpsServer, browserName }) => {
+    it.skip(browserName !== 'chromium', 'Partitioned cookies (CHIPS) are Chromium-specific');
+    await context.addCookies([
+      {
+        name: 'delete_me',
+        value: '1',
+        domain: httpsServer.HOSTNAME,
+        path: '/',
+        secure: true,
+        sameSite: 'None',
+        partitionKey: `https://${httpsServer.HOSTNAME}`,
+      },
+    ]);
+    const before = await context.cookies();
+    expect(before).toEqual([expect.objectContaining({
+      name: 'delete_me',
+      partitionKey: `https://${httpsServer.HOSTNAME}`,
+    })]);
+
+    await context.clearCookies({ name: 'delete_me' });
+    expect(await context.cookies()).toHaveLength(0);
+  });
 });
