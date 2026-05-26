@@ -403,43 +403,56 @@ export class FrameManager {
     this._webSockets.set(requestId, ws);
   }
 
-  onWebSocketRequest(requestId: string) {
+  onWebSocketRequest(requestId: string, headers: types.HeadersArray, wallTime?: number, timestamp?: number) {
     const ws = this._webSockets.get(requestId);
-    if (ws && ws.markAsNotified())
+    if (!ws)
+      return;
+
+    if (ws.markAsNotified())
       this._page.emit(Page.Events.WebSocket, ws);
+
+    ws.requestSent(headers, wallTime, timestamp);
   }
 
-  onWebSocketResponse(requestId: string, status: number, statusText: string) {
+  onWebSocketResponse(requestId: string, status: number, statusText: string, headers: types.HeadersArray) {
     const ws = this._webSockets.get(requestId);
-    if (status < 400)
+    if (!ws)
       return;
-    if (ws)
+
+    ws.responseReceived(status, statusText, headers);
+    if (status >= 400)
       ws.error(`${statusText}: ${status}`);
   }
 
-  onWebSocketFrameSent(requestId: string, opcode: number, data: string) {
+  onWebSocketFrameSent(requestId: string, opcode: number, data: string, timestamp: number) {
     const ws = this._webSockets.get(requestId);
     if (ws)
-      ws.frameSent(opcode, data);
+      ws.frameSent(opcode, data, timestamp);
   }
 
-  webSocketFrameReceived(requestId: string, opcode: number, data: string) {
+  webSocketFrameReceived(requestId: string, opcode: number, data: string, timestamp: number) {
     const ws = this._webSockets.get(requestId);
     if (ws)
-      ws.frameReceived(opcode, data);
+      ws.frameReceived(opcode, data, timestamp);
   }
 
   webSocketClosed(requestId: string) {
     const ws = this._webSockets.get(requestId);
-    if (ws)
+    if (ws) {
+      if (ws.markAsNotified())
+        this._page.emit(Page.Events.WebSocket, ws);
       ws.closed();
+    }
     this._webSockets.delete(requestId);
   }
 
   webSocketError(requestId: string, errorMessage: string): void {
     const ws = this._webSockets.get(requestId);
-    if (ws)
+    if (ws) {
+      if (ws.markAsNotified())
+        this._page.emit(Page.Events.WebSocket, ws);
       ws.error(errorMessage);
+    }
   }
 
   private _fireInternalFrameNavigation(frame: Frame, event: NavigationEvent) {

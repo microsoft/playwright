@@ -17,7 +17,7 @@
 
 import { PNG } from 'pngjs';
 import jpegjs from 'jpeg-js';
-import { headersArrayToObject } from '@isomorphic/headers';
+import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import { splitErrorMessage } from '@isomorphic/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import { hostPlatform } from '@utils/hostPlatform';
@@ -31,7 +31,7 @@ import { Page, PageBinding } from '../page';
 import { WKSession } from './wkConnection';
 import { createHandle, WKExecutionContext } from './wkExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
-import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
+import { WKInterceptableRequest, WKRouteImpl, wkSetCookieSeparator } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { translatePathToWSL } from './webkit';
@@ -397,10 +397,10 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(this._session, e)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId, headersObjectToArray(e.request.headers), e.walltime, e.timestamp)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText, headersObjectToArray(e.response.headers, ',', wkSetCookieSeparator))),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData, e.timestamp)),
+      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData, e.timestamp)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketClosed', e => this._page.frameManager.webSocketClosed(e.requestId)),
       eventsHelper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page.frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];

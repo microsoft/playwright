@@ -72,6 +72,15 @@ export type Entry = {
   _wasFulfilled?: boolean;
   _wasContinued?: boolean;
   _apiRequest?: boolean;
+  _resourceType?: string;
+  _webSocketMessages?: WebSocketMessage[];
+};
+
+export type WebSocketMessage = {
+  type: 'send' | 'receive';
+  time: number;
+  opcode: number;
+  data: string;
 };
 
 export type Request = {

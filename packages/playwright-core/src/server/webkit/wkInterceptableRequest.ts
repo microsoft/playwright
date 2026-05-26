@@ -42,6 +42,8 @@ const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'failed': 'General',
 };
 
+export const wkSetCookieSeparator = process.platform === 'darwin' ? ',' : 'playwright-set-cookie-separator';
+
 export class WKInterceptableRequest {
   private _session: WKSession;
   private _requestId: string;
@@ -83,8 +85,7 @@ export class WKInterceptableRequest {
       requestStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.requestStart) : -1,
       responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
     };
-    const setCookieSeparator = process.platform === 'darwin' ? ',' : 'playwright-set-cookie-separator';
-    const response = new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
+    const response = new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', wkSetCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
 
     // No raw response headers in WebKit, use "provisional" ones.
     response.setRawResponseHeaders(null);

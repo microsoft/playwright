@@ -18,7 +18,7 @@
 import { PNG } from 'pngjs';
 import jpegjs from 'jpeg-js';
 import { assert } from '@isomorphic/assert';
-import { headersArrayToObject } from '@isomorphic/headers';
+import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { splitErrorMessage } from '@isomorphic/stackTrace';
 import { debugLogger } from '@utils/debugLogger';
@@ -325,10 +325,10 @@ export class WVPage implements PageDelegate {
       eventsHelper.addEventListener(session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
       eventsHelper.addEventListener(session, 'Network.loadingFailed', e => this._onLoadingFailed(session, e)),
       eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
-      eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId)),
-      eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-      eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId, headersObjectToArray(e.request.headers), e.walltime, e.timestamp)),
+      eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText, headersObjectToArray(e.response.headers, ','))),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData, e.timestamp)),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData, e.timestamp)),
       eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => this._page.frameManager.webSocketClosed(e.requestId)),
       eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => this._page.frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
