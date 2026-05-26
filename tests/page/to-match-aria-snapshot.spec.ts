@@ -951,9 +951,25 @@ test('invalid attribute', { annotation: { type: 'issue', description: 'https://g
     - textbox "Name" [invalid=false]: Alice
   `);
 
-  // `aria-invalid="grammar"` and `aria-invalid="spelling"` map to the boolean flag too.
-  await page.setContent(`<input type="text" aria-label="Bio" aria-invalid="spelling">`);
+  // `aria-invalid="grammar"` and `aria-invalid="spelling"` surface their underlying value.
+  await page.setContent(`
+    <input type="text" aria-label="Bio" aria-invalid="grammar">
+    <input type="text" aria-label="Note" aria-invalid="spelling">
+  `);
   await expect(page).toMatchAriaSnapshot(`
+    - textbox "Bio" [invalid=grammar]
+    - textbox "Note" [invalid=spelling]
+  `);
+
+  // A `grammar` value is distinct from a plain `true` invalid state.
+  const error = await expect(page).toMatchAriaSnapshot(`
     - textbox "Bio" [invalid]
+  `, { timeout: 1 }).catch(e => e);
+  expect(stripAnsi(error.message)).toContain('[invalid=grammar]');
+
+  // Any other non-false value falls back to `true`.
+  await page.setContent(`<input type="text" aria-label="Zip" aria-invalid="garbage">`);
+  await expect(page).toMatchAriaSnapshot(`
+    - textbox "Zip" [invalid]
   `);
 });

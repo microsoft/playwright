@@ -30,7 +30,7 @@ export type AriaProps = {
   disabled?: boolean;
   expanded?: boolean;
   active?: boolean;
-  invalid?: boolean;
+  invalid?: boolean | 'grammar' | 'spelling';
   level?: number;
   pressed?: boolean | 'mixed';
   selected?: boolean;
@@ -498,8 +498,8 @@ export class KeyParser {
       return;
     }
     if (key === 'invalid') {
-      this._assert(value === 'true' || value === 'false', 'Value of "invalid" attribute must be a boolean', errorPos);
-      node.invalid = value === 'true';
+      this._assert(value === 'true' || value === 'false' || value === 'grammar' || value === 'spelling', 'Value of "invalid" attribute must be a boolean, "grammar" or "spelling"', errorPos);
+      node.invalid = value === 'true' ? true : value === 'false' ? false : value;
       return;
     }
     if (key === 'level') {
