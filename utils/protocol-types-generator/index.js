@@ -254,4 +254,4 @@ function firefoxTypeToString(type, indent='    ') {
   return type['$type'];
 }
 
-module.exports = { generateProtocol };
+module.exports = { generateProtocol, jsonToTS };

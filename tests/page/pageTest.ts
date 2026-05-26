@@ -20,6 +20,7 @@ import type { TestModeTestFixtures, TestModeWorkerFixtures, TestModeWorkerOption
 import { androidTest } from '../android/androidTest';
 import { browserTest } from '../config/browserTest';
 import { electronTest } from '../electron/electronTest';
+import { webviewTest } from '../webview/webviewTest';
 import type { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { expect as baseExpect } from '@playwright/test';
@@ -31,6 +32,8 @@ if (process.env.PWPAGE_IMPL === 'android')
   impl = androidTest;
 if (process.env.PWPAGE_IMPL === 'electron')
   impl = electronTest;
+if (process.env.PWPAGE_IMPL === 'webkit-webview')
+  impl = webviewTest;
 
 export const test = impl;
 
