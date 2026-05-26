@@ -336,10 +336,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       return;
 
     await this.addCookies(cookiesToExpire.map(cookie => ({
-      name: cookie.name,
+      ...cookie,
       value: '',
-      domain: cookie.domain,
-      path: cookie.path,
       expires: 0,
     })));
   }
