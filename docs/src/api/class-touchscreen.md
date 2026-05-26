@@ -12,7 +12,7 @@ This class is limited to emulating tap gestures. For examples of other gestures 
 Dispatches a `touchstart` and `touchend` event with a single touch at the position ([`param: x`],[`param: y`]).
 
 :::note
-[`method: Page.tap`] the method will throw if [`option: Browser.newContext.hasTouch`] option of the browser context is false.
+[`method: Touchscreen.tap`] will throw if the [`option: Browser.newContext.hasTouch`] option of the browser context is false.
 :::
 
 ### param: Touchscreen.tap.x
