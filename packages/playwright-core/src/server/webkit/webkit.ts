@@ -20,11 +20,14 @@ import path from 'path';
 import { wrapInASCIIBox } from '@utils/ascii';
 import { spawnAsync } from '@utils/spawnAsync';
 import { kBrowserCloseMessageId } from './wkConnection';
+import { Browser } from '../browser';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
-import { WKBrowser } from '../webkit/wkBrowser';
+import { WKBrowser } from './wkBrowser';
+import { connectOverRDP } from './webview/wvBrowser';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
+import type { Progress } from '../progress';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 
@@ -35,6 +38,10 @@ export class WebKit extends BrowserType {
 
   override connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
+  }
+
+  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean }): Promise<Browser> {
+    return connectOverRDP(progress, this, endpointURL, options);
   }
 
   override amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean, options: types.LaunchOptions): NodeJS.ProcessEnv {

@@ -1,0 +1,156 @@
+name: "tests WebView (iOS Simulator)"
+
+on:
+  # pull_request trigger disabled to avoid CI churn during wk_wv iteration - restore before merge
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+jobs:
+  test_webview_simulator:
+    name: "WebView on iOS Simulator (${{ matrix.shard }}/4)"
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Runner environment
+        run: |
+          echo "::group::OS / Xcode"
+          sw_vers
+          uname -a
+          xcode-select -p
+          xcodebuild -version
+          echo "::endgroup::"
+          echo "::group::Available iOS runtimes"
+          xcrun simctl list runtimes
+          echo "::endgroup::"
+          echo "::group::Available device types"
+          xcrun simctl list devicetypes | grep -i 'iPhone\|iPad' | head -40
+          echo "::endgroup::"
+          echo "::group::Network config"
+          cat /etc/hosts
+          ifconfig lo0
+          echo "::endgroup::"
+
+      - name: Ensure ::1 localhost in /etc/hosts
+        run: |
+          if grep -qE '^::1[[:space:]]+localhost' /etc/hosts; then
+            echo "::1 localhost already present"
+          else
+            echo "::1 localhost" | sudo tee -a /etc/hosts
+            echo "Added ::1 localhost"
+          fi
+          echo "--- /etc/hosts after ---"
+          cat /etc/hosts
+
+      - name: npm ci
+        run: |
+          echo "::group::npm ci"
+          npm ci
+          echo "::endgroup::"
+
+      - name: npm run build
+        run: |
+          echo "::group::npm run build"
+          npm run build
+          echo "::endgroup::"
+
+      - name: Install ios-webkit-debug-proxy
+        run: |
+          echo "::group::brew install ios-webkit-debug-proxy"
+          brew install ios-webkit-debug-proxy
+          which ios_webkit_debug_proxy
+          ios_webkit_debug_proxy --help 2>&1 | head -40 || true
+          echo "::endgroup::"
+
+      - name: Boot iOS Simulator
+        uses: futureware-tech/simulator-action@v5
+        with:
+          # Per wiki/Devices-macos-15.md only iPhone 16/17 series ship pre-installed; iPhone 15 isn't.
+          model: 'iPhone 16'
+          os_version: '18.6'
+          wait_for_boot: true
+          boot_timeout_seconds: 300
+
+      - name: Simulator state after boot
+        run: |
+          echo "::group::Booted devices"
+          xcrun simctl list devices booted
+          echo "::endgroup::"
+          echo "::group::Simulator processes"
+          pgrep -lf Simulator || true
+          pgrep -lf launchd_sim || true
+          echo "::endgroup::"
+
+      - name: Locate simulator webinspectord socket
+        run: |
+          echo "::group::Locating com.apple.webinspectord_sim.socket"
+          # On modern macOS, ios_webkit_debug_proxy can no longer auto-discover the simulator;
+          # we have to point -s at the launchd-owned unix socket.
+          for i in $(seq 1 15); do
+            SOCK=$(lsof -aUc launchd_sim 2>/dev/null | awk '/com\.apple\.webinspectord_sim\.socket/{print $NF; exit}')
+            [[ -n "$SOCK" ]] && break
+            echo "attempt $i: socket not found yet"
+            sleep 1
+          done
+          if [[ -z "$SOCK" ]]; then
+            echo "Failed to locate webinspectord_sim.socket"
+            echo "--- launchd_sim file table ---"
+            lsof -aUc launchd_sim 2>/dev/null || true
+            exit 1
+          fi
+          echo "socket: $SOCK"
+          echo "SIM_WI_SOCKET=unix:$SOCK" >> $GITHUB_ENV
+          echo "::endgroup::"
+
+      - name: Start ios-webkit-debug-proxy
+        run: |
+          echo "::group::Starting proxy (SIM_WI_SOCKET=$SIM_WI_SOCKET)"
+          ios_webkit_debug_proxy -F -d -s "$SIM_WI_SOCKET" -c "null:9221,:9222-9322" > "$RUNNER_TEMP/iwdp.log" 2>&1 &
+          PID=$!
+          echo "IWDP_PID=$PID" >> $GITHUB_ENV
+          echo "proxy pid=$PID"
+          sleep 3
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "Proxy died immediately. Log:"
+            cat "$RUNNER_TEMP/iwdp.log"
+            exit 1
+          fi
+          echo "::endgroup::"
+          echo "::group::Listening ports"
+          lsof -nP -iTCP -sTCP:LISTEN | grep -E "9221|9222|ios_webkit" || true
+          echo "::endgroup::"
+
+      - name: Run WebView tests
+        run: |
+          echo "::group::Test run (shard ${{ matrix.shard }}/4)"
+          npx playwright test --config tests/webview/playwright.config.ts --shard=${{ matrix.shard }}/4
+          echo "::endgroup::"
+
+      - name: Stop proxy
+        if: always()
+        run: |
+          [[ -n "$IWDP_PID" ]] && kill "$IWDP_PID" 2>/dev/null || true
+          # Simulator shutdown is owned by futureware-tech/simulator-action's post step.
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webview-simulator-logs-${{ matrix.shard }}
+          path: |
+            ${{ github.workspace }}/test-results/**
+          if-no-files-found: ignore
