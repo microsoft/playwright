@@ -274,12 +274,23 @@ export function fileIsModule(file: string): boolean {
   return folderIsModule(folder);
 }
 
+const packageJsonIsModuleCache = new Map<string, boolean>();
+
 function folderIsModule(folder: string): boolean {
   const packageJsonPath = getPackageJsonPath(folder);
   if (!packageJsonPath)
     return false;
-  // Rely on `require` internal caching logic.
-  return require(packageJsonPath).type === 'module';
+  // Note: do not `require()` the package.json here to avoid running
+  // our resolve hook from inside itself.
+  if (!packageJsonIsModuleCache.has(packageJsonPath)) {
+    let isModule = false;
+    try {
+      isModule = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).type === 'module';
+    } catch {
+    }
+    packageJsonIsModuleCache.set(packageJsonPath, isModule);
+  }
+  return packageJsonIsModuleCache.get(packageJsonPath)!;
 }
 
 const packageJsonMainFieldCache = new Map<string, string | undefined>();

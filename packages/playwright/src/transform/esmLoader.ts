@@ -105,12 +105,12 @@ function initialize(data: { port: MessagePort }) {
 function createTransport(port: MessagePort) {
   return new PortTransport(port, async (method, params) => {
     if (method === 'setSingleTSConfig') {
-      setSingleTSConfig(params.tsconfig);
+      await setSingleTSConfig(params.tsconfig);
       return;
     }
 
     if (method === 'setTransformConfig') {
-      setTransformConfig(params.config);
+      await setTransformConfig(params.config);
       return;
     }
 

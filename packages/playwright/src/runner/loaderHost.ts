@@ -15,7 +15,7 @@
  */
 
 import { ProcessHost } from './processHost';
-import { cc, esm, FullConfigInternal, ipc, poolBuilder, test as testNs, testLoader } from '../common';
+import { cc, FullConfigInternal, ipc, poolBuilder, test as testNs, testLoader, transform } from '../common';
 
 import type { TestError } from '../../types/testReporter';
 
@@ -40,7 +40,7 @@ export class InProcessLoaderHost {
   }
 
   async stop() {
-    await esm.incorporateCompilationCache();
+    await transform.incorporateCompilationCache();
   }
 }
 

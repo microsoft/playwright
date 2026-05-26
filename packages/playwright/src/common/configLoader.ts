@@ -20,9 +20,8 @@ import path from 'path';
 import { isRegExp } from '@isomorphic/rtti';
 
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
-import { errorWithFile, fileIsModule } from '../util';
+import { errorWithFile } from '../util';
 import { FullConfigInternal } from './config';
-import { configureESMLoader, configureESMLoaderTransformConfig, registerESMLoader } from './esmLoaderHost';
 import { addToCompilationCache } from '../transform/compilationCache';
 
 import type { ConfigLocation } from './config';
@@ -101,17 +100,8 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
 }
 
 export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false, metadata?: Config['metadata']): Promise<FullConfigInternal> {
-  // 0. Setup ESM loader if needed.
-  if (!registerESMLoader()) {
-    // In Node.js < 18, complain if the config file is ESM. Historically, we would restart
-    // the process with --loader, but now we require newer Node.js.
-    if (location.resolvedConfigFile && fileIsModule(location.resolvedConfigFile))
-      throw errorWithFile(location.resolvedConfigFile, `Playwright requires Node.js 18.19 or higher to load esm modules. Please update your version of Node.js.`);
-  }
-
-  // 1. Setup tsconfig; configure ESM loader with tsconfig and compilation cache.
-  setSingleTSConfig(overrides?.tsconfig);
-  await configureESMLoader();
+  // 1. Set the initial tsconfig before loading the config file.
+  await setSingleTSConfig(overrides?.tsconfig);
 
   // 2. Load and validate playwright config.
   const userConfig = await loadUserConfig(location);
@@ -129,12 +119,9 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
   const babelPlugins = (userConfig as any)['@playwright/test']?.babelPlugins || [];
   const external = userConfig.build?.external || [];
   const jsxImportSource = path.dirname(require.resolve('playwright'));
-  setTransformConfig({ babelPlugins, external, jsxImportSource });
+  await setTransformConfig({ babelPlugins, external, jsxImportSource });
   if (!overrides?.tsconfig)
-    setSingleTSConfig(fullConfig?.singleTSConfigPath);
-
-  // 4. Send transform options to ESM loader.
-  await configureESMLoaderTransformConfig();
+    await setSingleTSConfig(fullConfig?.singleTSConfigPath);
 
   return fullConfig;
 }

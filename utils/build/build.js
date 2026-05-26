@@ -645,9 +645,11 @@ function assertCoreBundleHasNoNodeModules() {
 steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
 
 // playwright/lib/transform/esmLoader.js — bundled ESM loader registered by
-// common/esmLoaderHost.ts via node:module register. Output sits next to
-// babelBundle.js so source-relative `./babelBundle` matches the runtime
-// sibling external.
+// transform.ts via node:module register. Output sits next to babelBundle.js
+// so source-relative `./babelBundle` matches the runtime sibling external.
+// '../transform/esmLoader.js' is also external: transform.ts has a
+// require.resolve() for it (dead code in this bundle, but esbuild still
+// parses it).
 {
   const playwrightSrc = filePath('packages/playwright/src');
   steps.push(new EsbuildStep({
@@ -659,6 +661,7 @@ steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
       'playwright-core/*',
       '../package',
       '../globals',
+      '../transform/esmLoader.js',
     ],
     plugins: [],
   }, [playwrightSrc]));

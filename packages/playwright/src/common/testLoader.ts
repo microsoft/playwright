@@ -17,11 +17,9 @@
 import path from 'path';
 import util from 'util';
 
-import * as esmLoaderHost from './esmLoaderHost';
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from '../globals';
 import { Suite } from './test';
-import { startCollectingFileDeps, stopCollectingFileDeps } from '../transform/compilationCache';
-import { requireOrImport } from '../transform/transform';
+import { requireOrImport, startCollectingFileDeps, stopCollectingFileDeps } from '../transform/transform';
 import { filterStackTrace } from '../util';
 
 import type { TestError } from '../../types/testReporter';
@@ -42,10 +40,8 @@ export async function loadTestFile(file: string, config: FullConfigInternal, tes
   suite._tags = [...config.config.tags];
 
   setCurrentlyLoadingFileSuite(suite);
-  if (!isWorkerProcess()) {
-    startCollectingFileDeps();
-    await esmLoaderHost.startCollectingFileDeps();
-  }
+  if (!isWorkerProcess())
+    await startCollectingFileDeps();
   try {
     await requireOrImport(file);
     cachedFileSuites.set(file, suite);
@@ -55,10 +51,8 @@ export async function loadTestFile(file: string, config: FullConfigInternal, tes
     testErrors.push(serializeLoadError(file, e));
   } finally {
     setCurrentlyLoadingFileSuite(undefined);
-    if (!isWorkerProcess()) {
-      stopCollectingFileDeps(file);
-      await esmLoaderHost.stopCollectingFileDeps(file);
-    }
+    if (!isWorkerProcess())
+      await stopCollectingFileDeps(file);
   }
 
   {
