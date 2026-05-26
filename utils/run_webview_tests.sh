@@ -30,13 +30,11 @@ echo "Socket: $SOCK"
 PROXY_LOG="$(mktemp -t iwdp.XXXXXX.log)"
 ios_webkit_debug_proxy -F -d -s "unix:$SOCK" -c "null:9221,:9222-9322" >"$PROXY_LOG" 2>&1 &
 PROXY_PID=$!
-cleanup() {
-  if kill -0 "$PROXY_PID" 2>/dev/null; then
-    kill "$PROXY_PID" 2>/dev/null || true
-    wait "$PROXY_PID" 2>/dev/null || true
-  fi
-}
-trap cleanup EXIT INT TERM
+# Only clean up on a forced abort. A clean exit leaves the proxy running so
+# subsequent `npm run wvtest` invocations can use it; stop manually with
+# `kill <pid>` printed below.
+trap 'kill "$PROXY_PID" 2>/dev/null || true' INT TERM
+disown "$PROXY_PID" 2>/dev/null || true
 echo "Started ios_webkit_debug_proxy pid=$PROXY_PID (log: $PROXY_LOG)"
 
 sleep 2
@@ -54,10 +52,4 @@ for i in $(seq 1 15); do
   fi
   sleep 1
 done
-
-cd "$ROOT"
-if [[ $# -gt 0 ]]; then
-  exec "$@"
-else
-  exec npx playwright test --config tests/webview/playwright.config.ts
-fi
+echo "Proxy listening on http://localhost:9222 (stop with: kill $PROXY_PID)"
