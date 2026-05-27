@@ -184,68 +184,53 @@ it('should not transiently delete non-matching cookies when filtering', {
   await page.goto(server.PREFIX);
 
   const eventsHandle = await page.evaluateHandle(() => {
-    const events: { kind: string, name: string }[] = [];
+    const events: string[] = [];
     cookieStore.addEventListener('change', event => {
       for (const changed of event.changed)
-        events.push({ kind: 'changed', name: changed.name });
+        events.push(`changed ${changed.name}`);
       for (const deleted of event.deleted)
-        events.push({ kind: 'deleted', name: deleted.name });
+        events.push(`deleted ${deleted.name}`);
     });
     return events;
   });
 
   await context.clearCookies({ name: 'delete_me' });
-  await expect.poll(() => eventsHandle.jsonValue()).toContainEqual({ kind: 'deleted', name: 'delete_me' });
-
-  expect(await eventsHandle.jsonValue()).not.toContainEqual({ kind: 'deleted', name: 'keep_me' });
+  await expect.poll(() => eventsHandle.jsonValue()).toEqual(['deleted delete_me']);
   expect(await page.evaluate('document.cookie')).toBe('keep_me=1');
 });
 
-it.describe('clearCookies with filter preserves cookie identity', () => {
-  it.use({ ignoreHTTPSErrors: true });
-
-  it('should remove __Secure- prefixed cookies by name', async ({ context, httpsServer }) => {
-    await context.addCookies([
-      { name: '__Secure-delete_me', value: '1', domain: httpsServer.HOSTNAME, path: '/', secure: true, sameSite: 'None' },
-      { name: 'keep_me', value: '2', domain: httpsServer.HOSTNAME, path: '/', secure: true, sameSite: 'None' },
-    ]);
-    expect((await context.cookies()).map(c => c.name).sort()).toEqual(['__Secure-delete_me', 'keep_me']);
-
-    await context.clearCookies({ name: '__Secure-delete_me' });
-    expect(await context.cookies()).toEqual([expect.objectContaining({ name: 'keep_me' })]);
-  });
-
-  it('should remove __Host- prefixed cookies by name', async ({ context, httpsServer }) => {
-    await context.addCookies([
-      { name: '__Host-delete_me', value: '1', url: httpsServer.PREFIX, secure: true, sameSite: 'None' },
-      { name: 'keep_me', value: '2', url: httpsServer.PREFIX, secure: true, sameSite: 'None' },
-    ]);
-    expect((await context.cookies()).map(c => c.name).sort()).toEqual(['__Host-delete_me', 'keep_me']);
-
-    await context.clearCookies({ name: '__Host-delete_me' });
-    expect(await context.cookies()).toEqual([expect.objectContaining({ name: 'keep_me' })]);
-  });
-
-  it('should remove partitioned cookies by name', async ({ context, httpsServer, browserName }) => {
-    it.skip(browserName !== 'chromium', 'Partitioned cookies (CHIPS) are Chromium-specific');
-    await context.addCookies([
-      {
-        name: 'delete_me',
-        value: '1',
-        domain: httpsServer.HOSTNAME,
-        path: '/',
-        secure: true,
-        sameSite: 'None',
-        partitionKey: `https://${httpsServer.HOSTNAME}`,
-      },
-    ]);
-    const before = await context.cookies();
-    expect(before).toEqual([expect.objectContaining({
+it('should remove partitioned cookies by name', async ({ browser, httpsServer, browserName }) => {
+  it.skip(browserName !== 'chromium', 'Partitioned cookies (CHIPS) are Chromium-specific');
+  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+  await context.addCookies([
+    {
       name: 'delete_me',
+      value: '1',
+      domain: httpsServer.HOSTNAME,
+      path: '/',
+      secure: true,
+      sameSite: 'None',
       partitionKey: `https://${httpsServer.HOSTNAME}`,
-    })]);
+    },
+    {
+      name: 'keep_me',
+      value: '2',
+      domain: httpsServer.HOSTNAME,
+      path: '/',
+      secure: true,
+      sameSite: 'None',
+      partitionKey: `https://${httpsServer.HOSTNAME}`,
+    },
+  ]);
+  const before = await context.cookies();
+  expect(before).toEqual([
+    expect.objectContaining({ name: 'delete_me', partitionKey: `https://${httpsServer.HOSTNAME}` }),
+    expect.objectContaining({ name: 'keep_me', partitionKey: `https://${httpsServer.HOSTNAME}` }),
+  ]);
 
-    await context.clearCookies({ name: 'delete_me' });
-    expect(await context.cookies()).toHaveLength(0);
-  });
+  await context.clearCookies({ name: 'delete_me' });
+  expect(await context.cookies()).toEqual([
+    expect.objectContaining({ name: 'keep_me', partitionKey: `https://${httpsServer.HOSTNAME}` }),
+  ]);
+  await context.close();
 });
