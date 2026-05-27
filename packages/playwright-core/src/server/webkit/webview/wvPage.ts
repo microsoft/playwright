@@ -17,6 +17,7 @@
 
 import { PNG } from 'pngjs';
 import jpegjs from 'jpeg-js';
+import { assert } from '@isomorphic/assert';
 import { headersArrayToObject } from '@isomorphic/headers';
 import { splitErrorMessage } from '@isomorphic/stackTrace';
 import { debugLogger } from '@utils/debugLogger';
@@ -28,11 +29,12 @@ import { helper } from '../../helper';
 import { saveGlobalsSnapshotSource } from '../../javascript';
 import * as network from '../../network';
 import { Page, PageBinding } from '../../page';
-import { WVSession } from './wvConnection';
+import { WVConnection, WVSession } from './wvConnection';
 import { createHandle, WVExecutionContext } from './wvExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wvInput';
 import { WVWorkers } from './wvWorkers';
 import { WVInterceptableRequest, WVRouteImpl } from './wvInterceptableRequest';
+import { WVProvisionalPage } from './wvProvisionalPage';
 
 import type { Protocol } from './protocol';
 import type { WVBrowserContext } from './wvBrowser';
@@ -49,45 +51,59 @@ export class WVPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
   _session: WVSession;
-  private _provisionalSession: WVSession | null = null;
-  private _targetIdToFrameSession = new Map<string, WKFrame>();
+  private readonly _connection: WVConnection;
+  private _provisionalPage: WVProvisionalPage | null = null;
   readonly _page: Page;
   private readonly _requestIdToRequest = new Map<string, WVInterceptableRequest>();
   private readonly _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private readonly _workers: WVWorkers;
+  private _workers: WVWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
-  private _provisionalListeners: RegisteredListener[] = [];
-  private _outerSessionListeners: RegisteredListener[] = [];
+  private _eventListeners: RegisteredListener[];
   private _pendingMainFrameLoaderResolvers = new Map<string, (loaderId: string) => void>();
   readonly _browserContext: WVBrowserContext;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   _firstNonInitialNavigationCommittedReject = (e: Error) => {};
+  private _initializedPromise: Promise<void>;
+  private _initializedFulfill = () => {};
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
 
   private readonly _dialogEndpoint: string | undefined;
 
-  constructor(browserContext: WVBrowserContext, session: WVSession, dialogEndpoint?: string) {
-    this._session = session;
+  constructor(browserContext: WVBrowserContext, connection: WVConnection, dialogEndpoint?: string) {
+    this._connection = connection;
     this._dialogEndpoint = dialogEndpoint;
-    this.rawKeyboard = new RawKeyboardImpl(session);
-    this.rawMouse = new RawMouseImpl(session);
-    this.rawTouchscreen = new RawTouchscreenImpl(session);
+    // The page session arrives via Target.targetCreated; raw input and workers
+    // are rebound to it in _setSession.
+    this._session = undefined as any as WVSession;
+    this.rawKeyboard = new RawKeyboardImpl(connection.outerSession);
+    this.rawMouse = new RawMouseImpl(connection.outerSession);
+    this.rawTouchscreen = new RawTouchscreenImpl(connection.outerSession);
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
-    this._workers = new WVWorkers(this._page, session);
+    this._workers = new WVWorkers(this._page, connection.outerSession);
     this._browserContext = browserContext;
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
+    this._eventListeners = [
+      eventsHelper.addEventListener(connection.outerSession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
+      eventsHelper.addEventListener(connection.outerSession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
+      eventsHelper.addEventListener(connection.outerSession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
+      eventsHelper.addEventListener(connection.outerSession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+    ];
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
     });
     // Avoid unhandled rejection on disconnect in the middle of initialization.
     this._firstNonInitialNavigationCommittedPromise.catch(() => {});
-    this._addSessionListeners();
-    this._addOuterSessionListeners();
+    this._initializedPromise = new Promise(f => { this._initializedFulfill = f; });
+  }
+
+  // Resolves once the initial page target has been set up and reported as new.
+  waitForInitialized(): Promise<void> {
+    return this._initializedPromise;
   }
 
   updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
@@ -130,18 +146,32 @@ export class WVPage implements PageDelegate {
   coverage?: (() => any) | undefined;
   cspErrorsAsynchronousForInlineScripts?: boolean | undefined;
 
-  async initialize(): Promise<void> {
-    let pageOrError: Page | Error;
-    try {
-      await this._initializeSession(this._session, ({ frameTree }) => this._handleFrameTree(frameTree));
-      pageOrError = this._page;
-    } catch (e) {
-      pageOrError = e as Error;
-    }
-    await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
+  private _setSession(session: WVSession) {
+    eventsHelper.removeEventListeners(this._sessionListeners);
+    this._session = session;
+    this.rawKeyboard.setSession(session);
+    this.rawMouse.setSession(session);
+    this.rawTouchscreen.setSession(session);
+    this._workers.setSession(session);
+    this._addSessionListeners();
   }
 
-  private async _initializeSession(session: WVSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void): Promise<void> {
+  // This method is called for provisional targets as well. The session passed as the parameter
+  // may be different from the current session and may be destroyed without becoming current.
+  async _initializeSession(session: WVSession, provisional: boolean, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void): Promise<void> {
+    await this._initializeSessionMayThrow(session, resourceTreeHandler).catch(e => {
+      // Provisional session can be disposed at any time, for example due to new navigation initiating
+      // a new provisional page.
+      if (provisional && session.isDisposed())
+        return;
+      // Swallow initialization errors due to newer target swap in,
+      // since we will reinitialize again.
+      if (this._session === session)
+        throw e;
+    });
+  }
+
+  private async _initializeSessionMayThrow(session: WVSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void): Promise<void> {
     const [, frameTree] = await Promise.all([
       session.send('Page.enable'),
       session.send('Page.getResourceTree'),
@@ -171,53 +201,75 @@ export class WVPage implements PageDelegate {
     }
   }
 
-  private _addOuterSessionListeners() {
-    const outerSession = this._session.connection.outerSession;
-    this._outerSessionListeners = [
-      eventsHelper.addEventListener(outerSession, 'Target.targetCreated', e => this._onOuterTargetCreated(e)),
-      eventsHelper.addEventListener(outerSession, 'Target.didCommitProvisionalTarget', e => this._onDidCommitProvisionalTarget(e)),
-      eventsHelper.addEventListener(outerSession, 'Target.targetDestroyed', e => this._onOuterTargetDestroyed(e)),
-    ];
+  private _createSession(targetId: string): WVSession {
+    const session: WVSession = new WVSession(this._connection, targetId, (message: any) => {
+      this._connection.outerSession.send('Target.sendMessageToTarget', {
+        targetId,
+        message: JSON.stringify(message),
+      }).catch(e => {
+        session.dispatchMessage({ id: message.id, error: { message: e.message } });
+      });
+    });
+    return session;
   }
 
-  private async _onOuterTargetCreated(event: Protocol.Target.targetCreatedPayload) {
-    if (!event.targetInfo.isProvisional)
-      return;
-    const session = this._session.connection.sessionForTarget(event.targetInfo.targetId);
-    if (!session)
-      return;
-    this._provisionalSession = session;
-    // Subscribe immediately — Network/Page events can arrive on the provisional
-    // session before didCommitProvisionalTarget. Session may be disposed before
-    // commit; swallow init errors.
-    this._provisionalListeners = this._buildSessionListeners(session);
-    await this._initializeSession(session, () => {}).catch(() => {});
-    // Resume so the new process can start driving the navigation now that
-    // we've set up Page/Network/interception on it.
-    if (event.targetInfo.isPaused)
-      this._session.connection.outerSession.sendMayFail('Target.resume', { targetId: event.targetInfo.targetId });
+  private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
+    const { targetInfo } = event;
+    assert(targetInfo.type === 'page', 'Only page targets are expected in WebView, received: ' + targetInfo.type);
+    const session = this._createSession(targetInfo.targetId);
+    if (!targetInfo.isProvisional) {
+      let pageOrError: Page | Error;
+      try {
+        this._setSession(session);
+        await this._initializeSession(session, false, ({ frameTree }) => this._handleFrameTree(frameTree));
+        pageOrError = this._page;
+      } catch (e) {
+        pageOrError = e as Error;
+      }
+      if (targetInfo.isPaused)
+        this._connection.outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+      await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
+      this._initializedFulfill();
+    } else {
+      assert(!this._provisionalPage);
+      this._provisionalPage = new WVProvisionalPage(session, this);
+      if (targetInfo.isPaused) {
+        this._provisionalPage.initializationPromise.then(() => {
+          this._connection.outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        });
+      }
+    }
+  }
+
+  private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
+    const { targetId, message } = event;
+    if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId)
+      this._provisionalPage._session.dispatchMessage(JSON.parse(message));
+    else if (this._session && this._session.sessionId === targetId)
+      this._session.dispatchMessage(JSON.parse(message));
   }
 
   private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
-    const provisional = this._provisionalSession;
-    if (!provisional || provisional.sessionId !== event.newTargetId)
-      return;
-    this._provisionalSession = null;
-    eventsHelper.removeEventListeners(this._sessionListeners);
-    this._sessionListeners = this._provisionalListeners;
-    this._provisionalListeners = [];
-    this._session = provisional;
-    this.rawKeyboard.setSession(provisional);
-    this.rawMouse.setSession(provisional);
-    this.rawTouchscreen.setSession(provisional);
-    this._workers.setSession(provisional);
+    const { oldTargetId, newTargetId } = event;
+    assert(this._provisionalPage);
+    assert(this._provisionalPage._session.sessionId === newTargetId, 'Unknown new target: ' + newTargetId);
+    assert(this._session.sessionId === oldTargetId, 'Unknown old target: ' + oldTargetId);
+    const newSession = this._provisionalPage._session;
+    this._provisionalPage.commit();
+    this._provisionalPage.dispose();
+    this._provisionalPage = null;
+    this._setSession(newSession);
   }
 
-  private _onOuterTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
-    if (this._provisionalSession && this._provisionalSession.sessionId === event.targetId) {
-      this._provisionalSession = null;
-      eventsHelper.removeEventListeners(this._provisionalListeners);
-      this._provisionalListeners = [];
+  private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
+    const { targetId } = event;
+    if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
+      this._provisionalPage._session.dispose();
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    } else if (this._session && this._session.sessionId === targetId) {
+      this._session.dispose();
+      eventsHelper.removeEventListeners(this._sessionListeners);
     }
   }
 
@@ -235,10 +287,14 @@ export class WVPage implements PageDelegate {
 
   didClose() {
     eventsHelper.removeEventListeners(this._sessionListeners);
-    eventsHelper.removeEventListeners(this._provisionalListeners);
-    eventsHelper.removeEventListeners(this._outerSessionListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
     if (this._session)
       this._session.dispose();
+    if (this._provisionalPage) {
+      this._provisionalPage._session.dispose();
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    }
     this._firstNonInitialNavigationCommittedReject(new TargetClosedError(this._page.closeReason()));
     this._page._didClose();
   }
@@ -892,40 +948,6 @@ export class WVPage implements PageDelegate {
   }
 
   async setDockTile(image: Buffer): Promise<void> {
-  }
-}
-
-class WKFrame {
-  readonly _page: WVPage;
-  readonly _session: WVSession;
-  private _sessionListeners: RegisteredListener[] = [];
-  private _initializePromise: Promise<void> | null = null;
-
-  constructor(page: WVPage, session: WVSession) {
-    this._page = page;
-    this._session = session;
-  }
-
-  async initialize() {
-    if (this._initializePromise)
-      return this._initializePromise;
-    this._initializePromise = this._initializeImpl();
-    return this._initializePromise;
-  }
-
-  private async _initializeImpl() {
-    this._sessionListeners = [
-      eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._page._onConsoleMessage(event)),
-      eventsHelper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._page._onConsoleRepeatCountUpdated(event)),
-    ];
-    // Child frames will actually inherit the console agent state from the main frame,
-    // but we keep the logic uniform as we don't know if we are a main frame or not.
-    await this._session.send('Console.enable');
-  }
-
-  dispose() {
-    eventsHelper.removeEventListeners(this._sessionListeners);
-    this._session.dispose();
   }
 }
 

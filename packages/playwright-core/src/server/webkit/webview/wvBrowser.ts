@@ -171,15 +171,15 @@ export class WVBrowser extends Browser {
   private async _attachTab(pageId: string, tab: ProxyTab): Promise<void> {
     const transport = await WebSocketTransport.connect(undefined, tab.webSocketDebuggerUrl, { headers: this._headers, followRedirects: true });
     const connection = new WVConnection(transport, () => this._detachTab(pageId), this.options.protocolLogger, this.options.browserLogsCollector);
-    // Pause future (provisional) targets so we can initialize them before the
-    // new process starts driving the navigation.
+    // Pause provisional targets so we can initialize them (Page/Network/
+    // interception) before the new process starts driving a cross-origin
+    // navigation. WVPage owns the per-target sessions and resumes them.
     connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
-    const session = await connection.waitForBrowserSession();
     const dialogEndpoint = this._dialogBridge.endpointFor(pageId);
-    const page = new WVPage(this._context, session, dialogEndpoint);
+    const page = new WVPage(this._context, connection, dialogEndpoint);
     this._dialogBridge.registerTab(pageId, req => page.onBridgeDialog(req));
     this._tabs.set(pageId, { pageId, transport, connection, page });
-    await page.initialize();
+    await page.waitForInitialized();
   }
 
   private _detachTab(pageId: string): void {
