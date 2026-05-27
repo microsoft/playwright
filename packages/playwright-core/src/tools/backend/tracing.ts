@@ -31,7 +31,8 @@ const tracingStart = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    const tracesDir = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code' });
+    // We don't own writing so we cannot track file size for this.
+    const { path: tracesDir } = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code', evictable: false });
     const name = 'trace-' + Date.now();
     await browserContext.tracing.start({
       name,

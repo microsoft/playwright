@@ -25,11 +25,12 @@ import type * as playwright from '../../..';
 import type { TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context, FilenameTemplate } from './context';
+import type { OutputFile } from './outputDir';
 
 export const requestDebug = debug('pw:mcp:request');
 
 type ResolvedFile = {
-  fileName: string;
+  file: OutputFile;
   relativeName: string;
   printableLink: string;
 };
@@ -78,15 +79,15 @@ export class Response {
     return rel;
   }
 
-  async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
-    let fileName: string;
+  async resolveClientFile(template: FilenameTemplate, title: string, opts?: { evictable?: boolean }): Promise<ResolvedFile> {
+    let file: OutputFile;
     if (template.suggestedFilename)
-      fileName = await this.resolveClientFilename(template.suggestedFilename);
+      file = this._context.outputDir.resolve(await this.resolveClientFilename(template.suggestedFilename), { evictable: false });
     else
-      fileName = await this._context.outputFile(template, { origin: 'llm' });
-    const relativeName = this._computeRelativeTo(fileName);
+      file = await this._context.outputFile(template, { origin: 'llm', evictable: opts?.evictable });
+    const relativeName = this._computeRelativeTo(file.path);
     const printableLink = `- [${title}](${relativeName})`;
-    return { fileName, relativeName, printableLink };
+    return { relativeName, printableLink, file };
   }
 
   async resolveClientFilename(filename: string): Promise<string> {
@@ -108,9 +109,11 @@ export class Response {
 
   private async _writeFile(resolvedFile: ResolvedFile, data: Buffer | string | null) {
     if (typeof data === 'string')
-      await fs.promises.writeFile(resolvedFile.fileName, this._redactSecrets(data), 'utf-8');
+      await resolvedFile.file.write(this._redactSecrets(data));
     else if (data)
-      await fs.promises.writeFile(resolvedFile.fileName, data);
+      await resolvedFile.file.write(data);
+    else
+      await resolvedFile.file.trackSize();
   }
 
   async addFileResult(resolvedFile: ResolvedFile, data: Buffer | string | null) {

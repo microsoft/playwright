@@ -203,15 +203,16 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   private async _downloadStarted(download: playwright.Download) {
     // Do not trust web names.
-    const outputFile = await this.context.outputFile({ suggestedFilename: sanitizeForFilePath(download.suggestedFilename()), prefix: 'download', ext: 'bin' }, { origin: 'code' });
+    const file = await this.context.outputFile({ suggestedFilename: sanitizeForFilePath(download.suggestedFilename()), prefix: 'download', ext: 'bin' }, { origin: 'code' });
     const entry = {
       download,
       finished: false,
-      outputFile,
+      outputFile: file.path,
     };
     this._downloads.push(entry);
     this._addLogEntry({ type: 'download-start', wallTime: Date.now(), download: entry });
-    await download.saveAs(entry.outputFile);
+    await download.saveAs(file.path);
+    await file.trackSize();
     entry.finished = true;
     this._addLogEntry({ type: 'download-finish', wallTime: Date.now(), download: entry });
   }

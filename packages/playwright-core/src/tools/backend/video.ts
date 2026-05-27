@@ -36,7 +36,7 @@ const videoStart = defineTool({
 
   handle: async (context, params, response) => {
     const resolvedFile = await response.resolveClientFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
-    await context.startVideoRecording(resolvedFile.fileName, { size: params.size });
+    await context.startVideoRecording(resolvedFile.file.path, { size: params.size });
     response.addTextResult('Video recording started.');
   },
 });

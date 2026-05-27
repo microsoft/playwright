@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
 
 import debug from 'debug';
 import type { Context } from './context';
+import type { OutputFile } from './outputDir';
 
 export type LogChunk = {
   type: string;
@@ -34,7 +34,7 @@ export class LogFile {
   private _filePrefix: string;
   private _title: string;
 
-  private _file: string | undefined;
+  private _file: OutputFile | undefined;
   private _stopped: boolean = false;
 
   private _line: number = 0;
@@ -76,7 +76,7 @@ export class LogFile {
       return undefined;
     const chunk: LogChunk = {
       type: this._title.toLowerCase(),
-      file: this._file,
+      file: this._file.path,
       fromLine: this._lastLine + 1,
       toLine: this._line,
       entryCount: this._entries - this._lastEntries,
@@ -89,10 +89,10 @@ export class LogFile {
   private async _write(wallTime: number, text: string) {
     if (this._stopped)
       return;
-    this._file ??= await this._context.outputFile({ prefix: this._filePrefix, ext: 'log', date: new Date(this._startTime) }, { origin: 'code' });
+    this._file ??= await this._context.outputFile({ prefix: this._filePrefix, ext: 'log', date: new Date(this._startTime) }, { origin: 'code', evictable: false });
     const relativeTime = Math.round(wallTime - this._startTime);
     const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${text}\n`;
-    await fs.promises.appendFile(this._file, logLine);
+    await this._file.append(logLine);
 
     const lineCount = logLine.split('\n').length - 1;
     this._line += lineCount;

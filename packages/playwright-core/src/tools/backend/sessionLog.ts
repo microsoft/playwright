@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import path from 'path';
 
-import { outputFile  } from './context';
 import { parseResponse } from './response';
 
-import type { ContextConfig } from './context';
+import type { Context } from './context';
+import type { OutputFile } from './outputDir';
 
 export class SessionLog {
-  private _folder: string;
-  private _file: string;
+  private _file: OutputFile;
   private _cwd: string;
   private _sessionFileQueue = Promise.resolve();
 
-  constructor(sessionFolder: string, cwd: string) {
-    this._folder = sessionFolder;
-    this._file = path.join(this._folder, 'session.md');
+  private constructor(file: OutputFile, cwd: string) {
+    this._file = file;
     this._cwd = cwd;
   }
 
-  static async create(config: ContextConfig, cwd: string): Promise<SessionLog> {
-    const sessionFolder = await outputFile({ config, cwd }, `session-${Date.now()}`, { origin: 'code' });
-    await fs.promises.mkdir(sessionFolder, { recursive: true });
+  static async create(context: Context, cwd: string): Promise<SessionLog> {
+    const file = await context.outputFile({
+      prefix: '',
+      ext: '',
+      suggestedFilename: path.join(`session-${Date.now()}`, 'session.md'),
+    }, { origin: 'code', evictable: false });
     // eslint-disable-next-line no-console
-    console.error(`Session: ${sessionFolder}`);
-    return new SessionLog(sessionFolder, cwd);
+    console.error(`Session: ${path.dirname(file.path)}`);
+    return new SessionLog(file, cwd);
   }
 
   logResponse(toolName: string, toolArgs: Record<string, any>, responseObject: any) {
@@ -60,6 +60,6 @@ export class SessionLog {
     }
 
     lines.push('');
-    this._sessionFileQueue = this._sessionFileQueue.then(() => fs.promises.appendFile(this._file, lines.join('\n')));
+    this._sessionFileQueue = this._sessionFileQueue.then(() => this._file.append(lines.join('\n')));
   }
 }

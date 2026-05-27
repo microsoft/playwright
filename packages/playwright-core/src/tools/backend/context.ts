@@ -26,11 +26,13 @@ import { isPathInside, isSystemDirectory, isWritable } from '@utils/fileUtils';
 import { playwright } from '../../inprocess';
 
 import { Tab } from './tab';
+import { OutputDir } from './outputDir';
 
 import type * as playwrightTypes from '../../..';
 import type { SessionLog } from './sessionLog';
 import type { Disposable } from '@isomorphic/disposable';
 import type { ToolCapability } from './tool';
+import type { OutputFile } from './outputDir';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -45,6 +47,7 @@ export type ContextConfig = {
     blockedOrigins?: string[];
   };
   outputDir?: string;
+  outputMaxSize?: number;
   outputMode?: 'file' | 'stdout';
   saveSession?: boolean;
   saveTrace?: boolean;
@@ -67,7 +70,6 @@ export type ContextConfig = {
 
 type ContextOptions = {
   config: ContextConfig;
-  sessionLog?: SessionLog;
   cwd: string;
 };
 
@@ -92,8 +94,9 @@ type VideoParams = { size?: { width: number; height: number } };
 
 export class Context {
   readonly config: ContextConfig;
-  readonly sessionLog: SessionLog | undefined;
+  sessionLog: SessionLog | undefined;
   readonly options: ContextOptions;
+  readonly outputDir: OutputDir;
   private _rawBrowserContext: playwrightTypes.BrowserContext;
   private _browserContextPromise: Promise<playwrightTypes.BrowserContext> | undefined;
   private _tabs: Tab[] = [];
@@ -117,8 +120,8 @@ export class Context {
 
   constructor(browserContext: playwrightTypes.BrowserContext, options: ContextOptions) {
     this.config = options.config;
-    this.sessionLog = options.sessionLog;
     this.options = options;
+    this.outputDir = new OutputDir(outputDir(options), options.config.outputMaxSize);
     this._rawBrowserContext = browserContext;
     testDebug('create context');
     process.on('unhandledRejection', this._onUnhandledRejection);
@@ -206,9 +209,10 @@ export class Context {
     return await workspaceFile(this.options, fileName, perCallWorkspaceDir);
   }
 
-  async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm' }): Promise<string> {
+  async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm', evictable?: boolean }): Promise<OutputFile> {
     const baseName = template.suggestedFilename || `${template.prefix}-${(template.date ?? new Date()).toISOString().replace(/[:.]/g, '-')}${template.ext ? '.' + template.ext : ''}`;
-    return await outputFile(this.options, baseName, options);
+    const absolutePath = await outputFile(this.options, baseName, options);
+    return this.outputDir.resolve(absolutePath, { evictable: options.evictable });
   }
 
   async startVideoRecording(fileName: string, params: VideoParams) {
@@ -401,7 +405,7 @@ export function outputDir(options: ContextOptions): string {
   return path.join(options.cwd, baseName);
 }
 
-export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
+async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
   const resolvedFile = path.resolve(outputDir(options), fileName);
   await checkFile(options, resolvedFile, flags);
   await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });

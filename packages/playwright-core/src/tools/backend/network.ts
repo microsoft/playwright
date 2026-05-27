@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
 import * as z from 'zod';
 
 import { getExtensionForMimeType, isTextualMimeType } from '@isomorphic/mimeType';
@@ -257,7 +255,7 @@ async function saveResponseBody(request: playwright.Request, response: ToolRespo
     return undefined;
   const ext = getExtensionForMimeType(httpResponse.headers()['content-type']);
   const resolved = await response.resolveClientFile({ prefix: 'response', ext, suggestedFilename }, 'Response body');
-  await fs.promises.writeFile(resolved.fileName, body);
+  await resolved.file.write(body);
   return resolved.relativeName;
 }
 

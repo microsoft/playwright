@@ -42,12 +42,14 @@ export class BrowserBackend implements ServerBackend {
   }
 
   async initialize(clientInfo: ClientInfo): Promise<void> {
-    this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, clientInfo.cwd) : undefined;
     this._context = new Context(this.browserContext, {
       config: this._config,
-      sessionLog: this._sessionLog,
       cwd: clientInfo.cwd,
     });
+    if (this._config.saveSession) {
+      this._sessionLog = await SessionLog.create(this._context, clientInfo.cwd);
+      this._context.sessionLog = this._sessionLog;
+    }
   }
 
   async dispose() {
