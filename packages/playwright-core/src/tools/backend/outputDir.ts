@@ -18,130 +18,57 @@ import fs from 'fs';
 import path from 'path';
 
 import debug from 'debug';
+import { isPathInside } from '@utils/index';
 
 const fileDebug = debug('pw:mcp:file');
 
-type Entry = {
-  path: string;
-  size: number;
-  addedAt: number;
-  evictable: boolean;
-};
-
 export class OutputDir {
   readonly path: string;
-  private readonly _maxSize: number | undefined;
-  private readonly _files = new Map<string, OutputFile>();
-  private readonly _entries = new Map<string, Entry>();
-  private _totalSize = 0;
-  private _seq = 0;
+  readonly maxSize: number;
+  // Insertion order encodes age: oldest first, newest last.
+  readonly _files = new Map<string, OutputFile>();
 
-  constructor(absolutePath: string, maxSize: number | undefined) {
-    this.path = absolutePath;
-    this._maxSize = maxSize && maxSize > 0 ? maxSize : undefined;
+  constructor(path: string, maxSize: number | undefined) {
+    this.path = path;
+    this.maxSize = maxSize ?? 0;
+    if (this.maxSize < 0)
+      throw new Error(`outputMaxSize must be non-negative, got ${this.maxSize}`);
   }
 
-  resolve(pathInOrAbsolute: string, opts?: { evictable?: boolean }): OutputFile {
-    const absolute = path.isAbsolute(pathInOrAbsolute)
-      ? path.resolve(pathInOrAbsolute)
-      : path.resolve(this.path, pathInOrAbsolute);
-    const existing = this._files.get(absolute);
-    if (existing)
-      return existing;
-    const evictable = opts?.evictable ?? true;
-    const file = new OutputFile(this, absolute, evictable);
-    this._files.set(absolute, file);
+  resolve(p: string, opts?: { evictable?: boolean }): OutputFile {
+    const absolute = path.resolve(this.path, p);
+    let file = this._files.get(absolute);
+    if (!file) {
+      file = new OutputFile(this, absolute, opts?.evictable ?? isPathInside(this.path, absolute));
+      this._files.set(absolute, file);
+    }
     return file;
   }
 
-  get hasCap(): boolean {
-    return this._maxSize !== undefined;
-  }
-
-  // Frees evictable entries until `additionalBytes` (the net increase to
-  // totalSize implied by an upcoming upsert/append) fits within the cap.
-  // `excludePath` is the file about to be written and must not be evicted.
-  _evictForBytes(additionalBytes: number, excludePath: string | undefined): void {
-    if (this._maxSize === undefined)
+  _evict(budget: number, keep: OutputFile): void {
+    if (this.maxSize === 0)
       return;
-    while (this._totalSize + additionalBytes > this._maxSize) {
-      const oldest = this._oldestEvictable(excludePath);
-      if (!oldest)
+    let total = 0;
+    for (const file of this._files.values())
+      total += file.size;
+    if (total <= budget)
+      return;
+    for (const file of this._files.values()) {
+      if (file === keep || !file.evictable)
+        continue;
+      total -= file.size;
+      file._unlink();
+      if (total <= budget)
         return;
-      this._removeEntry(oldest);
-      void fs.promises.unlink(oldest.path).catch(() => {});
     }
   }
 
-  private _oldestEvictable(excludePath: string | undefined): Entry | undefined {
-    let oldest: Entry | undefined;
-    for (const entry of this._entries.values()) {
-      if (!entry.evictable)
-        continue;
-      if (excludePath && entry.path === excludePath)
-        continue;
-      if (!oldest || entry.addedAt < oldest.addedAt)
-        oldest = entry;
-    }
-    return oldest;
-  }
-
-  private _removeEntry(entry: Entry) {
-    if (this._entries.delete(entry.path))
-      this._totalSize -= entry.size;
-  }
-
-  _upsert(absPath: string, size: number, evictable: boolean): void {
-    if (this._maxSize === undefined)
-      return;
-    const existing = this._entries.get(absPath);
-    if (existing) {
-      this._totalSize -= existing.size;
-      existing.size = size;
-      existing.addedAt = ++this._seq;
-      this._totalSize += size;
-      return;
-    }
-    this._entries.set(absPath, {
-      path: absPath,
-      size,
-      addedAt: ++this._seq,
-      evictable,
-    });
-    this._totalSize += size;
-  }
-
-  _addToEntry(absPath: string, delta: number, evictable: boolean): void {
-    if (this._maxSize === undefined)
-      return;
-    const existing = this._entries.get(absPath);
-    if (existing) {
-      existing.size += delta;
-      this._totalSize += delta;
-      return;
-    }
-    this._entries.set(absPath, {
-      path: absPath,
-      size: delta,
-      addedAt: ++this._seq,
-      evictable,
-    });
-    this._totalSize += delta;
-  }
-
-  _entrySize(absPath: string): number | undefined {
-    return this._entries.get(absPath)?.size;
-  }
-
-  // For tests/diagnostics.
-  totalTrackedSize(): number {
-    return this._totalSize;
-  }
 }
 
 export class OutputFile {
   readonly path: string;
   readonly evictable: boolean;
+  size = 0;
   private readonly _dir: OutputDir;
 
   constructor(dir: OutputDir, absolutePath: string, evictable: boolean) {
@@ -151,38 +78,51 @@ export class OutputFile {
   }
 
   async write(data: Buffer | string): Promise<void> {
-    const size = Buffer.byteLength(data);
-    const additional = size - (this._dir._entrySize(this.path) ?? 0);
-    this._dir._evictForBytes(additional, this.path);
+    const nextSize = Buffer.byteLength(data);
+    if (nextSize > this.size)
+      this._dir._evict(this._dir.maxSize - nextSize + this.size, this);
     await fs.promises.mkdir(path.dirname(this.path), { recursive: true });
     await fs.promises.writeFile(this.path, data);
     fileDebug(this.path);
-    this._dir._upsert(this.path, size, this.evictable);
+    this.size = nextSize;
+    this._touch();
   }
 
   async append(data: Buffer | string): Promise<void> {
     const delta = Buffer.byteLength(data);
-    this._dir._evictForBytes(delta, this.path);
+    this._dir._evict(this._dir.maxSize - delta, this);
     await fs.promises.mkdir(path.dirname(this.path), { recursive: true });
     await fs.promises.appendFile(this.path, data);
     fileDebug(this.path);
-    this._dir._addToEntry(this.path, delta, this.evictable);
+    this.size += delta;
+    this._touch();
   }
 
   async trackSize(size?: number): Promise<void> {
-    if (!this._dir.hasCap)
+    if (this._dir.maxSize === 0)
       return;
-    let resolvedSize = size;
-    if (resolvedSize === undefined) {
+    let nextSize = size;
+    if (nextSize === undefined) {
       try {
-        const stat = await fs.promises.stat(this.path);
-        resolvedSize = stat.size;
+        nextSize = (await fs.promises.stat(this.path)).size;
       } catch {
-        resolvedSize = 0;
+        nextSize = 0;
       }
     }
-    const additional = resolvedSize - (this._dir._entrySize(this.path) ?? 0);
-    this._dir._evictForBytes(additional, this.path);
-    this._dir._upsert(this.path, resolvedSize, this.evictable);
+    if (nextSize > this.size)
+      this._dir._evict(this._dir.maxSize - nextSize + this.size, this);
+    this.size = nextSize;
+    this._touch();
+  }
+
+  _unlink(): void {
+    this._dir._files.delete(this.path);
+    void fs.promises.unlink(this.path).catch(() => {});
+  }
+
+  // Re-insert at the tail so this file becomes the "newest" for LRU/FIFO eviction.
+  private _touch(): void {
+    this._dir._files.delete(this.path);
+    this._dir._files.set(this.path, this);
   }
 }
