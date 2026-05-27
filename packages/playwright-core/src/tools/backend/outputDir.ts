@@ -22,6 +22,10 @@ import { isPathInside } from '@utils/index';
 
 const fileDebug = debug('pw:mcp:file');
 
+// Not safe against concurrent writes to the same path or against another
+// writer's file being evicted mid-flight. Current callers serialize their
+// writes (SessionLog queues, LogFile is single-writer, screenshots/downloads
+// use unique paths), so this is acceptable for now.
 export class OutputDir {
   readonly path: string;
   readonly maxSize: number;
