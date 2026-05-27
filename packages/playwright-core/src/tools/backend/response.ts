@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import debug from 'debug';
+import { isPathInside } from '@utils/fileUtils';
 import { renderModalStates } from './tab';
 import { scaleImageToFitMessage } from './screenshot';
 
@@ -81,10 +82,17 @@ export class Response {
 
   async resolveClientFile(template: FilenameTemplate, title: string, opts?: { evictable?: boolean }): Promise<ResolvedFile> {
     let file: OutputFile;
-    if (template.suggestedFilename)
-      file = this._context.outputDir.resolve(await this.resolveClientFilename(template.suggestedFilename), { evictable: false });
-    else
+    if (template.suggestedFilename) {
+      const resolvedPath = await this.resolveClientFilename(template.suggestedFilename);
+      // If a client-provided filename lands inside the outputDir, treat it like
+      // any auto-generated artifact and allow eviction; files saved to the
+      // user's workspace are pinned so we never delete their data.
+      const insideOutputDir = isPathInside(this._context.outputDir.path, resolvedPath);
+      const evictable = insideOutputDir ? (opts?.evictable ?? true) : false;
+      file = this._context.outputDir.resolve(resolvedPath, { evictable });
+    } else {
       file = await this._context.outputFile(template, { origin: 'llm', evictable: opts?.evictable });
+    }
     const relativeName = this._computeRelativeTo(file.path);
     const printableLink = `- [${title}](${relativeName})`;
     return { relativeName, printableLink, file };
