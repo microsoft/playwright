@@ -1,7 +1,12 @@
 name: "tests WebView (iOS Simulator)"
 
 on:
-  # pull_request trigger disabled to avoid CI churn during wk_wv iteration - restore before merge
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/webview/**'
+      - 'packages/playwright-core/src/server/webkit/webview/**'
+      - '.github/workflows/tests_webview_simulator.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
