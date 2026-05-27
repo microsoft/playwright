@@ -46,19 +46,32 @@ helper of similar intent:
 
 ## Architecture
 
+This backend deliberately mirrors the regular WebKit backend one level up
+(`wkConnection.ts` / `wkPage.ts` / `wkProvisionalPage.ts`). When in doubt,
+read the WK equivalent — the WV class should look almost the same. The
+`outerSession` is the WV analogue of WK's page-proxy session.
+
 ```
 WebSocketTransport (ws://localhost:9222/devtools/page/<n>, via ios_webkit_debug_proxy)
-  → WVConnection.outerSession (sessionId "")  — bridges via Target.sendMessageToTarget
-      → WVSession per targetId  (stored in WVConnection._sessions)
-          → WVPage (one per tab; switches its _session on process swap)
+  → WVConnection            — dumb transport; owns only outerSession
+      → WVConnection.outerSession (sessionId "")  — Target.sendMessageToTarget bridge
+          → WVPage          — owns per-target WVSessions, routes
+                              Target.dispatchMessageFromTarget, manages swaps
+              → _session (current) + WVProvisionalPage (during a swap)
               → WVExecutionContext, WVWorkers, RawKeyboard/Mouse/Touchscreen
                 (all hold a session reference, all have setSession() for swap)
 ```
 
-The outer session only ever sees `Target.*` messages. Per-page work goes
-through `Target.sendMessageToTarget` (send) and `Target.dispatchMessageFromTarget`
-(receive), which `WVConnection` demultiplexes by `targetId` into per-target
-`WVSession`s.
+`WVConnection` is intentionally minimal: it pumps the transport into
+`outerSession` and back. `WVPage` creates the per-target `WVSession`s
+(`_createSession`), routes `Target.dispatchMessageFromTarget` by `targetId` to
+either `_session` or `_provisionalPage._session`, and handles
+`Target.targetCreated/targetDestroyed/didCommitProvisionalTarget` — exactly
+like `WKPage`. `WVPage` is constructed with the outer session (not a target
+session); `_session` starts undefined and is bound on the first
+`Target.targetCreated` via `_setSession`. `WVBrowser._attachTab` awaits
+`page.waitForInitialized()` (resolves after the first target is reported as
+new) instead of waiting on the connection.
 
 ## Process swap / provisional targets
 
@@ -72,13 +85,34 @@ Target.didCommitProvisionalTarget  oldTargetId, newTargetId
 Target.targetDestroyed  oldTargetId
 ```
 
+Handling mirrors WK: `WVProvisionalPage` (≈ `WKProvisionalPage`) wraps the
+provisional session, forwards its network events to `WVPage`, and exposes
+`initializationPromise` + `commit()`. `WVPage._onDidCommitProvisionalTarget`
+commits it and calls `_setSession(newSession)`.
+
+Two ordering facts that drive the design (confirmed via `DEBUG=pw:protocol`):
+
+- **Network events** (`requestWillBeSent`, `requestIntercepted`,
+  `responseReceived`, `loadingFinished/Failed`) arrive on the provisional
+  session *before* commit. So `WVProvisionalPage` subscribes to those, exactly
+  like `WKProvisionalPage`.
+- **Page lifecycle events** (`frameNavigated`, `loadEventFired`) arrive *after*
+  commit, on the now-committed session — picked up by `_setSession` →
+  `_addSessionListeners`. So they do **not** need provisional listeners.
+
 Without `Target.setPauseOnStart { pauseOnStart: true }` (sent on the outer
-session before any provisional target appears), the new process starts the
-navigation request before per-session state (`Network.setInterceptionEnabled`,
-bootstrap script, etc.) can be applied to it — `page.route(...)` won't fire,
-init scripts won't run, etc. Provisional targets created while the flag is set
-arrive with `isPaused: true` and don't load until `Target.resume { targetId }`
-is sent.
+session in `WVBrowser._attachTab`, before any provisional target appears), the
+new process starts the navigation request before per-session state
+(`Network.setInterceptionEnabled`, bootstrap script, etc.) can be applied — so
+`page.route(...)` won't fire, init scripts won't run, etc. Provisional targets
+created while the flag is set arrive with `isPaused: true`; `WVPage` resumes
+them with `Target.resume { targetId }` once `WVProvisionalPage`'s
+initialization finishes.
+
+Navigation can't use the patched `Playwright.navigate`, so `_navigateMainFrame`
+parks a resolver in `_pendingMainFrameLoaderResolvers` keyed by frame id and
+lets `_onFrameNavigated` (fired by whichever session ends up current) resolve
+the loaderId — this is the one place WV diverges from WK's navigation.
 
 Distinct from the **popup-pause** path (`window.open` opens a new tab/window),
 which in upstream stock Safari has no equivalent at all — that's a Playwright
