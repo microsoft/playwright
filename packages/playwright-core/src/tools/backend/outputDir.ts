@@ -60,7 +60,7 @@ export class OutputDir {
     if (total <= budget)
       return;
     for (const file of this._files.values()) {
-      if (file === keep || !file.evictable)
+      if (file === keep || !file.evictable || file.size === 0)
         continue;
       total -= file.size;
       fileDebug('evict %s (%d bytes)', file.path, file.size);
