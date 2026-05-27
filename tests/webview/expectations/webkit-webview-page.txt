@@ -71,27 +71,6 @@ page/page-screenshot.spec.ts › page screenshot › should work while navigatin
 page/page-screenshot.spec.ts › page screenshot › should work with Array deleted [fail]
 
 # ============================================================================
-# api-request-context  (14 tests)
-# APIRequestContext.fetch/get/post are not wired up for the WebView backend.
-# The stock RDP exposes no equivalent of Network.loadRequest, and we have not
-# implemented an out-of-page fetch path.
-# ============================================================================
-page/expect-boolean.spec.ts › not.toBeOK [fail]
-page/expect-boolean.spec.ts › toBeOK [fail]
-page/expect-boolean.spec.ts › toBeOK fail with promise [fail]
-page/expect-boolean.spec.ts › toBeOK should print response with text content type when fails › image content type [fail]
-page/expect-boolean.spec.ts › toBeOK should print response with text content type when fails › no content type [fail]
-page/expect-boolean.spec.ts › toBeOK should print response with text content type when fails › text content type [fail]
-page/page-request-fulfill.spec.ts › should fetch original request and fulfill [fail]
-page/page-request-fulfill.spec.ts › should fulfill with fetch result [fail]
-page/page-request-intercept.spec.ts › should fulfill intercepted response [fail]
-page/page-request-intercept.spec.ts › should fulfill response with empty body [fail]
-page/page-request-intercept.spec.ts › should fulfill with any response [fail]
-page/page-request-intercept.spec.ts › should give access to the intercepted response body [fail]
-page/page-request-intercept.spec.ts › should override with defaults when intercepted response not provided [fail]
-page/page-request-intercept.spec.ts › should support fulfill after intercept [fail]
-
-# ============================================================================
 # frame-element-and-ownership  (38 tests)
 # elementHandle.contentFrame / elementHandle.ownerFrame / frame.frameElement
 # are not implemented in wvPage — see the throwing stubs in wvPage.ts.
@@ -405,6 +384,7 @@ page/page-request-intercept.spec.ts › should support timeout option in route.f
 page/page-route.spec.ts › should fail navigation when aborting main resource [fail]
 page/page-route.spec.ts › should not auto-intercept non-preflight OPTIONS with network interception [fail]
 page/page-route.spec.ts › should not override cookie header [fail]
+page/page-route.spec.ts › should send referer [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should capture screenshots after layoutchanges in transitionend event › make sure transition is actually running [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should fire transitionend for finite transitions › make sure transition is actually running [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should stop animations that happen right before screenshot [fail]

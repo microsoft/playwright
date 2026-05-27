@@ -152,6 +152,10 @@ export const webviewTest = baseTest.extend<WebViewTestFixtures, WebViewWorkerFix
   },
 
   _autoSkipWebView: [async ({ webviewExpectations }, run, testInfo) => {
+    if (process.env.PWTEST_DISABLE_WEBVIEW_EXPECTATIONS !== undefined) {
+      await run();
+      return;
+    }
     const outcome = shouldSkipWebViewTest(testInfo.titlePath, webviewExpectations);
     if (outcome)
       testInfo.fixme(true, `webview expectation: ${outcome}`);

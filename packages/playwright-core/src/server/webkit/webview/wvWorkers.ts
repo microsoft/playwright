@@ -31,6 +31,10 @@ export class WVWorkers {
 
   constructor(page: Page, session: WVSession) {
     this._page = page;
+    this.setSession(session);
+  }
+
+  setSession(session: WVSession) {
     eventsHelper.removeEventListeners(this._sessionListeners);
     this.clear();
     this._sessionListeners = [

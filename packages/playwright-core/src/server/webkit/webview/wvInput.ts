@@ -64,9 +64,9 @@ function toButtonsMask(buttons: Set<types.MouseButton>): number {
 }
 
 export class RawKeyboardImpl implements input.RawKeyboard {
-  private _session: WVSession;
+  private _session: WVSession | undefined;
 
-  constructor(session: WVSession) {
+  setSession(session: WVSession) {
     this._session = session;
   }
 
@@ -116,9 +116,9 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 }
 
 export class RawMouseImpl implements input.RawMouse {
-  private _session: WVSession;
+  private _session: WVSession | undefined;
 
-  constructor(session: WVSession) {
+  setSession(session: WVSession) {
     this._session = session;
   }
 
@@ -173,9 +173,9 @@ export class RawMouseImpl implements input.RawMouse {
 }
 
 export class RawTouchscreenImpl implements input.RawTouchscreen {
-  private _session: WVSession;
+  private _session: WVSession | undefined;
 
-  constructor(session: WVSession) {
+  setSession(session: WVSession) {
     this._session = session;
   }
 
@@ -199,6 +199,8 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
   }
 }
 
-async function evalInPage(progress: Progress, session: WVSession, expression: string): Promise<void> {
+async function evalInPage(progress: Progress, session: WVSession | undefined, expression: string): Promise<void> {
+  if (!session)
+    throw new Error('Page is not initialized');
   await progress.race(session.send('Runtime.evaluate', { expression, returnByValue: true } as any));
 }

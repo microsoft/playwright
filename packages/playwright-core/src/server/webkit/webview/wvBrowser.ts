@@ -171,12 +171,13 @@ export class WVBrowser extends Browser {
   private async _attachTab(pageId: string, tab: ProxyTab): Promise<void> {
     const transport = await WebSocketTransport.connect(undefined, tab.webSocketDebuggerUrl, { headers: this._headers, followRedirects: true });
     const connection = new WVConnection(transport, () => this._detachTab(pageId), this.options.protocolLogger, this.options.browserLogsCollector);
-    const session = await connection.waitForBrowserSession();
+    // TODO: handle this as RDP connection parameter.
+    connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
     const dialogEndpoint = this._dialogBridge.endpointFor(pageId);
-    const page = new WVPage(this._context, session, dialogEndpoint);
+    const page = new WVPage(this._context, connection.outerSession, dialogEndpoint);
     this._dialogBridge.registerTab(pageId, req => page.onBridgeDialog(req));
     this._tabs.set(pageId, { pageId, transport, connection, page });
-    await page.initialize();
+    await page.waitForInitialized();
   }
 
   private _detachTab(pageId: string): void {
@@ -240,7 +241,7 @@ export class WVBrowserContext extends BrowserContext {
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
-    throw new Error('Method not implemented.');
+    return [];
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {

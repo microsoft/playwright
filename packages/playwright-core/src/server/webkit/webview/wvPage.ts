@@ -17,6 +17,7 @@
 
 import { PNG } from 'pngjs';
 import jpegjs from 'jpeg-js';
+import { assert } from '@isomorphic/assert';
 import { headersArrayToObject } from '@isomorphic/headers';
 import { splitErrorMessage } from '@isomorphic/stackTrace';
 import { debugLogger } from '@utils/debugLogger';
@@ -33,6 +34,7 @@ import { createHandle, WVExecutionContext } from './wvExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wvInput';
 import { WVWorkers } from './wvWorkers';
 import { WVInterceptableRequest, WVRouteImpl } from './wvInterceptableRequest';
+import { WVProvisionalPage } from './wvProvisionalPage';
 
 import type { Protocol } from './protocol';
 import type { WVBrowserContext } from './wvBrowser';
@@ -48,41 +50,56 @@ export class WVPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
-  _session: WVSession;
-  private _targetIdToFrameSession = new Map<string, WKFrame>();
+  private _session!: WVSession;
+  private readonly _outerSession: WVSession;
+  private _provisionalPage: WVProvisionalPage | null = null;
   readonly _page: Page;
   private readonly _requestIdToRequest = new Map<string, WVInterceptableRequest>();
   private readonly _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private readonly _workers: WVWorkers;
+  private _workers: WVWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
+  private _eventListeners: RegisteredListener[];
+  private _pendingMainFrameLoaderResolvers = new Map<string, (loaderId: string) => void>();
   readonly _browserContext: WVBrowserContext;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   _firstNonInitialNavigationCommittedReject = (e: Error) => {};
+  private _initializedPromise: Promise<void>;
+  private _initializedFulfill = () => {};
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
 
   private readonly _dialogEndpoint: string | undefined;
 
-  constructor(browserContext: WVBrowserContext, session: WVSession, dialogEndpoint?: string) {
-    this._session = session;
+  constructor(browserContext: WVBrowserContext, outerSession: WVSession, dialogEndpoint?: string) {
+    this._outerSession = outerSession;
     this._dialogEndpoint = dialogEndpoint;
-    this.rawKeyboard = new RawKeyboardImpl(session);
-    this.rawMouse = new RawMouseImpl(session);
-    this.rawTouchscreen = new RawTouchscreenImpl(session);
+    this.rawKeyboard = new RawKeyboardImpl();
+    this.rawMouse = new RawMouseImpl();
+    this.rawTouchscreen = new RawTouchscreenImpl();
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
-    this._workers = new WVWorkers(this._page, session);
+    this._workers = new WVWorkers(this._page, outerSession);
     this._browserContext = browserContext;
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
+    this._eventListeners = [
+      eventsHelper.addEventListener(outerSession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
+      eventsHelper.addEventListener(outerSession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
+      eventsHelper.addEventListener(outerSession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
+      eventsHelper.addEventListener(outerSession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+    ];
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
     });
     // Avoid unhandled rejection on disconnect in the middle of initialization.
     this._firstNonInitialNavigationCommittedPromise.catch(() => {});
-    this._addSessionListeners();
+    this._initializedPromise = new Promise(f => { this._initializedFulfill = f; });
+  }
+
+  waitForInitialized(): Promise<void> {
+    return this._initializedPromise;
   }
 
   updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
@@ -125,39 +142,131 @@ export class WVPage implements PageDelegate {
   coverage?: (() => any) | undefined;
   cspErrorsAsynchronousForInlineScripts?: boolean | undefined;
 
-  _setSession(session: WVSession) {
+  private _setSession(session: WVSession) {
     eventsHelper.removeEventListeners(this._sessionListeners);
     this._session = session;
+    this.rawKeyboard.setSession(session);
+    this.rawMouse.setSession(session);
+    this.rawTouchscreen.setSession(session);
+    this._workers.setSession(session);
+    this._addSessionListeners();
   }
 
-  async initialize(): Promise<void> {
-    let pageOrError: Page | Error;
-    try {
-      const [, frameTree] = await Promise.all([
-        this._session.send('Page.enable'),
-        this._session.send('Page.getResourceTree'),
-      ] as const);
-      this._handleFrameTree(frameTree.frameTree);
+  // This method is called for provisional targets as well. The session passed as the parameter
+  // may be different from the current session and may be destroyed without becoming current.
+  async _initializeSession(session: WVSession, provisional: boolean, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void): Promise<void> {
+    await this._initializeSessionMayThrow(session, resourceTreeHandler).catch(e => {
+      // Provisional session can be disposed at any time, for example due to new navigation initiating
+      // a new provisional page.
+      if (provisional && session.isDisposed())
+        return;
+      // Swallow initialization errors due to newer target swap in,
+      // since we will reinitialize again.
+      if (this._session === session)
+        throw e;
+    });
+  }
+
+  private async _initializeSessionMayThrow(session: WVSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void): Promise<void> {
+    const [, frameTree] = await Promise.all([
+      session.send('Page.enable'),
+      session.send('Page.getResourceTree'),
+    ] as const);
+    resourceTreeHandler(frameTree);
+    await Promise.all([
+      session.send('Runtime.enable'),
+      session.sendMayFail('Network.enable'),
+      session.sendMayFail('Console.enable'),
+      session.sendMayFail('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }),
+      session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
+    ]);
+    if (this._page.needsRequestInterception()) {
       await Promise.all([
-        this._session.send('Runtime.enable'),
-        this._session.sendMayFail('Network.enable'),
-        this._session.sendMayFail('Console.enable'),
-        this._updateBootstrapScript(),
-        this._session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
+        session.sendMayFail('Network.setInterceptionEnabled', { enabled: true }),
+        session.sendMayFail('Network.setResourceCachingDisabled', { disabled: true }),
+        session.sendMayFail('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
       ]);
-      // Inject the dialog bridge into the currently-loaded document too —
-      // bootstrap only applies to future navigations.
-      if (this._dialogEndpoint) {
-        await this._session.sendMayFail('Runtime.evaluate', {
-          expression: dialogBridgeSource(this._dialogEndpoint),
-          returnByValue: true,
-        } as any);
-      }
-      pageOrError = this._page;
-    } catch (e) {
-      pageOrError = e as Error;
     }
-    await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
+    // Inject the dialog bridge into the currently-loaded document too —
+    // bootstrap only applies to future navigations.
+    if (this._dialogEndpoint) {
+      await session.sendMayFail('Runtime.evaluate', {
+        expression: dialogBridgeSource(this._dialogEndpoint),
+        returnByValue: true,
+      } as any);
+    }
+  }
+
+  private _createSession(targetId: string): WVSession {
+    const session: WVSession = new WVSession(this._outerSession.connection, targetId, (message: any) => {
+      this._outerSession.send('Target.sendMessageToTarget', {
+        targetId,
+        message: JSON.stringify(message),
+      }).catch(e => {
+        session.dispatchMessage({ id: message.id, error: { message: e.message } });
+      });
+    });
+    return session;
+  }
+
+  private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
+    const { targetInfo } = event;
+    assert(targetInfo.type === 'page', 'Only page targets are expected in WebView, received: ' + targetInfo.type);
+    const session = this._createSession(targetInfo.targetId);
+    if (!targetInfo.isProvisional) {
+      let pageOrError: Page | Error;
+      try {
+        this._setSession(session);
+        await this._initializeSession(session, false, ({ frameTree }) => this._handleFrameTree(frameTree));
+        pageOrError = this._page;
+      } catch (e) {
+        pageOrError = e as Error;
+      }
+      if (targetInfo.isPaused)
+        this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+      await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
+      this._initializedFulfill();
+    } else {
+      assert(!this._provisionalPage);
+      this._provisionalPage = new WVProvisionalPage(session, this);
+      if (targetInfo.isPaused) {
+        this._provisionalPage.initializationPromise.then(() => {
+          this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        });
+      }
+    }
+  }
+
+  private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
+    const { targetId, message } = event;
+    if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId)
+      this._provisionalPage._session.dispatchMessage(JSON.parse(message));
+    else if (this._session && this._session.sessionId === targetId)
+      this._session.dispatchMessage(JSON.parse(message));
+  }
+
+  private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
+    const { oldTargetId, newTargetId } = event;
+    assert(this._provisionalPage);
+    assert(this._provisionalPage._session.sessionId === newTargetId, 'Unknown new target: ' + newTargetId);
+    assert(this._session.sessionId === oldTargetId, 'Unknown old target: ' + oldTargetId);
+    const newSession = this._provisionalPage._session;
+    this._provisionalPage.commit();
+    this._provisionalPage.dispose();
+    this._provisionalPage = null;
+    this._setSession(newSession);
+  }
+
+  private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
+    const { targetId } = event;
+    if (this._provisionalPage && this._provisionalPage._session.sessionId === targetId) {
+      this._provisionalPage._session.dispose();
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    } else if (this._session && this._session.sessionId === targetId) {
+      this._session.dispose();
+      eventsHelper.removeEventListeners(this._sessionListeners);
+    }
   }
 
   async onBridgeDialog(req: { type: 'alert' | 'confirm' | 'prompt'; message: string; defaultValue: string }): Promise<{ accept: boolean; promptText?: string }> {
@@ -174,35 +283,45 @@ export class WVPage implements PageDelegate {
 
   didClose() {
     eventsHelper.removeEventListeners(this._sessionListeners);
+    eventsHelper.removeEventListeners(this._eventListeners);
     if (this._session)
       this._session.dispose();
+    if (this._provisionalPage) {
+      this._provisionalPage._session.dispose();
+      this._provisionalPage.dispose();
+      this._provisionalPage = null;
+    }
     this._firstNonInitialNavigationCommittedReject(new TargetClosedError(this._page.closeReason()));
     this._page._didClose();
   }
 
   private _addSessionListeners() {
-    this._sessionListeners = [
-      eventsHelper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
-      eventsHelper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
-      eventsHelper.addEventListener(this._session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
-      eventsHelper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'load')),
-      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'domcontentloaded')),
-      eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-      eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
-      eventsHelper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
-      eventsHelper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
-      eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketClosed', e => this._page.frameManager.webSocketClosed(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page.frameManager.webSocketError(e.requestId, e.errorMessage)),
+    this._sessionListeners = this._buildSessionListeners(this._session);
+  }
+
+  private _buildSessionListeners(session: WVSession): RegisteredListener[] {
+    return [
+      eventsHelper.addEventListener(session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      eventsHelper.addEventListener(session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      eventsHelper.addEventListener(session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
+      eventsHelper.addEventListener(session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      eventsHelper.addEventListener(session, 'Page.loadEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'load')),
+      eventsHelper.addEventListener(session, 'Page.domContentEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'domcontentloaded')),
+      eventsHelper.addEventListener(session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      eventsHelper.addEventListener(session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
+      eventsHelper.addEventListener(session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
+      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(session, e)),
+      eventsHelper.addEventListener(session, 'Network.requestIntercepted', e => this._onRequestIntercepted(session, e)),
+      eventsHelper.addEventListener(session, 'Network.responseReceived', e => this._onResponseReceived(session, e)),
+      eventsHelper.addEventListener(session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
+      eventsHelper.addEventListener(session, 'Network.loadingFailed', e => this._onLoadingFailed(session, e)),
+      eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
+      eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId)),
+      eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => this._page.frameManager.webSocketClosed(e.requestId)),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => this._page.frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
   }
 
@@ -248,6 +367,11 @@ export class WVPage implements PageDelegate {
     this._page.frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();
+    const pending = this._pendingMainFrameLoaderResolvers.get(framePayload.id);
+    if (pending) {
+      this._pendingMainFrameLoaderResolvers.delete(framePayload.id);
+      pending(framePayload.loaderId);
+    }
   }
 
   private _onFrameNavigatedWithinDocument(frameId: string, url: string) {
@@ -274,6 +398,8 @@ export class WVPage implements PageDelegate {
     const frame = this._page.frameManager.frame(contextPayload.frameId);
     if (!frame)
       return;
+    if (contextPayload.type !== 'normal')
+      return;
     const delegate = new WVExecutionContext(this._session, contextPayload.id);
     const context = new dom.FrameExecutionContext(delegate, frame, 'main');
     frame.contextCreated('main', context);
@@ -290,13 +416,9 @@ export class WVPage implements PageDelegate {
   }
 
   private async _navigateMainFrame(frame: frames.Frame, url: string): Promise<frames.GotoResult> {
-    let resolveLoaderId: (loaderId: string) => void;
-    const loaderIdPromise = new Promise<string>(resolve => { resolveLoaderId = resolve; });
-    const onFrameNavigated = (payload: Protocol.Page.frameNavigatedPayload) => {
-      if (payload.frame.id === frame._id)
-        resolveLoaderId(payload.frame.loaderId);
-    };
-    this._session.on('Page.frameNavigated', onFrameNavigated);
+    const loaderIdPromise = new Promise<string>(resolve => {
+      this._pendingMainFrameLoaderResolvers.set(frame._id, resolve);
+    });
     try {
       this._session.sendMayFail('Runtime.evaluate', {
         expression: `window.location.href = ${JSON.stringify(url)}`,
@@ -305,7 +427,7 @@ export class WVPage implements PageDelegate {
       const loaderId = await loaderIdPromise;
       return { newDocumentId: loaderId };
     } finally {
-      this._session.off('Page.frameNavigated', onFrameNavigated);
+      this._pendingMainFrameLoaderResolvers.delete(frame._id);
     }
   }
 
@@ -822,40 +944,6 @@ export class WVPage implements PageDelegate {
   }
 
   async setDockTile(image: Buffer): Promise<void> {
-  }
-}
-
-class WKFrame {
-  readonly _page: WVPage;
-  readonly _session: WVSession;
-  private _sessionListeners: RegisteredListener[] = [];
-  private _initializePromise: Promise<void> | null = null;
-
-  constructor(page: WVPage, session: WVSession) {
-    this._page = page;
-    this._session = session;
-  }
-
-  async initialize() {
-    if (this._initializePromise)
-      return this._initializePromise;
-    this._initializePromise = this._initializeImpl();
-    return this._initializePromise;
-  }
-
-  private async _initializeImpl() {
-    this._sessionListeners = [
-      eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._page._onConsoleMessage(event)),
-      eventsHelper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._page._onConsoleRepeatCountUpdated(event)),
-    ];
-    // Child frames will actually inherit the console agent state from the main frame,
-    // but we keep the logic uniform as we don't know if we are a main frame or not.
-    await this._session.send('Console.enable');
-  }
-
-  dispose() {
-    eventsHelper.removeEventListeners(this._sessionListeners);
-    this._session.dispose();
   }
 }
 
