@@ -50,7 +50,7 @@ export class WVPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
-  _session: WVSession;
+  private _session!: WVSession;
   private readonly _outerSession: WVSession;
   private _provisionalPage: WVProvisionalPage | null = null;
   readonly _page: Page;
@@ -75,12 +75,9 @@ export class WVPage implements PageDelegate {
   constructor(browserContext: WVBrowserContext, outerSession: WVSession, dialogEndpoint?: string) {
     this._outerSession = outerSession;
     this._dialogEndpoint = dialogEndpoint;
-    // The page session arrives via Target.targetCreated; raw input and workers
-    // are rebound to it in _setSession.
-    this._session = undefined as any as WVSession;
-    this.rawKeyboard = new RawKeyboardImpl(outerSession);
-    this.rawMouse = new RawMouseImpl(outerSession);
-    this.rawTouchscreen = new RawTouchscreenImpl(outerSession);
+    this.rawKeyboard = new RawKeyboardImpl();
+    this.rawMouse = new RawMouseImpl();
+    this.rawTouchscreen = new RawTouchscreenImpl();
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
     this._workers = new WVWorkers(this._page, outerSession);
