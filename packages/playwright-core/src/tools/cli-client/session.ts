@@ -139,8 +139,6 @@ export class Session {
       args.push(`--cdp=${cliArgs.cdp}`);
     if (cliArgs.endpoint)
       args.push(`--endpoint=${cliArgs.endpoint}`);
-    else if (mode === 'attach' && process.env.PLAYWRIGHT_CLI_SESSION)
-      args.push(`--endpoint=${process.env.PLAYWRIGHT_CLI_SESSION}`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
