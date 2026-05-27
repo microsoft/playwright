@@ -402,6 +402,12 @@ export class WVPage implements PageDelegate {
     const frame = this._page.frameManager.frame(contextPayload.frameId);
     if (!frame)
       return;
+    // We run the injected script in the main world (noUtilityWorld), so only the
+    // page's own "normal" world is exposed. Stock WebKit also spins up internal
+    // worlds (e.g. "UniqueWorld_0"); registering those as 'main' would clobber the
+    // real main context and destroy any in-flight evaluation.
+    if (contextPayload.type !== 'normal')
+      return;
     const delegate = new WVExecutionContext(this._session, contextPayload.id);
     const context = new dom.FrameExecutionContext(delegate, frame, 'main');
     frame.contextCreated('main', context);
