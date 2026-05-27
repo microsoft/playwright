@@ -81,8 +81,10 @@ export class Chromium extends BrowserType {
     return super.launchPersistentContext(progress, userDataDir, options);
   }
 
-  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, artifactsDir?: string }) {
-    return await this._connectOverCDPInternal(progress, endpointURL, options);
+  override async connectOverCDP(progress: Progress, params: channels.BrowserTypeConnectOverCDPParams) {
+    if (params.transport)
+      return this._connectOverCDPImpl(progress, params.transport as any, async () => (params.transport as any).close(), { ...params, isLocal: true });
+    return await this._connectOverCDPInternal(progress, params.endpointURL!, params);
   }
 
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, artifactsDir?: string }, onClose?: () => Promise<void>) {
@@ -164,11 +166,6 @@ export class Chromium extends BrowserType {
       await progress.race(doClose().catch(() => {}));
       throw error;
     }
-  }
-
-  override async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport) {
-    const closeAndWait = async () => transport.close();
-    return this._connectOverCDPImpl(progress, transport, closeAndWait, { isLocal: true });
   }
 
   override async connectToWorker(progress: Progress, endpoint: string) {

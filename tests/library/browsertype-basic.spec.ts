@@ -32,8 +32,8 @@ test('browserType.name should work', async ({ browserType, browserName }) => {
 });
 
 test('should throw when trying to connect with not-chromium', async ({ browserType, browserName }) => {
-  test.skip(browserName === 'chromium');
+  test.skip(browserName === 'chromium' || browserName === 'webkit');
 
   const error = await browserType.connectOverCDP({ endpointURL: 'ws://foo' }).catch(e => e);
-  expect(error.message).toBe('Connecting over CDP is only supported in Chromium.');
+  expect(error.message).toBe('Connecting over CDP is only supported in Chromium and WebKit.');
 });

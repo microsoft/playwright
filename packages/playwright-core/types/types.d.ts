@@ -15439,7 +15439,8 @@ export interface BrowserType<Unused = {}> {
    * `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
    * @param options
    */
-  connectOverCDP(transport: ConnectionTransport): Promise<Browser>;
+  connectOverCDP(transport: ConnectionTransport, options?: ConnectOverCDPOptions): Promise<Browser>;
+
   /**
    * This method attaches Playwright to an existing browser instance created via `BrowserType.launchServer` in Node.js.
    *

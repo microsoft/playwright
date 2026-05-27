@@ -1087,22 +1087,16 @@ scheme.BrowserTypeLaunchPersistentContextResult = tObject({
   context: tChannel(['BrowserContext']),
 });
 scheme.BrowserTypeConnectOverCDPParams = tObject({
-  endpointURL: tString,
+  endpointURL: tOptional(tString),
   headers: tOptional(tArray(tType('NameValue'))),
   slowMo: tOptional(tFloat),
   timeout: tFloat,
   isLocal: tOptional(tBoolean),
   noDefaults: tOptional(tBoolean),
   artifactsDir: tOptional(tString),
+  transport: tOptional(tBinary),
 });
 scheme.BrowserTypeConnectOverCDPResult = tObject({
-  browser: tChannel(['Browser']),
-  defaultContext: tOptional(tChannel(['BrowserContext'])),
-});
-scheme.BrowserTypeConnectOverCDPTransportParams = tObject({
-  transport: tBinary,
-});
-scheme.BrowserTypeConnectOverCDPTransportResult = tObject({
   browser: tChannel(['Browser']),
   defaultContext: tOptional(tChannel(['BrowserContext'])),
 });
