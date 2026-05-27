@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as z from 'zod';
 import debug from 'debug';
 import { Context } from './context';
 import { Response } from './response';
@@ -67,7 +68,9 @@ export class BrowserBackend implements ServerBackend {
     try {
       parsedArguments = tool.schema.inputSchema.parse(rawArguments);
     } catch (error) {
-      return formatError(formatValidationError(name, error));
+      if (error instanceof z.ZodError)
+        return formatError(formatValidationError(name, error));
+      throw error;
     }
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
@@ -99,20 +102,8 @@ function formatRejectionReason(reason: unknown): string {
   return String(reason);
 }
 
-type ValidationIssue = {
-  path?: unknown[];
-  message?: string;
-};
-
-function isValidationError(error: unknown): error is { issues: ValidationIssue[] } {
-  return !!error && typeof error === 'object' && Array.isArray((error as { issues?: unknown }).issues);
-}
-
-function formatValidationError(toolName: string, error: unknown): string {
-  if (!isValidationError(error))
-    return String(error);
-
-  const lines = error.issues.map(issue => `- ${formatIssuePath(issue.path)}: ${issue.message || 'Invalid input'}`);
+function formatValidationError(toolName: string, error: z.ZodError): string {
+  const lines = error.issues.map(issue => `- ${formatIssuePath(issue.path)}: ${issue.message}`);
   if (!lines.length)
     return `Invalid arguments for tool "${toolName}".`;
   return [
@@ -121,8 +112,8 @@ function formatValidationError(toolName: string, error: unknown): string {
   ].join('\n');
 }
 
-function formatIssuePath(path: unknown[] | undefined): string {
-  if (!path?.length)
+function formatIssuePath(path: z.core.$ZodIssue['path']): string {
+  if (!path.length)
     return '<root>';
 
   let result = '';
