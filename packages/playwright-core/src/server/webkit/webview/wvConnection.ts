@@ -34,8 +34,6 @@ export class WVConnection {
   _browserDisconnectedLogs: string | undefined;
   private _lastId = 0;
   private _closed = false;
-  // Analogous to the page-proxy session in the regular WebKit backend; WVPage
-  // owns the per-target sessions.
   readonly outerSession: WVSession;
 
   constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {

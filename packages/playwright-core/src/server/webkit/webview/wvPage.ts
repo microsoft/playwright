@@ -398,9 +398,6 @@ export class WVPage implements PageDelegate {
     const frame = this._page.frameManager.frame(contextPayload.frameId);
     if (!frame)
       return;
-    // Internal worlds (e.g. "UniqueWorld_0") must not be registered as 'main',
-    // or they clobber the real main context. We run injected in main, so only
-    // the page's own "normal" world matters.
     if (contextPayload.type !== 'normal')
       return;
     const delegate = new WVExecutionContext(this._session, contextPayload.id);
@@ -419,8 +416,6 @@ export class WVPage implements PageDelegate {
   }
 
   private async _navigateMainFrame(frame: frames.Frame, url: string): Promise<frames.GotoResult> {
-    // Resolve via _onFrameNavigated so we capture the loaderId no matter which
-    // session (current or provisional) the navigation commits on.
     const loaderIdPromise = new Promise<string>(resolve => {
       this._pendingMainFrameLoaderResolvers.set(frame._id, resolve);
     });
