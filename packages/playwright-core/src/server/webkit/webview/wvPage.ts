@@ -98,7 +98,6 @@ export class WVPage implements PageDelegate {
     this._initializedPromise = new Promise(f => { this._initializedFulfill = f; });
   }
 
-  // Resolves once the initial page target has been set up and reported as new.
   waitForInitialized(): Promise<void> {
     return this._initializedPromise;
   }
@@ -399,10 +398,9 @@ export class WVPage implements PageDelegate {
     const frame = this._page.frameManager.frame(contextPayload.frameId);
     if (!frame)
       return;
-    // We run the injected script in the main world (noUtilityWorld), so only the
-    // page's own "normal" world is exposed. Stock WebKit also spins up internal
-    // worlds (e.g. "UniqueWorld_0"); registering those as 'main' would clobber the
-    // real main context and destroy any in-flight evaluation.
+    // Internal worlds (e.g. "UniqueWorld_0") must not be registered as 'main',
+    // or they clobber the real main context. We run injected in main, so only
+    // the page's own "normal" world matters.
     if (contextPayload.type !== 'normal')
       return;
     const delegate = new WVExecutionContext(this._session, contextPayload.id);
