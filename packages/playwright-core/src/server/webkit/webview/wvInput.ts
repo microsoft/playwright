@@ -70,6 +70,10 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._session = session;
   }
 
+  setSession(session: WVSession) {
+    this._session = session;
+  }
+
   async keydown(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
     const { code, keyCode, key, text, location } = description;
     const mods = modifierFlags(modifiers);
@@ -119,6 +123,10 @@ export class RawMouseImpl implements input.RawMouse {
   private _session: WVSession;
 
   constructor(session: WVSession) {
+    this._session = session;
+  }
+
+  setSession(session: WVSession) {
     this._session = session;
   }
 
@@ -176,6 +184,10 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
   private _session: WVSession;
 
   constructor(session: WVSession) {
+    this._session = session;
+  }
+
+  setSession(session: WVSession) {
     this._session = session;
   }
 

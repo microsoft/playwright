@@ -49,6 +49,7 @@ export class WVPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
   _session: WVSession;
+  private _provisionalSession: WVSession | null = null;
   private _targetIdToFrameSession = new Map<string, WKFrame>();
   readonly _page: Page;
   private readonly _requestIdToRequest = new Map<string, WVInterceptableRequest>();
@@ -56,6 +57,9 @@ export class WVPage implements PageDelegate {
   private readonly _workers: WVWorkers;
   private readonly _contextIdToContext: Map<number, dom.FrameExecutionContext>;
   private _sessionListeners: RegisteredListener[] = [];
+  private _provisionalListeners: RegisteredListener[] = [];
+  private _outerSessionListeners: RegisteredListener[] = [];
+  private _pendingMainFrameLoaderResolvers = new Map<string, (loaderId: string) => void>();
   readonly _browserContext: WVBrowserContext;
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
@@ -83,6 +87,7 @@ export class WVPage implements PageDelegate {
     // Avoid unhandled rejection on disconnect in the middle of initialization.
     this._firstNonInitialNavigationCommittedPromise.catch(() => {});
     this._addSessionListeners();
+    this._addOuterSessionListeners();
   }
 
   updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
@@ -125,39 +130,95 @@ export class WVPage implements PageDelegate {
   coverage?: (() => any) | undefined;
   cspErrorsAsynchronousForInlineScripts?: boolean | undefined;
 
-  _setSession(session: WVSession) {
-    eventsHelper.removeEventListeners(this._sessionListeners);
-    this._session = session;
-  }
-
   async initialize(): Promise<void> {
     let pageOrError: Page | Error;
     try {
-      const [, frameTree] = await Promise.all([
-        this._session.send('Page.enable'),
-        this._session.send('Page.getResourceTree'),
-      ] as const);
-      this._handleFrameTree(frameTree.frameTree);
-      await Promise.all([
-        this._session.send('Runtime.enable'),
-        this._session.sendMayFail('Network.enable'),
-        this._session.sendMayFail('Console.enable'),
-        this._updateBootstrapScript(),
-        this._session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
-      ]);
-      // Inject the dialog bridge into the currently-loaded document too —
-      // bootstrap only applies to future navigations.
-      if (this._dialogEndpoint) {
-        await this._session.sendMayFail('Runtime.evaluate', {
-          expression: dialogBridgeSource(this._dialogEndpoint),
-          returnByValue: true,
-        } as any);
-      }
+      await this._initializeSession(this._session, ({ frameTree }) => this._handleFrameTree(frameTree));
       pageOrError = this._page;
     } catch (e) {
       pageOrError = e as Error;
     }
     await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
+  }
+
+  private async _initializeSession(session: WVSession, resourceTreeHandler: (r: Protocol.Page.getResourceTreeReturnValue) => void): Promise<void> {
+    const [, frameTree] = await Promise.all([
+      session.send('Page.enable'),
+      session.send('Page.getResourceTree'),
+    ] as const);
+    resourceTreeHandler(frameTree);
+    await Promise.all([
+      session.send('Runtime.enable'),
+      session.sendMayFail('Network.enable'),
+      session.sendMayFail('Console.enable'),
+      session.sendMayFail('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }),
+      session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
+    ]);
+    if (this._page.needsRequestInterception()) {
+      await Promise.all([
+        session.sendMayFail('Network.setInterceptionEnabled', { enabled: true }),
+        session.sendMayFail('Network.setResourceCachingDisabled', { disabled: true }),
+        session.sendMayFail('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
+      ]);
+    }
+    // Inject the dialog bridge into the currently-loaded document too —
+    // bootstrap only applies to future navigations.
+    if (this._dialogEndpoint) {
+      await session.sendMayFail('Runtime.evaluate', {
+        expression: dialogBridgeSource(this._dialogEndpoint),
+        returnByValue: true,
+      } as any);
+    }
+  }
+
+  private _addOuterSessionListeners() {
+    const outerSession = this._session.connection.outerSession;
+    this._outerSessionListeners = [
+      eventsHelper.addEventListener(outerSession, 'Target.targetCreated', e => this._onOuterTargetCreated(e)),
+      eventsHelper.addEventListener(outerSession, 'Target.didCommitProvisionalTarget', e => this._onDidCommitProvisionalTarget(e)),
+      eventsHelper.addEventListener(outerSession, 'Target.targetDestroyed', e => this._onOuterTargetDestroyed(e)),
+    ];
+  }
+
+  private async _onOuterTargetCreated(event: Protocol.Target.targetCreatedPayload) {
+    if (!event.targetInfo.isProvisional)
+      return;
+    const session = this._session.connection.sessionForTarget(event.targetInfo.targetId);
+    if (!session)
+      return;
+    this._provisionalSession = session;
+    // Subscribe immediately — Network/Page events can arrive on the provisional
+    // session before didCommitProvisionalTarget. Session may be disposed before
+    // commit; swallow init errors.
+    this._provisionalListeners = this._buildSessionListeners(session);
+    await this._initializeSession(session, () => {}).catch(() => {});
+    // Resume so the new process can start driving the navigation now that
+    // we've set up Page/Network/interception on it.
+    if (event.targetInfo.isPaused)
+      this._session.connection.outerSession.sendMayFail('Target.resume', { targetId: event.targetInfo.targetId });
+  }
+
+  private _onDidCommitProvisionalTarget(event: Protocol.Target.didCommitProvisionalTargetPayload) {
+    const provisional = this._provisionalSession;
+    if (!provisional || provisional.sessionId !== event.newTargetId)
+      return;
+    this._provisionalSession = null;
+    eventsHelper.removeEventListeners(this._sessionListeners);
+    this._sessionListeners = this._provisionalListeners;
+    this._provisionalListeners = [];
+    this._session = provisional;
+    this.rawKeyboard.setSession(provisional);
+    this.rawMouse.setSession(provisional);
+    this.rawTouchscreen.setSession(provisional);
+    this._workers.setSession(provisional);
+  }
+
+  private _onOuterTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
+    if (this._provisionalSession && this._provisionalSession.sessionId === event.targetId) {
+      this._provisionalSession = null;
+      eventsHelper.removeEventListeners(this._provisionalListeners);
+      this._provisionalListeners = [];
+    }
   }
 
   async onBridgeDialog(req: { type: 'alert' | 'confirm' | 'prompt'; message: string; defaultValue: string }): Promise<{ accept: boolean; promptText?: string }> {
@@ -174,6 +235,8 @@ export class WVPage implements PageDelegate {
 
   didClose() {
     eventsHelper.removeEventListeners(this._sessionListeners);
+    eventsHelper.removeEventListeners(this._provisionalListeners);
+    eventsHelper.removeEventListeners(this._outerSessionListeners);
     if (this._session)
       this._session.dispose();
     this._firstNonInitialNavigationCommittedReject(new TargetClosedError(this._page.closeReason()));
@@ -181,28 +244,32 @@ export class WVPage implements PageDelegate {
   }
 
   private _addSessionListeners() {
-    this._sessionListeners = [
-      eventsHelper.addEventListener(this._session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
-      eventsHelper.addEventListener(this._session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
-      eventsHelper.addEventListener(this._session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
-      eventsHelper.addEventListener(this._session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
-      eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'load')),
-      eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'domcontentloaded')),
-      eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-      eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
-      eventsHelper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
-      eventsHelper.addEventListener(this._session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.requestIntercepted', e => this._onRequestIntercepted(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.responseReceived', e => this._onResponseReceived(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
-      eventsHelper.addEventListener(this._session, 'Network.loadingFailed', e => this._onLoadingFailed(this._session, e)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketClosed', e => this._page.frameManager.webSocketClosed(e.requestId)),
-      eventsHelper.addEventListener(this._session, 'Network.webSocketFrameError', e => this._page.frameManager.webSocketError(e.requestId, e.errorMessage)),
+    this._sessionListeners = this._buildSessionListeners(this._session);
+  }
+
+  private _buildSessionListeners(session: WVSession): RegisteredListener[] {
+    return [
+      eventsHelper.addEventListener(session, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
+      eventsHelper.addEventListener(session, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
+      eventsHelper.addEventListener(session, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
+      eventsHelper.addEventListener(session, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      eventsHelper.addEventListener(session, 'Page.loadEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'load')),
+      eventsHelper.addEventListener(session, 'Page.domContentEventFired', event => this._page.frameManager.frameLifecycleEvent(this._page.mainFrame()._id, 'domcontentloaded')),
+      eventsHelper.addEventListener(session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      eventsHelper.addEventListener(session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
+      eventsHelper.addEventListener(session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
+      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', e => this._onRequestWillBeSent(session, e)),
+      eventsHelper.addEventListener(session, 'Network.requestIntercepted', e => this._onRequestIntercepted(session, e)),
+      eventsHelper.addEventListener(session, 'Network.responseReceived', e => this._onResponseReceived(session, e)),
+      eventsHelper.addEventListener(session, 'Network.loadingFinished', e => this._onLoadingFinished(e)),
+      eventsHelper.addEventListener(session, 'Network.loadingFailed', e => this._onLoadingFailed(session, e)),
+      eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page.frameManager.onWebSocketCreated(e.requestId, e.url)),
+      eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page.frameManager.onWebSocketRequest(e.requestId)),
+      eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page.frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page.frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page.frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+      eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => this._page.frameManager.webSocketClosed(e.requestId)),
+      eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => this._page.frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
   }
 
@@ -248,6 +315,11 @@ export class WVPage implements PageDelegate {
     this._page.frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url, framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();
+    const pending = this._pendingMainFrameLoaderResolvers.get(framePayload.id);
+    if (pending) {
+      this._pendingMainFrameLoaderResolvers.delete(framePayload.id);
+      pending(framePayload.loaderId);
+    }
   }
 
   private _onFrameNavigatedWithinDocument(frameId: string, url: string) {
@@ -290,13 +362,11 @@ export class WVPage implements PageDelegate {
   }
 
   private async _navigateMainFrame(frame: frames.Frame, url: string): Promise<frames.GotoResult> {
-    let resolveLoaderId: (loaderId: string) => void;
-    const loaderIdPromise = new Promise<string>(resolve => { resolveLoaderId = resolve; });
-    const onFrameNavigated = (payload: Protocol.Page.frameNavigatedPayload) => {
-      if (payload.frame.id === frame._id)
-        resolveLoaderId(payload.frame.loaderId);
-    };
-    this._session.on('Page.frameNavigated', onFrameNavigated);
+    // Resolve via _onFrameNavigated so we capture the loaderId no matter which
+    // session (current or provisional) the navigation commits on.
+    const loaderIdPromise = new Promise<string>(resolve => {
+      this._pendingMainFrameLoaderResolvers.set(frame._id, resolve);
+    });
     try {
       this._session.sendMayFail('Runtime.evaluate', {
         expression: `window.location.href = ${JSON.stringify(url)}`,
@@ -305,7 +375,7 @@ export class WVPage implements PageDelegate {
       const loaderId = await loaderIdPromise;
       return { newDocumentId: loaderId };
     } finally {
-      this._session.off('Page.frameNavigated', onFrameNavigated);
+      this._pendingMainFrameLoaderResolvers.delete(frame._id);
     }
   }
 

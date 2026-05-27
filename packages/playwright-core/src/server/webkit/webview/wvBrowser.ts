@@ -171,6 +171,9 @@ export class WVBrowser extends Browser {
   private async _attachTab(pageId: string, tab: ProxyTab): Promise<void> {
     const transport = await WebSocketTransport.connect(undefined, tab.webSocketDebuggerUrl, { headers: this._headers, followRedirects: true });
     const connection = new WVConnection(transport, () => this._detachTab(pageId), this.options.protocolLogger, this.options.browserLogsCollector);
+    // Pause future (provisional) targets so we can initialize them before the
+    // new process starts driving the navigation.
+    connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
     const session = await connection.waitForBrowserSession();
     const dialogEndpoint = this._dialogBridge.endpointFor(pageId);
     const page = new WVPage(this._context, session, dialogEndpoint);
@@ -240,7 +243,7 @@ export class WVBrowserContext extends BrowserContext {
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
-    throw new Error('Method not implemented.');
+    return [];
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {

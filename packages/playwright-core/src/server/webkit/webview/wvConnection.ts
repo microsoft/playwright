@@ -36,6 +36,7 @@ export class WVConnection {
   private _closed = false;
   readonly outerSession: WVSession;
   private _browserSession: WVSession | undefined;
+  private readonly _sessions = new Map<string, WVSession>();
   private readonly _browserSessionPromise: Promise<WVSession>;
   private _resolveBrowserSession!: (session: WVSession) => void;
 
@@ -64,10 +65,14 @@ export class WVConnection {
     return this._browserSessionPromise;
   }
 
+  sessionForTarget(targetId: string): WVSession | undefined {
+    return this._sessions.get(targetId);
+  }
+
   private _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
-    if (this._browserSession)
-      return;
     const targetId = event.targetInfo.targetId;
+    if (this._sessions.has(targetId))
+      return;
     const session = new WVSession(this, targetId, (message: any) => {
       this.outerSession.send('Target.sendMessageToTarget', {
         targetId,
@@ -76,20 +81,27 @@ export class WVConnection {
         session.dispatchMessage({ id: message.id, error: { message: e.message } });
       });
     });
-    this._browserSession = session;
-    this._resolveBrowserSession(session);
-  }
-
-  private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
-    if (this._browserSession && this._browserSession.sessionId === event.targetId) {
-      this._browserSession.dispose();
-      this._browserSession = undefined;
+    this._sessions.set(targetId, session);
+    if (!this._browserSession) {
+      this._browserSession = session;
+      this._resolveBrowserSession(session);
     }
   }
 
+  private _onTargetDestroyed(event: Protocol.Target.targetDestroyedPayload) {
+    const session = this._sessions.get(event.targetId);
+    if (!session)
+      return;
+    this._sessions.delete(event.targetId);
+    session.dispose();
+    if (this._browserSession === session)
+      this._browserSession = undefined;
+  }
+
   private _onDispatchMessageFromTarget(event: Protocol.Target.dispatchMessageFromTargetPayload) {
-    if (this._browserSession && this._browserSession.sessionId === event.targetId)
-      this._browserSession.dispatchMessage(JSON.parse(event.message));
+    const session = this._sessions.get(event.targetId);
+    if (session)
+      session.dispatchMessage(JSON.parse(event.message));
   }
 
   nextMessageId(): number {
@@ -112,8 +124,10 @@ export class WVConnection {
     this._transport.onclose = undefined;
     this._browserDisconnectedLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs(), reason);
     this.outerSession.dispose();
-    if (this._browserSession)
-      this._browserSession.dispose();
+    for (const session of this._sessions.values())
+      session.dispose();
+    this._sessions.clear();
+    this._browserSession = undefined;
     this._onDisconnect();
   }
 
