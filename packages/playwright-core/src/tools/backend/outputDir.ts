@@ -41,6 +41,7 @@ export class OutputDir {
     if (!file) {
       file = new OutputFile(this, absolute, opts?.evictable ?? isPathInside(this.path, absolute));
       this._files.set(absolute, file);
+      fileDebug('resolve %s', absolute);
     }
     await fs.promises.mkdir(path.dirname(absolute), { recursive: true });
     return file;
@@ -58,6 +59,7 @@ export class OutputDir {
       if (file === keep || !file.evictable)
         continue;
       total -= file.size;
+      fileDebug('evict %s (%d bytes)', file.path, file.size);
       file._unlink();
       if (total <= budget)
         return;
@@ -83,7 +85,7 @@ export class OutputFile {
     if (nextSize > this.size)
       this._dir._evict(this._dir.maxSize - nextSize + this.size, this);
     await fs.promises.writeFile(this.path, data);
-    fileDebug(this.path);
+    fileDebug('write %s (%d bytes)', this.path, nextSize);
     this.size = nextSize;
     this._touch();
   }
@@ -92,7 +94,7 @@ export class OutputFile {
     const delta = Buffer.byteLength(data);
     this._dir._evict(this._dir.maxSize - delta, this);
     await fs.promises.appendFile(this.path, data);
-    fileDebug(this.path);
+    fileDebug('append %s (+%d bytes, total %d)', this.path, delta, this.size + delta);
     this.size += delta;
     this._touch();
   }

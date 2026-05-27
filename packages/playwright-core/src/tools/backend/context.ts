@@ -407,7 +407,6 @@ export function outputDir(options: ContextOptions): string {
 async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
   const resolvedFile = path.resolve(outputDir(options), fileName);
   await checkFile(options, resolvedFile, flags);
-  debug('pw:mcp:file')(resolvedFile);
   return resolvedFile;
 }
 
