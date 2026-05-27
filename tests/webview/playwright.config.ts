@@ -34,10 +34,7 @@ const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightT
   },
   timeout: 30000,
   globalTimeout: 7200000,
-  // Worker N talks to ios_webkit_debug_proxy on port 9222 + 100*N against
-  // simulator N (sorted by UDID). Set PW_WEBVIEW_WORKERS to the number of
-  // booted simulators; defaults to 1.
-  workers: Number(process.env.PW_WEBVIEW_WORKERS) || 1,
+  workers: 1,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [
