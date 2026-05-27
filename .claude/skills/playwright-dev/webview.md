@@ -85,41 +85,16 @@ Target.didCommitProvisionalTarget  oldTargetId, newTargetId
 Target.targetDestroyed  oldTargetId
 ```
 
-Handling mirrors WK: `WVProvisionalPage` (≈ `WKProvisionalPage`) wraps the
-provisional session, forwards its network events to `WVPage`, and exposes
-`initializationPromise` + `commit()`. `WVPage._onDidCommitProvisionalTarget`
-commits it and calls `_setSession(newSession)`.
+Handling mirrors WK — `WVProvisionalPage` ≈ `WKProvisionalPage`, swapped in by
+`WVPage._onDidCommitProvisionalTarget`. The one essential trick:
+`Target.setPauseOnStart` (sent in `WVBrowser._attachTab`) makes provisional
+targets arrive `isPaused`, so `WVPage` can set up interception / bootstrap
+before resuming them with `Target.resume`; otherwise the new process races
+ahead and `page.route(...)` never fires.
 
-Two ordering facts that drive the design (confirmed via `DEBUG=pw:protocol`):
-
-- **Network events** (`requestWillBeSent`, `requestIntercepted`,
-  `responseReceived`, `loadingFinished/Failed`) arrive on the provisional
-  session *before* commit. So `WVProvisionalPage` subscribes to those, exactly
-  like `WKProvisionalPage`.
-- **Page lifecycle events** (`frameNavigated`, `loadEventFired`) arrive *after*
-  commit, on the now-committed session — picked up by `_setSession` →
-  `_addSessionListeners`. So they do **not** need provisional listeners.
-
-Without `Target.setPauseOnStart { pauseOnStart: true }` (sent on the outer
-session in `WVBrowser._attachTab`, before any provisional target appears), the
-new process starts the navigation request before per-session state
-(`Network.setInterceptionEnabled`, bootstrap script, etc.) can be applied — so
-`page.route(...)` won't fire, init scripts won't run, etc. Provisional targets
-created while the flag is set arrive with `isPaused: true`; `WVPage` resumes
-them with `Target.resume { targetId }` once `WVProvisionalPage`'s
-initialization finishes.
-
-Navigation can't use the patched `Playwright.navigate`, so `_navigateMainFrame`
-parks a resolver in `_pendingMainFrameLoaderResolvers` keyed by frame id and
-lets `_onFrameNavigated` (fired by whichever session ends up current) resolve
-the loaderId — this is the one place WV diverges from WK's navigation.
-
-Distinct from the **popup-pause** path (`window.open` opens a new tab/window),
-which in upstream stock Safari has no equivalent at all — that's a Playwright
-patch (`PageInspectorController::pauseOnStart`). If you find yourself wanting
-popup behavior here, accept it can't be paused/intercepted from creation; the
-best you can do is attach as the tab becomes discoverable via the proxy's
-`/json`.
+Not to be confused with the **popup-pause** path (`window.open`), which is a
+Playwright patch (`PageInspectorController::pauseOnStart`) with no stock-Safari
+equivalent.
 
 ## Test infrastructure
 
