@@ -482,8 +482,6 @@ export abstract class APIRequestContext extends SdkObject {
             return;
           }
         }
-        response.on('aborted', () => reject(new Error('aborted')));
-
         const chunks: Buffer[] = [];
         const notifyBodyFinished = () => {
           const body = Buffer.concat(chunks);
@@ -536,6 +534,7 @@ export abstract class APIRequestContext extends SdkObject {
               reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
           });
         } else {
+          response.on('aborted', () => reject(new Error('aborted')));
           body.on('error', reject);
         }
 
