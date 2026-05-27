@@ -199,7 +199,9 @@ it('should not transiently delete non-matching cookies when filtering', {
   expect(await page.evaluate('document.cookie')).toBe('keep_me=1');
 });
 
-it('should remove partitioned cookies by name', async ({ browser, httpsServer, browserName }) => {
+it('should remove partitioned cookies by name', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40953' },
+}, async ({ browser, httpsServer, browserName }) => {
   it.skip(browserName !== 'chromium', 'Partitioned cookies (CHIPS) are Chromium-specific');
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   await context.addCookies([
