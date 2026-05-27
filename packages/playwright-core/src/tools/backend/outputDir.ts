@@ -122,7 +122,7 @@ export class OutputFile {
 
   _unlink(): void {
     this._dir._files.delete(this.path);
-    void fs.promises.unlink(this.path).catch(() => {});
+    void fs.promises.unlink(this.path).catch(error => fileDebug('unlink failed %s: %s', this.path, error));
   }
 
   // Re-insert at the tail so this file becomes the "newest" for LRU/FIFO eviction.
