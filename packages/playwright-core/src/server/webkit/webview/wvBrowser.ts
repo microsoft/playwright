@@ -176,7 +176,7 @@ export class WVBrowser extends Browser {
     // navigation. WVPage owns the per-target sessions and resumes them.
     connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
     const dialogEndpoint = this._dialogBridge.endpointFor(pageId);
-    const page = new WVPage(this._context, connection, dialogEndpoint);
+    const page = new WVPage(this._context, connection.outerSession, dialogEndpoint);
     this._dialogBridge.registerTab(pageId, req => page.onBridgeDialog(req));
     this._tabs.set(pageId, { pageId, transport, connection, page });
     await page.waitForInitialized();

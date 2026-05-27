@@ -29,7 +29,7 @@ import { helper } from '../../helper';
 import { saveGlobalsSnapshotSource } from '../../javascript';
 import * as network from '../../network';
 import { Page, PageBinding } from '../../page';
-import { WVConnection, WVSession } from './wvConnection';
+import { WVSession } from './wvConnection';
 import { createHandle, WVExecutionContext } from './wvExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wvInput';
 import { WVWorkers } from './wvWorkers';
@@ -51,7 +51,7 @@ export class WVPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
   _session: WVSession;
-  private readonly _connection: WVConnection;
+  private readonly _outerSession: WVSession;
   private _provisionalPage: WVProvisionalPage | null = null;
   readonly _page: Page;
   private readonly _requestIdToRequest = new Map<string, WVInterceptableRequest>();
@@ -72,25 +72,25 @@ export class WVPage implements PageDelegate {
 
   private readonly _dialogEndpoint: string | undefined;
 
-  constructor(browserContext: WVBrowserContext, connection: WVConnection, dialogEndpoint?: string) {
-    this._connection = connection;
+  constructor(browserContext: WVBrowserContext, outerSession: WVSession, dialogEndpoint?: string) {
+    this._outerSession = outerSession;
     this._dialogEndpoint = dialogEndpoint;
     // The page session arrives via Target.targetCreated; raw input and workers
     // are rebound to it in _setSession.
     this._session = undefined as any as WVSession;
-    this.rawKeyboard = new RawKeyboardImpl(connection.outerSession);
-    this.rawMouse = new RawMouseImpl(connection.outerSession);
-    this.rawTouchscreen = new RawTouchscreenImpl(connection.outerSession);
+    this.rawKeyboard = new RawKeyboardImpl(outerSession);
+    this.rawMouse = new RawMouseImpl(outerSession);
+    this.rawTouchscreen = new RawTouchscreenImpl(outerSession);
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
-    this._workers = new WVWorkers(this._page, connection.outerSession);
+    this._workers = new WVWorkers(this._page, outerSession);
     this._browserContext = browserContext;
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._eventListeners = [
-      eventsHelper.addEventListener(connection.outerSession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
-      eventsHelper.addEventListener(connection.outerSession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
-      eventsHelper.addEventListener(connection.outerSession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
-      eventsHelper.addEventListener(connection.outerSession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
+      eventsHelper.addEventListener(outerSession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
+      eventsHelper.addEventListener(outerSession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
+      eventsHelper.addEventListener(outerSession, 'Target.dispatchMessageFromTarget', this._onDispatchMessageFromTarget.bind(this)),
+      eventsHelper.addEventListener(outerSession, 'Target.didCommitProvisionalTarget', this._onDidCommitProvisionalTarget.bind(this)),
     ];
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
@@ -202,8 +202,8 @@ export class WVPage implements PageDelegate {
   }
 
   private _createSession(targetId: string): WVSession {
-    const session: WVSession = new WVSession(this._connection, targetId, (message: any) => {
-      this._connection.outerSession.send('Target.sendMessageToTarget', {
+    const session: WVSession = new WVSession(this._outerSession.connection, targetId, (message: any) => {
+      this._outerSession.send('Target.sendMessageToTarget', {
         targetId,
         message: JSON.stringify(message),
       }).catch(e => {
@@ -227,7 +227,7 @@ export class WVPage implements PageDelegate {
         pageOrError = e as Error;
       }
       if (targetInfo.isPaused)
-        this._connection.outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+        this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
       await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
       this._initializedFulfill();
     } else {
@@ -235,7 +235,7 @@ export class WVPage implements PageDelegate {
       this._provisionalPage = new WVProvisionalPage(session, this);
       if (targetInfo.isPaused) {
         this._provisionalPage.initializationPromise.then(() => {
-          this._connection.outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+          this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
         });
       }
     }
