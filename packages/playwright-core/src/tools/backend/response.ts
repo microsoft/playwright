@@ -83,7 +83,7 @@ export class Response {
     let file: OutputFile;
     if (template.suggestedFilename) {
       const resolvedPath = await this.resolveClientFilename(template.suggestedFilename);
-      file = this._context.outputDir.resolve(resolvedPath, { evictable: opts?.evictable });
+      file = await this._context.outputDir.resolve(resolvedPath, { evictable: opts?.evictable });
     } else {
       file = await this._context.outputFile(template, { origin: 'llm', evictable: opts?.evictable });
     }

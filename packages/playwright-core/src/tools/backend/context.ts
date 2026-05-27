@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -212,7 +211,7 @@ export class Context {
   async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm', evictable?: boolean }): Promise<OutputFile> {
     const baseName = template.suggestedFilename || `${template.prefix}-${(template.date ?? new Date()).toISOString().replace(/[:.]/g, '-')}${template.ext ? '.' + template.ext : ''}`;
     const absolutePath = await outputFile(this.options, baseName, options);
-    return this.outputDir.resolve(absolutePath, { evictable: options.evictable });
+    return await this.outputDir.resolve(absolutePath, { evictable: options.evictable });
   }
 
   async startVideoRecording(fileName: string, params: VideoParams) {
@@ -408,7 +407,6 @@ export function outputDir(options: ContextOptions): string {
 async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
   const resolvedFile = path.resolve(outputDir(options), fileName);
   await checkFile(options, resolvedFile, flags);
-  await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
   debug('pw:mcp:file')(resolvedFile);
   return resolvedFile;
 }

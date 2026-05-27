@@ -35,13 +35,14 @@ export class OutputDir {
       throw new Error(`outputMaxSize must be non-negative, got ${this.maxSize}`);
   }
 
-  resolve(p: string, opts?: { evictable?: boolean }): OutputFile {
+  async resolve(p: string, opts?: { evictable?: boolean }): Promise<OutputFile> {
     const absolute = path.resolve(this.path, p);
     let file = this._files.get(absolute);
     if (!file) {
       file = new OutputFile(this, absolute, opts?.evictable ?? isPathInside(this.path, absolute));
       this._files.set(absolute, file);
     }
+    await fs.promises.mkdir(path.dirname(absolute), { recursive: true });
     return file;
   }
 
@@ -81,7 +82,6 @@ export class OutputFile {
     const nextSize = Buffer.byteLength(data);
     if (nextSize > this.size)
       this._dir._evict(this._dir.maxSize - nextSize + this.size, this);
-    await fs.promises.mkdir(path.dirname(this.path), { recursive: true });
     await fs.promises.writeFile(this.path, data);
     fileDebug(this.path);
     this.size = nextSize;
@@ -91,7 +91,6 @@ export class OutputFile {
   async append(data: Buffer | string): Promise<void> {
     const delta = Buffer.byteLength(data);
     this._dir._evict(this._dir.maxSize - delta, this);
-    await fs.promises.mkdir(path.dirname(this.path), { recursive: true });
     await fs.promises.appendFile(this.path, data);
     fileDebug(this.path);
     this.size += delta;
