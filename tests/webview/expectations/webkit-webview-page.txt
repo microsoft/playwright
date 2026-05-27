@@ -384,6 +384,7 @@ page/page-request-intercept.spec.ts › should support timeout option in route.f
 page/page-route.spec.ts › should fail navigation when aborting main resource [fail]
 page/page-route.spec.ts › should not auto-intercept non-preflight OPTIONS with network interception [fail]
 page/page-route.spec.ts › should not override cookie header [fail]
+page/page-route.spec.ts › should send referer [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should capture screenshots after layoutchanges in transitionend event › make sure transition is actually running [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should fire transitionend for finite transitions › make sure transition is actually running [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should stop animations that happen right before screenshot [fail]
