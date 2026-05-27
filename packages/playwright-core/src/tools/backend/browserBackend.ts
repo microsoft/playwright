@@ -69,7 +69,7 @@ export class BrowserBackend implements ServerBackend {
       parsedArguments = tool.schema.inputSchema.parse(rawArguments);
     } catch (error) {
       if (error instanceof z.ZodError)
-        return formatError(formatValidationError(name, error));
+        return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
       throw error;
     }
     const cwd = rawArguments._meta?.cwd;
@@ -100,35 +100,4 @@ function formatRejectionReason(reason: unknown): string {
   if (reason instanceof Error)
     return reason.stack ?? reason.message;
   return String(reason);
-}
-
-function formatValidationError(toolName: string, error: z.ZodError): string {
-  const lines = error.issues.map(issue => `- ${formatIssuePath(issue.path)}: ${issue.message}`);
-  if (!lines.length)
-    return `Invalid arguments for tool "${toolName}".`;
-  return [
-    `Invalid arguments for tool "${toolName}":`,
-    ...lines,
-  ].join('\n');
-}
-
-function formatIssuePath(path: z.core.$ZodIssue['path']): string {
-  if (!path.length)
-    return '<root>';
-
-  let result = '';
-  for (const segment of path) {
-    if (typeof segment === 'number') {
-      result += `[${segment}]`;
-      continue;
-    }
-    const text = String(segment);
-    if (!result)
-      result = text;
-    else if (/^[a-zA-Z_$][\w$]*$/.test(text))
-      result += `.${text}`;
-    else
-      result += `[${JSON.stringify(text)}]`;
-  }
-  return result;
 }

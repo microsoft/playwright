@@ -47,8 +47,8 @@ test('reports missing required tool arguments', async () => {
     error: expect.stringContaining('Invalid arguments for tool "browser_validate":'),
   });
   const parsed = parseResponse(response);
-  expect(parsed.error).toContain('- url:');
-  expect(parsed.error).toContain('string');
+  expect(parsed.error).toContain('Invalid input: expected string');
+  expect(parsed.error).toContain('at url');
 });
 
 test('reports invalid tool argument types', async () => {
@@ -59,8 +59,8 @@ test('reports invalid tool argument types', async () => {
   const parsed = parseResponse(response);
   expect(parsed.isError).toBe(true);
   expect(parsed.error).toContain('Invalid arguments for tool "browser_validate":');
-  expect(parsed.error).toContain('- url:');
-  expect(parsed.error).toContain('string');
+  expect(parsed.error).toContain('Invalid input: expected string, received number');
+  expect(parsed.error).toContain('at url');
 });
 
 test('reports validation errors in json mode', async () => {
@@ -77,8 +77,8 @@ test('reports validation errors in json mode', async () => {
     isError: true,
     error: expect.stringContaining('Invalid arguments for tool "browser_validate":'),
   }));
-  expect(payload.error).toContain('- url:');
-  expect(payload.error).toContain('string');
+  expect(payload.error).toContain('Invalid input: expected string');
+  expect(payload.error).toContain('at url');
 });
 
 test('reports nested tool argument paths', async () => {
@@ -109,8 +109,8 @@ test('reports nested tool argument paths', async () => {
 
   const parsed = parseResponse(response);
   expect(parsed.isError).toBe(true);
-  expect(parsed.error).toContain('- items[0].label:');
-  expect(parsed.error).toContain('string');
+  expect(parsed.error).toContain('Invalid input: expected string, received number');
+  expect(parsed.error).toContain('at items[0].label');
 });
 
 test('reports unknown tools before validation', async () => {
