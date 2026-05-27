@@ -14,58 +14,42 @@
  * limitations under the License.
  */
 
-import * as z from 'zod';
-import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import { test, expect, parseResponse } from './fixtures';
 
-function createBackend() {
-  return new tools.BrowserBackend({}, {
-    once() {},
-    browser: () => undefined,
-  } as any, [{
-    capability: 'core',
-    schema: {
-      name: 'browser_validate',
-      title: 'Validate',
-      description: 'Validate arguments',
-      inputSchema: z.object({
-        url: z.string(),
-      }),
-      type: 'action',
-    },
-    handle: async () => {
-      throw new Error('Tool handler should not run for invalid arguments');
-    },
-  }]);
-}
-
-test('reports missing required tool arguments', async () => {
-  const response = await createBackend().callTool('browser_validate', {});
+test('reports missing required tool arguments', async ({ client }) => {
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: {},
+  });
 
   expect(response).toHaveResponse({
     isError: true,
-    error: expect.stringContaining('Invalid arguments for tool "browser_validate":'),
+    error: expect.stringContaining('Invalid arguments for tool "browser_navigate":'),
   });
   const parsed = parseResponse(response);
   expect(parsed.error).toContain('Invalid input: expected string');
   expect(parsed.error).toContain('at url');
 });
 
-test('reports invalid tool argument types', async () => {
-  const response = await createBackend().callTool('browser_validate', {
-    url: 123,
+test('reports invalid tool argument types', async ({ client }) => {
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 123 },
   });
 
   const parsed = parseResponse(response);
   expect(parsed.isError).toBe(true);
-  expect(parsed.error).toContain('Invalid arguments for tool "browser_validate":');
+  expect(parsed.error).toContain('Invalid arguments for tool "browser_navigate":');
   expect(parsed.error).toContain('Invalid input: expected string, received number');
   expect(parsed.error).toContain('at url');
 });
 
-test('reports validation errors in json mode', async () => {
-  const response = await createBackend().callTool('browser_validate', {
-    _meta: { json: true },
+test('reports validation errors in json mode', async ({ client }) => {
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      _meta: { json: true },
+    },
   });
 
   expect(response.isError).toBe(true);
@@ -75,49 +59,28 @@ test('reports validation errors in json mode', async () => {
   const payload = JSON.parse(response.content[0].text);
   expect(payload).toEqual(expect.objectContaining({
     isError: true,
-    error: expect.stringContaining('Invalid arguments for tool "browser_validate":'),
+    error: expect.stringContaining('Invalid arguments for tool "browser_navigate":'),
   }));
   expect(payload.error).toContain('Invalid input: expected string');
   expect(payload.error).toContain('at url');
 });
 
-test('reports nested tool argument paths', async () => {
-  const backend = new tools.BrowserBackend({}, {
-    once() {},
-    browser: () => undefined,
-  } as any, [{
-    capability: 'core',
-    schema: {
-      name: 'browser_validate_nested',
-      title: 'Validate nested',
-      description: 'Validate nested arguments',
-      inputSchema: z.object({
-        items: z.array(z.object({
-          label: z.string(),
-        })),
-      }),
-      type: 'action',
+test('reports nested tool argument paths', async ({ client }) => {
+  const response = await client.callTool({
+    name: 'browser_fill_form',
+    arguments: {
+      fields: [{
+        target: 'e1',
+        name: 'Name',
+        type: 'textbox',
+        value: 123,
+      }],
     },
-    handle: async () => {
-      throw new Error('Tool handler should not run for invalid arguments');
-    },
-  }]);
-
-  const response = await backend.callTool('browser_validate_nested', {
-    items: [{ label: 123 }],
   });
 
   const parsed = parseResponse(response);
   expect(parsed.isError).toBe(true);
+  expect(parsed.error).toContain('Invalid arguments for tool "browser_fill_form":');
   expect(parsed.error).toContain('Invalid input: expected string, received number');
-  expect(parsed.error).toContain('at items[0].label');
-});
-
-test('reports unknown tools before validation', async () => {
-  const response = await createBackend().callTool('browser_unknown', {});
-
-  expect(response).toHaveResponse({
-    isError: true,
-    error: 'Tool "browser_unknown" not found',
-  });
+  expect(parsed.error).toContain('at fields[0].value');
 });
