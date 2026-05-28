@@ -163,9 +163,13 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       const options: LocatorOptions = { attrs: [] };
       for (const attr of attrSelector.attributes) {
         if (attr.name === 'name') {
+          if (options.exact !== undefined && options.exact !== attr.caseSensitive)
+            throw new Error(`Conflicting exactness in internal:role selector: ${stringifySelector({ parts: [part] })}`);
           options.exact = attr.caseSensitive;
           options.name = attr.value;
         } else if (attr.name === 'description') {
+          if (options.exact !== undefined && options.exact !== attr.caseSensitive)
+            throw new Error(`Conflicting exactness in internal:role selector: ${stringifySelector({ parts: [part] })}`);
           options.exact = attr.caseSensitive;
           options.description = attr.value;
         } else {
