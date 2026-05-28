@@ -102,6 +102,7 @@ export type JsonTestResultEnd = {
   /** No longer emitted, but kept for backwards compatibility */
   attachments?: JsonAttachment[];
   annotations?: TestAnnotation[];
+  hasNonRetriableError?: boolean;
 };
 
 export type JsonTestStepStart = {
@@ -391,6 +392,7 @@ export class TeleReporterReceiver {
     result.status = payload.status;
     result.errors.push(...payload.errors ?? []);
     result.error = result.errors[0];
+    result._hasNonRetriableError = payload.hasNonRetriableError;
     // Attachments are only present here from legacy blobs. These override all _onAttach events
     if (!!payload.attachments)
       result.attachments = this._parseAttachments(payload.attachments);
@@ -756,6 +758,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
 
   _stepMap = new Map<string, TeleTestStep>();
   _id: string;
+  _hasNonRetriableError?: boolean;
 
   private _startTime: number = 0;
 

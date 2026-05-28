@@ -288,6 +288,34 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
+    test('print failures inline for a non-retriable error', async ({ runInlineTest }) => {
+      // A missing snapshot fails the test but is not retried. The reporter must
+      // still print the failure inline, even though the retry budget is not exhausted.
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            reporter: [['list', { printFailuresInline: true }]],
+            retries: 1,
+            workers: 1,
+          };
+        `,
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('missing snapshot', async ({}) => {
+            expect('actual').toMatchSnapshot('foo.txt');
+          });
+        `,
+      });
+      const text = result.output;
+      const failureHeader = '1) a.test.ts:3:15 › missing snapshot';
+      const failureIndex = text.indexOf(failureHeader);
+      expect(failureIndex, 'failure should be printed inline').not.toBe(-1);
+      expect(text.indexOf(`A snapshot doesn't exist`, failureIndex)).toBeGreaterThan(failureIndex);
+      // It must not be retried, so there is exactly one failure block.
+      expect(text.indexOf(failureHeader, failureIndex + 1)).toBe(-1);
+      expect(result.exitCode).toBe(1);
+    });
+
     test('print stdio', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.ts': `

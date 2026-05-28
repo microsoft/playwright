@@ -339,8 +339,10 @@ class JobDispatcher {
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
     if (isFailure)
       this._failedTests.add(test);
-    if (params.hasNonRetriableError)
+    if (params.hasNonRetriableError) {
+      (result as any)._hasNonRetriableError = true;
       this._addNonretriableTestAndSerialModeParents(test);
+    }
     this._reportTestEnd(test, result);
     this._currentlyRunning = undefined;
   }
