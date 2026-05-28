@@ -341,6 +341,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
                         e.target.select();
                       }}
                       aria-disabled={!interactive || undefined}
+                      aria-label={interactive ? 'Search or enter URL' : 'URL input - enable interactive mode to use this field'}
                       readOnly={!interactive}
                     />
                   </div>
