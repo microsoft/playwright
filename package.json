@@ -106,7 +106,7 @@
     "@types/react-dom": "^19.2.1",
     "@types/retry": "^0.12.5",
     "@types/source-map-support": "^0.5.4",
-    "@types/ws": "8.2.2",
+    "@types/ws": "8.18.1",
     "@types/xml2js": "^0.4.9",
     "@types/yazl": "^2.4.2",
     "@typescript-eslint/eslint-plugin": "^8.59.0",

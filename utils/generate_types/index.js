@@ -522,7 +522,7 @@ class TypesGenerator {
         ...assertionClasses,
       ]),
       ignoreMissing: new Set([
-        'ConnectionTransport',
+        'ConnectOverCDPTransport',
       ]),
     });
     let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
