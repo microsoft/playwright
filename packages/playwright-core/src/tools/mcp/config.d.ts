@@ -154,6 +154,11 @@ export type Config = {
    */
   outputDir?: string;
 
+  /**
+   * Threshold for evicting old output files, in bytes.
+   */
+  outputMaxSize?: number;
+
   console?: {
     /**
      * The level of console messages to return. Each level includes the messages of more severe levels. Defaults to "info".
