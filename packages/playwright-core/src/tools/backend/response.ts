@@ -79,13 +79,13 @@ export class Response {
     return rel;
   }
 
-  async resolveClientFile(template: FilenameTemplate, title: string, opts?: { evictable?: boolean }): Promise<ResolvedFile> {
+  async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
     let file: OutputFile;
     if (template.suggestedFilename) {
       const resolvedPath = await this.resolveClientFilename(template.suggestedFilename);
-      file = await this._context.outputDir.resolve(resolvedPath, { evictable: opts?.evictable });
+      file = await this._context.outputDir.resolve(resolvedPath);
     } else {
-      file = await this._context.outputFile(template, { origin: 'llm', evictable: opts?.evictable });
+      file = await this._context.outputFile(template, { origin: 'llm' });
     }
     const relativeName = this._computeRelativeTo(file.path);
     const printableLink = `- [${title}](${relativeName})`;
