@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import * as z from 'zod';
 import { defineTool } from './tool';
 
+import type { OutputFile } from './outputDir';
+
+type TraceLegend = { tracesDir: OutputFile, name: string };
 
 const tracingStart = defineTool({
   capability: 'devtools',
@@ -31,8 +37,7 @@ const tracingStart = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    // We don't own writing so we cannot track file size for this.
-    const { path: tracesDir } = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code', evictable: false });
+    const tracesDir = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code' });
     const name = 'trace-' + Date.now();
     await browserContext.tracing.start({
       name,
@@ -41,11 +46,11 @@ const tracingStart = defineTool({
       live: true,
     });
     response.addTextResult(`Trace recording started`);
-    response.addFileLink('Action log', `${tracesDir}/${name}.trace`);
-    response.addFileLink('Network log', `${tracesDir}/${name}.network`);
-    response.addFileLink('Resources', `${tracesDir}/resources`);
+    response.addFileLink('Action log', `${tracesDir.path}/${name}.trace`);
+    response.addFileLink('Network log', `${tracesDir.path}/${name}.network`);
+    response.addFileLink('Resources', `${tracesDir.path}/resources`);
     // eslint-disable-next-line no-restricted-syntax
-    (browserContext.tracing as any)[traceLegendSymbol] = { tracesDir, name };
+    (browserContext.tracing as any)[traceLegendSymbol] = { tracesDir, name } satisfies TraceLegend;
   },
 });
 
@@ -64,16 +69,19 @@ const tracingStop = defineTool({
     const browserContext = await context.ensureBrowserContext();
     await browserContext.tracing.stop();
     // eslint-disable-next-line no-restricted-syntax
-    const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
+    const traceLegend: TraceLegend | undefined = (browserContext.tracing as any)[traceLegendSymbol];
     if (!traceLegend)
       throw new Error('Tracing is not started');
     // eslint-disable-next-line no-restricted-syntax
     delete (browserContext.tracing as any)[traceLegendSymbol];
 
+    const tracesDir = traceLegend.tracesDir;
+    await tracesDir.trackSize(await directorySize(tracesDir.path));
+
     response.addTextResult(`Trace recording stopped.`);
-    response.addFileLink('Trace', `${traceLegend.tracesDir}/${traceLegend.name}.trace`);
-    response.addFileLink('Network log', `${traceLegend.tracesDir}/${traceLegend.name}.network`);
-    response.addFileLink('Resources', `${traceLegend.tracesDir}/resources`);
+    response.addFileLink('Trace', `${tracesDir.path}/${traceLegend.name}.trace`);
+    response.addFileLink('Network log', `${tracesDir.path}/${traceLegend.name}.network`);
+    response.addFileLink('Resources', `${tracesDir.path}/resources`);
   },
 });
 
@@ -83,3 +91,20 @@ export default [
 ];
 
 const traceLegendSymbol = Symbol('tracesDir');
+
+async function directorySize(dir: string): Promise<number> {
+  let entries: fs.Dirent[];
+  try {
+    entries = await fs.promises.readdir(dir, { withFileTypes: true, recursive: true });
+  } catch {
+    return 0;
+  }
+  const sizes = await Promise.all(entries.filter(e => e.isFile()).map(async e => {
+    try {
+      return (await fs.promises.stat(path.join(e.parentPath, e.name))).size;
+    } catch {
+      return 0;
+    }
+  }));
+  return sizes.reduce((a, b) => a + b, 0);
+}
