@@ -934,3 +934,42 @@ test('treat bad regex as a string', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain('-   - /url: /[a/');
   expect(stripAnsi(error.message)).toContain('+   - /url: /foo');
 });
+
+test('invalid attribute', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34839' } }, async ({ page }) => {
+  await page.setContent(`
+    <input type="text" aria-label="Email" aria-invalid="true" value="not-an-email">
+    <input type="text" aria-label="Name" value="Alice">
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - textbox "Email" [invalid]: not-an-email
+    - textbox "Name": Alice
+  `);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - textbox "Email" [invalid=true]: not-an-email
+    - textbox "Name" [invalid=false]: Alice
+  `);
+
+  // `aria-invalid="grammar"` and `aria-invalid="spelling"` surface their underlying value.
+  await page.setContent(`
+    <input type="text" aria-label="Bio" aria-invalid="grammar">
+    <input type="text" aria-label="Note" aria-invalid="spelling">
+  `);
+  await expect(page).toMatchAriaSnapshot(`
+    - textbox "Bio" [invalid=grammar]
+    - textbox "Note" [invalid=spelling]
+  `);
+
+  // A `grammar` value is distinct from a plain `true` invalid state.
+  const error = await expect(page).toMatchAriaSnapshot(`
+    - textbox "Bio" [invalid]
+  `, { timeout: 1 }).catch(e => e);
+  expect(stripAnsi(error.message)).toContain('[invalid=grammar]');
+
+  // Any other non-false value falls back to `true`.
+  await page.setContent(`<input type="text" aria-label="Zip" aria-invalid="garbage">`);
+  await expect(page).toMatchAriaSnapshot(`
+    - textbox "Zip" [invalid]
+  `);
+});

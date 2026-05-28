@@ -30,6 +30,7 @@ export type AriaProps = {
   disabled?: boolean;
   expanded?: boolean;
   active?: boolean;
+  invalid?: boolean | 'grammar' | 'spelling';
   level?: number;
   pressed?: boolean | 'mixed';
   selected?: boolean;
@@ -67,7 +68,7 @@ export function hasPointerCursor(ariaNode: AriaNode): boolean {
 }
 
 function ariaPropsEqual(a: AriaProps, b: AriaProps): boolean {
-  return a.active === b.active && a.checked === b.checked && a.disabled === b.disabled && a.expanded === b.expanded && a.selected === b.selected && a.level === b.level && a.pressed === b.pressed;
+  return a.active === b.active && a.checked === b.checked && a.disabled === b.disabled && a.expanded === b.expanded && a.invalid === b.invalid && a.selected === b.selected && a.level === b.level && a.pressed === b.pressed;
 }
 
 // We pass parsed template between worlds using JSON, make it easy.
@@ -494,6 +495,11 @@ export class KeyParser {
     if (key === 'active') {
       this._assert(value === 'true' || value === 'false', 'Value of "active" attribute must be a boolean', errorPos);
       node.active = value === 'true';
+      return;
+    }
+    if (key === 'invalid') {
+      this._assert(value === 'true' || value === 'false' || value === 'grammar' || value === 'spelling', 'Value of "invalid" attribute must be a boolean, "grammar" or "spelling"', errorPos);
+      node.invalid = value === 'true' ? true : value === 'false' ? false : value;
       return;
     }
     if (key === 'level') {

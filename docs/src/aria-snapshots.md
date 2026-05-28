@@ -156,7 +156,7 @@ Each accessible element in the tree is represented as a YAML node:
 - **role**: Specifies the ARIA or HTML role of the element (e.g., `heading`, `list`, `listitem`, `button`).
 - **"name"**: Accessible name of the element. Quoted strings indicate exact values, `/patterns/` are used for regular expression.
 - **[attribute=value]**: Attributes and values, in square brackets, represent specific ARIA attributes, such
-  as `checked`, `disabled`, `expanded`, `level`, `pressed`, or `selected`.
+  as `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, or `selected`.
 
 These values are derived from ARIA attributes or calculated based on HTML semantics. To inspect the accessibility tree
 structure of a page, use the [Chrome DevTools Accessibility Tab](https://developer.chrome.com/docs/devtools/accessibility/reference#tab).
@@ -564,7 +564,7 @@ Groups capture nested elements, such as `<details>` elements with summary conten
 
 ### Attributes and states
 
-Commonly used ARIA attributes, like `checked`, `disabled`, `expanded`, `level`, `pressed`, and `selected`, represent
+Commonly used ARIA attributes, like `checked`, `disabled`, `expanded`, `invalid`, `level`, `pressed`, and `selected`, represent
 control states.
 
 #### Checkbox with `checked` attribute
@@ -585,4 +585,25 @@ control states.
 
 ```yaml title="aria snapshot"
 - button "Toggle" [pressed=true]
+```
+
+#### Input with `aria-invalid` attribute
+
+The `aria-invalid` value is surfaced directly. A value of `true` renders as `[invalid]`, while `grammar`
+and `spelling` render as `[invalid=grammar]` and `[invalid=spelling]`. A `false` value is omitted.
+
+```html
+<input type="text" aria-label="Email" aria-invalid="true" value="not-an-email">
+```
+
+```yaml title="aria snapshot"
+- textbox "Email" [invalid]: not-an-email
+```
+
+```html
+<input type="text" aria-label="Bio" aria-invalid="spelling">
+```
+
+```yaml title="aria snapshot"
+- textbox "Bio" [invalid=spelling]
 ```

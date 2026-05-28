@@ -270,6 +270,11 @@ function toAriaNode(element: Element, options: InternalOptions): aria.AriaNode |
   if (roleUtils.kAriaExpandedRoles.includes(role))
     result.expanded = roleUtils.getAriaExpanded(element);
 
+  if (roleUtils.kAriaInvalidRoles.includes(role)) {
+    const invalid = roleUtils.getAriaInvalid(element);
+    result.invalid = invalid === 'false' ? false : invalid === 'true' ? true : invalid;
+  }
+
   if (roleUtils.kAriaLevelRoles.includes(role))
     result.level = roleUtils.getAriaLevel(element);
 
@@ -422,6 +427,8 @@ function matchesNode(node: aria.AriaNode | string, template: aria.AriaTemplateNo
   if (template.disabled !== undefined && template.disabled !== node.disabled)
     return false;
   if (template.expanded !== undefined && template.expanded !== node.expanded)
+    return false;
+  if (template.invalid !== undefined && template.invalid !== node.invalid)
     return false;
   if (template.level !== undefined && template.level !== node.level)
     return false;
@@ -614,6 +621,10 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
       key += ` [expanded]`;
     if (ariaNode.active && options.renderActive)
       key += ` [active]`;
+    if (ariaNode.invalid === 'grammar' || ariaNode.invalid === 'spelling')
+      key += ` [invalid=${ariaNode.invalid}]`;
+    if (ariaNode.invalid === true)
+      key += ` [invalid]`;
     if (ariaNode.level)
       key += ` [level=${ariaNode.level}]`;
     if (ariaNode.pressed === 'mixed')
