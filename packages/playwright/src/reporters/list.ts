@@ -194,7 +194,8 @@ class ListReporter extends TerminalReporter {
     const wasPaused = this._paused.delete(result);
     if (!wasPaused)
       this._updateTestLine(test, result);
-    if (!wasPaused && this._printFailuresInline && !this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted'))
+    const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
+    if (!wasPaused && this._printFailuresInline && isFailure)
       this._printFailure(test);
   }
 
