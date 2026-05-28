@@ -31,7 +31,7 @@ import type { ChildProcess } from 'child_process';
 import type { Screencast, ScreencastClient } from './screencast';
 import type { Page } from './page';
 
-const fps = 25;
+const defaultFps = 25;
 
 export class VideoRecorder {
   private _screencast: Screencast;
@@ -43,11 +43,21 @@ export class VideoRecorder {
     this._screencast = screencast;
   }
 
-  start(options: { fileName?: string, size?: { width: number, height: number } }) {
+  start(options: {
+    fileName?: string,
+    size?: { width: number, height: number },
+    ffmpegExecutable?: string,
+    ffmpegOptions?: string,
+    fps?: number,
+    outputExtension?: string,
+  }) {
     assert(!this._artifact);
     // Do this first, it likes to throw.
-    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._screencast.page.browserContext._browser.sdkLanguage());
-    const outputFile = options.fileName ?? path.join(this._screencast.page.browserContext._browser.options.artifactsDir, createGuid() + '.webm');
+    const ffmpegPath = options.ffmpegExecutable
+      ?? registry.findExecutable('ffmpeg')!.executablePathOrDie(this._screencast.page.browserContext._browser.sdkLanguage());
+    const ext = options.outputExtension ?? 'webm';
+    const outputFile = options.fileName ?? path.join(this._screencast.page.browserContext._browser.options.artifactsDir, createGuid() + '.' + ext);
+    const fps = options.fps ?? defaultFps;
 
     this._client = {
       onFrame: frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000),
@@ -59,7 +69,7 @@ export class VideoRecorder {
     const { size } = this._screencast.addClient(this._client);
     // For video files only, prioritize encoding into the given size, regardless of the actual pixel data.
     const videoSize = options.size ?? size;
-    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, outputFile);
+    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, outputFile, fps, options.ffmpegOptions);
     this._artifact = new Artifact(this._screencast.page.browserContext, outputFile);
     return this._artifact;
   }
@@ -91,7 +101,15 @@ export function startAutomaticVideoRecording(page: Page) {
   if (page.browserContext._options.recordVideo?.showActions)
     page.screencast.showActions(page.browserContext._options.recordVideo?.showActions);
   const dir = recordVideo.dir ?? page.browserContext._browser.options.artifactsDir;
-  const artifact = recorder.start({ size: recordVideo.size, fileName: path.join(dir, page.guid + '.webm') });
+  const ext = recordVideo.outputExtension ?? 'webm';
+  const artifact = recorder.start({
+    size: recordVideo.size,
+    fileName: path.join(dir, page.guid + '.' + ext),
+    ffmpegExecutable: recordVideo.ffmpegExecutable,
+    ffmpegOptions: recordVideo.ffmpegOptions,
+    fps: recordVideo.fps,
+    outputExtension: recordVideo.outputExtension,
+  });
   page.video = artifact;
 }
 
@@ -106,15 +124,17 @@ class FfmpegVideoRecorder {
   private _frameQueue: Buffer[] = [];
   private _isStopped = false;
   private _ffmpegPath: string;
+  private _fps: number;
+  private _userFfmpegOptions: string | undefined;
   private _launchPromise: Promise<Error | null>;
   private _outputFile: string;
 
-  constructor(ffmpegPath: string, size: types.Size, outputFile: string) {
-    if (!outputFile.endsWith('.webm'))
-      throw new Error('File must have .webm extension');
+  constructor(ffmpegPath: string, size: types.Size, outputFile: string, fps: number, userFfmpegOptions: string | undefined) {
     this._outputFile = outputFile;
     this._ffmpegPath = ffmpegPath;
     this._size = size;
+    this._fps = fps;
+    this._userFfmpegOptions = userFfmpegOptions;
     this._launchPromise = this._launch().catch(e => e);
   }
 
@@ -133,7 +153,7 @@ class FfmpegVideoRecorder {
     // How to stress-test video recording (runs 10 recorders in parallel to book all cpus available):
     //   $ node ./utils/video_stress.js
     //
-    // We use the following vp8 options:
+    // We use the following vp8 options when ``recordVideo.ffmpegOptions`` is not set:
     //   "-qmin 0 -qmax 50" - quality variation from 0 to 50.
     //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
     //   "-crf 8" - constant quality mode, 4-63, lower means better quality.
@@ -161,8 +181,16 @@ class FfmpegVideoRecorder {
 
     const w = this._size.width;
     const h = this._size.height;
-    const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
-    args.push(this._outputFile);
+    // When ``ffmpegOptions`` is provided the user owns the full ffmpeg command
+    // line — Playwright passes it through verbatim. In particular, the user is
+    // responsible for matching ``-r <fps>`` (before ``-i pipe:0``) to the
+    // ``fps`` field; otherwise ffmpeg defaults image2pipe to 25 fps and the
+    // output is time-distorted whenever ``fps`` differs.
+    let args: string[];
+    if (this._userFfmpegOptions !== undefined)
+      args = [...this._userFfmpegOptions.split(/\s+/).filter(Boolean), this._outputFile];
+    else
+      args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -r ${this._fps} -i pipe:0 -y -an -r ${this._fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0 ${this._outputFile}`.split(' ');
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._ffmpegPath,
@@ -204,7 +232,7 @@ class FfmpegVideoRecorder {
     if (!this._firstFrameTimestamp)
       this._firstFrameTimestamp = timestamp;
 
-    const frameNumber = Math.floor((timestamp - this._firstFrameTimestamp) * fps);
+    const frameNumber = Math.floor((timestamp - this._firstFrameTimestamp) * this._fps);
 
     if (this._lastFrame) {
       const repeatCount = frameNumber - this._lastFrame.frameNumber;

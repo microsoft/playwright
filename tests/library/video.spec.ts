@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { jpegjs } from 'playwright-core/lib/utilsBundle';
 import { expect, browserTest as it } from '../config/browserTest';
 import { ensureSomeFrames, parseTraceRaw } from '../config/utils';
 import { VideoPlayer } from './videoPlayer';
+
+function findSystemFfmpeg(): string | undefined {
+  const which = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['ffmpeg']);
+  if (which.status !== 0)
+    return undefined;
+  const candidate = which.stdout.toString().trim().split('\n')[0];
+  if (!candidate || !fs.existsSync(candidate))
+    return undefined;
+  return candidate;
+}
 
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
@@ -780,4 +791,58 @@ it('should saveAs video', async ({ browser }, testInfo) => {
   const saveAsPath = testInfo.outputPath('my-video.webm');
   await page.video().saveAs(saveAsPath);
   expect(fs.existsSync(saveAsPath)).toBeTruthy();
+});
+
+it.describe('recordVideo ffmpegOptions', () => {
+  it.slow();
+  it.skip(({ mode }) => mode !== 'default', 'video.path() is not available in remote mode');
+
+  it('should accept a custom fps', async ({ browser, browserName }, testInfo) => {
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: { dir: testInfo.outputPath(''), size, fps: 10 },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    await ensureSomeFrames(page);
+    await context.close();
+    const videoFile = await page.video().path();
+    const videoPlayer = new VideoPlayer(videoFile);
+    expect(videoPlayer.videoWidth).toBe(size.width);
+    expect(videoPlayer.videoHeight).toBe(size.height);
+  });
+
+  it('should accept a raw ffmpegOptions string', async ({ browser, browserName }, testInfo) => {
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const { width: w, height: h } = size;
+    const ffmpegOptions = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -r 25 -i pipe:0 -y -an -c:v vp8 -qmin 0 -qmax 50 -crf 40 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
+    const context = await browser.newContext({
+      recordVideo: { dir: testInfo.outputPath(''), size, ffmpegOptions },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    await ensureSomeFrames(page);
+    await context.close();
+    const videoFile = await page.video().path();
+    const videoPlayer = new VideoPlayer(videoFile);
+    expect(videoPlayer.videoWidth).toBe(size.width);
+    expect(videoPlayer.videoHeight).toBe(size.height);
+  });
+
+  it('should accept a custom ffmpegExecutable', async ({ browser, browserName }, testInfo) => {
+    const ffmpegExecutable = findSystemFfmpeg();
+    it.skip(!ffmpegExecutable, 'system ffmpeg not available');
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: { dir: testInfo.outputPath(''), size, ffmpegExecutable },
+      viewport: size,
+    });
+    const page = await context.newPage();
+    await ensureSomeFrames(page);
+    await context.close();
+    const videoFile = await page.video().path();
+    const videoPlayer = new VideoPlayer(videoFile);
+    expect(videoPlayer.videoWidth).toBe(size.width);
+    expect(videoPlayer.videoHeight).toBe(size.height);
+  });
 });

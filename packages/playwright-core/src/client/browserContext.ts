@@ -544,8 +544,13 @@ async function prepareStorageState(platform: Platform, storageState: string | Se
 export async function prepareBrowserContextParams(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.extraHTTPHeaders)
     network.validateHeaders(options.extraHTTPHeaders);
+  const { recordVideo, ...rest } = options;
+  const recordVideoForWire = recordVideo ? {
+    ...recordVideo,
+    dir: recordVideo.dir ? platform.path().resolve(recordVideo.dir) : recordVideo.dir,
+  } : undefined;
   const contextParams: channels.BrowserNewContextParams = {
-    ...options,
+    ...rest,
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
@@ -557,9 +562,8 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     contrast: options.contrast === null ? 'no-override' : options.contrast,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
     clientCertificates: await toClientCertificatesProtocol(platform, options.clientCertificates),
+    recordVideo: recordVideoForWire,
   };
-  if (contextParams.recordVideo && contextParams.recordVideo.dir)
-    contextParams.recordVideo.dir = platform.path().resolve(contextParams.recordVideo.dir);
   return contextParams;
 }
 

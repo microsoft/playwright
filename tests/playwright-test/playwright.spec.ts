@@ -552,6 +552,33 @@ test('should work with video size', async ({ runInlineTest }) => {
   expect(videoPlayer.videoHeight).toBe(110);
 });
 
+test('should work with video fps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: { video: { mode: 'on', size: { width: 220, height: 110 }, fps: 10 } },
+        name: 'chromium',
+        preserveOutput: 'always',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+        await page.waitForTimeout(2000);
+        test.expect(1 + 1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const folder = test.info().outputPath(`test-results/a-pass-chromium/`);
+  const [file] = fs.readdirSync(folder);
+  const videoPlayer = new VideoPlayer(path.join(folder, file));
+  expect(videoPlayer.videoWidth).toBe(220);
+  expect(videoPlayer.videoHeight).toBe(110);
+});
+
 test('should work with video.path() throwing', async ({ runInlineTest }, testInfo) => {
   // When running remotely, video.path() is not available, so we must not use it.
   const result = await runInlineTest({

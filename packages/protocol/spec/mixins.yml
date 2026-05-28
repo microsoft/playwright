@@ -197,6 +197,10 @@ ContextOptions:
           type: object?
           properties:
             $mixin: ShowActionsOptions
+        ffmpegExecutable: string?
+        ffmpegOptions: string?
+        fps: int?
+        outputExtension: string?
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?

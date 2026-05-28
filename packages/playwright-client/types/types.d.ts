@@ -10499,6 +10499,34 @@ export interface Browser {
          */
         fontSize?: number;
       };
+
+      /**
+       * Path to a system ffmpeg binary to use instead of the one bundled with Playwright. The bundled binary ships with VP8
+       * support only — provide a system ffmpeg to enable VP9, H264, AV1 and other encoders.
+       */
+      ffmpegExecutable?: string;
+
+      /**
+       * Full ffmpeg command line (everything between the executable and the output file). When set, replaces Playwright's
+       * default encoder pipeline entirely. You are responsible for reading raw frames from stdin (`-f image2pipe -c:v mjpeg
+       * -i pipe:0`), for the `-vf` filter that resizes them to `size`, and for setting `-r <fps>` before `-i pipe:0` to
+       * match the `fps` field — without it ffmpeg defaults image2pipe to 25 fps and your video will play at the wrong speed
+       * when `fps` differs.
+       */
+      ffmpegOptions?: string;
+
+      /**
+       * Frame rate used by the internal frame-repetition algorithm that fills gaps between browser screencast events. When
+       * `ffmpegOptions` is not set, it is also passed to ffmpeg as `-r`. When you provide `ffmpegOptions`, set `-r <fps>`
+       * yourself to match it. Defaults to `25`.
+       */
+      fps?: number;
+
+      /**
+       * Extension of the output file, without leading `.`. Defaults to `webm`. Use `mp4` or another container supported by
+       * your ffmpeg binary to record in a different format.
+       */
+      outputExtension?: string;
     };
 
     /**
@@ -15947,6 +15975,34 @@ export interface BrowserType<Unused = {}> {
          */
         fontSize?: number;
       };
+
+      /**
+       * Path to a system ffmpeg binary to use instead of the one bundled with Playwright. The bundled binary ships with VP8
+       * support only — provide a system ffmpeg to enable VP9, H264, AV1 and other encoders.
+       */
+      ffmpegExecutable?: string;
+
+      /**
+       * Full ffmpeg command line (everything between the executable and the output file). When set, replaces Playwright's
+       * default encoder pipeline entirely. You are responsible for reading raw frames from stdin (`-f image2pipe -c:v mjpeg
+       * -i pipe:0`), for the `-vf` filter that resizes them to `size`, and for setting `-r <fps>` before `-i pipe:0` to
+       * match the `fps` field — without it ffmpeg defaults image2pipe to 25 fps and your video will play at the wrong speed
+       * when `fps` differs.
+       */
+      ffmpegOptions?: string;
+
+      /**
+       * Frame rate used by the internal frame-repetition algorithm that fills gaps between browser screencast events. When
+       * `ffmpegOptions` is not set, it is also passed to ffmpeg as `-r`. When you provide `ffmpegOptions`, set `-r <fps>`
+       * yourself to match it. Defaults to `25`.
+       */
+      fps?: number;
+
+      /**
+       * Extension of the output file, without leading `.`. Defaults to `webm`. Use `mp4` or another container supported by
+       * your ffmpeg binary to record in a different format.
+       */
+      outputExtension?: string;
     };
 
     /**
@@ -22518,6 +22574,34 @@ export interface Electron {
          */
         fontSize?: number;
       };
+
+      /**
+       * Path to a system ffmpeg binary to use instead of the one bundled with Playwright. The bundled binary ships with VP8
+       * support only — provide a system ffmpeg to enable VP9, H264, AV1 and other encoders.
+       */
+      ffmpegExecutable?: string;
+
+      /**
+       * Full ffmpeg command line (everything between the executable and the output file). When set, replaces Playwright's
+       * default encoder pipeline entirely. You are responsible for reading raw frames from stdin (`-f image2pipe -c:v mjpeg
+       * -i pipe:0`), for the `-vf` filter that resizes them to `size`, and for setting `-r <fps>` before `-i pipe:0` to
+       * match the `fps` field — without it ffmpeg defaults image2pipe to 25 fps and your video will play at the wrong speed
+       * when `fps` differs.
+       */
+      ffmpegOptions?: string;
+
+      /**
+       * Frame rate used by the internal frame-repetition algorithm that fills gaps between browser screencast events. When
+       * `ffmpegOptions` is not set, it is also passed to ffmpeg as `-r`. When you provide `ffmpegOptions`, set `-r <fps>`
+       * yourself to match it. Defaults to `25`.
+       */
+      fps?: number;
+
+      /**
+       * Extension of the output file, without leading `.`. Defaults to `webm`. Use `mp4` or another container supported by
+       * your ffmpeg binary to record in a different format.
+       */
+      outputExtension?: string;
     };
 
     /**
@@ -23206,6 +23290,34 @@ export interface AndroidDevice {
          */
         fontSize?: number;
       };
+
+      /**
+       * Path to a system ffmpeg binary to use instead of the one bundled with Playwright. The bundled binary ships with VP8
+       * support only — provide a system ffmpeg to enable VP9, H264, AV1 and other encoders.
+       */
+      ffmpegExecutable?: string;
+
+      /**
+       * Full ffmpeg command line (everything between the executable and the output file). When set, replaces Playwright's
+       * default encoder pipeline entirely. You are responsible for reading raw frames from stdin (`-f image2pipe -c:v mjpeg
+       * -i pipe:0`), for the `-vf` filter that resizes them to `size`, and for setting `-r <fps>` before `-i pipe:0` to
+       * match the `fps` field — without it ffmpeg defaults image2pipe to 25 fps and your video will play at the wrong speed
+       * when `fps` differs.
+       */
+      ffmpegOptions?: string;
+
+      /**
+       * Frame rate used by the internal frame-repetition algorithm that fills gaps between browser screencast events. When
+       * `ffmpegOptions` is not set, it is also passed to ffmpeg as `-r`. When you provide `ffmpegOptions`, set `-r <fps>`
+       * yourself to match it. Defaults to `25`.
+       */
+      fps?: number;
+
+      /**
+       * Extension of the output file, without leading `.`. Defaults to `webm`. Use `mp4` or another container supported by
+       * your ffmpeg binary to record in a different format.
+       */
+      outputExtension?: string;
     };
 
     /**
@@ -24386,6 +24498,34 @@ export interface BrowserContextOptions {
        */
       fontSize?: number;
     };
+
+    /**
+     * Path to a system ffmpeg binary to use instead of the one bundled with Playwright. The bundled binary ships with VP8
+     * support only — provide a system ffmpeg to enable VP9, H264, AV1 and other encoders.
+     */
+    ffmpegExecutable?: string;
+
+    /**
+     * Full ffmpeg command line (everything between the executable and the output file). When set, replaces Playwright's
+     * default encoder pipeline entirely. You are responsible for reading raw frames from stdin (`-f image2pipe -c:v mjpeg
+     * -i pipe:0`), for the `-vf` filter that resizes them to `size`, and for setting `-r <fps>` before `-i pipe:0` to
+     * match the `fps` field — without it ffmpeg defaults image2pipe to 25 fps and your video will play at the wrong speed
+     * when `fps` differs.
+     */
+    ffmpegOptions?: string;
+
+    /**
+     * Frame rate used by the internal frame-repetition algorithm that fills gaps between browser screencast events. When
+     * `ffmpegOptions` is not set, it is also passed to ffmpeg as `-r`. When you provide `ffmpegOptions`, set `-r <fps>`
+     * yourself to match it. Defaults to `25`.
+     */
+    fps?: number;
+
+    /**
+     * Extension of the output file, without leading `.`. Defaults to `webm`. Use `mp4` or another container supported by
+     * your ffmpeg binary to record in a different format.
+     */
+    outputExtension?: string;
   };
 
   /**

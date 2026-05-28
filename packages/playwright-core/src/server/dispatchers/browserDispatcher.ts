@@ -60,8 +60,16 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContext(params: channels.BrowserNewContextParams, progress: Progress): Promise<channels.BrowserNewContextResult> {
-    if (params.recordVideo && this._object.attribution.playwright.options.isServer)
+    if (params.recordVideo && this._object.attribution.playwright.options.isServer) {
       params.recordVideo.dir = undefined;
+      // Same rationale as `dir`: a remote client must not be able to inject
+      // arbitrary ffmpeg arguments — or pick an arbitrary executable — on the
+      // server (it would allow arbitrary file reads/writes and process
+      // invocation via filters / inputs / external binaries).
+      params.recordVideo.ffmpegExecutable = undefined;
+      params.recordVideo.ffmpegOptions = undefined;
+      params.recordVideo.outputExtension = undefined;
+    }
 
     if (!this._options.isolateContexts) {
       const context = await this._object.newContext(progress, params);

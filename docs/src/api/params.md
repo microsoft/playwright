@@ -827,6 +827,10 @@ When set to `minimal`, only record information necessary for routing from HAR. T
     - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
     - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
     - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
+  - `ffmpegExecutable` ?<[path]> Path to a system ffmpeg binary to use instead of the one bundled with Playwright. The bundled binary ships with VP8 support only — provide a system ffmpeg to enable VP9, H264, AV1 and other encoders.
+  - `ffmpegOptions` ?<[string]> Full ffmpeg command line (everything between the executable and the output file). When set, replaces Playwright's default encoder pipeline entirely. You are responsible for reading raw frames from stdin (`-f image2pipe -c:v mjpeg -i pipe:0`), for the `-vf` filter that resizes them to `size`, and for setting `-r <fps>` before `-i pipe:0` to match the `fps` field — without it ffmpeg defaults image2pipe to 25 fps and your video will play at the wrong speed when `fps` differs.
+  - `fps` ?<[int]> Frame rate used by the internal frame-repetition algorithm that fills gaps between browser screencast events. When `ffmpegOptions` is not set, it is also passed to ffmpeg as `-r`. When you provide `ffmpegOptions`, set `-r <fps>` yourself to match it. Defaults to `25`.
+  - `outputExtension` ?<[string]> Extension of the output file, without leading `.`. Defaults to `webm`. Use `mp4` or another container supported by your ffmpeg binary to record in a different format.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.
@@ -850,6 +854,34 @@ not recorded. Make sure to call [`method: BrowserContext.close`] for videos to b
 Dimensions of the recorded videos. If not specified the size will be equal to `viewport`
 scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
 Actual picture of each page will be scaled down if necessary to fit the specified size.
+
+## context-option-recordvideo-ffmpegexecutable
+* langs: csharp, java, python
+  - alias-python: record_video_ffmpeg_executable
+- `recordVideoFfmpegExecutable` <[path]>
+
+Path to a system ffmpeg binary to use instead of the one bundled with Playwright. The bundled binary ships with VP8 support only — provide a system ffmpeg to enable VP9, H264, AV1 and other encoders.
+
+## context-option-recordvideo-ffmpegoptions
+* langs: csharp, java, python
+  - alias-python: record_video_ffmpeg_options
+- `recordVideoFfmpegOptions` <[string]>
+
+Full ffmpeg command line (everything between the executable and the output file). When set, replaces Playwright's default encoder pipeline entirely. You are responsible for reading raw frames from stdin (`-f image2pipe -c:v mjpeg -i pipe:0`), for the `-vf` filter that resizes them to `recordVideoSize`, and for setting `-r <fps>` before `-i pipe:0` to match `recordVideoFps` — without it ffmpeg defaults image2pipe to 25 fps and your video will play at the wrong speed when `recordVideoFps` differs.
+
+## context-option-recordvideo-fps
+* langs: csharp, java, python
+  - alias-python: record_video_fps
+- `recordVideoFps` <[int]>
+
+Frame rate used by the internal frame-repetition algorithm that fills gaps between browser screencast events. When `recordVideoFfmpegOptions` is not set, it is also passed to ffmpeg as `-r`. When you provide `recordVideoFfmpegOptions`, set `-r <fps>` yourself to match it. Defaults to `25`.
+
+## context-option-recordvideo-outputextension
+* langs: csharp, java, python
+  - alias-python: record_video_output_extension
+- `recordVideoOutputExtension` <[string]>
+
+Extension of the output file, without leading `.`. Defaults to `webm`. Use `mp4` or another container supported by your ffmpeg binary to record in a different format.
 
 ## context-option-proxy
 - `proxy` <[Object]>
@@ -1075,6 +1107,10 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
+- %%-context-option-recordvideo-ffmpegexecutable-%%
+- %%-context-option-recordvideo-ffmpegoptions-%%
+- %%-context-option-recordvideo-fps-%%
+- %%-context-option-recordvideo-outputextension-%%
 - %%-context-option-strict-%%
 - %%-context-option-service-worker-policy-%%
 

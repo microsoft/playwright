@@ -648,6 +648,10 @@ export default defineConfig({
       - `level` ?<[TestAnnotationLevel]<"file"|"test"|"step">> Level of the detail to include about the current test.
       - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the test information overlay. Defaults to `"top-left"`.
       - `fontSize` ?<[int]> Font size of the test information in pixels. Defaults to `14`.
+  - `ffmpegExecutable` ?<[string]> Path to a system ffmpeg binary to use instead of the one bundled with Playwright.
+  - `ffmpegOptions` ?<[string]> Full ffmpeg command line replacing Playwright's default encoder pipeline. See [`option: BrowserType.launchPersistentContext.recordVideo`] for the semantics.
+  - `fps` ?<[int]> Frame rate. Defaults to `25`.
+  - `outputExtension` ?<[string]> Output container extension without leading `.`. Defaults to `webm`.
 
 Whether to record video for each test. Defaults to `'off'`.
 * `'off'`: Do not record video.
