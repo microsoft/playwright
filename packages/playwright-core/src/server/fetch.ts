@@ -482,8 +482,6 @@ export abstract class APIRequestContext extends SdkObject {
             return;
           }
         }
-        response.on('aborted', () => reject(new Error('aborted')));
-
         const chunks: Buffer[] = [];
         const notifyBodyFinished = () => {
           const body = Buffer.concat(chunks);
@@ -522,11 +520,21 @@ export abstract class APIRequestContext extends SdkObject {
           // Brotli and deflate decompressors throw if the input stream is empty.
           const emptyStreamTransform = new SafeEmptyStreamTransform(notifyBodyFinished);
           body = pipeline(response, emptyStreamTransform, transform, e => {
-            if (e)
-              reject(new Error(`failed to decompress '${encoding}' encoding: ${e.message}`));
+            if (e) {
+              if (isNetworkConnectionError(e))
+                reject(e);
+              else
+                reject(new Error(`failed to decompress '${encoding}' encoding: ${e.message}`));
+            }
           });
-          body.on('error', e => reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`)));
+          body.on('error', e => {
+            if (isNetworkConnectionError(e))
+              reject(e);
+            else
+              reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
+          });
         } else {
+          response.on('aborted', () => reject(new Error('aborted')));
           body.on('error', reject);
         }
 
@@ -802,6 +810,11 @@ function removeHeader(headers: { [name: string]: string }, name: string) {
   const existing = Object.entries(headers).find(pair => pair[0].toLowerCase() === name.toLowerCase());
   if (existing)
     delete headers[existing[0]];
+}
+
+function isNetworkConnectionError(e: any): boolean {
+  const code = e?.code;
+  return code === 'ECONNRESET' || code === 'EPIPE' || code === 'ECONNABORTED';
 }
 
 function setBasicAuthorizationHeader(headers: { [name: string]: string }, credentials: HTTPCredentials) {

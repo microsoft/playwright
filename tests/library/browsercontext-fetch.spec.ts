@@ -1401,3 +1401,62 @@ it('should retry on ECONNRESET', {
   expect(await response.text()).toBe('Hello!');
   expect(requestCount).toBe(4);
 });
+
+it('should retry ECONNRESET on compressed response', async ({ context, server }) => {
+  let requestCount = 0;
+  server.setRoute('/test-gzip', (req, res) => {
+    if (requestCount++ < 2) {
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Type': 'text/plain',
+    });
+    const gzipStream = zlib.createGzip();
+    pipeline(gzipStream, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    gzipStream.write('compressed-retry-ok');
+    gzipStream.end();
+  });
+  const response = await context.request.get(server.PREFIX + '/test-gzip', { maxRetries: 3 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('compressed-retry-ok');
+  expect(requestCount).toBe(3);
+});
+
+it('should retry ECONNRESET mid-stream during gzip decompression', async ({ context, server }) => {
+  let requestCount = 0;
+  server.setRoute('/test-gzip-midstream', (req, res) => {
+    requestCount++;
+    if (requestCount <= 2) {
+      // Send response headers to make client enter the decompression pipeline,
+      // then destroy the socket. This exercises the fix: without it, the
+      // pipeline error callback wraps the error, stripping .code for retry.
+      res.writeHead(200, {
+        'Content-Encoding': 'gzip',
+        'Content-Type': 'text/plain',
+      });
+      res.flushHeaders();
+      req.socket.destroy();
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Type': 'text/plain',
+    });
+    const gzipStream = zlib.createGzip();
+    pipeline(gzipStream, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    gzipStream.write('midstream-retry-ok');
+    gzipStream.end();
+  });
+  const response = await context.request.get(server.PREFIX + '/test-gzip-midstream', { maxRetries: 3 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('midstream-retry-ok');
+  expect(requestCount).toBe(3);
+});
