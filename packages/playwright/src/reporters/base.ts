@@ -357,11 +357,6 @@ export class TerminalReporter implements ReporterV2 {
   }
 
   willRetry(test: TestCase): boolean {
-    // A non-retriable failure (e.g. a missing snapshot that was just written)
-    // will not be retried even if the retry budget allows it.
-    const lastResult = test.results[test.results.length - 1];
-    if ((lastResult as any)?._hasNonRetriableError)
-      return false;
     return test.outcome() === 'unexpected' && test.results.length <= test.retries;
   }
 

@@ -279,7 +279,6 @@ export class TeleReporterEmitter implements ReporterV2 {
       status: result.status,
       errors: this._resultKnownErrorCounts.has(id) ? result.errors.slice(this._resultKnownAttachmentCounts.get(id)) : result.errors,
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
-      hasNonRetriableError: (result as any)._hasNonRetriableError || undefined,
     };
   }
 
