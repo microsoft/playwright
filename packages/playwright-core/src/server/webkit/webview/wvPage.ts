@@ -19,6 +19,7 @@ import { PNG } from 'pngjs';
 import jpegjs from 'jpeg-js';
 import { assert } from '@isomorphic/assert';
 import { headersArrayToObject } from '@isomorphic/headers';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { splitErrorMessage } from '@isomorphic/stackTrace';
 import { debugLogger } from '@utils/debugLogger';
 import { eventsHelper } from '@utils/eventsHelper';
@@ -65,8 +66,7 @@ export class WVPage implements PageDelegate {
   private _firstNonInitialNavigationCommittedPromise: Promise<void>;
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   _firstNonInitialNavigationCommittedReject = (e: Error) => {};
-  private _initializedPromise: Promise<void>;
-  private _initializedFulfill = () => {};
+  private _initializedPromise = new ManualPromise<void>();
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
 
@@ -95,7 +95,6 @@ export class WVPage implements PageDelegate {
     });
     // Avoid unhandled rejection on disconnect in the middle of initialization.
     this._firstNonInitialNavigationCommittedPromise.catch(() => {});
-    this._initializedPromise = new Promise(f => { this._initializedFulfill = f; });
   }
 
   waitForInitialized(): Promise<void> {
@@ -225,7 +224,7 @@ export class WVPage implements PageDelegate {
       if (targetInfo.isPaused)
         this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
       await this._page.reportAsNew(undefined, pageOrError instanceof Page ? undefined : pageOrError);
-      this._initializedFulfill();
+      this._initializedPromise.resolve();
     } else {
       assert(!this._provisionalPage);
       this._provisionalPage = new WVProvisionalPage(session, this);

@@ -42,7 +42,7 @@ export class WebKit extends BrowserType {
   }
 
   override async connectOverCDP(progress: Progress, params: channels.BrowserTypeConnectOverCDPParams): Promise<Browser> {
-    return connectOverRDP(progress, this, params.endpointURL!, params);
+    return connectOverRDP(progress, this, params);
   }
 
   override amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean, options: types.LaunchOptions): NodeJS.ProcessEnv {

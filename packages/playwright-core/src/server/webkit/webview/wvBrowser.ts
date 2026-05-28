@@ -18,12 +18,14 @@
 import os from 'os';
 import path from 'path';
 
+import ws from 'ws';
 import { debugLogger, RecentLogsCollector } from '@utils/debugLogger';
 import { removeFolders } from '@utils/fileUtils';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '@utils/happyEyeballs';
 import { headersArrayToObject } from '@isomorphic/headers';
 import { Browser } from '../../browser';
 import { helper } from '../../helper';
-import { WebSocketTransport } from '../../transport';
+import { perMessageDeflate } from '../../transport';
 import { getUserAgent } from '../../userAgent';
 import { BrowserContext } from '../../browserContext';
 import { DialogBridge } from './dialogBridge';
@@ -33,9 +35,11 @@ import { WVPage } from './wvPage';
 import type { BrowserOptions, BrowserProcess } from '../../browser';
 import type { SdkObject } from '../../instrumentation';
 import type { InitScript, Page } from '../../page';
+import type { ProtocolRequest, ProtocolResponse } from '../../transport';
 import type * as types from '../../types';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '../../progress';
+import type { ConnectOverCDPTransport } from '../../../../types/types.d.ts';
 
 type ProxyTab = {
   url: string;
@@ -64,26 +68,82 @@ async function listTabs(proxyBase: string, headers: { [key: string]: string }): 
   return data.filter(t => !!t.webSocketDebuggerUrl);
 }
 
-export async function connectOverRDP(progress: Progress, parent: SdkObject, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, isLocal?: boolean, noDefaults?: boolean, artifactsDir?: string }): Promise<Browser> {
+// Local WebSocket-backed transport: defers opening the socket until `open()`
+// is called, so listeners on `onmessage` are wired before the remote side
+// starts emitting events.
+class DeferredWebSocketTransport implements ConnectOverCDPTransport {
+  private readonly _url: string;
+  private readonly _headers: { [key: string]: string };
+  private _ws: ws | undefined;
+  private _closed = false;
+
+  onmessage?: (message: object) => void;
+  onclose?: (reason?: string) => void;
+
+  constructor(url: string, headers: { [key: string]: string }) {
+    this._url = url;
+    this._headers = headers;
+  }
+
+  open(): void {
+    if (this._closed)
+      return;
+    const url = this._url;
+    this._ws = new ws(url, [], {
+      maxPayload: 256 * 1024 * 1024,
+      headers: this._headers,
+      followRedirects: true,
+      agent: (/^(https|wss):\/\//.test(url)) ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent,
+      perMessageDeflate,
+      allowSynchronousEvents: false,
+    });
+    this._ws.addEventListener('message', event => {
+      const eventData = event.data as string;
+      let parsedJson: ProtocolResponse;
+      try {
+        parsedJson = JSON.parse(eventData);
+        this.onmessage?.(parsedJson);
+      } catch {
+        this._ws?.close();
+      }
+    });
+    this._ws.addEventListener('close', event => {
+      this.onclose?.(event.reason);
+    });
+    this._ws.addEventListener('error', () => {});
+  }
+
+  send(message: object): void {
+    this._ws?.send(JSON.stringify(message as ProtocolRequest));
+  }
+
+  close(): void {
+    this._closed = true;
+    this._ws?.close();
+  }
+}
+
+export async function connectOverRDP(progress: Progress, parent: SdkObject, params: channels.BrowserTypeConnectOverCDPParams): Promise<Browser> {
   let headersMap: { [key: string]: string; } | undefined;
-  if (options.headers)
-    headersMap = headersArrayToObject(options.headers, false);
+  if (params.headers)
+    headersMap = headersArrayToObject(params.headers, false);
   if (!headersMap)
     headersMap = { 'User-Agent': getUserAgent() };
   else if (!Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
     headersMap['User-Agent'] = getUserAgent();
 
-  const proxyBase = deriveProxyBase(endpointURL);
+  const transport = params.transport as ConnectOverCDPTransport | undefined;
+  const proxyBase = transport ? '' : deriveProxyBase(params.endpointURL!);
 
-  const artifactsDir = options.artifactsDir ?? path.join(os.tmpdir(), 'playwright-artifacts-');
+  const artifactsDir = params.artifactsDir ?? path.join(os.tmpdir(), 'playwright-artifacts-');
   const doCleanup = async () => {
     await removeFolders([artifactsDir]);
   };
 
   const browser = await progress.race((async () => {
     const dialogBridge = await DialogBridge.start();
-    const created = new WVBrowser(parent, proxyBase, headersMap!, dialogBridge, {
-      slowMo: options.slowMo,
+    const created = new WVBrowser(parent, proxyBase, headersMap!, dialogBridge, transport, {
+      slowMo: params.slowMo,
       name: 'webkit',
       browserType: 'webkit',
       browserProcess: { close: async () => {}, kill: async () => {} } as BrowserProcess,
@@ -104,7 +164,7 @@ export async function connectOverRDP(progress: Progress, parent: SdkObject, endp
     return created;
   })());
 
-  if (!options.isLocal)
+  if (!params.isLocal)
     browser._isCollocatedWithServer = false;
   browser.on(Browser.Events.Disconnected, doCleanup);
   return browser;
@@ -112,7 +172,7 @@ export async function connectOverRDP(progress: Progress, parent: SdkObject, endp
 
 type TabEntry = {
   pageId: string;
-  transport: WebSocketTransport;
+  transport: ConnectOverCDPTransport;
   connection: WVConnection;
   page: WVPage;
 };
@@ -122,24 +182,30 @@ export class WVBrowser extends Browser {
   readonly _proxyBase: string;
   readonly _headers: { [key: string]: string };
   readonly _dialogBridge: DialogBridge;
+  readonly _directPageTransport: ConnectOverCDPTransport | undefined;
   readonly _tabs = new Map<string, TabEntry>();
   private _didCloseFired = false;
   // Backwards compat — old code still reads `_page` for the "primary" tab.
   _page!: WVPage;
 
-  constructor(parent: SdkObject, proxyBase: string, headers: { [key: string]: string }, dialogBridge: DialogBridge, options: BrowserOptions) {
+  constructor(parent: SdkObject, proxyBase: string, headers: { [key: string]: string }, dialogBridge: DialogBridge, directPageTransport: ConnectOverCDPTransport | undefined, options: BrowserOptions) {
     super(parent, options);
     this._proxyBase = proxyBase;
     this._headers = headers;
     this._dialogBridge = dialogBridge;
+    this._directPageTransport = directPageTransport;
     this._context = new WVBrowserContext(this);
   }
 
   async _initialize(): Promise<void> {
     await this._context.initialize();
-    await this._syncTabs();
-    if (!this._tabs.size)
-      throw new Error(`No Mobile Safari tabs found at ${this._proxyBase}/json — open Safari first.`);
+    if (this._directPageTransport) {
+      await this._attachTab('rdp-transport', this._directPageTransport);
+    } else {
+      await this._syncTabs();
+      if (!this._tabs.size)
+        throw new Error(`No Mobile Safari tabs found at ${this._proxyBase}/json — open Safari first.`);
+    }
     this._page = this._firstTab().page;
   }
 
@@ -156,7 +222,7 @@ export class WVBrowser extends Browser {
       if (this._tabs.has(pageId))
         continue;
       try {
-        await this._attachTab(pageId, tab);
+        await this._attachTab(pageId, new DeferredWebSocketTransport(tab.webSocketDebuggerUrl, this._headers));
       } catch (e) {
         debugLogger.log('error', `webview: failed to attach to tab ${pageId}: ${(e as Error).message}`);
       }
@@ -168,15 +234,14 @@ export class WVBrowser extends Browser {
     }
   }
 
-  private async _attachTab(pageId: string, tab: ProxyTab): Promise<void> {
-    const transport = await WebSocketTransport.connect(undefined, tab.webSocketDebuggerUrl, { headers: this._headers, followRedirects: true });
+  private async _attachTab(pageId: string, transport: ConnectOverCDPTransport): Promise<void> {
     const connection = new WVConnection(transport, () => this._detachTab(pageId), this.options.protocolLogger, this.options.browserLogsCollector);
-    // TODO: handle this as RDP connection parameter.
-    connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
     const dialogEndpoint = this._dialogBridge.endpointFor(pageId);
     const page = new WVPage(this._context, connection.outerSession, dialogEndpoint);
     this._dialogBridge.registerTab(pageId, req => page.onBridgeDialog(req));
     this._tabs.set(pageId, { pageId, transport, connection, page });
+    transport.open?.();
+    connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
     await page.waitForInitialized();
   }
 

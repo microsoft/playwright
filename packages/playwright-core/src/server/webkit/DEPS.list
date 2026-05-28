@@ -5,6 +5,7 @@
 ../registry/
 node_modules/jpeg-js
 node_modules/pngjs
+node_modules/ws
 
 [webkit.ts]
 ./webview/wvBrowser.ts

@@ -138,10 +138,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   async connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
   async connectOverCDP(endpointURL: string, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
-  async connectOverCDP(transport: api.ConnectionTransport, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
-  async connectOverCDP(overloaded: (api.ConnectOverCDPOptions & { wsEndpoint?: string }) | string | api.ConnectionTransport, options?: api.ConnectOverCDPOptions): Promise<Browser> {
+  async connectOverCDP(transport: api.ConnectOverCDPTransport, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
+  async connectOverCDP(overloaded: (api.ConnectOverCDPOptions & { wsEndpoint?: string }) | string | api.ConnectOverCDPTransport, options?: api.ConnectOverCDPOptions): Promise<Browser> {
     let endpointURL: string | undefined;
-    let transport: api.ConnectionTransport | undefined;
+    let transport: api.ConnectOverCDPTransport | undefined;
     let params: api.ConnectOverCDPOptions;
     if (typeof overloaded === 'string') {
       endpointURL = overloaded;
@@ -193,6 +193,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 }
 
-function isConnectionTransport(value: any): value is api.ConnectionTransport {
+function isConnectionTransport(value: any): value is api.ConnectOverCDPTransport {
   return !!value && typeof value === 'object' && typeof value.send === 'function' && typeof value.close === 'function';
 }
