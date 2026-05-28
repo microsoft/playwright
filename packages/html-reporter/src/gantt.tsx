@@ -157,7 +157,6 @@ export const GanttChart = ({
                 height={barHeight}
                 fill={color}
                 rx='2'
-                tabIndex={0}
               >
                 <title>{entry.tooltip}</title>
               </rect>
