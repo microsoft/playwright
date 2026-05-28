@@ -309,8 +309,11 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   }
 
   async clearCookies(options: {name?: string | RegExp, domain?: string | RegExp, path?: string | RegExp}): Promise<void> {
-    const currentCookies = await this._cookies();
-    await this.doClearCookies();
+    const hasFilter = options.name !== undefined || options.domain !== undefined || options.path !== undefined;
+    if (!hasFilter) {
+      await this.doClearCookies();
+      return;
+    }
 
     const matches = (cookie: channels.NetworkCookie, prop: 'name' | 'domain' | 'path', value: string | RegExp | undefined) => {
       if (!value)
@@ -322,13 +325,21 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       return cookie[prop] === value;
     };
 
-    const cookiesToReadd = currentCookies.filter(cookie => {
-      return !matches(cookie, 'name', options.name)
-        || !matches(cookie, 'domain', options.domain)
-        || !matches(cookie, 'path', options.path);
+    const currentCookies = await this._cookies();
+    const cookiesToExpire = currentCookies.filter(cookie => {
+      return matches(cookie, 'name', options.name)
+        && matches(cookie, 'domain', options.domain)
+        && matches(cookie, 'path', options.path);
     });
 
-    await this.addCookies(cookiesToReadd);
+    if (!cookiesToExpire.length)
+      return;
+
+    await this.addCookies(cookiesToExpire.map(cookie => ({
+      ...cookie,
+      value: '',
+      expires: 0,
+    })));
   }
 
   setHTTPCredentials(progress: Progress, httpCredentials?: types.Credentials): Promise<void> {
