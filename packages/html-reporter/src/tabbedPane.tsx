@@ -34,11 +34,6 @@ export const TabbedPane: React.FunctionComponent<{
   const idPrefix = React.useId();
   const tabRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Focus the selected tab after selection changes
-  React.useEffect(() => {
-    tabRefs.current[selectedTab]?.focus();
-  }, [selectedTab]);
-
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const currentIndex = tabs.findIndex(t => t.id === selectedTab);
 
@@ -48,6 +43,7 @@ export const TabbedPane: React.FunctionComponent<{
         event.preventDefault();
         const nextTab = tabs[(currentIndex + 1) % tabs.length];
         setSelectedTab(nextTab.id);
+        tabRefs.current[nextTab.id]?.focus();
         break;
 
       case 'ArrowLeft':
@@ -55,16 +51,19 @@ export const TabbedPane: React.FunctionComponent<{
         event.preventDefault();
         const prevTab = tabs[(currentIndex - 1 + tabs.length) % tabs.length];
         setSelectedTab(prevTab.id);
+        tabRefs.current[prevTab.id]?.focus();
         break;
 
       case 'Home':
         event.preventDefault();
         setSelectedTab(tabs[0].id);
+        tabRefs.current[tabs[0].id]?.focus();
         break;
 
       case 'End':
         event.preventDefault();
         setSelectedTab(tabs[tabs.length - 1].id);
+        tabRefs.current[tabs[tabs.length - 1].id]?.focus();
         break;
     }
   };

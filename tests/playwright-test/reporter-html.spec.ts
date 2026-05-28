@@ -1066,6 +1066,53 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(popup.url()).toBe(server.EMPTY_PAGE);
     });
 
+    test('should support keyboard navigation in tabbedPane', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { timeout: 1500, retries: 2 };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('test with retries', async ({}) => {
+            throw new Error('fail');
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.failed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'test with retries' }).click();
+
+      // Get all tabs for navigation
+      const retryTab1 = page.getByRole('tab', { name: 'Retry #1' });
+      const retryTab2 = page.getByRole('tab', { name: 'Retry #2' });
+      const mainTab = page.getByRole('tab').first();
+      // Focus on main tab
+      await mainTab.focus();
+      await expect(mainTab).toBeFocused();
+      await mainTab.press('ArrowRight');
+      await expect(retryTab1).toBeFocused();
+      await expect(retryTab1).toHaveAttribute('aria-selected', 'true');
+      await retryTab2.focus();
+      await retryTab2.press('ArrowRight');
+      await expect(mainTab).toBeFocused();
+      await expect(mainTab).toHaveAttribute('aria-selected', 'true');
+      await mainTab.press('ArrowLeft');
+      await expect(retryTab2).toBeFocused();
+      await expect(retryTab2).toHaveAttribute('aria-selected', 'true');
+      await retryTab2.press('Home');
+      await expect(mainTab).toBeFocused();
+      await expect(mainTab).toHaveAttribute('aria-selected', 'true');
+      await mainTab.press('End');
+      await expect(retryTab2).toBeFocused();
+      await expect(retryTab2).toHaveAttribute('aria-selected', 'true');
+      // Verify mouse click still works and doesn't affect keyboard navigation
+      await retryTab1.click();
+      await expect(retryTab1).toHaveAttribute('aria-selected', 'true');
+      await retryTab1.press('ArrowRight');
+      await expect(retryTab2).toBeFocused();
+    });
+
     test('should render text attachments as text', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
