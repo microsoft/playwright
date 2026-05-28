@@ -32,17 +32,58 @@ export const TabbedPane: React.FunctionComponent<{
   setSelectedTab: (tab: string) => void
 }> = ({ tabs, selectedTab, setSelectedTab }) => {
   const idPrefix = React.useId();
+  const tabRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Focus the selected tab after selection changes
+  React.useEffect(() => {
+    tabRefs.current[selectedTab]?.focus();
+  }, [selectedTab]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const currentIndex = tabs.findIndex(t => t.id === selectedTab);
+
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        event.preventDefault();
+        const nextTab = tabs[(currentIndex + 1) % tabs.length];
+        setSelectedTab(nextTab.id);
+        break;
+
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        event.preventDefault();
+        const prevTab = tabs[(currentIndex - 1 + tabs.length) % tabs.length];
+        setSelectedTab(prevTab.id);
+        break;
+
+      case 'Home':
+        event.preventDefault();
+        setSelectedTab(tabs[0].id);
+        break;
+
+      case 'End':
+        event.preventDefault();
+        setSelectedTab(tabs[tabs.length - 1].id);
+        break;
+    }
+  };
+
   return <div className='tabbed-pane'>
     <div className='vbox'>
       <div className='hbox' style={{ flex: 'none' }}>
         <div className='tabbed-pane-tab-strip' role='tablist'>{
           tabs.map(tab => (
-            <div className={clsx('tabbed-pane-tab-element', selectedTab === tab.id && 'selected')}
+            <div
+              ref={el => tabRefs.current[tab.id] = el}
+              className={clsx('tabbed-pane-tab-element', selectedTab === tab.id && 'selected')}
               onClick={() => setSelectedTab(tab.id)}
+              onKeyDown={handleKeyDown}
               id={`${idPrefix}-${tab.id}`}
               key={tab.id}
               role='tab'
-              aria-selected={selectedTab === tab.id}>
+              aria-selected={selectedTab === tab.id}
+              tabIndex={selectedTab === tab.id ? 0 : -1}>
               <div className='tabbed-pane-tab-label'>{tab.title}</div>
             </div>
           ))
