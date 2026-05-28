@@ -82,6 +82,7 @@ export const TabbedPane: React.FunctionComponent<{
               key={tab.id}
               role='tab'
               aria-selected={selectedTab === tab.id}
+              aria-controls={`${idPrefix}-${tab.id}-panel`}
               tabIndex={selectedTab === tab.id ? 0 : -1}>
               <div className='tabbed-pane-tab-label'>{tab.title}</div>
             </div>
@@ -91,7 +92,7 @@ export const TabbedPane: React.FunctionComponent<{
       {
         tabs.map(tab => {
           if (selectedTab === tab.id)
-            return <div key={tab.id} className='tab-content' role='tabpanel' aria-labelledby={`${idPrefix}-${tab.id}`}>{tab.render()}</div>;
+            return <div key={tab.id} id={`${idPrefix}-${tab.id}-panel`} className='tab-content' role='tabpanel' aria-labelledby={`${idPrefix}-${tab.id}`} tabIndex={0}>{tab.render()}</div>;
         })
       }
     </div>
