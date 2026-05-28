@@ -80,12 +80,21 @@ function filePath(relative) {
 }
 
 /**
- * @param {string} path
+ * Resolve a CLI shipped by a node_modules package to an absolute path, so we
+ * can spawn it via `node` directly instead of going through `npx`/`npm exec`
+ * (which adds a shell + npm wrapper process per concurrent build).
+ * @param {string} pkg
+ * @param {string} binName
  * @returns {string}
  */
-function quotePath(path) {
-  return "\"" + path + "\"";
+function resolveNodeBin(pkg, binName) {
+  // Resolve via package.json (always allowed) rather than a subpath that may
+  // be excluded by the package's `exports` field.
+  const pkgJson = require.resolve(`${pkg}/package.json`, { paths: [ROOT] });
+  return path.join(path.dirname(pkgJson), require(pkgJson).bin[binName]);
 }
+const VITE_BIN = resolveNodeBin('vite', 'vite');
+const TSC_BIN = resolveNodeBin('typescript', 'tsc');
 
 class Step {
   /**
@@ -859,16 +868,16 @@ const pkgSizePlugin = {
 
 // Build/watch trace viewer service worker.
 steps.push(new ProgramStep({
-  command: 'npx',
+  command: process.execPath,
   args: [
-    'vite',
+    VITE_BIN,
     '--config',
     'vite.sw.config.ts',
     'build',
     ...(watchMode ? ['--watch', '--minify=false'] : []),
     ...(withSourceMaps ? ['--sourcemap=inline'] : []),
   ],
-  shell: true,
+  shell: false,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
   concurrent: true,
 }));
@@ -883,15 +892,15 @@ steps.push(new ProgramStep({
 const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard'];
 for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
-    command: 'npx',
+    command: process.execPath,
     args: [
-      'vite',
+      VITE_BIN,
       'build',
       ...(watchMode ? ['--watch', '--minify=false'] : []),
       ...(withSourceMaps ? ['--sourcemap=inline'] : []),
       '--clearScreen=false',
     ],
-    shell: true,
+    shell: false,
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
     concurrent: true,
   }));
@@ -900,9 +909,9 @@ for (const webPackage of webPackages) {
 // Build/watch extension UI pages and service worker.
 for (const config of ['vite.config.mts', 'vite.sw.config.mts']) {
   steps.push(new ProgramStep({
-    command: 'npx',
+    command: process.execPath,
     args: [
-      'vite',
+      VITE_BIN,
       'build',
       '--config',
       config,
@@ -910,7 +919,7 @@ for (const config of ['vite.config.mts', 'vite.sw.config.mts']) {
       ...(withSourceMaps ? ['--sourcemap=inline'] : []),
       '--clearScreen=false',
     ],
-    shell: true,
+    shell: false,
     cwd: path.join(__dirname, '..', '..', 'packages', 'extension'),
     concurrent: true,
   }));
@@ -1035,9 +1044,9 @@ copyFiles.push({
 if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({
-    command: 'npx',
-    args: ['tsc', '-w', '--preserveWatchOutput', '-p', quotePath(filePath('.'))],
-    shell: true,
+    command: process.execPath,
+    args: [TSC_BIN, '-w', '--preserveWatchOutput', '-p', filePath('.')],
+    shell: false,
     concurrent: true,
   }));
 }
