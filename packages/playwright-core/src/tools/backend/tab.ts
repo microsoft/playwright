@@ -483,7 +483,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       return;
     }
 
-    await this.page.evaluate(() => new Promise(f => setTimeout(f, 1000))).catch(() => {});
+    await this.page.evaluate(ms => new Promise(f => setTimeout(f, ms)), time).catch(() => {});
   }
 }
 
