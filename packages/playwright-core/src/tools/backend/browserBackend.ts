@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as z from 'zod';
 import debug from 'debug';
 import { Context } from './context';
 import { Response } from './response';
@@ -63,8 +64,14 @@ export class BrowserBackend implements ServerBackend {
     const tool = this._tools.find(tool => tool.schema.name === name)!;
     if (!tool)
       return formatError(`Tool "${name}" not found`);
-    // eslint-disable-next-line no-restricted-syntax
-    const parsedArguments = tool.schema.inputSchema.parse(rawArguments) as any;
+    let parsedArguments: any;
+    try {
+      parsedArguments = tool.schema.inputSchema.parse(rawArguments);
+    } catch (error) {
+      if (error instanceof z.ZodError)
+        return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
+      throw error;
+    }
     const cwd = rawArguments._meta?.cwd;
     const raw = !!rawArguments._meta?.raw;
     const context = this._context!;
