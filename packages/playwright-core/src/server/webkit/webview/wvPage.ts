@@ -210,7 +210,15 @@ export class WVPage implements PageDelegate {
 
   private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
     const { targetInfo } = event;
-    assert(targetInfo.type === 'page', 'Only page targets are expected in WebView, received: ' + targetInfo.type);
+    if (targetInfo.type !== 'page') {
+      // Site-isolated WebKit (iOS 26+) reports a separate target per frame. We
+      // drive the whole page through the top-level page target, so out-of-process
+      // frame targets are not attached. Resume any paused ones so navigation in
+      // the owning page is not blocked waiting on them.
+      if (targetInfo.isPaused)
+        this._outerSession.sendMayFail('Target.resume', { targetId: targetInfo.targetId });
+      return;
+    }
     const session = this._createSession(targetInfo.targetId);
     if (!targetInfo.isProvisional) {
       let pageOrError: Page | Error;
