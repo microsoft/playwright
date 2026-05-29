@@ -14,6 +14,23 @@
  * limitations under the License.
  */
 
+const minimumMajorNodeVersion = 18;
+const currentNodeVersion = process.versions.node;
+const major = +currentNodeVersion.split('.')[0];
+
+if (major < minimumMajorNodeVersion) {
+  // eslint-disable-next-line no-console
+  console.error(
+      'You are running Node.js ' +
+      currentNodeVersion +
+      '.\n' +
+      `Playwright requires Node.js ${minimumMajorNodeVersion} or higher. \n` +
+      'Please update your version of Node.js.'
+  );
+  // eslint-disable-next-line no-restricted-properties
+  process.exit(1);
+}
+
 if (process.env.PW_INSTRUMENT_MODULES) {
   const Module = require('module');
   const originalLoad = Module._load;
