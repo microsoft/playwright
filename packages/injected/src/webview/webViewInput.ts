@@ -190,11 +190,21 @@ export class WebViewInput {
       return;
     const charCode = params.text.charCodeAt(0);
     const charNotPrevented = markAndDispatch(target, new KeyboardEvent('keypress', { ...init, charCode, keyCode: charCode, which: charCode }));
-    // Synthetic key events do not perform the browser's default text-insertion,
-    // so emulate it here (honoring the current selection) unless the page
-    // cancelled keydown/keypress.
-    if (notPrevented && charNotPrevented)
-      this._insertText(target, params.text);
+    if (!notPrevented || !charNotPrevented)
+      return;
+    // Real WebKit fires a `textInput` (TextEvent) whose default action performs
+    // the insertion (and the subsequent beforeinput/input). Replicate it; the
+    // event's default does the insertion, so we do not insert manually. Enter's
+    // text is '\r' but the inserted/textInput data is a newline.
+    this._dispatchTextInput(target, params.text === '\r' ? '\n' : params.text);
+  }
+
+  private _dispatchTextInput(target: EventTarget, text: string) {
+    // TextEvent has no usable constructor in WebKit — initTextEvent is the only
+    // way to create one (initTextEvent(type, bubbles, cancelable, view, data)).
+    const event = this._document.createEvent('TextEvent') as any;
+    event.initTextEvent('textInput', true, true, this._window, text);
+    markAndDispatch(target, event);
   }
 
   keyup(params: KeyEventParams) {
