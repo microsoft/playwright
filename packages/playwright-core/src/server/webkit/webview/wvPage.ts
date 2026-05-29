@@ -28,6 +28,7 @@ import * as dom from '../../dom';
 import { TargetClosedError } from '../../errors';
 import { helper } from '../../helper';
 import { saveGlobalsSnapshotSource } from '../../javascript';
+import * as rawWebViewInputSource from '../../../generated/webViewInputSource';
 import * as network from '../../network';
 import { Page, PageBinding } from '../../page';
 import { WVSession } from './wvConnection';
@@ -186,8 +187,9 @@ export class WVPage implements PageDelegate {
         session.sendMayFail('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
       ]);
     }
-    // Inject the dialog bridge into the currently-loaded document too —
-    // bootstrap only applies to future navigations.
+    // Inject the page-side input dispatcher and dialog bridge into the
+    // currently-loaded document too — bootstrap only applies to future navigations.
+    await session.sendMayFail('Runtime.evaluate', { expression: webViewInputBootstrapSource, returnByValue: true } as any);
     if (this._dialogEndpoint) {
       await session.sendMayFail('Runtime.evaluate', {
         expression: dialogBridgeSource(this._dialogEndpoint),
@@ -612,6 +614,7 @@ export class WVPage implements PageDelegate {
     scripts.push('if (!window.GestureEvent) window.GestureEvent = function GestureEvent() {};');
     scripts.push(this._publicKeyCredentialScript());
     scripts.push(bindingBridgeSource);
+    scripts.push(webViewInputBootstrapSource);
     if (this._dialogEndpoint)
       scripts.push(dialogBridgeSource(this._dialogEndpoint));
     scripts.push(...this._page.allInitScripts().map(script => script.source));
@@ -996,6 +999,17 @@ function isLoadedSecurely(url: string, timing: network.ResourceTiming) {
 }
 
 const BINDING_CALL_TAG = '__pw_binding_call__';
+// Install the page-side input dispatcher (window.__pwWebViewInput) on every
+// document. Runs synchronously via Page.setBootstrapScript before page scripts,
+// so input dispatched right after a navigation never races a missing dispatcher.
+// The bundled module's installer only reads `.window`/`.document`, so a minimal
+// shim stands in for the InjectedScript it normally receives.
+const webViewInputBootstrapSource = `(() => {
+  const module = {};
+  ${rawWebViewInputSource.source}
+  new (module.exports.default())({ window, document });
+})()`;
+
 const bindingBridgeSource = `
   if (!window['${PageBinding.kBindingName}']) {
     Object.defineProperty(window, '${PageBinding.kBindingName}', {

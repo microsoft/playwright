@@ -21,9 +21,9 @@ import type { InjectedScript } from '../injectedScript';
 // Stock WebKit only exposes the upstream Web Inspector Protocol, which has no
 // trusted Input domain. Input is therefore synthesized with DOM events. Because
 // synthetic events do not trigger the browser's default behaviors (typing,
-// hover transitions), we emulate them here. This module is injected into every
-// page via BrowserContext.extendInjectedScript so that the server-side wvInput
-// can drive it through `window.__pwWebViewInput`.
+// hover transitions), we emulate them here. This module is installed on every
+// document via the WV page bootstrap script so that the server-side wvInput can
+// drive it through `window.__pwWebViewInput`.
 
 type Modifiers = {
   ctrlKey: boolean;
@@ -100,6 +100,15 @@ export class WebViewInput {
     return el;
   }
 
+  // The focused element may live inside one or more shadow roots, where
+  // document.activeElement only reports the outermost shadow host.
+  private _deepActiveElement(): Element | null {
+    let active = this._document.activeElement;
+    while (active && active.shadowRoot && active.shadowRoot.activeElement)
+      active = active.shadowRoot.activeElement;
+    return active;
+  }
+
   private _insertText(target: Element | null, text: string) {
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
       const start = target.selectionStart ?? target.value.length;
@@ -117,7 +126,7 @@ export class WebViewInput {
   }
 
   keydown(params: KeyEventParams) {
-    const target = this._document.activeElement || this._document.body;
+    const target = this._deepActiveElement() || this._document.body;
     if (!target)
       return;
     const init: KeyboardEventInit = {
@@ -148,7 +157,7 @@ export class WebViewInput {
   }
 
   keyup(params: KeyEventParams) {
-    const target = this._document.activeElement || this._document.body;
+    const target = this._deepActiveElement() || this._document.body;
     if (!target)
       return;
     const event = new KeyboardEvent('keyup', {
@@ -169,7 +178,7 @@ export class WebViewInput {
   }
 
   insertText(text: string) {
-    this._insertText(this._document.activeElement, text);
+    this._insertText(this._deepActiveElement(), text);
   }
 
   mouseMove(params: MouseMoveParams) {
