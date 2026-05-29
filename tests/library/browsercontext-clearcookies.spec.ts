@@ -167,7 +167,8 @@ it('should remove cookies by name and domain', async ({ context, page, server })
 
 it('should not transiently delete non-matching cookies when filtering', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40953' },
-}, async ({ context, page, server }) => {
+}, async ({ context, page, server, browserName, isWindows }) => {
+  it.skip(browserName === 'webkit' && isWindows, 'cookieStore change events not supported on WebKit/Windows (curl backend lacks cookie change notifications)');
   await context.addCookies([{
     name: 'keep_me',
     value: '1',
