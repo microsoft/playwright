@@ -140,5 +140,13 @@ async function callWebViewInput(progress: Progress, session: WVSession | undefin
   if (!session)
     throw new Error('Page is not initialized');
   const expression = `window.__pwWebViewInput.${method}(${JSON.stringify(arg)})`;
-  await progress.race(session.send('Runtime.evaluate', { expression, returnByValue: true } as any));
+  // Some dispatchers are async — they spread events across event-loop tasks the
+  // way a real device does. Await the returned promise so the action only
+  // resolves once every event has been delivered. Stock WebKit's Runtime.evaluate
+  // has no awaitPromise option, so use the separate Runtime.awaitPromise command.
+  const { result } = await progress.race(session.send('Runtime.evaluate', { expression, returnByValue: false } as any)) as { result: { objectId?: string } };
+  if (result?.objectId) {
+    await progress.race(session.send('Runtime.awaitPromise', { promiseObjectId: result.objectId, returnByValue: true } as any));
+    await progress.race(session.sendMayFail('Runtime.releaseObject', { objectId: result.objectId }));
+  }
 }

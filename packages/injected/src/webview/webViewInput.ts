@@ -110,11 +110,22 @@ function dispatchKeyEvent(node: EventTarget, type: string, init: KeyboardEventIn
 export class WebViewInput {
   private _window: Window & typeof globalThis;
   private _document: Document;
+  private _setTimeout: Window['setTimeout'];
   private _hoverTarget: Element | null = null;
 
   constructor(window: Window & typeof globalThis, document: Document) {
     this._window = window;
     this._document = document;
+    // Captured before page scripts run (bootstrap), so a page that later
+    // overrides setTimeout cannot break the per-event task scheduling below.
+    this._setTimeout = window.setTimeout.bind(window);
+  }
+
+  // Real input events are each delivered in their own event-loop task; dispatch
+  // a sequence the same way so handlers that schedule work between events behave
+  // as they would on a real device.
+  private _nextTask(): Promise<void> {
+    return new Promise(resolve => this._setTimeout(resolve));
   }
 
   // Descend through open shadow roots so synthetic events land on the actual
@@ -155,7 +166,7 @@ export class WebViewInput {
     }
   }
 
-  keydown(params: KeyEventParams) {
+  keydown(params: KeyEventParams): void | Promise<void> {
     const target = this._deepActiveElement() || this._document.body;
     if (!target)
       return;
@@ -175,17 +186,26 @@ export class WebViewInput {
       metaKey: params.metaKey,
     };
     const notPrevented = dispatchKeyEvent(target, 'keydown', init, params.keyCode, params.key);
+    // Non-text keys produce only keydown — nothing more to deliver.
     if (params.text === undefined)
       return;
-    const charCode = params.text.charCodeAt(0);
+    return this._typeCharacter(target, init, notPrevented, params.text);
+  }
+
+  // keypress and textInput follow keydown, each in its own task — real WebKit
+  // delivers every key event in a separate event-loop task.
+  private async _typeCharacter(target: EventTarget, init: KeyboardEventInit, keydownNotPrevented: boolean, text: string) {
+    await this._nextTask();
+    const charCode = text.charCodeAt(0);
     const charNotPrevented = markAndDispatch(target, new KeyboardEvent('keypress', { ...init, charCode, keyCode: charCode, which: charCode }));
-    if (!notPrevented || !charNotPrevented)
+    if (!keydownNotPrevented || !charNotPrevented)
       return;
+    await this._nextTask();
     // Real WebKit fires a `textInput` (TextEvent) whose default action performs
     // the insertion (and the subsequent beforeinput/input). Replicate it; the
     // event's default does the insertion, so we do not insert manually. Enter's
     // text is '\r' but the inserted/textInput data is a newline.
-    this._dispatchTextInput(target, params.text === '\r' ? '\n' : params.text);
+    this._dispatchTextInput(target, text === '\r' ? '\n' : text);
   }
 
   private _dispatchTextInput(target: EventTarget, text: string) {
