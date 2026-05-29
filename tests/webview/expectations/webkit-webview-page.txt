@@ -217,12 +217,6 @@ page/page-screenshot.spec.ts › page screenshot animations › should not captu
 # deserves individual triage.
 # ============================================================================
 page/elementhandle-bounding-box.spec.ts › should handle scroll offset and click [fail]
-page/elementhandle-press.spec.ts › should not select existing value [fail]
-page/elementhandle-press.spec.ts › should reset selection when not focused [fail]
-page/elementhandle-press.spec.ts › should work [fail]
-page/elementhandle-type.spec.ts › should not select existing value [fail]
-page/elementhandle-type.spec.ts › should reset selection when not focused [fail]
-page/elementhandle-type.spec.ts › should work [fail]
 page/expect-boolean.spec.ts › toBeAttached › with frameLocator [fail]
 page/expect-boolean.spec.ts › toBeVisible › with frameLocator [fail]
 page/expect-boolean.spec.ts › toBeVisible › with frameLocator 2 [fail]
