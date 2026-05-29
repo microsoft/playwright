@@ -14,17 +14,6 @@
  * limitations under the License.
  */
 
-import type { InjectedScript } from '../injectedScript';
-
-// Page-side input dispatch for the stock WebKit (WebView) backend.
-//
-// Stock WebKit only exposes the upstream Web Inspector Protocol, which has no
-// trusted Input domain. Input is therefore synthesized with DOM events. Because
-// synthetic events do not trigger the browser's default behaviors (typing,
-// hover transitions), we emulate them here. This module is installed on every
-// document via the WV page bootstrap script so that the server-side wvInput can
-// drive it through `window.__pwWebViewInput`.
-
 type Modifiers = {
   ctrlKey: boolean;
   shiftKey: boolean;
@@ -123,9 +112,9 @@ export class WebViewInput {
   private _document: Document;
   private _hoverTarget: Element | null = null;
 
-  constructor(injectedScript: InjectedScript) {
-    this._window = injectedScript.window;
-    this._document = injectedScript.document;
+  constructor(window: Window & typeof globalThis, document: Document) {
+    this._window = window;
+    this._document = document;
   }
 
   // Descend through open shadow roots so synthetic events land on the actual
@@ -249,10 +238,6 @@ export class WebViewInput {
       metaKey: params.metaKey,
     };
     const pointer: PointerEventInit = { ...base, pointerId: 1, pointerType: 'mouse', isPrimary: true };
-    // A real pointer move fires the full out/leave -> over/enter -> move sequence
-    // (both mouse and pointer flavors) whenever the element under the pointer
-    // changes. Hover-driven UI (e.g. interstitials listening for mouseover /
-    // pointerover) does not react otherwise.
     const prev = this._hoverTarget;
     if (prev !== target) {
       if (prev && prev.isConnected) {
@@ -341,11 +326,4 @@ export class WebViewInput {
   }
 }
 
-// Installed by injectedScript.extend(): `new WebViewInputInstaller(injectedScript)`.
-class WebViewInputInstaller {
-  constructor(injectedScript: InjectedScript) {
-    (injectedScript.window as any).__pwWebViewInput = new WebViewInput(injectedScript);
-  }
-}
-
-export default WebViewInputInstaller;
+export default WebViewInput;

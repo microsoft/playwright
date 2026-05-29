@@ -999,15 +999,10 @@ function isLoadedSecurely(url: string, timing: network.ResourceTiming) {
 }
 
 const BINDING_CALL_TAG = '__pw_binding_call__';
-// Install the page-side input dispatcher (window.__pwWebViewInput) on every
-// document. Runs synchronously via Page.setBootstrapScript before page scripts,
-// so input dispatched right after a navigation never races a missing dispatcher.
-// The bundled module's installer only reads `.window`/`.document`, so a minimal
-// shim stands in for the InjectedScript it normally receives.
 const webViewInputBootstrapSource = `(() => {
   const module = {};
   ${rawWebViewInputSource.source}
-  new (module.exports.default())({ window, document });
+  window.__pwWebViewInput = new (module.exports.default())(window, document);
 })()`;
 
 const bindingBridgeSource = `
