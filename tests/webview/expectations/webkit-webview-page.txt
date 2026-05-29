@@ -175,6 +175,22 @@ page/page-route.spec.ts › should chain fallback w/ dynamic URL [fail]
 page/page-route.spec.ts › should work with redirects for subresources [fail]
 
 # ============================================================================
+# main-navigation-fulfill-flaky  (6 tests)
+# Intercepting/fulfilling the MAIN navigation request is flaky on iOS 26: the
+# navigation triggers a process swap and the provisional target arrives
+# un-paused, so interception races the request and page.goto resolves to null
+# (or the real server response). Subresource interception (e.g. mocking an
+# <img>) is unaffected. Pre-existing flakiness, surfaced now that the suite
+# runs again. Needs the provisional target to honor Target.setPauseOnStart.
+# ============================================================================
+page/page-request-fulfill.spec.ts › should work [fail]
+page/page-request-fulfill.spec.ts › should work with buffer as body [fail]
+page/page-request-fulfill.spec.ts › should work with status code 422 [fail]
+page/page-request-fulfill.spec.ts › should fulfill with fetch response that has multiple set-cookie [fail]
+page/page-request-fulfill.spec.ts › should fulfill with fetch result and overrides [fail]
+page/page-request-fulfill.spec.ts › should fulfill with gzip and readback [fail]
+
+# ============================================================================
 # element-not-attached  (11 tests)
 # Element-not-attached errors during action retries: getContentQuads /
 # scrollRectIntoViewIfNeeded evaluate in main world without the utility-world
@@ -359,7 +375,6 @@ page/page-request-continue.spec.ts › propagate headers same origin redirect [f
 page/page-request-continue.spec.ts › redirect after continue should be able to delete cookie [fail]
 page/page-request-continue.spec.ts › should respect set-cookie in redirect response [fail]
 page/page-request-fallback.spec.ts › should not chain abort [fail]
-page/page-request-fulfill.spec.ts › should fulfill with fetch response that has multiple set-cookie [fail]
 page/page-request-fulfill.spec.ts › should fulfill with har response [fail]
 page/page-request-fulfill.spec.ts › should fulfill with multiple set-cookie [fail]
 page/page-request-intercept.spec.ts › should support timeout option in route.fetch [fail]
@@ -474,9 +489,6 @@ page/page-request-continue.spec.ts › should not forward Host header on cross-o
 page/page-request-continue.spec.ts › should work with Cross-Origin-Opener-Policy [fail]
 page/page-request-fallback.spec.ts › should fall back after exception [fail]
 page/page-request-fallback.spec.ts › should work [fail]
-page/page-request-fulfill.spec.ts › should allow mocking binary responses [fail]
-page/page-request-fulfill.spec.ts › should allow mocking svg with charset [fail]
-page/page-request-fulfill.spec.ts › should fulfill with fetch result and overrides [fail]
 page/page-route.spec.ts › should not support ? in glob pattern [fail]
 page/page-screenshot.spec.ts › page screenshot › should capture canvas changes [fail]
 page/page-screenshot.spec.ts › page screenshot › should work with odd clip size on Retina displays [fail]
@@ -526,7 +538,6 @@ page/page-emulate-media.spec.ts › should emulate contrast [fail]
 page/page-emulate-media.spec.ts › should emulate forcedColors [fail]
 page/page-emulate-media.spec.ts › should emulate type @smoke [fail]
 page/page-emulate-media.spec.ts › should work during navigation [fail]
-page/page-request-fulfill.spec.ts › should fulfill with gzip and readback [fail]
 page/page-request-gc.spec.ts › should work [fail]
 page/page-request-intercept.spec.ts › should fulfill intercepted response using alias [fail]
 page/page-request-intercept.spec.ts › should intercept with url override [fail]
