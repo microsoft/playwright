@@ -77,25 +77,9 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     const expr = `(() => {
       const t = document.activeElement || document.body;
       const init = { bubbles: true, cancelable: true, view: window, code: ${JSON.stringify(code)}, key: ${JSON.stringify(key)}, keyCode: ${keyCode}, which: ${keyCode}, location: ${location}, repeat: ${autoRepeat}, ctrlKey: ${mods.ctrlKey}, shiftKey: ${mods.shiftKey}, altKey: ${mods.altKey}, metaKey: ${mods.metaKey} };
-      const dispatch = e => { Object.defineProperty(e, '__pwTrustedSynthetic', { value: true }); return t.dispatchEvent(e); };
-      const notPrevented = dispatch(new KeyboardEvent('keydown', init));
-      ${text ? `const charNotPrevented = dispatch(new KeyboardEvent('keypress', { ...init, charCode: ${charCode}, keyCode: ${charCode}, which: ${charCode} }));
-      // Synthetic key events do not perform the browser's default text-insertion,
-      // so emulate it here (honoring the current selection) unless the page
-      // cancelled keydown/keypress.
-      if (notPrevented && charNotPrevented) {
-        const text = ${JSON.stringify(text)};
-        if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) {
-          const start = t.selectionStart ?? t.value.length;
-          const end = t.selectionEnd ?? t.value.length;
-          t.value = t.value.slice(0, start) + text + t.value.slice(end);
-          const pos = start + text.length;
-          try { t.setSelectionRange(pos, pos); } catch {}
-          t.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: false, data: text, inputType: 'insertText' }));
-        } else if (t && t.isContentEditable) {
-          document.execCommand('insertText', false, text);
-        }
-      }` : ''}
+      const dispatch = e => { Object.defineProperty(e, '__pwTrustedSynthetic', { value: true }); t.dispatchEvent(e); };
+      dispatch(new KeyboardEvent('keydown', init));
+      ${text ? `dispatch(new KeyboardEvent('keypress', { ...init, charCode: ${charCode}, keyCode: ${charCode}, which: ${charCode} }));` : ''}
     })()`;
     await evalInPage(progress, this._session, expr);
   }
@@ -139,37 +123,7 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    const mods = modifierFlags(modifiers);
-    const buttonCode = buttonToNumber(button);
-    const buttonsMask = toButtonsMask(buttons);
-    // A real pointer move fires the full out/leave -> over/enter -> move sequence
-    // (both mouse and pointer flavors) whenever the element under the pointer
-    // changes. Synthetic dispatch must replicate it, otherwise hover-driven UI
-    // (e.g. interstitials listening for mouseover/pointerover) never reacts.
-    const expr = `(() => {
-      const x = ${x}, y = ${y};
-      const target = (${kDeepElementFromPointSrc})(x, y) || document.documentElement;
-      const base = { bubbles: true, cancelable: true, view: window, clientX: x, clientY: y, screenX: x, screenY: y, button: ${buttonCode}, buttons: ${buttonsMask}, ctrlKey: ${mods.ctrlKey}, shiftKey: ${mods.shiftKey}, altKey: ${mods.altKey}, metaKey: ${mods.metaKey} };
-      const pointer = { ...base, pointerId: 1, pointerType: 'mouse', isPrimary: true };
-      const fire = (Ctor, type, node, init) => { const e = new Ctor(type, init); Object.defineProperty(e, '__pwTrustedSynthetic', { value: true }); node.dispatchEvent(e); };
-      const prev = window.__pwHoverTarget || null;
-      if (prev !== target) {
-        if (prev && prev.isConnected) {
-          fire(PointerEvent, 'pointerout', prev, { ...pointer, relatedTarget: target });
-          fire(MouseEvent, 'mouseout', prev, { ...base, relatedTarget: target });
-          fire(PointerEvent, 'pointerleave', prev, { ...pointer, bubbles: false, cancelable: false, relatedTarget: target });
-          fire(MouseEvent, 'mouseleave', prev, { ...base, bubbles: false, cancelable: false, relatedTarget: target });
-        }
-        fire(PointerEvent, 'pointerover', target, { ...pointer, relatedTarget: prev });
-        fire(MouseEvent, 'mouseover', target, { ...base, relatedTarget: prev });
-        fire(PointerEvent, 'pointerenter', target, { ...pointer, bubbles: false, cancelable: false, relatedTarget: prev });
-        fire(MouseEvent, 'mouseenter', target, { ...base, bubbles: false, cancelable: false, relatedTarget: prev });
-        window.__pwHoverTarget = target;
-      }
-      fire(PointerEvent, 'pointermove', target, pointer);
-      fire(MouseEvent, 'mousemove', target, base);
-    })()`;
-    await evalInPage(progress, this._session, expr);
+    await this._dispatchMouse(progress, 'mousemove', x, y, buttonToNumber(button), toButtonsMask(buttons), modifiers, 0);
   }
 
   async down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
