@@ -77,6 +77,47 @@ function markAndDispatch(node: EventTarget, event: Event): boolean {
   return node.dispatchEvent(event);
 }
 
+// Legacy WebKit-only KeyboardEvent.keyIdentifier (a DOM Level 3 draft property
+// dropped by every other engine). It cannot be supplied via the constructor, so
+// compute it from the virtual key code and define it on the event before
+// dispatch. Mirrors WebCore's keyIdentifierForWindowsKeyCode.
+const kNamedKeyIdentifiers: Record<number, string> = {
+  8: 'U+0008',   // Backspace
+  9: 'U+0009',   // Tab
+  13: 'Enter',
+  16: 'Shift',
+  17: 'Control',
+  18: 'Alt',
+  27: 'U+001B',  // Escape
+  33: 'PageUp',
+  34: 'PageDown',
+  35: 'End',
+  36: 'Home',
+  37: 'Left',
+  38: 'Up',
+  39: 'Right',
+  40: 'Down',
+  45: 'Insert',
+  46: 'U+007F',  // Delete
+};
+
+function keyIdentifierFor(keyCode: number, key: string): string {
+  const named = kNamedKeyIdentifiers[keyCode];
+  if (named !== undefined)
+    return named;
+  if (keyCode >= 112 && keyCode <= 135)
+    return 'F' + (keyCode - 111);
+  if (key.length === 1)
+    return 'U+' + key.toUpperCase().charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+  return '';
+}
+
+function dispatchKeyEvent(node: EventTarget, type: string, init: KeyboardEventInit, keyCode: number, key: string): boolean {
+  const event = new KeyboardEvent(type, init);
+  Object.defineProperty(event, 'keyIdentifier', { value: keyIdentifierFor(keyCode, key), configurable: true });
+  return markAndDispatch(node, event);
+}
+
 export class WebViewInput {
   private _window: Window & typeof globalThis;
   private _document: Document;
@@ -144,7 +185,7 @@ export class WebViewInput {
       altKey: params.altKey,
       metaKey: params.metaKey,
     };
-    const notPrevented = markAndDispatch(target, new KeyboardEvent('keydown', init));
+    const notPrevented = dispatchKeyEvent(target, 'keydown', init, params.keyCode, params.key);
     if (params.text === undefined)
       return;
     const charCode = params.text.charCodeAt(0);
@@ -160,7 +201,7 @@ export class WebViewInput {
     const target = this._deepActiveElement() || this._document.body;
     if (!target)
       return;
-    const event = new KeyboardEvent('keyup', {
+    dispatchKeyEvent(target, 'keyup', {
       bubbles: true,
       cancelable: true,
       view: this._window,
@@ -173,8 +214,7 @@ export class WebViewInput {
       shiftKey: params.shiftKey,
       altKey: params.altKey,
       metaKey: params.metaKey,
-    });
-    markAndDispatch(target, event);
+    }, params.keyCode, params.key);
   }
 
   insertText(text: string) {
