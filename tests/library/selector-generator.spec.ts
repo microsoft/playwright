@@ -95,8 +95,8 @@ it.describe('selector generator', () => {
       <button aria-description="Upload report">Submit</button>
       <button aria-description="Upload photo">Submit</button>
     `);
-    expect(await generate(page, 'button[aria-description="Upload report"]')).toBe('internal:role=button[name="Submit"i][description="Upload report"s]');
-    expect(await generate(page, 'button[aria-description="Upload photo"]')).toBe('internal:role=button[name="Submit"i][description="Upload photo"s]');
+    expect(await generate(page, 'button[aria-description="Upload report"]')).toBe('internal:role=button[name="Submit"i][description="Upload report"i]');
+    expect(await generate(page, 'button[aria-description="Upload photo"]')).toBe('internal:role=button[name="Submit"i][description="Upload photo"i]');
   });
 
   it('should not use description when name is unique', async ({ page }) => {
@@ -114,8 +114,8 @@ it.describe('selector generator', () => {
       <button aria-describedby="desc1">Submit</button>
       <button aria-describedby="desc2">Submit</button>
     `);
-    expect(await generate(page, 'button[aria-describedby="desc1"]')).toBe('internal:role=button[name="Submit"i][description="Save form data"s]');
-    expect(await generate(page, 'button[aria-describedby="desc2"]')).toBe('internal:role=button[name="Submit"i][description="Save as draft"s]');
+    expect(await generate(page, 'button[aria-describedby="desc1"]')).toBe('internal:role=button[name="Submit"i][description="Save form data"i]');
+    expect(await generate(page, 'button[aria-describedby="desc2"]')).toBe('internal:role=button[name="Submit"i][description="Save as draft"i]');
   });
 
   it('should fall back to nth when name and description are both not unique', async ({ page }) => {
@@ -124,6 +124,28 @@ it.describe('selector generator', () => {
       <button aria-description="Same desc">Submit</button>
     `);
     expect(await generate(page, 'button:first-of-type')).toBe('internal:role=button[name="Submit"i] >> nth=0');
+  });
+
+  it('should use consistent exactness for name and description', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41032' }
+  }, async ({ page }) => {
+    // The public getByRole API has a single `exact` flag that covers both
+    // `name` and `description`, so the producer must not emit a candidate
+    // that mixes substring name with exact description (or vice versa).
+    await page.setContent(`
+      <table>
+        <tr title="table row 1">
+          <td>foo</td><td>bar</td><td>baz</td><td>foo</td><td>bar</td><td>baz</td><td>foo</td><td>bar</td><td>baz</td>
+        </tr>
+        <tr title="table row 2">
+          <td>foo</td><td>bar</td><td>baz</td><td>foo</td><td>bar</td><td>baz</td><td>foo</td><td>bar</td><td>baz</td>
+        </tr>
+      </table>
+    `);
+    const selector = await generate(page, 'tr[title="table row 1"]');
+    // Both name and description must share the same case-sensitivity flag.
+    expect(selector).not.toMatch(/\[name="[^"]*"i\]\[description="[^"]*"s\]/);
+    expect(selector).not.toMatch(/\[name="[^"]*"s\]\[description="[^"]*"i\]/);
   });
 
   it('should use description when role has no name', async ({ page }) => {

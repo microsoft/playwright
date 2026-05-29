@@ -253,6 +253,17 @@ it('reverse engineer getByRole', async ({ page }) => {
   });
 });
 
+it('refuses to translate internal:role with conflicting name/description exactness', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41032' }
+}, async () => {
+  const conflicting = 'internal:role=row[name="abc"i][description="d"s]';
+  const conflictingReversed = 'internal:role=row[name="abc"s][description="d"i]';
+  for (const lang of ['javascript', 'python', 'java', 'csharp'] as const) {
+    expect.soft(asLocator(lang, conflicting), lang).toBe(conflicting);
+    expect.soft(asLocator(lang, conflictingReversed), lang).toBe(conflictingReversed);
+  }
+});
+
 it('reverse engineer ignore-case locators', async ({ page }) => {
   expect.soft(generate(page.getByText('hello my\nwo"rld'))).toEqual({
     csharp: 'GetByText("hello my\\nwo\\"rld")',
