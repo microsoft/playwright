@@ -91,13 +91,6 @@ export type Config = {
     remoteEndpoint?: string | playwright.ConnectOptions & { endpoint: string };
 
     /**
-     * Headers to send with the remote endpoint connect request. Ignored when
-     * `remoteEndpoint` is provided as a [ConnectOptions] object; supply
-     * `headers` on that object instead.
-     */
-    remoteHeaders?: Record<string, string>;
-
-    /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
      */
     initPage?: string[];

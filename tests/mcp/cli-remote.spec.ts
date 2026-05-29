@@ -19,12 +19,14 @@ import { test, expect } from './cli-fixtures';
 
 test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium', 'Run only on the chromium project; the remote server connection is browser-agnostic.');
 
-test('attach to run-server endpoint with remoteHeaders from config', async ({ cli, runServerEndpoint, server }, testInfo) => {
+test('attach to run-server endpoint with headers from config', async ({ cli, runServerEndpoint, server }, testInfo) => {
   const configPath = testInfo.outputPath('config.json');
   await fs.promises.writeFile(configPath, JSON.stringify({
     browser: {
-      remoteEndpoint: runServerEndpoint,
-      remoteHeaders: { 'x-playwright-browser': 'chromium' },
+      remoteEndpoint: {
+        endpoint: runServerEndpoint,
+        headers: { 'x-playwright-browser': 'chromium' },
+      },
       isolated: true,
     },
   }, null, 2));

@@ -121,7 +121,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   // shape.
   const remote = config.browser.remoteEndpoint!;
   const remoteOptions = typeof remote === 'string'
-    ? { endpoint: remote, headers: config.browser.remoteHeaders }
+    ? { endpoint: remote }
     : remote;
 
   const descriptor = await serverRegistry.find(remoteOptions.endpoint);

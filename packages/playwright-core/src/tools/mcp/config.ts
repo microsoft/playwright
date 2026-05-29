@@ -63,7 +63,6 @@ export type CLIOptions = {
   port?: number;
   proxyBypass?: string;
   proxyServer?: string;
-  remoteHeader?: Record<string, string>;
   saveSession?: boolean;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
@@ -333,7 +332,6 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
       remoteEndpoint: cliOptions.endpoint,
-      remoteHeaders: cliOptions.remoteHeader,
     },
     extension: cliOptions.extension,
     server: {
@@ -404,7 +402,6 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.port = numberParser(e.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(e.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(e.PLAYWRIGHT_MCP_PROXY_SERVER);
-  options.remoteHeader = headerParser(envToString(e.PLAYWRIGHT_MCP_REMOTE_HEADERS));
   options.secrets = dotenvFileLoader(e.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(e.PLAYWRIGHT_MCP_STORAGE_STATE);
   options.testIdAttribute = envToString(e.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
