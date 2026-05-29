@@ -32,16 +32,40 @@ export const TabbedPane: React.FunctionComponent<{
   setSelectedTab: (tab: string) => void
 }> = ({ tabs, selectedTab, setSelectedTab }) => {
   const idPrefix = React.useId();
+  const tabStripRef = React.useRef<HTMLDivElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const tabElements = Array.from(tabStripRef.current?.querySelectorAll('[role="tab"]') ?? []) as HTMLElement[];
+    const currentIndex = tabElements.findIndex(el => el === document.activeElement);
+    if (currentIndex === -1)
+      return;
+    let nextIndex = currentIndex;
+    if (e.key === 'ArrowRight')
+      nextIndex = (currentIndex + 1) % tabElements.length;
+    else if (e.key === 'ArrowLeft')
+      nextIndex = (currentIndex - 1 + tabElements.length) % tabElements.length;
+    else if (e.key === 'Home')
+      nextIndex = 0;
+    else if (e.key === 'End')
+      nextIndex = tabElements.length - 1;
+    else
+      return;
+    e.preventDefault();
+    tabElements[nextIndex].focus();
+    setSelectedTab(tabs[nextIndex].id);
+  };
+
   return <div className='tabbed-pane'>
     <div className='vbox'>
       <div className='hbox' style={{ flex: 'none' }}>
-        <div className='tabbed-pane-tab-strip' role='tablist'>{
+        <div className='tabbed-pane-tab-strip' role='tablist' onKeyDown={handleKeyDown} ref={tabStripRef}>{
           tabs.map(tab => (
             <div className={clsx('tabbed-pane-tab-element', selectedTab === tab.id && 'selected')}
               onClick={() => setSelectedTab(tab.id)}
               id={`${idPrefix}-${tab.id}`}
               key={tab.id}
               role='tab'
+              tabIndex={selectedTab === tab.id ? 0 : -1}
               aria-selected={selectedTab === tab.id}>
               <div className='tabbed-pane-tab-label'>{tab.title}</div>
             </div>
