@@ -366,29 +366,13 @@ function sanitizeUnicode(text: string): string {
 }
 
 async function listFilesRecursive(dir: string): Promise<{ path: string, size: number, mtimeMs: number }[]> {
-  const result: { path: string, size: number, mtimeMs: number }[] = [];
-  async function walk(current: string) {
-    let entries: fs.Dirent[];
-    try {
-      entries = await fs.promises.readdir(current, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      const full = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        await walk(full);
-      } else if (entry.isFile()) {
-        try {
-          const stat = await fs.promises.stat(full);
-          result.push({ path: full, size: stat.size, mtimeMs: stat.mtimeMs });
-        } catch {
-        }
-      }
-    }
-  }
-  await walk(dir);
-  return result;
+  const entries = await fs.promises.readdir(dir, { recursive: true, withFileTypes: true });
+  const files = entries.filter(e => e.isFile());
+  return Promise.all(files.map(async e => {
+    const full = path.join(e.parentPath, e.name);
+    const { size, mtimeMs } = await fs.promises.stat(full);
+    return { path: full, size, mtimeMs };
+  }));
 }
 
 function parseSections(text: string): Map<string, string> {
