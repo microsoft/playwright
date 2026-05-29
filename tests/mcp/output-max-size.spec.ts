@@ -22,20 +22,31 @@ import { test, expect } from './fixtures';
 test('evicts oldest evictable files before write exceeds cap, pinned session.md survives', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
   const { client } = await startClient({
-    config: {
-      outputDir,
-      saveSession: true,
-      outputMaxSize: 10_000,
-    },
+    config: { outputDir, saveSession: true, outputMaxSize: 5_000 },
   });
 
-  await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+  let n = 0;
+  server.setRoute('/download', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename=file-${n++}.bin`,
+    });
+    res.end(Buffer.alloc(1000, 'x'));
+  });
+  server.setContent('/', `<!doctype html><body><a href="/download" download>D</a></body>`, 'text/html');
 
-  for (let i = 0; i < 8; i++)
-    await client.callTool({ name: 'browser_take_screenshot' });
-  const pngs = fs.readdirSync(outputDir).filter(f => f.endsWith('.png'));
-  expect(pngs.length).toBeLessThan(8);
-  expect(pngs.reduce((acc, f) => acc + fs.statSync(path.join(outputDir, f)).size, 0)).toBeLessThanOrEqual(10_000);
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+  for (let i = 0; i < 8; i++) {
+    await client.callTool({ name: 'browser_click', arguments: { element: 'D', target: 'e2' } });
+    // Click returns before download.saveAs() completes; wait for the file before the next eviction.
+    await expect.poll(() => fs.existsSync(path.join(outputDir, `file-${i}.bin`))).toBe(true);
+  }
+  // One more tool call so eviction runs with all 8 downloads on disk.
+  await client.callTool({ name: 'browser_snapshot' });
+
+  const bins = fs.readdirSync(outputDir).filter(f => f.endsWith('.bin'));
+  expect(bins.length).toBeLessThan(8);
+  expect(bins.reduce((acc, f) => acc + fs.statSync(path.join(outputDir, f)).size, 0)).toBeLessThanOrEqual(5_000);
 
   const sessionFolder = fs.readdirSync(outputDir).find(e => e.startsWith('session-'));
   expect(sessionFolder).toBeTruthy();
