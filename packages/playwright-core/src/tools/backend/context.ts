@@ -45,6 +45,7 @@ export type ContextConfig = {
     blockedOrigins?: string[];
   };
   outputDir?: string;
+  outputMaxSize?: number;
   outputMode?: 'file' | 'stdout';
   saveSession?: boolean;
   saveTrace?: boolean;
