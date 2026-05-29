@@ -123,76 +123,72 @@ page/elementhandle-screenshot.spec.ts › element screenshot › should not issu
 page/locator-misc-1.spec.ts › should focus and blur a button [fail]
 
 # ============================================================================
-# execution-context-destroyed  (65 tests)
-# Cross-navigation handle invalidation is racy on stock RDP — execution
-# contexts are reported destroyed before our frame manager learns about the
-# navigation. Needs proper Runtime.executionContextsCleared wiring in wvPage.
+# service-worker  (2 tests)
+# Service-worker request interception/reporting is unsupported on the stock
+# WebView backend; routing a request through a service worker tears down the
+# session ('Target closed').
 # ============================================================================
-page/elementhandle-convenience.spec.ts › innerHTML should work [fail]
-page/elementhandle-convenience.spec.ts › innerText should work [fail]
-page/elementhandle-convenience.spec.ts › textContent should work [fail]
-page/elementhandle-misc.spec.ts › should fill input when Node is removed [fail]
-page/elementhandle-misc.spec.ts › should select single option [fail]
-page/elementhandle-press.spec.ts › should not modify selection when focused [fail]
-page/elementhandle-query-selector.spec.ts › should query existing element [fail]
-page/elementhandle-select-text.spec.ts › should select input [fail]
-page/elementhandle-select-text.spec.ts › should select textarea [fail]
-page/elementhandle-type.spec.ts › should not modify selection when focused [fail]
-page/elementhandle-wait-for-element-state.spec.ts › should wait for stable position [fail]
 page/interception.spec.ts › should intercept after a service worker [fail]
-page/locator-click.spec.ts › should double click the button [fail]
-page/locator-element-handle.spec.ts › xpath should query existing element [fail]
-page/locator-list.spec.ts › locator.all should work [fail]
-page/locator-misc-2.spec.ts › should select textarea [fail]
-page/network-post-data.spec.ts › should return post data for PUT requests [fail]
-page/network-post-data.spec.ts › should return post data w/o content-type @smoke [fail]
-page/page-add-init-script.spec.ts › should support multiple scripts [fail]
-page/page-add-locator-handler.spec.ts › should not work with force:true [fail]
-page/page-add-locator-handler.spec.ts › should work › mouseover 1 times [fail]
-page/page-add-script-tag.spec.ts › should work with a content and type=module [fail]
-page/page-add-style-tag.spec.ts › should include sourceURL when path is provided [fail]
-page/page-aria-snapshot.spec.ts › should include pseudo codepoints [fail]
-page/page-click-scroll.spec.ts › should scroll into view element in iframe [fail]
-page/page-click.spec.ts › should click on checkbox label and toggle [fail]
-page/page-click.spec.ts › should click the button after navigation [fail]
-page/page-click.spec.ts › should fail when element detaches after animation [fail]
-page/page-click.spec.ts › should not wait with force [fail]
-page/page-click.spec.ts › should report nice error when element is detached and force-clicked [fail]
-page/page-click.spec.ts › should waitFor display:none to be gone [fail]
-page/page-click.spec.ts › should waitFor visibility:hidden to be gone [fail]
-page/page-click.spec.ts › should waitFor visible when parent is hidden [fail]
-page/page-drag.spec.ts › Drag and drop › should send the right events [fail]
-page/page-evaluate.spec.ts › should work with overridden globalThis.Window/Document/Node › () => globalThis.Window = null [fail]
-page/page-evaluate.spec.ts › should work with overridden globalThis.Window/Document/Node › () => globalThis.Window = {} [fail]
 page/page-event-request.spec.ts › should report requests and responses handled by service worker with routing [fail]
-page/page-event-request.spec.ts › should return last requests [fail]
-page/page-fill.spec.ts › input event.composed should be true and cross shadow dom boundary - color [fail]
-page/page-fill.spec.ts › should fill different input types [fail]
-page/page-fill.spec.ts › should retry on disabled element [fail]
-page/page-fill.spec.ts › should retry on invisible element [fail]
-page/page-fill.spec.ts › should retry on readonly element [fail]
-page/page-fill.spec.ts › should throw on unsupported inputs [fail]
-page/page-history.spec.ts › page.reload should not resolve with same-document navigation [fail]
-page/page-keyboard.spec.ts › insertText should only emit input event [fail]
-page/page-keyboard.spec.ts › should have correct Keydown/Keyup order when pressing Escape key [fail]
-page/page-keyboard.spec.ts › should report multiple modifiers [fail]
-page/page-keyboard.spec.ts › should report shiftKey [fail]
-page/page-keyboard.spec.ts › should specify location [fail]
-page/page-mouse.spec.ts › should set modifier keys on click [fail]
-page/page-network-request.spec.ts › should parse the json post data [fail]
-page/page-route.spec.ts › should intercept when postData is more than 1MB [fail]
-page/page-route.spec.ts › should pause intercepted fetch request until continue [fail]
+
+# ============================================================================
+# out-of-process-iframe  (1 test)
+# iOS 26 site-isolates frames into their own targets, which wvPage does not
+# attach — it drives the page through the top-level page target only. Actions
+# that must reach inside a cross-origin iframe therefore time out.
+# ============================================================================
+page/page-click-scroll.spec.ts › should scroll into view element in iframe [fail]
+
+# ============================================================================
+# native-drag-and-drop  (1 test)
+# Synthetic mouse events cannot drive WebKit's native HTML5 drag controller, so
+# dragstart/dragenter/dragover/drop are never produced for draggable elements.
+# ============================================================================
+page/page-drag.spec.ts › Drag and drop › should send the right events [fail]
+
+# ============================================================================
+# screenshot-animations  (4 tests)
+# screenshot({ animations: 'disabled' }) cannot freeze or advance animations
+# over the stock RDP (no Playwright screenshot patches), so animation-sensitive
+# screenshot comparisons differ.
+# ============================================================================
 page/page-screenshot.spec.ts › page screenshot animations › should capture screenshots after layoutchanges in transitionend event › make sure transition is actually running [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should fire transitionend for finite transitions › make sure transition is actually running [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should not capture css animations in shadow DOM [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should not capture pseudo element css animation [fail]
-page/page-screenshot.spec.ts › page screenshot animations › should not change animation with playbackRate equal to 0 [fail]
-page/page-screenshot.spec.ts › page screenshot animations › should resume infinite animations [fail]
-page/page-select-option.spec.ts › should wait for multiple options to be present [fail]
-page/page-select-option.spec.ts › should wait for option index to be present [fail]
-page/page-wait-for-selector-1.spec.ts › should report logs while waiting for hidden [fail]
-page/retarget.spec.ts › input value retargeting › "label" in "<label     >Text <input id=target></label>" input value [fail]
-page/selectors-css.spec.ts › should work for open shadow roots [fail]
+
+# ============================================================================
+# network-request-tracking  (1 test)
+# Rapidly-issued requests are occasionally dropped from the page's request log
+# on the stock RDP, so the full ordered list comes back incomplete.
+# ============================================================================
+page/page-event-request.spec.ts › should return last requests [fail]
+
+# ============================================================================
+# redirect-interception  (3 tests)
+# Request interception across HTTP redirects is incomplete on the stock WebView
+# backend — redirected (and redirected subresource) requests are not surfaced
+# to the route handler, and the final navigation response comes back null.
+# ============================================================================
+page/page-route.spec.ts › should not work with redirects [fail]
+page/page-route.spec.ts › should chain fallback w/ dynamic URL [fail]
+page/page-route.spec.ts › should work with redirects for subresources [fail]
+
+# ============================================================================
+# main-navigation-fulfill-flaky  (6 tests)
+# Intercepting/fulfilling the MAIN navigation request is flaky on iOS 26: the
+# navigation triggers a process swap and the provisional target arrives
+# un-paused, so interception races the request and page.goto resolves to null
+# (or the real server response). Subresource interception (e.g. mocking an
+# <img>) is unaffected. Pre-existing flakiness, surfaced now that the suite
+# runs again. Needs the provisional target to honor Target.setPauseOnStart.
+# ============================================================================
+page/page-request-fulfill.spec.ts › should work [fail]
+page/page-request-fulfill.spec.ts › should work with buffer as body [fail]
+page/page-request-fulfill.spec.ts › should work with status code 422 [fail]
+page/page-request-fulfill.spec.ts › should fulfill with fetch response that has multiple set-cookie [fail]
+page/page-request-fulfill.spec.ts › should fulfill with fetch result and overrides [fail]
+page/page-request-fulfill.spec.ts › should fulfill with gzip and readback [fail]
 
 # ============================================================================
 # element-not-attached  (11 tests)
@@ -220,9 +216,11 @@ page/page-screenshot.spec.ts › page screenshot animations › should not captu
 # deserves individual triage.
 # ============================================================================
 page/elementhandle-bounding-box.spec.ts › should handle scroll offset and click [fail]
+page/elementhandle-press.spec.ts › should not modify selection when focused [fail]
 page/elementhandle-press.spec.ts › should not select existing value [fail]
 page/elementhandle-press.spec.ts › should reset selection when not focused [fail]
 page/elementhandle-press.spec.ts › should work [fail]
+page/elementhandle-type.spec.ts › should not modify selection when focused [fail]
 page/elementhandle-type.spec.ts › should not select existing value [fail]
 page/elementhandle-type.spec.ts › should reset selection when not focused [fail]
 page/elementhandle-type.spec.ts › should work [fail]
@@ -377,7 +375,6 @@ page/page-request-continue.spec.ts › propagate headers same origin redirect [f
 page/page-request-continue.spec.ts › redirect after continue should be able to delete cookie [fail]
 page/page-request-continue.spec.ts › should respect set-cookie in redirect response [fail]
 page/page-request-fallback.spec.ts › should not chain abort [fail]
-page/page-request-fulfill.spec.ts › should fulfill with fetch response that has multiple set-cookie [fail]
 page/page-request-fulfill.spec.ts › should fulfill with har response [fail]
 page/page-request-fulfill.spec.ts › should fulfill with multiple set-cookie [fail]
 page/page-request-intercept.spec.ts › should support timeout option in route.fetch [fail]
@@ -492,9 +489,6 @@ page/page-request-continue.spec.ts › should not forward Host header on cross-o
 page/page-request-continue.spec.ts › should work with Cross-Origin-Opener-Policy [fail]
 page/page-request-fallback.spec.ts › should fall back after exception [fail]
 page/page-request-fallback.spec.ts › should work [fail]
-page/page-request-fulfill.spec.ts › should allow mocking binary responses [fail]
-page/page-request-fulfill.spec.ts › should allow mocking svg with charset [fail]
-page/page-request-fulfill.spec.ts › should fulfill with fetch result and overrides [fail]
 page/page-route.spec.ts › should not support ? in glob pattern [fail]
 page/page-screenshot.spec.ts › page screenshot › should capture canvas changes [fail]
 page/page-screenshot.spec.ts › page screenshot › should work with odd clip size on Retina displays [fail]
@@ -544,7 +538,6 @@ page/page-emulate-media.spec.ts › should emulate contrast [fail]
 page/page-emulate-media.spec.ts › should emulate forcedColors [fail]
 page/page-emulate-media.spec.ts › should emulate type @smoke [fail]
 page/page-emulate-media.spec.ts › should work during navigation [fail]
-page/page-request-fulfill.spec.ts › should fulfill with gzip and readback [fail]
 page/page-request-gc.spec.ts › should work [fail]
 page/page-request-intercept.spec.ts › should fulfill intercepted response using alias [fail]
 page/page-request-intercept.spec.ts › should intercept with url override [fail]
