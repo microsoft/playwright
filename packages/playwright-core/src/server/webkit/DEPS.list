@@ -2,6 +2,7 @@
 @isomorphic/**
 @utils/**
 ../
+../../generated/
 ../registry/
 node_modules/jpeg-js
 node_modules/pngjs

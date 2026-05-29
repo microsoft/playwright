@@ -28,6 +28,7 @@ import { helper } from '../../helper';
 import { perMessageDeflate } from '../../transport';
 import { getUserAgent } from '../../userAgent';
 import { BrowserContext } from '../../browserContext';
+import * as rawWebViewInputSource from '../../../generated/webViewInputSource';
 import { DialogBridge } from './dialogBridge';
 import { WVConnection } from './wvConnection';
 import { WVPage } from './wvPage';
@@ -207,6 +208,7 @@ export class WVBrowser extends Browser {
         throw new Error(`No Mobile Safari tabs found at ${this._proxyBase}/json — open Safari first.`);
     }
     this._page = this._firstTab().page;
+    await this._context.extendInjectedScript(rawWebViewInputSource.source);
   }
 
   private _firstTab(): TabEntry {
