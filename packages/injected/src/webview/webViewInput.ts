@@ -186,17 +186,18 @@ export class WebViewInput {
       metaKey: params.metaKey,
     };
     const notPrevented = dispatchKeyEvent(target, 'keydown', init, params.keyCode, params.key);
-    // Non-text keys produce only keydown — nothing more to deliver.
-    if (params.text === undefined)
+    // Non-text keys produce only keydown; a cancelled keydown also suppresses the
+    // keypress and the default text insertion.
+    if (params.text === undefined || !notPrevented)
       return;
-    return this._typeCharacter(target, init, notPrevented, params.text);
+    return this._typeCharacter(target, init, params.text);
   }
 
-  private async _typeCharacter(target: EventTarget, init: KeyboardEventInit, keydownNotPrevented: boolean, text: string) {
+  private async _typeCharacter(target: EventTarget, init: KeyboardEventInit, text: string) {
     await this._nextTask();
     const charCode = text.charCodeAt(0);
     const charNotPrevented = markAndDispatch(target, new KeyboardEvent('keypress', { ...init, charCode, keyCode: charCode, which: charCode }));
-    if (!keydownNotPrevented || !charNotPrevented)
+    if (!charNotPrevented)
       return;
     await this._nextTask();
     // Real WebKit fires a `textInput` (TextEvent) whose default action performs
