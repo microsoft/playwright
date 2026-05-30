@@ -110,22 +110,22 @@ function dispatchKeyEvent(node: EventTarget, type: string, init: KeyboardEventIn
 export class WebViewInput {
   private _window: Window & typeof globalThis;
   private _document: Document;
-  private _setTimeout: Window['setTimeout'];
   private _hoverTarget: Element | null = null;
 
   constructor(window: Window & typeof globalThis, document: Document) {
     this._window = window;
     this._document = document;
-    // Captured before page scripts run (bootstrap), so a page that later
-    // overrides setTimeout cannot break the per-event task scheduling below.
-    this._setTimeout = window.setTimeout.bind(window);
   }
 
   // Real input events are each delivered in their own event-loop task; dispatch
   // a sequence the same way so handlers that schedule work between events behave
-  // as they would on a real device.
+  // as they would on a real device. Timers come from the globals snapshot (taken
+  // at bootstrap), so a page overriding setTimeout cannot break scheduling.
   private _nextTask(): Promise<void> {
-    return new Promise(resolve => this._setTimeout(resolve));
+    const builtins = (this._window as any).__pwSnapshotGlobals || this._window;
+    // setImmediate avoids setTimeout's clamping, but WebKit does not implement it.
+    const schedule = builtins.setImmediate || builtins.setTimeout;
+    return new Promise(resolve => schedule.call(this._window, resolve));
   }
 
   // Descend through open shadow roots so synthetic events land on the actual
@@ -192,8 +192,6 @@ export class WebViewInput {
     return this._typeCharacter(target, init, notPrevented, params.text);
   }
 
-  // keypress and textInput follow keydown, each in its own task — real WebKit
-  // delivers every key event in a separate event-loop task.
   private async _typeCharacter(target: EventTarget, init: KeyboardEventInit, keydownNotPrevented: boolean, text: string) {
     await this._nextTask();
     const charCode = text.charCodeAt(0);

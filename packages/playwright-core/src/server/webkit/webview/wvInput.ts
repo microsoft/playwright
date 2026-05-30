@@ -144,9 +144,13 @@ async function callWebViewInput(progress: Progress, session: WVSession | undefin
   // way a real device does. Await the returned promise so the action only
   // resolves once every event has been delivered. Stock WebKit's Runtime.evaluate
   // has no awaitPromise option, so use the separate Runtime.awaitPromise command.
-  const { result } = await progress.race(session.send('Runtime.evaluate', { expression, returnByValue: false } as any)) as { result: { objectId?: string } };
-  if (result?.objectId) {
-    await progress.race(session.send('Runtime.awaitPromise', { promiseObjectId: result.objectId, returnByValue: true } as any));
-    await progress.race(session.sendMayFail('Runtime.releaseObject', { objectId: result.objectId }));
+  const { result } = await progress.race(session.send('Runtime.evaluate', { expression, returnByValue: false }));
+  // `result` is absent if evaluation failed (e.g. the frame navigated away).
+  // Only promises carry an objectId here — every __pwWebViewInput method returns
+  // void or a Promise — so this both awaits async dispatch and avoids leaking a
+  // handle for the synchronous (void) case.
+  if (result?.className === 'Promise' && result.objectId) {
+    await progress.race(session.send('Runtime.awaitPromise', { promiseObjectId: result.objectId, returnByValue: true }));
+    session.sendMayFail('Runtime.releaseObject', { objectId: result.objectId });
   }
 }
