@@ -42,6 +42,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation } from '../common';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
+import type { WorkerHost } from './workerHost';
 
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
@@ -84,6 +85,8 @@ export type RunTestsParams = {
   doNotRunDepsOutsideProjectFilter?: boolean;
   disableConfigReporters?: boolean;
   failOnLoadErrors?: boolean;
+  preforkedWorkers?: WorkerHost[];
+  workerEnv?: Record<string, string | undefined>;
 };
 
 export type FullResultStatus = reporterTypes.FullResult['status'];
@@ -327,6 +330,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       pauseAtEnd: params.pauseAtEnd,
       preserveOutputDir: true,
       onTestPaused: params => this.emit(TestRunnerEvent.TestPaused, params),
+      preforkedWorkers: params.preforkedWorkers,
+      workerEnv: params.workerEnv,
     };
 
     const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test', undefined, options);

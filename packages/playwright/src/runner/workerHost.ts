@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { assert } from '@isomorphic/assert';
 import { removeFolders } from '@utils/fileUtils';
 
 import { ProcessHost } from './processHost';
@@ -37,46 +38,81 @@ type WorkerHostOptions = {
   pauseAtEnd: boolean;
 };
 
+type WorkerHostInitOptions = WorkerHostOptions & {
+  testGroup: TestGroup;
+};
+
 export class WorkerHost extends ProcessHost {
-  readonly parallelIndex: number;
   readonly workerIndex: number;
-  private _hash: string;
-  private _params: ipc.WorkerInitParams;
+  private _parallelIndex: number;
+  private _hash: string | undefined;
+  private _params: ipc.WorkerInitParams | undefined;
   private _didFail = false;
 
-  constructor(testGroup: TestGroup, options: WorkerHostOptions) {
+  constructor(testGroup: TestGroup, options: WorkerHostOptions);
+  constructor(parallelIndex: number);
+  constructor(testGroupOrParallelIndex: TestGroup | number, options?: WorkerHostOptions) {
     const workerIndex = lastWorkerIndex++;
+    const extraEnv = options?.extraEnv || {};
     super(require.resolve('../worker/workerProcessEntry.js'), `worker-${workerIndex}`, {
-      ...options.extraEnv,
+      ...extraEnv,
       FORCE_COLOR: '1',
       DEBUG_COLORS: process.env.DEBUG_COLORS === undefined ? '1' : process.env.DEBUG_COLORS,
     });
     this.workerIndex = workerIndex;
-    this.parallelIndex = options.parallelIndex;
-    this._hash = testGroup.workerHash;
+    this._parallelIndex = typeof testGroupOrParallelIndex === 'number' ? testGroupOrParallelIndex : options!.parallelIndex;
+
+    if (typeof testGroupOrParallelIndex !== 'number')
+      this.initialize({ ...options!, testGroup: testGroupOrParallelIndex });
+  }
+
+  get parallelIndex() {
+    return this._parallelIndex;
+  }
+
+  initialize(options: WorkerHostInitOptions) {
+    if (this._params)
+      return;
+
+    this._parallelIndex = options.parallelIndex;
+    this._hash = options.testGroup.workerHash;
 
     this._params = {
       workerIndex: this.workerIndex,
       parallelIndex: options.parallelIndex,
-      repeatEachIndex: testGroup.repeatEachIndex,
-      projectId: testGroup.projectId,
+      repeatEachIndex: options.testGroup.repeatEachIndex,
+      projectId: options.testGroup.projectId,
       config: options.config,
-      artifactsDir: path.join(options.outputDir, artifactsFolderName(workerIndex)),
+      artifactsDir: path.join(options.outputDir, artifactsFolderName(this.workerIndex)),
+      extraEnv: options.extraEnv,
       pauseOnError: options.pauseOnError,
       pauseAtEnd: options.pauseAtEnd,
     };
   }
 
   async start() {
+    assert(this._params, 'Internal error: starting a worker before it is initialized');
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
+    if (this.hasProcess()) {
+      this.initRunner(this._params);
+      return;
+    }
     return await this.startRunner(this._params, {
       onStdOut: chunk => this.emit('stdOut', ipc.stdioChunkToParams(chunk)),
       onStdErr: chunk => this.emit('stdErr', ipc.stdioChunkToParams(chunk)),
     });
   }
 
+  async prefork() {
+    return await this.preforkRunner({
+      onStdOut: chunk => this.emit('stdOut', ipc.stdioChunkToParams(chunk)),
+      onStdErr: chunk => this.emit('stdErr', ipc.stdioChunkToParams(chunk)),
+    });
+  }
+
   override async onExit() {
-    await removeFolders([this._params.artifactsDir]);
+    if (this._params)
+      await removeFolders([this._params.artifactsDir]);
   }
 
   override async stop(didFail?: boolean) {
@@ -101,8 +137,12 @@ export class WorkerHost extends ProcessHost {
     return this._hash;
   }
 
+  isInitialized() {
+    return !!this._params;
+  }
+
   projectId() {
-    return this._params.projectId;
+    return this._params?.projectId;
   }
 
   didFail() {

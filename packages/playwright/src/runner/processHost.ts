@@ -32,6 +32,7 @@ export type ProcessExitData = {
 
 export class ProcessHost extends EventEmitter {
   private process: child_process.ChildProcess | undefined;
+  private _didSendInit = false;
   private _didSendStop = false;
   private _processDidExit = false;
   private _didExitAndRanOnExit = false;
@@ -50,7 +51,7 @@ export class ProcessHost extends EventEmitter {
     this._extraEnv = env;
   }
 
-  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
+  async preforkRunner(options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
     assert(!this.process, 'Internal error: starting the same process twice');
     this.process = child_process.fork(this._entryScript, {
       // Note: we pass detached:false, so that workers are in the same process group.
@@ -125,6 +126,12 @@ export class ProcessHost extends EventEmitter {
 
     if (error)
       return error;
+  }
+
+  initRunner(runnerParams: any) {
+    assert(this.process, 'Internal error: initializing a process before it starts');
+    assert(!this._didSendInit, 'Internal error: initializing the same process twice');
+    this._didSendInit = true;
 
     const processParams: ipc.ProcessInitParams = {
       processName: this._processName,
@@ -137,6 +144,17 @@ export class ProcessHost extends EventEmitter {
         runnerParams
       }
     });
+  }
+
+  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
+    const error = await this.preforkRunner(options);
+    if (error)
+      return error;
+    this.initRunner(runnerParams);
+  }
+
+  hasProcess() {
+    return !!this.process;
   }
 
   sendMessage(message: { method: string, params?: any }) {

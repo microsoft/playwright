@@ -20,6 +20,7 @@
 // imports.
 
 export * as testRunner from './testRunner';
+export * as workerHost from './workerHost';
 export * as testServer from './testServer';
 export * as watchMode from './watchMode';
 export * as projectUtils from './projectUtils';

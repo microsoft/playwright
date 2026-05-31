@@ -64,6 +64,12 @@ export class WorkerMain extends ProcessRunner {
 
   constructor(params: ipc.WorkerInitParams) {
     super();
+    for (const [key, value] of Object.entries(params.extraEnv || {})) {
+      if (value === undefined)
+        delete process.env[key];
+      else
+        process.env[key] = value;
+    }
     process.env.TEST_WORKER_INDEX = String(params.workerIndex);
     process.env.TEST_PARALLEL_INDEX = String(params.parallelIndex);
     globals.setIsWorkerProcess();

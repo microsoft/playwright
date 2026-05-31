@@ -35,6 +35,7 @@ import { createTitleMatcher, forceRegExp, removeDirAndLogToConsole } from '../ut
 
 import type { TestGroup } from '../runner/testGroups';
 import type { EnvByProjectId } from './dispatcher';
+import type { WorkerHost } from './workerHost';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Task } from './taskRunner';
 import type { ReporterDescription } from '../../types/test';
@@ -74,6 +75,8 @@ export type TestRunOptions = {
   preserveOutputDir?: boolean;
   additionalReporters?: ReporterDescription[];
   shardWeights?: number[];
+  preforkedWorkers?: WorkerHost[];
+  workerEnv?: Record<string, string | undefined>;
 };
 
 export type TestPausedParams = {
@@ -423,7 +426,7 @@ function createPhasesTask(): Task<TestRun> {
           processed.add(project);
         if (phaseProjects.length) {
           let testGroupsInPhase = 0;
-          const phase: Phase = { dispatcher: new Dispatcher(testRun), projects: [] };
+          const phase: Phase = { dispatcher: new Dispatcher(testRun, testRun.options.preforkedWorkers), projects: [] };
           testRun.phases.push(phase);
           for (const project of phaseProjects) {
             const projectSuite = projectToSuite.get(project)!;

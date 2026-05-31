@@ -46,8 +46,9 @@ export class Dispatcher {
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(testRun: TestRun) {
+  constructor(testRun: TestRun, preforkedWorkers: WorkerHost[] = []) {
     this._testRun = testRun;
+    this._workerSlots = preforkedWorkers.map(worker => ({ worker }));
     for (const project of testRun.config.projects) {
       if (project.workers)
         this._workerLimitPerProjectId.set(project.id, project.workers);
@@ -117,7 +118,7 @@ export class Dispatcher {
     let worker = this._workerSlots[index].worker;
 
     // 1. Restart the worker if it has the wrong hash or is being stopped already.
-    if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
+    if (worker && (worker.didSendStop() || (worker.isInitialized() && worker.hash() !== job.workerHash))) {
       await worker.stop();
       worker = undefined;
       if (this._isStopped) // Check stopped signal after async hop.
@@ -129,6 +130,12 @@ export class Dispatcher {
     if (!worker) {
       worker = this._createWorker(job, index, ipc.serializeConfig(this._testRun.config, true));
       this._workerSlots[index].worker = worker;
+      worker.on('exit', () => this._workerSlots[index].worker = undefined);
+      startError = await worker.start();
+      if (this._isStopped) // Check stopped signal after async hop.
+        return;
+    } else if (!worker.isInitialized()) {
+      this._initializeWorker(worker, job, index, ipc.serializeConfig(this._testRun.config, true));
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       startError = await worker.start();
       if (this._isStopped) // Check stopped signal after async hop.
@@ -173,12 +180,15 @@ export class Dispatcher {
   }
 
   private _isWorkerRedundant(worker: WorkerHost) {
+    const hash = worker.hash();
+    if (!hash)
+      return false;
     let workersWithSameHash = 0;
     for (const slot of this._workerSlots) {
-      if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash())
+      if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === hash)
         workersWithSameHash++;
     }
-    return workersWithSameHash > this._queuedOrRunningHashCount.get(worker.hash())!;
+    return workersWithSameHash > this._queuedOrRunningHashCount.get(hash)!;
   }
 
   private _updateCounterForWorkerHash(hash: string, delta: number) {
@@ -191,12 +201,15 @@ export class Dispatcher {
     for (const group of testGroups)
       this._updateCounterForWorkerHash(group.workerHash, +1);
     this._isStopped = false;
-    this._workerSlots = [];
+    const preforkedSlots = this._workerSlots
+        .filter(slot => slot.worker && !slot.worker.isInitialized() && !slot.worker.didSendStop())
+        .slice(0, this._testRun.config.config.workers);
+    this._workerSlots = preforkedSlots;
     // 0. Stop right away if we have reached max failures.
     if (this._testRun.hasReachedMaxFailures())
       void this.stop();
     // 1. Allocate workers.
-    for (let i = 0; i < this._testRun.config.config.workers; i++)
+    for (let i = this._workerSlots.length; i < this._testRun.config.config.workers; i++)
       this._workerSlots.push({});
     // 2. Schedule enough jobs.
     for (let i = 0; i < this._workerSlots.length; i++)
@@ -207,13 +220,14 @@ export class Dispatcher {
     await this._finished;
   }
 
-  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: ipc.SerializedConfig) {
+  _initializeWorker(worker: WorkerHost, testGroup: TestGroup, parallelIndex: number, loaderData: ipc.SerializedConfig) {
     const project = this._testRun.config.projects.find(p => p.id === testGroup.projectId)!;
     const pauseAtEnd = this._testRun.topLevelProjects.includes(project) && !!this._testRun.options.pauseAtEnd;
-    const worker = new WorkerHost(testGroup, {
+    worker.initialize({
+      testGroup,
       parallelIndex,
       config: loaderData,
-      extraEnv: this._extraEnvByProjectId.get(testGroup.projectId) || {},
+      extraEnv: { ...this._testRun.options.workerEnv, ...this._extraEnvByProjectId.get(testGroup.projectId) },
       outputDir: project.project.outputDir,
       pauseOnError: !!this._testRun.options.pauseOnError,
       pauseAtEnd,
@@ -260,6 +274,11 @@ export class Dispatcher {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
       this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
     });
+  }
+
+  _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: ipc.SerializedConfig) {
+    const worker = new WorkerHost(parallelIndex);
+    this._initializeWorker(worker, testGroup, parallelIndex, loaderData);
     return worker;
   }
 
