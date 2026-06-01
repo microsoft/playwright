@@ -225,13 +225,31 @@ export const ApiCallViewport: React.FC<{
   </div>;
 };
 
+function isManuallyExpandedApiCall(
+  callId: string | undefined,
+  expandedApiCalls: Set<string> | undefined,
+  collapsedApiCalls: Set<string> | undefined,
+): boolean {
+  if (!callId)
+    return false;
+  if (collapsedApiCalls?.has(callId))
+    return false;
+  return !!expandedApiCalls?.has(callId);
+}
+
 export function shouldShowApiCallViewport(
   autoShowApiDetails: boolean,
   showAllApiCalls: boolean,
   action: ActionTraceEvent | undefined,
   allActions: ActionTraceEventInContext[],
+  expandedApiCalls?: Set<string>,
+  collapsedApiCalls?: Set<string>,
 ): boolean {
   if (showAllApiCalls)
     return true;
-  return autoShowApiDetails && !!action && shouldShowApiCallDetailsUi(action, allActions);
+  if (!action || !shouldShowApiCallDetailsUi(action, allActions))
+    return false;
+  if (autoShowApiDetails)
+    return true;
+  return isManuallyExpandedApiCall(action.callId, expandedApiCalls, collapsedApiCalls);
 }

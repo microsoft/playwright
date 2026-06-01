@@ -131,11 +131,16 @@ export const ActionList: React.FC<ActionListProps> = ({
       showAttachments,
       isApiCall,
       showApiDetails,
-      onToggleApiDetails: () => toggleApiDetails(item.action.callId),
+      onToggleApiDetails: () => {
+        const willShow = !isApiDetailsShown(item.action.callId);
+        toggleApiDetails(item.action.callId);
+        if (willShow)
+          onSelected?.(item.action);
+      },
       model,
       allActions: actions,
     });
-  }, [actions, isApiDetailsShown, isLive, model, revealConsole, revealActionAttachment, sdkLanguage, toggleApiDetails]);
+  }, [actions, isApiDetailsShown, isLive, model, onSelected, revealConsole, revealActionAttachment, sdkLanguage, toggleApiDetails]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
@@ -176,7 +181,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       isError={isError}
       isVisible={isVisible}
       render={render}
-      autoExpandDepth={actionFilterText?.trim() ? 5 : 2}
+      autoExpandDepth={actionFilterText?.trim() ? 5 : 0}
       revealSelectedKey={showAllCounter}
     />
   </div>;
@@ -212,7 +217,7 @@ export const renderAction = (
   else if (!isLive)
     time = '-';
   const { elements, title } = renderTitleForCall(action);
-  return <div className='action-title vbox'>
+  return <div className={clsx('action-title vbox', showApiDetails && 'action-api-expanded-row')}>
     <div className='hbox'>
       <span className='action-title-method' title={title}>{elements}</span>
       {(showDuration || showBadges || showAttachments || isApiCall || isSkipped) && <div className='spacer'></div>}

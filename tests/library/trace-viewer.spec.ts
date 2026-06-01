@@ -114,18 +114,18 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
 
 test('should show API request & response in action list', async ({ runAndTrace, context, server }) => {
   const traceViewer = await runAndTrace(async () => {
-    await test.step('api', async () => {
-      await context.request.get(server.PREFIX + '/empty.html');
-    });
+    await context.request.get(server.PREFIX + '/empty.html');
   });
 
-  const apiAction = traceViewer.actionsTree.getByRole('treeitem').filter({ hasText: 'fetch' }).first();
+  const apiAction = traceViewer.actionsTree.getByRole('treeitem').filter({ hasText: /GET.*empty\.html/ }).first();
   await expect(apiAction).toBeVisible();
 
   const toggle = apiAction.locator('.action-api-details-toggle');
   await expect(toggle).toBeVisible();
+  await expect(traceViewer.page.locator('.api-call-details-viewport')).toHaveCount(0);
   await toggle.click();
-  await expect(traceViewer.page.locator('.api-call-details')).toBeVisible();
+  await expect(apiAction.locator('.action-api-details-panel .api-call-details')).toBeVisible();
+  await expect(traceViewer.page.locator('.api-call-details-viewport .api-call-details')).toBeVisible();
 });
 
 test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {

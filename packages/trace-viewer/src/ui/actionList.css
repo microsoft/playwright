@@ -130,3 +130,14 @@
   display: flex;
   flex-direction: column;
 }
+
+.tree-view-entry:has(.action-api-expanded-row) {
+  height: auto;
+  align-items: flex-start;
+  white-space: normal;
+}
+
+.action-api-expanded-row {
+  flex: auto;
+  min-width: 0;
+}

@@ -59,7 +59,9 @@ export const SnapshotTabsView: React.FunctionComponent<{
   setAutoShowApiDetails?: (value: boolean) => void,
   showAllApiCalls?: boolean,
   setShowAllApiCalls?: (value: boolean) => void,
-}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, playback, allActions, autoShowApiDetails, setAutoShowApiDetails, showAllApiCalls, setShowAllApiCalls }) => {
+  expandedApiCalls?: Set<string>,
+  collapsedApiCalls?: Set<string>,
+}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, playback, allActions, autoShowApiDetails, setAutoShowApiDetails, showAllApiCalls, setShowAllApiCalls, expandedApiCalls, collapsedApiCalls }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
@@ -73,7 +75,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot, model]);
 
   const snapshotUrls = React.useMemo((): SnapshotUrls | undefined => snapshotInfoUrl !== undefined ? { snapshotInfoUrl, snapshotUrl, popoutUrl } : undefined, [snapshotInfoUrl, snapshotUrl, popoutUrl]);
-  const showApiViewport = shouldShowApiCallViewport(!!autoShowApiDetails, !!showAllApiCalls, action, allActions ?? []);
+  const showApiViewport = shouldShowApiCallViewport(!!autoShowApiDetails, !!showAllApiCalls, action, allActions ?? [], expandedApiCalls, collapsedApiCalls);
 
   return <div className='snapshot-tab vbox'>
     <Toolbar>

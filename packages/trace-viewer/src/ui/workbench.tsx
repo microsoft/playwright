@@ -405,6 +405,8 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
           setAutoShowApiDetails={setAutoShowApiDetails}
           showAllApiCalls={showAllApiCalls}
           setShowAllApiCalls={setShowAllApiCalls}
+          expandedApiCalls={expandedApiCalls}
+          collapsedApiCalls={collapsedApiCalls}
         />}
         sidebar={
           <TabbedPane
