@@ -66,30 +66,6 @@ jobs:
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
-  test_linux_chromium_tot:
-    name: ${{ matrix.os }} (chromium tip-of-tree)
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04]
-    runs-on: ${{ matrix.os }}
-    permissions:
-      id-token: write   # This is required for OIDC login (azure/login) to succeed
-      contents: read    # This is required for actions/checkout to succeed
-    steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chromium-tip-of-tree
-        command: npm run test -- --project=chromium-*
-        bot-name: "${{ matrix.os }}-chromium-tip-of-tree"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-
   test_test_runner:
     name: Test Runner
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
@@ -163,7 +139,6 @@ jobs:
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
-        PWTEST_CHANNEL: firefox-beta
         PWTEST_SHARD_WEIGHTS: ${{ matrix.shardWeights }}
 
   test_vscode_extension:
