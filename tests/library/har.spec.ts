@@ -964,6 +964,62 @@ it('should support HAR larger than 512MB', async ({ contextFactory, server, brow
   expect(tail.toString()).toMatch(/\}\s*\}\s*$/);
 });
 
+it('should record resource type', async ({ contextFactory, server, asset }, testInfo) => {
+  server.setRoute('/resource-types.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <link rel="stylesheet" href="/resource-type-stylesheet.css">
+      <script src="/resource-type-script.js"></script>
+      <img src="/resource-type-image.png">
+    `);
+  });
+  server.setRoute('/resource-type-stylesheet.css', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/css' });
+    res.end(`
+      @font-face {
+        font-family: 'iconfont';
+        src: url('/resource-type-font.woff2') format('woff2');
+      }
+      body { font-family: 'iconfont'; }
+    `);
+  });
+  server.setRoute('/resource-type-font.woff2', (req, res) => {
+    server.serveFile(req, res, asset('webfont/iconfont.woff2'));
+  });
+  server.setRoute('/resource-type-script.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/javascript' });
+    res.end('window.__loaded = true;');
+  });
+  server.setRoute('/resource-type-image.png', (req, res) => {
+    server.serveFile(req, res, asset('pptr.png'));
+  });
+
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.PREFIX + '/resource-types.html');
+  await page.evaluate(() => fetch('/resource-type-fetch').catch(() => {}));
+  await page.evaluate(() => new Promise<void>(resolve => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', '/resource-type-xhr');
+    xhr.onloadend = () => resolve();
+    xhr.send();
+  }));
+  const log = await getLog();
+
+  const typeForURL = log.entries.reduce((accumulator, entry) => {
+    accumulator[entry.request.url] = entry._resourceType;
+    return accumulator;
+  }, {});
+  expect(typeForURL).toMatchObject({
+    [server.PREFIX + '/resource-types.html']: 'document',
+    [server.PREFIX + '/resource-type-stylesheet.css']: 'stylesheet',
+    [server.PREFIX + '/resource-type-script.js']: 'script',
+    [server.PREFIX + '/resource-type-image.png']: 'image',
+    [server.PREFIX + '/resource-type-font.woff2']: 'font',
+    [server.PREFIX + '/resource-type-fetch']: 'fetch',
+    [server.PREFIX + '/resource-type-xhr']: 'xhr',
+  });
+});
+
 it.describe('tracing.startHar', () => {
   it('should record a HAR with options', async ({ contextFactory, server }, testInfo) => {
     const context = await contextFactory();
