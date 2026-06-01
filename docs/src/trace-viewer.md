@@ -695,6 +695,8 @@ In the Actions tab you can see what locator was used for every action and how lo
 - Action log
 - Source code location
 
+[`method: Test.step`] titles that start with `log` (for example `log checkout started`) appear with a **log** badge in the actions list. These steps are recorded when using Playwright Test tracing (for example `trace: 'on'`), not when using [`method: BrowserContext.tracing`] alone.
+
 ### Screenshots
 
 When tracing with the [`option: Tracing.start.screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.
