@@ -61,7 +61,24 @@ class TestServer {
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
-    return await coreServer.startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
+    return await coreServer.startTraceViewerServer({
+      host: options.host,
+      port: options.port,
+      allowedFileRoots: () => this._allowedFileRoots(),
+      transport: this._dispatcher.transport,
+    });
+  }
+
+  private _allowedFileRoots(): string[] {
+    const roots = new Set<string>([process.cwd(), this._configLocation.configDir]);
+    const config = this._dispatcher?._testRunner.lastLoadedConfig();
+    if (config) {
+      for (const project of config.projects) {
+        roots.add(project.project.outputDir);
+        roots.add(project.project.testDir);
+      }
+    }
+    return [...roots];
   }
 
   async stop() {
@@ -97,7 +114,7 @@ export class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
   private _serializer: string | undefined;
   private _closeOnDisconnect = false;
-  private _testRunner: TestRunner;
+  _testRunner: TestRunner;
   private _globalSetupReport: ReportEntry[] | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
