@@ -119,9 +119,7 @@ export class WebViewInput {
     this._setTimeout = ((window as any).__pwSnapshotGlobals || window).setTimeout;
   }
 
-  // Run each event in its own task (like real input). Same-delay setTimeout
-  // callbacks fire in scheduling order, so awaiting the last posted task waits
-  // for every task posted before it too.
+  // Run each event in its own task (like real input).
   private _postTask(task: () => void): Promise<void> {
     return new Promise<void>(resolve => {
       this._setTimeout.call(this._window, () => {
