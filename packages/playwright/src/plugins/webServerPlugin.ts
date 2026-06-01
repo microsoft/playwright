@@ -15,6 +15,7 @@
  */
 import net from 'net';
 import path from 'path';
+import { stripVTControlCharacters } from 'util';
 
 import colors from 'colors/safe';
 import debug from 'debug';
@@ -172,7 +173,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
       launchedProcess[stdio]!.on('data', data => {
         if (!this._options.wait?.[stdio] || stdioWaitCollectors[stdio] === undefined)
           return;
-        stdioWaitCollectors[stdio] += data.toString();
+        stdioWaitCollectors[stdio] += stripVTControlCharacters(data.toString());
         this._options.wait[stdio].lastIndex = 0;
         const result = this._options.wait[stdio].exec(stdioWaitCollectors[stdio]);
         if (result) {
