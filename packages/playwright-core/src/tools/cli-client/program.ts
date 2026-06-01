@@ -156,7 +156,8 @@ export async function program(options?: { embedderVersion?: string}) {
     }
     case 'attach': {
       const attachTarget = args._[1] as string | undefined;
-      if (attachTarget && (args.cdp || args.endpoint || args.extension))
+      const targetCount = (attachTarget ? 1 : 0) + (args.cdp ? 1 : 0) + (args.endpoint ? 1 : 0) + (args.extension ? 1 : 0);
+      if (targetCount > 1)
         output.errorAttachConflict();
       if (attachTarget)
         args.endpoint = attachTarget;

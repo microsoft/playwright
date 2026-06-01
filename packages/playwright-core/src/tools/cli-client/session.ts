@@ -125,8 +125,6 @@ export class Session {
     ];
     if (cliArgs.headed)
       args.push('--headed');
-    if (cliArgs.extension)
-      args.push('--extension');
     if (cliArgs.browser)
       args.push(`--browser=${cliArgs.browser}`);
     if (cliArgs.persistent)
@@ -135,9 +133,11 @@ export class Session {
       args.push(`--profile=${cliArgs.profile}`);
     if (cliArgs.config)
       args.push(`--config=${cliArgs.config}`);
-    if (cliArgs.cdp)
+    if (cliArgs.extension)
+      args.push('--extension');
+    else if (cliArgs.cdp)
       args.push(`--cdp=${cliArgs.cdp}`);
-    if (cliArgs.endpoint)
+    else if (cliArgs.endpoint)
       args.push(`--endpoint=${cliArgs.endpoint}`);
 
     const child = spawn(process.execPath, args, {

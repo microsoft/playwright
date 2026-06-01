@@ -63,6 +63,12 @@ test('attach via cdp URL honors PLAYWRIGHT_CLI_SESSION as session name', { annot
   expect(exitCode).toBe(0);
 });
 
+test('attach rejects combining --cdp, --endpoint, or --extension', async ({ cli }) => {
+  const { error, exitCode } = await cli('attach', '--cdp=chrome-dev', '--endpoint=/tmp/foo');
+  expect(exitCode).toBe(1);
+  expect(error).toContain('only one of [name], --cdp, --endpoint, or --extension can be specified');
+});
+
 test('detach tears down an attached session', async ({ cdpServer, cli }) => {
   await cdpServer.start();
 
