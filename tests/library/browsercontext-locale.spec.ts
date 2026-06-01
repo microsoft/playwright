@@ -165,8 +165,8 @@ it('should not change default locale in another context', async ({ browser }) =>
   }
 });
 
-it('should propagate locale to workers', async ({ browser, browserName, server }) => {
-  it.fail(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/38919');
+it('should propagate locale to workers', async ({ browser, browserName, isBidi, server }) => {
+  it.fail(browserName === 'firefox' && !isBidi, 'https://github.com/microsoft/playwright/issues/38919');
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
