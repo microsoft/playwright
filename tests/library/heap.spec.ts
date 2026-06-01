@@ -16,10 +16,38 @@
 
 import { contextTest as test, expect } from '../config/browserTest';
 import { server as coreServer } from '../../packages/playwright-core/lib/coreBundle';
-import { queryObjectCount } from '../config/queryObjects';
 
 test.describe.configure({ mode: 'serial' });
-test.skip(({ browserName }) => browserName !== 'chromium');
+
+// Force a separate worker to start from a clean heap.
+test.use({ launchOptions: [async ({ launchOptions }, use) => use(launchOptions), { scope: 'worker' }] });
+
+async function queryObjectCount(type: Function): Promise<number> {
+  globalThis.typeForQueryObjects = type;
+  const session: import('inspector').Session = new (require('node:inspector').Session)();
+  session.connect();
+  try {
+    await new Promise(f => session.post('Runtime.enable', f));
+    const { result: constructorFunction } = await new Promise(f => session.post('Runtime.evaluate', {
+      expression: `globalThis.typeForQueryObjects.prototype`,
+      includeCommandLineAPI: true,
+    }, (_, result) => f(result))) as any;
+
+    const { objects: instanceArray } = await new Promise(f => session.post('Runtime.queryObjects', {
+      prototypeObjectId: constructorFunction.objectId
+    }, (_, result) => f(result))) as any;
+
+    const { result: { value } } = await new Promise<any>(f => session.post('Runtime.callFunctionOn', {
+      functionDeclaration: 'function (arr) { return this.length; }',
+      objectId: instanceArray.objectId,
+      arguments: [{ objectId: instanceArray.objectId }],
+    }, (_, result) => f(result as any)));
+
+    return value;
+  } finally {
+    session.disconnect();
+  }
+}
 
 const clientClass = {
   Page: null as Function,
@@ -69,9 +97,9 @@ test('should not leak fixtures w/o page', async ({}) => {
 
 test('should not leak server-side objects', async ({ page }) => {
   expect(await queryObjectCount(coreServer.Page)).toBe(1);
-  // 4 is because v8 heap creates objects for descendant classes, so WKContext, CRContext, FFContext, BidiBrowserContext and our context instance.
-  expect(await queryObjectCount(coreServer.BrowserContext)).toBe(5);
-  expect(await queryObjectCount(coreServer.Browser)).toBe(5);
+  // 6 is because v8 heap creates objects for descendant classes, so WKContext, CRContext, FFContext, WVBrowserContext, BidiBrowserContext and our context instance.
+  expect(await queryObjectCount(coreServer.BrowserContext)).toBe(6);
+  expect(await queryObjectCount(coreServer.Browser)).toBe(6);
 });
 
 test('should not leak dispatchers after closing page', async ({ context, server }) => {
