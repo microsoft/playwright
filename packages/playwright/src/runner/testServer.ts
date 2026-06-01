@@ -73,8 +73,10 @@ class TestServer {
     const roots = new Set<string>([process.cwd(), this._configLocation.configDir]);
     const config = this._dispatcher?._testRunner.lastLoadedConfig();
     if (config) {
-      for (const project of config.projects)
+      for (const project of config.projects) {
         roots.add(project.project.outputDir);
+        roots.add(project.project.testDir);
+      }
     }
     return [...roots];
   }
