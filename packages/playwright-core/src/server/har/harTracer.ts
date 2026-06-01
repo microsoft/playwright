@@ -285,6 +285,7 @@ export class HarTracer {
 
     const pageEntry = this._createPageEntryIfNeeded(page);
     const harEntry = createHarEntry(pageEntry?.id, request.method(), url, request.frame()?.guid, this._options);
+    harEntry._resourceType = request.resourceType();
     this._recordRequestHeadersAndCookies(harEntry, request.headers());
     harEntry.request.postData = this._postDataForRequest(request, this._options.content);
     if (!this._options.omitSizes)
