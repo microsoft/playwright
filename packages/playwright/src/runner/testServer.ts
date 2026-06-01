@@ -59,14 +59,24 @@ class TestServer {
     this._configCLIOverrides = configCLIOverrides;
   }
 
-  async start(options: { host?: string, port?: number, allowedFileRoots: string[] }): Promise<HttpServer> {
+  async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
     return await coreServer.startTraceViewerServer({
       host: options.host,
       port: options.port,
-      allowedFileRoots: options.allowedFileRoots,
+      allowedFileRoots: () => this._allowedFileRoots(),
       transport: this._dispatcher.transport,
     });
+  }
+
+  private _allowedFileRoots(): string[] {
+    const roots = new Set<string>([process.cwd(), this._configLocation.configDir]);
+    const config = this._dispatcher?._testRunner.lastLoadedConfig();
+    if (config) {
+      for (const project of config.projects)
+        roots.add(project.project.outputDir);
+    }
+    return [...roots];
   }
 
   async stop() {
@@ -102,7 +112,7 @@ export class TestServerDispatcher implements TestServerInterface {
   readonly transport: Transport;
   private _serializer: string | undefined;
   private _closeOnDisconnect = false;
-  private _testRunner: TestRunner;
+  _testRunner: TestRunner;
   private _globalSetupReport: ReportEntry[] | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
@@ -314,8 +324,7 @@ async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverr
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
   void sigintWatcher.promise().then(() => cancelPromise.resolve());
   try {
-    const allowedFileRoots = await allowedFileRootsForConfig(configLocation, configCLIOverrides);
-    const server = await testServer.start({ ...options, allowedFileRoots });
+    const server = await testServer.start(options);
     await openUI(server, cancelPromise);
     await cancelPromise;
   } finally {
@@ -323,16 +332,6 @@ async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverr
     sigintWatcher.disarm();
   }
   return sigintWatcher.hadSignal() ? 'interrupted' : 'passed';
-}
-
-async function allowedFileRootsForConfig(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides): Promise<string[]> {
-  const roots = new Set<string>([process.cwd(), configLocation.configDir]);
-  const config = await configLoader.loadConfig(configLocation, configCLIOverrides).catch(() => null);
-  if (config) {
-    for (const project of config.projects)
-      roots.add(project.project.outputDir);
-  }
-  return [...roots];
 }
 
 type StdioPayload = {

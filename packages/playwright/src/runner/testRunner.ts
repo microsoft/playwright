@@ -104,6 +104,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _watchTestDirs = false;
   private _populateDependenciesOnList = false;
   private _startingEnv: NodeJS.ProcessEnv = {};
+  private _lastLoadedConfig: FullConfigInternal | undefined;
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ipc.ConfigCLIOverrides) {
     super();
@@ -398,10 +399,15 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       } else {
         config.plugins.splice(0, config.plugins.length, ...this._plugins);
       }
+      this._lastLoadedConfig = config;
       return { config };
     } catch (e) {
       return { config: null, error: serializeError(e) };
     }
+  }
+
+  lastLoadedConfig(): FullConfigInternal | undefined {
+    return this._lastLoadedConfig;
   }
 
   private async _loadConfigOrReportError(reporter: InternalReporter, overrides?: ipc.ConfigCLIOverrides): Promise<FullConfigInternal | null> {
