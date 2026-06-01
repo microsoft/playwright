@@ -112,12 +112,17 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
 });
 
-test('should render log badge in action list', async ({ runAndTrace, page }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await test.step('log hello from test', async () => {
-      await page.setContent('<div>hello</div>');
-    });
+test('should render log badge in action list', async ({ page, showTraceViewer }, testInfo) => {
+  const tracing = (testInfo as any)._tracing;
+  await tracing.startIfNeeded('on');
+  await test.step('log hello from test', async () => {
+    await page.setContent('<div>hello</div>');
   });
+  await tracing.didFinishTestFunctionAndAfterEachHooks();
+  await tracing.stopIfNeeded();
+
+  const traceViewer = await showTraceViewer(testInfo.outputPath('trace.zip'));
+  await expect(traceViewer.actionsTree.getByRole('treeitem').filter({ hasText: 'hello from test' })).toBeVisible();
   await expect(traceViewer.page.locator('.action-log-badge', { hasText: 'log' }).first()).toBeVisible();
 });
 
