@@ -5,6 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
+  pull_request:
+    types: [labeled]
+    branches:
+      - 'main'
 
 permissions:
   contents: read
@@ -17,7 +21,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build trace viewer
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'deploy-trace-viewer') }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -35,7 +39,6 @@ jobs:
           path: packages/playwright-core/lib/vite/traceViewer
 
   deploy:
-    name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-24.04
     environment:
