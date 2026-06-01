@@ -29,6 +29,7 @@ import { TargetClosedError } from '../../errors';
 import { helper } from '../../helper';
 import { saveGlobalsSnapshotSource } from '../../javascript';
 import * as rawWebViewInputSource from '../../../generated/webViewInputSource';
+import * as rawWebViewDialogSource from '../../../generated/webViewDialogSource';
 import * as network from '../../network';
 import { Page, PageBinding } from '../../page';
 import { WVSession } from './wvConnection';
@@ -1015,42 +1016,10 @@ const bindingBridgeSource = `
   }
 `;
 
-// Stock WebKit RDP has no dialog API. We override window.alert/confirm/prompt
-// to tunnel calls through a synchronous XHR to our DialogBridge HTTP server,
-// which holds the response until the host-side Dialog handler resolves.
 function dialogBridgeSource(endpoint: string): string {
-  return `
-    (function() {
-      const URL = ${JSON.stringify(endpoint)};
-      function post(type, message, defaultValue) {
-        const xhr = new XMLHttpRequest();
-        try { xhr.open('POST', URL, false); } catch (e) { return null; }
-        // text/plain body keeps this a "simple" CORS request — no preflight.
-        try { xhr.send(JSON.stringify({ type: type, message: message, defaultValue: defaultValue })); }
-        catch (e) { return null; }
-        if (xhr.status !== 200) return null;
-        try { return JSON.parse(xhr.responseText); } catch (e) { return null; }
-      }
-      Object.defineProperty(window, 'alert', {
-        configurable: true, writable: false,
-        value: function(message) { post('alert', String(message == null ? '' : message), ''); },
-      });
-      Object.defineProperty(window, 'confirm', {
-        configurable: true, writable: false,
-        value: function(message) {
-          const r = post('confirm', String(message == null ? '' : message), '');
-          return !!(r && r.accept);
-        },
-      });
-      Object.defineProperty(window, 'prompt', {
-        configurable: true, writable: false,
-        value: function(message, defaultValue) {
-          const def = defaultValue == null ? '' : String(defaultValue);
-          const r = post('prompt', String(message == null ? '' : message), def);
-          if (!r || !r.accept) return null;
-          return typeof r.promptText === 'string' ? r.promptText : def;
-        },
-      });
-    })();
-  `;
+  return `(() => {
+  const module = {};
+  ${rawWebViewDialogSource.source}
+  module.exports.installDialogBridge()(window, ${JSON.stringify(endpoint)});
+})()`;
 }
