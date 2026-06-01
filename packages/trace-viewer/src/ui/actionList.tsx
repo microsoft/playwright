@@ -1,5 +1,6 @@
 /*
   Copyright (c) Microsoft Corporation.
+  Modifications Copyright (c) 2026 Roo. See FORK.md and NOTICE.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,12 +24,14 @@ import { stats, buildActionTree } from '@isomorphic/trace/traceModel';
 import { asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
-import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext, ActionTreeItem, TraceModel } from '@isomorphic/trace/traceModel';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
+import { shouldShowApiCallDetailsUi } from './apiCallUtils';
+import { ApiCallDetailsLoader } from './apiCallDetails';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -44,6 +47,12 @@ export interface ActionListProps {
   revealActionAttachment?(callId: string): void,
   isLive?: boolean,
   actionFilterText?: string,
+  model?: TraceModel,
+  autoShowApiDetails?: boolean,
+  expandedApiCalls?: Set<string>,
+  setExpandedApiCalls?: React.Dispatch<React.SetStateAction<Set<string>>>,
+  collapsedApiCalls?: Set<string>,
+  setCollapsedApiCalls?: React.Dispatch<React.SetStateAction<Set<string>>>,
 }
 
 const ActionTreeView = TreeView<ActionTreeItem>;
@@ -62,6 +71,12 @@ export const ActionList: React.FC<ActionListProps> = ({
   revealActionAttachment,
   isLive,
   actionFilterText,
+  model,
+  autoShowApiDetails,
+  expandedApiCalls,
+  setExpandedApiCalls,
+  collapsedApiCalls,
+  setCollapsedApiCalls,
 }) => {
   const { rootItem, itemMap } = React.useMemo(() => buildActionTree(actions), [actions]);
 
@@ -78,10 +93,50 @@ export const ActionList: React.FC<ActionListProps> = ({
     return setSelectedTime({ minimum: item.action.startTime, maximum: item.action.endTime });
   }, [setSelectedTime]);
 
+  const isApiDetailsShown = React.useCallback((callId: string) => {
+    if (collapsedApiCalls?.has(callId))
+      return false;
+    return expandedApiCalls?.has(callId) ||
+      (!!autoShowApiDetails && selectedAction?.callId === callId);
+  }, [autoShowApiDetails, collapsedApiCalls, expandedApiCalls, selectedAction]);
+
+  const toggleApiDetails = React.useCallback((callId: string) => {
+    if (isApiDetailsShown(callId)) {
+      setCollapsedApiCalls?.(previous => new Set(previous).add(callId));
+      setExpandedApiCalls?.(previous => {
+        const next = new Set(previous);
+        next.delete(callId);
+        return next;
+      });
+    } else {
+      setCollapsedApiCalls?.(previous => {
+        const next = new Set(previous);
+        next.delete(callId);
+        return next;
+      });
+      setExpandedApiCalls?.(previous => new Set(previous).add(callId));
+    }
+  }, [isApiDetailsShown, setCollapsedApiCalls, setExpandedApiCalls]);
+
   const render = React.useCallback((item: ActionTreeItem) => {
     const showAttachments = !!revealActionAttachment && !!item.action.attachments?.length;
-    return renderAction(item.action, { sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action.callId), isLive, showDuration: true, showBadges: true, showAttachments });
-  }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
+    const isApiCall = shouldShowApiCallDetailsUi(item.action, actions);
+    const showApiDetails = isApiCall && isApiDetailsShown(item.action.callId);
+    return renderAction(item.action, {
+      sdkLanguage,
+      revealConsole,
+      revealActionAttachment: () => revealActionAttachment?.(item.action.callId),
+      isLive,
+      showDuration: true,
+      showBadges: true,
+      showAttachments,
+      isApiCall,
+      showApiDetails,
+      onToggleApiDetails: () => toggleApiDetails(item.action.callId),
+      model,
+      allActions: actions,
+    });
+  }, [actions, isApiDetailsShown, isLive, model, revealConsole, revealActionAttachment, sdkLanguage, toggleApiDetails]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
@@ -122,7 +177,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       isError={isError}
       isVisible={isVisible}
       render={render}
-      autoExpandDepth={actionFilterText?.trim() ? 5 : 0}
+      autoExpandDepth={actionFilterText?.trim() ? 5 : 2}
       revealSelectedKey={showAllCounter}
     />
   </div>;
@@ -138,8 +193,13 @@ export const renderAction = (
     showDuration?: boolean,
     showBadges?: boolean,
     showAttachments?: boolean,
+    isApiCall?: boolean,
+    showApiDetails?: boolean,
+    onToggleApiDetails?(): void,
+    model?: TraceModel,
+    allActions?: ActionTraceEventInContext[],
   }) => {
-  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
+  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments, isApiCall, showApiDetails, onToggleApiDetails, model, allActions } = options;
   const { errors, warnings } = stats(action);
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
@@ -156,7 +216,17 @@ export const renderAction = (
   return <div className='action-title vbox'>
     <div className='hbox'>
       <span className='action-title-method' title={title}>{elements}</span>
-      {(showDuration || showBadges || showAttachments || isSkipped) && <div className='spacer'></div>}
+      {(showDuration || showBadges || showAttachments || isApiCall || isSkipped) && <div className='spacer'></div>}
+      {isApiCall && <ToolbarButton
+        className='action-api-details-toggle'
+        icon={showApiDetails ? 'chevron-down' : 'json'}
+        title={showApiDetails ? 'Hide request & response' : 'Show request & response'}
+        toggled={!!showApiDetails}
+        onClick={event => {
+          event.stopPropagation();
+          onToggleApiDetails?.();
+        }}
+      />}
       {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealActionAttachment?.()} />}
       {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
       {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
@@ -166,6 +236,9 @@ export const renderAction = (
       </div>}
     </div>
     {locator && <div className='action-title-selector' title={locator}>{locator}</div>}
+    {showApiDetails && model && allActions && <div className='action-api-details-panel'>
+      <ApiCallDetailsLoader action={action} model={model} allActions={allActions} compact={true} />
+    </div>}
   </div>;
 };
 

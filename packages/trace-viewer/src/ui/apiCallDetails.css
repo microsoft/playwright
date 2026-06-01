@@ -1,0 +1,189 @@
+/*
+  Copyright (c) 2026 Roo.
+  Based on Playwright trace-viewer (Copyright (c) Microsoft Corporation).
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.api-call-details {
+  display: flex;
+  flex-direction: column;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  user-select: text;
+}
+
+.api-call-details.compact {
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.api-call-details-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-wrap: wrap;
+}
+
+.api-call-details-method {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex: none;
+}
+
+.api-call-details-method.GET { color: #89b4fa; }
+.api-call-details-method.POST { color: #a6e3a1; }
+.api-call-details-method.PUT { color: #fab387; }
+.api-call-details-method.PATCH { color: #cba6f7; }
+.api-call-details-method.DELETE { color: #f38ba8; }
+.api-call-details-method.HEAD,
+.api-call-details-method.OPTIONS { color: #94e2d5; }
+
+.api-call-details-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #bac2de;
+}
+
+.api-call-details-meta {
+  display: flex;
+  gap: 12px;
+  flex: none;
+  color: #a6e3a1;
+  white-space: nowrap;
+}
+
+.api-call-details-meta-error {
+  color: #f38ba8;
+}
+
+.api-call-details-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  flex: auto;
+}
+
+.api-call-details-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid #313244;
+}
+
+.api-call-details-column:last-child {
+  border-right: none;
+}
+
+.api-call-details-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px 0;
+  background: #11111b;
+}
+
+.api-call-details-tab {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: #6c7086;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  font: inherit;
+}
+
+.api-call-details-tab:hover {
+  color: #cdd6f4;
+}
+
+.api-call-details-tab.selected {
+  background: #1e1e2e;
+  color: #cdd6f4;
+}
+
+.api-call-details-body {
+  flex: auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 4px 8px;
+}
+
+.api-call-details-body .cm-wrapper {
+  height: 100%;
+}
+
+.api-call-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  padding: 8px;
+}
+
+.api-call-details-table td {
+  padding: 4px 8px;
+  vertical-align: top;
+  word-break: break-all;
+}
+
+.api-call-details-table td:first-child {
+  width: 35%;
+  color: #89b4fa;
+  white-space: nowrap;
+}
+
+.api-call-details-empty {
+  padding: 16px;
+  color: #6c7086;
+  font-style: italic;
+}
+
+.api-call-details-loading {
+  padding: 16px;
+  color: #6c7086;
+}
+
+.api-call-details-viewport {
+  flex: auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  background: var(--vscode-editor-background);
+}
+
+.api-call-details-viewport-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.api-call-details-viewport .api-call-details {
+  min-height: 240px;
+}
+
+.action-api-details-toggle {
+  flex: none;
+}
+
+.action-api-details-panel {
+  margin: 4px 0 6px 12px;
+}
