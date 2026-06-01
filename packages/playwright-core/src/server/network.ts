@@ -725,12 +725,20 @@ export class Response extends SdkObject {
 export class WebSocket extends SdkObject {
   private _url: string;
   private _notified = false;
+  private _requestWallTime: number | undefined;
+  private _requestTimestamp: number | undefined;
+  private _status: number | undefined;
+  private _statusText: string | undefined;
+  private _requestHeaders: HeadersArray | undefined;
+  private _responseHeaders: HeadersArray | undefined;
 
   static Events = {
     Close: 'close',
     SocketError: 'socketerror',
     FrameReceived: 'framereceived',
     FrameSent: 'framesent',
+    Request: 'request',
+    Response: 'response',
   };
 
   constructor(parent: SdkObject, url: string) {
@@ -752,12 +760,40 @@ export class WebSocket extends SdkObject {
     return this._url;
   }
 
-  frameSent(opcode: number, data: string) {
-    this.emit(WebSocket.Events.FrameSent, { opcode, data });
+  requestSent(headers: HeadersArray, wallTime?: number, timestamp?: number) {
+    this._requestWallTime = wallTime;
+    this._requestTimestamp = timestamp;
+
+    this.emit(WebSocket.Events.Request, { headers });
   }
 
-  frameReceived(opcode: number, data: string) {
-    this.emit(WebSocket.Events.FrameReceived, { opcode, data });
+  responseReceived(status: number, statusText: string, headers: HeadersArray) {
+    this.emit(WebSocket.Events.Response, { status, statusText, headers });
+  }
+
+  private _toWallTime(timestamp: number): number {
+    // The timestamp of each frame is relative to the timestamp (and walltime) of the initial request in Chromium and WebKit.
+    if (this._requestWallTime !== undefined && this._requestTimestamp !== undefined)
+      return this._requestWallTime + (timestamp - this._requestTimestamp);
+
+    // The timestamp is already a walltime in Firefox.
+    return timestamp;
+  }
+
+  frameSent(opcode: number, data: string, timestamp: number) {
+    this.emit(WebSocket.Events.FrameSent, {
+      opcode,
+      data,
+      timestamp: this._toWallTime(timestamp),
+    });
+  }
+
+  frameReceived(opcode: number, data: string, timestamp: number) {
+    this.emit(WebSocket.Events.FrameReceived, {
+      opcode,
+      data,
+      timestamp: this._toWallTime(timestamp),
+    });
   }
 
   error(errorMessage: string) {

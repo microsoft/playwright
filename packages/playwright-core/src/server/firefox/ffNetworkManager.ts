@@ -19,20 +19,21 @@ import { eventsHelper } from '@utils/eventsHelper';
 import * as network from '../network';
 
 import type { FFSession } from './ffConnection';
+import type { FFPage } from './ffPage';
 import type { HeadersArray } from '../../server/types';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type * as frames from '../frames';
-import type { Page } from '../page';
 import type * as types from '../types';
 import type { Protocol } from './protocol';
 
 export class FFNetworkManager {
   private _session: FFSession;
   private _requests: Map<string, InterceptableRequest>;
-  private _page: Page;
+  private _page: FFPage;
   private _eventListeners: RegisteredListener[];
+  private _webSocketRequestIds = new Set<string>();
 
-  constructor(session: FFSession, page: Page) {
+  constructor(session: FFSession, page: FFPage) {
     this._session = session;
 
     this._requests = new Map();
@@ -59,7 +60,7 @@ export class FFNetworkManager {
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
     const redirectedFrom = event.redirectedFrom ? (this._requests.get(event.redirectedFrom) || null) : null;
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page.frameManager.frame(event.frameId) : null);
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page._page.frameManager.frame(event.frameId) : null);
     if (!frame)
       return;
     // Align with Chromium and WebKit and not expose preflight OPTIONS requests to the client.
@@ -67,18 +68,28 @@ export class FFNetworkManager {
       return;
     if (redirectedFrom)
       this._requests.delete(redirectedFrom._id);
+    // Align with Chromium and WebKit by having WebSocket be handled separately from other network activity.
+    if (event.cause === 'TYPE_WEBSOCKET') {
+      this._webSocketRequestIds.add(event.requestId);
+      this._page._onWebSocketRequestWillBeSent(event.requestId, event.url, event.headers);
+      return;
+    }
     const request = new InterceptableRequest(frame, redirectedFrom, event);
     let route;
     if (event.isIntercepted)
       route = new FFRouteImpl(this._session, request);
     this._requests.set(request._id, request);
-    this._page.frameManager.requestStarted(request.request, route);
+    this._page._page.frameManager.requestStarted(request.request, route);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
+    if (!request) {
+      // Align with Chromium and WebKit by having WebSocket be handled separately from other network activity.
+      if (this._webSocketRequestIds.has(event.requestId))
+        this._page._onWebSocketResponseReceived(event.requestId, event.status, event.statusText, event.headers);
       return;
+    }
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', {
         requestId: request._id
@@ -124,13 +135,19 @@ export class FFNetworkManager {
     response.setRawResponseHeaders(null);
     // Headers size are not available in Firefox.
     response.setResponseHeadersSize(null);
-    this._page.frameManager.requestReceivedResponse(response);
+    this._page._page.frameManager.requestReceivedResponse(response);
   }
 
   _onRequestFinished(event: Protocol.Network.requestFinishedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
+    if (!request) {
+      // Align with Chromium and WebKit by having WebSocket be handled separately from other network activity.
+      if (this._webSocketRequestIds.has(event.requestId)) {
+        this._webSocketRequestIds.delete(event.requestId);
+        this._page._onWebSocketRequestFinished(event.requestId);
+      }
       return;
+    }
     const response = request.request._existingResponse()!;
     response.setTransferSize(event.transferSize);
     response.setEncodedBodySize(event.encodedBodySize);
@@ -145,7 +162,7 @@ export class FFNetworkManager {
       response._requestFinished(responseEndTime);
     }
     response._setHttpVersion(event.protocolVersion ?? null);
-    this._page.frameManager.reportRequestFinished(request.request, response);
+    this._page._page.frameManager.reportRequestFinished(request.request, response);
   }
 
   _onRequestFailed(event: Protocol.Network.requestFailedPayload) {
@@ -161,7 +178,7 @@ export class FFNetworkManager {
       response._setHttpVersion(null);
     }
     request.request._setFailureText(event.errorCode);
-    this._page.frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
+    this._page._page.frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
   }
 }
 

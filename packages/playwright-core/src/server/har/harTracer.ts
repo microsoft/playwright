@@ -30,9 +30,10 @@ import { helper } from '../helper';
 import * as network from '../network';
 import { nullProgress } from '../progress';
 
+import { Page } from '../page';
+
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
-import type { Page } from '../page';
 import type { Worker } from '../page';
 import type { HeadersArray, LifecycleEvent } from '../types';
 import type * as har from '@trace/har';
@@ -102,7 +103,10 @@ export class HarTracer {
     ];
     if (this._context instanceof BrowserContext) {
       this._eventListeners.push(
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._createPageEntryIfNeeded(page)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => {
+            this._addPageEventListeners(page);
+            this._createPageEntryIfNeeded(page);
+          }),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
@@ -111,9 +115,19 @@ export class HarTracer {
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFulfilled, request => this._onRequestFulfilled(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestContinued, request => this._onRequestContinued(request)),
       );
-      for (const page of this._context.pages())
+      for (const page of this._context.pages()) {
+        this._addPageEventListeners(page);
         this._createPageEntryIfNeeded(page);
+      }
     }
+  }
+
+  private _addPageEventListeners(page: Page) {
+    if (this._page && page !== this._page)
+      return;
+    this._eventListeners.push(
+        eventsHelper.addEventListener(page, Page.Events.WebSocket, (webSocket: network.WebSocket) => this._onWebSocket(page, webSocket)),
+    );
   }
 
   private _shouldIncludeEntryWithUrl(urlString: string) {
@@ -416,6 +430,49 @@ export class HarTracer {
     const harEntry = this._entryForRequest(request);
     if (harEntry)
       harEntry._wasContinued = true;
+  }
+
+  private _onWebSocket(page: Page, webSocket: network.WebSocket) {
+    if (!this._shouldIncludeEntryWithUrl(webSocket.url()))
+      return;
+    const url = network.parseURL(webSocket.url());
+    if (!url)
+      return;
+
+    const pageEntry = this._createPageEntryIfNeeded(page);
+    const harEntry = createHarEntry(pageEntry?.id, 'GET', url, page.mainFrame().guid, this._options);
+    harEntry._resourceType = 'websocket';
+    harEntry._webSocketMessages = [];
+
+    const eventListeners = [
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.Request, ({ headers }: { headers: HeadersArray }) => {
+        this._recordRequestHeadersAndCookies(harEntry, headers);
+      }),
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.Response, ({ status, statusText, headers }: { status: number, statusText: string, headers: HeadersArray }) => {
+        harEntry.response.status = status;
+        harEntry.response.statusText = statusText;
+        this._recordResponseHeaders(harEntry, headers);
+      }),
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameSent, ({ opcode, data, timestamp }: { opcode: number, data: string, timestamp: number }) => {
+        harEntry._webSocketMessages!.push({ type: 'send', time: timestamp, opcode, data });
+      }),
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameReceived, ({ opcode, data, timestamp }: { opcode: number, data: string, timestamp: number }) => {
+        harEntry._webSocketMessages!.push({ type: 'receive', time: timestamp, opcode, data });
+      }),
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.SocketError, (errorMessage: string) => {
+        harEntry.response._failureText = errorMessage;
+      }),
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.Close, () => {
+        eventsHelper.removeEventListeners(eventListeners);
+
+        if (this._started)
+          this._delegate.onEntryFinished(harEntry);
+      }),
+    ];
+    this._eventListeners.push(...eventListeners);
+
+    if (this._started)
+      this._delegate.onEntryStarted(harEntry);
   }
 
   private _storeResponseContent(buffer: Buffer | undefined, content: har.Content, resourceType: string) {
