@@ -921,6 +921,15 @@ test('AggregateError sub-errors are spread into testInfo.errors', async ({ runIn
     onTestEnd(test: TestCase, result: TestResult): void {
       for (const error of result.errors)
         console.log(`%%${error.message ?? error.value}`);
+      // For the boxed-step case, also surface a frame from the test file so
+      // we can assert that the boxed-stack rewrite only applies to the
+      // top-level error and not to its sub-errors.
+      if (test.title === 'boxed step') {
+        for (const error of result.errors) {
+          const frame = (error.stack ?? '').split('\n').find(l => l.includes('a.spec.ts:'));
+          console.log(`%%FRAME ${error.message}: ${frame?.trim()}`);
+        }
+      }
     }
   }
 
@@ -943,6 +952,16 @@ test('AggregateError sub-errors are spread into testInfo.errors', async ({ runIn
         err.errors = ['oops', { foo: 1 }, new Error('real')];
         throw err;
       });
+      test('boxed step', async () => {
+        const subA = new Error('sub a');
+        const subB = new Error('sub b');
+        const helper = async () => {
+          await test.step('boxed', async () => {
+            throw new AggregateError([subA, subB], 'top');
+          }, { box: true });
+        };
+        await helper();
+      });
     `,
   }, { 'reporter': '', 'workers': 1 });
 
@@ -960,5 +979,11 @@ test('AggregateError sub-errors are spread into testInfo.errors', async ({ runIn
     `'oops'`,
     '{ foo: 1 }',
     'Error: real',
+    'AggregateError: top',
+    'Error: sub a',
+    'Error: sub b',
+    expect.stringMatching(/^FRAME AggregateError: top: at .*a\.spec\.ts:25:/),
+    expect.stringMatching(/^FRAME Error: sub a: at .*a\.spec\.ts:18:/),
+    expect.stringMatching(/^FRAME Error: sub b: at .*a\.spec\.ts:19:/),
   ]);
 });

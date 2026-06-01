@@ -413,12 +413,12 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'interrupted';
   }
 
-  _failWithError(error: Error | unknown) {
+  _failWithError(root: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
-      this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
+      this.status = root instanceof TimeoutManagerError ? 'timedOut' : 'failed';
     const visit = (error: Error | unknown) => {
       const serialized = testInfoError(error);
-      const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
+      const step: TestStepInternal | undefined = error === root && typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
       if (step && step.boxedStack)
         serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
       this.errors.push(serialized);
@@ -429,7 +429,7 @@ export class TestInfoImpl implements TestInfo {
           visit(child);
       }
     };
-    visit(error);
+    visit(root);
   }
 
   async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, group?: string }, cb: () => Promise<any>) {
