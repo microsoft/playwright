@@ -103,7 +103,7 @@
   "flexwrap": true,
   "focusvisible": true,
   "focuswithin": true,
-  "fontdisplay": true,
+  "fontdisplay": false,
   "fontface": true,
   "generatedcontent": true,
   "cssgradients": true,
