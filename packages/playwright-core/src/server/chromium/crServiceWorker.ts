@@ -53,6 +53,7 @@ export class CRServiceWorker extends Worker {
       this.updateExtraHTTPHeaders();
       this.updateHttpCredentials();
       this.updateOffline();
+      this.updateUserAgent();
       this._networkManager.addSession(session, undefined, true /* isMain */).catch(() => {});
     }
 
@@ -94,6 +95,18 @@ export class CRServiceWorker extends Worker {
     if (!this._isNetworkInspectionEnabled())
       return;
     await this._networkManager?.setExtraHTTPHeaders(this.browserContext._options.extraHTTPHeaders || []).catch(() => {});
+  }
+
+  async updateUserAgent(): Promise<void> {
+    if (!this._isNetworkInspectionEnabled())
+      return;
+    // Service workers do not expose the Emulation domain, so we use the Network
+    // domain's setUserAgentOverride which is available on the service worker session.
+    const options = this.browserContext._options;
+    await this._session.send('Network.setUserAgentOverride', {
+      userAgent: options.userAgent || '',
+      acceptLanguage: options.locale,
+    }).catch(() => {});
   }
 
   async updateRequestInterception(): Promise<void> {

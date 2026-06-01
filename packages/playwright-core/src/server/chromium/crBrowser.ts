@@ -498,7 +498,8 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     this._options.userAgent = userAgent;
     for (const page of this.pages())
       await (page.delegate as CRPage).updateUserAgent();
-    // TODO: service workers don't have Emulation domain?
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateUserAgent();
   }
 
   async doUpdateOffline(): Promise<void> {
