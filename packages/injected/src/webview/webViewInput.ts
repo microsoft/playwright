@@ -111,21 +111,25 @@ export class WebViewInput {
   private _window: Window & typeof globalThis;
   private _document: Document;
   private _hoverTarget: Element | null = null;
+  private _setTimeout: typeof globalThis.setTimeout;
 
   constructor(window: Window & typeof globalThis, document: Document) {
     this._window = window;
     this._document = document;
+    this._setTimeout = ((window as any).__pwSnapshotGlobals || window).setTimeout;
   }
 
-  // Real input events are each delivered in their own event-loop task; dispatch
-  // a sequence the same way so handlers that schedule work between events behave
-  // as they would on a real device. Timers come from the globals snapshot (taken
-  // at bootstrap), so a page overriding setTimeout cannot break scheduling.
-  private _nextTask(): Promise<void> {
-    const builtins = (this._window as any).__pwSnapshotGlobals || this._window;
-    // setImmediate avoids setTimeout's clamping, but WebKit does not implement it.
-    const schedule = builtins.setImmediate || builtins.setTimeout;
-    return new Promise(resolve => schedule.call(this._window, resolve));
+  // Run each event in its own task (like real input).
+  private _postTask(task: () => void): Promise<void> {
+    return new Promise<void>(resolve => {
+      this._setTimeout.call(this._window, () => {
+        try {
+          task();
+        } finally {
+          resolve();
+        }
+      });
+    });
   }
 
   // Descend through open shadow roots so synthetic events land on the actual
@@ -166,10 +170,10 @@ export class WebViewInput {
     }
   }
 
-  keydown(params: KeyEventParams): void | Promise<void> {
+  keydown(params: KeyEventParams): Promise<void> {
     const target = this._deepActiveElement() || this._document.body;
     if (!target)
-      return;
+      return Promise.resolve();
     const init: KeyboardEventInit = {
       bubbles: true,
       cancelable: true,
@@ -185,26 +189,32 @@ export class WebViewInput {
       altKey: params.altKey,
       metaKey: params.metaKey,
     };
-    const notPrevented = dispatchKeyEvent(target, 'keydown', init, params.keyCode, params.key);
+    let notPrevented = true;
+    let charNotPrevented = true;
+    let lastTask = this._postTask(() => {
+      notPrevented = dispatchKeyEvent(target, 'keydown', init, params.keyCode, params.key);
+    });
     // Non-text keys produce only keydown; a cancelled keydown also suppresses the
     // keypress and the default text insertion.
-    if (params.text === undefined || !notPrevented)
-      return;
-    return this._typeCharacter(target, init, params.text);
-  }
-
-  private async _typeCharacter(target: EventTarget, init: KeyboardEventInit, text: string) {
-    await this._nextTask();
-    const charCode = text.charCodeAt(0);
-    const charNotPrevented = markAndDispatch(target, new KeyboardEvent('keypress', { ...init, charCode, keyCode: charCode, which: charCode }));
-    if (!charNotPrevented)
-      return;
-    await this._nextTask();
-    // Real WebKit fires a `textInput` (TextEvent) whose default action performs
-    // the insertion (and the subsequent beforeinput/input). Replicate it; the
-    // event's default does the insertion, so we do not insert manually. Enter's
-    // text is '\r' but the inserted/textInput data is a newline.
-    this._dispatchTextInput(target, text === '\r' ? '\n' : text);
+    if (params.text !== undefined) {
+      const text = params.text;
+      void this._postTask(() => {
+        if (!notPrevented)
+          return;
+        const charCode = text.charCodeAt(0);
+        charNotPrevented = markAndDispatch(target, new KeyboardEvent('keypress', { ...init, charCode, keyCode: charCode, which: charCode }));
+      });
+      lastTask = this._postTask(() => {
+        if (!notPrevented || !charNotPrevented)
+          return;
+        // Real WebKit fires a `textInput` (TextEvent) whose default action performs
+        // the insertion (and the subsequent beforeinput/input). Replicate it; the
+        // event's default does the insertion, so we do not insert manually. Enter's
+        // text is '\r' but the inserted/textInput data is a newline.
+        this._dispatchTextInput(target, text === '\r' ? '\n' : text);
+      });
+    }
+    return lastTask;
   }
 
   private _dispatchTextInput(target: EventTarget, text: string) {
@@ -215,31 +225,33 @@ export class WebViewInput {
     markAndDispatch(target, event);
   }
 
-  keyup(params: KeyEventParams) {
+  keyup(params: KeyEventParams): Promise<void> {
     const target = this._deepActiveElement() || this._document.body;
     if (!target)
-      return;
-    dispatchKeyEvent(target, 'keyup', {
-      bubbles: true,
-      cancelable: true,
-      view: this._window,
-      code: params.code,
-      key: params.key,
-      keyCode: params.keyCode,
-      which: params.keyCode,
-      location: params.location,
-      ctrlKey: params.ctrlKey,
-      shiftKey: params.shiftKey,
-      altKey: params.altKey,
-      metaKey: params.metaKey,
-    }, params.keyCode, params.key);
+      return Promise.resolve();
+    return this._postTask(() => {
+      dispatchKeyEvent(target, 'keyup', {
+        bubbles: true,
+        cancelable: true,
+        view: this._window,
+        code: params.code,
+        key: params.key,
+        keyCode: params.keyCode,
+        which: params.keyCode,
+        location: params.location,
+        ctrlKey: params.ctrlKey,
+        shiftKey: params.shiftKey,
+        altKey: params.altKey,
+        metaKey: params.metaKey,
+      }, params.keyCode, params.key);
+    });
   }
 
-  insertText(text: string) {
-    this._insertText(this._deepActiveElement(), text);
+  insertText(text: string): Promise<void> {
+    return this._postTask(() => this._insertText(this._deepActiveElement(), text));
   }
 
-  mouseMove(params: MouseMoveParams) {
+  mouseMove(params: MouseMoveParams): Promise<void> {
     const target = this._deepElementFromPoint(params.x, params.y) || this._document.documentElement;
     const base: MouseEventInit = {
       bubbles: true,
@@ -260,65 +272,69 @@ export class WebViewInput {
     const prev = this._hoverTarget;
     if (prev !== target) {
       if (prev && prev.isConnected) {
-        markAndDispatch(prev, new PointerEvent('pointerout', { ...pointer, relatedTarget: target }));
-        markAndDispatch(prev, new MouseEvent('mouseout', { ...base, relatedTarget: target }));
-        markAndDispatch(prev, new PointerEvent('pointerleave', { ...pointer, bubbles: false, cancelable: false, relatedTarget: target }));
-        markAndDispatch(prev, new MouseEvent('mouseleave', { ...base, bubbles: false, cancelable: false, relatedTarget: target }));
+        void this._postTask(() => markAndDispatch(prev, new PointerEvent('pointerout', { ...pointer, relatedTarget: target })));
+        void this._postTask(() => markAndDispatch(prev, new MouseEvent('mouseout', { ...base, relatedTarget: target })));
+        void this._postTask(() => markAndDispatch(prev, new PointerEvent('pointerleave', { ...pointer, bubbles: false, cancelable: false, relatedTarget: target })));
+        void this._postTask(() => markAndDispatch(prev, new MouseEvent('mouseleave', { ...base, bubbles: false, cancelable: false, relatedTarget: target })));
       }
-      markAndDispatch(target, new PointerEvent('pointerover', { ...pointer, relatedTarget: prev }));
-      markAndDispatch(target, new MouseEvent('mouseover', { ...base, relatedTarget: prev }));
-      markAndDispatch(target, new PointerEvent('pointerenter', { ...pointer, bubbles: false, cancelable: false, relatedTarget: prev }));
-      markAndDispatch(target, new MouseEvent('mouseenter', { ...base, bubbles: false, cancelable: false, relatedTarget: prev }));
+      void this._postTask(() => markAndDispatch(target, new PointerEvent('pointerover', { ...pointer, relatedTarget: prev })));
+      void this._postTask(() => markAndDispatch(target, new MouseEvent('mouseover', { ...base, relatedTarget: prev })));
+      void this._postTask(() => markAndDispatch(target, new PointerEvent('pointerenter', { ...pointer, bubbles: false, cancelable: false, relatedTarget: prev })));
+      void this._postTask(() => markAndDispatch(target, new MouseEvent('mouseenter', { ...base, bubbles: false, cancelable: false, relatedTarget: prev })));
       this._hoverTarget = target;
     }
-    markAndDispatch(target, new PointerEvent('pointermove', pointer));
-    markAndDispatch(target, new MouseEvent('mousemove', base));
+    void this._postTask(() => markAndDispatch(target, new PointerEvent('pointermove', pointer)));
+    return this._postTask(() => markAndDispatch(target, new MouseEvent('mousemove', base)));
   }
 
-  mouseEvent(params: MouseEventParams) {
-    const target = this._deepElementFromPoint(params.x, params.y) || this._document.documentElement;
-    const event = new MouseEvent(params.type, {
-      bubbles: true,
-      cancelable: true,
-      view: this._window,
-      clientX: params.x,
-      clientY: params.y,
-      screenX: params.x,
-      screenY: params.y,
-      button: params.button,
-      buttons: params.buttons,
-      detail: params.clickCount,
-      ctrlKey: params.ctrlKey,
-      shiftKey: params.shiftKey,
-      altKey: params.altKey,
-      metaKey: params.metaKey,
+  mouseEvent(params: MouseEventParams): Promise<void> {
+    // Resolve the hit target at dispatch time, not enqueue time: a queued move
+    // ahead of this may reveal an overlay that should receive the press.
+    return this._postTask(() => {
+      const target = this._deepElementFromPoint(params.x, params.y) || this._document.documentElement;
+      markAndDispatch(target, new MouseEvent(params.type, {
+        bubbles: true,
+        cancelable: true,
+        view: this._window,
+        clientX: params.x,
+        clientY: params.y,
+        screenX: params.x,
+        screenY: params.y,
+        button: params.button,
+        buttons: params.buttons,
+        detail: params.clickCount,
+        ctrlKey: params.ctrlKey,
+        shiftKey: params.shiftKey,
+        altKey: params.altKey,
+        metaKey: params.metaKey,
+      }));
     });
-    markAndDispatch(target, event);
   }
 
-  wheel(params: WheelParams) {
-    const target = this._deepElementFromPoint(params.x, params.y) || this._document.documentElement;
-    const event = new WheelEvent('wheel', {
-      bubbles: true,
-      cancelable: true,
-      view: this._window,
-      clientX: params.x,
-      clientY: params.y,
-      screenX: params.x,
-      screenY: params.y,
-      deltaX: params.deltaX,
-      deltaY: params.deltaY,
-      deltaMode: 0,
-      ctrlKey: params.ctrlKey,
-      shiftKey: params.shiftKey,
-      altKey: params.altKey,
-      metaKey: params.metaKey,
+  wheel(params: WheelParams): Promise<void> {
+    return this._postTask(() => {
+      const target = this._deepElementFromPoint(params.x, params.y) || this._document.documentElement;
+      markAndDispatch(target, new WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        view: this._window,
+        clientX: params.x,
+        clientY: params.y,
+        screenX: params.x,
+        screenY: params.y,
+        deltaX: params.deltaX,
+        deltaY: params.deltaY,
+        deltaMode: 0,
+        ctrlKey: params.ctrlKey,
+        shiftKey: params.shiftKey,
+        altKey: params.altKey,
+        metaKey: params.metaKey,
+      }));
+      this._window.scrollBy(params.deltaX, params.deltaY);
     });
-    markAndDispatch(target, event);
-    this._window.scrollBy(params.deltaX, params.deltaY);
   }
 
-  tap(params: TapParams) {
+  tap(params: TapParams): Promise<void> {
     const target = this._deepElementFromPoint(params.x, params.y) || this._document.documentElement;
     const init: MouseEventInit = {
       bubbles: true,
@@ -335,13 +351,13 @@ export class WebViewInput {
     };
     try {
       const touch = new Touch({ identifier: 0, target, clientX: params.x, clientY: params.y, screenX: params.x, screenY: params.y, pageX: params.x, pageY: params.y, radiusX: 1, radiusY: 1, rotationAngle: 0, force: 1 });
-      markAndDispatch(target, new TouchEvent('touchstart', { ...init, touches: [touch], targetTouches: [touch], changedTouches: [touch] }));
-      markAndDispatch(target, new TouchEvent('touchend', { ...init, touches: [], targetTouches: [], changedTouches: [touch] }));
+      void this._postTask(() => markAndDispatch(target, new TouchEvent('touchstart', { ...init, touches: [touch], targetTouches: [touch], changedTouches: [touch] })));
+      void this._postTask(() => markAndDispatch(target, new TouchEvent('touchend', { ...init, touches: [], targetTouches: [], changedTouches: [touch] })));
     } catch {
     }
-    markAndDispatch(target, new MouseEvent('mousedown', { ...init, button: 0, buttons: 1, detail: 1 }));
-    markAndDispatch(target, new MouseEvent('mouseup', { ...init, button: 0, buttons: 0, detail: 1 }));
-    markAndDispatch(target, new MouseEvent('click', { ...init, button: 0, buttons: 0, detail: 1 }));
+    void this._postTask(() => markAndDispatch(target, new MouseEvent('mousedown', { ...init, button: 0, buttons: 1, detail: 1 })));
+    void this._postTask(() => markAndDispatch(target, new MouseEvent('mouseup', { ...init, button: 0, buttons: 0, detail: 1 })));
+    return this._postTask(() => markAndDispatch(target, new MouseEvent('click', { ...init, button: 0, buttons: 0, detail: 1 })));
   }
 }
 
