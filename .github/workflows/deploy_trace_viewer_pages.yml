@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     if: ${{ contains(github.event.pull_request.labels.*.name, 'deploy-trace-viewer') }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -40,7 +40,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
