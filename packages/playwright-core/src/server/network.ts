@@ -189,6 +189,7 @@ export class Request extends SdkObject {
   _responseEndTiming = -1;
   private _overrides: NormalizedContinueOverrides | undefined;
   private _bodySize: number | undefined;
+  private _wallTimeMs: number | undefined;
   _responseBodyOverride: { body: string; isBase64: boolean; } | undefined;
 
   static Events = {
@@ -196,7 +197,7 @@ export class Request extends SdkObject {
   };
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: ResourceType, method: string, postData: Buffer | null, headers: HeadersArray) {
+    url: string, resourceType: ResourceType, method: string, postData: Buffer | null, headers: HeadersArray, wallTimeMs?: number) {
     super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
@@ -211,7 +212,12 @@ export class Request extends SdkObject {
     this._method = method;
     this._postData = postData;
     this._headers = headers;
+    this._wallTimeMs = wallTimeMs;
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
+  }
+
+  wallTimeMs(): number | undefined {
+    return this._wallTimeMs;
   }
 
   async raceWithPageClosure<T>(progress: Progress, promise: Promise<T>): Promise<T> {
@@ -725,7 +731,7 @@ export class Response extends SdkObject {
 export class WebSocket extends SdkObject {
   private _url: string;
   private _notified = false;
-  private _requestWallTime: number | undefined;
+  private _requestWallTimeMs: number | undefined;
   private _requestTimestamp: number | undefined;
   private _status: number | undefined;
   private _statusText: string | undefined;
@@ -760,10 +766,16 @@ export class WebSocket extends SdkObject {
     return this._url;
   }
 
-  requestSent(headers: HeadersArray, wallTime?: number, timestamp?: number) {
-    this._requestWallTime = wallTime;
-    this._requestTimestamp = timestamp;
+  wallTimeMs(): number | undefined {
+    return this._requestWallTimeMs;
+  }
 
+  setRequestTiming(wallTimeMs: number | undefined, timestamp: number | undefined) {
+    this._requestWallTimeMs = wallTimeMs;
+    this._requestTimestamp = timestamp;
+  }
+
+  requestSent(headers: HeadersArray) {
     this.emit(WebSocket.Events.Request, { headers });
   }
 
@@ -773,8 +785,8 @@ export class WebSocket extends SdkObject {
 
   private _toWallTime(timestamp: number): number {
     // The timestamp of each frame is relative to the timestamp (and walltime) of the initial request in Chromium and WebKit.
-    if (this._requestWallTime !== undefined && this._requestTimestamp !== undefined)
-      return this._requestWallTime + (timestamp - this._requestTimestamp);
+    if (this._requestWallTimeMs !== undefined && this._requestTimestamp !== undefined)
+      return this._requestWallTimeMs + (timestamp - this._requestTimestamp);
 
     // The timestamp is already a walltime in Firefox.
     return timestamp;

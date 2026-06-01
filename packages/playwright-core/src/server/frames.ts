@@ -408,10 +408,12 @@ export class FrameManager {
     if (!ws)
       return;
 
+    ws.setRequestTiming(wallTime, timestamp);
+
     if (ws.markAsNotified())
       this._page.emit(Page.Events.WebSocket, ws);
 
-    ws.requestSent(headers, wallTime, timestamp);
+    ws.requestSent(headers);
   }
 
   onWebSocketResponse(requestId: string, status: number, statusText: string, headers: types.HeadersArray) {

@@ -61,7 +61,7 @@ export class WKInterceptableRequest {
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
     this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
-        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
+        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers), this._wallTime);
   }
 
   adoptRequestFromNewProcess(newSession: WKSession, requestId: string) {

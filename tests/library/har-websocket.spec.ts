@@ -124,8 +124,8 @@ it('should include websocket messages', async ({ contextFactory, server }, testI
     { type: 'receive', opcode: 1, data: 'incoming' },
   ]);
   for (const m of messages) {
-    expect(m.time).toBeGreaterThanOrEqual(beforeMs / 1000 - 1);
-    expect(m.time).toBeLessThanOrEqual(afterMs / 1000 + 1);
+    expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
+    expect(m.time).toBeLessThanOrEqual(afterMs + 1);
   }
   expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
 });

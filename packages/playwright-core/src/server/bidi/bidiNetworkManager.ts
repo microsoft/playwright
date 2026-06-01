@@ -287,7 +287,7 @@ class BidiRequest {
     const postDataBuffer = null;
     this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
         payload.request.url, resourceTypeFromBidi(payload.request.destination, payload.request.initiatorType, payload.initiator?.type), payload.request.method,
-        postDataBuffer, headersOverride || fromBidiHeaders(payload.request.headers));
+        postDataBuffer, headersOverride || fromBidiHeaders(payload.request.headers), payload.timestamp);
     // "raw" headers are the same as "provisional" headers in Bidi.
     this.request.setRawRequestHeaders(null);
     this.request._setBodySize(payload.request.bodySize || 0);

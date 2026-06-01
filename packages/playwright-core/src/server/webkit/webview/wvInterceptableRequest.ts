@@ -62,7 +62,7 @@ export class WVInterceptableRequest {
       postDataBuffer = Buffer.from(event.request.postData, 'utf8');
     }
     this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
-        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
+        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers), this._wallTime);
   }
 
   adoptRequestFromNewProcess(newSession: WVSession, requestId: string) {

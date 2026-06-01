@@ -284,7 +284,7 @@ export class HarTracer {
       return;
 
     const pageEntry = this._createPageEntryIfNeeded(page);
-    const harEntry = createHarEntry(pageEntry?.id, request.method(), url, request.frame()?.guid, this._options);
+    const harEntry = createHarEntry(pageEntry?.id, request.method(), url, request.frame()?.guid, this._options, request.wallTimeMs());
     harEntry._resourceType = request.resourceType();
     this._recordRequestHeadersAndCookies(harEntry, request.headers());
     harEntry.request.postData = this._postDataForRequest(request, this._options.content);
@@ -441,7 +441,7 @@ export class HarTracer {
       return;
 
     const pageEntry = this._createPageEntryIfNeeded(page);
-    const harEntry = createHarEntry(pageEntry?.id, 'GET', url, page.mainFrame().guid, this._options);
+    const harEntry = createHarEntry(pageEntry?.id, 'GET', url, page.mainFrame().guid, this._options, webSocket.wallTimeMs());
     harEntry._resourceType = 'websocket';
     harEntry._webSocketMessages = [];
 
@@ -535,6 +535,11 @@ export class HarTracer {
       const timing = response.timing();
       if (pageEntry && startDateTime > timing.startTime)
         pageEntry.startedDateTime = new Date(timing.startTime).toISOString();
+      if (request.wallTimeMs() === undefined && timing.startTime > 0) {
+        const startedDateTime = safeDateToISOString(timing.startTime);
+        if (startedDateTime)
+          harEntry.startedDateTime = startedDateTime;
+      }
       const dns = timing.domainLookupEnd !== -1 ? helper.millisToRoundishMillis(timing.domainLookupEnd - timing.domainLookupStart) : -1;
       const connect = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.connectStart) : -1;
       const ssl = timing.connectEnd !== -1 ? helper.millisToRoundishMillis(timing.connectEnd - timing.secureConnectionStart) : -1;
@@ -670,10 +675,11 @@ export class HarTracer {
 
 }
 
-function createHarEntry(pageRef: string | undefined, method: string, url: URL, frameref: string | undefined, options: HarTracerOptions): har.Entry {
+function createHarEntry(pageRef: string | undefined, method: string, url: URL, frameref: string | undefined, options: HarTracerOptions, wallTime?: number): har.Entry {
+  const startedDateTime = (wallTime && safeDateToISOString(wallTime)) || new Date().toISOString();
   const harEntry: har.Entry = {
     pageref: pageRef,
-    startedDateTime: new Date().toISOString(),
+    startedDateTime,
     time: -1,
     request: {
       method: method,
