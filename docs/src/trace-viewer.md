@@ -695,6 +695,8 @@ In the Actions tab you can see what locator was used for every action and how lo
 - Action log
 - Source code location
 
+Expect actions appear in the actions list with an **assert** badge and the matcher name. [`method: Test.step`] titles that start with `assert` (for example `assert user is logged in`) are shown the same way.
+
 ### Screenshots
 
 When tracing with the [`option: Tracing.start.screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.
