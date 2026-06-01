@@ -695,6 +695,8 @@ In the Actions tab you can see what locator was used for every action and how lo
 - Action log
 - Source code location
 
+For API requests, click the **{}** button on an action to show request and response inline. In the snapshot toolbar, **{}** shows all API calls in the main panel; **globe** auto-shows details for the selected action.
+
 ### Screenshots
 
 When tracing with the [`option: Tracing.start.screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.
