@@ -112,6 +112,15 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
 });
 
+test('should render log badge in action list', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await test.step('log hello from test', async () => {
+      await page.setContent('<div>hello</div>');
+    });
+  });
+  await expect(traceViewer.page.locator('.action-log-badge', { hasText: 'log' }).first()).toBeVisible();
+});
+
 test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36483' });
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39302' });
