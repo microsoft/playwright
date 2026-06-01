@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import { createImage } from './playwright-test-fixtures';
 import { test, expect, retries } from './ui-mode-fixtures';
 
@@ -840,4 +844,37 @@ test('should update state on subsequent run', async ({ runUITest, writeFiles }) 
   await expect(page).toMatchAriaSnapshot(`
     - treeitem /Expect \"toBe\"/
   `);
+});
+
+test('should load trace when outputDir is outside cwd', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40950' },
+}, async ({ runUITest }) => {
+  const outputDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'pw-outputdir-'));
+  try {
+    const { page } = await runUITest({
+      'playwright.config.ts': `
+        import { defineConfig } from '@playwright/test';
+        export default defineConfig({
+          outputDir: ${JSON.stringify(outputDir)},
+        });
+      `,
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('trace test', async ({ page }) => {
+          await page.setContent('<button>Submit</button>');
+        });
+      `,
+    });
+
+    await page.getByText('trace test').dblclick();
+
+    const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+    await expect(listItem, 'action list').toHaveText([
+      /Before Hooks/,
+      /Set content/,
+      /After Hooks/,
+    ]);
+  } finally {
+    await fs.promises.rm(outputDir, { recursive: true, force: true });
+  }
 });
