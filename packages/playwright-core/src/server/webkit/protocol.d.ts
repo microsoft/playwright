@@ -6403,6 +6403,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type CoordinateSystem = "Viewport"|"Page";
     /**
+     * Image format used to encode a captured snapshot.
+     */
+    export type ImageFormat = "png"|"jpeg"|"webp";
+    /**
      * Same-Site policy of a cookie.
      */
     export type CookieSameSitePolicy = "None"|"Lax"|"Strict";
@@ -6996,10 +7000,18 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * By default, screenshot is inflated by device scale factor to avoid blurry image. This flag disables it.
        */
       omitDeviceScaleFactor?: boolean;
+      /**
+       * Image format of the resulting snapshot. Defaults to "png".
+       */
+      format?: ImageFormat;
+      /**
+       * Compression quality from 0 to 100 (ignored for the "png" format). Defaults to 80.
+       */
+      quality?: number;
     }
     export type snapshotRectReturnValue = {
       /**
-       * Base64-encoded image data (PNG).
+       * Base64-encoded image data.
        */
       dataURL: string;
     }

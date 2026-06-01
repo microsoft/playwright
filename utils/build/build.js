@@ -866,29 +866,12 @@ const pkgSizePlugin = {
   },
 };
 
-// Build/watch trace viewer service worker.
-steps.push(new ProgramStep({
-  command: process.execPath,
-  args: [
-    VITE_BIN,
-    '--config',
-    'vite.sw.config.ts',
-    'build',
-    ...(watchMode ? ['--watch', '--minify=false'] : []),
-    ...(withSourceMaps ? ['--sourcemap=inline'] : []),
-  ],
-  shell: false,
-  cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-  concurrent: true,
-}));
-
 // Build/watch web packages. The html-reporter, trace-viewer, and dashboard
 // also have embedded Vite dev servers used when viewing reports/traces/the
 // dashboard live, but their bundled output is consumed as a static artifact
 // in other code paths (e.g. HtmlBuilder.build() reads lib/vite/htmlReport/
 // and lib/vite/traceViewer/), so we always keep the static build alongside
-// HMR. Recorder is not yet HMR'd. The trace viewer service worker still
-// builds via vite.sw.config.ts above — that step is not in this loop.
+// HMR. Recorder is not yet HMR'd.
 const webPackages = ['html-reporter', 'recorder', 'trace-viewer', 'dashboard'];
 for (const webPackage of webPackages) {
   steps.push(new ProgramStep({
@@ -906,24 +889,20 @@ for (const webPackage of webPackages) {
   }));
 }
 
-// Build/watch extension UI pages and service worker.
-for (const config of ['vite.config.mts', 'vite.sw.config.mts']) {
-  steps.push(new ProgramStep({
-    command: process.execPath,
-    args: [
-      VITE_BIN,
-      'build',
-      '--config',
-      config,
-      ...(watchMode ? ['--watch', '--minify=false'] : []),
-      ...(withSourceMaps ? ['--sourcemap=inline'] : []),
-      '--clearScreen=false',
-    ],
-    shell: false,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'extension'),
-    concurrent: true,
-  }));
-}
+// Build/watch extension
+steps.push(new ProgramStep({
+  command: process.execPath,
+  args: [
+    VITE_BIN,
+    'build',
+    ...(watchMode ? ['--watch', '--minify=false'] : []),
+    ...(withSourceMaps ? ['--sourcemap=inline'] : []),
+    '--clearScreen=false',
+  ],
+  shell: false,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'extension'),
+  concurrent: true,
+}));
 
 // Generate CLI help.
 onChanges.push({

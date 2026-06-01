@@ -56,8 +56,11 @@ export class WVInterceptableRequest {
     let postDataBuffer = null;
     this._timestamp = event.timestamp;
     this._wallTime = event.walltime * 1000;
-    if (event.request.postData)
-      postDataBuffer = Buffer.from(event.request.postData, 'base64');
+    if (event.request.postData) {
+      // Stock WebKit reports Network.Request.postData as a plain string, unlike
+      // the Playwright-patched WebKit build which base64-encodes it.
+      postDataBuffer = Buffer.from(event.request.postData, 'utf8');
+    }
     this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
