@@ -268,7 +268,7 @@ export interface PlaywrightWorkerOptions {
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure' | 'retain-on-failure-and-retries' | 'retain-all-failures';
-export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
+export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure' | 'retain-on-failure-and-retries' | 'retain-all-failures';
 export interface PlaywrightTestOptions {
   acceptDownloads: boolean;
   bypassCSP: boolean;

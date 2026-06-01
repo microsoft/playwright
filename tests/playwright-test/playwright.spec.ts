@@ -525,6 +525,126 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   }, errorPrompt]);
 });
 
+test('should work with video: on-all-retries', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { video: 'on-all-retries' }, retries: 2, name: 'chromium' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        await page.setContent('<div>FAIL</div>');
+        await page.waitForTimeout(1000);
+        test.expect(1 + 1).toBe(1);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const dirFail = test.info().outputPath('test-results', 'a-fail-chromium');
+  expect(fs.readdirSync(dirFail).find(file => file.endsWith('webm'))).toBeFalsy();
+
+  const dirRetry1 = test.info().outputPath('test-results', 'a-fail-chromium-retry1');
+  expect(fs.readdirSync(dirRetry1).find(file => file.endsWith('webm'))).toBeTruthy();
+
+  const dirRetry2 = test.info().outputPath('test-results', 'a-fail-chromium-retry2');
+  expect(fs.readdirSync(dirRetry2).find(file => file.endsWith('webm'))).toBeTruthy();
+});
+
+test('should work with video: retain-on-first-failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { video: 'retain-on-first-failure' }, retries: 1, name: 'chromium' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+        await page.waitForTimeout(1000);
+        test.expect(1 + 1).toBe(2);
+      });
+      test('fail', async ({ page }) => {
+        await page.setContent('<div>FAIL</div>');
+        await page.waitForTimeout(1000);
+        test.expect(1 + 1).toBe(1);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const dirPass = test.info().outputPath('test-results', 'a-pass-chromium');
+  const videoPass = fs.existsSync(dirPass) ? fs.readdirSync(dirPass).find(file => file.endsWith('webm')) : undefined;
+  expect(videoPass).toBeFalsy();
+
+  // First run failed, so the video is retained.
+  const dirFail = test.info().outputPath('test-results', 'a-fail-chromium');
+  expect(fs.readdirSync(dirFail).find(file => file.endsWith('webm'))).toBeTruthy();
+
+  // No video is captured on retries.
+  const dirRetry = test.info().outputPath('test-results', 'a-fail-chromium-retry1');
+  expect(fs.readdirSync(dirRetry).find(file => file.endsWith('webm'))).toBeFalsy();
+});
+
+test('should work with video: retain-on-failure-and-retries', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { video: 'retain-on-failure-and-retries' }, retries: 1, name: 'chromium' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('flaky', async ({ page }) => {
+        await page.setContent('<div>FLAKY</div>');
+        await page.waitForTimeout(1000);
+        test.expect(test.info().retry).toBe(1);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+
+  // First attempt failed, video retained.
+  const dirFail = test.info().outputPath('test-results', 'a-flaky-chromium');
+  expect(fs.readdirSync(dirFail).find(file => file.endsWith('webm'))).toBeTruthy();
+
+  // Retry passed, but all videos are retained once the test was retried.
+  const dirRetry = test.info().outputPath('test-results', 'a-flaky-chromium-retry1');
+  expect(fs.readdirSync(dirRetry).find(file => file.endsWith('webm'))).toBeTruthy();
+});
+
+test('should work with video: retain-all-failures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { video: 'retain-all-failures' }, retries: 1, name: 'chromium' };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('flaky', async ({ page }) => {
+        await page.setContent('<div>FLAKY</div>');
+        await page.waitForTimeout(1000);
+        test.expect(test.info().retry).toBe(1);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+
+  // First attempt failed, video retained.
+  const dirFail = test.info().outputPath('test-results', 'a-flaky-chromium');
+  expect(fs.readdirSync(dirFail).find(file => file.endsWith('webm'))).toBeTruthy();
+
+  // Retry passed, so its video is removed.
+  const dirRetry = test.info().outputPath('test-results', 'a-flaky-chromium-retry1');
+  const videoRetry = fs.existsSync(dirRetry) ? fs.readdirSync(dirRetry).find(file => file.endsWith('webm')) : undefined;
+  expect(videoRetry).toBeFalsy();
+});
+
 test('should work with video size', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
