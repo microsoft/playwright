@@ -29,6 +29,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
+import { formatLogLabel, isLogAction } from './logUtils';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -47,6 +48,8 @@ export interface ActionListProps {
 }
 
 const ActionTreeView = TreeView<ActionTreeItem>;
+
+const kLongLogLength = 48;
 
 export const ActionList: React.FC<ActionListProps> = ({
   actions,
@@ -78,10 +81,34 @@ export const ActionList: React.FC<ActionListProps> = ({
     return setSelectedTime({ minimum: item.action.startTime, maximum: item.action.endTime });
   }, [setSelectedTime]);
 
+  const [expandedLogs, setExpandedLogs] = React.useState<Set<string>>(() => new Set());
+  const toggleLogExpanded = React.useCallback((callId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setExpandedLogs(previous => {
+      const next = new Set(previous);
+      if (next.has(callId))
+        next.delete(callId);
+      else
+        next.add(callId);
+      return next;
+    });
+  }, []);
+
   const render = React.useCallback((item: ActionTreeItem) => {
     const showAttachments = !!revealActionAttachment && !!item.action.attachments?.length;
-    return renderAction(item.action, { sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action.callId), isLive, showDuration: true, showBadges: true, showAttachments });
-  }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
+    return renderAction(item.action, {
+      sdkLanguage,
+      revealConsole,
+      revealActionAttachment: () => revealActionAttachment?.(item.action.callId),
+      isLive,
+      showDuration: true,
+      showBadges: true,
+      showAttachments,
+      logExpanded: expandedLogs.has(item.action.callId),
+      onToggleLogExpanded: event => toggleLogExpanded(item.action.callId, event),
+    });
+  }, [expandedLogs, isLive, revealConsole, revealActionAttachment, sdkLanguage, toggleLogExpanded]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
@@ -138,9 +165,45 @@ export const renderAction = (
     showDuration?: boolean,
     showBadges?: boolean,
     showAttachments?: boolean,
+    logExpanded?: boolean,
+    onToggleLogExpanded?(event: React.MouseEvent): void,
   }) => {
-  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
+  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments, logExpanded, onToggleLogExpanded } = options;
   const { errors, warnings } = stats(action);
+
+  const isLog = isLogAction(action);
+  if (isLog) {
+    const label = formatLogLabel(action);
+    const isLong = label.length > kLongLogLength;
+    let time: string = '';
+    if (action.endTime)
+      time = msToString(action.endTime - action.startTime);
+    return <div className={clsx('action-title vbox', (logExpanded || isLong) && 'action-log-row', logExpanded && 'action-log-expanded-row')}>
+      <div className='hbox action-log-header'>
+        <span className='action-log-badge'>log</span>
+        <span
+          className={clsx(
+              'action-log-label',
+              isLong && 'expandable',
+              logExpanded && 'expanded-preview',
+          )}
+          title={!logExpanded && isLong ? 'Click to expand' : undefined}
+          onClick={isLong ? onToggleLogExpanded : undefined}
+        >{label}</span>
+        {isLong && <span
+          className={clsx('codicon action-log-expand-icon', logExpanded ? 'codicon-chevron-up' : 'codicon-chevron-down')}
+          title={logExpanded ? 'Collapse log' : 'Expand log'}
+          onClick={onToggleLogExpanded}
+        />}
+        <div className='spacer'></div>
+        {showDuration && time && <div className='action-duration'>{time}</div>}
+      </div>
+      {logExpanded && isLong && <div
+        className='action-log-full'
+        onClick={onToggleLogExpanded}
+      >{label}</div>}
+    </div>;
+  }
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 

@@ -130,3 +130,65 @@
   display: flex;
   flex-direction: column;
 }
+
+.tree-view-entry:has(.action-log-expanded-row) {
+  height: auto;
+}
+
+.action-log-row {
+  margin-top: 2px;
+}
+
+.action-log-header {
+  align-items: center;
+  min-height: 20px;
+}
+
+.action-log-expand-icon {
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.action-log-expand-icon:hover {
+  opacity: 1;
+}
+
+.action-log-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  line-height: 14px;
+  background: rgba(59, 130, 246, 0.14);
+  color: rgba(59, 130, 246, 1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  margin-right: 8px;
+  flex: none;
+}
+
+.action-log-label {
+  font-weight: 500;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.action-log-label.expandable {
+  cursor: pointer;
+}
+
+.action-log-label.expandable:hover {
+  text-decoration: underline;
+}
+
+.action-log-label.expanded-preview {
+  opacity: 0.85;
+}
+
+.action-log-full {
+  margin-top: 4px;
+  padding-left: 24px;
+  white-space: pre-wrap;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+}
