@@ -192,6 +192,11 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
+test('should render assertion badge in action list', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await expect(traceViewer.page.locator('.action-assert-badge', { hasText: 'assert' }).first()).toBeVisible();
+});
+
 test('should filter actions by text', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   const filterInput = traceViewer.page.getByRole('searchbox', { name: 'Filter actions' });
