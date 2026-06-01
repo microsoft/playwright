@@ -112,9 +112,9 @@
     "@typescript-eslint/eslint-plugin": "^8.59.0",
     "@typescript-eslint/parser": "^8.59.0",
     "@typescript-eslint/utils": "^8.59.0",
-    "@vitejs/plugin-basic-ssl": "^1.1.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "@zip.js/zip.js": "^2.7.29",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@zip.js/zip.js": "~2.7.60",
     "chokidar": "3.6.0",
     "chromium-bidi": "^12.0.0",
     "colors": "1.4.0",
@@ -126,7 +126,7 @@
     "dotenv": "^16.4.5",
     "electron": "^39.8.4",
     "enquirer": "2.3.6",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.0",
     "eslint": "^9.34.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-notice": "^1.0.0",
@@ -157,13 +157,18 @@
     "source-map-support": "0.5.21",
     "ssim.js": "^3.5.0",
     "typescript": "^6.0.3",
-    "vite": "^6.4.1",
-    "vite-plugin-static-copy": "^3.1.1",
+    "vite": "^8.0.15",
+    "vite-plugin-static-copy": "^3.4.0",
     "ws": "8.17.1",
     "xml2js": "^0.5.0",
     "yaml": "^2.8.3",
     "yazl": "2.5.1",
     "zod": "^4.3.6",
     "zod-to-json-schema": "^3.25.1"
+  },
+  "overrides": {
+    "vite": {
+      "@types/node": "18.19.76"
+    }
   }
 }
