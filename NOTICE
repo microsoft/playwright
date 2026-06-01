@@ -3,3 +3,15 @@ Copyright (c) Microsoft Corporation
 
 This software contains code derived from the Puppeteer project (https://github.com/puppeteer/puppeteer),
 available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/blob/master/LICENSE).
+
+---
+
+playwright-api-trace-viewer
+Copyright (c) 2026 Roo
+
+This repository is a fork of https://github.com/microsoft/playwright with modifications
+to packages/trace-viewer for API test debugging (request/response panels, assert/log
+actions, hook visibility, and related UI). See FORK.md for a file-level change list.
+
+Modified and new files in packages/trace-viewer/src/ui/ are marked in their headers
+with "Modifications Copyright (c) 2026 Roo" or equivalent.

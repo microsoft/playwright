@@ -21,9 +21,12 @@ import react from '@vitejs/plugin-react';
 
 import { bundle } from './bundle';
 
+// Set GITHUB_PAGES_BASE=/repo-name/ when building for GitHub Pages project sites.
+const pagesBase = process.env.GITHUB_PAGES_BASE || '';
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '',
+  base: pagesBase,
   plugins: [
     react(),
     bundle()
