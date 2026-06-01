@@ -112,29 +112,25 @@ export class WebViewInput {
   private _document: Document;
   private _hoverTarget: Element | null = null;
   private _queueTail: Promise<void> = Promise.resolve();
-  // Snapshotted setTimeout, immune to a page overriding window.setTimeout.
-  private _schedule: typeof globalThis.setTimeout;
+  private _setTimeout: typeof globalThis.setTimeout;
 
   constructor(window: Window & typeof globalThis, document: Document) {
     this._window = window;
     this._document = document;
-    this._schedule = ((window as any).__pwSnapshotGlobals || window).setTimeout;
+    this._setTimeout = ((window as any).__pwSnapshotGlobals || window).setTimeout;
   }
 
-  // Run each event in its own task (like real input) and serialize them: the
-  // driver fires a click's move/down/up without awaiting each, relying on
-  // submission order, so a later synchronous command must not race ahead of an
-  // earlier one still draining its tasks.
+  // Run each event in its own task (like real input) and serialize them.
   private _postTask(task: () => void): void {
-    this._queueTail = this._queueTail.then(() => new Promise<void>(resolve => {
-      this._schedule.call(this._window, () => {
+    this._queueTail = new Promise<void>(resolve => {
+      this._setTimeout.call(this._window, () => {
         try {
           task();
         } finally {
           resolve();
         }
       });
-    }));
+    });
   }
 
   private _drained(): Promise<void> {
