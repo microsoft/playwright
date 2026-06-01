@@ -211,6 +211,16 @@ browserTest.describe('page screenshot', () => {
     expect(pixel(0, 999).r).toBeLessThan(128);
     expect(pixel(0, 999).b).toBeGreaterThan(128);
   });
+
+  browserTest('should not hang when event loop is blocked', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36702' } }, async ({ page }) => {
+    browserTest.setTimeout(5000);
+    await page.evaluate(() => {
+      setTimeout(() => {
+        while (true) {}
+      }, 10);
+    });
+    await expect(page.screenshot({ fullPage: true, timeout: 200 })).rejects.toThrow(/page.screenshot: Timeout 200ms exceeded/);
+  });
 });
 
 browserTest.describe('element screenshot', () => {
