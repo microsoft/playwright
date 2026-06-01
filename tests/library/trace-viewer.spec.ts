@@ -208,6 +208,25 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
+test('should render assertion badge in action list', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await expect(traceViewer.page.locator('.action-assert-badge', { hasText: 'assert' }).first()).toBeVisible();
+});
+
+test('should render log badge in action list', async ({ page, showTraceViewer }, testInfo) => {
+  const tracing = (testInfo as any)._tracing;
+  await tracing.startIfNeeded('on');
+  await test.step('log hello from test', async () => {
+    await page.setContent('<div>hello</div>');
+  });
+  await tracing.didFinishTestFunctionAndAfterEachHooks();
+  await tracing.stopIfNeeded();
+
+  const traceViewer = await showTraceViewer(testInfo.outputPath('trace.zip'));
+  await expect(traceViewer.actionsTree.getByRole('treeitem').filter({ hasText: 'hello from test' })).toBeVisible();
+  await expect(traceViewer.page.locator('.action-log-badge', { hasText: 'log' }).first()).toBeVisible();
+});
+
 test('should filter actions by text', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   const filterInput = traceViewer.page.getByRole('searchbox', { name: 'Filter actions' });

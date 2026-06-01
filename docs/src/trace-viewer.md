@@ -697,6 +697,10 @@ In the Actions tab you can see what locator was used for every action and how lo
 
 For API requests, click the **{}** button on an action to show request and response inline. In the snapshot toolbar, **{}** shows all API calls in the main panel; **globe** auto-shows details for the selected action.
 
+Expect actions appear in the actions list with an **assert** badge and the matcher name. [`method: Test.step`] titles that start with `assert` (for example `assert user is logged in`) are shown the same way.
+
+[`method: Test.step`] titles that start with `log` (for example `log checkout started`) appear with a **log** badge in the actions list. These steps are recorded when using Playwright Test tracing (for example `trace: 'on'`), not when using [`method: BrowserContext.tracing`] alone.
+
 ### Screenshots
 
 When tracing with the [`option: Tracing.start.screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.

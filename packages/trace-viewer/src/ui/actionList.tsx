@@ -31,6 +31,8 @@ import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 import { shouldShowApiCallDetailsUi } from './apiCallUtils';
 import { ApiCallDetailsLoader } from './apiCallDetails';
+import { formatAssertionLabel, isAssertionAction } from './assertionUtils';
+import { formatLogLabel, isLogAction } from './logUtils';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -56,13 +58,15 @@ export interface ActionListProps {
 
 const ActionTreeView = TreeView<ActionTreeItem>;
 
+const kLongAssertionLength = 48;
+const kLongLogLength = 48;
+
 export const ActionList: React.FC<ActionListProps> = ({
   actions,
   selectedAction,
   selectedTime,
-  setSelectedTime,
-  treeState,
   setTreeState,
+  treeState,
   sdkLanguage,
   onSelected,
   onHighlighted,
@@ -76,6 +80,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   setExpandedApiCalls,
   collapsedApiCalls,
   setCollapsedApiCalls,
+  setSelectedTime,
 }) => {
   const { rootItem, itemMap } = React.useMemo(() => buildActionTree(actions), [actions]);
 
@@ -117,6 +122,34 @@ export const ActionList: React.FC<ActionListProps> = ({
     }
   }, [isApiDetailsShown, setCollapsedApiCalls, setExpandedApiCalls]);
 
+  const [expandedAssertions, setExpandedAssertions] = React.useState<Set<string>>(() => new Set());
+  const toggleAssertionExpanded = React.useCallback((callId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setExpandedAssertions(previous => {
+      const next = new Set(previous);
+      if (next.has(callId))
+        next.delete(callId);
+      else
+        next.add(callId);
+      return next;
+    });
+  }, []);
+
+  const [expandedLogs, setExpandedLogs] = React.useState<Set<string>>(() => new Set());
+  const toggleLogExpanded = React.useCallback((callId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setExpandedLogs(previous => {
+      const next = new Set(previous);
+      if (next.has(callId))
+        next.delete(callId);
+      else
+        next.add(callId);
+      return next;
+    });
+  }, []);
+
   const render = React.useCallback((item: ActionTreeItem) => {
     const showAttachments = !!revealActionAttachment && !!item.action.attachments?.length;
     const isApiCall = shouldShowApiCallDetailsUi(item.action, actions);
@@ -139,8 +172,12 @@ export const ActionList: React.FC<ActionListProps> = ({
       },
       model,
       allActions: actions,
+      assertionExpanded: expandedAssertions.has(item.action.callId),
+      onToggleAssertionExpanded: event => toggleAssertionExpanded(item.action.callId, event),
+      logExpanded: expandedLogs.has(item.action.callId),
+      onToggleLogExpanded: event => toggleLogExpanded(item.action.callId, event),
     });
-  }, [actions, isApiDetailsShown, isLive, model, onSelected, revealConsole, revealActionAttachment, sdkLanguage, toggleApiDetails]);
+  }, [actions, expandedAssertions, expandedLogs, isApiDetailsShown, isLive, model, onSelected, revealConsole, revealActionAttachment, sdkLanguage, toggleApiDetails, toggleAssertionExpanded, toggleLogExpanded]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
@@ -202,9 +239,104 @@ export const renderAction = (
     onToggleApiDetails?(): void,
     model?: TraceModel,
     allActions?: ActionTraceEventInContext[],
+    assertionExpanded?: boolean,
+    onToggleAssertionExpanded?(event: React.MouseEvent): void,
+    logExpanded?: boolean,
+    onToggleLogExpanded?(event: React.MouseEvent): void,
   }) => {
-  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments, isApiCall, showApiDetails, onToggleApiDetails, model, allActions } = options;
+  const {
+    sdkLanguage,
+    revealConsole,
+    revealActionAttachment,
+    isLive,
+    showDuration,
+    showBadges,
+    showAttachments,
+    isApiCall,
+    showApiDetails,
+    onToggleApiDetails,
+    model,
+    allActions,
+    assertionExpanded,
+    onToggleAssertionExpanded,
+    logExpanded,
+    onToggleLogExpanded,
+  } = options;
   const { errors, warnings } = stats(action);
+
+  const isLog = isLogAction(action);
+  if (isLog) {
+    const label = formatLogLabel(action);
+    const isLong = label.length > kLongLogLength;
+    let time: string = '';
+    if (action.endTime)
+      time = msToString(action.endTime - action.startTime);
+    return <div className={clsx('action-title vbox', (logExpanded || isLong) && 'action-log-row', logExpanded && 'action-log-expanded-row')}>
+      <div className='hbox action-log-header'>
+        <span className='action-log-badge'>log</span>
+        <span
+          className={clsx(
+              'action-log-label',
+              isLong && 'expandable',
+              logExpanded && 'expanded-preview',
+          )}
+          title={!logExpanded && isLong ? 'Click to expand' : undefined}
+          onClick={isLong ? onToggleLogExpanded : undefined}
+        >{label}</span>
+        {isLong && <span
+          className={clsx('codicon action-log-expand-icon', logExpanded ? 'codicon-chevron-up' : 'codicon-chevron-down')}
+          title={logExpanded ? 'Collapse log' : 'Expand log'}
+          onClick={onToggleLogExpanded}
+        />}
+        <div className='spacer'></div>
+        {showDuration && time && <div className='action-duration'>{time}</div>}
+      </div>
+      {logExpanded && isLong && <div
+        className='action-log-full'
+        onClick={onToggleLogExpanded}
+      >{label}</div>}
+    </div>;
+  }
+
+  const isAssertion = isAssertionAction(action);
+  const assertionFailed = isAssertion && !!action.error?.message;
+  if (isAssertion) {
+    const label = formatAssertionLabel(action);
+    const isLong = label.length > kLongAssertionLength;
+    let time: string = '';
+    if (action.endTime)
+      time = msToString(action.endTime - action.startTime);
+    else if (action.error)
+      time = 'Failed';
+    return <div className={clsx('action-title vbox', (assertionExpanded || isLong) && 'action-assert-row', assertionExpanded && 'action-assert-expanded-row')}>
+      <div className='hbox action-assert-header'>
+        <span className={clsx('action-assert-badge', assertionFailed && 'failed')}>assert</span>
+        <span
+          className={clsx(
+              'action-assert-label',
+              assertionFailed && 'failed',
+              isLong && 'expandable',
+              assertionExpanded && 'expanded-preview',
+          )}
+          title={!assertionExpanded && isLong ? 'Click to expand' : undefined}
+          onClick={isLong ? onToggleAssertionExpanded : undefined}
+        >{label}</span>
+        {isLong && <span
+          className={clsx('codicon action-assert-expand-icon', assertionExpanded ? 'codicon-chevron-up' : 'codicon-chevron-down')}
+          title={assertionExpanded ? 'Collapse assertion' : 'Expand assertion'}
+          onClick={onToggleAssertionExpanded}
+        />}
+        <div className='spacer'></div>
+        {showDuration && time && <div className={clsx('action-duration', assertionFailed && 'failed')}>{time}</div>}
+        {assertionFailed && <span className='codicon codicon-error action-assert-error-icon' title='Assertion failed'></span>}
+      </div>
+      {assertionExpanded && isLong && <div
+        className={clsx('action-assert-full', assertionFailed && 'failed')}
+        onClick={onToggleAssertionExpanded}
+      >{label}</div>}
+      {assertionFailed && !assertionExpanded && <div className='action-assertion-error' title={action.error!.message}>{action.error!.message}</div>}
+    </div>;
+  }
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
