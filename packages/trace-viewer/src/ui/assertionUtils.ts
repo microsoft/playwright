@@ -17,19 +17,18 @@
 import type { ActionTraceEvent } from '@trace/trace';
 
 export function isAssertionAction(action: ActionTraceEvent): boolean {
-  const title = action.title ?? '';
   if (action.class === 'Test' && action.method === 'expect')
     return true;
-  if (/^Expect "/.test(title))
-    return true;
-  if (action.class === 'Test' && action.method === 'test.step')
+  if (action.class === 'Test' && action.method === 'test.step') {
+    const title = action.title ?? '';
     return /^assert\b/i.test(title);
+  }
   return false;
 }
 
 export function formatAssertionLabel(action: ActionTraceEvent): string {
   const title = action.title ?? '';
-  if (action.method === 'expect' || /^Expect "/.test(title)) {
+  if (action.method === 'expect') {
     const quoted = title.match(/^Expect "(.+)"$/);
     if (quoted) {
       const matcher = quoted[1];

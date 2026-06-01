@@ -208,8 +208,17 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should render assertion badge in action list', async ({ showTraceViewer }) => {
-  const traceViewer = await showTraceViewer(traceFile);
+test('should render assertion badge in action list', async ({ page, showTraceViewer }, testInfo) => {
+  const tracing = (testInfo as any)._tracing;
+  await tracing.startIfNeeded('on');
+  await test.step('assert page has content', async () => {
+    await page.setContent('<div>assert content</div>');
+  });
+  await tracing.didFinishTestFunctionAndAfterEachHooks();
+  await tracing.stopIfNeeded();
+
+  const traceViewer = await showTraceViewer(testInfo.outputPath('trace.zip'));
+  await expect(traceViewer.actionsTree.getByRole('treeitem').filter({ hasText: 'page has content' })).toBeVisible();
   await expect(traceViewer.page.locator('.action-assert-badge', { hasText: 'assert' }).first()).toBeVisible();
 });
 
