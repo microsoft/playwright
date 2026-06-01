@@ -377,8 +377,14 @@ const snapshottedFunctionBuiltins = [
 // Non-callable globals (objects) — Prototype.js historically replaced JSON.
 const snapshottedObjectBuiltins = ['JSON', 'Math'];
 
+// Timer builtins are routinely overridden by frameworks and fake-timer shims; the
+// snapshot lets injected code schedule real tasks regardless. They are only added
+// to the snapshot object below, not to the main-world `const` block, so they never
+// shadow timers inside the injected bundle. (setImmediate is absent in most engines.)
+const snapshottedTimerBuiltins = ['setTimeout', 'setImmediate'];
+
 export const saveGlobalsSnapshotSource = `window.__pwSnapshotGlobals = {
-${[...snapshottedFunctionBuiltins, ...snapshottedObjectBuiltins].map(n => `  ${n}: window.${n}`).join(',\n')}
+${[...snapshottedFunctionBuiltins, ...snapshottedObjectBuiltins, ...snapshottedTimerBuiltins].map(n => `  ${n}: window.${n}`).join(',\n')}
 };`;
 
 export const mainWorldGlobalsSnapshotSource = `
