@@ -112,6 +112,22 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
 });
 
+test('should show API request & response in action list', async ({ runAndTrace, context, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await test.step('api', async () => {
+      await context.request.get(server.PREFIX + '/empty.html');
+    });
+  });
+
+  const apiAction = traceViewer.actionsTree.getByRole('treeitem').filter({ hasText: 'fetch' }).first();
+  await expect(apiAction).toBeVisible();
+
+  const toggle = apiAction.locator('.action-api-details-toggle');
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await expect(traceViewer.page.locator('.api-call-details')).toBeVisible();
+});
+
 test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36483' });
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39302' });
