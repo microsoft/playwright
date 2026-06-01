@@ -195,10 +195,10 @@ export class DispatcherConnection {
   readonly _dispatchersByBucket = new Map<string, Set<string>>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
-  private _isLocal: boolean;
+  private _isInProcess: boolean;
 
-  constructor(isLocal?: boolean) {
-    this._isLocal = !!isLocal;
+  constructor(isInProcess?: boolean) {
+    this._isInProcess = !!isInProcess;
   }
 
   sendEvent(dispatcher: DispatcherScope, event: string, params: any) {
@@ -224,7 +224,7 @@ export class DispatcherConnection {
   private _validatorToWireContext(): ValidatorContext {
     return {
       tChannelImpl: this._tChannelImplToWire.bind(this),
-      binary: this._isLocal ? 'buffer' : 'toBase64',
+      binary: this._isInProcess ? 'buffer' : 'toBase64',
       isUnderTest,
     };
   }
@@ -232,7 +232,7 @@ export class DispatcherConnection {
   private _validatorFromWireContext(): ValidatorContext {
     return {
       tChannelImpl: this._tChannelImplFromWire.bind(this),
-      binary: this._isLocal ? 'buffer' : 'fromBase64',
+      binary: this._isInProcess ? 'buffer' : 'fromBase64',
       isUnderTest,
     };
   }

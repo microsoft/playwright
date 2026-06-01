@@ -609,10 +609,10 @@ test('setInputFiles should use local path when isLocal is set', async ({ browser
   });
   try {
     const cdpBrowser1 = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
-    expect(toImpl(cdpBrowser1)._isCollocatedWithServer).toBe(false);
+    expect(toImpl(cdpBrowser1)._isBrowserCollocatedWithServer).toBe(false);
 
     const cdpBrowser2 = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, { isLocal: true });
-    expect(toImpl(cdpBrowser2)._isCollocatedWithServer).toBe(true);
+    expect(toImpl(cdpBrowser2)._isBrowserCollocatedWithServer).toBe(true);
   } finally {
     await browserServer.close();
   }

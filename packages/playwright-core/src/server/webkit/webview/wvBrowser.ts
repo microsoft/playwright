@@ -165,7 +165,7 @@ export async function connectOverRDP(progress: Progress, parent: SdkObject, para
   })());
 
   if (!params.isLocal)
-    browser._isCollocatedWithServer = false;
+    browser._isBrowserCollocatedWithServer = false;
   browser.on(Browser.Events.Disconnected, doCleanup);
   return browser;
 }

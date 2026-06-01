@@ -36,6 +36,8 @@ async function filesExceedUploadLimit(files: string[]) {
 export async function prepareFilesForUpload(frame: Frame, params: Omit<channels.ElementHandleSetInputFilesParams, 'timeout'>): Promise<InputFilesItems> {
   const { payloads, streams, directoryStream } = params;
   let { localPaths, localDirectory } = params;
+  if (localPaths && !frame.attribution.playwright.options.isClientCollocatedWithServer)
+    throw new Error('localPaths are not allowed when the client is not local');
 
   if ([payloads, localPaths, localDirectory, streams, directoryStream].filter(Boolean).length !== 1)
     throw new Error('Exactly one of payloads, localPaths and streams must be provided');
@@ -57,7 +59,7 @@ export async function prepareFilesForUpload(frame: Frame, params: Omit<channels.
     lastModifiedMs?: number,
   }[] | undefined = payloads;
 
-  if (!frame._page.browserContext._browser._isCollocatedWithServer) {
+  if (!frame._page.browserContext._browser._isBrowserCollocatedWithServer) {
     // If the browser is on a different machine read files into buffers.
     if (localPaths) {
       if (await filesExceedUploadLimit(localPaths))

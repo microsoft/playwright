@@ -34,6 +34,7 @@ type PlaywrightOptions = {
   sdkLanguage: Language;
   isInternalPlaywright?: boolean;
   isServer?: boolean;
+  isClientCollocatedWithServer?: boolean;
 };
 
 export class Playwright extends SdkObject {

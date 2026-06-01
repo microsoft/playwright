@@ -25,10 +25,10 @@ import type { Playwright as PlaywrightAPI } from './client/playwright';
 import type { Language } from '@isomorphic/locatorGenerators';
 
 export function createInProcessPlaywright(): PlaywrightAPI {
-  const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
+  const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript', isClientCollocatedWithServer: true });
   const clientConnection = new Connection(nodePlatform(packageRoot));
   clientConnection.useRawBuffers();
-  const dispatcherConnection = new DispatcherConnection(true /* local */);
+  const dispatcherConnection = new DispatcherConnection(true /* in process */);
 
   // Dispatch synchronously at first.
   dispatcherConnection.onmessage = message => clientConnection.dispatch(message);
