@@ -21,26 +21,6 @@ permissions:
   contents: read    # This is required for actions/checkout to succeed
 
 jobs:
-  test_linux:
-    name: ${{ matrix.os }} (${{ matrix.browser }})
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-        os: [ubuntu-24.04]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-*
-        bot-name: "${{ matrix.browser }}-${{ matrix.os }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
@@ -49,7 +29,7 @@ jobs:
       matrix:
         # Intel: *-large
         # Arm64: *-xlarge
-        os: [macos-15-large, macos-15-xlarge, macos-26-large, macos-26-xlarge]
+        os: [macos-15-large, macos-15-xlarge]
         browser: [chromium, firefox, webkit]
         include:
         - os: macos-14-xlarge
@@ -120,30 +100,6 @@ jobs:
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
-  headed_tests:
-    name: "headed ${{ matrix.browser }} (${{ matrix.os }})"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-        os: [ubuntu-24.04, macos-15-xlarge, windows-latest]
-        include:
-          # We have different binaries per Ubuntu version for WebKit.
-          - browser: webkit
-            os: ubuntu-22.04
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-* --headed --workers=2
-        bot-name: "${{ matrix.browser }}-headed-${{ matrix.os }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-
   driver_linux:
     name: "Driver"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
@@ -164,7 +120,7 @@ jobs:
         PWTEST_MODE: driver
 
   tracing_linux:
-    name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
+    name: Tracing ${{ matrix.browser }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -177,23 +133,19 @@ jobs:
           # See https://github.com/microsoft/playwright/issues/35586
           - browser: webkit
             runs-on: ubuntu-24.04
-          - browser: chromium
-            runs-on: ubuntu-22.04
-            channel: chromium-tip-of-tree
     runs-on: ${{ matrix.runs-on }}
     steps:
     - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
-        browsers-to-install: ${{ matrix.browser }} chromium ${{ matrix.channel }}
+        browsers-to-install: ${{ matrix.browser }} chromium
         command: npm run test -- --project=${{ matrix.browser }}-*
-        bot-name: "tracing-${{ matrix.channel || matrix.browser }}"
+        bot-name: "tracing-${{ matrix.browser }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_TRACE: 1
-        PWTEST_CHANNEL: ${{ matrix.channel }}
 
   test_chromium_channels:
     name: Test ${{ matrix.channel }} on ${{ matrix.runs-on }}
@@ -217,75 +169,6 @@ jobs:
       env:
         PWTEST_CHANNEL: ${{ matrix.channel }}
 
-  chromium_tot:
-    name: Chromium tip-of-tree ${{ matrix.os }}${{ matrix.headed }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ${{ matrix.os  }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # Note: we keep older versions here, assuming they are more likely to break with ToT builds.
-        os: [ubuntu-22.04, macos-15, windows-latest]
-        headed: ['--headed', '']
-        exclude:
-          # Tested in tests_primary.yml already
-          - os: ubuntu-22.04
-            headed: ''
-    steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chromium-tip-of-tree
-        command: npm run ctest -- ${{ matrix.headed }}
-        bot-name: "chromium-tip-of-tree-${{ matrix.os }}${{ matrix.headed }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-
-  chromium_tot_headless_shell:
-    name: Chromium tip-of-tree headless-shell-${{ matrix.os }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ${{ matrix.os  }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04]
-    steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chromium-tip-of-tree-headless-shell
-        command: npm run ctest
-        bot-name: "chromium-tip-of-tree-headless-shell-${{ matrix.os }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree-headless-shell
-
-  firefox_beta:
-    name: Firefox Beta ${{ matrix.os }}
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ${{ matrix.os  }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, windows-latest, macos-latest]
-    steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: firefox-beta chromium
-        command: npm run ftest
-        bot-name: "firefox-beta-${{ matrix.os }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: firefox-beta
-
   build-playwright-driver:
     name: "build-playwright-driver"
     runs-on: ubuntu-24.04
@@ -297,29 +180,6 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: utils/build/build-playwright-driver.sh
-
-  test_channel_chromium:
-    name: Test channel=chromium
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    strategy:
-      fail-fast: false
-      matrix:
-        runs-on: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.runs-on }}
-    steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/actions/run-test
-      with:
-        # TODO: this should pass --no-shell.
-        # However, codegen tests do not inherit the channel and try to launch headless shell.
-        browsers-to-install: chromium
-        command: npm run ctest
-        bot-name: "channel-chromium-${{ matrix.runs-on }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chromium
 
   test_android:
     name: Android
