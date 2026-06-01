@@ -915,3 +915,75 @@ test('should have static annotations on result when all tests are skipped', asyn
     'annotation: skip',
   ]);
 });
+
+test('AggregateError sub-errors are spread into testInfo.errors', async ({ runInlineTest }) => {
+  class TestReporter implements Reporter {
+    onTestEnd(test: TestCase, result: TestResult): void {
+      for (const error of result.errors)
+        console.log(`%%${error.message ?? error.value}`);
+      // For the boxed-step case, also surface a frame from the test file so
+      // we can assert that the boxed-stack rewrite only applies to the
+      // top-level error and not to its sub-errors.
+      if (test.title === 'boxed step') {
+        for (const error of result.errors) {
+          const frame = (error.stack ?? '').split('\n').find(l => l.includes('a.spec.ts:'));
+          console.log(`%%FRAME ${error.message}: ${frame?.trim()}`);
+        }
+      }
+    }
+  }
+
+  const result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test('basic', () => {
+        throw new AggregateError([new Error('a'), new Error('b')], 'parent');
+      });
+      test('nested', () => {
+        throw new AggregateError([
+          new AggregateError([new Error('a'), new Error('b')], 'inner'),
+          new Error('c'),
+        ], 'outer');
+      });
+      test('non-error entries', () => {
+        const err: any = new Error('parent');
+        err.errors = ['oops', { foo: 1 }, new Error('real')];
+        throw err;
+      });
+      test('boxed step', async () => {
+        const subA = new Error('sub a');
+        const subB = new Error('sub b');
+        const helper = async () => {
+          await test.step('boxed', async () => {
+            throw new AggregateError([subA, subB], 'top');
+          }, { box: true });
+        };
+        await helper();
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toEqual([
+    'AggregateError: parent',
+    'Error: a',
+    'Error: b',
+    'AggregateError: outer',
+    'AggregateError: inner',
+    'Error: a',
+    'Error: b',
+    'Error: c',
+    'Error: parent',
+    `'oops'`,
+    '{ foo: 1 }',
+    'Error: real',
+    'AggregateError: top',
+    'Error: sub a',
+    'Error: sub b',
+    expect.stringMatching(/^FRAME AggregateError: top: at .*a\.spec\.ts:25:/),
+    expect.stringMatching(/^FRAME Error: sub a: at .*a\.spec\.ts:18:/),
+    expect.stringMatching(/^FRAME Error: sub b: at .*a\.spec\.ts:19:/),
+  ]);
+});
