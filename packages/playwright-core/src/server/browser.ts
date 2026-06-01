@@ -80,7 +80,7 @@ export abstract class Browser extends SdkObject {
   private _startedClosing = false;
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
   _closeReason: string | undefined;
-  _isCollocatedWithServer: boolean = true;
+  _isBrowserCollocatedWithServer: boolean = true;
   private _server: BrowserServer;
 
   constructor(parent: SdkObject, options: BrowserOptions) {

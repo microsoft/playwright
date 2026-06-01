@@ -159,7 +159,7 @@ export class Chromium extends BrowserType {
       validateBrowserContextOptions(persistent, browserOptions);
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, transport, browserOptions));
       if (!options.isLocal)
-        browser._isCollocatedWithServer = false;
+        browser._isBrowserCollocatedWithServer = false;
       browser.on(Browser.Events.Disconnected, doCleanup);
       return browser;
     } catch (error) {
