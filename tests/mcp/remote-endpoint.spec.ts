@@ -18,27 +18,7 @@ import { test, expect } from './fixtures';
 
 test.skip(({ mcpBrowser }) => mcpBrowser !== 'chromium', 'Run only on the chromium project; the remote server connection is browser-agnostic.');
 
-test('remoteHeaders selects the browser on run-server endpoint', async ({ startClient, server, runServerEndpoint }) => {
-  const { client } = await startClient({
-    config: {
-      browser: {
-        remoteEndpoint: runServerEndpoint,
-        remoteHeaders: { 'x-playwright-browser': 'chromium' },
-        isolated: true,
-      },
-    },
-  });
-
-  const response = await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-  expect(response).toHaveResponse({
-    page: expect.stringContaining('Page Title: Title'),
-  });
-});
-
-test('connect without remoteHeaders fails on run-server endpoint', async ({ startClient, server, runServerEndpoint }) => {
+test('connect without headers fails on run-server endpoint', async ({ startClient, server, runServerEndpoint }) => {
   const { client } = await startClient({
     config: {
       browser: {
@@ -55,5 +35,27 @@ test('connect without remoteHeaders fails on run-server endpoint', async ({ star
   expect(response).toHaveResponse({
     isError: true,
     error: expect.stringContaining(`reading 'launch'`),
+  });
+});
+
+test('remoteEndpoint accepts ConnectOptions object with headers', async ({ startClient, server, runServerEndpoint }) => {
+  const { client } = await startClient({
+    config: {
+      browser: {
+        remoteEndpoint: {
+          endpoint: runServerEndpoint,
+          headers: { 'x-playwright-browser': 'chromium' },
+        },
+        isolated: true,
+      },
+    },
+  });
+
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  expect(response).toHaveResponse({
+    page: expect.stringContaining('Page Title: Title'),
   });
 });

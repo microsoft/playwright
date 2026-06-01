@@ -82,14 +82,13 @@ export type Config = {
     cdpTimeout?: number;
 
     /**
-     * Remote endpoint to connect to an existing Playwright server.
+     * Remote endpoint to connect to an existing Playwright server. May be a
+     * WebSocket URL string, or a [ConnectOptions] object that mirrors the
+     * `connectOptions` shape used by the test runner. When passed as an object,
+     * `exposeNetwork`, `headers`, `slowMo`, and `timeout` are forwarded to the
+     * underlying connect call.
      */
-    remoteEndpoint?: string;
-
-    /**
-     * Headers to send with the remote endpoint connect request.
-     */
-    remoteHeaders?: Record<string, string>;
+    remoteEndpoint?: string | playwright.ConnectOptions & { endpoint: string };
 
     /**
      * Paths to TypeScript files to add as initialization scripts for Playwright page.
