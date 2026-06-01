@@ -486,12 +486,14 @@ export namespace Protocol {
       wsid: string;
       opcode: number;
       data: string;
+      timestamp: number;
     }
     export type webSocketFrameReceivedPayload = {
       frameId: string;
       wsid: string;
       opcode: number;
       data: string;
+      timestamp: number;
     }
     export type screencastFramePayload = {
       data: string;
@@ -605,7 +607,7 @@ export namespace Protocol {
       }|null;
     };
     export type screenshotParameters = {
-      mimeType: ("image/png"|"image/jpeg");
+      mimeType: ("image/png"|"image/jpeg"|"image/webp");
       clip: {
         x: number;
         y: number;
