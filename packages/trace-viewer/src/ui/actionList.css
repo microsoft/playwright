@@ -130,3 +130,93 @@
   display: flex;
   flex-direction: column;
 }
+
+.tree-view-entry:has(.action-assert-expanded-row) {
+  height: auto;
+}
+
+.action-assert-row {
+  margin-top: 2px;
+}
+
+.action-assert-header {
+  align-items: center;
+  min-height: 20px;
+}
+
+.action-assert-expand-icon {
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+.action-assert-expand-icon:hover {
+  opacity: 1;
+}
+
+.action-assert-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  line-height: 14px;
+  background: rgba(34, 197, 94, 0.14);
+  color: rgba(34, 197, 94, 1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  margin-right: 8px;
+  flex: none;
+}
+
+.action-assert-badge.failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: rgba(239, 68, 68, 1);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.action-assert-label {
+  font-weight: 500;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.action-assert-label.expandable {
+  cursor: pointer;
+}
+
+.action-assert-label.expandable:hover {
+  text-decoration: underline;
+}
+
+.action-assert-label.expanded-preview {
+  opacity: 0.85;
+}
+
+.action-assert-full {
+  margin-top: 4px;
+  padding-left: 24px;
+  white-space: pre-wrap;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+}
+
+.action-assert-full.failed {
+  color: var(--vscode-errorForeground);
+}
+
+.action-assert-label.failed {
+  color: var(--vscode-errorForeground);
+}
+
+.action-assert-error-icon {
+  margin-left: 6px;
+  color: var(--vscode-errorForeground);
+}
+
+.action-assertion-error {
+  margin-top: 4px;
+  padding-left: 24px;
+  color: var(--vscode-errorForeground);
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

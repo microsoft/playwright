@@ -29,6 +29,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
+import { formatAssertionLabel, isAssertionAction } from './assertionUtils';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -47,6 +48,8 @@ export interface ActionListProps {
 }
 
 const ActionTreeView = TreeView<ActionTreeItem>;
+
+const kLongAssertionLength = 48;
 
 export const ActionList: React.FC<ActionListProps> = ({
   actions,
@@ -78,10 +81,34 @@ export const ActionList: React.FC<ActionListProps> = ({
     return setSelectedTime({ minimum: item.action.startTime, maximum: item.action.endTime });
   }, [setSelectedTime]);
 
+  const [expandedAssertions, setExpandedAssertions] = React.useState<Set<string>>(() => new Set());
+  const toggleAssertionExpanded = React.useCallback((callId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setExpandedAssertions(previous => {
+      const next = new Set(previous);
+      if (next.has(callId))
+        next.delete(callId);
+      else
+        next.add(callId);
+      return next;
+    });
+  }, []);
+
   const render = React.useCallback((item: ActionTreeItem) => {
     const showAttachments = !!revealActionAttachment && !!item.action.attachments?.length;
-    return renderAction(item.action, { sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action.callId), isLive, showDuration: true, showBadges: true, showAttachments });
-  }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
+    return renderAction(item.action, {
+      sdkLanguage,
+      revealConsole,
+      revealActionAttachment: () => revealActionAttachment?.(item.action.callId),
+      isLive,
+      showDuration: true,
+      showBadges: true,
+      showAttachments,
+      assertionExpanded: expandedAssertions.has(item.action.callId),
+      onToggleAssertionExpanded: event => toggleAssertionExpanded(item.action.callId, event),
+    });
+  }, [expandedAssertions, isLive, revealConsole, revealActionAttachment, sdkLanguage, toggleAssertionExpanded]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
@@ -138,9 +165,51 @@ export const renderAction = (
     showDuration?: boolean,
     showBadges?: boolean,
     showAttachments?: boolean,
+    assertionExpanded?: boolean,
+    onToggleAssertionExpanded?(event: React.MouseEvent): void,
   }) => {
-  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
+  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments, assertionExpanded, onToggleAssertionExpanded } = options;
   const { errors, warnings } = stats(action);
+
+  const isAssertion = isAssertionAction(action);
+  const assertionFailed = isAssertion && !!action.error?.message;
+  if (isAssertion) {
+    const label = formatAssertionLabel(action);
+    const isLong = label.length > kLongAssertionLength;
+    let time: string = '';
+    if (action.endTime)
+      time = msToString(action.endTime - action.startTime);
+    else if (action.error)
+      time = 'Failed';
+    return <div className={clsx('action-title vbox', (assertionExpanded || isLong) && 'action-assert-row', assertionExpanded && 'action-assert-expanded-row')}>
+      <div className='hbox action-assert-header'>
+        <span className={clsx('action-assert-badge', assertionFailed && 'failed')}>assert</span>
+        <span
+          className={clsx(
+              'action-assert-label',
+              assertionFailed && 'failed',
+              isLong && 'expandable',
+              assertionExpanded && 'expanded-preview',
+          )}
+          title={!assertionExpanded && isLong ? 'Click to expand' : undefined}
+          onClick={isLong ? onToggleAssertionExpanded : undefined}
+        >{label}</span>
+        {isLong && <span
+          className={clsx('codicon action-assert-expand-icon', assertionExpanded ? 'codicon-chevron-up' : 'codicon-chevron-down')}
+          title={assertionExpanded ? 'Collapse assertion' : 'Expand assertion'}
+          onClick={onToggleAssertionExpanded}
+        />}
+        <div className='spacer'></div>
+        {showDuration && time && <div className={clsx('action-duration', assertionFailed && 'failed')}>{time}</div>}
+        {assertionFailed && <span className='codicon codicon-error action-assert-error-icon' title='Assertion failed'></span>}
+      </div>
+      {assertionExpanded && isLong && <div
+        className={clsx('action-assert-full', assertionFailed && 'failed')}
+        onClick={onToggleAssertionExpanded}
+      >{label}</div>}
+      {assertionFailed && !assertionExpanded && <div className='action-assertion-error' title={action.error!.message}>{action.error!.message}</div>}
+    </div>;
+  }
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
