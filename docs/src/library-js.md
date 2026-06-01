@@ -206,6 +206,10 @@ Alternatively, you can add `@playwright/browser-chromium`, `@playwright/browser-
 npm install @playwright/browser-chromium
 ```
 
+:::note
+These helper packages download the browser from an `install` script that runs during `npm install`. Some package managers (pnpm, Yarn Berry, Bun, Deno, and npm following [RFC #868](https://github.com/npm/rfcs/pull/868)) block dependency install scripts by default. In that case, allow the script explicitly (for example via the `allowScripts` field in `package.json` or `npm approve-scripts`), or download the browser with `npx playwright install chromium` instead.
+:::
+
 **Download behind a firewall or a proxy**
 
 Pass `HTTPS_PROXY` environment variable to download through a proxy.
