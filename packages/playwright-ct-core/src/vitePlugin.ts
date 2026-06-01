@@ -242,7 +242,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
     async transform(this: PluginContext, content, id) {
       const queryIndex = id.indexOf('?');
       const file = queryIndex !== -1 ? id.substring(0, queryIndex) : id;
-      if (!buildInfo.sources[file]) {
+      if (!buildInfo.sources[file] && !file.includes('/node_modules/') && !file.includes(`${path.sep}node_modules${path.sep}`)) {
         try {
           const timestamp = (await fs.promises.stat(file)).mtimeMs;
           buildInfo.sources[file] = { timestamp };
@@ -274,6 +274,8 @@ function collectViteModuleDependencies(context: PluginContext, id: string, deps:
   const cleanedId = id.split(/[?#]/)[0];
   const normalizedId = path.normalize(cleanedId);
   if (!path.isAbsolute(normalizedId))
+    return;
+  if (normalizedId.includes(`${path.sep}node_modules${path.sep}`))
     return;
   if (deps.has(normalizedId))
     return;

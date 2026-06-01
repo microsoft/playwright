@@ -19,6 +19,7 @@ import path from 'path';
 
 import { cc, transform } from 'playwright/lib/common';
 import { debug } from 'playwright-core/lib/utilsBundle';
+import { transformWithOxc } from 'vite';
 
 import type { ImportInfo } from './tsxTransform';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from 'playwright/types/test';
@@ -112,15 +113,25 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
   // .js files.
   if (supportJsxInJs) {
     log('jsx-in-js detected');
-    frameworkOverrides.esbuild = {
-      loader: 'jsx',
-      include: /.*\.jsx?$/,
-      exclude: [],
-    };
+    frameworkOverrides.plugins!.push({
+      name: 'playwright:jsx-in-js',
+      enforce: 'pre',
+      async transform(code, id) {
+        const [filename] = id.split('?');
+        if (!/\.jsx?$/.test(filename) || /\/node_modules\//.test(filename))
+          return null;
+        const result = await transformWithOxc(code, filename, {
+          lang: 'jsx',
+          jsx: { runtime: 'automatic' },
+          sourcemap: true,
+        });
+        return { code: result.code, map: result.map as any };
+      },
+    });
     frameworkOverrides.optimizeDeps = {
-      esbuildOptions: {
-        loader: { '.js': 'jsx' },
-      }
+      rolldownOptions: {
+        moduleTypes: { '.js': 'jsx' },
+      },
     };
   }
 
@@ -138,7 +149,7 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
 
   // We assume that any non-empty plugin list includes `vite-react` or similar.
   if (frameworkPluginFactory && !baseAndUserConfig.plugins?.length)
-    frameworkOverrides.plugins = [await frameworkPluginFactory()];
+    frameworkOverrides.plugins!.unshift(await frameworkPluginFactory());
 
   return mergeConfig(baseAndUserConfig, frameworkOverrides);
 }
