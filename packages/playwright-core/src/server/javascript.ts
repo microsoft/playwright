@@ -380,8 +380,8 @@ const snapshottedObjectBuiltins = ['JSON', 'Math'];
 // Timer builtins are routinely overridden by frameworks and fake-timer shims; the
 // snapshot lets injected code schedule real tasks regardless. They are only added
 // to the snapshot object below, not to the main-world `const` block, so they never
-// shadow timers inside the injected bundle. (setImmediate is absent in most engines.)
-const snapshottedTimerBuiltins = ['setTimeout', 'setImmediate'];
+// shadow timers inside the injected bundle.
+const snapshottedTimerBuiltins = ['setTimeout'];
 
 export const saveGlobalsSnapshotSource = `window.__pwSnapshotGlobals = {
 ${[...snapshottedFunctionBuiltins, ...snapshottedObjectBuiltins, ...snapshottedTimerBuiltins].map(n => `  ${n}: window.${n}`).join(',\n')}
