@@ -235,13 +235,19 @@ class SocksProxyConnection {
               session.close();
               this._browserEncrypted.destroy(error);
             };
-            stream.once('end', cleanup);
             stream.once('error', cleanup);
             stream.respond({
               [http2.constants.HTTP2_HEADER_CONTENT_TYPE]: 'text/html',
               [http2.constants.HTTP2_HEADER_STATUS]: 503,
             });
+            // Do not clean up on the stream's 'end' event: for GET requests the client sends
+            // END_STREAM together with the HEADERS frame, so 'end' can fire before stream.end()
+            // queues the DATA write. Tearing down the socket while that write is still in flight
+            // crashes the http2 session with an `is_write_in_progress()` assertion. Instead, queue
+            // the cleanup right after stream.end() so setImmediate FIFO ordering flushes the DATA
+            // write first.
             stream.end(responseBody);
+            setImmediate(() => cleanup());
           });
         } else {
           this._browserEncrypted.destroy(error);

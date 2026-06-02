@@ -842,6 +842,40 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should not crash on HTTP/2 when the TLS connection to the server fails', async ({ browser, startCCServer, asset, browserName, isMac, nodeVersion }) => {
+    test.skip(browserName === 'webkit' && isMac, 'WebKit on macOS does not proxy localhost');
+    test.skip(nodeVersion.major < 20, 'http2.performServerHandshake is not supported in older Node.js versions');
+
+    // Regression test for https://github.com/microsoft/playwright/issues/41105
+    // When the upstream TLS handshake fails, the proxy answers with a 503 over h2. For GET
+    // requests the browser sends END_STREAM together with the HEADERS frame, so the stream 'end'
+    // event could fire before the 503 DATA write completed, tearing down the socket mid-write and
+    // crashing the http2 session with an `is_write_in_progress()` assertion. The crash is a race,
+    // so issue many sequential requests to reproduce it reliably.
+    const serverURL = await startCCServer({ http2: true });
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    await page.goto(serverURL);
+    await expect(page.getByText('Playwright client-certificate error: self-signed certificate')).toBeVisible();
+    for (let i = 0; i < 50; i++) {
+      const status = await page.evaluate(async url => {
+        const response = await fetch(url + '?' + Math.random(), { cache: 'no-store' });
+        await response.text();
+        return response.status;
+      }, serverURL);
+      expect(status).toBe(503);
+    }
+    // The browser is still alive (it did not crash).
+    await page.reload();
+    await expect(page.getByText('Playwright client-certificate error: self-signed certificate')).toBeVisible();
+    await page.close();
+  });
+
   test('should handle rejected certificate in handshake with HTTP/2', async ({ browser, asset, browserName, platform }) => {
     const server: http2.Http2SecureServer = createHttp2Server({
       key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
