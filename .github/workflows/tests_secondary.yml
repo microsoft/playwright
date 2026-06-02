@@ -154,8 +154,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [chrome, chrome-beta, msedge, msedge-beta, msedge-dev]
-        runs-on: [ubuntu-22.04, macos-latest, windows-latest]
+        include:
+          - channel: chrome
+            runs-on: ubuntu-22.04
+          - channel: chrome
+            runs-on: macos-latest
+          - channel: chrome
+            runs-on: windows-latest
+          - channel: chrome-beta
+            runs-on: ubuntu-22.04
+          - channel: msedge
+            runs-on: windows-latest
+          - channel: msedge-dev
+            runs-on: windows-latest
     steps:
     - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
