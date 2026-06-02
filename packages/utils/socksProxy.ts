@@ -294,6 +294,11 @@ function hexToNumber(hex: string): number {
 }
 
 function ipToSocksAddress(address: string): number[] {
+  // Node.js may return IPv4-mapped IPv6 addresses (e.g. "::ffff:10.0.0.1") from
+  // socket.localAddress on dual-stack systems. Unwrap them to plain IPv4.
+  const ipv4Mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
+  if (ipv4Mapped)
+    address = ipv4Mapped[1];
   if (net.isIPv4(address)) {
     return [
       0x01, // IPv4
