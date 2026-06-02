@@ -164,4 +164,21 @@ it.describe('MV3', () => {
     expect(message.text()).toContain('Test console log from a third-party execution context');
     await context.close();
   });
+
+  it('should use custom userAgent in service worker fetch requests', async ({ launchPersistentContext, asset, server }) => {
+    server.setRoute('/ua-echo', (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end(req.headers['user-agent']);
+    });
+    const extensionPath = asset('extension-mv3-simple');
+    const context = await launchPersistentContext(extensionPath, { userAgent: 'MyTestAgent/1.0' });
+    const serviceWorkers = context.serviceWorkers();
+    const sw = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
+    const userAgent = await sw.evaluate(async url => {
+      const response = await fetch(url);
+      return response.text();
+    }, server.PREFIX + '/ua-echo');
+    expect(userAgent).toBe('MyTestAgent/1.0');
+    await context.close();
+  });
 });

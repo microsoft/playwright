@@ -104,7 +104,7 @@ export class CRServiceWorker extends Worker {
     // domain's setUserAgentOverride which is available on the service worker session.
     const options = this.browserContext._options;
     await this._session.send('Network.setUserAgentOverride', {
-      userAgent: options.userAgent || '',
+      userAgent: options.userAgent || this.browserContext._browser.userAgent(),
       acceptLanguage: options.locale,
     }).catch(() => {});
   }

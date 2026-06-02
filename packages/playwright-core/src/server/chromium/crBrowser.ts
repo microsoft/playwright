@@ -496,10 +496,10 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
     this._options.userAgent = userAgent;
-    for (const page of this.pages())
-      await (page.delegate as CRPage).updateUserAgent();
-    for (const sw of this.serviceWorkers())
-      await (sw as CRServiceWorker).updateUserAgent();
+    await Promise.all([
+      ...this.pages().map(page => (page.delegate as CRPage).updateUserAgent()),
+      ...this.serviceWorkers().map(sw => (sw as CRServiceWorker).updateUserAgent()),
+    ]);
   }
 
   async doUpdateOffline(): Promise<void> {
