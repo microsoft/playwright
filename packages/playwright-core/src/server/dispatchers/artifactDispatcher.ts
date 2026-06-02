@@ -46,11 +46,13 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async pathAfterFinished(params: channels.ArtifactPathAfterFinishedParams, progress: Progress): Promise<channels.ArtifactPathAfterFinishedResult> {
+    this._assertFileAccessible();
     const path = await this._object.localPathAfterFinished(progress);
     return { value: path };
   }
 
   async saveAs(params: channels.ArtifactSaveAsParams, progress: Progress): Promise<channels.ArtifactSaveAsResult> {
+    this._assertFileAccessible();
     return await progress.race(new Promise((resolve, reject) => {
       this._object.saveAs(progress, async (localPath, error) => {
         if (error) {
@@ -68,7 +70,14 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
     }));
   }
 
+  private _assertFileAccessible(): void {
+    const errorMessage = this._object.missingFileErrorMessage();
+    if (errorMessage)
+      throw new Error(errorMessage);
+  }
+
   async saveAsStream(params: channels.ArtifactSaveAsStreamParams, progress: Progress): Promise<channels.ArtifactSaveAsStreamResult> {
+    this._assertFileAccessible();
     return await progress.race(new Promise((resolve, reject) => {
       this._object.saveAs(progress, async (localPath, error) => {
         if (error) {
@@ -94,6 +103,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async stream(params: channels.ArtifactStreamParams, progress: Progress): Promise<channels.ArtifactStreamResult> {
+    this._assertFileAccessible();
     const fileName = await this._object.localPathAfterFinished(progress);
     const readable = fs.createReadStream(fileName, { highWaterMark: 1024 * 1024 });
     return { stream: new StreamDispatcher(this, readable) };

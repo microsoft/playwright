@@ -32,6 +32,11 @@ export class Download {
     if (!downloadPath)
       throw new Error(`Download filename '${downloadFilename}' escapes download directory`);
     this.artifact = new Artifact(page, downloadPath, unaccessibleErrorMessage, () => this.cancel());
+    if (!page.browserContext._browser._isBrowserCollocatedWithServer) {
+      this.artifact.markMissingFileErrorMessage(
+          `Downloaded file is not accessible from the Playwright server because the browser is running on a different host ` +
+          `(e.g. connected over CDP to a remote browser). Saving downloads requires the browser and the Playwright server to share a filesystem.`);
+    }
     this._page = page;
     this.url = url;
     this._uuid = uuid;
