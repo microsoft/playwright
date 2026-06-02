@@ -343,8 +343,9 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should not intercept TLS for origins without a client certificate', async ({ browser, asset, httpsServer }) => {
-    // https://github.com/microsoft/playwright/issues/41106
+  test('should not intercept TLS for origins without a client certificate', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41106' },
+  }, async ({ browser, asset, httpsServer }) => {
     // If the proxy intercepted this origin, the browser would see its self-signed cert (CN=localhost)
     // instead of the real server cert (CN=playwright-test).
     const page = await browser.newPage({
