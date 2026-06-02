@@ -15,6 +15,7 @@
  */
 
 import mime from 'mime';
+import { base64ByteLength } from '@isomorphic/base64';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { assert } from '@isomorphic/assert';
@@ -440,25 +441,68 @@ export class HarTracer {
     if (!url)
       return;
 
+    const method = 'GET';
     const pageEntry = this._createPageEntryIfNeeded(page);
-    const harEntry = createHarEntry(pageEntry?.id, 'GET', url, page.mainFrame().guid, this._options, webSocket.wallTimeMs());
+    const harEntry = createHarEntry(pageEntry?.id, method, url, page.mainFrame().guid, this._options, webSocket.wallTimeMs());
     harEntry._resourceType = 'websocket';
     harEntry._webSocketMessages = [];
+
+    let oldestWallTimeMs = Infinity;
+    let newestWallTimeMs = -Infinity;
+    const updateTime = (wallTimeMs: number) => {
+      if (this._options.omitTiming)
+        return;
+
+      if (wallTimeMs >= oldestWallTimeMs && wallTimeMs <= newestWallTimeMs)
+        return;
+
+      if (wallTimeMs < oldestWallTimeMs)
+        oldestWallTimeMs = wallTimeMs;
+      if (wallTimeMs > newestWallTimeMs)
+        newestWallTimeMs = wallTimeMs;
+      if (oldestWallTimeMs === newestWallTimeMs)
+        return;
+
+      harEntry.time = newestWallTimeMs - oldestWallTimeMs;
+    };
 
     const eventListeners = [
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.Request, ({ headers }: { headers: HeadersArray }) => {
         this._recordRequestHeadersAndCookies(harEntry, headers);
+        if (!this._options.omitSizes)
+          harEntry.request.headersSize = network.requestHeadersSize(headers, webSocket.url(), method);
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.Response, ({ status, statusText, headers }: { status: number, statusText: string, headers: HeadersArray }) => {
         harEntry.response.status = status;
         harEntry.response.statusText = statusText;
         this._recordResponseHeaders(harEntry, headers);
+        if (!this._options.omitSizes) {
+          harEntry.response.headersSize = network.responseHeadersSize(headers, statusText);
+          harEntry.response._transferSize = Math.max(0, harEntry.response._transferSize!) + harEntry.response.headersSize;
+        }
       }),
-      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameSent, ({ opcode, data, timestamp }: { opcode: number, data: string, timestamp: number }) => {
-        harEntry._webSocketMessages!.push({ type: 'send', time: timestamp, opcode, data });
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameSent, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
+        harEntry._webSocketMessages!.push({ type: 'send', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+        updateTime(wallTimeMs);
       }),
-      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameReceived, ({ opcode, data, timestamp }: { opcode: number, data: string, timestamp: number }) => {
-        harEntry._webSocketMessages!.push({ type: 'receive', time: timestamp, opcode, data });
+      eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameReceived, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
+        harEntry._webSocketMessages!.push({ type: 'receive', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+        updateTime(wallTimeMs);
+        if (!this._options.omitSizes) {
+          const length = (opcode === 1) ? Buffer.byteLength(data, 'utf8') : base64ByteLength(data);
+
+          // According to <https://www.rfc-editor.org/info/rfc6455/#section-5.2>:
+          // - there are always 16 bits at the beginning of every frame: FIN RSV1 RSV2 RSV3 opcode(4) mask length(7)
+          // - there are always 4 bytes for the masking key (see <https://www.rfc-editor.org/info/rfc6455/#section-5.1>)
+          // - there may be an additional 16 or 64 bits for payload length if it's too long to fit in the above 7 bits (or if it also can't fit in 16 bits)
+          let headerSize = 6;
+          if (length > 2 ** 16)
+            headerSize += 8;
+          else if (length > 125)
+            headerSize += 2;
+
+          harEntry.response._transferSize = Math.max(0, harEntry.response._transferSize!) + headerSize + length;
+        }
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.SocketError, (errorMessage: string) => {
         harEntry.response._failureText = errorMessage;
