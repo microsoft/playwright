@@ -961,6 +961,33 @@ for (const stdio of ['stdout', 'stderr']) {
     expect(result.output).toContain('server started');
   });
 
+  test(`should wait for ${stdio} with ANSI escape codes`, async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'test.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('pass', async ({}) => {});
+      `,
+      'server.js': `
+        // Emit text wrapped in ANSI color escape codes.
+        setTimeout(() => { console.${stdio === 'stdout' ? 'log' : 'error'}('\\u001b[32mserver started\\u001b[39m'); }, 1000);
+        setTimeout(() => {}, 100000);
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          webServer: [
+            {
+              command: 'node server.js',
+              stdout: 'pipe',
+              wait: { ${stdio}: /^server started$/m },
+            }
+          ],
+        };
+      `,
+    }, undefined);
+    expect(result.exitCode).toBe(0);
+    expect(result.output).toContain('server started');
+  });
+
   test(`should wait for ${stdio} w/group`, async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'test.spec.ts': `
