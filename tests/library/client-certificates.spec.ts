@@ -656,12 +656,11 @@ test.describe('browser', () => {
     const port = (server.address() as net.AddressInfo).port;
     const host = browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost';
     const serverUrl = `https://${host}:${port}`;
-    const origin = new URL(serverUrl).origin;
 
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
-        origin,
+        origin: serverUrl,
         certPath: asset('client-certificates/client/trusted/cert.pem'),
         keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],

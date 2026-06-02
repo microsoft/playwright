@@ -160,13 +160,13 @@ class SocksProxyConnection {
     // the protocol on the first package and attach appropriate listeners.
     if (!this._firstPackageReceived) {
       this._firstPackageReceived = true;
-      const secureContext = this.socksProxy.secureContextMap.get(normalizeOrigin(`https://${this.host}:${this.port}`));
       // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
       // Only intercept the TLS handshake to inject a client certificate when the destination origin
       // actually has one configured. Otherwise we pass the connection through untouched, so the browser
       // negotiates TLS directly with the server. This avoids unnecessarily terminating and re-establishing
       // TLS for third-party origins, which is both slower and a source of spurious errors.
-      if (data[0] === 0x16 && secureContext)
+      const secureContext = data[0] === 0x16 ? this.socksProxy.secureContextMap.get(normalizeOrigin(`https://${this.host}:${this.port}`)) : undefined;
+      if (secureContext)
         this._establishTlsTunnel(this._browserEncrypted, data, secureContext);
       else
         this._establishPlaintextTunnel(this._browserEncrypted);
