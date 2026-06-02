@@ -769,6 +769,12 @@ page/page-expose-function.spec.ts › should work on frames before navigation [f
 page/page-expose-function.spec.ts › should work with complex objects [fail]
 page/page-expose-function.spec.ts › should work with setContent [fail]
 page/page-goto.spec.ts › js redirect overrides url bar navigation [fail]
+# The next two pass in isolation and were briefly un-skipped, but flake on CI
+# and must stay here. The first does a cross-origin navigation that kills the
+# page target (a cascade trigger). The second is a plain navigation that comes
+# back 'Target closed' whenever it runs after any such trigger in the shard —
+# it was the observed victim. Don't re-enable until cross-process navigation
+# stops tearing down the session.
 page/page-goto.spec.ts › should not crash when navigating to bad SSL after a cross origin navigation [fail]
 page/page-goto.spec.ts › should not throw if networkidle0 is passed as an option [fail]
 page/page-request-fulfill.spec.ts › should fulfill preload link requests [fail]
