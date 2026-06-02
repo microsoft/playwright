@@ -1,0 +1,131 @@
+name: tests docker
+
+on:
+  workflow_call:
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  test_linux_docker:
+    name: "Docker ${{ matrix.docker_tag }} ${{ matrix.docker_arch }}"
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - docker_tag: jammy
+          docker_arch: amd64
+          host_os: ubuntu-22.04
+        - docker_tag: jammy
+          docker_arch: arm64
+          host_os: ubuntu-22.04-arm
+        - docker_tag: noble
+          docker_arch: amd64
+          host_os: ubuntu-22.04
+        - docker_tag: noble
+          docker_arch: arm64
+          host_os: ubuntu-22.04-arm
+    runs-on: ${{ matrix.host_os }}
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    steps:
+    - name: Create ~/.azure directory
+      run: mkdir -p ~/.azure
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 22
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm ci
+    - run: npm run build
+    # Used as a Pull-through cache for the Docker images. Only available on the
+    # main repo, where the secrets are present; forks fall back to Docker Hub.
+    - name: Azure Login
+      if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      uses: azure/login@v3
+      with:
+        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+    - name: Login to ACR via OIDC
+      if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      run: az acr login --name playwright
+    - name: Add Dockerfile cache
+      if: ${{ github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      run: sed -i 's/FROM ubuntu/FROM playwright.azurecr.io\/cached\/ubuntu/' utils/docker/Dockerfile.${{matrix.docker_tag}}
+    - run: ./utils/docker/build.sh --${{ matrix.docker_arch }} ${{ matrix.docker_tag }} playwright:localbuild
+      shell: bash
+    - name: Launch container
+      run: |
+        docker run \
+          --rm \
+          --name docker-tests \
+          --platform linux/${{ matrix.docker_arch }} \
+          --user=pwuser \
+          --workdir /home/pwuser \
+          --env CI \
+          --env INSIDE_DOCKER=1 \
+          -v ~/.azure:/root/.azure \
+          -d \
+          -t \
+          playwright:localbuild /bin/bash
+    - name: Copy repository inside docker container
+      run: |
+        # Note: we cannot do explicit `git clone` inside container because it requires some smarts to decide if github.sha or
+        # github.ref should be used for checkout.
+        # The actions/checkout action already handled this complexity for us, so we'll just copy checkout.
+        docker cp . docker-tests:/home/pwuser/playwright
+        docker exec --user root docker-tests chown -R pwuser /home/pwuser/playwright
+
+        # GIT is now picky on directory ownership
+        # See https://github.blog/2022-04-12-git-security-vulnerability-announced/
+        docker exec \
+          --user root \
+          --workdir /home/pwuser/playwright docker-tests /bin/bash -c '
+            git config --global --add safe.directory /home/pwuser/playwright
+          '
+    - name: Run "npm ci" inside docker
+      run: docker exec --workdir /home/pwuser/playwright docker-tests npm ci
+
+    - name: Run "npm run build" inside docker
+      run: docker exec --workdir /home/pwuser/playwright docker-tests npm run build
+
+    - name: "Run @smoke tests inside docker"
+      run: docker exec --workdir /home/pwuser/playwright docker-tests xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test -- --grep "@smoke"
+
+    - name: Azure Login
+      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      uses: azure/login@v3
+      with:
+        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+    - name: Upload Flakiness dashboard
+      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      run: |
+        # Flakiness dashboard has to be uploaded from-inside docker container so that it can collect meta information, e.g. arch
+        # See https://github.com/microsoft/playwright/blob/13b1e52d95df416fdfa7846c8a840aad8df263af/utils/upload_flakiness_dashboard.sh#L71-L86
+        docker exec \
+          --env GITHUB_REPOSITORY \
+          --env GITHUB_REF \
+          --env GITHUB_RUN_ID \
+          --user root \
+          --workdir /home/pwuser/playwright docker-tests /bin/bash -c '
+            set -e
+            # Azure-CLI is needed for upload_flakiness_dashboard.sh script.
+            curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+            ./utils/upload_flakiness_dashboard.sh "./test-results/report.json"
+          '
+    - name: Copy blob report from container
+      if: ${{ !cancelled() && (github.event_name == 'pull_request' || failure()) }}
+      run: docker cp "docker-tests:/home/pwuser/playwright/blob-report" "./blob-report"
+
+    - name: Upload blob report
+      if: ${{ !cancelled() && (github.event_name == 'pull_request' || failure()) }}
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: blob-report
+        job_name: docker-${{ matrix.docker_tag }}-${{ matrix.docker_arch }}
