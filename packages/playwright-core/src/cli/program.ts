@@ -80,7 +80,8 @@ export function decorateProgram(program: Command) {
       .option('--force', 'force reinstall of already installed browsers')
       .option('--only-shell', 'only install headless shell when installing chromium')
       .option('--no-shell', 'do not install chromium headless shell')
-      .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
+      .option('--no-progress', 'do not show download progress bars')
+      .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, progress?: boolean }) {
         try {
           await installBrowsers(args, options);
         } catch (e) {

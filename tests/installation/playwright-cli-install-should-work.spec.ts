@@ -65,6 +65,24 @@ test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk 
   }
 });
 
+test('install command should suppress progress bar with --no-progress', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41099' } }, async ({ exec, checkInstalledSoftwareOnDisk }) => {
+  await exec('npm i playwright');
+  const result = await exec('npx playwright install chromium --no-progress');
+  expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  expect(result).not.toContain('% of');
+  expect(result).not.toContain('■');
+});
+
+test('install command should suppress progress bar with PLAYWRIGHT_DOWNLOAD_NO_PROGRESS', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41099' } }, async ({ exec, checkInstalledSoftwareOnDisk }) => {
+  await exec('npm i playwright');
+  const result = await exec('npx playwright install chromium', { env: { PLAYWRIGHT_DOWNLOAD_NO_PROGRESS: '1' } });
+  expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+  expect(result).not.toContain('% of');
+  expect(result).not.toContain('■');
+});
+
 test('install command should work with HTTPS_PROXY', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36650' } }, async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
   const proxy = await TestProxy.create(8947 + test.info().workerIndex * 4);
