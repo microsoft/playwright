@@ -7313,6 +7313,22 @@ export interface PlaywrightTestOptions {
    */
   ignoreHTTPSErrors: boolean;
   /**
+   * When set to `true`, the test will fail immediately when the page emits a `pageerror` event.
+   * Defaults to `false`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: { failOnPageError: true },
+   * });
+   * ```
+   */
+  failOnPageError?: boolean;
+  /**
    * Whether the `meta viewport` tag is taken into account and touch events are enabled. isMobile is a part of device,
    * so you don't actually need to set it manually. Defaults to `false` and is not supported in Firefox. Learn more
    * about [mobile emulation](https://playwright.dev/docs/emulation#ismobile).

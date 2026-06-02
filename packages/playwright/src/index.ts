@@ -228,6 +228,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     await use(connectOptionsFromEnv() || _optionConnectOptions);
   }, { scope: 'worker', option: true, box: true }],
   video: ['off', { scope: 'worker', option: true, box: true }],
+  failOnPageError: [false, { option: true, box: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -392,7 +393,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
+  _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions, failOnPageError /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
@@ -435,6 +436,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
           return;
         closed = true;
         const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
+        // Remove pageerror listeners if attached.
+        const ctxData = contexts.get(context) as { _pageErrorHandler?: (error: Error) => void, _pageAddedHandler?: (page: Page) => void } | undefined;
+        if (ctxData && ctxData._pageErrorHandler) {
+          const handler = ctxData._pageErrorHandler;
+          for (const p of context.pages())
+            p.off('pageerror', handler);
+          if (ctxData._pageAddedHandler)
+            context.off('page', ctxData._pageAddedHandler);
+        }
         await context.close({ reason: closeReason });
         const preserveVideo = captureVideo && shouldPreserveVideo(videoMode, testInfo);
         if (preserveVideo) {
@@ -453,9 +463,36 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
         }
       };
 
-      const contextData = { close, pagesWithVideo: [] as Page[] };
+      const contextData: { close: () => Promise<void>, pagesWithVideo: Page[], _pageErrorHandler?: (error: Error) => void, _pageAddedHandler?: (page: Page) => void } = { close, pagesWithVideo: [] as Page[] };
       if (captureVideo)
         context.on('page', page => contextData.pagesWithVideo.push(page));
+
+      if (failOnPageError) {
+        const pageErrorHandler = (error: Error) => {
+          const currentTestInfo = globals.currentTestInfo() as TestInfoImpl | undefined;
+          if (!currentTestInfo)
+            return;
+          // Mark and fail the test with an explicit message, then interrupt execution.
+          if (!currentTestInfo._hasUnhandledError) {
+            currentTestInfo._hasUnhandledError = true;
+            const wrappedError = new Error(`Test stopped due to page error: ${error.message}`);
+            (wrappedError as any).cause = error;
+            if ((error as any).stack)
+              wrappedError.stack = `${wrappedError.name}: ${wrappedError.message}\n${(error as any).stack}`;
+            currentTestInfo._failWithError(wrappedError);
+          }
+          currentTestInfo._interrupt();
+        };
+        // Attach to existing pages.
+        for (const p of context.pages())
+          p.on('pageerror', pageErrorHandler);
+        // Attach to future pages.
+        const pageAddedHandler = (p: Page) => p.on('pageerror', pageErrorHandler);
+        context.on('page', pageAddedHandler);
+        contextData._pageErrorHandler = pageErrorHandler;
+        contextData._pageAddedHandler = pageAddedHandler;
+      }
+
       contexts.set(context, contextData);
       return { context, close };
     });
