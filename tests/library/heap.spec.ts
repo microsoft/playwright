@@ -165,7 +165,46 @@ test.describe(() => {
     }
   });
 
+  test('should collect frames', async ({ page, server }) => {
+    test.slow();
+
+    const kFrameCount = 310;
+
+    await page.goto(server.EMPTY_PAGE);
+    let cb;
+    const promise = new Promise(f => cb = f);
+    let counter = 0;
+    page.on('frameattached', async () => {
+      // Make sure we can access page.
+      await page.title();
+      if (++counter === kFrameCount)
+        cb();
+    });
+
+    page.evaluate(async ({ url, count }) => {
+      for (let i = 0; i < count; i++) {
+        const frame = document.createElement('iframe');
+        frame.src = url;
+        document.body.appendChild(frame);
+        await new Promise(f => setTimeout(f, 10));
+        frame.remove();
+      }
+    }, { url: server.PREFIX + '/one-style.html', count: kFrameCount }).catch(() => {});
+    await promise;
+    await page.waitForTimeout(500);
+  });
+
   test.afterEach(() => {
     coreServer.setMaxDispatchersForTest(null);
   });
+});
+
+test('cycle handles', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<div><span>hi</span></div>`.repeat(2000));
+  const divs = await page.$$('div');
+  for (const div of divs) {
+    const span = await div.$('span');
+    expect(await span.textContent()).toBe('hi');
+  }
 });
