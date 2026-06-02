@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
+import { getAsBooleanFromENV } from '@utils/env';
 import { httpRequest } from '@utils/network';
 import { removeFolders } from '@utils/fileUtils';
 import { extractZip } from '@utils/third_party/extractZip';
@@ -48,6 +49,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
   let downloadedBytes = 0;
   let totalBytes = 0;
   let chunked = false;
+  const reportProgress = !getAsBooleanFromENV('PLAYWRIGHT_DOWNLOAD_NO_PROGRESS');
 
   const promise = new ManualPromise<void>();
   httpRequest({
@@ -106,7 +108,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
 
   function onData(chunk: string) {
     downloadedBytes += chunk.length;
-    if (!chunked)
+    if (!chunked && reportProgress)
       progress(downloadedBytes, totalBytes);
   }
 }
