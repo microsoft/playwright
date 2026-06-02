@@ -344,10 +344,9 @@ test.describe('browser', () => {
   });
 
   test('should not intercept TLS for origins without a client certificate', async ({ browser, asset, httpsServer }) => {
-    // Origins without a matching client certificate must not be TLS-terminated by the proxy.
-    // If they were, the browser would observe the proxy's self-signed certificate (CN=localhost)
-    // instead of the real server certificate (CN=playwright-test).
     // https://github.com/microsoft/playwright/issues/41106
+    // If the proxy intercepted this origin, the browser would see its self-signed cert (CN=localhost)
+    // instead of the real server cert (CN=playwright-test).
     const page = await browser.newPage({
       clientCertificates: [{
         origin: 'https://not-matching.com',
