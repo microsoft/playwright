@@ -92,7 +92,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
     private _fakeBase: HTMLBaseElement;
     private _observer: MutationObserver;
-    private _observedDocument: Document;
+    private _observedDocument: Document | undefined;
     private _targetGeneration = 0;
 
     constructor() {
@@ -119,9 +119,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       this._fakeBase = document.createElement('base');
 
       this._observer = new MutationObserver(list => this._handleMutations(list));
-      this._observedDocument = document;
-      this._observer.observe(document, kObserverConfig);
-      this._refreshListenersWhenNeeded();
+      this._ensureObservingCurrentDocument();
     }
 
     private _refreshListenersWhenNeeded() {
@@ -214,15 +212,22 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     }
 
     private _ensureObservingCurrentDocument() {
-      // A popup reuses its initial about:blank document, so the observer can be
-      // left bound to a stale document after navigation. Re-bind on swap.
+      // The streamer is installed once per window, but a window can swap its
+      // document without re-running the init script - most notably a popup's
+      // initial about:blank document being replaced by the navigated one (the
+      // initial empty document is reused). In that case our observers and
+      // listeners are left bound to the stale document. Re-attach all
+      // per-document instrumentation whenever the document changes - this also
+      // re-arms the documentElement watcher in _refreshListenersWhenNeeded(),
+      // which on its own cannot recover because it relies on an observer bound
+      // to the same swapped-away document.
       // See https://github.com/microsoft/playwright/issues/40895.
       if (this._observedDocument === document)
         return;
       this._observedDocument = document;
       this._observer.disconnect();
       this._observer.observe(document, kObserverConfig);
-      this._refreshListeners();
+      this._refreshListenersWhenNeeded();
     }
 
     private _invalidateStyleSheet(sheet: CSSStyleSheet) {
