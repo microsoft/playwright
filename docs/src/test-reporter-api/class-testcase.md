@@ -107,3 +107,41 @@ Returns a list of titles from the root down to this test.
 - returns: <[TestCaseType]<"test">>
 
 Returns "test". Useful for detecting test cases in [`method: Suite.entries`].
+
+## method: TestCase.skip
+* since: v1.61
+
+Mark this test as skipped. Intended for use from inside [`method: Reporter.plan`] — that is the only call-site at which a mutation propagates to workers. Sets [`property: TestCase.expectedStatus`] to `'skipped'` and appends a `skip` annotation.
+
+### param: TestCase.skip.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: TestCase.fixme
+* since: v1.61
+
+Mark this test as fixme. Intended for use from inside [`method: Reporter.plan`] — that is the only call-site at which a mutation propagates to workers. Sets [`property: TestCase.expectedStatus`] to `'skipped'` and appends a `fixme` annotation.
+
+### param: TestCase.fixme.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: TestCase.fail
+* since: v1.61
+
+Mark this test as expected-to-fail. Intended for use from inside [`method: Reporter.plan`] — that is the only call-site at which a mutation propagates to workers. Sets [`property: TestCase.expectedStatus`] to `'failed'` (unless the test was already marked as skipped) and appends a `fail` annotation.
+
+### param: TestCase.fail.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: TestCase.exclude
+* since: v1.61
+
+Remove this test from the run entirely. Excluded tests do not appear in the report, and their body is not executed. Must be called from inside [`method: Reporter.plan`] — calling later has no effect.

@@ -25,14 +25,6 @@ import type { FullProjectInternal } from './config';
 import type { Suite, TestCase } from './test';
 import type { Matcher, TestCaseFilter } from '../util';
 
-export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilter): boolean {
-  const filteredSuites = suite.suites.filter(child => filterTestsRemoveEmptySuites(child, filter));
-  const filteredTests = suite.tests.filter(filter);
-  const entries = new Set([...filteredSuites, ...filteredTests]);
-  suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
-  return !!suite._entries.length;
-}
-
 export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
   const relativeFile = path.relative(project.project.testDir, suite.location!.file);
   const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
@@ -93,23 +85,27 @@ export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Su
   });
 }
 
-export function filterOnly(suite: Suite) {
-  if (!suite._getOnlyItems().length)
-    return;
-  const suiteFilter = (suite: Suite) => suite._only;
-  const testFilter = (test: TestCase) => test._only;
-  return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
-}
-
-function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suite: Suite) => boolean, testFilter: TestCaseFilter) {
-  const onlySuites = suite.suites.filter(child => filterSuiteWithOnlySemantics(child, suiteFilter, testFilter) || suiteFilter(child));
-  const onlyTests = suite.tests.filter(testFilter);
-  const onlyEntries = new Set([...onlySuites, ...onlyTests]);
-  if (onlyEntries.size) {
-    suite._entries = suite._entries.filter(e => onlyEntries.has(e)); // Preserve the order.
+export function filterOnly(suite: Suite): boolean {
+  const toExclude: (Suite | TestCase)[] = [];
+  let hasOnlyInside = false;
+  for (const child of suite.suites) {
+    if (filterOnly(child))
+      hasOnlyInside = true;
+    else
+      toExclude.push(child);
+  }
+  for (const test of suite.tests) {
+    if (test._only)
+      hasOnlyInside = true;
+    else
+      toExclude.push(test);
+  }
+  if (hasOnlyInside) {
+    for (const e of toExclude)
+      e.exclude();
     return true;
   }
-  return false;
+  return !!suite._only;
 }
 
 export function createFiltersFromArguments(args: string[]): { fileFilter: Matcher, testFilter: TestCaseFilter } {

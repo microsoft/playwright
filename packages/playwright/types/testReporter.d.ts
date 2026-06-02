@@ -159,6 +159,15 @@ export interface Reporter {
    */
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
   /**
+   * When `true`, Playwright skips its built-in shard filter for this run, leaving sharding to the reporter (typically
+   * implemented inside [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) by
+   * calling [testCase.exclude()](https://playwright.dev/docs/api/class-testcase#test-case-exclude) on out-of-shard
+   * tests). If [testConfig.shard](https://playwright.dev/docs/api/class-testconfig#test-config-shard) is also
+   * explicitly set, a warning is printed indicating the request is being ignored.
+   */
+  implementsSharding?(): boolean;
+
+  /**
    * Called once before running tests. All tests have been already discovered and put into a hierarchy of
    * [Suite](https://playwright.dev/docs/api/class-suite)s.
    * @param config Resolved configuration.
@@ -226,6 +235,40 @@ export interface Reporter {
    * @param result Result of the test run.
    */
   onTestEnd?(test: TestCase, result: TestResult): void;
+
+  /**
+   * Called after the configuration has been resolved and before
+   * [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin). Allows a
+   * reporter to inspect the discovered test corpus and call disposition methods on individual
+   * [TestCase](https://playwright.dev/docs/api/class-testcase)s or whole
+   * [Suite](https://playwright.dev/docs/api/class-suite)s before the run starts. Available disposition methods:
+   * - [testCase.skip([reason])](https://playwright.dev/docs/api/class-testcase#test-case-skip) /
+   *   [suite.skip([reason])](https://playwright.dev/docs/api/class-suite#suite-skip) — mark expected status as
+   *   `'skipped'` and append a `skip` annotation. The test body is not executed.
+   * - [testCase.fixme([reason])](https://playwright.dev/docs/api/class-testcase#test-case-fixme) /
+   *   [suite.fixme([reason])](https://playwright.dev/docs/api/class-suite#suite-fixme) — same as `skip`, but appends
+   *   a `fixme` annotation.
+   * - [testCase.fail([reason])](https://playwright.dev/docs/api/class-testcase#test-case-fail) /
+   *   [suite.fail([reason])](https://playwright.dev/docs/api/class-suite#suite-fail) — mark expected status as
+   *   `'failed'` and append a `fail` annotation.
+   * - [testCase.exclude()](https://playwright.dev/docs/api/class-testcase#test-case-exclude) /
+   *   [suite.exclude()](https://playwright.dev/docs/api/class-suite#suite-exclude) — remove the test from the run
+   *   entirely. Excluded tests do not appear in the report and their body is not executed.
+   *
+   * When multiple reporters implement `plan`, they are called in registration order and disposition methods accumulate;
+   * the last write wins on conflicting `expectedStatus` changes. Built-in sharding (see
+   * [testConfig.shard](https://playwright.dev/docs/api/class-testconfig#test-config-shard)) is applied **after**
+   * `plan()` returns, so dispositions are not silently dropped by sharding. If your reporter handles sharding itself,
+   * also implement
+   * [reporter.implementsSharding()](https://playwright.dev/docs/api/class-reporter#reporter-implements-sharding) to
+   * disable the built-in shard filter.
+   *
+   * Throwing from `plan` aborts the run before
+   * [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called.
+   * @param config Resolved configuration.
+   * @param suite The root suite that contains all projects, files and test cases.
+   */
+  plan?(config: FullConfig, suite: Suite): Promise<void>;
 
   /**
    * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
@@ -369,9 +412,42 @@ export interface Suite {
   entries(): Array<TestCase|Suite>;
 
   /**
+   * Remove every descendant [TestCase](https://playwright.dev/docs/api/class-testcase) of this suite from the run.
+   * Excluded tests do not appear in the report and their body is not executed. Must be called from inside
+   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) — calling later has no
+   * effect.
+   */
+  exclude(): void;
+
+  /**
+   * Mark every descendant [TestCase](https://playwright.dev/docs/api/class-testcase) of this suite as expected-to-fail.
+   * Intended for use from [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan).
+   * See [testCase.fail([reason])](https://playwright.dev/docs/api/class-testcase#test-case-fail) for per-test
+   * semantics.
+   * @param reason Optional explanation surfaced as the annotation description.
+   */
+  fail(reason?: string): void;
+
+  /**
+   * Mark every descendant [TestCase](https://playwright.dev/docs/api/class-testcase) of this suite as fixme. Intended
+   * for use from [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan). See
+   * [testCase.fixme([reason])](https://playwright.dev/docs/api/class-testcase#test-case-fixme) for per-test semantics.
+   * @param reason Optional explanation surfaced as the annotation description.
+   */
+  fixme(reason?: string): void;
+
+  /**
    * Configuration of the project this suite belongs to, or [void] for the root suite.
    */
   project(): FullProject|undefined;
+
+  /**
+   * Mark every descendant [TestCase](https://playwright.dev/docs/api/class-testcase) of this suite as skipped. Intended
+   * for use from [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan). See
+   * [testCase.skip([reason])](https://playwright.dev/docs/api/class-testcase#test-case-skip) for per-test semantics.
+   * @param reason Optional explanation surfaced as the annotation description.
+   */
+  skip(reason?: string): void;
 
   /**
    * Returns a list of titles from the root down to this suite.
@@ -428,6 +504,34 @@ export interface Suite {
  */
 export interface TestCase {
   /**
+   * Remove this test from the run entirely. Excluded tests do not appear in the report, and their body is not executed.
+   * Must be called from inside
+   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) — calling later has no
+   * effect.
+   */
+  exclude(): void;
+
+  /**
+   * Mark this test as expected-to-fail. Intended for use from inside
+   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) — that is the only
+   * call-site at which a mutation propagates to workers. Sets
+   * [testCase.expectedStatus](https://playwright.dev/docs/api/class-testcase#test-case-expected-status) to `'failed'`
+   * (unless the test was already marked as skipped) and appends a `fail` annotation.
+   * @param reason Optional explanation surfaced as the annotation description.
+   */
+  fail(reason?: string): void;
+
+  /**
+   * Mark this test as fixme. Intended for use from inside
+   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) — that is the only
+   * call-site at which a mutation propagates to workers. Sets
+   * [testCase.expectedStatus](https://playwright.dev/docs/api/class-testcase#test-case-expected-status) to `'skipped'`
+   * and appends a `fixme` annotation.
+   * @param reason Optional explanation surfaced as the annotation description.
+   */
+  fixme(reason?: string): void;
+
+  /**
    * Whether the test is considered running fine. Non-ok tests fail the test run with non-zero exit code.
    */
   ok(): boolean;
@@ -439,6 +543,16 @@ export interface TestCase {
    * - Test that passes on a second retry is `'flaky'`.
    */
   outcome(): "skipped"|"expected"|"unexpected"|"flaky";
+
+  /**
+   * Mark this test as skipped. Intended for use from inside
+   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) — that is the only
+   * call-site at which a mutation propagates to workers. Sets
+   * [testCase.expectedStatus](https://playwright.dev/docs/api/class-testcase#test-case-expected-status) to `'skipped'`
+   * and appends a `skip` annotation.
+   * @param reason Optional explanation surfaced as the annotation description.
+   */
+  skip(reason?: string): void;
 
   /**
    * Returns a list of titles from the root down to this test.

@@ -34,6 +34,15 @@ export class Multiplexer implements ReporterV2 {
       wrap(() => reporter.onConfigure?.(config));
   }
 
+  async plan(config: FullConfig, suite: test.Suite) {
+    // Unlike other reporter callbacks, `plan` errors are NOT swallowed —
+    // they propagate so the run aborts before onBegin. Reporters use plan
+    // to mutate the corpus; silently dropping a planning error would let
+    // an inconsistent (partial-mutation) state reach the workers.
+    for (const reporter of this._reporters)
+      await reporter.plan?.(config, suite);
+  }
+
   onBegin(suite: test.Suite) {
     for (const reporter of this._reporters)
       wrap(() => reporter.onBegin?.(suite));
@@ -108,6 +117,14 @@ export class Multiplexer implements ReporterV2 {
       let prints = false;
       wrap(() => prints = r.printsToStdio ? r.printsToStdio() : true);
       return prints;
+    });
+  }
+
+  implementsSharding(): boolean {
+    return this._reporters.some(r => {
+      let shards = false;
+      wrap(() => shards = r.implementsSharding ? r.implementsSharding() : false);
+      return shards;
     });
   }
 }

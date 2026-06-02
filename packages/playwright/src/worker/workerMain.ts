@@ -220,7 +220,13 @@ export class WorkerMain extends ProcessRunner {
       const suite = suiteUtils.bindFileSuiteToProject(this._project, fileSuite);
       if (this._params.repeatEachIndex)
         suiteUtils.applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);
-      suiteUtils.filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
+      for (const test of suite.allTests()) {
+        const entry = entries.get(test.id);
+        if (!entry)
+          test.exclude();
+        else
+          test.annotations.push(...entry.planAnnotations);
+      }
       const tests = suite.allTests();
 
       // Collect test IDs that were not found in the worker

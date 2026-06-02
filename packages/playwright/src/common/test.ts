@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import { parseStackFrame } from '@isomorphic/stackTrace';
 import { rootTestType } from './testType';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
 
@@ -94,6 +96,14 @@ export class Suite extends Base {
   _prependSuite(suite: Suite) {
     suite.parent = this;
     this._entries.unshift(suite);
+  }
+
+  _detach(child: Suite | TestCase) {
+    const idx = this._entries.indexOf(child);
+    if (idx !== -1)
+      this._entries.splice(idx, 1);
+    if (this._entries.length === 0)
+      this.parent?._detach(this);
   }
 
   allTests(): TestCase[] {
@@ -252,6 +262,28 @@ export class Suite extends Base {
   project(): FullProject | undefined {
     return this._fullProject?.project || this.parent?.project();
   }
+
+  skip(reason?: string): void {
+    for (const entry of this.entries())
+      entry.skip(reason);
+  }
+
+  fixme(reason?: string): void {
+    for (const entry of this.entries())
+      entry.fixme(reason);
+  }
+
+  fail(reason?: string): void {
+    for (const entry of this.entries())
+      entry.fail(reason);
+  }
+
+  exclude(): void {
+    if (this.parent)
+      this.parent._detach(this);
+    else
+      this._entries = [];
+  }
 }
 
 export class TestCase extends Base implements reporterTypes.TestCase {
@@ -275,6 +307,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
+  _planAnnotations: TestAnnotation[] = [];
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);
@@ -307,6 +340,32 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       ...titleTags,
       ...this._tags,
     ];
+  }
+
+  skip(reason?: string): void {
+    const annotation: TestAnnotation = { type: 'skip', description: reason, location: captureCallerLocation(this.skip) };
+    this.annotations.push(annotation);
+    this._planAnnotations.push(annotation);
+    this.expectedStatus = 'skipped';
+  }
+
+  fixme(reason?: string): void {
+    const annotation: TestAnnotation = { type: 'fixme', description: reason, location: captureCallerLocation(this.fixme) };
+    this.annotations.push(annotation);
+    this._planAnnotations.push(annotation);
+    this.expectedStatus = 'skipped';
+  }
+
+  fail(reason?: string): void {
+    const annotation: TestAnnotation = { type: 'fail', description: reason, location: captureCallerLocation(this.fail) };
+    this.annotations.push(annotation);
+    this._planAnnotations.push(annotation);
+    if (this.expectedStatus !== 'skipped')
+      this.expectedStatus = 'failed';
+  }
+
+  exclude(): void {
+    this.parent._detach(this);
   }
 
   _serialize(): any {
@@ -383,4 +442,18 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     path.push(...this._tags);
     return path.join(' ');
   }
+}
+
+function captureCallerLocation(belowFn: Function): Location | undefined {
+  const err: { stack?: string } = {};
+  Error.captureStackTrace(err, belowFn);
+  const lines = (err.stack ?? '').split('\n');
+  for (const line of lines) {
+    const frame = parseStackFrame(line, path.sep, false);
+    if (frame?.file && !frame.file.includes(`${path.sep}packages${path.sep}isomorphic${path.sep}`)
+        && !frame.file.includes(`${path.sep}packages${path.sep}playwright${path.sep}`)
+        && !frame.file.includes(`${path.sep}packages${path.sep}playwright-core${path.sep}`))
+      return { file: frame.file, line: frame.line ?? 0, column: frame.column ?? 0 };
+  }
+  return undefined;
 }

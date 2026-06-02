@@ -648,6 +648,19 @@ export class TeleSuite implements reporterTypes.Suite {
     suite.parent = this;
     this._entries.push(suite);
   }
+
+  skip(_reason?: string): void {
+    throw new Error('Disposition methods are not supported on a TeleSuite (read-only).');
+  }
+  fixme(_reason?: string): void {
+    throw new Error('Disposition methods are not supported on a TeleSuite (read-only).');
+  }
+  fail(_reason?: string): void {
+    throw new Error('Disposition methods are not supported on a TeleSuite (read-only).');
+  }
+  exclude(): void {
+    throw new Error('Disposition methods are not supported on a TeleSuite (read-only).');
+  }
 }
 
 export class TeleTestCase implements reporterTypes.TestCase {
@@ -692,6 +705,19 @@ export class TeleTestCase implements reporterTypes.TestCase {
     const result = new TeleTestResult(this.results.length, id);
     this.results.push(result);
     return result;
+  }
+
+  skip(_reason?: string): void {
+    throw new Error('Disposition methods are not supported on a TeleTestCase (read-only).');
+  }
+  fixme(_reason?: string): void {
+    throw new Error('Disposition methods are not supported on a TeleTestCase (read-only).');
+  }
+  fail(_reason?: string): void {
+    throw new Error('Disposition methods are not supported on a TeleTestCase (read-only).');
+  }
+  exclude(): void {
+    throw new Error('Disposition methods are not supported on a TeleTestCase (read-only).');
   }
 }
 

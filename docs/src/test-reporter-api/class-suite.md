@@ -85,3 +85,41 @@ Returns a list of titles from the root down to this suite.
 
 Returns the type of the suite. The Suites form the following hierarchy:
 `root` -> `project` -> `file` -> `describe` -> ...`describe` -> `test`.
+
+## method: Suite.skip
+* since: v1.61
+
+Mark every descendant [TestCase] of this suite as skipped. Intended for use from [`method: Reporter.plan`]. See [`method: TestCase.skip`] for per-test semantics.
+
+### param: Suite.skip.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: Suite.fixme
+* since: v1.61
+
+Mark every descendant [TestCase] of this suite as fixme. Intended for use from [`method: Reporter.plan`]. See [`method: TestCase.fixme`] for per-test semantics.
+
+### param: Suite.fixme.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: Suite.fail
+* since: v1.61
+
+Mark every descendant [TestCase] of this suite as expected-to-fail. Intended for use from [`method: Reporter.plan`]. See [`method: TestCase.fail`] for per-test semantics.
+
+### param: Suite.fail.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: Suite.exclude
+* since: v1.61
+
+Remove every descendant [TestCase] of this suite from the run. Excluded tests do not appear in the report and their body is not executed. Must be called from inside [`method: Reporter.plan`] — calling later has no effect.
