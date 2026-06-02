@@ -124,13 +124,15 @@ page/elementhandle-screenshot.spec.ts › element screenshot › should not issu
 page/locator-misc-1.spec.ts › should focus and blur a button [fail]
 
 # ============================================================================
-# service-worker  (2 tests)
+# service-worker  (3 tests)
 # Service-worker request interception/reporting is unsupported on the stock
 # WebView backend; routing a request through a service worker tears down the
-# session ('Target closed').
+# session ('Target closed'). Passes in isolation but fails in the full run
+# because service-worker registration persists across tests.
 # ============================================================================
 page/interception.spec.ts › should intercept after a service worker [fail]
 page/page-event-request.spec.ts › should report requests and responses handled by service worker with routing [fail]
+page/page-goto.spec.ts › should be able to navigate to a page controlled by service worker [fail]
 
 # ============================================================================
 # out-of-process-iframe  (1 test)
@@ -305,7 +307,6 @@ page/page-goto.spec.ts › should fail when navigating to bad url [fail]
 page/page-goto.spec.ts › should fail when replaced by another navigation [fail]
 page/page-goto.spec.ts › should override referrer-policy [fail]
 page/page-goto.spec.ts › should return url with basic auth info [fail]
-page/page-goto.spec.ts › should return when navigation is committed if commit is specified [fail]
 page/page-goto.spec.ts › should send referer [fail]
 page/page-goto.spec.ts › should send referer of cross-origin URL [fail]
 page/page-goto.spec.ts › should work with cross-process that fails before committing [fail]
@@ -373,7 +374,7 @@ page/page-wait-for-url.spec.ts › should work with DOM history.back()/history.f
 page/wheel.spec.ts › should work when the event is canceled [fail]
 
 # ============================================================================
-# misc  (98 tests)
+# misc  (99 tests)
 # Failures that have not been grouped yet — eyeball before extending the
 # categories above.
 # ============================================================================
@@ -419,13 +420,11 @@ page/page-focus.spec.ts › clicking checkbox should activate it [fail]
 page/page-focus.spec.ts › tab should cycle between document elements and browser [fail]
 page/page-focus.spec.ts › tab should cycle between single input and browser [fail]
 page/page-goto.spec.ts › js redirect overrides url bar navigation [fail]
-page/page-goto.spec.ts › should be able to navigate to a page controlled by service worker [fail]
 page/page-goto.spec.ts › should fail when main resources failed to load [fail]
 page/page-goto.spec.ts › should fail when navigating and show the url at the error message [fail]
 page/page-goto.spec.ts › should fail when navigating to bad SSL [fail]
 page/page-goto.spec.ts › should fail when navigating to bad SSL after redirects [fail]
-page/page-goto.spec.ts › should not crash when navigating to bad SSL after a cross origin navigation [fail]
-page/page-goto.spec.ts › should not throw if networkidle0 is passed as an option [fail]
+page/page-goto.spec.ts › should fail when server returns 204 [fail]
 page/page-goto.spec.ts › should work cross-process [fail]
 page/page-goto.spec.ts › should work with Cross-Origin-Opener-Policy [fail]
 page/page-goto.spec.ts › should work with Cross-Origin-Opener-Policy after redirect [fail]
@@ -532,7 +531,7 @@ page/page-mouse.spec.ts › should trigger hover state on disabled button [fail]
 page/page-mouse.spec.ts › should trigger hover state with removed window.Node [fail]
 
 # ============================================================================
-# timeout  (28 tests)
+# timeout  (26 tests)
 # Test timed out — usually because an unimplemented hook never resolves.
 # Re-triage once the relevant delegate methods are wired up.
 # ============================================================================
@@ -552,7 +551,6 @@ page/page-click.spec.ts › should wait for becoming hit target [fail]
 page/page-drag.spec.ts › Drag and drop › should respect the drop effect [fail]
 page/page-drag.spec.ts › Drag and drop › should work if a frame is stalled [fail]
 page/page-evaluate.spec.ts › should return -Infinity [fail]
-page/page-goto.spec.ts › should fail when exceeding default maximum navigation timeout [fail]
 page/page-goto.spec.ts › should not leak listeners during bad navigation [fail]
 page/page-goto.spec.ts › should not throw unhandled rejections on invalid url [fail]
 page/page-history.spec.ts › page.goBack during renderer-initiated navigation [fail]
@@ -563,7 +561,6 @@ page/page-request-continue.spec.ts › should not throw if request was cancelled
 page/page-route.spec.ts › should not throw "Invalid Interception Id" if the request was cancelled [fail]
 page/page-screenshot.spec.ts › should capture css box-shadow [fail]
 page/to-match-aria-snapshot.spec.ts › should not match what is not matched [fail]
-page/workers.spec.ts › should have JSHandles for console logs [fail]
 
 # ============================================================================
 # structural-unsupported  (111 tests)
@@ -654,7 +651,6 @@ page/page-filechooser.spec.ts › should work when file input is not attached to
 page/page-filechooser.spec.ts › should work with no timeout [fail]
 page/page-goto.spec.ts › should capture cross-process iframe navigation request [fail]
 page/page-goto.spec.ts › should capture iframe navigation request [fail]
-page/page-goto.spec.ts › should wait for load when iframe attaches and detaches [fail]
 page/page-goto.spec.ts › should work with lazy loading iframes [fail]
 page/page-network-idle.spec.ts › should wait for networkidle from the popup [fail]
 page/page-network-idle.spec.ts › should wait for networkidle when iframe attaches and detaches [fail]
@@ -708,10 +704,11 @@ page/page-fill.spec.ts › should throw on incorrect color value [fail]
 page/page-fill.spec.ts › should throw on incorrect datetime-local [fail]
 
 # ============================================================================
-# target-closed-cascade  (120 tests)
-# Cascade failures: the worker session died (likely from one of the unimplemented
-# methods above) and every following test sees 'Target closed'. Once the root
-# causes above are addressed, re-run and prune this section.
+# target-closed-cascade  (107 tests)
+# Cascade failures: a test tears down the page session and every following test
+# sees 'Target closed'. A confirmed trigger is cross-process navigation, which
+# leaves the page target dead for the next test's first navigation (see the
+# worker-remaining section). Re-run and prune this section as triggers are fixed.
 # ============================================================================
 page/elementhandle-click.spec.ts › should work @smoke [fail]
 page/elementhandle-owner-frame.spec.ts › should work for adopted elements [fail]
@@ -772,6 +769,12 @@ page/page-expose-function.spec.ts › should work on frames before navigation [f
 page/page-expose-function.spec.ts › should work with complex objects [fail]
 page/page-expose-function.spec.ts › should work with setContent [fail]
 page/page-goto.spec.ts › js redirect overrides url bar navigation [fail]
+# First does a cross-origin navigation that kills the page target; second is a
+# plain navigation that inherits 'Target closed' when it runs after such a
+# trigger. Keep skipped until cross-process navigation stops tearing down the
+# session.
+page/page-goto.spec.ts › should not crash when navigating to bad SSL after a cross origin navigation [fail]
+page/page-goto.spec.ts › should not throw if networkidle0 is passed as an option [fail]
 page/page-request-fulfill.spec.ts › should fulfill preload link requests [fail]
 page/page-request-intercept.spec.ts › should give access to the intercepted response [fail]
 page/page-request-intercept.spec.ts › should intercept with post data override [fail]
@@ -818,18 +821,16 @@ page/selectors-frame.spec.ts › should work for $eval [fail]
 page/selectors-frame.spec.ts › should work for $eval (handle) [fail]
 page/selectors-frame.spec.ts › waitFor should survive frame reattach [fail]
 page/selectors-frame.spec.ts › waitForSelector should survive frame reattach (handle) [fail]
-page/workers.spec.ts › Page.workers @smoke [fail]
+# ============================================================================
+# worker-remaining  (2 tests)
+# Web Workers attach over the WebView backend now (Worker.enable is sent during
+# session init), so page/workers.spec.ts mostly passes. Two gaps remain:
+#  - 'should clear upon cross-process navigation' passes its own assertions but
+#    the cross-process target swap leaves the page in a 'Target closed' state for
+#    the next test (same root cause as target-closed-cascade above).
+#  - 'should support extra http headers': setExtraHTTPHeaders is not applied to
+#    the worker script request, so worker.js arrives without the header.
+# ============================================================================
 page/workers.spec.ts › should clear upon cross-process navigation [fail]
-page/workers.spec.ts › should clear upon navigation [fail]
-page/workers.spec.ts › should dispatch console messages when page has workers [fail]
-page/workers.spec.ts › should emit created and destroyed events [fail]
-page/workers.spec.ts › should evaluate [fail]
-page/workers.spec.ts › should have timestamp on worker console messages [fail]
-page/workers.spec.ts › should not report console logs from workers twice [fail]
-page/workers.spec.ts › should report console event on the worker [fail]
-page/workers.spec.ts › should report console event on the worker when not listening on page or context [fail]
-page/workers.spec.ts › should report console logs [fail]
-page/workers.spec.ts › should report network activity [fail]
-page/workers.spec.ts › should report worker script as network request after redirect [fail]
 page/workers.spec.ts › should support extra http headers [fail]
 
