@@ -16,11 +16,12 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
+import { parseHar } from '../config/utils';
 import fs from 'fs';
 import net from 'net';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
-import type { Entry, Log } from '../../packages/trace/src/har';
+import type { Entry, Log, WebSocketMessage } from '../../packages/trace/src/har';
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
@@ -32,6 +33,10 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
     getLog: async () => {
       await context.close();
       return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
+    },
+    getZip: async () => {
+      await context.close();
+      return parseHar(harPath);
     },
   };
 }
@@ -56,7 +61,17 @@ function responseHeadersSize(headers: { name: string, value: string }[]): number
   return result;
 }
 
-it('should only have one websocket entry', async ({ contextFactory, server, browserName }, testInfo) => {
+function messageSize(message: string | number[]): number {
+  // The payload is short enough that they only need the minimum frame header size.
+  if (message.length <= 125)
+    return 6 + message.length;
+  // The payload is large enough that additional bytes are needed to represent the payload length.
+  if (message.length < 2 ** 16)
+    return 6 + 2 + message.length;
+  return 6 + 8 + message.length;
+}
+
+it('should only have one websocket entry', async ({ contextFactory, server }, testInfo) => {
   server.onceWebSocketConnection(ws => {
     ws.on('message', () => ws.close());
   });
@@ -77,7 +92,7 @@ it('should only have one websocket entry', async ({ contextFactory, server, brow
   expect(wsEntry._resourceType).toBe('websocket');
 });
 
-it('should include websocket handshake headers and status', async ({ contextFactory, server, browserName }, testInfo) => {
+it('should include websocket handshake headers and status', async ({ contextFactory, server }, testInfo) => {
   server.onceWebSocketConnection(ws => {
     ws.on('message', () => ws.close());
   });
@@ -115,227 +130,157 @@ it('should include websocket handshake headers and status', async ({ contextFact
   expect(responseHeaderNames).toContain('sec-websocket-accept');
 });
 
-it('should include websocket messages', async ({ contextFactory, server }, testInfo) => {
-  const incoming = 'x'.repeat(125);
-  const outgoing = 'outgoing';
+async function testWebSocketMessages(contextFactory, server, testInfo, content) {
+  const incomingText =   ['x'.repeat(125),             'x'.repeat(126),             'x'.repeat(2 ** 16)];
+  const incomingBinary = [(new Array(125)).fill(0x01), (new Array(126)).fill(0x01), (new Array(2 ** 16)).fill(0x01)];
+  const outgoingText =   ['y'.repeat(125),             'y'.repeat(126),             'y'.repeat(2 ** 16)];
+  const outgoingBinary = [(new Array(125)).fill(0x02), (new Array(126)).fill(0x02), (new Array(2 ** 16)).fill(0x02)];
 
   server.onceWebSocketConnection(ws => {
-    ws.on('message', () => ws.send(incoming));
+    for (const text of incomingText)
+      ws.send(text);
+    for (const binary of incomingBinary)
+      ws.send(Buffer.from(binary));
   });
 
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const outputPath = content === 'embed' ? undefined : 'test.har.zip';
+  const { page, getLog, getZip } = await pageWithHar(contextFactory, testInfo, { content, outputPath });
   await page.goto(server.EMPTY_PAGE);
 
   const beforeMs = Date.now();
   const wsUrl = `ws://${server.HOST}/ws`;
-  const closed = page.evaluate(({ url, outgoing }) => new Promise<void>(resolve => {
+  const closed = page.evaluate(({ url, incomingCount, outgoingText, outgoingBinary }) => new Promise<void>(resolve => {
+    let count = 0;
     const ws = new WebSocket(url);
-    ws.addEventListener('open', () => ws.send(outgoing));
-    ws.addEventListener('message', () => ws.close());
-    ws.addEventListener('close', () => resolve());
-  }), { url: wsUrl, outgoing });
-  await closed;
-  const afterMs = Date.now();
-  const log = await getLog();
-
-  const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
-  // The payload is short enough that they only need the minimum frame header size.
-  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + 6 + incoming.length);
-
-  const messages = wsEntry._webSocketMessages;
-  expect(messages.map(m => ({ type: m.type, opcode: m.opcode, data: m.data }))).toEqual([
-    { type: 'send', opcode: 1, data: outgoing },
-    { type: 'receive', opcode: 1, data: incoming },
-  ]);
-  for (const m of messages) {
-    expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
-    expect(m.time).toBeLessThanOrEqual(afterMs + 1);
-  }
-  expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
-});
-
-it('should include larger websocket messages', async ({ contextFactory, server }, testInfo) => {
-  const incoming = 'x'.repeat(126);
-  const outgoing = 'outgoing';
-
-  server.onceWebSocketConnection(ws => {
-    ws.on('message', () => ws.send(incoming));
-  });
-
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  await page.goto(server.EMPTY_PAGE);
-
-  const beforeMs = Date.now();
-  const wsUrl = `ws://${server.HOST}/ws`;
-  const closed = page.evaluate(({ url, outgoing }) => new Promise<void>(resolve => {
-    const ws = new WebSocket(url);
-    ws.addEventListener('open', () => ws.send(outgoing));
-    ws.addEventListener('message', () => ws.close());
-    ws.addEventListener('close', () => resolve());
-  }), { url: wsUrl, outgoing });
-  await closed;
-  const afterMs = Date.now();
-  const log = await getLog();
-
-  const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
-  // The payload is large enough that additional bytes are needed to represent the payload length.
-  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + 6 + 2 + incoming.length);
-
-  const messages = wsEntry._webSocketMessages;
-  expect(messages.map(m => ({ type: m.type, opcode: m.opcode, data: m.data }))).toEqual([
-    { type: 'send', opcode: 1, data: outgoing },
-    { type: 'receive', opcode: 1, data: incoming },
-  ]);
-  for (const m of messages) {
-    expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
-    expect(m.time).toBeLessThanOrEqual(afterMs + 1);
-  }
-  expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
-});
-
-it('should include gigantic websocket messages', async ({ contextFactory, server }, testInfo) => {
-  const incoming = 'x'.repeat(2 ** 16 + 1);
-  const outgoing = 'outgoing';
-
-  server.onceWebSocketConnection(ws => {
-    ws.on('message', () => ws.send(incoming));
-  });
-
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  await page.goto(server.EMPTY_PAGE);
-
-  const beforeMs = Date.now();
-  const wsUrl = `ws://${server.HOST}/ws`;
-  const closed = page.evaluate(({ url, outgoing }) => new Promise<void>(resolve => {
-    const ws = new WebSocket(url);
-    ws.addEventListener('open', () => ws.send(outgoing));
-    ws.addEventListener('message', () => ws.close());
-    ws.addEventListener('close', () => resolve());
-  }), { url: wsUrl, outgoing });
-  await closed;
-  const afterMs = Date.now();
-  const log = await getLog();
-
-  const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
-  // The payload is large enough that additional bytes are needed to represent the payload length.
-  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + 6 + 8 + incoming.length);
-
-  const messages = wsEntry._webSocketMessages;
-  expect(messages.map(m => ({ type: m.type, opcode: m.opcode, data: m.data }))).toEqual([
-    { type: 'send', opcode: 1, data: outgoing },
-    { type: 'receive', opcode: 1, data: incoming },
-  ]);
-  for (const m of messages) {
-    expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
-    expect(m.time).toBeLessThanOrEqual(afterMs + 1);
-  }
-  expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
-});
-
-it('should use 64-bit extended length for exactly 2**16 byte websocket payload', async ({ contextFactory, server }, testInfo) => {
-  // RFC 6455 Section 5.2: 16-bit extended length covers 126-65535.
-  // Payloads of exactly 65536 (2**16) bytes require the 64-bit extended length field.
-  const incoming = 'x'.repeat(2 ** 16);
-  const outgoing = 'outgoing';
-
-  server.onceWebSocketConnection(ws => {
-    ws.on('message', () => ws.send(incoming));
-  });
-
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  await page.goto(server.EMPTY_PAGE);
-
-  const wsUrl = `ws://${server.HOST}/ws`;
-  const closed = page.evaluate(({ url, outgoing }) => new Promise<void>(resolve => {
-    const ws = new WebSocket(url);
-    ws.addEventListener('open', () => ws.send(outgoing));
-    ws.addEventListener('message', () => ws.close());
-    ws.addEventListener('close', () => resolve());
-  }), { url: wsUrl, outgoing });
-  await closed;
-  const log = await getLog();
-
-  const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
-  // 6 (base header) + 8 (64-bit extended length) for payload of exactly 2**16 bytes.
-  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + 6 + 8 + incoming.length);
-});
-
-it('should include binary websocket messages', async ({ contextFactory, server }, testInfo) => {
-  const incoming = [0x01, 0x02, 0x03, 0x04];
-  const outgoing = [0x05, 0x06, 0x07, 0x08];
-
-  server.onceWebSocketConnection(ws => {
-    ws.on('message', () => ws.send(Buffer.from(incoming)));
-  });
-
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  await page.goto(server.EMPTY_PAGE);
-
-  const beforeMs = Date.now();
-  const wsUrl = `ws://${server.HOST}/ws`;
-  const closed = page.evaluate(({ url, outgoing }) => new Promise<void>(resolve => {
-    const ws = new WebSocket(url);
-    ws.binaryType = 'arraybuffer';
-    ws.addEventListener('open', () => ws.send(new Uint8Array(outgoing)));
-    ws.addEventListener('message', () => ws.close());
-    ws.addEventListener('close', () => resolve());
-  }), { url: wsUrl, outgoing });
-  await closed;
-  const afterMs = Date.now();
-  const log = await getLog();
-
-  const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
-  // The payload is short enough that they only need the minimum frame header size.
-  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + 6 + incoming.length);
-
-  const messages = wsEntry._webSocketMessages;
-  expect(messages.map(m => ({ type: m.type, opcode: m.opcode, data: [...Buffer.from(m.data, 'base64')] }))).toEqual([
-    { type: 'send', opcode: 2, data: outgoing },
-    { type: 'receive', opcode: 2, data: incoming },
-  ]);
-  for (const m of messages) {
-    expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
-    expect(m.time).toBeLessThanOrEqual(afterMs + 1);
-  }
-  expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
-});
-
-it('should include websocket entry time across multiple messages', async ({ contextFactory, server }, testInfo) => {
-  server.onceWebSocketConnection(ws => {
-    ws.on('message', message => {
-      switch (message.toString()) {
-        case 'a':
-          setTimeout(() => ws.send('b'), 50);
-          break;
-        case 'b':
-          setTimeout(() => ws.send('c'), 50);
-          break;
-        case 'c':
-          setTimeout(() => ws.close(), 50);
-          break;
-      }
+    ws.addEventListener('message', () => {
+      if (++count < incomingCount)
+        return;
+      for (const text of outgoingText)
+        ws.send(text);
+      for (const binary of outgoingBinary)
+        ws.send(new Uint8Array(binary));
+      ws.close();
     });
-  });
-
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
-  await page.goto(server.EMPTY_PAGE);
-
-  const wsUrl = `ws://${server.HOST}/ws`;
-  const beforeMs = Date.now();
-  const closed = page.evaluate(url => new Promise<void>(resolve => {
-    const ws = new WebSocket(url);
-    ws.addEventListener('open', () => ws.send('a'));
-    ws.addEventListener('message', e => ws.send(e.data));
     ws.addEventListener('close', () => resolve());
-  }), wsUrl);
+  }), { url: wsUrl, incomingCount: incomingText.length + incomingBinary.length, outgoingText, outgoingBinary });
   await closed;
   const afterMs = Date.now();
-  const log = await getLog();
+
+  let zip: Map<string, Buffer>;
+  let log: Log;
+  if (outputPath) {
+    zip = await getZip();
+    log = JSON.parse(zip.get('har.har')!.toString())['log'] as Log;
+  } else {
+    log = await getLog();
+  }
+  const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
+  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + [...incomingText, ...incomingBinary].reduce((accumulator, current) => accumulator + messageSize(current), 0));
+  expect(wsEntry.time).toBeLessThanOrEqual(afterMs - beforeMs);
+
+  if (content === 'omit') {
+    expect(wsEntry.response.content._file).toBeUndefined();
+    return;
+  }
+
+  let messages: WebSocketMessage[];
+  if (content === 'attach') {
+    expect(wsEntry._webSocketMessages).toBeUndefined();
+    const file = wsEntry.response.content._file!;
+    expect(file).toMatch(/^[0-9a-f]{40}\.json$/);
+    messages = JSON.parse(zip.get(file)!.toString()) as WebSocketMessage[];
+  } else {
+    messages = wsEntry._webSocketMessages;
+  }
+  expect(messages.map(m => ({ type: m.type, opcode: m.opcode, data: m.opcode === 1 ? m.data : [...Buffer.from(m.data, 'base64')] }))).toEqual([
+    ...incomingText.map(m => ({ type: 'receive', opcode: 1, data: m })),
+    ...incomingBinary.map(m => ({ type: 'receive', opcode: 2, data: m })),
+    ...outgoingText.map(m => ({ type: 'send', opcode: 1, data: m })),
+    ...outgoingBinary.map(m => ({ type: 'send', opcode: 2, data: m })),
+  ]);
+  for (const m of messages) {
+    expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
+    expect(m.time).toBeLessThanOrEqual(afterMs + 1);
+  }
+  expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
+  expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
+}
+
+it('should embed websocket messages', async ({ contextFactory, server }, testInfo) => {
+  await testWebSocketMessages(contextFactory, server, testInfo, 'embed');
+});
+
+it('should attach websocket messages', async ({ contextFactory, server }, testInfo) => {
+  await testWebSocketMessages(contextFactory, server, testInfo, 'attach');
+});
+
+it('should attach websocket messages for a still open websocket after stopping', async ({ contextFactory, server }, testInfo) => {
+  const incomingText = 'incoming';
+  const incomingBinary = [0x01, 0x02, 0x03, 0x04];
+  const outgoingText = 'outgoing';
+  const outgoingBinary = [0x05, 0x06, 0x07, 0x08];
+
+  server.onceWebSocketConnection(ws => {
+    let count = 0;
+    ws.on('message', () => ws.send((++count < 2) ? incomingText : Buffer.from(incomingBinary)));
+  });
+
+  const { page, getZip } = await pageWithHar(contextFactory, testInfo, { content: 'attach', outputPath: 'test.har.zip' });
+  await page.goto(server.EMPTY_PAGE);
+
+  const beforeMs = Date.now();
+  const wsUrl = `ws://${server.HOST}/ws`;
+  const [ws] = await Promise.all([
+    page.waitForEvent('websocket'),
+    page.evaluate(({ url, outgoingText, outgoingBinary }) => {
+      const ws = new WebSocket(url);
+      (window as any).ws = ws;
+      let count = 0;
+      ws.addEventListener('open', () => ws.send(outgoingText));
+      ws.addEventListener('message', () => {
+        if (++count < 2)
+          ws.send(new Uint8Array(outgoingBinary));
+      });
+    }, { url: wsUrl, outgoingText, outgoingBinary }),
+  ]);
+  // Wait for all frames so the HAR tracer has observed them before the context is closed.
+  await ws.waitForEvent('framesent');
+  await ws.waitForEvent('framereceived');
+  await ws.waitForEvent('framesent');
+  await ws.waitForEvent('framereceived');
+  const afterMs = Date.now();
+
+  // Do not close the WebSocket on the page side. Closing the context should still flush messages.
+  expect(await page.evaluate(() => (window as any).ws.readyState)).toBe(1 /* OPEN */);
+
+  const zip = await getZip();
+  const log = JSON.parse(zip.get('har.har')!.toString())['log'] as Log;
 
   const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
-  const messages = wsEntry._webSocketMessages;
-  expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
+  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + messageSize(incomingText) + messageSize(incomingBinary));
   expect(wsEntry.time).toBeLessThanOrEqual(afterMs - beforeMs);
+  expect(wsEntry._webSocketMessages).toBeUndefined();
+
+  const file = wsEntry.response.content._file!;
+  expect(file).toMatch(/^[0-9a-f]{40}\.json$/);
+
+  const messages = JSON.parse(zip.get(file)!.toString()) as Array<{ type: string, time: number, opcode: number, data: string }>;
+  expect(messages.map(m => ({ type: m.type, opcode: m.opcode, data: m.opcode === 1 ? m.data : [...Buffer.from(m.data, 'base64')] }))).toEqual([
+    { type: 'send',    opcode: 1, data: outgoingText },
+    { type: 'receive', opcode: 1, data: incomingText },
+    { type: 'send',    opcode: 2, data: outgoingBinary },
+    { type: 'receive', opcode: 2, data: incomingBinary },
+  ]);
+  for (const m of messages) {
+    expect(m.time).toBeGreaterThanOrEqual(beforeMs - 1);
+    expect(m.time).toBeLessThanOrEqual(afterMs + 1);
+  }
+  expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
+  expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
+});
+
+it('should omit websocket messages', async ({ contextFactory, server }, testInfo) => {
+  await testWebSocketMessages(contextFactory, server, testInfo, 'omit');
 });
 
 it('should record websocket connection failure', async ({ contextFactory, server }, testInfo) => {
