@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import { parseStackFrame } from '@isomorphic/stackTrace';
+import { captureRawStack } from '@isomorphic/stackTrace';
 import { rootTestType } from './testType';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
+import { filteredStackTrace } from '../util';
 
 import type { FixturesWithLocation, FullProjectInternal } from './config';
 import type { FixturePool } from './fixtures';
@@ -343,21 +343,21 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   skip(reason?: string): void {
-    const annotation: TestAnnotation = { type: 'skip', description: reason, location: captureCallerLocation(this.skip) };
+    const annotation: TestAnnotation = { type: 'skip', description: reason, location: captureCallerLocation() };
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
     this.expectedStatus = 'skipped';
   }
 
   fixme(reason?: string): void {
-    const annotation: TestAnnotation = { type: 'fixme', description: reason, location: captureCallerLocation(this.fixme) };
+    const annotation: TestAnnotation = { type: 'fixme', description: reason, location: captureCallerLocation() };
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
     this.expectedStatus = 'skipped';
   }
 
   fail(reason?: string): void {
-    const annotation: TestAnnotation = { type: 'fail', description: reason, location: captureCallerLocation(this.fail) };
+    const annotation: TestAnnotation = { type: 'fail', description: reason, location: captureCallerLocation() };
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
     if (this.expectedStatus !== 'skipped')
@@ -444,16 +444,9 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 }
 
-function captureCallerLocation(belowFn: Function): Location | undefined {
-  const err: { stack?: string } = {};
-  Error.captureStackTrace(err, belowFn);
-  const lines = (err.stack ?? '').split('\n');
-  for (const line of lines) {
-    const frame = parseStackFrame(line, path.sep, false);
-    if (frame?.file && !frame.file.includes(`${path.sep}packages${path.sep}isomorphic${path.sep}`)
-        && !frame.file.includes(`${path.sep}packages${path.sep}playwright${path.sep}`)
-        && !frame.file.includes(`${path.sep}packages${path.sep}playwright-core${path.sep}`))
-      return { file: frame.file, line: frame.line ?? 0, column: frame.column ?? 0 };
-  }
-  return undefined;
+function captureCallerLocation(): Location | undefined {
+  const frame = filteredStackTrace(captureRawStack())[0];
+  if (!frame?.file)
+    return undefined;
+  return { file: frame.file, line: frame.line ?? 0, column: frame.column ?? 0 };
 }
