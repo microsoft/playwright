@@ -301,16 +301,7 @@ Whether this reporter uses stdio for reporting. When it does not, Playwright Tes
 ## optional async method: Reporter.plan
 * since: v1.61
 
-Called after the configuration has been resolved and before [`method: Reporter.onBegin`]. Allows a reporter to inspect the discovered test corpus and call disposition methods on individual [TestCase]s or whole [Suite]s before the run starts. Available disposition methods:
-
-* [`method: TestCase.skip`] / [`method: Suite.skip`] — mark expected status as `'skipped'` and append a `skip` annotation. The test body is not executed.
-* [`method: TestCase.fixme`] / [`method: Suite.fixme`] — same as `skip`, but appends a `fixme` annotation.
-* [`method: TestCase.fail`] / [`method: Suite.fail`] — mark expected status as `'failed'` and append a `fail` annotation.
-* [`method: TestCase.exclude`] / [`method: Suite.exclude`] — remove the test from the run entirely. Excluded tests do not appear in the report and their body is not executed.
-
-When multiple reporters implement `plan`, they are called in registration order and disposition methods accumulate; the last write wins on conflicting `expectedStatus` changes. Built-in sharding (see [`property: TestConfig.shard`]) is applied **after** `plan()` returns, so dispositions are not silently dropped by sharding. If your reporter handles sharding itself, also implement [`method: Reporter.implementsSharding`] to disable the built-in shard filter.
-
-Throwing from `plan` aborts the run before [`method: Reporter.onBegin`] is called.
+Called after the configuration has been resolved and before [`method: Reporter.onBegin`]. Allows a reporter to mark individual tests as skipped, excluded, fixed or failing.
 
 ### param: Reporter.plan.config
 * since: v1.61
@@ -328,5 +319,4 @@ The root suite that contains all projects, files and test cases.
 * since: v1.61
 - returns: <[boolean]>
 
-When `true`, Playwright skips its built-in shard filter for this run, leaving sharding to the reporter (typically implemented inside [`method: Reporter.plan`] by calling [`method: TestCase.exclude`] on out-of-shard tests). If [`property: TestConfig.shard`] is also explicitly set, a warning is printed indicating the request is being ignored.
-
+When `true`, Playwright skips its built-in shard filter for this run, leaving sharding to the reporter (typically implemented inside [`method: Reporter.plan`] by calling [`method: TestCase.exclude`] on out-of-shard tests).

@@ -111,7 +111,7 @@ Returns "test". Useful for detecting test cases in [`method: Suite.entries`].
 ## method: TestCase.skip
 * since: v1.61
 
-Mark this test as skipped. Intended for use from inside [`method: Reporter.plan`] — that is the only call-site at which a mutation propagates to workers. Sets [`property: TestCase.expectedStatus`] to `'skipped'` and appends a `skip` annotation.
+Must be called from inside [`method: Reporter.plan`], skip this test. The test body is not executed and the test is reported as skipped.
 
 ### param: TestCase.skip.reason
 * since: v1.61
@@ -122,7 +122,7 @@ Optional explanation surfaced as the annotation description.
 ## method: TestCase.fixme
 * since: v1.61
 
-Mark this test as fixme. Intended for use from inside [`method: Reporter.plan`] — that is the only call-site at which a mutation propagates to workers. Sets [`property: TestCase.expectedStatus`] to `'skipped'` and appends a `fixme` annotation.
+Must be called from inside [`method: Reporter.plan`], mark this test as fixme. The test body is not executed and the test is reported as skipped, with the intention to fix it.
 
 ### param: TestCase.fixme.reason
 * since: v1.61
@@ -133,7 +133,7 @@ Optional explanation surfaced as the annotation description.
 ## method: TestCase.fail
 * since: v1.61
 
-Mark this test as expected-to-fail. Intended for use from inside [`method: Reporter.plan`] — that is the only call-site at which a mutation propagates to workers. Sets [`property: TestCase.expectedStatus`] to `'failed'` (unless the test was already marked as skipped) and appends a `fail` annotation.
+Must be called from inside [`method: Reporter.plan`], mark this test as "should fail". Playwright runs the test and ensures it is actually failing, useful for documenting broken functionality until it is fixed.
 
 ### param: TestCase.fail.reason
 * since: v1.61
@@ -144,4 +144,4 @@ Optional explanation surfaced as the annotation description.
 ## method: TestCase.exclude
 * since: v1.61
 
-Remove this test from the run entirely. Excluded tests do not appear in the report, and their body is not executed. Must be called from inside [`method: Reporter.plan`] — calling later has no effect.
+Must be called from inside [`method: Reporter.plan`], exclude this test from the run. Excluded tests do not appear in the report and their body is not executed.
