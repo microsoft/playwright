@@ -498,7 +498,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     this._options.userAgent = userAgent;
     await Promise.all([
       ...this.pages().map(page => (page.delegate as CRPage).updateUserAgent()),
-      ...this.serviceWorkers().map(sw => (sw as CRServiceWorker).updateUserAgent()),
+      ...this.serviceWorkers().map(sw => sw.updateUserAgent()),
     ]);
   }
 
@@ -594,7 +594,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     });
   }
 
-  serviceWorkers(): Worker[] {
+  serviceWorkers(): CRServiceWorker[] {
     return Array.from(this._browser._serviceWorkers.values()).filter(serviceWorker => serviceWorker.browserContext === this);
   }
 

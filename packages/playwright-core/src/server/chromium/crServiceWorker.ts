@@ -98,13 +98,9 @@ export class CRServiceWorker extends Worker {
   }
 
   async updateUserAgent(): Promise<void> {
-    if (!this._isNetworkInspectionEnabled())
-      return;
-    // Service workers do not expose the Emulation domain, so we use the Network
-    // domain's setUserAgentOverride which is available on the service worker session.
     const options = this.browserContext._options;
-    await this._session.send('Network.setUserAgentOverride', {
-      userAgent: options.userAgent || this.browserContext._browser.userAgent(),
+    await this._session.send('Emulation.setUserAgentOverride', {
+      userAgent: options.userAgent || '',
       acceptLanguage: options.locale,
     }).catch(() => {});
   }
