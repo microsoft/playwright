@@ -267,3 +267,12 @@ export function inheritAndCleanEnv(env: NodeJS.ProcessEnv | undefined): NodeJS.P
     ...env,
   };
 }
+
+export function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}

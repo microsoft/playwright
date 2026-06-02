@@ -15,6 +15,7 @@
  */
 
 import { test as base, expect, extensionId, clickAllowAndSelect } from './extension-fixtures';
+import { isAlive } from '../config/utils';
 
 import type { CliResult } from './extension-fixtures';
 import type { Page } from 'playwright';
@@ -36,15 +37,6 @@ const test = base.extend<{
     });
   },
 });
-
-function isAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 async function expectDaemonExited(cliPromise: Promise<CliResult>): Promise<void> {
   const { error } = await cliPromise;

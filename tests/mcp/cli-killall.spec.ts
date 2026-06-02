@@ -15,15 +15,7 @@
  */
 
 import { test, expect } from './cli-fixtures';
-
-function isAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { isAlive } from '../config/utils';
 
 test('kill-all kills only filtered pid', async ({ cli, server }) => {
   const { daemonPid } = await cli('open', server.HELLO_WORLD);

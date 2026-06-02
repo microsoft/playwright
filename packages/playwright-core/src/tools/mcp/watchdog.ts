@@ -19,7 +19,7 @@ import { testDebug } from './log';
 
 export function setupExitWatchdog() {
   let isExiting = false;
-  const handleExit = async (signal: string) => {
+  const handleExit = async () => {
     if (isExiting)
       return;
     isExiting = true;
@@ -31,7 +31,19 @@ export function setupExitWatchdog() {
     process.exit(0);
   };
 
-  process.stdin.on('close', () => handleExit('close'));
-  process.on('SIGINT', () => handleExit('SIGINT'));
-  process.on('SIGTERM', () => handleExit('SIGTERM'));
+  process.stdin.on('close', handleExit);
+  process.on('SIGINT', handleExit);
+  process.on('SIGTERM', handleExit);
+
+  // The host can die without delivering a signal or closing stdin (SIGKILL, OOM,
+  // IDE reload), in which case we get re-parented. Poll for that to avoid leaking
+  // the browser. No re-parenting on Windows.
+  if (process.platform !== 'win32') {
+    const parentPid = process.ppid;
+    const interval = setInterval(() => {
+      if (process.ppid !== parentPid)
+        void handleExit();
+    }, 1000);
+    interval.unref();
+  }
 }

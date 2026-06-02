@@ -19,6 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { test, expect, installSaveFilePickerMock } from './cli-fixtures';
+import { isAlive } from '../config/utils';
 
 function displayPath(p: string): string {
   const home = os.homedir();
@@ -110,15 +111,6 @@ test('should activate session when show is called with -s', async ({ cli, server
   const dashboard = await startDashboardServer({ session: 'sessB' });
   await expect(activeSession(dashboard)).toHaveAccessibleName('Session sessB');
 });
-
-function isAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 test('daemon show: closing page exits the process', async ({ cli, connectToDashboard }) => {
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
