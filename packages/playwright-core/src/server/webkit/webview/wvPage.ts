@@ -178,6 +178,7 @@ export class WVPage implements PageDelegate {
       session.send('Runtime.enable'),
       session.sendMayFail('Network.enable'),
       session.sendMayFail('Console.enable'),
+      this._workers.initializeSession(session),
       session.sendMayFail('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }),
       session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
     ]);
