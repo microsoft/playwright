@@ -704,7 +704,7 @@ page/page-fill.spec.ts › should throw on incorrect color value [fail]
 page/page-fill.spec.ts › should throw on incorrect datetime-local [fail]
 
 # ============================================================================
-# target-closed-cascade  (105 tests)
+# target-closed-cascade  (107 tests)
 # Cascade failures: a test tears down the page session and every following test
 # sees 'Target closed'. A confirmed trigger is cross-process navigation, which
 # leaves the page target dead for the next test's first navigation (see the
@@ -769,6 +769,8 @@ page/page-expose-function.spec.ts › should work on frames before navigation [f
 page/page-expose-function.spec.ts › should work with complex objects [fail]
 page/page-expose-function.spec.ts › should work with setContent [fail]
 page/page-goto.spec.ts › js redirect overrides url bar navigation [fail]
+page/page-goto.spec.ts › should not crash when navigating to bad SSL after a cross origin navigation [fail]
+page/page-goto.spec.ts › should not throw if networkidle0 is passed as an option [fail]
 page/page-request-fulfill.spec.ts › should fulfill preload link requests [fail]
 page/page-request-intercept.spec.ts › should give access to the intercepted response [fail]
 page/page-request-intercept.spec.ts › should intercept with post data override [fail]
