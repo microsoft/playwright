@@ -37,7 +37,7 @@ export function printApiJson() {
 export function runDriver() {
   const dispatcherConnection = new DispatcherConnection();
   new RootDispatcher(dispatcherConnection, async (rootScope, { sdkLanguage }) => {
-    const playwright = createPlaywright({ sdkLanguage });
+    const playwright = createPlaywright({ sdkLanguage, isClientCollocatedWithServer: true });
     return new PlaywrightDispatcher(rootScope, playwright);
   });
   // eslint-disable-next-line no-restricted-properties
