@@ -182,6 +182,36 @@ The following table shows which traces are kept in a few common scenarios, assum
 `'retain-on-failure'` already keeps the trace of a failed run even when a later retry passes, so a flaky test that recovers still leaves the failing run's trace for debugging.
 :::
 
+#### Video modes
+
+The `video` option supports the same set of modes as `trace`, and they record and keep recordings using the same rules.
+
+| Mode | Records a video on | Keeps the video when |
+| :- | :- | :- |
+| `'off'` | never | — |
+| `'on'` | every run | always |
+| `'retain-on-failure'` | every run | that run failed |
+| `'retain-on-first-failure'` | first run only | the first run failed |
+| `'retain-on-failure-and-retries'` | every run | that run failed, or it is a retry |
+| `'on-first-retry'` | first retry only | always |
+| `'on-all-retries'` | every retry | always |
+
+The following table shows which videos are kept in a few common scenarios, assuming `retries: 2` is configured:
+
+| Mode | Passes on first run | Fails, then passes on retry | Fails on every run |
+| :- | :- | :- | :- |
+| `'off'` | — | — | — |
+| `'on'` | first run | first run + retry | all three runs |
+| `'retain-on-failure'` | — | first run | all three runs |
+| `'retain-on-first-failure'` | — | first run | first run |
+| `'retain-on-failure-and-retries'` | — | first run + retry | all three runs |
+| `'on-first-retry'` | — | first retry | first retry |
+| `'on-all-retries'` | — | first retry | both retries |
+
+:::note
+`'retain-on-failure'` already keeps the video of a failed run even when a later retry passes, so a flaky test that recovers still leaves the failing run's video for debugging.
+:::
+
 ### Other Options
 
 ```js title="playwright.config.ts"

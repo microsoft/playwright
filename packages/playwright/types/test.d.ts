@@ -7025,15 +7025,21 @@ export interface PlaywrightWorkerOptions {
    */
   trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean, attachments?: boolean };
   /**
-   * Whether to record video for each test. Defaults to `'off'`.
+   * Whether to record video for each test. Defaults to `'off'`. The initial run of a test is the "first run";
+   * subsequent runs caused by [retries](https://playwright.dev/docs/test-retries) are "retries".
    * - `'off'`: Do not record video.
-   * - `'on'`: Record video for each test.
-   * - `'on-first-retry'`: Record video only when retrying a test for the first time.
-   * - `'on-all-retries'`: Record video only when retrying a test.
-   * - `'retain-on-failure'`: Record video for each test. When test run passes, remove the recorded video.
-   * - `'retain-on-first-failure'`: Record video for the first run of each test, but not for retries. When test run
-   *   passes, remove the recorded video.
-   * - `'retain-on-failure-and-retries'`: Record video for each test run. Retains all videos when an attempt fails.
+   * - `'on'`: Record and keep a video for every run.
+   * - `'on-first-retry'`: Record and keep a video only for the first retry of a test.
+   * - `'on-all-retries'`: Record and keep a video for every retry.
+   * - `'retain-on-failure'`: Record a video for every run, but keep it only for runs that failed. A failed run's
+   *   video is kept even when a later retry passes.
+   * - `'retain-on-first-failure'`: Record a video only for the first run of a test (not for retries), and keep it
+   *   only if that run failed.
+   * - `'retain-on-failure-and-retries'`: Record a video for every run, and keep it for any run that failed or that is
+   *   a retry.
+   *
+   * See [video modes](https://playwright.dev/docs/test-use-options#video-modes) for a side-by-side comparison of what each mode records and
+   * keeps.
    *
    * To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be
    * equal to [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) scaled
