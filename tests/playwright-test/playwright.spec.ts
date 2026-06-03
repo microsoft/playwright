@@ -617,34 +617,6 @@ test('should work with video: retain-on-failure-and-retries', async ({ runInline
   expect(fs.readdirSync(dirRetry).find(file => file.endsWith('webm'))).toBeTruthy();
 });
 
-test('should work with video: retain-all-failures', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { video: 'retain-all-failures' }, retries: 1, name: 'chromium' };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('flaky', async ({ page }) => {
-        await page.setContent('<div>FLAKY</div>');
-        await page.waitForTimeout(1000);
-        test.expect(test.info().retry).toBe(1);
-      });
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.flaky).toBe(1);
-
-  // First attempt failed, video retained.
-  const dirFail = test.info().outputPath('test-results', 'a-flaky-chromium');
-  expect(fs.readdirSync(dirFail).find(file => file.endsWith('webm'))).toBeTruthy();
-
-  // Retry passed, so its video is removed.
-  const dirRetry = test.info().outputPath('test-results', 'a-flaky-chromium-retry1');
-  const videoRetry = fs.existsSync(dirRetry) ? fs.readdirSync(dirRetry).find(file => file.endsWith('webm')) : undefined;
-  expect(videoRetry).toBeFalsy();
-});
-
 test('should work with video size', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `

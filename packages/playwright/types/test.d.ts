@@ -6999,8 +6999,6 @@ export interface PlaywrightWorkerOptions {
    * - `'retain-on-first-failure'`: Record trace for the first run of each test, but not for retries. When test run
    *   passes, remove the recorded trace.
    * - `'retain-on-failure-and-retries'`: Record trace for each test run. Retains all traces when an attempt fails.
-   * - `'retain-all-failures'`: Record trace for each test run. Retains the trace only for attempts that failed,
-   *   regardless of the final test outcome.
    *
    * For more control, pass an object that specifies `mode` and trace features to enable.
    *
@@ -7030,8 +7028,6 @@ export interface PlaywrightWorkerOptions {
    * - `'retain-on-first-failure'`: Record video for the first run of each test, but not for retries. When test run
    *   passes, remove the recorded video.
    * - `'retain-on-failure-and-retries'`: Record video for each test run. Retains all videos when an attempt fails.
-   * - `'retain-all-failures'`: Record video for each test run. Retains the video only for attempts that failed,
-   *   regardless of the final test outcome.
    *
    * To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be
    * equal to [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) scaled
@@ -7061,8 +7057,8 @@ export interface PlaywrightWorkerOptions {
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
-export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure' | 'retain-on-failure-and-retries' | 'retain-all-failures';
-export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure' | 'retain-on-failure-and-retries' | 'retain-all-failures';
+export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure' | 'retain-on-failure-and-retries';
+export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure' | 'retain-on-failure-and-retries';
 /**
  * Playwright Test provides many options to configure test environment,
  * [Browser](https://playwright.dev/docs/api/class-browser),

@@ -584,8 +584,8 @@ export default defineConfig({
 
 ## property: TestOptions.trace
 * since: v1.10
-- type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"retain-on-first-failure"|"retain-on-failure-and-retries"|"retain-all-failures">>
-  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries"|"retain-all-failures">> Trace recording mode.
+- type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"retain-on-first-failure"|"retain-on-failure-and-retries">>
+  - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">> Trace recording mode.
   - `attachments` ?<[boolean]> Whether to include test attachments. Defaults to true. Optional.
   - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
   - `snapshots` ?<[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
@@ -599,7 +599,6 @@ Whether to record trace for each test. Defaults to `'off'`.
 * `'retain-on-failure'`: Record trace for each test. When test run passes, remove the recorded trace.
 * `'retain-on-first-failure'`: Record trace for the first run of each test, but not for retries. When test run passes, remove the recorded trace.
 * `'retain-on-failure-and-retries'`: Record trace for each test run. Retains all traces when an attempt fails.
-* `'retain-all-failures'`: Record trace for each test run. Retains the trace only for attempts that failed, regardless of the final test outcome.
 
 For more control, pass an object that specifies `mode` and trace features to enable.
 
@@ -634,8 +633,8 @@ export default defineConfig({
 
 ## property: TestOptions.video
 * since: v1.10
-- type: <[Object]|[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries"|"retain-all-failures">>
-  - `mode` <[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries"|"retain-all-failures">> Video recording mode.
+- type: <[Object]|[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">>
+  - `mode` <[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry"|"on-all-retries"|"retain-on-first-failure"|"retain-on-failure-and-retries">> Video recording mode.
   - `size` ?<[Object]> Size of the recorded video. Optional.
     - `width` <[int]>
     - `height` <[int]>
@@ -657,7 +656,6 @@ Whether to record video for each test. Defaults to `'off'`.
 * `'retain-on-failure'`: Record video for each test. When test run passes, remove the recorded video.
 * `'retain-on-first-failure'`: Record video for the first run of each test, but not for retries. When test run passes, remove the recorded video.
 * `'retain-on-failure-and-retries'`: Record video for each test run. Retains all videos when an attempt fails.
-* `'retain-all-failures'`: Record video for each test run. Retains the video only for attempts that failed, regardless of the final test outcome.
 
 To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
 
