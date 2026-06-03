@@ -157,7 +157,6 @@ const longhandTypes: Record<string, LonghandType> = {
   'extension': 'boolean',
   'capabilities': 'string[]',
   'saveSession': 'boolean',
-  'saveTrace': 'boolean',
   'saveVideo': 'size',
   'sharedBrowserContext': 'boolean',
   'outputDir': 'string',

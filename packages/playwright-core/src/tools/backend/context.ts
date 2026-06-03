@@ -48,7 +48,6 @@ export type ContextConfig = {
   outputMaxSize?: number;
   outputMode?: 'file' | 'stdout';
   saveSession?: boolean;
-  saveTrace?: boolean;
   secrets?: Record<string, string>;
   snapshot?: {
     mode?: 'full' | 'none';
@@ -327,19 +326,6 @@ export class Context {
     const browserContext = this._rawBrowserContext;
     await this._setupRequestInterception(browserContext);
 
-    if (this.config.saveTrace) {
-      await browserContext.tracing.start({
-        name: 'trace-' + Date.now(),
-        screenshots: true,
-        snapshots: true,
-        live: true,
-      });
-      this._disposables.push({
-        dispose: async () => {
-          await browserContext.tracing.stop();
-        },
-      });
-    }
     for (const initScript of this.config.browser?.initScript || [])
       this._disposables.push(await browserContext.addInitScript({ path: path.resolve(this.options.cwd, initScript) }));
 
