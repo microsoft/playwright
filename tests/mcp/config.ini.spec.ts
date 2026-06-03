@@ -105,7 +105,7 @@ test('ini config boolean values', async ({ startClient }) => {
   const { client } = await startClient({
     config: `
       capabilities = config
-      saveTrace = true
+      saveSession = true
       browser.contextOptions.bypassCSP = true
       browser.contextOptions.javaScriptEnabled = false
     `,
@@ -113,7 +113,7 @@ test('ini config boolean values', async ({ startClient }) => {
 
   const result = await client.callTool({ name: 'browser_get_config' });
   const config = JSON.parse(parseResponse(result).result);
-  expect(config.saveTrace).toBe(true);
+  expect(config.saveSession).toBe(true);
   expect(config.browser.contextOptions.bypassCSP).toBe(true);
   expect(config.browser.contextOptions.javaScriptEnabled).toBe(false);
 });
