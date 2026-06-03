@@ -68,8 +68,6 @@ By default, the WebView2 control will use the same user data directory for all i
 
 Using the following, Playwright will run your WebView2 application as a sub-process, assign a unique user data directory to it and provide the [Page] instance to your test:
 
-<!-- source code is available here to verify that the examples are working https://github.com/mxschmitt/playwright-webview2-demo -->
-
 ```js title="webView2Test.ts"
 import { test as base } from '@playwright/test';
 import fs from 'fs';
