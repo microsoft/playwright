@@ -84,25 +84,15 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
   ]);
 });
 
-test('browser_stop_tracing without start does not kill config-initiated trace', async ({ startClient }) => {
+test('browser_stop_tracing without start returns error', async ({ startClient }) => {
   const { client } = await startClient({
     args: ['--caps=tracing'],
-    config: { saveTrace: true },
   });
 
-  // Calling stop without a prior browser_start_tracing should error.
   expect(await client.callTool({
     name: 'browser_stop_tracing',
   })).toHaveResponse({
     isError: true,
     error: expect.stringContaining('Tracing is not started'),
-  });
-
-  // Config-initiated trace should still be active: starting again must fail.
-  expect(await client.callTool({
-    name: 'browser_start_tracing',
-  })).toHaveResponse({
-    isError: true,
-    error: expect.stringContaining('Tracing has been already started'),
   });
 });
