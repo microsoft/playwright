@@ -73,6 +73,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     return obj[kCachedData];
   }
 
+  const kObserverConfig: MutationObserverInit = { attributes: true, subtree: true };
+
   function removeHash(url: string) {
     try {
       const u = new URL(url);
@@ -90,6 +92,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
     private _fakeBase: HTMLBaseElement;
     private _observer: MutationObserver;
+    private _observedDocument: Document | undefined;
     private _targetGeneration = 0;
 
     constructor() {
@@ -116,9 +119,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       this._fakeBase = document.createElement('base');
 
       this._observer = new MutationObserver(list => this._handleMutations(list));
-      const observerConfig = { attributes: true, subtree: true };
-      this._observer.observe(document, observerConfig);
-      this._refreshListenersWhenNeeded();
+      this._ensureObservingCurrentDocument();
     }
 
     private _refreshListenersWhenNeeded() {
@@ -208,6 +209,19 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     private _handleMutations(list: MutationRecord[]) {
       for (const mutation of list)
         ensureCachedData(mutation.target).attributesCached = undefined;
+    }
+
+    private _ensureObservingCurrentDocument() {
+      // A window can swap its document without re-running the init script (e.g.
+      // a popup reusing its initial about:blank document), leaving our observers
+      // and listeners bound to the stale one. Re-attach on swap.
+      // https://github.com/microsoft/playwright/issues/40895
+      if (this._observedDocument === document)
+        return;
+      this._observedDocument = document;
+      this._observer.disconnect();
+      this._observer.observe(document, kObserverConfig);
+      this._refreshListenersWhenNeeded();
     }
 
     private _invalidateStyleSheet(sheet: CSSStyleSheet) {
@@ -347,6 +361,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       let shadowDomNesting = 0;
       let headNesting = 0;
 
+      this._ensureObservingCurrentDocument();
       // Ensure we are up to date.
       this._handleMutations(this._observer.takeRecords());
 
