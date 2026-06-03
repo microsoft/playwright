@@ -1447,13 +1447,16 @@ export class InjectedScript {
 
   async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: ExpectReceived, missingReceived?: boolean }> {
     const core = await this._expectCore(element, options, elements);
-    const ariaSnapshot = this._ariaSnapshotForExpect(element, options);
-    if (core.received === undefined && ariaSnapshot === undefined)
+    if (core.received === undefined)
       return { matches: core.matches, missingReceived: core.missingReceived };
-    return { matches: core.matches, received: { value: core.received, ariaSnapshot }, missingReceived: core.missingReceived };
+    return { matches: core.matches, received: { value: core.received }, missingReceived: core.missingReceived };
   }
 
-  private _ariaSnapshotForExpect(element: Element | undefined, options: FrameExpectParams): string | undefined {
+  // Renders the aria snapshot attached as error context to a failed expect. This
+  // is computed lazily, only once the assertion has reached its final failure -
+  // rendering a full-page snapshot on every poll attempt saturates the page main
+  // thread when many auto-retrying assertions run concurrently (see #41098).
+  ariaSnapshotForExpect(element: Element | undefined, options: FrameExpectParams): string | undefined {
     const expression = options.expression;
     if (expression === 'to.have.count' || expression.endsWith('.array'))
       return undefined;

@@ -110,6 +110,39 @@ test.describe('hidden or missing elements print full page snapshot', () => {
   });
 });
 
+test.describe('concurrent auto-retrying assertions', () => {
+  test('many concurrent assertions on hidden elements should not saturate the page (#41098)', async ({ page }) => {
+    test.slow();
+    // A large DOM amplifies the cost of rendering a full-page aria snapshot.
+    // The aria snapshot for a failed expect must be rendered lazily (once, at
+    // final failure) and not on every poll attempt - otherwise N concurrently
+    // polling assertions each render the full page on every poll, saturating the
+    // page main thread and delaying the very script that reveals the targets.
+    const filler = '<p>x</p>'.repeat(15000);
+    const targets = Array.from({ length: 60 }, (_, i) => `<div id="t${i}" style="display: none">t${i}</div>`).join('');
+    await page.setContent(`
+      <main>${filler}</main>
+      ${targets}
+      <script>
+        setTimeout(() => {
+          for (const el of document.querySelectorAll('div[id^="t"]'))
+            el.style.display = 'block';
+        }, 700);
+      </script>
+    `);
+
+    const started = Date.now();
+    await Promise.all(Array.from({ length: 60 }, (_, i) =>
+      expect(page.locator(`#t${i}`)).toBeVisible({ timeout: 20000 })));
+    const elapsed = Date.now() - started;
+
+    // The targets become visible after ~700ms. With a lazy snapshot the whole
+    // batch resolves shortly after that; with a per-poll full-page snapshot the
+    // saturated main thread stretches this into many seconds.
+    expect(elapsed).toBeLessThan(7000);
+  });
+});
+
 test.describe('matchers that should not include an aria snapshot', () => {
   test('toHaveCount failure has no aria snapshot', async ({ page }) => {
     await page.setContent(`<ul><li>a</li><li>b</li></ul>`);

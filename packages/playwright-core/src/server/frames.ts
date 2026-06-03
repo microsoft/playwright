@@ -1530,6 +1530,14 @@ export class Frame extends SdkObject<FrameEventMap> {
       } else if (lastIntermediateResult.isSet) {
         result.received = lastIntermediateResult.received;
         result.errorMessage = lastIntermediateResult.errorMessage;
+        // Render the aria snapshot used as error context once, now that the
+        // assertion has reached its final failure - rendering it on every poll
+        // attempt saturates the page main thread (see #41098). This uses its own
+        // fresh progress, since `progress` is already aborted at this point.
+        // eslint-disable-next-line progress/await-must-use-progress
+        const ariaSnapshot = await this._ariaSnapshotForExpectError(selector, options);
+        if (ariaSnapshot !== undefined)
+          result.received = { ...result.received, ariaSnapshot };
       }
       if (e instanceof TimeoutError)
         result.timedOut = true;
@@ -1577,6 +1585,23 @@ export class Frame extends SdkObject<FrameEventMap> {
         progressLog(`  unexpected value "${renderUnexpectedValue(options.expression, received?.value)}"`);
     }
     return { matches, received };
+  }
+
+  private async _ariaSnapshotForExpectError(selector: string | undefined, options: FrameExpectParams): Promise<string | undefined> {
+    // Use a fresh, bounded progress: the expect's own progress has already been
+    // aborted by the time we render the error context.
+    const controller = new ProgressController();
+    return await controller.run(async progress => {
+      const selectorInFrame = selector ? await progress.race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
+      const { frame, info } = selectorInFrame || { frame: this, info: undefined };
+      const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
+      const context = await progress.race(frame.context(world));
+      const injected = await progress.race(context.injectedScript());
+      return await progress.race(injected.evaluate((injected, { info, options }) => {
+        const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
+        return injected.ariaSnapshotForExpect(elements[0], options);
+      }, { info, options }));
+    }, 5000).catch(() => undefined);
   }
 
   async waitForFunctionExpression<R>(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any, options: { pollingInterval?: number }, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
