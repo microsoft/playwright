@@ -90,6 +90,7 @@ export class Snapshotter {
       this._onPage(page);
     this._eventListeners = [
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
+      eventsHelper.addEventListener(this._context, BrowserContext.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)),
     ];
 
     const { javaScriptEnabled } = this._context._options;
@@ -161,7 +162,6 @@ export class Snapshotter {
     // Annotate frame hierarchy so that snapshots could include frame ids.
     for (const frame of page.frames())
       this._annotateFrameHierarchy(frame);
-    this._eventListeners.push(eventsHelper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
   }
 
   private _annotateFrameHierarchy(frame: Frame) {

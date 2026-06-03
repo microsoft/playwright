@@ -894,7 +894,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   frameNavigatedToNewDocument(frame: frames.Frame) {
     this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
-    this.browserContext.emit(BrowserContext.Events.InternalFrameNavigatedToNewDocument, frame, this);
+    this.browserContext.emit(BrowserContext.Events.InternalFrameNavigatedToNewDocument, frame);
     const origin = frame.origin();
     if (origin)
       this.browserContext.addVisitedOrigin(origin);

@@ -623,6 +623,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       params: { pageId: page.guid },
     };
     this._appendTraceEvent(event);
+    this._pageTracingRecorders.get(page)?.dispose();
+    this._pageTracingRecorders.delete(page);
   }
 
   dispose(params: TracingTracingStopChunkParams) {

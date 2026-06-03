@@ -212,10 +212,11 @@ browserTest.describe('page screenshot', () => {
     expect(pixel(0, 999).b).toBeGreaterThan(128);
   });
 
-  browserTest('should not hang when event loop is blocked', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36702' } }, async ({ page }) => {
+  browserTest('should not hang when event loop is blocked', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36702' } }, async ({ page, trace }) => {
+    browserTest.skip(trace === 'on', 'taking a snapshot hangs when the page is blocked');
     browserTest.setTimeout(5000);
     await page.evaluate(() => {
-      setTimeout(() => {
+      window.builtins.setTimeout(() => {
         while (true) {}
       }, 10);
     });

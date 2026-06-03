@@ -357,7 +357,8 @@ test.describe('browser', () => {
     });
     const response = await page.goto(httpsServer.EMPTY_PAGE);
     expect(response.ok()).toBe(true);
-    expect((await response.securityDetails()).subjectName).toBe('playwright-test');
+    // This is "CN=playwright-test" in some ubuntu webkits, and "playwright-test" in other browsers.
+    expect((await response.securityDetails()).subjectName).toContain('playwright-test');
     await page.close();
   });
 

@@ -16,6 +16,8 @@
 
 import { test as it, expect } from './pageTest';
 
+it.skip(({ isElectron }) => !!isElectron, 'Electron shares a single context between tests');
+
 it('localStorage.items returns empty array on fresh origin', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(await page.localStorage.items()).toEqual([]);
@@ -96,7 +98,9 @@ it('localStorage and sessionStorage are independent', async ({ page, server }) =
   expect(await page.sessionStorage.getItem('shared')).toBe('session');
 });
 
-it('storage methods are scoped to the current origin', async ({ page, server }) => {
+it('storage methods are scoped to the current origin', async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'these are same origins on Android due to our test server limitation');
+
   await page.goto(server.PREFIX + '/empty.html');
   await page.localStorage.setItem('k', 'origin-1');
 

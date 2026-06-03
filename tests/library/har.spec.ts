@@ -118,7 +118,7 @@ it('should populate entry startedDateTime from the browser', async ({ contextFac
   // `unblockedAt`); if it comes from the browser via the debugging protocol
   // it will be tied to when the browser actually sent the request.
   await page.evaluate(() => {
-    setTimeout(() => { void fetch('/delayed-fetch'); }, 50);
+    window.builtins.setTimeout(() => { void fetch('/delayed-fetch'); }, 50);
   });
 
   const blockUntil = Date.now() + 300;
@@ -1068,6 +1068,24 @@ it.describe('tracing.startHar', () => {
     expect(urls).toEqual([server.PREFIX + '/one-style.css']);
     // Minimal mode drops body sizes.
     expect(log.entries[0].request.bodySize).toBe(-1);
+  });
+
+  it('should include pages', async ({ contextFactory, server }, testInfo) => {
+    const context = await contextFactory();
+    const harPath = testInfo.outputPath('tracing.har');
+    await context.tracing.startHar(harPath);
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/title.html');
+    const page2 = await context.newPage();
+    await page2.goto(server.PREFIX + '/empty.html');
+    await page.close(); // Close the page before stopping - it should still be in the har.
+    await context.tracing.stopHar();
+    await context.close();
+
+    const log = JSON.parse(fs.readFileSync(harPath).toString()).log as Log;
+    expect(log.pages.length).toBe(2);
+    expect(log.pages[0].title).toBe('Woof-Woof');
+    expect(log.pages[1].title).toBe('');
   });
 
   it('should record a zipped HAR for APIRequestContext', async ({ playwright, server }, testInfo) => {

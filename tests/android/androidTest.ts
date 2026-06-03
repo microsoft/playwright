@@ -83,6 +83,6 @@ export const androidTest = baseTest.extend<PageTestFixtures & AndroidTestFixture
       await androidContext.pages()[1].close();
     const page = await androidContext.newPage();
     await run(page);
-    await androidContext.clearCookies();
+    await androidContext.setStorageState({ cookies: [], origins: [] });
   },
 });
