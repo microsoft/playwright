@@ -232,8 +232,14 @@ test('should connect to a browser with a page stuck loading its first navigation
 }, async ({ browserType, server, childProcess, waitForPort, mode }, testInfo) => {
   test.skip(mode !== 'default', 'Spawns the browser executable directly');
 
-  // Never respond, so the tab's first navigation never commits.
-  server.setRoute('/hang', () => {});
+  // Hold the response so the tab's first navigation never commits; release it later.
+  let releaseHang = () => {};
+  server.setRoute('/hang', (req, res) => {
+    releaseHang = () => {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<html></html>');
+    };
+  });
 
   const port = 9339 + testInfo.workerIndex;
   // Launch the browser directly (not via Playwright) so that we are the only CDP client.
@@ -257,8 +263,14 @@ test('should connect to a browser with a page stuck loading its first navigation
 
   // connectOverCDP must not hang waiting for the stuck page to commit a navigation.
   const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
-  expect(cdpBrowser.contexts().length).toBe(1);
-  expect(cdpBrowser.contexts()[0].pages().length).toBeGreaterThan(0);
+  const pages = cdpBrowser.contexts()[0].pages();
+  expect(pages.length).toBe(2);
+  // The stuck tab is reported while still on the initial empty document.
+  const stuckPage = pages.find(page => page.url() === ':');
+  expect(stuckPage).toBeTruthy();
+  // Releasing the response lets the previously-stuck page finish navigating to /hang.
+  releaseHang();
+  await stuckPage!.waitForURL(server.PREFIX + '/hang');
   await cdpBrowser.close();
 });
 
