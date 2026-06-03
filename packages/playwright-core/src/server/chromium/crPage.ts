@@ -76,7 +76,7 @@ export class CRPage implements PageDelegate {
     return crPage._mainFrameSession;
   }
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, bits: { hasUIWindow: boolean }) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, bits: { hasUIWindow: boolean, isPreExistingTarget: boolean }) {
     this._targetId = targetId;
     this._opener = opener;
     const dragManager = new DragManager(this);
@@ -106,7 +106,7 @@ export class CRPage implements PageDelegate {
         this._page.setEmulatedSizeFromWindowOpen({ viewport: viewportSize, screen: viewportSize });
     }
 
-    this._mainFrameSession._initialize(bits.hasUIWindow).then(
+    this._mainFrameSession._initialize(bits.hasUIWindow, bits.isPreExistingTarget).then(
         () => this._page.reportAsNew(this._opener?._page, undefined),
         error => this._page.reportAsNew(this._opener?._page, error));
   }
@@ -437,7 +437,7 @@ class FrameSession {
     ]);
   }
 
-  async _initialize(hasUIWindow: boolean) {
+  async _initialize(hasUIWindow: boolean, isPreExistingTarget: boolean) {
     if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
@@ -496,6 +496,11 @@ class FrameSession {
           lifecycleEventsEnabled.catch(e => {}).then(() => {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
+          // A pre-existing page may sit on the initial empty document forever (e.g. a tab whose
+          // navigation never commits), so report it instead of blocking the connection.
+          // See https://github.com/microsoft/playwright/issues/41093.
+          if (isPreExistingTarget)
+            this._firstNonInitialNavigationCommittedFulfill();
         } else {
           this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
@@ -719,7 +724,7 @@ class FrameSession {
       }
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
-      frameSession._initialize(false).catch(e => e);
+      frameSession._initialize(false, false).catch(e => e);
       return;
     }
 

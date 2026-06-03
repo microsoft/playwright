@@ -224,6 +224,44 @@ test('should connect to existing page with iframe and navigate', async ({ browse
   }
 });
 
+test('should connect to a browser with a page stuck loading its first navigation', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/41093'
+  }
+}, async ({ browserType, server, childProcess, waitForPort, mode }, testInfo) => {
+  test.skip(mode !== 'default', 'Spawns the browser executable directly');
+
+  // Never respond, so the tab's first navigation never commits.
+  server.setRoute('/hang', () => {});
+
+  const port = 9339 + testInfo.workerIndex;
+  // Launch the browser directly (not via Playwright) so that we are the only CDP client.
+  childProcess({
+    command: [browserType.executablePath(),
+      `--remote-debugging-port=${port}`,
+      `--user-data-dir=${testInfo.outputPath('cdp-user-data-dir')}`,
+      '--headless=new',
+      '--no-first-run',
+      '--no-default-browser-check',
+      'about:blank',
+    ],
+  });
+  await waitForPort(port);
+
+  // Open a tab whose very first navigation never commits.
+  await Promise.all([
+    server.waitForRequest('/hang'),
+    fetch(`http://127.0.0.1:${port}/json/new?${server.PREFIX}/hang`, { method: 'PUT' }),
+  ]);
+
+  // connectOverCDP must not hang waiting for the stuck page to commit a navigation.
+  const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+  expect(cdpBrowser.contexts().length).toBe(1);
+  expect(cdpBrowser.contexts()[0].pages().length).toBeGreaterThan(0);
+  await cdpBrowser.close();
+});
+
 test('should connect to existing service workers', async ({ browserType, mode, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({

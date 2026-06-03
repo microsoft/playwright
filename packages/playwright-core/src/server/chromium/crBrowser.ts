@@ -55,6 +55,8 @@ export class CRBrowser extends Browser {
   private _tracingRecording = false;
   private _tracingClient: CRSession | undefined;
   private _userAgent: string = '';
+  // True while attaching to targets that already existed when we connected.
+  private _attachingPreExistingTargets = false;
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
     // Make a copy in case we need to update `headful` property below.
@@ -84,6 +86,7 @@ export class CRBrowser extends Browser {
       return browser;
     }
     browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
+    browser._attachingPreExistingTargets = true;
     await Promise.all([
       session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
         // Target.setAutoAttach has a bug where it does not wait for new Targets being attached.
@@ -93,6 +96,7 @@ export class CRBrowser extends Browser {
       }),
       browser._defaultContext.initialize(),
     ]);
+    browser._attachingPreExistingTargets = false;
     await browser._waitForAllPagesToBeInitialized();
     return browser;
   }
@@ -190,7 +194,7 @@ export class CRBrowser extends Browser {
 
     if (targetInfo.type === 'page' || treatOtherAsPage) {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page' });
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page', isPreExistingTarget: this._attachingPreExistingTargets });
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }
