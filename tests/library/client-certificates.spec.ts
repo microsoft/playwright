@@ -343,6 +343,24 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should not intercept TLS for origins without a client certificate', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41106' },
+  }, async ({ browser, asset, httpsServer }) => {
+    // If the proxy intercepted this origin, the browser would see its self-signed cert (CN=localhost)
+    // instead of the real server cert (CN=playwright-test).
+    const page = await browser.newPage({
+      clientCertificates: [{
+        origin: 'https://not-matching.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    const response = await page.goto(httpsServer.EMPTY_PAGE);
+    expect(response.ok()).toBe(true);
+    expect((await response.securityDetails()).subjectName).toBe('playwright-test');
+    await page.close();
+  });
+
   test('should fail with no client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
@@ -636,13 +654,13 @@ test.describe('browser', () => {
 
     await new Promise<void>(resolve => server.listen(0, 'localhost', resolve));
     const port = (server.address() as net.AddressInfo).port;
-    const origin = 'https://' + (browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost');
-    const serverUrl = `${origin}:${port}`;
+    const host = browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost';
+    const serverUrl = `https://${host}:${port}`;
 
     const context = await browser.newContext({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
-        origin,
+        origin: serverUrl,
         certPath: asset('client-certificates/client/trusted/cert.pem'),
         keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
