@@ -178,10 +178,6 @@ The following table shows which traces are kept in a few common scenarios, assum
 | `'on-first-retry'` | — | first retry | first retry |
 | `'on-all-retries'` | — | first retry | both retries |
 
-:::note
-`'retain-on-failure'` already keeps the trace of a failed run even when a later retry passes, so a flaky test that recovers still leaves the failing run's trace for debugging.
-:::
-
 #### Video modes
 
 The `video` option supports the same set of modes as `trace`, and they record and keep recordings using the same rules.
@@ -207,10 +203,6 @@ The following table shows which videos are kept in a few common scenarios, assum
 | `'retain-on-failure-and-retries'` | — | first run + retry | all three runs |
 | `'on-first-retry'` | — | first retry | first retry |
 | `'on-all-retries'` | — | first retry | both retries |
-
-:::note
-`'retain-on-failure'` already keeps the video of a failed run even when a later retry passes, so a flaky test that recovers still leaves the failing run's video for debugging.
-:::
 
 ### Other Options
 
