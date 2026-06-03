@@ -591,14 +591,16 @@ export default defineConfig({
   - `snapshots` ?<[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
   - `sources` ?<[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
 
-Whether to record trace for each test. Defaults to `'off'`.
+Whether to record trace for each test. Defaults to `'off'`. The initial run of a test is the "first run"; subsequent runs caused by [retries](../test-retries.md) are "retries".
 * `'off'`: Do not record trace.
-* `'on'`: Record trace for each test.
-* `'on-first-retry'`: Record trace only when retrying a test for the first time.
-* `'on-all-retries'`: Record trace only when retrying a test.
-* `'retain-on-failure'`: Record trace for each test. When test run passes, remove the recorded trace.
-* `'retain-on-first-failure'`: Record trace for the first run of each test, but not for retries. When test run passes, remove the recorded trace.
-* `'retain-on-failure-and-retries'`: Record trace for each test run. Retains all traces when an attempt fails.
+* `'on'`: Record and keep a trace for every run.
+* `'on-first-retry'`: Record and keep a trace only for the first retry of a test.
+* `'on-all-retries'`: Record and keep a trace for every retry.
+* `'retain-on-failure'`: Record a trace for every run, but keep it only for runs that failed. A failed run's trace is kept even when a later retry passes.
+* `'retain-on-first-failure'`: Record a trace only for the first run of a test (not for retries), and keep it only if that run failed.
+* `'retain-on-failure-and-retries'`: Record a trace for every run, and keep it for any run that failed or that is a retry.
+
+See [trace modes](../test-use-options.md#trace-modes) for a side-by-side comparison of what each mode records and keeps.
 
 For more control, pass an object that specifies `mode` and trace features to enable.
 
