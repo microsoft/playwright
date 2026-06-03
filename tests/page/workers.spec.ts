@@ -188,7 +188,6 @@ it('should clear upon cross-process navigation', async function({ server, page }
 });
 
 it('should attribute network activity for worker inside iframe to the iframe', async function({ page, server, browserName, browserMajorVersion }) {
-  it.fixme(browserName === 'chromium');
   it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
 
   await page.goto(server.PREFIX + '/empty.html');
