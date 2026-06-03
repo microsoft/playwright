@@ -24,6 +24,7 @@ import { stackTraceToLocation } from './crProtocolHelper';
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
+import { calculateUserAgentMetadata } from './crPage';
 
 export class CRServiceWorker extends Worker {
   readonly browserContext: CRBrowserContext;
@@ -102,6 +103,7 @@ export class CRServiceWorker extends Worker {
     await this._session.send('Emulation.setUserAgentOverride', {
       userAgent: options.userAgent || '',
       acceptLanguage: options.locale,
+      userAgentMetadata: calculateUserAgentMetadata(options),
     }).catch(() => {});
   }
 
