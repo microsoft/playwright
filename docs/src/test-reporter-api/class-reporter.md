@@ -313,7 +313,11 @@ Resolved configuration.
 * since: v1.61
 - `suite` <[Suite]>
 
-The root suite that contains all projects, files and test cases.
+The root suite that contains the projects, files and test cases that will run.
+
+The suite reflects `--project`, `--grep`/`--grep-invert` and `.only` filtering, so it only contains tests that match the current invocation. It contains only the top-level projects being run — setup and dependency projects are not included and cannot be excluded from here.
+
+The suite ignores the `--shard` argument: it always contains the full, un-sharded corpus. Playwright applies its built-in sharding after [`method: Reporter.plan`] returns, unless [`method: Reporter.implementsSharding`] returns `true`.
 
 ## optional method: Reporter.implementsSharding
 * since: v1.61

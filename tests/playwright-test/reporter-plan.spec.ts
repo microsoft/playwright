@@ -245,6 +245,131 @@ test('multiple reporters declaring implementsSharding throws', async ({ runInlin
   expect(result.rawOutput).toContain(`Multiple reporters declare 'implementsSharding'`);
 });
 
+test('plan.suite contains only top-level projects, not dependency/setup projects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        async plan(config, suite) {
+          // The suite only exposes top-level projects, so a reporter has no handle on
+          // setup/dependency project tests and therefore cannot exclude them.
+          console.log('%% plan projects: ' + suite.suites.map(s => s.title).join(','));
+          console.log('%% plan tests: ' + suite.allTests().map(t => t.title).join(','));
+        }
+        onTestEnd(test, result) {
+          console.log('%% ran ' + test.parent.project().name + '/' + test.title);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter.ts',
+        projects: [
+          { name: 'setup', testMatch: /a\\.setup\\.ts/ },
+          { name: 'main', testMatch: /a\\.test\\.ts/, dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'a.setup.ts': `
+      import { test } from '@playwright/test';
+      test('setup-test', async () => {});
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('main-test', async () => {});
+    `,
+  }, { reporter: '', workers: 1 }, undefined, { additionalArgs: ['--project=main'] });
+
+  expect(result.exitCode).toBe(0);
+  // plan only sees the top-level 'main' project; the 'setup' dependency is prepended afterwards.
+  expect(result.outputLines).toContain('plan projects: main');
+  // 'setup-test' is absent from the plan suite, proving setup/dependency tests are not exposed.
+  expect(result.outputLines).toContain('plan tests: main-test');
+  // Both the dependency and the main project still run.
+  expect(result.outputLines).toContain('ran setup/setup-test');
+  expect(result.outputLines).toContain('ran main/main-test');
+});
+
+test('plan.suite respects --grep filtering', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        async plan(config, suite) {
+          console.log('%% plan: ' + suite.allTests().map(t => t.title).join(','));
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('foo-one', async () => {});
+      test('bar-two', async () => {});
+    `,
+  }, { reporter: '', workers: 1, grep: 'foo' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['plan: foo-one']);
+});
+
+test('plan.suite respects --project filtering', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        async plan(config, suite) {
+          console.log('%% plan projects: ' + suite.suites.map(s => s.title).join(','));
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter.ts',
+        projects: [{ name: 'one' }, { name: 'two' }],
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t', async () => {});
+    `,
+  }, { reporter: '', workers: 1, project: 'one' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['plan projects: one']);
+});
+
+test('plan.suite ignores --shard; built-in sharding applies after plan', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        async plan(config, suite) {
+          // plan sees the full, un-sharded corpus.
+          console.log('%% plan: ' + suite.allTests().map(t => t.title).join(','));
+        }
+        onBegin(config, suite) {
+          // built-in sharding has narrowed the run after plan.
+          console.log('%% begin: ' + suite.allTests().map(t => t.title).join(','));
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `module.exports = { reporter: './reporter.ts', fullyParallel: true };`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      for (let i = 0; i < 4; i++)
+        test('t' + i, async () => {});
+    `,
+  }, { reporter: '', workers: 1, shard: '1/2' });
+
+  expect(result.exitCode).toBe(0);
+  // plan observes all four tests regardless of --shard.
+  expect(result.outputLines).toContain('plan: t0,t1,t2,t3');
+  // The built-in shard filter runs after plan and reduces the corpus.
+  const beginLine = result.outputLines.find(l => l.startsWith('begin: '));
+  expect(beginLine).toBeTruthy();
+  expect(beginLine!.slice('begin: '.length).split(',').length).toBe(2);
+});
+
 test('plan annotations capture caller location pointing at reporter', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
