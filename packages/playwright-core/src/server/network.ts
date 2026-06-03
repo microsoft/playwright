@@ -336,14 +336,7 @@ export class Request extends SdkObject {
   }
 
   async _requestHeadersSize(): Promise<number> {
-    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
-    headersSize += this.method().length;
-    headersSize += (new URL(this.url())).pathname.length;
-    headersSize += 8; // httpVersion
-    const headers = await this._rawRequestHeaders();
-    for (const header of headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
-    return headersSize;
+    return requestHeadersSize(await this._rawRequestHeaders(), this.url(), this.method());
   }
 }
 
@@ -689,15 +682,7 @@ export class Response extends SdkObject {
       return availableSize;
 
     // Fallback to calculating it manually.
-    let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
-    headersSize += 8; // httpVersion;
-    headersSize += 3; // statusCode;
-    headersSize += this.statusText().length;
-    const headers = await this._rawResponseHeadersPromise;
-    for (const header of headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
-    headersSize += 2; // '\r\n'
-    return headersSize;
+    return responseHeadersSize(await this._rawResponseHeadersPromise, this.statusText());
   }
 
   private async _sizes(): Promise<ResourceSizes> {
@@ -731,8 +716,7 @@ export class Response extends SdkObject {
 export class WebSocket extends SdkObject {
   private _url: string;
   private _notified = false;
-  private _requestWallTimeMs: number | undefined;
-  private _requestTimestamp: number | undefined;
+  private _wallTimeMs: number | undefined;
   private _status: number | undefined;
   private _statusText: string | undefined;
   private _requestHeaders: HeadersArray | undefined;
@@ -749,7 +733,7 @@ export class WebSocket extends SdkObject {
 
   constructor(parent: SdkObject, url: string) {
     super(parent, 'ws');
-    this._url = url;
+    this._url = stripFragmentFromUrl(url);
   }
 
   markAsNotified() {
@@ -767,12 +751,11 @@ export class WebSocket extends SdkObject {
   }
 
   wallTimeMs(): number | undefined {
-    return this._requestWallTimeMs;
+    return this._wallTimeMs;
   }
 
-  setRequestTiming(wallTimeMs: number | undefined, timestamp: number | undefined) {
-    this._requestWallTimeMs = wallTimeMs;
-    this._requestTimestamp = timestamp;
+  setWallTimeMs(wallTimeMs: number | undefined) {
+    this._wallTimeMs = wallTimeMs;
   }
 
   requestSent(headers: HeadersArray) {
@@ -783,29 +766,12 @@ export class WebSocket extends SdkObject {
     this.emit(WebSocket.Events.Response, { status, statusText, headers });
   }
 
-  private _toWallTime(timestamp: number): number {
-    // The timestamp of each frame is relative to the timestamp (and walltime) of the initial request in Chromium and WebKit.
-    if (this._requestWallTimeMs !== undefined && this._requestTimestamp !== undefined)
-      return this._requestWallTimeMs + (timestamp - this._requestTimestamp);
-
-    // The timestamp is already a walltime in Firefox.
-    return timestamp;
+  frameSent(opcode: number, data: string, wallTimeMs: number) {
+    this.emit(WebSocket.Events.FrameSent, { opcode, data, wallTimeMs });
   }
 
-  frameSent(opcode: number, data: string, timestamp: number) {
-    this.emit(WebSocket.Events.FrameSent, {
-      opcode,
-      data,
-      timestamp: this._toWallTime(timestamp),
-    });
-  }
-
-  frameReceived(opcode: number, data: string, timestamp: number) {
-    this.emit(WebSocket.Events.FrameReceived, {
-      opcode,
-      data,
-      timestamp: this._toWallTime(timestamp),
-    });
+  frameReceived(opcode: number, data: string, wallTimeMs: number) {
+    this.emit(WebSocket.Events.FrameReceived, { opcode, data, wallTimeMs });
   }
 
   error(errorMessage: string) {
@@ -913,5 +879,31 @@ export function mergeHeaders(headers: (HeadersArray | undefined | null)[]): Head
   const result: HeadersArray = [];
   for (const [lower, value] of lowerCaseToValue)
     result.push({ name: lowerCaseToOriginalCase.get(lower)!, value });
+  return result;
+}
+
+function headersSize(headers: HeadersArray): number {
+  let result = 0;
+  for (const header of headers)
+    result += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+  return result;
+}
+
+export function requestHeadersSize(headers: HeadersArray, url: string, method: string): number {
+  let result = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
+  result += method.length;
+  result += (new URL(url)).pathname.length;
+  result += 8; // httpVersion
+  result += headersSize(headers);
+  return result;
+}
+
+export function responseHeadersSize(headers: HeadersArray, statusText: string): number {
+  let result = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
+  result += 8; // httpVersion;
+  result += 3; // statusCode;
+  result += statusText.length;
+  result += headersSize(headers);
+  result += 2; // '\r\n'
   return result;
 }
