@@ -55,7 +55,6 @@ export class CRBrowser extends Browser {
   private _tracingRecording = false;
   private _tracingClient: CRSession | undefined;
   private _userAgent: string = '';
-  // True while attaching to targets that already existed when we connected.
   private _attachingPreExistingTargets = false;
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
