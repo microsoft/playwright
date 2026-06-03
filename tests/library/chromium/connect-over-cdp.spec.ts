@@ -217,6 +217,7 @@ test('should connect to existing page with iframe and navigate', async ({ browse
     const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
+    await expect.poll(() => contexts[0].pages().length).toBe(1);
     await contexts[0].pages()[0].goto(server.EMPTY_PAGE);
     await cdpBrowser.close();
   } finally {
@@ -263,14 +264,11 @@ test('should connect to a browser with a page stuck loading its first navigation
 
   // connectOverCDP must not hang waiting for the stuck page to commit a navigation.
   const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
-  const pages = cdpBrowser.contexts()[0].pages();
-  expect(pages.length).toBe(2);
-  // The stuck tab is reported while still on the initial empty document.
-  const stuckPage = pages.find(page => page.url() === ':');
-  expect(stuckPage).toBeTruthy();
-  // Releasing the response lets the previously-stuck page finish navigating to /hang.
+  const context = cdpBrowser.contexts()[0];
+  // The stuck tab has not committed a navigation yet, so it is not reported. Releasing the
+  // response lets it finish navigating to /hang and show up in the context.
   releaseHang();
-  await stuckPage!.waitForURL(server.PREFIX + '/hang');
+  await expect.poll(() => context.pages().map(page => page.url())).toContain(server.PREFIX + '/hang');
   await cdpBrowser.close();
 });
 
@@ -427,7 +425,7 @@ test('should report all pages in an existing browser', async ({ browserType }, t
     const cdpBrowser2 = await browserType.connectOverCDP({
       endpointURL: `http://127.0.0.1:${port}/`,
     });
-    expect(cdpBrowser2.contexts()[0].pages().length).toBe(3);
+    await expect.poll(() => cdpBrowser2.contexts()[0].pages().length).toBe(3);
 
     await cdpBrowser2.close();
   } finally {
@@ -728,6 +726,7 @@ test('should not reuse utility worlds between two clients', async ({ browserType
 
     const browser2 = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
     const context2 = browser2.contexts()[0];
+    await expect.poll(() => context2.pages().length).toBe(1);
     const page2 = context2.pages()[0];
     const frameImpl2 = toImpl(page2.mainFrame()) as Frame;
     const result = await frameImpl2.evaluateExpression(nullProgress, 'window.foo', { world: 'utility' });
@@ -766,6 +765,7 @@ test('should get title and URL of existing page', async ({ browserType, mode, se
       browsers.push(cdpBrowser);
 
       const [context] = cdpBrowser.contexts();
+      await expect.poll(() => context.pages().length).toBe(1);
       const [page] = context.pages();
       expect(page.url()).toBe(server.EMPTY_PAGE);
       expect(await page.title()).toBe('my title');

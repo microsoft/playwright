@@ -55,9 +55,8 @@ export class CRBrowser extends Browser {
   private _tracingRecording = false;
   private _tracingClient: CRSession | undefined;
   private _userAgent: string = '';
-  private _attachingPreExistingTargets = false;
 
-  static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
+  static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools, connectToExistingBrowser?: boolean): Promise<CRBrowser> {
     // Make a copy in case we need to update `headful` property below.
     options = { ...options };
     const connection = new CRConnection(parent, transport, options.protocolLogger, options.browserLogsCollector);
@@ -85,7 +84,6 @@ export class CRBrowser extends Browser {
       return browser;
     }
     browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
-    browser._attachingPreExistingTargets = true;
     await Promise.all([
       session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
         // Target.setAutoAttach has a bug where it does not wait for new Targets being attached.
@@ -95,8 +93,11 @@ export class CRBrowser extends Browser {
       }),
       browser._defaultContext.initialize(),
     ]);
-    browser._attachingPreExistingTargets = false;
-    await browser._waitForAllPagesToBeInitialized();
+    // When connecting to an existing browser (connectOverCDP), it may have pages that are stuck
+    // loading and will never finish initializing, so do not block the connection on them.
+    // See https://github.com/microsoft/playwright/issues/41093.
+    if (!connectToExistingBrowser)
+      await browser._waitForAllPagesToBeInitialized();
     return browser;
   }
 
@@ -193,7 +194,7 @@ export class CRBrowser extends Browser {
 
     if (targetInfo.type === 'page' || treatOtherAsPage) {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page', isPreExistingTarget: this._attachingPreExistingTargets });
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page' });
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }
