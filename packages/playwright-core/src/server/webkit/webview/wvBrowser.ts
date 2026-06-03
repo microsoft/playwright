@@ -56,16 +56,65 @@ function deriveProxyBase(endpointURL: string): string {
 }
 
 function pageIdFromWsUrl(wsUrl: string): string {
-  const m = /\/devtools\/page\/([^/]+)/.exec(wsUrl);
-  return m ? m[1] : wsUrl;
+  // ios_webkit_debug_proxy exposes tabs as /devtools/page/<id>.
+  const cdp = /\/devtools\/page\/([^/]+)/.exec(wsUrl);
+  if (cdp)
+    return cdp[1];
+  // WebKitGTK/WPE remote inspector HTTP server exposes targets as
+  // /socket/<connectionID>/<targetID>/<type>.
+  const gtk = /\/socket\/(\d+)\/(\d+)\//.exec(wsUrl);
+  if (gtk)
+    return `${gtk[1]}/${gtk[2]}`;
+  return wsUrl;
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, '\'');
+}
+
+// WebKitGTK and WPE expose the remote inspector through an HTTP server (enabled
+// with WEBKIT_INSPECTOR_HTTP_SERVER=host:port). Unlike ios_webkit_debug_proxy
+// there is no /json endpoint: the target list is an HTML page at `/`, with each
+// inspectable target carrying a `/socket/<connectionID>/<targetID>/<type>` path
+// that upgrades to a WebSocket speaking the same protocol as the iOS tabs.
+function parseGtkTargetListPage(html: string, proxyBase: string): ProxyTab[] {
+  const wsProto = new URL(proxyBase).protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = new URL(proxyBase).host;
+  const tabs: ProxyTab[] = [];
+  const rowRegex = /<div class="targetname">([\s\S]*?)<\/div><div class="targeturl">([\s\S]*?)<\/div>[\s\S]*?\/socket\/(\d+)\/(\d+)\/(\w+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = rowRegex.exec(html))) {
+    const [, name, url, connectionID, targetID, type] = match;
+    // Only page targets are driveable; skip ServiceWorker/JavaScript targets.
+    if (type !== 'WebPage')
+      continue;
+    tabs.push({
+      title: decodeHtmlEntities(name),
+      url: decodeHtmlEntities(url),
+      webSocketDebuggerUrl: `${wsProto}//${host}/socket/${connectionID}/${targetID}/${type}`,
+    });
+  }
+  return tabs;
 }
 
 async function listTabs(proxyBase: string, headers: { [key: string]: string }): Promise<ProxyTab[]> {
-  const res = await fetch(`${proxyBase}/json`, { headers });
-  if (!res.ok)
-    throw new Error(`ios_webkit_debug_proxy ${proxyBase}/json returned ${res.status}`);
-  const data = await res.json() as ProxyTab[];
-  return data.filter(t => !!t.webSocketDebuggerUrl);
+  // ios_webkit_debug_proxy exposes a CDP-style JSON listing.
+  const jsonRes = await fetch(`${proxyBase}/json`, { headers });
+  if (jsonRes.ok) {
+    const text = await jsonRes.text();
+    try {
+      const data = JSON.parse(text) as ProxyTab[];
+      if (Array.isArray(data))
+        return data.filter(t => !!t.webSocketDebuggerUrl);
+    } catch {
+      // Not a JSON listing — fall through to the WebKitGTK/WPE HTML listing.
+    }
+  }
+  const htmlRes = await fetch(`${proxyBase}/`, { headers });
+  if (!htmlRes.ok)
+    throw new Error(`Remote inspector at ${proxyBase} returned ${jsonRes.status} for /json and ${htmlRes.status} for /`);
+  return parseGtkTargetListPage(await htmlRes.text(), proxyBase);
 }
 
 // Local WebSocket-backed transport: defers opening the socket until `open()`
@@ -204,7 +253,7 @@ export class WVBrowser extends Browser {
     } else {
       await this._syncTabs();
       if (!this._tabs.size)
-        throw new Error(`No Mobile Safari tabs found at ${this._proxyBase}/json — open Safari first.`);
+        throw new Error(`No inspectable tabs found at ${this._proxyBase} — open a page in the browser first.`);
     }
     this._page = this._firstTab().page;
   }

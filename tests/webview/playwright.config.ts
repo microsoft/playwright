@@ -52,12 +52,20 @@ const metadata = {
   video: false,
 };
 
+// macOS drives Mobile Safari in the iOS Simulator via ios_webkit_debug_proxy;
+// Linux drives a WebKitGTK/WPE browser (Epiphany, MiniBrowser, ...) over its
+// remote inspector HTTP server. Both share the same page tests and connectOverCDP
+// transport; only the discovery/launch differs (see webviewTest.ts).
+const isLinux = process.platform === 'linux';
+const projectName = isLinux ? 'webkit-webview-gtk-page' : 'webkit-webview-page';
+const snapshotSuffix = isLinux ? 'webkit-webview-gtk' : 'webkit-webview';
+
 config.projects!.push({
-  name: 'webkit-webview-page',
+  name: projectName,
   use: {
     browserName: 'webkit',
   },
-  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-webkit-webview{ext}',
+  snapshotPathTemplate: `{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-${snapshotSuffix}{ext}`,
   testDir: path.join(testDir, 'page'),
   metadata,
 });

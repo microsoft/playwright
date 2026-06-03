@@ -1,0 +1,9 @@
+# WebView (WebKitGTK / WPE) expected failures.
+#
+# Tests listed here are skipped against the webkit-webview-gtk-page project,
+# which drives a WebKitGTK/WPE browser (Epiphany, MiniBrowser, ...) over its
+# remote inspector HTTP server (WEBKIT_INSPECTOR_HTTP_SERVER).
+#
+# This file starts empty: every page test runs. Populate it from a baseline run
+# (see tests/webview/expectations/webkit-webview-page.txt for the iOS format),
+# grouping entries by root cause. Format: `<title path> [fail|flaky|timeout|skip]`.
