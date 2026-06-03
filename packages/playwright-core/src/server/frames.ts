@@ -22,6 +22,7 @@ import { LongStandingScope } from '@isomorphic/manualPromise';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { assert } from '@isomorphic/assert';
 import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
+import { monotonicTime } from '@isomorphic/time';
 import { makeWaitForNextTask } from '@utils/task';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
@@ -1116,7 +1117,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result!;
   }
 
-  async retryWithProgressAndBackoff<R>(progress: Progress, action: (progress: Progress, continuePolling: symbol) => Promise<R | symbol>): Promise<R> {
+  async retryWithProgressAndBackoff<R>(progress: Progress, action: (progress: Progress, continuePolling: symbol, lastAttempt: boolean) => Promise<R | symbol>): Promise<R> {
     const backoffScale = [20, 50, 100, 100, 500];
     if (progress.timeout) {
       // For small timeouts, cap the large backoff values to produce meaningul retries.
@@ -1126,8 +1127,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     return await this.retryWithProgressAndTimeouts<R>(progress, backoffScale, action);
   }
 
-  async retryWithProgressAndTimeouts<R>(progress: Progress, timeouts: number[], action: (progress: Progress, continuePolling: symbol) => Promise<R | symbol>): Promise<R> {
+  async retryWithProgressAndTimeouts<R>(progress: Progress, timeouts: number[], action: (progress: Progress, continuePolling: symbol, lastAttempt: boolean) => Promise<R | symbol>): Promise<R> {
     const continuePolling = Symbol('continuePolling');
+    // The largest backoff interval, used to estimate how much time a single poll
+    // plus its following wait consumes near the deadline.
+    const maxInterval = timeouts.length ? timeouts[timeouts.length - 1] : 0;
     timeouts = [0, ...timeouts];
     let timeoutIndex = 0;
     while (true) {
@@ -1141,8 +1145,17 @@ export class Frame extends SdkObject<FrameEventMap> {
           this._detachedScope,
         ], actionPromise));
       }
+      // Hint the action that we are in the final stretch before the deadline -
+      // fewer than two steady-state intervals remain, so this is likely one of the
+      // last couple of attempts. The action can use this to perform extra work that
+      // is only useful for the failure path (e.g. rendering an error snapshot)
+      // without paying for it on every poll. A small window (rather than a single
+      // predicted attempt) keeps this reliable: an earlier attempt in the window
+      // still completes and stores its result even if the very last one is aborted
+      // by the deadline.
+      const lastAttempt = !!progress.deadline && progress.deadline - monotonicTime() <= 2 * maxInterval;
       try {
-        const result = await action(progress, continuePolling);
+        const result = await action(progress, continuePolling, lastAttempt);
         if (result === continuePolling)
           continue;
         return result as R;
@@ -1495,7 +1508,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
       try {
-        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
+        const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true, false);
         if (options.noAutoWaiting || resultOneShot.matches !== options.isNot)
           return resultOneShot;
       } catch (e) {
@@ -1505,10 +1518,12 @@ export class Frame extends SdkObject<FrameEventMap> {
       }
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      const result = await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
+      const result = await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling, lastAttempt) => {
         if (!options.noAutoWaiting)
           await this._page.performActionPreChecks(progress);
-        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
+        // Render the error-context aria snapshot only on the last poll(s) before the
+        // deadline, capturing the state at the point of failure (see #41098).
+        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false, lastAttempt);
         if (matches === options.isNot) {
           // Keep waiting in these cases:
           // expect(locator).conditionThatDoesNotMatch
@@ -1530,14 +1545,6 @@ export class Frame extends SdkObject<FrameEventMap> {
       } else if (lastIntermediateResult.isSet) {
         result.received = lastIntermediateResult.received;
         result.errorMessage = lastIntermediateResult.errorMessage;
-        // Render the aria snapshot used as error context once, now that the
-        // assertion has reached its final failure - rendering it on every poll
-        // attempt saturates the page main thread (see #41098). This uses its own
-        // fresh progress, since `progress` is already aborted at this point.
-        // eslint-disable-next-line progress/await-must-use-progress
-        const ariaSnapshot = await this._ariaSnapshotForExpectError(selector, options);
-        if (ariaSnapshot !== undefined)
-          result.received = { ...result.received, ariaSnapshot };
       }
       if (e instanceof TimeoutError)
         result.timedOut = true;
@@ -1546,7 +1553,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string }, noAbort: boolean, renderAriaSnapshot: boolean) {
     const progressLog = (text: string) => progress.log(text);
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
     if (noAbort)
@@ -1558,7 +1565,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     const context = await progress.race(frame.context(world));
     const injected = await progress.race(context.injectedScript());
 
-    const { log, matches, received, missingReceived } = await progress.race(injected.evaluate(async (injected, { info, options }) => {
+    const { log, matches, received, missingReceived } = await progress.race(injected.evaluate(async (injected, { info, options, renderAriaSnapshot }) => {
       const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
       injected.markTargetElements(new Set(elements));
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
@@ -1571,8 +1578,8 @@ export class Frame extends SdkObject<FrameEventMap> {
         log = `  locator resolved to ${injected.previewNode(elements[0])}`;
       if (info)
         injected.checkDeprecatedSelectorUsage(info.parsed, elements);
-      return { log, ...await injected.expect(elements[0], options, elements) };
-    }, { info, options }));
+      return { log, ...await injected.expect(elements[0], options, elements, renderAriaSnapshot) };
+    }, { info, options, renderAriaSnapshot }));
 
     if (log)
       progressLog(log);
@@ -1585,23 +1592,6 @@ export class Frame extends SdkObject<FrameEventMap> {
         progressLog(`  unexpected value "${renderUnexpectedValue(options.expression, received?.value)}"`);
     }
     return { matches, received };
-  }
-
-  private async _ariaSnapshotForExpectError(selector: string | undefined, options: FrameExpectParams): Promise<string | undefined> {
-    // Use a fresh, bounded progress: the expect's own progress has already been
-    // aborted by the time we render the error context.
-    const controller = new ProgressController();
-    return await controller.run(async progress => {
-      const selectorInFrame = selector ? await progress.race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
-      const { frame, info } = selectorInFrame || { frame: this, info: undefined };
-      const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
-      const context = await progress.race(frame.context(world));
-      const injected = await progress.race(context.injectedScript());
-      return await progress.race(injected.evaluate((injected, { info, options }) => {
-        const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
-        return injected.ariaSnapshotForExpect(elements[0], options);
-      }, { info, options }));
-    }, 5000).catch(() => undefined);
   }
 
   async waitForFunctionExpression<R>(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any, options: { pollingInterval?: number }, world: types.World = 'main'): Promise<js.SmartHandle<R>> {

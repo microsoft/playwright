@@ -1445,18 +1445,20 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: ExpectReceived, missingReceived?: boolean }> {
+  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[], renderAriaSnapshot: boolean): Promise<{ matches: boolean, received?: ExpectReceived, missingReceived?: boolean }> {
     const core = await this._expectCore(element, options, elements);
-    if (core.received === undefined)
+    // The aria snapshot is only used as error context for a failing assertion, and
+    // for a hidden/missing element it renders a full-page snapshot. Rendering it on
+    // every poll saturates the page main thread when many auto-retrying assertions
+    // run concurrently, so the caller only requests it on the last poll(s) before
+    // the deadline - capturing the state at the point of failure (see #41098).
+    const ariaSnapshot = renderAriaSnapshot ? this._ariaSnapshotForExpect(element, options) : undefined;
+    if (core.received === undefined && ariaSnapshot === undefined)
       return { matches: core.matches, missingReceived: core.missingReceived };
-    return { matches: core.matches, received: { value: core.received }, missingReceived: core.missingReceived };
+    return { matches: core.matches, received: { value: core.received, ariaSnapshot }, missingReceived: core.missingReceived };
   }
 
-  // Renders the aria snapshot attached as error context to a failed expect. This
-  // is computed lazily, only once the assertion has reached its final failure -
-  // rendering a full-page snapshot on every poll attempt saturates the page main
-  // thread when many auto-retrying assertions run concurrently (see #41098).
-  ariaSnapshotForExpect(element: Element | undefined, options: FrameExpectParams): string | undefined {
+  private _ariaSnapshotForExpect(element: Element | undefined, options: FrameExpectParams): string | undefined {
     const expression = options.expression;
     if (expression === 'to.have.count' || expression.endsWith('.array'))
       return undefined;
