@@ -93,11 +93,7 @@ export class CRBrowser extends Browser {
       }),
       browser._defaultContext.initialize(),
     ]);
-    // When connecting to an existing browser (connectOverCDP), it may have pages that are stuck
-    // loading and will never finish initializing, so do not block the connection on them.
-    // See https://github.com/microsoft/playwright/issues/41093.
-    if (!connectToExistingBrowser)
-      await browser._waitForAllPagesToBeInitialized();
+    await browser._waitForAllPagesToBeInitialized(connectToExistingBrowser);
     return browser;
   }
 
@@ -161,8 +157,15 @@ export class CRBrowser extends Browser {
     return this.options.name === 'clank';
   }
 
-  async _waitForAllPagesToBeInitialized() {
-    await Promise.all([...this._crPages.values()].map(crPage => crPage._page.waitForInitializedOrError()));
+  async _waitForAllPagesToBeInitialized(connectToExistingBrowser?: boolean) {
+    await Promise.all([...this._crPages.values()].map(crPage => {
+      // When connecting to an existing browser, do not block on a page that is stuck on the initial
+      // empty document - its first navigation may never commit. Such a page is reported later, once
+      // it navigates. See https://github.com/microsoft/playwright/issues/41093.
+      if (connectToExistingBrowser)
+        return Promise.race([crPage._page.waitForInitializedOrError(), crPage._initialEmptyPagePromise]);
+      return crPage._page.waitForInitializedOrError();
+    }));
   }
 
   _onAttachedToTarget({ targetInfo, sessionId, waitingForDebugger }: Protocol.Target.attachedToTargetPayload) {

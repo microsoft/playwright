@@ -16,6 +16,7 @@
  */
 
 import { assert } from '@isomorphic/assert';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
@@ -63,6 +64,7 @@ export class CRPage implements PageDelegate {
   private readonly _pdf: CRPDF;
   private readonly _coverage: CRCoverage;
   readonly _browserContext: CRBrowserContext;
+  readonly _initialEmptyPagePromise = new ManualPromise<void>();
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -496,6 +498,8 @@ class FrameSession {
           lifecycleEventsEnabled.catch(e => {}).then(() => {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
+          if (!this._crPage._initialEmptyPagePromise.isDone())
+            this._crPage._initialEmptyPagePromise.resolve();
         } else {
           this._firstNonInitialNavigationCommittedFulfill();
           this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
