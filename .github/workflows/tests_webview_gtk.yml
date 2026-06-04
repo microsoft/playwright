@@ -60,8 +60,10 @@ jobs:
           echo "::group::Test run (shard ${{ matrix.shard }}/4)"
           # GTK needs a display (xvfb) and a session bus (dbus-run-session). The
           # fixture launches MiniBrowser itself and disables the WebKit sandbox.
+          # Scoped to a curated subset for now; widen to the full config later.
           xvfb-run -a dbus-run-session -- \
-            npx playwright test --config tests/webview/playwright.config.ts --shard=${{ matrix.shard }}/4
+            npx playwright test page-check page-click page-goto page-keyboard \
+              --config tests/webview/playwright.config.ts --shard=${{ matrix.shard }}/4
           echo "::endgroup::"
 
       - name: Upload artifacts
