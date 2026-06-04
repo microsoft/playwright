@@ -14,7 +14,10 @@ runs:
   steps:
     - name: Integrity check
       shell: bash
-      run: find "${{ inputs.report_dir }}" -name "*.zip" -exec unzip -t {} \;
+      run: |
+        echo "::group::extracting blob archives"
+        find "${{ inputs.report_dir }}" -name "*.zip" -exec unzip -t {} \;
+        echo "::endgroup::"
     - name: Upload blob report to GitHub
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v7

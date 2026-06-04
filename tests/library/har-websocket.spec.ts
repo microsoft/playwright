@@ -321,11 +321,13 @@ it('should record websocket connection failure', async ({ contextFactory, server
   await page.goto(server.EMPTY_PAGE);
 
   const wsUrl = `ws://127.0.0.1:${port}/ws-connect-fail`;
+  const wsPromise = page.waitForEvent('websocket');
   await page.evaluate(url => new Promise<void>(resolve => {
     const ws = new WebSocket(url);
     ws.addEventListener('close', () => resolve());
     ws.addEventListener('error', () => resolve());
   }), wsUrl);
+  await wsPromise;
   const log = await getLog();
 
   const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;

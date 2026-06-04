@@ -101,6 +101,7 @@ export const electronTest = baseTest
         await use(page);
         for (const window of sharedApp.windows())
           await window.close().catch(() => {});
+        await sharedApp.context().clearCookies();
       },
 
       launchElectronApp: async ({ createUserDataDir }, use) => {

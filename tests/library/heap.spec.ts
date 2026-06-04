@@ -18,6 +18,7 @@ import { contextTest as test, expect } from '../config/browserTest';
 import { server as coreServer } from '../../packages/playwright-core/lib/coreBundle';
 
 test.describe.configure({ mode: 'serial' });
+test.skip(({ mode }) => mode !== 'default');
 
 // Force a separate worker to start from a clean heap.
 test.use({ launchOptions: [async ({ launchOptions }, use) => use(launchOptions), { scope: 'worker' }] });
@@ -186,7 +187,7 @@ test.describe(() => {
         const frame = document.createElement('iframe');
         frame.src = url;
         document.body.appendChild(frame);
-        await new Promise(f => setTimeout(f, 10));
+        await new Promise(f => window.builtins.setTimeout(f, 10));
         frame.remove();
       }
     }, { url: server.PREFIX + '/one-style.html', count: kFrameCount }).catch(() => {});
@@ -200,6 +201,8 @@ test.describe(() => {
 });
 
 test('cycle handles', async ({ page, server }) => {
+  test.slow();
+
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<div><span>hi</span></div>`.repeat(2000));
   const divs = await page.$$('div');

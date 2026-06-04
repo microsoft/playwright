@@ -168,6 +168,7 @@ export class FrameManager {
       const frame = new Frame(this._page, frameId, parentFrame);
       this._frames.set(frameId, frame);
       this._page.emit(Page.Events.FrameAttached, frame);
+      this._page.browserContext.emit(BrowserContext.Events.FrameAttached, frame);
       return frame;
     }
   }
@@ -410,8 +411,10 @@ export class FrameManager {
 
     ws.setWallTimeMs(wallTimeMs);
 
-    if (ws.markAsNotified())
+    if (ws.markAsNotified()) {
       this._page.emit(Page.Events.WebSocket, ws);
+      this._page.browserContext.emit(BrowserContext.Events.WebSocket, ws, this._page);
+    }
 
     ws.requestSent(headers);
   }
@@ -441,8 +444,10 @@ export class FrameManager {
   webSocketClosed(requestId: string) {
     const ws = this._webSockets.get(requestId);
     if (ws) {
-      if (ws.markAsNotified())
+      if (ws.markAsNotified()) {
         this._page.emit(Page.Events.WebSocket, ws);
+        this._page.browserContext.emit(BrowserContext.Events.WebSocket, ws, this._page);
+      }
       ws.closed();
     }
     this._webSockets.delete(requestId);
@@ -451,8 +456,10 @@ export class FrameManager {
   webSocketError(requestId: string, errorMessage: string): void {
     const ws = this._webSockets.get(requestId);
     if (ws) {
-      if (ws.markAsNotified())
+      if (ws.markAsNotified()) {
         this._page.emit(Page.Events.WebSocket, ws);
+        this._page.browserContext.emit(BrowserContext.Events.WebSocket, ws, this._page);
+      }
       ws.error(errorMessage);
     }
   }

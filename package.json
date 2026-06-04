@@ -125,7 +125,7 @@
     "debug": "^4.3.4",
     "diff": "^8.0.3",
     "dotenv": "^16.4.5",
-    "electron": "^39.8.4",
+    "electron": "^40.10.2",
     "enquirer": "2.3.6",
     "esbuild": "^0.25.0",
     "eslint": "^9.34.0",

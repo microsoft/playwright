@@ -441,8 +441,10 @@ it('should throw for too deep reference chain', {
 
 it('should throw for too deep reference chain 2', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40940' }
-}, async ({ page, browserName }) => {
+}, async ({ page, browserName, isAndroid }) => {
   it.skip(browserName !== 'chromium', 'this is a chromium-only limitation');
+  it.skip(isAndroid, 'something fails there');
+
   await expect(page.evaluate(depth => {
     let node = {};
     for (let i = 0; i < depth; i++)

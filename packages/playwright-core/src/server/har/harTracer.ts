@@ -68,10 +68,11 @@ export class HarTracer {
   private _barrierPromises = new Set<Promise<void>>();
   private _delegate: HarTracerDelegate;
   private _options: HarTracerOptions;
-  private _pageEntries = new Map<Page, har.Page>();
+  private _pageEntries: har.Page[] = [];
   private _eventListeners: RegisteredListener[] = [];
   private _started = false;
   private _entrySymbol: symbol;
+  private _pageEntrySymbol: symbol;
   private _baseURL: string | undefined;
   private _page: Page | null;
 
@@ -89,6 +90,7 @@ export class HarTracer {
       options.omitPages = true;
     }
     this._entrySymbol = Symbol('requestHarEntry');
+    this._pageEntrySymbol = Symbol('pageHarEntry');
     this._baseURL = context instanceof APIRequestContext ? context._defaultOptions().baseURL : context._options.baseURL;
   }
 
@@ -104,10 +106,7 @@ export class HarTracer {
     ];
     if (this._context instanceof BrowserContext) {
       this._eventListeners.push(
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => {
-            this._addPageEventListeners(page);
-            this._createPageEntryIfNeeded(page);
-          }),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._createPageEntryIfNeeded(page)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
@@ -115,20 +114,11 @@ export class HarTracer {
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestAborted, request => this._onRequestAborted(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFulfilled, request => this._onRequestFulfilled(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestContinued, request => this._onRequestContinued(request)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.WebSocket, (webSocket: network.WebSocket, page: Page) => this._onWebSocket(page, webSocket)),
       );
-      for (const page of this._context.pages()) {
-        this._addPageEventListeners(page);
+      for (const page of this._context.pages())
         this._createPageEntryIfNeeded(page);
-      }
     }
-  }
-
-  private _addPageEventListeners(page: Page) {
-    if (this._page && page !== this._page)
-      return;
-    this._eventListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.WebSocket, (webSocket: network.WebSocket) => this._onWebSocket(page, webSocket)),
-    );
   }
 
   private _shouldIncludeEntryWithUrl(urlString: string) {
@@ -146,7 +136,7 @@ export class HarTracer {
       return;
     if (this._page && page !== this._page)
       return;
-    let pageEntry = this._pageEntries.get(page);
+    let pageEntry = (page as any)[this._pageEntrySymbol] as har.Page | undefined;
     if (!pageEntry) {
       const date = new Date();
       pageEntry = {
@@ -167,7 +157,8 @@ export class HarTracer {
           this._onDOMContentLoaded(page, pageEntry!);
       });
 
-      this._pageEntries.set(page, pageEntry);
+      (page as any)[this._pageEntrySymbol] = pageEntry;
+      this._pageEntries.push(pageEntry);
     }
     return pageEntry;
   }
@@ -435,6 +426,8 @@ export class HarTracer {
   }
 
   private _onWebSocket(page: Page, webSocket: network.WebSocket) {
+    if (this._page && page !== this._page)
+      return;
     if (!this._shouldIncludeEntryWithUrl(webSocket.url()))
       return;
     const url = network.parseURL(webSocket.url());
@@ -655,7 +648,7 @@ export class HarTracer {
         name: context?._browser.options.name || '',
         version: context?._browser.version() || ''
       },
-      pages: this._pageEntries.size ? Array.from(this._pageEntries.values()) : undefined,
+      pages: this._pageEntries.length ? this._pageEntries.slice() : undefined,
       entries: [],
     };
     if (!this._options.omitTiming) {
@@ -671,7 +664,7 @@ export class HarTracer {
           pageEntry.pageTimings.onLoad = -1;
       }
     }
-    this._pageEntries.clear();
+    this._pageEntries = [];
     return log;
   }
 

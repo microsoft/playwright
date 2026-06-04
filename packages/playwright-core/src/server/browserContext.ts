@@ -64,6 +64,8 @@ const BrowserContextEvent = {
   RecorderEvent: 'recorderevent',
   PageClosed: 'pageclosed',
   InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
+  FrameAttached: 'frameattached',
+  WebSocket: 'websocket',
 } as const;
 
 export type BrowserContextEventMap = {
@@ -81,7 +83,9 @@ export type BrowserContextEventMap = {
   [BrowserContextEvent.BeforeClose]: [];
   [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }];
   [BrowserContextEvent.PageClosed]: [page: Page];
-  [BrowserContextEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame, page: Page];
+  [BrowserContextEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame];
+  [BrowserContextEvent.FrameAttached]: [frame: frames.Frame];
+  [BrowserContextEvent.WebSocket]: [webSocket: network.WebSocket, page: Page];
 };
 
 export abstract class BrowserContext<EM extends EventMap = EventMap> extends SdkObject<BrowserContextEventMap | EM> {
