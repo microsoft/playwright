@@ -591,14 +591,16 @@ export default defineConfig({
   - `snapshots` ?<[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
   - `sources` ?<[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
 
-Whether to record trace for each test. Defaults to `'off'`.
+Whether to record trace for each test. Defaults to `'off'`. The initial run of a test is the "first run"; subsequent runs caused by [retries](../test-retries.md) are "retries".
 * `'off'`: Do not record trace.
-* `'on'`: Record trace for each test.
-* `'on-first-retry'`: Record trace only when retrying a test for the first time.
-* `'on-all-retries'`: Record trace only when retrying a test.
-* `'retain-on-failure'`: Record trace for each test. When test run passes, remove the recorded trace.
-* `'retain-on-first-failure'`: Record trace for the first run of each test, but not for retries. When test run passes, remove the recorded trace.
-* `'retain-on-failure-and-retries'`: Record trace for each test run. Retains all traces when an attempt fails.
+* `'on'`: Record and keep a trace for every run.
+* `'on-first-retry'`: Record and keep a trace only for the first retry of a test.
+* `'on-all-retries'`: Record and keep a trace for every retry.
+* `'retain-on-failure'`: Record a trace for every run, but keep it only for runs that failed. A failed run's trace is kept even when a later retry passes.
+* `'retain-on-first-failure'`: Record a trace only for the first run of a test (not for retries), and keep it only if that run failed.
+* `'retain-on-failure-and-retries'`: Record a trace for every run, and keep it for any run that failed or that is a retry.
+
+See [trace modes](../test-use-options.md#trace-modes) for a side-by-side comparison of what each mode records and keeps.
 
 For more control, pass an object that specifies `mode` and trace features to enable.
 
@@ -648,14 +650,16 @@ export default defineConfig({
       - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the test information overlay. Defaults to `"top-left"`.
       - `fontSize` ?<[int]> Font size of the test information in pixels. Defaults to `14`.
 
-Whether to record video for each test. Defaults to `'off'`.
+Whether to record video for each test. Defaults to `'off'`. The initial run of a test is the "first run"; subsequent runs caused by [retries](../test-retries.md) are "retries".
 * `'off'`: Do not record video.
-* `'on'`: Record video for each test.
-* `'on-first-retry'`: Record video only when retrying a test for the first time.
-* `'on-all-retries'`: Record video only when retrying a test.
-* `'retain-on-failure'`: Record video for each test. When test run passes, remove the recorded video.
-* `'retain-on-first-failure'`: Record video for the first run of each test, but not for retries. When test run passes, remove the recorded video.
-* `'retain-on-failure-and-retries'`: Record video for each test run. Retains all videos when an attempt fails.
+* `'on'`: Record and keep a video for every run.
+* `'on-first-retry'`: Record and keep a video only for the first retry of a test.
+* `'on-all-retries'`: Record and keep a video for every retry.
+* `'retain-on-failure'`: Record a video for every run, but keep it only for runs that failed. A failed run's video is kept even when a later retry passes.
+* `'retain-on-first-failure'`: Record a video only for the first run of a test (not for retries), and keep it only if that run failed.
+* `'retain-on-failure-and-retries'`: Record a video for every run, and keep it for any run that failed or that is a retry.
+
+See [video modes](../test-use-options.md#video-modes) for a side-by-side comparison of what each mode records and keeps.
 
 To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
 
