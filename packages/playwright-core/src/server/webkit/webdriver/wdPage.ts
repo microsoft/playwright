@@ -20,9 +20,11 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { createGuid } from '@utils/crypto';
 import * as dom from '../../dom';
 import { Page } from '../../page';
+import * as rawWebViewInputSource from '../../../generated/webViewInputSource';
 import { WDExecutionContext } from './wdExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wdInput';
 
+import type { WDPageEvent } from './wdExecutionContext';
 import type { WDBrowserContext } from './wdBrowser';
 import type { WDSession } from './wdConnection';
 import type * as frames from '../../frames';
@@ -79,6 +81,7 @@ export class WDPage implements PageDelegate {
       this._mainFrameId = await this._session.windowHandle().catch(() => 'main');
       this._page.frameManager.frameAttached(this._mainFrameId, null);
       this._createContext();
+      await this._installInputBridge();
       const url = await this._session.currentUrl().catch(() => 'about:blank');
       this._page.frameManager.frameCommittedNewDocumentNavigation(this._mainFrameId, url, '', createGuid(), true);
       this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'domcontentloaded');
@@ -97,9 +100,39 @@ export class WDPage implements PageDelegate {
 
   private _createContext(): void {
     const frame = this._mainFrame();
-    const context = new dom.FrameExecutionContext(new WDExecutionContext(this._session), frame, 'main');
+    const delegate = new WDExecutionContext(this._session, (events, readyState) => this._processPageEvents(events, readyState));
+    const context = new dom.FrameExecutionContext(delegate, frame, 'main');
     this._context = context;
     frame.contextCreated('main', context);
+  }
+
+  // Install the page-side input dispatcher (see wdInput) into the current
+  // document. Re-installed after every navigation, since a new document drops it.
+  private async _installInputBridge(): Promise<void> {
+    const bootstrap = `(() => {
+      const module = {};
+      ${rawWebViewInputSource.source}
+      window.__pwWebViewInput = new (module.exports.default())(window, document);
+    })()`;
+    const script = `
+      const __cb = arguments[arguments.length - 1];
+      try { ${bootstrap}; __cb(null); } catch (e) { __cb({ __pwError: String(e) }); }
+    `;
+    await this._session.executeAsync(script).catch(() => {});
+  }
+
+  // WebDriver pushes no console/lifecycle events, so every evaluate piggybacks
+  // buffered console messages and the document readyState (see wdExecutionContext).
+  // Delivering the console messages drives the setContent tag handler (which
+  // clears lifecycle), after which we re-fire lifecycle from readyState.
+  private _processPageEvents(events: WDPageEvent[], readyState: string): void {
+    const location = { url: this._mainFrame().url(), lineNumber: 0, columnNumber: 0 };
+    for (const event of events)
+      this._page.addConsoleMessage(null, event.type, [], location, event.text, Date.now());
+    if (readyState === 'interactive' || readyState === 'complete')
+      this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'domcontentloaded');
+    if (readyState === 'complete')
+      this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'load');
   }
 
   // Synthesizes the commit + context + lifecycle events for a navigation that
@@ -115,6 +148,7 @@ export class WDPage implements PageDelegate {
     const documentId = createGuid();
     this._page.frameManager.frameCommittedNewDocumentNavigation(this._mainFrameId, url, '', documentId, false);
     this._createContext();
+    await this._installInputBridge();
     this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'domcontentloaded');
     this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'load');
     return { newDocumentId: documentId };
