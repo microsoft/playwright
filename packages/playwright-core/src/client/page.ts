@@ -449,7 +449,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
     const logLine = trimmedUrl ? `waiting for request ${trimmedUrl}` : undefined;
-    return await this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, logLine);
+    return await this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout, signal: options.signal }, logLine);
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: TimeoutOptions = {}): Promise<Response> {
@@ -460,7 +460,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
     const logLine = trimmedUrl ? `waiting for response ${trimmedUrl}` : undefined;
-    return await this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, logLine);
+    return await this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout, signal: options.signal }, logLine);
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
@@ -475,10 +475,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);
       if (logLine)
         waiter.log(logLine);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      waiter.rejectOnSignal(signal);
       if (event !== Events.Page.Crash)
         waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
       if (event !== Events.Page.Close)

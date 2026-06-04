@@ -218,6 +218,13 @@ test('should work with no timeout', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
+test('should abort with signal', async ({ page }) => {
+  const controller = new AbortController();
+  const promise = page.waitForEvent('filechooser', { signal: controller.signal });
+  controller.abort('Aborted by user');
+  await expect(promise).rejects.toThrow('Aborted by user');
+});
+
 test('should return the same file chooser when there are many watchdogs simultaneously', async ({ page, server }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser1, fileChooser2] = await Promise.all([
