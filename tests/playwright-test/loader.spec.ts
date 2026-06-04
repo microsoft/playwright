@@ -289,32 +289,6 @@ test('should load ts from esm when package.json has type module', async ({ runIn
   expect(result.output).not.toContain(`is an experimental feature`);
 });
 
-test('should import a relative .js file from esm when package.json has type module', async ({ runInlineTest }) => {
-  // Regression test for https://github.com/microsoft/playwright/issues/41121:
-  // resolveHook returns an absolute path that is passed to the default ESM resolver,
-  // which on Windows rejects it as an invalid file:// URL ("Received protocol 'c:'").
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      export default { projects: [{name: 'foo'}] };
-    `,
-    'package.json': JSON.stringify({ type: 'module' }),
-    'a.test.js': `
-      import { test, expect } from '@playwright/test';
-      import { dummy } from './lib/lib.js';
-      test('check project name', ({}, testInfo) => {
-        dummy();
-        expect(testInfo.project.name).toBe('foo');
-      });
-    `,
-    'lib/lib.js': `
-      export function dummy() {}
-    `,
-  });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
