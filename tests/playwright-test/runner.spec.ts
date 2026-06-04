@@ -847,6 +847,363 @@ test('should run last failed tests', async ({ runInlineTest }) => {
   expect(result2.failed).toBe(1);
 });
 
+test('should run last failed tests from dependency projects', async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.ts/ },
+          { name: 'chromium', testMatch: /test.ts/, dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'setup.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+      test('fail', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+    'test.ts': `
+      import { test } from '@playwright/test';
+      test('test', async () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(result1.didNotRun).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(1);
+  expect(result2.didNotRun).toBe(0);
+  expect(result2.output).not.toContain('No tests found');
+  expect(result2.output).not.toContain('setup.ts:3:11 › pass');
+  expect(result2.output).toContain('setup.ts:4:11 › fail');
+  expect(result2.output).not.toContain('test.ts:3:11 › test');
+});
+
+test('should shard last failed tests from dependency projects', async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup1', testMatch: /setup1.ts/ },
+          { name: 'tests1', testMatch: /test1.ts/, dependencies: ['setup1'] },
+          { name: 'setup2', testMatch: /setup2.ts/ },
+          { name: 'tests2', testMatch: /test2.ts/, dependencies: ['setup2'] },
+        ],
+      };
+    `,
+    'setup1.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail1', async () => {
+        console.log('\\n%%setup1');
+        expect(1).toBe(2);
+      });
+    `,
+    'setup2.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail2', async () => {
+        console.log('\\n%%setup2');
+        expect(1).toBe(2);
+      });
+    `,
+    'test1.ts': `
+      import { test } from '@playwright/test';
+      test('test1', async () => {});
+    `,
+    'test2.ts': `
+      import { test } from '@playwright/test';
+      test('test2', async () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.failed).toBe(2);
+  expect(result1.didNotRun).toBe(2);
+
+  const result2 = await runInlineTest(workspace, { shard: '2/2', workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.failed).toBe(2);
+  expect(result2.outputLines.sort()).toEqual(['setup1', 'setup2']);
+});
+
+test('should preserve shard placement for last failed dependency projects', async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup1', testMatch: /setup1.ts/ },
+          { name: 'tests1', testMatch: /test1.ts/, dependencies: ['setup1'] },
+          { name: 'setup2', testMatch: /setup2.ts/ },
+          { name: 'tests2', testMatch: /test2.ts/, dependencies: ['setup2'] },
+        ],
+      };
+    `,
+    'setup1.ts': `
+      import { test } from '@playwright/test';
+      test('pass1', async () => {
+        console.log('\\n%%setup1');
+      });
+    `,
+    'setup2.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail2', async () => {
+        console.log('\\n%%setup2');
+        expect(1).toBe(2);
+      });
+    `,
+    'test1.ts': `
+      import { test } from '@playwright/test';
+      test('test1', async () => {});
+    `,
+    'test2.ts': `
+      import { test } from '@playwright/test';
+      test('test2', async () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(result1.didNotRun).toBe(1);
+
+  const result2 = await runInlineTest(workspace, { shard: '2/2', workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.outputLines).toEqual(['setup2']);
+});
+
+test('should shard mixed top-level and dependency last failed tests together', async ({ runInlineTest }, testInfo) => {
+  const lastFailedRel = '.cache/mixed-last-run.json';
+  const defaultLastRun = path.join(testInfo.outputPath(), 'test-results', '.last-run.json');
+  const mixedLastRun = path.join(testInfo.outputPath(), lastFailedRel);
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup1', testMatch: /setup1.ts/ },
+          { name: 'tests1', testMatch: /test1.ts/, dependencies: ['setup1'] },
+          { name: 'setup2', testMatch: /setup2.ts/ },
+          { name: 'tests2', testMatch: /test2.ts/, dependencies: ['setup2'] },
+        ],
+      };
+    `,
+    'setup1.ts': `
+      import { test } from '@playwright/test';
+      test('pass1', async () => {
+        console.log('\\n%%setup1');
+      });
+    `,
+    'setup2.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail2', async () => {
+        console.log('\\n%%setup2');
+        expect(1).toBe(2);
+      });
+    `,
+    'test1.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail1', async () => {
+        console.log('\\n%%test1');
+        expect(1).toBe(2);
+      });
+    `,
+    'test2.ts': `
+      import { test } from '@playwright/test';
+      test('test2', async () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.failed).toBe(2);
+  expect(result1.didNotRun).toBe(1);
+  const lastRunInfo = await fs.promises.readFile(defaultLastRun, 'utf8');
+
+  await fs.promises.mkdir(path.dirname(mixedLastRun), { recursive: true });
+  await fs.promises.writeFile(mixedLastRun, lastRunInfo);
+  const shard1 = await runInlineTest(workspace, { shard: '1/2', workers: 1 }, {}, { additionalArgs: ['--last-failed', `--last-failed-file=${lastFailedRel}`] });
+  await fs.promises.writeFile(mixedLastRun, lastRunInfo);
+  const shard2 = await runInlineTest(workspace, { shard: '2/2', workers: 1 }, {}, { additionalArgs: ['--last-failed', `--last-failed-file=${lastFailedRel}`] });
+  expect(shard1.exitCode).toBe(1);
+  expect(shard2.exitCode).toBe(1);
+  expect(shard1.failed).toBe(1);
+  expect(shard2.failed).toBe(1);
+  expect([...shard1.outputLines, ...shard2.outputLines].sort()).toEqual(['setup1', 'setup2', 'test1']);
+});
+
+test('should run repeated last failed tests from dependency projects', async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.ts/, repeatEach: 2 },
+          { name: 'chromium', testMatch: /test.ts/, dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'setup.ts': `
+      import { test, expect } from '@playwright/test';
+      test('maybe fail', async ({}, testInfo) => {
+        console.log('\\n%%repeat ' + testInfo.repeatEachIndex);
+        expect(testInfo.repeatEachIndex).toBe(0);
+      });
+    `,
+    'test.ts': `
+      import { test } from '@playwright/test';
+      test('test', async () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(result1.didNotRun).toBe(1);
+
+  const result2 = await runInlineTest(workspace, { workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(1);
+  expect(result2.outputLines).toEqual(['repeat 1']);
+});
+
+test('should run dependencies of last failed dependency projects', async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'prepare', testMatch: /prepare.ts/ },
+          { name: 'setup', testMatch: /setup.ts/, dependencies: ['prepare'] },
+          { name: 'chromium', testMatch: /test.ts/, dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'prepare.ts': `
+      import { test } from '@playwright/test';
+      test('prepare', async () => {
+        console.log('\\n%%prepare');
+      });
+    `,
+    'setup.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async () => {
+        console.log('\\n%%setup');
+        expect(1).toBe(2);
+      });
+    `,
+    'test.ts': `
+      import { test } from '@playwright/test';
+      test('test', async () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+  expect(result1.didNotRun).toBe(1);
+
+  const result2 = await runInlineTest(workspace, { workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.didNotRun).toBe(0);
+  expect(result2.outputLines).toEqual(['prepare', 'setup']);
+});
+
+test('should not duplicate a last failed dependency that is also needed by a last failed project', async ({ runInlineTest }, testInfo) => {
+  const lastFailedRel = '.cache/combined-last-run.json';
+  const defaultLastRun = path.join(testInfo.outputPath(), 'test-results', '.last-run.json');
+  const combinedLastRun = path.join(testInfo.outputPath(), lastFailedRel);
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.ts/ },
+          { name: 'chromium', testMatch: /test.ts/, dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'setup.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {
+        console.log('\\n%%setup pass');
+      });
+      test('fail', async () => {
+        console.log('\\n%%setup fail');
+        expect(1).toBe(2);
+      });
+    `,
+    'test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async () => {
+        console.log('\\n%%test fail');
+        expect(1).toBe(2);
+      });
+    `
+  };
+
+  const setupRun = await runInlineTest(workspace, { project: ['setup'] });
+  expect(setupRun.exitCode).toBe(1);
+  const setupFailures = JSON.parse(await fs.promises.readFile(defaultLastRun, 'utf8')).failedTests;
+
+  const testRun = await runInlineTest(workspace, { project: ['chromium'] }, {}, { additionalArgs: ['--no-deps'] });
+  expect(testRun.exitCode).toBe(1);
+  const testFailures = JSON.parse(await fs.promises.readFile(defaultLastRun, 'utf8')).failedTests;
+
+  await fs.promises.mkdir(path.dirname(combinedLastRun), { recursive: true });
+  await fs.promises.writeFile(combinedLastRun, JSON.stringify({
+    status: 'failed',
+    failedTests: [...setupFailures, ...testFailures],
+  }));
+
+  const result = await runInlineTest(workspace, { workers: 1 }, {}, { additionalArgs: ['--last-failed', `--last-failed-file=${lastFailedRel}`] });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.didNotRun).toBe(1);
+  expect(result.output).not.toContain('test.ts:3:11 › fail');
+  expect(result.outputLines).toEqual(['setup pass', 'setup fail']);
+});
+
+test('should run dependencies for last failed tests', async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.ts/ },
+          { name: 'chromium', testMatch: /test.ts/, dependencies: ['setup'] },
+        ],
+      };
+    `,
+    'setup.ts': `
+      import { test } from '@playwright/test';
+      test('setup', async () => {});
+    `,
+    'test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+      test('fail', async () => {
+        expect(1).toBe(2);
+      });
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(2);
+  expect(result1.failed).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.output).toContain('setup.ts:3:11 › setup');
+  expect(result2.output).not.toContain('test.ts:3:11 › pass');
+  expect(result2.output).toContain('test.ts:4:11 › fail');
+});
+
 test('should run last failed tests in a shard', async ({ runInlineTest }) => {
   const workspace = {
     'a.spec.js': `

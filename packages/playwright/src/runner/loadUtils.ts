@@ -155,6 +155,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
       rootSuite._addSuite(buildProjectSuite(project, filteredProjectSuites.get(project)!));
     }
   }
+  const topLevelProjectSet = new Set(rootSuite.suites.map(suite => suite._fullProject!));
 
   // Complain about only.
   if (config.config.forbidOnly) {
@@ -165,13 +166,31 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
   }
 
-  // Shard only the top-level projects.
+  const candidateProjectSuites: { project: commonConfig.FullProjectInternal, projectSuite: testNs.Suite }[] = [];
+  if (testRun.postShardTestFilters.length) {
+    for (const [project, projectSuite] of filteredProjectSuites) {
+      if (topLevelProjectSet.has(project))
+        continue;
+      project.project.repeatEach = project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach;
+      const projectSuiteWithRepeats = buildProjectSuite(project, projectSuite._deepClone());
+      if (!projectSuiteWithRepeats._hasTests())
+        continue;
+      candidateProjectSuites.push({ project, projectSuite: projectSuiteWithRepeats });
+    }
+    if (!candidateProjectSuites.some(({ projectSuite }) => projectSuite.allTests().some(test => testRun.postShardTestFilters.every(filter => filter(test)))))
+      candidateProjectSuites.length = 0;
+  }
+
+  // Shard top-level projects, plus dependency projects that can match --last-failed.
   if (config.config.shard) {
-    // Create test groups for top-level projects.
     const testGroups: TestGroup[] = [];
     for (const projectSuite of rootSuite.suites) {
       // Split beforeAll-grouped tests into "config.shard.total" groups when needed.
       // Later on, we'll re-split them between workers by using "config.workers" instead.
+      for (const group of createTestGroups(projectSuite, config.config.shard.total))
+        testGroups.push(group);
+    }
+    for (const { projectSuite } of candidateProjectSuites) {
       for (const group of createTestGroups(projectSuite, config.config.shard.total))
         testGroups.push(group);
     }
@@ -186,10 +205,44 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
 
     // Update project suites, removing empty ones.
     suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
+    for (const { projectSuite } of candidateProjectSuites)
+      suiteUtils.filterTestsRemoveEmptySuites(projectSuite, test => testsInThisShard.has(test));
   }
 
   if (testRun.postShardTestFilters.length)
     suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testRun.postShardTestFilters.every(filter => filter(test)));
+
+  // When the last failed test belongs to a dependency project, it is not
+  // present in the root suite until dependencies are prepended below.
+  // Add such projects explicitly, unless they are already needed as a dependency
+  // by a selected top-level project.
+  if (testRun.postShardTestFilters.length) {
+    const selectedProjects = rootSuite.suites.map(suite => suite._fullProject!);
+    const selectedProjectSet = new Set(selectedProjects);
+    const selectedDependencySet = new Set<commonConfig.FullProjectInternal>();
+    for (const [project, level] of buildProjectsClosure(selectedProjects)) {
+      if (level === 'dependency')
+        selectedDependencySet.add(project);
+    }
+
+    const additionalProjectSuites: { project: commonConfig.FullProjectInternal, projectSuite: testNs.Suite }[] = [];
+    for (const { project, projectSuite } of candidateProjectSuites) {
+      if (selectedProjectSet.has(project) || selectedDependencySet.has(project))
+        continue;
+      suiteUtils.filterTestsRemoveEmptySuites(projectSuite, test => testRun.postShardTestFilters.every(filter => filter(test)));
+      if (projectSuite._hasTests())
+        additionalProjectSuites.push({ project, projectSuite });
+    }
+    const additionalDependencySet = new Set<commonConfig.FullProjectInternal>();
+    for (const [project, level] of buildProjectsClosure(additionalProjectSuites.map(({ project }) => project))) {
+      if (level === 'dependency')
+        additionalDependencySet.add(project);
+    }
+    for (const { project, projectSuite } of additionalProjectSuites) {
+      if (!additionalDependencySet.has(project))
+        rootSuite._addSuite(projectSuite);
+    }
+  }
 
   const topLevelProjects = [];
   // Now prepend dependency projects without filtration.
