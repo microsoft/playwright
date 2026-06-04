@@ -232,6 +232,34 @@ it('should include gigantic websocket messages', async ({ contextFactory, server
   expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
 });
 
+it('should use 64-bit extended length for exactly 2**16 byte websocket payload', async ({ contextFactory, server }, testInfo) => {
+  // RFC 6455 Section 5.2: 16-bit extended length covers 126-65535.
+  // Payloads of exactly 65536 (2**16) bytes require the 64-bit extended length field.
+  const incoming = 'x'.repeat(2 ** 16);
+  const outgoing = 'outgoing';
+
+  server.onceWebSocketConnection(ws => {
+    ws.on('message', () => ws.send(incoming));
+  });
+
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+
+  const wsUrl = `ws://${server.HOST}/ws`;
+  const closed = page.evaluate(({ url, outgoing }) => new Promise<void>(resolve => {
+    const ws = new WebSocket(url);
+    ws.addEventListener('open', () => ws.send(outgoing));
+    ws.addEventListener('message', () => ws.close());
+    ws.addEventListener('close', () => resolve());
+  }), { url: wsUrl, outgoing });
+  await closed;
+  const log = await getLog();
+
+  const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
+  // 6 (base header) + 8 (64-bit extended length) for payload of exactly 2**16 bytes.
+  expect(wsEntry.response._transferSize).toBe(responseHeadersSize(wsEntry.response.headers) + 6 + 8 + incoming.length);
+});
+
 it('should include binary websocket messages', async ({ contextFactory, server }, testInfo) => {
   const incoming = [0x01, 0x02, 0x03, 0x04];
   const outgoing = [0x05, 0x06, 0x07, 0x08];
