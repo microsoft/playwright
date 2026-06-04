@@ -140,7 +140,16 @@ function launchWebKitGTKBrowser(): ChildProcess {
   const command = process.env.PW_WEBVIEW_BROWSER || DEFAULT_WEBKITGTK_BROWSER;
   const extraArgs = process.env.PW_WEBVIEW_BROWSER_ARGS ? process.env.PW_WEBVIEW_BROWSER_ARGS.split(' ').filter(Boolean) : [];
   return spawn(command, [...extraArgs, 'about:blank'], {
-    env: { ...process.env, WEBKIT_INSPECTOR_HTTP_SERVER: inspectorHttpAddress() },
+    env: {
+      ...process.env,
+      WEBKIT_INSPECTOR_HTTP_SERVER: inspectorHttpAddress(),
+      // WebKit's bubblewrap sandbox needs an unprivileged user namespace, which
+      // distros like Ubuntu 24.04 deny to unconfined processes
+      // (kernel.apparmor_restrict_unprivileged_userns=1) — bwrap then fails with
+      // "setting up uid map: Permission denied". The browser is a throwaway test
+      // target, so disable the sandbox to run regardless of the host policy.
+      WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: '1',
+    },
     stdio: 'ignore',
   });
 }
