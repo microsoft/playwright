@@ -1360,3 +1360,10 @@ it('should abort via signal', async ({ page }) => {
   controller.abort(new Error('Aborted by user'));
   await expect(promise).rejects.toThrow('Aborted by user');
 });
+
+it('should abort via already-aborted signal', async ({ page }) => {
+  await page.setContent(`<button>click me</button>`);
+  const controller = new AbortController();
+  controller.abort(new Error('Already aborted'));
+  await expect(page.locator('button').click({ signal: controller.signal })).rejects.toThrow('Already aborted');
+});
