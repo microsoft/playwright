@@ -30,7 +30,7 @@ import { CRPage } from './crPage';
 import { saveProtocolStream } from './crProtocolHelper';
 import { CRServiceWorker } from './crServiceWorker';
 
-import type { InitScript, Worker } from '../page';
+import type { InitScript } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { CDPSession, CRSession } from './crConnection';

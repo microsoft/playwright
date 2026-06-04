@@ -20,11 +20,11 @@ import { BrowserContext } from '../browserContext';
 import * as network from '../network';
 import { ConsoleMessage } from '../console';
 import { stackTraceToLocation } from './crProtocolHelper';
+import { calculateUserAgentMetadata } from './crPage';
 
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
-import { calculateUserAgentMetadata } from './crPage';
 
 export class CRServiceWorker extends Worker {
   readonly browserContext: CRBrowserContext;
