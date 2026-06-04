@@ -34,6 +34,11 @@ export class WDConnection {
   private readonly _protocolLogger: ProtocolLogger;
   private readonly _browserLogsCollector: RecentLogsCollector;
   private _closed = false;
+  // safaridriver processes one command per session at a time. Playwright can
+  // issue commands concurrently (races, lifecycle-triggered follow-ups), and
+  // overlapping requests get reordered by the driver — e.g. a pointerUp landing
+  // a cycle late, breaking clicks. Serialize every command onto a single chain.
+  private _commandChain: Promise<void> = Promise.resolve();
 
   constructor(baseURL: string, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     // Normalize a trailing slash so callers can build `${baseURL}/session/...`.
@@ -42,7 +47,14 @@ export class WDConnection {
     this._browserLogsCollector = browserLogsCollector;
   }
 
-  async command(httpMethod: 'GET' | 'POST' | 'DELETE', path: string, body?: any): Promise<any> {
+  command(httpMethod: 'GET' | 'POST' | 'DELETE', path: string, body?: any): Promise<any> {
+    const result = this._commandChain.then(() => this._sendCommand(httpMethod, path, body));
+    // Keep the chain alive regardless of this command's outcome.
+    this._commandChain = result.then(() => {}, () => {});
+    return result;
+  }
+
+  private async _sendCommand(httpMethod: 'GET' | 'POST' | 'DELETE', path: string, body?: any): Promise<any> {
     if (this._closed)
       throw this._error('closed', undefined, 'WebDriver connection is closed');
     const url = `${this.baseURL}${path}`;
