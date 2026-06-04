@@ -10,3 +10,4 @@ node_modules/ws
 
 [webkit.ts]
 ./webview/wvBrowser.ts
+./webdriver/wdBrowser.ts

@@ -24,6 +24,7 @@ import { Browser } from '../browser';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { WKBrowser } from './wkBrowser';
 import { connectOverRDP } from './webview/wvBrowser';
+import { connectOverWebDriver } from './webdriver/wdBrowser';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -42,6 +43,12 @@ export class WebKit extends BrowserType {
   }
 
   override async connectOverCDP(progress: Progress, params: channels.BrowserTypeConnectOverCDPParams): Promise<Browser> {
+    // `webdriver://host:port` / `webdriver+launch://safari` route to the classic
+    // W3C WebDriver backend (e.g. safaridriver); everything else is the WebKit
+    // inspector-protocol (webview) backend.
+    const endpointURL = params.endpointURL || '';
+    if (endpointURL.startsWith('webdriver://') || endpointURL.startsWith('webdriver+launch://'))
+      return connectOverWebDriver(progress, this, params);
     return connectOverRDP(progress, this, params);
   }
 
