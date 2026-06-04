@@ -2,11 +2,10 @@ name: "tests WebView (iOS Simulator)"
 
 on:
   workflow_dispatch:
+  # Disabled while iterating on tests_webview_gtk.yml; re-enable by reverting.
   pull_request:
     paths:
-      - 'tests/webview/**'
-      - 'packages/playwright-core/src/server/webkit/webview/**'
-      - '.github/workflows/tests_webview_simulator.yml'
+      - '__webview_gtk_pr_disabled__'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}

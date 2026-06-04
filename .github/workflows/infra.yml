@@ -5,10 +5,10 @@ on:
     branches:
       - main
       - release-*
+  # Disabled while iterating on tests_webview_gtk.yml; re-enable by reverting.
   pull_request:
-    branches:
-      - main
-      - release-*
+    paths:
+      - '__webview_gtk_pr_disabled__'
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1

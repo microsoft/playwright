@@ -5,19 +5,10 @@ on:
     branches:
       - main
       - release-*
+  # Disabled while iterating on tests_webview_gtk.yml; re-enable by reverting.
   pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
-      - 'packages/extension/**'
-      - 'packages/playwright-core/src/server/bidi/**'
-      - 'packages/playwright-core/src/tools/**'
-      - 'tests/bidi/**'
-      - 'tests/extension/**'
-      - 'tests/mcp/**'
-    branches:
-      - main
-      - release-*
+    paths:
+      - '__webview_gtk_pr_disabled__'
 
 concurrency:
   # For pull requests, cancel all currently-running jobs for this workflow

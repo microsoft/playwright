@@ -1,0 +1,74 @@
+name: "tests WebView (WebKitGTK)"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/webview/**'
+      - 'packages/playwright-core/src/server/webkit/webview/**'
+      - '.github/workflows/tests_webview_gtk.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+  # The webview fixture launches this binary (provided by libwebkitgtk-6.0-4).
+  PW_WEBVIEW_PROXY_BASE: http://127.0.0.1:9222
+
+jobs:
+  test_webview_gtk:
+    name: "WebView on WebKitGTK (${{ matrix.shard }}/4)"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install WebKitGTK MiniBrowser
+        run: |
+          echo "::group::apt-get install libwebkitgtk-6.0-4"
+          sudo apt-get update
+          # libwebkitgtk-6.0-4 ships /usr/lib/x86_64-linux-gnu/webkitgtk-6.0/MiniBrowser
+          # and the engine; xvfb gives the GTK app a display, dbus-x11 a session bus.
+          sudo apt-get install -y libwebkitgtk-6.0-4 xvfb dbus-x11
+          ls -l /usr/lib/x86_64-linux-gnu/webkitgtk-6.0/MiniBrowser
+          echo "::endgroup::"
+
+      - name: npm ci
+        run: |
+          echo "::group::npm ci"
+          npm ci
+          echo "::endgroup::"
+
+      - name: npm run build
+        run: |
+          echo "::group::npm run build"
+          npm run build
+          echo "::endgroup::"
+
+      - name: Run WebView tests
+        run: |
+          echo "::group::Test run (shard ${{ matrix.shard }}/4)"
+          # GTK needs a display (xvfb) and a session bus (dbus-run-session). The
+          # fixture launches MiniBrowser itself and disables the WebKit sandbox.
+          xvfb-run -a dbus-run-session -- \
+            npx playwright test --config tests/webview/playwright.config.ts --shard=${{ matrix.shard }}/4
+          echo "::endgroup::"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webview-gtk-logs-${{ matrix.shard }}
+          path: |
+            ${{ github.workspace }}/test-results/**
+          if-no-files-found: ignore
