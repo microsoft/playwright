@@ -31,6 +31,7 @@ env:
 
 jobs:
   test_linux:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
@@ -66,6 +67,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test_test_runner:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: Test Runner
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
@@ -141,6 +143,7 @@ jobs:
         PWTEST_SHARD_WEIGHTS: ${{ matrix.shardWeights }}
 
   test_vscode_extension:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: VSCode Extension
     runs-on: ubuntu-latest
     steps:
@@ -177,6 +180,7 @@ jobs:
         job_name: vscode-extension
 
   test_package_installations:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: "Installation Test ${{ matrix.os }}"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:

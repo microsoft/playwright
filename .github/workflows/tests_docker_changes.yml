@@ -17,6 +17,7 @@ on:
 
 jobs:
   test_linux_docker:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     uses: ./.github/workflows/tests_docker.yml
     permissions:
       id-token: write

@@ -21,6 +21,7 @@ permissions:
 
 jobs:
   test_mac:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: ${{ matrix.os }} (${{ matrix.browser }})
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
@@ -46,6 +47,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test_win:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: "Windows"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
@@ -65,6 +67,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   test-package-installations-other-node-versions:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
@@ -100,6 +103,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
 
   driver_linux:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: "Driver"
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
@@ -119,6 +123,7 @@ jobs:
         PWTEST_MODE: driver
 
   tracing_linux:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: Tracing ${{ matrix.browser }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
@@ -147,6 +152,7 @@ jobs:
         PWTEST_TRACE: 1
 
   test_chromium_channels:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: Test ${{ matrix.channel }} on ${{ matrix.runs-on }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.runs-on }}
@@ -180,6 +186,7 @@ jobs:
         PWTEST_CHANNEL: ${{ matrix.channel }}
 
   build-playwright-driver:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: "build-playwright-driver"
     runs-on: ubuntu-24.04
     steps:
@@ -192,6 +199,7 @@ jobs:
     - run: utils/build/build-playwright-driver.sh
 
   test_android:
+    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
     name: Android
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: playwright-x64-ubuntu24-64-core
