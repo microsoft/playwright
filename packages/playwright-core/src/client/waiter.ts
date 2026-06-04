@@ -88,9 +88,8 @@ export class Waiter {
   rejectOnSignal(signal: AbortSignal | undefined) {
     if (!signal)
       return;
-    const error = signalToError(signal);
     if (signal.aborted) {
-      this.rejectImmediately(error);
+      this.rejectImmediately(signalToError(signal));
       return;
     }
     let rejectPromise: (e: any) => void;
@@ -164,7 +163,7 @@ function waitForEvent<T = void>(emitter: EventEmitter, event: string, savedZone:
 function signalToError(signal: AbortSignal): Error {
   const reason = signal.reason;
   if (reason instanceof Error)
-    return new Error(reason.message);
+    return reason;
   const message = typeof reason?.message === 'string' ? reason.message : reason;
   return new Error(String(message ?? 'The operation was aborted'));
 }
