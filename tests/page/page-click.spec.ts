@@ -1352,3 +1352,11 @@ it('should not wait with noAutoWaiting 3', async ({ page }) => {
   const error = await page.locator('button').click({ __testHookNoAutoWaiting: true } as any).catch(e => e);
   expect(error.message).toContain('locator.click: Element is not enabled');
 });
+
+it('should abort via signal', async ({ page }) => {
+  await page.setContent(`<button style="display:none">click me</button>`);
+  const controller = new AbortController();
+  const promise = page.locator('button').click({ signal: controller.signal, timeout: 0 });
+  controller.abort(new Error('Aborted by user'));
+  await expect(promise).rejects.toThrow('Aborted by user');
+});

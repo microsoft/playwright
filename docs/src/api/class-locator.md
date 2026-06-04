@@ -521,6 +521,8 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
+### option: Locator.click.signal = %%-input-signal-%%
+
 ### option: Locator.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
@@ -2820,3 +2822,5 @@ orderSent.WaitForAsync();
 
 ### option: Locator.waitFor.timeout = %%-input-timeout-js-%%
 * since: v1.16
+
+### option: Locator.waitFor.signal = %%-input-signal-%%

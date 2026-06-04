@@ -13423,6 +13423,14 @@ export interface Locator {
     };
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout;
+     * pass `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
      * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
      */
@@ -15383,6 +15391,14 @@ export interface Locator {
    * @param options
    */
   waitFor(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout;
+     * pass `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Defaults to `'visible'`. Can be either:
      * - `'attached'` - wait for element to be present in DOM.
