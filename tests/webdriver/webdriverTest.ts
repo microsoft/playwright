@@ -19,17 +19,25 @@ import net from 'net';
 
 import { baseTest } from '../config/baseTest';
 
+import type { Browser } from '@playwright/test';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 export { expect } from '@playwright/test';
 
 type WebDriverWorkerFixtures = PageWorkerFixtures & {
   webdriverEndpoint: string;
+  wdBrowser: Browser;
 };
 
 function killStraySafariDrivers(): void {
-  // A crashed run can leave safaridriver alive with Safari still "paired",
-  // which makes the next session creation fail. Clear it before launching.
-  spawnSync('pkill', ['-9', '-f', 'safaridriver']);
+  // Soft-terminate (SIGTERM, not SIGKILL) so a leftover driver ends its session
+  // and unpairs Safari on the way out. A SIGKILLed driver leaves Safari paired,
+  // which makes the next session creation fail or pop the "Continue Session"
+  // dialog.
+  spawnSync('pkill', ['-f', 'safaridriver']);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function findFreePort(): Promise<number> {
@@ -70,14 +78,17 @@ export const webdriverTest = baseTest.extend<PageTestFixtures, WebDriverWorkerFi
   isHeadlessShell: [false, { scope: 'worker' }],
   isFrozenWebkit: [false, { scope: 'worker' }],
 
-  // Launch one safaridriver per worker and expose its HTTP endpoint. Each test
-  // then creates and tears down its own WebDriver session (a fresh Safari
-  // window) against it — mirroring the webview worker-endpoint / per-test-page
-  // split. safaridriver drives desktop Safari, so this only works on macOS with
-  // `safaridriver --enable` run once.
+  // Launch safaridriver and open one WebDriver session for the whole worker.
+  // A fresh session per test (a new Safari window each time) is both slow and
+  // fragile — a failed test can leave the session paired, so the next one can't
+  // create one. We reuse a single session and reset to about:blank between
+  // tests instead. safaridriver drives desktop Safari, so this only works on
+  // macOS with `safaridriver --enable` run once.
   webdriverEndpoint: [async ({}, run) => {
+    // Clear any driver orphaned by a previous crashed run, giving it a moment
+    // to unpair Safari before we launch a fresh one.
     killStraySafariDrivers();
-    await new Promise(r => setTimeout(r, 1000));
+    await sleep(1000);
     const port = await findFreePort();
     const proc: ChildProcess = spawn('safaridriver', ['--port', String(port)], { stdio: 'ignore' });
     const baseURL = `http://localhost:${port}`;
@@ -85,18 +96,26 @@ export const webdriverTest = baseTest.extend<PageTestFixtures, WebDriverWorkerFi
       await waitForReady(baseURL, Date.now() + 30000);
       await run(`webdriver://localhost:${port}`);
     } finally {
+      // Graceful stop: let safaridriver delete its session and unpair Safari.
       proc.kill('SIGTERM');
-      killStraySafariDrivers();
+      await Promise.race([new Promise<void>(r => proc.once('exit', () => r())), sleep(3000)]);
     }
   }, { scope: 'worker', timeout: 60000 }],
 
-  page: async ({ playwright, webdriverEndpoint }, run) => {
+  wdBrowser: [async ({ playwright, webdriverEndpoint }, run) => {
     const browser = await playwright.webkit.connectOverCDP(webdriverEndpoint);
-    const page = browser.contexts()[0].pages()[0];
+    try {
+      await run(browser);
+    } finally {
+      await browser.close().catch(() => {});
+    }
+  }, { scope: 'worker', timeout: 60000 }],
+
+  page: async ({ wdBrowser }, run) => {
+    const page = wdBrowser.contexts()[0].pages()[0];
     if (!page)
       throw new Error('No Safari page is attached');
     await page.goto('about:blank').catch(() => {});
     await run(page);
-    await browser.close().catch(() => {});
   },
 });

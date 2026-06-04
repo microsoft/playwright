@@ -20,7 +20,6 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { createGuid } from '@utils/crypto';
 import * as dom from '../../dom';
 import { Page } from '../../page';
-import * as rawWebViewInputSource from '../../../generated/webViewInputSource';
 import { WDExecutionContext } from './wdExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wdInput';
 
@@ -81,7 +80,6 @@ export class WDPage implements PageDelegate {
       this._mainFrameId = await this._session.windowHandle().catch(() => 'main');
       this._page.frameManager.frameAttached(this._mainFrameId, null);
       this._createContext();
-      await this._installInputBridge();
       const url = await this._session.currentUrl().catch(() => 'about:blank');
       this._page.frameManager.frameCommittedNewDocumentNavigation(this._mainFrameId, url, '', createGuid(), true);
       this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'domcontentloaded');
@@ -104,21 +102,6 @@ export class WDPage implements PageDelegate {
     const context = new dom.FrameExecutionContext(delegate, frame, 'main');
     this._context = context;
     frame.contextCreated('main', context);
-  }
-
-  // Install the page-side input dispatcher (see wdInput) into the current
-  // document. Re-installed after every navigation, since a new document drops it.
-  private async _installInputBridge(): Promise<void> {
-    const bootstrap = `(() => {
-      const module = {};
-      ${rawWebViewInputSource.source}
-      window.__pwWebViewInput = new (module.exports.default())(window, document);
-    })()`;
-    const script = `
-      const __cb = arguments[arguments.length - 1];
-      try { ${bootstrap}; __cb(null); } catch (e) { __cb({ __pwError: String(e) }); }
-    `;
-    await this._session.executeAsync(script).catch(() => {});
   }
 
   // WebDriver pushes no console/lifecycle events, so every evaluate piggybacks
@@ -148,7 +131,6 @@ export class WDPage implements PageDelegate {
     const documentId = createGuid();
     this._page.frameManager.frameCommittedNewDocumentNavigation(this._mainFrameId, url, '', documentId, false);
     this._createContext();
-    await this._installInputBridge();
     this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'domcontentloaded');
     this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'load');
     return { newDocumentId: documentId };

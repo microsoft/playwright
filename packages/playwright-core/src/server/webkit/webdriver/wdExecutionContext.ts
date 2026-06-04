@@ -20,18 +20,12 @@ import * as dom from '../../dom';
 
 import type { WDSession } from './wdConnection';
 
-let lastHandleId = 0;
-
 // Metadata we attach to a JSHandle so it can be re-materialized inside a
-// WebDriver `execute` call. A handle is one of:
-//  - `source`:     a self-contained IIFE we inline to reconstruct the object
-//                  (UtilityScript, InjectedScript) — stateless, rebuilt per call.
-//  - `registryId`: a key into the page-side `window.__pwHandles` map, which is
-//                  how we emulate live remote handles over a protocol that has
-//                  none. Valid until the document navigates.
+// WebDriver `execute` call. `registryId` is a key into the page-side
+// `window.__pwHandles` map, which is how we emulate live remote handles over a
+// protocol that has none. Valid until the document navigates.
 type WDHandleMeta = {
-  source?: string;
-  registryId?: string;
+  registryId: string;
 };
 
 // Lazily creates the page-side live-handle registry. Idempotent; included at the
@@ -67,10 +61,12 @@ const kBridgeInit = `
  *
  * WebDriver has no persistent object handles, so we emulate them with a page-side
  * registry (`window.__pwHandles`): when an evaluate returns a non-serializable
- * value (a DOM node, the InjectedScript hit-target interceptor, …) we stash it in
- * the registry and return its key. Passing that handle back inlines a
- * `window.__pwHandles.get(key)` lookup, so the live object is recovered in-page.
- * UtilityScript/InjectedScript are instead inlined from source each call.
+ * value (a DOM node, UtilityScript/InjectedScript, the hit-target interceptor, …)
+ * we stash it in the registry and return its key. Passing that handle back inlines
+ * a `window.__pwHandles.get(key)` lookup, so the live object is recovered in-page.
+ * Crucially this caches UtilityScript/InjectedScript as per-document singletons
+ * rather than rebuilding them (and re-installing their global event listeners) on
+ * every evaluate.
  */
 export class WDExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WDSession;
@@ -100,12 +96,17 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
-    // The only callers are `_utilityScript()` / `injectedScript()`, which pass a
-    // self-contained IIFE source. Stash the source on a placeholder handle and
-    // inline it on every evaluate that references it.
-    const objectId = `wd-source-${++lastHandleId}`;
-    this._handleMeta.set(objectId, { source: expression });
-    return new js.JSHandle(context, 'object', undefined, objectId);
+    // The callers are `_utilityScript()` / `injectedScript()`, passing a
+    // self-contained IIFE source. Evaluate it once and keep the resulting object
+    // live in the page registry, so it is reused (not rebuilt) on every evaluate.
+    const expr = expression.trim().replace(/;+\s*$/, '');
+    const value = await this._execute(wrapAsync(`
+      const __pwR = (${expr});
+      const __pwId = 'h' + (++window.__pwHandleSeq);
+      window.__pwHandles.set(__pwId, __pwR);
+      return { __pwHandleId: __pwId, isElement: false };
+    `));
+    return this._createHandleFromResult(context, value);
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], handles: js.JSHandle[]): Promise<any> {
@@ -186,8 +187,6 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
   // Builds the JS expression that recovers a handle inside a WebDriver script.
   private _inlineHandle(handle: js.JSHandle): string {
     const meta = handle._objectId ? this._handleMeta.get(handle._objectId) : undefined;
-    if (meta?.source)
-      return `(${meta.source.trim().replace(/;+\s*$/, '')})`;
     if (meta?.registryId)
       return `window.__pwHandles.get(${JSON.stringify(meta.registryId)})`;
     throw new js.JavaScriptErrorInEvaluate('Cannot pass an unknown JSHandle to a WebDriver evaluate.');
@@ -196,7 +195,7 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
   private _createHandleFromResult(context: js.ExecutionContext, descriptor: any): js.JSHandle {
     if (descriptor && descriptor.__pwPrimitive)
       return new js.JSHandle(context, typeof descriptor.value, undefined, undefined, descriptor.value);
-    const registryId = descriptor?.__pwHandleId as string | undefined;
+    const registryId = descriptor?.__pwHandleId as string;
     const objectId = `wd-obj-${registryId}`;
     this._handleMeta.set(objectId, { registryId });
     if (descriptor?.isElement && context instanceof dom.FrameExecutionContext)
