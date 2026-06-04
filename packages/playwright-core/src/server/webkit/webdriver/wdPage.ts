@@ -35,12 +35,10 @@ import type { PagePdfParams } from '@protocol/channels';
 /**
  * PageDelegate backed by a classic W3C WebDriver session.
  *
- * WebDriver pushes no events, so this delegate *synthesizes* the frame,
- * execution-context and lifecycle events the core Page/Frame machinery expects:
- * there is a single (main) frame, a single execution context that is torn down
- * and recreated on every navigation, and lifecycle events fired right after a
- * blocking WebDriver navigation returns. See ../webview/wvPage.ts for the
- * event-driven counterpart.
+ * WebDriver pushes no events, so this delegate synthesizes the frame, execution
+ * context and lifecycle events the core expects: a single main frame, one
+ * execution context recreated on each navigation, and lifecycle events fired
+ * after a (blocking) WebDriver navigation returns.
  */
 export class WDPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -104,10 +102,9 @@ export class WDPage implements PageDelegate {
     frame.contextCreated('main', context);
   }
 
-  // WebDriver pushes no console/lifecycle events, so every evaluate piggybacks
-  // buffered console messages and the document readyState (see wdExecutionContext).
-  // Delivering the console messages drives the setContent tag handler (which
-  // clears lifecycle), after which we re-fire lifecycle from readyState.
+  // Console + lifecycle events synthesized from the side-channel piggybacked on
+  // every evaluate. Delivering console messages drives the setContent tag handler
+  // (which clears lifecycle); we then re-fire lifecycle from readyState.
   private _processPageEvents(events: WDPageEvent[], readyState: string): void {
     const location = { url: this._mainFrame().url(), lineNumber: 0, columnNumber: 0 };
     for (const event of events)
@@ -118,9 +115,8 @@ export class WDPage implements PageDelegate {
       this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'load');
   }
 
-  // Synthesizes the commit + context + lifecycle events for a navigation that
-  // the (blocking) WebDriver command has already completed. Returns the freshly
-  // generated document id so navigateFrame can satisfy gotoImpl's predicate.
+  // Synthesizes commit + context + lifecycle events after a (blocking) WebDriver
+  // navigation completes. The returned documentId must match the one gotoImpl awaits.
   private async _didNavigate(fallbackUrl: string): Promise<frames.GotoResult> {
     const frame = this._mainFrame();
     if (this._context) {

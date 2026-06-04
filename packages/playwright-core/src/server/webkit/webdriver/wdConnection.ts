@@ -23,25 +23,18 @@ export type WDCapabilities = Record<string, any>;
 
 type WDResponse = { value: any };
 
-/**
- * Thin classic W3C WebDriver HTTP client. Unlike the WebKit inspector protocol
- * (see ../webview/wvConnection.ts) WebDriver is a synchronous request/response
- * protocol with no pushed events, so there is no event dispatch loop here — just
- * a `command()` that issues an HTTP request and unwraps the `{ value }` envelope.
- */
+// Classic W3C WebDriver HTTP client: synchronous request/response, no events.
 export class WDConnection {
   readonly baseURL: string;
   private readonly _protocolLogger: ProtocolLogger;
   private readonly _browserLogsCollector: RecentLogsCollector;
   private _closed = false;
-  // safaridriver processes one command per session at a time. Playwright can
-  // issue commands concurrently (races, lifecycle-triggered follow-ups), and
-  // overlapping requests get reordered by the driver — e.g. a pointerUp landing
-  // a cycle late, breaking clicks. Serialize every command onto a single chain.
+  // safaridriver processes one command per session at a time, and overlapping
+  // requests get reordered by the driver (e.g. a pointerUp landing a cycle late,
+  // breaking clicks). Serialize every command onto a single chain.
   private _commandChain: Promise<void> = Promise.resolve();
 
   constructor(baseURL: string, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
-    // Normalize a trailing slash so callers can build `${baseURL}/session/...`.
     this.baseURL = baseURL.replace(/\/$/, '');
     this._protocolLogger = protocolLogger;
     this._browserLogsCollector = browserLogsCollector;
@@ -49,7 +42,6 @@ export class WDConnection {
 
   command(httpMethod: 'GET' | 'POST' | 'DELETE', path: string, body?: any): Promise<any> {
     const result = this._commandChain.then(() => this._sendCommand(httpMethod, path, body));
-    // Keep the chain alive regardless of this command's outcome.
     this._commandChain = result.then(() => {}, () => {});
     return result;
   }
@@ -77,8 +69,6 @@ export class WDConnection {
       throw this._error('error', `${httpMethod} ${path}`, `Non-JSON WebDriver response (${res.status}): ${text.slice(0, 200)}`);
     }
     this._protocolLogger('receive', { result: json?.value } as any);
-    // A WebDriver error is signalled both by a non-2xx status and a `value.error`
-    // string (https://www.w3.org/TR/webdriver/#errors).
     const value = json?.value;
     if (!res.ok || (value && typeof value === 'object' && typeof value.error === 'string')) {
       const error = (value && value.error) || `HTTP ${res.status}`;
@@ -104,10 +94,7 @@ export class WDConnection {
   }
 }
 
-/**
- * A WebDriver session — wraps a sessionId and exposes the per-session endpoints
- * we use. Construct via `WDConnection.createSession`.
- */
+// A WebDriver session: a sessionId plus the per-session endpoints we use.
 export class WDSession {
   readonly connection: WDConnection;
   readonly sessionId: string;
@@ -119,23 +106,17 @@ export class WDSession {
 
   static async create(connection: WDConnection, capabilities: WDCapabilities): Promise<WDSession> {
     const value = await connection.command('POST', '/session', { capabilities });
-    const sessionId = value.sessionId;
-    if (!sessionId)
+    if (!value.sessionId)
       throw new Error('WebDriver did not return a sessionId');
-    return new WDSession(connection, sessionId);
+    return new WDSession(connection, value.sessionId);
   }
 
   send(httpMethod: 'GET' | 'POST' | 'DELETE', command: string, body?: any): Promise<any> {
     return this.connection.command(httpMethod, `/session/${this.sessionId}/${command}`, body);
   }
 
-  // Runs a script synchronously in the top-level browsing context.
-  executeSync(script: string, args: any[] = []): Promise<any> {
-    return this.send('POST', 'execute/sync', { script, args });
-  }
-
-  // Runs a script that resolves a callback (the last argument) — lets us await
-  // promises that `execute/sync` would otherwise drop on the floor.
+  // Runs a script that resolves a callback (its last argument), so we can await
+  // promises that `execute/sync` would drop.
   executeAsync(script: string, args: any[] = []): Promise<any> {
     return this.send('POST', 'execute/async', { script, args });
   }
@@ -146,10 +127,6 @@ export class WDSession {
 
   currentUrl(): Promise<string> {
     return this.send('GET', 'url');
-  }
-
-  title(): Promise<string> {
-    return this.send('GET', 'title');
   }
 
   windowHandle(): Promise<string> {
@@ -168,7 +145,7 @@ export class WDSession {
     return this.send('POST', 'forward');
   }
 
-  // Returns a base64-encoded PNG of the current viewport.
+  // Base64-encoded PNG of the current viewport.
   screenshot(): Promise<string> {
     return this.send('GET', 'screenshot');
   }
@@ -187,10 +164,6 @@ export class WDSession {
 
   performActions(actions: any[]): Promise<void> {
     return this.send('POST', 'actions', { actions });
-  }
-
-  releaseActions(): Promise<void> {
-    return this.send('DELETE', 'actions');
   }
 
   async delete(): Promise<void> {

@@ -37,9 +37,25 @@ import type * as channels from '@protocol/channels';
 
 const kLaunchScheme = 'webdriver+launch://';
 
-// Translates a `webdriver://host:port` endpoint into an `http://host:port` base.
 function toHttpBase(endpointURL: string): string {
   return endpointURL.replace(/^webdriver:\/\//, 'http://');
+}
+
+// A session deleted by a previous test needs a moment before Safari unpairs;
+// retry session creation while the driver still reports it as paired.
+async function createSession(connection: WDConnection, progress: Progress): Promise<WDSession> {
+  let lastError: Error | undefined;
+  for (let i = 0; i < 10; i++) {
+    try {
+      return await progress.race(WDSession.create(connection, { alwaysMatch: { browserName: 'safari' } }));
+    } catch (e) {
+      lastError = e as Error;
+      if (!/already paired|session not created/i.test(lastError.message))
+        throw lastError;
+      await progress.race(new Promise(f => setTimeout(f, 500)));
+    }
+  }
+  throw lastError!;
 }
 
 function findFreePort(): Promise<number> {
@@ -102,7 +118,7 @@ export async function connectOverWebDriver(progress: Progress, parent: SdkObject
     await waitForReady(baseURL, progress);
 
     const connection = new WDConnection(baseURL, helper.debugProtocolLogger(), browserLogsCollector);
-    const session = await WDSession.create(connection, { alwaysMatch: { browserName: 'safari' } });
+    const session = await createSession(connection, progress);
 
     const created = new WDBrowser(parent, connection, session, {
       slowMo: params.slowMo,

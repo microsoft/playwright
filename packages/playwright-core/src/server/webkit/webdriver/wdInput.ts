@@ -49,14 +49,8 @@ function buttonNumber(button: types.MouseButton): number {
   return 0;
 }
 
-/**
- * Input over the W3C WebDriver Actions API (`POST /session/{id}/actions`).
- *
- * WebDriver keeps per-session input state between `performActions` calls, so the
- * separate move/down/up delegate calls that Playwright issues accumulate
- * correctly. Keyboard modifiers are already pressed as real key actions by
- * Playwright's input layer, so the mouse handlers do not re-apply them.
- */
+// Input over the W3C WebDriver Actions API. Modifiers are already pressed as
+// real key actions by Playwright's input layer, so the mouse handlers ignore them.
 class RawInput {
   protected _session: WDSession | undefined;
 
