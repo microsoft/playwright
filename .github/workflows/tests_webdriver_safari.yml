@@ -1,4 +1,4 @@
-name: "tests WebDriver (Safari)"
+name: "tests WebDriver"
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ env:
 
 jobs:
   test_webdriver_safari:
-    name: "WebDriver on Safari"
+    name: "WebDriver"
     runs-on: macos-15-xlarge
     timeout-minutes: 60
     steps:
