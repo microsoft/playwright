@@ -24,7 +24,7 @@ env:
 
 jobs:
   test_components:
-    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
+    if: ${{ github.head_ref != 'webdriver-poc' }}  # TEMP: skip on webdriver-poc branch
     name: ${{ matrix.os }} - Node.js ${{ matrix.node-version }}
     strategy:
       fail-fast: false

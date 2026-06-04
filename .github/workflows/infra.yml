@@ -12,7 +12,7 @@ on:
 
 jobs:
   doc-and-lint:
-    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
+    if: ${{ github.head_ref != 'webdriver-poc' }}  # TEMP: skip on webdriver-poc branch
     name: "docs & lint"
     runs-on: ubuntu-24.04
     steps:
@@ -35,7 +35,7 @@ jobs:
       run: node utils/check_audit.js
       continue-on-error: true
   lint-snippets:
-    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
+    if: ${{ github.head_ref != 'webdriver-poc' }}  # TEMP: skip on webdriver-poc branch
     name: "Lint snippets"
     runs-on: ubuntu-latest
     steps:

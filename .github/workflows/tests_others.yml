@@ -21,7 +21,7 @@ env:
 
 jobs:
   test_clock_frozen_time_linux:
-    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
+    if: ${{ github.head_ref != 'webdriver-poc' }}  # TEMP: skip on webdriver-poc branch
     name: time library - ${{ matrix.clock }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     permissions:
@@ -47,7 +47,7 @@ jobs:
         PW_CLOCK: ${{ matrix.clock }}
 
   test_clock_frozen_time_test_runner:
-    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
+    if: ${{ github.head_ref != 'webdriver-poc' }}  # TEMP: skip on webdriver-poc branch
     name: time test runner - ${{ matrix.clock }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-22.04
@@ -72,7 +72,7 @@ jobs:
         PW_CLOCK: ${{ matrix.clock }}
 
   test_electron:
-    if: ${{ github.head_ref != 'webdriver-safari-poc' }}  # TEMP: skip on webdriver-safari-poc branch
+    if: ${{ github.head_ref != 'webdriver-poc' }}  # TEMP: skip on webdriver-poc branch
     name: Electron - ${{ matrix.os }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:

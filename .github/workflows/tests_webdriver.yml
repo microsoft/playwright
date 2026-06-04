@@ -8,7 +8,7 @@ on:
       - 'tests/page/pageTest.ts'
       - 'packages/playwright-core/src/server/webkit/webdriver/**'
       - 'packages/playwright-core/src/server/webkit/webkit.ts'
-      - '.github/workflows/tests_webdriver_safari.yml'
+      - '.github/workflows/tests_webdriver.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -19,7 +19,7 @@ env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
-  test_webdriver_safari:
+  test_webdriver:
     name: "WebDriver"
     runs-on: macos-15-xlarge
     timeout-minutes: 60
@@ -60,6 +60,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: webdriver-safari-logs
+          name: webdriver-logs
           path: ${{ github.workspace }}/test-results/**
           if-no-files-found: ignore
