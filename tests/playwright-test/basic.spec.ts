@@ -425,7 +425,7 @@ test('should hint at async describe() callbacks when test() is called too late',
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Playwright Test did not expect test() to be called here.');
-  expect(result.output).toContain('You have an async test.describe() block. Only sync ones are supported.');
+  expect(result.output).toContain('You are calling test() from an async test.describe() block. Only sync ones are supported.');
 });
 
 test('should allow async describe() callback that registers tests synchronously', async ({ runInlineTest }) => {
