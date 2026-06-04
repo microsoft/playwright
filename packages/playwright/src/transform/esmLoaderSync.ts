@@ -21,15 +21,19 @@ import { currentFileDepsCollector } from './compilationCache';
 import { resolveHook, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
-export function resolve(specifier: string, context: { parentURL?: string }, nextResolve: Function) {
+export function resolve(specifier: string, context: { parentURL?: string, conditions?: string[] }, nextResolve: Function) {
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
     const resolved = resolveHook(filename, specifier);
-    // Pass the resolved absolute path (not a file:// URL) to nextResolve: unlike the
-    // ESM-only asynchronous loader, these hooks also serve require(), whose default
-    // resolver rejects file:// specifiers but accepts absolute paths for both kinds.
-    if (resolved !== undefined)
-      specifier = resolved;
+    if (resolved !== undefined) {
+      // ESM resolver on Windows requires file:// URLs — absolute paths like "C:\..."
+      // are parsed as having URL protocol "c:". CJS resolver accepts absolute paths
+      // directly. Use context.conditions to pick the right form.
+      if (context.conditions?.includes('import'))
+        specifier = url.pathToFileURL(resolved).toString();
+      else
+        specifier = resolved;
+    }
   }
   const result = nextResolve(specifier, context);
   if (result?.url && result.url.startsWith('file://'))
