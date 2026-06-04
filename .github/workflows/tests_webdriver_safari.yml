@@ -46,6 +46,7 @@ jobs:
         run: npm run build
 
       - name: Enable safaridriver
+        timeout-minutes: 2
         run: sudo safaridriver --enable
 
       - name: Run WebDriver tests
