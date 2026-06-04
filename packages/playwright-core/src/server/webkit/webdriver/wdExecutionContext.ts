@@ -38,6 +38,30 @@ type WDHandleMeta = {
 // top of every script so `window.__pwHandles.get(...)` is always available.
 const kRegistryInit = `window.__pwHandles = window.__pwHandles || new Map(); window.__pwHandleSeq = window.__pwHandleSeq || 0;`;
 
+// Page event captured as a side-channel of every `execute` (see kBridgeInit).
+export type WDPageEvent = { type: string, text: string };
+
+// Idempotently installs a console hook that buffers messages on window, so we
+// can surface them (and the lifecycle-clearing tag setContent logs) over a
+// protocol that pushes no console events. Lives on `window`/`console`, both of
+// which survive `document.open()`.
+const kBridgeInit = `
+  if (!window.__pwBridge) {
+    window.__pwBridge = true;
+    window.__pwEvents = [];
+    for (const __pwType of ['log', 'debug', 'info', 'warning', 'error']) {
+      const __pwMethod = __pwType === 'warning' ? 'warn' : __pwType;
+      const __pwOrig = window.console[__pwMethod];
+      window.console[__pwMethod] = function(...args) {
+        try {
+          window.__pwEvents.push({ type: __pwType, text: args.map(a => { try { return typeof a === 'string' ? a : JSON.stringify(a); } catch (e) { return String(a); } }).join(' ') });
+        } catch (e) {}
+        if (__pwOrig) return __pwOrig.apply(window.console, args);
+      };
+    }
+  }
+`;
+
 /**
  * ExecutionContextDelegate over classic W3C WebDriver `execute/async`.
  *
@@ -50,15 +74,29 @@ const kRegistryInit = `window.__pwHandles = window.__pwHandles || new Map(); win
  */
 export class WDExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WDSession;
+  private readonly _onPageEvents: (events: WDPageEvent[], readyState: string) => void;
   private readonly _handleMeta = new Map<string, WDHandleMeta>();
 
-  constructor(session: WDSession) {
+  constructor(session: WDSession, onPageEvents: (events: WDPageEvent[], readyState: string) => void) {
     this._session = session;
+    this._onPageEvents = onPageEvents;
+  }
+
+  // Runs a script, then delivers any buffered console messages and the document
+  // readyState so the page can synthesize console + lifecycle events.
+  private async _execute(script: string, args: any[] = []): Promise<any> {
+    const result = await this._session.executeAsync(script, args);
+    if (result && typeof result === 'object') {
+      this._onPageEvents(result.events || [], result.readyState || '');
+      if ('__pwError' in result)
+        throw new js.JavaScriptErrorInEvaluate(String(result.__pwError));
+      return result.value;
+    }
+    return undefined;
   }
 
   async rawEvaluateJSON(expression: string): Promise<any> {
-    const result = await this._session.executeAsync(wrapAsync(`return (${expression});`));
-    return unwrap(result);
+    return await this._execute(wrapAsync(`return (${expression});`));
   }
 
   async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
@@ -100,8 +138,7 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
       `;
     }
 
-    const result = await this._session.executeAsync(wrapAsync(body), [values]);
-    const value = unwrap(result);
+    const value = await this._execute(wrapAsync(body), [values]);
     if (returnByValue)
       return parseEvaluationResultValue(value);
     return this._createHandleFromResult(utilityScript._context, value);
@@ -123,8 +160,7 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
       }
       return out;
     }`;
-    const entries = await this._session.executeAsync(wrapAsync(`${kRegistryInit} return (${expression})();`));
-    const list = unwrap(entries) as { name: string, id: string }[];
+    const list = await this._execute(wrapAsync(`return (${expression})();`)) as { name: string, id: string }[];
     const result = new Map<string, js.JSHandle>();
     for (const { name, id } of list) {
       const objectId = `wd-obj-${id}`;
@@ -140,7 +176,7 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
     const meta = this._handleMeta.get(handle._objectId);
     this._handleMeta.delete(handle._objectId);
     if (meta?.registryId)
-      await this._session.executeAsync(wrapAsync(`window.__pwHandles && window.__pwHandles.delete(${JSON.stringify(meta.registryId)}); return undefined;`)).catch(() => {});
+      await this._execute(wrapAsync(`window.__pwHandles && window.__pwHandles.delete(${JSON.stringify(meta.registryId)}); return undefined;`)).catch(() => {});
   }
 
   shouldPrependErrorPrefix(): boolean {
@@ -171,20 +207,20 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
 
 // Wraps a body into an `execute/async` script: the last argument is the
 // completion callback. Lets the page function return a promise and surfaces
-// thrown errors as `{ __pwError }` rather than hanging.
+// thrown errors as `{ __pwError }` rather than hanging. Every result also
+// carries buffered console events and the document readyState, so the page can
+// synthesize console + lifecycle events that WebDriver never pushes.
 function wrapAsync(body: string): string {
   return `
     const __pwArgs = arguments;
     const __pwDone = __pwArgs[__pwArgs.length - 1];
     ${kRegistryInit}
+    ${kBridgeInit}
+    const __pwDrain = () => { const e = window.__pwEvents || []; window.__pwEvents = []; return { events: e, readyState: document.readyState }; };
     (async () => {
       ${body}
-    })().then(value => __pwDone({ value }), error => __pwDone({ __pwError: (error && error.stack) || String(error) }));
+    })().then(
+      value => __pwDone({ value, ...__pwDrain() }),
+      error => __pwDone({ __pwError: (error && error.stack) || String(error), ...__pwDrain() }));
   `;
-}
-
-function unwrap(result: any): any {
-  if (result && typeof result === 'object' && '__pwError' in result)
-    throw new js.JavaScriptErrorInEvaluate(String(result.__pwError));
-  return result ? result.value : undefined;
 }
