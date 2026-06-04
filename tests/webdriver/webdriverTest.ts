@@ -29,10 +29,8 @@ type WebDriverWorkerFixtures = PageWorkerFixtures & {
 };
 
 function killStraySafariDrivers(): void {
-  // Soft-terminate (SIGTERM, not SIGKILL) so a leftover driver ends its session
-  // and unpairs Safari on the way out. A SIGKILLed driver leaves Safari paired,
-  // which makes the next session creation fail or pop the "Continue Session"
-  // dialog.
+  // SIGTERM (not SIGKILL) so a leftover driver ends its session and unpairs
+  // Safari; a SIGKILLed driver leaves Safari paired and blocks the next session.
   spawnSync('pkill', ['-f', 'safaridriver']);
 }
 
@@ -78,12 +76,7 @@ export const webdriverTest = baseTest.extend<PageTestFixtures, WebDriverWorkerFi
   isHeadlessShell: [false, { scope: 'worker' }],
   isFrozenWebkit: [false, { scope: 'worker' }],
 
-  // Launch safaridriver and open one WebDriver session for the whole worker.
-  // A fresh session per test (a new Safari window each time) is both slow and
-  // fragile — a failed test can leave the session paired, so the next one can't
-  // create one. We reuse a single session and reset to about:blank between
-  // tests instead. safaridriver drives desktop Safari, so this only works on
-  // macOS with `safaridriver --enable` run once.
+  // One long-lived safaridriver per worker. Requires macOS with `safaridriver --enable`.
   webdriverEndpoint: [async ({}, run) => {
     // Clear any driver orphaned by a previous crashed run, giving it a moment
     // to unpair Safari before we launch a fresh one.
@@ -102,6 +95,9 @@ export const webdriverTest = baseTest.extend<PageTestFixtures, WebDriverWorkerFi
     }
   }, { scope: 'worker', timeout: 60000 }],
 
+  // One session per worker — creating a session re-prompts Safari's "remotely
+  // controlled" dialog, so we open it once rather than per test. Reset to
+  // about:blank between tests for a measure of isolation.
   wdBrowser: [async ({ playwright, webdriverEndpoint }, run) => {
     const browser = await playwright.webkit.connectOverCDP(webdriverEndpoint);
     try {

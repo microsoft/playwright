@@ -20,25 +20,19 @@ import * as dom from '../../dom';
 
 import type { WDSession } from './wdConnection';
 
-// Metadata we attach to a JSHandle so it can be re-materialized inside a
-// WebDriver `execute` call. `registryId` is a key into the page-side
-// `window.__pwHandles` map, which is how we emulate live remote handles over a
-// protocol that has none. Valid until the document navigates.
+// Key into the page-side `window.__pwHandles` map — how we emulate live remote
+// handles over a protocol that has none. Valid until the document navigates.
 type WDHandleMeta = {
   registryId: string;
 };
 
-// Lazily creates the page-side live-handle registry. Idempotent; included at the
-// top of every script so `window.__pwHandles.get(...)` is always available.
+// Lazily creates the page-side live-handle registry. Idempotent.
 const kRegistryInit = `window.__pwHandles = window.__pwHandles || new Map(); window.__pwHandleSeq = window.__pwHandleSeq || 0;`;
 
-// Page event captured as a side-channel of every `execute` (see kBridgeInit).
 export type WDPageEvent = { type: string, text: string };
 
-// Idempotently installs a console hook that buffers messages on window, so we
-// can surface them (and the lifecycle-clearing tag setContent logs) over a
-// protocol that pushes no console events. Lives on `window`/`console`, both of
-// which survive `document.open()`.
+// Idempotently hooks console to buffer messages on `window` (which survives
+// `document.open()`), so we can surface them over a protocol with no console events.
 const kBridgeInit = `
   if (!window.__pwBridge) {
     window.__pwBridge = true;
@@ -60,13 +54,10 @@ const kBridgeInit = `
  * ExecutionContextDelegate over classic W3C WebDriver `execute/async`.
  *
  * WebDriver has no persistent object handles, so we emulate them with a page-side
- * registry (`window.__pwHandles`): when an evaluate returns a non-serializable
- * value (a DOM node, UtilityScript/InjectedScript, the hit-target interceptor, …)
- * we stash it in the registry and return its key. Passing that handle back inlines
- * a `window.__pwHandles.get(key)` lookup, so the live object is recovered in-page.
- * Crucially this caches UtilityScript/InjectedScript as per-document singletons
- * rather than rebuilding them (and re-installing their global event listeners) on
- * every evaluate.
+ * registry (`window.__pwHandles`): a non-serializable evaluate result is stashed
+ * there and its key returned; passing the handle back inlines a
+ * `window.__pwHandles.get(key)` lookup. This also keeps UtilityScript/InjectedScript
+ * as per-document singletons instead of rebuilding them on every evaluate.
  */
 export class WDExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WDSession;
@@ -78,8 +69,8 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
     this._onPageEvents = onPageEvents;
   }
 
-  // Runs a script, then delivers any buffered console messages and the document
-  // readyState so the page can synthesize console + lifecycle events.
+  // Runs a script, then delivers buffered console messages + readyState so the
+  // page can synthesize console and lifecycle events.
   private async _execute(script: string, args: any[] = []): Promise<any> {
     const result = await this._session.executeAsync(script, args);
     if (result && typeof result === 'object') {
@@ -96,9 +87,8 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
-    // The callers are `_utilityScript()` / `injectedScript()`, passing a
-    // self-contained IIFE source. Evaluate it once and keep the resulting object
-    // live in the page registry, so it is reused (not rebuilt) on every evaluate.
+    // Callers pass a self-contained IIFE (UtilityScript/InjectedScript); evaluate
+    // it once and keep the result live in the registry for reuse.
     const expr = expression.trim().replace(/;+\s*$/, '');
     const value = await this._execute(wrapAsync(`
       const __pwR = (${expr});
@@ -119,13 +109,11 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
 
     let body: string;
     if (returnByValue) {
-      // UtilityScript already returns a JSON-serializable structure.
       body = `const __pwValues = __pwArgs[0]; return ${call};`;
     } else {
-      // Recover a live handle. The InjectedScript polling protocol returns
-      // `{ result: <Promise>, abort }` and expects the resolved `.result` to be
-      // read later; resolve it here (in-page, where the Promise is live) before
-      // storing, so it survives. Primitives are returned inline.
+      // The InjectedScript poller returns `{ result: <Promise>, abort }` and reads
+      // the resolved `.result` later; resolve it here (where the Promise is live)
+      // so it survives. Primitives are returned inline, objects via the registry.
       body = `
         const __pwValues = __pwArgs[0];
         let __pwR = await ${call};
@@ -184,7 +172,6 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
     return false;
   }
 
-  // Builds the JS expression that recovers a handle inside a WebDriver script.
   private _inlineHandle(handle: js.JSHandle): string {
     const meta = handle._objectId ? this._handleMeta.get(handle._objectId) : undefined;
     if (meta?.registryId)
@@ -204,11 +191,9 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
   }
 }
 
-// Wraps a body into an `execute/async` script: the last argument is the
-// completion callback. Lets the page function return a promise and surfaces
-// thrown errors as `{ __pwError }` rather than hanging. Every result also
-// carries buffered console events and the document readyState, so the page can
-// synthesize console + lifecycle events that WebDriver never pushes.
+// Wraps a body into an `execute/async` script (last arg is the completion
+// callback): awaits a returned promise, reports thrown errors as `{ __pwError }`,
+// and piggybacks buffered console events + readyState onto every result.
 function wrapAsync(body: string): string {
   return `
     const __pwArgs = arguments;
