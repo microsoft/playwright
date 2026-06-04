@@ -60,6 +60,9 @@ export class Suite extends Base {
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
+  // Set on the root suite for the duration of Reporter.preprocessSuite(), gating
+  // the disposition methods (skip/fixme/fail/exclude) to that phase only.
+  _preprocessing = false;
   readonly _type: 'root' | 'project' | 'file' | 'describe';
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
@@ -279,10 +282,16 @@ export class Suite extends Base {
   }
 
   exclude(): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`Suite.exclude() can only be called from Reporter.preprocessSuite().`);
     if (this.parent)
       this.parent._detach(this);
     else
       this._entries = [];
+  }
+
+  _rootSuite(): Suite {
+    return this.parent?._rootSuite() ?? this;
   }
 }
 
@@ -343,6 +352,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   skip(reason?: string): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`TestCase.skip() can only be called from Reporter.preprocessSuite().`);
     const annotation: TestAnnotation = { type: 'skip', description: reason, location: captureCallerLocation() };
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
@@ -350,6 +361,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   fixme(reason?: string): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`TestCase.fixme() can only be called from Reporter.preprocessSuite().`);
     const annotation: TestAnnotation = { type: 'fixme', description: reason, location: captureCallerLocation() };
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
@@ -357,6 +370,8 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   fail(reason?: string): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`TestCase.fail() can only be called from Reporter.preprocessSuite().`);
     const annotation: TestAnnotation = { type: 'fail', description: reason, location: captureCallerLocation() };
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
@@ -365,7 +380,13 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   exclude(): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`TestCase.exclude() can only be called from Reporter.preprocessSuite().`);
     this.parent._detach(this);
+  }
+
+  _rootSuite(): Suite {
+    return this.parent._rootSuite();
   }
 
   _serialize(): any {

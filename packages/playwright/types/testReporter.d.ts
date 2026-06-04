@@ -146,6 +146,23 @@ export interface FullResult {
  */
 export interface Reporter {
   /**
+   * Called after the configuration has been resolved and before
+   * [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin). Allows a
+   * reporter to mark individual tests as skipped, excluded, fixed or failing.
+   * @param config Resolved configuration.
+   * @param suite The root suite that contains the projects, files and test cases that will run.
+   *
+   * The suite reflects `--project`, `--grep`/`--grep-invert` and `.only` filtering, so it only contains tests that
+   * match the current invocation. It contains only the top-level projects being run — setup and dependency projects are
+   * not included and cannot be excluded from here.
+   *
+   * The suite ignores the `--shard` argument: it always contains the full, un-sharded corpus. Playwright applies its
+   * built-in sharding after
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite)
+   * returns, unless the returned `implementsSharding` is `true`.
+   */
+  preprocessSuite?(config: FullConfig, suite: Suite): Promise<{ implementsSharding?: boolean } | undefined | void> | { implementsSharding?: boolean } | void;
+  /**
    * Called after all tests have been run, or testing has been interrupted. Note that this method may return a [Promise]
    * and Playwright Test will await it. Reporter is allowed to override the status and hence affect the exit code of the
    * test runner.
@@ -158,14 +175,6 @@ export interface Reporter {
    * - `'interrupted'` - Interrupted by the user.
    */
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
-  /**
-   * When `true`, Playwright skips its built-in shard filter for this run, leaving sharding to the reporter (typically
-   * implemented inside [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) by
-   * calling [testCase.exclude()](https://playwright.dev/docs/api/class-testcase#test-case-exclude) on out-of-shard
-   * tests).
-   */
-  implementsSharding?(): boolean;
-
   /**
    * Called once before running tests. All tests have been already discovered and put into a hierarchy of
    * [Suite](https://playwright.dev/docs/api/class-suite)s.
@@ -234,25 +243,6 @@ export interface Reporter {
    * @param result Result of the test run.
    */
   onTestEnd?(test: TestCase, result: TestResult): void;
-
-  /**
-   * Called after the configuration has been resolved and before
-   * [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin). Allows a
-   * reporter to mark individual tests as skipped, excluded, fixed or failing.
-   * @param config Resolved configuration.
-   * @param suite The root suite that contains the projects, files and test cases that will run.
-   *
-   * The suite reflects `--project`, `--grep`/`--grep-invert` and `.only` filtering, so it only contains tests that
-   * match the current invocation. It contains only the top-level projects being run — setup and dependency projects are
-   * not included and cannot be excluded from here.
-   *
-   * The suite ignores the `--shard` argument: it always contains the full, un-sharded corpus. Playwright applies its
-   * built-in sharding after
-   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan) returns, unless
-   * [reporter.implementsSharding()](https://playwright.dev/docs/api/class-reporter#reporter-implements-sharding)
-   * returns `true`.
-   */
-  plan?(config: FullConfig, suite: Suite): Promise<void>;
 
   /**
    * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
@@ -397,8 +387,8 @@ export interface Suite {
 
   /**
    * Must be called from inside
-   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan), exclude this suite
-   * from the run. Excluded tests do not appear in the report and their body is not executed.
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite),
+   * exclude this suite from the run. Excluded tests do not appear in the report and their body is not executed.
    */
   exclude(): void;
 
@@ -484,24 +474,25 @@ export interface Suite {
 export interface TestCase {
   /**
    * Must be called from inside
-   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan), exclude this test
-   * from the run. Excluded tests do not appear in the report and their body is not executed.
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite),
+   * exclude this test from the run. Excluded tests do not appear in the report and their body is not executed.
    */
   exclude(): void;
 
   /**
    * Must be called from inside
-   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan), mark this test as
-   * "should fail". Playwright runs the test and ensures it is actually failing, useful for documenting broken
-   * functionality until it is fixed.
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite),
+   * mark this test as "should fail". Playwright runs the test and ensures it is actually failing, useful for
+   * documenting broken functionality until it is fixed.
    * @param reason Optional explanation surfaced as the annotation description.
    */
   fail(reason?: string): void;
 
   /**
    * Must be called from inside
-   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan), mark this test as
-   * fixme. The test body is not executed and the test is reported as skipped, with the intention to fix it.
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite),
+   * mark this test as fixme. The test body is not executed and the test is reported as skipped, with the intention to
+   * fix it.
    * @param reason Optional explanation surfaced as the annotation description.
    */
   fixme(reason?: string): void;
@@ -521,8 +512,8 @@ export interface TestCase {
 
   /**
    * Must be called from inside
-   * [reporter.plan(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-plan), skip this test. The
-   * test body is not executed and the test is reported as skipped.
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite),
+   * skip this test. The test body is not executed and the test is reported as skipped.
    * @param reason Optional explanation surfaced as the annotation description.
    */
   skip(reason?: string): void;

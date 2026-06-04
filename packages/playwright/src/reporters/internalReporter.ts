@@ -50,8 +50,13 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onConfigure?.(config);
   }
 
-  async plan(config: FullConfig, suite: testNs.Suite) {
-    await this._reporter.plan?.(config, suite);
+  async preprocessSuite(config: FullConfig, suite: testNs.Suite) {
+    suite._preprocessing = true;
+    try {
+      return await this._reporter.preprocessSuite?.(config, suite);
+    } finally {
+      suite._preprocessing = false;
+    }
   }
 
   onBegin(suite: testNs.Suite) {
@@ -113,10 +118,6 @@ export class InternalReporter implements ReporterV2 {
 
   printsToStdio() {
     return this._reporter.printsToStdio?.() ?? true;
-  }
-
-  implementsSharding() {
-    return this._reporter.implementsSharding?.() ?? false;
   }
 
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {

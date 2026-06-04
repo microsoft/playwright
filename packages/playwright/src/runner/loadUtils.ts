@@ -23,7 +23,7 @@ import { toPosixPath } from '@utils/fileUtils';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { createTitleMatcher, errorWithFile, parseLocationArg } from '../util';
 import { buildProjectsClosure, collectFilesForProject } from './projectUtils';
-import { createTestGroups, filterForShard } from './testGroups';
+import {  createTestGroups, filterForShard } from './testGroups';
 import { cc, config as commonConfig, FullConfigInternal, suiteUtils, test as testNs, transform } from '../common';
 
 import type { RawSourceMap } from 'source-map';
@@ -129,15 +129,9 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     for (const [project, fileSuites] of testRun.projectSuites) {
       const projectSuite = createProjectSuite(project, fileSuites);
       projectSuites.set(project, projectSuite);
-      filteredProjectSuites.set(project, projectSuite);
-      if (testRun.preOnlyTestFilters.length) {
-        const filteredProjectSuite = projectSuite._deepClone();
-        for (const test of filteredProjectSuite.allTests()) {
-          if (!testRun.preOnlyTestFilters.every(f => f(test)))
-            test.exclude();
-        }
-        filteredProjectSuites.set(project, filteredProjectSuite);
-      }
+
+      const filteredProjectSuite = filterProjectSuite(projectSuite, testRun.preOnlyTestFilters);
+      filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
 
@@ -171,9 +165,9 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
   }
 
-  await testRun.reporter.plan(config.config, rootSuite);
+  const preprocessResult = await testRun.reporter.preprocessSuite(config.config, rootSuite);
   // Shard only the top-level projects.
-  if (config.config.shard && !testRun.reporter.implementsSharding()) {
+  if (config.config.shard && !preprocessResult?.implementsSharding) {
     // Create test groups for top-level projects.
     const testGroups: TestGroup[] = [];
     for (const projectSuite of rootSuite.suites) {
@@ -191,19 +185,12 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
         testsInThisShard.add(test);
     }
 
-    // Drop all tests that are not in this shard.
-    for (const t of rootSuite.allTests()) {
-      if (!testsInThisShard.has(t))
-        t.exclude();
-    }
+    // Update project suites, removing empty ones.
+    suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
-  if (testRun.postShardTestFilters.length){
-    for (const test of rootSuite.allTests()) {
-      if (!testRun.postShardTestFilters.every(f => f(test)))
-        test.exclude();
-    }
-  }
+  if (testRun.postShardTestFilters.length)
+    suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testRun.postShardTestFilters.every(filter => filter(test)));
 
   const topLevelProjects = [];
   // Now prepend dependency projects without filtration.
@@ -232,12 +219,23 @@ function createProjectSuite(project: commonConfig.FullProjectInternal, fileSuite
 
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
-  for (const test of projectSuite.allTests()) {
+  suiteUtils.filterTestsRemoveEmptySuites(projectSuite, (test: testNs.TestCase) => {
     const grepTitle = test._grepTitleWithTags();
-    if (grepInvertMatcher?.(grepTitle) || !grepMatcher(grepTitle))
-      test.exclude();
-  }
+    if (grepInvertMatcher?.(grepTitle))
+      return false;
+    return grepMatcher(grepTitle);
+  });
   return projectSuite;
+}
+
+function filterProjectSuite(projectSuite: testNs.Suite, testFilters: TestCaseFilter[]): testNs.Suite {
+  // Fast path.
+  if (!testFilters.length)
+    return projectSuite;
+
+  const result = projectSuite._deepClone();
+  suiteUtils.filterTestsRemoveEmptySuites(result, test => testFilters.every(filter => filter(test)));
+  return result;
 }
 
 function buildProjectSuite(project: commonConfig.FullProjectInternal, projectSuite: testNs.Suite): testNs.Suite {

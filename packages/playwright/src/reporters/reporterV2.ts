@@ -28,7 +28,7 @@ export interface ReportEndParams {
 
 export interface ReporterV2 {
   onConfigure?(config: FullConfig): void;
-  plan?(config: FullConfig, suite: Suite): void | Promise<void>;
+  preprocessSuite?(config: FullConfig, suite: Suite): { implementsSharding?: boolean } | Promise<{ implementsSharding?: boolean } | undefined | void> | void;
   onBegin?(suite: Suite): void;
   onTestBegin?(test: TestCase, result: TestResult): void;
   onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
@@ -43,7 +43,6 @@ export interface ReporterV2 {
   onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
   onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
   printsToStdio?(): boolean;
-  implementsSharding?(): boolean;
   version(): 'v2';
 }
 
@@ -81,8 +80,8 @@ class ReporterV2Wrapper implements ReporterV2 {
     this._config = config;
   }
 
-  async plan(config: FullConfig, suite: Suite) {
-    await this._reporter.plan?.(config, suite);
+  async preprocessSuite(config: FullConfig, suite: Suite) {
+    return await this._reporter.preprocessSuite?.(config, suite);
   }
 
   onBegin(suite: Suite) {
@@ -150,9 +149,5 @@ class ReporterV2Wrapper implements ReporterV2 {
 
   printsToStdio() {
     return this._reporter.printsToStdio ? this._reporter.printsToStdio() : true;
-  }
-
-  implementsSharding() {
-    return this._reporter.implementsSharding ? this._reporter.implementsSharding() : false;
   }
 }

@@ -20,7 +20,7 @@ test('plan runs between project setup and onBegin, sees the .only-narrowed corpu
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           console.log('%% plan: ' + suite.allTests().map(t => t.title).join(','));
           for (const t of suite.allTests())
             if (t.title.includes('skip-me')) t.skip('planned skip');
@@ -56,7 +56,7 @@ test('TestCase.exclude removes test from run and report', async ({ runInlineTest
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           for (const t of suite.allTests())
             if (t.title === 'excluded') t.exclude();
         }
@@ -88,7 +88,7 @@ test('Suite.skip cascades to all descendants', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           const visit = (s) => {
             if (s.title === 'doomed') s.skip('whole group');
             for (const child of s.suites || []) visit(child);
@@ -120,11 +120,37 @@ test('Suite.skip cascades to all descendants', async ({ runInlineTest }) => {
   ]);
 });
 
+test('disposition methods throw when called outside preprocessSuite', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onBegin(config, suite) {
+          try {
+            suite.allTests()[0].exclude();
+            console.log('%% no-throw');
+          } catch (e) {
+            console.log('%% threw: ' + e.message);
+          }
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `module.exports = { reporter: './reporter.ts' };`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('t', async () => {});
+    `,
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toContain('threw: TestCase.exclude() can only be called from Reporter.preprocessSuite().');
+});
+
 test('plan throwing aborts the run before onBegin', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           throw new Error('plan-aborted');
         }
         onBegin(config, suite) {
@@ -153,7 +179,7 @@ test('multiple reporters: plan called in order, annotations accumulate, exclude 
   const result = await runInlineTest({
     'first.ts': `
       class R {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           console.log('%% first plan sees: ' + suite.allTests().map(t => t.title).join(','));
           for (const t of suite.allTests()) {
             if (t.title === 'gone') t.exclude();
@@ -168,7 +194,7 @@ test('multiple reporters: plan called in order, annotations accumulate, exclude 
     `,
     'second.ts': `
       class R {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           console.log('%% second plan sees: ' + suite.allTests().map(t => t.title).join(','));
           suite.allTests()[0].skip('second reason');
         }
@@ -196,12 +222,12 @@ test('implementsSharding disables built-in shard filter', async ({ runInlineTest
   const result = await runInlineTest({
     'reporter.ts': `
       class R {
-        implementsSharding() { return true; }
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           let i = 0;
           for (const t of suite.allTests()) {
             if (i++ % 2 === 1) t.exclude();
           }
+          return { implementsSharding: true };
         }
         onBegin(config, suite) {
           console.log('%% begin: ' + suite.allTests().map(t => t.title).join(','));
@@ -227,11 +253,14 @@ test('implementsSharding disables built-in shard filter', async ({ runInlineTest
 test('multiple reporters declaring implementsSharding throws', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter-a.ts': `
-      class A { implementsSharding() { return true; } }
+      class A {
+        preprocessSuite() { return { implementsSharding: true }; }
+        onError(err) { console.log('%% error: ' + err.message); }
+      }
       module.exports = A;
     `,
     'reporter-b.ts': `
-      class B { implementsSharding() { return true; } }
+      class B { preprocessSuite() { return { implementsSharding: true }; } }
       module.exports = B;
     `,
     'playwright.config.ts': `module.exports = { reporter: [['./reporter-a.ts'], ['./reporter-b.ts']] };`,
@@ -242,14 +271,14 @@ test('multiple reporters declaring implementsSharding throws', async ({ runInlin
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).not.toBe(0);
-  expect(result.rawOutput).toContain(`Multiple reporters declare 'implementsSharding'`);
+  expect(result.outputLines.join('\n')).toContain(`Multiple reporters declare 'implementsSharding'`);
 });
 
 test('plan.suite contains only top-level projects, not dependency/setup projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           // The suite only exposes top-level projects, so a reporter has no handle on
           // setup/dependency project tests and therefore cannot exclude them.
           console.log('%% plan projects: ' + suite.suites.map(s => s.title).join(','));
@@ -294,7 +323,7 @@ test('plan.suite respects --grep filtering', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           console.log('%% plan: ' + suite.allTests().map(t => t.title).join(','));
         }
       }
@@ -316,7 +345,7 @@ test('plan.suite respects --project filtering', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           console.log('%% plan projects: ' + suite.suites.map(s => s.title).join(','));
         }
       }
@@ -342,7 +371,7 @@ test('plan.suite ignores --shard; built-in sharding applies after plan', async (
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           // plan sees the full, un-sharded corpus.
           console.log('%% plan: ' + suite.allTests().map(t => t.title).join(','));
         }
@@ -374,7 +403,7 @@ test('plan annotations capture caller location pointing at reporter', async ({ r
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        async plan(config, suite) {
+        async preprocessSuite(config, suite) {
           for (const t of suite.allTests())
             t.skip('planned');
         }

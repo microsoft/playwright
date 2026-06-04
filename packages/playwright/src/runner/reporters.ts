@@ -74,7 +74,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     }
   }
 
-  const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio?.() ?? true);
+  const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, just in case some other reporter stalls onEnd.
@@ -83,11 +83,6 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     else if (mode !== 'merge')
       reporters.unshift(!process.env.CI ? new LineReporter() : new DotReporter());
   }
-
-  const shardingReporters = reporters.filter(r => r.implementsSharding?.() ?? false);
-  if (shardingReporters.length > 1)
-    throw new Error(`Multiple reporters declare 'implementsSharding': ${shardingReporters.map(r => r.constructor?.name ?? 'reporter').join(', ')}. Only one reporter may handle sharding.`);
-
   return reporters;
 }
 

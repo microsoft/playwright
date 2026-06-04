@@ -122,4 +122,4 @@ Optional explanation surfaced as the annotation description.
 ## method: Suite.exclude
 * since: v1.61
 
-Must be called from inside [`method: Reporter.plan`], exclude this suite from the run. Excluded tests do not appear in the report and their body is not executed.
+Must be called from inside [`method: Reporter.preprocessSuite`], exclude this suite from the run. Excluded tests do not appear in the report and their body is not executed.

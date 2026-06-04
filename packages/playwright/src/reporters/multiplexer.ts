@@ -34,13 +34,20 @@ export class Multiplexer implements ReporterV2 {
       wrap(() => reporter.onConfigure?.(config));
   }
 
-  async plan(config: FullConfig, suite: test.Suite) {
-    // Unlike other reporter callbacks, `plan` errors are NOT swallowed —
-    // they propagate so the run aborts before onBegin. Reporters use plan
+  async preprocessSuite(config: FullConfig, suite: test.Suite) {
+    // Unlike other reporter callbacks, `preprocessSuite` errors are NOT swallowed —
+    // they propagate so the run aborts before onBegin. Reporters use preprocessSuite
     // to mutate the corpus; silently dropping a planning error would let
     // an inconsistent (partial-mutation) state reach the workers.
-    for (const reporter of this._reporters)
-      await reporter.plan?.(config, suite);
+    const shardingReporters: ReporterV2[] = [];
+    for (const reporter of this._reporters) {
+      const result = await reporter.preprocessSuite?.(config, suite);
+      if (result?.implementsSharding)
+        shardingReporters.push(reporter);
+    }
+    if (shardingReporters.length > 1)
+      throw new Error(`Multiple reporters declare 'implementsSharding': ${shardingReporters.map(r => r.constructor?.name ?? 'reporter').join(', ')}. Only one reporter may handle sharding.`);
+    return { implementsSharding: shardingReporters.length > 0 };
   }
 
   onBegin(suite: test.Suite) {
@@ -117,14 +124,6 @@ export class Multiplexer implements ReporterV2 {
       let prints = false;
       wrap(() => prints = r.printsToStdio ? r.printsToStdio() : true);
       return prints;
-    });
-  }
-
-  implementsSharding(): boolean {
-    return this._reporters.some(r => {
-      let shards = false;
-      wrap(() => shards = r.implementsSharding ? r.implementsSharding() : false);
-      return shards;
     });
   }
 }
