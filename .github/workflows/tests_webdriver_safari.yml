@@ -1,0 +1,64 @@
+name: "tests WebDriver (Safari)"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/webdriver/**'
+      - 'tests/page/pageTest.ts'
+      - 'packages/playwright-core/src/server/webkit/webdriver/**'
+      - 'packages/playwright-core/src/server/webkit/webkit.ts'
+      - '.github/workflows/tests_webdriver_safari.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+jobs:
+  test_webdriver_safari:
+    name: "WebDriver on Safari"
+    runs-on: macos-15-xlarge
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Runner environment
+        run: |
+          sw_vers
+          uname -a
+          safaridriver --version || true
+
+      - name: Ensure ::1 localhost in /etc/hosts
+        run: |
+          grep -qE '^::1[[:space:]]+localhost' /etc/hosts || echo "::1 localhost" | sudo tee -a /etc/hosts
+
+      - name: npm ci
+        run: npm ci
+
+      - name: npm run build
+        run: npm run build
+
+      - name: Enable safaridriver
+        run: sudo safaridriver --enable
+
+      - name: Run WebDriver tests
+        run: |
+          npx playwright test --config tests/webdriver/playwright.config.ts \
+            tests/page/page-check.spec.ts \
+            tests/page/page-goto.spec.ts \
+            tests/page/page-click.spec.ts
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webdriver-safari-logs
+          path: ${{ github.workspace }}/test-results/**
+          if-no-files-found: ignore
