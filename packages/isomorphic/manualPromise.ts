@@ -114,13 +114,15 @@ export class LongStandingScope {
 }
 
 export function signalToPromise(signal: AbortSignal): { promise: Promise<void>, dispose: () => void } {
+  if (signal.aborted)
+    return { promise: Promise.resolve(), dispose: () => {} };
+  let dispose: (() => void) | undefined;
   const promise = new Promise<void>(resolve => {
-    if (signal.aborted)
-      resolve();
-    else
-      signal.addEventListener('abort', () => resolve(), { once: true });
+    const onAbort = () => resolve();
+    signal.addEventListener('abort', onAbort, { once: true });
+    dispose = () => signal.removeEventListener('abort', onAbort);
   });
-  return { promise, dispose: () => {} };
+  return { promise, dispose: dispose! };
 }
 
 function cloneError(error: Error, frames: string[]) {
