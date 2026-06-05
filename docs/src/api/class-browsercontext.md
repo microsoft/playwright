@@ -1618,6 +1618,15 @@ Removes all routes created with [`method: BrowserContext.route`] and [`method: B
 ### option: BrowserContext.unrouteAll.behavior = %%-unroute-all-options-behavior-%%
 * since: v1.41
 
+## async method: BrowserContext.unrouteAllWebSockets
+* since: v1.61
+
+Removes all routes created with [`method: BrowserContext.routeWebSocket`].
+
+:::note
+Only affects `WebSocket` created after this call. Any [WebSocketRoute] already passed to a handler will keep working until the underlying `WebSocket` is closed.
+:::
+
 ## async method: BrowserContext.unroute
 * since: v1.8
 
@@ -1653,6 +1662,46 @@ Optional handler function used to register a routing with [`method: BrowserConte
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
+
+## async method: BrowserContext.unrouteWebSocket
+* since: v1.61
+
+Removes a route created with [`method: BrowserContext.routeWebSocket`]. When [`param: handler`] is not specified,
+removes all routes for the [`param: url`].
+
+:::note
+Only affects `WebSocket` created after this call. Any [WebSocketRoute] already passed to a handler will keep working until the underlying `WebSocket` is closed.
+:::
+
+### param: BrowserContext.unrouteWebSocket.url
+* since: v1.61
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] used to register a routing with
+[`method: BrowserContext.routeWebSocket`].
+
+### param: BrowserContext.unrouteWebSocket.url
+* since: v1.61
+* langs: python, csharp, java
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, or predicate receiving [URL] used to register a routing with
+[`method: BrowserContext.routeWebSocket`].
+
+### param: BrowserContext.unrouteWebSocket.handler
+* since: v1.61
+* langs: js, python
+- `handler` ?<[function]\([WebSocketRoute]\): [Promise<any>|any]>
+
+Optional handler function used to register a routing with [`method: BrowserContext.routeWebSocket`].
+
+### param: BrowserContext.unrouteWebSocket.handler
+* since: v1.61
+* langs: csharp, java
+- `handler` ?<[function]\([WebSocketRoute]\)>
+
+Optional handler function used to register a routing with [`method: BrowserContext.routeWebSocket`].
 
 ## async method: BrowserContext.waitForCondition
 * since: v1.32

@@ -4764,6 +4764,34 @@ export interface Page {
     behavior?: "wait"|"ignoreErrors"|"default";
   }): Promise<void>;
 
+  /**
+   * Removes all routes created with
+   * [page.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-page#page-route-web-socket).
+   *
+   * **NOTE** Only affects `WebSocket` created after this call. Any
+   * [WebSocketRoute](https://playwright.dev/docs/api/class-websocketroute) already passed to a handler will keep
+   * working until the underlying `WebSocket` is closed.
+   *
+   */
+  unrouteAllWebSockets(): Promise<void>;
+
+  /**
+   * Removes a route created with
+   * [page.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-page#page-route-web-socket). When
+   * [`handler`](https://playwright.dev/docs/api/class-page#page-unroute-web-socket-option-handler) is not specified,
+   * removes all routes for the [`url`](https://playwright.dev/docs/api/class-page#page-unroute-web-socket-option-url).
+   *
+   * **NOTE** Only affects `WebSocket` created after this call. Any
+   * [WebSocketRoute](https://playwright.dev/docs/api/class-websocketroute) already passed to a handler will keep
+   * working until the underlying `WebSocket` is closed.
+   *
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] used to register a routing with
+   * [page.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-page#page-route-web-socket).
+   * @param handler Optional handler function used to register a routing with
+   * [page.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-page#page-route-web-socket).
+   */
+  unrouteWebSocket(url: string|RegExp|URLPattern|((url: URL) => boolean), handler?: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
+
   url(): string;
 
   /**
@@ -9783,6 +9811,36 @@ export interface BrowserContext {
      */
     behavior?: "wait"|"ignoreErrors"|"default";
   }): Promise<void>;
+
+  /**
+   * Removes all routes created with
+   * [browserContext.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket).
+   *
+   * **NOTE** Only affects `WebSocket` created after this call. Any
+   * [WebSocketRoute](https://playwright.dev/docs/api/class-websocketroute) already passed to a handler will keep
+   * working until the underlying `WebSocket` is closed.
+   *
+   */
+  unrouteAllWebSockets(): Promise<void>;
+
+  /**
+   * Removes a route created with
+   * [browserContext.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket).
+   * When
+   * [`handler`](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute-web-socket-option-handler)
+   * is not specified, removes all routes for the
+   * [`url`](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute-web-socket-option-url).
+   *
+   * **NOTE** Only affects `WebSocket` created after this call. Any
+   * [WebSocketRoute](https://playwright.dev/docs/api/class-websocketroute) already passed to a handler will keep
+   * working until the underlying `WebSocket` is closed.
+   *
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] used to register a routing with
+   * [browserContext.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket).
+   * @param handler Optional handler function used to register a routing with
+   * [browserContext.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket).
+   */
+  unrouteWebSocket(url: string|RegExp|URLPattern|((url: URL) => boolean), handler?: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
 
   /**
    * This event is not emitted.

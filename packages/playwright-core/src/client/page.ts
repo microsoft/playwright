@@ -568,6 +568,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._disposeHarRouters();
   }
 
+  async unrouteAllWebSockets(): Promise<void> {
+    this._webSocketRoutes = [];
+    await this._updateWebSocketInterceptionPatterns({ title: 'Unroute WebSockets' });
+  }
+
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {
     const removed = [];
     const remaining = [];
@@ -578,6 +583,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         remaining.push(route);
     }
     await this._unrouteInternal(removed, remaining, 'default');
+  }
+
+  async unrouteWebSocket(url: URLMatch, handler?: WebSocketRouteHandlerCallback): Promise<void> {
+    this._webSocketRoutes = this._webSocketRoutes.filter(route => !urlMatchesEqual(route.url, url) || (handler && route.handler !== handler));
+    await this._updateWebSocketInterceptionPatterns({ title: 'Unroute WebSockets' });
   }
 
   private async _unrouteInternal(removed: RouteHandler[], remaining: RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {

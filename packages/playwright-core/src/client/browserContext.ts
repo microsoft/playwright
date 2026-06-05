@@ -408,6 +408,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._disposeHarRouters();
   }
 
+  async unrouteAllWebSockets(): Promise<void> {
+    this._webSocketRoutes = [];
+    await this._updateWebSocketInterceptionPatterns({ title: 'Unroute WebSockets' });
+  }
+
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
     const removed = [];
     const remaining = [];
@@ -418,6 +423,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         remaining.push(route);
     }
     await this._unrouteInternal(removed, remaining, 'default');
+  }
+
+  async unrouteWebSocket(url: URLMatch, handler?: network.WebSocketRouteHandlerCallback): Promise<void> {
+    this._webSocketRoutes = this._webSocketRoutes.filter(route => !urlMatchesEqual(route.url, url) || (handler && route.handler !== handler));
+    await this._updateWebSocketInterceptionPatterns({ title: 'Unroute WebSockets' });
   }
 
   private async _unrouteInternal(removed: network.RouteHandler[], remaining: network.RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {

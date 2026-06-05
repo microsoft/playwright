@@ -679,3 +679,97 @@ test('should expose protocols on server-side route', async ({ page, server }) =>
   expect(pageRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
   expect(serverRoute.protocols()).toEqual(['chat.v2', 'chat.v1']);
 });
+
+test('unrouteWebSocket should filter routes by url, handler, and scope', async ({ page, server }) => {
+  const ws1 = (ws: WebSocketRoute) => ws.onMessage(() => ws.send('ws1'));
+  const ws2 = (ws: WebSocketRoute) => ws.onMessage(() => ws.send('ws2'));
+  await page.routeWebSocket(/.*\/ws$/, ws1);
+  await page.routeWebSocket(/.*\/ws$/, ws2);
+  await page.context().routeWebSocket(/.*/, ws => ws.onMessage(() => ws.send('context')));
+
+  // ws2 was registered last (unshifted), so the page-level ws2 wins.
+  await setupWS(page, server, 'blob');
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('req');
+  });
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=ws2 origin=ws://${server.HOST} lastEventId=`,
+  ]);
+
+  // No-op when nothing matches.
+  await page.unrouteWebSocket(/.*\/never$/);
+  await setupWS(page, server, 'blob');
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('req');
+  });
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=ws2 origin=ws://${server.HOST} lastEventId=`,
+  ]);
+
+  // Removing only ws2 lets ws1 win for new WebSockets.
+  await page.unrouteWebSocket(/.*\/ws$/, ws2);
+  await setupWS(page, server, 'blob');
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('req');
+  });
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=ws1 origin=ws://${server.HOST} lastEventId=`,
+  ]);
+
+  // Removing without a handler arg clears all page handlers for that url;
+  // the context-level fallback takes over.
+  await page.unrouteWebSocket(/.*\/ws$/);
+  await setupWS(page, server, 'blob');
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('req');
+  });
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=context origin=ws://${server.HOST} lastEventId=`,
+  ]);
+
+  // Re-register a page handler and remove all context routes — page still wins.
+  await page.routeWebSocket(/.*\/ws$/, ws1);
+  await page.context().unrouteAllWebSockets();
+  await setupWS(page, server, 'blob');
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('req');
+  });
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=ws1 origin=ws://${server.HOST} lastEventId=`,
+  ]);
+
+  // After unrouteAllWebSockets, the already-active WebSocket keeps its route.
+  await page.unrouteAllWebSockets();
+  await page.evaluate(() => window.ws.send('req'));
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=ws1 origin=ws://${server.HOST} lastEventId=`,
+    `message: data=ws1 origin=ws://${server.HOST} lastEventId=`,
+  ]);
+
+  // New WebSockets fall through to the real server. If unroute had not taken
+  // effect, the page-side mock would reply with 'ws1' and the real server
+  // would never observe the connection.
+  const wsPromise = server.waitForWebSocket();
+  await setupWS(page, server, 'blob');
+  const realWs = await wsPromise;
+  realWs.on('message', message => realWs.send(`real:${message}`));
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('req');
+  });
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=real:req origin=ws://${server.HOST} lastEventId=`,
+  ]);
+});

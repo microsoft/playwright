@@ -4446,6 +4446,15 @@ Removes all routes created with [`method: Page.route`] and [`method: Page.routeF
 ### option: Page.unrouteAll.behavior = %%-unroute-all-options-behavior-%%
 * since: v1.41
 
+## async method: Page.unrouteAllWebSockets
+* since: v1.61
+
+Removes all routes created with [`method: Page.routeWebSocket`].
+
+:::note
+Only affects `WebSocket` created after this call. Any [WebSocketRoute] already passed to a handler will keep working until the underlying `WebSocket` is closed.
+:::
+
 ## async method: Page.unroute
 * since: v1.8
 
@@ -4479,6 +4488,46 @@ Optional handler function to route the request.
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function to route the request.
+
+## async method: Page.unrouteWebSocket
+* since: v1.61
+
+Removes a route created with [`method: Page.routeWebSocket`]. When [`param: handler`] is not specified, removes all
+routes for the [`param: url`].
+
+:::note
+Only affects `WebSocket` created after this call. Any [WebSocketRoute] already passed to a handler will keep working until the underlying `WebSocket` is closed.
+:::
+
+### param: Page.unrouteWebSocket.url
+* since: v1.61
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] used to register a routing with
+[`method: Page.routeWebSocket`].
+
+### param: Page.unrouteWebSocket.url
+* since: v1.61
+* langs: python, csharp, java
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, or predicate receiving [URL] used to register a routing with
+[`method: Page.routeWebSocket`].
+
+### param: Page.unrouteWebSocket.handler
+* since: v1.61
+* langs: js, python
+- `handler` ?<[function]\([WebSocketRoute]\): [Promise<any>|any]>
+
+Optional handler function used to register a routing with [`method: Page.routeWebSocket`].
+
+### param: Page.unrouteWebSocket.handler
+* since: v1.61
+* langs: csharp, java
+- `handler` ?<[function]\([WebSocketRoute]\)>
+
+Optional handler function used to register a routing with [`method: Page.routeWebSocket`].
 
 ## method: Page.url
 * since: v1.8
