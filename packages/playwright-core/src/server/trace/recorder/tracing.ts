@@ -643,9 +643,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       params: {
         error: serializeError(pageError.error),
         location: {
-          url: pageError.location.url,
-          line: pageError.location.lineNumber,
-          column: pageError.location.columnNumber,
+          url: pageError.location?.url ?? '',
+          line: pageError.location?.lineNumber ?? 0,
+          column: pageError.location?.columnNumber ?? 0,
         },
       },
       pageId: page.guid,

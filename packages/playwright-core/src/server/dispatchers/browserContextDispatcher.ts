@@ -114,9 +114,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         error: serializeError(pageError.error),
         page: PageDispatcher.from(this, page),
         location: {
-          url: pageError.location.url,
-          line: pageError.location.lineNumber,
-          column: pageError.location.columnNumber,
+          url: pageError.location?.url ?? '',
+          line: pageError.location?.lineNumber ?? 0,
+          column: pageError.location?.columnNumber ?? 0,
         },
       });
     });

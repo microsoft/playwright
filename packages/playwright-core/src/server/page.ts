@@ -160,7 +160,7 @@ const navigationMarkSymbol = Symbol('navigationMark');
 
 export type PageError = {
   error: Error,
-  location: types.ConsoleMessageLocation,
+  location: types.ConsoleMessageLocation | undefined,
 };
 
 export class Page extends SdkObject<PageEventMap> {
@@ -432,7 +432,7 @@ export class Page extends SdkObject<PageEventMap> {
     return marked === -1 ? this._consoleMessages : this._consoleMessages.slice(marked + 1);
   }
 
-  addPageError(error: Error, location: types.ConsoleMessageLocation) {
+  addPageError(error: Error, location: types.ConsoleMessageLocation | undefined) {
     const pageError: PageError = { error, location };
     this._pageErrors.push(pageError);
     ensureArrayLimit(this._pageErrors, 200); // Avoid unbounded memory growth.
