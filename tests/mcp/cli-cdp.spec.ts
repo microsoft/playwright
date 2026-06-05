@@ -57,6 +57,18 @@ test('attach via cdp URL keeps the default session', async ({ cdpServer, cli, se
   expect(listOutput).toContain('(attached)');
 });
 
+test('attach via cdp URL honors PLAYWRIGHT_CLI_SESSION as session name', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/414' } }, async ({ cdpServer, cli }) => {
+  await cdpServer.start();
+  const { exitCode } = await cli('attach', `--cdp=${cdpServer.endpoint}`, { env: { PLAYWRIGHT_CLI_SESSION: 'myname' } });
+  expect(exitCode).toBe(0);
+});
+
+test('attach rejects combining --cdp, --endpoint, or --extension', async ({ cli }) => {
+  const { error, exitCode } = await cli('attach', '--cdp=chrome-dev', '--endpoint=/tmp/foo');
+  expect(exitCode).toBe(1);
+  expect(error).toContain('only one of [name], --cdp, --endpoint, or --extension can be specified');
+});
+
 test('detach tears down an attached session', async ({ cdpServer, cli }) => {
   await cdpServer.start();
 

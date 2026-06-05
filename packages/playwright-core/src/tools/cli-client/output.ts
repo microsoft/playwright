@@ -105,7 +105,7 @@ export class TextOutput implements Output {
   }
 
   errorAttachConflict(): never {
-    console.error(`Error: cannot use target name with --cdp, --endpoint, or --extension`);
+    console.error(`Error: only one of [name], --cdp, --endpoint, or --extension can be specified`);
     return process.exit(1);
   }
 
@@ -288,7 +288,7 @@ export class JsonOutput implements Output {
   }
 
   errorAttachConflict(): never {
-    this._emit({ isError: true, error: `cannot use target name with --cdp, --endpoint, or --extension` });
+    this._emit({ isError: true, error: `only one of [name], --cdp, --endpoint, or --extension can be specified` });
     return process.exit(1);
   }
 
