@@ -5,7 +5,6 @@ on:
     types: [roll_into_pw]
 
 env:
-  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
   BROWSER: ${{ github.event.client_payload.browser }}
   REVISION: ${{ github.event.client_payload.revision }}
   BROWSER_VERSION: ${{ github.event.client_payload.browserVersion }}
@@ -13,7 +12,7 @@ env:
 permissions:
   contents: write
 
-concurrency: 
+concurrency:
   group: 'roll-browser-into-playwright-${{ github.event.client_payload.browser }}-${{ github.event.client_payload.revision }}'
 
 jobs:

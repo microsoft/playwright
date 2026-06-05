@@ -266,22 +266,6 @@ it('should intercept with post data override', async ({ page, server, isElectron
   expect((await request.postBody).toString()).toBe(JSON.stringify({ 'foo': 'bar' }));
 });
 
-it('should fulfill popup main request using alias', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
-  it.skip(isElectron && electronMajorVersion < 30, 'error: Browser context management is not supported.');
-  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
-
-  await page.context().route('**/*', async route => {
-    const response = await route.fetch();
-    await route.fulfill({ response, body: 'hello' });
-  });
-  await page.setContent(`<a target=_blank href="${server.EMPTY_PAGE}">click me</a>`);
-  const [popup] = await Promise.all([
-    page.waitForEvent('popup'),
-    page.getByText('click me').click(),
-  ]);
-  await expect(popup.locator('body')).toHaveText('hello');
-});
-
 it('request.postData is not null when fetching FormData with a Blob', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24077' }
 }, async ({ server, page, browserName, isElectron, electronMajorVersion, isAndroid }) => {

@@ -5,9 +5,6 @@ on:
   release:
     types: [published]
 
-env:
-  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-
 jobs:
   publish-docker-release:
     name: "publish to DockerHub"

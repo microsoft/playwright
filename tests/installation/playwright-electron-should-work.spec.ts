@@ -19,7 +19,8 @@ import { expect } from '../../packages/playwright-test';
 import path from 'path';
 
 test('electron should work', async ({ exec, tsc, writeFiles }) => {
-  await exec('npm i @playwright/test electron@40.10.2');
+  await exec('npm i @playwright/test electron@42.3.3');
+  await exec('npx install-electron --no');
   await exec('node sanity-electron.js');
   await writeFiles({
     'test.ts':
@@ -32,7 +33,8 @@ test('electron should work with special characters in path', async ({ exec, tmpW
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30755' });
   const folderName = path.join(tmpWorkspace, '!@#$% тест with spaces and 😊');
 
-  await exec('npm i @playwright/test electron@40.10.2');
+  await exec('npm i @playwright/test electron@42.3.3');
+  await exec('npx install-electron --no');
   await fs.promises.mkdir(folderName);
   for (const file of ['electron-app.js', 'sanity-electron.js'])
     await fs.promises.copyFile(path.join(tmpWorkspace, file), path.join(folderName, file));
@@ -42,7 +44,8 @@ test('electron should work with special characters in path', async ({ exec, tmpW
 });
 
 test('should work when wrapped inside @playwright/test and trace is enabled', async ({ exec, tmpWorkspace, writeFiles }) => {
-  await exec('npm i -D @playwright/test electron@40.10.2');
+  await exec('npm i -D @playwright/test electron@42.3.3');
+  await exec('npx install-electron --no');
   await writeFiles({
     'electron-with-tracing.spec.ts': `
       import { test, expect, _electron as electron } from '@playwright/test';
