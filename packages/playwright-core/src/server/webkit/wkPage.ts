@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import { PNG } from 'pngjs';
-import jpegjs from 'jpeg-js';
 import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import { splitErrorMessage } from '@isomorphic/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
@@ -874,12 +872,9 @@ export class WKPage implements PageDelegate {
     const omitDeviceScaleFactor = scale === 'css';
     this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
     this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
-    const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor }));
-    const prefix = 'data:image/png;base64,';
-    let buffer: Buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
-    if (format === 'jpeg')
-      buffer = jpegjs.encode(PNG.sync.read(buffer), quality).data;
-    return buffer;
+    const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor, format: format as 'png' | 'jpeg', quality }));
+    // Strip the 'data:image/<format>;base64,' prefix.
+    return Buffer.from(result.dataURL.substring(result.dataURL.indexOf(',') + 1), 'base64');
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
