@@ -17,6 +17,7 @@
 
 import { assert } from '@isomorphic/assert';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
+import { raceAgainstAbortSignal } from '@isomorphic/manualPromise';
 import { urlMatches } from '@isomorphic/urlMatch';
 import { EventEmitter } from './eventEmitter';
 import { ChannelOwner } from './channelOwner';
@@ -490,10 +491,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return (await this._channel.title()).value;
   }
 
-  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<ExpectResult> {
-    const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
+  async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'> & { signal?: AbortSignal }): Promise<ExpectResult> {
+    const { signal, ...expectOptions } = options;
+    const params: channels.FrameExpectParams = { expression, ...expectOptions, isNot: !!options.isNot };
     params.expectedValue = serializeArgument(options.expectedValue);
-    const channelResult = await this._channel.expect(params);
+    if (signal?.aborted)
+      throw signal.reason;
+    const channelResult = await raceAgainstAbortSignal(this._channel.expect({ ...params, ...{ signal } }), signal);
     const result: ExpectResult = {
       matches: channelResult.matches,
       log: channelResult.log,

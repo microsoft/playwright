@@ -123,6 +123,22 @@ export function signalToPromise(signal: AbortSignal): { promise: Promise<void>, 
   return { promise, dispose: () => {} };
 }
 
+export async function raceAgainstAbortSignal<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (!signal)
+    return await promise;
+  let dispose: (() => void) | undefined;
+  const abortPromise = new Promise<never>((_, reject) => {
+    const abortListener = () => reject(signal.reason);
+    signal.addEventListener('abort', abortListener, { once: true });
+    dispose = () => signal.removeEventListener('abort', abortListener);
+  });
+  try {
+    return await Promise.race([promise, abortPromise]);
+  } finally {
+    dispose?.();
+  }
+}
+
 function cloneError(error: Error, frames: string[]) {
   const clone = new Error();
   clone.name = error.name;

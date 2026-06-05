@@ -1020,6 +1020,14 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 
 Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
 
+## js-assertions-signal
+* langs: js
+* since: v1.61
+- `signal` <[AbortSignal]>
+
+Allows to cancel the assertion using an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the assertion will be aborted and throw an error.
+Note that providing a signal does not disable the default timeout; pass `timeout: 0` to disable the timeout entirely.
+
 ## csharp-java-python-assertions-timeout
 * langs: java, python, csharp
 - `timeout` <[float]>

@@ -120,3 +120,64 @@ test('should not miss element that appears between retries before the deadline',
   });
   await expect(page.locator('#target')).toBeVisible({ timeout: 1800 });
 });
+
+test('should abort assertion via signal', async ({ page }) => {
+  await page.setContent(`<div id=node style="display:none">Text content</div>`);
+  const controller = new AbortController();
+  const promise = expect(page.locator('#node')).toBeVisible({ signal: controller.signal, timeout: 0 });
+  controller.abort(new Error('Aborted by user'));
+  const error = await promise.catch(e => e);
+  expect(error.message).toBe('Aborted by user');
+  expect(stripAnsi(error.message)).not.toContain('toBeVisible');
+  expect(stripAnsi(error.message)).not.toContain('Received');
+  expect(stripAnsi(error.message)).not.toContain('Call log');
+});
+
+test('should abort assertion via already-aborted signal', async ({ page }) => {
+  await page.setContent(`<div id=node>Text content</div>`);
+  const controller = new AbortController();
+  controller.abort(new Error('Already aborted'));
+  const error = await expect(page.locator('#node')).toBeVisible({ signal: controller.signal }).catch(e => e);
+  expect(error.message).toBe('Already aborted');
+});
+
+test('should abort assertion via signal without a reason', async ({ page }) => {
+  await page.setContent(`<div id=node style="display:none">Text content</div>`);
+  const controller = new AbortController();
+  const promise = expect(page.locator('#node')).toBeVisible({ signal: controller.signal, timeout: 0 });
+  controller.abort();
+  const error = await promise.catch(e => e);
+  expect(error.name).toBe('AbortError');
+});
+
+test('should abort text assertion via signal', async ({ page }) => {
+  await page.setContent(`<div id=node>Text content</div>`);
+  const controller = new AbortController();
+  const promise = expect(page.locator('#node')).toHaveText('never matches', { signal: controller.signal, timeout: 0 });
+  controller.abort(new Error('Aborted by user'));
+  await expect(promise).rejects.toThrow('Aborted by user');
+});
+
+test('should abort count assertion via signal', async ({ page }) => {
+  await page.setContent(`<div>one</div>`);
+  const controller = new AbortController();
+  const promise = expect(page.locator('div')).toHaveCount(5, { signal: controller.signal, timeout: 0 });
+  controller.abort(new Error('Aborted by user'));
+  await expect(promise).rejects.toThrow('Aborted by user');
+});
+
+test('should abort aria snapshot assertion via signal', async ({ page }) => {
+  await page.setContent(`<button>hello</button>`);
+  const controller = new AbortController();
+  const promise = expect(page.locator('body')).toMatchAriaSnapshot(`- button "never matches"`, { signal: controller.signal, timeout: 0 });
+  controller.abort(new Error('Aborted by user'));
+  await expect(promise).rejects.toThrow('Aborted by user');
+});
+
+test('should abort url assertion via signal', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const controller = new AbortController();
+  const promise = expect(page).toHaveURL(url => url.pathname === '/never-matches', { signal: controller.signal, timeout: 0 });
+  controller.abort(new Error('Aborted by user'));
+  await expect(promise).rejects.toThrow('Aborted by user');
+});

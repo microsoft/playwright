@@ -32,15 +32,15 @@ export async function toEqual<T>(
   matcherName: string,
   locator: Locator,
   receiverType: 'Locator',
-  query: (isNot: boolean, timeout: number) => Promise<ExpectResult>,
+  query: (isNot: boolean, timeout: number, signal?: AbortSignal) => Promise<ExpectResult>,
   expected: T,
-  options: { timeout?: number, contains?: boolean } = {},
+  options: { timeout?: number, contains?: boolean, signal?: AbortSignal } = {},
 ): Promise<MatcherResult<any, any>> {
   expectTypes(locator, [receiverType], matcherName);
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, received, log, timedOut, errorMessage } = await query(!!this.isNot, timeout);
+  const { matches: pass, received, log, timedOut, errorMessage } = await query(!!this.isNot, timeout, options.signal);
   const receivedValue = received?.value;
 
   if (pass === !this.isNot) {

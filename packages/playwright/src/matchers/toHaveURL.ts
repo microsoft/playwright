@@ -26,7 +26,7 @@ export async function toHaveURLWithPredicate(
   this: ExpectMatcherStateInternal,
   page: Page,
   expected: (url: URL) => boolean,
-  options?: { ignoreCase?: boolean; timeout?: number },
+  options?: { ignoreCase?: boolean; timeout?: number, signal?: AbortSignal },
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toHaveURL';
   const timeout = options?.timeout ?? this.timeout;
@@ -53,11 +53,12 @@ export async function toHaveURLWithPredicate(
             !this.isNot === urlMatches(baseURL, lastCheckedURLString, expected)
           );
         },
-        { timeout },
+        { timeout, signal: options?.signal },
     );
 
     conditionSucceeded = true;
-  } catch (e) {
+  } catch {
+    options?.signal?.throwIfAborted();
     conditionSucceeded = false;
   }
 
