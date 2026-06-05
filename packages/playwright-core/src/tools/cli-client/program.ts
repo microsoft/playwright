@@ -167,7 +167,7 @@ export async function program(options?: { embedderVersion?: string}) {
       }
 
       const cdpChannel = typeof args.cdp === 'string' && isKnownChannel(args.cdp) ? args.cdp : undefined;
-      const targetName = attachTarget ?? cdpChannel ?? extensionChannel ?? args.cdp as string;
+      const targetName = attachTarget ?? cdpChannel ?? extensionChannel ?? args.endpoint as string ?? args.cdp as string;
       if (!targetName)
         output.errorAttachNoTarget();
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? cdpChannel ?? extensionChannel ?? sessionName;
