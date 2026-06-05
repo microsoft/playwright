@@ -22,6 +22,7 @@ import { EventEmitter } from './eventEmitter';
 import { ChannelOwner } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
+import { PlaywrightError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { FrameLocator, Locator, testIdAttributeName } from './locator';
@@ -493,20 +494,25 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'>): Promise<ExpectResult> {
     const params: channels.FrameExpectParams = { expression, ...options, isNot: !!options.isNot };
     params.expectedValue = serializeArgument(options.expectedValue);
-    const channelResult = await this._channel.expect(params);
-    const result: ExpectResult = {
-      matches: channelResult.matches,
-      log: channelResult.log,
-      timedOut: channelResult.timedOut,
-      errorMessage: channelResult.errorMessage,
-    };
-    if (channelResult.received !== undefined && channelResult.matches === !!options.isNot) {
-      result.received = {
-        value: channelResult.received.value !== undefined ? parseResult(channelResult.received.value) : undefined,
-        ariaSnapshot: channelResult.received.ariaSnapshot,
+    try {
+      await this._channel.expect(params);
+      return { matches: !params.isNot };
+    } catch (e) {
+      if (!(e instanceof PlaywrightError))
+        throw e;
+      const details = e.details as channels.FrameExpectErrorDetails;
+      const received = details.received ? {
+        value: details.received.value !== undefined ? parseResult(details.received.value) : undefined,
+        ariaSnapshot: details.received.ariaSnapshot,
+      } : undefined;
+      return {
+        matches: !!params.isNot,
+        received,
+        log: e.log,
+        timedOut: details.timedOut,
+        errorMessage: details.customErrorMessage ? 'Error: ' + details.customErrorMessage : undefined,
       };
     }
-    return result;
   }
 }
 

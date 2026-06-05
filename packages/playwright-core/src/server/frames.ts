@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import yaml from 'yaml';
+import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
 import { isInvalidSelectorError } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
@@ -37,7 +39,6 @@ import { Page, ariaSnapshotForFrame } from './page';
 import { isAbortError, nullProgress, ProgressController } from './progress';
 import * as types from './types';
 import { isSessionClosedError } from './protocolError';
-import { compressCallLog } from './callLog';
 
 import type { ConsoleMessage } from './console';
 import type { SelectorInfo } from './frameSelectors';
@@ -95,8 +96,23 @@ export class NavigationAbortedError extends Error {
   }
 }
 
-export type ExpectReceived = { value?: any, ariaSnapshot?: string };
-export type ExpectResult = { matches: boolean, received?: ExpectReceived, log?: string[], timedOut?: boolean, errorMessage?: string };
+type ExpectReceived = { value?: any, ariaSnapshot?: string };
+
+type ExpectErrorDetails = {
+  received?: ExpectReceived;
+  timedOut?: boolean;
+  customErrorMessage?: string;
+};
+
+export class ExpectError extends Error {
+  readonly details: ExpectErrorDetails;
+
+  constructor(details: ExpectErrorDetails) {
+    super('Expect failed');
+    this.name = 'ExpectError';
+    this.details = details;
+  }
+}
 
 const kDummyFrameId = '<dummy>';
 
@@ -1484,37 +1500,38 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<ExpectResult> {
-    const lastIntermediateResult: { received?: ExpectReceived, isSet: boolean, errorMessage?: string } = { isSet: false };
-    const fixupMetadataError = (result: ExpectResult) => {
-      // Library mode special case for the expect errors which are return values, not exceptions.
-      if (result.matches === options.isNot)
-        progress.metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
-    };
+  async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<void> {
+    if (options.expression === 'to.match.aria' && options.expectedValue) {
+      try {
+        options = { ...options, expectedValue: parseAriaSnapshotUnsafe(yaml, options.expectedValue) };
+      } catch (e) {
+        throw new ExpectError({ customErrorMessage: e.message });
+      }
+    }
+    // `isSet` distinguishes "not collected yet" from "collected with received: undefined".
+    const lastIntermediateResult: { isSet: boolean, received?: ExpectReceived, errorMessage?: string } = { isSet: false };
     try {
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       if (selector)
         progress.log(`waiting for ${this._asLocator(selector)}`);
-      if (!options.noAutoWaiting)
-        await this._page.performActionPreChecks(progress);
+      await this._page.performActionPreChecks(progress);
 
       // Step 2: perform one-shot expect check without a timeout.
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
       // that should succeed when the locator is already visible.
       try {
         const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
-        if (options.noAutoWaiting || resultOneShot.matches !== options.isNot)
-          return resultOneShot;
+        if (resultOneShot.matches !== options.isNot)
+          return;
       } catch (e) {
-        if (options.noAutoWaiting || this.isNonRetriableError(e))
+        if (this.isNonRetriableError(e))
           throw e;
         // Ignore any other errors from one-shot, we'll handle them during retries.
       }
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
-      const result = await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
-        if (!options.noAutoWaiting)
-          await this._page.performActionPreChecks(progress);
+      await this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
+        await this._page.performActionPreChecks(progress);
         const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
         if (matches === options.isNot) {
           // Keep waiting in these cases:
@@ -1524,24 +1541,19 @@ export class Frame extends SdkObject<FrameEventMap> {
         }
         return { matches, received };
       });
-      fixupMetadataError(result);
-      return result;
     } catch (e) {
-      // Q: Why not throw upon isNonRetriableError(e) as in other places?
-      // A: We want user to receive a friendly message containing the last intermediate result.
-      const result: ExpectResult = { matches: options.isNot, log: compressCallLog(progress.metadata.log) };
+      const details: ExpectErrorDetails = {};
       if (isInvalidSelectorError(e)) {
-        result.errorMessage = 'Error: ' + e.message;
+        details.customErrorMessage = e.message;
       } else if (js.isJavaScriptErrorInEvaluate(e)) {
-        result.errorMessage = e.message;
+        details.customErrorMessage = e.message.startsWith('Error: ') ? e.message.substring('Error: '.length) : e.message;
       } else if (lastIntermediateResult.isSet) {
-        result.received = lastIntermediateResult.received;
-        result.errorMessage = lastIntermediateResult.errorMessage;
+        details.received = lastIntermediateResult.received;
+        details.customErrorMessage = lastIntermediateResult.errorMessage;
       }
       if (e instanceof TimeoutError)
-        result.timedOut = true;
-      fixupMetadataError(result);
-      return result;
+        details.timedOut = true;
+      throw new ExpectError(details);
     }
   }
 
@@ -1577,7 +1589,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       progressLog(log);
     // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
     if (matches === options.isNot) {
-      lastIntermediateResult.errorMessage = missingReceived ? 'Error: element(s) not found' : undefined;
+      lastIntermediateResult.errorMessage = missingReceived ? 'element(s) not found' : undefined;
       lastIntermediateResult.received = received;
       lastIntermediateResult.isSet = true;
       if (!missingReceived && !Array.isArray(received?.value))

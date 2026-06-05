@@ -705,7 +705,7 @@ export class Page extends SdkObject<PageEventMap> {
     await this.delegate.updateRequestInterception();
   }
 
-  async expectScreenshot(progress: Progress, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean }> {
+  async expectScreenshot(progress: Progress, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer }> {
     const locator = options.locator;
     const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
@@ -716,15 +716,6 @@ export class Page extends SdkObject<PageEventMap> {
     };
 
     const comparator = getComparator('image/png');
-    if (!options.expected && options.isNot)
-      return { errorMessage: '"not" matcher requires expected result' };
-    try {
-      const format = validateScreenshotOptions(options || {});
-      if (format !== 'png')
-        throw new Error('Only PNG screenshots are supported');
-    } catch (error) {
-      return { errorMessage: error.message };
-    }
     let intermediateResult: {
       actual?: Buffer,
       previous?: Buffer,
@@ -741,6 +732,11 @@ export class Page extends SdkObject<PageEventMap> {
     };
 
     try {
+      if (!options.expected && options.isNot)
+        throw new Error('"not" matcher requires expected result');
+      const format = validateScreenshotOptions(options || {});
+      if (format !== 'png')
+        throw new Error('Only PNG screenshots are supported');
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
@@ -797,12 +793,17 @@ export class Page extends SdkObject<PageEventMap> {
       let errorMessage = e.message;
       if (e instanceof TimeoutError && intermediateResult?.previous)
         errorMessage = `Failed to take two consecutive stable screenshots.`;
-      return {
+      const details: channels.PageExpectScreenshotErrorDetails = {
         log: compressCallLog(e.message ? [...progress.metadata.log, e.message] : progress.metadata.log),
-        ...intermediateResult,
-        errorMessage,
+        actual: intermediateResult?.actual,
+        previous: intermediateResult?.previous,
+        diff: intermediateResult?.diff,
         timedOut: (e instanceof TimeoutError),
+        customErrorMessage: errorMessage,
       };
+      const error = new Error('Expect failed');
+      (error as any).details = details;
+      throw error;
     }
   }
 
