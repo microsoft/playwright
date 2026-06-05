@@ -1446,7 +1446,7 @@ export class InjectedScript {
 
   async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: ExpectReceived, missingReceived?: boolean }> {
     const core = await this._expectCore(element, options, elements);
-    const ariaSnapshot = this._ariaSnapshotForExpect(element, options);
+    const ariaSnapshot = core.matches !== options.isNot ? undefined : this._ariaSnapshotForExpect(element, options);
     if (core.received === undefined && ariaSnapshot === undefined)
       return { matches: core.matches, missingReceived: core.missingReceived };
     return { matches: core.matches, received: { value: core.received, ariaSnapshot }, missingReceived: core.missingReceived };
