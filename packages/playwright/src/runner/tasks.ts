@@ -25,7 +25,7 @@ import { removeFolders } from '@utils/fileUtils';
 
 import { Dispatcher  } from './dispatcher';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook, loadTestList } from './loadUtils';
-import { buildDependentProjects, buildProjectsClosure, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
+import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
 import { TaskRunner } from './taskRunner';
 import { detectChangedTestFiles } from './vcs';
@@ -96,16 +96,12 @@ export class TestRun {
   readonly loadFileFilters: Matcher[] = [];
   readonly preOnlyTestFilters: TestCaseFilter[] = [];
   readonly postShardTestFilters: TestCaseFilter[] = [];
-  readonly projectClosureIds: Set<string>;
 
   constructor(config: FullConfigInternal, reporter: InternalReporter, options?: TestRunOptions) {
     this.config = config;
     this.options = options ?? {};
     this.reporter = reporter;
     this.filteredProjects = filterProjects(config.projects, this.options.projectFilter);
-    this.projectClosureIds = new Set();
-    for (const project of buildProjectsClosure(this.filteredProjects).keys())
-      this.projectClosureIds.add(project.id);
   }
 
   onTestPaused(params: TestPausedParams) {
@@ -195,14 +191,12 @@ export function createReportBeginTask(): Task<TestRun> {
 export function createPluginSetupTasks(config: FullConfigInternal): Task<TestRun>[] {
   return config.plugins.map(plugin => ({
     title: 'plugin setup',
-    setup: async testRun => {
-      if (plugin.projectId && !testRun.projectClosureIds.has(plugin.projectId))
-        return;
+    setup: async ({ reporter }) => {
       if (typeof plugin.factory === 'function')
         plugin.instance = await plugin.factory();
       else
         plugin.instance = plugin.factory;
-      await plugin.instance?.setup?.(config.config, config.configDir, testRun.reporter);
+      await plugin.instance?.setup?.(config.config, config.configDir, reporter);
     },
     teardown: async () => {
       await plugin.instance?.teardown?.();
@@ -214,8 +208,6 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestR
   return {
     title: 'plugin begin',
     setup: async testRun => {
-      if (plugin.projectId && !testRun.projectClosureIds.has(plugin.projectId))
-        return;
       await plugin.instance?.begin?.(testRun.rootSuite!);
     },
     teardown: async () => {
