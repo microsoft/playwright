@@ -278,3 +278,28 @@ test('download event should work @smoke', async ({ page, server }) => {
   expect(download.suggestedFilename()).toBe('file.txt');
   expect(download.page()).toBe(page);
 });
+
+test('weberror event should not crash when Firefox omits location in uncaughtError', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41169' },
+}, async ({ page, toImpl, browserName }) => {
+  // Firefox can omit the location field in Page.uncaughtError protocol events
+  // when an uncaught error fires during mid-navigation. Inject a synthetic event
+  // without location to verify the driver does not crash.
+  test.skip(browserName !== 'firefox', 'Firefox-only: tests FF protocol behaviour');
+  const webErrors: Error[] = [];
+  page.context().on('weberror', e => webErrors.push(e.error()));
+  const pageErrors: Error[] = [];
+  page.on('pageerror', e => pageErrors.push(e));
+
+  (toImpl(page) as any).delegate._session.emit('Page.uncaughtError', {
+    frameId: '',
+    message: 'Error: no-location-error',
+    stack: '',
+    // location intentionally absent — simulates the protocol omitting it
+  });
+
+  await page.waitForTimeout(500);
+  expect(pageErrors).toHaveLength(1);
+  expect(pageErrors[0].message).toBe('no-location-error');
+  expect(webErrors).toHaveLength(1);
+});

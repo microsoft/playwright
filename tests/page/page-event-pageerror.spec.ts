@@ -230,18 +230,3 @@ it('should fire illegal character error', {
   else
     expect(error.message).toContain('illegal character');
 });
-
-it('should emit weberror on context when pageerror fires on firefox', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41169' },
-}, async ({ page, browserName }) => {
-  // Regression guard: Firefox may omit location in Page.uncaughtError protocol events
-  // (e.g. during navigation interruption). The driver must dispatch the event without crashing.
-  it.skip(browserName !== 'firefox', 'Firefox-only regression guard');
-  const webErrors: any[] = [];
-  page.context().on('weberror', e => webErrors.push(e));
-  await Promise.all([
-    page.waitForEvent('pageerror'),
-    page.goto(server.PREFIX + '/error.html'),
-  ]);
-  expect(webErrors.length).toBeGreaterThan(0);
-});
