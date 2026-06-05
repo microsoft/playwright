@@ -86,6 +86,32 @@ test('browser_navigate can navigate to file:// URLs allowUnrestrictedFileAccess 
   });
 });
 
+test('browser_navigate_back does not time out when load never fires', async ({ client, server }) => {
+  // https://github.com/microsoft/playwright-mcp/issues/1635
+  // Page A never fires the `load` event because the image request hangs forever.
+  // Going back to it should still succeed because we wait for `commit`, not `load`.
+  server.setRoute('/hang', () => {});
+  server.setContent('/page-a', `<title>Page A</title><body>Page A<img src="/hang"></body>`, 'text/html');
+  server.setContent('/page-b', `<title>Page B</title><body>Page B</body>`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: `${server.PREFIX}/page-a` },
+  });
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: `${server.PREFIX}/page-b` },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate_back',
+    arguments: {},
+  })).toHaveResponse({
+    code: `await page.goBack();`,
+    page: expect.stringContaining(`- Page URL: ${server.PREFIX}/page-a`),
+  });
+});
+
 test('browser_select_option', async ({ client, server }) => {
   server.setContent('/', `
     <title>Title</title>
