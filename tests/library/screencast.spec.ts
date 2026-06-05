@@ -57,9 +57,9 @@ test('onFrame receives viewport size', async ({ browser, server, trace }) => {
   const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
   const page = await context.newPage();
 
-  const frames: { viewportWidth: number, viewportHeight: number }[] = [];
+  const frames: { timestamp: number, viewportWidth: number, viewportHeight: number }[] = [];
   await page.screencast.start({
-    onFrame: ({ viewportWidth, viewportHeight }) => frames.push({ viewportWidth, viewportHeight }),
+    onFrame: ({ timestamp, viewportWidth, viewportHeight }) => frames.push({ timestamp, viewportWidth, viewportHeight }),
     size: { width: 500, height: 400 },
   });
   await page.goto(server.EMPTY_PAGE);
@@ -70,6 +70,7 @@ test('onFrame receives viewport size', async ({ browser, server, trace }) => {
   for (const frame of frames) {
     expect(frame.viewportWidth).toBe(1000);
     expect(frame.viewportHeight).toBe(400);
+    expect(typeof frame.timestamp).toBe('number');
   }
 
   await context.close();

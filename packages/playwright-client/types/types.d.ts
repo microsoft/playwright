@@ -16557,8 +16557,8 @@ export interface Screencast {
    * ```js
    * // Capture frames
    * await page.screencast.start({
-   *   onFrame: ({ data, viewportWidth, viewportHeight }) => {
-   *     console.log(`frame size: ${data.length} (${viewportWidth}x${viewportHeight})`);
+   *   onFrame: ({ data, timestamp, viewportWidth, viewportHeight }) => {
+   *     console.log(`frame size: ${data.length} (${viewportWidth}x${viewportHeight}) at ${timestamp}`);
    *   },
    *   size: { width: 800, height: 600 },
    * });
@@ -16569,7 +16569,7 @@ export interface Screencast {
    * @param options
    */
   start(options?: {
-    onFrame?: (frame: { data: Buffer, viewportWidth: number, viewportHeight: number }) => Promise<any>|any;
+    onFrame?: (frame: { data: Buffer, timestamp: number, viewportWidth: number, viewportHeight: number }) => Promise<any>|any;
     path?: string;
     size?: {
       width: number;
