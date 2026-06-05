@@ -30,6 +30,7 @@ playwright-cli --help
 Alternatively, install `@playwright/cli` as a local dependency and use `npx`:
 
 ```bash
+npm install -D @playwright/cli@latest
 npx playwright-cli --help
 ```
 
