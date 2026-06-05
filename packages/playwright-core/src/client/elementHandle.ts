@@ -320,13 +320,15 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   return { payloads };
 }
 
-export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {
+export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' | 'webp' }): 'png' | 'jpeg' | 'webp' | undefined {
   if (options.path) {
     const mimeType = getMimeTypeForPath(options.path);
     if (mimeType === 'image/png')
       return 'png';
     else if (mimeType === 'image/jpeg')
       return 'jpeg';
+    else if (mimeType === 'image/webp')
+      return 'webp';
     throw new Error(`path: unsupported mime type "${mimeType}"`);
   }
   return options.type;

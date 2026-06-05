@@ -1295,7 +1295,7 @@ relative path, then it is resolved relative to the current working directory. If
 saved to the disk.
 
 ## screenshot-option-type
-- `type` <[ScreenshotType]<"png"|"jpeg">>
+- `type` <[ScreenshotType]<"png"|"jpeg"|"webp">>
 
 Specify screenshot type, defaults to `png`.
 

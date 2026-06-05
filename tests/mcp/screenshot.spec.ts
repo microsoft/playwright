@@ -96,8 +96,10 @@ test('--output-dir should work', async ({ startClient, server }, testInfo) => {
   expect(files[0]).toMatch(/^page-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.png$/);
 });
 
-for (const type of ['png', 'jpeg']) {
-  test(`browser_take_screenshot (type: ${type})`, async ({ startClient, server }, testInfo) => {
+for (const type of ['png', 'jpeg', 'webp']) {
+  test(`browser_take_screenshot (type: ${type})`, async ({ startClient, server, mcpBrowser }, testInfo) => {
+    test.skip(type === 'webp' && mcpBrowser === 'webkit' && process.platform === 'darwin', 'CG on macOS does not include a webp encoder UTI');
+
     const outputDir = testInfo.outputPath('output');
     const { client } = await startClient({
       config: { outputDir },

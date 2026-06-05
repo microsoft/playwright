@@ -12503,7 +12503,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Specify screenshot type, defaults to `png`.
      */
-    type?: "png"|"jpeg";
+    type?: "png"|"jpeg"|"webp";
   }): Promise<Buffer>;
 
   /**
@@ -23863,7 +23863,7 @@ export interface LocatorScreenshotOptions {
   /**
    * Specify screenshot type, defaults to `png`.
    */
-  type?: "png"|"jpeg";
+  type?: "png"|"jpeg"|"webp";
 }
 
 interface ElementHandleWaitForSelectorOptions {
@@ -24536,7 +24536,7 @@ export interface PageScreenshotOptions {
   /**
    * Specify screenshot type, defaults to `png`.
    */
-  type?: "png"|"jpeg";
+  type?: "png"|"jpeg"|"webp";
 }
 
 type Devices = {

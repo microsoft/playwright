@@ -489,6 +489,8 @@ export class BidiPage implements PageDelegate {
   }
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+    if (format === 'webp')
+      throw new Error('webp screenshots are not supported via WebDriver BiDi');
     const rect = (documentRect || viewportRect)!;
     const { data } = await progress.race(this._session.send('browsingContext.captureScreenshot', {
       context: this._session.sessionId,
