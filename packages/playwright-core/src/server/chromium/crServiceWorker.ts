@@ -20,6 +20,7 @@ import { BrowserContext } from '../browserContext';
 import * as network from '../network';
 import { ConsoleMessage } from '../console';
 import { stackTraceToLocation } from './crProtocolHelper';
+import { calculateUserAgentMetadata } from './crPage';
 
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
@@ -53,6 +54,7 @@ export class CRServiceWorker extends Worker {
       this.updateExtraHTTPHeaders();
       this.updateHttpCredentials();
       this.updateOffline();
+      this.updateUserAgent();
       this._networkManager.addSession(session, undefined, true /* isMain */).catch(() => {});
     }
 
@@ -94,6 +96,15 @@ export class CRServiceWorker extends Worker {
     if (!this._isNetworkInspectionEnabled())
       return;
     await this._networkManager?.setExtraHTTPHeaders(this.browserContext._options.extraHTTPHeaders || []).catch(() => {});
+  }
+
+  async updateUserAgent(): Promise<void> {
+    const options = this.browserContext._options;
+    await this._session.send('Emulation.setUserAgentOverride', {
+      userAgent: options.userAgent || '',
+      acceptLanguage: options.locale,
+      userAgentMetadata: calculateUserAgentMetadata(options),
+    }).catch(() => {});
   }
 
   async updateRequestInterception(): Promise<void> {
