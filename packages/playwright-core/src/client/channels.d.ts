@@ -3332,7 +3332,7 @@ export type ElementHandleQuerySelectorAllResult = {
 };
 export type ElementHandleScreenshotParams = {
   timeout: number,
-  type?: 'png' | 'jpeg',
+  type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
@@ -3346,7 +3346,7 @@ export type ElementHandleScreenshotParams = {
   style?: string,
 };
 export type ElementHandleScreenshotOptions = {
-  type?: 'png' | 'jpeg',
+  type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
@@ -4239,7 +4239,7 @@ export type PageExpectScreenshotErrorDetails = {
 };
 export type PageScreenshotParams = {
   timeout: number,
-  type?: 'png' | 'jpeg',
+  type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
   fullPage?: boolean,
   clip?: Rect,
@@ -4255,7 +4255,7 @@ export type PageScreenshotParams = {
   style?: string,
 };
 export type PageScreenshotOptions = {
-  type?: 'png' | 'jpeg',
+  type?: 'png' | 'jpeg' | 'webp',
   quality?: number,
   fullPage?: boolean,
   clip?: Rect,

@@ -58,7 +58,7 @@ export class Response {
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
   private _clientWorkspace: string;
-  private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
+  private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' | 'webp' }[] = [];
   private _raw: boolean;
   private _json: boolean;
   private _writtenFiles = new Set<string>();
@@ -127,7 +127,7 @@ export class Response {
     this.addTextResult(`- [${title}](${relativeName})`);
   }
 
-  async registerImageResult(data: Buffer, imageType: 'png' | 'jpeg') {
+  async registerImageResult(data: Buffer, imageType: 'png' | 'jpeg' | 'webp') {
     this._imageResults.push({ data, imageType });
   }
 
@@ -209,7 +209,7 @@ export class Response {
     if (this._context.config.imageResponses !== 'omit') {
       for (const imageResult of this._imageResults) {
         const scaledData = scaleImageToFitMessage(imageResult.data, imageResult.imageType);
-        content.push({ type: 'image', data: scaledData.toString('base64'), mimeType: imageResult.imageType === 'png' ? 'image/png' : 'image/jpeg' });
+        content.push({ type: 'image', data: scaledData.toString('base64'), mimeType: `image/${imageResult.imageType}` });
       }
     }
 

@@ -53,6 +53,17 @@ test('screenshot --filename', async ({ cli, server, mcpBrowser }) => {
   expect(attachments[0].data).toEqual(expect.any(Buffer));
 });
 
+test('screenshot --filename infers webp from extension', async ({ cli, server, mcpBrowser }) => {
+  test.skip(mcpBrowser === 'webkit' && process.platform === 'darwin', 'CG on macOS does not include a webp encoder UTI');
+
+  await cli('open', server.HELLO_WORLD);
+  const { output, attachments } = await cli('screenshot', '--filename=screenshot.webp');
+  expect(output).toContain('[Screenshot of viewport](./screenshot.webp)');
+  const buffer = attachments[0].data as Buffer;
+  expect(buffer.subarray(0, 4).toString('latin1')).toBe('RIFF');
+  expect(buffer.subarray(8, 12).toString('latin1')).toBe('WEBP');
+});
+
 test('pdf', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'PDF is only supported in Chromium and Chrome');
   await cli('open', server.HELLO_WORLD);
