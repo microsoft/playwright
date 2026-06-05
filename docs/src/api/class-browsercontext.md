@@ -1310,10 +1310,13 @@ Optional setting to control resource content management. If `attach` is specifie
 
 ## async method: BrowserContext.routeWebSocket
 * since: v1.48
+- returns: <[Disposable]>
 
 This method allows to modify websocket connections that are made by any page in the browser context.
 
-Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this method before creating any pages.
+:::note
+Only affects `WebSocket` created after this method was called will be routed. It is recommended to call this method before creating any pages.
+:::
 
 **Usage**
 

@@ -4129,8 +4129,8 @@ export interface Page {
   /**
    * This method allows to modify websocket connections that are made by the page.
    *
-   * Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this
-   * method before navigating the page.
+   * **NOTE** Only affects `WebSocket` created after this method was called will be routed. It is recommended to call
+   * this method before navigating the page.
    *
    * **Usage**
    *
@@ -4150,7 +4150,7 @@ export interface Page {
    * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) context option.
    * @param handler Handler function to route the WebSocket.
    */
-  routeWebSocket(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
+  routeWebSocket(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<Disposable>;
 
   /**
    * Returns the buffer with the captured screenshot.
@@ -9533,8 +9533,8 @@ export interface BrowserContext {
   /**
    * This method allows to modify websocket connections that are made by any page in the browser context.
    *
-   * Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this
-   * method before creating any pages.
+   * **NOTE** Only affects `WebSocket` created after this method was called will be routed. It is recommended to call
+   * this method before creating any pages.
    *
    * **Usage**
    *
@@ -9556,7 +9556,7 @@ export interface BrowserContext {
    * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) context option.
    * @param handler Handler function to route the WebSocket.
    */
-  routeWebSocket(url: string|RegExp|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
+  routeWebSocket(url: string|RegExp|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<Disposable>;
 
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.

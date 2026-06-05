@@ -3811,10 +3811,13 @@ Optional setting to control resource content management. If `attach` is specifie
 
 ## async method: Page.routeWebSocket
 * since: v1.48
+- returns: <[Disposable]>
 
 This method allows to modify websocket connections that are made by the page.
 
-Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this method before navigating the page.
+:::note
+Only affects `WebSocket` created after this method was called will be routed. It is recommended to call this method before navigating the page.
+:::
 
 **Usage**
 

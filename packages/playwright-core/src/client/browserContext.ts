@@ -380,9 +380,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return new DisposableStub(() => this.unroute(url, handler));
   }
 
-  async routeWebSocket(url: URLMatch, handler: network.WebSocketRouteHandlerCallback): Promise<void> {
+  async routeWebSocket(url: URLMatch, handler: network.WebSocketRouteHandlerCallback): Promise<DisposableStub> {
     this._webSocketRoutes.unshift(new network.WebSocketRouteHandler(this._options.baseURL, url, handler));
     await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
+    return new DisposableStub(() => this.unrouteWebSocket(url, handler));
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {

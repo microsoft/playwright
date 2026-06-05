@@ -553,9 +553,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await harRouter.addPageRoute(this);
   }
 
-  async routeWebSocket(url: URLMatch, handler: WebSocketRouteHandlerCallback): Promise<void> {
+  async routeWebSocket(url: URLMatch, handler: WebSocketRouteHandlerCallback): Promise<DisposableStub> {
     this._webSocketRoutes.unshift(new WebSocketRouteHandler(this._browserContext._options.baseURL, url, handler));
     await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
+    return new DisposableStub(() => this.unrouteWebSocket(url, handler));
   }
 
   private _disposeHarRouters() {
