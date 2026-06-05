@@ -59,3 +59,23 @@ test('remoteEndpoint accepts ConnectOptions object with headers', async ({ start
     page: expect.stringContaining('Page Title: Title'),
   });
 });
+
+test('back-compat: remoteHeaders config still selects the browser on run-server endpoint', async ({ startClient, server, runServerEndpoint }) => {
+  const { client } = await startClient({
+    config: {
+      browser: {
+        remoteEndpoint: runServerEndpoint,
+        remoteHeaders: { 'x-playwright-browser': 'chromium' },
+        isolated: true,
+      },
+    } as any,
+  });
+
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  expect(response).toHaveResponse({
+    page: expect.stringContaining('Page Title: Title'),
+  });
+});

@@ -120,9 +120,12 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   // `timeout`. Normalize once so the rest of the function deals with a single
   // shape.
   const remote = config.browser.remoteEndpoint!;
+  // `remoteHeaders` is for back-compat, `remoteEndpoint.headers` takes precedence.
+  // eslint-disable-next-line no-restricted-syntax
+  const remoteHeaders = (config.browser as any).remoteHeaders as Record<string, string> | undefined;
   const remoteOptions = typeof remote === 'string'
-    ? { endpoint: remote }
-    : remote;
+    ? { endpoint: remote, headers: remoteHeaders }
+    : { ...remote, headers: { ...remoteHeaders, ...remote.headers } };
 
   const descriptor = await serverRegistry.find(remoteOptions.endpoint);
   if (descriptor) {
