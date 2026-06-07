@@ -214,6 +214,11 @@ export namespace Protocol {
           height: number;
         };
         deviceScaleFactor?: number;
+        screenSize?: {
+          width: number;
+          height: number;
+        };
+        isMobile?: boolean;
       }|null;
     };
     export type setDefaultViewportReturnValue = void;
@@ -343,6 +348,11 @@ export namespace Protocol {
         height: number;
       };
       deviceScaleFactor?: number;
+      screenSize?: {
+        width: number;
+        height: number;
+      };
+      isMobile?: boolean;
     };
     export type DOMQuad = {
       p1: {
@@ -523,6 +533,11 @@ export namespace Protocol {
         height: number;
       }|null;
       deviceScaleFactor?: number;
+      screenSize?: {
+        width: number;
+        height: number;
+      };
+      isMobile?: boolean;
     };
     export type setViewportSizeReturnValue = void;
     export type setZoomParameters = {

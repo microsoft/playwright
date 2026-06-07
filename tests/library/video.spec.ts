@@ -503,8 +503,6 @@ it.describe('screencast', () => {
   });
 
   it('should emulate an iphone', async ({ contextFactory, playwright, browserName }, testInfo) => {
-    it.skip(browserName === 'firefox', 'isMobile is not supported in Firefox');
-
     const device = playwright.devices['iPhone 6'];
     const context = await contextFactory({
       ...device,
