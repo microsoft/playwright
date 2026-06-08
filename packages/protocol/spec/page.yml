@@ -718,6 +718,7 @@ Page:
     screencastFrame:
       parameters:
         data: binary
+        timestamp: float
         viewportWidth: int
         viewportHeight: int
 

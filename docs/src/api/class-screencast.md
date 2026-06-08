@@ -22,8 +22,8 @@ await page.screencast.stop();
 ```js
 // Capture frames
 await page.screencast.start({
-  onFrame: ({ data, viewportWidth, viewportHeight }) => {
-    console.log(`frame size: ${data.length} (${viewportWidth}x${viewportHeight})`);
+  onFrame: ({ data, timestamp, viewportWidth, viewportHeight }) => {
+    console.log(`frame size: ${data.length} (${viewportWidth}x${viewportHeight}) at ${timestamp}`);
   },
   size: { width: 800, height: 600 },
 });
@@ -36,6 +36,7 @@ await page.screencast.stop();
 - `onFrame` <[function]\([Object]\): [Promise]>
   * alias: ScreencastFrame
   - `data` <[Buffer]> JPEG-encoded frame data.
+  - `timestamp` <[float]> The timestamp of when the frame was presented by the browser, in milliseconds since the Unix epoch.
   - `viewportWidth` <[int]> Width of the page viewport at the time the frame was captured.
   - `viewportHeight` <[int]> Height of the page viewport at the time the frame was captured.
 

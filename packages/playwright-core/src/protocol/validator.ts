@@ -2299,6 +2299,7 @@ scheme.PageRouteEvent = tObject({
 });
 scheme.PageScreencastFrameEvent = tObject({
   data: tBinary,
+  timestamp: tFloat,
   viewportWidth: tInt,
   viewportHeight: tInt,
 });

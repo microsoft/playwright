@@ -4140,6 +4140,7 @@ export type PageRouteEvent = {
 };
 export type PageScreencastFrameEvent = {
   data: Binary,
+  timestamp: number,
   viewportWidth: number,
   viewportHeight: number,
 };
