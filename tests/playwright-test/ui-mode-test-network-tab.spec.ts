@@ -526,4 +526,3 @@ test('should support keyboard navigation for resource type filters', async ({ ru
   await page.keyboard.press('ArrowRight');
   await expect(filters.getByText('All', { exact: true })).toBeFocused();
 });
-

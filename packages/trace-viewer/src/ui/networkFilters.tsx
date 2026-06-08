@@ -15,6 +15,7 @@
  */
 
 import * as React from 'react';
+import { handleTabListKeyDown } from '@web/uiUtils';
 import './networkFilters.css';
 
 const resourceTypes = ['Fetch', 'HTML', 'JS', 'CSS', 'Font', 'Image'] as const;
@@ -34,23 +35,7 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
   const tabListRef = React.useRef<HTMLDivElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const tabElements = Array.from(tabListRef.current?.querySelectorAll('[role="tab"]') ?? []) as HTMLElement[];
-    const currentIndex = tabElements.findIndex(el => el === document.activeElement);
-    if (currentIndex === -1)
-      return;
-    let nextIndex = currentIndex;
-    if (e.key === 'ArrowRight')
-      nextIndex = (currentIndex + 1) % tabElements.length;
-    else if (e.key === 'ArrowLeft')
-      nextIndex = (currentIndex - 1 + tabElements.length) % tabElements.length;
-    else if (e.key === 'Home')
-      nextIndex = 0;
-    else if (e.key === 'End')
-      nextIndex = tabElements.length - 1;
-    else
-      return;
-    e.preventDefault();
-    tabElements[nextIndex].focus();
+    handleTabListKeyDown(e, tabListRef.current);
   };
 
   const isAllSelected = filterState.resourceTypes.size === 0;
