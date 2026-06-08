@@ -627,7 +627,6 @@ it('should have connection details', async ({ contextFactory, server, browserNam
 });
 
 it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode }, testInfo) => {
-  it.fail(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/6759');
   it.fail(browserName === 'webkit' && platform === 'win32');
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
@@ -639,7 +638,7 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
     expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
     expect(port).toBe(httpsServer.PORT);
   }
-  if (browserName === 'webkit' && platform === 'darwin')
+  if (browserName === 'webkit')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
   else
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
@@ -696,8 +695,6 @@ it('should return server address directly from response', async ({ page, server,
 });
 
 it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, channel }) => {
-  it.fail(browserName === 'webkit' && (platform === 'linux' || channel === 'webkit-wsl'), 'https://github.com/microsoft/playwright/issues/6759');
-
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   const response = await page.goto(httpsServer.EMPTY_PAGE);
