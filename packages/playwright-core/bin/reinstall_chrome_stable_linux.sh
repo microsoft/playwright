@@ -35,7 +35,7 @@ fi
 
 # 4. download chrome stable from dl.google.com and install it.
 cd /tmp
-curl -O https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+curl -L -O https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 apt-get install -y ./google-chrome-stable_current_amd64.deb
 rm -rf ./google-chrome-stable_current_amd64.deb
 cd -
