@@ -21,35 +21,11 @@ Playwright recommends using the official [Playwright Pytest plugin](./test-runne
 
 Get started by installing Playwright and running the example test to see it in action.
 
-<Tabs
-  groupId="package-managers"
-  defaultValue="pypi"
-  values={[
-    {label: 'PyPI', value: 'pypi'},
-    {label: 'Anaconda', value: 'anaconda'}
-  ]
-}>
-<TabItem value="pypi">
-
 Install the [Pytest plugin](https://pypi.org/project/pytest-playwright/):
 
 ```bash
 pip install pytest-playwright
 ```
-
-</TabItem>
-<TabItem value="anaconda">
-
-Install the [Pytest plugin](https://anaconda.org/Microsoft/pytest-playwright):
-
-```bash
-conda config --add channels conda-forge
-conda config --add channels microsoft
-conda install pytest-playwright
-```
-
-</TabItem>
-</Tabs>
 
 Install the required browsers:
 
