@@ -200,8 +200,9 @@ test.describe(() => {
   });
 });
 
-test('cycle handles', async ({ page, server }) => {
+test('cycle handles', async ({ page, server, trace }) => {
   test.slow();
+  test.skip(trace === 'on', 'too slow with 2000 snapshots');
 
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<div><span>hi</span></div>`.repeat(2000));
