@@ -228,7 +228,7 @@ export class Request extends SdkObject {
   }
 
   async rawRequestHeaders(progress: Progress): Promise<HeadersArray> {
-    return await this.raceWithPageClosure(progress, this._rawRequestHeaders());
+    return await this.raceWithPageClosure(progress, this.internalRawRequestHeaders());
   }
 
   async response(progress: Progress): Promise<Response | null> {
@@ -280,7 +280,7 @@ export class Request extends SdkObject {
       this._rawRequestHeadersPromise.resolve(headers || this._headers);
   }
 
-  private async _rawRequestHeaders(): Promise<HeadersArray> {
+  async internalRawRequestHeaders(): Promise<HeadersArray> {
     return this._overrides?.headers || this._rawRequestHeadersPromise;
   }
 
@@ -336,7 +336,7 @@ export class Request extends SdkObject {
   }
 
   async _requestHeadersSize(): Promise<number> {
-    return requestHeadersSize(await this._rawRequestHeaders(), this.url(), this.method());
+    return requestHeadersSize(await this.internalRawRequestHeaders(), this.url(), this.method());
   }
 }
 
@@ -553,19 +553,19 @@ export class Response extends SdkObject {
   }
 
   async serverAddr(progress: Progress): Promise<RemoteAddr | null> {
-    return (await this._request.raceWithPageClosure(progress, this._serverAddrPromise)) || null;
+    return await this._request.raceWithPageClosure(progress, this.internalServerAddr());
   }
 
   async rawResponseHeaders(progress: Progress): Promise<NameValue[]> {
-    return await this._request.raceWithPageClosure(progress, this._rawResponseHeadersPromise);
+    return await this._request.raceWithPageClosure(progress, this.internalRawResponseHeaders());
   }
 
   async httpVersion(progress: Progress): Promise<string> {
-    return await this._request.raceWithPageClosure(progress, this._httpVersion());
+    return await this._request.raceWithPageClosure(progress, this.internalHttpVersion());
   }
 
   async sizes(progress: Progress): Promise<ResourceSizes> {
-    return await this._request.raceWithPageClosure(progress, this._sizes());
+    return await this._request.raceWithPageClosure(progress, this.internalSizes());
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
@@ -634,6 +634,14 @@ export class Response extends SdkObject {
     return await this._securityDetailsPromise || null;
   }
 
+  async internalServerAddr(): Promise<RemoteAddr | null> {
+    return await this._serverAddrPromise || null;
+  }
+
+  async internalRawResponseHeaders(): Promise<HeadersArray> {
+    return await this._rawResponseHeadersPromise;
+  }
+
   internalBody(): Promise<Buffer> {
     if (!this._contentPromise) {
       this._contentPromise = this._finishedPromise.then(async () => {
@@ -661,7 +669,7 @@ export class Response extends SdkObject {
     return this._request.frame();
   }
 
-  private async _httpVersion(): Promise<string> {
+  async internalHttpVersion(): Promise<string> {
     const httpVersion = await this._httpVersionPromise || null;
     if (!httpVersion)
       return 'HTTP/1.1';
@@ -685,7 +693,7 @@ export class Response extends SdkObject {
     return responseHeadersSize(await this._rawResponseHeadersPromise, this.statusText());
   }
 
-  private async _sizes(): Promise<ResourceSizes> {
+  async internalSizes(): Promise<ResourceSizes> {
     const requestHeadersSize = await this._request._requestHeadersSize();
     const responseHeadersSize = await this.responseHeadersSize();
 
