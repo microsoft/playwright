@@ -77,6 +77,13 @@ export class HarRecorder implements HarTracerDelegate {
     this._fs.writeFile(path.join(this._resourcesDir, sha1), buffer, true /* skipIfExists */);
   }
 
+  onContentBlobAppend(sha1: string, text: string) {
+    if (!this._writtenContentEntries.size)
+      this._fs.mkdir(this._resourcesDir);
+    this._writtenContentEntries.add(sha1);
+    this._fs.appendFile(path.join(this._resourcesDir, sha1), text);
+  }
+
   private async _flush() {
     if (this._isFlushed)
       return;
