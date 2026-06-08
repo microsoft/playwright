@@ -489,7 +489,7 @@ export class HarTracer {
           // - there are always 4 bytes for the masking key (see <https://www.rfc-editor.org/info/rfc6455/#section-5.1>)
           // - there may be an additional 16 or 64 bits for payload length if it's too long to fit in the above 7 bits (or if it also can't fit in 16 bits)
           let headerSize = 6;
-          if (length > 2 ** 16)
+          if (length >= 2 ** 16)
             headerSize += 8;
           else if (length > 125)
             headerSize += 2;
