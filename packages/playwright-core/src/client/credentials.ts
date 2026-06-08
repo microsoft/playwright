@@ -42,8 +42,4 @@ export class Credentials implements api.Credentials {
   async delete(id: string): Promise<void> {
     await this._browserContext._channel.credentialsDelete({ id });
   }
-
-  async setUserVerified(value: boolean): Promise<void> {
-    await this._browserContext._channel.credentialsSetUserVerified({ value });
-  }
 }

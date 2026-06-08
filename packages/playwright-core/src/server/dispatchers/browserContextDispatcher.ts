@@ -422,10 +422,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await progress.race(this._context.credentials.delete(params.id));
   }
 
-  async credentialsSetUserVerified(params: channels.BrowserContextCredentialsSetUserVerifiedParams, progress: Progress): Promise<channels.BrowserContextCredentialsSetUserVerifiedResult> {
-    this._context.credentials.setUserVerified(params.value);
-  }
-
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, progress: Progress): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);

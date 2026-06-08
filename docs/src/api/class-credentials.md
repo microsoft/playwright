@@ -71,8 +71,6 @@ await page.goto('https://example.com/login');
   usernameless passkey flows resolve them.
 - Fresh keys are ECDSA P-256 (COSE algorithm `-7`). An omitted `id` or `userHandle` is
   filled with 16 random bytes.
-- User verification is **on** by default — every assertion and attestation reports the user as
-  verified. Toggle this with [`method: Credentials.setUserVerified`].
 
 ## async method: Credentials.install
 * since: v1.61
@@ -158,41 +156,3 @@ Only return credentials for this relying party id.
 - `id` <[string]>
 
 Only return the credential with this base64url-encoded id.
-
-## async method: Credentials.setUserVerified
-* since: v1.61
-
-Controls whether the virtual authenticator reports the user as **verified**. This is a
-context-wide setting (default `true`) that toggles the user-verified (UV) flag in the
-`authenticatorData` of every subsequent `navigator.credentials.create()` and
-`navigator.credentials.get()` ceremony.
-
-When set to `false`, ceremonies still **succeed**, but the resulting assertion/attestation reports
-that user verification was *not* performed — the user-present (UP) flag stays set. It does **not**
-simulate a cancelled or denied prompt, and it does not reject the call. Use it to test how your
-relying party or app handles an assertion that lacks user verification, for example requiring
-step-up authentication.
-
-**Usage**
-
-```js
-await context.credentials.install();
-await context.credentials.create({ rpId: 'example.com' });
-
-// Report assertions as NOT user-verified, e.g. a presence-only tap.
-await context.credentials.setUserVerified(false);
-
-const page = await context.newPage();
-await page.goto('https://example.com/login');
-// Assert the app requires step-up auth or rejects the unverified sign-in.
-
-// Restore verified assertions for later steps.
-await context.credentials.setUserVerified(true);
-```
-
-### param: Credentials.setUserVerified.value
-* since: v1.61
-- `value` <[boolean]>
-
-`true` to report assertions and attestations as user-verified (default), `false` to report them as
-not user-verified.
