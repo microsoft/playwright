@@ -316,9 +316,11 @@ BrowserContext:
 
     credentialsInstall:
       title: Install virtual WebAuthn authenticator
+      group: configuration
 
     credentialsCreate:
       title: Create virtual credential for "{rpId}"
+      group: configuration
       parameters:
         rpId: string
         id: string?
@@ -330,6 +332,7 @@ BrowserContext:
 
     credentialsGet:
       title: Get virtual credentials
+      group: configuration
       parameters:
         rpId: string?
         id: string?
@@ -340,13 +343,9 @@ BrowserContext:
 
     credentialsDelete:
       title: Delete virtual credential
+      group: configuration
       parameters:
         id: string
-
-    credentialsSetUserVerified:
-      title: Set virtual authenticator user verified
-      parameters:
-        value: boolean
 
   events:
 

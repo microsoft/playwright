@@ -29,41 +29,6 @@ it('should not intercept navigator.credentials without install()', async ({ cont
   expect(intercepted).toBe(false);
 });
 
-it('should toggle user-verified flag', async ({ contextFactory, server }) => {
-  const context = await contextFactory();
-  await context.credentials.install();
-  const seeded = await context.credentials.create({ rpId: server.HOSTNAME });
-  await context.credentials.setUserVerified(false);
-  const page = await context.newPage();
-  await page.goto(server.EMPTY_PAGE);
-
-  const flagsByte = await page.evaluate(async ({ rpId, credentialId }) => {
-    const b64UrlToBytes = (s: string) => {
-      let str = s.replace(/-/g, '+').replace(/_/g, '/');
-      while (str.length % 4)
-        str += '=';
-      const bin = atob(str);
-      const u8 = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++)
-        u8[i] = bin.charCodeAt(i);
-      return u8;
-    };
-    const cred = await navigator.credentials.get({
-      publicKey: {
-        challenge: new Uint8Array(32),
-        rpId,
-        allowCredentials: [{ type: 'public-key', id: b64UrlToBytes(credentialId) }],
-      },
-    }) as PublicKeyCredential;
-    const resp = cred.response as AuthenticatorAssertionResponse;
-    return new Uint8Array(resp.authenticatorData)[32];
-  }, { rpId: server.HOSTNAME, credentialId: seeded.id });
-
-  // UV bit (0x04) should be unset; UP bit (0x01) still set.
-  expect(flagsByte & 0x04).toBe(0);
-  expect(flagsByte & 0x01).toBe(0x01);
-});
-
 it('should seed a known credential and authenticate', async ({ contextFactory, server }) => {
   // This is the easiest way to create credentials. In practice, this
   // probably comes from environment.

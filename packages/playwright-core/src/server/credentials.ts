@@ -44,7 +44,6 @@ export class Credentials {
   private _initScripts: InitScript[] = [];
   private _installed = false;
   private _registry = new Map<string, CredentialRecord>();
-  private _userVerified = true;
 
   constructor(browserContext: BrowserContext) {
     this._browserContext = browserContext;
@@ -89,10 +88,6 @@ export class Credentials {
 
   async delete(id: string): Promise<void> {
     this._registry.delete(id);
-  }
-
-  setUserVerified(value: boolean) {
-    this._userVerified = value;
   }
 
   async dispose(progress: Progress) {
@@ -160,7 +155,7 @@ export class Credentials {
       crossOrigin: false,
     }));
     const rpIdHash = crypto.createHash('sha256').update(rpId).digest();
-    const flags = 0x01 | (this._userVerified ? 0x04 : 0) | 0x40; // UP | UV? | AT
+    const flags = 0x01 | 0x04 | 0x40; // UP | UV | AT
     const signCountBuf = u32ToBytes(record.signCount);
     const cosePublicKey = encodeCoseEs256PublicKey(pair.publicKey);
     const credIdLenBuf = Buffer.from([(credentialId.length >> 8) & 0xff, credentialId.length & 0xff]);
@@ -205,7 +200,7 @@ export class Credentials {
       crossOrigin: false,
     }));
     const rpIdHash = crypto.createHash('sha256').update(rpId).digest();
-    const flags = 0x01 | (this._userVerified ? 0x04 : 0); // UP | UV?
+    const flags = 0x01 | 0x04; // UP | UV
     candidate.signCount += 1;
     const signCountBuf = u32ToBytes(candidate.signCount);
     const authData = Buffer.concat([rpIdHash, Buffer.from([flags]), signCountBuf]);

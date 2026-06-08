@@ -19596,38 +19596,6 @@ export interface Credentials {
    * `install()` populates the authenticator, but the page will never see those credentials.
    */
   install(): Promise<void>;
-
-  /**
-   * Controls whether the virtual authenticator reports the user as **verified**. This is a context-wide setting
-   * (default `true`) that toggles the user-verified (UV) flag in the `authenticatorData` of every subsequent
-   * `navigator.credentials.create()` and `navigator.credentials.get()` ceremony.
-   *
-   * When set to `false`, ceremonies still **succeed**, but the resulting assertion/attestation reports that user
-   * verification was *not* performed — the user-present (UP) flag stays set. It does **not** simulate a cancelled or
-   * denied prompt, and it does not reject the call. Use it to test how your relying party or app handles an assertion
-   * that lacks user verification, for example requiring step-up authentication.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await context.credentials.install();
-   * await context.credentials.create({ rpId: 'example.com' });
-   *
-   * // Report assertions as NOT user-verified, e.g. a presence-only tap.
-   * await context.credentials.setUserVerified(false);
-   *
-   * const page = await context.newPage();
-   * await page.goto('https://example.com/login');
-   * // Assert the app requires step-up auth or rejects the unverified sign-in.
-   *
-   * // Restore verified assertions for later steps.
-   * await context.credentials.setUserVerified(true);
-   * ```
-   *
-   * @param value `true` to report assertions and attestations as user-verified (default), `false` to report them as not
-   * user-verified.
-   */
-  setUserVerified(value: boolean): Promise<void>;
 }
 
 /**

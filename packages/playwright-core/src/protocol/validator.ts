@@ -956,10 +956,6 @@ scheme.BrowserContextCredentialsDeleteParams = tObject({
   id: tString,
 });
 scheme.BrowserContextCredentialsDeleteResult = tOptional(tObject({}));
-scheme.BrowserContextCredentialsSetUserVerifiedParams = tObject({
-  value: tBoolean,
-});
-scheme.BrowserContextCredentialsSetUserVerifiedResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
