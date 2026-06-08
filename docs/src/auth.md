@@ -397,6 +397,75 @@ export const test = baseTest.extend<{}, { workerStorageState: string }>({
 });
 ```
 
+### Passkeys (WebAuthn)
+* langs: js
+
+**When to use**
+- Your app signs users in with passkeys (WebAuthn), and you want tests to start already enrolled.
+
+**Details**
+
+[`property: BrowserContext.credentials`] is a virtual WebAuthn authenticator. Unlike cookie or local storage state, a passkey is seeded **imperatively** with [`method: Credentials.create`] and [`method: Credentials.install`], so it lives in a [`context` fixture override](./test-fixtures.md#overriding-fixtures) rather than in the `storageState` config option.
+
+If your backend already provisioned a passkey for the test user, seed it directly — no setup project required:
+
+```js title="playwright/fixtures.ts"
+import { test as baseTest } from '@playwright/test';
+export * from '@playwright/test';
+
+export const test = baseTest.extend({
+  context: async ({ context }, use) => {
+    // A passkey your backend provisioned for the test user.
+    await context.credentials.create({
+      rpId: 'example.com',
+      id: process.env.PASSKEY_ID,
+      userHandle: process.env.PASSKEY_USER_HANDLE,
+      privateKey: process.env.PASSKEY_PRIVATE_KEY,
+      publicKey: process.env.PASSKEY_PUBLIC_KEY,
+    });
+    await context.credentials.install();
+    await use(context);
+  },
+});
+```
+
+Otherwise, let the app register a passkey once in a [setup project](#basic-shared-account-in-all-tests), capture it with [`method: Credentials.get`], and save it to disk:
+
+```js title="tests/passkey.setup.ts"
+import { test as setup } from '@playwright/test';
+import fs from 'fs';
+
+setup('enroll passkey', async ({ context, page }) => {
+  await context.credentials.install();
+  await page.goto('https://example.com/register');
+  // The app calls navigator.credentials.create() to register the passkey.
+  await page.getByRole('button', { name: 'Create a passkey' }).click();
+
+  // Read back the registered passkey, including its private key, and save it.
+  const [credential] = await context.credentials.get({ rpId: 'example.com' });
+  fs.writeFileSync('playwright/.auth/passkey.json', JSON.stringify(credential));
+});
+```
+
+Then seed the captured passkey into every test's context:
+
+```js title="playwright/fixtures.ts"
+import { test as baseTest } from '@playwright/test';
+import fs from 'fs';
+export * from '@playwright/test';
+
+export const test = baseTest.extend({
+  context: async ({ context }, use) => {
+    const credential = JSON.parse(fs.readFileSync('playwright/.auth/passkey.json', 'utf8'));
+    await context.credentials.create(credential);
+    await context.credentials.install();
+    await use(context);
+  },
+});
+```
+
+Declare the `setup` project as a [dependency](./test-projects.md#dependencies) of your testing projects, just like in the [basic flow](#basic-shared-account-in-all-tests). The saved `passkey.json` contains a private key, so keep it under `playwright/.auth` and out of source control (see [Core concepts](#core-concepts)).
+
 ### Multiple signed in roles
 * langs: js
 
