@@ -120,7 +120,7 @@ export const test = base
             await testProcess.waitForOutput('DevTools listening on');
             const line = testProcess.output.split('\n').find(l => l.includes('DevTools listening on'));
             const wsEndpoint = line!.split(' ')[3];
-            browser = await chromium.connectOverCDP(wsEndpoint);
+            browser = await chromium.connectOverCDP(wsEndpoint, { isLocal: true });
             const [context] = browser.contexts();
             [page] = context.pages();
           }

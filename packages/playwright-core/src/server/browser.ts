@@ -65,6 +65,7 @@ export type BrowserOptions = {
   originalLaunchOptions: types.LaunchOptions;
   userDataDir?: string;
   noDefaults?: boolean;
+  isBrowserCollocatedWithServer?: boolean,
 };
 
 export abstract class Browser extends SdkObject {
@@ -80,13 +81,14 @@ export abstract class Browser extends SdkObject {
   private _startedClosing = false;
   private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
   _closeReason: string | undefined;
-  _isBrowserCollocatedWithServer: boolean = true;
+  readonly _isBrowserCollocatedWithServer: boolean;
   private _server: BrowserServer;
 
   constructor(parent: SdkObject, options: BrowserOptions) {
     super(parent, 'browser');
     this.attribution.browser = this;
     this.options = options;
+    this._isBrowserCollocatedWithServer = options.isBrowserCollocatedWithServer ?? true;
     this.instrumentation.onBrowserOpen(this);
     this._server = new BrowserServer(this);
   }

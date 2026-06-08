@@ -169,6 +169,41 @@ test('should give a clear error for downloads when browser is not co-located wit
   }
 });
 
+test('should cancel downloads when the browser is not co-located with the server', async ({ browserType, server }, testInfo) => {
+  server.setRoute('/downloadWithFilename', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+    res.end(`Hello world`);
+  });
+
+  const downloadFailure = async (isLocal: boolean) => {
+    const port = 9339 + testInfo.workerIndex;
+    const browserServer = await browserType.launch({
+      args: ['--remote-debugging-port=' + port]
+    });
+    try {
+      const browser = await browserType.connectOverCDP({
+        endpointURL: `http://127.0.0.1:${port}/`,
+        isLocal,
+      });
+      const page = await browser.contexts()[0].newPage();
+      await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.click('a')
+      ]);
+      return await download.failure();
+    } finally {
+      await browserServer.close();
+    }
+  };
+
+  // When co-located, the browser shares the filesystem and the download is saved.
+  expect(await downloadFailure(true)).toBe(null);
+  // Otherwise the file would be inaccessible from the server, so the download is denied.
+  expect(await downloadFailure(false)).toBe('canceled');
+});
+
 test('should connect to an existing cdp session twice', async ({ browserType, mode, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({

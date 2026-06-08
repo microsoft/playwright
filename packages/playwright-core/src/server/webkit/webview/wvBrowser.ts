@@ -150,6 +150,7 @@ export async function connectOverRDP(progress: Progress, parent: SdkObject, para
       protocolLogger: helper.debugProtocolLogger(),
       browserLogsCollector: new RecentLogsCollector(),
       artifactsDir,
+      isBrowserCollocatedWithServer: !!params.isLocal,
       downloadsPath: artifactsDir,
       tracesDir: artifactsDir,
       originalLaunchOptions: {},
@@ -164,8 +165,6 @@ export async function connectOverRDP(progress: Progress, parent: SdkObject, para
     return created;
   })());
 
-  if (!params.isLocal)
-    browser._isBrowserCollocatedWithServer = false;
   browser.on(Browser.Events.Disconnected, doCleanup);
   return browser;
 }

@@ -152,14 +152,13 @@ export class Chromium extends BrowserType {
         browserLogsCollector: new RecentLogsCollector(),
         artifactsDir,
         downloadsPath: options.downloadsPath || artifactsDir,
+        isBrowserCollocatedWithServer: !!options.isLocal,
         tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
         noDefaults: options.noDefaults,
       };
       validateBrowserContextOptions(persistent, browserOptions);
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, transport, browserOptions));
-      if (!options.isLocal)
-        browser._isBrowserCollocatedWithServer = false;
       browser.on(Browser.Events.Disconnected, doCleanup);
       return browser;
     } catch (error) {

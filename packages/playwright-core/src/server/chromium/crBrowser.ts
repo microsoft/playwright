@@ -62,8 +62,6 @@ export class CRBrowser extends Browser {
     const connection = new CRConnection(parent, transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(parent, connection, options);
     browser._devtools = devtools;
-    if (browser.isClank())
-      browser._isBrowserCollocatedWithServer = false;
     const session = connection.rootSession;
     if ((options as any).__testHookOnConnectToBrowser)
       await (options as any).__testHookOnConnectToBrowser();
@@ -351,10 +349,11 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
     const promises: Promise<any>[] = [super.initialize()];
     if (this._browser.options.name !== 'clank' && this._options.acceptDownloads !== 'internal-browser-default') {
+      const isLocal = this._browser._isBrowserCollocatedWithServer;
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
-        behavior: this._options.acceptDownloads === 'accept' ? 'allowAndName' : 'deny',
+        behavior: (this._options.acceptDownloads === 'accept' && isLocal) ? 'allowAndName' : 'deny',
         browserContextId: this._browserContextId,
-        downloadPath: this._browser.options.downloadsPath,
+        downloadPath: isLocal ? this._browser.options.downloadsPath : undefined,
         eventsEnabled: true,
       }));
     }

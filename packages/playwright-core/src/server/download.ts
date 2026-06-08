@@ -35,7 +35,8 @@ export class Download {
     if (!page.browserContext._browser._isBrowserCollocatedWithServer) {
       this.artifact.markMissingFileErrorMessage(
           `Downloaded file is not accessible from the Playwright server because the browser is running on a different host ` +
-          `(e.g. connected over CDP to a remote browser). Saving downloads requires the browser and the Playwright server to share a filesystem.`);
+          `(e.g. connected over CDP to a remote browser). If the browser has access to the Playwright server's filesystem, ` +
+          `pass { isLocal: true } to connectOverCDP() to enable saving downloads.`);
     }
     this._page = page;
     this.url = url;

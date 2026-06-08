@@ -357,6 +357,7 @@ export class AndroidDevice extends SdkObject {
         persistent: { ...options, noDefaultViewport: true },
         artifactsDir,
         downloadsPath: artifactsDir,
+        isBrowserCollocatedWithServer: false,
         tracesDir: artifactsDir,
         browserProcess: new ClankBrowserProcess(androidBrowser),
         proxy: options.proxy,
