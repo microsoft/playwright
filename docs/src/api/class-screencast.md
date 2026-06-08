@@ -56,7 +56,6 @@ The quality of the image, between 0-100.
 
 ### option: Screencast.start.size
 * since: v1.59
-* langs: js
 - `size` ?<[Object]>
   * alias-csharp: ScreencastSize
   - `width` <[int]> Max frame width in pixels.
