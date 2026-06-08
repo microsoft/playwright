@@ -18,7 +18,6 @@ on:
 
 env:
   FORCE_COLOR: 1
-  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
   test_clock_frozen_time_linux:
@@ -93,10 +92,9 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium
+        setup-command: npx install-electron --no
         command: npm run etest
         bot-name: "electron-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        ELECTRON_SKIP_BINARY_DOWNLOAD:

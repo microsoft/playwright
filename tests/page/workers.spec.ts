@@ -189,6 +189,7 @@ it('should clear upon cross-process navigation', async function({ server, page }
 
 it('should attribute network activity for worker inside iframe to the iframe', async function({ page, server, browserName, browserMajorVersion }) {
   it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 149, 'needs TargetInfo.parentFrameId for workers');
 
   await page.goto(server.PREFIX + '/empty.html');
   const [worker, frame] = await Promise.all([

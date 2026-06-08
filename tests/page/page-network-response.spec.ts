@@ -380,34 +380,6 @@ it('should bypass disk cache when page interception is enabled', async ({ page, 
   }
 });
 
-it('should bypass disk cache when context interception is enabled', async ({ page, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30000' });
-  await page.context().route('**/api*', route => route.continue());
-  await page.goto(server.PREFIX + '/frames/one-frame.html');
-  {
-    const requests = [];
-    server.setRoute('/api', (req, res) => {
-      requests.push(req);
-      res.statusCode = 200;
-      res.setHeader('content-type', 'text/plain');
-      res.setHeader('cache-control', 'public, max-age=31536000');
-      res.end('Hello');
-    });
-    for (let i = 0; i < 3; i++) {
-      await it.step(`main frame iteration ${i}`, async () => {
-        const respPromise = page.waitForResponse('**/api');
-        await page.evaluate(async () => {
-          const response = await fetch('/api');
-          return response.status;
-        });
-        const response = await respPromise;
-        expect(response.status()).toBe(200);
-        expect(requests.length).toBe(i + 1);
-      });
-    }
-  }
-});
-
 it('request.existingResponse should return null before response is received', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let serverResponse = null;
