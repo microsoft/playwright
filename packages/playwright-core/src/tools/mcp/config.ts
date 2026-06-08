@@ -265,6 +265,10 @@ function resolveBrowserParam(browserOption: string | undefined): { browserName?:
       return { browserName: 'chromium', channel: 'chrome-for-testing' };
     case 'firefox':
       return { browserName: 'firefox' };
+    case 'moz-firefox':
+    case 'moz-firefox-beta':
+    case 'moz-firefox-nightly':
+      return { browserName: 'firefox', channel: browserOption };
     case 'webkit':
       return { browserName: 'webkit' };
     default:
@@ -472,7 +476,9 @@ function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
     },
   };
 
-  if (browser.browserName !== 'chromium' && browser.launchOptions)
+  // Firefox supports the `moz-firefox*` channels via WebDriver BiDi, so keep
+  // those; otherwise channels are a Chromium-only concept and should be dropped.
+  if (browser.browserName !== 'chromium' && browser.launchOptions && !browser.launchOptions.channel?.startsWith('moz-'))
     delete browser.launchOptions.channel;
 
   return {
