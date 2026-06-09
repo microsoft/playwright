@@ -14731,10 +14731,6 @@ export interface Locator {
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the
    * text.
    *
-   * When [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
-   * `true`, anything inside `{}` is treated as a key name (same format as
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)).
-   *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press).
    *
@@ -14743,11 +14739,6 @@ export interface Locator {
    * ```js
    * await locator.pressSequentially('Hello'); // Types instantly
    * await locator.pressSequentially('World', { delay: 100 }); // Types slower, like a user
-   *
-   * // Mix characters and named keys
-   * await locator.pressSequentially('Hello{Enter}World', { namedKeys: true });
-   * // Use modifier combos
-   * await locator.pressSequentially('{Control+A}{Delete}Hello', { namedKeys: true });
    * ```
    *
    * An example of typing into a text field and then submitting the form:
@@ -14758,10 +14749,7 @@ export interface Locator {
    * await locator.press('Enter');
    * ```
    *
-   * @param text String of characters to sequentially press into a focused element. When
-   * [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
-   * `true`, anything inside `{}` is treated as a key name (same format as
-   * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)).
+   * @param text String of characters to sequentially press into a focused element.
    * @param options
    */
   pressSequentially(text: string, options?: {
@@ -14769,14 +14757,6 @@ export interface Locator {
      * Time to wait between key presses in milliseconds. Defaults to 0.
      */
     delay?: number;
-
-    /**
-     * When [`namedKeys`](https://playwright.dev/docs/api/class-locator#locator-press-sequentially-option-named-keys) is
-     * `true`, anything inside `{}` is treated as a key name (same format as
-     * [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)). Use `{{` to type a
-     * literal brace character. Defaults to `false`.
-     */
-    namedKeys?: boolean;
 
     /**
      * This option has no effect.
@@ -19963,10 +19943,6 @@ export interface Keyboard {
    *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
    *
-   * When [`namedKeys`](https://playwright.dev/docs/api/class-keyboard#keyboard-type-option-named-keys) is `true`,
-   * anything inside `{}` is treated as a key name (same format as
-   * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)).
-   *
    * To press a special key, like `Control` or `ArrowDown`, use
    * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press).
    *
@@ -19975,9 +19951,6 @@ export interface Keyboard {
    * ```js
    * await page.keyboard.type('Hello'); // Types instantly
    * await page.keyboard.type('World', { delay: 100 }); // Types slower, like a user
-   *
-   * // Mix text and special keys
-   * await page.keyboard.type('Hello{Enter}World', { namedKeys: true });
    * ```
    *
    * **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
@@ -19992,14 +19965,6 @@ export interface Keyboard {
      * Time to wait between key presses in milliseconds. Defaults to 0.
      */
     delay?: number;
-
-    /**
-     * When [`namedKeys`](https://playwright.dev/docs/api/class-keyboard#keyboard-type-option-named-keys) is `true`,
-     * anything inside `{}` is treated as a key name (same format as
-     * [keyboard.press(key[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-press)). Use `{{` to type
-     * a literal brace character. Defaults to `false`.
-     */
-    namedKeys?: boolean;
   }): Promise<void>;
 
   /**

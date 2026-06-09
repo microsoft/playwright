@@ -787,19 +787,3 @@ it('should close dialog on Escape key press in contenteditable', {
   await expect(dialog).toHaveJSProperty('open', false);
   await expect(widget).not.toBeVisible();
 });
-
-it('should type with namedKeys', async ({ page }) => {
-  await page.evaluate(() => {
-    const textarea = document.createElement('textarea');
-    document.body.appendChild(textarea);
-    textarea.focus();
-  });
-  await page.keyboard.type('He{{ll}o{Enter}Wor{ld', { namedKeys: true });
-  expect(await page.evaluate(() => document.querySelector('textarea')!.value)).toBe('He{ll}o\nWor{ld');
-});
-
-it('locator should pressSequentially with namedKeys', async ({ page }) => {
-  await page.setContent(`<textarea></textarea>`);
-  await page.locator('textarea').pressSequentially('Hello{Enter}World', { namedKeys: true });
-  expect(await page.$eval('textarea', el => el.value)).toBe('Hello\nWorld');
-});
