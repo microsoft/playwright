@@ -99,8 +99,7 @@ it('should inherit http credentials from browser context', async function({ brow
   await context.close();
 });
 
-it('should inherit touch support from browser context', async function({ browser, server, browserName, browserMajorVersion }) {
-  it.fixme(browserName === 'firefox' && browserMajorVersion >= 148, 'https://bugzilla.mozilla.org/show_bug.cgi?id=2014330');
+it('should inherit touch support from browser context', async function({ browser, server }) {
   const context = await browser.newContext({
     viewport: { width: 400, height: 500 },
     hasTouch: true
