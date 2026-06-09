@@ -318,8 +318,10 @@ it.describe('page screenshot', () => {
     }
   });
 
-  it('should work for webgl', async ({ page, server, browserName, platform }) => {
+  it('should work for webgl', async ({ page, server, browserName, platform, isElectron }) => {
     it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'WebGL is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
+    it.skip(isElectron, 'different rendering in electron');
+
     await page.setViewportSize({ width: 640, height: 480 });
     await page.goto(server.PREFIX + '/screenshots/webgl.html');
     const screenshot = await page.screenshot();

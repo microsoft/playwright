@@ -1366,7 +1366,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   credentialsCreate(params: BrowserContextCredentialsCreateParams, progress?: Progress): Promise<BrowserContextCredentialsCreateResult>;
   credentialsGet(params: BrowserContextCredentialsGetParams, progress?: Progress): Promise<BrowserContextCredentialsGetResult>;
   credentialsDelete(params: BrowserContextCredentialsDeleteParams, progress?: Progress): Promise<BrowserContextCredentialsDeleteResult>;
-  credentialsSetUserVerified(params: BrowserContextCredentialsSetUserVerifiedParams, progress?: Progress): Promise<BrowserContextCredentialsSetUserVerifiedResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1785,13 +1784,6 @@ export type BrowserContextCredentialsDeleteOptions = {
 
 };
 export type BrowserContextCredentialsDeleteResult = void;
-export type BrowserContextCredentialsSetUserVerifiedParams = {
-  value: boolean,
-};
-export type BrowserContextCredentialsSetUserVerifiedOptions = {
-
-};
-export type BrowserContextCredentialsSetUserVerifiedResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;

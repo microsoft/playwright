@@ -75,6 +75,7 @@ export class HarTracer {
   private _pageEntrySymbol: symbol;
   private _baseURL: string | undefined;
   private _page: Page | null;
+  private _saveOpenWebSocketMessagesFunctions = new Set<() => void>();
 
   constructor(context: BrowserContext | APIRequestContext, page: Page | null, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
@@ -438,7 +439,28 @@ export class HarTracer {
     const pageEntry = this._createPageEntryIfNeeded(page);
     const harEntry = createHarEntry(pageEntry?.id, method, url, page.mainFrame().guid, this._options, webSocket.wallTimeMs());
     harEntry._resourceType = 'websocket';
-    harEntry._webSocketMessages = [];
+
+    const messages: har.WebSocketMessage[] = [];
+    if (this._options.content === 'embed')
+      harEntry._webSocketMessages = messages;
+
+    let saveMessages: (() => void) | undefined;
+    if (this._options.content === 'attach') {
+      saveMessages = () => {
+        if (!messages.length)
+          return;
+
+        const buffer = Buffer.from(JSON.stringify(messages));
+        const sha1 = calculateSha1(buffer) + '.json';
+        if (this._options.includeTraceInfo)
+          harEntry.response.content._sha1 = sha1;
+        else
+          harEntry.response.content._file = sha1;
+        if (this._started)
+          this._delegate.onContentBlob(sha1, buffer);
+      };
+      this._saveOpenWebSocketMessagesFunctions.add(saveMessages);
+    }
 
     let oldestWallTimeMs = Infinity;
     let newestWallTimeMs = -Infinity;
@@ -475,12 +497,17 @@ export class HarTracer {
         }
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameSent, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
-        harEntry._webSocketMessages!.push({ type: 'send', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+        if (this._options.content !== 'omit')
+          messages.push({ type: 'send', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+
         updateTime(wallTimeMs);
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameReceived, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
-        harEntry._webSocketMessages!.push({ type: 'receive', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+        if (this._options.content !== 'omit')
+          messages.push({ type: 'receive', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+
         updateTime(wallTimeMs);
+
         if (!this._options.omitSizes) {
           const length = (opcode === 1) ? Buffer.byteLength(data, 'utf8') : base64ByteLength(data);
 
@@ -489,7 +516,7 @@ export class HarTracer {
           // - there are always 4 bytes for the masking key (see <https://www.rfc-editor.org/info/rfc6455/#section-5.1>)
           // - there may be an additional 16 or 64 bits for payload length if it's too long to fit in the above 7 bits (or if it also can't fit in 16 bits)
           let headerSize = 6;
-          if (length > 2 ** 16)
+          if (length >= 2 ** 16)
             headerSize += 8;
           else if (length > 125)
             headerSize += 2;
@@ -502,6 +529,11 @@ export class HarTracer {
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.Close, () => {
         eventsHelper.removeEventListeners(eventListeners);
+
+        if (saveMessages) {
+          this._saveOpenWebSocketMessagesFunctions.delete(saveMessages);
+          saveMessages();
+        }
 
         if (this._started)
           this._delegate.onEntryFinished(harEntry);
@@ -633,6 +665,12 @@ export class HarTracer {
   }
 
   stop() {
+    // Unlike other requests that have a single response, a WebSocket can receive multiple frames.
+    // As such, we don't finish the entry until the WebSocket is closed, which delays when the captured frames are saved.
+    // Make sure to save at least what has been captured so far.
+    for (const saveOpenWebSocketMessages of this._saveOpenWebSocketMessagesFunctions)
+      saveOpenWebSocketMessages();
+
     this._started = false;
     eventsHelper.removeEventListeners(this._eventListeners);
     this._barrierPromises.clear();
@@ -665,6 +703,7 @@ export class HarTracer {
       }
     }
     this._pageEntries = [];
+    this._saveOpenWebSocketMessagesFunctions.clear();
     return log;
   }
 

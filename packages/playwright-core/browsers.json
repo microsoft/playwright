@@ -38,14 +38,14 @@
     },
     {
       "name": "firefox-beta",
-      "revision": "1522",
+      "revision": "1524",
       "installByDefault": false,
       "browserVersion": "152.0b1",
       "title": "Firefox Beta"
     },
     {
       "name": "webkit",
-      "revision": "2302",
+      "revision": "2306",
       "installByDefault": true,
       "revisionOverrides": {
         "mac14": "2251",

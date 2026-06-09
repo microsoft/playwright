@@ -30,7 +30,6 @@ concurrency:
 
 env:
   FORCE_COLOR: 1
-  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
   DEBUG: pw:mcp:error
 
 jobs:

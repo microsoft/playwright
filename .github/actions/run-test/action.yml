@@ -1,6 +1,9 @@
 name: 'Run browser tests'
 description: 'Run browser tests'
 inputs:
+  setup-command:
+    description: 'Extra setup command to run before tests'
+    required: false
   command:
     description: 'Command to run tests'
     required: true
@@ -55,6 +58,10 @@ runs:
         echo "::endgroup::"
       shell: bash
     - run: echo "PLAYWRIGHT_SETUP_COMPLETE=true" >> $GITHUB_ENV
+      shell: bash
+    - name: Run setup command
+      if: inputs.setup-command != ''
+      run: ${{ inputs.setup-command }}
       shell: bash
     - name: Run tests
       if: inputs.shell == 'bash'

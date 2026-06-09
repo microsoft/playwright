@@ -10,9 +10,6 @@ on:
   release:
     types: [published]
 
-env:
-  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-
 jobs:
   publish-npm-and-driver:
     name: "publish NPM and driver"
