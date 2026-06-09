@@ -147,6 +147,10 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
   const browser = await connectToBrowser(playwrightObject, remoteOptions);
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
+  // A browser started via `launchServer` exposes no contexts until one is
+  // created, so create one when attaching to such a server.
+  if (!browser.contexts().length)
+    await browser.newContext(config.browser.contextOptions);
   return { browser, browserInfo: browserInfo(browser, config), canBind: false, ownership: 'attached' };
 }
 
