@@ -16,8 +16,6 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it.skip(({ mode }) => mode.startsWith('service'));
-
 it('should not intercept navigator.credentials without install()', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   // Seed a credential, but do not install the interceptor.

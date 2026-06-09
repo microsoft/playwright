@@ -74,7 +74,6 @@ export const test = contextTest.extend<CLITestArgs>({
 
   runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions }, run, testInfo) => {
     testInfo.slow();
-    testInfo.skip(mode.startsWith('service'));
 
     let cli: CLIMock | undefined;
     await run(cliArgs => {

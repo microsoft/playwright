@@ -253,7 +253,6 @@ it('should behave the same way for headers and allHeaders', async ({ page, serve
 it('should provide a Response with a file URL', async ({ page, asset, isAndroid, isElectron, isWindows, browserName, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
   it.skip(browserName === 'firefox', 'Firefox does return null for file:// URLs');
-  it.skip(mode.startsWith('service'));
   it.skip(channel === 'webkit-wsl');
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;

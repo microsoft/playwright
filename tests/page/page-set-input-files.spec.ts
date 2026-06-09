@@ -145,7 +145,6 @@ test('should upload a file after popup', async ({ page, server, asset }) => {
 
 test('should upload large file', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
-  test.skip(mode.startsWith('service'));
   test.slow();
 
   await page.goto(server.PREFIX + '/input/fileupload.html');
@@ -202,7 +201,6 @@ test('should throw an error if the file does not exist', async ({ page, server, 
 
 test('should upload large file with relative path', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
-  test.skip(mode.startsWith('service'));
   test.slow();
 
   await page.goto(server.PREFIX + '/input/fileupload.html');

@@ -16,8 +16,6 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it.skip(({ mode }) => mode.startsWith('service'));
-
 it.beforeEach(({ server }) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');

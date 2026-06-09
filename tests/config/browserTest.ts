@@ -59,7 +59,9 @@ type BrowserTestTestFixtures = PageTestFixtures & {
   autoSkipBidiTest: void;
 };
 
-const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
+type ContextFactory = (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
+
+const test = baseTest.extend<BrowserTestTestFixtures & { _contextFactory: ContextFactory }, BrowserTestWorkerFixtures>({
   browserVersion: [async ({ browser }, run) => {
     await run(browser.version());
   }, { scope: 'worker' }],
@@ -115,7 +117,25 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await use(browserName === 'webkit' && (hostPlatform.startsWith('debian11') || hostPlatform.startsWith('ubuntu20.04') || (isMac && macVersion < 15)));
   }, { scope: 'worker' }],
 
-  contextFactory: async ({ _contextFactory }: any, run) => {
+  _contextFactory: async ({ _contextFactory }, use) => {
+    await use(async options => {
+      const result = await _contextFactory(options);
+      const { context } = result;
+      if (process.env.PW_CLOCK === 'frozen') {
+        await (context as any)._wrapApiCall(async () => {
+          await context.clock.install({ time: 0 });
+          await context.clock.pauseAt(1000);
+        }, { internal: true });
+      } else if (process.env.PW_CLOCK === 'realtime') {
+        await (context as any)._wrapApiCall(async () => {
+          await context.clock.install({ time: 0 });
+        }, { internal: true });
+      }
+      return result;
+    });
+  },
+
+  contextFactory: async ({ _contextFactory }, run) => {
     await run(async options => {
       const { context } = await _contextFactory(options);
       return context;
@@ -123,7 +143,6 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   },
 
   createUserDataDir: async ({ mode }, run) => {
-    test.skip(mode.startsWith('service'));
     const dirs: string[] = [];
     // We do not put user data dir in testOutputPath,
     // because we do not want to upload them as test result artifacts.
