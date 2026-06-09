@@ -20,7 +20,6 @@ import { TestServer } from '../../config/testserver';
 import { inheritAndCleanEnv } from '../../config/utils';
 
 it('should pass firefox user preferences', async ({ browserType, mode }) => {
-  it.skip(mode.startsWith('service'));
   const browser = await browserType.launch({
     firefoxUserPrefs: {
       'network.proxy.type': 1,
@@ -35,7 +34,6 @@ it('should pass firefox user preferences', async ({ browserType, mode }) => {
 });
 
 it('should pass firefox user preferences in persistent', async ({ mode, launchPersistent }) => {
-  it.skip(mode.startsWith('service'));
   const { page } = await launchPersistent({
     firefoxUserPrefs: {
       'network.proxy.type': 1,
@@ -48,8 +46,6 @@ it('should pass firefox user preferences in persistent', async ({ mode, launchPe
 });
 
 it('should support custom firefox policies', async ({ browserType, mode, asset, loopback }, testInfo) => {
-  it.skip(mode.startsWith('service'));
-
   const policies = {
     'policies': {
       'Certificates': {

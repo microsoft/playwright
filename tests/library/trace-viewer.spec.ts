@@ -32,7 +32,6 @@ const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
 // NOTE: set PWTEST_DEBUG_TRACE_VIEWER=1 to record/attach traces for these tests.
 test.skip(({ trace }) => trace === 'on');
-test.skip(({ mode }) => mode.startsWith('service'));
 test.skip(process.env.PW_CLOCK === 'frozen');
 test.slow();
 

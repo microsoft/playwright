@@ -418,17 +418,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
 
-      if (process.env.PW_CLOCK === 'frozen') {
-        await context._wrapApiCall(async () => {
-          await context.clock.install({ time: 0 });
-          await context.clock.pauseAt(1000);
-        }, { internal: true });
-      } else if (process.env.PW_CLOCK === 'realtime') {
-        await context._wrapApiCall(async () => {
-          await context.clock.install({ time: 0 });
-        }, { internal: true });
-      }
-
       let closed = false;
       const close = async () => {
         if (closed)

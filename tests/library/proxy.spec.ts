@@ -18,8 +18,6 @@ import { setupSocksForwardingServer } from '../config/proxy';
 import { playwrightTest as it, expect } from '../config/browserTest';
 import net from 'net';
 
-it.skip(({ mode }) => mode.startsWith('service'));
-
 it('should throw for bad server value', async ({ browserType }) => {
   const error = await browserType.launch({
     // @ts-expect-error server must be a string

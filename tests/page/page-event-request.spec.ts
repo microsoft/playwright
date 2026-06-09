@@ -85,7 +85,6 @@ it('should report requests and responses handled by service worker', async ({ pa
 it('should report requests and responses handled by service worker with routing', async ({ page, server, isAndroid, isElectron, mode, browserName, platform }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
-  it.fixme(mode.startsWith('service') && platform === 'linux', 'Times out for no clear reason');
 
   const interceptedUrls = [];
   await page.route('**/*', route => {

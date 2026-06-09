@@ -23,7 +23,6 @@ import formidable from 'formidable';
 
 test('should upload multiple large files', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
-  test.skip(mode.startsWith('service'));
   test.slow();
 
   const filesCount = 10;

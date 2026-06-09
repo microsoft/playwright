@@ -54,7 +54,6 @@ it('page.goBack should work with HistoryAPI', async ({ page, server }) => {
 
 it('page.goBack should work for file urls', async ({ page, server, asset, channel, isAndroid, mode }) => {
   it.skip(isAndroid, 'No files on Android');
-  it.skip(mode.startsWith('service'));
   it.skip(channel === 'webkit-wsl');
 
   const url1 = url.pathToFileURL(asset('consolelog.html')).href;

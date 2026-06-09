@@ -62,8 +62,6 @@ it('should throw if page argument is passed', async ({ browserType, browserName,
 });
 
 it('should reject if launched browser fails immediately', async ({ mode, browserType, asset, channel }) => {
-  it.skip(mode.startsWith('service'));
-
   const error = await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => e);
   if (channel === 'webkit-wsl')
     expect(error.message).toContain('Cannot specify executablePath when using the \"webkit-wsl\" channel.');
@@ -72,7 +70,6 @@ it('should reject if launched browser fails immediately', async ({ mode, browser
 });
 
 it('should reject if executable path is invalid', async ({ browserType, mode, channel }) => {
-  it.skip(mode.startsWith('service'), 'on service mode we dont allow passing custom executable path');
   let waitError: Error | undefined;
   await browserType.launch({ executablePath: 'random-invalid-path' }).catch(e => waitError = e);
   if (channel === 'webkit-wsl')
@@ -102,8 +99,6 @@ it('should handle exception and report launch log', async ({ browserType, mode }
 });
 
 it('should accept objects as options', async ({ mode,   browserType }) => {
-  it.skip(mode.startsWith('service'));
-
   // @ts-expect-error process is not a real option.
   const browser = await browserType.launch({ process });
   await browser.close();

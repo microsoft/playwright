@@ -26,7 +26,6 @@ it('should work @smoke', async ({ page, server }) => {
 
 it('should work with file URL', async ({ page, asset, isAndroid, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
-  it.skip(mode.startsWith('service'));
   it.skip(channel === 'webkit-wsl', 'separate filesystem on wsl');
 
   const fileurl = url.pathToFileURL(asset('empty.html')).href;
@@ -37,7 +36,6 @@ it('should work with file URL', async ({ page, asset, isAndroid, mode, channel }
 
 it('should work with file URL with subframes', async ({ page, asset, isAndroid, mode, channel }) => {
   it.skip(isAndroid, 'No files on Android');
-  it.skip(mode.startsWith('service'));
   it.skip(channel === 'webkit-wsl', 'separate filesystem on wsl');
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
