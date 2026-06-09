@@ -29,7 +29,6 @@ type CancelCallback = () => Promise<void>;
 export class Artifact extends SdkObject {
   private _localPath: string;
   private _unaccessibleErrorMessage: string | undefined;
-  private _missingFileErrorMessage: string | undefined;
   private _cancelCallback: CancelCallback | undefined;
   private _finishedPromise = new ManualPromise<void>();
   private _saveCallbacks: SaveCallback[] = [];
@@ -42,14 +41,6 @@ export class Artifact extends SdkObject {
     this._localPath = localPath;
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
     this._cancelCallback = cancelCallback;
-  }
-
-  markMissingFileErrorMessage(errorMessage: string) {
-    this._missingFileErrorMessage = errorMessage;
-  }
-
-  missingFileErrorMessage(): string | undefined {
-    return this._missingFileErrorMessage;
   }
 
   async localPathAfterFinished(progress: Progress): Promise<string> {
