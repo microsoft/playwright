@@ -90,8 +90,6 @@ export class FFBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    if (options.isMobile)
-      throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this.session.send('Browser.createBrowserContext', { removeOnDetach: true });
     const context = new FFBrowserContext(this, browserContextId, options);
     await context.initialize();
@@ -359,7 +357,9 @@ export class FFBrowserContext extends BrowserContext {
       return;
     const viewport = {
       viewportSize: { width: this._options.viewport.width, height: this._options.viewport.height },
+      screenSize: this._options.screen,
       deviceScaleFactor: this._options.deviceScaleFactor || 1,
+      isMobile: !!this._options.isMobile,
     };
     await this._browser.session.send('Browser.setDefaultViewport', { browserContextId: this._browserContextId, viewport });
   }

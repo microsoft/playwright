@@ -28,8 +28,6 @@ it('should support hasTouch option', async ({ server, launchPersistent }) => {
 });
 
 it('should work in persistent context', async ({ server, launchPersistent, browserName }) => {
-  it.skip(browserName === 'firefox', 'Firefox does not support mobile');
-
   const { page } = await launchPersistent({ viewport: { width: 320, height: 480 }, isMobile: true });
   await page.goto(server.PREFIX + '/empty.html');
   expect(await page.evaluate(() => window.innerWidth)).toBe(980);

@@ -85,9 +85,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     delete contextOptions.isMobile;
   }
 
-  if (contextOptions.isMobile && browserType.name() === 'firefox')
-    contextOptions.isMobile = undefined;
-
   if (options.blockServiceWorkers)
     contextOptions.serviceWorkers = 'block';
 
