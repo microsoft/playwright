@@ -16,7 +16,7 @@
 
 import { test, expect } from './cli-fixtures';
 
-test('attach --endpoint keeps the default session', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41154' } }, async ({ wsEndpoint, cli }) => {
+test('attach --endpoint keeps the default session', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41154' } }, async ({ wsEndpoint, cli, server }) => {
   const { exitCode, error } = await cli('attach', `--endpoint=${wsEndpoint}`);
   expect(error).not.toContain('no target specified');
   expect(exitCode).toBe(0);
@@ -24,10 +24,7 @@ test('attach --endpoint keeps the default session', { annotation: { type: 'issue
   const { output: listOutput } = await cli('list');
   expect(listOutput).toContain('- default:');
   expect(listOutput).toContain('(attached)');
-});
 
-test('attach via --endpoint can snapshot the connected browser', async ({ wsEndpoint, cli, server }) => {
-  await cli('attach', `--endpoint=${wsEndpoint}`);
   await cli('goto', server.HELLO_WORLD);
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).toContain('Hello, world!');

@@ -62,7 +62,9 @@ export function decorateProgram(program: Command) {
           const { browser, browserInfo, canBind, ownership } = await createBrowserWithInfo(mcpConfig, mcpClientInfo, options);
           if (canBind)
             await browser.bind(sessionName, { workspaceDir: clientInfo.workspaceDir });
-          const browserContext = browser.contexts()[0] ?? await browser.newContext(mcpConfig.browser.contextOptions);
+          const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
+          if (!browserContext)
+            throw new Error('Error: unable to connect to a browser that does not have any contexts');
           const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
           const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true, ownership });
           console.log(`Daemon listening on ${socketPath}\n`);
