@@ -44,7 +44,6 @@ export type WaitForNavigationOptions = {
   timeout?: number,
   waitUntil?: LifecycleEvent,
   url?: URLMatch,
-  signal?: AbortSignal,
 };
 
 export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Frame {
@@ -119,7 +118,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil, timeout: this._navigationTimeout(options) })).response);
   }
 
-  private _setupNavigationWaiter(options: TimeoutOptions): Waiter {
+  private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
     const waiter = new Waiter(this._page!, '');
     if (this._page!.isClosed())
       waiter.rejectImmediately(this._page!._closeErrorWithReason());
@@ -128,7 +127,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
     const timeout = this._page!._timeoutSettings.navigationTimeout(options);
     waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded.`);
-    waiter.rejectOnSignal(options.signal);
     return waiter;
   }
 
@@ -167,10 +165,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     }, { title: 'Wait for navigation' });
   }
 
-  async waitForLoadState(state: LifecycleEvent = 'load', options?: TimeoutOptions): Promise<void> {
+  async waitForLoadState(state: LifecycleEvent = 'load', options: { timeout?: number } = {}): Promise<void> {
     state = verifyLoadState('state', state);
     return await this._page!._wrapApiCall(async () => {
-      const waiter = this._setupNavigationWaiter(options ?? {});
+      const waiter = this._setupNavigationWaiter(options);
       if (this._loadStates.has(state)) {
         waiter.log(`  not waiting, "${state}" event already fired`);
       } else {
@@ -183,12 +181,11 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     }, { title: `Wait for load state "${state}"` });
   }
 
-  async waitForURL(url: URLMatch, options?: { waitUntil?: LifecycleEvent } & TimeoutOptions): Promise<void> {
-    const waitOptions = options ?? {};
+  async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
     if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
-      return await this.waitForLoadState(waitOptions.waitUntil, waitOptions);
+      return await this.waitForLoadState(options.waitUntil, options);
 
-    await this.waitForNavigation({ url, ...waitOptions });
+    await this.waitForNavigation({ url, ...options });
   }
 
   async frameElement(): Promise<ElementHandle> {

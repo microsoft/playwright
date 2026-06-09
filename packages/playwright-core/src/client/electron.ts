@@ -25,7 +25,7 @@ import { Waiter } from './waiter';
 import { TimeoutSettings } from './timeoutSettings';
 
 import type { Page } from './page';
-import type { BrowserContextOptions, Headers, TimeoutOptions, WaitForEventOptions } from './types';
+import type { BrowserContextOptions, Headers, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -114,7 +114,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     return [...this._windows];
   }
 
-  async firstWindow(options?: TimeoutOptions): Promise<Page> {
+  async firstWindow(options?: { timeout?: number }): Promise<Page> {
     if (this._windows.size)
       return this._windows.values().next().value!;
     return await this.waitForEvent('window', options);
@@ -142,10 +142,8 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     return await this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-      const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-      waiter.rejectOnSignal(signal);
       if (event !== Events.ElectronApplication.Close)
         waiter.rejectOnEvent(this, Events.ElectronApplication.Close, () => new TargetClosedError());
       const result = await waiter.waitForEvent(this, event, predicate as any);
