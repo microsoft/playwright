@@ -263,10 +263,11 @@ const FontPreview: React.FunctionComponent<{
       // note: constant font family name will lead to bugs
       // when displaying two font previews.
       fontFace = new FontFace('font-preview', font);
-      if (fontFace.status === 'loaded')
+      fontFace.load().then(() => {
         document.fonts.add(fontFace);
-      if (fontFace.status === 'error')
+      }).catch(() => {
         setIsError(true);
+      });
     } catch {
       setIsError(true);
     }
