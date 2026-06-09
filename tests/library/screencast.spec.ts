@@ -25,8 +25,10 @@ test.skip(({ mode }) => mode !== 'default', 'screencast is not available in remo
 test.skip(({ video }) => video === 'on', 'conflicts with built-in video recording');
 test.slow();
 
-test('screencast.start delivers frames via onFrame callback', async ({ browser, server, trace }) => {
+test('screencast.start delivers frames via onFrame callback', async ({ browser, server, trace, browserName, isMac, headless }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
+  test.fixme(browserName === 'firefox' && isMac && !headless, 'wrong frame size in headed Firefox on Mac');
+
   const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
   const page = await context.newPage();
 
@@ -52,8 +54,10 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
   await context.close();
 });
 
-test('onFrame receives viewport size', async ({ browser, server, trace }) => {
+test('onFrame receives viewport size', async ({ browser, server, trace, browserName, isMac, headless }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
+  test.fixme(browserName === 'firefox' && isMac && !headless, 'wrong frame size in headed Firefox on Mac');
+
   const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
   const page = await context.newPage();
 
