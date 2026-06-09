@@ -520,9 +520,8 @@ test('should be able to connect via localhost', async ({ browserType }, testInfo
   }
 });
 
-test('emulate media should not be affected by second connectOverCDP', async ({ browserType }, testInfo) => {
+test('emulate media should not be affected by second connectOverCDP with noDefaults', async ({ browserType }, testInfo) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24109' });
-  test.fixme();
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     args: ['--remote-debugging-port=' + port]
@@ -537,7 +536,7 @@ test('emulate media should not be affected by second connectOverCDP', async ({ b
     const page1 = await context1.newPage();
     await page1.emulateMedia({ media: 'print' });
     expect(await isPrint(page1)).toBe(true);
-    const browser2 = await browserType.connectOverCDP(`http://localhost:${port}`);
+    const browser2 = await browserType.connectOverCDP(`http://localhost:${port}`, { noDefaults: true });
     expect(await isPrint(page1)).toBe(true);
     await Promise.all([
       browser1.close(),

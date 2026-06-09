@@ -887,7 +887,6 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
 
 test('should work with adopted style sheets and all: unset', async ({ page, runAndTrace, browserName }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31500' });
-  test.fixme(browserName === 'chromium', 'https://issues.chromium.org/u/1/issues/41416124');
 
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
@@ -1957,8 +1956,6 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
 });
 
 test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName, isBidi }) => {
-  test.fixme(browserName === 'firefox' && !isBidi, 'Elements in iframe are not marked');
-
   server.setRoute('/level-0.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<iframe src="/level-1.html" style="position: absolute; left: 100px"></iframe>`);

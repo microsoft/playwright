@@ -118,7 +118,7 @@ it('should fail with WebSocket if not ignored', async ({ browser, httpsServer })
 
 it('serviceWorker should intercept document request', async ({ browser, httpsServer, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27768' });
-  it.fixme(browserName === 'chromium');
+  it.fixme(browserName === 'chromium', 'Failed to register a ServiceWorker: An SSL certificate error occurred when fetching the script.');
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   await context.route('**/*', route => route.continue());

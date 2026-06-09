@@ -35,7 +35,7 @@ const test = testBase.extend<{ crash: () => void }, { dummy: string }>({
 
 test.beforeEach(({ platform, browserName, channel }) => {
   test.slow(platform === 'linux' && (browserName === 'webkit'), 'WebKit/Linux tests are consistently slower on some Linux environments. Most likely WebContent process is not getting terminated properly and is causing the slowdown.');
-  test.fixme(channel === 'webkit-wsl', 'WebKit on WSL is even slower than above ^^ - skipping for now');
+  test.skip(channel === 'webkit-wsl', 'WebKit on WSL is even slower than above ^^ - skipping for now');
   test.skip(browserName === 'chromium' && utils.hostPlatform.startsWith('ubuntu24.04'), 'never dispatches the crash event');
 });
 
