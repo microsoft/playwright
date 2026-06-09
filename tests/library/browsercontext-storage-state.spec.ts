@@ -540,6 +540,47 @@ it('should support empty indexedDB', { annotation: { type: 'issue', description:
   expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
 });
 
+it('should round-trip WebAuthn credentials with storageState', async ({ contextFactory, server }) => {
+  const context = await contextFactory();
+  const credential = await context.credentials.create(server.HOSTNAME);
+
+  // Credentials are opt-in, omitted by default.
+  expect(await context.storageState()).toEqual({ cookies: [], origins: [] });
+
+  const storageState = await context.storageState({ credentials: true });
+  expect(storageState).toEqual({ cookies: [], origins: [], credentials: [credential] });
+
+  // A fresh context seeded from the storage state holds the same credential and round-trips equal.
+  const context2 = await contextFactory({ storageState });
+  expect(await context2.credentials.get()).toEqual([credential]);
+  expect(await context2.storageState({ credentials: true })).toEqual(storageState);
+});
+
+it('setStorageState should replace credentials', async ({ contextFactory }) => {
+  const ctxA = await contextFactory();
+  const credA = await ctxA.credentials.create('a.example.com');
+  const stateA = await ctxA.storageState({ credentials: true });
+
+  const ctxB = await contextFactory();
+  const credB = await ctxB.credentials.create('b.example.com');
+  const stateB = await ctxB.storageState({ credentials: true });
+
+  const context = await contextFactory({ storageState: stateA });
+  expect(await context.credentials.get()).toEqual([credA]);
+
+  // Replacing the storage state swaps in the new credentials.
+  await context.setStorageState(stateB);
+  expect(await context.credentials.get()).toEqual([credB]);
+
+  // A storage state without credentials clears them.
+  await context.setStorageState({ cookies: [], origins: [] });
+  expect(await context.credentials.get()).toEqual([]);
+
+  // Credentials can be installed again afterwards.
+  await context.setStorageState(stateA);
+  expect(await context.credentials.get()).toEqual([credA]);
+});
+
 it('setStorageState should handle missing file', async ({ contextFactory }, testInfo) => {
   const context = await contextFactory();
   const file = testInfo.outputPath('does-not-exist.json');

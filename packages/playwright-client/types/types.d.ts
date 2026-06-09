@@ -9635,7 +9635,10 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
-   * Clears the existing cookies, local storage and IndexedDB entries for all origins and sets the new storage state.
+   * Clears the existing cookies, local storage, IndexedDB entries and virtual WebAuthn credentials, and sets the new
+   * storage state. When the storage state contains credentials, the virtual WebAuthn authenticator is installed
+   * (equivalent to [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install)),
+   * preventing all real authenticators from working in this context.
    *
    * **Usage**
    *
@@ -9700,11 +9703,24 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
-   * snapshot.
+   * Returns storage state for this browser context, contains current cookies, local storage snapshot, IndexedDB
+   * snapshot and virtual WebAuthn credentials.
    * @param options
    */
   storageState(options?: {
+    /**
+     * Set to `true` to include the context's virtual WebAuthn
+     * [browserContext.credentials](https://playwright.dev/docs/api/class-browsercontext#browser-context-credentials)
+     * (passkeys) in the storage state snapshot. The captured credentials carry their private keys, so they can be
+     * re-seeded into a later context via the
+     * [`storageState`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-storage-state) option or
+     * [browserContext.setStorageState(storageState)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-storage-state).
+     * Note that restoring the storage state that contains credentials will automatically install the virtual WebAuthn
+     * authenticator (see [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install)),
+     * and prevent all real authenticators from working in this context.
+     */
+    credentials?: boolean;
+
     /**
      * Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage
      * state snapshot. If your application uses IndexedDB to store authentication tokens, like Firebase Authentication,
@@ -18888,7 +18904,7 @@ export interface Coverage {
  * `navigator.credentials.create()` / `navigator.credentials.get()` ceremonies in the page, without a real
  * authenticator or hardware security key.
  *
- * There are two common ways to use it:
+ * There are three common ways to use it:
  *
  * **Usage: seed a known credential**
  *
@@ -18909,10 +18925,10 @@ export interface Coverage {
  * // The page's navigator.credentials.get() is answered with the seeded passkey.
  * ```
  *
- * **Usage: capture a passkey, then reuse it**
+ * **Usage: capture a credential, then reuse it**
  *
  * ```js
- * // setup test: let the app register a passkey, then save it.
+ * // setup test: let the app register a passkey, then save the storage state with it.
  * const context = await browser.newContext();
  * await context.credentials.install();
  *
@@ -18936,6 +18952,10 @@ export interface Coverage {
  * await page.goto('https://example.com/login');
  * // navigator.credentials.get() resolves the captured passkey — already signed in.
  * ```
+ *
+ * **Usage: save credentials in the storage state, restore later**
+ *
+ * See [authentication guide](https://playwright.dev/docs/auth) for examples of using saving and resotring the storage state.
  *
  * **Defaults**
  */
