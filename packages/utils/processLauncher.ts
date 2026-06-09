@@ -182,7 +182,14 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   let processClosed = false;
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
-  spawnedProcess.once('close', (exitCode, signal) => {
+  // Resolve cleanup on 'exit' (the process itself is gone) rather than waiting for
+  // 'close' (stdio EOF). A grandchild that inherits the browser's stdio pipe — for
+  // example msedge spawning EdgeUpdater — can keep the pipe open long after the
+  // browser process exits, which would otherwise delay close() until that grandchild
+  // exits. 'exit' always precedes 'close', so run the handler at most once.
+  const onProcessGone = (exitCode: number | null, signal: NodeJS.Signals | null) => {
+    if (processClosed)
+      return;
     options.log(`[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
     gracefullyCloseSet.delete(gracefullyClose);
@@ -191,7 +198,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.onExit(exitCode, signal);
     // Cleanup as process exits.
     cleanup().then(fulfillCleanup);
-  });
+  };
+  spawnedProcess.once('exit', onProcessGone);
+  spawnedProcess.once('close', onProcessGone);
 
   addProcessHandlerIfNeeded('exit');
   if (options.handleSIGINT)

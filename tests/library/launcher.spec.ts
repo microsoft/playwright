@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { launchProcess } from '@utils/processLauncher';
 import { inheritAndCleanEnv } from '../config/utils';
 import { playwrightTest as it, expect } from '../config/browserTest';
 
@@ -40,6 +41,55 @@ it('should kill browser process on timeout after close', async ({ browserType, m
   const browser = await browserType.launch(launchOptions);
   await browser.close();
   expect(stalled).toBeTruthy();
+});
+
+it('should resolve close on process exit even if a child keeps stdio open', async ({ mode }) => {
+  it.skip(mode !== 'default', 'Exercises @utils/processLauncher directly; no browser needed');
+
+  // Regression: msedge spawns EdgeUpdater, which inherits the browser's stdio pipe
+  // and outlives it. The process 'close' event (stdio EOF) is then delayed until
+  // EdgeUpdater exits, which used to block close() for ~20s. Model that with a fake
+  // "browser" that backgrounds a grandchild inheriting stdio for a few seconds, then
+  // exits on graceful close. close() must resolve on the process 'exit' event rather
+  // than wait for the lingering grandchild to release the pipe.
+  const grandchildLifetimeMs = 5_000;
+  const script = [
+    `const cp = require('child_process');`,
+    // Detached grandchild in its own process group (like msedge's EdgeUpdater): it
+    // inherits this process's stdio pipe and outlives it, and is not taken down by a
+    // process-group kill of the parent.
+    `const g = cp.spawn(process.execPath, ['-e', 'setTimeout(() => {}, ${grandchildLifetimeMs})'], { stdio: ['ignore', 'inherit', 'inherit'], detached: true });`,
+    `g.unref();`,
+    `process.on('SIGTERM', () => process.exit(0));`,
+    // Signal readiness only after the grandchild holds the pipe and the SIGTERM
+    // handler is installed, so close() runs against a fully-started process.
+    `console.log('READY_FOR_CLOSE');`,
+    `setInterval(() => {}, 1000);`,
+  ].join('\n');
+
+  let onReady = () => {};
+  const ready = new Promise<void>(f => onReady = f);
+  const result = await launchProcess({
+    command: process.execPath,
+    args: ['-e', script],
+    stdio: 'pipe',
+    tempDirectories: [],
+    attemptToGracefullyClose: async () => void result.launchedProcess.kill('SIGTERM'),
+    onExit: () => {},
+    log: message => {
+      if (message.includes('[out] READY_FOR_CLOSE'))
+        onReady();
+    },
+  });
+  await ready;
+
+  const start = Date.now();
+  await result.gracefullyClose();
+  const elapsed = Date.now() - start;
+
+  // With the fix, close resolves on 'exit' (~tens of ms). Without it, it waits for
+  // the grandchild to release the inherited pipe (~grandchildLifetimeMs).
+  expect(elapsed).toBeLessThan(grandchildLifetimeMs - 1_000);
 });
 
 it('should throw a friendly error if its headed and there is no xserver on linux running', async ({ mode, browserType, platform, channel }) => {
