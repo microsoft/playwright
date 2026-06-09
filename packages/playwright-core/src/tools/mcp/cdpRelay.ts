@@ -73,7 +73,14 @@ export class CDPRelayServer {
   private _extensionConnectionPromise = new ManualPromise<void>();
 
   constructor(server: http.Server, browserChannel: string, executablePath?: string) {
-    this._wsHost = addressToString(server.address(), { protocol: 'ws' });
+    // Normalize IPv6 loopback ([::1]) to IPv4 loopback (127.0.0.1) so the relay URL
+    // is reachable from Windows Edge when the relay server runs inside WSL2.
+    const addr = server.address();
+    if (addr && typeof addr === 'object' && addr.address === '::1') {
+      addr.address = '127.0.0.1';
+      addr.family = 'IPv4';
+    }
+    this._wsHost = addressToString(addr, { protocol: 'ws' });
     this._browserChannel = browserChannel;
     this._executablePath = executablePath;
     this._protocolVersion = parseInt(process.env.PLAYWRIGHT_EXTENSION_PROTOCOL ?? protocol.DEFAULT_VERSION.toString(), 10);

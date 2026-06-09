@@ -34,7 +34,7 @@ export async function createExtensionBrowser(channel: string, executablePath: st
   }
 
   const httpServer = createHttpServer();
-  await startHttpServer(httpServer, {});
+  await startHttpServer(httpServer, { host: '127.0.0.1' });
   const relay = new CDPRelayServer(httpServer, channel, executablePath);
   debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
