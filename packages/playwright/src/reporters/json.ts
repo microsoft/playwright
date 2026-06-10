@@ -239,7 +239,37 @@ class JSONReporter implements ReporterV2 {
 }
 
 async function outputReport(report: JSONReport, resolvedOutputFile: string | undefined) {
-  const reportString = JSON.stringify(report, undefined, 2);
+  let reportString: string;
+  try {
+    reportString = JSON.stringify(report, undefined, 2);
+  } catch (e: any) {
+    // V8 caps strings at ~2**29 - 24 chars (~512 MiB on 64-bit). A merge of
+    // hundreds of shards with attachments / stack traces can blow past that,
+    // and `JSON.stringify` throws `RangeError: Invalid string length`. The
+    // wrapping reporter would otherwise log it as a generic "Error in
+    // reporter" and leave a 0-byte file from any shell redirect — emit a
+    // small, parseable JSON describing the failure so downstream tooling
+    // (`jq`, etc.) doesn't die with "Unexpected end of JSON input", and
+    // rethrow with an actionable message so the warning isn't opaque.
+    const failurePayload = JSON.stringify({
+      error: 'JSON reporter failed to serialize the merged report.',
+      reason: e?.message ?? String(e),
+      hint: 'The merged report likely exceeds V8\'s maximum string length (~512 MiB). Use the blob reporter for sharded runs or filter the dataset before re-merging.',
+    }, undefined, 2);
+    if (resolvedOutputFile) {
+      await fs.promises.mkdir(path.dirname(resolvedOutputFile), { recursive: true });
+      await fs.promises.writeFile(resolvedOutputFile, failurePayload);
+    } else {
+      // eslint-disable-next-line no-console
+      console.log(failurePayload);
+    }
+    throw new Error(
+      `JSON reporter could not serialize the merged report: ${e?.message ?? e}. ` +
+        'The report likely exceeds V8\'s maximum string length (~512 MiB on 64-bit Node). ' +
+        'Use the blob reporter for sharded runs or filter the dataset before re-merging.',
+      { cause: e },
+    );
+  }
   if (resolvedOutputFile) {
     await fs.promises.mkdir(path.dirname(resolvedOutputFile), { recursive: true });
     await fs.promises.writeFile(resolvedOutputFile, reportString);
