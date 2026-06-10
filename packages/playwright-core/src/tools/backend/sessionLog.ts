@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import debug from 'debug';
+
 import { outputFile  } from './context';
 import { parseResponse } from './response';
 
@@ -60,6 +62,6 @@ export class SessionLog {
     }
 
     lines.push('');
-    this._sessionFileQueue = this._sessionFileQueue.then(() => fs.promises.appendFile(this._file, lines.join('\n')));
+    this._sessionFileQueue = this._sessionFileQueue.then(() => fs.promises.appendFile(this._file, lines.join('\n'))).catch(e => debug('pw:tools:error')(e));
   }
 }
