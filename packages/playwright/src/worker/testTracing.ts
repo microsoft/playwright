@@ -238,9 +238,9 @@ export class TestTracing {
     const traceContent = Buffer.from(this._traceEvents.map(e => JSON.stringify(e)).join('\n'));
     zipFile.addBuffer(traceContent, testTraceEntryName);
 
-    await new Promise(f => {
+    await new Promise<void>((resolve, reject) => {
       zipFile.end(undefined, () => {
-        zipFile.outputStream.pipe(fs.createWriteStream(this._generateNextTraceRecordingPath())).on('close', f);
+        zipFile.outputStream.pipe(fs.createWriteStream(this._generateNextTraceRecordingPath())).on('close', resolve).on('error', reject);
       });
     });
 

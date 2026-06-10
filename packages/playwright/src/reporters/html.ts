@@ -464,11 +464,11 @@ class HtmlBuilder {
 
   private async _writeReportData(filePath: string) {
     fs.appendFileSync(filePath, '<template id="playwrightReportBase64">data:application/zip;base64,');
-    await new Promise(f => {
+    await new Promise<void>((resolve, reject) => {
       this._dataZipFile.end(undefined, () => {
         this._dataZipFile.outputStream
             .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
+            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', resolve).on('error', reject);
       });
     });
     fs.appendFileSync(filePath, '</template>');
