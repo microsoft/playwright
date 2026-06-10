@@ -187,8 +187,8 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content) 
   if (content === 'attach') {
     expect(wsEntry._webSocketMessages).toBeUndefined();
     const file = wsEntry.response.content._file!;
-    expect(file).toMatch(/^[0-9a-f]{40}\.json$/);
-    messages = JSON.parse(zip.get(file)!.toString()) as WebSocketMessage[];
+    expect(file).toMatch(/^[0-9a-f]+\.jsonl$/);
+    messages = zip.get(file)!.toString().split('\n').filter(Boolean).map(line => JSON.parse(line)) as WebSocketMessage[];
   } else {
     messages = wsEntry._webSocketMessages;
   }
@@ -262,9 +262,9 @@ it('should attach websocket messages for a still open websocket after stopping',
   expect(wsEntry._webSocketMessages).toBeUndefined();
 
   const file = wsEntry.response.content._file!;
-  expect(file).toMatch(/^[0-9a-f]{40}\.json$/);
+  expect(file).toMatch(/^[0-9a-f]+\.jsonl$/);
 
-  const messages = JSON.parse(zip.get(file)!.toString()) as Array<{ type: string, time: number, opcode: number, data: string }>;
+  const messages = zip.get(file)!.toString().split('\n').filter(Boolean).map(line => JSON.parse(line)) as Array<{ type: string, time: number, opcode: number, data: string }>;
   expect(messages.map(m => ({ type: m.type, opcode: m.opcode, data: m.opcode === 1 ? m.data : [...Buffer.from(m.data, 'base64')] }))).toEqual([
     { type: 'send',    opcode: 1, data: outgoingText },
     { type: 'receive', opcode: 1, data: incomingText },

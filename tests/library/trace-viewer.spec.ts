@@ -652,6 +652,74 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   await expect.soft(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript.*continued/]);
 });
 
+test('should filter network requests by websocket type', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10996' }
+}, async ({ page, server, runAndTrace }) => {
+  server.onceWebSocketConnection(ws => {
+    ws.on('message', () => ws.close());
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(async url => {
+      const ws = new WebSocket(url);
+      await new Promise(resolve => ws.addEventListener('open', resolve));
+      ws.send('done');
+      await new Promise(resolve => ws.addEventListener('close', resolve, { once: true }));
+    }, `ws://${server.HOST}/ws`);
+  });
+
+  await traceViewer.showNetworkTab();
+  await traceViewer.page.getByText('WS', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests).toContainText('websocket');
+});
+
+test('should show websocket messages', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10996' }
+}, async ({ page, server, runAndTrace }) => {
+  server.onceWebSocketConnection(ws => {
+    ws.on('message', message => {
+      if (message.toString() === 'ping')
+        ws.send('pong');
+      else if (message.toString() === 'binary')
+        ws.send(Buffer.from([0x01, 0x02, 0x03, 0x04]));
+    });
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(async url => {
+      const ws = new WebSocket(url);
+      await new Promise(resolve => ws.addEventListener('open', resolve));
+      ws.send('ping');
+      await new Promise(resolve => ws.addEventListener('message', resolve, { once: true }));
+      ws.send('binary');
+      await new Promise(resolve => ws.addEventListener('message', resolve, { once: true }));
+      ws.close();
+      await new Promise(resolve => ws.addEventListener('close', resolve, { once: true }));
+    }, `ws://${server.HOST}/ws`);
+  });
+
+  await traceViewer.showNetworkTab();
+  const wsRequest = traceViewer.networkRequests.filter({ hasText: 'ws' }).filter({ hasText: 'websocket' });
+  await expect(wsRequest).toBeVisible();
+  await wsRequest.click();
+
+  const messagesTab = traceViewer.networkTab.getByRole('tabpanel', { name: 'Messages' });
+  await traceViewer.networkTab.getByRole('tab', { name: 'Messages' }).click();
+  await expect(messagesTab).toBeVisible();
+
+  const wsList = messagesTab.getByRole('listbox', { name: 'WebSocket messages' });
+  await expect(wsList.getByRole('option')).toHaveCount(4);
+  await expect(wsList.getByRole('option').nth(0)).toContainText('ping');
+  await expect(wsList.getByRole('option').nth(0)).toContainText('Text');
+  await expect(wsList.getByRole('option').nth(1)).toContainText('pong');
+  await expect(wsList.getByRole('option').nth(1)).toContainText('Text');
+  await expect(wsList.getByRole('option').nth(2)).toContainText('binary');
+  await expect(wsList.getByRole('option').nth(3)).toContainText('Binary');
+});
+
 test('should show snapshot URL and copy button', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);

@@ -26,14 +26,19 @@ import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { isJsonMimeType, isXmlMimeType } from '@isomorphic/mimeType';
 import { useAsyncMemo, useSetting } from '@web/uiUtils';
-import { msToString } from '@isomorphic/formatUtils';
-import type { Entry } from '@trace/har';
+import { bytesToString, msToString } from '@isomorphic/formatUtils';
+import type { Entry, WebSocketMessage } from '@trace/har';
 import { useTraceModel } from './traceModelContext';
 import { Expandable } from '@web/components/expandable';
+import { ListView } from '@web/components/listView';
+import { SplitView } from '@web/components/splitView';
 import { Toolbar } from '@web/components/toolbar';
+import { PlaceholderPanel } from './placeholderPanel';
 
 type RequestBody = { text: string, mimeType?: string } | null;
 type ResponseBody = { dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null;
+type FormattableBody = { text?: string, mimeType?: string } | null;
+type IndexedWebSocketMessage = WebSocketMessage & { index: number, byteLength: number };
 
 
 export const NetworkResourceDetails: React.FunctionComponent<{
@@ -288,6 +293,188 @@ const FontPreview: React.FunctionComponent<{
   </div>;
 };
 
+export const WebSocketResourceDetails: React.FunctionComponent<{
+  resource: ResourceSnapshot;
+  startTimeOffset: number;
+  onClose: () => void;
+}> = ({ resource, startTimeOffset, onClose }) => {
+  const [selectedTab, setSelectedTab] = React.useState<string>('messages');
+
+  return <TabbedPane
+    leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose} />]}
+    tabs={[
+      {
+        id: 'headers',
+        title: 'Headers',
+        render: () => <HeadersTab resource={resource} startTimeOffset={startTimeOffset} />,
+      },
+      {
+        id: 'messages',
+        title: 'Messages',
+        render: () => <WebSocketMessagesTab resource={resource} />,
+      },
+    ]}
+    selectedTab={selectedTab}
+    setSelectedTab={setSelectedTab} />;
+};
+
+const WebSocketMessagesTab: React.FunctionComponent<{
+  resource: ResourceSnapshot;
+}> = ({ resource }) => {
+  const model = useTraceModel();
+
+  const indexedMessages = useAsyncMemo<IndexedWebSocketMessage[] | undefined>(async () => {
+    if (resource._webSocketMessages)
+      return resource._webSocketMessages.map((m, index) => ({ ...m, index, byteLength: messageByteLength(m) }));
+    if (model && resource.response.content._sha1) {
+      try {
+        const response = await fetch(model.createRelativeUrl(`sha1/${resource.response.content._sha1}`));
+        if (!response.ok)
+          return [];
+        const text = await response.text();
+        const messages = text.split('\n').filter(Boolean).map(line => JSON.parse(line) as WebSocketMessage);
+        return messages.map((m, index) => ({ ...m, index, byteLength: messageByteLength(m) }));
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }, [resource, model], undefined);
+
+  const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>(undefined);
+  const selectedMessage = selectedIndex !== undefined ? indexedMessages?.[selectedIndex] : undefined;
+  const baseTimeMs = React.useMemo(() => {
+    if (!indexedMessages)
+      return undefined;
+    for (const f of indexedMessages) {
+      if (f.time > 0)
+        return f.time;
+    }
+    return undefined;
+  }, [indexedMessages]);
+
+  if (indexedMessages === undefined)
+    return <PlaceholderPanel text='Loading...' />;
+
+  if (indexedMessages.length === 0)
+    return <PlaceholderPanel text='No messages captured' />;
+
+  const list = <WebSocketMessagesListView
+    name='network-websocket-messages'
+    ariaLabel='WebSocket messages'
+    items={indexedMessages}
+    id={indexedMessage => String(indexedMessage.index)}
+    selectedItem={selectedMessage}
+    onSelected={indexedMessage => setSelectedIndex(indexedMessage.index)}
+    render={indexedMessage => renderMessageRow(indexedMessage, baseTimeMs)}
+  />;
+
+  if (!selectedMessage)
+    return list;
+
+  return <SplitView
+    sidebarSize={200}
+    orientation='vertical'
+    sidebarIsFirst={false}
+    settingName='networkWebSocketMessageDetails'
+    main={list}
+    sidebar={<WebSocketMessageDetail message={selectedMessage} />}
+  />;
+};
+
+const WebSocketMessagesListView = ListView<IndexedWebSocketMessage>;
+
+const WebSocketMessageDetail: React.FunctionComponent<{
+  message: WebSocketMessage,
+}> = ({ message }) => {
+  const [showFormattedMessage, setShowFormattedMessage] = useSetting('trace-viewer-network-details-show-formatted-message', true);
+  const messageBody = React.useMemo(() => {
+    if (message.opcode === 1) {
+      const text = message.data;
+      let mimeType: string | undefined;
+      try {
+        JSON.parse(text);
+        mimeType = 'application/json';
+      } catch {
+        mimeType = 'text/plain';
+      }
+      return { text, mimeType };
+    }
+    if (message.opcode === 8 || message.opcode === 9 || message.opcode === 10) {
+      if (!message.data)
+        return { text: '' };
+      // Control messages may carry a small payload as base64.
+      try {
+        const text = decodeBase64ToText(message.data);
+        return { text, mimeType: 'text/plain' };
+      } catch {
+        return { text: dumpHex(message.data) };
+      }
+    }
+    return { text: dumpHex(message.data) };
+  }, [message]);
+  const formatResult = useFormattedBody(messageBody, showFormattedMessage);
+
+  return <div className='vbox network-websocket-message-detail'>
+    <Toolbar noShadow={true} noMinHeight={true} className='network-websocket-message-detail-toolbar'>
+      <span className='network-websocket-message-detail-summary'>
+        {message.type === 'send' ? 'Sent' : 'Received'} · {opcodeName(message.opcode)} · {bytesToString(messageByteLength(message))}
+      </span>
+      <div style={{ margin: 'auto' }}></div>
+      <FormatToggleButton toggled={showFormattedMessage} error={formatResult.error} onToggle={() => setShowFormattedMessage(!showFormattedMessage)} />
+    </Toolbar>
+    <div className='vbox network-websocket-message-detail-body'>
+      <CodeMirrorWrapper text={formatResult.text} mimeType={messageBody.mimeType} readOnly lineNumbers={true} />
+    </div>
+  </div>;
+};
+
+function renderMessageRow(message: IndexedWebSocketMessage, baseTimeMs: number | undefined): React.ReactNode {
+  const directionIcon = message.type === 'send' ? 'codicon-arrow-up' : 'codicon-arrow-down';
+  const directionLabel = message.type === 'send' ? 'Sent' : 'Received';
+  const opcodeLabel = opcodeName(message.opcode);
+  const relativeTime = (message.time > 0 && baseTimeMs !== undefined) ? msToString(message.time - baseTimeMs) : '-';
+  const preview = messagePreview(message);
+
+  return <div className='network-websocket-message-row'>
+    <span className={`network-websocket-message-direction-${message.type} codicon ${directionIcon}`} title={directionLabel} />
+    <span className='network-websocket-message-preview' title={preview}>{preview}</span>
+    <span className='network-websocket-message-opcode' title={`Opcode ${message.opcode}`}>{opcodeLabel}</span>
+    <span className='network-websocket-message-length' title={`${message.byteLength} bytes`}>{bytesToString(message.byteLength)}</span>
+    <span className='network-websocket-message-time'>{relativeTime}</span>
+  </div>;
+}
+
+function opcodeName(opcode: number): string {
+  switch (opcode) {
+    case 0: return 'Continuation';
+    case 1: return 'Text';
+    case 2: return 'Binary';
+    case 8: return 'Close';
+    case 9: return 'Ping';
+    case 10: return 'Pong';
+    default: return `Opcode ${opcode}`;
+  }
+}
+
+function messageByteLength(message: WebSocketMessage): number {
+  return (message.opcode === 1) ? (new TextEncoder()).encode(message.data).length : base64ByteLength(message.data);
+}
+
+function messagePreview(message: WebSocketMessage): string {
+  if (message.opcode === 1) {
+    const trimmed = message.data.replace(/\s+/g, ' ');
+    return trimmed.length > 200 ? trimmed.substring(0, 200) + '…' : trimmed;
+  }
+  if (message.opcode === 8)
+    return '(close)';
+  if (message.opcode === 9)
+    return '(ping)';
+  if (message.opcode === 10)
+    return '(pong)';
+  return `(binary, ${bytesToString(base64ByteLength(message.data))})`;
+}
+
 function statusClass(statusCode: number): string {
   if (statusCode < 300 || statusCode === 304)
     return 'green-circle';
@@ -340,7 +527,7 @@ function formatBody(body: string, contentType?: string): string {
   return body;
 }
 
-const useFormattedBody = (body: RequestBody | ResponseBody, showFormatted: boolean) => {
+const useFormattedBody = (body: FormattableBody, showFormatted: boolean) => {
   return React.useMemo(() => {
     if (body?.text === undefined)
       return { text: '' };
@@ -355,3 +542,43 @@ const useFormattedBody = (body: RequestBody | ResponseBody, showFormatted: boole
     }
   }, [body, showFormatted]);
 };
+
+function base64ByteLength(data: string): number {
+  if (!data)
+    return 0;
+  const padding = (data[data.length - 2] === '=') ? 2 : ((data[data.length - 1] === '=') ? 1 : 0);
+  return Math.max(0, Math.floor(data.length * 3 / 4) - padding);
+}
+
+function decodeBase64ToText(base64: string): string {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; ++i)
+    bytes[i] = binary.charCodeAt(i);
+  return (new TextDecoder('utf-8', { fatal: false })).decode(bytes);
+}
+
+function dumpHex(base64: string): string {
+  if (!base64)
+    return '';
+  const binary = atob(base64);
+  const lines: string[] = [];
+  for (let offset = 0; offset < binary.length; offset += 16) {
+    const chunkLength = Math.min(16, binary.length - offset);
+    const hex: string[] = [];
+    const ascii: string[] = [];
+    for (let i = 0; i < 16; ++i) {
+      if (i < chunkLength) {
+        const code = binary.charCodeAt(offset + i);
+        hex.push(code.toString(16).padStart(2, '0'));
+        ascii.push((code >= 0x20 && code < 0x7f) ? binary[offset + i] : '.');
+      } else {
+        hex.push('  ');
+      }
+      if (i === 7)
+        hex.push('');
+    }
+    lines.push(`${offset.toString(16).padStart(8, '0')}  ${hex.join(' ')}  ${ascii.join('')}`);
+  }
+  return lines.join('\n');
+}

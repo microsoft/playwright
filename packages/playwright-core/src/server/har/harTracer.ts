@@ -19,7 +19,7 @@ import { base64ByteLength } from '@isomorphic/base64';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { assert } from '@isomorphic/assert';
-import { calculateSha1 } from '@utils/crypto';
+import { calculateSha1, createGuid } from '@utils/crypto';
 import { monotonicTime } from '@isomorphic/time';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { urlMatches } from '@isomorphic/urlMatch';
@@ -45,6 +45,7 @@ export interface HarTracerDelegate {
   onEntryStarted(entry: har.Entry): void;
   onEntryFinished(entry: har.Entry): void;
   onContentBlob(sha1: string, buffer: Buffer): void;
+  onContentBlobAppend(sha1: string, text: string): void;
 }
 
 type HarTracerOptions = {
@@ -75,7 +76,6 @@ export class HarTracer {
   private _pageEntrySymbol: symbol;
   private _baseURL: string | undefined;
   private _page: Page | null;
-  private _saveOpenWebSocketMessagesFunctions = new Set<() => void>();
 
   constructor(context: BrowserContext | APIRequestContext, page: Page | null, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
@@ -440,27 +440,25 @@ export class HarTracer {
     const harEntry = createHarEntry(pageEntry?.id, method, url, page.mainFrame().guid, this._options, webSocket.wallTimeMs());
     harEntry._resourceType = 'websocket';
 
-    const messages: har.WebSocketMessage[] = [];
-    if (this._options.content === 'embed')
-      harEntry._webSocketMessages = messages;
+    let sha1: string | undefined = undefined;
+    const recordMessage = (type: 'send' | 'receive', opcode: number, data: string, wallTimeMs: number) => {
+      const message = { type, time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data };
+      if (this._options.content === 'embed') {
+        harEntry._webSocketMessages ??= [];
+        harEntry._webSocketMessages.push(message);
+      } else if (this._options.content === 'attach') {
+        if (!sha1) {
+          sha1 = createGuid() + '.jsonl';
+          if (this._options.includeTraceInfo)
+            harEntry.response.content._sha1 = sha1;
+          else
+            harEntry.response.content._file = sha1;
+        }
 
-    let saveMessages: (() => void) | undefined;
-    if (this._options.content === 'attach') {
-      saveMessages = () => {
-        if (!messages.length)
-          return;
-
-        const buffer = Buffer.from(JSON.stringify(messages));
-        const sha1 = calculateSha1(buffer) + '.json';
-        if (this._options.includeTraceInfo)
-          harEntry.response.content._sha1 = sha1;
-        else
-          harEntry.response.content._file = sha1;
         if (this._started)
-          this._delegate.onContentBlob(sha1, buffer);
-      };
-      this._saveOpenWebSocketMessagesFunctions.add(saveMessages);
-    }
+          this._delegate.onContentBlobAppend(sha1, JSON.stringify(message) + '\n');
+      }
+    };
 
     let oldestWallTimeMs = Infinity;
     let newestWallTimeMs = -Infinity;
@@ -497,15 +495,11 @@ export class HarTracer {
         }
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameSent, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
-        if (this._options.content !== 'omit')
-          messages.push({ type: 'send', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
-
+        recordMessage('send', opcode, data, wallTimeMs);
         updateTime(wallTimeMs);
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameReceived, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
-        if (this._options.content !== 'omit')
-          messages.push({ type: 'receive', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
-
+        recordMessage('receive', opcode, data, wallTimeMs);
         updateTime(wallTimeMs);
 
         if (!this._options.omitSizes) {
@@ -529,11 +523,6 @@ export class HarTracer {
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.Close, () => {
         eventsHelper.removeEventListeners(eventListeners);
-
-        if (saveMessages) {
-          this._saveOpenWebSocketMessagesFunctions.delete(saveMessages);
-          saveMessages();
-        }
 
         if (this._started)
           this._delegate.onEntryFinished(harEntry);
@@ -665,12 +654,6 @@ export class HarTracer {
   }
 
   stop() {
-    // Unlike other requests that have a single response, a WebSocket can receive multiple frames.
-    // As such, we don't finish the entry until the WebSocket is closed, which delays when the captured frames are saved.
-    // Make sure to save at least what has been captured so far.
-    for (const saveOpenWebSocketMessages of this._saveOpenWebSocketMessagesFunctions)
-      saveOpenWebSocketMessages();
-
     this._started = false;
     eventsHelper.removeEventListeners(this._eventListeners);
     this._barrierPromises.clear();
@@ -703,7 +686,6 @@ export class HarTracer {
       }
     }
     this._pageEntries = [];
-    this._saveOpenWebSocketMessagesFunctions.clear();
     return log;
   }
 

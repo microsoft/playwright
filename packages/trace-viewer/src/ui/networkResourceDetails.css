@@ -103,6 +103,77 @@
   text-align: center;
 }
 
+.network-websocket-message-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 2px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.network-websocket-message-row .codicon {
+  flex: none;
+}
+
+.network-websocket-message-direction-send {
+  color: var(--vscode-charts-green);
+}
+
+.network-websocket-message-direction-receive {
+  color: var(--vscode-charts-red);
+}
+
+.network-websocket-message-preview {
+  flex: auto;
+  font-family: var(--vscode-editor-font-family);
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.network-websocket-message-opcode,
+.network-websocket-message-length,
+.network-websocket-message-time {
+  flex: none;
+  color: var(--vscode-descriptionForeground);
+  font-variant-numeric: tabular-nums;
+}
+
+.network-websocket-message-opcode {
+  min-width: 80px;
+  text-align: left;
+}
+
+.network-websocket-message-length,
+.network-websocket-message-time {
+  min-width: 64px;
+  text-align: right;
+}
+
+.network-websocket-message-detail {
+  flex: auto;
+  overflow: hidden;
+}
+
+.network-websocket-message-detail-toolbar {
+  padding: 0 8px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.network-websocket-message-detail-summary {
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.network-websocket-message-detail-body {
+  flex: auto;
+  overflow: hidden;
+}
+
 .tab-network .toolbar {
   min-height: 30px !important;
   background-color: initial !important;
