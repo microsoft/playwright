@@ -7,11 +7,47 @@ title: "Getting started - Library"
 
 [<img src="https://badge.fury.io/py/playwright.svg" alt="PyPI version" width="132" height="20" />](https://pypi.python.org/pypi/playwright/)
 
+<Tabs
+  groupId="package-managers"
+  defaultValue="pip"
+  values={[
+    {label: 'Pip', value: 'pip'},
+    {label: 'Poetry', value: 'poetry'},
+    {label: 'uv', value: 'uv'}
+  ]
+}>
+
+<TabItem value="pip">
+
 ```bash
 pip install --upgrade pip
 pip install playwright
 playwright install
 ```
+
+</TabItem>
+
+<TabItem value="poetry">
+
+```bash
+poetry self update
+poetry add playwright
+playwright install
+```
+
+</TabItem>
+
+<TabItem value="uv">
+
+```bash
+uv self update
+uv add playwright
+playwright install
+```
+
+</TabItem>
+
+</Tabs>
 
 These commands download the Playwright package and install browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./browsers.md#install-browsers).
 
