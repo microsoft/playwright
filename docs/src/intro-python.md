@@ -23,9 +23,41 @@ Get started by installing Playwright and running the example test to see it in a
 
 Install the [Pytest plugin](https://pypi.org/project/pytest-playwright/):
 
+<Tabs
+  groupId="package-managers"
+  defaultValue="pip"
+  values={[
+    {label: 'Pip', value: 'pip'},
+    {label: 'Poetry', value: 'poetry'},
+    {label: 'uv', value: 'uv'}
+  ]
+}>
+
+<TabItem value="pip">
+
 ```bash
 pip install pytest-playwright
 ```
+
+</TabItem>
+
+<TabItem value="poetry">
+
+```bash
+poetry add pytest-playwright
+```
+
+</TabItem>
+
+<TabItem value="uv">
+
+```bash
+uv add pytest-playwright
+```
+
+</TabItem>
+
+</Tabs>
 
 Install the required browsers:
 
@@ -69,9 +101,37 @@ pytest
 
 To update Playwright to the latest version run the following command:
 
+<Tabs
+  groupId="package-managers"
+  defaultValue="pip"
+  values={[
+    {label: 'pip', value: 'pip'},
+    {label: 'Poetry', value: 'poetry'},
+    {label: 'uv', value: 'uv'}
+  ]
+}>
+<TabItem value="pip">
+
 ```bash
 pip install pytest-playwright playwright -U
 ```
+
+</TabItem>
+<TabItem value="poetry">
+
+```bash
+poetry update pytest-playwright playwright
+```
+
+</TabItem>
+<TabItem value="uv">
+
+```bash
+uv add --upgrade pytest-playwright playwright
+```
+
+</TabItem>
+</Tabs>
 
 ## System requirements
 
