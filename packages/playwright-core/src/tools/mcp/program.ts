@@ -138,7 +138,7 @@ export function decorateMCPCommand(command: Command) {
             sharedBrowserPromise = undefined;
             const browserContext = (backend as BrowserBackend).browserContext;
             await browserContext.close().catch(() => { });
-            await browserContext.browser()!.close().catch(() => { });
+            await browserContext.browser()?.close().catch(() => { });
           }
         };
         await mcpServer.start(factory, config.server);
