@@ -67,4 +67,5 @@ RUN cd /ms-playwright-agent && \
     rm /tmp/playwright-core.tar.gz && \
     rm -rf /ms-playwright-agent && \
     rm -rf ~/.npm/ && \
+    chmod 777 /ms-playwright && \
     chmod -R 777 /ms-playwright/webkit-*
