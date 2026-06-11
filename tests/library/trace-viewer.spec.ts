@@ -768,7 +768,7 @@ test('should capture attribute mutations inside a popup window', {
     await expect(popup.locator('#overlay')).toBeHidden();
   });
 
-  const frame = await traceViewer.snapshotFrame('Click');
+  const frame = await traceViewer.snapshotFrame('Expect');
   await expect(frame.locator('#overlay')).toHaveClass('no-display');
 });
 
