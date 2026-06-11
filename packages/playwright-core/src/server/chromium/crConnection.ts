@@ -77,8 +77,6 @@ export class CRConnection extends SdkObject {
 
   async _onMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if ((process.env.PW_PROBE || process.env.PW_NETLOG) && (message.method?.startsWith('Network.') || message.method === 'Target.attachedToTarget' || message.method === 'Target.detachedFromTarget'))
-      console.error(`[PROBE-CONN] ${message.method} msgSession=${message.sessionId} routed=${this._sessions.has(message.sessionId || '')} reqId=${(message.params as any)?.requestId ?? ''} newSession=${(message.params as any)?.sessionId ?? ''} info=${(message.params as any)?.targetInfo ? (message.params as any).targetInfo.type + ':' + (message.params as any).targetInfo.targetId?.slice(0,8) : ''}`);
     if (message.id === kBrowserCloseMessageId)
       return;
     const session = this._sessions.get(message.sessionId || '');

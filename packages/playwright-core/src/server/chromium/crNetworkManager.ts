@@ -94,8 +94,6 @@ export class CRNetworkManager {
   }
 
   removeSession(session: CRSession) {
-    if (process.env.PW_PROBE || process.env.PW_NETLOG)
-      console.log(`[PROBE] removeSession mgr=${(this._page?.delegate as any)?._targetId?.slice(0, 8)}`);
     const info = this._sessions.get(session);
     if (info)
       eventsHelper.removeEventListeners(info.eventListeners);
@@ -195,8 +193,6 @@ export class CRNetworkManager {
   }
 
   _onRequestWillBeSent(sessionInfo: SessionInfo, event: Protocol.Network.requestWillBeSentPayload) {
-    if (process.env.PW_PROBE || process.env.PW_NETLOG)
-      console.error(`[PROBE] requestWillBeSent url=${event.request.url} type=${event.type} frame=${event.frameId} loaderId=${event.loaderId} reqId=${event.requestId}`);
     // Request interception doesn't happen for data URLs with Network Service.
     if (this._protocolRequestInterceptionEnabled && !event.request.url.startsWith('data:')) {
       const requestId = event.requestId;
@@ -473,8 +469,6 @@ export class CRNetworkManager {
   }
 
   _onResponseReceived(sessionInfo: SessionInfo, event: Protocol.Network.responseReceivedPayload) {
-    if (process.env.PW_PROBE || process.env.PW_NETLOG)
-      console.log(`[PROBE] responseReceived reqId=${event.requestId} known=${this._requestIdToRequest.has(event.requestId)} mgr=${(this._page?.delegate as any)?._targetId?.slice(0, 8)} isMain=${sessionInfo.isMain}`);
     let request = this._requestIdToRequest.get(event.requestId);
     // For frame-level Requests that are handled by a Service Worker's fetch handler, we'll never get a requestPaused event, so we need to
     // manually create the request. In an ideal world, crNetworkManager would be able to know this on Network.requestWillBeSent, but there
@@ -495,8 +489,6 @@ export class CRNetworkManager {
   }
 
   _onLoadingFinished(sessionInfo: SessionInfo, event: Protocol.Network.loadingFinishedPayload) {
-    if (process.env.PW_PROBE || process.env.PW_NETLOG)
-      console.log(`[PROBE] loadingFinished reqId=${event.requestId} known=${this._requestIdToRequest.has(event.requestId)} mgr=${(this._page?.delegate as any)?._targetId?.slice(0, 8)} isMain=${sessionInfo.isMain}`);
     this._responseExtraInfoTracker.loadingFinished(event);
 
     const request = this._requestIdToRequest.get(event.requestId);
@@ -519,8 +511,6 @@ export class CRNetworkManager {
   }
 
   _onLoadingFailed(sessionInfo: SessionInfo, event: Protocol.Network.loadingFailedPayload) {
-    if (process.env.PW_PROBE || process.env.PW_NETLOG)
-      console.log(`[PROBE] loadingFailed reqId=${event.requestId} known=${this._requestIdToRequest.has(event.requestId)} text=${event.errorText}`);
     this._responseExtraInfoTracker.loadingFailed(event);
 
     let request = this._requestIdToRequest.get(event.requestId);
