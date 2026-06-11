@@ -1,0 +1,12 @@
+{
+  "name": "Popup extension",
+  "version": "0.1",
+  "background": {
+    "service_worker": "index.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["activeTab"],
+  "manifest_version": 3
+}

@@ -29,6 +29,7 @@ const it = base.extend<{
         args: [
           `--disable-extensions-except=${extensionPath}`,
           `--load-extension=${extensionPath}`,
+          ...(options.args ?? []),
         ],
       };
       return await browserType.launchPersistentContext('', extensionOptions);
@@ -163,5 +164,49 @@ it.describe('MV3', () => {
     const message = await consolePromise;
     expect(message.text()).toContain('Test console log from a third-party execution context');
     await context.close();
+  });
+
+  // Surfacing the extension action popup as a page is not supported yet. Two things block it:
+  //   1. Playwright does not auto-attach to CDP `tab` targets, and the popup is delivered only
+  //      nested inside a `tab` target (normal pages still arrive via Chromium's backward-compatible
+  //      top-level `page` delivery, so they are unaffected).
+  //   2. Even when reached, the popup is auto-attached as a `type: 'other'` target, and attaching
+  //      to / initializing it as a page crashes Chrome (reported upstream).
+  // The test sets PW_CHROMIUM_ATTACH_TO_OTHER so the popup `other` target is treated as a page
+  // (see crBrowser.ts). Keep as fixme until both are resolved.
+  it.fixme('should surface the extension action popup as a page event', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40554' }
+  }, async ({ launchPersistentContext, asset }) => {
+    const extensionPath = asset('extension-mv3-popup');
+    const oldEnv = process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
+    process.env.PW_CHROMIUM_ATTACH_TO_OTHER = '1';
+    try {
+      const context = await launchPersistentContext(extensionPath, {
+        args: ['--enable-unsafe-extension-debugging'],
+      });
+
+      const serviceWorkers = context.serviceWorkers();
+      const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
+      const extensionId = new URL(serviceWorker.url()).host;
+
+      const browserSession = await context.browser()!.newBrowserCDPSession();
+      const { targetInfos } = await browserSession.send('Target.getTargets', { filter: [{ type: 'tab' }] });
+      const tabTargetId = targetInfos.find((t: any) => t.type === 'tab')!.targetId;
+
+      const popupPromise = context.waitForEvent('page', page => page.url().endsWith('popup.html'));
+      await browserSession.send('Extensions.triggerAction' as any, { id: extensionId, targetId: tabTargetId });
+      const popup = await popupPromise;
+
+      expect(popup.url()).toMatch(/popup\.html$/);
+      expect(context.pages()).toContain(popup);
+      await expect(popup.locator('#popup-marker')).toHaveText('hello from the popup');
+
+      await context.close();
+    } finally {
+      if (oldEnv === undefined)
+        delete process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
+      else
+        process.env.PW_CHROMIUM_ATTACH_TO_OTHER = oldEnv;
+    }
   });
 });
