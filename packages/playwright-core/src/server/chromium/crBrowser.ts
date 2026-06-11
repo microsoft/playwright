@@ -204,6 +204,8 @@ export class CRBrowser extends Browser {
     assert(!this._serviceWorkers.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
 
     if (targetInfo.type === 'page' || treatOtherAsPage) {
+      if (process.env.PW_PROBE)
+        console.error(`[PROBE] page attach id=${targetInfo.targetId} type=${targetInfo.type} waiting=${waitingForDebugger} url=${targetInfo.url} opener=${targetInfo.openerId}`);
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
       const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page' });
       this._crPages.set(targetInfo.targetId, crPage);
@@ -215,8 +217,11 @@ export class CRBrowser extends Browser {
         const tabStack = (this as any)._probeTabSessions || [];
         const tab = tabStack.pop();
         if (tab) {
-          console.error(`[PROBE] page ${targetInfo.targetId} created (opener=${targetInfo.openerId}); Network.enable enqueued, resuming tab now`);
-          tab.send('Runtime.runIfWaitingForDebugger').catch(() => {});
+          console.error(`[PROBE] page ${targetInfo.targetId} created (opener=${targetInfo.openerId}); awaiting page Network.enable BEFORE resuming tab`);
+          session.send('Network.enable').then(() => {
+            console.error(`[PROBE] page Network.enable ACKED for ${targetInfo.targetId}; resuming tab now`);
+            return tab.send('Runtime.runIfWaitingForDebugger');
+          }).catch((e: any) => console.error(`[PROBE] enable/resume err ${e.message}`));
         }
       }
       return;
