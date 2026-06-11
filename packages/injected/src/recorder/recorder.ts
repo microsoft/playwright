@@ -412,10 +412,15 @@ class RecordActionTool implements RecorderTool {
     const target = this._recorder.deepEventTarget(event);
 
     if (target.nodeName === 'INPUT' && (target as HTMLInputElement).type.toLowerCase() === 'file') {
+      // When the file input is hidden and triggered by another element (e.g. a button with
+      // onclick="input.click()"), the hover model points to the trigger, not the input.
+      // Derive the selector from the actual target element in that case.
+      const selector = target === this._hoveredElement
+        ? this._hoveredModel!.selector
+        : this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName }).selector;
       this._recordAction({
         name: 'setInputFiles',
-        // webkit doesn't focus file inputs on click, so activeModel is unreliable here.
-        selector: this._hoveredModel!.selector,
+        selector,
         signals: [],
         files: [...((target as HTMLInputElement).files || [])].map(file => file.name),
       });
