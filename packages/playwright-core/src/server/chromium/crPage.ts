@@ -438,7 +438,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    if (!this._page.isStorageStatePage && hasUIWindow &&
+    if (!process.env.PW_PROBE && !this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
       try {

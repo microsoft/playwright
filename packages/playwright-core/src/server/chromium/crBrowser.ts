@@ -79,13 +79,14 @@ export class CRBrowser extends Browser {
     // We don't trust the option as it may lie in case of connectOverCDP where remote browser
     // may have been launched with different options.
     browser.options.headful = !version.userAgent.includes('Headless');
+    const probeFilter = process.env.PW_PROBE ? [{ type: 'browser', exclude: true }, { type: 'page', exclude: true }, {}] : undefined;
     if (!options.persistent) {
-      await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
+      await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true, filter: probeFilter as any });
       return browser;
     }
     browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
     await Promise.all([
-      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }).then(async () => {
+      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true, filter: probeFilter as any }).then(async () => {
         // Target.setAutoAttach has a bug where it does not wait for new Targets being attached.
         // However making a dummy call afterwards fixes this.
         // This can be removed after https://chromium-review.googlesource.com/c/chromium/src/+/2885888 lands in stable.
@@ -165,6 +166,20 @@ export class CRBrowser extends Browser {
     if (targetInfo.type === 'browser')
       return;
     const session = this._session.createChildSession(sessionId);
+
+    if (process.env.PW_PROBE && targetInfo.type === 'tab') {
+      // Tab-target migration probe. Descend into the tab; the nested page attaches
+      // un-paused while the tab renderer stays frozen by the tab-level pause.
+      console.error(`[PROBE] tab attached id=${targetInfo.targetId} waiting=${waitingForDebugger}`);
+      const tabStack = (this as any)._probeTabSessions = (this as any)._probeTabSessions || [];
+      tabStack.push(session);
+      session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
+      session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true })
+          .then(() => session.send('Target.getTargetInfo'))
+          .catch((e: any) => console.error(`[PROBE] tab setup err ${e.message}`));
+      return;
+    }
+
     assert(targetInfo.browserContextId, 'targetInfo: ' + JSON.stringify(targetInfo, null, 2));
     let context = this._contexts.get(targetInfo.browserContextId) || null;
     if (!context) {
@@ -192,6 +207,18 @@ export class CRBrowser extends Browser {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
       const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page' });
       this._crPages.set(targetInfo.targetId, crPage);
+      if (process.env.PW_PROBE) {
+        // CRPage construction synchronously enqueues Network.enable on the page session.
+        // Resume the paused tab IMMEDIATELY (without awaiting the enable) so the enable
+        // and the resume travel together — testing whether the backend applies Network
+        // instrumentation in-order before dispatching the renderer's first navigation.
+        const tabStack = (this as any)._probeTabSessions || [];
+        const tab = tabStack.pop();
+        if (tab) {
+          console.error(`[PROBE] page ${targetInfo.targetId} created (opener=${targetInfo.openerId}); Network.enable enqueued, resuming tab now`);
+          tab.send('Runtime.runIfWaitingForDebugger').catch(() => {});
+        }
+      }
       return;
     }
 
@@ -371,6 +398,11 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
 
   override async doCreateNewPage(): Promise<Page> {
     const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
+    if (process.env.PW_PROBE) {
+      const deadline = Date.now() + 30000;
+      while (!this._browser._crPages.get(targetId) && Date.now() < deadline)
+        await new Promise(r => setTimeout(r, 10));
+    }
     return this._browser._crPages.get(targetId)!._page;
   }
 
