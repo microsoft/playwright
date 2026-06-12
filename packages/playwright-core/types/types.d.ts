@@ -18820,8 +18820,7 @@ export interface Coverage {
  * const context = await browser.newContext();
  *
  * // A passkey your backend already provisioned for a test user.
- * await context.credentials.create({
- *   rpId: 'example.com',
+ * await context.credentials.create('example.com', {
  *   id: knownCredentialId, // base64url
  *   userHandle: knownUserHandle, // base64url
  *   privateKey: knownPrivateKey, // base64url PKCS#8 (DER)
@@ -18854,7 +18853,7 @@ export interface Coverage {
  * // later test: seed the captured passkey so the app starts already enrolled.
  * const credential = JSON.parse(fs.readFileSync('playwright/.auth/passkey.json', 'utf8'));
  * const context = await browser.newContext();
- * await context.credentials.create(credential);
+ * await context.credentials.create(credential.rpId, credential);
  * await context.credentials.install();
  *
  * const page = await context.newPage();
@@ -18877,9 +18876,10 @@ export interface Credentials {
    *
    * Call [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install) before
    * navigating to a page that uses WebAuthn.
+   * @param rpId Relying party id (typically the site's effective domain).
    * @param options
    */
-  create(options: {
+  create(rpId: string, options?: {
     /**
      * Base64url-encoded credential id. Auto-generated if omitted.
      */
@@ -18894,11 +18894,6 @@ export interface Credentials {
      * Base64url-encoded SPKI (DER) public key. Auto-generated if omitted.
      */
     publicKey?: string;
-
-    /**
-     * Relying party id (typically the site's effective domain).
-     */
-    rpId: string;
 
     /**
      * Base64url-encoded user handle. Auto-generated if omitted.
@@ -18933,8 +18928,8 @@ export interface Credentials {
 
   /**
    * Removes a credential from the authenticator by its id. Works for any credential currently held — both those seeded
-   * with [credentials.create(options)](https://playwright.dev/docs/api/class-credentials#credentials-create) and those
-   * the page registered itself by calling `navigator.credentials.create()`.
+   * with [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create)
+   * and those the page registered itself by calling `navigator.credentials.create()`.
    * @param id Base64url-encoded credential id.
    */
   delete(id: string): Promise<void>;
@@ -18942,13 +18937,13 @@ export interface Credentials {
   /**
    * Returns every credential currently held by the authenticator, optionally filtered by `rpId` or `id`. This includes
    * both credentials seeded with
-   * [credentials.create(options)](https://playwright.dev/docs/api/class-credentials#credentials-create) and credentials
-   * the page registered itself by calling `navigator.credentials.create()`.
+   * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) and
+   * credentials the page registered itself by calling `navigator.credentials.create()`.
    *
    * Each returned credential includes its `privateKey` and `publicKey`, so a passkey the app just registered can be
    * saved and re-seeded into a later test with
-   * [credentials.create(options)](https://playwright.dev/docs/api/class-credentials#credentials-create) — see the
-   * second example in the class overview.
+   * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) — see
+   * the second example in the class overview.
    * @param options
    */
   get(options?: {
@@ -18980,7 +18975,7 @@ export interface Credentials {
    *
    * Required: until `install()` is called, no interception is in place and the page sees the platform's native (or
    * absent) WebAuthn behaviour. Seeding credentials with
-   * [credentials.create(options)](https://playwright.dev/docs/api/class-credentials#credentials-create) without
+   * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) without
    * `install()` populates the authenticator, but the page will never see those credentials.
    */
   install(): Promise<void>;
