@@ -62,9 +62,7 @@ it('should handle remote -> local -> remote transitions', async function({ page,
   await assertOOPIFCount(browser, 1);
 });
 
-it('should get the proper viewport', async ({ page, browser, server }) => {
-  it.fixme();
-
+it.fixme('should get the proper viewport', async ({ page, browser, server }) => {
   expect(page.viewportSize()).toEqual({ width: 1280, height: 720 });
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);

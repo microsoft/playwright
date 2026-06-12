@@ -321,7 +321,7 @@ it('should disable memory cache when intercepting', async ({ page, server }) => 
 });
 
 it('should intercept blob url requests', async function({ page, server, browserName }) {
-  it.fixme(browserName !== 'webkit');
+  it.skip(browserName !== 'webkit');
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/*', route => {
     route.fulfill({

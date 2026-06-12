@@ -92,7 +92,8 @@ it('should play webm video @smoke', async ({ page, asset, browserName, platform,
 
 it('should play audio @smoke', async ({ page, server, browserName, platform, macVersion }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && macVersion === 15, 'audio output is unreliable on hosted macOS 15 runners');
+  it.skip(browserName === 'webkit' && platform === 'darwin' && macVersion === 15, 'audio output is unreliable on hosted macOS 15 runners');
+
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
   await page.$eval('audio', e => e.play());
@@ -391,7 +392,7 @@ it('should be able to render avif images', {
     description: 'https://github.com/microsoft/playwright/issues/32673',
   }
 }, async ({ page, server, browserName, platform, isFrozenWebkit }) => {
-  it.fixme(browserName === 'webkit' && platform === 'win32');
+  it.skip(browserName === 'webkit' && platform === 'win32');
   it.skip(isFrozenWebkit);
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<img src="${server.PREFIX}/rgb.avif" onerror="window.error = true">`);
@@ -443,7 +444,7 @@ it('should not auto play audio', {
     description: 'https://github.com/microsoft/playwright/issues/33590'
   }
 }, async ({ page, browserName, isWindows }) => {
-  it.fixme(browserName === 'webkit' && isWindows);
+  it.skip(browserName === 'webkit' && isWindows, 'audio does not play at all');
   it.skip(process.env.PW_CLOCK === 'frozen', 'no way to inject real setTimeout');
   await page.route('**/*', async route => {
     await route.fulfill({

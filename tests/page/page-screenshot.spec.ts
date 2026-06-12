@@ -258,8 +258,6 @@ it.describe('page screenshot', () => {
   });
 
   it('should render white background on jpeg file', async ({ page, server, isElectron }) => {
-    it.fixme(isElectron, 'omitBackground with jpeg does not work');
-
     await page.setViewportSize({ width: 300, height: 300 });
     await page.goto(server.EMPTY_PAGE);
     const screenshot = await page.screenshot({ omitBackground: true, type: 'jpeg' });
@@ -267,7 +265,7 @@ it.describe('page screenshot', () => {
   });
 
   it('should work with odd clip size on Retina displays', async ({ page, isElectron }) => {
-    it.fixme(isElectron, 'Scale is wrong');
+    it.skip(isElectron, 'electron does not set device scale factor to 1');
 
     const screenshot = await page.screenshot({
       clip: {
@@ -371,8 +369,6 @@ it.describe('page screenshot', () => {
   });
 
   it('path option should detect jpeg', async ({ page, server, isElectron }, testInfo) => {
-    it.fixme(isElectron, 'omitBackground with jpeg does not work');
-
     await page.setViewportSize({ width: 300, height: 300 });
     await page.goto(server.EMPTY_PAGE);
     const outputPath = testInfo.outputPath('screenshot.jpg');
@@ -914,7 +910,7 @@ it('should throw if screenshot size is too large', async ({ page, browserName, i
 it('page screenshot should capture css transform', async function({ page, browserName, isElectron, isAndroid }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26447' });
   it.fixme(browserName === 'webkit');
-  it.fixme(isElectron || isAndroid, 'Returns screenshot of a different size.');
+  it.skip(isElectron || isAndroid, 'Returns screenshot of a different size.');
   await page.setContent(`
     <style>
     .container {
@@ -957,7 +953,7 @@ it('page screenshot should capture css transform', async function({ page, browse
 
 it('should capture css box-shadow', async ({ page, isElectron, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21620' });
-  it.fixme(isElectron || isAndroid, 'Returns screenshot of a different size.');
+  it.skip(isElectron || isAndroid, 'Returns screenshot of a different size.');
   await page.setContent(`<div style="box-shadow: red 10px 10px 10px; width: 50px; height: 50px;"></div>`);
   await expect(page).toHaveScreenshot();
 });

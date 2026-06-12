@@ -434,8 +434,6 @@ it('should parse cookie with large Max-Age correctly', async ({ server, page, de
 });
 
 it('iframe should inherit cookies from parent', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35439' } }, async ({ page, isLinux, browserName }) => {
-  it.fixme(browserName === 'webkit' && isLinux, 'https://bugs.webkit.org/show_bug.cgi?id=291194');
-
   await page.route('**/*', async (route, request) => {
     if (request.url().includes('sub.example.test')) {
       await route.fulfill({

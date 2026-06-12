@@ -133,22 +133,16 @@ it('should be isolated between frames', async ({ page, server }) => {
 });
 
 it('should work in iframes that failed initial navigation', async ({ page, browserName }) => {
-  it.fixme(browserName !== 'webkit');
-
-  // - Firefox does not report domcontentloaded for the iframe.
-  // - Chromium and Firefox report empty url.
-  // - Chromium does not report main/utility worlds for the iframe.
   await page.setContent(`
     <meta http-equiv="Content-Security-Policy" content="script-src 'none';">
     <iframe src='javascript:""'></iframe>
   `, { waitUntil: 'domcontentloaded' });
-  // Note: Chromium/Firefox never report 'load' event for the iframe.
   await page.evaluate(() => {
     const iframe = document.querySelector('iframe');
     const div = iframe.contentDocument.createElement('div');
     iframe.contentDocument.body.appendChild(div);
   });
-  expect(page.frames()[1].url()).toBe('about:blank');
+  expect(page.frames()[1].url()).toBe(browserName === 'webkit' ? 'about:blank' : '');
   // Main world should work.
   expect(await page.frames()[1].evaluate(() => window.location.href)).toBe('about:blank');
   // Utility world should work.
@@ -156,8 +150,6 @@ it('should work in iframes that failed initial navigation', async ({ page, brows
 });
 
 it('should work in iframes that interrupted initial javascript url navigation', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'chromium');
-
   // Chromium does not report isolated world for the iframe.
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {

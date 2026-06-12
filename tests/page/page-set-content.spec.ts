@@ -126,7 +126,7 @@ it('content() should throw nice error during navigation', async ({ page, server 
 });
 
 it('should return empty content there is no iframe src', async ({ page, browserName }) => {
-  it.fixme(browserName === 'webkit', 'Hangs in all browsers because there is no utility context');
+  it.fixme(browserName === 'webkit', 'there is no utility context');
   await page.setContent(`<iframe src="javascript:console.log(1)"></iframe>`);
   expect(page.frames().length).toBe(2);
   expect(await page.frames()[1].content()).toBe('<html><head></head><body></body></html>');
