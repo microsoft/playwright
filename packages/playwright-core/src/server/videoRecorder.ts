@@ -101,7 +101,7 @@ class FfmpegVideoRecorder {
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
   private _firstFrameTimestamp: number = 0;
-  private _lastFrame: { timestamp: number, frameNumber: number, buffer: Buffer } | null = null;
+  private _lastFrame: { timestamp: number, frameNumber: number, timestampMs: number, buffer: Buffer } | null = null;
   private _lastWriteNodeTime: number = 0;
   private _isStopped = false;
   private _ffmpegPath: string;
@@ -209,20 +209,22 @@ class FfmpegVideoRecorder {
     const timestampMs = Math.max(0, Math.round((timestamp - this._firstFrameTimestamp) * 1000));
 
     // The output is constant frame rate, so multiple input frames that map to the same output
-    // slot would be redundant - ffmpeg only keeps one of them. Skip them on our side to avoid
-    // muxing and piping frames that ffmpeg would just discard.
+    // slot would be redundant - ffmpeg only keeps one of them. We coalesce them on our side to
+    // avoid muxing and piping frames that ffmpeg would just discard, keeping the most recent
+    // frame for each slot. The pending frame is only emitted once the slot is complete (a frame
+    // belonging to a later slot arrives, or recording stops), so that fast bursts of frames
+    // within a single slot still surface the latest pixels rather than the first ones.
     const frameNumber = Math.floor(timestampMs * fps / 1000);
-    if (this._lastFrame && frameNumber === this._lastFrame.frameNumber) {
-      this._lastFrame = { buffer: frame, timestamp, frameNumber };
-      this._lastWriteNodeTime = monotonicTime();
-      return;
-    }
+    if (this._lastFrame && frameNumber !== this._lastFrame.frameNumber)
+      this._emitFrame(this._lastFrame.buffer, this._lastFrame.timestampMs);
 
-    this._process.stdin!.write(writeClusterHeader(timestampMs, frame.length));
-    this._process.stdin!.write(frame);
-
-    this._lastFrame = { buffer: frame, timestamp, frameNumber };
+    this._lastFrame = { buffer: frame, timestamp, frameNumber, timestampMs };
     this._lastWriteNodeTime = monotonicTime();
+  }
+
+  private _emitFrame(frame: Buffer, timestampMs: number) {
+    this._process!.stdin!.write(writeClusterHeader(timestampMs, frame.length));
+    this._process!.stdin!.write(frame);
   }
 
   async _stop() {
@@ -236,10 +238,12 @@ class FfmpegVideoRecorder {
       // ffmpeg only creates a file upon some non-empty input.
       this._writeFrame(createWhiteImage(this._size.width, this._size.height), monotonicTime() / 1000);
     }
-    // Repeat the last frame at the end so it stays visible for at least 1s. This also ensures
-    // non-empty videos with 1 frame and gives the output stream a final timestamp.
+    // Emit the last received frame at its own slot, then repeat it at the end so it stays visible
+    // for at least 1s. This also ensures non-empty videos with 1 frame and gives the output stream
+    // a final timestamp.
+    this._emitFrame(this._lastFrame!.buffer, this._lastFrame!.timestampMs);
     const addTime = Math.max((monotonicTime() - this._lastWriteNodeTime) / 1000, 1);
-    this._writeFrame(this._lastFrame!.buffer, this._lastFrame!.timestamp + addTime);
+    this._emitFrame(this._lastFrame!.buffer, this._lastFrame!.timestampMs + Math.round(addTime * 1000));
     this._isStopped = true;
     try {
       await this._gracefullyClose!();
