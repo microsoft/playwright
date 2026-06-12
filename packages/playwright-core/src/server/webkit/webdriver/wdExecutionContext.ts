@@ -109,7 +109,9 @@ export class WDExecutionContext implements js.ExecutionContextDelegate {
 
     let body: string;
     if (returnByValue) {
-      body = `const __pwValues = __pwArgs[0]; return ${call};`;
+      // WebDriver's result clone coerces a top-level `undefined` to `null`, so
+      // re-encode it as the serializer's `undefined` marker to round-trip it.
+      body = `const __pwValues = __pwArgs[0]; const __pwR = await ${call}; return __pwR === undefined ? { v: 'undefined' } : __pwR;`;
     } else {
       // The InjectedScript poller returns `{ result: <Promise>, abort }` and reads
       // the resolved `.result` later; resolve it here (where the Promise is live)
