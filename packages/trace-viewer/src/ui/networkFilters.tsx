@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import * as React from 'react';
-import { handleTabListKeyDown } from '@web/uiUtils';
 import './networkFilters.css';
 
 const resourceTypes = ['Fetch', 'HTML', 'JS', 'CSS', 'Font', 'Image', 'WS'] as const;
@@ -32,14 +30,6 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
   filterState: FilterState,
   onFilterStateChange: (filterState: FilterState) => void,
 }) => {
-  const tabListRef = React.useRef<HTMLDivElement>(null);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    handleTabListKeyDown(e, tabListRef.current);
-  };
-
-  const isAllSelected = filterState.resourceTypes.size === 0;
-
   return (
     <div className='network-filters'>
       <input
@@ -50,14 +40,11 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
         onChange={e => onFilterStateChange({ ...filterState, searchValue: e.target.value })}
       />
 
-      <div className='network-filters-resource-types' role='tablist' aria-multiselectable='true' onKeyDown={handleKeyDown} ref={tabListRef}>
+      <div className='network-filters-resource-types' role='tablist' aria-multiselectable='true'>
         <div
           title='All'
           onClick={() => onFilterStateChange({ ...filterState, resourceTypes: new Set() })}
-          className={`network-filters-resource-type ${isAllSelected ? 'selected' : ''}`}
-          role='tab'
-          tabIndex={isAllSelected ? 0 : -1}
-          aria-selected={isAllSelected}
+          className={`network-filters-resource-type ${filterState.resourceTypes.size === 0 ? 'selected' : ''}`}
         >
           All
         </div>
@@ -77,7 +64,6 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
             }}
             className={`network-filters-resource-type ${filterState.resourceTypes.has(resourceType) ? 'selected' : ''}`}
             role='tab'
-            tabIndex={filterState.resourceTypes.has(resourceType) ? 0 : -1}
             aria-selected={filterState.resourceTypes.has(resourceType)}
           >
             {resourceType}
