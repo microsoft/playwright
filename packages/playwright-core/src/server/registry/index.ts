@@ -897,12 +897,19 @@ export class Registry {
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
     });
+    const wslExecutable = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'wsl.exe') : undefined;
     this._executables.push({
       name: 'webkit-wsl',
       browserName: 'webkit',
       directory: webkit.dir,
-      executablePath: () => webkitExecutable,
-      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('webkit', webkitExecutable, webkit.installByDefault, sdkLanguage),
+      executablePath: () => wslExecutable,
+      executablePathOrDie: () => {
+        if (!wslExecutable)
+          throw new Error(`webkit-wsl is only supported on Windows`);
+        return wslExecutable;
+      },
+      // WebKit is installed inside the WSL distribution by install_webkit_wsl.ps1.
+      wslExecutablePath: `/home/pwuser/.cache/ms-playwright/webkit-${webkit.revision}/pw_run.sh`,
       installType: 'download-on-demand',
       title: 'Webkit in WSL',
       _validateHostRequirements: (sdkLanguage: string) => Promise.resolve(),
