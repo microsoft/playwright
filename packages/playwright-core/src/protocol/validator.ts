@@ -1276,6 +1276,7 @@ scheme.FrameAriaSnapshotParams = tObject({
   selector: tOptional(tString),
   depth: tOptional(tInt),
   boxes: tOptional(tBoolean),
+  numbers: tOptional(tEnum(['regex', 'static'])),
   timeout: tFloat,
 });
 scheme.FrameAriaSnapshotResult = tObject({

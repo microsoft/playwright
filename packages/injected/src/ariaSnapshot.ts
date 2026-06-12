@@ -42,6 +42,7 @@ export type AriaTreeOptions = {
   doNotRenderActive?: boolean;
   depth?: number;
   boxes?: boolean;
+  numbers?: 'regex' | 'static';
 };
 
 type InternalOptions = {
@@ -57,6 +58,7 @@ type InternalOptions = {
 
 function toInternalOptions(options: AriaTreeOptions): InternalOptions {
   const renderBoxes = options.boxes;
+  const renderStringsAsRegex = options.numbers !== 'static';
   if (options.mode === 'ai') {
     // For AI consumption.
     return {
@@ -66,19 +68,20 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
       includeGenericRole: true,
       renderActive: !options.doNotRenderActive,
       renderCursorPointer: true,
+      renderStringsAsRegex,
       renderBoxes,
     };
   }
   if (options.mode === 'autoexpect') {
     // To auto-generate assertions on visible elements.
-    return { visibility: 'ariaAndVisible', refs: 'none', renderBoxes };
+    return { visibility: 'ariaAndVisible', refs: 'none', renderStringsAsRegex, renderBoxes };
   }
   if (options.mode === 'codegen') {
-    // To generate aria assertion with regex heurisitcs.
+    // To generate aria assertion with regex heuristics.
     return { visibility: 'aria', refs: 'none', renderStringsAsRegex: true, renderBoxes };
   }
   // To match aria snapshot.
-  return { visibility: 'aria', refs: 'none', renderBoxes };
+  return { visibility: 'aria', refs: 'none', renderStringsAsRegex, renderBoxes };
 }
 
 export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOptions): AriaSnapshot {

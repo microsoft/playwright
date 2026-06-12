@@ -2432,6 +2432,7 @@ export type FrameAriaSnapshotParams = {
   selector?: string,
   depth?: number,
   boxes?: boolean,
+  numbers?: 'regex' | 'static',
   timeout: number,
 };
 export type FrameAriaSnapshotOptions = {

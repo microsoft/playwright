@@ -139,6 +139,7 @@ export type ExpectConfig = {
   toMatchAriaSnapshot?: {
     pathTemplate?: string;
     children?: 'contain' | 'equal' | 'deep-equal';
+    numbers?: 'regex' | 'static';
   };
   toPass?: { timeout?: number; intervals?: number[] };
 };

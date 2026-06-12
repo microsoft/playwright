@@ -34,6 +34,7 @@ type ToMatchAriaSnapshotExpected = {
   name?: string;
   path?: string;
   timeout?: number;
+  numbers?: 'regex' | 'static';
 } | string;
 
 const kImpossibleAriaMatch = `- none "Generating new baseline"`;
