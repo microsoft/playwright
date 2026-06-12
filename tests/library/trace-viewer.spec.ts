@@ -106,9 +106,16 @@ test('should open two trace viewers', async ({ showTraceViewer }, testInfo) => {
 });
 
 test('should open trace viewer on specific host', async ({ showTraceViewer }, testInfo) => {
-  const traceViewer = await showTraceViewer(testInfo.outputPath(), { host: '127.0.0.1' });
+  const dir = testInfo.outputPath('some-dir');
+  await fs.promises.mkdir(dir, { recursive: true });
+  // Run from a random directory to check that file access works.
+  const traceViewer = await showTraceViewer(traceFile, { host: '127.0.0.1', cwd: dir });
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
+  await expect(traceViewer.actionTitles).toContainText([
+    /Create page/,
+    /Close page/,
+  ]);
 });
 
 test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
