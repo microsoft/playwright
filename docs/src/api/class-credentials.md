@@ -33,6 +33,76 @@ await page.goto('https://example.com/login');
 // The page's navigator.credentials.get() is answered with the seeded passkey.
 ```
 
+```java
+BrowserContext context = browser.newContext();
+
+// A passkey your backend already provisioned for a test user.
+context.credentials().create("example.com", new Credentials.CreateOptions()
+    .setId(knownCredentialId) // base64url
+    .setUserHandle(knownUserHandle) // base64url
+    .setPrivateKey(knownPrivateKey) // base64url PKCS#8 (DER)
+    .setPublicKey(knownPublicKey)); // base64url SPKI (DER)
+context.credentials().install();
+
+Page page = context.newPage();
+page.navigate("https://example.com/login");
+// The page's navigator.credentials.get() is answered with the seeded passkey.
+```
+
+```python async
+context = await browser.new_context()
+
+# A passkey your backend already provisioned for a test user.
+await context.credentials.create(
+    "example.com",
+    id=known_credential_id,  # base64url
+    user_handle=known_user_handle,  # base64url
+    private_key=known_private_key,  # base64url PKCS#8 (DER)
+    public_key=known_public_key,  # base64url SPKI (DER)
+)
+await context.credentials.install()
+
+page = await context.new_page()
+await page.goto("https://example.com/login")
+# The page's navigator.credentials.get() is answered with the seeded passkey.
+```
+
+```python sync
+context = browser.new_context()
+
+# A passkey your backend already provisioned for a test user.
+context.credentials.create(
+    "example.com",
+    id=known_credential_id,  # base64url
+    user_handle=known_user_handle,  # base64url
+    private_key=known_private_key,  # base64url PKCS#8 (DER)
+    public_key=known_public_key,  # base64url SPKI (DER)
+)
+context.credentials.install()
+
+page = context.new_page()
+page.goto("https://example.com/login")
+# The page's navigator.credentials.get() is answered with the seeded passkey.
+```
+
+```csharp
+var context = await browser.NewContextAsync();
+
+// A passkey your backend already provisioned for a test user.
+await context.Credentials.CreateAsync("example.com", new()
+{
+    Id = knownCredentialId, // base64url
+    UserHandle = knownUserHandle, // base64url
+    PrivateKey = knownPrivateKey, // base64url PKCS#8 (DER)
+    PublicKey = knownPublicKey, // base64url SPKI (DER)
+});
+await context.Credentials.InstallAsync();
+
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://example.com/login");
+// The page's navigator.credentials.get() is answered with the seeded passkey.
+```
+
 **Usage: capture a passkey, then reuse it**
 
 ```js
@@ -49,6 +119,65 @@ const [credential] = await context.credentials.get({ rpId: 'example.com' });
 fs.writeFileSync('playwright/.auth/passkey.json', JSON.stringify(credential));
 ```
 
+```java
+// setup test: let the app register a passkey, then save it.
+BrowserContext context = browser.newContext();
+context.credentials().install();
+
+Page page = context.newPage();
+page.navigate("https://example.com/register");
+page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Create a passkey")).click();
+
+// Read back the passkey the page registered — it includes the private key.
+VirtualCredential credential = context.credentials().get(
+    new Credentials.GetOptions().setRpId("example.com")).get(0);
+Files.writeString(Paths.get("playwright/.auth/passkey.json"), new Gson().toJson(credential));
+```
+
+```python async
+# setup test: let the app register a passkey, then save it.
+context = await browser.new_context()
+await context.credentials.install()
+
+page = await context.new_page()
+await page.goto("https://example.com/register")
+await page.get_by_role("button", name="Create a passkey").click()
+
+# Read back the passkey the page registered — it includes the private key.
+[credential] = await context.credentials.get(rp_id="example.com")
+with open("playwright/.auth/passkey.json", "w") as f:
+    json.dump(credential, f)
+```
+
+```python sync
+# setup test: let the app register a passkey, then save it.
+context = browser.new_context()
+context.credentials.install()
+
+page = context.new_page()
+page.goto("https://example.com/register")
+page.get_by_role("button", name="Create a passkey").click()
+
+# Read back the passkey the page registered — it includes the private key.
+[credential] = context.credentials.get(rp_id="example.com")
+with open("playwright/.auth/passkey.json", "w") as f:
+    json.dump(credential, f)
+```
+
+```csharp
+// setup test: let the app register a passkey, then save it.
+var context = await browser.NewContextAsync();
+await context.Credentials.InstallAsync();
+
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://example.com/register");
+await page.GetByRole(AriaRole.Button, new() { Name = "Create a passkey" }).ClickAsync();
+
+// Read back the passkey the page registered — it includes the private key.
+var credentials = await context.Credentials.GetAsync(new() { RpId = "example.com" });
+File.WriteAllText("playwright/.auth/passkey.json", JsonSerializer.Serialize(credentials[0]));
+```
+
 ```js
 // later test: seed the captured passkey so the app starts already enrolled.
 const credential = JSON.parse(fs.readFileSync('playwright/.auth/passkey.json', 'utf8'));
@@ -58,6 +187,80 @@ await context.credentials.install();
 
 const page = await context.newPage();
 await page.goto('https://example.com/login');
+// navigator.credentials.get() resolves the captured passkey — already signed in.
+```
+
+```java
+// later test: seed the captured passkey so the app starts already enrolled.
+VirtualCredential credential = new Gson().fromJson(
+    Files.readString(Paths.get("playwright/.auth/passkey.json")), VirtualCredential.class);
+BrowserContext context = browser.newContext();
+context.credentials().create(credential.rpId, new Credentials.CreateOptions()
+    .setId(credential.id)
+    .setUserHandle(credential.userHandle)
+    .setPrivateKey(credential.privateKey)
+    .setPublicKey(credential.publicKey));
+context.credentials().install();
+
+Page page = context.newPage();
+page.navigate("https://example.com/login");
+// navigator.credentials.get() resolves the captured passkey — already signed in.
+```
+
+```python async
+# later test: seed the captured passkey so the app starts already enrolled.
+with open("playwright/.auth/passkey.json") as f:
+    credential = json.load(f)
+context = await browser.new_context()
+await context.credentials.create(
+    credential["rpId"],
+    id=credential["id"],
+    user_handle=credential["userHandle"],
+    private_key=credential["privateKey"],
+    public_key=credential["publicKey"],
+)
+await context.credentials.install()
+
+page = await context.new_page()
+await page.goto("https://example.com/login")
+# navigator.credentials.get() resolves the captured passkey — already signed in.
+```
+
+```python sync
+# later test: seed the captured passkey so the app starts already enrolled.
+with open("playwright/.auth/passkey.json") as f:
+    credential = json.load(f)
+context = browser.new_context()
+context.credentials.create(
+    credential["rpId"],
+    id=credential["id"],
+    user_handle=credential["userHandle"],
+    private_key=credential["privateKey"],
+    public_key=credential["publicKey"],
+)
+context.credentials.install()
+
+page = context.new_page()
+page.goto("https://example.com/login")
+# navigator.credentials.get() resolves the captured passkey — already signed in.
+```
+
+```csharp
+// later test: seed the captured passkey so the app starts already enrolled.
+var credential = JsonSerializer.Deserialize<VirtualCredential>(
+    File.ReadAllText("playwright/.auth/passkey.json"));
+var context = await browser.NewContextAsync();
+await context.Credentials.CreateAsync(credential.RpId, new()
+{
+    Id = credential.Id,
+    UserHandle = credential.UserHandle,
+    PrivateKey = credential.PrivateKey,
+    PublicKey = credential.PublicKey,
+});
+await context.Credentials.InstallAsync();
+
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://example.com/login");
 // navigator.credentials.get() resolves the captured passkey — already signed in.
 ```
 
