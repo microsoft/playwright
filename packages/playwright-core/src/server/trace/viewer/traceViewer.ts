@@ -218,6 +218,13 @@ function traceFileRoots(traceUrl: string | undefined): string[] {
     } catch {
     }
   }
+  if (traceUrl?.startsWith('file?path=')) {
+    try {
+      const url = new URL(traceUrl, 'http://localhost');
+      return [path.dirname(url.searchParams.get('path')!)];
+    } catch {
+    }
+  }
   return [process.cwd()];
 }
 
