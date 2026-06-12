@@ -370,7 +370,10 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   override async doCreateNewPage(): Promise<Page> {
-    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
+    // Create headful windows/tabs in the background to avoid stealing focus from the user.
+    // The `background` parameter is not supported by the headless shell or Android.
+    const background = this._browser.options.headful && this._browser.options.name !== 'clank' ? true : undefined;
+    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId, background });
     return this._browser._crPages.get(targetId)!._page;
   }
 
