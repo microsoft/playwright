@@ -210,27 +210,6 @@ export function scrollIntoViewIfNeeded(element: Element | undefined) {
     element?.scrollIntoView();
 }
 
-export function handleTabListKeyDown(e: React.KeyboardEvent, tabListElement: HTMLElement | null): number {
-  const tabElements = Array.from(tabListElement?.querySelectorAll('[role="tab"]') ?? []) as HTMLElement[];
-  const currentIndex = tabElements.findIndex(el => el === document.activeElement);
-  if (currentIndex === -1)
-    return -1;
-  let nextIndex = currentIndex;
-  if (e.key === 'ArrowRight')
-    nextIndex = (currentIndex + 1) % tabElements.length;
-  else if (e.key === 'ArrowLeft')
-    nextIndex = (currentIndex - 1 + tabElements.length) % tabElements.length;
-  else if (e.key === 'Home')
-    nextIndex = 0;
-  else if (e.key === 'End')
-    nextIndex = tabElements.length - 1;
-  else
-    return -1;
-  e.preventDefault();
-  tabElements[nextIndex].focus();
-  return nextIndex;
-}
-
 const kControlCodesRe = '\\u0000-\\u0020\\u007f-\\u009f';
 export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + kControlCodesRe + '"]{2,}[^\\s' + kControlCodesRe + '"\')}\\],:;.!?]', 'ug');
 
