@@ -103,7 +103,7 @@ export class TestContext {
     if (options?.headless !== undefined)
       this.computedHeaded = !options.headless;
     else
-      this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY);
+      this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY && !process.env.WAYLAND_DISPLAY);
   }
 
   private async _enqueue<T>(fn: () => Promise<T>): Promise<T> {
