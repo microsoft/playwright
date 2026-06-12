@@ -90,8 +90,6 @@ Electron:
 ElectronApplication:
   type: interface
 
-  extends: EventTarget
-
   initializer:
     context: BrowserContext
 

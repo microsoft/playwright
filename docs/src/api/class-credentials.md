@@ -281,9 +281,9 @@ Installs the virtual WebAuthn authenticator into the context, overriding
 `navigator.credentials.create()` and `navigator.credentials.get()` in all current
 and future pages. Call this before the page first touches `navigator.credentials`.
 
-Required: until `install()` is called, no interception is in place and the page sees
+Required: until [`method: Credentials.install`] is called, no interception is in place and the page sees
 the platform's native (or absent) WebAuthn behaviour. Seeding credentials with
-[`method: Credentials.create`] without `install()` populates the authenticator, but the
+[`method: Credentials.create`] without installing populates the authenticator, but the
 page will never see those credentials.
 
 ## async method: Credentials.create
@@ -298,13 +298,12 @@ page will never see those credentials.
 
 Seeds a virtual WebAuthn credential and returns it.
 
-With only `rpId`, generates a fresh **ECDSA P-256** keypair, credential id and user handle. The
+With only [`param: Credentials.create.rpId`], generates a fresh **ECDSA P-256** keypair, credential id and user handle. The
 seeded credential is discoverable (resident), so the page can resolve it from both
-username-then-passkey and usernameless passkey flows. The returned object carries the `privateKey` and `publicKey`, so
-it can be persisted to disk and re-seeded in a later test.
+username-then-passkey and usernameless passkey flows. The returned object carries the private and public keys, so it can be persisted to disk and re-seeded in a later test.
 
-To **import a known credential**, supply all four of `id`, `userHandle`, `privateKey` and
-`publicKey` together.
+To **import a known credential**, supply all four of [`option: Credentials.create.id`], [`option: Credentials.create.userHandle`], [`option: Credentials.create.privateKey`] and
+[`option: Credentials.create.publicKey`] together.
 
 Call [`method: Credentials.install`] before navigating to a page that uses WebAuthn.
 
@@ -361,11 +360,11 @@ Base64url-encoded credential id.
   - `privateKey` <[string]>
   - `publicKey` <[string]>
 
-Returns every credential currently held by the authenticator, optionally filtered by `rpId` or
-`id`. This includes both credentials seeded with [`method: Credentials.create`] and credentials
+Returns every credential currently held by the authenticator, optionally filtered by [`option: Credentials.get.rpId`] or
+[`option: Credentials.get.id`]. This includes both credentials seeded with [`method: Credentials.create`] and credentials
 the page registered itself by calling `navigator.credentials.create()`.
 
-Each returned credential includes its `privateKey` and `publicKey`, so a passkey the app just
+Each returned credential includes its private and public keys, so a passkey the app just
 registered can be saved and re-seeded into a later test with [`method: Credentials.create`] — see the second example in the class overview.
 
 ### option: Credentials.get.rpId

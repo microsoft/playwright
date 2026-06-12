@@ -37,7 +37,7 @@ page.local_storage.clear()
 page.navigate("https://example.com");
 page.localStorage().setItem("token", "abc");
 String token = page.localStorage().getItem("token");
-List<NameValue> all = page.localStorage().items();
+List<WebStorageItem> all = page.localStorage().items();
 page.localStorage().removeItem("token");
 page.localStorage().clear();
 ```
@@ -54,16 +54,17 @@ await page.LocalStorage.ClearAsync();
 ## async method: WebStorage.items
 * since: v1.61
 - returns: <[Array]<[Object]>>
+  * alias: WebStorageItem
   - `name` <[string]>
   - `value` <[string]>
 
-Returns all items in the storage as `name`/`value` pairs.
+Returns all items in the storage as name/value pairs.
 
 ## async method: WebStorage.getItem
 * since: v1.61
 - returns: <[null]|[string]>
 
-Returns the value for the given `name`, or `null` if the key is not present.
+Returns the value for the given [`param: WebStorage.getItem.name`] if present.
 
 ### param: WebStorage.getItem.name
 * since: v1.61
@@ -74,7 +75,7 @@ Name of the item to retrieve.
 ## async method: WebStorage.setItem
 * since: v1.61
 
-Sets the value for the given `name`. Overwrites any existing value for that name.
+Sets the value for the given [`param: WebStorage.setItem.name`]. Overwrites any existing value for that name.
 
 ### param: WebStorage.setItem.name
 * since: v1.61
@@ -91,7 +92,7 @@ New value for the item.
 ## async method: WebStorage.removeItem
 * since: v1.61
 
-Removes the item with the given `name`. No-op if the item is absent.
+Removes the item with the given [`param: WebStorage.removeItem.name`]. No-op if the item is absent.
 
 ### param: WebStorage.removeItem.name
 * since: v1.61

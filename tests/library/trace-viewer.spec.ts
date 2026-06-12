@@ -2507,6 +2507,26 @@ test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) 
   await expect(frame.frameLocator('iframe').getByRole('button')).toHaveText('Hello iframe');
 });
 
+test('should render snapshots from the second chunk', async ({ context, page, server, showTraceViewer }, testInfo) => {
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent('<button>Click</button>');
+
+  await context.tracing.startChunk();
+  await page.click('"Click"');
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
+
+  await context.tracing.startChunk();
+  await page.hover('"Click"');
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace2.zip') });
+
+  // Snapshots in the second chunk must be self-contained and not reference
+  // snapshot state from the first chunk.
+  const traceViewer = await showTraceViewer(testInfo.outputPath('trace2.zip'));
+  const frame = await traceViewer.snapshotFrame('Hover');
+  await expect(frame.locator('button')).toHaveText('Click');
+});
+
 test('take trace paths via stdin', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(undefined, { stdin: true });
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
