@@ -69,7 +69,7 @@ export class Snapshotter {
 
   async reset() {
     if (this._started)
-      await this._context.safeNonStallingEvaluateInAllFrames(`window["${this._snapshotStreamer}"].reset()`, 'main');
+      await this._context.safeNonStallingEvaluateInAllFrames(`window["${this._snapshotStreamer}"].resetHistory()`, 'main');
   }
 
   stop() {

@@ -18867,12 +18867,16 @@ export interface Credentials {
   /**
    * Seeds a virtual WebAuthn credential and returns it.
    *
-   * With only `rpId`, generates a fresh **ECDSA P-256** keypair, credential id and user handle. The seeded credential
-   * is discoverable (resident), so the page can resolve it from both username-then-passkey and usernameless passkey
-   * flows. The returned object carries the `privateKey` and `publicKey`, so it can be persisted to disk and re-seeded
-   * in a later test.
+   * With only [`rpId`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-rp-id), generates a
+   * fresh **ECDSA P-256** keypair, credential id and user handle. The seeded credential is discoverable (resident), so
+   * the page can resolve it from both username-then-passkey and usernameless passkey flows. The returned object carries
+   * the private and public keys, so it can be persisted to disk and re-seeded in a later test.
    *
-   * To **import a known credential**, supply all four of `id`, `userHandle`, `privateKey` and `publicKey` together.
+   * To **import a known credential**, supply all four of
+   * [`id`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-id),
+   * [`userHandle`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-user-handle),
+   * [`privateKey`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-private-key) and
+   * [`publicKey`](https://playwright.dev/docs/api/class-credentials#credentials-create-option-public-key) together.
    *
    * Call [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install) before
    * navigating to a page that uses WebAuthn.
@@ -18935,13 +18939,15 @@ export interface Credentials {
   delete(id: string): Promise<void>;
 
   /**
-   * Returns every credential currently held by the authenticator, optionally filtered by `rpId` or `id`. This includes
-   * both credentials seeded with
+   * Returns every credential currently held by the authenticator, optionally filtered by
+   * [`rpId`](https://playwright.dev/docs/api/class-credentials#credentials-get-option-rp-id) or
+   * [`id`](https://playwright.dev/docs/api/class-credentials#credentials-get-option-id). This includes both credentials
+   * seeded with
    * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) and
    * credentials the page registered itself by calling `navigator.credentials.create()`.
    *
-   * Each returned credential includes its `privateKey` and `publicKey`, so a passkey the app just registered can be
-   * saved and re-seeded into a later test with
+   * Each returned credential includes its private and public keys, so a passkey the app just registered can be saved
+   * and re-seeded into a later test with
    * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) — see
    * the second example in the class overview.
    * @param options
@@ -18973,10 +18979,11 @@ export interface Credentials {
    * `navigator.credentials.get()` in all current and future pages. Call this before the page first touches
    * `navigator.credentials`.
    *
-   * Required: until `install()` is called, no interception is in place and the page sees the platform's native (or
-   * absent) WebAuthn behaviour. Seeding credentials with
+   * Required: until [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install) is
+   * called, no interception is in place and the page sees the platform's native (or absent) WebAuthn behaviour. Seeding
+   * credentials with
    * [credentials.create(rpId[, options])](https://playwright.dev/docs/api/class-credentials#credentials-create) without
-   * `install()` populates the authenticator, but the page will never see those credentials.
+   * installing populates the authenticator, but the page will never see those credentials.
    */
   install(): Promise<void>;
 }
@@ -21677,13 +21684,14 @@ export interface WebStorage {
   clear(): Promise<void>;
 
   /**
-   * Returns the value for the given `name`, or `null` if the key is not present.
+   * Returns the value for the given
+   * [`name`](https://playwright.dev/docs/api/class-webstorage#web-storage-get-item-option-name) if present.
    * @param name Name of the item to retrieve.
    */
   getItem(name: string): Promise<null|string>;
 
   /**
-   * Returns all items in the storage as `name`/`value` pairs.
+   * Returns all items in the storage as name/value pairs.
    */
   items(): Promise<Array<{
     name: string;
@@ -21692,13 +21700,17 @@ export interface WebStorage {
   }>>;
 
   /**
-   * Removes the item with the given `name`. No-op if the item is absent.
+   * Removes the item with the given
+   * [`name`](https://playwright.dev/docs/api/class-webstorage#web-storage-remove-item-option-name). No-op if the item
+   * is absent.
    * @param name Name of the item to remove.
    */
   removeItem(name: string): Promise<void>;
 
   /**
-   * Sets the value for the given `name`. Overwrites any existing value for that name.
+   * Sets the value for the given
+   * [`name`](https://playwright.dev/docs/api/class-webstorage#web-storage-set-item-option-name). Overwrites any
+   * existing value for that name.
    * @param name Name of the item to set.
    * @param value New value for the item.
    */
