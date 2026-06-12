@@ -99,10 +99,17 @@ export function formatTimestamp(ms: number, base: number): string {
   if (relative < 0)
     return '0:00.000';
   const totalMs = Math.floor(relative);
-  const minutes = Math.floor(totalMs / 60000);
-  const seconds = Math.floor((totalMs % 60000) / 1000);
+  const totalSeconds = Math.floor(totalMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
   const millis = totalMs % 1000;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
+  const mm = minutes.toString().padStart(2, '0');
+  const ss = seconds.toString().padStart(2, '0');
+  const mmm = millis.toString().padStart(3, '0');
+  if (hours > 0)
+    return `${hours}:${mm}:${ss}.${mmm}`;
+  return `${minutes}:${ss}.${mmm}`;
 }
 
 export function actionTitle(action: ActionTraceEventInContext): string {
