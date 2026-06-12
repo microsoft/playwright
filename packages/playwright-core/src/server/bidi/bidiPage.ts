@@ -626,6 +626,8 @@ export class BidiPage implements PageDelegate {
   }
 
   async resetForReuse(progress: Progress): Promise<void> {
+    // See https://github.com/microsoft/playwright/issues/22432.
+    await this.rawMouse.move(progress, 0, 0, 'none', new Set(), new Set(), false);
   }
 
   async pdf(options: channels.PagePdfParams): Promise<Buffer> {
