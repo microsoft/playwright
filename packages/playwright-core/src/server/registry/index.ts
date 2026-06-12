@@ -1561,6 +1561,6 @@ function lowercaseAllKeys(json: any): any {
   return result;
 }
 
-export const registry = new Registry(require(path.join(packageRoot, 'browsers.json')));
+export const registry = new Registry(require('../../../browsers.json'));
 
 export { runOopDownloadBrowserMain } from './oopDownloadBrowserMain';
