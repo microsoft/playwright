@@ -37,6 +37,8 @@ import { isAbortError } from './progress';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
 import { Tracing } from './trace/recorder/tracing';
 
+import type net from 'net';
+
 import type { Playwright } from './playwright';
 import type { Progress } from './progress';
 import type * as types from './types';
@@ -552,9 +554,26 @@ export abstract class APIRequestContext extends SdkObject {
       );
       request.on('close', () => eventsHelper.removeEventListeners(listeners));
 
+      const captureSecurityDetails = (socket: net.Socket) => {
+        if (!(socket instanceof TLSSocket))
+          return;
+        const peerCertificate = socket.getPeerCertificate();
+        securityDetails = {
+          protocol: socket.getProtocol() ?? undefined,
+          subjectName: peerCertificate.subject.CN,
+          validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
+          validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
+          issuer: peerCertificate.issuer.CN
+        };
+      };
+
       request.on('socket', socket => {
+        serverIPAddress = socket.remoteAddress;
+        serverPort = socket.remotePort;
+
         if (request.reusedSocket) {
           reusedSocketAt = monotonicTime();
+          captureSecurityDetails(socket);
           return;
         }
 
@@ -569,22 +588,9 @@ export abstract class APIRequestContext extends SdkObject {
             eventsHelper.addEventListener(socket, 'connect', () => { tcpConnectionAt = monotonicTime(); }),
             eventsHelper.addEventListener(socket, 'secureConnect', () => {
               tlsHandshakeAt = monotonicTime();
-
-              if (socket instanceof TLSSocket) {
-                const peerCertificate = socket.getPeerCertificate();
-                securityDetails = {
-                  protocol: socket.getProtocol() ?? undefined,
-                  subjectName: peerCertificate.subject.CN,
-                  validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
-                  validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
-                  issuer: peerCertificate.issuer.CN
-                };
-              }
+              captureSecurityDetails(socket);
             }),
         );
-
-        serverIPAddress = socket.remoteAddress;
-        serverPort = socket.remotePort;
       });
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 
