@@ -178,7 +178,7 @@ export class CRBrowser extends Browser {
       return;
     }
 
-    const treatOtherAsPage = targetInfo.type === 'other' && process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
+    const treatOtherAsPage = targetInfo.type === 'other' && process.env.PW_CHROMIUM_ATTACH_TO_OTHER !== '0';
 
     if (!context || (targetInfo.type === 'other' && !treatOtherAsPage)) {
       session.detach().catch(() => {});

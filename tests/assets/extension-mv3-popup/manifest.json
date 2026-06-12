@@ -7,6 +7,6 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "scripting"],
   "manifest_version": 3
 }

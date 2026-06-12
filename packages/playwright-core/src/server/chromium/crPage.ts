@@ -379,6 +379,7 @@ class FrameSession {
   private _firstNonInitialNavigationCommittedFulfill = () => {};
   private _firstNonInitialNavigationCommittedReject = (e: Error) => {};
   private _windowId: number | undefined;
+  private _hasUIWindow = true;
   // Marks the oopif session that remote -> local transition has happened in the parent.
   // See Target.detachedFromTarget handler for details.
   private _swappedIn = false;
@@ -438,6 +439,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
+    this._hasUIWindow = hasUIWindow;
     if (!this._page.isStorageStatePage && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
@@ -908,6 +910,8 @@ class FrameSession {
 
   async _updateViewport(preserveWindowBoundaries?: boolean): Promise<void> {
     if (this._crPage._browserContext._browser.isClank())
+      return;
+    if (!this._hasUIWindow)
       return;
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;

@@ -166,47 +166,42 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  // Surfacing the extension action popup as a page is not supported yet. Two things block it:
-  //   1. Playwright does not auto-attach to CDP `tab` targets, and the popup is delivered only
-  //      nested inside a `tab` target (normal pages still arrive via Chromium's backward-compatible
-  //      top-level `page` delivery, so they are unaffected).
-  //   2. Even when reached, the popup is auto-attached as a `type: 'other'` target, and attaching
-  //      to / initializing it as a page crashes Chrome (reported upstream).
-  // The test sets PW_CHROMIUM_ATTACH_TO_OTHER so the popup `other` target is treated as a page
-  // (see crBrowser.ts). Keep as fixme until both are resolved.
-  it.fixme('should surface the extension action popup as a page event', {
+  it('should surface the extension action popup as a page event', {
     annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40554' }
-  }, async ({ launchPersistentContext, asset }) => {
+  }, async ({ launchPersistentContext, asset, server }) => {
+    server.setRoute('/uppercase-target.html', (req, res) => {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end('<body>hello from the page</body>');
+    });
     const extensionPath = asset('extension-mv3-popup');
-    const oldEnv = process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
-    process.env.PW_CHROMIUM_ATTACH_TO_OTHER = '1';
-    try {
-      const context = await launchPersistentContext(extensionPath, {
-        args: ['--enable-unsafe-extension-debugging'],
-      });
+    const context = await launchPersistentContext(extensionPath, {
+      ignoreDefaultArgs: ['--disable-extensions'],
+      args: ['--enable-unsafe-extension-debugging'],
+    });
 
-      const serviceWorkers = context.serviceWorkers();
-      const serviceWorker = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
-      const extensionId = new URL(serviceWorker.url()).host;
+    const page = context.pages()[0] ?? await context.newPage();
+    await page.goto(server.PREFIX + '/uppercase-target.html');
 
-      const browserSession = await context.browser()!.newBrowserCDPSession();
-      const { targetInfos } = await browserSession.send('Target.getTargets', { filter: [{ type: 'tab' }] });
-      const tabTargetId = targetInfos.find((t: any) => t.type === 'tab')!.targetId;
+    const serviceWorker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
+    const extensionId = new URL(serviceWorker.url()).host;
 
-      const popupPromise = context.waitForEvent('page', page => page.url().endsWith('popup.html'));
-      await browserSession.send('Extensions.triggerAction' as any, { id: extensionId, targetId: tabTargetId });
-      const popup = await popupPromise;
+    const browserSession = await context.browser()!.newBrowserCDPSession();
+    const { targetInfos } = await browserSession.send('Target.getTargets', { filter: [{ type: 'tab' }] });
+    const tabTargetId = targetInfos.find(t => t.type === 'tab' && t.url === page.url())?.targetId;
 
-      expect(popup.url()).toMatch(/popup\.html$/);
-      expect(context.pages()).toContain(popup);
-      await expect(popup.locator('#popup-marker')).toHaveText('hello from the popup');
+    expect(tabTargetId).toBeTruthy();
+    const [popup] = await Promise.all([
+      context.waitForEvent('page'),
+      browserSession.send('Extensions.triggerAction', { id: extensionId, targetId: tabTargetId })
+    ]);
 
-      await context.close();
-    } finally {
-      if (oldEnv === undefined)
-        delete process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
-      else
-        process.env.PW_CHROMIUM_ATTACH_TO_OTHER = oldEnv;
-    }
+    expect(popup.url()).toMatch(/popup\.html$/);
+    expect(context.pages()).toContain(popup);
+    await expect(popup.locator('#popup-marker')).toHaveText('hello from the popup');
+
+    await popup.locator('#uppercase').click();
+    await expect(page.locator('body')).toHaveText('HELLO FROM THE PAGE');
+
+    await context.close();
   });
 });
