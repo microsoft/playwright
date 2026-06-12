@@ -20,8 +20,7 @@ There are two common ways to use it:
 const context = await browser.newContext();
 
 // A passkey your backend already provisioned for a test user.
-await context.credentials.create({
-  rpId: 'example.com',
+await context.credentials.create('example.com', {
   id: knownCredentialId, // base64url
   userHandle: knownUserHandle, // base64url
   privateKey: knownPrivateKey, // base64url PKCS#8 (DER)
@@ -54,7 +53,7 @@ fs.writeFileSync('playwright/.auth/passkey.json', JSON.stringify(credential));
 // later test: seed the captured passkey so the app starts already enrolled.
 const credential = JSON.parse(fs.readFileSync('playwright/.auth/passkey.json', 'utf8'));
 const context = await browser.newContext();
-await context.credentials.create(credential);
+await context.credentials.create(credential.rpId, credential);
 await context.credentials.install();
 
 const page = await context.newPage();
@@ -106,14 +105,35 @@ To **import a known credential**, supply all four of `id`, `userHandle`, `privat
 
 Call [`method: Credentials.install`] before navigating to a page that uses WebAuthn.
 
-### param: Credentials.create.options
+### param: Credentials.create.rpId
 * since: v1.61
-- `options` <[Object]>
-  - `rpId` <[string]> Relying party id (typically the site's effective domain).
-  - `id` ?<[string]> Base64url-encoded credential id. Auto-generated if omitted.
-  - `userHandle` ?<[string]> Base64url-encoded user handle. Auto-generated if omitted.
-  - `privateKey` ?<[string]> Base64url-encoded PKCS#8 (DER) private key. Auto-generated if omitted.
-  - `publicKey` ?<[string]> Base64url-encoded SPKI (DER) public key. Auto-generated if omitted.
+- `rpId` <[string]>
+
+Relying party id (typically the site's effective domain).
+
+### option: Credentials.create.id
+* since: v1.61
+- `id` <[string]>
+
+Base64url-encoded credential id. Auto-generated if omitted.
+
+### option: Credentials.create.userHandle
+* since: v1.61
+- `userHandle` <[string]>
+
+Base64url-encoded user handle. Auto-generated if omitted.
+
+### option: Credentials.create.privateKey
+* since: v1.61
+- `privateKey` <[string]>
+
+Base64url-encoded PKCS#8 (DER) private key. Auto-generated if omitted.
+
+### option: Credentials.create.publicKey
+* since: v1.61
+- `publicKey` <[string]>
+
+Base64url-encoded SPKI (DER) public key. Auto-generated if omitted.
 
 ## async method: Credentials.delete
 * since: v1.61

@@ -19,7 +19,7 @@ import { browserTest as it, expect } from '../config/browserTest';
 it('should not intercept navigator.credentials without install()', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   // Seed a credential, but do not install the interceptor.
-  await context.credentials.create({ rpId: server.HOSTNAME });
+  await context.credentials.create(server.HOSTNAME);
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
@@ -31,11 +31,11 @@ it('should seed a known credential and authenticate', async ({ contextFactory, s
   // This is the easiest way to create credentials. In practice, this
   // probably comes from environment.
   const source = await contextFactory();
-  const known = await source.credentials.create({ rpId: server.HOSTNAME });
+  const known = await source.credentials.create(server.HOSTNAME);
 
   // A fresh context imports the known credential and signs in with it.
   const context = await contextFactory();
-  await context.credentials.create(known);
+  await context.credentials.create(known.rpId, known);
   await context.credentials.install();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -139,7 +139,7 @@ it('should capture a page-created credential and reuse it in another context', a
 
   // Reuse the captured passkey in a fresh context and sign in with it.
   const context = await contextFactory();
-  await context.credentials.create(captured);
+  await context.credentials.create(captured.rpId, captured);
   await context.credentials.install();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
