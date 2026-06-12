@@ -88,7 +88,8 @@ export function decorateMCPCommand(command: Command) {
         if (options.vision) {
           // eslint-disable-next-line no-console
           console.error('The --vision option is deprecated, use --caps=vision instead');
-          options.caps = 'vision';
+          options.caps ??= [];
+          options.caps.push('vision');
         }
 
         if (options.caps?.includes('tracing'))
