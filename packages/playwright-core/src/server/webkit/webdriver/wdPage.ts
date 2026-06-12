@@ -19,6 +19,7 @@ import jpegjs from 'jpeg-js';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { createGuid } from '@utils/crypto';
 import * as dom from '../../dom';
+import * as network from '../../network';
 import { Page } from '../../page';
 import { WDExecutionContext } from './wdExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wdInput';
@@ -125,11 +126,30 @@ export class WDPage implements PageDelegate {
     }
     const url = await this._session.currentUrl().catch(() => fallbackUrl);
     const documentId = createGuid();
+    // WebDriver exposes no network events; synthesize a main-document
+    // request/response so page.goto() resolves to a Response. The HTTP status is
+    // read from PerformanceNavigationTiming once the new document is available.
+    let request: network.Request | undefined;
+    if (/^https?:/i.test(url)) {
+      request = new network.Request(this._page.browserContext, frame, null, null, documentId, url, 'document', 'GET', null, []);
+      this._page.frameManager.requestStarted(request);
+    }
     this._page.frameManager.frameCommittedNewDocumentNavigation(this._mainFrameId, url, '', documentId, false);
     this._createContext();
+    if (request) {
+      const status = await this._navigationStatus();
+      const response = new network.Response(request, status, statusText(status), [], kNoTiming, async () => Buffer.from(''), false);
+      this._page.frameManager.requestReceivedResponse(response);
+      this._page.frameManager.reportRequestFinished(request, response);
+    }
     this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'domcontentloaded');
     this._page.frameManager.frameLifecycleEvent(this._mainFrameId, 'load');
     return { newDocumentId: documentId };
+  }
+
+  private async _navigationStatus(): Promise<number> {
+    const status = await this._context!.rawEvaluateJSON('(performance.getEntriesByType("navigation")[0] || {}).responseStatus || 0').catch(() => 0);
+    return status || 200;
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -298,4 +318,13 @@ export class WDPage implements PageDelegate {
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     throw new Error('Adopting element handles is not supported over WebDriver.');
   }
+}
+
+const kNoTiming: network.ResourceTiming = {
+  startTime: 0, domainLookupStart: -1, domainLookupEnd: -1, connectStart: -1,
+  secureConnectionStart: -1, connectEnd: -1, requestStart: -1, responseStart: -1,
+};
+
+function statusText(status: number): string {
+  return status === 200 ? 'OK' : '';
 }
