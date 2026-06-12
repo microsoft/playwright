@@ -954,3 +954,42 @@ test('should run last failed tests in a shard with --last-failed-file', async ({
   expect(result2.output).not.toContain('b.spec.js:3:11 › pass-b');
   expect(result2.output).toContain('b.spec.js:4:11 › fail-b');
 });
+
+test('should apply --last-failed to dependency projects as well', async ({ runInlineTest }) => {
+  const workspace = {
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass-a', async () => {});
+      test('fail-a', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+    'b.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test.beforeAll(async () => {});
+      test('pass-b', async () => {});
+      test('fail-b', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        projects: [
+          { name: 'setup', testMatch: /a\\.spec\\.ts/ },
+          { name: 'main', testMatch: /b\\.spec\\.ts/, dependencies: ['setup'] },
+        ],
+      });
+    `,
+  };
+
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(2);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(2);
+});

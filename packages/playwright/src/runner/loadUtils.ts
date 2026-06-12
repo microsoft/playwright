@@ -188,9 +188,6 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
-  if (testRun.postShardTestFilters.length)
-    suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testRun.postShardTestFilters.every(filter => filter(test)));
-
   const topLevelProjects = [];
   // Now prepend dependency projects without filtration.
   {
@@ -206,6 +203,9 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
         topLevelProjects.push(project);
     }
   }
+
+  if (testRun.postShardTestFilters.length)
+    suiteUtils.filterTestsRemoveEmptySuites(rootSuite, test => testRun.postShardTestFilters.every(filter => filter(test)));
 
   testRun.rootSuite = rootSuite;
   testRun.topLevelProjects = topLevelProjects;
