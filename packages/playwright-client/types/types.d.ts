@@ -23284,6 +23284,14 @@ export interface LaunchOptions {
   chromiumSandbox?: boolean;
 
   /**
+   * When set to `true`, new pages are created in the background, so that the headed browser window does not activate
+   * and steal the OS focus from the user. Pages still behave as focused ones. Use
+   * [page.bringToFront()](https://playwright.dev/docs/api/class-page#page-bring-to-front) to activate the browser
+   * window when needed. Currently only implemented for headed Chromium. Defaults to `false`.
+   */
+  createPagesInBackground?: boolean;
+
+  /**
    * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
    * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
    * created in is closed.

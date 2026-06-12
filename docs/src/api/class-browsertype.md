@@ -322,6 +322,14 @@ describes some differences for Linux users.
 ### option: BrowserType.launch.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
 * since: v1.9
 
+### option: BrowserType.launch.createPagesInBackground
+* since: v1.62
+- `createPagesInBackground` <[boolean]>
+
+When set to `true`, new pages are created in the background, so that the headed browser window does not activate and
+steal the OS focus from the user. Pages still behave as focused ones. Use [`method: Page.bringToFront`] to activate
+the browser window when needed. Currently only implemented for headed Chromium. Defaults to `false`.
+
 ## async method: BrowserType.launchPersistentContext
 * since: v1.8
 - returns: <[BrowserContext]>

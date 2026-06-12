@@ -92,6 +92,7 @@ LaunchOptions:
     tracesDir: string?
     artifactsDir: string?
     chromiumSandbox: boolean?
+    createPagesInBackground: boolean?
     firefoxUserPrefs: json?
     cdpPort: int?
 

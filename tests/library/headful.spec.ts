@@ -232,11 +232,12 @@ it('Page.bringToFront should work', async ({ browser }) => {
   await page2.close();
 });
 
-it('new pages should be focused and interactable', {
+it('pages created in background should be focused and interactable', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/4822' },
-}, async ({ browser }) => {
-  // Chromium creates headed pages in the background to avoid stealing
-  // OS focus; emulated focus should make them behave as foreground.
+}, async ({ browserType }) => {
+  // With createPagesInBackground, pages do not activate the browser window;
+  // emulated focus should make them behave as foreground.
+  const browser = await browserType.launch({ createPagesInBackground: true });
   const page1 = await browser.newPage();
   await page1.setContent('<input id=i>');
   const page2 = await browser.newPage();
@@ -252,8 +253,7 @@ it('new pages should be focused and interactable', {
   expect(await page1.inputValue('#i')).toBe('page1');
   expect(await page2.inputValue('#i')).toBe('page2');
 
-  await page1.close();
-  await page2.close();
+  await browser.close();
 });
 
 it('should click in OOPIF', async ({ browserName, launchPersistent, server }) => {
