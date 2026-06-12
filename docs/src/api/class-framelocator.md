@@ -144,6 +144,8 @@ in that iframe.
 
 ### option: FrameLocator.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: FrameLocator.getByRole.busy = %%-locator-get-by-role-option-busy-%%
+
 ## method: FrameLocator.getByTestId
 * since: v1.27
 - returns: <[Locator]>

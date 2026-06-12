@@ -17,7 +17,7 @@
 import { parseAttributeSelector } from '@isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
-import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleDescription, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
+import { beginAriaCaches, endAriaCaches, getAriaBusy, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleDescription, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 import { matchesAttributePart } from './selectorUtils';
 
 import type { AttributeSelectorOperator, AttributeSelectorPart } from '@isomorphic/selectorParser';
@@ -37,10 +37,11 @@ type RoleEngineOptions = {
   expanded?: boolean;
   level?: number;
   disabled?: boolean;
+  busy?: boolean;
   includeHidden?: boolean;
 };
 
-const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'description', 'include-hidden'];
+const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'busy', 'name', 'description', 'include-hidden'];
 kSupportedAttributes.sort();
 
 function validateSupportedRole(attr: string, roles: string[], role: string) {
@@ -106,6 +107,12 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
         options.disabled = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
+      case 'busy': {
+        validateSupportedValues(attr, [true, false]);
+        validateSupportedOp(attr, ['<truthy>', '=']);
+        options.busy = attr.op === '<truthy>' ? true : attr.value;
+        break;
+      }
       case 'name': {
         if (attr.op === '<truthy>')
           throw new Error(`"name" attribute must have a value`);
@@ -156,6 +163,8 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
     if (options.level !== undefined && getAriaLevel(element) !== options.level)
       return;
     if (options.disabled !== undefined && getAriaDisabled(element) !== options.disabled)
+      return;
+    if (options.busy !== undefined && getAriaBusy(element) !== options.busy)
       return;
     if (!options.includeHidden) {
       const isHidden = isElementHiddenForAria(element);

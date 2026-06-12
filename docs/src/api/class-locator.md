@@ -1444,6 +1444,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: Locator.getByRole.busy = %%-locator-get-by-role-option-busy-%%
+
 ## method: Locator.getByTestId
 * since: v1.27
 - returns: <[Locator]>

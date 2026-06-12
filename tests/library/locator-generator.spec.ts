@@ -227,6 +227,12 @@ it('reverse engineer getByRole', async ({ page }) => {
     java: `getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setChecked(true).setLevel(3).setPressed(false))`,
     csharp: `GetByRole(AriaRole.Button, new() { Checked = true, Level = 3, Pressed = false })`,
   });
+  expect.soft(generate(page.getByRole('cell', { busy: false }))).toEqual({
+    javascript: `getByRole('cell', { busy: false })`,
+    python: `get_by_role("cell", busy=False)`,
+    java: `getByRole(AriaRole.CELL, new Page.GetByRoleOptions().setBusy(false))`,
+    csharp: `GetByRole(AriaRole.Cell, new() { Busy = false })`,
+  });
   expect.soft(generate(page.getByRole('alert', { name: 'Upload', description: 'doc.pdf' }))).toEqual({
     javascript: `getByRole('alert', { name: 'Upload', description: 'doc.pdf' })`,
     python: `get_by_role("alert", name="Upload", description="doc.pdf")`,

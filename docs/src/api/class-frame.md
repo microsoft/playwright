@@ -1041,6 +1041,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: Frame.getByRole.busy = %%-locator-get-by-role-option-busy-%%
+
 ## method: Frame.getByTestId
 * since: v1.27
 - returns: <[Locator]>
