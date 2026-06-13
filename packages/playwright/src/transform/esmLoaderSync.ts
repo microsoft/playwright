@@ -32,7 +32,7 @@ export function resolve(specifier: string, context: { parentURL?: string, condit
       // - the ESM resolver wants a file:// URL and, on Windows, mistakes an absolute path's
       //   drive letter for a URL scheme ("Received protocol 'c:'").
       // The `import` condition is present only for ESM resolution, so use it to pick the form.
-      specifier = context.conditions?.includes('import') ? url.pathToFileURL(resolved).toString() : resolved;
+      specifier = context.conditions?.includes?.('import') ? url.pathToFileURL(resolved).toString() : resolved;
     }
   }
   const result = nextResolve(specifier, context);

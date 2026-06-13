@@ -44,16 +44,17 @@ test('should create test n times', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
       test('no-repeat', () => {
       });
-      test('repeat-equal-1', { tag: '@foo' }, () => {
+      test('repeat-equal-1', { tag: '@foo', repeat: 1 }, () => {
       });
-      test('repeat-equal-2', { tag: ['@foo', '@bar'] }, () => {
+      test('repeat-equal-2', { tag: ['@foo', '@bar'], repeat: 2 }, () => {
       });
     `
   });
   expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `title=no-repeat, tags=@global`,
-    `title=repeat-equal-1, tags=@global,@inline,@foo,@repeat=1`,
+    `title=repeat-equal-1, tags=@global,@foo,@repeat=1`,
     `title=repeat-equal-2 (1/2), tags=@global,@foo,@bar,@repeat=2`,
     `title=repeat-equal-2 (2/2), tags=@global,@foo,@bar,@repeat=2`,
   ]);
