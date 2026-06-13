@@ -2784,6 +2784,27 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   *
+   * **Repeat**
+   *
+   * You can repeat an individual test multiple times by providing the `repeat` property in the test details.
+   *
+   * This is useful when investigating flaky tests, validating test stability, or stress-testing specific scenarios
+   * without repeating the entire test suite.
+   *
+   * Each repetition is treated as a separate test run and is reported independently.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('repeated test', {
+   *   repeat: 3,
+   * }, async ({ page }) => {
+   *   await page.goto('https://playwright.dev/');
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Test title.
    * @param details Additional test details.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional
@@ -2861,6 +2882,27 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   *
+   * **Repeat**
+   *
+   * You can repeat an individual test multiple times by providing the `repeat` property in the test details.
+   *
+   * This is useful when investigating flaky tests, validating test stability, or stress-testing specific scenarios
+   * without repeating the entire test suite.
+   *
+   * Each repetition is treated as a separate test run and is reported independently.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('repeated test', {
+   *   repeat: 3,
+   * }, async ({ page }) => {
+   *   await page.goto('https://playwright.dev/');
+   *   // ...
+   * });
+   * ```
+   *
    * @param title Test title.
    * @param details Additional test details.
    * @param body Test body that takes one or two arguments: an object with fixtures and optional

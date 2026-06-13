@@ -38,6 +38,7 @@ const testDetailsSchema: JsonSchema = {
         { type: 'array', items: { type: 'string', pattern: '^@', patternError: "Tag must start with '@'" } },
       ]
     },
+    repeat: { type: 'number', pattern: '^[1-9][0-9]*$', patternError: 'repeat must be a positive integer' },
     annotation: {
       oneOf: [
         testAnnotationSchema,
@@ -51,6 +52,7 @@ type ValidTestDetails = {
   tags: string[];
   annotations: (TestDetailsAnnotation & { location: Location })[];
   location: Location;
+  repeat?: number;
 };
 
 export function validateTestDetails(details: unknown, location: Location): ValidTestDetails {
@@ -65,9 +67,14 @@ export function validateTestDetails(details: unknown, location: Location): Valid
   const annotation = obj.annotation;
   const annotations: TestDetailsAnnotation[] = annotation === undefined ? [] : Array.isArray(annotation) ? annotation : [annotation as TestDetailsAnnotation];
 
+  const repeat = typeof obj.repeat === 'number' ? obj.repeat : undefined;
+  if (repeat !== undefined)
+    tags.push(`@repeat=${repeat}`);
+
   return {
     annotations: annotations.map(a => ({ ...a, location })),
     tags,
     location,
+    repeat,
   };
 }

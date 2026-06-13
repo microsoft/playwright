@@ -85,6 +85,25 @@ You can also add annotations during runtime by manipulating [`property: TestInfo
 
 Learn more about [test annotations](../test-annotations.md).
 
+**Repeat**
+
+You can repeat an individual test multiple times by providing the `repeat` property in the test details.
+
+This is useful when investigating flaky tests, validating test stability, or stress-testing specific scenarios without repeating the entire test suite.
+
+Each repetition is treated as a separate test run and is reported independently.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('repeated test', {
+  repeat: 3,
+}, async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  // ...
+});
+```
+
 ### param: Test.(call).title
 * since: v1.10
 - `title` <[string]>

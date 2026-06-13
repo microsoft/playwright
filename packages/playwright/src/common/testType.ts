@@ -108,18 +108,33 @@ export class TestTypeImpl {
     }
 
     const validatedDetails = validateTestDetails(details, location);
-    const test = new TestCase(title, body, this, location);
-    test._requireFile = suite._requireFile;
-    test.annotations.push(...validatedDetails.annotations);
-    test._tags.push(...validatedDetails.tags);
-    suite._addTest(test);
+    const _this = this;
+    function createTestInstance(title: string) {
+      if (!suite)
+        return;
 
-    if (type === 'only' || type === 'fail.only')
-      test._only = true;
-    if (type === 'skip' || type === 'fixme' || type === 'fail')
-      test.annotations.push({ type, location });
-    else if (type === 'fail.only')
-      test.annotations.push({ type: 'fail', location });
+      const test = new TestCase(title, body, _this, location);
+      test._requireFile = suite._requireFile;
+      test.annotations.push(...validatedDetails.annotations);
+      test._tags.push(...validatedDetails.tags);
+      suite._addTest(test);
+
+      if (type === 'only' || type === 'fail.only')
+        test._only = true;
+      if (type === 'skip' || type === 'fixme' || type === 'fail')
+        test.annotations.push({ type, location });
+      else if (type === 'fail.only')
+        test.annotations.push({ type: 'fail', location });
+
+    }
+
+    // If repeat is specified, create multiple test instances with modified titles.
+    if (validatedDetails.repeat && validatedDetails.repeat > 1) {
+      for (let i = 0; i < validatedDetails.repeat; i++)
+        createTestInstance(`${title} (${i + 1}/${validatedDetails.repeat})`);
+    } else {
+      createTestInstance(title);
+    }
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
