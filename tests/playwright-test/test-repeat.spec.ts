@@ -51,7 +51,6 @@ test('should create test n times', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(0);
-  expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `title=no-repeat, tags=@global`,
     `title=repeat-equal-1, tags=@global,@foo,@repeat=1`,
