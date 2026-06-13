@@ -99,3 +99,9 @@ test('cli should work', async ({ exec, tmpWorkspace }) => {
     expect(result).toContain(`No report found at "${path.join(fs.realpathSync(tmpWorkspace), 'playwright-report')}"`);
   });
 });
+
+test('npx playwright --help should show cli subcommand', async ({ exec }) => {
+  const result = await exec('npx playwright --help');
+  expect(result).toContain(`cli`);
+  expect(result).toContain('run playwright mcp commands from terminal');
+});

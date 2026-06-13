@@ -242,7 +242,8 @@ export function decorateProgram(program: Command) {
   addTraceCommands(program, logErrorAndExit);
 
   program
-      .command('cli', { hidden: true })
+      .command('cli')
+      .description("run playwright mcp commands from terminal")
       .allowExcessArguments(true)
       .allowUnknownOption(true)
       .helpOption(false)
