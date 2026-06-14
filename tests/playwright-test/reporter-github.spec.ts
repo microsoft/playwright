@@ -115,5 +115,21 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(summaryIndex).toBeGreaterThan(errorIndex);
       expect(result.exitCode).toBe(1);
     });
+
+    test('starts GitHub failure annotation on a new line with dot reporter', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('failing', async ({}) => {
+            expect(1 + 1).toBe(3);
+          });
+        `
+      }, { workers: 1, reporter: 'dot,github' }, { GITHUB_WORKSPACE: process.cwd() });
+      const text = result.output;
+      const annotationIndex = text.indexOf('::error file=');
+      expect(annotationIndex).toBeGreaterThan(0);
+      expect(text[annotationIndex - 1]).toBe('\n');
+      expect(result.exitCode).toBe(1);
+    });
   });
 }
