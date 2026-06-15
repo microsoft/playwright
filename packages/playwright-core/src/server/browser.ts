@@ -199,6 +199,8 @@ export abstract class Browser extends SdkObject {
 
   async killForTests(progress: Progress) {
     await progress.race(this.options.browserProcess.kill());
+    if (this.isConnected())
+      await progress.race(new Promise(x => this.once(Browser.Events.Disconnected, x)));
   }
 }
 

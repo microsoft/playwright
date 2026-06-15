@@ -60,8 +60,9 @@ it('should report console logs', async function({ page }) {
   expect(page.url()).not.toContain('blob');
 });
 
-it('should have timestamp on worker console messages', async function({ page, isAndroid }) {
+it('should have timestamp on worker console messages', async function({ page, isAndroid, channel }) {
   it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
+  it.skip(channel === 'webkit-wsl', 'there is a time difference between WSL VM and host machine');
 
   const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
   const [message] = await Promise.all([

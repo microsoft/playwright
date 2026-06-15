@@ -108,8 +108,9 @@ it('should accept relative userDataDir', async ({ createUserDataDir, browserType
   await context.close();
 });
 
-it('should restore state from userDataDir', async ({ browserType, server, createUserDataDir }) => {
+it('should restore state from userDataDir', async ({ browserType, server, createUserDataDir, channel }) => {
   it.slow();
+  it.fixme(channel === 'webkit-wsl', 'Pending local storage writes are lost on close, see https://github.com/microsoft/playwright-browsers/issues/2275');
 
   const userDataDir = await createUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir);
