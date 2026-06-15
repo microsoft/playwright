@@ -133,7 +133,7 @@ export const AttachmentLink: React.FunctionComponent<{
 };
 
 export const TraceLink: React.FC<{ test: TestCaseSummary, run?: number, trailingSeparator?: boolean, dim?: boolean }> = ({ test, run, trailingSeparator, dim }) => {
-  const resultsToCheck = run !== undefined ? [test.results[run]] : test.results;
+  const resultsToCheck = run !== undefined && test.results[run] ? [test.results[run]] : test.results;
   const firstTraces = resultsToCheck.map(result => result.attachments.filter(attachment => attachment.name === 'trace')).filter(traces => traces.length > 0)[0];
   if (!firstTraces)
     return undefined;
