@@ -137,7 +137,6 @@ page/page-screenshot.spec.ts › page screenshot › should allow transparency [
 page/page-set-input-files.spec.ts › should upload a folder [fail]
 page/page-wait-for-load-state.spec.ts › should wait for load state of about:blank popup [timeout]
 page/page-wait-for-load-state.spec.ts › should wait for load state of about:blank popup with noopener [timeout]
-page/page-wait-for-load-state.spec.ts › should wait for load state of about:blank popup with noopener [timeout]
 page/page-wait-for-load-state.spec.ts › should wait for load state of empty url popup [timeout]
 page/wheel.spec.ts › should dispatch wheel events after popup was opened @smoke [timeout]
 page/workers.spec.ts › Page.workers @smoke [timeout]
