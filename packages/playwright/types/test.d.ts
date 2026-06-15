@@ -1641,6 +1641,30 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   retries?: number;
 
   /**
+   * Controls when failed tests are retried. Defaults to `'immediate'`.
+   * - `'immediate'` - A failed test is retried as soon as a worker is available, interleaved with the rest of the
+   *   run. This is the default.
+   * - `'deferred'` - Retries are run only after all tests have had their first attempt, in parallel up to the
+   *   configured number of [workers](#test-config-workers).
+   *
+   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   retries: 2,
+   *   retryStrategy: 'deferred',
+   * });
+   * ```
+   *
+   */
+  retryStrategy?: "immediate"|"deferred";
+
+  /**
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
