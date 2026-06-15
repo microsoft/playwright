@@ -51,6 +51,7 @@ items = page.session_storage.items()
 ### 🛠️ Other improvements
 
 - Playwright now supports Ubuntu 26.04.
+- HAR and trace recordings now include WebSocket requests.
 
 ### Browser Versions
 
