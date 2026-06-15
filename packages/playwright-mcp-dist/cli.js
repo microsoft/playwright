@@ -131,21 +131,6 @@ async function main() {
 
   const server = new SupervisorServer({ supervisor });
 
-  supervisor.on('child-initialized', () => {
-    const rpc = supervisor.getChildRpc();
-    if (rpc) server.setChildRpc(rpc);
-  });
-  supervisor.on('restart-completed', () => {
-    const rpc = supervisor.getChildRpc();
-    if (rpc) {
-      rpc.waitInitialized()
-        .then(() => server.setChildRpc(rpc))
-        .catch((err) =>
-          console.error('[supervisor] child re-init failed:', err)
-        );
-    }
-  });
-
   supervisor.on('child-started', (pid) => {
     console.error(`[supervisor] child started (pid=${pid})`);
   });
@@ -165,6 +150,27 @@ async function main() {
   });
 
   await supervisor.start();
+
+  // Wait for the child to finish initializing before we start the MCP
+  // server. Claude Code fetches tools/list once at connect time — if we
+  // start the server before the child is ready, the initial list only
+  // contains `browser_restart_server` (the supervisor's own tool) and
+  // Claude Code never picks up the browser tools even after the later
+  // notifications/tools/list_changed fires.
+  await new Promise((resolve, reject) => {
+    supervisor.once('child-initialized', resolve);
+    supervisor.once('child-init-failed', (err) => reject(err instanceof Error ? err : new Error(String(err))));
+  });
+  const initRpc = supervisor.getChildRpc();
+  if (initRpc) server.setChildRpc(initRpc);
+
+  // Subsequent restarts: child-initialized fires again after each respawn's
+  // waitInitialized() resolves inside spawnChild().
+  supervisor.on('child-initialized', () => {
+    const rpc = supervisor.getChildRpc();
+    if (rpc) server.setChildRpc(rpc);
+  });
+
   await server.start();
 
   console.error('[supervisor] signal handlers registering...');
