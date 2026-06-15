@@ -93,6 +93,27 @@ test('browser_hide_highlight', async ({ boundBrowser, startClient }) => {
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });
 
+test('browser_resume completes without next breakpoint', async ({ boundBrowser, startClient }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+  const context = boundBrowser.contexts()[0];
+
+  // Pause the debugger before the next action.
+  await context.debugger.requestPause();
+  const clickPromise = page.click('button');
+  await new Promise<void>(resolve => context.debugger.once('pausedstatechanged', resolve));
+  expect(context.debugger.pausedDetails()).toBeTruthy();
+
+  // browser_resume without step or location should return without
+  // waiting for a subsequent pause. Before the fix, this would hang
+  // indefinitely because no subsequent breakpoint exists.
+  const { client } = await startClient({ args: [`--endpoint=default`] });
+  await client.callTool({ name: 'browser_resume' });
+
+  await clickPromise;
+  expect(context.debugger.pausedDetails()).toBeNull();
+});
+
 test('browser_hide_highlight all', async ({ boundBrowser, startClient }) => {
   const page = await boundBrowser.newPage();
   await page.setContent(`<button>Submit</button><a href="#">Go</a>`);

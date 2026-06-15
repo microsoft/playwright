@@ -40,15 +40,19 @@ const resume = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    const pausedPromise = new Promise<void>(resolve => {
-      const listener = () => {
-        if (browserContext.debugger.pausedDetails()) {
-          browserContext.debugger.off('pausedstatechanged', listener);
-          resolve();
-        }
-      };
-      browserContext.debugger.on('pausedstatechanged', listener);
-    });
+    const waitForPause = params.step || params.location;
+    let pausedPromise: Promise<void> | undefined;
+    if (waitForPause) {
+      pausedPromise = new Promise<void>(resolve => {
+        const listener = () => {
+          if (browserContext.debugger.pausedDetails()) {
+            browserContext.debugger.off('pausedstatechanged', listener);
+            resolve();
+          }
+        };
+        browserContext.debugger.on('pausedstatechanged', listener);
+      });
+    }
 
     if (params.location) {
       const [file, lineStr] = params.location.split(':');
@@ -67,7 +71,8 @@ const resume = defineTool({
     } else {
       await browserContext.debugger.resume();
     }
-    await pausedPromise;
+    if (pausedPromise)
+      await pausedPromise;
   },
 });
 
