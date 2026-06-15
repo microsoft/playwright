@@ -81,8 +81,14 @@ export const androidTest = baseTest.extend<PageTestFixtures & AndroidTestFixture
     // Retain default page, otherwise Clank will re-create it.
     while (androidContext.pages().length > 1)
       await androidContext.pages()[1].close();
-    const page = await androidContext.newPage();
-    await run(page);
+    await run(await androidContext.newPage());
+    const pages = androidContext.pages();
+    // Keep one fresh page - Clank does not like having zero pages.
+    await androidContext.newPage();
+    // Close all existing pages that could be stuck in a navigation, have an open dialog, etc.
+    for (const page of pages)
+      await page.close();
+    // Cleanup as much as we can. This requires a non-stuck page that can respond to CDP.
     await androidContext.setStorageState({ cookies: [], origins: [] });
   },
 });
