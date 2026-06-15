@@ -1317,3 +1317,24 @@ test('preflight should survive faulty ESM loader ahead of playwright', {
   expect(result.output).toContain('Failed to load preflight');
   expect(result.output).toContain('what the heck is preflight');
 });
+
+test('esm sync loader resolve should handle conditions as Set or Array (Node 22.15 registerHooks regression)', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41311' },
+}, async ({ runInlineTest }) => {
+  // Exercises the resolve hook path (file:// parent + 'import' condition) that was
+  // introduced in #41138 and is now robust to conditions being a Set (as Node's
+  // registerHooks can pass on some 22.15-22.16 require-initiated sync paths).
+  // The linked issue has the full repro requiring Node 22.15; this covers the code path
+  // in our test matrix.
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

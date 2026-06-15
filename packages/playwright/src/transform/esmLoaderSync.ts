@@ -21,7 +21,7 @@ import { currentFileDepsCollector } from './compilationCache';
 import { resolveHook, shouldTransform, transformHook } from './transform';
 import { fileIsModule } from '../util';
 
-export function resolve(specifier: string, context: { parentURL?: string, conditions?: string[] }, nextResolve: Function) {
+export function resolve(specifier: string, context: { parentURL?: string, conditions?: string[] | Set<string> }, nextResolve: Function) {
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
     const resolved = resolveHook(filename, specifier);
@@ -32,7 +32,13 @@ export function resolve(specifier: string, context: { parentURL?: string, condit
       // - the ESM resolver wants a file:// URL and, on Windows, mistakes an absolute path's
       //   drive letter for a URL scheme ("Received protocol 'c:'").
       // The `import` condition is present only for ESM resolution, so use it to pick the form.
-      specifier = context.conditions?.includes('import') ? url.pathToFileURL(resolved).toString() : resolved;
+      // Node registerHooks may pass `conditions` as a Set (instead of Array) in some
+      // require-initiated sync hook paths on Node 22.15-22.16 (see #41311, related #41138).
+      const conditions = context.conditions;
+      const isImport = conditions && (typeof (conditions as any).has === 'function'
+        ? (conditions as any).has('import')
+        : (conditions as any).includes('import'));
+      specifier = isImport ? url.pathToFileURL(resolved).toString() : resolved;
     }
   }
   const result = nextResolve(specifier, context);
