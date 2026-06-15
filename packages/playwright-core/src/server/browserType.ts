@@ -225,6 +225,7 @@ export abstract class BrowserType extends SdkObject {
         browserLogsCollector.log(message);
       },
       stdio: 'pipe',
+      waitForStdioClose: !isMicrosoftEdgeChannel(this.getExecutableName(options)),
       tempDirectories: prepared.tempDirectories,
       attemptToGracefullyClose: async () => {
         if ((options as any).__testHookGracefullyClose)
@@ -357,4 +358,8 @@ function copyTestHooks(from: object, to: object) {
     if (key.startsWith('__testHook'))
       (to as any)[key] = value;
   }
+}
+
+function isMicrosoftEdgeChannel(name: string): boolean {
+  return name === 'msedge' || name.startsWith('msedge-');
 }

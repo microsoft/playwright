@@ -32,6 +32,9 @@ export type LaunchProcessOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   stdio: 'pipe' | 'stdin',
+  // Defaults to true. Set to false when a child process can spawn helpers
+  // that inherit stdio and outlive the child itself.
+  waitForStdioClose?: boolean,
   tempDirectories: string[],
 
   cwd?: string,
@@ -179,10 +182,11 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid}][err] ` + data);
   });
 
+  const waitForStdioClose = options.waitForStdioClose ?? true;
   let processClosed = false;
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
-  spawnedProcess.once('close', (exitCode, signal) => {
+  const handleProcessExit = (exitCode: number | null, signal: string | null) => {
     options.log(`[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
     gracefullyCloseSet.delete(gracefullyClose);
@@ -191,7 +195,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.onExit(exitCode, signal);
     // Cleanup as process exits.
     cleanup().then(fulfillCleanup);
-  });
+  };
+  spawnedProcess.once(waitForStdioClose ? 'close' : 'exit', handleProcessExit);
 
   addProcessHandlerIfNeeded('exit');
   if (options.handleSIGINT)
