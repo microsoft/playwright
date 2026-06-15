@@ -1,0 +1,56 @@
+{
+  "name": "@app/playwright-mcp-dist",
+  "version": "0.0.75-multi.1",
+  "description": "Multi-slot Playwright MCP built from the nuesslerm/playwright-fork submodule",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "postinstall": "node build.js",
+    "lint": "echo 'No lint'",
+    "test": "echo 'No tests yet'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "chokidar": "^5.0.0",
+    "chromium-bidi": "^12.1.0",
+    "colors": "^1.4.0",
+    "commander": "^13.0.0",
+    "debug": "^4.4.0",
+    "diff": "^8.0.4",
+    "dotenv": "^17.4.2",
+    "enquirer": "^2.4.1",
+    "get-east-asian-width": "^1.6.0",
+    "get-stream": "^5.2.0",
+    "graceful-fs": "4.2.10",
+    "https-proxy-agent": "7.0.6",
+    "ini": "^7.0.0",
+    "jpeg-js": "0.4.4",
+    "json5": "^2.2.3",
+    "mime": "^4.1.0",
+    "minimatch": "^10.2.5",
+    "open": "^11.0.0",
+    "pngjs": "6.0.0",
+    "progress": "^2.0.3",
+    "proxy-from-env": "^2.1.0",
+    "retry": "^0.13.1",
+    "signal-exit": "3.0.7",
+    "socks-proxy-agent": "8.0.5",
+    "source-map-support": "^0.5.21",
+    "ws": "8.17.1",
+    "yaml": "^2.9.0",
+    "yauzl": "^3.3.2",
+    "yazl": "^2.5.1",
+    "zod": "^3.24.0",
+    "zod-to-json-schema": "^3.25.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "esbuild": "^0.25.0"
+  },
+  "bin": {
+    "playwright-mcp": "cli.js"
+  }
+}
