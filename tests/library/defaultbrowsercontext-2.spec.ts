@@ -145,6 +145,8 @@ it('should create userDataDir if it does not exist', async ({ createUserDataDir,
 it('should goto about:blank on relaunched persistent context', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41216' },
 }, async ({ browserType, createUserDataDir }) => {
+  it.slow();
+
   const userDataDir = await createUserDataDir();
 
   const context1 = await browserType.launchPersistentContext(userDataDir);
