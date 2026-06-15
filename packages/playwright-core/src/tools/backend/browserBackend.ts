@@ -15,6 +15,26 @@
  */
 
 import * as z from 'zod';
+
+// zod v4 has `z.prettifyError`; v3 does not. The vendored upstream
+// code calls it (browserBackend.ts:72), so we shim it for v3. Once
+// upstream upgrades to zod v4 this shim becomes a no-op.
+if (typeof (z as any).prettifyError !== 'function') {
+  Object.defineProperty(z, 'prettifyError', {
+    value: (error: { issues?: Array<{ path: (string | number)[]; message: string }> }): string => {
+      if (!error.issues || !Array.isArray(error.issues)) return String(error);
+      return error.issues
+        .map(issue => {
+          const path = issue.path.length ? `at \`${issue.path.join('.')}\` ` : '';
+          return `  → ${path}${issue.message}`;
+        })
+        .join('\n');
+    },
+    writable: true,
+    configurable: true,
+  });
+}
+
 import debug from 'debug';
 import { Context } from './context';
 import { Response } from './response';
@@ -69,7 +89,7 @@ export class BrowserBackend implements ServerBackend {
       parsedArguments = tool.schema.inputSchema.parse(rawArguments);
     } catch (error) {
       if (error instanceof z.ZodError)
-        return formatError(`Invalid arguments for tool "${name}":\n${z.prettifyError(error)}`);
+        return formatError(`Invalid arguments for tool "${name}":\n${(z as any).prettifyError(error)}`);
       throw error;
     }
     const cwd = rawArguments._meta?.cwd;

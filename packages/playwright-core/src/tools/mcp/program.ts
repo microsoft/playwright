@@ -16,19 +16,93 @@
 
 import { Option as ProgramOption } from 'commander';
 import * as mcpServer from '../utils/mcp/server';
-import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
+import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveBrowserParam, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
 import { createBrowserWithInfo } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
 import { packageJSON } from '../../package';
+import { attachKeyboardMock } from '../../lib/keyboard/attachKeyboardMock.js';
+import { attachAutoNavigate } from '../../lib/attachAutoNavigate.js';
 
 import type { Command } from 'commander';
 import type { ClientInfo } from '../utils/mcp/server';
+import type { FullConfig } from './config';
+
+/**
+ * Default Expo dev-server port the fork falls back to when no CLI
+ * flag, env var, or registry slot is set. Picked to match the
+ * `expo start` default — keep them in sync if Expo ever changes it.
+ */
+export const DEFAULT_DEV_SERVER_PORT = 8081;
+
+/**
+ * Pure resolution chain for the dev-server `baseUrl`. Order:
+ *   1. `cliFlag`        — `--base-url` from the user on the command line
+ *   2. `env.EXPO_DEV_SERVER_URL` — the env var Expo sets when it boots
+ *   3. `registry`       — first slot's metro port from the wf registry
+ *                         (caller formats `http://localhost:<port>`);
+ *                         pass `undefined` to skip this layer
+ *   4. `http://localhost:<defaultPort>` — last-resort default
+ *
+ * Pure so the workflow-cli's doctor can import + unit-test it
+ * without spinning up a fork. The CLI `action` handler
+ * (`decorateMCPCommand`) reads `process.env` and the on-disk
+ * registry itself and calls into this helper, so the production
+ * resolution still works the same — only the test surface gained
+ * a clean entry point.
+ */
+export function resolveBaseUrl(
+  cliFlag: string | undefined,
+  env: { EXPO_DEV_SERVER_URL?: string | undefined } | NodeJS.ProcessEnv,
+  registry: string | undefined,
+  defaultPort: number = DEFAULT_DEV_SERVER_PORT
+): string {
+  return (
+    cliFlag
+    ?? (env as { EXPO_DEV_SERVER_URL?: string }).EXPO_DEV_SERVER_URL
+    ?? registry
+    ?? `http://localhost:${defaultPort}`
+  );
+}
+
+/**
+ * Read the first slot's metro port from the on-disk wf registry
+ * and format it as a `baseUrl`. Returns `undefined` on any
+ * failure — the caller treats undefined as "no signal at this
+ * layer" and falls back to the default. The registry shape is
+ * out-of-process and may be anything, so we catch all errors.
+ */
+function readRegistryBaseUrl(): string | undefined {
+  // Lazy require: keeps the import graph small and the helper
+  // safe to call from a frozen test environment.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const fs = require('fs') as typeof import('fs');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const path = require('path') as typeof import('path');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const os = require('os') as typeof import('os');
+  try {
+    const regDir = process.env.WF_REGISTRY_DIR ?? path.join(os.homedir(), '.local/state/wf-registry');
+    const reg = JSON.parse(fs.readFileSync(path.join(regDir, 'registry.json'), 'utf-8')) as { slots?: Record<string, { metro_claims?: { metroPort?: number } }> };
+    const firstSlot = Object.values(reg.slots ?? {})[0];
+    return firstSlot?.metro_claims?.metroPort !== undefined
+      ? `http://localhost:${firstSlot.metro_claims.metroPort}`
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
 import type * as playwright from '../../..';
 
 const version = packageJSON.version;
+
+/**
+ * Per-slot config override hook (no longer used by the multi-slot server;
+ * the per-call `browser=` arg is now applied inside the factory). Kept
+ * here for reference — see git history for the previous implementation.
+ */
 
 export function decorateMCPCommand(command: Command) {
   command
@@ -53,10 +127,11 @@ export function decorateMCPCommand(command: Command) {
       .option('--headless', 'run browser in headless mode, headed by default')
       .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
       .option('--ignore-https-errors', 'ignore https errors')
-      .option('--init-page <path...>', 'path to TypeScript file to evaluate on Playwright page object')
       .option('--init-script <path...>', 'path to JavaScript file to add as an initialization script. The script will be evaluated in every page before any of the page\'s scripts. Can be specified multiple times.')
       .option('--isolated', 'keep the browser profile in memory, do not save it to disk.')
       .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow" or "omit", Defaults to "allow".', enumParser.bind(null, '--image-responses', ['allow', 'omit']))
+      .option('--keyboard-mock', 'inject mobile keyboard mock into every browser context (default: true).')
+      .option('--no-keyboard-mock', 'disable the mobile keyboard mock.')
       .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
       .option('--output-dir <path>', 'path to the directory for output files.')
       .option('--output-max-size <bytes>', 'Threshold for evicting old output files, in bytes.', numberParser)
@@ -78,6 +153,17 @@ export function decorateMCPCommand(command: Command) {
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
+      .option('--multi', 'enable multi-slot mode (one BrowserContext per slotId; each tool call must include a slotId).')
+      .option('--no-multi', 'opt out of multi-slot mode (legacy single-slot).')
+      .option('--single', 'legacy mode: no slotId, one browser. Equivalent to --no-multi.')
+      .option('--base-url <url>', 'override the dev server URL (e.g. for staging or direct fork use). Falls back to EXPO_DEV_SERVER_URL env, then registry first slot\'s metroPort, then http://localhost:8081.')
+      .option('--max-restarts <n>', 'supervisor: max auto-restart attempts before giving up (0-10, default 3)', numberParser)
+      .option('--restart-delay <ms>', 'supervisor: base backoff delay in ms (default 1000)', numberParser)
+      .option('--max-restart-delay <ms>', 'supervisor: cap on backoff in ms (default 30000)', numberParser)
+      .option('--no-auto-restart', 'supervisor: disable automatic respawn on child death (manual only)')
+      .option('--no-watch', 'supervisor: disable dist file watcher')
+      .option('--watch-path <path>', 'supervisor: override the watched directory')
+      .option('--child', 'Run as a child MCP server (no supervision). Used by `wf mcp inspect` and tests.')
       .action(async options => {
 
         // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
@@ -95,8 +181,23 @@ export function decorateMCPCommand(command: Command) {
           options.caps.push('devtools');
 
         const config = await resolveCLIConfigForMCP(options);
+
+        // Resolve dev server URL (CLI wins over env, which wins over registry,
+        // which wins over default). Only set if not already on the config (a
+        // config file may have set it explicitly).
+        if (!config.browser.baseUrl) {
+          config.browser.baseUrl = resolveBaseUrl(
+            options.baseUrl,
+            process.env,
+            readRegistryBaseUrl()
+          );
+        }
+
         const tools = filteredTools(config);
-        const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
+        // In multi-slot mode with --isolated we want a fresh browser per slot
+        // so each BrowserContext is truly independent. sharedBrowserContext is
+        // the explicit opt-in; --isolated alone should not force sharing.
+        const useSharedBrowser = config.sharedBrowserContext && !config.browser.isolated;
         let sharedBrowserPromise: Promise<playwright.Browser> | undefined;
         let clientCount = 0;
         const clientNameCounters = new Map<string, number>();
@@ -106,10 +207,14 @@ export function decorateMCPCommand(command: Command) {
           nameInConfig: 'playwright',
           version,
           toolSchemas: tools.map(tool => tool.schema),
-          create: async (clientInfo: ClientInfo) => {
+          create: async (clientInfo: ClientInfo, _slotContext?: mcpServer.SlotContext) => {
+            // Per-call browser selection happens inside the multi-slot
+            // manager (see server.ts); the factory always uses the base
+            // config here.
+            const slotConfig = config;
             if (useSharedBrowser && !sharedBrowserPromise) {
               sharedBrowserPromise = (async () => {
-                const { browser, canBind } = await createBrowserWithInfo(config, clientInfo, options);
+                const { browser, canBind } = await createBrowserWithInfo(slotConfig, clientInfo, options);
                 if (canBind)
                   await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
                 return browser;
@@ -119,15 +224,22 @@ export function decorateMCPCommand(command: Command) {
               });
             }
             clientCount++;
-            const { browser, canBind } = sharedBrowserPromise ? { browser: await sharedBrowserPromise, canBind: false } : await createBrowserWithInfo(config, clientInfo, options);
+            // Per-slot browser + shared-browser are mutually exclusive:
+            // a single browser process can only be one engine. The
+            // multi-slot server disables useSharedBrowser for slots with
+            // an override, so this path is reached only when the slot
+            // either has no override or matches the shared default.
+            const { browser, canBind } = sharedBrowserPromise ? { browser: await sharedBrowserPromise, canBind: false } : await createBrowserWithInfo(slotConfig, clientInfo, options);
             if (canBind) {
               const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
               clientNameCounters.set(clientInfo.clientName, count);
               const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
               await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
             }
-            const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
-            return new BrowserBackend(config, browserContext, tools);
+            const browserContext = slotConfig.browser.isolated ? await browser.newContext(slotConfig.browser.contextOptions) : browser.contexts()[0];
+            await attachKeyboardMock(browserContext, slotConfig.browser.keyboardMock);
+            await attachAutoNavigate(browserContext, slotConfig.browser.baseUrl);
+            return new BrowserBackend(slotConfig, browserContext, tools);
           },
           disposed: async backend => {
             clientCount--;
@@ -141,6 +253,26 @@ export function decorateMCPCommand(command: Command) {
             await browserContext.browser()!.close().catch(() => { });
           }
         };
-        await mcpServer.start(factory, config.server);
+        // Default is multi-slot; --no-multi (or the legacy alias --single)
+        // opts out and routes to the upstream single-server path.
+        const useMulti = options.multi !== false;
+        if (useMulti) {
+          // Label the multi-slot fork distinctly so doctor's
+          // `checkMultiSlotFork` (and the 3 fork-only checks) can
+          // identify it via `serverInfo.name`. Legacy path keeps
+          // the upstream name 'Playwright' for zero regression.
+          factory.name = 'wf-playwright-multi';
+          // The fork's global `--browser` flag becomes the per-slot
+          // default for tool calls that omit `browser` — same chrome/
+          // chromium/firefox/webkit string. Falls back to 'chrome' if
+          // the user passed nothing.
+          const defaultBrowser: 'chrome' | 'chromium' | 'firefox' | 'webkit' =
+            options.browser === 'chrome' || options.browser === 'chromium' || options.browser === 'firefox' || options.browser === 'webkit'
+              ? options.browser
+              : 'chrome';
+          await mcpServer.startMultiServer(factory, { ...config.server, defaultBrowser });
+        } else {
+          await mcpServer.start(factory, config.server);
+        }
       });
 }

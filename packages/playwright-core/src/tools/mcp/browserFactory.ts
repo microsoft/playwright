@@ -26,6 +26,8 @@ import { createExtensionBrowser } from './extensionContextFactory';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
 import { resolveExtensionOptions } from './config';
+import { attachKeyboardMock } from '../../lib/keyboard/attachKeyboardMock.js';
+import { attachAutoNavigate } from '../../lib/attachAutoNavigate.js';
 // eslint-disable-next-line no-restricted-imports
 import { connectToBrowser } from '../../client/connect';
 
@@ -175,6 +177,12 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
   };
   try {
     const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
+    // launchPersistentContext returns the fork's wrapped BrowserContext;
+    // the helpers expect playwright-core's. The two are structurally
+    // compatible for addInitScript/newPage/goto, so cast through unknown.
+    const ctx = browserContext as unknown as import('playwright-core').BrowserContext;
+    await attachKeyboardMock(ctx, config.browser.keyboardMock);
+    await attachAutoNavigate(ctx, config.browser.baseUrl);
     const browser = browserContext.browser()!;
     return browser;
   } catch (error: any) {
