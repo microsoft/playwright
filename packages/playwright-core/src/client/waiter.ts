@@ -85,6 +85,20 @@ export class Waiter {
     this._rejectOn(promise.then(() => { throw new TimeoutError(message); }), dispose);
   }
 
+  rejectOnSignal(signal: AbortSignal | undefined) {
+    if (!signal)
+      return;
+    if (signal.aborted) {
+      this.rejectImmediately(signalToError(signal));
+      return;
+    }
+    let rejectPromise: (e: any) => void;
+    const promise = new Promise<void>((_, reject) => { rejectPromise = reject; });
+    const listener = () => rejectPromise!(signalToError(signal));
+    signal.addEventListener('abort', listener, { once: true });
+    this._rejectOn(promise, () => signal.removeEventListener('abort', listener));
+  }
+
   rejectImmediately(error: Error) {
     this._immediateError = error;
   }
@@ -144,6 +158,14 @@ function waitForEvent<T = void>(emitter: EventEmitter, event: string, savedZone:
   });
   const dispose = () => emitter.removeListener(event, listener);
   return { promise, dispose };
+}
+
+function signalToError(signal: AbortSignal): Error {
+  const reason = signal.reason;
+  if (reason instanceof Error)
+    return reason;
+  const message = typeof reason?.message === 'string' ? reason.message : reason;
+  return new Error(String(message ?? 'The operation was aborted'));
 }
 
 function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () => void } {

@@ -25,7 +25,7 @@ export interface Logger {
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
 
-export type TimeoutOptions = { timeout?: number };
+export type TimeoutOptions = { timeout?: number, signal?: AbortSignal };
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
 
