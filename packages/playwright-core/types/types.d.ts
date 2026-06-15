@@ -15415,6 +15415,10 @@ export interface BrowserType<Unused = {}> {
    * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
    * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    *
+   * **NOTE** Playwright maintains a curated list of arguments for launching the browser. If you launch the browser
+   * without Playwright and do not pass the exact same arguments, some of Playwright functionality may be broken upon
+   * connecting to the browser.
+   *
    * **Usage**
    *
    * ```js
@@ -15440,6 +15444,10 @@ export interface BrowserType<Unused = {}> {
    * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
    * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   *
+   * **NOTE** Playwright maintains a curated list of arguments for launching the browser. If you launch the browser
+   * without Playwright and do not pass the exact same arguments, some of Playwright functionality may be broken upon
+   * connecting to the browser.
    *
    * **Usage**
    *
@@ -15470,6 +15478,10 @@ export interface BrowserType<Unused = {}> {
    * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
    * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   *
+   * **NOTE** Playwright maintains a curated list of arguments for launching the browser. If you launch the browser
+   * without Playwright and do not pass the exact same arguments, some of Playwright functionality may be broken upon
+   * connecting to the browser.
    *
    * **Usage**
    *
