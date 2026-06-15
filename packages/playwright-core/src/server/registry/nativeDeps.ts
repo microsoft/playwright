@@ -925,6 +925,7 @@ export const deps: any = {
     firefox: [
       'libasound2',
       'libatk1.0-0',
+      'libavcodec58',
       'libcairo-gobject2',
       'libcairo2',
       'libdbus-1-3',
@@ -1133,6 +1134,7 @@ export const deps: any = {
     firefox: [
       'libasound2',
       'libatk1.0-0',
+      'libavcodec59',
       'libcairo-gobject2',
       'libcairo2',
       'libdbus-1-3',
@@ -1288,6 +1290,7 @@ export const deps: any = {
     firefox: [
       'libasound2',
       'libatk1.0-0t64',
+      'libavcodec61',
       'libcairo-gobject2',
       'libcairo2',
       'libdbus-1-3',

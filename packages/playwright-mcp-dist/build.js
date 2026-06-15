@@ -26,21 +26,26 @@ const externals = [
   ...npmDeps,
 ];
 
-// Root of the fork's playwright-core source, relative to this file.
-const SRC = path.join(__dirname, '../playwright-core/src');
+// Root of the fork submodule (contains tsconfig.json with @isomorphic/* paths).
+const FORK_ROOT = path.join(__dirname, '../..');
+// Root of the fork's playwright-core source tree.
+const CORE_SRC = path.join(__dirname, '../playwright-core/src');
+// Injected scripts live in a sibling package in the upstream monorepo.
+const INJECTED_SRC = path.join(__dirname, '../injected/src');
 
 // ---------------------------------------------------------------------------
-// Phase 1 — codegen: vendored source .ts → generated *Source.ts
+// Phase 1 — codegen: injected sources .ts → generated *Source.ts
 // ---------------------------------------------------------------------------
 
+// src paths are relative to INJECTED_SRC; out paths relative to CORE_SRC.
 const INJECTED_SOURCES = [
-  { src: 'injected-src/utilityScript.ts',            out: 'generated/utilityScriptSource.ts' },
-  { src: 'injected-src/injectedScript.ts',           out: 'generated/injectedScriptSource.ts' },
-  { src: 'injected-src/recorder/pollingRecorder.ts', out: 'generated/pollingRecorderSource.ts' },
-  { src: 'injected-src/clock.ts',                    out: 'generated/clockSource.ts' },
-  { src: 'injected-src/storageScript.ts',            out: 'generated/storageScriptSource.ts' },
-  { src: 'injected-src/bindingsController.ts',       out: 'generated/bindingsControllerSource.ts' },
-  { src: 'injected-src/webSocketMock.ts',            out: 'generated/webSocketMockSource.ts' },
+  { src: 'utilityScript.ts',            out: 'generated/utilityScriptSource.ts' },
+  { src: 'injectedScript.ts',           out: 'generated/injectedScriptSource.ts' },
+  { src: 'recorder/pollingRecorder.ts', out: 'generated/pollingRecorderSource.ts' },
+  { src: 'clock.ts',                    out: 'generated/clockSource.ts' },
+  { src: 'storageScript.ts',            out: 'generated/storageScriptSource.ts' },
+  { src: 'bindingsController.ts',       out: 'generated/bindingsControllerSource.ts' },
+  { src: 'webSocketMock.ts',            out: 'generated/webSocketMockSource.ts' },
 ];
 
 const EMPTY_STUB_SOURCES = [
@@ -110,12 +115,12 @@ async function replaceEsbuildHeader(content) {
 async function generateInjectedSources() {
   const outdir = path.join(__dirname, '.codegen-tmp');
   await fs.promises.mkdir(outdir, { recursive: true });
-  const generatedDir = path.join(SRC, 'generated');
+  const generatedDir = path.join(CORE_SRC, 'generated');
   await fs.promises.mkdir(generatedDir, { recursive: true });
   try {
     for (const { src, out } of INJECTED_SOURCES) {
-      const srcPath = path.join(SRC, src);
-      const outPath = path.join(SRC, out);
+      const srcPath = path.join(INJECTED_SRC, src);
+      const outPath = path.join(CORE_SRC, out);
 
       const result = await esbuild.build({
         entryPoints: [srcPath],
@@ -126,6 +131,7 @@ async function generateInjectedSources() {
         plugins: [inlineCSSPlugin],
         write: false,
         logLevel: 'silent',
+        tsconfig: path.join(FORK_ROOT, 'tsconfig.json'),
       });
       if (!result.outputFiles || result.outputFiles.length === 0) {
         throw new Error(`esbuild produced no output for ${src}`);
@@ -136,7 +142,7 @@ async function generateInjectedSources() {
       await fs.promises.writeFile(outPath, wrapped);
     }
     for (const name of EMPTY_STUB_SOURCES) {
-      const outPath = path.join(SRC, 'generated', `${name}.ts`);
+      const outPath = path.join(CORE_SRC, 'generated', `${name}.ts`);
       await fs.promises.writeFile(
         outPath,
         '// Empty stub: this code path is pruned in the multi-slot fork.\n' +
@@ -155,7 +161,7 @@ async function generateInjectedSources() {
 
 async function bundleFork() {
   await esbuild.build({
-    entryPoints: [path.join(SRC, 'tools/mcp/program.ts')],
+    entryPoints: [path.join(CORE_SRC, 'tools/mcp/program.ts')],
     bundle: true,
     platform: 'node',
     target: 'node18',
@@ -184,7 +190,7 @@ async function bundleSupervisor() {
     'tools/utils/mcp/child-rpc.ts',
   ];
   await esbuild.build({
-    entryPoints: entries.map(e => path.join(SRC, e)),
+    entryPoints: entries.map(e => path.join(CORE_SRC, e)),
     bundle: true,
     platform: 'node',
     target: 'node18',

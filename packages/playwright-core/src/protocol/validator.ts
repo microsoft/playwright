@@ -956,10 +956,6 @@ scheme.BrowserContextCredentialsDeleteParams = tObject({
   id: tString,
 });
 scheme.BrowserContextCredentialsDeleteResult = tOptional(tObject({}));
-scheme.BrowserContextCredentialsSetUserVerifiedParams = tObject({
-  value: tBoolean,
-});
-scheme.BrowserContextCredentialsSetUserVerifiedResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
@@ -1609,7 +1605,6 @@ scheme.FrameTypeParams = tObject({
   strict: tOptional(tBoolean),
   text: tString,
   delay: tOptional(tFloat),
-  namedKeys: tOptional(tBoolean),
   timeout: tFloat,
 });
 scheme.FrameTypeResult = tOptional(tObject({}));
@@ -2299,6 +2294,7 @@ scheme.PageRouteEvent = tObject({
 });
 scheme.PageScreencastFrameEvent = tObject({
   data: tBinary,
+  timestamp: tFloat,
   viewportWidth: tInt,
   viewportHeight: tInt,
 });
@@ -2494,7 +2490,6 @@ scheme.PageKeyboardInsertTextResult = tOptional(tObject({}));
 scheme.PageKeyboardTypeParams = tObject({
   text: tString,
   delay: tOptional(tFloat),
-  namedKeys: tOptional(tBoolean),
 });
 scheme.PageKeyboardTypeResult = tOptional(tObject({}));
 scheme.PageKeyboardPressParams = tObject({

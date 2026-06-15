@@ -108,6 +108,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       includeTraceInfo: true,
       recordRequestOverrides: false,
       waitForContentOnStop: false,
+      omitWebSocketFrames: !!process.env.PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES,
     });
     const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName() : undefined;
     this._contextCreatedEvent = {
@@ -558,6 +559,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onContentBlob(sha1: string, buffer: Buffer) {
     this._appendResource(sha1, buffer);
+  }
+
+  onContentBlobAppend(sha1: string, text: string) {
+    if (!this._allResources.has(sha1))
+      this._allResources.add(sha1);
+    this._fs.appendFile(path.join(this._state!.resourcesDir, sha1), text, this._state!.options.live /* flush */);
   }
 
   onSnapshotterBlob(blob: SnapshotterBlob): void {

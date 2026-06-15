@@ -1,5 +1,5 @@
 {
-  "name": "@app/playwright-mcp-dist",
+  "name": "@app/playwright-mcp",
   "version": "0.0.75-multi.1",
   "description": "Multi-slot Playwright MCP built from the nuesslerm/playwright-fork submodule",
   "license": "Apache-2.0",

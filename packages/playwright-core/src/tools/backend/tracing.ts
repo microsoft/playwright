@@ -61,11 +61,11 @@ const tracingStop = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    await browserContext.tracing.stop();
     // eslint-disable-next-line no-restricted-syntax
     const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
     if (!traceLegend)
       throw new Error('Tracing is not started');
+    await browserContext.tracing.stop();
     // eslint-disable-next-line no-restricted-syntax
     delete (browserContext.tracing as any)[traceLegendSymbol];
 

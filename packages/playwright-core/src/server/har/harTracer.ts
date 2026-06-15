@@ -19,7 +19,7 @@ import { base64ByteLength } from '@isomorphic/base64';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { assert } from '@isomorphic/assert';
-import { calculateSha1 } from '@utils/crypto';
+import { calculateSha1, createGuid } from '@utils/crypto';
 import { monotonicTime } from '@isomorphic/time';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { urlMatches } from '@isomorphic/urlMatch';
@@ -45,6 +45,7 @@ export interface HarTracerDelegate {
   onEntryStarted(entry: har.Entry): void;
   onEntryFinished(entry: har.Entry): void;
   onContentBlob(sha1: string, buffer: Buffer): void;
+  onContentBlobAppend(sha1: string, text: string): void;
 }
 
 type HarTracerOptions = {
@@ -61,6 +62,7 @@ type HarTracerOptions = {
   omitPages?: boolean;
   omitSizes?: boolean;
   omitScripts?: boolean;
+  omitWebSocketFrames?: boolean;
 };
 
 export class HarTracer {
@@ -321,7 +323,7 @@ export class HarTracer {
     // In WebKit security details and server ip are reported in Network.loadingFinished, so we populate
     // it here to not hang in case of long chunked responses, see https://github.com/microsoft/playwright/issues/21182.
     if (!this._options.omitServerIP) {
-      this._addBarrier(page || request.serviceWorker(), response.serverAddr(nullProgress).then(server => {
+      this._addBarrier(page || request.serviceWorker(), response.internalServerAddr().then(server => {
         if (server?.ipAddress)
           harEntry.serverIPAddress = server.ipAddress;
         if (server?.port)
@@ -329,7 +331,7 @@ export class HarTracer {
       }));
     }
     if (!this._options.omitSecurityDetails) {
-      this._addBarrier(page || request.serviceWorker(), response.securityDetails(nullProgress).then(details => {
+      this._addBarrier(page || request.serviceWorker(), response.internalSecurityDetails().then(details => {
         if (details)
           harEntry._securityDetails = details;
       }));
@@ -374,7 +376,7 @@ export class HarTracer {
     });
     this._addBarrier(page || request.serviceWorker(), promise);
 
-    this._addBarrier(page || request.serviceWorker(), response.httpVersion(nullProgress).then(httpVersion => {
+    this._addBarrier(page || request.serviceWorker(), response.internalHttpVersion().then(httpVersion => {
       harEntry.request.httpVersion = httpVersion;
       harEntry.response.httpVersion = httpVersion;
     }));
@@ -385,7 +387,7 @@ export class HarTracer {
     this._computeHarEntryTotalTime(harEntry);
 
     if (!this._options.omitSizes) {
-      this._addBarrier(page || request.serviceWorker(), response.sizes(nullProgress).then(sizes => {
+      this._addBarrier(page || request.serviceWorker(), response.internalSizes().then(sizes => {
         harEntry.response.bodySize = sizes.responseBodySize;
         harEntry.response.headersSize = sizes.responseHeadersSize;
         harEntry.response._transferSize = sizes.transferSize;
@@ -438,7 +440,28 @@ export class HarTracer {
     const pageEntry = this._createPageEntryIfNeeded(page);
     const harEntry = createHarEntry(pageEntry?.id, method, url, page.mainFrame().guid, this._options, webSocket.wallTimeMs());
     harEntry._resourceType = 'websocket';
-    harEntry._webSocketMessages = [];
+
+    let sha1: string | undefined = undefined;
+    const recordMessage = (type: 'send' | 'receive', opcode: number, data: string, wallTimeMs: number) => {
+      if (this._options.omitWebSocketFrames)
+        return;
+      const message = { type, time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data };
+      if (this._options.content === 'embed') {
+        harEntry._webSocketMessages ??= [];
+        harEntry._webSocketMessages.push(message);
+      } else if (this._options.content === 'attach') {
+        if (!sha1) {
+          sha1 = createGuid() + '.jsonl';
+          if (this._options.includeTraceInfo)
+            harEntry.response.content._sha1 = sha1;
+          else
+            harEntry.response.content._file = sha1;
+        }
+
+        if (this._started)
+          this._delegate.onContentBlobAppend(sha1, JSON.stringify(message) + '\n');
+      }
+    };
 
     let oldestWallTimeMs = Infinity;
     let newestWallTimeMs = -Infinity;
@@ -475,12 +498,13 @@ export class HarTracer {
         }
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameSent, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
-        harEntry._webSocketMessages!.push({ type: 'send', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+        recordMessage('send', opcode, data, wallTimeMs);
         updateTime(wallTimeMs);
       }),
       eventsHelper.addEventListener(webSocket, network.WebSocket.Events.FrameReceived, ({ opcode, data, wallTimeMs }: { opcode: number, data: string, wallTimeMs: number }) => {
-        harEntry._webSocketMessages!.push({ type: 'receive', time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data });
+        recordMessage('receive', opcode, data, wallTimeMs);
         updateTime(wallTimeMs);
+
         if (!this._options.omitSizes) {
           const length = (opcode === 1) ? Buffer.byteLength(data, 'utf8') : base64ByteLength(data);
 
@@ -489,7 +513,7 @@ export class HarTracer {
           // - there are always 4 bytes for the masking key (see <https://www.rfc-editor.org/info/rfc6455/#section-5.1>)
           // - there may be an additional 16 or 64 bits for payload length if it's too long to fit in the above 7 bits (or if it also can't fit in 16 bits)
           let headerSize = 6;
-          if (length > 2 ** 16)
+          if (length >= 2 ** 16)
             headerSize += 8;
           else if (length > 125)
             headerSize += 2;
@@ -595,13 +619,13 @@ export class HarTracer {
     }
 
     this._recordRequestOverrides(harEntry, request);
-    this._addBarrier(page || request.serviceWorker(), request.rawRequestHeaders(nullProgress).then(headers => {
+    this._addBarrier(page || request.serviceWorker(), request.internalRawRequestHeaders().then(headers => {
       this._recordRequestHeadersAndCookies(harEntry, headers);
     }));
     // Record available headers including redirect location in case the tracing is stopped before
     // response extra info is received (in Chromium).
     this._recordResponseHeaders(harEntry, response.headers());
-    this._addBarrier(page || request.serviceWorker(), response.rawResponseHeaders(nullProgress).then(headers => {
+    this._addBarrier(page || request.serviceWorker(), response.internalRawResponseHeaders().then(headers => {
       this._recordResponseHeaders(harEntry, headers);
     }));
   }
