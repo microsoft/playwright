@@ -448,3 +448,25 @@ it('should still allow routeWebSocket to modify messages when capturing HAR', as
     { type: 'receive', data: 'server-saw-modified-hello' },
   ]);
 });
+
+it('should respect PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES', async ({ contextFactory, server }, testInfo) => {
+  process.env.PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES = '1';
+  server.onceWebSocketConnection(ws => {
+    ws.on('message', () => ws.close());
+  });
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.goto(server.EMPTY_PAGE);
+  const wsUrl = `ws://${server.HOST}/ws`;
+  const closed = page.evaluate(url => new Promise<void>(resolve => {
+    const ws = new WebSocket(url);
+    ws.addEventListener('open', () => ws.send('ping'));
+    ws.addEventListener('close', () => resolve());
+  }), wsUrl);
+  await closed;
+  const log = await getLog();
+  const wsEntry = log.entries.filter(e => e.request.url.endsWith(`://${server.HOST}/ws`))[0];
+  expect(wsEntry._resourceType).toBe('websocket');
+  expect(wsEntry._webSocketMessages).toBeUndefined();
+  expect(wsEntry.response.content._file).toBe(undefined);
+  delete process.env.PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES;
+});

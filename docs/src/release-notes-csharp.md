@@ -52,6 +52,7 @@ var items = await page.SessionStorage.ItemsAsync();
 ### 🛠️ Other improvements
 
 - Playwright now supports Ubuntu 26.04.
+- HAR and trace recordings now include WebSocket requests.
 
 ### Browser Versions
 
