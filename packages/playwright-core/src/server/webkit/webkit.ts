@@ -70,8 +70,6 @@ export class WebKit extends BrowserType {
       return {};
     const result = new ManualPromise<{ wsEndpoint?: string }>();
     browserLogsCollector.onMessage(message => {
-      // The browser is listening on the loopback interface inside WSL, the endpoint
-      // is reachable from the Windows host thanks to WSL localhost forwarding.
       const match = message.match(/Playwright listening on (ws:\/\/\S+)/);
       if (match)
         result.resolve({ wsEndpoint: match[1] });
@@ -98,9 +96,6 @@ export class WebKit extends BrowserType {
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
     const isWSL = options.channel === 'webkit-wsl';
-    // wsl.exe does not forward extra file descriptors to the Linux process, so the pipe
-    // transport cannot work across the WSL boundary. Instead, the browser exposes the
-    // protocol over a WebSocket server and we connect to it from the Windows host.
     const webkitArguments = [isWSL ? '--remote-debugging-port=0' : '--inspector-pipe'];
 
     if (isWSL) {

@@ -199,8 +199,6 @@ export abstract class Browser extends SdkObject {
 
   async killForTests(progress: Progress) {
     await progress.race(this.options.browserProcess.kill());
-    // With WebSocket transport the disconnect is not necessarily dispatched before the
-    // process exit, wait for it explicitly to make the kill appear atomic to the clients.
     if (this.isConnected())
       await progress.race(new Promise(x => this.once(Browser.Events.Disconnected, x)));
   }

@@ -48,7 +48,7 @@ jobs:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
-    - run: npx playwright install webkit-wsl ffmpeg
+    - run: npx playwright install webkit-wsl
     - name: Run tests
       run: npm run wtest -- ${{ matrix.headed && '--headed' || '' }}
       env:
