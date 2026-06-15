@@ -1,5 +1,4 @@
 library/agent-perform.spec.ts › retrieve a secret [timeout]
-library/browser.spec.ts › should dispatch page.on(close) upon browser.close and reject evaluate [timeout]
 library/browsercontext-add-cookies.spec.ts › should allow unnamed cookies [fail]
 library/browsercontext-basic.spec.ts › fetch with keepalive should throw when offline [fail]
 library/browsercontext-basic.spec.ts › should disable javascript [fail]
@@ -72,7 +71,6 @@ library/browsertype-connect.spec.ts › run-server › should save download [fai
 library/browsertype-connect.spec.ts › run-server › should save videos to artifactsDir [fail]
 library/browsertype-connect.spec.ts › run-server › should saveAs videos from remote browser [timeout]
 library/browsertype-connect.spec.ts › run-server › should upload a folder [fail]
-library/browsertype-launch.spec.ts › should reject all promises when browser is closed [timeout]
 library/browsertype-launch.spec.ts › should reject if launched browser fails immediately [fail]
 library/capabilities.spec.ts › SharedArrayBuffer should work @smoke [timeout]
 library/capabilities.spec.ts › should play video @smoke [timeout]
