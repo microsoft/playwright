@@ -449,7 +449,9 @@ it('should still allow routeWebSocket to modify messages when capturing HAR', as
   ]);
 });
 
-it('should respect PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES', async ({ contextFactory, server }, testInfo) => {
+it('should respect PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES', async ({ contextFactory, server, mode }, testInfo) => {
+  it.skip(mode !== 'default', 'no env vars in non-default mode');
+
   process.env.PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES = '1';
   server.onceWebSocketConnection(ws => {
     ws.on('message', () => ws.close());
