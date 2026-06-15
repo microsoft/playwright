@@ -19024,7 +19024,10 @@ export interface Coverage {
     reportAnonymousScripts?: boolean;
 
     /**
-     * Whether to reset coverage on every navigation. Defaults to `true`.
+     * **NOTE** Settings this to `false` may still reset on navigations.
+     *
+     * Whether to reset coverage on every navigation. Defaults to `true`. Note that passing `false` does not guarantee
+     * that coverage persists through navigations, due to browser architecture limitations.
      */
     resetOnNavigation?: boolean;
   }): Promise<void>;
