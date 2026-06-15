@@ -39,6 +39,7 @@ import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { disposeAll } from '../disposable';
+import { openHarBackend } from '../localUtils';
 
 import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
@@ -61,6 +62,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
+  private _harForAPIRequestsRegistrations = new Map<string, { dispose: () => void }>();
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -335,6 +337,37 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._routeWebSocketInitScript = await WebSocketRouteDispatcher.install(progress, this.connection, this._context);
   }
 
+  async harForAPIRequestsStart(params: channels.BrowserContextHarForAPIRequestsStartParams, progress: Progress): Promise<channels.BrowserContextHarForAPIRequestsStartResult> {
+    const result = await openHarBackend(progress, params.har);
+    if ('error' in result)
+      throw new Error(result.error);
+    const urlMatch: URLMatch | undefined =
+      params.urlRegexSource !== undefined && params.urlRegexFlags !== undefined ? new RegExp(params.urlRegexSource, params.urlRegexFlags) :
+        params.urlGlob !== undefined ? params.urlGlob : undefined;
+    const registrationId = createGuid();
+    const registration = this._context.addHarForAPIRequests({
+      harBackend: result.harBackend,
+      urlMatch,
+      notFound: params.notFound,
+      baseURL: this._context._options.baseURL,
+    });
+    this._harForAPIRequestsRegistrations.set(registrationId, {
+      dispose: () => {
+        registration.dispose();
+        result.harBackend.dispose();
+      },
+    });
+    return { registrationId };
+  }
+
+  async harForAPIRequestsStop(params: channels.BrowserContextHarForAPIRequestsStopParams, progress: Progress): Promise<void> {
+    const entry = this._harForAPIRequestsRegistrations.get(params.registrationId);
+    if (!entry)
+      return;
+    this._harForAPIRequestsRegistrations.delete(params.registrationId);
+    entry.dispose();
+  }
+
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
     return await this._context.storageState(progress, params.indexedDB);
   }
@@ -446,6 +479,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context.dialogManager.removeDialogHandler(this._dialogHandler);
     this._interceptionUrlMatchers = [];
     this._context.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
+    for (const entry of this._harForAPIRequestsRegistrations.values()) {
+      try {
+        entry.dispose();
+      } catch {
+      }
+    }
+    this._harForAPIRequestsRegistrations.clear();
     disposeAll(this._disposables).catch(() => {});
     if (this._routeWebSocketInitScript)
       WebSocketRouteDispatcher.uninstall(this.connection, this._context, this._routeWebSocketInitScript).catch(() => {});

@@ -830,6 +830,20 @@ scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
   })),
 });
 scheme.BrowserContextSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
+scheme.BrowserContextHarForAPIRequestsStartParams = tObject({
+  har: tString,
+  urlGlob: tOptional(tString),
+  urlRegexSource: tOptional(tString),
+  urlRegexFlags: tOptional(tString),
+  notFound: tEnum(['abort', 'fallback']),
+});
+scheme.BrowserContextHarForAPIRequestsStartResult = tObject({
+  registrationId: tString,
+});
+scheme.BrowserContextHarForAPIRequestsStopParams = tObject({
+  registrationId: tString,
+});
+scheme.BrowserContextHarForAPIRequestsStopResult = tOptional(tObject({}));
 scheme.BrowserContextSetWebSocketInterceptionPatternsParams = tObject({
   patterns: tArray(tObject({
     glob: tOptional(tString),

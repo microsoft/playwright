@@ -385,7 +385,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
   }
 
-  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full', interceptAPIRequests?: boolean } = {}): Promise<void> {
     const localUtils = this._connection.localUtils();
     if (!localUtils)
       throw new Error('Route from har is not supported in thin clients');
@@ -396,6 +396,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });
     this._harRouters.push(harRouter);
     await harRouter.addContextRoute(this);
+    if (options.interceptAPIRequests)
+      await harRouter.addAPIRequestRoute(this, har);
   }
 
   private _disposeHarRouters() {

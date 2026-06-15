@@ -39,7 +39,7 @@ export class HarBackend {
     this._zipFile = zipFile;
   }
 
-  async lookup(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, isNavigationRequest: boolean): Promise<{
+  async lookup(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, isNavigationRequest: boolean, options: { apiRequestOnly?: boolean } = {}): Promise<{
     action: 'error' | 'redirect' | 'fulfill' | 'noentry',
     message?: string,
     redirectURL?: string,
@@ -49,7 +49,7 @@ export class HarBackend {
   }> {
     let entry;
     try {
-      entry = await this._harFindResponse(url, method, headers, postData);
+      entry = await this._harFindResponse(url, method, headers, postData, options);
     } catch (e) {
       return { action: 'error', message: 'HAR error: ' + e.message };
     }
@@ -93,13 +93,15 @@ export class HarBackend {
     return buffer;
   }
 
-  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined): Promise<har.Entry | undefined> {
+  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, options: { apiRequestOnly?: boolean } = {}): Promise<har.Entry | undefined> {
     const harLog = this._harFile.log;
     const visited = new Set<har.Entry>();
     while (true) {
       const entries: har.Entry[] = [];
       for (const candidate of harLog.entries) {
         if (candidate.request.url !== url || candidate.request.method !== method)
+          continue;
+        if (options.apiRequestOnly && !candidate._apiRequest)
           continue;
         if (method === 'POST' && postData && candidate.request.postData) {
           const buffer = await this._loadContent(candidate.request.postData);

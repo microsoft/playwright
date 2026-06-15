@@ -23,7 +23,7 @@ import * as zlib from 'zlib';
 import { createGuid } from '@utils/crypto';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from '@utils/happyEyeballs';
 import { assert } from '@isomorphic/assert';
-import { constructURLBasedOnBaseURL } from '@isomorphic/urlMatch';
+import { constructURLBasedOnBaseURL, urlMatches } from '@isomorphic/urlMatch';
 import { eventsHelper } from '@utils/eventsHelper';
 import { monotonicTime } from '@isomorphic/time';
 import { createProxyAgent } from '@utils/network';
@@ -150,6 +150,10 @@ export abstract class APIRequestContext extends SdkObject {
   abstract addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
   abstract cookies(progress: Progress, url: URL): Promise<channels.NetworkCookie[]>;
 
+  protected async _lookupInHar(progress: Progress, url: URL, method: string, headers: HeadersObject, postData: Buffer | undefined): Promise<SendRequestResult | undefined> {
+    return undefined;
+  }
+
   protected _disposeImpl() {
     this._disposed = true;
     APIRequestContext.allInstances.delete(this);
@@ -225,7 +229,14 @@ export abstract class APIRequestContext extends SdkObject {
     const postData = serializePostData(params, headers);
     if (postData)
       setHeader(headers, 'content-length', String(postData.byteLength));
-    const { body, log, response } = await this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
+    const harResponse = await this._lookupInHar(progress, requestUrl, method, headers, postData);
+    let body: Buffer;
+    let log: string[];
+    let response: Omit<channels.APIResponse, 'fetchUid'>;
+    if (harResponse)
+      ({ body, log, response } = harResponse);
+    else
+      ({ body, log, response } = await this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries));
     const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.failOnStatusCode;
     if (failOnStatusCode && (response.status < 200 || response.status >= 400)) {
       let responseText = '';
@@ -681,6 +692,47 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
 
   override async storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
     return this._context.storageState(progress, indexedDB);
+  }
+
+  protected override async _lookupInHar(progress: Progress, url: URL, method: string, headers: HeadersObject, postData: Buffer | undefined): Promise<SendRequestResult | undefined> {
+    const registrations = this._context.harForAPIRequests();
+    if (!registrations.length)
+      return undefined;
+    const urlString = url.toString();
+    const log: string[] = [];
+    log.push(`→ ${method} ${urlString}`);
+    const headersArray: HeadersArray = Object.entries(headers).map(([name, value]) => ({ name, value }));
+    for (const registration of registrations) {
+      if (!urlMatches(registration.baseURL, urlString, registration.urlMatch))
+        continue;
+      const lookupResult = await progress.race(registration.harBackend.lookup(urlString, method, headersArray, postData, false, { apiRequestOnly: true }));
+      if (lookupResult.action === 'error') {
+        log.push(`HAR: ${lookupResult.message ?? 'lookup failed'}`);
+        continue;
+      }
+      if (lookupResult.action === 'noentry') {
+        if (registration.notFound === 'abort')
+          throw new Error(`Request "${method} ${urlString}" was not found in the HAR file`);
+        continue;
+      }
+      if (lookupResult.action === 'redirect') {
+        // Not expected for non-navigation API requests, but treat as fulfill miss.
+        log.push(`HAR: ignoring redirect entry for ${urlString}`);
+        continue;
+      }
+      log.push(`← ${lookupResult.status ?? 0} (from HAR)`);
+      return {
+        body: lookupResult.body ?? Buffer.from(''),
+        log,
+        response: {
+          url: urlString,
+          status: lookupResult.status ?? 0,
+          statusText: '',
+          headers: lookupResult.headers ?? [],
+        },
+      };
+    }
+    return undefined;
   }
 }
 

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { isRegExp, isString } from '@isomorphic/rtti';
+
 import type { BrowserContext } from './browserContext';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
@@ -27,6 +29,7 @@ export class HarRouter {
   private _harId: string;
   private _notFoundAction: HarNotFoundAction;
   private _options: { urlMatch?: URLMatch; baseURL?: string; };
+  private _apiRequestRegistrations: { context: BrowserContext, registrationId: string }[] = [];
 
   static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
     const { harId, error } = await localUtils.harOpen({ file });
@@ -115,11 +118,26 @@ export class HarRouter {
     await page.route(this._options.urlMatch || '**/*', route => this._handle(route));
   }
 
+  async addAPIRequestRoute(context: BrowserContext, har: string) {
+    const urlMatch = this._options.urlMatch;
+    const { registrationId } = await context._channel.harForAPIRequestsStart({
+      har,
+      urlGlob: isString(urlMatch) ? urlMatch : undefined,
+      urlRegexSource: isRegExp(urlMatch) ? urlMatch.source : undefined,
+      urlRegexFlags: isRegExp(urlMatch) ? urlMatch.flags : undefined,
+      notFound: this._notFoundAction,
+    });
+    this._apiRequestRegistrations.push({ context, registrationId });
+  }
+
   async [Symbol.asyncDispose]() {
     await this.dispose();
   }
 
   dispose() {
     this._localUtils.harClose({ harId: this._harId }).catch(() => {});
+    for (const { context, registrationId } of this._apiRequestRegistrations)
+      context._channel.harForAPIRequestsStop({ registrationId }).catch(() => {});
+    this._apiRequestRegistrations = [];
   }
 }

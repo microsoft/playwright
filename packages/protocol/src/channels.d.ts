@@ -1344,6 +1344,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   setGeolocation(params: BrowserContextSetGeolocationParams, progress?: Progress): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, progress?: Progress): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  harForAPIRequestsStart(params: BrowserContextHarForAPIRequestsStartParams, progress?: Progress): Promise<BrowserContextHarForAPIRequestsStartResult>;
+  harForAPIRequestsStop(params: BrowserContextHarForAPIRequestsStopParams, progress?: Progress): Promise<BrowserContextHarForAPIRequestsStopResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, progress?: Progress): Promise<BrowserContextSetOfflineResult>;
   storageState(params: BrowserContextStorageStateParams, progress?: Progress): Promise<BrowserContextStorageStateResult>;
@@ -1577,6 +1579,28 @@ export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
 export type BrowserContextSetNetworkInterceptionPatternsResult = void;
+export type BrowserContextHarForAPIRequestsStartParams = {
+  har: string,
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+  notFound: 'abort' | 'fallback',
+};
+export type BrowserContextHarForAPIRequestsStartOptions = {
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+};
+export type BrowserContextHarForAPIRequestsStartResult = {
+  registrationId: string,
+};
+export type BrowserContextHarForAPIRequestsStopParams = {
+  registrationId: string,
+};
+export type BrowserContextHarForAPIRequestsStopOptions = {
+
+};
+export type BrowserContextHarForAPIRequestsStopResult = void;
 export type BrowserContextSetWebSocketInterceptionPatternsParams = {
   patterns: {
     glob?: string,

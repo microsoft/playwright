@@ -1307,6 +1307,12 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
 
+### option: BrowserContext.routeFromHAR.interceptAPIRequests
+* since: v1.62
+- `interceptAPIRequests` <[boolean]>
+
+If set to `true`, requests made via [APIRequestContext] (such as [`property: BrowserContext.request`] or [`property: Page.request`]) are also served from the HAR file. By default these requests are sent to the network, matching the behavior prior to v1.62. Defaults to `false` for backward compatibility.
+
 
 ## async method: BrowserContext.routeWebSocket
 * since: v1.48
