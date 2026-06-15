@@ -163,6 +163,8 @@ export type PageError = {
   location: types.ConsoleMessageLocation,
 };
 
+const emptyConsoleMessageLocation: types.ConsoleMessageLocation = { url: '', lineNumber: 0, columnNumber: 0 };
+
 export class Page extends SdkObject<PageEventMap> {
   static Events = PageEvent;
 
@@ -432,7 +434,8 @@ export class Page extends SdkObject<PageEventMap> {
     return marked === -1 ? this._consoleMessages : this._consoleMessages.slice(marked + 1);
   }
 
-  addPageError(error: Error, location: types.ConsoleMessageLocation) {
+  addPageError(error: Error, location: types.ConsoleMessageLocation | undefined) {
+    location ??= emptyConsoleMessageLocation;
     const pageError: PageError = { error, location };
     this._pageErrors.push(pageError);
     ensureArrayLimit(this._pageErrors, 200); // Avoid unbounded memory growth.

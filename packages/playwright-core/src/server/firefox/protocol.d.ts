@@ -402,7 +402,7 @@ export namespace Protocol {
       frameId: string;
       message: string;
       stack: string;
-      location: {
+      location?: {
         columnNumber: number;
         lineNumber: number;
         url: string;

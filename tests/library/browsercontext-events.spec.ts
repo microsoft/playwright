@@ -209,6 +209,19 @@ test('weberror event should include location', async ({ page, server }) => {
   expect(location.column).toBeGreaterThan(0); // column is not consistent across browsers
 });
 
+test('weberror event should tolerate missing location', async ({ page, toImpl }) => {
+  const [webError, pageError] = await Promise.all([
+    page.context().waitForEvent('weberror'),
+    page.waitForEvent('pageerror'),
+    Promise.resolve().then(() => toImpl(page).addPageError(new Error('boom'), undefined)),
+  ]);
+
+  expect(webError.page()).toBe(page);
+  expect(webError.error().message).toBe('boom');
+  expect(webError.location()).toEqual({ url: '', line: 0, column: 0 });
+  expect(pageError.message).toBe('boom');
+});
+
 test('pageload event should work @smoke', async ({ page, server }) => {
   const [eventPage] = await Promise.all([
     page.context().waitForEvent('pageload'),
