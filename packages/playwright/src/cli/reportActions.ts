@@ -43,8 +43,8 @@ export async function mergeReports(reportDir: string | undefined, opts: { [key: 
   if (!reporterDescriptions)
     reporterDescriptions = [[commonConfig.defaultReporter]];
   const rootDirOverride = configFile ? config.config.rootDir : undefined;
-  await merge.createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
-  gracefullyProcessExitDoNotHang(0);
+  const result = await merge.createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
+  gracefullyProcessExitDoNotHang(result === 'failed' ? 1 : 0);
 }
 
 function resolveReporterOption(reporter?: string): ReporterDescription[] | undefined {
