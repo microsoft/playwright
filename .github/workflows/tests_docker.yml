@@ -26,6 +26,12 @@ jobs:
         - docker_tag: noble
           docker_arch: arm64
           host_os: ubuntu-22.04-arm
+        - docker_tag: resolute
+          docker_arch: amd64
+          host_os: ubuntu-22.04
+        - docker_tag: resolute
+          docker_arch: arm64
+          host_os: ubuntu-22.04-arm
     runs-on: ${{ matrix.host_os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
