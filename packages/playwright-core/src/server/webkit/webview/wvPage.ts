@@ -755,6 +755,9 @@ export class WVPage implements PageDelegate {
     const listener = eventsHelper.addEventListener(this._session, 'DOM.setChildNodes',
         (e: Protocol.DOM.setChildNodesPayload) => collect(e.nodes));
     try {
+      // getDocument returns the document node only to depth 2 (not the full
+      // tree), so it stays cheap regardless of page size; the path to the
+      // requested node is delivered by the requestNode setChildNodes push.
       const { root } = await this._session.send('DOM.getDocument');
       collect([root]);
       const { nodeId } = await this._session.send('DOM.requestNode', { objectId });
