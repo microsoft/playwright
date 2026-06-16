@@ -880,15 +880,7 @@ export class WVPage implements PageDelegate {
         redirectedFrom = request;
       }
     }
-    let frame = redirectedFrom ? redirectedFrom.request.frame() : this._page.frameManager.frame(event.frameId);
-    // Stock WebKit RDP discovers subframes lazily on Page.frameNavigated, which
-    // only fires once the document has loaded. A subframe's initial document
-    // request is therefore reported before its frame is known — and when
-    // intercepting, dropping it here would stall the request and the frame would
-    // never load. Attach the subframe now so interception can run the route
-    // handler against it.
-    if (!frame && !redirectedFrom && event.type === 'Document')
-      frame = this._ensureSubframeForNavigationRequest(event);
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : this._page.frameManager.frame(event.frameId);
     // sometimes we get stray network events for detached frames
     // TODO(einbinder) why?
     if (!frame)
@@ -907,25 +899,6 @@ export class WVPage implements PageDelegate {
     }
     this._requestIdToRequest.set(event.requestId, request);
     this._page.frameManager.requestStarted(request.request, route);
-  }
-
-  private _ensureSubframeForNavigationRequest(event: Protocol.Network.requestWillBeSentPayload): frames.Frame | null {
-    // The network event carries no parent frame id, so resolve the parent from
-    // the request's Referer, which points at the document that hosts the
-    // <iframe>. A subframe's parent always finishes loading (and is thus already
-    // registered) before the subframe's own request is issued, including for
-    // nested iframes, so this resolves the parent reliably for same-origin
-    // hierarchies. If the parent cannot be identified we leave the frame
-    // unattached rather than risk corrupting the frame tree.
-    const referer = Object.entries(event.request.headers || {}).find(([name]) => name.toLowerCase() === 'referer')?.[1];
-    if (!referer)
-      return null;
-    const stripHash = (url: string) => url.replace(/#.*$/, '');
-    const target = stripHash(referer);
-    const parent = this._page.frameManager.frames().find(frame => stripHash(frame.url()) === target);
-    if (!parent)
-      return null;
-    return this._page.frameManager.frameAttached(event.frameId, parent._id);
   }
 
   private _handleRequestRedirect(request: WVInterceptableRequest, requestId: string, responsePayload: Protocol.Network.Response, timestamp: number) {
