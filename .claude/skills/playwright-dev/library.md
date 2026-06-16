@@ -12,7 +12,6 @@ packages/playwright-core/src/
   client/                   — public API objects (ChannelOwner subclasses)
     channel.d.ts            — generated client channel interfaces
   server/                   — browser automation implementation (SdkObject subclasses)
-    callMetadata.d.ts       — call metadata types
     channel.d.ts            — generated server channel interfaces
   server/dispatchers/       — protocol bridge (Dispatcher subclasses)
   protocol/                 — validators (generated + primitives)

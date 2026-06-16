@@ -16,7 +16,7 @@
 
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
-import type * as channels from '../../playwright-core/src/client/channel';
+import type * as channels from '../../playwright-core/src/server/channel';
 
 export type SerializedStorage = Omit<channels.OriginStorage, 'origin'>;
 

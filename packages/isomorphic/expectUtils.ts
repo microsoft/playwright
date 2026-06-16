@@ -15,7 +15,7 @@
  */
 
 import { isRegExp, isString } from './rtti';
-import type { ExpectedTextValue } from '../playwright-core/src/client/channel';
+import type { ExpectedTextValue } from '../playwright-core/src/client/channel'; // same type across client and server, either is fine
 
 export function serializeExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {
   return items.map(i => ({

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import type { ClientSideCallMetadata, StackFrame } from '../../playwright-core/src/client/channel';
+import type { StackFrame } from '../stackTrace';
+import type { ClientSideCallMetadata } from '../../playwright-core/src/client/channel';
 
 export type SerializedStackFrame = [number, number, number, string];
 export type SerializedStack = [number, SerializedStackFrame[]];
