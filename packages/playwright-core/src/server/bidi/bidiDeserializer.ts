@@ -102,7 +102,7 @@ function deserializeBidiMapping(
   bidiValue: bidi.Script.ObjectRemoteValue | bidi.Script.MapRemoteValue,
   internalIdMap: Map<bidi.Script.InternalId, any>
 ) {
-  const result = getValue(bidiValue, internalIdMap, () => ({}));
+  const result = getValue(bidiValue, internalIdMap, () => Object.create(null));
   for (const [serializedKey, serializedValue] of bidiValue.value || []) {
     const key =
       typeof serializedKey === 'string'
