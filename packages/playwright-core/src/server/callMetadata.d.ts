@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedError } from './client/channels';
+import type { SerializedError } from './channel';
 
 export type CallMetadata = {
   id: string;
@@ -39,3 +39,4 @@ export type CallMetadata = {
   pageId?: string;
   frameId?: string;
 };
+

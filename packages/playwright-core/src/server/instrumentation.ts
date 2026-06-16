@@ -29,8 +29,8 @@ import type { Frame } from './frames';
 import type { Page, Worker } from './page';
 import type { Playwright } from './playwright';
 import type * as types from './types';
-import type { CallMetadata } from '@protocol/callMetadata';
-export type { CallMetadata } from '@protocol/callMetadata';
+import type { CallMetadata } from './callMetadata';
+export type { CallMetadata } from './callMetadata';
 import type { LogName } from '@utils/debugLogger';
 
 export type Attribution = {
