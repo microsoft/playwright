@@ -72,6 +72,7 @@ export class WVPage implements PageDelegate {
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
   private _timestampBaselineForWebSocket = new Map<string, number>();
+  private _frameTokenSeq = 0;
 
   private readonly _dialogEndpoint: string | undefined;
 
@@ -689,11 +690,111 @@ export class WVPage implements PageDelegate {
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
-    throw new Error('Method not implemented');
+    // Stock WebKit RDP exposes no DOM.describeNode (and thus no contentFrameId),
+    // so we correlate the <iframe> element with its child frame ourselves.
+    // Preferred: tag the iframe's contentWindow with a unique token and probe
+    // every frame's context for it. This is exact (and works even when the
+    // <iframe> element handle lives in a different frame than the iframe itself),
+    // but only when the iframe is same-origin with its parent — cross-origin
+    // contentWindow access throws.
+    const token = `__pw_content_frame_${++this._frameTokenSeq}`;
+    const tagged = await handle.evaluateInUtility(([, node, token]) => {
+      try {
+        const win = (node as HTMLIFrameElement).contentWindow;
+        if (!win)
+          return false;
+        (win as any)[token] = token;
+        return true;
+      } catch {
+        return false;
+      }
+    }, token);
+    if (tagged === true) {
+      const frame = await this._findFrameByWindowToken(token);
+      if (frame)
+        return frame;
+    }
+    // Fallback for cross-origin (but still in-process) iframes: match by the
+    // element's own name/src and document order, all readable cross-origin.
+    const childFrames = handle._frame._getChildFrames();
+    if (!childFrames.length)
+      return null;
+    const descriptor = await handle.evaluateInUtility(([, node]) => {
+      const element = node as HTMLIFrameElement;
+      const all = Array.from(element.ownerDocument.querySelectorAll('iframe,frame'));
+      return {
+        name: element.getAttribute('name') || '',
+        url: element.src || '',
+        index: all.indexOf(element),
+      };
+    }, {});
+    if (!descriptor || typeof descriptor === 'string')
+      return null;
+    return this._matchChildFrame(childFrames, descriptor);
+  }
+
+  private _matchChildFrame(childFrames: frames.Frame[], descriptor: { name: string, url: string, index: number }): frames.Frame | null {
+    if (descriptor.name) {
+      const named = childFrames.filter(frame => frame.name() === descriptor.name);
+      if (named.length === 1)
+        return named[0];
+    }
+    if (descriptor.url) {
+      const byUrl = childFrames.filter(frame => frame.url() === descriptor.url);
+      if (byUrl.length === 1)
+        return byUrl[0];
+    }
+    // Last resort: when the document's frame elements line up one-to-one with the
+    // known child frames, fall back to document order.
+    if (descriptor.index >= 0 && descriptor.index < childFrames.length)
+      return childFrames[descriptor.index];
+    return null;
+  }
+
+  // Returns the frame whose window was previously tagged with `token`. Each
+  // frame deletes the tag from its own global when it matches, so only the
+  // tagged frame answers true.
+  private async _findFrameByWindowToken(token: string): Promise<frames.Frame | null> {
+    for (const frame of this._page.frameManager.frames()) {
+      const context = await frame.mainContext().catch(() => null);
+      if (!context)
+        continue;
+      const matched = await context.evaluate(token => {
+        const found = (globalThis as any)[token] === token;
+        if (found)
+          delete (globalThis as any)[token];
+        return found;
+      }, token).catch(() => false);
+      if (matched)
+        return frame;
+    }
+    return null;
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
-    throw new Error('Method not implemented');
+    // A handle usually lives in the execution context of the frame that owns the
+    // node, but cross-frame element handles (e.g. obtained via window.top or
+    // contentWindow) do not. Tag the node's own window and probe every frame to
+    // find the real owner; fall back to the handle's frame when the node's
+    // window is cross-origin and cannot be tagged.
+    const token = `__pw_owner_frame_${++this._frameTokenSeq}`;
+    const tagged = await handle.evaluateInUtility(([, node, token]) => {
+      try {
+        const win = ((node as Node).ownerDocument || node as Document).defaultView;
+        if (!win)
+          return false;
+        (win as any)[token] = token;
+        return true;
+      } catch {
+        return false;
+      }
+    }, token);
+    if (tagged === true) {
+      const frame = await this._findFrameByWindowToken(token);
+      if (frame)
+        return frame._id;
+    }
+    return handle._frame._id;
   }
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
@@ -776,7 +877,52 @@ export class WVPage implements PageDelegate {
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
-    throw new Error('Method not implemented');
+    const parent = frame.parentFrame();
+    if (!parent)
+      throw new Error('Frame has been detached.');
+    // Reverse of getContentFrame: tag the child frame's window, then find the
+    // owning <iframe>/<frame> element in the parent document by matching the tag
+    // on its contentWindow. Same-origin only.
+    const token = `__pw_frame_element_${++this._frameTokenSeq}`;
+    const childContext = await frame.mainContext();
+    await childContext.evaluate((token: string) => {
+      (globalThis as any)[token] = token;
+    }, token);
+    const parentContext = await parent.mainContext();
+    // Preferred: same-origin tag match via contentWindow. Fall back to matching
+    // by the child frame's name/url and document order for cross-origin frames,
+    // where contentWindow is not accessible from the parent.
+    const matcher = { token, name: frame.name() || '', url: frame.url() || '' };
+    const handle = await parentContext.evaluateHandle((matcher: { token: string, name: string, url: string }) => {
+      const frameElements = Array.from(document.querySelectorAll('iframe,frame')) as HTMLIFrameElement[];
+      for (const frameElement of frameElements) {
+        try {
+          const win = frameElement.contentWindow;
+          if (win && (win as any)[matcher.token] === matcher.token) {
+            delete (win as any)[matcher.token];
+            return frameElement;
+          }
+        } catch {
+        }
+      }
+      if (matcher.name) {
+        const named = frameElements.filter(element => element.getAttribute('name') === matcher.name);
+        if (named.length === 1)
+          return named[0];
+      }
+      if (matcher.url) {
+        const byUrl = frameElements.filter(element => element.src === matcher.url);
+        if (byUrl.length === 1)
+          return byUrl[0];
+      }
+      return null;
+    }, matcher);
+    const element = handle.asElement() as dom.ElementHandle | null;
+    if (!element) {
+      handle.dispose();
+      throw new Error('Frame has been detached.');
+    }
+    return element;
   }
 
   _adoptRequestFromNewProcess(navigationRequest: network.Request, newSession: WVSession, newRequestId: string) {
@@ -814,7 +960,15 @@ export class WVPage implements PageDelegate {
         redirectedFrom = request;
       }
     }
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : this._page.frameManager.frame(event.frameId);
+    let frame = redirectedFrom ? redirectedFrom.request.frame() : this._page.frameManager.frame(event.frameId);
+    // Stock WebKit RDP discovers subframes lazily on Page.frameNavigated, which
+    // only fires once the document has loaded. A subframe's initial document
+    // request is therefore reported before its frame is known — and when
+    // intercepting, dropping it here would stall the request and the frame would
+    // never load. Attach the subframe now so interception can run the route
+    // handler against it.
+    if (!frame && !redirectedFrom && event.type === 'Document')
+      frame = this._ensureSubframeForNavigationRequest(event);
     // sometimes we get stray network events for detached frames
     // TODO(einbinder) why?
     if (!frame)
@@ -833,6 +987,25 @@ export class WVPage implements PageDelegate {
     }
     this._requestIdToRequest.set(event.requestId, request);
     this._page.frameManager.requestStarted(request.request, route);
+  }
+
+  private _ensureSubframeForNavigationRequest(event: Protocol.Network.requestWillBeSentPayload): frames.Frame | null {
+    // The network event carries no parent frame id, so resolve the parent from
+    // the request's Referer, which points at the document that hosts the
+    // <iframe>. A subframe's parent always finishes loading (and is thus already
+    // registered) before the subframe's own request is issued, including for
+    // nested iframes, so this resolves the parent reliably for same-origin
+    // hierarchies. If the parent cannot be identified we leave the frame
+    // unattached rather than risk corrupting the frame tree.
+    const referer = Object.entries(event.request.headers || {}).find(([name]) => name.toLowerCase() === 'referer')?.[1];
+    if (!referer)
+      return null;
+    const stripHash = (url: string) => url.replace(/#.*$/, '');
+    const target = stripHash(referer);
+    const parent = this._page.frameManager.frames().find(frame => stripHash(frame.url()) === target);
+    if (!parent)
+      return null;
+    return this._page.frameManager.frameAttached(event.frameId, parent._id);
   }
 
   private _handleRequestRedirect(request: WVInterceptableRequest, requestId: string, responsePayload: Protocol.Network.Response, timestamp: number) {
