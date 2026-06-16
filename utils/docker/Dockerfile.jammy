@@ -67,5 +67,6 @@ RUN cd /ms-playwright-agent && \
     rm /tmp/playwright-core.tar.gz && \
     rm -rf /ms-playwright-agent && \
     rm -rf ~/.npm/ && \
-    chmod 777 /ms-playwright && \
+    # Keep the full browser registry writable for later npm ci runs, including .links.
+    chmod -R a+rwx /ms-playwright && \
     chmod -R 777 /ms-playwright/webkit-*
