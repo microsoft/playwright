@@ -285,8 +285,8 @@ See our doc on [Running and Debugging Tests](./running-tests.md) to learn more a
 
 - Playwright is distributed as a .NET Standard 2.0 library. We recommend .NET 8.
 - Windows 11+, Windows Server 2019+ or Windows Subsystem for Linux (WSL).
-- macOS 14 Sonoma, or later.
-- Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04, on x86-64 and arm64 architecture.
+- macOS 14 (Sonoma) or later.
+- Debian 12 / 13, Ubuntu 22.04 / 24.04 / 26.04 (x86-64 or arm64).
 
 ## What's next
 

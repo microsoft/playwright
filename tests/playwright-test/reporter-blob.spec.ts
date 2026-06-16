@@ -150,6 +150,39 @@ test('should call methods in right order', async ({ runInlineTest, mergeReports 
   expect(lines.filter(l => l === 'onExit').length).toBe(1);
 });
 
+test('should fail merge and report error when reporter throws in onEnd', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const files = {
+    'throwing-reporter.js': `
+      class ThrowingReporter {
+        onEnd() {
+          throw new Error('Error in merge onEnd!');
+        }
+      }
+      module.exports = ThrowingReporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  };
+  await runInlineTest(files, { shard: `1/2` });
+  await runInlineTest(files, { shard: `2/2` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  // Merge through the dot reporter so the reporter error is surfaced, and the
+  // throwing reporter to fail the merge command.
+  const { exitCode, output } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', 'dot,' + test.info().outputPath('throwing-reporter.js')] });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('Error in merge onEnd!');
+});
+
 test('should merge into html with dependencies', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const reportDir = test.info().outputPath('blob-report');
   const files = {

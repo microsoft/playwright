@@ -88,7 +88,8 @@ export function decorateMCPCommand(command: Command) {
         if (options.vision) {
           // eslint-disable-next-line no-console
           console.error('The --vision option is deprecated, use --caps=vision instead');
-          options.caps = 'vision';
+          options.caps ??= [];
+          options.caps.push('vision');
         }
 
         if (options.caps?.includes('tracing'))
@@ -138,7 +139,7 @@ export function decorateMCPCommand(command: Command) {
             sharedBrowserPromise = undefined;
             const browserContext = (backend as BrowserBackend).browserContext;
             await browserContext.close().catch(() => { });
-            await browserContext.browser()!.close().catch(() => { });
+            await browserContext.browser()?.close().catch(() => { });
           }
         };
         await mcpServer.start(factory, config.server);

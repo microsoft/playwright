@@ -199,6 +199,28 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFi
 await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFilesAsync(new[] {  });`);
   });
 
+  test('should upload a file via hidden input triggered by button', async ({ openRecorder, browserName, asset, isLinux }) => {
+    const { page, recorder } = await openRecorder();
+    await recorder.setContentAndWait(`
+    <button onclick="document.querySelector('input[type=file]').click()">select file</button>
+    <input type="file" style="display: none">
+  `);
+
+    await recorder.hoverOverElement('button');
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      recorder.trustedClick(),
+    ]);
+    await new Promise(f => setTimeout(f, 1000));
+    await chooser.setFiles(asset('file-to-upload.txt'));
+
+    const sources = await recorder.waitForOutput('JavaScript', 'setInputFiles');
+
+    // The setInputFiles call must target the actual file input, not the trigger button.
+    expect(sources.get('JavaScript')!.text).toContain(`setInputFiles('file-to-upload.txt')`);
+    expect(sources.get('JavaScript')!.text).not.toContain(`getByRole('button', { name: 'select file' }).setInputFiles`);
+  });
+
   test('should download files', async ({ openRecorder, server }) => {
     const { page, recorder } = await openRecorder();
 

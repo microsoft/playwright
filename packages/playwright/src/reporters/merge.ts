@@ -44,7 +44,9 @@ type ReportData = {
   fullResult: JsonFullResult;
 };
 
-export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined) {
+export type MergeResult = 'passed' | 'failed';
+
+export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined): Promise<MergeResult> {
   const reporters = await createReporters(config, 'merge', reporterDescriptions);
   const multiplexer = new Multiplexer(reporters);
   const stringPool = new StringInternPool();
@@ -110,6 +112,9 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     });
   }
   await dispatchEvents(eventData.epilogue);
+  // The merged report status is intentionally not surfaced as a failure - the
+  // merge command only fails when a reporter itself errors.
+  return multiplexer.hasReporterErrors() ? 'failed' : 'passed';
 }
 
 const commonEventNames = ['onBlobReportMetadata', 'onConfigure', 'onProject', 'onBegin', 'onEnd'];

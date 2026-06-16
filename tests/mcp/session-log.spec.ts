@@ -84,6 +84,53 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
 `.trim()));
 });
 
+test('session log should recover after write failure', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser === 'webkit');
+
+  const { client, stderr } = await startClient({
+    args: [
+      '--save-session',
+      '--output-dir', testInfo.outputPath('output'),
+    ],
+  });
+
+  server.setContent('/', `<title>Title</title><button>Submit</button>`, 'text/html');
+
+  // First call: logs successfully.
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
+  const sessionFolder = output.substring('Session: '.length);
+  const sessionFile = path.join(sessionFolder, 'session.md');
+
+  // Wait for the first entry to be written.
+  await expect.poll(() => readSessionLog(sessionFolder)).toContain('browser_navigate');
+
+  // Make the session file read-only so the next write fails.
+  await fs.promises.chmod(sessionFile, 0o444);
+
+  // Second call: write fails (EACCES) but the chain should recover.
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Submit button', target: 'e2' },
+  });
+
+  // Restore write permission.
+  await fs.promises.chmod(sessionFile, 0o644);
+
+  // Third call: without the fix the chain stays rejected and this is never logged.
+  await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Submit button', target: 'e2' },
+  });
+
+  // Verify the third call was logged (chain recovered).
+  await expect.poll(() => readSessionLog(sessionFolder)).toContain('browser_click');
+});
+
 async function readSessionLog(sessionFolder: string): Promise<string> {
   return await fs.promises.readFile(path.join(sessionFolder, 'session.md'), 'utf8').catch(() => '');
 }

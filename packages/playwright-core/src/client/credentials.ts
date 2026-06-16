@@ -29,8 +29,8 @@ export class Credentials implements api.Credentials {
     await this._browserContext._channel.credentialsInstall({});
   }
 
-  async create(options: channels.BrowserContextCredentialsCreateParams): Promise<channels.VirtualCredential> {
-    const { credential } = await this._browserContext._channel.credentialsCreate(options);
+  async create(rpId: string, options: Omit<channels.BrowserContextCredentialsCreateParams, 'rpId'> = {}): Promise<channels.VirtualCredential> {
+    const { credential } = await this._browserContext._channel.credentialsCreate({ ...options, rpId });
     return credential;
   }
 

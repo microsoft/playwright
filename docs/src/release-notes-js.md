@@ -6,6 +6,79 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.61
+
+### 🔑 WebAuthn passkeys
+
+New [Credentials] virtual authenticator, available via [`property: BrowserContext.credentials`], lets tests register passkeys and answer `navigator.credentials.create()` / `navigator.credentials.get()` ceremonies in the page — no real hardware key required, works in all browsers:
+
+```js
+const context = await browser.newContext();
+
+// Seed a passkey your backend provisioned for a test user.
+await context.credentials.create('example.com', {
+  id: credentialId,
+  userHandle,
+  privateKey,
+  publicKey,
+});
+await context.credentials.install();
+
+const page = await context.newPage();
+await page.goto('https://example.com/login');
+// The page's navigator.credentials.get() is answered with the seeded passkey.
+```
+
+You can also let the app register a passkey once in a setup test, read it back with [`method: Credentials.get`], and seed it into later tests — see [Credentials] for details.
+
+### 🗃️ Web Storage
+
+New [WebStorage] API, available via [`property: Page.localStorage`] and [`property: Page.sessionStorage`], reads and writes the page's storage for the current origin:
+
+```js
+await page.localStorage.setItem('token', 'abc');
+const token = await page.localStorage.getItem('token');
+const items = await page.sessionStorage.items();
+```
+
+### New APIs
+
+#### Network
+
+- [`method: APIResponse.securityDetails`] and [`method: APIResponse.serverAddr`] mirror the browser-side [`method: Response.securityDetails`] and [`method: Response.serverAddr`].
+
+#### Browser and Screencast
+
+- New option `artifactsDir` in [`method: BrowserType.connectOverCDP`] controls where artifacts such as traces and downloads are stored when attached to an existing browser.
+- New option `cursor` in [`method: Screencast.showActions`] controls the cursor decoration rendered for pointer actions.
+- The `onFrame` callback in [`method: Screencast.start`] now receives a `timestamp` of when the frame was presented by the browser.
+
+#### Test runner
+
+- The [`property: TestOptions.video`] option now supports the same set of modes as `trace`: new `'on-all-retries'`, `'retain-on-first-failure'` and `'retain-on-failure-and-retries'` values. See the [video modes table](./test-use-options.md#video-modes) for which runs are recorded and kept in each mode.
+- Supported `expect.soft.poll(...)`.
+- New [`property: FullConfig.argv`] — a snapshot of `process.argv` from the runner process, handy for reading custom arguments passed after the `--` separator.
+- New [`property: FullConfig.failOnFlakyTests`] mirrors the config option, so reporters can explain why a flaky run failed.
+- [`property: TestInfo.errors`] now lists each sub-error of an `AggregateError` as a separate entry.
+- New `-G` command line shorthand for `--grep-invert`.
+
+### 🛠️ Other improvements
+
+- Playwright now supports Ubuntu 26.04.
+- HAR and trace recordings now include WebSocket requests.
+
+### Browser Versions
+
+- Chromium 149.0.7827.55
+- Mozilla Firefox 151.0
+- WebKit 26.5
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 149
+- Microsoft Edge 149
+
+
 ## Version 1.60
 
 ### 🌐 HAR recording on Tracing

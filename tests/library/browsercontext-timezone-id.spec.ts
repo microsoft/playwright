@@ -118,8 +118,8 @@ it('should affect Intl.DateTimeFormat().resolvedOptions().timeZone', async ({ br
   await context.close();
 });
 
-it('should propagate timezone to workers', async ({ browser, browserName, server }) => {
-  it.fail(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/38919');
+it('should propagate timezone to workers', async ({ browser, browserName, isBidi, server }) => {
+  it.fail(browserName === 'firefox' && !isBidi, 'https://github.com/microsoft/playwright/issues/38919');
   const context = await browser.newContext({ timezoneId: 'America/Jamaica' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);

@@ -416,8 +416,7 @@ export * from '@playwright/test';
 export const test = baseTest.extend({
   context: async ({ context }, use) => {
     // A passkey your backend provisioned for the test user.
-    await context.credentials.create({
-      rpId: 'example.com',
+    await context.credentials.create('example.com', {
       id: process.env.PASSKEY_ID,
       userHandle: process.env.PASSKEY_USER_HANDLE,
       privateKey: process.env.PASSKEY_PRIVATE_KEY,
@@ -457,7 +456,7 @@ export * from '@playwright/test';
 export const test = baseTest.extend({
   context: async ({ context }, use) => {
     const credential = JSON.parse(fs.readFileSync('playwright/.auth/passkey.json', 'utf8'));
-    await context.credentials.create(credential);
+    await context.credentials.create(credential.rpId, credential);
     await context.credentials.install();
     await use(context);
   },

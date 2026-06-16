@@ -108,6 +108,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       includeTraceInfo: true,
       recordRequestOverrides: false,
       waitForContentOnStop: false,
+      omitWebSocketFrames: !!process.env.PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES,
     });
     const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName() : undefined;
     this._contextCreatedEvent = {

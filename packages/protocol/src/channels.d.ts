@@ -2237,7 +2237,7 @@ export interface ElectronApplicationEventTarget {
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   on(event: 'console', callback: (params: ElectronApplicationConsoleEvent) => void): this;
 }
-export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, EventTargetChannel {
+export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, Channel {
   _type_ElectronApplication: boolean;
   browserWindow(params: ElectronApplicationBrowserWindowParams, progress?: Progress): Promise<ElectronApplicationBrowserWindowResult>;
   evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, progress?: Progress): Promise<ElectronApplicationEvaluateExpressionResult>;

@@ -116,6 +116,39 @@ it('clicking in the middle of navigation that commits', async ({ page, server })
   await expect(page.locator('body')).toContainText('hello world');
 });
 
+it('clicking a link intercepted by the Navigation API same-document', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41125' },
+}, async ({ page, server }) => {
+  server.setRoute('/intercept.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <a id="go" href="/other">go</a>
+      <p id="status">initial</p>
+      <script>
+        navigation.addEventListener('navigate', event => {
+          if (!event.canIntercept)
+            return;
+          event.intercept({
+            handler: async () => {
+              const dest = new URL(event.destination.url).pathname;
+              document.getElementById('status').textContent = 'intercepted:' + dest;
+            },
+          });
+        });
+      </script>
+    `);
+  });
+
+  await page.goto(server.PREFIX + '/intercept.html');
+  await expect(page.locator('#status')).toHaveText('initial');
+
+  // Should not hang waiting for the same-document navigation to commit.
+  await page.locator('#go').click();
+
+  await expect(page.locator('#status')).toHaveText('intercepted:/other');
+  expect(new URL(page.url()).pathname).toBe('/other');
+});
+
 it('goBack in the middle of navigation that commits', async ({ page, server }) => {
   let commitCallback;
   const abortPromise = new Promise(f => commitCallback = f);

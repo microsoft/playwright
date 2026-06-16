@@ -273,7 +273,7 @@ export abstract class BrowserType extends SdkObject {
         const updatedLog = this.doRewriteStartupLog(log);
         throw new Error(`Failed to launch the browser process.\nBrowser logs:\n${updatedLog}`);
       }
-      if (!this.supportsPipeTransport()) {
+      if (!this.supportsPipeTransport(options)) {
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
       } else {
         const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
@@ -337,7 +337,7 @@ export abstract class BrowserType extends SdkObject {
   async prepareUserDataDir(options: types.LaunchOptions, userDataDir: string): Promise<void> {
   }
 
-  supportsPipeTransport(): boolean {
+  supportsPipeTransport(options: types.LaunchOptions): boolean {
     return true;
   }
 

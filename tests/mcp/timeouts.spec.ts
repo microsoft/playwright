@@ -76,6 +76,56 @@ test('action timeout (custom)', async ({ startClient, server }) => {
   });
 });
 
+test('wait_for text timeout', async ({ startClient, server }) => {
+  const { client } = await startClient({ args: [`--timeout-action=1234`] });
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <div>Hello World</div>
+    </html>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_wait_for',
+    arguments: { text: 'This text will never appear' },
+  })).toHaveResponse({
+    error: expect.stringContaining(`Timeout 1234ms exceeded.`),
+    isError: true,
+  });
+});
+
+test('wait_for textGone timeout', async ({ startClient, server }) => {
+  const { client } = await startClient({ args: [`--timeout-action=1234`] });
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <div>Permanent text</div>
+    </html>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_wait_for',
+    arguments: { textGone: 'Permanent text' },
+  })).toHaveResponse({
+    error: expect.stringContaining(`Timeout 1234ms exceeded.`),
+    isError: true,
+  });
+});
+
 test('navigation timeout', async ({ startClient, server }) => {
   const { client } = await startClient({ args: [`--timeout-navigation=1234`] });
   server.setRoute('/slow', async () => {

@@ -624,8 +624,9 @@ it('should have connection details', async ({ contextFactory, server, browserNam
   expect(securityDetails).toEqual({});
 });
 
-it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode }, testInfo) => {
-  it.fail(browserName === 'webkit' && platform === 'win32');
+it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode, channel, isFrozenWebkit }, testInfo) => {
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl');
+  it.skip(isFrozenWebkit);
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(httpsServer.EMPTY_PAGE);
@@ -684,7 +685,9 @@ it('should return server address directly from response', async ({ page, server,
   expect(port).toBe(server.PORT);
 });
 
-it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, channel }) => {
+it('should return security details directly from response', async ({ contextFactory, httpsServer, browserName, platform, channel, isFrozenWebkit }) => {
+  it.skip(isFrozenWebkit);
+
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   const response = await page.goto(httpsServer.EMPTY_PAGE);

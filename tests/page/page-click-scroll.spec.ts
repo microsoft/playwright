@@ -17,9 +17,6 @@
 import { expect, test as it } from './pageTest';
 
 it('should not hit scroll bar', async ({ page, browserName, platform }) => {
-  it.fixme(browserName === 'webkit' && platform === 'linux', 'Fails in headless and in headful on Ubuntu 22.04');
-  it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/18452');
-
   await page.setContent(`
     <style>
       .categories { width: 180px; display: flex; overflow-x: scroll; }

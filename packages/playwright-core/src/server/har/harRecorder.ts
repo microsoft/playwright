@@ -57,6 +57,7 @@ export class HarRecorder implements HarTracerDelegate {
       recordRequestOverrides: true,
       waitForContentOnStop: true,
       urlFilter: urlFilterRe ?? options.urlGlob,
+      omitWebSocketFrames: !!process.env.PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES,
     });
     this._tracer.start({ omitScripts: false });
   }

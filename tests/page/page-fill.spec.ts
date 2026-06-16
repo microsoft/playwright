@@ -73,10 +73,10 @@ it('should fill color input', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('#aaaaaa');
 });
 
-it('should fill color input case insensitive', async ({ page, browserName, isWindows }) => {
+it('should fill color input case insensitive', async ({ page, browserName, isWindows, channel }) => {
   await page.setContent('<input type=color value="#e66465">');
   await page.fill('input', '#AbCd00');
-  if (browserName === 'webkit' && isWindows)
+  if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
     expect(await page.$eval('input', input => input.value)).toBe('#AbCd00');
   else
     expect(await page.$eval('input', input => input.value)).toBe('#abcd00');

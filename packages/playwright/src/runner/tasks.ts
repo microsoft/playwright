@@ -116,7 +116,7 @@ export class TestRun {
   result(): 'failed' | 'passed' {
     const hasFailedTests = this.rootSuite?.allTests().some(test => !test.ok());
     const hasFlakyTests = this.rootSuite?.allTests().some(test => test.outcome() === 'flaky');
-    return this.hasWorkerErrors || this.hasReachedMaxFailures() || hasFailedTests || (this.config.config.failOnFlakyTests && hasFlakyTests) ? 'failed' : 'passed';
+    return this.hasWorkerErrors || this.reporter.hasReporterErrors() || this.hasReachedMaxFailures() || hasFailedTests || (this.config.config.failOnFlakyTests && hasFlakyTests) ? 'failed' : 'passed';
   }
 }
 
@@ -146,6 +146,10 @@ async function finishTaskRun(testRun: TestRun, status: FullResult['status']) {
   if (modifiedResult && modifiedResult.status)
     status = modifiedResult.status;
   await testRun.reporter.onExit();
+  // A reporter may have thrown during onEnd/onExit (or earlier), which is not
+  // reflected in testRun.result() computed above. Fail the run in that case.
+  if (status === 'passed' && testRun.reporter.hasReporterErrors())
+    status = 'failed';
   return status;
 }
 

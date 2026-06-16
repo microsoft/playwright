@@ -134,8 +134,8 @@ it('should support Set-Cookie header', async ({ contextFactory, defaultSameSiteC
   }]);
 });
 
-it('should ignore secure Set-Cookie header for insecure requests', async ({ contextFactory, server, browserName }) => {
-  it.fixme(browserName === 'webkit');
+it('should ignore secure Set-Cookie header for insecure requests', async ({ contextFactory, server, browserName, isMac }) => {
+  it.fixme(browserName === 'webkit' && !isMac);
 
   const context = await contextFactory();
   const page = await context.newPage();

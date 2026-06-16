@@ -20,7 +20,7 @@ import { attachFrame } from '../config/utils';
 
 it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
 it.skip(({ isAndroid }) => isAndroid, 'No drag&drop on Android.');
-it.fixme(({ headless }) => !headless, 'Stray mouse events mess up the tests.');
+it.skip(({ headless }) => !headless, 'Stray mouse events mess up the tests.');
 
 it.describe('Drag and drop', () => {
   it('should work @smoke', async ({ page, server }) => {
@@ -69,7 +69,6 @@ it.describe('Drag and drop', () => {
   });
 
   it('should work inside iframe', async ({ page, server, browserName, isElectron, isWindows }) => {
-    it.fixme(isElectron && isWindows, 'Fails on the bots');
     await page.goto(server.EMPTY_PAGE);
     const frame = await attachFrame(page, 'myframe', server.PREFIX + '/drag-n-drop.html');
     await page.$eval('iframe', iframe => {
@@ -131,7 +130,6 @@ it.describe('Drag and drop', () => {
         iframe.style.marginLeft = '500px';
         iframe.style.marginTop = '60px';
       });
-      await page.waitForTimeout(5000);
       const pageEvents = await trackEvents(await page.$('body'));
       const frameEvents = await trackEvents(await frame.$('body'));
       await page.hover('#source');
