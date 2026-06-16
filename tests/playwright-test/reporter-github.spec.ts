@@ -125,10 +125,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           });
         `
       }, { workers: 1, reporter: 'dot,github' }, { GITHUB_WORKSPACE: process.cwd() });
-      const text = result.output;
-      const annotationIndex = text.indexOf('::error file=');
-      expect(annotationIndex).toBeGreaterThan(0);
-      expect(text[annotationIndex - 1]).toBe('\n');
+      expect(result.output).toContain('F\n::error file=');
       expect(result.exitCode).toBe(1);
     });
   });
