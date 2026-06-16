@@ -36,7 +36,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
 
 # 2. Set up playwright-core and install all system dependencies in one layer.
-RUN install -d -m 777 /ms-playwright && \
+RUN install -d -m 777 /ms-playwright /ms-playwright/.links && \
     mkdir /ms-playwright-agent && \
     cd /ms-playwright-agent && npm init -y && \
     npm i /tmp/playwright-core.tar.gz && \
