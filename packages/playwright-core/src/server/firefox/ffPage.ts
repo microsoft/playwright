@@ -55,6 +55,7 @@ export class FFPage implements PageDelegate {
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
   private _initScripts: { initScript: InitScript, worldName?: string }[] = [];
+  private _pendingNavigationForFrame = new Map<string, { navigationId: string, url: string }>();
   private _webSocketRequests = new Map<string, { url: string, headers: types.HeadersArray }>();
   private _webSocketResponses = new Map<string, { status: number, statusText: string, headers: types.HeadersArray }>();
 
@@ -235,22 +236,37 @@ export class FFPage implements PageDelegate {
   }
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
+    const pending = this._pendingNavigationForFrame.get(params.frameId);
+    if (pending?.navigationId === params.navigationId)
+      this._pendingNavigationForFrame.delete(params.frameId);
+
     this._page.frameManager.frameAbortedNavigation(params.frameId, params.errorText, params.navigationId);
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
-    if (!params.navigationId) {
-      // Firefox replays the current navigation without a navigationId during a process swap (e.g. when restoring a persistent profile).
-      // Treat these as same-document URL updates so they don't interrupt any in-flight new-document navigation in Frame.gotoImpl.
-      this._page.frameManager.frameCommittedSameDocumentNavigation(params.frameId, params.url);
-      return;
+    let navigationId = params.navigationId;
+
+    const pending = this._pendingNavigationForFrame.get(params.frameId);
+    if (!navigationId) {
+      if (pending?.url !== params.url) {
+        // Firefox replays the current navigation without a navigationId during a process swap (e.g. when restoring a persistent profile).
+        // Treat these as same-document URL updates so they don't interrupt any in-flight new-document navigation in Frame.gotoImpl.
+        this._page.frameManager.frameCommittedSameDocumentNavigation(params.frameId, params.url);
+        return;
+      }
+
+      // The navigationId can be lost during a process swap, but we can use the pending navigation so Frame.gotoImpl sees a matching new-document commit.
+      navigationId = pending.navigationId;
+      this._pendingNavigationForFrame.delete(params.frameId);
+    } else if (pending?.navigationId === navigationId) {
+      this._pendingNavigationForFrame.delete(params.frameId);
     }
 
     for (const [workerId, worker] of this._workers) {
       if (worker.frameId === params.frameId)
         this._onWorkerDestroyed({ workerId });
     }
-    this._page.frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId, false);
+    this._page.frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', navigationId, false);
   }
 
   _onSameDocumentNavigation(params: Protocol.Page.sameDocumentNavigationPayload) {
@@ -262,6 +278,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onFrameDetached(params: Protocol.Page.frameDetachedPayload) {
+    this._pendingNavigationForFrame.delete(params.frameId);
     this._page.frameManager.frameDetached(params.frameId);
   }
 
@@ -378,8 +395,10 @@ export class FFPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referer: string | undefined): Promise<frames.GotoResult> {
-    const response = await this._session.send('Page.navigate', { url, referer, frameId: frame._id });
-    return { newDocumentId: response.navigationId || undefined };
+    const { navigationId } = await this._session.send('Page.navigate', { url, referer, frameId: frame._id });
+    if (navigationId)
+      this._pendingNavigationForFrame.set(frame._id, { navigationId, url });
+    return { newDocumentId: navigationId || undefined };
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
