@@ -72,7 +72,6 @@ export class WVPage implements PageDelegate {
   private _lastConsoleMessage: { derivedType: string, text: string, handles: JSHandle[]; count: number, location: types.ConsoleMessageLocation; } | null = null;
   private readonly _requestIdToResponseReceivedPayloadEvent = new Map<string, Protocol.Network.responseReceivedPayload>();
   private _timestampBaselineForWebSocket = new Map<string, number>();
-  private _frameTokenSeq = 0;
 
   private readonly _dialogEndpoint: string | undefined;
 
@@ -722,50 +721,49 @@ export class WVPage implements PageDelegate {
     return ownerFrame?._getChildFrames()[result.index] || null;
   }
 
-  // Returns the frame whose window was previously tagged with `token`. Each
-  // frame deletes the tag from its own global when it matches, so only the
-  // tagged frame answers true.
-  private async _findFrameByWindowToken(token: string): Promise<frames.Frame | null> {
-    for (const frame of this._page.frameManager.frames()) {
-      const context = await frame.mainContext().catch(() => null);
-      if (!context)
-        continue;
-      const matched = await context.evaluate(token => {
-        const found = (globalThis as any)[token] === token;
-        if (found)
-          delete (globalThis as any)[token];
-        return found;
-      }, token).catch(() => false);
-      if (matched)
-        return frame;
-    }
-    return null;
-  }
-
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
-    // A handle usually lives in the execution context of the frame that owns the
-    // node, but cross-frame element handles (e.g. obtained via window.top or
-    // contentWindow) do not. Tag the node's own window and probe every frame to
-    // find the real owner; fall back to the handle's frame when the node's
-    // window is cross-origin and cannot be tagged.
-    const token = `__pw_owner_frame_${++this._frameTokenSeq}`;
-    const tagged = await handle.evaluateInUtility(([, node, token]) => {
-      try {
-        const win = ((node as Node).ownerDocument || node as Document).defaultView;
-        if (!win)
-          return false;
-        (win as any)[token] = token;
-        return true;
-      } catch {
-        return false;
-      }
-    }, token);
-    if (tagged === true) {
-      const frame = await this._findFrameByWindowToken(token);
-      if (frame)
-        return frame._id;
+    // Every DOM.Node carries the id of its containing frame, so ask the DOM agent
+    // directly instead of probing page globals. This is exact even for a
+    // cross-frame element handle (whose execution context is a different frame
+    // than the node it points at) and for cross-origin frames. Fall back to the
+    // handle's own frame if the node cannot be resolved.
+    if (handle._objectId) {
+      const frameId = await this._ownerFrameIdViaDOM(handle._objectId);
+      if (frameId)
+        return frameId;
     }
     return handle._frame._id;
+  }
+
+  private async _ownerFrameIdViaDOM(objectId: string): Promise<string | null> {
+    const frameIdByNodeId = new Map<number, string>();
+    const collect = (nodes: Protocol.DOM.Node[] | undefined) => {
+      for (const node of nodes || []) {
+        if (node.frameId)
+          frameIdByNodeId.set(node.nodeId, node.frameId);
+        collect(node.children);
+        collect(node.shadowRoots);
+        if (node.contentDocument)
+          collect([node.contentDocument]);
+        if (node.templateContent)
+          collect([node.templateContent]);
+      }
+    };
+    // DOM.requestNode reports the node — and the path from it up to the root — via
+    // DOM.setChildNodes events, but only after the agent has observed the document
+    // via DOM.getDocument.
+    const listener = eventsHelper.addEventListener(this._session, 'DOM.setChildNodes',
+        (e: Protocol.DOM.setChildNodesPayload) => collect(e.nodes));
+    try {
+      const { root } = await this._session.send('DOM.getDocument');
+      collect([root]);
+      const { nodeId } = await this._session.send('DOM.requestNode', { objectId });
+      return frameIdByNodeId.get(nodeId) || null;
+    } catch {
+      return null;
+    } finally {
+      eventsHelper.removeEventListeners([listener]);
+    }
   }
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
