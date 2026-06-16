@@ -714,41 +714,25 @@ export class WVPage implements PageDelegate {
       if (frame)
         return frame;
     }
-    // Fallback for cross-origin (but still in-process) iframes: match by the
-    // element's own name/src and document order, all readable cross-origin.
-    const childFrames = handle._frame._getChildFrames();
-    if (!childFrames.length)
-      return null;
-    const descriptor = await handle.evaluateInUtility(([, node]) => {
+    // Fallback for cross-origin (but still in-process) iframes: the element's
+    // position in its owner window's `frames` list lines up with the order of
+    // child frames reported by Page.getResourceTree. WindowProxy identity
+    // (`win.frames[i] === iframe.contentWindow`) is readable cross-origin, so
+    // this resolves the frame without touching the cross-origin document.
+    const index = await handle.evaluateInUtility(([, node]) => {
       const element = node as HTMLIFrameElement;
-      const all = Array.from(element.ownerDocument.querySelectorAll('iframe,frame'));
-      return {
-        name: element.getAttribute('name') || '',
-        url: element.src || '',
-        index: all.indexOf(element),
-      };
+      const win = element.ownerDocument.defaultView;
+      if (!win)
+        return -1;
+      for (let i = 0; i < win.frames.length; i++) {
+        if (win.frames[i] === element.contentWindow)
+          return i;
+      }
+      return -1;
     }, {});
-    if (!descriptor || typeof descriptor === 'string')
+    if (typeof index !== 'number' || index < 0)
       return null;
-    return this._matchChildFrame(childFrames, descriptor);
-  }
-
-  private _matchChildFrame(childFrames: frames.Frame[], descriptor: { name: string, url: string, index: number }): frames.Frame | null {
-    if (descriptor.name) {
-      const named = childFrames.filter(frame => frame.name() === descriptor.name);
-      if (named.length === 1)
-        return named[0];
-    }
-    if (descriptor.url) {
-      const byUrl = childFrames.filter(frame => frame.url() === descriptor.url);
-      if (byUrl.length === 1)
-        return byUrl[0];
-    }
-    // Last resort: when the document's frame elements line up one-to-one with the
-    // known child frames, fall back to document order.
-    if (descriptor.index >= 0 && descriptor.index < childFrames.length)
-      return childFrames[descriptor.index];
-    return null;
+    return handle._frame._getChildFrames()[index] || null;
   }
 
   // Returns the frame whose window was previously tagged with `token`. Each
@@ -890,10 +874,13 @@ export class WVPage implements PageDelegate {
     }, token);
     const parentContext = await parent.mainContext();
     // Preferred: same-origin tag match via contentWindow. Fall back to matching
-    // by the child frame's name/url and document order for cross-origin frames,
-    // where contentWindow is not accessible from the parent.
-    const matcher = { token, name: frame.name() || '', url: frame.url() || '' };
-    const handle = await parentContext.evaluateHandle((matcher: { token: string, name: string, url: string }) => {
+    // by position for cross-origin frames: the child frame's index among the
+    // parent's child frames lines up with the parent window's `frames` list, and
+    // WindowProxy identity (`frames[index] === frameElement.contentWindow`) is
+    // readable cross-origin.
+    const index = parent._getChildFrames().indexOf(frame);
+    const matcher = { token, index };
+    const handle = await parentContext.evaluateHandle((matcher: { token: string, index: number }) => {
       const frameElements = Array.from(document.querySelectorAll('iframe,frame')) as HTMLIFrameElement[];
       for (const frameElement of frameElements) {
         try {
@@ -905,15 +892,12 @@ export class WVPage implements PageDelegate {
         } catch {
         }
       }
-      if (matcher.name) {
-        const named = frameElements.filter(element => element.getAttribute('name') === matcher.name);
-        if (named.length === 1)
-          return named[0];
-      }
-      if (matcher.url) {
-        const byUrl = frameElements.filter(element => element.src === matcher.url);
-        if (byUrl.length === 1)
-          return byUrl[0];
+      const win = matcher.index >= 0 ? window.frames[matcher.index] : null;
+      if (win) {
+        for (const frameElement of frameElements) {
+          if (frameElement.contentWindow === win)
+            return frameElement;
+        }
       }
       return null;
     }, matcher);
