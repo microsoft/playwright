@@ -260,11 +260,16 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
 
   // Protocol call aka library contexts have startTime/endTime as server-side times.
   // Step aka test runner contexts have startTime/endTime as client-side times.
-  // Adjust startTime/endTime on the library contexts to align them with the test
-  // runner steps.
-  const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map);
-  if (delta)
-    adjustMonotonicTime(libraryContexts, delta);
+  // Adjust startTime/endTime on each library context to align it with the test
+  // runner steps. Each library context can come from a different process (e.g.
+  // a remote run-server in Docker), so its monotonic clock can be unrelated to
+  // the runner's. Align by wall time, falling back to a stepId match if wall
+  // times are not available.
+  for (const libraryContext of libraryContexts) {
+    const delta = monotonicTimeDeltaBetweenLibraryAndRunner(libraryContext, testRunnerContexts, map);
+    if (delta)
+      adjustMonotonicTime([libraryContext], delta);
+  }
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
@@ -321,13 +326,24 @@ function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: numbe
   }
 }
 
-function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
-  // We cannot rely on wall time or monotonic time to be the in sync
-  // between library and test runner contexts. So we find first action
-  // that is present in both runner and library contexts and use it
-  // to calculate the time delta, assuming the two events happened at the
-  // same instant.
-  for (const context of nonPrimaryContexts) {
+function monotonicTimeDeltaBetweenLibraryAndRunner(libraryContext: ContextEntry, testRunnerContexts: ContextEntry[], libraryActions: Map<string, ActionTraceEventInContext>) {
+  // Library and test runner contexts can run in different processes (e.g. a
+  // remote run-server in Docker), so their monotonic clocks are unrelated.
+  // Both contexts record both wallTime and monotonicTime at chunk start, so
+  // align by wall time: the per-context offset (monotonicTime - wallTime) is
+  // the constant that maps the wall clock onto the local monotonic clock, and
+  // the difference between the two offsets is the delta we need to apply to
+  // library timestamps to express them in the runner's monotonic clock.
+  if (libraryContext.wallTime && libraryContext.startTime) {
+    const runnerContext = testRunnerContexts.find(c => c.wallTime && c.startTime);
+    if (runnerContext)
+      return (runnerContext.startTime - runnerContext.wallTime) - (libraryContext.startTime - libraryContext.wallTime);
+  }
+
+  // Fall back to matching the first action shared via stepId, assuming the
+  // two events happened at the same instant. Used when wall times are missing
+  // (older trace formats).
+  for (const context of testRunnerContexts) {
     for (const action of context.actions) {
       if (!action.startTime)
         continue;
