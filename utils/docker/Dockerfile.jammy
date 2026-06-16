@@ -36,6 +36,7 @@ COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
 
 # 2. Set up playwright-core and install all system dependencies in one layer.
 RUN mkdir /ms-playwright && \
+    chmod -R a+rwx /ms-playwright && \
     mkdir /ms-playwright-agent && \
     cd /ms-playwright-agent && npm init -y && \
     npm i /tmp/playwright-core.tar.gz && \
@@ -67,6 +68,4 @@ RUN cd /ms-playwright-agent && \
     rm /tmp/playwright-core.tar.gz && \
     rm -rf /ms-playwright-agent && \
     rm -rf ~/.npm/ && \
-    # Keep the full browser registry writable for later npm ci runs, including .links.
-    chmod -R a+rwx /ms-playwright && \
     chmod -R 777 /ms-playwright/webkit-*
