@@ -691,48 +691,35 @@ export class WVPage implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     // Stock WebKit RDP exposes no DOM.describeNode (and thus no contentFrameId),
-    // so we correlate the <iframe> element with its child frame ourselves.
-    // Preferred: tag the iframe's contentWindow with a unique token and probe
-    // every frame's context for it. This is exact (and works even when the
-    // <iframe> element handle lives in a different frame than the iframe itself),
-    // but only when the iframe is same-origin with its parent — cross-origin
-    // contentWindow access throws.
-    const token = `__pw_content_frame_${++this._frameTokenSeq}`;
-    const tagged = await handle.evaluateInUtility(([, node, token]) => {
-      try {
-        const win = (node as HTMLIFrameElement).contentWindow;
-        if (!win)
-          return false;
-        (win as any)[token] = token;
-        return true;
-      } catch {
-        return false;
-      }
-    }, token);
-    if (tagged === true) {
-      const frame = await this._findFrameByWindowToken(token);
-      if (frame)
-        return frame;
-    }
-    // Fallback for cross-origin (but still in-process) iframes: the element's
-    // position in its owner window's `frames` list lines up with the order of
-    // child frames reported by Page.getResourceTree. WindowProxy identity
-    // (`win.frames[i] === iframe.contentWindow`) is readable cross-origin, so
-    // this resolves the frame without touching the cross-origin document.
-    const index = await handle.evaluateInUtility(([, node]) => {
+    // so we correlate the <iframe> element with its child frame by position: the
+    // element's index in its owner window's `frames` list lines up with the order
+    // of child frames reported by Page.getResourceTree. WindowProxy identity
+    // (`win.frames[i] === iframe.contentWindow`) is readable cross-origin, so the
+    // same path resolves same-origin and in-process cross-origin iframes alike,
+    // without ever touching the (possibly cross-origin) framed document.
+    const result = await handle.evaluateInUtility(([, node]) => {
       const element = node as HTMLIFrameElement;
       const win = element.ownerDocument.defaultView;
       if (!win)
-        return -1;
+        return { index: -1, ownedByThisFrame: true };
       for (let i = 0; i < win.frames.length; i++) {
         if (win.frames[i] === element.contentWindow)
-          return i;
+          return { index: i, ownedByThisFrame: win === self };
       }
-      return -1;
+      return { index: -1, ownedByThisFrame: win === self };
     }, {});
-    if (typeof index !== 'number' || index < 0)
+    if (!result || typeof result === 'string' || result.index < 0)
       return null;
-    return handle._frame._getChildFrames()[index] || null;
+    // The index is relative to the element's owner frame. Usually that is the
+    // handle's own frame, but a cross-frame element handle (e.g. obtained via
+    // window.top.document) lives in a different frame than the element it points
+    // at, so resolve the real owner in that case.
+    let ownerFrame: frames.Frame | null = handle._frame;
+    if (!result.ownedByThisFrame) {
+      const ownerFrameId = await this.getOwnerFrame(handle);
+      ownerFrame = ownerFrameId ? this._page.frameManager.frame(ownerFrameId) : null;
+    }
+    return ownerFrame?._getChildFrames()[result.index] || null;
   }
 
   // Returns the frame whose window was previously tagged with `token`. Each
@@ -864,43 +851,23 @@ export class WVPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    // Reverse of getContentFrame: tag the child frame's window, then find the
-    // owning <iframe>/<frame> element in the parent document by matching the tag
-    // on its contentWindow. Same-origin only.
-    const token = `__pw_frame_element_${++this._frameTokenSeq}`;
-    const childContext = await frame.mainContext();
-    await childContext.evaluate((token: string) => {
-      (globalThis as any)[token] = token;
-    }, token);
-    const parentContext = await parent.mainContext();
-    // Preferred: same-origin tag match via contentWindow. Fall back to matching
-    // by position for cross-origin frames: the child frame's index among the
-    // parent's child frames lines up with the parent window's `frames` list, and
-    // WindowProxy identity (`frames[index] === frameElement.contentWindow`) is
-    // readable cross-origin.
+    // Reverse of getContentFrame: the child frame's index among the parent's
+    // child frames lines up with the parent window's `frames` list, so locate the
+    // owning <iframe>/<frame> element by WindowProxy identity
+    // (`frames[index] === frameElement.contentWindow`), readable cross-origin.
     const index = parent._getChildFrames().indexOf(frame);
-    const matcher = { token, index };
-    const handle = await parentContext.evaluateHandle((matcher: { token: string, index: number }) => {
-      const frameElements = Array.from(document.querySelectorAll('iframe,frame')) as HTMLIFrameElement[];
-      for (const frameElement of frameElements) {
-        try {
-          const win = frameElement.contentWindow;
-          if (win && (win as any)[matcher.token] === matcher.token) {
-            delete (win as any)[matcher.token];
-            return frameElement;
-          }
-        } catch {
-        }
-      }
-      const win = matcher.index >= 0 ? window.frames[matcher.index] : null;
+    const parentContext = await parent.mainContext();
+    const handle = await parentContext.evaluateHandle((index: number) => {
+      const win = index >= 0 ? window.frames[index] : null;
       if (win) {
+        const frameElements = Array.from(document.querySelectorAll('iframe,frame')) as HTMLIFrameElement[];
         for (const frameElement of frameElements) {
           if (frameElement.contentWindow === win)
             return frameElement;
         }
       }
       return null;
-    }, matcher);
+    }, index);
     const element = handle.asElement() as dom.ElementHandle | null;
     if (!element) {
       handle.dispose();
