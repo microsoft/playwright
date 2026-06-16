@@ -22,6 +22,7 @@ import * as network from '../../network';
 import type * as frames from '../../frames';
 import type * as types from '../../types';
 import type { Protocol } from './protocol';
+import type { WVBrowserContext } from './wvBrowser';
 import type { WVSession } from './wvConnection';
 
 
@@ -49,7 +50,7 @@ export class WVInterceptableRequest {
   _timestamp: number;
   _wallTime: number;
 
-  constructor(session: WVSession, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: WVInterceptableRequest | null, documentId: string | undefined) {
+  constructor(session: WVSession, browserContext: WVBrowserContext, frame: frames.Frame | null, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: WVInterceptableRequest | null, documentId: string | undefined) {
     this._session = session;
     this._requestId = event.requestId;
     const resourceType = event.type ? toResourceType(event.type) : (redirectedFrom ? redirectedFrom.request.resourceType() : 'other');
@@ -61,7 +62,7 @@ export class WVInterceptableRequest {
       // the Playwright-patched WebKit build which base64-encodes it.
       postDataBuffer = Buffer.from(event.request.postData, 'utf8');
     }
-    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
+    this.request = new network.Request(browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers), this._wallTime);
   }
 

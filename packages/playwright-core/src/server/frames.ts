@@ -321,9 +321,9 @@ export class FrameManager {
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
-    const frame = request.frame()!;
+    const frame = request.frame();
     this._inflightRequestStarted(request);
-    if (request._documentId)
+    if (frame && request._documentId)
       frame._setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
       // Abort favicon requests to avoid network access in case of interception.
@@ -350,9 +350,9 @@ export class FrameManager {
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
-    const frame = request.frame()!;
+    const frame = request.frame();
     this._inflightRequestFinished(request);
-    if (frame.pendingDocument() && frame.pendingDocument()!.request === request) {
+    if (frame && frame.pendingDocument() && frame.pendingDocument()!.request === request) {
       let errorText = request.failure()!.errorText;
       if (canceled)
         errorText += '; maybe frame was detached?';
@@ -377,8 +377,8 @@ export class FrameManager {
   }
 
   private _inflightRequestFinished(request: network.Request) {
-    const frame = request.frame()!;
-    if (request._isFavicon)
+    const frame = request.frame();
+    if (request._isFavicon || !frame)
       return;
     if (!frame._inflightRequests.has(request))
       return;
@@ -388,8 +388,8 @@ export class FrameManager {
   }
 
   private _inflightRequestStarted(request: network.Request) {
-    const frame = request.frame()!;
-    if (request._isFavicon)
+    const frame = request.frame();
+    if (request._isFavicon || !frame)
       return;
     frame._inflightRequests.add(request);
     if (frame._inflightRequests.size === 1)
