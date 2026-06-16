@@ -48,6 +48,10 @@ const resume = defineTool({
         }
       };
       browserContext.debugger.on('pausedstatechanged', listener);
+      browserContext.once('close', () => {
+        browserContext.debugger.off('pausedstatechanged', listener);
+        resolve();
+      });
     });
 
     if (params.location) {

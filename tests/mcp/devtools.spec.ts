@@ -93,6 +93,29 @@ test('browser_hide_highlight', async ({ boundBrowser, startClient }) => {
   await expect(page.locator('x-pw-highlight')).toHaveCount(0);
 });
 
+test('browser_resume completes when context closes', async ({ boundBrowser, startClient }) => {
+  const page = await boundBrowser.newPage();
+  await page.setContent(`<button>Submit</button>`);
+  const context = boundBrowser.contexts()[0];
+
+  // Pause the debugger before the next action.
+  await context.debugger.requestPause();
+  const clickPromise = page.click('button');
+  await new Promise<void>(resolve => context.debugger.once('pausedstatechanged', resolve));
+  expect(context.debugger.pausedDetails()).toBeTruthy();
+
+  // browser_resume without step or location resumes execution and
+  // waits for either the next pause or context close. Closing the
+  // context after resume simulates a test finishing with no further
+  // breakpoints. Before the fix, this would hang indefinitely.
+  const { client } = await startClient({ args: [`--endpoint=default`] });
+  const resumePromise = client.callTool({ name: 'browser_resume' });
+
+  await clickPromise;
+  await context.close();
+  await resumePromise;
+});
+
 test('browser_hide_highlight all', async ({ boundBrowser, startClient }) => {
   const page = await boundBrowser.newPage();
   await page.setContent(`<button>Submit</button><a href="#">Go</a>`);
