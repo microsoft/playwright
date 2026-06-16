@@ -689,43 +689,33 @@ export class WVPage implements PageDelegate {
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
-    // Stock WebKit RDP has no DOM.describeNode, but every DOM.Node for a frame
-    // owner element carries a `contentDocument` whose `frameId` is the framed
-    // document's frame. Resolving the node by its Runtime objectId is exact even
-    // for cross-frame element handles and works for cross-origin/cross-process
-    // frames (the DOM agent spans the whole page).
     if (!handle._objectId)
       return null;
-    const node = await this._resolveNodeViaDOM(handle._objectId);
+    // A frame-owner node's contentDocument.frameId is the framed document's frame.
+    const { node } = await this._requestNodeViaDOM(handle._objectId);
     const frameId = node?.contentDocument?.frameId;
     return frameId ? this._page.frameManager.frame(frameId) : null;
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
-    // Every DOM.Node carries the id of its containing frame, so ask the DOM agent
-    // directly instead of probing page globals. This is exact even for a
-    // cross-frame element handle (whose execution context is a different frame
-    // than the node it points at) and for cross-origin frames. Fall back to the
-    // handle's own frame if the node cannot be resolved.
     if (handle._objectId) {
-      const node = await this._resolveNodeViaDOM(handle._objectId);
+      // A node's frameId is its containing frame, even for a cross-frame handle.
+      const { node } = await this._requestNodeViaDOM(handle._objectId);
       if (node?.frameId)
         return node.frameId;
     }
     return handle._frame._id;
   }
 
-  // Resolves a Runtime objectId to its DOM.Node. DOM.requestNode reports the node
-  // — and the path from it up to the root — via DOM.setChildNodes events, but only
-  // after the agent has observed the document via DOM.getDocument. getDocument
-  // returns the document node only to depth 2 (not the full tree), so it stays
-  // cheap regardless of page size; the requestNode push carries just the node's
-  // ancestor path.
-  private async _resolveNodeViaDOM(objectId: string): Promise<Protocol.DOM.Node | null> {
-    const nodeById = new Map<number, Protocol.DOM.Node>();
+  // Resolves a Runtime objectId to its DOM.Node. DOM.requestNode streams the node
+  // and its ancestor path through DOM.setChildNodes, but only once DOM.getDocument
+  // has let the agent observe the document. Returns the requested node along with
+  // every node seen along the way, keyed by id.
+  private async _requestNodeViaDOM(objectId: string): Promise<{ node: Protocol.DOM.Node | undefined, nodesById: Map<number, Protocol.DOM.Node> }> {
+    const nodesById = new Map<number, Protocol.DOM.Node>();
     const collect = (nodes: Protocol.DOM.Node[] | undefined) => {
       for (const node of nodes || []) {
-        nodeById.set(node.nodeId, node);
+        nodesById.set(node.nodeId, node);
         collect(node.children);
         collect(node.shadowRoots);
         if (node.contentDocument)
@@ -740,9 +730,9 @@ export class WVPage implements PageDelegate {
       const { root } = await this._session.send('DOM.getDocument');
       collect([root]);
       const { nodeId } = await this._session.send('DOM.requestNode', { objectId });
-      return nodeById.get(nodeId) || null;
+      return { node: nodesById.get(nodeId), nodesById };
     } catch {
-      return null;
+      return { node: undefined, nodesById };
     } finally {
       eventsHelper.removeEventListeners([listener]);
     }
@@ -831,53 +821,28 @@ export class WVPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    // Reverse of getContentFrame: find the frame-owner node whose contentDocument
-    // belongs to `frame`, then resolve it into a handle in the parent's context.
-    const ownerNodeId = await this._frameOwnerNodeId(frame);
-    const resolved = ownerNodeId !== null ? await this._session.sendMayFail('DOM.resolveNode', { nodeId: ownerNodeId }) : null;
+    // Requesting the frame's own document streams its ancestor path, which
+    // includes the owner element (and its siblings). Pick the one whose
+    // contentDocument is this frame, then resolve it in the parent's context.
+    const documentHandle = await (await frame.mainContext()).evaluateHandle(() => document);
+    let ownerNodeId: number | undefined;
+    try {
+      if (documentHandle._objectId) {
+        const { nodesById } = await this._requestNodeViaDOM(documentHandle._objectId);
+        for (const node of nodesById.values()) {
+          if (node.contentDocument?.frameId === frame._id) {
+            ownerNodeId = node.nodeId;
+            break;
+          }
+        }
+      }
+    } finally {
+      documentHandle.dispose();
+    }
+    const resolved = ownerNodeId !== undefined ? await this._session.sendMayFail('DOM.resolveNode', { nodeId: ownerNodeId }) : null;
     if (!resolved || resolved.object.subtype === 'null')
       throw new Error('Frame has been detached.');
-    const parentContext = await parent.mainContext();
-    return createHandle(parentContext, resolved.object) as dom.ElementHandle;
-  }
-
-  // Finds the frame-owner node (the <iframe>/<frame> element) for `frame`.
-  // Requesting the frame's own document node makes the DOM agent stream the path
-  // up to the root via DOM.setChildNodes, and that path includes the owner
-  // element (carrying contentDocument.frameId) — so we get the answer without
-  // pulling the whole document tree.
-  private async _frameOwnerNodeId(frame: frames.Frame): Promise<number | null> {
-    let ownerNodeId: number | null = null;
-    const scan = (nodes: Protocol.DOM.Node[] | undefined) => {
-      for (const node of nodes || []) {
-        if (node.contentDocument?.frameId === frame._id)
-          ownerNodeId = node.nodeId;
-        scan(node.children);
-        scan(node.shadowRoots);
-        if (node.contentDocument)
-          scan([node.contentDocument]);
-        if (node.templateContent)
-          scan([node.templateContent]);
-      }
-    };
-    const listener = eventsHelper.addEventListener(this._session, 'DOM.setChildNodes',
-        (e: Protocol.DOM.setChildNodesPayload) => scan(e.nodes));
-    try {
-      const documentHandle = await (await frame.mainContext()).evaluateHandle(() => document);
-      try {
-        if (!documentHandle._objectId)
-          return null;
-        await this._session.send('DOM.getDocument');
-        await this._session.send('DOM.requestNode', { objectId: documentHandle._objectId });
-        return ownerNodeId;
-      } finally {
-        documentHandle.dispose();
-      }
-    } catch {
-      return null;
-    } finally {
-      eventsHelper.removeEventListeners([listener]);
-    }
+    return createHandle(await parent.mainContext(), resolved.object) as dom.ElementHandle;
   }
 
   _adoptRequestFromNewProcess(navigationRequest: network.Request, newSession: WVSession, newRequestId: string) {
