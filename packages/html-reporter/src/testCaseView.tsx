@@ -62,7 +62,7 @@ export const TestCaseView: React.FC<{
         </CopyToClipboardContainer>
       </div>
       <div style={{ flex: 'auto' }}></div>
-      <TraceLink test={test} trailingSeparator={true} />
+      <TraceLink test={test} run={selectedResultIndex} trailingSeparator={true} />
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>
     <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={report.json().projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
