@@ -28,7 +28,7 @@ import { makeWaitForNextTask } from '@utils/task';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
-import { TimeoutError } from './errors';
+import { TimeoutError, isTargetClosedError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { FrameSelectors } from './frameSelectors';
 import { helper } from './helper';
@@ -139,10 +139,10 @@ export class FrameManager {
       this.frameAttached(kDummyFrameId, null);
   }
 
-  dispose() {
+  dispose(error: Error) {
     for (const frame of this._frames.values()) {
       frame._stopNetworkIdleTimer();
-      frame.invalidateNonStallingEvaluations('Target crashed');
+      frame.invalidateNonStallingEvaluations(error);
     }
   }
 
@@ -572,17 +572,16 @@ export class Frame extends SdkObject<FrameEventMap> {
   _setPendingDocument(documentInfo: DocumentInfo | undefined) {
     this._pendingDocument = documentInfo;
     if (documentInfo)
-      this.invalidateNonStallingEvaluations('Navigation interrupted the evaluation');
+      this.invalidateNonStallingEvaluations(new Error('Navigation interrupted the evaluation'));
   }
 
   pendingDocument(): DocumentInfo | undefined {
     return this._pendingDocument;
   }
 
-  invalidateNonStallingEvaluations(message: string) {
+  invalidateNonStallingEvaluations(error: Error) {
     if (!this._raceAgainstEvaluationStallingEventsPromises.size)
       return;
-    const error = new Error(message);
     for (const promise of this._raceAgainstEvaluationStallingEventsPromises)
       promise.reject(error);
   }
@@ -1551,6 +1550,8 @@ export class Frame extends SdkObject<FrameEventMap> {
         details.received = lastIntermediateResult.received;
         details.customErrorMessage = lastIntermediateResult.errorMessage;
       }
+      if (isTargetClosedError(e) || isSessionClosedError(e))
+        progress.log(e.message);
       if (e instanceof TimeoutError)
         details.timedOut = true;
       throw new ExpectError(details);
