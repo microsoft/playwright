@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/client/channels';
 import * as React from 'react';
 import './consoleTab.css';
 import type { TraceModel } from '@isomorphic/trace/traceModel';

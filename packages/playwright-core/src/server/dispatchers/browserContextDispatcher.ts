@@ -46,7 +46,7 @@ import type { Request, Response, RouteHandler } from '../network';
 import type { InitScript, Page, PageError } from '../page';
 import type { Disposable } from '../disposable';
 import type { DispatcherScope } from './dispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/server/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '@isomorphic/urlMatch';
 

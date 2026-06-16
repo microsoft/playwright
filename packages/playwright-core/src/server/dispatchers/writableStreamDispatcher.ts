@@ -20,7 +20,7 @@ import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../instrumentation';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/server/channels';
 import type { Progress } from '@protocol/progress';
 
 class WritableStreamSdkObject extends SdkObject {

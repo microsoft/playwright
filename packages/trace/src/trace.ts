@@ -16,7 +16,7 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Point, SerializedError, StackFrame } from '@protocol/channels';
+import type { Point, SerializedError, StackFrame } from '@protocol/client/channels';
 
 export type Size = { width: number, height: number };
 

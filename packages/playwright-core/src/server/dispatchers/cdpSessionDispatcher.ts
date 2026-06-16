@@ -19,7 +19,7 @@ import { CDPSession } from '../chromium/crConnection';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { BrowserDispatcher } from './browserDispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/server/channels';
 import type { Progress } from '@protocol/progress';
 
 export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSessionChannel, BrowserDispatcher | BrowserContextDispatcher> implements channels.CDPSessionChannel {

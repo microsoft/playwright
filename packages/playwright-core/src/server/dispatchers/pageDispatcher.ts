@@ -46,7 +46,7 @@ import type { InitScript } from '../page';
 import type { Disposable } from '../disposable';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { ConsoleMessage } from '../console';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/server/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type { ScreencastFrame } from '../types';

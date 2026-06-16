@@ -18,7 +18,7 @@ import { Dispatcher } from './dispatcher';
 
 import type { DisposableObject } from '../disposable';
 import type { DispatcherScope } from './dispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/server/channels';
 import type { Progress } from '@protocol/progress';
 
 export class DisposableDispatcher extends Dispatcher<DisposableObject, channels.DisposableChannel, DispatcherScope> implements channels.DisposableChannel {

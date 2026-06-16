@@ -20,7 +20,7 @@ import type * as fs from 'fs';
 import type * as path from 'path';
 import type { Readable, Writable } from 'stream';
 import type { Colors } from '@isomorphic/colors';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/client/channels';
 
 export type Zone = {
   push(data: unknown): Zone;

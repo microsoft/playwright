@@ -27,7 +27,7 @@ import type { BrowserContext } from '../browserContext';
 import type { DispatcherConnection } from './dispatcher';
 import type { Frame } from '../frames';
 import type * as ws from '@injected/webSocketMock';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/server/channels';
 import type { Progress } from '@protocol/progress';
 import type { InitScript, PageBinding } from '../page';
 

@@ -18,7 +18,7 @@ import util from 'util';
 
 import { stringifyStackFrames } from '@isomorphic/stackTrace';
 
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@protocol/client/channels';
 
 export type MatcherAttachment = { name: string; contentType: string; path?: string; body?: string | Buffer };
 

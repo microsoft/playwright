@@ -16,7 +16,7 @@
 
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/client/channels';
 
 export type SerializedStorage = Omit<channels.OriginStorage, 'origin'>;
 

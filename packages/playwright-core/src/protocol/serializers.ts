@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/channels';
+import type { SerializedValue } from '@protocol/client/channels';
 
 export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
   return innerParseSerializedValue(value, handles, new Map(), []);

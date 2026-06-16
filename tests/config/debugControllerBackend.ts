@@ -16,7 +16,7 @@
 
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/client/channels';
 
 export type ProtocolRequest = {
   id: number;

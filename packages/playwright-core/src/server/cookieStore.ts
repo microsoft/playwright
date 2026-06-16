@@ -16,7 +16,7 @@
 
 import { isLocalHostname, kMaxCookieExpiresDateInSeconds } from './network';
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/client/channels';
 
 export class Cookie {
   private _raw: channels.NetworkCookie;

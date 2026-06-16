@@ -30,7 +30,7 @@ import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { RecentLogsCollector } from '@utils/debugLogger';
 import type { BrowserContext } from '../browserContext';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/client/channels';
 import type { Progress } from '@protocol/progress';
 
 export class Firefox extends BrowserType {

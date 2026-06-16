@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedError } from './channels';
+import type { SerializedError } from './client/channels';
 
 export type CallMetadata = {
   id: string;

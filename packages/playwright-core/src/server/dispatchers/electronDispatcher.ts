@@ -23,7 +23,7 @@ import type { RootDispatcher } from './dispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type { ConsoleMessage } from '../console';
 import type { Electron } from '../electron/electron';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@protocol/server/channels';
 import type { Progress } from '@protocol/progress';
 
 
