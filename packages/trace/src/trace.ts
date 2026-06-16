@@ -16,7 +16,7 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Point, SerializedError, StackFrame } from '../../playwright-core/src/client/channel';
+import type { Point, SerializedError, StackFrame } from '../../playwright-core/src/server/channel';
 
 export type Size = { width: number, height: number };
 

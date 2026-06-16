@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../../../playwright-core/src/client/channel';
+import type * as channels from '../../../playwright-core/src/server/channel';
 import * as React from 'react';
 import './consoleTab.css';
 import type { TraceModel } from '@isomorphic/trace/traceModel';

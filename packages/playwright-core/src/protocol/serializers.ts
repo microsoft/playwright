@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '../client/channel';
+import type { SerializedValue } from '../client/channel'; // same type across client and server, either is fine
 
 export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
   return innerParseSerializedValue(value, handles, new Map(), []);
