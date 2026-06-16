@@ -25,8 +25,8 @@ import { nullProgress } from '../progress';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
-import type * as channels from '@protocol/server/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channel';
+import type { Progress } from '../progress';
 
 type BrowserDispatcherOptions = {
   // Do not allow to close this browser.

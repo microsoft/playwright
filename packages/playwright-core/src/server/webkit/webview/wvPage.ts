@@ -47,7 +47,7 @@ import type { JSHandle } from '../../javascript';
 import type { InitScript, PageDelegate } from '../../page';
 import type { Progress } from '../../progress';
 import type * as types from '../../types';
-import type { PagePdfParams } from '@protocol/client/channels';
+import type { PagePdfParams } from '../../channel';
 
 export class WVPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;

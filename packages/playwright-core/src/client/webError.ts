@@ -16,7 +16,7 @@
 
 import type { Page } from './page';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/client/channels';
+import type * as channels from './channel';
 
 type WebErrorLocation = channels.BrowserContextPageErrorEvent['location'];
 

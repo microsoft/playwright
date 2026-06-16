@@ -22,8 +22,8 @@ import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { APIRequestContextDispatcher } from './networkDispatchers';
 import type { PageDispatcher } from './pageDispatcher';
 import type { Tracing } from '../trace/recorder/tracing';
-import type * as channels from '@protocol/server/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channel';
+import type { Progress } from '../progress';
 
 export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChannel, BrowserContextDispatcher | APIRequestContextDispatcher> implements channels.TracingChannel {
   _type_Tracing = true;

@@ -30,7 +30,7 @@ import type { BrowserContext } from './browserContext';
 import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
 import type { ElementInfo, Mode } from '@recorder/recorderTypes';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from './progress';
 import type * as actions from '@recorder/actions';
 
 export class DebugController extends SdkObject {

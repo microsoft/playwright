@@ -22,8 +22,8 @@ import type * as js from '../javascript';
 import type { ElectronApplicationDispatcher } from './electronDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
 import type { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
-import type * as channels from '@protocol/server/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channel';
+import type { Progress } from '../progress';
 
 export type JSHandleDispatcherParentScope = PageDispatcher | FrameDispatcher | WorkerDispatcher | ElectronApplicationDispatcher;
 

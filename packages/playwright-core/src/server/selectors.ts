@@ -18,7 +18,7 @@ import { InvalidSelectorError,  parseSelector, stringifySelector, visitAllSelect
 import { createGuid } from '@utils/crypto';
 
 import type { ParsedSelector } from '@isomorphic/selectorParser';
-import type * as channels from '@protocol/client/channels';
+import type * as channels from './channel';
 
 export class Selectors {
   private readonly _builtinEngines: Set<string>;

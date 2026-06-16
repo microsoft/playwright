@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './stackTrace.css';
 import { ListView } from '@web/components/listView';
-import type { StackFrame } from '@protocol/client/channels';
+import type { StackFrame } from '../../../playwright-core/src/client/channel';
 
 const StackFrameListView = ListView<StackFrame>;
 

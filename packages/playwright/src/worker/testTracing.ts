@@ -29,7 +29,7 @@ import { filteredStackTrace } from '../util';
 
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
-import type { SerializedError, StackFrame } from '@protocol/client/channels';
+import type { SerializedError, StackFrame } from '../../../playwright-core/src/client/channel';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
 

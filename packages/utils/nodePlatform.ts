@@ -28,7 +28,7 @@ import { debugMode, isUnderTest } from './debug';
 
 import type { Platform, Zone } from '@isomorphic/platform';
 import type { Zone as ZoneImpl } from './zones';
-import type * as channels from '@protocol/client/channels';
+import type * as channels from '../playwright-core/src/client/channel';
 
 const pipelineAsync = util.promisify(pipeline);
 

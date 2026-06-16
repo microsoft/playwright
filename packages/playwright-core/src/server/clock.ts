@@ -19,7 +19,7 @@ import { nullProgress } from './progress';
 
 import type { BrowserContext } from './browserContext';
 import type { InitScript } from './page';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from './progress';
 
 export class Clock {
   private _browserContext: BrowserContext;

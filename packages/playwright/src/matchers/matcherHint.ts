@@ -18,7 +18,7 @@ import util from 'util';
 
 import { stringifyStackFrames } from '@isomorphic/stackTrace';
 
-import type { StackFrame } from '@protocol/client/channels';
+import type { StackFrame } from '../../../playwright-core/src/client/channel';
 
 export type MatcherAttachment = { name: string; contentType: string; path?: string; body?: string | Buffer };
 

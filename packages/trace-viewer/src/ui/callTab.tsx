@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/client/channels';
+import type { SerializedValue } from '../../../playwright-core/src/client/channel';
 import type { ActionTraceEvent } from '@trace/trace';
 import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';

@@ -30,7 +30,7 @@ import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';
 import type { RawStack } from '@isomorphic/stackTrace';
 import type { Location } from './../types/testReporter';
 import type { TestInfoError } from './../types/test';
-import type { StackFrame } from '@protocol/client/channels';
+import type { StackFrame } from '../../playwright-core/src/client/channel';
 import type { TestCase } from './common/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');

@@ -30,8 +30,8 @@ import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { RecentLogsCollector } from '@utils/debugLogger';
 import type { BrowserContext } from '../browserContext';
-import type * as channels from '@protocol/client/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channel';
+import type { Progress } from '../progress';
 
 export class Firefox extends BrowserType {
   private _bidiFirefox: BrowserType;

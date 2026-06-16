@@ -15,7 +15,7 @@
  */
 
 import mime from 'mime';
-import type * as channels from '@protocol/client/channels';
+import type * as channels from './channel';
 
 export class MultipartFormData {
   private readonly _boundary: string;

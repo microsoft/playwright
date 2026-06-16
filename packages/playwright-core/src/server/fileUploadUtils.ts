@@ -23,7 +23,7 @@ import type { WritableStreamDispatcher } from './dispatchers/writableStreamDispa
 import type { InputFilesItems } from './dom';
 import type { Frame } from './frames';
 import type * as types from './types';
-import type * as channels from '@protocol/server/channels';
+import type * as channels from './channel';
 
 // Keep in sync with the client.
 export const fileUploadSizeLimit = 50 * 1024 * 1024;

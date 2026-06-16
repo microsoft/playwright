@@ -31,7 +31,7 @@ import { WebSocketTransport } from '../transport';
 import type { HarBackend } from '../harBackend';
 import type { Playwright } from '../playwright';
 import type { RootDispatcher } from './dispatcher';
-import type * as channels from '@protocol/server/channels';
+import type * as channels from '../channel';
 import type * as http from 'http';
 import type { HTTPRequestParams } from '@utils/network';
 

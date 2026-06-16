@@ -17,7 +17,7 @@
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
 
-import type * as channels from '@protocol/client/channels';
+import type * as channels from './channel';
 
 export interface Disposable {
   dispose: () => Promise<void>;

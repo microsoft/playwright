@@ -24,7 +24,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from '../progress';
 
 export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');

@@ -22,7 +22,7 @@ import { ValidationError, findValidator } from '../protocol/validator';
 
 import type { WebSocketTransport } from './transport';
 import type { ValidatorContext } from '../protocol/validator';
-import type * as channels from '@protocol/client/channels';
+import type * as channels from '../client/channel';
 
 export class SocksInterceptor {
   private _handler: socks.SocksProxyHandler;

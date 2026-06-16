@@ -21,7 +21,7 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
-import type { StackFrame } from '@protocol/client/channels';
+import type { StackFrame } from '../../playwright-core/src/client/channel';
 import type { ActionGroup } from '../protocolFormatter';
 
 const contextSymbol = Symbol('context');

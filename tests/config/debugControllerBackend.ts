@@ -16,7 +16,7 @@
 
 import WebSocket from 'ws';
 import { EventEmitter } from 'events';
-import type * as channels from '@protocol/client/channels';
+import type * as channels from '../../packages/playwright-core/src/client/channel';
 
 export type ProtocolRequest = {
   id: number;

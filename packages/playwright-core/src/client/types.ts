@@ -16,7 +16,7 @@
  */
 
 import type { Size } from '@isomorphic/types';
-import type * as channels from '@protocol/client/channels';
+import type * as channels from './channel';
 export type { HeadersArray, Point, Quad, Rect, Size } from '@isomorphic/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';

@@ -22,8 +22,8 @@ import { SdkObject } from '../instrumentation';
 
 import type { RootDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
-import type * as channels from '@protocol/server/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channel';
+import type { Progress } from '../progress';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel, RootDispatcher> implements channels.AndroidChannel {
   _type_Android = true;

@@ -21,7 +21,7 @@ import { nullProgress } from './progress';
 
 import type { BrowserContext } from './browserContext';
 import type { InitScript } from './page';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from './progress';
 
 const kBindingName = '__pwWebAuthnBinding';
 const kAuthenticatorAAGUID = Buffer.alloc(16); // All-zero AAGUID for the virtual authenticator.
