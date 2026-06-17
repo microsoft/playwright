@@ -52,8 +52,6 @@ Artifact:
 
     delete:
       internal: true
-      flags:
-        potentiallyClosesScope: true
 
 Stream:
   type: interface
