@@ -73,6 +73,7 @@ export const chromiumSwitches = (options?: { android?: boolean }) => [
   '--disable-popup-blocking',
   '--disable-prompt-on-repost',
   '--disable-renderer-backgrounding',
+  '--disable-updater-scheduler', // Prevents Edge-specific updater from being launched when Edge is launched on mac.
   '--force-color-profile=srgb',
   '--metrics-recording-only',
   '--no-first-run',
