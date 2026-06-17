@@ -8,6 +8,7 @@ env:
   BROWSER: ${{ github.event.client_payload.browser }}
   REVISION: ${{ github.event.client_payload.revision }}
   BROWSER_VERSION: ${{ github.event.client_payload.browserVersion }}
+  BUILD_LINK: ${{ github.event.client_payload.buildLink }}
 
 permissions:
   contents: write
@@ -62,12 +63,15 @@ jobs:
       with:
         github-token: ${{ steps.app-token.outputs.token }}
         script: |
+          const buildLink = process.env.BUILD_LINK;
+          const body = buildLink ? `Browser build: ${buildLink}. Build has full platform coverage - check that all tests pass there.` : undefined;
           const response = await github.rest.pulls.create({
             owner: 'microsoft',
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
             base: 'main',
             title: 'feat(${{ env.BROWSER }}): roll to r${{ env.REVISION }}',
+            body,
           });
           await github.rest.issues.addLabels({
             owner: 'microsoft',
