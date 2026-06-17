@@ -24,8 +24,6 @@ Worker:
       title: Disconnect from worker
       parameters:
         reason: string?
-      flags:
-        potentiallyClosesScope: true
 
     evaluateExpression:
       title: Evaluate
