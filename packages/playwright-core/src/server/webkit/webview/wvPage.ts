@@ -880,16 +880,12 @@ export class WVPage implements PageDelegate {
         redirectedFrom = request;
       }
     }
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : this._page.frameManager.frame(event.frameId);
-    // sometimes we get stray network events for detached frames
-    // TODO(einbinder) why?
-    if (!frame)
-      return;
-
-    // TODO(einbinder) this will fail if we are an XHR document request
+    // The frame may be null for a subframe document request that arrives before
+    // Page.frameNavigated creates its frame.
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : (this._page.frameManager.frame(event.frameId) ?? null);
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new WVInterceptableRequest(session, frame, event, redirectedFrom, documentId);
+    const request = new WVInterceptableRequest(session, this._browserContext, frame, event, redirectedFrom, documentId);
     let route;
     if (intercepted) {
       route = new WVRouteImpl(session, event.requestId);
