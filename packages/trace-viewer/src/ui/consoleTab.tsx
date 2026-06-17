@@ -20,7 +20,6 @@ import './consoleTab.css';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { ListView } from '@web/components/listView';
 import type { Boundaries } from './geometry';
-import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
 import { ansi2html } from '@web/ansi2html';
 import { PlaceholderPanel } from './placeholderPanel';
@@ -38,11 +37,13 @@ export type ConsoleEntry = {
   isError: boolean;
   isWarning: boolean;
   timestamp: number;
+  pageId: string;
   repeat: number;
 };
 
 type ConsoleTabModel = {
   entries: ConsoleEntry[],
+  hasMultiplePages: boolean,
 };
 
 const ConsoleListView = ListView<ConsoleEntry>;
@@ -63,6 +64,7 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
   const { entries } = React.useMemo(() => {
     if (!model)
       return { entries: [] };
+    const pageTitle = (id: string | undefined) => (id && model.pagerefToTitle.get(id)) || '';
     const entries: ConsoleEntry[] = [];
     function addEntry(entry: Omit<ConsoleEntry, 'repeat'>) {
       const lastEntry = entries[entries.length - 1];
@@ -74,6 +76,7 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
         && entry.nodeMessage?.html === lastEntry.nodeMessage?.html
         && entry.isError === lastEntry.isError
         && entry.isWarning === lastEntry.isWarning
+        && entry.pageId === lastEntry.pageId
         && entry.timestamp - lastEntry.timestamp < 1000;
       if (isSameAsLast)
         lastEntry.repeat++;
@@ -103,6 +106,7 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
           },
           isError: event.messageType === 'error',
           isWarning: event.messageType === 'warning',
+          pageId: pageTitle(event.pageId),
           timestamp: event.time,
         });
       }
@@ -113,6 +117,7 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
           browserError: event.params.error,
           isError: true,
           isWarning: false,
+          pageId: pageTitle(event.pageId),
           timestamp: event.time,
         });
       }
@@ -128,6 +133,7 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
           nodeMessage: { html },
           isError: event.type === 'stderr',
           isWarning: false,
+          pageId: '',
           timestamp: event.timestamp,
         });
       }
@@ -141,7 +147,9 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
     return entries.filter(entry => entry.timestamp >= selectedTime.minimum && entry.timestamp <= selectedTime.maximum);
   }, [entries, selectedTime]);
 
-  return { entries: filteredEntries };
+  const hasMultiplePages = React.useMemo(() => new Set(filteredEntries.map(entry => entry.pageId).filter(Boolean)).size > 1, [filteredEntries]);
+
+  return { entries: filteredEntries, hasMultiplePages };
 }
 
 export const ConsoleTab: React.FunctionComponent<{
@@ -165,8 +173,9 @@ export const ConsoleTab: React.FunctionComponent<{
       render={entry => {
         const timestamp = msToString(entry.timestamp - boundaries.minimum);
         const timestampElement = <span className='console-time'>{timestamp}</span>;
-        const errorSuffix = entry.isError ? 'status-error' : entry.isWarning ? 'status-warning' : 'status-none';
-        const statusElement = entry.browserMessage || entry.browserError ? <span className={clsx('codicon', 'codicon-browser', errorSuffix)} title='Browser message'></span> : <span className={clsx('codicon', 'codicon-file', errorSuffix)} title='Runner message'></span>;
+        const isBrowserMessage = !!(entry.browserMessage || entry.browserError);
+        const source = !isBrowserMessage ? 'test' : (consoleModel.hasMultiplePages ? (entry.pageId || 'page') : 'page');
+        const sourceElement = <span className='console-source' title={isBrowserMessage ? 'Browser message' : 'Runner message'}>{source}</span>;
         let locationText: string | undefined;
         let messageBody: React.JSX.Element[] | string | undefined;
         let messageInnerHTML: string | undefined;
@@ -193,7 +202,7 @@ export const ConsoleTab: React.FunctionComponent<{
 
         return <div className='console-line'>
           {timestampElement}
-          {statusElement}
+          {sourceElement}
           {locationText && <span className='console-location'>{locationText}</span>}
           {entry.repeat > 1 && <span className='console-repeat'>{entry.repeat}</span>}
           {messageBody && <span className='console-line-message'>{messageBody}</span>}
