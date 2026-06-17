@@ -1019,7 +1019,7 @@ export namespace Protocol {
      */
     export type createStyleSheetParameters = {
       /**
-       * Identifier of the frame where the new "inspector" stylesheet should be created.
+       * Identifier of the frame where the new "inspector" stylesheet should be created. Ignored when dispatched to a FrameTarget; the receiving frame is used implicitly.
        */
       frameId: Network.FrameId;
     }
@@ -7005,7 +7005,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       format?: ImageFormat;
       /**
-       * Compression quality from 0 to 100 (ignored for the "png" format). Defaults to 80.
+       * Compression quality from 0 to 100 (ignored for the "png" format). For "jpeg" it defaults to 80. For "webp", omitting the quality or setting it to 100 produces a lossless image; any other value uses lossy compression at that quality.
        */
       quality?: number;
     }
