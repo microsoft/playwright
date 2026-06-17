@@ -26,7 +26,7 @@ import type * as pages from './page';
 import type * as types from './types';
 import type { NormalizedContinueOverrides } from './types';
 import type { HeadersArray, NameValue } from '@isomorphic/types';
-import type * as channels from './channel';
+import type * as channels from './channels';
 import type { Progress } from './progress';
 
 

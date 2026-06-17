@@ -19,7 +19,7 @@ import { PageDispatcher } from './pageDispatcher';
 
 import type { Dialog } from '../dialog';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
-import type * as channels from '../channel';
+import type * as channels from '../channels';
 import type { Progress } from '../progress';
 
 export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel, BrowserContextDispatcher | PageDispatcher> implements channels.DialogChannel {

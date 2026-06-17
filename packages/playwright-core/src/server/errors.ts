@@ -17,7 +17,7 @@
 import { isError } from '@isomorphic/rtti';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
-import type { SerializedError } from './channel';
+import type { SerializedError } from './channels';
 
 class CustomError extends Error {
   constructor(message: string) {

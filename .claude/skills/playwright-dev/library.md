@@ -10,9 +10,9 @@ packages/protocol/src/
 
 packages/playwright-core/src/
   client/                   — public API objects (ChannelOwner subclasses)
-    channel.d.ts            — generated client channel interfaces
+    channels.d.ts           — generated client channel interfaces
   server/                   — browser automation implementation (SdkObject subclasses)
-    channel.d.ts            — generated server channel interfaces
+    channels.d.ts           — generated server channel interfaces
   server/dispatchers/       — protocol bridge (Dispatcher subclasses)
   protocol/                 — validators (generated + primitives)
   utils/isomorphic/         — shared code used by both client and server

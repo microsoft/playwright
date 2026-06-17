@@ -47,7 +47,7 @@ import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
 import type { ValidatorContext } from '../protocol/validator';
 import type { Platform } from '@isomorphic/platform';
-import type * as channels from './channel';
+import type * as channels from './channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {

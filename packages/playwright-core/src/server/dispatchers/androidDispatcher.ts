@@ -22,7 +22,7 @@ import { SdkObject } from '../instrumentation';
 
 import type { RootDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
-import type * as channels from '../channel';
+import type * as channels from '../channels';
 import type { Progress } from '../progress';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel, RootDispatcher> implements channels.AndroidChannel {

@@ -25,7 +25,7 @@ import { nullProgress } from '../progress';
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
-import type * as channels from '../channel';
+import type * as channels from '../channels';
 import type { Progress } from '../progress';
 
 type BrowserDispatcherOptions = {

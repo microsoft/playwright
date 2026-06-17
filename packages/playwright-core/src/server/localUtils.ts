@@ -27,7 +27,7 @@ import { calculateSha1 } from '@utils/crypto';
 import { ZipFile } from '@utils/zipFile';
 import { removeFolders, resolveWithinRoot } from '@utils/fileUtils';
 import { HarBackend } from './harBackend';
-import type * as channels from './channel';
+import type * as channels from './channels';
 import type * as har from '@trace/har';
 import type EventEmitter from 'events';
 import type { Progress } from './progress';

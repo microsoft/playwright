@@ -15,7 +15,11 @@
  */
 
 import type { StackFrame } from '../stackTrace';
-import type { ClientSideCallMetadata } from '../../playwright-core/src/client/channel';
+
+type ClientSideCallMetadata = {
+  id: number,
+  stack?: StackFrame[],
+};
 
 export type SerializedStackFrame = [number, number, number, string];
 export type SerializedStack = [number, SerializedStackFrame[]];

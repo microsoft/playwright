@@ -17,7 +17,7 @@
 import { ChannelOwner } from './channelOwner';
 
 import type { Size } from './types';
-import type * as channels from './channel';
+import type * as channels from './channels';
 
 type DeviceDescriptor = {
   userAgent: string,

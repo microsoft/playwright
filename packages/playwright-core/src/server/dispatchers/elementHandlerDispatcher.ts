@@ -21,7 +21,7 @@ import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDi
 import type { ElementHandle } from '../dom';
 import type { Frame } from '../frames';
 import type * as js from '../javascript';
-import type * as channels from '../channel';
+import type * as channels from '../channels';
 import type { Progress } from '../progress';
 
 

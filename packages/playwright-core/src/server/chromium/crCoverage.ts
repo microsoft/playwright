@@ -22,7 +22,7 @@ import { raceUncancellableOperationWithCleanup } from '../progress';
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
 import type { RegisteredListener } from '@utils/eventsHelper';
-import type * as channels from '../channel';
+import type * as channels from '../channels';
 import type { Progress } from '../progress';
 
 

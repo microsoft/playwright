@@ -417,8 +417,8 @@ function writeFile(filePath, content) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'client', 'channel.d.ts'), client_channels_ts.join('\n') + '\n');
-writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'server', 'channel.d.ts'), server_channels_ts.join('\n') + '\n');
+writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'client', 'channels.d.ts'), client_channels_ts.join('\n') + '\n');
+writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'server', 'channels.d.ts'), server_channels_ts.join('\n') + '\n');
 writeFile(path.join(__dirname, '..', 'packages', 'isomorphic', 'protocolMetainfo.ts'), metainfoContent);
 writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'validator.ts'), validatorContent);
 process.exit(hasChanges ? 1 : 0);

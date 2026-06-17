@@ -21,7 +21,7 @@ import { Dispatcher } from './dispatcher';
 
 import type { BrowserType } from '../browserType';
 import type { RootDispatcher } from './dispatcher';
-import type * as channels from '../channel';
+import type * as channels from '../channels';
 import type { Progress } from '../progress';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher> implements channels.BrowserTypeChannel {

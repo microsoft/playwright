@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { createGuid } from '@utils/crypto';
 import { debugLogger } from '@utils/debugLogger';
 
-import type { SerializedError } from './channel';
+import type { SerializedError } from './channels';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';

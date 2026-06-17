@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '../../../playwright-core/src/server/channel';
+import type { SerializedError } from '@trace/trace';
 import * as React from 'react';
 import './consoleTab.css';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
@@ -31,7 +31,7 @@ export type ConsoleEntry = {
     bodyString: string;
     location: string;
   },
-  browserError?: channels.SerializedError;
+  browserError?: SerializedError;
   nodeMessage?: {
     html: string;
   },
