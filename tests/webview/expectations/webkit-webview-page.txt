@@ -316,6 +316,9 @@ page/page-network-request.spec.ts › should report raw headers [fail]
 page/page-network-request.spec.ts › should return postData [fail]
 page/page-network-request.spec.ts › should work with binary post data [fail]
 page/page-network-request.spec.ts › should work with binary post data and interception [fail]
+# A subframe document request is reported without a frame (the frame is created
+# later on Page.frameNavigated), so request.frame() does not match the subframe.
+page/page-network-request.spec.ts › should work for subframe navigation request [fail]
 page/page-network-sizes.spec.ts › should handle redirects [fail]
 page/page-network-sizes.spec.ts › should have the correct responseBodySize for chunked request [fail]
 page/page-network-sizes.spec.ts › should set bodySize and headersSize [fail]
@@ -525,6 +528,9 @@ page/page-autowaiting-basic.spec.ts › should report and collapse log in action
 page/page-autowaiting-basic.spec.ts › should report and collapse log in expect [fail]
 page/page-autowaiting-no-hang.spec.ts › assigning location to about:blank after non-about:blank [fail]
 page/page-autowaiting-no-hang.spec.ts › calling window.stop sync [fail]
+# Pre-existing (fails on main too): a same-document navigation via the Navigation
+# API does not update the frame URL on the stock WebView backend.
+page/page-autowaiting-no-hang.spec.ts › clicking a link intercepted by the Navigation API same-document [fail]
 page/page-click.spec.ts › should wait for becoming hit target [fail]
 page/page-drag.spec.ts › Drag and drop › should respect the drop effect [fail]
 page/page-drag.spec.ts › Drag and drop › should work if a frame is stalled [fail]
