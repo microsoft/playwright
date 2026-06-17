@@ -239,18 +239,11 @@ export class FFPage implements PageDelegate {
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
-    if (!params.navigationId) {
-      // Firefox replays the current navigation without a navigationId during a process swap (e.g. when restoring a persistent profile).
-      // Treat these as same-document URL updates so they don't interrupt any in-flight new-document navigation in Frame.gotoImpl.
-      this._page.frameManager.frameCommittedSameDocumentNavigation(params.frameId, params.url);
-      return;
-    }
-
     for (const [workerId, worker] of this._workers) {
       if (worker.frameId === params.frameId)
         this._onWorkerDestroyed({ workerId });
     }
-    this._page.frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId, false);
+    this._page.frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId || '', false);
   }
 
   _onSameDocumentNavigation(params: Protocol.Page.sameDocumentNavigationPayload) {
