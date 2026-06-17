@@ -30,7 +30,7 @@ export class WVExecutionContext implements js.ExecutionContextDelegate {
 
   constructor(session: WVSession, contextId: number | undefined) {
     this._session = session;
-    this._contextId = undefined;
+    this._contextId = contextId;
   }
 
   async rawEvaluateJSON(expression: string): Promise<any> {
