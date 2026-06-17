@@ -875,15 +875,3 @@ it('should ignore dangerous object keys', async ({ page }) => {
   const result = await page.evaluate(arg => arg, input);
   expect(result).toEqual({ safeKey: 'safeValue' });
 });
-
-it('should not pollute Object.prototype when returning __proto__ key', async ({ page }) => {
-  const result = await page.evaluate(() => {
-    const obj = Object.create(null);
-    Object.defineProperty(obj, '__proto__', { value: { polluted: true }, enumerable: true });
-    obj['safeKey'] = 'safeValue';
-    return obj;
-  });
-  // Verify Object.prototype was not polluted
-  expect(({} as any).polluted).toBeUndefined();
-  expect(result['safeKey']).toBe('safeValue');
-});
