@@ -89,6 +89,11 @@ jobs:
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         fi
       shell: bash
+    # Prevent stalling when macOS decides to show the reopen windows prompt after killing enough Electron processes.
+    - name: Turn off the reopen windows prompt on macOS
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: defaults write com.github.Electron ApplePersistenceIgnoreState YES
+      shell: bash
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium
