@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
+import { Reporter, FullConfig, Suite, TestCase, TestResult } from 'packages/playwright-test/reporter';
 
 test('plan runs between project setup and onBegin, sees the .only-narrowed corpus, and can skip tests', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -423,4 +425,94 @@ test('plan annotations capture caller location pointing at reporter', async ({ r
 
   expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual(['loc=reporter.ts:5']);
+});
+
+test('greedy time-based scheduling can be built on preprocessSuite', async ({ runInlineTest, mergeReports }) => {
+  test.slow();
+
+  const timingsFile = test.info().outputPath('timings.json');
+
+  const files = {
+    'scheduler.ts': `
+      const fs = require('fs');
+      ${class Scheduler implements Reporter {
+        _durations = new Map<string, number>();
+        _config!: FullConfig;
+        preprocessSuite(config: FullConfig, suite: Suite) {
+          if (!config.shard)
+            throw new Error('Should not be called during merge step.');
+          const file = process.env.TIMINGS_FILE;
+          const timings = file && fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+          if (!timings)
+            return { implementsSharding: false };
+          const total = config.shard.total;
+          const tests = suite.allTests();
+          const sorted = [...tests].sort((a, b) => (timings[b.id] || 0) - (timings[a.id] || 0));
+          const loads = new Array(total).fill(0);
+          const assignment = new Map<TestCase, number>();
+          for (const t of sorted) {
+            let min = 0;
+            for (let i = 1; i < total; i++) {
+              if (loads[i] < loads[min])
+                min = i;
+            }
+            loads[min] += (timings[t.id] || 0);
+            assignment.set(t, min);
+          }
+          for (const t of tests) {
+            if (assignment.get(t) !== config.shard.current - 1)
+              t.exclude();
+          }
+          return { implementsSharding: true };
+        }
+        onBegin(config: FullConfig, suite: Suite) {
+          this._config = config;
+          const shard = config.shard ? config.shard.current + '/' + config.shard.total : 'none';
+          console.log('%% shard ' + shard + ': ' + suite.allTests().map(t => t.title).join(','));
+        }
+        onTestEnd(test: TestCase, result: TestResult) {
+          this._durations.set(test.id, result.duration);
+        }
+        onEnd() {
+          if (this._config.shard)
+            return;
+          fs.writeFileSync(process.env.TIMINGS_FILE, JSON.stringify(Object.fromEntries(this._durations)));
+        }
+      }.toString()}
+      module.exports = Scheduler;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        fullyParallel: true,
+        reporter: [['blob'], ['./scheduler.ts']],
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('a', async () => { await new Promise(r => setTimeout(r, 3000)); });
+      test('b', async () => { await new Promise(r => setTimeout(r, 1500)); });
+      test('c', async () => { await new Promise(r => setTimeout(r, 100)); });
+    `,
+  };
+
+  // Round 1: no timing file, falls back to built-in contiguous sharding.
+  const r1s1 = await runInlineTest(files, { shard: '1/2' }, { TIMINGS_FILE: timingsFile });
+  const r1s2 = await runInlineTest(files, { shard: '2/2' }, { TIMINGS_FILE: timingsFile, PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  expect(r1s1.exitCode).toBe(0);
+  expect(r1s2.exitCode).toBe(0);
+  expect(r1s1.outputLines).toEqual(['shard 1/2: a,b']);
+  expect(r1s2.outputLines).toEqual(['shard 2/2: c']);
+
+  // Merge: the reporter sees every test's duration and writes the timing file.
+  const merge = await mergeReports('blob-report', { TIMINGS_FILE: timingsFile }, { additionalArgs: ['--reporter', 'scheduler.ts'] });
+  expect(merge.exitCode).toBe(0);
+  expect(Object.keys(JSON.parse(fs.readFileSync(timingsFile, 'utf8')))).toHaveLength(3);
+
+  // Round 2: with the timing file, LPT scheduling balances the shards.
+  const r2s1 = await runInlineTest(files, { shard: '1/2' }, { TIMINGS_FILE: timingsFile });
+  const r2s2 = await runInlineTest(files, { shard: '2/2' }, { TIMINGS_FILE: timingsFile });
+  expect(r2s1.exitCode).toBe(0);
+  expect(r2s2.exitCode).toBe(0);
+  expect(r2s1.outputLines).toEqual(['shard 1/2: a']);
+  expect(r2s2.outputLines).toEqual(['shard 2/2: b,c']);
 });
