@@ -29,13 +29,13 @@ export type Zone = {
 };
 
 export type StreamChannel = {
-  read(params: { size?: number }): Promise<{ binary: Buffer }>;
-  close(params?: {}): Promise<any>;
+  read(params: { size?: number }, signal: AbortSignal | undefined): Promise<{ binary: Buffer }>;
+  close(params: {}, signal: AbortSignal | undefined): Promise<any>;
 };
 
 export type WritableStreamChannel = {
-  write(params: { binary: Buffer }): Promise<any>;
-  close(params?: {}): Promise<any>;
+  write(params: { binary: Buffer }, signal: AbortSignal | undefined): Promise<any>;
+  close(params: {}, signal: AbortSignal | undefined): Promise<any>;
 };
 
 const noopZone: Zone = {

@@ -355,8 +355,7 @@ function generateChannels(target) {
           for (const derived of derivedClasses.get(channelName) || [])
             addScheme(`${derived}${titleCase(methodName)}ErrorDetails`, `tType('${errorDetailsName}')`);
         }
-        const secondParam = isDispatcher ? `, progress: Progress` : '';
-        channels_ts.push(`  ${methodName}(params${method.parameters || isDispatcher ? '' : '?'}: ${paramsName}${secondParam}): Promise<${resultName}>;`);
+        channels_ts.push(`  ${methodName}(params: ${paramsName}, ${isDispatcher ? `progress: Progress` : `signal: AbortSignal | undefined`}): Promise<${resultName}>;`);
       }
 
       channels_ts.push(`}`);

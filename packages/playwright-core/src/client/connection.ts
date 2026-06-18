@@ -57,7 +57,7 @@ class Root extends ChannelOwner<channels.RootChannel> {
   async initialize(): Promise<Playwright> {
     return Playwright.from((await this._channel.initialize({
       sdkLanguage: 'javascript',
-    })).playwright);
+    }, undefined)).playwright);
   }
 }
 
@@ -171,7 +171,7 @@ export class Connection extends EventEmitter {
       this._tracingCount--;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], stepId?: string }): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, method: string, params: any, options: { apiName?: string, title?: string, internal?: boolean, frames?: channels.StackFrame[], stepId?: string, signal?: AbortSignal }): Promise<any> {
     // Fire-and-forget: server intentionally never replies to __waitInfo__,
     // so silently drop it after the connection is closed or the object was collected.
     if (method === '__waitInfo__' && (this._closedError || object._wasCollected))
@@ -180,6 +180,9 @@ export class Connection extends EventEmitter {
       throw this._closedError;
     if (object._wasCollected)
       throw new Error('The object has been collected to prevent unbounded heap growth.');
+
+    const signal = options.signal;
+    signal?.throwIfAborted();
 
     const guid = object._guid;
     const type = object._type;
@@ -199,7 +202,20 @@ export class Connection extends EventEmitter {
     // Fire-and-forget: server intentionally never replies to __waitInfo__.
     if (method === '__waitInfo__')
       return;
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, title: options.title, type, method }));
+    let abortListener: (() => void) | undefined;
+    if (signal) {
+      abortListener = () => {
+        const reason = signal.reason instanceof Error ? signal.reason.message : String(signal.reason);
+        this._platform.zones.empty.run(() => this.onmessage({ guid, method: '__cancel__', params: { id, reason } }));
+      };
+      signal.addEventListener('abort', abortListener, { once: true });
+    }
+    try {
+      return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, title: options.title, type, method }));
+    } finally {
+      if (abortListener)
+        signal!.removeEventListener('abort', abortListener);
+    }
   }
 
   private _validatorFromWireContext(): ValidatorContext {

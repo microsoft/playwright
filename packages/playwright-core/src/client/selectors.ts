@@ -40,7 +40,7 @@ export class Selectors implements api.Selectors {
     const source = await evaluationScript(this._platform, script, undefined, false);
     const selectorEngine: channels.SelectorEngine = { ...options, name, source };
     for (const context of this._contextsForSelectors)
-      await context._channel.registerSelectorEngine({ selectorEngine });
+      await context._channel.registerSelectorEngine({ selectorEngine }, undefined);
     this._selectorEngines.push(selectorEngine);
   }
 
@@ -49,7 +49,7 @@ export class Selectors implements api.Selectors {
     setTestIdAttribute(attributeName);
     for (const context of this._contextsForSelectors) {
       context._options.testIdAttributeName = attributeName;
-      context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
+      context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }, undefined).catch(() => {});
     }
   }
 

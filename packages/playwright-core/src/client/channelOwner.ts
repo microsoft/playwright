@@ -149,7 +149,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           const validator = maybeFindValidator(this._type, prop, 'Params');
           const { internal } = getMetainfo({ type: this._type, method: prop }) || {};
           if (validator) {
-            return async (params: any) => {
+            return async (params: any, signal: AbortSignal | undefined) => {
               return await this._wrapApiCall(async apiZone => {
                 const validatedParams = validator(params, '', this._validatorToWireContext());
                 if (!apiZone.internal && !apiZone.reported) {
@@ -157,11 +157,11 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
                   apiZone.reported = true;
                   this._instrumentation.onApiCallBegin(apiZone, { type: this._type, method: prop, params });
                   logApiCall(this._platform, this._logger, `=> ${apiZone.apiName} started`);
-                  return await this._connection.sendMessageToServer(this, prop, validatedParams, apiZone);
+                  return await this._connection.sendMessageToServer(this, prop, validatedParams, { ...apiZone, signal });
                 }
                 // Since this api call is either internal, or has already been reported/traced once,
                 // passing as internal.
-                return await this._connection.sendMessageToServer(this, prop, validatedParams, { internal: true });
+                return await this._connection.sendMessageToServer(this, prop, validatedParams, { internal: true, signal });
               }, { internal });
             };
           }

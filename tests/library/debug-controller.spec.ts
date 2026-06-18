@@ -86,7 +86,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('inspectRequested', event => events.push(event));
 
-  await backend.setRecorderMode({ mode: 'inspecting' });
+  await backend.setRecorderMode({ mode: 'inspecting' }, undefined);
 
   const context = await connectedBrowser.newContextForReuse();
   const [page] = context.pages();
@@ -108,7 +108,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
   ]);
 
   // No events after mode disabled
-  await backend.setRecorderMode({ mode: 'none' });
+  await backend.setRecorderMode({ mode: 'none' }, undefined);
   await page.locator('body').click();
   expect(events).toHaveLength(2);
 });
@@ -116,7 +116,7 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
 test('should report pages', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('stateChanged', event => events.push(event));
-  await backend.setReportStateChanged({ enabled: true });
+  await backend.setReportStateChanged({ enabled: true }, undefined);
 
   const context = await connectedBrowser.newContextForReuse();
   const page1 = await context.newPage();
@@ -124,7 +124,7 @@ test('should report pages', async ({ backend, connectedBrowser }) => {
   await page1.close();
   await page2.close();
 
-  await backend.setReportStateChanged({ enabled: false });
+  await backend.setReportStateChanged({ enabled: false }, undefined);
   const page3 = await context.newPage();
   await page3.close();
 
@@ -165,10 +165,10 @@ test('should highlight all', async ({ backend, connectedBrowser }) => {
   const page2 = await context.newPage();
   await page1.goto('data:text/html,<button>Submit</button>');
   await page2.goto('data:text/html,<button>Submit</button>');
-  await backend.highlight({ selector: 'button' });
+  await backend.highlight({ selector: 'button' }, undefined);
   await expect(page1.getByText('locator(\'button\')')).toBeVisible();
   await expect(page2.getByText('locator(\'button\')')).toBeVisible();
-  await backend.hideHighlight();
+  await backend.hideHighlight({}, undefined);
   await expect(page1.getByText('locator(\'button\')')).toBeHidden({ timeout: 1000000 });
   await expect(page2.getByText('locator(\'button\')')).toBeHidden();
 });
@@ -177,7 +177,7 @@ test('should record', async ({ backend, connectedBrowser }) => {
   const events = [];
   backend.on('sourceChanged', event => events.push(event));
 
-  await backend.setRecorderMode({ mode: 'recording' });
+  await backend.setRecorderMode({ mode: 'recording' }, undefined);
 
   const context = await connectedBrowser.newContextForReuse();
   const [page] = context.pages();
@@ -202,7 +202,7 @@ test('test', async ({ page }) => {
 });`
   });
   // No events after mode disabled
-  await backend.setRecorderMode({ mode: 'none' });
+  await backend.setRecorderMode({ mode: 'none' }, undefined);
   const length = events.length;
   await page.getByRole('button').click();
   expect(events).toHaveLength(length);
@@ -221,7 +221,7 @@ test('should record custom data-testid', async ({ backend, connectedBrowser }) =
   await page.setContent(`<div data-custom-id='one'>One</div>`);
 
   // 2. "Record at cursor".
-  await backend.setRecorderMode({ mode: 'recording', testIdAttributeName: 'data-custom-id' });
+  await backend.setRecorderMode({ mode: 'recording', testIdAttributeName: 'data-custom-id' }, undefined);
 
   // 3. Record a click action.
   await page.locator('div').click();
@@ -279,16 +279,16 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
 
   const highlight = page.frameLocator('iframe').locator('x-pw-highlight');
   await expect(highlight).not.toHaveCount(0);
-  await backend.hideHighlight();
+  await backend.hideHighlight({}, undefined);
   await expect(highlight).toHaveCount(0);
 
-  await backend.highlight({ selector: `frameLocator('iframe').getByText('bar')` });
+  await backend.highlight({ selector: `frameLocator('iframe').getByText('bar')` }, undefined);
   await expect(highlight).not.toHaveCount(0);
 
-  await backend.highlight({ selector: `frameLocator('iframe').frameLocator('iframe').getByText('bar')` });
+  await backend.highlight({ selector: `frameLocator('iframe').frameLocator('iframe').getByText('bar')` }, undefined);
   await expect(highlight).toHaveCount(0);
 
-  await backend.highlight({ selector: `getByText('bar')` });
+  await backend.highlight({ selector: `getByText('bar')` }, undefined);
   await expect(highlight).toHaveCount(1);
   await expect(page.locator('x-pw-highlight')).toHaveCount(1);
 });
@@ -301,16 +301,16 @@ test('should highlight aria template', async ({ backend, connectedBrowser }, tes
   const button = page.getByRole('button');
   const highlight = page.locator('x-pw-highlight');
 
-  await backend.highlight({ ariaTemplate: `- button "Submit2"` });
+  await backend.highlight({ ariaTemplate: `- button "Submit2"` }, undefined);
   await expect(highlight).toHaveCount(0);
 
-  await backend.highlight({ ariaTemplate: `- button "Submit"` });
+  await backend.highlight({ ariaTemplate: `- button "Submit"` }, undefined);
   const box1 = roundBox(await button.boundingBox());
   const box2 = roundBox(await highlight.boundingBox());
   expect(box1).toEqual(box2);
 });
 
 test('should report error in aria template', async ({ backend }) => {
-  const error = await backend.highlight({ ariaTemplate: `- button "Submit` }).catch(e => e);
+  const error = await backend.highlight({ ariaTemplate: `- button "Submit` }, undefined).catch(e => e);
   expect(error.message).toContain('Unterminated string:');
 });

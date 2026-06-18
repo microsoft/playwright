@@ -25,31 +25,31 @@ export class Clock implements api.Clock {
   }
 
   async install(options: { time?: number | string | Date } = { }) {
-    await this._browserContext._channel.clockInstall(options.time !== undefined ? parseTime(options.time) : {});
+    await this._browserContext._channel.clockInstall({ ...(options.time !== undefined ? parseTime(options.time) : {}) }, undefined);
   }
 
   async fastForward(ticks: number | string) {
-    await this._browserContext._channel.clockFastForward(parseTicks(ticks));
+    await this._browserContext._channel.clockFastForward({ ...parseTicks(ticks) }, undefined);
   }
 
   async pauseAt(time: number | string | Date) {
-    await this._browserContext._channel.clockPauseAt(parseTime(time));
+    await this._browserContext._channel.clockPauseAt({ ...parseTime(time) }, undefined);
   }
 
   async resume() {
-    await this._browserContext._channel.clockResume({});
+    await this._browserContext._channel.clockResume({}, undefined);
   }
 
   async runFor(ticks: number | string) {
-    await this._browserContext._channel.clockRunFor(parseTicks(ticks));
+    await this._browserContext._channel.clockRunFor({ ...parseTicks(ticks) }, undefined);
   }
 
   async setFixedTime(time: string | number | Date) {
-    await this._browserContext._channel.clockSetFixedTime(parseTime(time));
+    await this._browserContext._channel.clockSetFixedTime({ ...parseTime(time) }, undefined);
   }
 
   async setSystemTime(time: string | number | Date) {
-    await this._browserContext._channel.clockSetSystemTime(parseTime(time));
+    await this._browserContext._channel.clockSetSystemTime({ ...parseTime(time) }, undefined);
   }
 }
 

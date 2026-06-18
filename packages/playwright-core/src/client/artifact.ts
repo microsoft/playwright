@@ -29,16 +29,16 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   async pathAfterFinished(): Promise<string> {
     if (this._connection.isRemote())
       throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
-    return (await this._channel.pathAfterFinished()).value;
+    return (await this._channel.pathAfterFinished({}, undefined)).value;
   }
 
   async saveAs(path: string): Promise<void> {
     if (!this._connection.isRemote()) {
-      await this._channel.saveAs({ path });
+      await this._channel.saveAs({ path }, undefined);
       return;
     }
 
-    const result = await this._channel.saveAsStream();
+    const result = await this._channel.saveAsStream({}, undefined);
     const stream = Stream.from(result.stream);
     await mkdirIfNeeded(this._platform, path);
     await new Promise((resolve, reject) => {
@@ -49,11 +49,11 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   }
 
   async failure(): Promise<string | null> {
-    return (await this._channel.failure()).error || null;
+    return (await this._channel.failure({}, undefined)).error || null;
   }
 
   async createReadStream(): Promise<Readable> {
-    const result = await this._channel.stream();
+    const result = await this._channel.stream({}, undefined);
     const stream = Stream.from(result.stream);
     return stream.stream();
   }
@@ -73,10 +73,10 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   }
 
   async cancel(): Promise<void> {
-    return await this._channel.cancel();
+    return await this._channel.cancel({}, undefined);
   }
 
   async delete(): Promise<void> {
-    return await this._channel.delete();
+    return await this._channel.delete({}, undefined);
   }
 }

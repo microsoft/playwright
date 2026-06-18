@@ -140,7 +140,7 @@ export interface AndroidEventTarget {
 }
 export interface AndroidChannel extends AndroidEventTarget, Channel {
   _type_Android: boolean;
-  devices(params: AndroidDevicesParams): Promise<AndroidDevicesResult>;
+  devices(params: AndroidDevicesParams, signal: AbortSignal | undefined): Promise<AndroidDevicesResult>;
 }
 export type AndroidDevicesParams = {
   host?: string,
@@ -167,8 +167,8 @@ export interface AndroidSocketEventTarget {
 }
 export interface AndroidSocketChannel extends AndroidSocketEventTarget, Channel {
   _type_AndroidSocket: boolean;
-  write(params: AndroidSocketWriteParams): Promise<AndroidSocketWriteResult>;
-  close(params?: AndroidSocketCloseParams): Promise<AndroidSocketCloseResult>;
+  write(params: AndroidSocketWriteParams, signal: AbortSignal | undefined): Promise<AndroidSocketWriteResult>;
+  close(params: AndroidSocketCloseParams, signal: AbortSignal | undefined): Promise<AndroidSocketCloseResult>;
 }
 export type AndroidSocketDataEvent = {
   data: Binary,
@@ -202,30 +202,30 @@ export interface AndroidDeviceEventTarget {
 }
 export interface AndroidDeviceChannel extends AndroidDeviceEventTarget, Channel {
   _type_AndroidDevice: boolean;
-  wait(params: AndroidDeviceWaitParams): Promise<AndroidDeviceWaitResult>;
-  fill(params: AndroidDeviceFillParams): Promise<AndroidDeviceFillResult>;
-  tap(params: AndroidDeviceTapParams): Promise<AndroidDeviceTapResult>;
-  drag(params: AndroidDeviceDragParams): Promise<AndroidDeviceDragResult>;
-  fling(params: AndroidDeviceFlingParams): Promise<AndroidDeviceFlingResult>;
-  longTap(params: AndroidDeviceLongTapParams): Promise<AndroidDeviceLongTapResult>;
-  pinchClose(params: AndroidDevicePinchCloseParams): Promise<AndroidDevicePinchCloseResult>;
-  pinchOpen(params: AndroidDevicePinchOpenParams): Promise<AndroidDevicePinchOpenResult>;
-  scroll(params: AndroidDeviceScrollParams): Promise<AndroidDeviceScrollResult>;
-  swipe(params: AndroidDeviceSwipeParams): Promise<AndroidDeviceSwipeResult>;
-  info(params: AndroidDeviceInfoParams): Promise<AndroidDeviceInfoResult>;
-  screenshot(params?: AndroidDeviceScreenshotParams): Promise<AndroidDeviceScreenshotResult>;
-  inputType(params: AndroidDeviceInputTypeParams): Promise<AndroidDeviceInputTypeResult>;
-  inputPress(params: AndroidDeviceInputPressParams): Promise<AndroidDeviceInputPressResult>;
-  inputTap(params: AndroidDeviceInputTapParams): Promise<AndroidDeviceInputTapResult>;
-  inputSwipe(params: AndroidDeviceInputSwipeParams): Promise<AndroidDeviceInputSwipeResult>;
-  inputDrag(params: AndroidDeviceInputDragParams): Promise<AndroidDeviceInputDragResult>;
-  launchBrowser(params: AndroidDeviceLaunchBrowserParams): Promise<AndroidDeviceLaunchBrowserResult>;
-  open(params: AndroidDeviceOpenParams): Promise<AndroidDeviceOpenResult>;
-  shell(params: AndroidDeviceShellParams): Promise<AndroidDeviceShellResult>;
-  installApk(params: AndroidDeviceInstallApkParams): Promise<AndroidDeviceInstallApkResult>;
-  push(params: AndroidDevicePushParams): Promise<AndroidDevicePushResult>;
-  connectToWebView(params: AndroidDeviceConnectToWebViewParams): Promise<AndroidDeviceConnectToWebViewResult>;
-  close(params?: AndroidDeviceCloseParams): Promise<AndroidDeviceCloseResult>;
+  wait(params: AndroidDeviceWaitParams, signal: AbortSignal | undefined): Promise<AndroidDeviceWaitResult>;
+  fill(params: AndroidDeviceFillParams, signal: AbortSignal | undefined): Promise<AndroidDeviceFillResult>;
+  tap(params: AndroidDeviceTapParams, signal: AbortSignal | undefined): Promise<AndroidDeviceTapResult>;
+  drag(params: AndroidDeviceDragParams, signal: AbortSignal | undefined): Promise<AndroidDeviceDragResult>;
+  fling(params: AndroidDeviceFlingParams, signal: AbortSignal | undefined): Promise<AndroidDeviceFlingResult>;
+  longTap(params: AndroidDeviceLongTapParams, signal: AbortSignal | undefined): Promise<AndroidDeviceLongTapResult>;
+  pinchClose(params: AndroidDevicePinchCloseParams, signal: AbortSignal | undefined): Promise<AndroidDevicePinchCloseResult>;
+  pinchOpen(params: AndroidDevicePinchOpenParams, signal: AbortSignal | undefined): Promise<AndroidDevicePinchOpenResult>;
+  scroll(params: AndroidDeviceScrollParams, signal: AbortSignal | undefined): Promise<AndroidDeviceScrollResult>;
+  swipe(params: AndroidDeviceSwipeParams, signal: AbortSignal | undefined): Promise<AndroidDeviceSwipeResult>;
+  info(params: AndroidDeviceInfoParams, signal: AbortSignal | undefined): Promise<AndroidDeviceInfoResult>;
+  screenshot(params: AndroidDeviceScreenshotParams, signal: AbortSignal | undefined): Promise<AndroidDeviceScreenshotResult>;
+  inputType(params: AndroidDeviceInputTypeParams, signal: AbortSignal | undefined): Promise<AndroidDeviceInputTypeResult>;
+  inputPress(params: AndroidDeviceInputPressParams, signal: AbortSignal | undefined): Promise<AndroidDeviceInputPressResult>;
+  inputTap(params: AndroidDeviceInputTapParams, signal: AbortSignal | undefined): Promise<AndroidDeviceInputTapResult>;
+  inputSwipe(params: AndroidDeviceInputSwipeParams, signal: AbortSignal | undefined): Promise<AndroidDeviceInputSwipeResult>;
+  inputDrag(params: AndroidDeviceInputDragParams, signal: AbortSignal | undefined): Promise<AndroidDeviceInputDragResult>;
+  launchBrowser(params: AndroidDeviceLaunchBrowserParams, signal: AbortSignal | undefined): Promise<AndroidDeviceLaunchBrowserResult>;
+  open(params: AndroidDeviceOpenParams, signal: AbortSignal | undefined): Promise<AndroidDeviceOpenResult>;
+  shell(params: AndroidDeviceShellParams, signal: AbortSignal | undefined): Promise<AndroidDeviceShellResult>;
+  installApk(params: AndroidDeviceInstallApkParams, signal: AbortSignal | undefined): Promise<AndroidDeviceInstallApkResult>;
+  push(params: AndroidDevicePushParams, signal: AbortSignal | undefined): Promise<AndroidDevicePushResult>;
+  connectToWebView(params: AndroidDeviceConnectToWebViewParams, signal: AbortSignal | undefined): Promise<AndroidDeviceConnectToWebViewResult>;
+  close(params: AndroidDeviceCloseParams, signal: AbortSignal | undefined): Promise<AndroidDeviceCloseResult>;
 }
 export type AndroidDeviceCloseEvent = {};
 export type AndroidDeviceWebViewAddedEvent = {
@@ -642,12 +642,12 @@ export interface APIRequestContextEventTarget {
 }
 export interface APIRequestContextChannel extends APIRequestContextEventTarget, Channel {
   _type_APIRequestContext: boolean;
-  fetch(params: APIRequestContextFetchParams): Promise<APIRequestContextFetchResult>;
-  fetchResponseBody(params: APIRequestContextFetchResponseBodyParams): Promise<APIRequestContextFetchResponseBodyResult>;
-  fetchLog(params: APIRequestContextFetchLogParams): Promise<APIRequestContextFetchLogResult>;
-  storageState(params: APIRequestContextStorageStateParams): Promise<APIRequestContextStorageStateResult>;
-  disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams): Promise<APIRequestContextDisposeAPIResponseResult>;
-  dispose(params: APIRequestContextDisposeParams): Promise<APIRequestContextDisposeResult>;
+  fetch(params: APIRequestContextFetchParams, signal: AbortSignal | undefined): Promise<APIRequestContextFetchResult>;
+  fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, signal: AbortSignal | undefined): Promise<APIRequestContextFetchResponseBodyResult>;
+  fetchLog(params: APIRequestContextFetchLogParams, signal: AbortSignal | undefined): Promise<APIRequestContextFetchLogResult>;
+  storageState(params: APIRequestContextStorageStateParams, signal: AbortSignal | undefined): Promise<APIRequestContextStorageStateResult>;
+  disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, signal: AbortSignal | undefined): Promise<APIRequestContextDisposeAPIResponseResult>;
+  dispose(params: APIRequestContextDisposeParams, signal: AbortSignal | undefined): Promise<APIRequestContextDisposeResult>;
 }
 export type APIRequestContextFetchParams = {
   url: string,
@@ -746,13 +746,13 @@ export interface ArtifactEventTarget {
 }
 export interface ArtifactChannel extends ArtifactEventTarget, Channel {
   _type_Artifact: boolean;
-  pathAfterFinished(params?: ArtifactPathAfterFinishedParams): Promise<ArtifactPathAfterFinishedResult>;
-  saveAs(params: ArtifactSaveAsParams): Promise<ArtifactSaveAsResult>;
-  saveAsStream(params?: ArtifactSaveAsStreamParams): Promise<ArtifactSaveAsStreamResult>;
-  failure(params?: ArtifactFailureParams): Promise<ArtifactFailureResult>;
-  stream(params?: ArtifactStreamParams): Promise<ArtifactStreamResult>;
-  cancel(params?: ArtifactCancelParams): Promise<ArtifactCancelResult>;
-  delete(params?: ArtifactDeleteParams): Promise<ArtifactDeleteResult>;
+  pathAfterFinished(params: ArtifactPathAfterFinishedParams, signal: AbortSignal | undefined): Promise<ArtifactPathAfterFinishedResult>;
+  saveAs(params: ArtifactSaveAsParams, signal: AbortSignal | undefined): Promise<ArtifactSaveAsResult>;
+  saveAsStream(params: ArtifactSaveAsStreamParams, signal: AbortSignal | undefined): Promise<ArtifactSaveAsStreamResult>;
+  failure(params: ArtifactFailureParams, signal: AbortSignal | undefined): Promise<ArtifactFailureResult>;
+  stream(params: ArtifactStreamParams, signal: AbortSignal | undefined): Promise<ArtifactStreamResult>;
+  cancel(params: ArtifactCancelParams, signal: AbortSignal | undefined): Promise<ArtifactCancelResult>;
+  delete(params: ArtifactDeleteParams, signal: AbortSignal | undefined): Promise<ArtifactDeleteResult>;
 }
 export type ArtifactPathAfterFinishedParams = {};
 export type ArtifactPathAfterFinishedOptions = {};
@@ -797,8 +797,8 @@ export interface StreamEventTarget {
 }
 export interface StreamChannel extends StreamEventTarget, Channel {
   _type_Stream: boolean;
-  read(params: StreamReadParams): Promise<StreamReadResult>;
-  close(params?: StreamCloseParams): Promise<StreamCloseResult>;
+  read(params: StreamReadParams, signal: AbortSignal | undefined): Promise<StreamReadResult>;
+  close(params: StreamCloseParams, signal: AbortSignal | undefined): Promise<StreamCloseResult>;
 }
 export type StreamReadParams = {
   size?: number,
@@ -822,8 +822,8 @@ export interface WritableStreamEventTarget {
 }
 export interface WritableStreamChannel extends WritableStreamEventTarget, Channel {
   _type_WritableStream: boolean;
-  write(params: WritableStreamWriteParams): Promise<WritableStreamWriteResult>;
-  close(params?: WritableStreamCloseParams): Promise<WritableStreamCloseResult>;
+  write(params: WritableStreamWriteParams, signal: AbortSignal | undefined): Promise<WritableStreamWriteResult>;
+  close(params: WritableStreamCloseParams, signal: AbortSignal | undefined): Promise<WritableStreamCloseResult>;
 }
 export type WritableStreamWriteParams = {
   binary: Binary,
@@ -851,17 +851,17 @@ export interface BrowserEventTarget {
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
   _type_Browser: boolean;
-  startServer(params: BrowserStartServerParams): Promise<BrowserStartServerResult>;
-  stopServer(params?: BrowserStopServerParams): Promise<BrowserStopServerResult>;
-  close(params: BrowserCloseParams): Promise<BrowserCloseResult>;
-  killForTests(params?: BrowserKillForTestsParams): Promise<BrowserKillForTestsResult>;
-  defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams): Promise<BrowserDefaultUserAgentForTestResult>;
-  newContext(params: BrowserNewContextParams): Promise<BrowserNewContextResult>;
-  newContextForReuse(params: BrowserNewContextForReuseParams): Promise<BrowserNewContextForReuseResult>;
-  disconnectFromReusedContext(params: BrowserDisconnectFromReusedContextParams): Promise<BrowserDisconnectFromReusedContextResult>;
-  newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams): Promise<BrowserNewBrowserCDPSessionResult>;
-  startTracing(params: BrowserStartTracingParams): Promise<BrowserStartTracingResult>;
-  stopTracing(params?: BrowserStopTracingParams): Promise<BrowserStopTracingResult>;
+  startServer(params: BrowserStartServerParams, signal: AbortSignal | undefined): Promise<BrowserStartServerResult>;
+  stopServer(params: BrowserStopServerParams, signal: AbortSignal | undefined): Promise<BrowserStopServerResult>;
+  close(params: BrowserCloseParams, signal: AbortSignal | undefined): Promise<BrowserCloseResult>;
+  killForTests(params: BrowserKillForTestsParams, signal: AbortSignal | undefined): Promise<BrowserKillForTestsResult>;
+  defaultUserAgentForTest(params: BrowserDefaultUserAgentForTestParams, signal: AbortSignal | undefined): Promise<BrowserDefaultUserAgentForTestResult>;
+  newContext(params: BrowserNewContextParams, signal: AbortSignal | undefined): Promise<BrowserNewContextResult>;
+  newContextForReuse(params: BrowserNewContextForReuseParams, signal: AbortSignal | undefined): Promise<BrowserNewContextForReuseResult>;
+  disconnectFromReusedContext(params: BrowserDisconnectFromReusedContextParams, signal: AbortSignal | undefined): Promise<BrowserDisconnectFromReusedContextResult>;
+  newBrowserCDPSession(params: BrowserNewBrowserCDPSessionParams, signal: AbortSignal | undefined): Promise<BrowserNewBrowserCDPSessionResult>;
+  startTracing(params: BrowserStartTracingParams, signal: AbortSignal | undefined): Promise<BrowserStartTracingResult>;
+  stopTracing(params: BrowserStopTracingParams, signal: AbortSignal | undefined): Promise<BrowserStopTracingResult>;
 }
 export type BrowserContextEvent = {
   context: BrowserContextChannel,
@@ -1325,43 +1325,43 @@ export interface BrowserContextEventTarget {
 }
 export interface BrowserContextChannel extends BrowserContextEventTarget, Channel {
   _type_BrowserContext: boolean;
-  addCookies(params: BrowserContextAddCookiesParams): Promise<BrowserContextAddCookiesResult>;
-  addInitScript(params: BrowserContextAddInitScriptParams): Promise<BrowserContextAddInitScriptResult>;
-  clearCookies(params: BrowserContextClearCookiesParams): Promise<BrowserContextClearCookiesResult>;
-  clearPermissions(params?: BrowserContextClearPermissionsParams): Promise<BrowserContextClearPermissionsResult>;
-  close(params: BrowserContextCloseParams): Promise<BrowserContextCloseResult>;
-  cookies(params: BrowserContextCookiesParams): Promise<BrowserContextCookiesResult>;
-  exposeBinding(params: BrowserContextExposeBindingParams): Promise<BrowserContextExposeBindingResult>;
-  grantPermissions(params: BrowserContextGrantPermissionsParams): Promise<BrowserContextGrantPermissionsResult>;
-  newPage(params?: BrowserContextNewPageParams): Promise<BrowserContextNewPageResult>;
-  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams): Promise<BrowserContextRegisterSelectorEngineResult>;
-  setTestIdAttributeName(params: BrowserContextSetTestIdAttributeNameParams): Promise<BrowserContextSetTestIdAttributeNameResult>;
-  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams): Promise<BrowserContextSetExtraHTTPHeadersResult>;
-  setGeolocation(params: BrowserContextSetGeolocationParams): Promise<BrowserContextSetGeolocationResult>;
-  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
-  setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
-  setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
-  setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
-  storageState(params: BrowserContextStorageStateParams): Promise<BrowserContextStorageStateResult>;
-  setStorageState(params: BrowserContextSetStorageStateParams): Promise<BrowserContextSetStorageStateResult>;
-  pause(params?: BrowserContextPauseParams): Promise<BrowserContextPauseResult>;
-  enableRecorder(params: BrowserContextEnableRecorderParams): Promise<BrowserContextEnableRecorderResult>;
-  disableRecorder(params?: BrowserContextDisableRecorderParams): Promise<BrowserContextDisableRecorderResult>;
-  exposeConsoleApi(params?: BrowserContextExposeConsoleApiParams): Promise<BrowserContextExposeConsoleApiResult>;
-  newCDPSession(params: BrowserContextNewCDPSessionParams): Promise<BrowserContextNewCDPSessionResult>;
-  createTempFiles(params: BrowserContextCreateTempFilesParams): Promise<BrowserContextCreateTempFilesResult>;
-  updateSubscription(params: BrowserContextUpdateSubscriptionParams): Promise<BrowserContextUpdateSubscriptionResult>;
-  clockFastForward(params: BrowserContextClockFastForwardParams): Promise<BrowserContextClockFastForwardResult>;
-  clockInstall(params: BrowserContextClockInstallParams): Promise<BrowserContextClockInstallResult>;
-  clockPauseAt(params: BrowserContextClockPauseAtParams): Promise<BrowserContextClockPauseAtResult>;
-  clockResume(params?: BrowserContextClockResumeParams): Promise<BrowserContextClockResumeResult>;
-  clockRunFor(params: BrowserContextClockRunForParams): Promise<BrowserContextClockRunForResult>;
-  clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams): Promise<BrowserContextClockSetFixedTimeResult>;
-  clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams): Promise<BrowserContextClockSetSystemTimeResult>;
-  credentialsInstall(params?: BrowserContextCredentialsInstallParams): Promise<BrowserContextCredentialsInstallResult>;
-  credentialsCreate(params: BrowserContextCredentialsCreateParams): Promise<BrowserContextCredentialsCreateResult>;
-  credentialsGet(params: BrowserContextCredentialsGetParams): Promise<BrowserContextCredentialsGetResult>;
-  credentialsDelete(params: BrowserContextCredentialsDeleteParams): Promise<BrowserContextCredentialsDeleteResult>;
+  addCookies(params: BrowserContextAddCookiesParams, signal: AbortSignal | undefined): Promise<BrowserContextAddCookiesResult>;
+  addInitScript(params: BrowserContextAddInitScriptParams, signal: AbortSignal | undefined): Promise<BrowserContextAddInitScriptResult>;
+  clearCookies(params: BrowserContextClearCookiesParams, signal: AbortSignal | undefined): Promise<BrowserContextClearCookiesResult>;
+  clearPermissions(params: BrowserContextClearPermissionsParams, signal: AbortSignal | undefined): Promise<BrowserContextClearPermissionsResult>;
+  close(params: BrowserContextCloseParams, signal: AbortSignal | undefined): Promise<BrowserContextCloseResult>;
+  cookies(params: BrowserContextCookiesParams, signal: AbortSignal | undefined): Promise<BrowserContextCookiesResult>;
+  exposeBinding(params: BrowserContextExposeBindingParams, signal: AbortSignal | undefined): Promise<BrowserContextExposeBindingResult>;
+  grantPermissions(params: BrowserContextGrantPermissionsParams, signal: AbortSignal | undefined): Promise<BrowserContextGrantPermissionsResult>;
+  newPage(params: BrowserContextNewPageParams, signal: AbortSignal | undefined): Promise<BrowserContextNewPageResult>;
+  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams, signal: AbortSignal | undefined): Promise<BrowserContextRegisterSelectorEngineResult>;
+  setTestIdAttributeName(params: BrowserContextSetTestIdAttributeNameParams, signal: AbortSignal | undefined): Promise<BrowserContextSetTestIdAttributeNameResult>;
+  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, signal: AbortSignal | undefined): Promise<BrowserContextSetExtraHTTPHeadersResult>;
+  setGeolocation(params: BrowserContextSetGeolocationParams, signal: AbortSignal | undefined): Promise<BrowserContextSetGeolocationResult>;
+  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetHTTPCredentialsResult>;
+  setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
+  setOffline(params: BrowserContextSetOfflineParams, signal: AbortSignal | undefined): Promise<BrowserContextSetOfflineResult>;
+  storageState(params: BrowserContextStorageStateParams, signal: AbortSignal | undefined): Promise<BrowserContextStorageStateResult>;
+  setStorageState(params: BrowserContextSetStorageStateParams, signal: AbortSignal | undefined): Promise<BrowserContextSetStorageStateResult>;
+  pause(params: BrowserContextPauseParams, signal: AbortSignal | undefined): Promise<BrowserContextPauseResult>;
+  enableRecorder(params: BrowserContextEnableRecorderParams, signal: AbortSignal | undefined): Promise<BrowserContextEnableRecorderResult>;
+  disableRecorder(params: BrowserContextDisableRecorderParams, signal: AbortSignal | undefined): Promise<BrowserContextDisableRecorderResult>;
+  exposeConsoleApi(params: BrowserContextExposeConsoleApiParams, signal: AbortSignal | undefined): Promise<BrowserContextExposeConsoleApiResult>;
+  newCDPSession(params: BrowserContextNewCDPSessionParams, signal: AbortSignal | undefined): Promise<BrowserContextNewCDPSessionResult>;
+  createTempFiles(params: BrowserContextCreateTempFilesParams, signal: AbortSignal | undefined): Promise<BrowserContextCreateTempFilesResult>;
+  updateSubscription(params: BrowserContextUpdateSubscriptionParams, signal: AbortSignal | undefined): Promise<BrowserContextUpdateSubscriptionResult>;
+  clockFastForward(params: BrowserContextClockFastForwardParams, signal: AbortSignal | undefined): Promise<BrowserContextClockFastForwardResult>;
+  clockInstall(params: BrowserContextClockInstallParams, signal: AbortSignal | undefined): Promise<BrowserContextClockInstallResult>;
+  clockPauseAt(params: BrowserContextClockPauseAtParams, signal: AbortSignal | undefined): Promise<BrowserContextClockPauseAtResult>;
+  clockResume(params: BrowserContextClockResumeParams, signal: AbortSignal | undefined): Promise<BrowserContextClockResumeResult>;
+  clockRunFor(params: BrowserContextClockRunForParams, signal: AbortSignal | undefined): Promise<BrowserContextClockRunForResult>;
+  clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, signal: AbortSignal | undefined): Promise<BrowserContextClockSetFixedTimeResult>;
+  clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, signal: AbortSignal | undefined): Promise<BrowserContextClockSetSystemTimeResult>;
+  credentialsInstall(params: BrowserContextCredentialsInstallParams, signal: AbortSignal | undefined): Promise<BrowserContextCredentialsInstallResult>;
+  credentialsCreate(params: BrowserContextCredentialsCreateParams, signal: AbortSignal | undefined): Promise<BrowserContextCredentialsCreateResult>;
+  credentialsGet(params: BrowserContextCredentialsGetParams, signal: AbortSignal | undefined): Promise<BrowserContextCredentialsGetResult>;
+  credentialsDelete(params: BrowserContextCredentialsDeleteParams, signal: AbortSignal | undefined): Promise<BrowserContextCredentialsDeleteResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1807,10 +1807,10 @@ export interface BrowserTypeEventTarget {
 }
 export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   _type_BrowserType: boolean;
-  launch(params: BrowserTypeLaunchParams): Promise<BrowserTypeLaunchResult>;
-  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<BrowserTypeLaunchPersistentContextResult>;
-  connectOverCDP(params: BrowserTypeConnectOverCDPParams): Promise<BrowserTypeConnectOverCDPResult>;
-  connectToWorker(params: BrowserTypeConnectToWorkerParams): Promise<BrowserTypeConnectToWorkerResult>;
+  launch(params: BrowserTypeLaunchParams, signal: AbortSignal | undefined): Promise<BrowserTypeLaunchResult>;
+  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, signal: AbortSignal | undefined): Promise<BrowserTypeLaunchPersistentContextResult>;
+  connectOverCDP(params: BrowserTypeConnectOverCDPParams, signal: AbortSignal | undefined): Promise<BrowserTypeConnectOverCDPResult>;
+  connectToWorker(params: BrowserTypeConnectToWorkerParams, signal: AbortSignal | undefined): Promise<BrowserTypeConnectToWorkerResult>;
 }
 export type BrowserTypeLaunchParams = {
   channel?: string,
@@ -2106,7 +2106,7 @@ export interface DisposableEventTarget {
 }
 export interface DisposableChannel extends DisposableEventTarget, Channel {
   _type_Disposable: boolean;
-  dispose(params?: DisposableDisposeParams): Promise<DisposableDisposeResult>;
+  dispose(params: DisposableDisposeParams, signal: AbortSignal | undefined): Promise<DisposableDisposeResult>;
 }
 export type DisposableDisposeParams = {};
 export type DisposableDisposeOptions = {};
@@ -2129,7 +2129,7 @@ export interface ElectronEventTarget {
 }
 export interface ElectronChannel extends ElectronEventTarget, Channel {
   _type_Electron: boolean;
-  launch(params: ElectronLaunchParams): Promise<ElectronLaunchResult>;
+  launch(params: ElectronLaunchParams, signal: AbortSignal | undefined): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
   executablePath?: string,
@@ -2235,10 +2235,10 @@ export interface ElectronApplicationEventTarget {
 }
 export interface ElectronApplicationChannel extends ElectronApplicationEventTarget, Channel {
   _type_ElectronApplication: boolean;
-  browserWindow(params: ElectronApplicationBrowserWindowParams): Promise<ElectronApplicationBrowserWindowResult>;
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams): Promise<ElectronApplicationUpdateSubscriptionResult>;
+  browserWindow(params: ElectronApplicationBrowserWindowParams, signal: AbortSignal | undefined): Promise<ElectronApplicationBrowserWindowResult>;
+  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, signal: AbortSignal | undefined): Promise<ElectronApplicationEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, signal: AbortSignal | undefined): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
+  updateSubscription(params: ElectronApplicationUpdateSubscriptionParams, signal: AbortSignal | undefined): Promise<ElectronApplicationUpdateSubscriptionResult>;
 }
 export type ElectronApplicationCloseEvent = {};
 export type ElectronApplicationConsoleEvent = {
@@ -2310,55 +2310,55 @@ export interface FrameEventTarget {
 }
 export interface FrameChannel extends FrameEventTarget, Channel {
   _type_Frame: boolean;
-  evalOnSelector(params: FrameEvalOnSelectorParams): Promise<FrameEvalOnSelectorResult>;
-  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams): Promise<FrameEvalOnSelectorAllResult>;
-  addScriptTag(params: FrameAddScriptTagParams): Promise<FrameAddScriptTagResult>;
-  addStyleTag(params: FrameAddStyleTagParams): Promise<FrameAddStyleTagResult>;
-  ariaSnapshot(params: FrameAriaSnapshotParams): Promise<FrameAriaSnapshotResult>;
-  blur(params: FrameBlurParams): Promise<FrameBlurResult>;
-  check(params: FrameCheckParams): Promise<FrameCheckResult>;
-  click(params: FrameClickParams): Promise<FrameClickResult>;
-  content(params?: FrameContentParams): Promise<FrameContentResult>;
-  dragAndDrop(params: FrameDragAndDropParams): Promise<FrameDragAndDropResult>;
-  drop(params: FrameDropParams): Promise<FrameDropResult>;
-  dblclick(params: FrameDblclickParams): Promise<FrameDblclickResult>;
-  dispatchEvent(params: FrameDispatchEventParams): Promise<FrameDispatchEventResult>;
-  evaluateExpression(params: FrameEvaluateExpressionParams): Promise<FrameEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams): Promise<FrameEvaluateExpressionHandleResult>;
-  fill(params: FrameFillParams): Promise<FrameFillResult>;
-  focus(params: FrameFocusParams): Promise<FrameFocusResult>;
-  frameElement(params?: FrameFrameElementParams): Promise<FrameFrameElementResult>;
-  resolveSelector(params: FrameResolveSelectorParams): Promise<FrameResolveSelectorResult>;
-  highlight(params: FrameHighlightParams): Promise<FrameHighlightResult>;
-  hideHighlight(params: FrameHideHighlightParams): Promise<FrameHideHighlightResult>;
-  getAttribute(params: FrameGetAttributeParams): Promise<FrameGetAttributeResult>;
-  goto(params: FrameGotoParams): Promise<FrameGotoResult>;
-  hover(params: FrameHoverParams): Promise<FrameHoverResult>;
-  innerHTML(params: FrameInnerHTMLParams): Promise<FrameInnerHTMLResult>;
-  innerText(params: FrameInnerTextParams): Promise<FrameInnerTextResult>;
-  inputValue(params: FrameInputValueParams): Promise<FrameInputValueResult>;
-  isChecked(params: FrameIsCheckedParams): Promise<FrameIsCheckedResult>;
-  isDisabled(params: FrameIsDisabledParams): Promise<FrameIsDisabledResult>;
-  isEnabled(params: FrameIsEnabledParams): Promise<FrameIsEnabledResult>;
-  isHidden(params: FrameIsHiddenParams): Promise<FrameIsHiddenResult>;
-  isVisible(params: FrameIsVisibleParams): Promise<FrameIsVisibleResult>;
-  isEditable(params: FrameIsEditableParams): Promise<FrameIsEditableResult>;
-  press(params: FramePressParams): Promise<FramePressResult>;
-  querySelector(params: FrameQuerySelectorParams): Promise<FrameQuerySelectorResult>;
-  querySelectorAll(params: FrameQuerySelectorAllParams): Promise<FrameQuerySelectorAllResult>;
-  queryCount(params: FrameQueryCountParams): Promise<FrameQueryCountResult>;
-  selectOption(params: FrameSelectOptionParams): Promise<FrameSelectOptionResult>;
-  setContent(params: FrameSetContentParams): Promise<FrameSetContentResult>;
-  setInputFiles(params: FrameSetInputFilesParams): Promise<FrameSetInputFilesResult>;
-  tap(params: FrameTapParams): Promise<FrameTapResult>;
-  textContent(params: FrameTextContentParams): Promise<FrameTextContentResult>;
-  title(params?: FrameTitleParams): Promise<FrameTitleResult>;
-  type(params: FrameTypeParams): Promise<FrameTypeResult>;
-  uncheck(params: FrameUncheckParams): Promise<FrameUncheckResult>;
-  waitForTimeout(params: FrameWaitForTimeoutParams): Promise<FrameWaitForTimeoutResult>;
-  waitForFunction(params: FrameWaitForFunctionParams): Promise<FrameWaitForFunctionResult>;
-  waitForSelector(params: FrameWaitForSelectorParams): Promise<FrameWaitForSelectorResult>;
-  expect(params: FrameExpectParams): Promise<FrameExpectResult>;
+  evalOnSelector(params: FrameEvalOnSelectorParams, signal: AbortSignal | undefined): Promise<FrameEvalOnSelectorResult>;
+  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, signal: AbortSignal | undefined): Promise<FrameEvalOnSelectorAllResult>;
+  addScriptTag(params: FrameAddScriptTagParams, signal: AbortSignal | undefined): Promise<FrameAddScriptTagResult>;
+  addStyleTag(params: FrameAddStyleTagParams, signal: AbortSignal | undefined): Promise<FrameAddStyleTagResult>;
+  ariaSnapshot(params: FrameAriaSnapshotParams, signal: AbortSignal | undefined): Promise<FrameAriaSnapshotResult>;
+  blur(params: FrameBlurParams, signal: AbortSignal | undefined): Promise<FrameBlurResult>;
+  check(params: FrameCheckParams, signal: AbortSignal | undefined): Promise<FrameCheckResult>;
+  click(params: FrameClickParams, signal: AbortSignal | undefined): Promise<FrameClickResult>;
+  content(params: FrameContentParams, signal: AbortSignal | undefined): Promise<FrameContentResult>;
+  dragAndDrop(params: FrameDragAndDropParams, signal: AbortSignal | undefined): Promise<FrameDragAndDropResult>;
+  drop(params: FrameDropParams, signal: AbortSignal | undefined): Promise<FrameDropResult>;
+  dblclick(params: FrameDblclickParams, signal: AbortSignal | undefined): Promise<FrameDblclickResult>;
+  dispatchEvent(params: FrameDispatchEventParams, signal: AbortSignal | undefined): Promise<FrameDispatchEventResult>;
+  evaluateExpression(params: FrameEvaluateExpressionParams, signal: AbortSignal | undefined): Promise<FrameEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams, signal: AbortSignal | undefined): Promise<FrameEvaluateExpressionHandleResult>;
+  fill(params: FrameFillParams, signal: AbortSignal | undefined): Promise<FrameFillResult>;
+  focus(params: FrameFocusParams, signal: AbortSignal | undefined): Promise<FrameFocusResult>;
+  frameElement(params: FrameFrameElementParams, signal: AbortSignal | undefined): Promise<FrameFrameElementResult>;
+  resolveSelector(params: FrameResolveSelectorParams, signal: AbortSignal | undefined): Promise<FrameResolveSelectorResult>;
+  highlight(params: FrameHighlightParams, signal: AbortSignal | undefined): Promise<FrameHighlightResult>;
+  hideHighlight(params: FrameHideHighlightParams, signal: AbortSignal | undefined): Promise<FrameHideHighlightResult>;
+  getAttribute(params: FrameGetAttributeParams, signal: AbortSignal | undefined): Promise<FrameGetAttributeResult>;
+  goto(params: FrameGotoParams, signal: AbortSignal | undefined): Promise<FrameGotoResult>;
+  hover(params: FrameHoverParams, signal: AbortSignal | undefined): Promise<FrameHoverResult>;
+  innerHTML(params: FrameInnerHTMLParams, signal: AbortSignal | undefined): Promise<FrameInnerHTMLResult>;
+  innerText(params: FrameInnerTextParams, signal: AbortSignal | undefined): Promise<FrameInnerTextResult>;
+  inputValue(params: FrameInputValueParams, signal: AbortSignal | undefined): Promise<FrameInputValueResult>;
+  isChecked(params: FrameIsCheckedParams, signal: AbortSignal | undefined): Promise<FrameIsCheckedResult>;
+  isDisabled(params: FrameIsDisabledParams, signal: AbortSignal | undefined): Promise<FrameIsDisabledResult>;
+  isEnabled(params: FrameIsEnabledParams, signal: AbortSignal | undefined): Promise<FrameIsEnabledResult>;
+  isHidden(params: FrameIsHiddenParams, signal: AbortSignal | undefined): Promise<FrameIsHiddenResult>;
+  isVisible(params: FrameIsVisibleParams, signal: AbortSignal | undefined): Promise<FrameIsVisibleResult>;
+  isEditable(params: FrameIsEditableParams, signal: AbortSignal | undefined): Promise<FrameIsEditableResult>;
+  press(params: FramePressParams, signal: AbortSignal | undefined): Promise<FramePressResult>;
+  querySelector(params: FrameQuerySelectorParams, signal: AbortSignal | undefined): Promise<FrameQuerySelectorResult>;
+  querySelectorAll(params: FrameQuerySelectorAllParams, signal: AbortSignal | undefined): Promise<FrameQuerySelectorAllResult>;
+  queryCount(params: FrameQueryCountParams, signal: AbortSignal | undefined): Promise<FrameQueryCountResult>;
+  selectOption(params: FrameSelectOptionParams, signal: AbortSignal | undefined): Promise<FrameSelectOptionResult>;
+  setContent(params: FrameSetContentParams, signal: AbortSignal | undefined): Promise<FrameSetContentResult>;
+  setInputFiles(params: FrameSetInputFilesParams, signal: AbortSignal | undefined): Promise<FrameSetInputFilesResult>;
+  tap(params: FrameTapParams, signal: AbortSignal | undefined): Promise<FrameTapResult>;
+  textContent(params: FrameTextContentParams, signal: AbortSignal | undefined): Promise<FrameTextContentResult>;
+  title(params: FrameTitleParams, signal: AbortSignal | undefined): Promise<FrameTitleResult>;
+  type(params: FrameTypeParams, signal: AbortSignal | undefined): Promise<FrameTypeResult>;
+  uncheck(params: FrameUncheckParams, signal: AbortSignal | undefined): Promise<FrameUncheckResult>;
+  waitForTimeout(params: FrameWaitForTimeoutParams, signal: AbortSignal | undefined): Promise<FrameWaitForTimeoutResult>;
+  waitForFunction(params: FrameWaitForFunctionParams, signal: AbortSignal | undefined): Promise<FrameWaitForFunctionResult>;
+  waitForSelector(params: FrameWaitForSelectorParams, signal: AbortSignal | undefined): Promise<FrameWaitForSelectorResult>;
+  expect(params: FrameExpectParams, signal: AbortSignal | undefined): Promise<FrameExpectResult>;
 }
 export type FrameLoadstateEvent = {
   add?: LifecycleEvent,
@@ -3040,12 +3040,12 @@ export interface JSHandleEventTarget {
 }
 export interface JSHandleChannel extends JSHandleEventTarget, Channel {
   _type_JSHandle: boolean;
-  dispose(params?: JSHandleDisposeParams): Promise<JSHandleDisposeResult>;
-  evaluateExpression(params: JSHandleEvaluateExpressionParams): Promise<JSHandleEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams): Promise<JSHandleEvaluateExpressionHandleResult>;
-  getPropertyList(params?: JSHandleGetPropertyListParams): Promise<JSHandleGetPropertyListResult>;
-  getProperty(params: JSHandleGetPropertyParams): Promise<JSHandleGetPropertyResult>;
-  jsonValue(params?: JSHandleJsonValueParams): Promise<JSHandleJsonValueResult>;
+  dispose(params: JSHandleDisposeParams, signal: AbortSignal | undefined): Promise<JSHandleDisposeResult>;
+  evaluateExpression(params: JSHandleEvaluateExpressionParams, signal: AbortSignal | undefined): Promise<JSHandleEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, signal: AbortSignal | undefined): Promise<JSHandleEvaluateExpressionHandleResult>;
+  getPropertyList(params: JSHandleGetPropertyListParams, signal: AbortSignal | undefined): Promise<JSHandleGetPropertyListResult>;
+  getProperty(params: JSHandleGetPropertyParams, signal: AbortSignal | undefined): Promise<JSHandleGetPropertyResult>;
+  jsonValue(params: JSHandleJsonValueParams, signal: AbortSignal | undefined): Promise<JSHandleJsonValueResult>;
 }
 export type JSHandlePreviewUpdatedEvent = {
   preview: string,
@@ -3108,42 +3108,42 @@ export interface ElementHandleEventTarget {
 }
 export interface ElementHandleChannel extends ElementHandleEventTarget, JSHandleChannel {
   _type_ElementHandle: boolean;
-  evalOnSelector(params: ElementHandleEvalOnSelectorParams): Promise<ElementHandleEvalOnSelectorResult>;
-  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams): Promise<ElementHandleEvalOnSelectorAllResult>;
-  boundingBox(params?: ElementHandleBoundingBoxParams): Promise<ElementHandleBoundingBoxResult>;
-  check(params: ElementHandleCheckParams): Promise<ElementHandleCheckResult>;
-  click(params: ElementHandleClickParams): Promise<ElementHandleClickResult>;
-  contentFrame(params?: ElementHandleContentFrameParams): Promise<ElementHandleContentFrameResult>;
-  dblclick(params: ElementHandleDblclickParams): Promise<ElementHandleDblclickResult>;
-  dispatchEvent(params: ElementHandleDispatchEventParams): Promise<ElementHandleDispatchEventResult>;
-  fill(params: ElementHandleFillParams): Promise<ElementHandleFillResult>;
-  focus(params?: ElementHandleFocusParams): Promise<ElementHandleFocusResult>;
-  getAttribute(params: ElementHandleGetAttributeParams): Promise<ElementHandleGetAttributeResult>;
-  hover(params: ElementHandleHoverParams): Promise<ElementHandleHoverResult>;
-  innerHTML(params?: ElementHandleInnerHTMLParams): Promise<ElementHandleInnerHTMLResult>;
-  innerText(params?: ElementHandleInnerTextParams): Promise<ElementHandleInnerTextResult>;
-  inputValue(params?: ElementHandleInputValueParams): Promise<ElementHandleInputValueResult>;
-  isChecked(params?: ElementHandleIsCheckedParams): Promise<ElementHandleIsCheckedResult>;
-  isDisabled(params?: ElementHandleIsDisabledParams): Promise<ElementHandleIsDisabledResult>;
-  isEditable(params?: ElementHandleIsEditableParams): Promise<ElementHandleIsEditableResult>;
-  isEnabled(params?: ElementHandleIsEnabledParams): Promise<ElementHandleIsEnabledResult>;
-  isHidden(params?: ElementHandleIsHiddenParams): Promise<ElementHandleIsHiddenResult>;
-  isVisible(params?: ElementHandleIsVisibleParams): Promise<ElementHandleIsVisibleResult>;
-  ownerFrame(params?: ElementHandleOwnerFrameParams): Promise<ElementHandleOwnerFrameResult>;
-  press(params: ElementHandlePressParams): Promise<ElementHandlePressResult>;
-  querySelector(params: ElementHandleQuerySelectorParams): Promise<ElementHandleQuerySelectorResult>;
-  querySelectorAll(params: ElementHandleQuerySelectorAllParams): Promise<ElementHandleQuerySelectorAllResult>;
-  screenshot(params: ElementHandleScreenshotParams): Promise<ElementHandleScreenshotResult>;
-  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams): Promise<ElementHandleScrollIntoViewIfNeededResult>;
-  selectOption(params: ElementHandleSelectOptionParams): Promise<ElementHandleSelectOptionResult>;
-  selectText(params: ElementHandleSelectTextParams): Promise<ElementHandleSelectTextResult>;
-  setInputFiles(params: ElementHandleSetInputFilesParams): Promise<ElementHandleSetInputFilesResult>;
-  tap(params: ElementHandleTapParams): Promise<ElementHandleTapResult>;
-  textContent(params?: ElementHandleTextContentParams): Promise<ElementHandleTextContentResult>;
-  type(params: ElementHandleTypeParams): Promise<ElementHandleTypeResult>;
-  uncheck(params: ElementHandleUncheckParams): Promise<ElementHandleUncheckResult>;
-  waitForElementState(params: ElementHandleWaitForElementStateParams): Promise<ElementHandleWaitForElementStateResult>;
-  waitForSelector(params: ElementHandleWaitForSelectorParams): Promise<ElementHandleWaitForSelectorResult>;
+  evalOnSelector(params: ElementHandleEvalOnSelectorParams, signal: AbortSignal | undefined): Promise<ElementHandleEvalOnSelectorResult>;
+  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams, signal: AbortSignal | undefined): Promise<ElementHandleEvalOnSelectorAllResult>;
+  boundingBox(params: ElementHandleBoundingBoxParams, signal: AbortSignal | undefined): Promise<ElementHandleBoundingBoxResult>;
+  check(params: ElementHandleCheckParams, signal: AbortSignal | undefined): Promise<ElementHandleCheckResult>;
+  click(params: ElementHandleClickParams, signal: AbortSignal | undefined): Promise<ElementHandleClickResult>;
+  contentFrame(params: ElementHandleContentFrameParams, signal: AbortSignal | undefined): Promise<ElementHandleContentFrameResult>;
+  dblclick(params: ElementHandleDblclickParams, signal: AbortSignal | undefined): Promise<ElementHandleDblclickResult>;
+  dispatchEvent(params: ElementHandleDispatchEventParams, signal: AbortSignal | undefined): Promise<ElementHandleDispatchEventResult>;
+  fill(params: ElementHandleFillParams, signal: AbortSignal | undefined): Promise<ElementHandleFillResult>;
+  focus(params: ElementHandleFocusParams, signal: AbortSignal | undefined): Promise<ElementHandleFocusResult>;
+  getAttribute(params: ElementHandleGetAttributeParams, signal: AbortSignal | undefined): Promise<ElementHandleGetAttributeResult>;
+  hover(params: ElementHandleHoverParams, signal: AbortSignal | undefined): Promise<ElementHandleHoverResult>;
+  innerHTML(params: ElementHandleInnerHTMLParams, signal: AbortSignal | undefined): Promise<ElementHandleInnerHTMLResult>;
+  innerText(params: ElementHandleInnerTextParams, signal: AbortSignal | undefined): Promise<ElementHandleInnerTextResult>;
+  inputValue(params: ElementHandleInputValueParams, signal: AbortSignal | undefined): Promise<ElementHandleInputValueResult>;
+  isChecked(params: ElementHandleIsCheckedParams, signal: AbortSignal | undefined): Promise<ElementHandleIsCheckedResult>;
+  isDisabled(params: ElementHandleIsDisabledParams, signal: AbortSignal | undefined): Promise<ElementHandleIsDisabledResult>;
+  isEditable(params: ElementHandleIsEditableParams, signal: AbortSignal | undefined): Promise<ElementHandleIsEditableResult>;
+  isEnabled(params: ElementHandleIsEnabledParams, signal: AbortSignal | undefined): Promise<ElementHandleIsEnabledResult>;
+  isHidden(params: ElementHandleIsHiddenParams, signal: AbortSignal | undefined): Promise<ElementHandleIsHiddenResult>;
+  isVisible(params: ElementHandleIsVisibleParams, signal: AbortSignal | undefined): Promise<ElementHandleIsVisibleResult>;
+  ownerFrame(params: ElementHandleOwnerFrameParams, signal: AbortSignal | undefined): Promise<ElementHandleOwnerFrameResult>;
+  press(params: ElementHandlePressParams, signal: AbortSignal | undefined): Promise<ElementHandlePressResult>;
+  querySelector(params: ElementHandleQuerySelectorParams, signal: AbortSignal | undefined): Promise<ElementHandleQuerySelectorResult>;
+  querySelectorAll(params: ElementHandleQuerySelectorAllParams, signal: AbortSignal | undefined): Promise<ElementHandleQuerySelectorAllResult>;
+  screenshot(params: ElementHandleScreenshotParams, signal: AbortSignal | undefined): Promise<ElementHandleScreenshotResult>;
+  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams, signal: AbortSignal | undefined): Promise<ElementHandleScrollIntoViewIfNeededResult>;
+  selectOption(params: ElementHandleSelectOptionParams, signal: AbortSignal | undefined): Promise<ElementHandleSelectOptionResult>;
+  selectText(params: ElementHandleSelectTextParams, signal: AbortSignal | undefined): Promise<ElementHandleSelectTextResult>;
+  setInputFiles(params: ElementHandleSetInputFilesParams, signal: AbortSignal | undefined): Promise<ElementHandleSetInputFilesResult>;
+  tap(params: ElementHandleTapParams, signal: AbortSignal | undefined): Promise<ElementHandleTapResult>;
+  textContent(params: ElementHandleTextContentParams, signal: AbortSignal | undefined): Promise<ElementHandleTextContentResult>;
+  type(params: ElementHandleTypeParams, signal: AbortSignal | undefined): Promise<ElementHandleTypeResult>;
+  uncheck(params: ElementHandleUncheckParams, signal: AbortSignal | undefined): Promise<ElementHandleUncheckResult>;
+  waitForElementState(params: ElementHandleWaitForElementStateParams, signal: AbortSignal | undefined): Promise<ElementHandleWaitForElementStateResult>;
+  waitForSelector(params: ElementHandleWaitForSelectorParams, signal: AbortSignal | undefined): Promise<ElementHandleWaitForSelectorResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -3545,16 +3545,16 @@ export interface LocalUtilsEventTarget {
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
-  zip(params: LocalUtilsZipParams): Promise<LocalUtilsZipResult>;
-  harOpen(params: LocalUtilsHarOpenParams): Promise<LocalUtilsHarOpenResult>;
-  harLookup(params: LocalUtilsHarLookupParams): Promise<LocalUtilsHarLookupResult>;
-  harClose(params: LocalUtilsHarCloseParams): Promise<LocalUtilsHarCloseResult>;
-  harUnzip(params: LocalUtilsHarUnzipParams): Promise<LocalUtilsHarUnzipResult>;
-  connect(params: LocalUtilsConnectParams): Promise<LocalUtilsConnectResult>;
-  tracingStarted(params: LocalUtilsTracingStartedParams): Promise<LocalUtilsTracingStartedResult>;
-  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
-  traceDiscarded(params: LocalUtilsTraceDiscardedParams): Promise<LocalUtilsTraceDiscardedResult>;
-  globToRegex(params: LocalUtilsGlobToRegexParams): Promise<LocalUtilsGlobToRegexResult>;
+  zip(params: LocalUtilsZipParams, signal: AbortSignal | undefined): Promise<LocalUtilsZipResult>;
+  harOpen(params: LocalUtilsHarOpenParams, signal: AbortSignal | undefined): Promise<LocalUtilsHarOpenResult>;
+  harLookup(params: LocalUtilsHarLookupParams, signal: AbortSignal | undefined): Promise<LocalUtilsHarLookupResult>;
+  harClose(params: LocalUtilsHarCloseParams, signal: AbortSignal | undefined): Promise<LocalUtilsHarCloseResult>;
+  harUnzip(params: LocalUtilsHarUnzipParams, signal: AbortSignal | undefined): Promise<LocalUtilsHarUnzipResult>;
+  connect(params: LocalUtilsConnectParams, signal: AbortSignal | undefined): Promise<LocalUtilsConnectResult>;
+  tracingStarted(params: LocalUtilsTracingStartedParams, signal: AbortSignal | undefined): Promise<LocalUtilsTracingStartedResult>;
+  addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, signal: AbortSignal | undefined): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
+  traceDiscarded(params: LocalUtilsTraceDiscardedParams, signal: AbortSignal | undefined): Promise<LocalUtilsTraceDiscardedResult>;
+  globToRegex(params: LocalUtilsGlobToRegexParams, signal: AbortSignal | undefined): Promise<LocalUtilsGlobToRegexResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -3717,8 +3717,8 @@ export interface RequestEventTarget {
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
-  response(params?: RequestResponseParams): Promise<RequestResponseResult>;
-  rawRequestHeaders(params?: RequestRawRequestHeadersParams): Promise<RequestRawRequestHeadersResult>;
+  response(params: RequestResponseParams, signal: AbortSignal | undefined): Promise<RequestResponseResult>;
+  rawRequestHeaders(params: RequestRawRequestHeadersParams, signal: AbortSignal | undefined): Promise<RequestRawRequestHeadersResult>;
 }
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
@@ -3742,10 +3742,10 @@ export interface RouteEventTarget {
 }
 export interface RouteChannel extends RouteEventTarget, Channel {
   _type_Route: boolean;
-  redirectNavigationRequest(params: RouteRedirectNavigationRequestParams): Promise<RouteRedirectNavigationRequestResult>;
-  abort(params: RouteAbortParams): Promise<RouteAbortResult>;
-  continue(params: RouteContinueParams): Promise<RouteContinueResult>;
-  fulfill(params: RouteFulfillParams): Promise<RouteFulfillResult>;
+  redirectNavigationRequest(params: RouteRedirectNavigationRequestParams, signal: AbortSignal | undefined): Promise<RouteRedirectNavigationRequestResult>;
+  abort(params: RouteAbortParams, signal: AbortSignal | undefined): Promise<RouteAbortResult>;
+  continue(params: RouteContinueParams, signal: AbortSignal | undefined): Promise<RouteContinueResult>;
+  fulfill(params: RouteFulfillParams, signal: AbortSignal | undefined): Promise<RouteFulfillResult>;
 }
 export type RouteRedirectNavigationRequestParams = {
   url: string,
@@ -3807,12 +3807,12 @@ export interface WebSocketRouteEventTarget {
 }
 export interface WebSocketRouteChannel extends WebSocketRouteEventTarget, Channel {
   _type_WebSocketRoute: boolean;
-  connect(params?: WebSocketRouteConnectParams): Promise<WebSocketRouteConnectResult>;
-  ensureOpened(params?: WebSocketRouteEnsureOpenedParams): Promise<WebSocketRouteEnsureOpenedResult>;
-  sendToPage(params: WebSocketRouteSendToPageParams): Promise<WebSocketRouteSendToPageResult>;
-  sendToServer(params: WebSocketRouteSendToServerParams): Promise<WebSocketRouteSendToServerResult>;
-  closePage(params: WebSocketRouteClosePageParams): Promise<WebSocketRouteClosePageResult>;
-  closeServer(params: WebSocketRouteCloseServerParams): Promise<WebSocketRouteCloseServerResult>;
+  connect(params: WebSocketRouteConnectParams, signal: AbortSignal | undefined): Promise<WebSocketRouteConnectResult>;
+  ensureOpened(params: WebSocketRouteEnsureOpenedParams, signal: AbortSignal | undefined): Promise<WebSocketRouteEnsureOpenedResult>;
+  sendToPage(params: WebSocketRouteSendToPageParams, signal: AbortSignal | undefined): Promise<WebSocketRouteSendToPageResult>;
+  sendToServer(params: WebSocketRouteSendToServerParams, signal: AbortSignal | undefined): Promise<WebSocketRouteSendToServerResult>;
+  closePage(params: WebSocketRouteClosePageParams, signal: AbortSignal | undefined): Promise<WebSocketRouteClosePageResult>;
+  closeServer(params: WebSocketRouteCloseServerParams, signal: AbortSignal | undefined): Promise<WebSocketRouteCloseServerResult>;
 }
 export type WebSocketRouteMessageFromPageEvent = {
   message: string,
@@ -3907,12 +3907,12 @@ export interface ResponseEventTarget {
 }
 export interface ResponseChannel extends ResponseEventTarget, Channel {
   _type_Response: boolean;
-  body(params?: ResponseBodyParams): Promise<ResponseBodyResult>;
-  securityDetails(params?: ResponseSecurityDetailsParams): Promise<ResponseSecurityDetailsResult>;
-  serverAddr(params?: ResponseServerAddrParams): Promise<ResponseServerAddrResult>;
-  rawResponseHeaders(params?: ResponseRawResponseHeadersParams): Promise<ResponseRawResponseHeadersResult>;
-  httpVersion(params?: ResponseHttpVersionParams): Promise<ResponseHttpVersionResult>;
-  sizes(params?: ResponseSizesParams): Promise<ResponseSizesResult>;
+  body(params: ResponseBodyParams, signal: AbortSignal | undefined): Promise<ResponseBodyResult>;
+  securityDetails(params: ResponseSecurityDetailsParams, signal: AbortSignal | undefined): Promise<ResponseSecurityDetailsResult>;
+  serverAddr(params: ResponseServerAddrParams, signal: AbortSignal | undefined): Promise<ResponseServerAddrResult>;
+  rawResponseHeaders(params: ResponseRawResponseHeadersParams, signal: AbortSignal | undefined): Promise<ResponseRawResponseHeadersResult>;
+  httpVersion(params: ResponseHttpVersionParams, signal: AbortSignal | undefined): Promise<ResponseHttpVersionResult>;
+  sizes(params: ResponseSizesParams, signal: AbortSignal | undefined): Promise<ResponseSizesResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -4033,64 +4033,64 @@ export interface PageEventTarget {
 }
 export interface PageChannel extends PageEventTarget, Channel {
   _type_Page: boolean;
-  addInitScript(params: PageAddInitScriptParams): Promise<PageAddInitScriptResult>;
-  close(params: PageCloseParams): Promise<PageCloseResult>;
-  runBeforeUnload(params?: PageRunBeforeUnloadParams): Promise<PageRunBeforeUnloadResult>;
-  clearConsoleMessages(params?: PageClearConsoleMessagesParams): Promise<PageClearConsoleMessagesResult>;
-  consoleMessages(params: PageConsoleMessagesParams): Promise<PageConsoleMessagesResult>;
-  emulateMedia(params: PageEmulateMediaParams): Promise<PageEmulateMediaResult>;
-  exposeBinding(params: PageExposeBindingParams): Promise<PageExposeBindingResult>;
-  goBack(params: PageGoBackParams): Promise<PageGoBackResult>;
-  goForward(params: PageGoForwardParams): Promise<PageGoForwardResult>;
-  requestGC(params?: PageRequestGCParams): Promise<PageRequestGCResult>;
-  registerLocatorHandler(params: PageRegisterLocatorHandlerParams): Promise<PageRegisterLocatorHandlerResult>;
-  resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams): Promise<PageResolveLocatorHandlerNoReplyResult>;
-  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams): Promise<PageUnregisterLocatorHandlerResult>;
-  reload(params: PageReloadParams): Promise<PageReloadResult>;
-  expectScreenshot(params: PageExpectScreenshotParams): Promise<PageExpectScreenshotResult>;
-  screenshot(params: PageScreenshotParams): Promise<PageScreenshotResult>;
-  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams): Promise<PageSetExtraHTTPHeadersResult>;
-  setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams): Promise<PageSetNetworkInterceptionPatternsResult>;
-  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams): Promise<PageSetWebSocketInterceptionPatternsResult>;
-  setViewportSize(params: PageSetViewportSizeParams): Promise<PageSetViewportSizeResult>;
-  keyboardDown(params: PageKeyboardDownParams): Promise<PageKeyboardDownResult>;
-  keyboardUp(params: PageKeyboardUpParams): Promise<PageKeyboardUpResult>;
-  keyboardInsertText(params: PageKeyboardInsertTextParams): Promise<PageKeyboardInsertTextResult>;
-  keyboardType(params: PageKeyboardTypeParams): Promise<PageKeyboardTypeResult>;
-  keyboardPress(params: PageKeyboardPressParams): Promise<PageKeyboardPressResult>;
-  mouseMove(params: PageMouseMoveParams): Promise<PageMouseMoveResult>;
-  mouseDown(params: PageMouseDownParams): Promise<PageMouseDownResult>;
-  mouseUp(params: PageMouseUpParams): Promise<PageMouseUpResult>;
-  mouseClick(params: PageMouseClickParams): Promise<PageMouseClickResult>;
-  mouseWheel(params: PageMouseWheelParams): Promise<PageMouseWheelResult>;
-  touchscreenTap(params: PageTouchscreenTapParams): Promise<PageTouchscreenTapResult>;
-  clearPageErrors(params?: PageClearPageErrorsParams): Promise<PageClearPageErrorsResult>;
-  pageErrors(params: PagePageErrorsParams): Promise<PagePageErrorsResult>;
-  pdf(params: PagePdfParams): Promise<PagePdfResult>;
-  requests(params?: PageRequestsParams): Promise<PageRequestsResult>;
-  startJSCoverage(params: PageStartJSCoverageParams): Promise<PageStartJSCoverageResult>;
-  stopJSCoverage(params?: PageStopJSCoverageParams): Promise<PageStopJSCoverageResult>;
-  startCSSCoverage(params: PageStartCSSCoverageParams): Promise<PageStartCSSCoverageResult>;
-  stopCSSCoverage(params?: PageStopCSSCoverageParams): Promise<PageStopCSSCoverageResult>;
-  bringToFront(params?: PageBringToFrontParams): Promise<PageBringToFrontResult>;
-  pickLocator(params?: PagePickLocatorParams): Promise<PagePickLocatorResult>;
-  cancelPickLocator(params?: PageCancelPickLocatorParams): Promise<PageCancelPickLocatorResult>;
-  hideHighlight(params?: PageHideHighlightParams): Promise<PageHideHighlightResult>;
-  screencastShowOverlay(params: PageScreencastShowOverlayParams): Promise<PageScreencastShowOverlayResult>;
-  screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams): Promise<PageScreencastRemoveOverlayResult>;
-  screencastChapter(params: PageScreencastChapterParams): Promise<PageScreencastChapterResult>;
-  screencastSetOverlayVisible(params: PageScreencastSetOverlayVisibleParams): Promise<PageScreencastSetOverlayVisibleResult>;
-  screencastShowActions(params: PageScreencastShowActionsParams): Promise<PageScreencastShowActionsResult>;
-  screencastHideActions(params?: PageScreencastHideActionsParams): Promise<PageScreencastHideActionsResult>;
-  screencastStart(params: PageScreencastStartParams): Promise<PageScreencastStartResult>;
-  screencastStop(params?: PageScreencastStopParams): Promise<PageScreencastStopResult>;
-  updateSubscription(params: PageUpdateSubscriptionParams): Promise<PageUpdateSubscriptionResult>;
-  setDockTile(params: PageSetDockTileParams): Promise<PageSetDockTileResult>;
-  webStorageItems(params: PageWebStorageItemsParams): Promise<PageWebStorageItemsResult>;
-  webStorageGetItem(params: PageWebStorageGetItemParams): Promise<PageWebStorageGetItemResult>;
-  webStorageSetItem(params: PageWebStorageSetItemParams): Promise<PageWebStorageSetItemResult>;
-  webStorageRemoveItem(params: PageWebStorageRemoveItemParams): Promise<PageWebStorageRemoveItemResult>;
-  webStorageClear(params: PageWebStorageClearParams): Promise<PageWebStorageClearResult>;
+  addInitScript(params: PageAddInitScriptParams, signal: AbortSignal | undefined): Promise<PageAddInitScriptResult>;
+  close(params: PageCloseParams, signal: AbortSignal | undefined): Promise<PageCloseResult>;
+  runBeforeUnload(params: PageRunBeforeUnloadParams, signal: AbortSignal | undefined): Promise<PageRunBeforeUnloadResult>;
+  clearConsoleMessages(params: PageClearConsoleMessagesParams, signal: AbortSignal | undefined): Promise<PageClearConsoleMessagesResult>;
+  consoleMessages(params: PageConsoleMessagesParams, signal: AbortSignal | undefined): Promise<PageConsoleMessagesResult>;
+  emulateMedia(params: PageEmulateMediaParams, signal: AbortSignal | undefined): Promise<PageEmulateMediaResult>;
+  exposeBinding(params: PageExposeBindingParams, signal: AbortSignal | undefined): Promise<PageExposeBindingResult>;
+  goBack(params: PageGoBackParams, signal: AbortSignal | undefined): Promise<PageGoBackResult>;
+  goForward(params: PageGoForwardParams, signal: AbortSignal | undefined): Promise<PageGoForwardResult>;
+  requestGC(params: PageRequestGCParams, signal: AbortSignal | undefined): Promise<PageRequestGCResult>;
+  registerLocatorHandler(params: PageRegisterLocatorHandlerParams, signal: AbortSignal | undefined): Promise<PageRegisterLocatorHandlerResult>;
+  resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, signal: AbortSignal | undefined): Promise<PageResolveLocatorHandlerNoReplyResult>;
+  unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, signal: AbortSignal | undefined): Promise<PageUnregisterLocatorHandlerResult>;
+  reload(params: PageReloadParams, signal: AbortSignal | undefined): Promise<PageReloadResult>;
+  expectScreenshot(params: PageExpectScreenshotParams, signal: AbortSignal | undefined): Promise<PageExpectScreenshotResult>;
+  screenshot(params: PageScreenshotParams, signal: AbortSignal | undefined): Promise<PageScreenshotResult>;
+  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, signal: AbortSignal | undefined): Promise<PageSetExtraHTTPHeadersResult>;
+  setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<PageSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<PageSetWebSocketInterceptionPatternsResult>;
+  setViewportSize(params: PageSetViewportSizeParams, signal: AbortSignal | undefined): Promise<PageSetViewportSizeResult>;
+  keyboardDown(params: PageKeyboardDownParams, signal: AbortSignal | undefined): Promise<PageKeyboardDownResult>;
+  keyboardUp(params: PageKeyboardUpParams, signal: AbortSignal | undefined): Promise<PageKeyboardUpResult>;
+  keyboardInsertText(params: PageKeyboardInsertTextParams, signal: AbortSignal | undefined): Promise<PageKeyboardInsertTextResult>;
+  keyboardType(params: PageKeyboardTypeParams, signal: AbortSignal | undefined): Promise<PageKeyboardTypeResult>;
+  keyboardPress(params: PageKeyboardPressParams, signal: AbortSignal | undefined): Promise<PageKeyboardPressResult>;
+  mouseMove(params: PageMouseMoveParams, signal: AbortSignal | undefined): Promise<PageMouseMoveResult>;
+  mouseDown(params: PageMouseDownParams, signal: AbortSignal | undefined): Promise<PageMouseDownResult>;
+  mouseUp(params: PageMouseUpParams, signal: AbortSignal | undefined): Promise<PageMouseUpResult>;
+  mouseClick(params: PageMouseClickParams, signal: AbortSignal | undefined): Promise<PageMouseClickResult>;
+  mouseWheel(params: PageMouseWheelParams, signal: AbortSignal | undefined): Promise<PageMouseWheelResult>;
+  touchscreenTap(params: PageTouchscreenTapParams, signal: AbortSignal | undefined): Promise<PageTouchscreenTapResult>;
+  clearPageErrors(params: PageClearPageErrorsParams, signal: AbortSignal | undefined): Promise<PageClearPageErrorsResult>;
+  pageErrors(params: PagePageErrorsParams, signal: AbortSignal | undefined): Promise<PagePageErrorsResult>;
+  pdf(params: PagePdfParams, signal: AbortSignal | undefined): Promise<PagePdfResult>;
+  requests(params: PageRequestsParams, signal: AbortSignal | undefined): Promise<PageRequestsResult>;
+  startJSCoverage(params: PageStartJSCoverageParams, signal: AbortSignal | undefined): Promise<PageStartJSCoverageResult>;
+  stopJSCoverage(params: PageStopJSCoverageParams, signal: AbortSignal | undefined): Promise<PageStopJSCoverageResult>;
+  startCSSCoverage(params: PageStartCSSCoverageParams, signal: AbortSignal | undefined): Promise<PageStartCSSCoverageResult>;
+  stopCSSCoverage(params: PageStopCSSCoverageParams, signal: AbortSignal | undefined): Promise<PageStopCSSCoverageResult>;
+  bringToFront(params: PageBringToFrontParams, signal: AbortSignal | undefined): Promise<PageBringToFrontResult>;
+  pickLocator(params: PagePickLocatorParams, signal: AbortSignal | undefined): Promise<PagePickLocatorResult>;
+  cancelPickLocator(params: PageCancelPickLocatorParams, signal: AbortSignal | undefined): Promise<PageCancelPickLocatorResult>;
+  hideHighlight(params: PageHideHighlightParams, signal: AbortSignal | undefined): Promise<PageHideHighlightResult>;
+  screencastShowOverlay(params: PageScreencastShowOverlayParams, signal: AbortSignal | undefined): Promise<PageScreencastShowOverlayResult>;
+  screencastRemoveOverlay(params: PageScreencastRemoveOverlayParams, signal: AbortSignal | undefined): Promise<PageScreencastRemoveOverlayResult>;
+  screencastChapter(params: PageScreencastChapterParams, signal: AbortSignal | undefined): Promise<PageScreencastChapterResult>;
+  screencastSetOverlayVisible(params: PageScreencastSetOverlayVisibleParams, signal: AbortSignal | undefined): Promise<PageScreencastSetOverlayVisibleResult>;
+  screencastShowActions(params: PageScreencastShowActionsParams, signal: AbortSignal | undefined): Promise<PageScreencastShowActionsResult>;
+  screencastHideActions(params: PageScreencastHideActionsParams, signal: AbortSignal | undefined): Promise<PageScreencastHideActionsResult>;
+  screencastStart(params: PageScreencastStartParams, signal: AbortSignal | undefined): Promise<PageScreencastStartResult>;
+  screencastStop(params: PageScreencastStopParams, signal: AbortSignal | undefined): Promise<PageScreencastStopResult>;
+  updateSubscription(params: PageUpdateSubscriptionParams, signal: AbortSignal | undefined): Promise<PageUpdateSubscriptionResult>;
+  setDockTile(params: PageSetDockTileParams, signal: AbortSignal | undefined): Promise<PageSetDockTileResult>;
+  webStorageItems(params: PageWebStorageItemsParams, signal: AbortSignal | undefined): Promise<PageWebStorageItemsResult>;
+  webStorageGetItem(params: PageWebStorageGetItemParams, signal: AbortSignal | undefined): Promise<PageWebStorageGetItemResult>;
+  webStorageSetItem(params: PageWebStorageSetItemParams, signal: AbortSignal | undefined): Promise<PageWebStorageSetItemResult>;
+  webStorageRemoveItem(params: PageWebStorageRemoveItemParams, signal: AbortSignal | undefined): Promise<PageWebStorageRemoveItemResult>;
+  webStorageClear(params: PageWebStorageClearParams, signal: AbortSignal | undefined): Promise<PageWebStorageClearResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -4769,7 +4769,7 @@ export interface RootEventTarget {
 }
 export interface RootChannel extends RootEventTarget, Channel {
   _type_Root: boolean;
-  initialize(params: RootInitializeParams): Promise<RootInitializeResult>;
+  initialize(params: RootInitializeParams, signal: AbortSignal | undefined): Promise<RootInitializeResult>;
 }
 export type RootInitializeParams = {
   sdkLanguage: SDKLanguage,
@@ -4800,7 +4800,7 @@ export interface PlaywrightEventTarget {
 }
 export interface PlaywrightChannel extends PlaywrightEventTarget, Channel {
   _type_Playwright: boolean;
-  newRequest(params: PlaywrightNewRequestParams): Promise<PlaywrightNewRequestResult>;
+  newRequest(params: PlaywrightNewRequestParams, signal: AbortSignal | undefined): Promise<PlaywrightNewRequestResult>;
 }
 export type PlaywrightNewRequestParams = {
   baseURL?: string,
@@ -4884,13 +4884,13 @@ export interface DebugControllerEventTarget {
 }
 export interface DebugControllerChannel extends DebugControllerEventTarget, Channel {
   _type_DebugController: boolean;
-  initialize(params: DebugControllerInitializeParams): Promise<DebugControllerInitializeResult>;
-  setReportStateChanged(params: DebugControllerSetReportStateChangedParams): Promise<DebugControllerSetReportStateChangedResult>;
-  setRecorderMode(params: DebugControllerSetRecorderModeParams): Promise<DebugControllerSetRecorderModeResult>;
-  highlight(params: DebugControllerHighlightParams): Promise<DebugControllerHighlightResult>;
-  hideHighlight(params?: DebugControllerHideHighlightParams): Promise<DebugControllerHideHighlightResult>;
-  resume(params?: DebugControllerResumeParams): Promise<DebugControllerResumeResult>;
-  kill(params?: DebugControllerKillParams): Promise<DebugControllerKillResult>;
+  initialize(params: DebugControllerInitializeParams, signal: AbortSignal | undefined): Promise<DebugControllerInitializeResult>;
+  setReportStateChanged(params: DebugControllerSetReportStateChangedParams, signal: AbortSignal | undefined): Promise<DebugControllerSetReportStateChangedResult>;
+  setRecorderMode(params: DebugControllerSetRecorderModeParams, signal: AbortSignal | undefined): Promise<DebugControllerSetRecorderModeResult>;
+  highlight(params: DebugControllerHighlightParams, signal: AbortSignal | undefined): Promise<DebugControllerHighlightResult>;
+  hideHighlight(params: DebugControllerHideHighlightParams, signal: AbortSignal | undefined): Promise<DebugControllerHideHighlightResult>;
+  resume(params: DebugControllerResumeParams, signal: AbortSignal | undefined): Promise<DebugControllerResumeResult>;
+  kill(params: DebugControllerKillParams, signal: AbortSignal | undefined): Promise<DebugControllerKillResult>;
 }
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
@@ -4973,11 +4973,11 @@ export interface SocksSupportEventTarget {
 }
 export interface SocksSupportChannel extends SocksSupportEventTarget, Channel {
   _type_SocksSupport: boolean;
-  socksConnected(params: SocksSupportSocksConnectedParams): Promise<SocksSupportSocksConnectedResult>;
-  socksFailed(params: SocksSupportSocksFailedParams): Promise<SocksSupportSocksFailedResult>;
-  socksData(params: SocksSupportSocksDataParams): Promise<SocksSupportSocksDataResult>;
-  socksError(params: SocksSupportSocksErrorParams): Promise<SocksSupportSocksErrorResult>;
-  socksEnd(params: SocksSupportSocksEndParams): Promise<SocksSupportSocksEndResult>;
+  socksConnected(params: SocksSupportSocksConnectedParams, signal: AbortSignal | undefined): Promise<SocksSupportSocksConnectedResult>;
+  socksFailed(params: SocksSupportSocksFailedParams, signal: AbortSignal | undefined): Promise<SocksSupportSocksFailedResult>;
+  socksData(params: SocksSupportSocksDataParams, signal: AbortSignal | undefined): Promise<SocksSupportSocksDataResult>;
+  socksError(params: SocksSupportSocksErrorParams, signal: AbortSignal | undefined): Promise<SocksSupportSocksErrorResult>;
+  socksEnd(params: SocksSupportSocksEndParams, signal: AbortSignal | undefined): Promise<SocksSupportSocksEndResult>;
 }
 export type SocksSupportSocksRequestedEvent = {
   uid: string,
@@ -5046,8 +5046,8 @@ export interface JsonPipeEventTarget {
 }
 export interface JsonPipeChannel extends JsonPipeEventTarget, Channel {
   _type_JsonPipe: boolean;
-  send(params: JsonPipeSendParams): Promise<JsonPipeSendResult>;
-  close(params?: JsonPipeCloseParams): Promise<JsonPipeCloseResult>;
+  send(params: JsonPipeSendParams, signal: AbortSignal | undefined): Promise<JsonPipeSendResult>;
+  close(params: JsonPipeCloseParams, signal: AbortSignal | undefined): Promise<JsonPipeCloseResult>;
 }
 export type JsonPipeMessageEvent = {
   message: any,
@@ -5166,8 +5166,8 @@ export interface CDPSessionEventTarget {
 }
 export interface CDPSessionChannel extends CDPSessionEventTarget, Channel {
   _type_CDPSession: boolean;
-  send(params: CDPSessionSendParams): Promise<CDPSessionSendResult>;
-  detach(params?: CDPSessionDetachParams): Promise<CDPSessionDetachResult>;
+  send(params: CDPSessionSendParams, signal: AbortSignal | undefined): Promise<CDPSessionSendResult>;
+  detach(params: CDPSessionDetachParams, signal: AbortSignal | undefined): Promise<CDPSessionDetachResult>;
 }
 export type CDPSessionEventEvent = {
   method: string,
@@ -5203,8 +5203,8 @@ export interface BindingCallEventTarget {
 }
 export interface BindingCallChannel extends BindingCallEventTarget, Channel {
   _type_BindingCall: boolean;
-  reject(params: BindingCallRejectParams): Promise<BindingCallRejectResult>;
-  resolve(params: BindingCallResolveParams): Promise<BindingCallResolveResult>;
+  reject(params: BindingCallRejectParams, signal: AbortSignal | undefined): Promise<BindingCallRejectResult>;
+  resolve(params: BindingCallResolveParams, signal: AbortSignal | undefined): Promise<BindingCallResolveResult>;
 }
 export type BindingCallRejectParams = {
   error: SerializedError,
@@ -5231,10 +5231,10 @@ export interface DebuggerEventTarget {
 }
 export interface DebuggerChannel extends DebuggerEventTarget, Channel {
   _type_Debugger: boolean;
-  requestPause(params?: DebuggerRequestPauseParams): Promise<DebuggerRequestPauseResult>;
-  resume(params?: DebuggerResumeParams): Promise<DebuggerResumeResult>;
-  next(params?: DebuggerNextParams): Promise<DebuggerNextResult>;
-  runTo(params: DebuggerRunToParams): Promise<DebuggerRunToResult>;
+  requestPause(params: DebuggerRequestPauseParams, signal: AbortSignal | undefined): Promise<DebuggerRequestPauseResult>;
+  resume(params: DebuggerResumeParams, signal: AbortSignal | undefined): Promise<DebuggerResumeResult>;
+  next(params: DebuggerNextParams, signal: AbortSignal | undefined): Promise<DebuggerNextResult>;
+  runTo(params: DebuggerRunToParams, signal: AbortSignal | undefined): Promise<DebuggerRunToResult>;
 }
 export type DebuggerPausedStateChangedEvent = {
   pausedDetails?: {
@@ -5283,8 +5283,8 @@ export interface DialogEventTarget {
 }
 export interface DialogChannel extends DialogEventTarget, Channel {
   _type_Dialog: boolean;
-  accept(params: DialogAcceptParams): Promise<DialogAcceptResult>;
-  dismiss(params?: DialogDismissParams): Promise<DialogDismissResult>;
+  accept(params: DialogAcceptParams, signal: AbortSignal | undefined): Promise<DialogAcceptResult>;
+  dismiss(params: DialogDismissParams, signal: AbortSignal | undefined): Promise<DialogDismissResult>;
 }
 export type DialogAcceptParams = {
   promptText?: string,
@@ -5394,14 +5394,14 @@ export interface TracingEventTarget {
 }
 export interface TracingChannel extends TracingEventTarget, Channel {
   _type_Tracing: boolean;
-  tracingStart(params: TracingTracingStartParams): Promise<TracingTracingStartResult>;
-  tracingStartChunk(params: TracingTracingStartChunkParams): Promise<TracingTracingStartChunkResult>;
-  tracingGroup(params: TracingTracingGroupParams): Promise<TracingTracingGroupResult>;
-  tracingGroupEnd(params?: TracingTracingGroupEndParams): Promise<TracingTracingGroupEndResult>;
-  tracingStopChunk(params: TracingTracingStopChunkParams): Promise<TracingTracingStopChunkResult>;
-  tracingStop(params?: TracingTracingStopParams): Promise<TracingTracingStopResult>;
-  harStart(params: TracingHarStartParams): Promise<TracingHarStartResult>;
-  harExport(params: TracingHarExportParams): Promise<TracingHarExportResult>;
+  tracingStart(params: TracingTracingStartParams, signal: AbortSignal | undefined): Promise<TracingTracingStartResult>;
+  tracingStartChunk(params: TracingTracingStartChunkParams, signal: AbortSignal | undefined): Promise<TracingTracingStartChunkResult>;
+  tracingGroup(params: TracingTracingGroupParams, signal: AbortSignal | undefined): Promise<TracingTracingGroupResult>;
+  tracingGroupEnd(params: TracingTracingGroupEndParams, signal: AbortSignal | undefined): Promise<TracingTracingGroupEndResult>;
+  tracingStopChunk(params: TracingTracingStopChunkParams, signal: AbortSignal | undefined): Promise<TracingTracingStopChunkResult>;
+  tracingStop(params: TracingTracingStopParams, signal: AbortSignal | undefined): Promise<TracingTracingStopResult>;
+  harStart(params: TracingHarStartParams, signal: AbortSignal | undefined): Promise<TracingHarStartResult>;
+  harExport(params: TracingHarExportParams, signal: AbortSignal | undefined): Promise<TracingHarExportResult>;
 }
 export type TracingTracingStartParams = {
   name?: string,
@@ -5494,10 +5494,10 @@ export interface WorkerEventTarget {
 }
 export interface WorkerChannel extends WorkerEventTarget, Channel {
   _type_Worker: boolean;
-  disconnect(params: WorkerDisconnectParams): Promise<WorkerDisconnectResult>;
-  evaluateExpression(params: WorkerEvaluateExpressionParams): Promise<WorkerEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams): Promise<WorkerEvaluateExpressionHandleResult>;
-  updateSubscription(params: WorkerUpdateSubscriptionParams): Promise<WorkerUpdateSubscriptionResult>;
+  disconnect(params: WorkerDisconnectParams, signal: AbortSignal | undefined): Promise<WorkerDisconnectResult>;
+  evaluateExpression(params: WorkerEvaluateExpressionParams, signal: AbortSignal | undefined): Promise<WorkerEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, signal: AbortSignal | undefined): Promise<WorkerEvaluateExpressionHandleResult>;
+  updateSubscription(params: WorkerUpdateSubscriptionParams, signal: AbortSignal | undefined): Promise<WorkerUpdateSubscriptionResult>;
 }
 export type WorkerConsoleEvent = {
   type: string,
