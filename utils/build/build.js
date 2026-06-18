@@ -558,6 +558,40 @@ for (const pkg of workspace.packages()) {
   }));
 }
 
+// @playwright/client — browser-targeted ESM bundle. The client tree is written
+// isomorphically; the few genuine node builtins it still imports are swapped for
+// browser stubs here (see packages/playwright-client/src/nodeStubs). esbuild's
+// `platform: 'browser'` additionally fails the build if any other builtin leaks.
+{
+  const clientNodeStub = name => filePath(`packages/playwright-client/src/nodeStubs/${name}.ts`);
+  steps.push(new EsbuildStep({
+    bundle: true,
+    format: 'esm',
+    platform: 'browser',
+    target: 'es2020',
+    entryPoints: [filePath('packages/playwright-client/src/index.ts')],
+    outfile: filePath('packages/playwright-client/lib/index.mjs'),
+    alias: {
+      'fs': clientNodeStub('fs'),
+      'path': clientNodeStub('path'),
+      'stream': clientNodeStub('stream'),
+      'util': clientNodeStub('util'),
+      'inspector': clientNodeStub('inspector'),
+      'async_hooks': clientNodeStub('async_hooks'),
+      'events': clientNodeStub('events'),
+      // Vendored npm dep used for terminal colors; no-op in the browser.
+      'colors/safe': clientNodeStub('colors'),
+    },
+    // Provide a `process` global so isomorphic/@utils code that reads
+    // `process.env` works in the browser.
+    inject: [clientNodeStub('processShim')],
+  }, [
+    filePath('packages/playwright-client/src'),
+    filePath('packages/playwright-core/src/client'),
+    filePath('packages/isomorphic'),
+  ]));
+}
+
 // Build playwright-core exported entry points.
 steps.push(new EsbuildStep({
   entryPoints: [

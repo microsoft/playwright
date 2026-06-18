@@ -78,7 +78,7 @@ export async function connectToEndpoint(parentConnection: Connection, params: ch
   const localUtils = parentConnection.localUtils();
   const transport = localUtils ? new JsonPipeTransport(localUtils) : new WebSocketTransport();
   const connectHeaders = await transport.connect(params);
-  const connection = new Connection(parentConnection._platform, localUtils, parentConnection._instrumentation, connectHeaders);
+  const connection = new Connection(localUtils, parentConnection._instrumentation, connectHeaders);
   connection.markAsRemote();
   connection.on('close', () => transport.close());
 

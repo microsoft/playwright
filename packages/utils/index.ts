@@ -26,7 +26,6 @@ export * from './fileUtils';
 export * from './hostPlatform';
 export * from './httpServer';
 export * from './network';
-export * from './nodePlatform';
 export * from './processLauncher';
 export * from './profiler';
 export * from './serializedFS';

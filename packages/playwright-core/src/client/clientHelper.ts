@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { isString } from '@isomorphic/rtti';
+import fs from 'fs';
 
-import type { Platform } from '@isomorphic/platform';
+import { isString } from '@isomorphic/rtti';
 
 export function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
@@ -28,7 +28,7 @@ export function envObjectToArray(env: NodeJS.ProcessEnv): { name: string, value:
   return result;
 }
 
-export async function evaluationScript(platform: Platform, fun: Function | string | { path?: string, content?: string }, arg?: any, addSourceUrl: boolean = true): Promise<string> {
+export async function evaluationScript(fun: Function | string | { path?: string, content?: string }, arg?: any, addSourceUrl: boolean = true): Promise<string> {
   if (typeof fun === 'function') {
     const source = fun.toString();
     const argString = Object.is(arg, undefined) ? 'undefined' : JSON.stringify(arg);
@@ -41,7 +41,7 @@ export async function evaluationScript(platform: Platform, fun: Function | strin
   if (fun.content !== undefined)
     return fun.content;
   if (fun.path !== undefined) {
-    let source = await platform.fs().promises.readFile(fun.path, 'utf8');
+    let source = await fs.promises.readFile(fun.path, 'utf8');
     if (addSourceUrl)
       source = addSourceUrlToScript(source, fun.path);
     return source;

@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-
-// Keep in sync with the server.
-export const fileUploadSizeLimit = 50 * 1024 * 1024;
-
-export async function mkdirIfNeeded(filePath: string) {
-  // This will harmlessly throw on windows if the dirname is the root directory.
-  await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
+export function url(): string | undefined {
+  return undefined;
 }
+
+export default { url };

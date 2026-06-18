@@ -16,18 +16,15 @@
  */
 
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT, DEFAULT_PLAYWRIGHT_TIMEOUT } from '@isomorphic/time';
-
-import type { Platform } from '@isomorphic/platform';
+import { debugMode } from '@utils/debug';
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
   private _defaultTimeout: number | undefined;
   private _defaultNavigationTimeout: number | undefined;
-  private _platform: Platform;
 
-  constructor(platform: Platform, parent?: TimeoutSettings) {
+  constructor(parent?: TimeoutSettings) {
     this._parent = parent;
-    this._platform = platform;
   }
 
   setDefaultTimeout(timeout: number | undefined) {
@@ -51,7 +48,7 @@ export class TimeoutSettings {
       return options.timeout;
     if (this._defaultNavigationTimeout !== undefined)
       return this._defaultNavigationTimeout;
-    if (this._platform.isDebugMode())
+    if (debugMode() === 'inspector')
       return 0;
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
@@ -63,7 +60,7 @@ export class TimeoutSettings {
   timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    if (this._platform.isDebugMode())
+    if (debugMode() === 'inspector')
       return 0;
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
@@ -75,7 +72,7 @@ export class TimeoutSettings {
   launchTimeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    if (this._platform.isDebugMode())
+    if (debugMode() === 'inspector')
       return 0;
     if (this._parent)
       return this._parent.launchTimeout(options);

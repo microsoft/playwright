@@ -15,7 +15,6 @@
  */
 
 import { Connection } from '../../playwright-core/src/client/connection';
-import { webPlatform } from './webPlatform';
 
 import type { Browser } from '../../playwright-core/src/client/browser';
 
@@ -30,7 +29,7 @@ export async function connect(wsEndpoint: string, browserName: string, options: 
     ws.addEventListener('error', r);
   });
 
-  const connection = new Connection(webPlatform);
+  const connection = new Connection();
   connection.onmessage = message => ws.send(JSON.stringify(message));
   ws.addEventListener('message', message => connection.dispatch(JSON.parse(message.data)));
   ws.addEventListener('close', () => connection.close());

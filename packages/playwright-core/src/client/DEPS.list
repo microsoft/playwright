@@ -1,3 +1,7 @@
 [*]
 ../protocol/
 @isomorphic/**
+@utils/debug.ts
+@utils/debugLogger.ts
+@utils/zones.ts
+node_modules/colors/safe

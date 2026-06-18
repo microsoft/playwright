@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { inspect } from 'util';
+
 import { asLocatorDescription, locatorCustomDescription } from '@isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
 import { escapeForTextSelector } from '@isomorphic/stringUtils';
@@ -71,8 +73,8 @@ export class Locator implements api.Locator {
     if (options?.visible !== undefined)
       this._selector += ` >> visible=${options.visible ? 'true' : 'false'}`;
 
-    if (this._frame._platform.inspectCustom)
-      (this as any)[this._frame._platform.inspectCustom] = () => this._inspect();
+    if (inspect.custom)
+      (this as any)[inspect.custom] = () => this._inspect();
   }
 
   private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, options: { title: string, internal?: boolean, timeout?: number }): Promise<R> {

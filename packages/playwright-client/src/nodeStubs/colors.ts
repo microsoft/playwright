@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
+// Browser polyfill for `colors/safe`.
 
-// Keep in sync with the server.
-export const fileUploadSizeLimit = 50 * 1024 * 1024;
+import { noColors } from '@isomorphic/colors';
 
-export async function mkdirIfNeeded(filePath: string) {
-  // This will harmlessly throw on windows if the dirname is the root directory.
-  await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
-}
+export default noColors;
