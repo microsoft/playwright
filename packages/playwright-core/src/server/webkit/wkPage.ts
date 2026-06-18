@@ -1214,7 +1214,7 @@ export class WKPage implements PageDelegate {
 
   _onWebSocketWillSendHandshakeRequest(event: Protocol.Network.webSocketWillSendHandshakeRequestPayload) {
     const wallTimeMs = event.walltime * 1000;
-    this._timestampBaselineForWebSocket.set(event.requestId, wallTimeMs - event.timestamp);
+    this._timestampBaselineForWebSocket.set(event.requestId, wallTimeMs - event.timestamp * 1000);
     this._page.frameManager.onWebSocketRequest(event.requestId, headersObjectToArray(event.request.headers), wallTimeMs);
   }
 
@@ -1224,7 +1224,7 @@ export class WKPage implements PageDelegate {
   }
 
   _timestampToWallTimeMsForWebSocket(requestId: string, timestamp: number): number {
-    return this._timestampBaselineForWebSocket.get(requestId)! + timestamp;
+    return this._timestampBaselineForWebSocket.get(requestId)! + timestamp * 1000;
   }
 
   async _grantPermissions(origin: string, permissions: string[]) {
