@@ -447,7 +447,9 @@ test('greedy time-based scheduling can be built on preprocessSuite', async ({ ru
             return { implementsSharding: false };
           const total = config.shard.total;
           const tests = suite.allTests();
-          const sorted = [...tests].sort((a, b) => (timings[b.id] || 0) - (timings[a.id] || 0));
+          const known = Object.values(timings) as number[];
+          const avg = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 0;
+          const sorted = [...tests].sort((a, b) => (timings[b.id] || avg) - (timings[a.id] || avg));
           const loads = new Array(total).fill(0);
           const assignment = new Map<TestCase, number>();
           for (const t of sorted) {
@@ -456,7 +458,7 @@ test('greedy time-based scheduling can be built on preprocessSuite', async ({ ru
               if (loads[i] < loads[min])
                 min = i;
             }
-            loads[min] += (timings[t.id] || 0);
+            loads[min] += (timings[t.id] || avg);
             assignment.set(t, min);
           }
           for (const t of tests) {
