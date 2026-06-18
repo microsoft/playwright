@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
+import type { StackFrame } from '../stackTrace';
+
+type ClientSideCallMetadata = {
+  id: number,
+  stack?: StackFrame[],
+};
 
 export type SerializedStackFrame = [number, number, number, string];
 export type SerializedStack = [number, SerializedStackFrame[]];

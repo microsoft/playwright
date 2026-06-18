@@ -33,8 +33,8 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 import type { AndroidDevice } from '../android/android';
 import type { Browser } from '../browser';
 import type { Playwright } from '../playwright';
-import type * as channels from '@protocol/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channels';
+import type { Progress } from '../progress';
 
 export type PlaywrightDispatcherOptions = {
   socksProxy?: SocksProxy;

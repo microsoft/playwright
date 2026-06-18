@@ -38,7 +38,7 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export type WaitForNavigationOptions = {
   timeout?: number,

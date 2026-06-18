@@ -30,7 +30,7 @@ import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { FFSession } from './ffConnection';
 import type { Protocol } from './protocol';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 export class FFBrowser extends Browser {
   private _connection: FFConnection;

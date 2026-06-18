@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { serializeExpectedTextValues } from '@isomorphic/expectUtils';
 import { toKeyboardModifiers } from '../codegen/language';
 import { buildFullSelector, mainFrameForAction } from './recorderUtils';
 import { Progress } from '../progress';
@@ -105,7 +104,7 @@ async function performActionImpl(progress: Progress, mainFrame: Frame, actionInC
     await mainFrame.expect(progress, selector, {
       selector,
       expression: 'to.have.text',
-      expectedText: serializeExpectedTextValues([action.text], { matchSubstring: true, normalizeWhiteSpace: true }),
+      expectedText: [{ string: action.text, matchSubstring: true, normalizeWhiteSpace: true }],
       isNot: false,
     });
     return;

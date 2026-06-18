@@ -19,7 +19,7 @@ import { remote, utils } from '../../packages/playwright-core/lib/coreBundle';
 const { PlaywrightServer } = remote;
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../../packages/playwright-core/src/client/channels';
 import { roundBox } from '../config/utils';
 
 const { createGuid } = utils;

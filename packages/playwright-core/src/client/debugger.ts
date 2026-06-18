@@ -18,7 +18,7 @@ import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 type PausedDetails = { location: { file: string, line?: number, column?: number }, title: string, stack?: string };
 

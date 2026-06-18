@@ -27,7 +27,7 @@ import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../
 import type { Protocol } from './protocol';
 import type { RecentLogsCollector } from '@utils/debugLogger';
 import type { ProtocolLogger } from '../types';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from '../progress';
 
 
 export const ConnectionEvents = {

@@ -18,7 +18,7 @@ import { ChannelOwner } from './channelOwner';
 import { Stream } from './stream';
 import { mkdirIfNeeded } from './fileUtils';
 
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { Readable } from 'stream';
 
 export class Artifact extends ChannelOwner<channels.ArtifactChannel> {

@@ -31,7 +31,7 @@ import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 
 export class BidiBrowser extends Browser {

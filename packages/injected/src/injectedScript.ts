@@ -37,7 +37,6 @@ import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { CSSComplexSelectorList } from '@isomorphic/cssParser';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { AttributeSelectorPart, NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '@isomorphic/selectorParser';
-import type * as channels from '@protocol/channels';
 import type { AriaSnapshot, AriaTreeOptions } from './ariaSnapshot';
 import type { LayoutSelectorName } from './layoutSelectorUtils';
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
@@ -46,8 +45,28 @@ import type { ElementText, TextMatcher } from './selectorUtils';
 import type { Builtins } from './utilityScript';
 
 
-export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue' | 'timeout'> & {
-  expectedValue?: any;
+type ExpectedTextValue = {
+  string?: string,
+  regexSource?: string,
+  regexFlags?: string,
+  matchSubstring?: boolean,
+  ignoreCase?: boolean,
+  normalizeWhiteSpace?: boolean,
+};
+
+type Point = { x: number, y: number };
+type Rect = Point & { width: number, height: number };
+
+export type FrameExpectParams = {
+  selector?: string,
+  expression: string,
+  expressionArg?: any,
+  pseudo?: 'before' | 'after',
+  expectedText?: ExpectedTextValue[],
+  expectedNumber?: number,
+  expectedValue?: any,
+  useInnerText?: boolean,
+  isNot: boolean,
 };
 
 export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
@@ -1337,7 +1356,7 @@ export class InjectedScript {
     highlight.removeElementHighlight(selector);
   }
 
-  setScreencastAnnotation(annotation: { point?: channels.Point, box?: channels.Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number, cursor?: 'none' | 'pointer' } | null) {
+  setScreencastAnnotation(annotation: { point?: Point, box?: Rect, actionTitle?: string, duration?: number, position?: string, fontSize?: number, cursor?: 'none' | 'pointer' } | null) {
     const highlight = this._ensureHighlight();
     if (!annotation) {
       highlight.updateHighlight([]);
@@ -1722,7 +1741,7 @@ export class InjectedScript {
   }
 
   private _matchSequentially<T>(
-    expectedText: channels.ExpectedTextValue[],
+    expectedText: ExpectedTextValue[],
     received: T[],
     matchFn: (matcher: ExpectedTextMatcher, received: T) => boolean
   ): boolean {
@@ -1811,7 +1830,7 @@ class ExpectedTextMatcher {
   private _normalizeWhiteSpace: boolean | undefined;
   private _ignoreCase: boolean | undefined;
 
-  constructor(expected: channels.ExpectedTextValue) {
+  constructor(expected: ExpectedTextValue) {
     this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
     this._ignoreCase = expected.ignoreCase;
     this._string = expected.matchSubstring ? undefined : this.normalize(expected.string);

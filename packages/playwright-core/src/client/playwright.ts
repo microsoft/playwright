@@ -23,7 +23,7 @@ import { TimeoutError } from './errors';
 import { APIRequest } from './fetch';
 import { Selectors } from './selectors';
 
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { LaunchOptions } from 'playwright-core';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {

@@ -16,9 +16,50 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Point, SerializedError, StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@isomorphic/stackTrace';
+import type { Point } from '@isomorphic/types';
 
 export type Size = { width: number, height: number };
+
+export type SerializedValue = {
+  n?: number,
+  b?: boolean,
+  s?: string,
+  v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
+  d?: string,
+  u?: string,
+  bi?: string,
+  ta?: {
+    b: Buffer,
+    k: 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64',
+  },
+  e?: {
+    m: string,
+    n: string,
+    s: string,
+  },
+  r?: {
+    p: string,
+    f: string,
+  },
+  a?: SerializedValue[],
+  o?: {
+    k: string,
+    v: SerializedValue,
+  }[],
+  h?: number,
+  id?: number,
+  ref?: number,
+};
+
+export type SerializedError = {
+  error?: {
+    message: string,
+    name: string,
+    stack?: string,
+  },
+  value?: SerializedValue,
+};
 
 // Make sure you add _modernize_N_to_N1(event: any) to traceModernizer.ts.
 export type VERSION = 8;

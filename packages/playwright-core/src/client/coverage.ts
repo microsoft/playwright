@@ -15,7 +15,7 @@
  */
 
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export class Coverage implements api.Coverage {
   private _channel: channels.PageChannel;

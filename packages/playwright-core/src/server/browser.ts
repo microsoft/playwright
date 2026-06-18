@@ -32,7 +32,7 @@ import { TargetClosedError } from './errors';
 import type * as types from './types';
 import type { ProxySettings } from './types';
 import type { RecentLogsCollector } from '@utils/debugLogger';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { ChildProcess } from 'child_process';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { Progress } from './progress';

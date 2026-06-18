@@ -51,7 +51,7 @@ import type { Progress } from '../progress';
 import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import type { BrowserContext } from '../browserContext';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 import type http from 'http';
 import type stream from 'stream';
 

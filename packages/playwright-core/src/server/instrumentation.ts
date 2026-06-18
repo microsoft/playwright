@@ -19,6 +19,7 @@ import { EventEmitter } from 'events';
 import { createGuid } from '@utils/crypto';
 import { debugLogger } from '@utils/debugLogger';
 
+import type { SerializedError } from './channels';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';
@@ -29,8 +30,6 @@ import type { Frame } from './frames';
 import type { Page, Worker } from './page';
 import type { Playwright } from './playwright';
 import type * as types from './types';
-import type { CallMetadata } from '@protocol/callMetadata';
-export type { CallMetadata } from '@protocol/callMetadata';
 import type { LogName } from '@utils/debugLogger';
 
 export type Attribution = {
@@ -81,6 +80,30 @@ export function createRootSdkObject() {
 }
 
 export type AddListenerOptions = { order?: 'last' };
+
+export type CallMetadata = {
+  id: string;
+  startTime: number;
+  endTime: number;
+  pauseStartTime?: number;
+  pauseEndTime?: number;
+  type: string;
+  method: string;
+  params: any;
+  title?: string;
+  // Client is making an internal call that should not show up in
+  // the inspector or trace.
+  internal?: boolean;
+  // Test runner step id.
+  stepId?: string;
+  location?: { file: string, line?: number, column?: number };
+  log: string[];
+  error?: SerializedError;
+  result?: any;
+  objectId?: string;
+  pageId?: string;
+  frameId?: string;
+};
 
 export interface Instrumentation {
   addListener(listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null, options?: AddListenerOptions): void;

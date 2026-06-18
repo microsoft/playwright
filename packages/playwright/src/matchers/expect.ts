@@ -88,7 +88,7 @@ import type { MatcherContext, MatchersObject, RawMatcherFn } from './expectLibra
 import type { MatcherAttachment, MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@isomorphic/stackTrace';
 
 interface ExpectStep {
   complete(result: {

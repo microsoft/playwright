@@ -21,7 +21,7 @@ import { SdkObject } from './instrumentation';
 import * as rawUtilityScriptSource from '../generated/utilityScriptSource';
 
 import type * as dom from './dom';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from './progress';
 import type { UtilityScript } from '@injected/utilityScript';
 
 interface TaggedAsJSHandle<T> {

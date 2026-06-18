@@ -20,13 +20,22 @@ import type * as fs from 'fs';
 import type * as path from 'path';
 import type { Readable, Writable } from 'stream';
 import type { Colors } from '@isomorphic/colors';
-import type * as channels from '@protocol/channels';
 
 export type Zone = {
   push(data: unknown): Zone;
   pop(): Zone;
   run<R>(func: () => R): R;
   data<T>(): T | undefined;
+};
+
+export type StreamChannel = {
+  read(params: { size?: number }): Promise<{ binary: Buffer }>;
+  close(params?: {}): Promise<any>;
+};
+
+export type WritableStreamChannel = {
+  write(params: { binary: Buffer }): Promise<any>;
+  close(params?: {}): Promise<any>;
 };
 
 const noopZone: Zone = {
@@ -57,8 +66,8 @@ export type Platform = {
   pathSeparator: string;
   showInternalStackFrames: () => boolean,
   streamFile: (path: string, writable: Writable) => Promise<void>,
-  streamReadable: (channel: channels.StreamChannel) => Readable,
-  streamWritable: (channel: channels.WritableStreamChannel) => Writable,
+  streamReadable: (channel: StreamChannel) => Readable,
+  streamWritable: (channel: WritableStreamChannel) => Writable,
   zones: { empty: Zone, current: () => Zone; };
 };
 
@@ -111,11 +120,11 @@ export const emptyPlatform: Platform = {
     throw new Error('Streams are not available');
   },
 
-  streamReadable: (channel: channels.StreamChannel) => {
+  streamReadable: (channel: StreamChannel) => {
     throw new Error('Streams are not available');
   },
 
-  streamWritable: (channel: channels.WritableStreamChannel) => {
+  streamWritable: (channel: WritableStreamChannel) => {
     throw new Error('Streams are not available');
   },
 

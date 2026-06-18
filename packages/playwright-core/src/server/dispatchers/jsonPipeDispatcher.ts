@@ -18,8 +18,8 @@ import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../instrumentation';
 
 import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
-import type * as channels from '@protocol/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channels';
+import type { Progress } from '../progress';
 
 export class JsonPipeDispatcher extends Dispatcher<SdkObject, channels.JsonPipeChannel, LocalUtilsDispatcher> implements channels.JsonPipeChannel {
   _type_JsonPipe = true;

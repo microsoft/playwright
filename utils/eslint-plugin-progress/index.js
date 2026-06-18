@@ -121,7 +121,7 @@ const rule = createRule({
       description: 'In methods accepting Progress, awaited async calls must pass progress or be wrapped in progress.race()',
     },
     messages: {
-      missingProgress: 'Awaited async call must either pass `progress` as first argument or be wrapped in `progress.race()`. See packages/protocol/src/progress.d.ts.',
+      missingProgress: 'Awaited async call must either pass `progress` as first argument or be wrapped in `progress.race()`. See packages/playwright-core/src/server/progress.ts.',
     },
     schema: [],
   },

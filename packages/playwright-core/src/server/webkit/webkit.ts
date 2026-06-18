@@ -33,7 +33,7 @@ import type { Progress } from '../progress';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { RecentLogsCollector } from '@utils/debugLogger';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 // Must be kept in sync with bin/install_webkit_wsl.ps1 that provisions the distribution.
 const kWSLDistribution = 'playwright';

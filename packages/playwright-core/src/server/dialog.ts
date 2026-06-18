@@ -20,7 +20,7 @@ import { SdkObject } from './instrumentation';
 
 import type { Instrumentation } from './instrumentation';
 import type { Page } from './page';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from './progress';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
 

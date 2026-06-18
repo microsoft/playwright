@@ -19,7 +19,7 @@ import { setTestIdAttribute } from './locator';
 
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { BrowserContext } from './browserContext';
 import type { Platform } from '@isomorphic/platform';
 

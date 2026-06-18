@@ -16,7 +16,7 @@
 
 import type { BrowserContext } from './browserContext';
 import type { APIRequestContext, NewContextOptions } from './fetch';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from './channels';
 import type { Page } from './page';
 import type { BrowserContextOptions } from './types';
 

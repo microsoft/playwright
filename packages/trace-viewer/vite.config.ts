@@ -36,7 +36,6 @@ export default defineConfig({
     alias: {
       '@injected': path.resolve(__dirname, '../injected/src'),
       '@isomorphic': path.resolve(__dirname, '../isomorphic'),
-      '@protocol': path.resolve(__dirname, '../protocol/src'),
       '@testIsomorphic': path.resolve(__dirname, '../playwright/src/isomorphic'),
       '@trace': path.resolve(__dirname, '../trace/src'),
       '@web': path.resolve(__dirname, '../web/src'),

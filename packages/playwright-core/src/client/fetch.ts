@@ -31,7 +31,7 @@ import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '@isomorphic/types';
 import type { Platform } from '@isomorphic/platform';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type * as fs from 'fs';
 
 export type FetchOptions = {

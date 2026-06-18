@@ -21,7 +21,7 @@ import { DisposableStub } from './disposable';
 
 import type { Page } from './page';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;

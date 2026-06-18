@@ -21,7 +21,6 @@ import { isRegExp } from '@isomorphic/rtti';
 import { isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { constructURLBasedOnBaseURL, isURLPattern } from '@isomorphic/urlMatch';
-import { serializeExpectedTextValues } from '@isomorphic/expectUtils';
 import { monotonicTime } from '@isomorphic/index';
 
 import { expectTypes, formatMatcherMessage, MatcherResult } from './matcherHint';
@@ -44,6 +43,26 @@ import type { URLPattern } from '@isomorphic/urlMatch';
 export type ExpectMatcherStateInternal = Omit<ExpectMatcherState, 'utils'> & {
   utils: ExpectMatcherUtils & InternalMatcherUtils;
 };
+
+type ExpectedTextValue = {
+  string?: string,
+  regexSource?: string,
+  regexFlags?: string,
+  matchSubstring?: boolean,
+  ignoreCase?: boolean,
+  normalizeWhiteSpace?: boolean,
+};
+
+function serializeExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {
+  return items.map(i => ({
+    string: isString(i) ? i : undefined,
+    regexSource: isRegExp(i) ? i.source : undefined,
+    regexFlags: isRegExp(i) ? i.flags : undefined,
+    matchSubstring: options.matchSubstring,
+    ignoreCase: options.ignoreCase,
+    normalizeWhiteSpace: options.normalizeWhiteSpace,
+  }));
+}
 
 export interface LocatorEx extends Locator {
   _selector: string;

@@ -31,7 +31,7 @@ import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
 import type { Platform } from '@isomorphic/platform';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { Playwright } from './playwright';
 
 type Direction = 'down' | 'up' | 'left' | 'right';

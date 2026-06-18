@@ -27,7 +27,7 @@ import type { DropPayload, FilePayload, FrameExpectParams, Rect, SelectOption, S
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 
 export type LocatorOptions = {

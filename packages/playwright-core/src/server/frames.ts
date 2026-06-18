@@ -47,7 +47,7 @@ import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type { ParsedSelector } from '@isomorphic/selectorParser';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedReason: string }>;

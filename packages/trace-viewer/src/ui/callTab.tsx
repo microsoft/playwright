@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/channels';
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent, SerializedValue } from '@trace/trace';
 import { clsx } from '@web/uiUtils';
 import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';

@@ -26,8 +26,8 @@ import type * as pages from './page';
 import type * as types from './types';
 import type { NormalizedContinueOverrides } from './types';
 import type { HeadersArray, NameValue } from '@isomorphic/types';
-import type * as channels from '@protocol/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from './channels';
+import type { Progress } from './progress';
 
 
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {

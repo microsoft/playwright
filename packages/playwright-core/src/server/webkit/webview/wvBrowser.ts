@@ -37,7 +37,7 @@ import type { SdkObject } from '../../instrumentation';
 import type { InitScript, Page } from '../../page';
 import type { ProtocolRequest, ProtocolResponse } from '../../transport';
 import type * as types from '../../types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../../channels';
 import type { Progress } from '../../progress';
 import type { ConnectOverCDPTransport } from '../../../../types/types.d.ts';
 

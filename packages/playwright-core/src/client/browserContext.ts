@@ -48,7 +48,7 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type { Platform } from '@isomorphic/platform';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type * as actions from '@recorder/actions';
 
 interface RecorderEventSink {

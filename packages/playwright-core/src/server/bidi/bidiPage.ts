@@ -35,7 +35,7 @@ import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 export const kPlaywrightBindingChannel = 'playwrightChannel';

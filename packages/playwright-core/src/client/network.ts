@@ -37,7 +37,7 @@ import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '@isomorphic/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { Platform, Zone } from '@isomorphic/platform';
 
 export type NetworkCookie = {

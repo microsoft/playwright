@@ -27,7 +27,7 @@ import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { TimeoutOptions, WaitForEventOptions } from './types';
 
 
