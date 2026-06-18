@@ -53,17 +53,6 @@ const reporters = () => {
   return result;
 };
 
-let connectOptions: any;
-let webServer: Config['webServer'];
-
-if (channel === 'webkit-wsl') {
-  connectOptions = { wsEndpoint: 'ws://localhost:3777/' };
-  webServer = {
-    command: 'set PWTEST_UNDER_TEST=1 && set WSLENV=PWTEST_UNDER_TEST && wsl.exe -d playwright -u pwuser -- bash -lc \'/home/pwuser/node/bin/npx playwright run-server --port=3777\'',
-    url: 'http://localhost:3777',
-  };
-}
-
 const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
   outputDir,
@@ -80,10 +69,6 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   reporter: reporters(),
   tag: process.env.PW_TAG,
   projects: [],
-  use: {
-    connectOptions,
-  },
-  webServer,
 };
 
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];

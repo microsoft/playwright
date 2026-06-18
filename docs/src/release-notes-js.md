@@ -65,6 +65,7 @@ const items = await page.sessionStorage.items();
 ### 🛠️ Other improvements
 
 - Playwright now supports Ubuntu 26.04.
+- HAR and trace recordings now include WebSocket requests.
 
 ### Browser Versions
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { clsx } from '../uiUtils';
+import { clsx, handleTabListKeyDown } from '../uiUtils';
 import './tabbedPane.css';
 import { Toolbar } from './toolbar';
 import * as React from 'react';
@@ -45,24 +45,9 @@ export const TabbedPane: React.FunctionComponent<{
     mode = 'default';
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const tabElements = Array.from(tabListRef.current?.querySelectorAll('[role="tab"]') ?? []) as HTMLElement[];
-    const currentIndex = tabElements.findIndex(el => el === document.activeElement);
-    if (currentIndex === -1)
-      return;
-    let nextIndex = currentIndex;
-    if (e.key === 'ArrowRight')
-      nextIndex = (currentIndex + 1) % tabElements.length;
-    else if (e.key === 'ArrowLeft')
-      nextIndex = (currentIndex - 1 + tabElements.length) % tabElements.length;
-    else if (e.key === 'Home')
-      nextIndex = 0;
-    else if (e.key === 'End')
-      nextIndex = tabElements.length - 1;
-    else
-      return;
-    e.preventDefault();
-    tabElements[nextIndex].focus();
-    setSelectedTab?.(tabs[nextIndex].id);
+    const nextIndex = handleTabListKeyDown(e, tabListRef.current);
+    if (nextIndex !== -1)
+      setSelectedTab?.(tabs[nextIndex].id);
   };
 
   return <div className='tabbed-pane' data-testid={dataTestId}>

@@ -51,7 +51,7 @@ import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
 import type { ImageComparatorOptions } from '@utils/comparators';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { BindingPayload } from '@injected/bindingsController';
 import type { SelectorInfo } from './frameSelectors';
 

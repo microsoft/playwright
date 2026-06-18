@@ -29,7 +29,7 @@ import { filteredStackTrace } from '../util';
 
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
-import type { SerializedError, StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@isomorphic/stackTrace';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
 
@@ -291,7 +291,7 @@ export class TestTracing {
     });
   }
 
-  appendAfterActionForStep(callId: string, error?: SerializedError['error'], attachments: Attachment[] = [], annotations?: trace.AfterActionTraceEventAnnotation[]) {
+  appendAfterActionForStep(callId: string, error?: trace.SerializedError['error'], attachments: Attachment[] = [], annotations?: trace.AfterActionTraceEventAnnotation[]) {
     this._appendTraceEvent({
       type: 'after',
       callId,

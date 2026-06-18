@@ -19,9 +19,9 @@ import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../instrumentation';
 
 import type { ArtifactDispatcher } from './artifactDispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 import type * as stream from 'stream';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from '../progress';
 
 class StreamSdkObject extends SdkObject {
   readonly stream: stream.Readable;

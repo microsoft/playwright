@@ -41,7 +41,7 @@ import type { Progress } from './progress';
 import type { BrowserName } from './registry';
 import type { ConnectionTransport } from './transport';
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -152,7 +152,6 @@ export abstract class BrowserType extends SdkObject {
       ignoreDefaultArgs,
       ignoreAllDefaultArgs,
       args = [],
-      executablePath = null,
     } = options;
     const tempDirectories: string[] = [];
     let artifactsDir: string;
@@ -183,10 +182,9 @@ export abstract class BrowserType extends SdkObject {
       browserArguments.push(...await this.defaultArgs(options, isPersistent, userDataDir));
 
     let executable: string;
-    if (executablePath) {
-      if (!(await existsAsync(executablePath)))
-        throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
-      executable = executablePath;
+    const customExecutablePath = await this.resolveExecutablePath(options);
+    if (customExecutablePath) {
+      executable = customExecutablePath;
     } else {
       const registryExecutable = registry.findExecutable(this.getExecutableName(options));
       if (!registryExecutable || registryExecutable.browserName !== this._name)
@@ -273,7 +271,7 @@ export abstract class BrowserType extends SdkObject {
         const updatedLog = this.doRewriteStartupLog(log);
         throw new Error(`Failed to launch the browser process.\nBrowser logs:\n${updatedLog}`);
       }
-      if (!this.supportsPipeTransport()) {
+      if (!this.supportsPipeTransport(options)) {
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
       } else {
         const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
@@ -337,12 +335,21 @@ export abstract class BrowserType extends SdkObject {
   async prepareUserDataDir(options: types.LaunchOptions, userDataDir: string): Promise<void> {
   }
 
-  supportsPipeTransport(): boolean {
+  supportsPipeTransport(options: types.LaunchOptions): boolean {
     return true;
   }
 
   getExecutableName(options: types.LaunchOptions): string {
     return options.channel || this._name;
+  }
+
+  protected async resolveExecutablePath(options: types.LaunchOptions): Promise<string | undefined> {
+    const { executablePath } = options;
+    if (!executablePath)
+      return undefined;
+    if (!(await existsAsync(executablePath)))
+      throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
+    return executablePath;
   }
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]>;

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import { serializeError } from '../util';
+
 import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep, WorkerInfo } from '../../types/testReporter';
 import type { test } from '../common';
 
 export class Multiplexer implements ReporterV2 {
   private _reporters: ReporterV2[];
+  private _hasReporterErrors = false;
 
   constructor(reporters: ReporterV2[]) {
     this._reporters = reporters;
@@ -29,54 +32,58 @@ export class Multiplexer implements ReporterV2 {
     return 'v2';
   }
 
+  hasReporterErrors(): boolean {
+    return this._hasReporterErrors;
+  }
+
   onConfigure(config: FullConfig) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onConfigure?.(config));
+      this._wrap(() => reporter.onConfigure?.(config));
   }
 
   onBegin(suite: test.Suite) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onBegin?.(suite));
+      this._wrap(() => reporter.onBegin?.(suite));
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onTestBegin?.(test, result));
+      this._wrap(() => reporter.onTestBegin?.(test, result));
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStdOut?.(chunk, test, result));
+      this._wrap(() => reporter.onStdOut?.(chunk, test, result));
   }
 
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStdErr?.(chunk, test, result));
+      this._wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
 
   async onTestPaused(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      await wrapAsync(() => reporter.onTestPaused?.(test, result));
+      await this._wrapAsync(() => reporter.onTestPaused?.(test, result));
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onTestEnd?.(test, result));
+      this._wrap(() => reporter.onTestEnd?.(test, result));
   }
 
   onReportConfigure(params: ReportConfigureParams): void {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onReportConfigure?.(params));
+      this._wrap(() => reporter.onReportConfigure?.(params));
   }
 
   onReportEnd(params: ReportEndParams): void {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onReportEnd?.(params));
+      this._wrap(() => reporter.onReportEnd?.(params));
   }
 
   async onEnd(result: FullResult) {
     for (const reporter of this._reporters) {
-      const outResult = await wrapAsync(() => reporter.onEnd?.(result));
+      const outResult = await this._wrapAsync(() => reporter.onEnd?.(result));
       if (outResult?.status)
         result.status = outResult.status;
     }
@@ -85,47 +92,48 @@ export class Multiplexer implements ReporterV2 {
 
   async onExit() {
     for (const reporter of this._reporters)
-      await wrapAsync(() => reporter.onExit?.());
+      await this._wrapAsync(() => reporter.onExit?.());
   }
 
   onError(error: TestError, workerInfo?: WorkerInfo) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onError?.(error, workerInfo));
+      this._wrap(() => reporter.onError?.(error, workerInfo), false);
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStepBegin?.(test, result, step));
+      this._wrap(() => reporter.onStepBegin?.(test, result, step));
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStepEnd?.(test, result, step));
+      this._wrap(() => reporter.onStepEnd?.(test, result, step));
   }
 
   printsToStdio(): boolean {
     return this._reporters.some(r => {
       let prints = false;
-      wrap(() => prints = r.printsToStdio ? r.printsToStdio() : true);
+      this._wrap(() => prints = r.printsToStdio ? r.printsToStdio() : true, false);
       return prints;
     });
   }
-}
 
-async function wrapAsync<T>(callback: () => T | Promise<T>) {
-  try {
-    return await callback();
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('Error in reporter', e);
+  private _wrap(callback: () => void, redispatch: boolean = true) {
+    try {
+      callback();
+    } catch (e) {
+      this._hasReporterErrors = true;
+      if (redispatch)
+        this.onError(serializeError(e));
+    }
   }
-}
 
-function wrap(callback: () => void) {
-  try {
-    callback();
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error('Error in reporter', e);
+  private async _wrapAsync<T>(callback: () => T | Promise<T>): Promise<T | undefined> {
+    try {
+      return await callback();
+    } catch (e) {
+      this._hasReporterErrors = true;
+      this.onError(serializeError(e));
+    }
   }
 }

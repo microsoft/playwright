@@ -16,9 +16,42 @@
 
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
-import type * as channels from '@protocol/channels';
+type NameValue = { name: string, value: string };
 
-export type SerializedStorage = Omit<channels.OriginStorage, 'origin'>;
+type IndexedDBDatabase = {
+  name: string,
+  version: number,
+  stores: {
+    name: string,
+    autoIncrement: boolean,
+    keyPath?: string,
+    keyPathArray?: string[],
+    records: {
+      key?: any,
+      keyEncoded?: any,
+      value?: any,
+      valueEncoded?: any,
+    }[],
+    indexes: {
+      name: string,
+      keyPath?: string,
+      keyPathArray?: string[],
+      multiEntry: boolean,
+      unique: boolean,
+    }[],
+  }[],
+};
+
+type SetOriginStorage = {
+  origin: string,
+  localStorage: NameValue[],
+  indexedDB?: IndexedDBDatabase[],
+};
+
+export type SerializedStorage = {
+  localStorage: NameValue[],
+  indexedDB?: IndexedDBDatabase[],
+};
 
 export class StorageScript {
   private _isFirefox: boolean;
@@ -85,7 +118,7 @@ export class StorageScript {
 
       const keys = await this._idbRequestToPromise(objectStore.getAllKeys());
       const records = await Promise.all(keys.map(async key => {
-        const record: channels.IndexedDBDatabase['stores'][0]['records'][0] = {};
+        const record: IndexedDBDatabase['stores'][0]['records'][0] = {};
 
         if (objectStore.keyPath === null) {
           const { encoded, trivial } = this._trySerialize(key);
@@ -146,7 +179,7 @@ export class StorageScript {
     }
   }
 
-  private async _restoreDB(dbInfo: channels.IndexedDBDatabase) {
+  private async _restoreDB(dbInfo: IndexedDBDatabase) {
     const openRequest = this._global.indexedDB.open(dbInfo.name, dbInfo.version);
     openRequest.addEventListener('upgradeneeded', () => {
       const db = openRequest.result;
@@ -176,7 +209,7 @@ export class StorageScript {
     }));
   }
 
-  async restore(originState: channels.SetOriginStorage | undefined) {
+  async restore(originState: SetOriginStorage | undefined) {
     // Clean Service Workers.
     const registrations = this._global.navigator.serviceWorker ? await this._global.navigator.serviceWorker.getRegistrations() : [];
     await Promise.all(registrations.map(async r => {

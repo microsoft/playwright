@@ -16,7 +16,7 @@
  */
 
 import type { Size } from '@isomorphic/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 export type { HeadersArray, Point, Quad, Rect, Size } from '@isomorphic/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
@@ -25,7 +25,7 @@ export interface Logger {
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
 
-export type TimeoutOptions = { timeout?: number };
+export type TimeoutOptions = { timeout?: number, signal?: AbortSignal };
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
 

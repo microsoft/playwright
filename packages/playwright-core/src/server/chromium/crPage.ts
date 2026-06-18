@@ -44,7 +44,7 @@ import type { RegisteredListener } from '@utils/eventsHelper';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 
 export type WindowBounds = { top?: number, left?: number, width?: number, height?: number };

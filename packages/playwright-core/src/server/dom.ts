@@ -30,7 +30,7 @@ import type { Page } from './page';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export type InputFilesItems = {
   filePayloads?: types.FilePayload[],

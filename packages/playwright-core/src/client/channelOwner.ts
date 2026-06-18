@@ -25,7 +25,7 @@ import type { Connection } from './connection';
 import type { Logger } from './types';
 import type { ValidatorContext } from '../protocol/validator';
 import type { Platform } from '@isomorphic/platform';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 type Listener = (...args: any[]) => void;
 

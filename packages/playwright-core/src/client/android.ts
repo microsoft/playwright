@@ -31,7 +31,7 @@ import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
 import type { Platform } from '@isomorphic/platform';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { Playwright } from './playwright';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
@@ -273,8 +273,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     return await this._wrapApiCall(async () => {
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as types.TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      waiter.rejectOnSignal(signal);
       if (event !== Events.AndroidDevice.Close)
         waiter.rejectOnEvent(this, Events.AndroidDevice.Close, () => new TargetClosedError());
       const result = await waiter.waitForEvent(this, event, predicate as any);

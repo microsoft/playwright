@@ -20,7 +20,7 @@ import { SdkObject } from './instrumentation';
 import { BrowserContext } from './browserContext';
 
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
-import type { Progress } from '@protocol/progress';
+import type { Progress } from './progress';
 
 const symbol = Symbol('Debugger');
 

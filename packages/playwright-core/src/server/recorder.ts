@@ -39,7 +39,7 @@ import type { CallMetadata, InstrumentationListener, SdkObject } from './instrum
 import type { Point } from '@isomorphic/types';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { Progress } from './progress';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus, ElementInfo, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
 import type { RegisteredListener } from '@utils/eventsHelper';

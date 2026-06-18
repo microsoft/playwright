@@ -19,8 +19,8 @@ import { Dispatcher } from './dispatcher';
 import { Debugger } from '../debugger';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
-import type * as channels from '@protocol/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channels';
+import type { Progress } from '../progress';
 
 export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerChannel, BrowserContextDispatcher> implements channels.DebuggerChannel {
   _type_Debugger = true;

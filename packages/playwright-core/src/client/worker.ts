@@ -27,8 +27,8 @@ import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
-import type { WaitForEventOptions } from './types';
+import type * as channels from './channels';
+import type { TimeoutOptions, WaitForEventOptions } from './types';
 
 
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
@@ -91,8 +91,10 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
       const timeoutSettings = this._page?._timeoutSettings ?? this._context?._timeoutSettings ?? new TimeoutSettings(this._platform);
       const timeout = timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      waiter.rejectOnSignal(signal);
       if (event !== Events.Worker.Close)
         waiter.rejectOnEvent(this, Events.Worker.Close, () => this._closeErrorWithReason());
       const result = await waiter.waitForEvent(this, event, predicate as any);

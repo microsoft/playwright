@@ -16,7 +16,7 @@
 
 import type { BrowserContext } from './browserContext';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export class Credentials implements api.Credentials {
   private _browserContext: BrowserContext;

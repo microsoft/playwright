@@ -71,49 +71,30 @@ page/page-screenshot.spec.ts › page screenshot › should work while navigatin
 page/page-screenshot.spec.ts › page screenshot › should work with Array deleted [fail]
 
 # ============================================================================
-# frame-element-and-ownership  (38 tests)
+# frame-element-and-ownership  (remaining)
 # elementHandle.contentFrame / elementHandle.ownerFrame / frame.frameElement
-# are not implemented in wvPage — see the throwing stubs in wvPage.ts.
+# are implemented in wvPage for same-origin and in-process cross-origin frames
+# (contentWindow token correlation, with name/url/document-order fallbacks), so
+# most of this section now passes and has been unskipped. The entries left here
+# are the ones that remain genuinely unsupported:
+#   - cross-frame element-handle adoption (needs DOM node identity across
+#     execution contexts, which the stock RDP DOM agent does not expose);
+#   - <iframe> elements nested inside a closed/declarative shadow root (the
+#     frame-element search does not pierce shadow roots);
+#   - clicking/typing/dragging into an iframe (input is dispatched in page
+#     coordinates without translating into the subframe's offset — same gap as
+#     the frame bounding-box section).
 # ============================================================================
-page/elementhandle-content-frame.spec.ts › should return null for document.documentElement [fail]
-page/elementhandle-content-frame.spec.ts › should return null for non-iframes [fail]
-page/elementhandle-content-frame.spec.ts › should work [fail]
-page/elementhandle-content-frame.spec.ts › should work for cross-frame evaluations [fail]
-page/elementhandle-content-frame.spec.ts › should work for cross-process iframes [fail]
-page/elementhandle-owner-frame.spec.ts › should work [fail]
-page/elementhandle-owner-frame.spec.ts › should work for cross-frame evaluations [fail]
-page/elementhandle-owner-frame.spec.ts › should work for cross-process iframes [fail]
-page/elementhandle-owner-frame.spec.ts › should work for detached elements [fail]
-page/elementhandle-owner-frame.spec.ts › should work for document [fail]
-page/elementhandle-owner-frame.spec.ts › should work for iframe elements [fail]
-page/frame-evaluate.spec.ts › should be isolated between frames [fail]
-page/frame-evaluate.spec.ts › should have different execution contexts [fail]
 page/frame-evaluate.spec.ts › should not allow cross-frame element handles when frames do not script each other [fail]
-page/frame-evaluate.spec.ts › should throw for detached frames [fail]
-page/frame-frame-element.spec.ts › should throw when detached [fail]
-page/frame-frame-element.spec.ts › should work @smoke [fail]
 page/frame-frame-element.spec.ts › should work inside closed shadow root [fail]
 page/frame-frame-element.spec.ts › should work inside declarative shadow root [fail]
-page/frame-frame-element.spec.ts › should work with contentFrame [fail]
-page/frame-frame-element.spec.ts › should work with frameset [fail]
 page/frame-goto.spec.ts › should return matching responses [fail]
-page/frame-hierarchy.spec.ts › should report different frame instance when frame re-attaches [fail]
-page/frame-hierarchy.spec.ts › should report frame.name() [fail]
-page/frame-hierarchy.spec.ts › should report frame.parent() [fail]
-page/frame-hierarchy.spec.ts › should send events when frames are manipulated dynamically [fail]
 page/page-click.spec.ts › should click button inside frameset [fail]
 page/page-click.spec.ts › should click the button inside an iframe [fail]
 page/page-click.spec.ts › should not hang when frame is detached [fail]
 page/page-drag.spec.ts › Drag and drop › should work inside iframe [fail]
-page/page-evaluate.spec.ts › should throw when frame is detached [fail]
 page/page-keyboard.spec.ts › should type emoji into an iframe [fail]
-page/page-network-request.spec.ts › should work for subframe navigation request [fail]
-page/page-wait-for-function.spec.ts › should throw when frame is detached [fail]
 page/page-wait-for-selector-1.spec.ts › page.waitForSelector is shortcut for main frame [fail]
-page/page-wait-for-selector-1.spec.ts › should run in specified frame [fail]
-page/page-wait-for-selector-1.spec.ts › should throw when frame is detached [fail]
-page/page-wait-for-selector-2.spec.ts › should run in specified frame xpath [fail]
-page/page-wait-for-selector-2.spec.ts › should throw when frame is detached xpath [fail]
 
 # ============================================================================
 # expose-function  (2 tests)
@@ -236,11 +217,7 @@ page/expect-to-have-accessible.spec.ts › toHaveAccessibleDescription [fail]
 page/expect-to-have-text.spec.ts › toHaveText with array › fail [fail]
 page/frame-evaluate.spec.ts › should dispose context on cross-origin navigation [fail]
 page/frame-evaluate.spec.ts › should dispose context on navigation [fail]
-page/frame-evaluate.spec.ts › should have correct execution contexts @smoke [fail]
-page/frame-evaluate.spec.ts › should work in iframes that failed initial navigation [fail]
-page/frame-goto.spec.ts › should continue after client redirect [fail]
 page/interception.spec.ts › should intercept network activity from worker 2 [fail]
-page/locator-frame.spec.ts › should click in lazy iframe [fail]
 page/locator-misc-1.spec.ts › should clear input [fail]
 page/locator-misc-2.spec.ts › should scroll zero-sized element into view [fail]
 page/locator-query.spec.ts › should allow some, but not all nested frameLocators [fail]
@@ -338,6 +315,9 @@ page/page-network-request.spec.ts › should report raw headers [fail]
 page/page-network-request.spec.ts › should return postData [fail]
 page/page-network-request.spec.ts › should work with binary post data [fail]
 page/page-network-request.spec.ts › should work with binary post data and interception [fail]
+# A subframe document request is reported without a frame (the frame is created
+# later on Page.frameNavigated), so request.frame() does not match the subframe.
+page/page-network-request.spec.ts › should work for subframe navigation request [fail]
 page/page-network-sizes.spec.ts › should handle redirects [fail]
 page/page-network-sizes.spec.ts › should have the correct responseBodySize for chunked request [fail]
 page/page-network-sizes.spec.ts › should set bodySize and headersSize [fail]
@@ -547,6 +527,9 @@ page/page-autowaiting-basic.spec.ts › should report and collapse log in action
 page/page-autowaiting-basic.spec.ts › should report and collapse log in expect [fail]
 page/page-autowaiting-no-hang.spec.ts › assigning location to about:blank after non-about:blank [fail]
 page/page-autowaiting-no-hang.spec.ts › calling window.stop sync [fail]
+# Pre-existing (fails on main too): a same-document navigation via the Navigation
+# API does not update the frame URL on the stock WebView backend.
+page/page-autowaiting-no-hang.spec.ts › clicking a link intercepted by the Navigation API same-document [fail]
 page/page-click.spec.ts › should wait for becoming hit target [fail]
 page/page-drag.spec.ts › Drag and drop › should respect the drop effect [fail]
 page/page-drag.spec.ts › Drag and drop › should work if a frame is stalled [fail]
@@ -563,23 +546,22 @@ page/page-screenshot.spec.ts › should capture css box-shadow [fail]
 page/to-match-aria-snapshot.spec.ts › should not match what is not matched [fail]
 
 # ============================================================================
-# structural-unsupported  (111 tests)
+# structural-unsupported  (remaining)
 # Tests whose name contains 'iframe', 'popup', or 'filechooser'. Stock WebKit
-# RDP exposes no Target.create / popup tracking / file-chooser API and our
-# wvPage subframe support is intentionally minimal — these tests can't be
-# made to pass without a real WebKit build. Bulk-skipped to keep the worker
-# from stalling on popup/dialog interactions.
+# RDP exposes no Target.create / popup tracking / file-chooser API, so popup and
+# file-chooser tests stay skipped. The remaining iframe entries here are the
+# selectors-frame / locator-frame suites, which are almost entirely built on
+# fulfilling the MAIN navigation via page.route. On iOS 26 that fulfillment is
+# flaky: the cross-origin navigation triggers a process swap whose provisional
+# target arrives un-paused (Target.setPauseOnStart is not honored for it), so it
+# fetches the real document before interception can run and the fulfilled body is
+# lost (see the main-navigation-fulfill-flaky section). The underlying iframe
+# support works — same-origin frame discovery, contentFrame/ownerFrame/
+# frameElement, and subframe interception all pass (see the now-unskipped
+# frame-evaluate / frame-hierarchy / frame-frame-element / elementhandle-*-frame
+# tests). Kept skipped until the provisional-target pause gap is addressed.
 # ============================================================================
-page/elementhandle-content-frame.spec.ts › should return null for non-iframes [fail]
-page/elementhandle-content-frame.spec.ts › should work for cross-process iframes [fail]
-page/elementhandle-owner-frame.spec.ts › should work for cross-process iframes [fail]
-page/elementhandle-owner-frame.spec.ts › should work for iframe elements [fail]
-page/frame-evaluate.spec.ts › should work in iframes that failed initial navigation [fail]
 page/frame-evaluate.spec.ts › should work in iframes that interrupted initial javascript url navigation [fail]
-page/frame-hierarchy.spec.ts › should refuse to display x-frame-options:deny iframe [fail]
-page/locator-frame.spec.ts › click should survive iframe navigation [fail]
-page/locator-frame.spec.ts › locator.frameLocator should work for iframe [fail]
-page/locator-frame.spec.ts › should click in lazy iframe [fail]
 page/locator-frame.spec.ts › should work for iframe @smoke [fail]
 page/locator-frame.spec.ts › should work for nested iframe [fail]
 page/locator-frame.spec.ts › should work with COEP/COOP/CORP isolated iframe [fail]
@@ -667,16 +649,10 @@ page/page-wait-for-load-state.spec.ts › should wait for load state of about:bl
 page/page-wait-for-load-state.spec.ts › should wait for load state of empty url popup [fail]
 page/page-wait-for-load-state.spec.ts › should wait for load state of popup with network url [fail]
 page/page-wait-for-load-state.spec.ts › should wait for load state of popup with network url and noopener [fail]
-page/page-wait-for-load-state.spec.ts › should work with broken blob-url iframe [fail]
-page/page-wait-for-load-state.spec.ts › should work with broken data-url iframe [fail]
-page/page-wait-for-load-state.spec.ts › should work with javascript: iframe [fail]
-page/selectors-frame.spec.ts › click should survive iframe navigation [fail]
-page/selectors-frame.spec.ts › should click in lazy iframe [fail]
 page/selectors-frame.spec.ts › should work for iframe (handle) [fail]
 page/selectors-frame.spec.ts › should work for iframe @smoke [fail]
 page/selectors-frame.spec.ts › should work for nested iframe [fail]
 page/selectors-frame.spec.ts › should work for nested iframe (handle) [fail]
-page/selectors-frame.spec.ts › waitForSelector should survive iframe navigation (handle) [fail]
 page/wheel.spec.ts › should dispatch wheel events after popup was opened @smoke [fail]
 page/workers.spec.ts › should attribute network activity for worker inside iframe to the iframe [fail]
 
@@ -710,28 +686,22 @@ page/page-fill.spec.ts › should throw on incorrect datetime-local [fail]
 # leaves the page target dead for the next test's first navigation (see the
 # worker-remaining section). Re-run and prune this section as triggers are fixed.
 # ============================================================================
+# These two pass in isolation but their cross-process/cross-site MAIN navigation
+# leaves the page target dead for the following test in the file, so they stay
+# skipped with the rest of the cascade triggers.
+page/frame-evaluate.spec.ts › should execute after cross-site navigation [fail]
+page/frame-hierarchy.spec.ts › should persist mainFrame on cross-process navigation [fail]
 page/elementhandle-click.spec.ts › should work @smoke [fail]
 page/elementhandle-owner-frame.spec.ts › should work for adopted elements [fail]
 page/elementhandle-query-selector.spec.ts › should work for adopted elements [fail]
 page/elementhandle-scroll-into-view.spec.ts › should scroll display:contents into view [fail]
-page/frame-evaluate.spec.ts › should execute after cross-site navigation [fail]
-page/frame-evaluate.spec.ts › should not allow cross-frame js handles [fail]
-page/frame-hierarchy.spec.ts › should not send attach/detach events for main frame [fail]
-page/frame-hierarchy.spec.ts › should persist mainFrame on cross-process navigation [fail]
 page/frame-hierarchy.spec.ts › should send "framenavigated" when navigating on anchor URLs [fail]
 page/interception.spec.ts › should intercept network activity from worker [fail]
 page/interception.spec.ts › should intercept worker requests when enabled after worker creation [fail]
 page/interception.spec.ts › should work with navigation @smoke [fail]
-page/locator-frame.spec.ts › click should survive frame reattach [fail]
 page/locator-frame.spec.ts › frameLocator.owner should work [fail]
-page/locator-frame.spec.ts › getBy coverage [fail]
 page/locator-frame.spec.ts › locator.contentFrame should work [fail]
-page/locator-frame.spec.ts › locator.frameLocator should not throw on first/last/nth [fail]
-page/locator-frame.spec.ts › locator.frameLocator should throw on ambiguity [fail]
-page/locator-frame.spec.ts › should wait for frame 2 [fail]
-page/locator-frame.spec.ts › should wait for frame to go [fail]
 page/locator-frame.spec.ts › should work for $ and $$ [fail]
-page/locator-frame.spec.ts › waitFor should survive frame reattach [fail]
 page/locator-misc-2.spec.ts › Locator.locator() and FrameLocator.locator() should accept locator [fail]
 page/network-post-data.spec.ts › should get post data for file/blob [fail]
 page/network-post-data.spec.ts › should get post data for navigator.sendBeacon api calls [fail]
@@ -807,20 +777,7 @@ page/page-wait-for-url.spec.ts › should work with history.pushState() [fail]
 page/page-wait-for-url.spec.ts › should work with history.replaceState() [fail]
 page/page-wait-for-url.spec.ts › should work with url match for same document navigations [fail]
 page/retarget.spec.ts › should check the box outside shadow dom label [fail]
-page/selectors-frame.spec.ts › click should survive frame reattach [fail]
-page/selectors-frame.spec.ts › click should survive navigation [fail]
-page/selectors-frame.spec.ts › should capture after the enter-frame [fail]
-page/selectors-frame.spec.ts › should not allow capturing before enter-frame [fail]
-page/selectors-frame.spec.ts › should not allow dangling enter-frame [fail]
-page/selectors-frame.spec.ts › should not allow leading enter-frame [fail]
 page/selectors-frame.spec.ts › should work for $ and $$ [fail]
-page/selectors-frame.spec.ts › should work for $ and $$ (handle) [fail]
-page/selectors-frame.spec.ts › should work for $$eval [fail]
-page/selectors-frame.spec.ts › should work for $$eval (handle) [fail]
-page/selectors-frame.spec.ts › should work for $eval [fail]
-page/selectors-frame.spec.ts › should work for $eval (handle) [fail]
-page/selectors-frame.spec.ts › waitFor should survive frame reattach [fail]
-page/selectors-frame.spec.ts › waitForSelector should survive frame reattach (handle) [fail]
 # ============================================================================
 # worker-remaining  (2 tests)
 # Web Workers attach over the WebView backend now (Worker.enable is sent during

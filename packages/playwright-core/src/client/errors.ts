@@ -17,7 +17,7 @@
 import { isError } from '@isomorphic/rtti';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
-import type { SerializedError } from '@protocol/channels';
+import type { SerializedError } from './channels';
 
 export class PlaywrightError extends Error {
   log: string[] = [];

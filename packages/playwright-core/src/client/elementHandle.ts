@@ -29,7 +29,7 @@ import type { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptio
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { Platform } from '@isomorphic/platform';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {
   private _frame: Frame;

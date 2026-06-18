@@ -23,7 +23,7 @@ import { Events } from './events';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, HeadersArray } from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export async function connectToBrowser(playwright: Playwright, params: ConnectOptions): Promise<Browser> {
   const deadline = params.timeout ? monotonicTime() + params.timeout : 0;

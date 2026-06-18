@@ -126,6 +126,7 @@ Performs action and waits for the Worker to close.
 
 ### option: Worker.waitForClose.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Worker.waitForClose.signal = %%-wait-for-event-signal-%%
 
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -145,6 +146,7 @@ Receives the [ConsoleMessage] object and resolves to true when the waiting shoul
 
 ### option: Worker.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
 * since: v1.57
+### option: Worker.waitForConsoleMessage.signal = %%-wait-for-event-signal-%%
 
 ### param: Worker.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.57
@@ -203,3 +205,4 @@ Either a predicate that receives an event or an options object. Optional.
 
 ### option: Worker.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 * since: v1.57
+### option: Worker.waitForEvent.signal = %%-wait-for-event-signal-%%

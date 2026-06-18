@@ -49,8 +49,6 @@ Disposable:
 
     dispose:
       internal: true
-      flags:
-        potentiallyClosesScope: true
 
 WaitInfo:
   type: object

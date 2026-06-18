@@ -34,7 +34,7 @@ import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type { CallLog, ElementInfo, Mode, RecorderBackend, RecorderFrontend, Source } from '@recorder/recorderTypes';
 import type { Language, LanguageGeneratorOptions } from '../codegen/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 import type { Progress } from '../progress';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 

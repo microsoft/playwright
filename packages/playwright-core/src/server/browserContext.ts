@@ -45,8 +45,8 @@ import type { Progress } from './progress';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
 import type { URLMatch } from '@isomorphic/urlMatch';
+import type * as channels from './channels';
 
 const BrowserContextEvent = {
   Console: 'console',

@@ -21,8 +21,8 @@ import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDi
 import type { ElementHandle } from '../dom';
 import type { Frame } from '../frames';
 import type * as js from '../javascript';
-import type * as channels from '@protocol/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channels';
+import type { Progress } from '../progress';
 
 
 export class ElementHandleDispatcher extends JSHandleDispatcher<FrameDispatcher> implements channels.ElementHandleChannel {

@@ -38,3 +38,43 @@ test('should override exit code', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should fail run and report error when reporter throws in onEnd', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        async onEnd() {
+          throw new Error('Error in onEnd!');
+        }
+      }
+    `,
+    'playwright.config.ts': `module.exports = { reporter: [['dot'], ['./reporter.ts']] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passing', async () => {});
+    `,
+  }, { reporter: '' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Error in onEnd!');
+});
+
+test('should fail run and report error when reporter throws in onTestEnd', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onTestEnd() {
+          throw new Error('Error in onTestEnd!');
+        }
+      }
+    `,
+    'playwright.config.ts': `module.exports = { reporter: [['dot'], ['./reporter.ts']] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passing', async () => {});
+    `,
+  }, { reporter: '' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Error in onTestEnd!');
+});

@@ -16,7 +16,6 @@
       "@isomorphic/*": ["packages/isomorphic/*"],
       "@utils/*": ["packages/utils/*"],
       "@testIsomorphic/*": ["packages/playwright/src/isomorphic/*"],
-      "@protocol/*": ["packages/protocol/src/*"],
       "@recorder/*": ["packages/recorder/src/*"],
       "@trace/*": ["packages/trace/src/*"],
       "@web/*": ["packages/web/src/*"],

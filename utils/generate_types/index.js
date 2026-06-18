@@ -288,7 +288,7 @@ class TypesGenerator {
         for (const { eventName, params, comment, type } of eventDescriptions) {
           if (comment)
             parts.push(this.writeComment(comment, indent));
-          parts.push(`  ${member.alias}(event: '${eventName}', optionsOrPredicate?: { predicate?: (${params}) => boolean | Promise<boolean>, timeout?: number } | ((${params}) => boolean | Promise<boolean>)): Promise<${type}>;\n`);
+          parts.push(`  ${member.alias}(event: '${eventName}', optionsOrPredicate?: { predicate?: (${params}) => boolean | Promise<boolean>, timeout?: number, signal?: AbortSignal } | ((${params}) => boolean | Promise<boolean>)): Promise<${type}>;\n`);
         }
 
         return parts.join('\n');

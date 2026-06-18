@@ -15,7 +15,6 @@
  */
 
 export * from './ariaSnapshot';
-export * from './expectUtils';
 export * from './assert';
 export * from './base64';
 export * from './colors';

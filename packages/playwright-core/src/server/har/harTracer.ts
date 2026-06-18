@@ -62,6 +62,7 @@ type HarTracerOptions = {
   omitPages?: boolean;
   omitSizes?: boolean;
   omitScripts?: boolean;
+  omitWebSocketFrames?: boolean;
 };
 
 export class HarTracer {
@@ -442,6 +443,8 @@ export class HarTracer {
 
     let sha1: string | undefined = undefined;
     const recordMessage = (type: 'send' | 'receive', opcode: number, data: string, wallTimeMs: number) => {
+      if (this._options.omitWebSocketFrames)
+        return;
       const message = { type, time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data };
       if (this._options.content === 'embed') {
         harEntry._webSocketMessages ??= [];

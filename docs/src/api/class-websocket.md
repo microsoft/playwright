@@ -97,6 +97,7 @@ Either a predicate that receives an event or an options object. Optional.
 
 ### option: WebSocket.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8
+### option: WebSocket.waitForEvent.signal = %%-wait-for-event-signal-%%
 
 ## async method: WebSocket.waitForFrameReceived
 * since: v1.10
@@ -115,6 +116,7 @@ Receives the [WebSocketFrame] object and resolves to truthy value when the waiti
 
 ### option: WebSocket.waitForFrameReceived.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: WebSocket.waitForFrameReceived.signal = %%-wait-for-event-signal-%%
 
 ### param: WebSocket.waitForFrameReceived.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -136,6 +138,7 @@ Receives the [WebSocketFrame] object and resolves to truthy value when the waiti
 
 ### option: WebSocket.waitForFrameSent.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: WebSocket.waitForFrameSent.signal = %%-wait-for-event-signal-%%
 
 ### param: WebSocket.waitForFrameSent.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -162,3 +165,4 @@ Will throw an error if the socket is closed before the `event` is fired.
 
 ### option: WebSocket.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8
+### option: WebSocket.waitForEvent2.signal = %%-wait-for-event-signal-%%

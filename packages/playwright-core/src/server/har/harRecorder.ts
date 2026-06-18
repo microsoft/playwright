@@ -25,7 +25,7 @@ import type { BrowserContext } from '../browserContext';
 import type { HarTracerDelegate } from './harTracer';
 import type { Page } from '../page';
 import type { NameValue } from '@isomorphic/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 import type * as har from '@trace/har';
 
 export class HarRecorder implements HarTracerDelegate {
@@ -57,6 +57,7 @@ export class HarRecorder implements HarTracerDelegate {
       recordRequestOverrides: true,
       waitForContentOnStop: true,
       urlFilter: urlFilterRe ?? options.urlGlob,
+      omitWebSocketFrames: !!process.env.PLAYWRIGHT_HAR_NO_WEBSOCKET_FRAMES,
     });
     this._tracer.start({ omitScripts: false });
   }

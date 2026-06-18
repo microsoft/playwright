@@ -21,7 +21,7 @@ import { assert } from '@isomorphic/assert';
 import { TargetClosedError } from './errors';
 import { SdkObject } from './instrumentation';
 
-import type { Progress } from '@protocol/progress';
+import type { Progress } from './progress';
 
 type SaveCallback = (localPath: string, error?: Error) => Promise<void>;
 type CancelCallback = () => Promise<void>;

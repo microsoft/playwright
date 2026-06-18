@@ -26,9 +26,8 @@ import { debugLogger } from './debugLogger';
 import { currentZone, emptyZone } from './zones';
 import { debugMode, isUnderTest } from './debug';
 
-import type { Platform, Zone } from '@isomorphic/platform';
+import type { Platform, StreamChannel, WritableStreamChannel, Zone } from '@isomorphic/platform';
 import type { Zone as ZoneImpl } from './zones';
-import type * as channels from '@protocol/channels';
 
 const pipelineAsync = util.promisify(pipeline);
 
@@ -113,11 +112,11 @@ export const nodePlatform: (coreDir: string) => Platform = coreDir => ({
     await pipelineAsync(fs.createReadStream(path), stream);
   },
 
-  streamReadable: (channel: channels.StreamChannel) => {
+  streamReadable: (channel: StreamChannel) => {
     return new ReadableStreamImpl(channel);
   },
 
-  streamWritable: (channel: channels.WritableStreamChannel) => {
+  streamWritable: (channel: WritableStreamChannel) => {
     return new WritableStreamImpl(channel);
   },
 
@@ -128,9 +127,9 @@ export const nodePlatform: (coreDir: string) => Platform = coreDir => ({
 });
 
 class ReadableStreamImpl extends Readable {
-  private _channel: channels.StreamChannel;
+  private _channel: StreamChannel;
 
-  constructor(channel: channels.StreamChannel) {
+  constructor(channel: StreamChannel) {
     super();
     this._channel = channel;
   }
@@ -151,9 +150,9 @@ class ReadableStreamImpl extends Readable {
 }
 
 class WritableStreamImpl extends Writable {
-  private _channel: channels.WritableStreamChannel;
+  private _channel: WritableStreamChannel;
 
-  constructor(channel: channels.WritableStreamChannel) {
+  constructor(channel: WritableStreamChannel) {
     super();
     this._channel = channel;
   }

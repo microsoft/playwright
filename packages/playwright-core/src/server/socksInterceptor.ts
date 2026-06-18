@@ -22,7 +22,7 @@ import { ValidationError, findValidator } from '../protocol/validator';
 
 import type { WebSocketTransport } from './transport';
 import type { ValidatorContext } from '../protocol/validator';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../client/channels'; // this file lives in server/, but since it runs via localUtils, client channels is still correct.
 
 export class SocksInterceptor {
   private _handler: socks.SocksProxyHandler;

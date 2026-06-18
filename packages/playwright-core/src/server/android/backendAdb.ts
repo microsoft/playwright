@@ -20,7 +20,7 @@ import net from 'net';
 import debug from 'debug';
 import { assert } from '@isomorphic/assert';
 import type { Backend, DeviceBackend, SocketBackend } from './android';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 
 export class AdbBackend implements Backend {

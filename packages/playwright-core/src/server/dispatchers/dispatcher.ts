@@ -33,7 +33,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type { ValidatorContext } from '../../protocol/validator';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 const metadataValidator = createMetadataValidator();
 const waitInfoValidator = createWaitInfoValidator();

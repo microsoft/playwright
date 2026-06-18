@@ -47,7 +47,7 @@ import type { Page } from '../page';
 import type { Playwright } from '../playwright';
 import type { Progress } from '../progress';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 import type * as childProcess from 'child_process';
 import type { BrowserWindow } from 'electron';
 

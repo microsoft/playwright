@@ -22,8 +22,6 @@ JSHandle:
 
     dispose:
       internal: true
-      flags:
-        potentiallyClosesScope: true
 
     evaluateExpression:
       title: Evaluate

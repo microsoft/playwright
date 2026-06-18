@@ -343,7 +343,7 @@ it('should succeed if element handle was detached while waiting for hidden', asy
   await page.setContent(`<button>hello</button>`);
   const button = await page.$('button');
   const promise = button.waitForSelector('something', { state: 'hidden' });
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(1000);
   await page.evaluate(() => document.body.innerText = '');
   await promise;
 });
@@ -352,7 +352,7 @@ it('should succeed if element handle was detached while waiting for detached', a
   await page.setContent(`<button>hello</button>`);
   const button = await page.$('button');
   const promise = button.waitForSelector('something', { state: 'detached' });
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(1000);
   await page.evaluate(() => document.body.innerText = '');
   await promise;
 });

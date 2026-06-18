@@ -7,12 +7,12 @@ Playwright uses a client-server architecture connected by a protocol layer. The 
 ```
 packages/protocol/src/
   protocol.yml              — RPC protocol definition (source of truth)
-  channels.d.ts             — generated TypeScript channel interfaces
-  callMetadata.d.ts         — call metadata types
 
 packages/playwright-core/src/
   client/                   — public API objects (ChannelOwner subclasses)
+    channels.d.ts           — generated client channel interfaces
   server/                   — browser automation implementation (SdkObject subclasses)
+    channels.d.ts           — generated server channel interfaces
   server/dispatchers/       — protocol bridge (Dispatcher subclasses)
   protocol/                 — validators (generated + primitives)
   utils/isomorphic/         — shared code used by both client and server

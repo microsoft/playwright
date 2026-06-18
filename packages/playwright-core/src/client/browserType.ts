@@ -27,7 +27,7 @@ import { Worker } from './worker';
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { ChildProcess } from 'child_process';
 
 export interface BrowserServerLauncher {

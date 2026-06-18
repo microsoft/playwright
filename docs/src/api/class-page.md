@@ -4507,6 +4507,7 @@ Performs action and waits for the Page to close.
 
 ### option: Page.waitForClose.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Page.waitForClose.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -4538,6 +4539,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 
 ### option: Page.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Page.waitForConsoleMessage.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -4569,6 +4571,7 @@ Receives the [Download] object and resolves to truthy value when the waiting sho
 
 ### option: Page.waitForDownload.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Page.waitForDownload.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForDownload.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -4625,6 +4628,7 @@ Either a predicate that receives an event or an options object. Optional.
 
 ### option: Page.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8
+### option: Page.waitForEvent.signal = %%-wait-for-event-signal-%%
 
 ## async method: Page.waitForFileChooser
 * since: v1.9
@@ -4653,6 +4657,7 @@ Receives the [FileChooser] object and resolves to truthy value when the waiting 
 
 ### option: Page.waitForFileChooser.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Page.waitForFileChooser.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForFileChooser.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -4890,6 +4895,7 @@ Console.WriteLine(await popup.TitleAsync()); // popup is ready to use.
 
 ### option: Page.waitForLoadState.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
+### option: Page.waitForLoadState.signal = %%-wait-for-event-signal-%%
 
 ## async method: Page.waitForNavigation
 * since: v1.8
@@ -4976,6 +4982,7 @@ a navigation.
 
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-js-%%
 * since: v1.8
+### option: Page.waitForNavigation.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForNavigation.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -5007,6 +5014,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 
 ### option: Page.waitForPopup.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Page.waitForPopup.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForPopup.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -5116,6 +5124,8 @@ Request URL string, regex or predicate receiving [Request] object.
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`] method.
 
+### option: Page.waitForRequest.signal = %%-wait-for-event-signal-%%
+
 ### param: Page.waitForRequest.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
@@ -5146,6 +5156,7 @@ Receives the [Request] object and resolves to truthy value when the waiting shou
 
 ### option: Page.waitForRequestFinished.timeout = %%-wait-for-event-timeout-%%
 * since: v1.12
+### option: Page.waitForRequestFinished.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForRequestFinished.callback = %%-java-wait-for-event-callback-%%
 * since: v1.12
@@ -5261,6 +5272,8 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+
+### option: Page.waitForResponse.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForResponse.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -5513,6 +5526,7 @@ await page.WaitForURLAsync("**/target.html");
 
 ### option: Page.waitForURL.timeout = %%-navigation-timeout-js-%%
 * since: v1.11
+### option: Page.waitForURL.signal = %%-wait-for-event-signal-%%
 
 ### option: Page.waitForURL.waitUntil = %%-navigation-wait-until-%%
 * since: v1.11
@@ -5544,6 +5558,7 @@ Receives the [WebSocket] object and resolves to truthy value when the waiting sh
 
 ### option: Page.waitForWebSocket.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Page.waitForWebSocket.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForWebSocket.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -5575,6 +5590,7 @@ Receives the [Worker] object and resolves to truthy value when the waiting shoul
 
 ### option: Page.waitForWorker.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: Page.waitForWorker.signal = %%-wait-for-event-signal-%%
 
 ### param: Page.waitForWorker.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -5612,3 +5628,4 @@ Will throw an error if the page is closed before the `event` is fired.
 
 ### option: Page.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8
+### option: Page.waitForEvent2.signal = %%-wait-for-event-signal-%%

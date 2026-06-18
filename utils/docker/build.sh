@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') || ($1 == '') || ($2 == '') ]]; then
-  echo "usage: $(basename $0) {--arm64,--amd64} {jammy,noble} playwright:localbuild-noble"
+  echo "usage: $(basename $0) {--arm64,--amd64} {jammy,noble,resolute} playwright:localbuild-noble"
   echo
   echo "Build Playwright docker image and tag it as 'playwright:localbuild-noble'."
   echo "Once image is built, you can run it with"

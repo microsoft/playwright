@@ -30,7 +30,7 @@ import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 const BROWSER_VERSION = '26.5';
 const DEFAULT_USER_AGENT = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${BROWSER_VERSION} Safari/605.1.15`;

@@ -1719,6 +1719,7 @@ Receives the [ConsoleMessage] object and resolves to truthy value when the waiti
 
 ### option: BrowserContext.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
 * since: v1.34
+### option: BrowserContext.waitForConsoleMessage.signal = %%-wait-for-event-signal-%%
 
 ### param: BrowserContext.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.34
@@ -1788,6 +1789,7 @@ Either a predicate that receives an event or an options object. Optional.
 
 ### option: BrowserContext.waitForEvent.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8
+### option: BrowserContext.waitForEvent.signal = %%-wait-for-event-signal-%%
 
 ## async method: BrowserContext.waitForPage
 * since: v1.9
@@ -1817,6 +1819,7 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 
 ### option: BrowserContext.waitForPage.timeout = %%-wait-for-event-timeout-%%
 * since: v1.9
+### option: BrowserContext.waitForPage.signal = %%-wait-for-event-signal-%%
 
 ### param: BrowserContext.waitForPage.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
@@ -1843,3 +1846,4 @@ Will throw an error if the browser context is closed before the `event` is fired
 
 ### option: BrowserContext.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
 * since: v1.8
+### option: BrowserContext.waitForEvent2.signal = %%-wait-for-event-signal-%%

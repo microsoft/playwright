@@ -624,8 +624,8 @@ it('should have connection details', async ({ contextFactory, server, browserNam
   expect(securityDetails).toEqual({});
 });
 
-it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode, isFrozenWebkit }, testInfo) => {
-  it.fail(browserName === 'webkit' && platform === 'win32');
+it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode, channel, isFrozenWebkit }, testInfo) => {
+  it.fail(browserName === 'webkit' && platform === 'win32' && channel !== 'webkit-wsl');
   it.skip(isFrozenWebkit);
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);

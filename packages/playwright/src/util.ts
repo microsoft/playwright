@@ -27,10 +27,9 @@ import { isRegExp } from '@isomorphic/rtti';
 import { parseStackFrame, stringifyStackFrames } from '@isomorphic/stackTrace';
 import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';
 
-import type { RawStack } from '@isomorphic/stackTrace';
+import type { RawStack, StackFrame } from '@isomorphic/stackTrace';
 import type { Location } from './../types/testReporter';
 import type { TestInfoError } from './../types/test';
-import type { StackFrame } from '@protocol/channels';
 import type { TestCase } from './common/test';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');

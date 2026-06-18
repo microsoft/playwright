@@ -17,11 +17,13 @@
 
 import path from 'path';
 
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { wrapInASCIIBox } from '@utils/ascii';
 import { spawnAsync } from '@utils/spawnAsync';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { Browser } from '../browser';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
+import { registry } from '../registry';
 import { WKBrowser } from './wkBrowser';
 import { connectOverRDP } from './webview/wvBrowser';
 
@@ -30,7 +32,13 @@ import type { SdkObject } from '../instrumentation';
 import type { Progress } from '../progress';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
+import type { RecentLogsCollector } from '@utils/debugLogger';
+import type * as channels from '../channels';
+
+// Must be kept in sync with bin/install_webkit_wsl.ps1 that provisions the distribution.
+const kWSLDistribution = 'playwright';
+const kWSLUser = 'pwuser';
+const kWSLHome = '/home/pwuser';
 
 export class WebKit extends BrowserType {
   constructor(parent: SdkObject) {
@@ -48,8 +56,35 @@ export class WebKit extends BrowserType {
   override amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean, options: types.LaunchOptions): NodeJS.ProcessEnv {
     return {
       ...env,
-      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
+      // Cookie jar is only used by the Windows port of WebKit.
+      CURL_COOKIE_JAR_PATH: process.platform === 'win32' && options.channel !== 'webkit-wsl' && isPersistent ? path.join(userDataDir, 'cookiejar.db') : undefined,
     };
+  }
+
+  override supportsPipeTransport(options: types.LaunchOptions): boolean {
+    return options.channel !== 'webkit-wsl';
+  }
+
+  override async resolveExecutablePath(options: types.LaunchOptions): Promise<string | undefined> {
+    if (options.channel !== 'webkit-wsl')
+      return super.resolveExecutablePath(options);
+    // executablePath points inside the WSL distribution and is consumed in defaultArgs; the
+    // host command is wsl.exe from the registry.
+    if (options.executablePath && !await wslPathExists(options.executablePath))
+      throw new Error(`Failed to launch webkit because executable doesn't exist at ${options.executablePath}`);
+    return undefined;
+  }
+
+  override async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
+    if (options.channel !== 'webkit-wsl')
+      return {};
+    const result = new ManualPromise<{ wsEndpoint?: string }>();
+    browserLogsCollector.onMessage(message => {
+      const match = message.match(/Playwright listening on (ws:\/\/\S+)/);
+      if (match)
+        result.resolve({ wsEndpoint: match[1] });
+    });
+    return result;
   }
 
   override doRewriteStartupLog(logs: string): string {
@@ -70,14 +105,26 @@ export class WebKit extends BrowserType {
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    const webkitArguments = ['--inspector-pipe'];
+    const isWSL = options.channel === 'webkit-wsl';
+    const webkitArguments = [isWSL ? '--remote-debugging-port=0' : '--inspector-pipe'];
 
-    if (process.platform === 'win32' && options.channel !== 'webkit-wsl')
+    if (isWSL) {
+      const wslExecutablePath = options.executablePath || registry.findExecutable('webkit-wsl')!.wslExecutablePath!;
+      webkitArguments.unshift(
+          '-d', kWSLDistribution,
+          '-u', kWSLUser,
+          '--cd', kWSLHome,
+          '--',
+          wslExecutablePath,
+      );
+    }
+
+    if (process.platform === 'win32' && !isWSL)
       webkitArguments.push('--disable-accelerated-compositing');
     if (headless)
       webkitArguments.push('--headless');
     if (isPersistent)
-      webkitArguments.push(`--user-data-dir=${options.channel === 'webkit-wsl' ? await translatePathToWSL(userDataDir) : userDataDir}`);
+      webkitArguments.push(`--user-data-dir=${isWSL ? await translatePathToWSL(userDataDir) : userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
     const proxy = options.proxyOverride || options.proxy;
@@ -86,7 +133,7 @@ export class WebKit extends BrowserType {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(`--proxy-bypass-list=${proxy.bypass}`);
-      } else if (process.platform === 'linux' || (process.platform === 'win32' && options.channel === 'webkit-wsl')) {
+      } else if (process.platform === 'linux' || isWSL) {
         webkitArguments.push(`--proxy=${proxy.server}`);
         if (proxy.bypass)
           webkitArguments.push(...proxy.bypass.split(',').map(t => `--ignore-host=${t}`));
@@ -106,6 +153,11 @@ export class WebKit extends BrowserType {
 }
 
 export async function translatePathToWSL(path: string): Promise<string> {
-  const { stdout } = await spawnAsync('wsl.exe', ['-d', 'playwright', '--cd', '/home/pwuser', 'wslpath', path.replace(/\\/g, '\\\\')]);
+  const { stdout } = await spawnAsync('wsl.exe', ['-d', kWSLDistribution, '--cd', kWSLHome, 'wslpath', path.replace(/\\/g, '\\\\')]);
   return stdout.toString().trim();
+}
+
+async function wslPathExists(wslPath: string): Promise<boolean> {
+  const { code } = await spawnAsync('wsl.exe', ['-d', kWSLDistribution, '-u', kWSLUser, '--', 'test', '-e', wslPath]);
+  return code === 0;
 }

@@ -396,8 +396,6 @@ CDPSession:
     detach:
       title: Detach CDP session
       group: configuration
-      flags:
-        potentiallyClosesScope: true
 
   events:
 

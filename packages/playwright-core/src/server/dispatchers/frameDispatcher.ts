@@ -25,7 +25,7 @@ import type { Progress } from '../progress';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type { NavigationEvent } from '../frames';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../channels';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
   _type_Frame = true;

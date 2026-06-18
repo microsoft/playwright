@@ -29,7 +29,7 @@ import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep,
 
 
 export class InternalReporter implements ReporterV2 {
-  private _reporter: ReporterV2;
+  private _reporter: Multiplexer;
   private _didBegin = false;
   private _config!: FullConfig;
   private _startTime: Date | undefined;
@@ -41,6 +41,10 @@ export class InternalReporter implements ReporterV2 {
 
   version(): 'v2' {
     return 'v2';
+  }
+
+  hasReporterErrors(): boolean {
+    return this._reporter.hasReporterErrors();
   }
 
   onConfigure(config: FullConfig) {

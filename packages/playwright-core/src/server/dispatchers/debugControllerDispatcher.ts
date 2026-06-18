@@ -20,8 +20,8 @@ import { Dispatcher } from './dispatcher';
 
 import type { DispatcherConnection, RootDispatcher } from './dispatcher';
 import type { RegisteredListener } from '@utils/eventsHelper';
-import type * as channels from '@protocol/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channels';
+import type { Progress } from '../progress';
 
 
 export class DebugControllerDispatcher extends Dispatcher<DebugController, channels.DebugControllerChannel, RootDispatcher> implements channels.DebugControllerChannel {

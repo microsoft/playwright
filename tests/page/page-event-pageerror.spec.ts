@@ -197,7 +197,7 @@ it('clearPageErrors should work', async ({ page }) => {
 
 it('should fire illegal character error', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38388' },
-}, async ({ page, server, browserName, isWindows }) => {
+}, async ({ page, server, browserName, isWindows, channel }) => {
   server.setRoute('/error.html', (req, res) => {
     res.end(`
       <!doctype html>
@@ -223,7 +223,7 @@ it('should fire illegal character error', {
   ]);
   if (browserName === 'chromium')
     expect(error.message).toContain('Invalid or unexpected token');
-  else if (browserName === 'webkit' && isWindows)
+  else if (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl')
     expect(error.message).toContain('No identifiers allowed directly after numeric literal');
   else if (browserName === 'webkit')
     expect(error.message).toContain('Invalid character');

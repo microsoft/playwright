@@ -17,7 +17,7 @@
 
 import type { HeadersArray, Point, Size } from '@isomorphic/types';
 export type { HeadersArray, Point, Quad, Rect, Size } from '@isomorphic/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 import type { ProxySettings } from '@utils/network';
 
 export type StrictOptions = {

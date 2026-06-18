@@ -22,8 +22,8 @@ import { StreamDispatcher } from './streamDispatcher';
 
 import type { DispatcherScope } from './dispatcher';
 import type { Artifact } from '../artifact';
-import type * as channels from '@protocol/channels';
-import type { Progress } from '@protocol/progress';
+import type * as channels from '../channels';
+import type { Progress } from '../progress';
 
 export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactChannel, DispatcherScope> implements channels.ArtifactChannel {
   _type_Artifact = true;

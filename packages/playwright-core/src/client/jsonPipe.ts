@@ -16,7 +16,7 @@
 
 import { ChannelOwner } from './channelOwner';
 
-import type * as channels from '@protocol/channels';
+import type * as channels from './channels';
 
 export class JsonPipe extends ChannelOwner<channels.JsonPipeChannel> {
   static from(jsonPipe: channels.JsonPipeChannel): JsonPipe {

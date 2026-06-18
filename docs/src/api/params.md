@@ -991,6 +991,14 @@ Receives the event data and resolves to truthy value when the waiting should res
 Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
+## wait-for-event-signal
+* langs: js
+* since: v1.61
+- `signal` <[AbortSignal]>
+
+Allows to cancel the waiting using an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the waiting will be aborted and the operation will throw an error.
+Note that providing a signal does not disable the default timeout; pass `timeout: 0` to disable the timeout entirely.
+
 ## android-timeout
 * langs: js
 - `timeout` <[float]>
