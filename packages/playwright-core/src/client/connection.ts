@@ -29,7 +29,7 @@ import { Dialog } from './dialog';
 import { DisposableObject } from './disposable';
 import { Electron, ElectronApplication } from './electron';
 import { ElementHandle } from './elementHandle';
-import { TargetClosedError, parseError } from './errors';
+import { AbortError, TargetClosedError, parseError } from './errors';
 import { APIRequestContext } from './fetch';
 import { Frame } from './frame';
 import { JSHandle } from './jsHandle';
@@ -70,7 +70,7 @@ export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, title: string | undefined, type: string, method: string }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, signal: AbortSignal | undefined, title: string | undefined, type: string, method: string }>();
   private _rootObject: Root;
   private _closedError: Error | undefined;
   private _isRemote = false;
@@ -182,7 +182,8 @@ export class Connection extends EventEmitter {
       throw new Error('The object has been collected to prevent unbounded heap growth.');
 
     const signal = options.signal;
-    signal?.throwIfAborted();
+    if (signal?.aborted)
+      throw new AbortError(undefined, { cause: signal.reason });
 
     const guid = object._guid;
     const type = object._type;
@@ -206,12 +207,12 @@ export class Connection extends EventEmitter {
     if (signal) {
       abortListener = () => {
         const reason = signal.reason instanceof Error ? signal.reason.message : String(signal.reason);
-        this._platform.zones.empty.run(() => this.onmessage({ guid, method: '__cancel__', params: { id, reason } }));
+        this._platform.zones.empty.run(() => this.onmessage({ guid, method: '__abort__', params: { id, reason } }));
       };
       signal.addEventListener('abort', abortListener, { once: true });
     }
     try {
-      return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, title: options.title, type, method }));
+      return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, signal, title: options.title, type, method }));
     } finally {
       if (abortListener)
         signal!.removeEventListener('abort', abortListener);
@@ -240,6 +241,8 @@ export class Connection extends EventEmitter {
       this._callbacks.delete(id);
       if (error && !result) {
         const parsedError = parseError(error);
+        if (callback.signal?.aborted && parsedError instanceof AbortError)
+          parsedError.cause = callback.signal.reason;
         parsedError.log = log || [];
         rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this._platform, log));
         const detailsValidator = maybeFindValidator(callback.type, callback.method, 'ErrorDetails');

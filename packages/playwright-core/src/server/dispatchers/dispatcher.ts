@@ -23,7 +23,7 @@ import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '../../protocol/validator';
-import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
+import { AbortError, TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
@@ -300,8 +300,8 @@ export class DispatcherConnection {
         await this._dispatchWaitInfo(id, dispatcher, params, metadata);
       return;
     }
-    if (method === '__cancel__') {
-      await dispatcher?._activeProgressControllers.get(`call@${params.id}`)?.abort(new Error(params.reason));
+    if (method === '__abort__') {
+      await dispatcher?._activeProgressControllers.get(`call@${params.id}`)?.abort(new AbortError(undefined, { cause: params.reason }));
       return;
     }
     if (!dispatcher) {
