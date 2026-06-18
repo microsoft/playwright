@@ -727,6 +727,41 @@ test('should show websocket messages', {
   await expect(wsList.getByRole('option').nth(3)).toContainText('Binary');
 });
 
+test('should show websocket message times in milliseconds', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41360' }
+}, async ({ page, server, runAndTrace }) => {
+  server.onceWebSocketConnection(ws => {
+    ws.on('message', message => ws.send(`echo:${message}`));
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(async url => {
+      const ws = new WebSocket(url);
+      const waitForMessage = () => new Promise(resolve => ws.addEventListener('message', resolve, { once: true }));
+      await new Promise(resolve => ws.addEventListener('open', resolve, { once: true }));
+      ws.send('first');
+      await waitForMessage();
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      ws.send('second');
+      await waitForMessage();
+      ws.close();
+      await new Promise(resolve => ws.addEventListener('close', resolve, { once: true }));
+    }, `ws://${server.HOST}/ws`);
+  });
+
+  await traceViewer.showNetworkTab();
+  await traceViewer.networkRequests.filter({ hasText: 'ws' }).filter({ hasText: 'websocket' }).click();
+
+  const messagesTab = traceViewer.networkTab.getByRole('tabpanel', { name: 'Messages' });
+  await traceViewer.networkTab.getByRole('tab', { name: 'Messages' }).click();
+  const wsList = messagesTab.getByRole('listbox', { name: 'WebSocket messages' });
+  await expect(wsList.getByRole('option')).toHaveCount(4);
+  await expect(wsList.getByRole('option').nth(2)).toContainText('second');
+  const secondMessageTime = await wsList.getByRole('option').nth(2).locator('.network-websocket-message-time').textContent();
+  expect(parseMillis(secondMessageTime!)).toBeGreaterThan(1000);
+});
+
 test('should show snapshot URL and copy button', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
