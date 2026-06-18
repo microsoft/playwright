@@ -20,6 +20,7 @@ import path from 'path';
 import { isPathInside } from '@utils/fileUtils';
 import { ZipFile } from '@utils/zipFile';
 
+import { formatError, terminalScreen } from './base';
 import {  currentBlobReportVersion } from './blob';
 import { Multiplexer } from './multiplexer';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
@@ -112,8 +113,10 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
     });
   }
   await dispatchEvents(eventData.epilogue);
-  // The merged report status is intentionally not surfaced as a failure - the
-  // merge command only fails when a reporter itself errors.
+  // The merged report status is intentionally not surfaced as a failure.
+  // Reporter errors still fail the merge command and should be visible.
+  for (const error of multiplexer.reporterErrors())
+    terminalScreen.stderr.write(formatError(terminalScreen, error).message + '\n');
   return multiplexer.hasReporterErrors() ? 'failed' : 'passed';
 }
 

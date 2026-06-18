@@ -23,6 +23,7 @@ import type { test } from '../common';
 export class Multiplexer implements ReporterV2 {
   private _reporters: ReporterV2[];
   private _hasReporterErrors = false;
+  private _reporterErrors: TestError[] = [];
 
   constructor(reporters: ReporterV2[]) {
     this._reporters = reporters;
@@ -34,6 +35,10 @@ export class Multiplexer implements ReporterV2 {
 
   hasReporterErrors(): boolean {
     return this._hasReporterErrors;
+  }
+
+  reporterErrors(): TestError[] {
+    return this._reporterErrors;
   }
 
   onConfigure(config: FullConfig) {
@@ -122,9 +127,11 @@ export class Multiplexer implements ReporterV2 {
     try {
       callback();
     } catch (e) {
+      const error = serializeError(e);
       this._hasReporterErrors = true;
+      this._reporterErrors.push(error);
       if (redispatch)
-        this.onError(serializeError(e));
+        this.onError(error);
     }
   }
 
@@ -132,8 +139,10 @@ export class Multiplexer implements ReporterV2 {
     try {
       return await callback();
     } catch (e) {
+      const error = serializeError(e);
       this._hasReporterErrors = true;
-      this.onError(serializeError(e));
+      this._reporterErrors.push(error);
+      this.onError(error);
     }
   }
 }
