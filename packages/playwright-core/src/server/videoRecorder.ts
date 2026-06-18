@@ -24,6 +24,7 @@ import { debugLogger } from '@utils/debugLogger';
 import { mkdirIfNeeded } from '@utils/fileUtils';
 import { monotonicTime } from '@isomorphic/time';
 import { Artifact } from './artifact';
+import { writeClusterHeader, writeHeader } from './ebml';
 import { registry } from './registry';
 
 import type * as types from './types';
@@ -99,11 +100,9 @@ class FfmpegVideoRecorder {
   private _size: types.Size;
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
-  private _lastWritePromise: Promise<void> = Promise.resolve();
   private _firstFrameTimestamp: number = 0;
   private _lastFrame: { timestamp: number, frameNumber: number, buffer: Buffer } | null = null;
   private _lastWriteNodeTime: number = 0;
-  private _frameQueue: Buffer[] = [];
   private _isStopped = false;
   private _ffmpegPath: string;
   private _launchPromise: Promise<Error | null>;
@@ -147,21 +146,24 @@ class FfmpegVideoRecorder {
     //   https://ffmpeg.org/ffmpeg-filters.html#pad-1
     //   https://ffmpeg.org/ffmpeg-filters.html#crop
     //
-    // We use "image2pipe" mode to pipe frames and get a single video - https://trac.ffmpeg.org/wiki/Slideshow
-    //   "-f image2pipe -c:v mjpeg -i -" forces input to be read from standard input, and forces
-    //     mjpeg input image format.
-    //   "-avioflags direct" reduces general buffering.
+    // We wrap each incoming MJPEG frame into a minimal Matroska stream (see ./ebml.ts) with an
+    // explicit timestamp, and let ffmpeg read frame timing from that stream.
+    //   "-f matroska -i pipe:0" forces input to be read from standard input as Matroska.
     //   "-fpsprobesize 0 -probesize 32 -analyzeduration 0" reduces initial buffering
     //     while analyzing input fps and other stats.
+    //   Note: "-avioflags direct" must NOT be used here - it breaks Matroska header parsing
+    //     by disabling the input buffering the demuxer needs.
     //
     // "-y" means overwrite output.
     // "-an" means no audio.
+    // "-r 25" forces a constant output frame rate; ffmpeg duplicates frames as needed based on
+    //   the input timestamps, so we don't have to repeat frames ourselves.
     // "-threads 1" means using one thread. This drastically reduces stalling when
     //   cpu is overbooked. By default vp8 tries to use all available threads?
 
     const w = this._size.width;
     const h = this._size.height;
-    const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
@@ -186,6 +188,7 @@ class FfmpegVideoRecorder {
     });
     this._process = launchedProcess;
     this._gracefullyClose = gracefullyClose;
+    launchedProcess.stdin!.write(writeHeader(w, h));
   }
 
   writeFrame(frame: Buffer, timestamp: number) {
@@ -205,28 +208,17 @@ class FfmpegVideoRecorder {
       this._firstFrameTimestamp = timestamp;
 
     const frameNumber = Math.floor((timestamp - this._firstFrameTimestamp) * fps);
-
-    if (this._lastFrame) {
-      const repeatCount = frameNumber - this._lastFrame.frameNumber;
-      for (let i = 0; i < repeatCount; ++i)
-        this._frameQueue.push(this._lastFrame.buffer);
-      this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
-    }
+    if (this._lastFrame && frameNumber !== this._lastFrame.frameNumber)
+      this._emitFrame(this._lastFrame.buffer, this._lastFrame.frameNumber);
 
     this._lastFrame = { buffer: frame, timestamp, frameNumber };
     this._lastWriteNodeTime = monotonicTime();
   }
 
-  private async _sendFrames() {
-    while (this._frameQueue.length)
-      await this._sendFrame(this._frameQueue.shift()!);
-  }
-
-  private async _sendFrame(frame: Buffer) {
-    return new Promise(f => this._process!.stdin!.write(frame, f)).then(error => {
-      if (error)
-        debugLogger.log('browser', `ffmpeg failed to write: ${String(error)}`);
-    });
+  private _emitFrame(frame: Buffer, frameNumber: number) {
+    const timestampMs = Math.max(0, Math.round(frameNumber * 1000 / fps));
+    this._process!.stdin!.write(writeClusterHeader(timestampMs, frame.length));
+    this._process!.stdin!.write(frame);
   }
 
   async _stop() {
@@ -237,16 +229,18 @@ class FfmpegVideoRecorder {
     if (this._isStopped)
       return;
     if (!this._lastFrame) {
-      // ffmpeg only creates a file upon some non-empty input
-      this._writeFrame(createWhiteImage(this._size.width, this._size.height), monotonicTime());
+      // ffmpeg only creates a file upon some non-empty input.
+      this._writeFrame(createWhiteImage(this._size.width, this._size.height), monotonicTime() / 1000);
     }
-    // Pad with at least 1s of the last frame in the end for convenience.
-    // This also ensures non-empty videos with 1 frame.
+    // Emit the last received frame at its own slot, then repeat it at the end so it stays visible
+    // for at least 1s. This also ensures non-empty videos with 1 frame and gives the output stream
+    // a final timestamp.
+    this._emitFrame(this._lastFrame!.buffer, this._lastFrame!.frameNumber);
     const addTime = Math.max((monotonicTime() - this._lastWriteNodeTime) / 1000, 1);
-    this._writeFrame(Buffer.from([]), this._lastFrame!.timestamp + addTime);
+    const endFrameNumber = Math.floor((this._lastFrame!.timestamp + addTime - this._firstFrameTimestamp) * fps);
+    this._emitFrame(this._lastFrame!.buffer, endFrameNumber);
     this._isStopped = true;
     try {
-      await this._lastWritePromise;
       await this._gracefullyClose!();
     } catch (e) {
       debugLogger.log('error', `ffmpeg failed to stop: ${String(e)}`);
