@@ -152,7 +152,6 @@ export abstract class BrowserType extends SdkObject {
       ignoreDefaultArgs,
       ignoreAllDefaultArgs,
       args = [],
-      executablePath = null,
     } = options;
     const tempDirectories: string[] = [];
     let artifactsDir: string;
@@ -183,10 +182,9 @@ export abstract class BrowserType extends SdkObject {
       browserArguments.push(...await this.defaultArgs(options, isPersistent, userDataDir));
 
     let executable: string;
-    if (executablePath) {
-      if (!(await existsAsync(executablePath)))
-        throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
-      executable = executablePath;
+    const customExecutablePath = await this.resolveExecutablePath(options);
+    if (customExecutablePath) {
+      executable = customExecutablePath;
     } else {
       const registryExecutable = registry.findExecutable(this.getExecutableName(options));
       if (!registryExecutable || registryExecutable.browserName !== this._name)
@@ -343,6 +341,15 @@ export abstract class BrowserType extends SdkObject {
 
   getExecutableName(options: types.LaunchOptions): string {
     return options.channel || this._name;
+  }
+
+  protected async resolveExecutablePath(options: types.LaunchOptions): Promise<string | undefined> {
+    const { executablePath } = options;
+    if (!executablePath)
+      return undefined;
+    if (!(await existsAsync(executablePath)))
+      throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
+    return executablePath;
   }
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]>;

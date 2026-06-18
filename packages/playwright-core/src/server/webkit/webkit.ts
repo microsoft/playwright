@@ -65,6 +65,16 @@ export class WebKit extends BrowserType {
     return options.channel !== 'webkit-wsl';
   }
 
+  override async resolveExecutablePath(options: types.LaunchOptions): Promise<string | undefined> {
+    if (options.channel !== 'webkit-wsl')
+      return super.resolveExecutablePath(options);
+    // executablePath points inside the WSL distribution and is consumed in defaultArgs; the
+    // host command is wsl.exe from the registry.
+    if (options.executablePath && !await wslPathExists(options.executablePath))
+      throw new Error(`Failed to launch webkit because executable doesn't exist at ${options.executablePath}`);
+    return undefined;
+  }
+
   override async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
     if (options.channel !== 'webkit-wsl')
       return {};
@@ -99,15 +109,13 @@ export class WebKit extends BrowserType {
     const webkitArguments = [isWSL ? '--remote-debugging-port=0' : '--inspector-pipe'];
 
     if (isWSL) {
-      if (options.executablePath)
-        throw new Error('Cannot specify executablePath when using the "webkit-wsl" channel.');
-      // The actual command is `wsl.exe -- <linux executable> <browser args>`.
+      const wslExecutablePath = options.executablePath || registry.findExecutable('webkit-wsl')!.wslExecutablePath!;
       webkitArguments.unshift(
           '-d', kWSLDistribution,
           '-u', kWSLUser,
           '--cd', kWSLHome,
           '--',
-          registry.findExecutable('webkit-wsl')!.wslExecutablePath!,
+          wslExecutablePath,
       );
     }
 
@@ -147,4 +155,9 @@ export class WebKit extends BrowserType {
 export async function translatePathToWSL(path: string): Promise<string> {
   const { stdout } = await spawnAsync('wsl.exe', ['-d', kWSLDistribution, '--cd', kWSLHome, 'wslpath', path.replace(/\\/g, '\\\\')]);
   return stdout.toString().trim();
+}
+
+async function wslPathExists(wslPath: string): Promise<boolean> {
+  const { code } = await spawnAsync('wsl.exe', ['-d', kWSLDistribution, '-u', kWSLUser, '--', 'test', '-e', wslPath]);
+  return code === 0;
 }

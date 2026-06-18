@@ -155,7 +155,6 @@ Frame:
         pause: true
         input: true
         isAutoWaiting: true
-        potentiallyClosesScope: true
 
     content:
       title: Get content

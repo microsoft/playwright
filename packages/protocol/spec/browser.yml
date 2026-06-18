@@ -47,12 +47,9 @@ Browser:
         reason: string?
       flags:
         pause: true
-        potentiallyClosesScope: true
 
     killForTests:
       internal: true
-      flags:
-        potentiallyClosesScope: true
 
     defaultUserAgentForTest:
       internal: true

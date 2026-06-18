@@ -328,8 +328,7 @@ function generateChannels(target) {
           const pauseProp = method.flags?.pause ? ` pause: ${method.flags.pause},` : '';
           const inputProp = method.flags?.input ? ` input: ${method.flags.input},` : '';
           const isAutoWaitingProp = method.flags?.isAutoWaiting ? ` isAutoWaiting: ${method.flags.isAutoWaiting},` : '';
-          const potentiallyClosesScopeProp = method.flags?.potentiallyClosesScope ? ` potentiallyClosesScope: ${method.flags.potentiallyClosesScope},` : '';
-          methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp}${inputProp}${isAutoWaitingProp}${potentiallyClosesScopeProp}${groupProp} }]`);
+          methodMetainfo.push(`['${className + '.' + methodName}', {${internalProp}${titleProp}${slowMoProp}${snapshotProp}${pauseProp}${inputProp}${isAutoWaitingProp}${groupProp} }]`);
         }
 
         const parameters = objectType(method.parameters || {}, '');
@@ -387,7 +386,7 @@ function generateChannels(target) {
 
 const client_channels_ts = generateChannels('Channel');
 
-metainfo_ts.push(`export type MethodMetainfo = { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pause?: boolean, isAutoWaiting?: boolean, input?: boolean, potentiallyClosesScope?: boolean, group?: string };
+metainfo_ts.push(`export type MethodMetainfo = { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pause?: boolean, isAutoWaiting?: boolean, input?: boolean, group?: string };
 
 export const methodMetainfo = new Map<string, MethodMetainfo>([
   ${methodMetainfo.join(`,\n  `)}

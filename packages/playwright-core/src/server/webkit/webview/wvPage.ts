@@ -689,11 +689,53 @@ export class WVPage implements PageDelegate {
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
-    throw new Error('Method not implemented');
+    if (!handle._objectId)
+      return null;
+    // A frame-owner node's contentDocument.frameId is the framed document's frame.
+    const { node } = await this._requestNodeViaDOM(handle._objectId);
+    const frameId = node?.contentDocument?.frameId;
+    return frameId ? this._page.frameManager.frame(frameId) : null;
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
-    throw new Error('Method not implemented');
+    if (handle._objectId) {
+      // A node's frameId is its containing frame, even for a cross-frame handle.
+      const { node } = await this._requestNodeViaDOM(handle._objectId);
+      if (node?.frameId)
+        return node.frameId;
+    }
+    return handle._frame._id;
+  }
+
+  // Resolves a Runtime objectId to its DOM.Node. DOM.requestNode streams the node
+  // and its ancestor path through DOM.setChildNodes, but only once DOM.getDocument
+  // has let the agent observe the document. Returns the requested node along with
+  // every node seen along the way, keyed by id.
+  private async _requestNodeViaDOM(objectId: string): Promise<{ node: Protocol.DOM.Node | undefined, nodesById: Map<number, Protocol.DOM.Node> }> {
+    const nodesById = new Map<number, Protocol.DOM.Node>();
+    const collect = (nodes: Protocol.DOM.Node[] | undefined) => {
+      for (const node of nodes || []) {
+        nodesById.set(node.nodeId, node);
+        collect(node.children);
+        collect(node.shadowRoots);
+        if (node.contentDocument)
+          collect([node.contentDocument]);
+        if (node.templateContent)
+          collect([node.templateContent]);
+      }
+    };
+    const listener = eventsHelper.addEventListener(this._session, 'DOM.setChildNodes',
+        (e: Protocol.DOM.setChildNodesPayload) => collect(e.nodes));
+    try {
+      const { root } = await this._session.send('DOM.getDocument');
+      collect([root]);
+      const { nodeId } = await this._session.send('DOM.requestNode', { objectId });
+      return { node: nodesById.get(nodeId), nodesById };
+    } catch {
+      return { node: undefined, nodesById };
+    } finally {
+      eventsHelper.removeEventListeners([listener]);
+    }
   }
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
@@ -776,7 +818,31 @@ export class WVPage implements PageDelegate {
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
-    throw new Error('Method not implemented');
+    const parent = frame.parentFrame();
+    if (!parent)
+      throw new Error('Frame has been detached.');
+    // Requesting the frame's own document streams its ancestor path, which
+    // includes the owner element (and its siblings). Pick the one whose
+    // contentDocument is this frame, then resolve it in the parent's context.
+    const documentHandle = await (await frame.mainContext()).evaluateHandle(() => document);
+    let ownerNodeId: number | undefined;
+    try {
+      if (documentHandle._objectId) {
+        const { nodesById } = await this._requestNodeViaDOM(documentHandle._objectId);
+        for (const node of nodesById.values()) {
+          if (node.contentDocument?.frameId === frame._id) {
+            ownerNodeId = node.nodeId;
+            break;
+          }
+        }
+      }
+    } finally {
+      documentHandle.dispose();
+    }
+    const resolved = ownerNodeId !== undefined ? await this._session.sendMayFail('DOM.resolveNode', { nodeId: ownerNodeId }) : null;
+    if (!resolved || resolved.object.subtype === 'null')
+      throw new Error('Frame has been detached.');
+    return createHandle(await parent.mainContext(), resolved.object) as dom.ElementHandle;
   }
 
   _adoptRequestFromNewProcess(navigationRequest: network.Request, newSession: WVSession, newRequestId: string) {
@@ -814,16 +880,12 @@ export class WVPage implements PageDelegate {
         redirectedFrom = request;
       }
     }
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : this._page.frameManager.frame(event.frameId);
-    // sometimes we get stray network events for detached frames
-    // TODO(einbinder) why?
-    if (!frame)
-      return;
-
-    // TODO(einbinder) this will fail if we are an XHR document request
+    // The frame may be null for a subframe document request that arrives before
+    // Page.frameNavigated creates its frame.
+    const frame = redirectedFrom ? redirectedFrom.request.frame() : (this._page.frameManager.frame(event.frameId) ?? null);
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    const request = new WVInterceptableRequest(session, frame, event, redirectedFrom, documentId);
+    const request = new WVInterceptableRequest(session, this._browserContext, frame, event, redirectedFrom, documentId);
     let route;
     if (intercepted) {
       route = new WVRouteImpl(session, event.requestId);
