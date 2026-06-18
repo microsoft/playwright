@@ -34,16 +34,29 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 # 1. Add tip-of-tree Playwright package to install its browsers.
 #    The package should be built beforehand from tip-of-tree Playwright.
 COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
-COPY ./install_browsers.sh /tmp/install_browsers.sh
 
 # 2. Set up playwright-core and install all system dependencies in one layer.
-RUN /tmp/install_browsers.sh install-deps
+RUN install -d -m 777 /ms-playwright /ms-playwright/.links && \
+    mkdir /ms-playwright-agent && \
+    cd /ms-playwright-agent && npm init -y && \
+    npm i /tmp/playwright-core.tar.gz && \
+    npm exec --no -- playwright-core mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}" && \
+    npm exec --no -- playwright-core install-deps && \
+    rm -rf /var/lib/apt/lists/*
 
 # 3. Install each browser binary in its own layer for parallel pulling.
 # Note: installing chromium also installs chromium-headless-shell and ffmpeg.
-RUN /tmp/install_browsers.sh chromium
+RUN cd /ms-playwright-agent && \
+    npm exec --no -- playwright-core install chromium && \
+    chmod -R 777 /ms-playwright/chromium-* /ms-playwright/chromium_headless_shell-* /ms-playwright/ffmpeg-*
 
-RUN /tmp/install_browsers.sh firefox
+RUN cd /ms-playwright-agent && \
+    npm exec --no -- playwright-core install firefox && \
+    chmod -R 777 /ms-playwright/firefox-*
 
-RUN /tmp/install_browsers.sh webkit && \
-    /tmp/install_browsers.sh cleanup
+RUN cd /ms-playwright-agent && \
+    npm exec --no -- playwright-core install webkit && \
+    rm /tmp/playwright-core.tar.gz && \
+    rm -rf /ms-playwright-agent && \
+    rm -rf ~/.npm/ && \
+    chmod -R 777 /ms-playwright/webkit-*
