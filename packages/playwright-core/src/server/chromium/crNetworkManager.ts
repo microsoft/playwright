@@ -733,6 +733,7 @@ type RequestInfo = {
   responses: network.Response[],
   loadingFinished?: Protocol.Network.loadingFinishedPayload,
   loadingFailed?: Protocol.Network.loadingFailedPayload,
+  fallbackTimerScheduled?: boolean,
   servedFromCache?: boolean,
 };
 
@@ -849,7 +850,35 @@ class ResponseExtraInfoTracker {
       return;
     }
 
-    // We are not done yet.
+    if (info.fallbackTimerScheduled)
+      return;
+    info.fallbackTimerScheduled = true;
+    setImmediate(() => this._fallbackToProvisionalHeaders(info));
+  }
+
+  private _fallbackToProvisionalHeaders(info: RequestInfo) {
+    if (this._requests.get(info.requestId) !== info)
+      return;
+    if (!info.loadingFinished && !info.loadingFailed)
+      return;
+    if (!info.responses.length)
+      return;
+    if (info.responses.length <= info.responseReceivedExtraInfo.length) {
+      this._stopTracking(info.requestId);
+      return;
+    }
+
+    // Chromium can report "hasExtraInfo" without ever emitting all extra info
+    // events, for example for worker scripts started from an iframe. Once the
+    // request has finished and the next task still did not bring the missing
+    // events, use provisional headers instead of leaving allHeaders() pending
+    // forever.
+    for (const response of info.responses) {
+      response.request().setRawRequestHeaders(null);
+      response.setResponseHeadersSize(null);
+      response.setRawResponseHeaders(null);
+    }
+    this._stopTracking(info.requestId);
   }
 
   private _stopTracking(requestId: string) {

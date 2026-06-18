@@ -261,6 +261,27 @@ it('should report worker script as network request', {
   expect(text).toContain(`console.log('hello from the worker');`);
 });
 
+it('should resolve response headers for worker script request from iframe', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39948' },
+}, async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/iframe-with-worker.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<script>window.worker = new Worker('/worker.js');</script>`);
+  });
+  server.setRoute('/worker.js', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/javascript', 'X-Worker-Script': 'true' });
+    res.end(`console.log('hello from the worker');`);
+  });
+
+  const requestFinishedPromise = page.waitForEvent('requestfinished', request => request.url().endsWith('/worker.js'));
+  await attachFrame(page, 'worker-frame', server.PREFIX + '/iframe-with-worker.html');
+  const request = await requestFinishedPromise;
+  const response = await request.response();
+  const headers = await response!.allHeaders();
+  expect(headers).toEqual(expect.objectContaining({ 'x-worker-script': 'true' }));
+});
+
 it('should report worker script as network request after redirect', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35678' },
 }, async ({ page, server, browserName }) => {
