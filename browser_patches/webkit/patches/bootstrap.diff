@@ -13399,6 +13399,22 @@ index 0000000000000000000000000000000000000000..a29ae94cda78928fab928bbdd250f8cd
 +        eventModifiers,
 +        timestamp);
 +    m_page.handleMouseEvent(event);
++
++    // WebKit swallows mousedown for right-click internally to handle contextmenu.
++    // Explicitly re-dispatch so page JS handlers receive it, matching behaviour on Mac
++    if (eventType == WebEventType::MouseDown && eventButton == WebMouseEventButton::Right) {
++        NativeWebMouseEvent contextMenuEvent(
++            WebEventType::MouseDown,
++            eventButton,
++            eventButtons,
++            {x, y},
++            WebCore::IntPoint(),
++            0, 0, 0,
++            eventClickCount,
++            eventModifiers,
++            timestamp);
++        m_page.handleMouseEvent(contextMenuEvent);
++    }
 +#endif
 +}
 +
