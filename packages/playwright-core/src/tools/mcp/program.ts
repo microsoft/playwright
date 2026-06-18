@@ -127,7 +127,7 @@ export function decorateMCPCommand(command: Command) {
               const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
               await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
             }
-            const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
+            const browserContext = config.browser.isolated || !browser.contexts().length ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
             return new BrowserBackend(config, browserContext, tools);
           },
           disposed: async backend => {
