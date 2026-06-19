@@ -973,6 +973,7 @@ export type BrowserNewContextParams = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextOptions = {
@@ -1047,6 +1048,7 @@ export type BrowserNewContextOptions = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextResult = {
@@ -1124,6 +1126,7 @@ export type BrowserNewContextForReuseParams = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextForReuseOptions = {
@@ -1198,6 +1201,7 @@ export type BrowserNewContextForReuseOptions = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextForReuseResult = {
@@ -1594,24 +1598,29 @@ export type BrowserContextSetOfflineOptions = {
 export type BrowserContextSetOfflineResult = void;
 export type BrowserContextStorageStateParams = {
   indexedDB?: boolean,
+  credentials?: boolean,
 };
 export type BrowserContextStorageStateOptions = {
   indexedDB?: boolean,
+  credentials?: boolean,
 };
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
+  credentials?: VirtualCredential[],
 };
 export type BrowserContextSetStorageStateParams = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserContextSetStorageStateOptions = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserContextSetStorageStateResult = void;

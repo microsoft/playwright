@@ -508,6 +508,7 @@ scheme.BrowserNewContextParams = tObject({
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('SetOriginStorage'))),
+    credentials: tOptional(tArray(tType('VirtualCredential'))),
   })),
 });
 scheme.BrowserNewContextResult = tObject({
@@ -585,6 +586,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('SetOriginStorage'))),
+    credentials: tOptional(tArray(tType('VirtualCredential'))),
   })),
 });
 scheme.BrowserNewContextForReuseResult = tObject({
@@ -845,15 +847,18 @@ scheme.BrowserContextSetOfflineParams = tObject({
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
 scheme.BrowserContextStorageStateParams = tObject({
   indexedDB: tOptional(tBoolean),
+  credentials: tOptional(tBoolean),
 });
 scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),
+  credentials: tOptional(tArray(tType('VirtualCredential'))),
 });
 scheme.BrowserContextSetStorageStateParams = tObject({
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('SetOriginStorage'))),
+    credentials: tOptional(tArray(tType('VirtualCredential'))),
   })),
 });
 scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));

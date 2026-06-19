@@ -179,6 +179,7 @@ BrowserContext:
       group: configuration
       parameters:
         indexedDB: boolean?
+        credentials: boolean?
       returns:
         cookies:
           type: array
@@ -186,6 +187,9 @@ BrowserContext:
         origins:
           type: array
           items: OriginStorage
+        credentials:
+          type: array?
+          items: VirtualCredential
 
     setStorageState:
       title: Set storage state
@@ -200,6 +204,9 @@ BrowserContext:
             origins:
               type: array?
               items: SetOriginStorage
+            credentials:
+              type: array?
+              items: VirtualCredential
 
     pause:
       title: Pause
