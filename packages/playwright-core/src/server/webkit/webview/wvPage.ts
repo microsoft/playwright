@@ -586,9 +586,6 @@ export class WVPage implements PageDelegate {
     await this._session.send('Page.reload');
   }
 
-  // Cookie support is limited to the stock Web Inspector `Page` cookie commands,
-  // which operate on the cookie store visible to the inspected page — i.e. the
-  // current page's domain — rather than the whole context.
   async getCookies(): Promise<Protocol.Page.Cookie[]> {
     const { cookies } = await this._session.send('Page.getCookies');
     return cookies;

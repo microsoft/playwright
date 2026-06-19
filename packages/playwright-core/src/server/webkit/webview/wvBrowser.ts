@@ -307,10 +307,8 @@ export class WVBrowserContext extends BrowserContext {
     throw new Error('Not supported');
   }
 
-  // Cookies are read/written through the current page's `Page` cookie commands,
-  // so they only cover the cookie store visible to that page (its domain), not
-  // the whole browser context. Without an attached page there is nothing to
-  // operate on.
+  // The Page cookie commands only see cookies for the current page's domain, so
+  // cookie access is scoped to that page rather than the whole context.
   private _cookiePage(): WVPage | undefined {
     const page = this.pages()[0];
     return page ? page.delegate as WVPage : undefined;

@@ -148,9 +148,8 @@ export const webviewTest = baseTest.extend<WebViewTestFixtures, WebViewWorkerFix
       throw new Error('No Mobile Safari tab is attached');
     await page.goto('about:blank').catch(() => {});
     await run(page);
-    // The single Mobile Safari instance keeps one cookie store across tests, so
-    // wipe cookies for the page's current domain before disconnecting — webview
-    // cookies are scoped to the current page's domain (see WVBrowserContext).
+    // The shared Mobile Safari cookie store persists across tests; clear it
+    // while still on the test's domain (webview cookies are domain-scoped).
     await page.context().clearCookies().catch(() => {});
     await browser.close();
   },
