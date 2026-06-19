@@ -132,6 +132,54 @@ function loadAndValidateTsconfigsForFolder(folder: string): ParsedTsConfigData[]
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
 const builtins = new Set(Module.builtinModules);
 
+function resolvePackageSubpathImport(filename: string, specifier: string): string | undefined {
+  if (specifier.startsWith('#'))
+    return;
+
+  const tokens = specifier.split('/');
+  const packageName = specifier.startsWith('@') ? tokens.slice(0, 2).join('/') : tokens[0];
+  const subpath = specifier.startsWith('@') ? tokens.slice(2).join('/') : tokens.slice(1).join('/');
+  if (!packageName || !subpath)
+    return;
+
+  let currentFolder = path.dirname(filename);
+  while (true) {
+    const packageJsonPath = path.join(currentFolder, 'node_modules', packageName, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson = readPackageJson(packageJsonPath);
+      if (!packageJson)
+        return;
+      if (packageJson.exports !== undefined)
+        return;
+      const resolved = resolveImportSpecifierAfterMapping(path.join(path.dirname(packageJsonPath), subpath), true);
+      return resolved ? fs.realpathSync(resolved) : undefined;
+    }
+
+    const parentFolder = path.dirname(currentFolder);
+    if (currentFolder === parentFolder)
+      break;
+    currentFolder = parentFolder;
+  }
+}
+
+type PackageJsonWithExports = {
+  exports?: unknown;
+};
+
+const packageJsonCache = new Map<string, PackageJsonWithExports | undefined>();
+
+function readPackageJson(packageJsonPath: string): PackageJsonWithExports | undefined {
+  if (!packageJsonCache.has(packageJsonPath)) {
+    let packageJson;
+    try {
+      packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    } catch {
+    }
+    packageJsonCache.set(packageJsonPath, packageJson);
+  }
+  return packageJsonCache.get(packageJsonPath);
+}
+
 export function resolveHook(filename: string, specifier: string): string | undefined {
   if (specifier.startsWith('node:') || builtins.has(specifier))
     return;
@@ -197,6 +245,10 @@ export function resolveHook(filename: string, specifier: string): string | undef
     if (pathMatchedByLongestPrefix)
       return pathMatchedByLongestPrefix;
   }
+
+  const packageSubpath = resolvePackageSubpathImport(filename, specifier);
+  if (packageSubpath)
+    return packageSubpath;
 
   if (path.isAbsolute(specifier)) {
     // Handle absolute file paths like `import '/path/to/file'`

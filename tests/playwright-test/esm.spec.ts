@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { cliEntrypoint, test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import fs from 'fs';
+import path from 'path';
 
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -563,6 +565,75 @@ test('should resolve .js import to .tsx file in ESM mode for components', async 
   }, { workers: 1 });
   expect(result.passed).toBe(1);
   expect(result.exitCode).toBe(0);
+});
+
+test('should resolve no-extension ts package subpath imports through workspace symlinks in ESM mode', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41371' },
+}, async ({ writeFiles, childProcess, nodeVersion }) => {
+  test.skip(nodeVersion.major < 22, 'Sync ESM loader requires module.registerHooks');
+
+  const baseDir = await writeFiles({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default { testDir: './apps/e2e/tests' };`,
+    'apps/e2e/package.json': `{ "type": "module" }`,
+    'apps/e2e/tests/basic.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { greet } from '@repro/core/lib/conversations';
+      import { value } from '@repro/exported/lib/value';
+      import { unscopedValue } from 'unscoped/lib/value';
+
+      test('pass', () => {
+        expect(greet('world')).toBe('Hello, world');
+        expect(value).toBe('dist');
+        expect(unscopedValue).toBe('unscoped');
+      });
+    `,
+    'packages/core/package.json': `{ "name": "@repro/core", "type": "module" }`,
+    'packages/core/lib/conversations.ts': `
+      export { greet } from '@repro/shared/lib/text.utils';
+    `,
+    'packages/shared/package.json': `{ "name": "@repro/shared", "type": "module" }`,
+    'packages/shared/lib/text.utils.ts': `
+      export function greet(name: string) {
+        return 'Hello, ' + name;
+      }
+    `,
+    'packages/exported/package.json': JSON.stringify({
+      name: '@repro/exported',
+      type: 'module',
+      exports: {
+        './lib/value': './dist/value.js',
+      },
+    }),
+    'packages/exported/lib/value.ts': `
+      export const value = 'source';
+    `,
+    'packages/exported/dist/value.js': `
+      export const value = 'dist';
+    `,
+    'packages/unscoped/package.json': `{ "name": "unscoped", "type": "module" }`,
+    'packages/unscoped/lib/value.ts': `
+      export const unscopedValue = 'unscoped';
+    `,
+  });
+
+  const linkDirectory = async (target: string, link: string) => {
+    await fs.promises.mkdir(path.dirname(link), { recursive: true });
+    await fs.promises.symlink(process.platform === 'win32' ? target : path.relative(path.dirname(link), target), link, process.platform === 'win32' ? 'junction' : 'dir');
+  };
+
+  await linkDirectory(path.join(baseDir, 'packages/core'), path.join(baseDir, 'apps/e2e/node_modules/@repro/core'));
+  await linkDirectory(path.join(baseDir, 'packages/shared'), path.join(baseDir, 'packages/core/node_modules/@repro/shared'));
+  await linkDirectory(path.join(baseDir, 'packages/exported'), path.join(baseDir, 'apps/e2e/node_modules/@repro/exported'));
+  await linkDirectory(path.join(baseDir, 'packages/unscoped'), path.join(baseDir, 'apps/e2e/node_modules/unscoped'));
+
+  const result = childProcess({
+    command: ['node', cliEntrypoint, 'test', '--workers=1'],
+    cwd: baseDir,
+  });
+  const { exitCode } = await result.exited;
+  expect(result.output).toContain('1 passed');
+  expect(exitCode).toBe(0);
 });
 
 test('should load cjs config and test in non-ESM mode', async ({ runInlineTest }) => {
