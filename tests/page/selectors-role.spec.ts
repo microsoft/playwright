@@ -476,6 +476,22 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
   ]);
 });
 
+test('should find slotted content when scoping into a shadow subtree', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38166' },
+}, async ({ page }) => {
+  await page.setContent(`
+    <my-dialog>
+      <template shadowrootmode="open">
+        <dialog open><slot></slot></dialog>
+      </template>
+      <div><button>Foo</button></div>
+    </my-dialog>
+  `);
+  await expect(page.getByRole('dialog').getByRole('button', { name: 'Foo' })).toBeVisible();
+  expect(await page.getByRole('dialog').getByRole('button').count()).toBe(1);
+  expect(await page.getByRole('button').count()).toBe(1);
+});
+
 test('should support name', async ({ page }) => {
   await page.setContent(`
     <div role="button" aria-label=" Hello "></div>

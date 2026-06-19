@@ -149,7 +149,11 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
 
 function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
   const result: Element[] = [];
+  const visited = new Set<Element>();
   const match = (element: Element) => {
+    if (visited.has(element))
+      return;
+    visited.add(element);
     if (getAriaRole(element) !== options.role)
       return;
     if (options.selected !== undefined && getAriaSelected(element) !== options.selected)
@@ -204,6 +208,12 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
       match(element);
       if (element.shadowRoot)
         shadows.push(element.shadowRoot);
+      if (element.nodeName === 'SLOT') {
+        for (const assigned of (element as HTMLSlotElement).assignedElements()) {
+          match(assigned);
+          query(assigned);
+        }
+      }
     }
     shadows.forEach(query);
   };
