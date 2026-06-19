@@ -205,7 +205,6 @@ export class WKPage implements PageDelegate {
         height: emulatedSize.screen.height,
       }));
     }
-    promises.push(this.updateEmulateMedia());
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(this._calculateExtraHTTPHeaders(), false /* lowerCase */) }));
     if (contextOptions.offline)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));

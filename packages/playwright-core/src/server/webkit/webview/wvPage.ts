@@ -108,8 +108,39 @@ export class WVPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
-  updateEmulateMedia(): Promise<void> {
-    throw new Error('Method not implemented.');
+  private static async _setEmulateMedia(session: WVSession, mediaType: types.MediaType, colorScheme: types.ColorScheme, reducedMotion: types.ReducedMotion, contrast: types.Contrast): Promise<void> {
+    const promises = [];
+    promises.push(session.send('Page.setEmulatedMedia', { media: mediaType === 'no-override' ? '' : mediaType }));
+    let appearance: any = undefined;
+    switch (colorScheme) {
+      case 'light': appearance = 'Light'; break;
+      case 'dark': appearance = 'Dark'; break;
+      case 'no-override': appearance = undefined; break;
+    }
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersColorScheme', value: appearance }));
+    let reducedMotionWk: any = undefined;
+    switch (reducedMotion) {
+      case 'reduce': reducedMotionWk = 'Reduce'; break;
+      case 'no-preference': reducedMotionWk = 'NoPreference'; break;
+      case 'no-override': reducedMotionWk = undefined; break;
+    }
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersReducedMotion', value: reducedMotionWk }));
+    let contrastWk: any = undefined;
+    switch (contrast) {
+      case 'more': contrastWk = 'More'; break;
+      case 'no-preference': contrastWk = 'NoPreference'; break;
+      case 'no-override': contrastWk = undefined; break;
+    }
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersContrast', value: contrastWk }));
+    await Promise.all(promises);
+  }
+
+  async updateEmulateMedia(): Promise<void> {
+    const emulatedMedia = this._page.emulatedMedia();
+    const colorScheme = emulatedMedia.colorScheme;
+    const reducedMotion = emulatedMedia.reducedMotion;
+    const contrast = emulatedMedia.contrast;
+    await this._forAllSessions(session => WVPage._setEmulateMedia(session, emulatedMedia.media, colorScheme, reducedMotion, contrast));
   }
 
   goBack(): Promise<boolean> {
@@ -183,6 +214,9 @@ export class WVPage implements PageDelegate {
       session.sendMayFail('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }),
       session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
     ]);
+    const emulatedMedia = this._page.emulatedMedia();
+    if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.contrast)
+      promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.contrast));
     if (this._page.needsRequestInterception()) {
       await Promise.all([
         session.sendMayFail('Network.setInterceptionEnabled', { enabled: true }),
