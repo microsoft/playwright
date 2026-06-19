@@ -75,6 +75,7 @@ type RecordingState = {
   chunkOrdinal: number,
   networkSha1s: Set<string>,
   traceSha1s: Set<string>,
+  appendableSha1s: Set<string>,
   recording: boolean;
   callIds: Set<string>;
   groupStack: string[];
@@ -172,6 +173,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       chunkOrdinal: 0,
       traceSha1s: new Set(),
       networkSha1s: new Set(),
+      appendableSha1s: new Set(),
       recording: false,
       callIds: new Set(),
       groupStack: [],
@@ -411,8 +413,15 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const entries: NameValue[] = [];
     entries.push({ name: 'trace.trace', value: this._state.traceFile });
     entries.push({ name: 'trace.network', value: newNetworkFile });
-    for (const sha1 of new Set([...this._state.traceSha1s, ...this._state.networkSha1s]))
-      entries.push({ name: path.join('resources', sha1), value: path.join(this._state.resourcesDir, sha1) });
+    for (const sha1 of new Set([...this._state.traceSha1s, ...this._state.networkSha1s])) {
+      let value = path.join(this._state.resourcesDir, sha1);
+      if (params.mode === 'entries' && this._state.appendableSha1s.has(sha1)) {
+        const copy = path.join(this._state.tracesDir, `${this._state.traceName}-pwnetcopy-${this._state.chunkOrdinal}-${sha1}`);
+        this._fs.copyFile(value, copy);
+        value = copy;
+      }
+      entries.push({ name: path.join('resources', sha1), value });
+    }
 
     // Only reset trace sha1s, network resources are preserved between chunks.
     this._state.traceSha1s = new Set();
@@ -543,6 +552,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     const visited = visitTraceEvent(event, this._state!.networkSha1s);
     this._fs.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n', true /* flush */);
+
+    const sha1 = entry.response.content._sha1;
+    if (sha1)
+      this._state!.appendableSha1s.delete(sha1);
   }
 
   flushHarEntries() {
@@ -562,8 +575,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onContentBlobAppend(sha1: string, text: string) {
-    if (!this._allResources.has(sha1))
-      this._allResources.add(sha1);
+    this._allResources.add(sha1);
+    this._state!.appendableSha1s.add(sha1);
     this._fs.appendFile(path.join(this._state!.resourcesDir, sha1), text, this._state!.options.live /* flush */);
   }
 
