@@ -215,6 +215,46 @@ test('should update tracing network live', async ({ runUITest, server }) => {
   ).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
+test('should complete live trace with active websocket frames', async ({ runUITest, server }) => {
+  let receivedFrames = 0;
+  server.onceWebSocketConnection(socket => {
+    socket.on('error', () => undefined);
+    socket.on('message', () => ++receivedFrames);
+  });
+
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('websocket live trace', async ({ page }) => {
+        await page.goto('${server.EMPTY_PAGE}');
+        await page.evaluate(async url => {
+          const ws = new WebSocket(url);
+          (window as any).ws = ws;
+          await new Promise((resolve, reject) => {
+            ws.addEventListener('open', resolve, { once: true });
+            ws.addEventListener('error', () => reject(new Error('WebSocket failed to open')), { once: true });
+          });
+          let remainingFrames = 60;
+          const timer = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN)
+              ws.send('client-frame-' + 'x'.repeat(4096));
+            if (--remainingFrames === 0) {
+              clearInterval(timer);
+              ws.close();
+            }
+          }, 10);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }, 'ws://${server.HOST}/ws');
+        await expect(page.locator('body')).toBeVisible();
+      });
+    `,
+  });
+
+  await page.getByText('websocket live trace').dblclick();
+  await expect.poll(() => receivedFrames).toBeGreaterThan(0);
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 (100%) — 1 passed', { timeout: 30000 });
+});
+
 test('should show trace w/ multiple contexts', async ({ runUITest, server, createLatch }) => {
   const latch = createLatch();
 

@@ -535,11 +535,15 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onEntryStarted(entry: har.Entry) {
+    if (!this._isHarRecording())
+      return;
     this._pendingHarEntries.add(entry);
   }
 
   onEntryFinished(entry: har.Entry) {
     this._pendingHarEntries.delete(entry);
+    if (!this._isHarRecording())
+      return;
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
     const visited = visitTraceEvent(event, this._state!.networkSha1s);
     this._fs.appendFile(this._state!.networkFile, JSON.stringify(visited) + '\n', true /* flush */);
@@ -558,13 +562,21 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
+    if (!this._isHarRecording())
+      return;
     this._appendResource(sha1, buffer);
   }
 
   onContentBlobAppend(sha1: string, text: string) {
+    if (!this._isHarRecording())
+      return;
     if (!this._allResources.has(sha1))
       this._allResources.add(sha1);
     this._fs.appendFile(path.join(this._state!.resourcesDir, sha1), text, this._state!.options.live /* flush */);
+  }
+
+  private _isHarRecording() {
+    return !!this._state?.recording && !this._isStopping;
   }
 
   onSnapshotterBlob(blob: SnapshotterBlob): void {
