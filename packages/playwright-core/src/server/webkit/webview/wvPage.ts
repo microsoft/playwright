@@ -182,6 +182,7 @@ export class WVPage implements PageDelegate {
       this._workers.initializeSession(session),
       session.sendMayFail('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }),
       session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
+      session.sendMayFail('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(this._calculateExtraHTTPHeaders(), false /* lowerCase */) }),
     ]);
     if (this._page.needsRequestInterception()) {
       await Promise.all([
