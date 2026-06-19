@@ -147,6 +147,26 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
   }
 
+  if (testRun.options.lastFailedTestIds?.length) {
+    const failedTestIds = new Set(testRun.options.lastFailedTestIds);
+    const projectsWithLastFailedTests: commonConfig.FullProjectInternal[] = [];
+    for (const [project, filteredProjectSuite] of filteredProjectSuites) {
+      if (filteredProjectSuite.allTests().some(test => failedTestIds.has(test.id)))
+        projectsWithLastFailedTests.push(project);
+    }
+
+    if (projectsWithLastFailedTests.length) {
+      const lastFailedProjectClosure = buildProjectsClosure(projectsWithLastFailedTests, project => filteredProjectSuites.get(project)!._hasTests());
+      const topLevelProjectsWithLastFailedTests = new Set([...lastFailedProjectClosure]
+          .filter(([, type]) => type === 'top-level')
+          .map(([project]) => project));
+      for (const project of filteredProjectSuites.keys()) {
+        if (!topLevelProjectsWithLastFailedTests.has(project))
+          filteredProjectSuites.delete(project);
+      }
+    }
+  }
+
   // Add post-filtered top-level projects to the root suite for sharding and 'only' processing.
   const projectClosure = buildProjectsClosure([...filteredProjectSuites.keys()], project => filteredProjectSuites.get(project)!._hasTests());
   for (const [project, type] of projectClosure) {

@@ -38,6 +38,239 @@ test('should run projects with dependencies', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['A', 'B', 'C']);
 });
 
+test('should run last failed tests from a dependency project', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.spec.ts/ },
+          { name: 'app', testMatch: /app.spec.ts/, dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('setup passes', async () => {
+        console.log('\\n%%setup passes');
+      });
+      test('setup fails 1', async () => {
+        console.log('\\n%%setup fails 1');
+        expect(1).toBe(2);
+      });
+      test('setup fails 2', async () => {
+        console.log('\\n%%setup fails 2');
+        expect(1).toBe(2);
+      });
+    `,
+    'app.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('app passes', async () => {
+        console.log('\\n%%app passes');
+      });
+    `,
+  };
+  const result1 = await runInlineTest(files, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(2);
+  expect(result1.didNotRun).toBe(1);
+  expect(result1.outputLines).toEqual(['setup passes', 'setup fails 1', 'setup fails 2']);
+
+  const result2 = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(2);
+  expect(result2.didNotRun).toBe(0);
+  expect(result2.outputLines).toEqual(['setup fails 1', 'setup fails 2']);
+});
+
+test('should run dependencies unfiltered when rerunning a top-level last failed test', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.spec.ts/ },
+          { name: 'app', testMatch: /app.spec.ts/, dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('setup 1', async () => {
+        console.log('\\n%%setup 1');
+      });
+      test('setup 2', async () => {
+        console.log('\\n%%setup 2');
+      });
+    `,
+    'app.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('app passes', async () => {
+        console.log('\\n%%app passes');
+      });
+      test('app fails', async () => {
+        console.log('\\n%%app fails');
+        expect(1).toBe(2);
+      });
+    `,
+  };
+  const result1 = await runInlineTest(files, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(3);
+  expect(result1.failed).toBe(1);
+  expect(result1.outputLines).toEqual(['setup 1', 'setup 2', 'app passes', 'app fails']);
+
+  const result2 = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(2);
+  expect(result2.failed).toBe(1);
+  expect(result2.outputLines).toEqual(['setup 1', 'setup 2', 'app fails']);
+});
+
+test('should prefer top-level last failed tests over their dependency failures', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.spec.ts/ },
+          { name: 'app', testMatch: /app.spec.ts/, dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('setup passes', async () => {
+        console.log('\\n%%setup passes');
+      });
+      test('setup fails', async () => {
+        console.log('\\n%%setup fails');
+        expect(1).toBe(2);
+      });
+    `,
+    'app.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('app passes', async () => {
+        console.log('\\n%%app passes');
+      });
+      test('app fails', async () => {
+        console.log('\\n%%app fails');
+        expect(1).toBe(2);
+      });
+    `,
+  };
+
+  const result1 = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['--no-deps'] });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(2);
+  expect(result1.failed).toBe(2);
+  expect(result1.outputLines).toEqual(['setup passes', 'setup fails', 'app passes', 'app fails']);
+
+  const result2 = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.didNotRun).toBe(1);
+  expect(result2.outputLines).toEqual(['setup passes', 'setup fails']);
+});
+
+test('should run transitive dependencies for a last failed dependency project', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.spec.ts/ },
+          { name: 'seed', testMatch: /seed.spec.ts/, dependencies: ['setup'] },
+          { name: 'app', testMatch: /app.spec.ts/, dependencies: ['seed'] },
+        ],
+      };`,
+    'setup.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('setup passes', async () => {
+        console.log('\\n%%setup passes');
+      });
+    `,
+    'seed.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('seed passes', async () => {
+        console.log('\\n%%seed passes');
+      });
+      test('seed fails', async () => {
+        console.log('\\n%%seed fails');
+        expect(1).toBe(2);
+      });
+    `,
+    'app.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('app passes', async () => {
+        console.log('\\n%%app passes');
+      });
+    `,
+  };
+  const result1 = await runInlineTest(files, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(2);
+  expect(result1.failed).toBe(1);
+  expect(result1.didNotRun).toBe(1);
+  expect(result1.outputLines).toEqual(['setup passes', 'seed passes', 'seed fails']);
+
+  const result2 = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(1);
+  expect(result2.failed).toBe(1);
+  expect(result2.didNotRun).toBe(0);
+  expect(result2.outputLines).toEqual(['setup passes', 'seed fails']);
+});
+
+test('should run shared dependencies once for multiple top-level last failed tests', async ({ runInlineTest }) => {
+  const files = {
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'setup', testMatch: /setup.spec.ts/ },
+          { name: 'chromium', testMatch: /chromium.spec.ts/, dependencies: ['setup'] },
+          { name: 'firefox', testMatch: /firefox.spec.ts/, dependencies: ['setup'] },
+        ],
+      };`,
+    'setup.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('setup 1', async () => {
+        console.log('\\n%%setup 1');
+      });
+      test('setup 2', async () => {
+        console.log('\\n%%setup 2');
+      });
+    `,
+    'chromium.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('chromium passes', async () => {
+        console.log('\\n%%chromium passes');
+      });
+      test('chromium fails', async () => {
+        console.log('\\n%%chromium fails');
+        expect(1).toBe(2);
+      });
+    `,
+    'firefox.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('firefox passes', async () => {
+        console.log('\\n%%firefox passes');
+      });
+      test('firefox fails', async () => {
+        console.log('\\n%%firefox fails');
+        expect(1).toBe(2);
+      });
+    `,
+  };
+  const result1 = await runInlineTest(files, { workers: 1 });
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(4);
+  expect(result1.failed).toBe(2);
+  expect(result1.outputLines).toEqual(['setup 1', 'setup 2', 'chromium passes', 'chromium fails', 'firefox passes', 'firefox fails']);
+
+  const result2 = await runInlineTest(files, { workers: 1 }, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(2);
+  expect(result2.failed).toBe(2);
+  expect(result2.outputLines).toEqual(['setup 1', 'setup 2', 'chromium fails', 'firefox fails']);
+});
+
 test('should inherit env changes from dependencies', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
