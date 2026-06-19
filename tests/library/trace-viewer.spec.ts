@@ -459,6 +459,22 @@ test('should have correct snapshot size', async ({ showTraceViewer }, testInfo) 
   await expect(traceViewer.snapshotContainer).toHaveCSS('height', '600px');
 });
 
+test('should collapse and expand browser', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('Click');
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+
+  // Collapse the browser, the network/properties panel becomes the central panel.
+  await traceViewer.page.getByRole('button', { name: 'Collapse browser' }).click();
+  await expect(traceViewer.snapshotContainer).toBeHidden();
+  await traceViewer.showNetworkTab();
+  await expect(traceViewer.networkRequests.first()).toBeVisible();
+
+  // Restore the browser.
+  await traceViewer.page.getByRole('button', { name: 'Show browser' }).click();
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+});
+
 test('should have correct stack trace', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
 

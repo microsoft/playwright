@@ -51,8 +51,9 @@ export const SnapshotTabsView: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedElement: HighlightedElement,
   setHighlightedElement: (element: HighlightedElement) => void,
-  playback: PlaybackState
-}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, playback }) => {
+  playback: PlaybackState,
+  onCollapse?: () => void,
+}> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, playback, onCollapse }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
@@ -90,6 +91,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
           injectedScript.consoleApi.install();
         });
       }} />
+      {onCollapse && <ToolbarButton icon='screen-normal' title='Collapse browser' onClick={onCollapse} />}
     </Toolbar>
     <SnapshotView
       snapshotUrls={snapshotUrls}

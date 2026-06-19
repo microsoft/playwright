@@ -78,6 +78,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const [selectedNavigatorTab, setSelectedNavigatorTab] = useSetting<string>('navigatorTab',  'actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [browserCollapsed, setBrowserCollapsed] = useSetting<boolean>('browserCollapsed', false);
   const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
   // Per-model settings, should be primitive non-retaining types.
@@ -361,6 +362,36 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
 
   const actionsFilterWithCount = selectedNavigatorTab === 'actions' && <ActionsFilterButton counters={model?.actionCounters} hiddenActionsCount={hiddenActionsCount} />;
 
+  const snapshotView = <SnapshotTabsView
+    action={activeAction}
+    model={model}
+    sdkLanguage={sdkLanguage}
+    testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+    isInspecting={isInspecting}
+    setIsInspecting={setIsInspecting}
+    highlightedElement={highlightedElement}
+    setHighlightedElement={elementPicked}
+    playback={playback}
+    onCollapse={() => setBrowserCollapsed(true)} />;
+
+  const propertiesView = <TabbedPane
+    tabs={tabs}
+    selectedTab={selectedPropertiesTab}
+    setSelectedTab={selectPropertiesTab}
+    rightToolbar={browserCollapsed ? [
+      <ToolbarButton key='browser' title='Show browser' icon='screen-full' onClick={() => setBrowserCollapsed(false)} />
+    ] : [
+      sidebarLocation === 'bottom' ?
+        <ToolbarButton key='dock' title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
+          setSidebarLocation('right');
+        }} /> :
+        <ToolbarButton key='dock' title='Dock to bottom' icon='layout-panel-off' onClick={() => {
+          setSidebarLocation('bottom');
+        }} />
+    ]}
+    mode={!browserCollapsed && sidebarLocation === 'right' ? 'select' : 'default'}
+  />;
+
   return <div className='vbox workbench' {...(inert ? { inert: true } : {})}>
     {!hideTimeline && <Timeline
       model={model}
@@ -375,21 +406,13 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     <SplitView
       sidebarSize={250}
       orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
+      sidebarHidden={browserCollapsed}
       main={<SplitView
         sidebarSize={250}
         orientation='horizontal'
         sidebarIsFirst
         settingName='actionListSidebar'
-        main={<SnapshotTabsView
-          action={activeAction}
-          model={model}
-          sdkLanguage={sdkLanguage}
-          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          highlightedElement={highlightedElement}
-          setHighlightedElement={elementPicked}
-          playback={playback} />}
+        main={browserCollapsed ? propertiesView : snapshotView}
         sidebar={
           <TabbedPane
             tabs={[actionsTab, metadataTab]}
@@ -399,21 +422,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
           />
         }
       />}
-      sidebar={<TabbedPane
-        tabs={tabs}
-        selectedTab={selectedPropertiesTab}
-        setSelectedTab={selectPropertiesTab}
-        rightToolbar={[
-          sidebarLocation === 'bottom' ?
-            <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
-              setSidebarLocation('right');
-            }} /> :
-            <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
-              setSidebarLocation('bottom');
-            }} />
-        ]}
-        mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
-      />}
+      sidebar={propertiesView}
     />
   </div>;
 };
