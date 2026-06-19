@@ -156,13 +156,16 @@ const startHeartbeat = (server: ServerType) => {
     Promise.race([
       server.ping(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), 5000)),
-    ]).then(() => {
+    ]).catch(() => {
+      // A missed application-level ping does not mean the connection is dead. Long-running
+      // tool calls, and HTTP clients/proxies that don't answer server-initiated pings, would
+      // otherwise have their session (and browser context) reaped while perfectly alive.
+      // Dead transports are already cleaned up via transport.onclose, so keep the heartbeat
+      // purely as a keepalive and keep beating.
+    }).finally(() => {
       setTimeout(beat, 3000);
-    }).catch(() => {
-      void server.close();
     });
   };
-
   beat();
 };
 
