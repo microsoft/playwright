@@ -720,8 +720,12 @@ Frame:
         timeout: float
         # When present, polls on interval. Otherwise, polls on raf.
         pollingInterval: float?
+        # When present, first argument is the matched element.
+        selector: string?
+        strict: boolean?
       returns:
-        handle: JSHandle
+        # Missing when "selector" is present.
+        handle: JSHandle?
       flags:
         snapshot: true
         pause: true

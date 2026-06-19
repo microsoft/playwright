@@ -20,6 +20,7 @@ import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
+import { serializeArgument } from './jsHandle';
 import { DisposableStub } from './disposable';
 
 import type { ExpectResult, Frame } from './frame';
@@ -388,6 +389,18 @@ export class Locator implements api.Locator {
   waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void>;
   async waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void> {
     await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options, timeout: this._frame._timeout(options) });
+  }
+
+  async waitForFunction<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<void> {
+    await this._frame._channel.waitForFunction({
+      selector: this._selector,
+      strict: true,
+      expression: String(pageFunction),
+      isFunction: typeof pageFunction === 'function',
+      arg: serializeArgument(arg),
+      timeout: this._frame._timeout(options),
+      pollingInterval: 100,
+    });
   }
 
 

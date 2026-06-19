@@ -2796,3 +2796,50 @@ orderSent.WaitForAsync();
 
 ### option: Locator.waitFor.timeout = %%-input-timeout-js-%%
 * since: v1.16
+
+## async method: Locator.waitForFunction
+* since: v1.62
+
+Returns when [`param: expression`] returns a truthy value, called with the matching element as a first argument, and [`param: arg`] as a second argument.
+
+This is a generic way to wait for an element to reach a custom condition without asserting it. The locator is re-resolved on each retry, so it tolerates the element being re-rendered while waiting.
+
+If [`param: expression`] returns a [Promise], this method will wait for the promise to resolve before checking its value.
+
+If [`param: expression`] throws or rejects, this method throws.
+
+**Usage**
+
+Wait for an attribute to appear:
+
+```js
+const toggle = page.getByRole('button', { name: 'Menu' });
+await toggle.click();
+await toggle.waitForFunction(element => element.hasAttribute('aria-expanded'));
+```
+
+Passing argument to [`param: expression`]:
+
+```js
+await page.getByTestId('status').waitForFunction((element, value) => {
+  return element.textContent === value;
+}, 'Ready');
+```
+
+### param: Locator.waitForFunction.expression = %%-evaluate-expression-%%
+* since: v1.62
+
+### param: Locator.waitForFunction.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.62
+
+### param: Locator.waitForFunction.arg
+* since: v1.62
+- `arg` ?<[EvaluationArgument]>
+
+Optional argument to pass to [`param: expression`].
+
+### option: Locator.waitForFunction.timeout = %%-wait-for-function-timeout-%%
+* since: v1.62
+
+### option: Locator.waitForFunction.timeout = %%-wait-for-function-timeout-js-%%
+* since: v1.62

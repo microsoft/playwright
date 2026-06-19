@@ -484,7 +484,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       arg: serializeArgument(arg),
       timeout: this._timeout(options),
     });
-    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
+    return JSHandle.from(result.handle!) as any as structs.SmartHandle<R>;
   }
 
   async title(): Promise<string> {
