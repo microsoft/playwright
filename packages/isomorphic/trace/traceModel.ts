@@ -90,7 +90,8 @@ export class TraceModel {
   readonly actionCounters: Map<string, number>;
   readonly traceUri: string;
   readonly testTimeout?: number;
-
+  readonly pagerefToTitle = new Map<string, string>();
+  readonly contextToTitle = new Map<ContextEntry, string>();
 
   constructor(traceUri: string, contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
@@ -120,6 +121,16 @@ export class TraceModel {
     this.resources = [...contexts.map(c => c.resources)].flat().map(entry => ({ ...entry, id: `${entry.pageref}-${entry.startedDateTime}-${entry.request.url}` }));
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
+
+    this.pages.forEach((page, index) => this.pagerefToTitle.set(page.pageId, 'page#' + (index + 1)));
+    let lastApiContextId = 0;
+    let lastBrowserContextId = 0;
+    for (const context of contexts) {
+      if (context.resources.some(resource => resource._apiRequest))
+        this.contextToTitle.set(context, 'api#' + (++lastApiContextId));
+      else
+        this.contextToTitle.set(context, 'browser#' + (++lastBrowserContextId));
+    }
 
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);

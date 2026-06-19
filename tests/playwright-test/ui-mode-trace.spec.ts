@@ -420,6 +420,10 @@ test('should show request source context id', async ({ runUITest, server }) => {
         const page2 = await context.newPage();
         await page2.goto('${server.EMPTY_PAGE}');
         await request.get('${server.EMPTY_PAGE}');
+        console.log('log from node');
+        console.error('error from node');
+        await page.evaluate(() => console.log('here from page1'));
+        await page2.evaluate(() => console.log('here from page2'));
       });
     `,
   });
@@ -432,6 +436,13 @@ test('should show request source context id', async ({ runUITest, server }) => {
   await expect(page.getByText('page#1')).toBeVisible();
   await expect(page.getByText('page#2')).toBeVisible();
   await expect(page.getByText('api#1')).toBeVisible();
+
+  await page.getByText('Console', { exact: true }).click();
+  const consoleLines = page.getByRole('tabpanel', { name: 'Console' }).getByRole('option');
+  await expect(consoleLines.filter({ hasText: 'log from node' }).locator('.console-source')).toHaveText('test');
+  await expect(consoleLines.filter({ hasText: 'error from node' }).locator('.console-source')).toHaveText('test');
+  await expect(consoleLines.filter({ hasText: 'here from page1' }).locator('.console-source')).toHaveText('page#1');
+  await expect(consoleLines.filter({ hasText: 'here from page2' }).locator('.console-source')).toHaveText('page#2');
 });
 
 test('should work behind reverse proxy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33705' } }, async ({ runUITest, proxyServer: reverseProxy }) => {

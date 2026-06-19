@@ -20,17 +20,16 @@ import './networkTab.css';
 import { NetworkResourceDetails, WebSocketResourceDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@isomorphic/formatUtils';
 import { PlaceholderPanel } from './placeholderPanel';
-import { context, type ResourceEntry } from '@isomorphic/trace/traceModel';
-import type { TraceModel } from '@isomorphic/trace/traceModel';
+import { context } from '@isomorphic/trace/traceModel';
+import type { ResourceEntry, TraceModel } from '@isomorphic/trace/traceModel';
 import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
-import type { ContextEntry } from '@isomorphic/trace/entries';
 import { NetworkFilters, defaultFilterState, type FilterState, type ResourceType } from './networkFilters';
 import type { Language } from '@isomorphic/locatorGenerators';
 
 type NetworkTabModel = {
   resources: ResourceEntry[],
-  contextIdMap: ContextIdMap,
+  model: TraceModel | undefined,
 };
 
 type RenderedEntry = {
@@ -61,8 +60,7 @@ export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: 
     });
     return filtered;
   }, [model, selectedTime, pageId]);
-  const contextIdMap = React.useMemo(() => new ContextIdMap(model), [model]);
-  return { resources, contextIdMap };
+  return { resources, model };
 }
 
 export const NetworkTab: React.FunctionComponent<{
@@ -75,12 +73,13 @@ export const NetworkTab: React.FunctionComponent<{
   const [selectedResourceKey, setSelectedResourceKey] = React.useState<string | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
-  const { renderedEntries } = React.useMemo(() => {
-    const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap)).filter(filterEntry(filterState));
+  const { renderedEntries, multipleContexts } = React.useMemo(() => {
+    const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.model)).filter(filterEntry(filterState));
     if (sorting)
       sort(renderedEntries, sorting);
-    return { renderedEntries };
-  }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
+    const multipleContexts = new Set(renderedEntries.map(entry => entry.contextId).filter(Boolean)).size > 1;
+    return { renderedEntries, multipleContexts };
+  }, [networkModel.resources, networkModel.model, filterState, sorting, boundaries]);
 
   const visibleSelectedEntry = React.useMemo(() => (selectedResourceKey ? renderedEntries.find(entry => entry.resource.id === selectedResourceKey) : undefined), [selectedResourceKey, renderedEntries]);
 
@@ -103,7 +102,7 @@ export const NetworkTab: React.FunctionComponent<{
     selectedItem={visibleSelectedEntry}
     onSelected={item => setSelectedResourceKey(item.resource.id)}
     onHighlighted={item => onResourceHovered?.(item ? resourceTimeRange(item.resource) : undefined)}
-    columns={visibleColumns(!!visibleSelectedEntry, renderedEntries)}
+    columns={visibleColumns(!!visibleSelectedEntry, multipleContexts)}
     columnTitle={columnTitle}
     columnWidths={columnWidths}
     setColumnWidths={setColumnWidths}
@@ -166,15 +165,15 @@ const columnWidth = (column: ColumnName) => {
   return 100;
 };
 
-function visibleColumns(entrySelected: boolean, renderedEntries: RenderedEntry[]): (keyof RenderedEntry)[] {
+function visibleColumns(entrySelected: boolean, multipleContexts: boolean): (keyof RenderedEntry)[] {
   if (entrySelected) {
     const columns: (keyof RenderedEntry)[] = ['name'];
-    if (hasMultipleContexts(renderedEntries))
+    if (multipleContexts)
       columns.unshift('contextId');
     return columns;
   }
   let columns: (keyof RenderedEntry)[] = allColumns();
-  if (!hasMultipleContexts(renderedEntries))
+  if (!multipleContexts)
     columns = columns.filter(name => name !== 'contextId');
   return columns;
 }
@@ -217,57 +216,19 @@ const renderCell = (entry: RenderedEntry, column: ColumnName): RenderedGridCell 
   return { body: '' };
 };
 
-class ContextIdMap {
-  private _pagerefToShortId = new Map<string, string>();
-  private _contextToId = new Map<ContextEntry, string>();
-  private _lastPageId = 0;
-  private _lastApiRequestContextId = 0;
-
-  constructor(model: TraceModel | undefined) {}
-
-  contextId(resource: ResourceEntry): string {
-    if (resource.pageref)
-      return this._pageId(resource.pageref);
-    else if (resource._apiRequest)
-      return this._apiRequestContextId(resource);
+function resourceContextId(model: TraceModel | undefined, resource: ResourceEntry): string {
+  if (!model)
     return '';
-  }
-
-  private _pageId(pageref: string): string {
-    let shortId = this._pagerefToShortId.get(pageref);
-    if (!shortId) {
-      ++this._lastPageId;
-      shortId = 'page#' + this._lastPageId;
-      this._pagerefToShortId.set(pageref, shortId);
-    }
-    return shortId;
-  }
-
-  private _apiRequestContextId(resource: ResourceEntry): string {
+  if (resource.pageref)
+    return model.pagerefToTitle.get(resource.pageref) || '';
+  if (resource._apiRequest) {
     const contextEntry = context(resource);
-    if (!contextEntry)
-      return '';
-    let contextId = this._contextToId.get(contextEntry);
-    if (!contextId) {
-      ++this._lastApiRequestContextId;
-      contextId = 'api#' + this._lastApiRequestContextId;
-      this._contextToId.set(contextEntry, contextId);
-    }
-    return contextId;
+    return (contextEntry && model.contextToTitle.get(contextEntry)) || '';
   }
+  return '';
 }
 
-function hasMultipleContexts(renderedEntries: RenderedEntry[]): boolean {
-  const contextIds = new Set<string>();
-  for (const entry of renderedEntries) {
-    contextIds.add(entry.contextId);
-    if (contextIds.size > 1)
-      return true;
-  }
-  return false;
-}
-
-const renderEntry = (resource: ResourceEntry, boundaries: Boundaries, contextIdGenerator: ContextIdMap): RenderedEntry => {
+const renderEntry = (resource: ResourceEntry, boundaries: Boundaries, model: TraceModel | undefined): RenderedEntry => {
   const routeStatus = formatRouteStatus(resource);
   let resourceName: string;
   try {
@@ -300,7 +261,7 @@ const renderEntry = (resource: ResourceEntry, boundaries: Boundaries, contextIdG
     start: resource._monotonicTime! - boundaries.minimum,
     route: routeStatus,
     resource,
-    contextId: contextIdGenerator.contextId(resource),
+    contextId: resourceContextId(model, resource),
   };
 };
 
