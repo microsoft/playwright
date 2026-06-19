@@ -15,9 +15,11 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import { playwrightTest as it, expect } from '../../config/browserTest';
 import { TestServer } from '../../config/testserver';
 import { inheritAndCleanEnv } from '../../config/utils';
+import { amendFirefoxPoliciesEnv, kFirefoxPoliciesEnvName, prepareFirefoxPolicies } from '../../../packages/playwright-core/src/server/firefox/firefoxPolicies';
 
 it('should pass firefox user preferences', async ({ browserType, mode }) => {
   const browser = await browserType.launch({
@@ -72,4 +74,86 @@ it('should support custom firefox policies', async ({ browserType, mode, asset, 
   await expect(page.locator('body')).toHaveText(`Hi, I'm frame`);
   await browser.close();
   await server.stop();
+});
+
+it('should launch with generated firefox policies file', async ({ browserType, createUserDataDir }, testInfo) => {
+  const policiesPath = testInfo.outputPath('policies.json');
+  await fs.promises.writeFile(policiesPath, JSON.stringify({
+    policies: {
+      DisableTelemetry: true,
+    },
+  }));
+
+  const userDataDir = await createUserDataDir();
+  const context = await browserType.launchPersistentContext(userDataDir, {
+    env: inheritAndCleanEnv({ [kFirefoxPoliciesEnvName]: policiesPath }),
+  });
+  const generatedPolicies = JSON.parse(await fs.promises.readFile(path.join(userDataDir, 'playwright-policies.json'), 'utf8'));
+  expect(generatedPolicies).toEqual({
+    policies: {
+      DisableTelemetry: true,
+      DisableAppUpdate: true,
+    },
+  });
+  await context.close();
+});
+
+it('should merge custom firefox policies with disabled app updates', async ({}, testInfo) => {
+  const defaultUserDataDir = testInfo.outputPath('default-profile');
+  await fs.promises.mkdir(defaultUserDataDir);
+  await prepareFirefoxPolicies({}, defaultUserDataDir);
+  expect(JSON.parse(await fs.promises.readFile(path.join(defaultUserDataDir, 'playwright-policies.json'), 'utf8'))).toEqual({
+    policies: {
+      DisableAppUpdate: true,
+    },
+  });
+
+  const policiesPath = testInfo.outputPath('policies.json');
+  await fs.promises.writeFile(policiesPath, JSON.stringify({
+    policies: {
+      Certificates: {
+        Install: ['cert.pem'],
+      },
+      DisableAppUpdate: false,
+    },
+  }));
+
+  const userDataDir = testInfo.outputPath('profile');
+  await fs.promises.mkdir(userDataDir);
+  await prepareFirefoxPolicies({
+    env: [{ name: kFirefoxPoliciesEnvName, value: policiesPath }],
+  }, userDataDir);
+
+  const generatedPolicies = JSON.parse(await fs.promises.readFile(path.join(userDataDir, 'playwright-policies.json'), 'utf8'));
+  expect(generatedPolicies).toEqual({
+    policies: {
+      Certificates: {
+        Install: ['cert.pem'],
+      },
+      DisableAppUpdate: true,
+    },
+  });
+});
+
+it('should point Firefox to generated policies file', async ({}, testInfo) => {
+  const userDataDir = testInfo.outputPath('profile');
+  expect(amendFirefoxPoliciesEnv({}, userDataDir)).toEqual({
+    [kFirefoxPoliciesEnvName]: path.join(userDataDir, 'playwright-policies.json'),
+  });
+});
+
+it('should report invalid custom firefox policies', async ({}, testInfo) => {
+  const userDataDir = testInfo.outputPath('profile');
+  await fs.promises.mkdir(userDataDir);
+
+  const missingPoliciesPath = testInfo.outputPath('missing-policies.json');
+  await expect(prepareFirefoxPolicies({
+    env: [{ name: kFirefoxPoliciesEnvName, value: missingPoliciesPath }],
+  }, userDataDir)).rejects.toThrow(`Failed to read Firefox policies from ${missingPoliciesPath}`);
+
+  const invalidPoliciesPath = testInfo.outputPath('invalid-policies.json');
+  await fs.promises.writeFile(invalidPoliciesPath, '{');
+  await expect(prepareFirefoxPolicies({
+    env: [{ name: kFirefoxPoliciesEnvName, value: invalidPoliciesPath }],
+  }, userDataDir)).rejects.toThrow(`Failed to read Firefox policies from ${invalidPoliciesPath}`);
 });
