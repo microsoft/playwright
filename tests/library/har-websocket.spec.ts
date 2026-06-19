@@ -170,10 +170,10 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
         return;
       for (const text of outgoingText) {
         ws.send(text);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await new Promise(resolve => window.builtins.setTimeout(resolve, delayMs));
       }
       for (const binary of outgoingBinary) {
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await new Promise(resolve => window.builtins.setTimeout(resolve, delayMs));
         ws.send(new Uint8Array(binary));
       }
       ws.close();
