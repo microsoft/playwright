@@ -241,7 +241,6 @@ export class WVBrowser extends Browser {
     this._dialogBridge.registerTab(pageId, req => page.onBridgeDialog(req));
     this._tabs.set(pageId, { pageId, transport, connection, page });
     transport.open?.();
-    connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
     await page.waitForInitialized();
   }
 

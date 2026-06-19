@@ -54,6 +54,7 @@ export class WVPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
   private _session!: WVSession;
+  private _sentPauseOnStart = false;
   private readonly _outerSession: WVSession;
   private _provisionalPage: WVProvisionalPage | null = null;
   readonly _page: Page;
@@ -265,6 +266,13 @@ export class WVPage implements PageDelegate {
   }
 
   private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
+    // The Target domain only exists for the top-level web-page target, so send it as soon as we know it exists.
+    // Commands sent before the first Target.targetCreated event may be silently dropped as targets may not exist yet.
+    if (!this._sentPauseOnStart) {
+      this._sentPauseOnStart = true;
+      await this._outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
+    }
+
     const { targetInfo } = event;
     if (targetInfo.type !== 'page') {
       // Site-isolated WebKit (iOS 26+) reports a separate target per frame. We
