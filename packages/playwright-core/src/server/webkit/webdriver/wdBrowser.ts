@@ -33,7 +33,7 @@ import type { SdkObject } from '../../instrumentation';
 import type { InitScript, Page } from '../../page';
 import type { Progress } from '../../progress';
 import type * as types from '../../types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '../../channels';
 
 const kLaunchScheme = 'webdriver+launch://';
 

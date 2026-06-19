@@ -31,7 +31,7 @@ import type * as frames from '../../frames';
 import type { InitScript, PageDelegate } from '../../page';
 import type { Progress } from '../../progress';
 import type * as types from '../../types';
-import type { PagePdfParams } from '@protocol/channels';
+import type { PagePdfParams } from '../../channels';
 
 /**
  * PageDelegate backed by a classic W3C WebDriver session.
