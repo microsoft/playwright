@@ -101,7 +101,7 @@ export class DialogManager {
   dialogDidOpen(dialog: Dialog) {
     // Any ongoing evaluations will be stalled until the dialog is closed.
     for (const frame of dialog.page().frameManager.frames())
-      frame.invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
+      frame.invalidateNonStallingEvaluations(new Error('JavaScript dialog interrupted evaluation'));
     this._openedDialogs.add(dialog);
     this._instrumentation.onDialog(dialog);
 

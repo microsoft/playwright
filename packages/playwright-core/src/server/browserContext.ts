@@ -234,7 +234,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     const otherPages = this.possiblyUninitializedPages().filter(p => p !== page);
     for (const p of otherPages)
       await p.close(progress);
-    if (page && page.hasCrashed()) {
+    if (page && page.isClosedOrClosingOrCrashed()) {
       await page.close(progress);
       page = undefined;
     }

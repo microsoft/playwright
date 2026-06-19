@@ -835,9 +835,9 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._pageProxySession.sendMayFail('Target.close', {
-      targetId: this._session.sessionId,
-      runBeforeUnload
+    await this._pageProxySession.connection.browserSession.sendMayFail('Playwright.closePage', {
+      pageProxyId: this._pageProxySession.sessionId,
+      runBeforeUnload,
     });
   }
 

@@ -451,7 +451,7 @@ export class FFPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._session.send('Page.close', { runBeforeUnload });
+    await this._session.sendEvenAfterCrash('Page.close', { runBeforeUnload });
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
