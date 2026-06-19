@@ -78,6 +78,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const [selectedNavigatorTab, setSelectedNavigatorTab] = useSetting<string>('navigatorTab',  'actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [browserPanelHidden, setBrowserPanelHidden] = useSetting<boolean>('browserPanelHidden', false);
   const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
   // Per-model settings, should be primitive non-retaining types.
@@ -360,6 +361,44 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   };
 
   const actionsFilterWithCount = selectedNavigatorTab === 'actions' && <ActionsFilterButton counters={model?.actionCounters} hiddenActionsCount={hiddenActionsCount} />;
+  const propertiesPaneToolbar = [
+    browserPanelHidden ?
+      <ToolbarButton key='browser-panel' title='Show browser panel' icon='eye' onClick={() => setBrowserPanelHidden(false)} /> :
+      <ToolbarButton key='browser-panel' title='Hide browser panel' icon='eye-closed' onClick={() => setBrowserPanelHidden(true)} />,
+  ];
+  if (!browserPanelHidden) {
+    propertiesPaneToolbar.push(sidebarLocation === 'bottom' ?
+      <ToolbarButton key='dock-properties' title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
+        setSidebarLocation('right');
+      }} /> :
+      <ToolbarButton key='dock-properties' title='Dock to bottom' icon='layout-panel-off' onClick={() => {
+        setSidebarLocation('bottom');
+      }} />
+    );
+  }
+  const navigatorPane = <TabbedPane
+    tabs={[actionsTab, metadataTab]}
+    rightToolbar={[actionsFilterWithCount]}
+    selectedTab={selectedNavigatorTab}
+    setSelectedTab={setSelectedNavigatorTab}
+  />;
+  const propertiesPane = <TabbedPane
+    tabs={tabs}
+    selectedTab={selectedPropertiesTab}
+    setSelectedTab={selectPropertiesTab}
+    rightToolbar={propertiesPaneToolbar}
+    mode={sidebarLocation === 'bottom' && !browserPanelHidden ? 'default' : 'select'}
+  />;
+  const browserPane = <SnapshotTabsView
+    action={activeAction}
+    model={model}
+    sdkLanguage={sdkLanguage}
+    testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+    isInspecting={isInspecting}
+    setIsInspecting={setIsInspecting}
+    highlightedElement={highlightedElement}
+    setHighlightedElement={elementPicked}
+    playback={playback} />;
 
   return <div className='vbox workbench' {...(inert ? { inert: true } : {})}>
     {!hideTimeline && <Timeline
@@ -380,40 +419,11 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
         orientation='horizontal'
         sidebarIsFirst
         settingName='actionListSidebar'
-        main={<SnapshotTabsView
-          action={activeAction}
-          model={model}
-          sdkLanguage={sdkLanguage}
-          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          highlightedElement={highlightedElement}
-          setHighlightedElement={elementPicked}
-          playback={playback} />}
-        sidebar={
-          <TabbedPane
-            tabs={[actionsTab, metadataTab]}
-            rightToolbar={[actionsFilterWithCount]}
-            selectedTab={selectedNavigatorTab}
-            setSelectedTab={setSelectedNavigatorTab}
-          />
-        }
+        main={browserPanelHidden ? propertiesPane : browserPane}
+        sidebar={navigatorPane}
       />}
-      sidebar={<TabbedPane
-        tabs={tabs}
-        selectedTab={selectedPropertiesTab}
-        setSelectedTab={selectPropertiesTab}
-        rightToolbar={[
-          sidebarLocation === 'bottom' ?
-            <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
-              setSidebarLocation('right');
-            }} /> :
-            <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
-              setSidebarLocation('bottom');
-            }} />
-        ]}
-        mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
-      />}
+      sidebarHidden={browserPanelHidden}
+      sidebar={propertiesPane}
     />
   </div>;
 };

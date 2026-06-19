@@ -481,6 +481,36 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests.filter({ hasText: '404GET404text' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
+test('should expand network details when browser panel is hidden', async ({ showTraceViewer }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41062' });
+  const traceViewer = await showTraceViewer(traceFile);
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.showNetworkTab();
+  const networkTab = traceViewer.networkTab;
+  const initialBox = await networkTab.boundingBox();
+
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+  await expect(traceViewer.page.getByRole('button', { name: 'Dock to right' })).toBeVisible();
+  await traceViewer.page.getByRole('button', { name: 'Hide browser panel' }).click();
+  await expect(traceViewer.snapshotContainer).toBeHidden();
+  await expect(traceViewer.page.getByRole('button', { name: 'Show browser panel' })).toBeVisible();
+  await expect(traceViewer.page.getByRole('button', { name: 'Dock to right' })).toBeHidden();
+  await expect(traceViewer.actionsTree).toBeVisible();
+  await traceViewer.selectAction('Click');
+  await expect(traceViewer.actionsTree.getByRole('treeitem', { selected: true })).toHaveText(/Click/);
+  await traceViewer.selectAction('Navigate');
+  const expandedBox = await networkTab.boundingBox();
+
+  expect(initialBox).toBeTruthy();
+  expect(expandedBox).toBeTruthy();
+  expect(expandedBox!.height).toBeGreaterThan(initialBox!.height);
+  await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
+
+  await traceViewer.page.getByRole('button', { name: 'Show browser panel' }).click();
+  await expect(traceViewer.snapshotContainer).toBeVisible();
+  await expect(traceViewer.page.getByRole('button', { name: 'Dock to right' })).toBeVisible();
+});
+
 test('should highlight network request on timeline on hover', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Navigate');
