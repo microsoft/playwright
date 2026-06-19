@@ -28,9 +28,9 @@ import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
 import { nullProgress } from '../progress';
 
+import * as frames from '../frames';
 import * as network from '../network';
 import type { RegisteredListener } from '@utils/eventsHelper';
-import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
@@ -55,6 +55,7 @@ export class BidiPage implements PageDelegate {
   private readonly _pdf: BidiPDF;
   private _initScriptIds = new Map<InitScript, string>();
   private readonly _fragmentNavigations = new Set<string>();
+  private readonly _failedNavigations = new Map<string, string>();
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -194,6 +195,7 @@ export class BidiPage implements PageDelegate {
 
   private _onNavigationStarted(params: bidi.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
+    this._failedNavigations.delete(frameId);
     this._page.frameManager.frameRequestedNavigation(frameId, params.navigation!);
   }
 
@@ -218,6 +220,8 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onNavigationFailed(params: bidi.BrowsingContext.NavigationInfo) {
+    if (params.navigation)
+      this._failedNavigations.set(params.context, params.navigation);
     this._page.frameManager.frameAbortedNavigation(params.context, 'Navigation failed', params.navigation || undefined);
   }
 
@@ -314,15 +318,21 @@ export class BidiPage implements PageDelegate {
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
-    const { navigation } = await this._session.send('browsingContext.navigate', {
-      context: frame._id,
-      url,
-    });
-    if (navigation && this._fragmentNavigations.has(navigation)) {
-      this._fragmentNavigations.delete(navigation);
-      return {};
+    try {
+      const { navigation } = await this._session.send('browsingContext.navigate', {
+        context: frame._id,
+        url,
+      });
+      if (navigation && this._fragmentNavigations.has(navigation)) {
+        this._fragmentNavigations.delete(navigation);
+        return {};
+      }
+      return { newDocumentId: navigation || undefined };
+    } catch (error) {
+      const navigation = this._failedNavigations.get(frame._id);
+      this._failedNavigations.delete(frame._id);
+      throw new frames.NavigationAbortedError(navigation, `${error.message} at ${url}`);
     }
-    return { newDocumentId: navigation || undefined };
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
