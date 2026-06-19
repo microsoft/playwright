@@ -940,6 +940,32 @@ test('should support mergeExpects', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should support mergeExpects with builtin matcher overrides', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, mergeExpects, expect as baseExpect } from '@playwright/test';
+
+      const expect1 = baseExpect.extend({
+        async toBeVisible(locator) {
+          await baseExpect(locator).toBeVisible();
+          console.log('%%merged custom');
+          return { pass: true, message: () => '' };
+        }
+      });
+
+      const expect = mergeExpects(expect1);
+
+      test('custom matcher', async ({ page }) => {
+        await page.setContent('<h1>Installation</h1>');
+        await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+        await baseExpect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+      });
+    `
+  }, { workers: 1 });
+  expect(result.outputLines).toEqual(['merged custom']);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should respect timeout from configured expect when used outside of the test runner', async ({ runInlineTest, writeFiles, runTSC }) => {
 
   const files = {
@@ -1112,6 +1138,52 @@ test('expect.extend should fall back to legacy behavior', async ({ runInlineTest
     'foo2',
     'bar',
   ]);
+});
+
+test('expect.extend should not override builtin matchers on base expect', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      const customExpect = expect.extend({
+        async toBeVisible(locator) {
+          await expect(locator).toBeVisible();
+          console.log('%%custom');
+          return { pass: true, message: () => 'custom matcher' };
+        },
+      });
+
+      test('custom matcher can call builtin matcher with the same name', async ({ page }) => {
+        await page.setContent('<h1>Installation</h1>');
+        await customExpect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual(['custom']);
+});
+
+test('expect.extend should not override builtin matchers through legacy behavior', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      expect.extend({
+        async toBeVisible(locator) {
+          await expect(locator).toBeVisible();
+          console.log('%%legacy custom');
+          return { pass: true, message: () => 'custom matcher' };
+        },
+      });
+
+      test('base expect keeps builtin matcher', async ({ page }) => {
+        await page.setContent('<h1>Installation</h1>');
+        await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([]);
 });
 
 test('custom asymmetric matchers should work with expect.extend', async ({ runInlineTest }) => {
