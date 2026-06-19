@@ -22,6 +22,7 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { wrapInASCIIBox } from '@utils/ascii';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
+import { amendFirefoxPoliciesEnv, prepareFirefoxPolicies } from './firefoxPolicies';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 
 import type { Browser, BrowserOptions } from '../browser';
@@ -57,6 +58,10 @@ export class Firefox extends BrowserType {
     return FFBrowser.connect(this.attribution.playwright, transport, options);
   }
 
+  override async prepareUserDataDir(options: types.LaunchOptions, userDataDir: string): Promise<void> {
+    await prepareFirefoxPolicies(options, userDataDir);
+  }
+
   override doRewriteStartupLog(logs: string): string {
     // https://github.com/microsoft/playwright/issues/6500
     if (logs.includes(`as root in a regular user's session is not supported.`))
@@ -66,7 +71,8 @@ export class Firefox extends BrowserType {
     return logs;
   }
 
-  override amendEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  override amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string): NodeJS.ProcessEnv {
+    env = amendFirefoxPoliciesEnv(env, userDataDir);
     if (!path.isAbsolute(os.homedir()))
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
     if (os.platform() === 'linux') {
