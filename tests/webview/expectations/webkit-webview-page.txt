@@ -452,7 +452,6 @@ page/page-wait-for-load-state.spec.ts › should work for frame [fail]
 # Page.goBack/goForward and we have not yet driven the back/forward list via
 # Runtime.evaluate(history.back()).
 # ============================================================================
-page/interception.spec.ts › should disable memory cache when intercepting [fail]
 page/page-history.spec.ts › goBack/goForward should work with bfcache-able pages [fail]
 page/page-history.spec.ts › page.goBack should work @smoke [fail]
 

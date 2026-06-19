@@ -144,11 +144,24 @@ export class WVPage implements PageDelegate {
   }
 
   goBack(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    return this._navigateHistory(false);
   }
 
   goForward(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    return this._navigateHistory(true);
+  }
+
+  private async _navigateHistory(forward: boolean): Promise<boolean> {
+    const response = await this._session.sendMayFail('Runtime.evaluate', {
+      expression: `(function() {
+        const canNavigate = window.navigation?.${forward ? 'canGoForward' : 'canGoBack'} ?? window.history.length > 1;
+        if (canNavigate)
+          window.history.${forward ? 'forward' : 'back'}();
+        return canNavigate;
+      })()`,
+      returnByValue: true,
+    } as any);
+    return !!response?.result?.value;
   }
 
   async requestGC(): Promise<void> {
