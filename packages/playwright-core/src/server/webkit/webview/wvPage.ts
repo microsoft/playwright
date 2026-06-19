@@ -218,6 +218,9 @@ export class WVPage implements PageDelegate {
     const emulatedMedia = this._page.emulatedMedia();
     if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.contrast)
       await WVPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.contrast);
+    const contextOptions = this._browserContext._options;
+    if (contextOptions.userAgent)
+      await session.sendMayFail('Page.overrideUserAgent', { value: contextOptions.userAgent });
     if (this._page.needsRequestInterception()) {
       await Promise.all([
         session.sendMayFail('Network.setInterceptionEnabled', { enabled: true }),
@@ -599,6 +602,11 @@ export class WVPage implements PageDelegate {
       locale ? network.singleHeader('Accept-Language', locale) : undefined,
     ]);
     return headers;
+  }
+
+  async updateUserAgent(): Promise<void> {
+    const contextOptions = this._browserContext._options;
+    await this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });
   }
 
   async bringToFront(): Promise<void> {
