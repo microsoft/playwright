@@ -244,6 +244,7 @@ export class WVPage implements PageDelegate {
     // Inject the page-side input dispatcher and dialog bridge into the
     // currently-loaded document too — bootstrap only applies to future navigations.
     await session.sendMayFail('Runtime.evaluate', { expression: webViewInputBootstrapSource, returnByValue: true } as any);
+    await session.sendMayFail('Runtime.evaluate', { expression: sameDocumentNavigationBridgeSource, returnByValue: true } as any);
     if (this._dialogEndpoint) {
       await session.sendMayFail('Runtime.evaluate', {
         expression: dialogBridgeSource(this._dialogEndpoint),
@@ -515,17 +516,20 @@ export class WVPage implements PageDelegate {
     // For example, frame.setContent relies on this.
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber, source } = event.message;
 
-    if (level === 'debug'
-        && parameters
-        && parameters.length >= 2
-        && parameters[0].type === 'string'
-        && parameters[0].value === BINDING_CALL_TAG
-        && parameters[1].type === 'string') {
-      const payload = parameters[1].value as string;
-      const context = [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
-      if (context)
-        this._page.onBindingCalled(payload, context).catch(e => debugLogger.log('error', e));
-      return;
+    if (level === 'debug' && parameters && parameters.length >= 2 && parameters[0].type === 'string') {
+      const [bindingName, bindingArg] = parameters;
+
+      if (bindingName.value === BINDING_CALL_TAG && bindingArg.type === 'string') {
+        const context = [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
+        if (context)
+          this._page.onBindingCalled(bindingArg.value, context).catch(e => debugLogger.log('error', e));
+        return;
+      }
+
+      if (bindingName.value === SAME_DOCUMENT_NAVIGATION_TAG && bindingArg.type === 'string') {
+        this._onFrameNavigatedWithinDocument(this._page.mainFrame()._id, bindingArg.value);
+        return;
+      }
     }
 
     if (level === 'error' && source === 'javascript') {
@@ -673,6 +677,7 @@ export class WVPage implements PageDelegate {
     scripts.push('if (!window.GestureEvent) window.GestureEvent = function GestureEvent() {};');
     scripts.push(this._publicKeyCredentialScript());
     scripts.push(bindingBridgeSource);
+    scripts.push(sameDocumentNavigationBridgeSource);
     scripts.push(webViewInputBootstrapSource);
     if (this._dialogEndpoint)
       scripts.push(dialogBridgeSource(this._dialogEndpoint));
@@ -1150,6 +1155,35 @@ const bindingBridgeSource = `
     });
   }
 `;
+
+const SAME_DOCUMENT_NAVIGATION_TAG = '__pw_same_document_navigation__';
+const sameDocumentNavigationBridgeSource = `(() => {
+  if (window.top !== window)
+    return;
+  if (window['${SAME_DOCUMENT_NAVIGATION_TAG}'])
+    return;
+  Object.defineProperty(window, '${SAME_DOCUMENT_NAVIGATION_TAG}', { value: true, configurable: true });
+  let lastReportedURL = window.location.href;
+  function report() {
+    if (window.location.href === lastReportedURL)
+      return;
+    lastReportedURL = window.location.href;
+    console.debug('${SAME_DOCUMENT_NAVIGATION_TAG}', window.location.href);
+  }
+  for (const name of ['pushState', 'replaceState']) {
+    const original = window.History.prototype[name];
+    if (typeof original !== 'function')
+      continue;
+    window.History.prototype[name] = function() {
+      const result = original.apply(this, arguments);
+      report();
+      return result;
+    };
+  }
+  window.addEventListener('popstate', report);
+  window.addEventListener('hashchange', report);
+  window.navigation?.addEventListener('currententrychange', report);
+})()`;
 
 function dialogBridgeSource(endpoint: string): string {
   return `(() => {
