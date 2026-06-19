@@ -42,7 +42,6 @@
 .console-source {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   box-sizing: border-box;
   min-width: 48px;
   height: 16px;
@@ -50,8 +49,6 @@
   margin: 0 6px 0 3px;
   font-size: 11px;
   border-radius: 4px;
-  background-color: var(--vscode-badge-background);
-  color: var(--vscode-badge-foreground);
   user-select: none;
   flex: none;
   vertical-align: middle;

@@ -351,13 +351,8 @@ test('should render console', async ({ showTraceViewer, browserName }) => {
   // Browsers can insert more messages between these two.
   await expect(traceViewer.consoleLineMessages.filter({ hasText: 'Cheers!' })).toBeVisible();
 
-  const sources = traceViewer.consoleLines.locator('.console-source');
-  await expect.soft(sources.nth(0)).toHaveText('page');
-  await expect.soft(sources.nth(1)).toHaveText('page');
-  await expect.soft(sources.nth(2)).toHaveText('page');
-  await expect.soft(sources.nth(3)).toHaveText('page');
-  // Browsers can insert more messages between these two.
-  await expect.soft(traceViewer.consoleLines.filter({ hasText: 'Cheers!' }).locator('.console-source')).toHaveText('page');
+  // Single page and no runner messages: the source badge is hidden.
+  await expect(traceViewer.consoleLines.locator('.console-source')).toHaveCount(0);
   await expect(traceViewer.consoleStacks.first()).toContainText('Error: Unhandled exception');
 
   await traceViewer.selectAction('Evaluate');

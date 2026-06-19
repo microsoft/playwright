@@ -44,6 +44,7 @@ export type ConsoleEntry = {
 type ConsoleTabModel = {
   entries: ConsoleEntry[],
   hasMultiplePages: boolean,
+  showSource: boolean,
 };
 
 const ConsoleListView = ListView<ConsoleEntry>;
@@ -148,8 +149,11 @@ export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: 
   }, [entries, selectedTime]);
 
   const hasMultiplePages = React.useMemo(() => new Set(filteredEntries.map(entry => entry.pageId).filter(Boolean)).size > 1, [filteredEntries]);
+  // Only show the source badge when it carries information: either messages come
+  // from multiple pages, or there are test (runner) messages alongside page messages.
+  const showSource = React.useMemo(() => hasMultiplePages || filteredEntries.some(entry => !entry.browserMessage && !entry.browserError), [filteredEntries, hasMultiplePages]);
 
-  return { entries: filteredEntries, hasMultiplePages };
+  return { entries: filteredEntries, hasMultiplePages, showSource };
 }
 
 export const ConsoleTab: React.FunctionComponent<{
@@ -175,7 +179,7 @@ export const ConsoleTab: React.FunctionComponent<{
         const timestampElement = <span className='console-time'>{timestamp}</span>;
         const isBrowserMessage = !!(entry.browserMessage || entry.browserError);
         const source = !isBrowserMessage ? 'test' : (consoleModel.hasMultiplePages ? (entry.pageId || 'page') : 'page');
-        const sourceElement = <span className='console-source' title={isBrowserMessage ? 'Browser message' : 'Runner message'}>{source}</span>;
+        const sourceElement = consoleModel.showSource ? <span className='console-source' title={isBrowserMessage ? 'Browser message' : 'Runner message'}>{source}</span> : undefined;
         let locationText: string | undefined;
         let messageBody: React.JSX.Element[] | string | undefined;
         let messageInnerHTML: string | undefined;
