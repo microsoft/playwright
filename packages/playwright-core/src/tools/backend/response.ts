@@ -20,6 +20,7 @@ import path from 'path';
 import debug from 'debug';
 import { renderModalStates } from './tab';
 import { scaleImageToFitMessage } from './screenshot';
+import { compressAriaSnapshot } from './ariaCompression';
 
 import { outputDir as resolveOutputDir } from './context';
 
@@ -53,6 +54,7 @@ export class Response {
   private _includeSnapshotRoot: playwright.Locator | undefined;
   private _includeSnapshotDepth: number | undefined;
   private _includeSnapshotBoxes: boolean | undefined;
+  private _includeSnapshotCompress: boolean | undefined;
   private _isClose: boolean = false;
 
   readonly toolName: string;
@@ -147,12 +149,13 @@ export class Response {
     this._includeSnapshot = this._context.config.snapshot?.mode ?? 'full';
   }
 
-  setIncludeFullSnapshot(includeSnapshotFileName?: string, root?: playwright.Locator, depth?: number, boxes?: boolean) {
+  setIncludeFullSnapshot(includeSnapshotFileName?: string, root?: playwright.Locator, depth?: number, boxes?: boolean, compress?: boolean) {
     this._includeSnapshot = 'explicit';
     this._includeSnapshotFileName = includeSnapshotFileName;
     this._includeSnapshotDepth = depth;
     this._includeSnapshotBoxes = boxes;
     this._includeSnapshotRoot = root;
+    this._includeSnapshotCompress = compress;
   }
 
   private _redactSecrets(text: string): string {
@@ -300,7 +303,10 @@ export class Response {
         await this._writeFile(resolvedFile, tabSnapshot.ariaSnapshot);
         addSection('Snapshot', [resolvedFile.printableLink]);
       } else {
-        addSection('Snapshot', [tabSnapshot.ariaSnapshot], 'yaml');
+        const ariaYaml = this._includeSnapshotCompress
+          ? compressAriaSnapshot(tabSnapshot.ariaSnapshot).output
+          : tabSnapshot.ariaSnapshot;
+        addSection('Snapshot', [ariaYaml], 'yaml');
       }
     }
 

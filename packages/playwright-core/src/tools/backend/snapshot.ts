@@ -43,6 +43,7 @@ const snapshot = defineTabTool({
       filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
       depth: z.number().optional().describe('Limit the depth of the snapshot tree'),
       boxes: z.boolean().optional().describe('Include each element\'s bounding box as [box=x,y,width,height] in the snapshot. Coordinates are viewport-relative, in CSS pixels (Element.getBoundingClientRect)'),
+      compress: z.boolean().optional().describe('Collapse repeated sibling ARIA nodes to reduce token usage on pages with large lists or tables. Keeps the first 10 occurrences of any repeated structural pattern. Use browser_evaluate() to enumerate the full list when needed.'),
     }),
     type: 'readOnly',
   },
@@ -51,7 +52,7 @@ const snapshot = defineTabTool({
     let resolved: { locator: playwright.Locator | undefined, resolved: string } = { locator: undefined, resolved: '' };
     if (params.target)
       resolved = await tab.targetLocator({ target: params.target });
-    response.setIncludeFullSnapshot(params.filename, resolved.locator, params.depth, params.boxes);
+    response.setIncludeFullSnapshot(params.filename, resolved.locator, params.depth, params.boxes, params.compress);
   },
 });
 
