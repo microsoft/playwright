@@ -108,7 +108,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       includeTraceInfo: true,
       recordRequestOverrides: false,
       waitForContentOnStop: false,
-      omitWebSocketFrames: !!process.env.PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES,
     });
     const testIdAttributeName = ('selectors' in context) ? context.selectors().testIdAttributeName() : undefined;
     this._contextCreatedEvent = {
@@ -223,6 +222,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     );
     if (this._state.options.screenshots)
       this._startScreencast();
+    this._harTracer.setOmitWebSocketFrames(!!process.env.PLAYWRIGHT_TRACING_NO_WEBSOCKET_FRAMES);
     if (this._state.options.snapshots)
       await this._snapshotter?.start(progress);
     return { traceName: this._state.traceName };
@@ -394,7 +394,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     eventsHelper.removeEventListeners(this._eventListeners);
     if (this._state.options.screenshots)
       this._stopScreencast();
-
+    // We don't need websocket frames outside of the recording window. This also
+    // stops updating websocket content blobs, which we want to stay unchanged for zipping.
+    this._harTracer.setOmitWebSocketFrames(true);
     if (this._state.options.snapshots)
       this._snapshotter?.stop();
 
