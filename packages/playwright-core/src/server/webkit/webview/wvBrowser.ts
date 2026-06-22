@@ -334,6 +334,12 @@ export class WVBrowserContext extends BrowserContext {
       await (page.delegate as WVPage).updateExtraHTTPHeaders();
   }
 
+  async setUserAgent(userAgent: string | undefined): Promise<void> {
+    this._options.userAgent = userAgent;
+    for (const page of this.pages())
+      await (page.delegate as WVPage).updateUserAgent();
+  }
+
   async doAddInitScript(initScript: InitScript) {
     for (const page of this.pages())
       await (page.delegate as WVPage)._updateBootstrapScript();
@@ -360,7 +366,6 @@ export class WVBrowserContext extends BrowserContext {
   override async clearCache(): Promise<void> { throw new Error('Method not implemented.'); }
   override async doClose(reason: string | undefined): Promise<void | 'close-browser'> { throw new Error('Method not implemented.'); }
   override async cancelDownload(uuid: string) { throw new Error('Method not implemented.'); }
-  override async setUserAgent(userAgent: string | undefined): Promise<void> { throw new Error('Method not implemented.'); }
   protected override async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> { throw new Error('Method not implemented.'); }
   protected override async doUpdateOffline(): Promise<void> { throw new Error('Method not implemented.'); }
 }
