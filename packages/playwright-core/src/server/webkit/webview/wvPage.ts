@@ -151,8 +151,8 @@ export class WVPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
-  requestGC(): Promise<void> {
-    throw new Error('Method not implemented.');
+  async requestGC(): Promise<void> {
+    await this._session.send('Heap.gc');
   }
 
   updateFileChooserInterception(): Promise<void> {
