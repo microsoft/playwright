@@ -99,6 +99,8 @@ export class CRNetworkManager {
     if (info)
       eventsHelper.removeEventListeners(info.eventListeners);
     this._sessions.delete(session);
+    for (const request of this._page?.networkRequests() ?? [])
+      InterceptableRequest.detachIfNeeded(request, session);
   }
 
   private async _forEachSession(cb: (sessionInfo: SessionInfo) => Promise<any>) {
@@ -377,32 +379,7 @@ export class CRNetworkManager {
   }
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response, hasExtraInfo: boolean): network.Response {
-    const getResponseBody = async () => {
-      const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
-      const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
-
-      const session = request.session;
-      const response = await session.send('Network.getResponseBody', { requestId: request._requestId });
-      if (response.body || !expectedLength)
-        return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
-
-      // Make sure no network requests sent while reading the body for fulfilled requests.
-      if (request._originalRequestRoute?._fulfilled)
-        return Buffer.from('');
-
-      // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
-      const resource = await session.send('Network.loadNetworkResource', { url: request.request.url(), frameId: this._serviceWorker ? undefined : request.request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
-      const chunks: Buffer[] = [];
-      while (resource.resource.stream) {
-        const chunk = await session.send('IO.read', { handle: resource.resource.stream });
-        chunks.push(Buffer.from(chunk.data, chunk.base64Encoded ? 'base64' : 'utf-8'));
-        if (chunk.eof) {
-          await session.send('IO.close', { handle: resource.resource.stream });
-          break;
-        }
-      }
-      return Buffer.concat(chunks);
-    };
+    const getResponseBody = InterceptableRequest.createResponseBodyCallback(request.request);
     const timingPayload = responsePayload.timing!;
     let timing: network.ResourceTiming;
     if (timingPayload && !this._responseExtraInfoTracker.servedFromCache(request._requestId)) {
@@ -577,6 +554,8 @@ export class CRNetworkManager {
   }
 }
 
+const kInterceptableRequest = Symbol('InterceptableRequest');
+
 class InterceptableRequest {
   readonly request: network.Request;
   readonly _requestId: string;
@@ -588,6 +567,49 @@ class InterceptableRequest {
   // store the first and only Route in the chain (if any).
   readonly _originalRequestRoute: RouteImpl | undefined;
   session: CRSession;
+
+  private static from(request: network.Request): InterceptableRequest | undefined {
+    return (request as any)[kInterceptableRequest];
+  }
+
+  static detachIfNeeded(request: network.Request, session: CRSession) {
+    if (InterceptableRequest.from(request)?.session === session)
+      (request as any)[kInterceptableRequest] = undefined;
+  }
+
+  static createResponseBodyCallback(request: network.Request): () => Promise<Buffer> {
+    return async () => {
+      // Lookup the request lazily, so that the response does not retain the
+      // InterceptableRequest and its session after detachIfNeeded().
+      const interceptable = InterceptableRequest.from(request);
+      if (!interceptable)
+        throw new Error('Response body is unavailable');
+      const contentLength = request._existingResponse()?.headerValue('content-length');
+      const expectedLength = contentLength ? +contentLength : undefined;
+
+      const session = interceptable.session;
+      const response = await session.send('Network.getResponseBody', { requestId: interceptable._requestId });
+      if (response.body || !expectedLength)
+        return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+
+      // Make sure no network requests sent while reading the body for fulfilled requests.
+      if (interceptable._originalRequestRoute?._fulfilled)
+        return Buffer.from('');
+
+      // For <link prefetch we are going to receive empty body with non-empty content-length expectation. Reach out for the actual content.
+      const resource = await session.send('Network.loadNetworkResource', { url: request.url(), frameId: request.serviceWorker() ? undefined : request.frame()!._id, options: { disableCache: false, includeCredentials: true } });
+      const chunks: Buffer[] = [];
+      while (resource.resource.stream) {
+        const chunk = await session.send('IO.read', { handle: resource.resource.stream });
+        chunks.push(Buffer.from(chunk.data, chunk.base64Encoded ? 'base64' : 'utf-8'));
+        if (chunk.eof) {
+          await session.send('IO.close', { handle: resource.resource.stream });
+          break;
+        }
+      }
+      return Buffer.concat(chunks);
+    };
+  }
 
   constructor(options: {
     session: CRSession,
@@ -622,6 +644,7 @@ class InterceptableRequest {
       postDataBuffer = Buffer.concat(entries.map(entry => Buffer.from(entry.bytes!, 'base64')));
 
     this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || headersObjectToArray(headers), requestWillBeSentEvent.wallTime * 1000);
+    (this.request as any)[kInterceptableRequest] = this;
   }
 }
 
