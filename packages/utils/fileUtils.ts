@@ -83,6 +83,8 @@ export function trimLongString(s: string, length = 100) {
     return s;
   const hash = calculateSha1(s);
   const middle = `-${hash.substring(0, 5)}-`;
+  if (length <= middle.length)
+    return hash.substring(0, length);
   const start = Math.floor((length - middle.length) / 2);
   const end = length - middle.length - start;
   return s.substring(0, start) + middle + s.slice(-end);
