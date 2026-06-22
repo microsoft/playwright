@@ -208,6 +208,49 @@ test('should support expanded', async ({ page }) => {
   ]);
 });
 
+test('should support busy', async ({ page }) => {
+  await page.setContent(`
+    <div role="cell">Hi</div>
+    <div role="cell" aria-busy="true">Hello</div>
+    <div role="cell" aria-busy="false">Bye</div>
+    <button>Click</button>
+    <button aria-busy="true">Loading</button>
+  `);
+
+  expect(await page.locator(`role=cell`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="cell">Hi</div>`,
+    `<div role="cell" aria-busy="true">Hello</div>`,
+    `<div role="cell" aria-busy="false">Bye</div>`,
+  ]);
+
+  expect(await page.locator(`role=cell[busy]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="cell" aria-busy="true">Hello</div>`,
+  ]);
+  expect(await page.locator(`role=cell[busy=true]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="cell" aria-busy="true">Hello</div>`,
+  ]);
+  expect(await page.getByRole('cell', { busy: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="cell" aria-busy="true">Hello</div>`,
+  ]);
+
+  expect(await page.locator(`role=cell[busy=false]`).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="cell">Hi</div>`,
+    `<div role="cell" aria-busy="false">Bye</div>`,
+  ]);
+  expect(await page.getByRole('cell', { busy: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="cell">Hi</div>`,
+    `<div role="cell" aria-busy="false">Bye</div>`,
+  ]);
+
+  // aria-busy is a global ARIA state and should work for any role.
+  expect(await page.getByRole('button', { busy: true }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button aria-busy="true">Loading</button>`,
+  ]);
+  expect(await page.getByRole('button', { busy: false }).evaluateAll(els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Click</button>`,
+  ]);
+});
+
 test('should support disabled', async ({ page }) => {
   await page.setContent(`
     <button>Hi</button>
@@ -511,7 +554,7 @@ test('errors', async ({ page }) => {
   expect(e0.message).toContain(`Role must not be empty`);
 
   const e1 = await page.$('role=foo[sElected]').catch(e => e);
-  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "checked", "description", "disabled", "expanded", "include-hidden", "level", "name", "pressed", "selected"`);
+  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "busy", "checked", "description", "disabled", "expanded", "include-hidden", "level", "name", "pressed", "selected"`);
 
   const e2 = await page.$('role=foo[bar . qux=true]').catch(e => e);
   expect(e2.message).toContain(`Unknown attribute "bar.qux"`);
