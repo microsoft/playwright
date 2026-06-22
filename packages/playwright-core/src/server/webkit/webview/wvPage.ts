@@ -216,7 +216,7 @@ export class WVPage implements PageDelegate {
     ]);
     const emulatedMedia = this._page.emulatedMedia();
     if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.contrast)
-      promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.contrast));
+      await WVPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.contrast);
     if (this._page.needsRequestInterception()) {
       await Promise.all([
         session.sendMayFail('Network.setInterceptionEnabled', { enabled: true }),
