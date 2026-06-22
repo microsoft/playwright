@@ -231,7 +231,6 @@ page/page-autowaiting-basic.spec.ts › should work with waitForLoadState(load) 
 page/page-basic.spec.ts › async stacks should work [fail]
 page/page-basic.spec.ts › has navigator.webdriver set to true [fail]
 page/page-basic.spec.ts › page.url should include hashes [fail]
-page/page-basic.spec.ts › should have sane user agent [fail]
 page/page-click-react.spec.ts › should not retarget when element is recycled on hover [fail]
 page/page-click-scroll.spec.ts › should scroll into view span element [fail]
 page/page-click-timeout-2.spec.ts › should timeout waiting for display:none to be gone [fail]
