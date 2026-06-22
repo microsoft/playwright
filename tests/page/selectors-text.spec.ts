@@ -362,10 +362,11 @@ it('should skip head, script and style', async ({ page }) => {
   }
 });
 
-it('should match input[type=button|submit]', async ({ page }) => {
-  await page.setContent(`<input type="submit" value="hello"><input type="button" value="world">`);
+it('should match input[type=button|submit|reset]', async ({ page }) => {
+  await page.setContent(`<input type="submit" value="hello"><input type="button" value="world"><input type="reset" value="clear">`);
   expect(await page.$eval(`text=hello`, e => e.outerHTML)).toBe('<input type="submit" value="hello">');
   expect(await page.$eval(`text=world`, e => e.outerHTML)).toBe('<input type="button" value="world">');
+  expect(await page.$eval(`text=clear`, e => e.outerHTML)).toBe('<input type="reset" value="clear">');
 });
 
 it('should work for open shadow roots', async ({ page, server }) => {
