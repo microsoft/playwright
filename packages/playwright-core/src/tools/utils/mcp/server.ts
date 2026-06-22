@@ -151,11 +151,27 @@ const initializeServer = async (server: ServerType, factory: ServerBackendFactor
   return backend;
 };
 
+const defaultPingTimeout = 5000;
+
+const pingTimeout = (): number => {
+  const value = process.env.PLAYWRIGHT_MCP_PING_TIMEOUT_MS;
+  if (value === undefined)
+    return defaultPingTimeout;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed))
+    return defaultPingTimeout;
+  return parsed;
+};
+
 const startHeartbeat = (server: ServerType) => {
+  const timeout = pingTimeout();
+  if (timeout <= 0)
+    return;
+
   const beat = () => {
     Promise.race([
       server.ping(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), 5000)),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('ping timeout')), timeout)),
     ]).then(() => {
       setTimeout(beat, 3000);
     }).catch(() => {
