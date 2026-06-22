@@ -152,7 +152,10 @@ export class Dispatcher {
 
     // 5. Possibly queue a new job with leftover tests and/or retries.
     if (!this._isStopped && result.newJob) {
-      this._queue.unshift(result.newJob);
+      if (this._testRun.config.retryStrategy === 'deferred')
+        this._queue.push(result.newJob);
+      else
+        this._queue.unshift(result.newJob);
       this._updateCounterForWorkerHash(result.newJob.workerHash, +1);
     }
   }

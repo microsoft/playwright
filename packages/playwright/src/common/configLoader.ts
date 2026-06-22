@@ -243,6 +243,11 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "changed", "missing" or "none"`);
   }
 
+  if ('retryStrategy' in config && config.retryStrategy !== undefined) {
+    if (typeof config.retryStrategy !== 'string' || !['immediate', 'deferred'].includes(config.retryStrategy))
+      throw errorWithFile(file, `config.retryStrategy must be one of "immediate" or "deferred"`);
+  }
+
   if ('tsconfig' in config && config.tsconfig !== undefined) {
     if (typeof config.tsconfig !== 'string')
       throw errorWithFile(file, `config.tsconfig must be a string`);

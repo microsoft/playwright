@@ -515,6 +515,27 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.retryStrategy
+* since: v1.62
+- type: ?<[RetryStrategy]<"immediate"|"deferred">>
+
+Controls when failed tests are retried. Defaults to `'immediate'`.
+* `'immediate'` - A failed test is retried as soon as a worker is available, interleaved with the rest of the run. This is the default.
+* `'deferred'` - Retries are run only after all tests have had their first attempt, in parallel up to the configured number of [workers](#test-config-workers).
+
+Learn more about [test retries](../test-retries.md#retries).
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  retries: 2,
+  retryStrategy: 'deferred',
+});
+```
+
 ## property: TestConfig.shard
 * since: v1.10
 - type: ?<[null]|[Object]>
