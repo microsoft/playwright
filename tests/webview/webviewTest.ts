@@ -36,8 +36,23 @@ type WebViewTestFixtures = PageTestFixtures & {
 
 type ProxyTab = { url: string; webSocketDebuggerUrl: string };
 
+// A cold CoreSimulator can make `xcrun simctl` block indefinitely.
+// Cap every invocation and turn a hang (or a missing toolchain) into an actionable error instead.
+const SIMCTL_TIMEOUT_MS = 60000;
+
+function runSimctl(args: string[]): { status: number | null; stdout: string } {
+  const out = spawnSync('xcrun', ['simctl', ...args], { encoding: 'utf8', timeout: SIMCTL_TIMEOUT_MS });
+  if (out.error) {
+    const timedOut = (out.error as NodeJS.ErrnoException).code === 'ETIMEDOUT';
+    throw new Error(timedOut
+      ? `\`xcrun simctl ${args[0]}\` timed out after ${SIMCTL_TIMEOUT_MS}ms — is CoreSimulator responsive and a simulator booted? Try \`xcrun simctl list devices booted\`.`
+      : `\`xcrun simctl ${args[0]}\` failed to run: ${out.error.message}`);
+  }
+  return { status: out.status, stdout: out.stdout ?? '' };
+}
+
 function bootedSimulatorUdid(): string | undefined {
-  const out = spawnSync('xcrun', ['simctl', 'list', 'devices', 'booted', '-j'], { encoding: 'utf8' });
+  const out = runSimctl(['list', 'devices', 'booted', '-j']);
   if (out.status !== 0)
     return undefined;
   try {
@@ -71,7 +86,7 @@ async function listTabs(): Promise<ProxyTab[]> {
 // whatever a prior worker left behind. Limited to Library/Safari and
 // Library/SafariView — caches and prefs untouched.
 function clearMobileSafariState(udid: string): void {
-  const out = spawnSync('xcrun', ['simctl', 'get_app_container', udid, 'com.apple.mobilesafari', 'data'], { encoding: 'utf8' });
+  const out = runSimctl(['get_app_container', udid, 'com.apple.mobilesafari', 'data']);
   if (out.status !== 0)
     return;
   const dataDir = out.stdout.trim();
@@ -85,13 +100,13 @@ function clearMobileSafariState(udid: string): void {
 }
 
 async function resetMobileSafari(udid: string): Promise<void> {
-  spawnSync('xcrun', ['simctl', 'terminate', udid, 'com.apple.mobilesafari']);
+  runSimctl(['terminate', udid, 'com.apple.mobilesafari']);
   // Let the proxy drop the dead tabs before wiping state and relaunching.
   const drained = Date.now() + 30000;
   while (Date.now() < drained && (await listTabs()).length > 0)
     await sleep(1000);
   clearMobileSafariState(udid);
-  spawnSync('xcrun', ['simctl', 'launch', udid, 'com.apple.mobilesafari', 'about:blank']);
+  runSimctl(['launch', udid, 'com.apple.mobilesafari', 'about:blank']);
 }
 
 async function discoverEndpoint(deadlineMs: number): Promise<string> {
