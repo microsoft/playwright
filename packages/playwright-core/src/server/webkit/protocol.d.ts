@@ -8773,15 +8773,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     export type activateReturnValue = {
     }
-    /**
-     * Closes the target.
-     */
-    export type closeParameters = {
-      targetId: string;
-      runBeforeUnload?: boolean;
-    }
-    export type closeReturnValue = {
-    }
   }
   
   /**
@@ -9504,7 +9495,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Target.resume": Target.resumeParameters;
     "Target.sendMessageToTarget": Target.sendMessageToTargetParameters;
     "Target.activate": Target.activateParameters;
-    "Target.close": Target.closeParameters;
     "Timeline.enable": Timeline.enableParameters;
     "Timeline.disable": Timeline.disableParameters;
     "Timeline.start": Timeline.startParameters;
@@ -9810,7 +9800,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Target.resume": Target.resumeReturnValue;
     "Target.sendMessageToTarget": Target.sendMessageToTargetReturnValue;
     "Target.activate": Target.activateReturnValue;
-    "Target.close": Target.closeReturnValue;
     "Timeline.enable": Timeline.enableReturnValue;
     "Timeline.disable": Timeline.disableReturnValue;
     "Timeline.start": Timeline.startReturnValue;
