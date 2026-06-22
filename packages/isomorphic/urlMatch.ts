@@ -249,7 +249,10 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
     let resolved = result.resolved;
     for (const [token, original] of tokenMap) {
       const normalize = result.caseInsensitivePart?.includes(token);
-      resolved = resolved.replace(token, normalize ? original.toLowerCase() : original);
+      const replacement = normalize ? original.toLowerCase() : original;
+      // '$$', '$&', '$`' and "$'" are special in String.prototype.replace with a string argument.
+      // Instead, use the function argument form that treats the string argument literally.
+      resolved = resolved.replace(token, () => replacement);
     }
     match = resolved;
   }
