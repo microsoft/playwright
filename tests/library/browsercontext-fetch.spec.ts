@@ -1047,6 +1047,7 @@ it('should support multipart/form-data', async function({ context, server }) {
     context.request.post(server.EMPTY_PAGE, {
       multipart: {
         firstName: 'John',
+        middleName: '',
         lastName: 'Doe',
         file
       }
@@ -1056,6 +1057,7 @@ it('should support multipart/form-data', async function({ context, server }) {
   expect(serverRequest.method).toBe('POST');
   expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
   expect(fields['firstName']).toBe('John');
+  expect(fields['middleName']).toBe('');
   expect(fields['lastName']).toBe('Doe');
   expect(files['file'].originalFilename).toBe(file.name);
   expect(files['file'].mimetype).toBe(file.mimeType);
