@@ -430,6 +430,20 @@ it('should report raw headers', async ({ page, server, browserName, platform, is
   expect(await request.headerValue('not-there')).toEqual(null);
 });
 
+it('should return a headersArray copy that does not mutate the cached headers', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForRequest('**/foo'),
+    page.evaluate(() => fetch('/foo').catch(() => {})),
+  ]);
+  const first = await request.headersArray();
+  const originalLength = first.length;
+  first.push({ name: 'x-injected', value: 'value' });
+  const second = await request.headersArray();
+  expect(second.length).toBe(originalLength);
+  expect(second.some(header => header.name === 'x-injected')).toBe(false);
+});
+
 it('should report raw response headers in redirects', async ({ page, server, browserName }) => {
   it.skip(browserName === 'webkit', `WebKit won't give us raw headers for redirects`);
   server.setExtraHeaders('/redirect/1.html', { 'sec-test-header': '1.html' });

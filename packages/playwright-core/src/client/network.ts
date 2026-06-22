@@ -190,7 +190,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async headersArray(): Promise<HeadersArray> {
-    return (await this._actualHeaders()).headersArray();
+    return (await this._actualHeaders()).headersArray().slice();
   }
 
   async headerValue(name: string): Promise<string | null> {
