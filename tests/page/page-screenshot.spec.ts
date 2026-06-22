@@ -194,6 +194,20 @@ it.describe('page screenshot', () => {
     expect(screenshotError.message).toContain('Clipped area is either empty or outside the resulting image');
   });
 
+  it('should throw on a negative clip size', async ({ page, server }) => {
+    await page.setViewportSize({ width: 500, height: 500 });
+    await page.goto(server.PREFIX + '/grid.html');
+    const screenshotError = await page.screenshot({
+      clip: {
+        x: 50,
+        y: 50,
+        width: -100,
+        height: 100
+      }
+    }).catch(error => error);
+    expect(screenshotError.message).toContain('Expected options.clip.width to be greater than 0');
+  });
+
   it('should run in parallel', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
