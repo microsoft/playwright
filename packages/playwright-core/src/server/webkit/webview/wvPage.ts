@@ -642,6 +642,21 @@ export class WVPage implements PageDelegate {
     await this._session.send('Page.reload');
   }
 
+  async getCookies(): Promise<Protocol.Page.Cookie[]> {
+    const { cookies } = await this._session.send('Page.getCookies');
+    return cookies;
+  }
+
+  async setCookies(cookies: Protocol.Page.Cookie[]): Promise<void> {
+    for (const cookie of cookies)
+      await this._session.send('Page.setCookie', { cookie });
+  }
+
+  async deleteCookies(cookies: { cookieName: string, url: string }[]): Promise<void> {
+    for (const { cookieName, url } of cookies)
+      await this._session.send('Page.deleteCookie', { cookieName, url });
+  }
+
   async addInitScript(initScript: InitScript): Promise<void> {
     await this._updateBootstrapScript();
   }
