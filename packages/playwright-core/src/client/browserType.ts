@@ -127,7 +127,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (typeof optionsOrEndpoint === 'string')
       return await this._connect({ ...options, endpoint: optionsOrEndpoint });
     assert(optionsOrEndpoint.wsEndpoint, 'options.wsEndpoint is required');
-    return await this._connect({ ...options, endpoint: optionsOrEndpoint.wsEndpoint });
+    return await this._connect({ ...optionsOrEndpoint, endpoint: optionsOrEndpoint.wsEndpoint });
   }
 
   async _connect(params: ConnectOptions): Promise<Browser> {
