@@ -39,7 +39,7 @@ export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: num
   });
 }
 
-export async function pollAgainstDeadline<T>(callback: () => Promise<{ continuePolling: boolean, result: T }>, deadline: number, pollIntervals: number[] = [100, 250, 500, 1000]): Promise<{ result?: T, timedOut: boolean }> {
+export async function pollAgainstDeadline<T>(callback: () => Promise<{ continuePolling: boolean, result: T }>, deadline: number, [...pollIntervals]: number[] = [100, 250, 500, 1000]): Promise<{ result?: T, timedOut: boolean }> {
   const lastPollInterval = pollIntervals.pop() ?? 1000;
   let lastResult: T|undefined;
   const wrappedCallback = () => Promise.resolve().then(callback);

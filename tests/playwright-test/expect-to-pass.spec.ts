@@ -114,6 +114,27 @@ test('should respect interval', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should not consume the shared toPass intervals across tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { expect: { toPass: { intervals: [0, 0, 0] } } };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      for (const name of ['one', 'two']) {
+        test(name, async () => {
+          let probes = 0;
+          await test.expect(() => {
+            ++probes;
+            expect(probes).toBeGreaterThanOrEqual(3);
+          }).toPass({ timeout: 1000 });
+        });
+      }
+    `
+  }, { workers: 1 });
+  expect(result.passed).toBe(2);
+});
+
 test('should compile', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
