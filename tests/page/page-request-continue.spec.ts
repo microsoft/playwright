@@ -477,6 +477,62 @@ it('continue should not override cookie', {
   expect(serverRequest.headers['custom']).toBe('value');
 });
 
+it('continue with headers should send fresh cookie from the browser cookie store', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41428' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=v1;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=v1');
+
+  await page.route('**/empty.html', async route => {
+    // Cookie store changes between interception and continuation.
+    await page.context().addCookies([{ name: 'foo', value: 'v2', url: server.PREFIX }]);
+    await route.continue({ headers: route.request().headers() });
+  });
+
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.EMPTY_PAGE)
+  ]);
+  // The fresh cookie from the browser cookie store should be sent, not the stale captured value.
+  expect(serverRequest.headers['cookie']).toBe('foo=v2');
+});
+
+it('continue with headers should send fresh cookie after a redirect', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41428' },
+  ]
+}, async ({ page, server }) => {
+  server.setRoute('/set-cookie', (request, response) => {
+    response.writeHead(200, { 'Set-Cookie': 'foo=v1;' });
+    response.end();
+  });
+  await page.goto(server.PREFIX + '/set-cookie');
+  expect(await page.evaluate(() => document.cookie)).toBe('foo=v1');
+
+  // The redirect updates the cookie before bouncing to the final destination.
+  server.setRoute('/redirect', (request, response) => {
+    response.writeHead(302, { 'Set-Cookie': 'foo=v2;', 'location': server.PREFIX + '/empty.html' });
+    response.end();
+  });
+
+  await page.route('**/redirect', route => {
+    void route.continue({ headers: route.request().headers() });
+  });
+
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.goto(server.PREFIX + '/redirect')
+  ]);
+  // The redirected request should carry the cookie updated by the redirect, not the stale captured value.
+  expect(serverRequest.headers['cookie']).toBe('foo=v2');
+});
+
 it('redirect after continue should be able to delete cookie', {
   annotation: [
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
