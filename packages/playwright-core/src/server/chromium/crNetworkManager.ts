@@ -346,7 +346,7 @@ export class CRNetworkManager {
         headersOverride = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
         if (headersOverride) {
           const originalHeaders = Object.entries(requestPausedEvent.request.headers).map(([name, value]) => ({ name, value }));
-          headersOverride = network.applyHeadersOverrides(originalHeaders, headersOverride);
+          headersOverride = removeCookieHeader(network.applyHeadersOverrides(originalHeaders, headersOverride));
         }
         requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers: headersOverride });
       } else {
@@ -663,7 +663,7 @@ class RouteImpl implements network.RouteDelegate {
     this._alreadyContinuedParams = {
       requestId: this._interceptionId!,
       url: overrides.url,
-      headers: overrides.headers,
+      headers: overrides.headers && removeCookieHeader(overrides.headers),
       method: overrides.method,
       postData: overrides.postData ? overrides.postData.toString('base64') : undefined
     };
@@ -713,6 +713,13 @@ async function catchDisallowedErrors(callback: () => Promise<void>) {
   }
 }
 
+
+// Never forward the `cookie` header to Fetch.continueRequest: since Chromium 145 it overrides
+// the cookie store, which leaks the value captured at interception time. Omitting it lets the
+// network stack source the cookie from the store. https://github.com/microsoft/playwright/issues/41428
+function removeCookieHeader(headers: types.HeadersArray): types.HeadersArray {
+  return headers.filter(header => header.name.toLowerCase() !== 'cookie');
+}
 
 function splitSetCookieHeader(headers: types.HeadersArray): types.HeadersArray {
   const index = headers.findIndex(({ name }) => name.toLowerCase() === 'set-cookie');
