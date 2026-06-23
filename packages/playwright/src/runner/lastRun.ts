@@ -43,14 +43,14 @@ export class LastRunReporter implements ReporterV2 {
     }
   }
 
-  async filterLastFailed(): Promise<string[]> {
+  async filterLastFailed(): Promise<string[] | undefined> {
     if (!this._lastRunFile)
-      return [];
+      return undefined;
     try {
       const lastRunInfo = JSON.parse(await fs.promises.readFile(this._lastRunFile, 'utf8')) as LastRunInfo;
       return lastRunInfo.failedTests;
     } catch {
-      return [];
+      return undefined;
     }
   }
 

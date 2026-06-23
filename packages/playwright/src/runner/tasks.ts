@@ -336,7 +336,7 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
         });
       }
 
-      if (testRun.options.lastFailedTestIds?.length) {
+      if (testRun.options.lastFailedTestIds) {
         const failedTestIds = new Set(testRun.options.lastFailedTestIds);
         testRun.postShardTestFilters.push(test => failedTestIds.has(test.id));
       }
