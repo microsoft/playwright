@@ -21,6 +21,7 @@ import path from 'path';
 
 import { wrapInASCIIBox } from '@utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
+import { getLinuxDistributionInfoSync } from '@utils/linuxUtils';
 import { spawnAsync } from '@utils/spawnAsync';
 import { getPlaywrightVersion } from '../userAgent';
 import { deps } from './nativeDeps';
@@ -90,6 +91,19 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
 }
 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>, dryRun: boolean) {
+  if (!isDebianBasedDistro()) {
+    const distroId = getLinuxDistributionInfoSync()?.id || 'this distribution';
+    const message = [
+      `'install-deps' can only install system dependencies on Debian and Ubuntu.`,
+      `On ${distroId}, install the libraries Playwright's browsers need using your`,
+      `distribution's package manager (e.g. zypper, dnf or pacman).`,
+    ].join('\n');
+    if (dryRun) {
+      console.log(message); // eslint-disable-line no-console
+      return;
+    }
+    throw new Error(message);
+  }
   const libraries: string[] = [];
   const platform = hostPlatform;
   if (!isOfficiallySupportedPlatform)
@@ -210,6 +224,22 @@ export async function validateDependenciesWindows(sdkLanguage: string, windowsEx
   }
 }
 
+// Playwright only knows apt package names for the libraries its browsers need (Debian/Ubuntu).
+// On other distributions `hostPlatform` falls back to a Debian/Ubuntu build so the binaries can
+// still be downloaded, but those package names — and `install-deps`, which shells out to apt —
+// do not apply. Detect the Debian/Ubuntu family (including derivatives via ID_LIKE) to decide
+// whether the apt-based suggestions are relevant.
+const DEBIAN_BASED_DISTRO_IDS = new Set(['ubuntu', 'debian', 'pop', 'neon', 'tuxedo', 'linuxmint', 'raspbian']);
+
+function isDebianBasedDistro(): boolean {
+  const info = getLinuxDistributionInfoSync();
+  if (!info)
+    return false;
+  if (DEBIAN_BASED_DISTRO_IDS.has(info.id))
+    return true;
+  return info.idLike.split(' ').some(like => like === 'debian' || like === 'ubuntu');
+}
+
 export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDirectories: string[], dlOpenLibraries: string[]) {
   const directoryPaths = linuxLddDirectories;
   const lddPaths: string[] = [];
@@ -229,7 +259,10 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   // Check Ubuntu version.
   const missingPackages = new Set();
 
-  const libraryToPackageNameMapping = deps[hostPlatform] ? {
+  // Only translate libraries to apt package names on Debian/Ubuntu; on other distributions the
+  // names would be wrong, so we report the missing libraries instead (see the `else` branch below).
+  const isDebianBased = isDebianBasedDistro();
+  const libraryToPackageNameMapping = isDebianBased && deps[hostPlatform] ? {
     ...(deps[hostPlatform]?.lib2package || {}),
     ...MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU,
   } : {};
@@ -285,13 +318,24 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       `<3 Playwright Team`,
     ]);
   } else {
-    // Unhappy path: we either run on unknown distribution, or we failed to resolve all missing
-    // libraries to package names.
+    // Unhappy path: we either run on a non-Debian distribution, or we failed to resolve all
+    // missing libraries to package names.
     // Print missing libraries only:
     errorLines.push(...[
       `Missing libraries:`,
       ...[...allMissingDeps].map(dep => '    ' + dep),
     ]);
+    if (!isDebianBased) {
+      const distroId = getLinuxDistributionInfoSync()?.id || 'this distribution';
+      errorLines.push(...[
+        ``,
+        `Playwright's automated dependency installer ('install-deps') supports only Debian and`,
+        `Ubuntu. On ${distroId}, install the packages that provide the libraries listed above`,
+        `using your distribution's package manager (e.g. zypper, dnf or pacman).`,
+        ``,
+        `<3 Playwright Team`,
+      ]);
+    }
   }
 
   throw new Error('\n' + wrapInASCIIBox(errorLines.join('\n'), 1));
@@ -313,7 +357,7 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
     return [];
   const allPaths = (await fs.promises.readdir(directoryPath)).map(file => path.resolve(directoryPath, file));
   const allStats = await Promise.all(allPaths.map(aPath => fs.promises.stat(aPath)));
-  const filePaths = allPaths.filter((aPath, index) => (allStats[index] as any).isFile());
+  const filePaths = allPaths.filter((aPath, index) => allStats[index].isFile());
 
   const executablersOrLibraries = (await Promise.all(filePaths.map(async filePath => {
     const basename = path.basename(filePath).toLowerCase();
