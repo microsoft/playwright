@@ -67,6 +67,10 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     localUtils.harClose(this._harBackends, params);
   }
 
+  harBackendForId(harId: string): HarBackend | undefined {
+    return this._harBackends.get(harId);
+  }
+
   async harUnzip(params: channels.LocalUtilsHarUnzipParams, progress: Progress): Promise<void> {
     return await localUtils.harUnzip(progress, params);
   }

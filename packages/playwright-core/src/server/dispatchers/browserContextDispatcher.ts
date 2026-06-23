@@ -39,7 +39,6 @@ import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 import { disposeAll } from '../disposable';
-import { openHarBackend } from '../localUtils';
 
 import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
@@ -47,9 +46,12 @@ import type { Request, Response, RouteHandler } from '../network';
 import type { InitScript, Page, PageError } from '../page';
 import type { Disposable } from '../disposable';
 import type { DispatcherScope } from './dispatcher';
+import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import type * as channels from '../channels';
 import type { Progress } from '../progress';
 import type { URLMatch } from '@isomorphic/urlMatch';
+
+type HarForAPIRequestsDisposable = Disposable & { registrationId: string };
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_BrowserContext = true;
@@ -62,7 +64,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
-  private _harForAPIRequestsRegistrations = new Map<string, { dispose: () => void }>();
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
     const result = parentScope.connection.existingDispatcher<BrowserContextDispatcher>(context);
@@ -337,35 +338,37 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._routeWebSocketInitScript = await WebSocketRouteDispatcher.install(progress, this.connection, this._context);
   }
 
-  async harForAPIRequestsStart(params: channels.BrowserContextHarForAPIRequestsStartParams, progress: Progress): Promise<channels.BrowserContextHarForAPIRequestsStartResult> {
-    const result = await openHarBackend(progress, params.har);
-    if ('error' in result)
-      throw new Error(result.error);
+  async routeAPIRequestsFromHar(params: channels.BrowserContextRouteAPIRequestsFromHarParams, progress: Progress): Promise<channels.BrowserContextRouteAPIRequestsFromHarResult> {
+    // Reuse the HarBackend that was already opened via localUtils.harOpen for the page-side
+    // route, rather than opening a second backend for the same HAR file. The backend is owned
+    // by LocalUtils and closed via harClose, so this registration must not dispose it.
+    const localUtils = [...this.connection._dispatcherByGuid.values()].find(d => d._type === 'LocalUtils') as LocalUtilsDispatcher | undefined;
+    const harBackend = localUtils?.harBackendForId(params.harId);
+    if (!harBackend)
+      throw new Error('Internal error: har was not opened');
     const urlMatch: URLMatch | undefined =
       params.urlRegexSource !== undefined && params.urlRegexFlags !== undefined ? new RegExp(params.urlRegexSource, params.urlRegexFlags) :
         params.urlGlob !== undefined ? params.urlGlob : undefined;
     const registrationId = createGuid();
-    const registration = this._context.addHarForAPIRequests({
-      harBackend: result.harBackend,
+    const registration = this._context.routeAPIRequestsFromHar({
+      harBackend,
       urlMatch,
       notFound: params.notFound,
       baseURL: this._context._options.baseURL,
     });
-    this._harForAPIRequestsRegistrations.set(registrationId, {
-      dispose: () => {
-        registration.dispose();
-        result.harBackend.dispose();
-      },
-    });
+    this._disposables.push({
+      registrationId,
+      dispose: async () => registration.dispose(),
+    } as HarForAPIRequestsDisposable);
     return { registrationId };
   }
 
-  async harForAPIRequestsStop(params: channels.BrowserContextHarForAPIRequestsStopParams, progress: Progress): Promise<void> {
-    const entry = this._harForAPIRequestsRegistrations.get(params.registrationId);
-    if (!entry)
+  async unrouteAPIRequestsFromHar(params: channels.BrowserContextUnrouteAPIRequestsFromHarParams, progress: Progress): Promise<void> {
+    const index = this._disposables.findIndex(d => (d as HarForAPIRequestsDisposable).registrationId === params.registrationId);
+    if (index === -1)
       return;
-    this._harForAPIRequestsRegistrations.delete(params.registrationId);
-    entry.dispose();
+    const [disposable] = this._disposables.splice(index, 1);
+    await progress.race(disposable.dispose());
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
@@ -479,13 +482,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context.dialogManager.removeDialogHandler(this._dialogHandler);
     this._interceptionUrlMatchers = [];
     this._context.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
-    for (const entry of this._harForAPIRequestsRegistrations.values()) {
-      try {
-        entry.dispose();
-      } catch {
-      }
-    }
-    this._harForAPIRequestsRegistrations.clear();
     disposeAll(this._disposables).catch(() => {});
     if (this._routeWebSocketInitScript)
       WebSocketRouteDispatcher.uninstall(this.connection, this._context, this._routeWebSocketInitScript).catch(() => {});

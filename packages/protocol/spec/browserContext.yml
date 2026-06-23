@@ -155,10 +155,10 @@ BrowserContext:
               regexFlags: string?
               urlPattern: URLPattern?
 
-    harForAPIRequestsStart:
+    routeAPIRequestsFromHar:
       internal: true
       parameters:
-        har: string
+        harId: string
         urlGlob: string?
         urlRegexSource: string?
         urlRegexFlags: string?
@@ -170,7 +170,7 @@ BrowserContext:
       returns:
         registrationId: string
 
-    harForAPIRequestsStop:
+    unrouteAPIRequestsFromHar:
       internal: true
       parameters:
         registrationId: string

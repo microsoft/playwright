@@ -118,10 +118,10 @@ export class HarRouter {
     await page.route(this._options.urlMatch || '**/*', route => this._handle(route));
   }
 
-  async addAPIRequestRoute(context: BrowserContext, har: string) {
+  async addAPIRequestRoute(context: BrowserContext) {
     const urlMatch = this._options.urlMatch;
-    const { registrationId } = await context._channel.harForAPIRequestsStart({
-      har,
+    const { registrationId } = await context._channel.routeAPIRequestsFromHar({
+      harId: this._harId,
       urlGlob: isString(urlMatch) ? urlMatch : undefined,
       urlRegexSource: isRegExp(urlMatch) ? urlMatch.source : undefined,
       urlRegexFlags: isRegExp(urlMatch) ? urlMatch.flags : undefined,
@@ -137,7 +137,7 @@ export class HarRouter {
   dispose() {
     this._localUtils.harClose({ harId: this._harId }).catch(() => {});
     for (const { context, registrationId } of this._apiRequestRegistrations)
-      context._channel.harForAPIRequestsStop({ registrationId }).catch(() => {});
+      context._channel.unrouteAPIRequestsFromHar({ registrationId }).catch(() => {});
     this._apiRequestRegistrations = [];
   }
 }

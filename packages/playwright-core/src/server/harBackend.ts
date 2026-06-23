@@ -26,6 +26,8 @@ import type * as har from '@trace/har';
 
 const redirectStatus = [301, 302, 303, 307, 308];
 
+class MaxRedirectsExceededError extends Error {}
+
 export class HarBackend {
   readonly id: string;
   private _harFile: har.HARFile;
@@ -39,18 +41,30 @@ export class HarBackend {
     this._zipFile = zipFile;
   }
 
-  async lookup(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, isNavigationRequest: boolean, options: { apiRequestOnly?: boolean } = {}): Promise<{
+  async lookup(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, isNavigationRequest: boolean, options: { apiRequestOnly?: boolean, maxRedirects?: number } = {}): Promise<{
     action: 'error' | 'redirect' | 'fulfill' | 'noentry',
     message?: string,
     redirectURL?: string,
+    url?: string,
     status?: number,
+    statusText?: string,
+    httpVersion?: string,
     headers?: HeadersArray,
-    body?: Buffer
+    cookies?: har.Cookie[],
+    body?: Buffer,
+    timings?: har.Timings,
+    serverIPAddress?: string,
+    serverPort?: number,
+    securityDetails?: har.SecurityDetails,
   }> {
     let entry;
     try {
       entry = await this._harFindResponse(url, method, headers, postData, options);
     } catch (e) {
+      // A redirect-limit overflow is a hard error the caller must surface (mirrors the live
+      // request path), so let it propagate instead of degrading to a soft 'error' result.
+      if (e instanceof MaxRedirectsExceededError)
+        throw e;
       return { action: 'error', message: 'HAR error: ' + e.message };
     }
 
@@ -66,9 +80,17 @@ export class HarBackend {
       const buffer = await this._loadContent(response.content);
       return {
         action: 'fulfill',
+        url: entry.request.url,
         status: response.status,
+        statusText: response.statusText,
+        httpVersion: response.httpVersion,
         headers: response.headers,
+        cookies: response.cookies,
         body: buffer,
+        timings: entry.timings,
+        serverIPAddress: entry.serverIPAddress,
+        serverPort: entry._serverPort,
+        securityDetails: entry._securityDetails,
       };
     } catch (e) {
       return { action: 'error', message: e.message };
@@ -93,9 +115,10 @@ export class HarBackend {
     return buffer;
   }
 
-  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, options: { apiRequestOnly?: boolean } = {}): Promise<har.Entry | undefined> {
+  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, options: { apiRequestOnly?: boolean, maxRedirects?: number } = {}): Promise<har.Entry | undefined> {
     const harLog = this._harFile.log;
     const visited = new Set<har.Entry>();
+    let maxRedirects = options.maxRedirects;
     while (true) {
       const entries: har.Entry[] = [];
       for (const candidate of harLog.entries) {
@@ -144,6 +167,16 @@ export class HarBackend {
       // Follow redirects.
       const locationHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'location');
       if (redirectStatus.includes(entry.response.status) && locationHeader) {
+        if (maxRedirects !== undefined) {
+          // Mirror the live request path (see APIRequestContext._sendRequest): a negative
+          // limit means "do not follow redirects" and returns the 3xx response as-is, while
+          // a zero limit means the redirect budget has been exhausted.
+          if (maxRedirects < 0)
+            return entry;
+          if (maxRedirects === 0)
+            throw new MaxRedirectsExceededError('Max redirect count exceeded');
+          --maxRedirects;
+        }
         const locationURL = new URL(locationHeader.value, url);
         url = locationURL.toString();
         if ((entry.response.status === 301 || entry.response.status === 302) && method === 'POST' ||

@@ -397,7 +397,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._harRouters.push(harRouter);
     await harRouter.addContextRoute(this);
     if (options.interceptAPIRequests)
-      await harRouter.addAPIRequestRoute(this, har);
+      await harRouter.addAPIRequestRoute(this);
   }
 
   private _disposeHarRouters() {

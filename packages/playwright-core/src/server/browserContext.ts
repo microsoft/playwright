@@ -742,14 +742,15 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     await Promise.all([...this._routesInFlight].map(route => route.removeHandler(handler)));
   }
 
-  addHarForAPIRequests(options: { harBackend: HarBackend, urlMatch: URLMatch | undefined, notFound: 'abort' | 'fallback', baseURL: string | undefined }): { dispose: () => void } {
+  routeAPIRequestsFromHar(options: { harBackend: HarBackend, urlMatch: URLMatch | undefined, notFound: 'abort' | 'fallback', baseURL: string | undefined }): { dispose: () => void } {
     const registration: HarForAPIRequestsRegistration = {
       harBackend: options.harBackend,
       urlMatch: options.urlMatch,
       notFound: options.notFound,
       baseURL: options.baseURL,
     };
-    this._harForAPIRequests.push(registration);
+    // Give priority to the newest registration, mirroring BrowserContext.route/Page.route.
+    this._harForAPIRequests.unshift(registration);
     return {
       dispose: () => {
         const index = this._harForAPIRequests.indexOf(registration);

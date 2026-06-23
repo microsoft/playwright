@@ -1340,9 +1340,9 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   setGeolocation(params: BrowserContextSetGeolocationParams): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  routeAPIRequestsFromHar(params: BrowserContextRouteAPIRequestsFromHarParams): Promise<BrowserContextRouteAPIRequestsFromHarResult>;
+  unrouteAPIRequestsFromHar(params: BrowserContextUnrouteAPIRequestsFromHarParams): Promise<BrowserContextUnrouteAPIRequestsFromHarResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
-  harForAPIRequestsStart(params: BrowserContextHarForAPIRequestsStartParams, progress?: Progress): Promise<BrowserContextHarForAPIRequestsStartResult>;
-  harForAPIRequestsStop(params: BrowserContextHarForAPIRequestsStopParams, progress?: Progress): Promise<BrowserContextHarForAPIRequestsStopResult>;
   setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
   storageState(params: BrowserContextStorageStateParams): Promise<BrowserContextStorageStateResult>;
   setStorageState(params: BrowserContextSetStorageStateParams): Promise<BrowserContextSetStorageStateResult>;
@@ -1575,28 +1575,28 @@ export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
 export type BrowserContextSetNetworkInterceptionPatternsResult = void;
-export type BrowserContextHarForAPIRequestsStartParams = {
-  har: string,
+export type BrowserContextRouteAPIRequestsFromHarParams = {
+  harId: string,
   urlGlob?: string,
   urlRegexSource?: string,
   urlRegexFlags?: string,
   notFound: 'abort' | 'fallback',
 };
-export type BrowserContextHarForAPIRequestsStartOptions = {
+export type BrowserContextRouteAPIRequestsFromHarOptions = {
   urlGlob?: string,
   urlRegexSource?: string,
   urlRegexFlags?: string,
 };
-export type BrowserContextHarForAPIRequestsStartResult = {
+export type BrowserContextRouteAPIRequestsFromHarResult = {
   registrationId: string,
 };
-export type BrowserContextHarForAPIRequestsStopParams = {
+export type BrowserContextUnrouteAPIRequestsFromHarParams = {
   registrationId: string,
 };
-export type BrowserContextHarForAPIRequestsStopOptions = {
+export type BrowserContextUnrouteAPIRequestsFromHarOptions = {
 
 };
-export type BrowserContextHarForAPIRequestsStopResult = void;
+export type BrowserContextUnrouteAPIRequestsFromHarResult = void;
 export type BrowserContextSetWebSocketInterceptionPatternsParams = {
   patterns: {
     glob?: string,
