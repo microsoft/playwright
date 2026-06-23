@@ -7,8 +7,10 @@ on:
   push:
     branches:
       - release-*
-  release:
-    types: [published]
+    tags:
+      # TODO: revert this to "published release" once github.ref is set there.
+      # See https://github.com/actions/runner/issues/2788 as well.
+      - 'v1.61.1'
 
 jobs:
   publish-npm-and-driver:
@@ -47,7 +49,7 @@ jobs:
         node utils/build/update_canary_version.js --beta --commit-timestamp
         utils/publish_all_packages.sh --beta
     - name: "publish release to NPM"
-      if: github.event_name == 'release' && github.event.action == 'published'
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: utils/publish_all_packages.sh --release
 
     - name: Azure Login
@@ -58,7 +60,7 @@ jobs:
         subscription-id: ${{ secrets.AZURE_PW_CDN_SUBSCRIPTION_ID }}
     - name: build & publish driver
       env:
-        AZ_UPLOAD_FOLDER: ${{ github.event_name == 'release' && 'driver' || 'driver/next' }}
+        AZ_UPLOAD_FOLDER: ${{ startsWith(github.ref, 'refs/tags/v') && 'driver' || 'driver/next' }}
       run: |
         utils/build/build-playwright-driver.sh
         utils/build/upload-playwright-driver.sh
@@ -89,7 +91,7 @@ jobs:
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
     - name: Deploy Stable
-      if: github.event_name == 'release' && github.event.action == 'published'
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
       run: bash utils/build/deploy-trace-viewer.sh --stable
       env:
         GH_SERVICE_ACCOUNT_TOKEN: ${{ steps.app-token.outputs.token }}
