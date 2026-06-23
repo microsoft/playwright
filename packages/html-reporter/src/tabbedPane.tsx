@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { clsx, handleTabListKeyDown } from '@web/uiUtils';
+import { clsx } from '@web/uiUtils';
 import './colors.css';
 import './tabbedPane.css';
 import * as React from 'react';
@@ -32,25 +32,16 @@ export const TabbedPane: React.FunctionComponent<{
   setSelectedTab: (tab: string) => void
 }> = ({ tabs, selectedTab, setSelectedTab }) => {
   const idPrefix = React.useId();
-  const tabStripRef = React.useRef<HTMLDivElement>(null);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const nextIndex = handleTabListKeyDown(e, tabStripRef.current);
-    if (nextIndex !== -1)
-      setSelectedTab(tabs[nextIndex].id);
-  };
-
   return <div className='tabbed-pane'>
     <div className='vbox'>
       <div className='hbox' style={{ flex: 'none' }}>
-        <div className='tabbed-pane-tab-strip' role='tablist' onKeyDown={handleKeyDown} ref={tabStripRef}>{
+        <div className='tabbed-pane-tab-strip' role='tablist'>{
           tabs.map(tab => (
             <div className={clsx('tabbed-pane-tab-element', selectedTab === tab.id && 'selected')}
               onClick={() => setSelectedTab(tab.id)}
               id={`${idPrefix}-${tab.id}`}
               key={tab.id}
               role='tab'
-              tabIndex={selectedTab === tab.id ? 0 : -1}
               aria-selected={selectedTab === tab.id}>
               <div className='tabbed-pane-tab-label'>{tab.title}</div>
             </div>

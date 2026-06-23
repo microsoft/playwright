@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { clsx, handleTabListKeyDown } from '../uiUtils';
+import { clsx } from '../uiUtils';
 import './tabbedPane.css';
 import { Toolbar } from './toolbar';
 import * as React from 'react';
@@ -38,25 +38,17 @@ export const TabbedPane: React.FunctionComponent<{
   mode?: 'default' | 'select',
 }> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId, mode }) => {
   const id = React.useId();
-  const tabListRef = React.useRef<HTMLDivElement>(null);
   if (!selectedTab)
     selectedTab = tabs[0].id;
   if (!mode)
     mode = 'default';
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const nextIndex = handleTabListKeyDown(e, tabListRef.current);
-    if (nextIndex !== -1)
-      setSelectedTab?.(tabs[nextIndex].id);
-  };
-
   return <div className='tabbed-pane' data-testid={dataTestId}>
     <div className='vbox'>
       <Toolbar>
         { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px', alignItems: 'center' }}>
           {...leftToolbar}
         </div>}
-        {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }} role='tablist' onKeyDown={handleKeyDown} ref={tabListRef}>
+        {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }} role='tablist'>
           {[...tabs.map(tab => (
             <TabbedPaneTab
               key={tab.id}
@@ -67,7 +59,6 @@ export const TabbedPane: React.FunctionComponent<{
               errorCount={tab.errorCount}
               selected={selectedTab === tab.id}
               onSelect={setSelectedTab}
-              tabIndex={selectedTab === tab.id ? 0 : -1}
             />)),
           ]}
         </div>}
@@ -110,13 +101,11 @@ export const TabbedPaneTab: React.FunctionComponent<{
   selected?: boolean,
   onSelect?: (id: string) => void,
   ariaControls?: string,
-  tabIndex?: number,
-}> = ({ id, title, count, errorCount, selected, onSelect, ariaControls, tabIndex }) => {
+}> = ({ id, title, count, errorCount, selected, onSelect, ariaControls }) => {
   return <div className={clsx('tabbed-pane-tab', selected && 'selected')}
     onClick={() => onSelect?.(id)}
     role='tab'
     title={title}
-    tabIndex={tabIndex ?? (selected ? 0 : -1)}
     aria-controls={ariaControls}
     aria-selected={selected}>
     <div className='tabbed-pane-tab-label'>{title}</div>
