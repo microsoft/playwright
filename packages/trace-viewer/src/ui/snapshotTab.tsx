@@ -21,7 +21,7 @@ import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trac
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { clsx, useMeasure, useSetting } from '@web/uiUtils';
+import { clsx, handleTabListKeyDown, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import { asLocator } from '@isomorphic/locatorGenerators';
@@ -54,6 +54,14 @@ export const SnapshotTabsView: React.FunctionComponent<{
   playback: PlaybackState
 }> = ({ action, model, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedElement, setHighlightedElement, playback }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
+  const tabs = ['action', 'before', 'after'] as const;
+  const tabListRef = React.useRef<HTMLDivElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const nextIndex = handleTabListKeyDown(e, tabListRef.current);
+    if (nextIndex !== -1)
+      setSnapshotTab(tabs[nextIndex]);
+  };
 
   const [shouldPopulateCanvasFromScreenshot] = useSetting('shouldPopulateCanvasFromScreenshot', false);
 
@@ -70,8 +78,8 @@ export const SnapshotTabsView: React.FunctionComponent<{
   return <div className='snapshot-tab vbox'>
     <Toolbar>
       <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
-      <div className='hbox' style={{ height: '100%' }} role='tablist'>
-        {(['action', 'before', 'after'] as const).map(tab => {
+      <div className='hbox' style={{ height: '100%' }} role='tablist' onKeyDown={handleKeyDown} ref={tabListRef}>
+        {tabs.map(tab => {
           return <TabbedPaneTab
             key={tab}
             id={tab}
