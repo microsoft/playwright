@@ -110,7 +110,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         autoCloseBrackets: true,
         extraKeys: {
           'Ctrl-F': 'findPersistent',
-          'Cmd-F': 'findPersistent'
+          'Cmd-F': 'findPersistent',
+          'Tab': false,
+          'Shift-Tab': false,
         }
       });
       codemirrorRef.current = { cm };

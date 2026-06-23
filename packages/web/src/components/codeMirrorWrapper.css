@@ -20,6 +20,10 @@
   line-height: 18px;
 }
 
+.cm-wrapper:has(textarea:focus-visible) {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
 .cm-wrapper, .cm-wrapper > div {
   width: 100%;
   height: 100%;
