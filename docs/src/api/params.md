@@ -80,6 +80,14 @@ This option has no effect.
 
 Whether to bypass the [actionability](../actionability.md) checks. Defaults to `false`.
 
+## input-scroll
+- `scroll` <[ScrollMode]<"auto"|"none">>
+
+Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`,
+which scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+`"none"`, Playwright does not scroll the element and the action fails if the element is not already in the viewport.
+This is useful to assert that an element is reachable by the user without additional scrolling.
+
 ## input-selector
 - `selector` <[string]>
 

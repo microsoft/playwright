@@ -110,6 +110,11 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         position: Point?
         timeout: float
         trial: boolean?
@@ -126,6 +131,11 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         noWaitAfter: boolean?
         modifiers:
           type: array?
@@ -170,6 +180,11 @@ Frame:
         source: string
         target: string
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         timeout: float
         trial: boolean?
         sourcePosition: Point?
@@ -225,6 +240,11 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         modifiers:
           type: array?
           items:
@@ -374,6 +394,11 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         modifiers:
           type: array?
           items:
@@ -634,6 +659,11 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         modifiers:
           type: array?
           items:
@@ -694,6 +724,11 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         position: Point?
         timeout: float
         trial: boolean?

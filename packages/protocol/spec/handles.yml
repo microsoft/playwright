@@ -125,6 +125,11 @@ ElementHandle:
       title: Check
       parameters:
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         position: Point?
         timeout: float
         trial: boolean?
@@ -139,6 +144,11 @@ ElementHandle:
       title: Click
       parameters:
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         noWaitAfter: boolean?
         modifiers:
           type: array?
@@ -179,6 +189,11 @@ ElementHandle:
       title: Double click
       parameters:
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         modifiers:
           type: array?
           items:
@@ -252,6 +267,11 @@ ElementHandle:
       title: Hover
       parameters:
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         modifiers:
           type: array?
           items:
@@ -490,6 +510,11 @@ ElementHandle:
       title: Tap
       parameters:
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         modifiers:
           type: array?
           items:
@@ -536,6 +561,11 @@ ElementHandle:
       title: Uncheck
       parameters:
         force: boolean?
+        scroll:
+          type: enum?
+          literals:
+          - auto
+          - none
         position: Point?
         timeout: float
         trial: boolean?

@@ -2139,6 +2139,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -2244,6 +2252,14 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -2385,6 +2401,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -2502,6 +2526,14 @@ export interface Page {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
@@ -3329,6 +3361,14 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -4314,6 +4354,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -4575,6 +4623,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -4721,6 +4777,14 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -6244,6 +6308,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6340,6 +6412,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6434,6 +6514,14 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -6539,6 +6627,14 @@ export interface Frame {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
@@ -7169,6 +7265,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7703,6 +7807,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7878,6 +7990,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -8024,6 +8144,14 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -11742,6 +11870,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -11824,6 +11960,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
@@ -11913,6 +12057,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
@@ -12087,6 +12239,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -12531,6 +12691,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12659,6 +12827,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12761,6 +12937,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -13245,6 +13429,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -13390,6 +13582,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
      * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
      */
@@ -13511,6 +13711,14 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
@@ -13661,6 +13869,14 @@ export interface Locator {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
@@ -14355,6 +14571,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15027,6 +15251,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15183,6 +15415,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15303,6 +15543,14 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`

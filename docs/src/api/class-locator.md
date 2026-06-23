@@ -354,6 +354,9 @@ await page.GetByRole(AriaRole.Checkbox).CheckAsync();
 ### option: Locator.check.force = %%-input-force-%%
 * since: v1.14
 
+### option: Locator.check.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
@@ -512,6 +515,9 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.force = %%-input-force-%%
 * since: v1.14
 
+### option: Locator.click.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.click.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
 
@@ -597,6 +603,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.dblclick.force = %%-input-force-%%
 * since: v1.14
+
+### option: Locator.dblclick.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Locator.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
@@ -893,6 +902,9 @@ Locator of the element to drag to.
 
 ### option: Locator.dragTo.force = %%-input-force-%%
 * since: v1.18
+
+### option: Locator.dragTo.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.18
@@ -1552,6 +1564,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.hover.force = %%-input-force-%%
 * since: v1.14
+
+### option: Locator.hover.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Locator.hover.timeout = %%-input-timeout-%%
 * since: v1.14
@@ -2446,6 +2461,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.setChecked.force = %%-input-force-%%
 * since: v1.15
 
+### option: Locator.setChecked.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
@@ -2627,6 +2645,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.tap.force = %%-input-force-%%
 * since: v1.14
 
+### option: Locator.tap.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
@@ -2740,6 +2761,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.uncheck.force = %%-input-force-%%
 * since: v1.14
+
+### option: Locator.uncheck.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
