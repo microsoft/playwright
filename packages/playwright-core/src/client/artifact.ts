@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { ChannelOwner } from './channelOwner';
 import { Stream } from './stream';
 import { mkdirIfNeeded } from './fileUtils';
@@ -40,9 +42,9 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
 
     const result = await this._channel.saveAsStream();
     const stream = Stream.from(result.stream);
-    await mkdirIfNeeded(this._platform, path);
+    await mkdirIfNeeded(path);
     await new Promise((resolve, reject) => {
-      stream.stream().pipe(this._platform.fs().createWriteStream(path))
+      stream.stream().pipe(fs.createWriteStream(path))
           .on('finish' as any, resolve)
           .on('error' as any, reject);
     });

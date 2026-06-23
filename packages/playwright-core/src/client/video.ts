@@ -18,15 +18,14 @@ import { Artifact } from './artifact';
 import { EventEmitter } from './eventEmitter';
 
 import type { Connection } from './connection';
-import type { Page } from './page';
 import type * as api from '../../types/types';
 
 export class Video extends EventEmitter implements api.Video {
   private _artifact: Artifact | undefined;
   private _isRemote = false;
 
-  constructor(page: Page, connection: Connection, artifact: Artifact | undefined) {
-    super(page._platform);
+  constructor(connection: Connection, artifact: Artifact | undefined) {
+    super();
     this._isRemote = connection.isRemote();
     this._artifact = artifact;
   }

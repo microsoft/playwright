@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import { captureRawStack, parseStackFrame } from '@isomorphic/stackTrace';
+import path from 'path';
 
-import type { Platform } from '@isomorphic/platform';
+import { boxedStackPrefixes, captureRawStack, coreDir, parseStackFrame, showInternalStackFrames } from '@isomorphic/stackTrace';
+
 import type { StackFrame } from '@isomorphic/stackTrace';
 
-export function captureLibraryStackTrace(platform: Platform): { frames: StackFrame[], apiName: string } {
+export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: string } {
   const stack = captureRawStack();
+  const playwrightCoreDir = coreDir();
 
   type ParsedFrame = {
     frame: StackFrame;
@@ -28,10 +30,10 @@ export function captureLibraryStackTrace(platform: Platform): { frames: StackFra
     isPlaywrightLibrary: boolean;
   };
   let parsedFrames = stack.map(line => {
-    const frame = parseStackFrame(line, platform.pathSeparator, platform.showInternalStackFrames());
+    const frame = parseStackFrame(line, path.sep, showInternalStackFrames());
     if (!frame || !frame.file)
       return null;
-    const isPlaywrightLibrary = !!platform.coreDir && frame.file.startsWith(platform.coreDir);
+    const isPlaywrightLibrary = !!playwrightCoreDir && frame.file.startsWith(playwrightCoreDir);
     const parsed: ParsedFrame = {
       frame,
       frameText: line,
@@ -63,7 +65,7 @@ export function captureLibraryStackTrace(platform: Platform): { frames: StackFra
   }
 
   // This is for the inspector so that it did not include the test runner stack frames.
-  const filterPrefixes = platform.boxedStackPrefixes();
+  const filterPrefixes = boxedStackPrefixes();
   parsedFrames = parsedFrames.filter(f => {
     if (filterPrefixes.some(prefix => f.frame.file.startsWith(prefix)))
       return false;

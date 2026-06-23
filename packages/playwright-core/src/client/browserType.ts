@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { Browser } from './browser';
@@ -72,7 +74,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
-      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
+      timeout: new TimeoutSettings().launchTimeout(options),
     };
     return await this._wrapApiCall(async () => {
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
@@ -97,15 +99,15 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     await this._instrumentation.runBeforeCreateBrowserContext(options);
 
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
-    const contextParams = await prepareBrowserContextParams(this._platform, options);
+    const contextParams = await prepareBrowserContextParams(options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
-      userDataDir: (this._platform.path().isAbsolute(userDataDir) || !userDataDir) ? userDataDir : this._platform.path().resolve(userDataDir),
-      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
+      userDataDir: (path.isAbsolute(userDataDir) || !userDataDir) ? userDataDir : path.resolve(userDataDir),
+      timeout: new TimeoutSettings().launchTimeout(options),
     };
     const context = await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
@@ -166,7 +168,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       transport: transport as any,
       headers: params.headers ? headersObjectToArray(params.headers) : undefined,
       slowMo: params.slowMo,
-      timeout: new TimeoutSettings(this._platform).timeout(params),
+      timeout: new TimeoutSettings().timeout(params),
       isLocal: params.isLocal,
       noDefaults: params.noDefaults,
       artifactsDir: params.artifactsDir,
@@ -187,7 +189,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       throw new Error('Connecting to workers is only supported in Chromium.');
     const result = await this._channel.connectToWorker({
       endpoint,
-      timeout: new TimeoutSettings(this._platform).timeout(options),
+      timeout: new TimeoutSettings().timeout(options),
     });
     return Worker.from(result.worker);
   }

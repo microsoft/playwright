@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+import colors from 'colors/safe';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { isUnderTest } from '@utils/debug';
+import { debugLogger } from '@utils/debugLogger';
+import { emptyZone } from '@utils/zones';
 import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
@@ -46,7 +50,6 @@ import { ValidationError, findValidator, maybeFindValidator } from '../protocol/
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
 import type { ValidatorContext } from '../protocol/validator';
-import type { Platform } from '@isomorphic/platform';
 import type * as channels from './channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {
@@ -84,8 +87,8 @@ export class Connection extends EventEmitter {
   readonly headers: HeadersArray;
   private _objectFactories = new Map<string, ChannelOwnerFactory>();
 
-  constructor(platform: Platform, localUtils?: LocalUtils, instrumentation?: ClientInstrumentation, headers: HeadersArray = []) {
-    super(platform);
+  constructor(localUtils?: LocalUtils, instrumentation?: ClientInstrumentation, headers: HeadersArray = []) {
+    super();
     this._instrumentation = instrumentation || createInstrumentation();
     this._localUtils = localUtils;
     this._rootObject = new Root(this);
@@ -185,9 +188,9 @@ export class Connection extends EventEmitter {
     const type = object._type;
     const id = ++this._lastId;
     const message = { id, guid, method, params };
-    if (this._platform.isLogEnabled('channel')) {
+    if (debugLogger.isEnabled('channel')) {
       // Do not include metadata in debug logs to avoid noise.
-      this._platform.log('channel', 'SEND> ' + JSON.stringify(message));
+      debugLogger.log('channel', 'SEND> ' + JSON.stringify(message));
     }
     const location = options.frames?.[0] ? { file: options.frames[0].file, line: options.frames[0].line, column: options.frames[0].column } : undefined;
     const metadata: channels.Metadata = { title: options.title, location, internal: options.internal, stepId: options.stepId };
@@ -195,7 +198,7 @@ export class Connection extends EventEmitter {
       this._localUtils?.addStackToTracingNoReply({ callData: { stack: options.frames ?? [], id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
-    this._platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
+    emptyZone.run(() => this.onmessage({ ...message, metadata }));
     // Fire-and-forget: server intentionally never replies to __waitInfo__.
     if (method === '__waitInfo__')
       return;
@@ -206,7 +209,7 @@ export class Connection extends EventEmitter {
     return {
       tChannelImpl: this._tChannelImplFromWire.bind(this),
       binary: this._rawBuffers ? 'buffer' : 'fromBase64',
-      isUnderTest: () => this._platform.isUnderTest(),
+      isUnderTest,
     };
   }
 
@@ -216,8 +219,8 @@ export class Connection extends EventEmitter {
 
     const { id, guid, method, params, result, error, errorDetails, log } = message as any;
     if (id) {
-      if (this._platform.isLogEnabled('channel'))
-        this._platform.log('channel', '<RECV ' + JSON.stringify(message));
+      if (debugLogger.isEnabled('channel'))
+        debugLogger.log('channel', '<RECV ' + JSON.stringify(message));
       const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
@@ -225,7 +228,7 @@ export class Connection extends EventEmitter {
       if (error && !result) {
         const parsedError = parseError(error);
         parsedError.log = log || [];
-        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this._platform, log));
+        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(log));
         const detailsValidator = maybeFindValidator(callback.type, callback.method, 'ErrorDetails');
         if (detailsValidator)
           parsedError.details = detailsValidator(errorDetails ?? {}, '', this._validatorFromWireContext());
@@ -237,8 +240,8 @@ export class Connection extends EventEmitter {
       return;
     }
 
-    if (this._platform.isLogEnabled('channel'))
-      this._platform.log('channel', '<EVENT ' + JSON.stringify(message));
+    if (debugLogger.isEnabled('channel'))
+      debugLogger.log('channel', '<EVENT ' + JSON.stringify(message));
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;
@@ -300,11 +303,11 @@ export class Connection extends EventEmitter {
   }
 }
 
-function formatCallLog(platform: Platform, log: string[] | undefined): string {
+function formatCallLog(log: string[] | undefined): string {
   if (!log || !log.some(l => !!l))
     return '';
   return `
 Call log:
-${platform.colors.dim(log.join('\n'))}
+${colors.dim(log.join('\n'))}
 `;
 }

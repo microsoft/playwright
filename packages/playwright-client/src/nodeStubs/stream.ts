@@ -14,4 +14,11 @@
  * limitations under the License.
  */
 
-export { connect } from './index.js';
+export class Readable {}
+export class Writable {}
+
+export const promises = {
+  pipeline: (): Promise<void> => Promise.reject(new Error('stream is not available in the browser')),
+};
+
+export default { Readable, Writable, promises };

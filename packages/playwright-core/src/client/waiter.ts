@@ -15,12 +15,13 @@
  */
 
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { currentZone } from '@utils/zones';
 import { TimeoutError } from './errors';
 
 import type { ChannelOwner } from './channelOwner';
 import type * as channels from './channels';
 import type { EventEmitter } from 'events';
-import type { Zone } from '@isomorphic/platform';
+import type { Zone } from '@utils/zones';
 
 export class Waiter {
   private _dispose: (() => void)[];
@@ -33,9 +34,9 @@ export class Waiter {
   private _savedZone: Zone;
 
   constructor(channelOwner: ChannelOwner, event: string) {
-    this._waitId = channelOwner._platform.createGuid();
+    this._waitId = createGuidWithWebCrypto();
     this._channelOwner = channelOwner;
-    this._savedZone = channelOwner._platform.zones.current().pop();
+    this._savedZone = currentZone().without('apiZone');
 
     const title = `Wait for event "${event}"`;
     this._sendWaitInfo({ waitId: this._waitId, phase: 'before', event }, { title });
@@ -183,4 +184,10 @@ function formatLogRecording(log: string[]): string {
   const leftLength = (headerLength - header.length) / 2;
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
+}
+
+function createGuidWithWebCrypto() {
+  // This avoids stubbing "crypto" for browser build.
+  // TODO: consider replacing the main createGuid() helper with this.
+  return Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
 }

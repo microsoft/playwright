@@ -58,11 +58,11 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     options = this._playwright.selectors._withSelectorOptions(options);
     const params: channels.ElectronLaunchParams = {
-      ...await prepareBrowserContextParams(this._platform, options),
-      env: envObjectToArray(options.env ? options.env : this._platform.env),
+      ...await prepareBrowserContextParams(options),
+      env: options.env ? envObjectToArray(options.env) : undefined,
       tracesDir: options.tracesDir,
       artifactsDir: options.artifactsDir,
-      timeout: new TimeoutSettings(this._platform).launchTimeout(options),
+      timeout: new TimeoutSettings().launchTimeout(options),
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
     this._playwright.selectors._contextsForSelectors.add(app._context);
@@ -85,7 +85,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronApplicationInitializer) {
     super(parent, type, guid, initializer);
 
-    this._timeoutSettings = new TimeoutSettings(this._platform);
+    this._timeoutSettings = new TimeoutSettings();
     this._context = BrowserContext.from(initializer.context);
     for (const page of this._context._pages)
       this._onPage(page);
@@ -93,7 +93,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     this._channel.on('close', () => {
       this.emit(Events.ElectronApplication.Close);
     });
-    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(this._platform, event, null, null)));
+    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(event, null, null)));
     this._setEventToSubscriptionMapping(new Map<string, channels.ElectronApplicationUpdateSubscriptionParams['event']>([
       [Events.ElectronApplication.Console, 'console'],
     ]));
