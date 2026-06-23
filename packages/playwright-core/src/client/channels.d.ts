@@ -2981,13 +2981,17 @@ export type FrameWaitForFunctionParams = {
   arg: SerializedArgument,
   timeout: number,
   pollingInterval?: number,
+  selector?: string,
+  strict?: boolean,
 };
 export type FrameWaitForFunctionOptions = {
   isFunction?: boolean,
   pollingInterval?: number,
+  selector?: string,
+  strict?: boolean,
 };
 export type FrameWaitForFunctionResult = {
-  handle: JSHandleChannel,
+  handle?: JSHandleChannel,
 };
 export type FrameWaitForSelectorParams = {
   selector: string,

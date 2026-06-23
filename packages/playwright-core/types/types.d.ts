@@ -12852,167 +12852,108 @@ export interface Locator {
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg, options?: {
-    timeout?: number;
-  }): Promise<R>;
+  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number }): Promise<R>;
   /**
-   * Execute JavaScript code in the page, taking the matching element as an argument.
+   * Execute JavaScript code in the page, taking the matching element as an argument, and return a
+   * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
    *
    * **Details**
    *
    * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression), called with the
-   * matching element as a first argument, and
-   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-arg) as a second argument.
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) as
+   * a[JSHandle](https://playwright.dev/docs/api/class-jshandle), called with the matching element as a first argument,
+   * and [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-arg) as a second argument.
    *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression) returns a
+   * The only difference between
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate)
+   * and
+   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
+   * is that
+   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
+   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression)
+   * returns a [Promise], this method will wait for the promise to resolve and return its value.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) throws
+   * or rejects, this method throws.
+   *
+   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
+   * more details.
+   * @param pageFunction Function to be evaluated in the page context.
+   * @param arg Optional argument to pass to
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
+   * @param options
+   */
+  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number }): Promise<SmartHandle<R>>;
+  /**
+   * Execute JavaScript code in the page, taking all matching elements as an argument.
+   *
+   * **Details**
+   *
+   * Returns the return value of
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression), called with
+   * an array of all matching elements as a first argument, and
+   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-arg) as a second argument.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) returns a
    * [Promise], this method will wait for the promise to resolve and return its value.
    *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression) throws or
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) throws or
    * rejects, this method throws.
    *
    * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('div');
+   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
+   * ```
+   *
+   * @param pageFunction Function to be evaluated in the page context.
+   * @param arg Optional argument to pass to
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression).
+   */
+  evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg?: Arg): Promise<R>;
+  /**
+   * Returns when
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression) returns
+   * a truthy value, called with the matching element as a first argument, and
+   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-arg) as a second argument.
+   *
+   * This is a generic way to wait for an element to reach a custom condition without asserting it. The locator is
+   * re-resolved on each retry, so it tolerates the element being re-rendered while waiting.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression)
+   * returns a [Promise], this method will wait for the promise to resolve before checking its value.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression)
+   * throws or rejects, this method throws.
+   *
+   * **Usage**
+   *
+   * Wait for an attribute to appear:
+   *
+   * ```js
+   * const toggle = page.getByRole('button', { name: 'Menu' });
+   * await toggle.click();
+   * await toggle.waitForFunction(element => element.hasAttribute('aria-expanded'));
+   * ```
    *
    * Passing argument to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression):
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression):
    *
    * ```js
-   * const result = await page.getByTestId('myId').evaluate((element, [x, y]) => {
-   *   return element.textContent + ' ' + x * y;
-   * }, [7, 8]);
-   * console.log(result); // prints "myId text 56"
+   * await page.getByTestId('status').waitForFunction((element, value) => {
+   *   return element.textContent === value;
+   * }, 'Ready');
    * ```
    *
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression).
    * @param options
    */
-  evaluate<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, void, R>, options?: {
-    timeout?: number;
-  }): Promise<R>;
-  /**
-   * Execute JavaScript code in the page, taking the matching element as an argument, and return a
-   * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) as
-   * a[JSHandle](https://playwright.dev/docs/api/class-jshandle), called with the matching element as a first argument,
-   * and [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-arg) as a second argument.
-   *
-   * The only difference between
-   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate)
-   * and
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * is that
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression)
-   * returns a [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) throws
-   * or rejects, this method throws.
-   *
-   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
-   * more details.
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
-   * @param options
-   */
-  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  /**
-   * Execute JavaScript code in the page, taking the matching element as an argument, and return a
-   * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) as
-   * a[JSHandle](https://playwright.dev/docs/api/class-jshandle), called with the matching element as a first argument,
-   * and [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-arg) as a second argument.
-   *
-   * The only difference between
-   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate)
-   * and
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * is that
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression)
-   * returns a [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) throws
-   * or rejects, this method throws.
-   *
-   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
-   * more details.
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
-   * @param options
-   */
-  evaluateHandle<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, void, R>): Promise<SmartHandle<R>>;
-  /**
-   * Execute JavaScript code in the page, taking all matching elements as an argument.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression), called with
-   * an array of all matching elements as a first argument, and
-   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-arg) as a second argument.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) returns a
-   * [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) throws or
-   * rejects, this method throws.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = page.locator('div');
-   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
-   * ```
-   *
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression).
-   */
-  evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
-  /**
-   * Execute JavaScript code in the page, taking all matching elements as an argument.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression), called with
-   * an array of all matching elements as a first argument, and
-   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-arg) as a second argument.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) returns a
-   * [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) throws or
-   * rejects, this method throws.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = page.locator('div');
-   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
-   * ```
-   *
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression).
-   */
-  evaluateAll<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], void, R>): Promise<R>;
+  waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number }): Promise<void>;
   /**
    * **NOTE** Always prefer using [Locator](https://playwright.dev/docs/api/class-locator)s and web assertions over
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle)s because latter are inherently racy.
@@ -13021,17 +12962,13 @@ export interface Locator {
    * multiple elements match the locator, throws.
    * @param options
    */
-  elementHandle(options?: {
-    timeout?: number;
-  }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+  elementHandle(options?: { timeout?: number }): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
    * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
    * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
    * @param options
    */
-  highlight(options?: {
-    style?: string | { [key: string]: string | number };
-  }): Promise<Disposable>;
+  highlight(options?: { style?: string | { [key: string]: string | number } }): Promise<Disposable>;
   /**
    * Returns a human-readable representation of the locator, using the
    * [locator.description()](https://playwright.dev/docs/api/class-locator#locator-description) if one exists;

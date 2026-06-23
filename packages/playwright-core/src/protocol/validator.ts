@@ -1632,9 +1632,11 @@ scheme.FrameWaitForFunctionParams = tObject({
   arg: tType('SerializedArgument'),
   timeout: tFloat,
   pollingInterval: tOptional(tFloat),
+  selector: tOptional(tString),
+  strict: tOptional(tBoolean),
 });
 scheme.FrameWaitForFunctionResult = tObject({
-  handle: tChannel(['ElementHandle', 'JSHandle']),
+  handle: tOptional(tChannel(['ElementHandle', 'JSHandle'])),
 });
 scheme.FrameWaitForSelectorParams = tObject({
   selector: tString,
