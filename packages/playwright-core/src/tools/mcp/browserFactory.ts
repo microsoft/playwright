@@ -18,6 +18,8 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 
+import { getLinuxDistributionInfoSync, isDebianBasedDistro } from '@utils/linuxUtils';
+
 import { playwright } from '../../inprocess';
 import { defaultCacheDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
@@ -78,8 +80,7 @@ export interface BrowserContextFactory {
 
 function browserInfo(browser: playwrightTypes.Browser, config: FullConfig): BrowserInfo {
   return {
-    // eslint-disable-next-line no-restricted-syntax
-    guid: (browser as any)._guid,
+    guid: (browser as unknown as { _guid: string })._guid,
     browserName: config.browser.browserName,
     launchOptions: config.browser.launchOptions,
     userDataDir: config.browser.userDataDir
@@ -121,8 +122,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   // shape.
   const remote = config.browser.remoteEndpoint!;
   // `remoteHeaders` is for back-compat, `remoteEndpoint.headers` takes precedence.
-  // eslint-disable-next-line no-restricted-syntax
-  const remoteHeaders = (config.browser as any).remoteHeaders as Record<string, string> | undefined;
+  const remoteHeaders = (config.browser as { remoteHeaders?: Record<string, string> }).remoteHeaders;
   const remoteOptions = typeof remote === 'string'
     ? { endpoint: remote, headers: remoteHeaders }
     : { ...remote, headers: { ...remoteHeaders, ...remote.headers } };
@@ -181,11 +181,16 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
     const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
     const browser = browserContext.browser()!;
     return browser;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (!(error instanceof Error))
+      throw error;
     throwIfExecutableMissing(error, config);
     if (error.message.includes('cannot open shared object file: No such file or directory')) {
       const browserName = launchOptions.channel ?? config.browser.browserName;
-      throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
+      if (isDebianBasedDistro())
+        throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
+      const distroId = getLinuxDistributionInfoSync()?.id || 'this distribution';
+      throw new Error(`Missing system dependencies required to run browser ${browserName}. On ${distroId}, install the libraries it needs using your distribution's package manager (e.g. zypper, dnf or pacman).`);
     }
     if (error.message.includes('ProcessSingleton') || error.message.includes('exitCode=21'))
       throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
@@ -229,8 +234,8 @@ export function isProfileLocked(userDataDir: string): boolean {
       const fd = fs.openSync(lockPath, 'r+');
       fs.closeSync(fd);
       return false;
-    } catch (e: any) {
-      return e.code !== 'ENOENT';
+    } catch (e: unknown) {
+      return (e as NodeJS.ErrnoException).code !== 'ENOENT';
     }
   }
 

@@ -21,7 +21,7 @@ import path from 'path';
 
 import { wrapInASCIIBox } from '@utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
-import { getLinuxDistributionInfoSync } from '@utils/linuxUtils';
+import { getLinuxDistributionInfoSync, isDebianBasedDistro } from '@utils/linuxUtils';
 import { spawnAsync } from '@utils/spawnAsync';
 import { getPlaywrightVersion } from '../userAgent';
 import { deps } from './nativeDeps';
@@ -222,22 +222,6 @@ export async function validateDependenciesWindows(sdkLanguage: string, windowsEx
     // eslint-disable-next-line no-console
     console.warn(message);
   }
-}
-
-// Playwright only knows apt package names for the libraries its browsers need (Debian/Ubuntu).
-// On other distributions `hostPlatform` falls back to a Debian/Ubuntu build so the binaries can
-// still be downloaded, but those package names — and `install-deps`, which shells out to apt —
-// do not apply. Detect the Debian/Ubuntu family (including derivatives via ID_LIKE) to decide
-// whether the apt-based suggestions are relevant.
-const DEBIAN_BASED_DISTRO_IDS = new Set(['ubuntu', 'debian', 'pop', 'neon', 'tuxedo', 'linuxmint', 'raspbian']);
-
-function isDebianBasedDistro(): boolean {
-  const info = getLinuxDistributionInfoSync();
-  if (!info)
-    return false;
-  if (DEBIAN_BASED_DISTRO_IDS.has(info.id))
-    return true;
-  return info.idLike.split(' ').some(like => like === 'debian' || like === 'ubuntu');
 }
 
 export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDirectories: string[], dlOpenLibraries: string[]) {

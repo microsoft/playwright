@@ -45,6 +45,19 @@ export function getLinuxDistributionInfoSync(): { id: string, version: string, i
   return osRelease;
 }
 
+// Distributions whose system dependencies Playwright can install or describe with apt.
+// ID_LIKE covers derivatives (e.g. Pop!_OS, Mint, Kali) that set it to "debian"/"ubuntu".
+const DEBIAN_BASED_DISTRO_IDS = new Set(['ubuntu', 'debian', 'pop', 'neon', 'tuxedo', 'linuxmint', 'raspbian']);
+
+export function isDebianBasedDistro(): boolean {
+  const info = getLinuxDistributionInfoSync();
+  if (!info)
+    return false;
+  if (DEBIAN_BASED_DISTRO_IDS.has(info.id))
+    return true;
+  return info.idLike.split(' ').some(like => like === 'debian' || like === 'ubuntu');
+}
+
 function parseOSReleaseText(osReleaseText: string): Map<string, string> {
   const fields = new Map();
   for (const line of osReleaseText.split('\n')) {
