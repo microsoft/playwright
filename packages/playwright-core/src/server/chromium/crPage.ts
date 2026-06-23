@@ -757,6 +757,8 @@ class FrameSession {
     // This might be a worker...
     const workerSession = this._workerSessions.get(event.sessionId);
     if (workerSession) {
+      this._workerSessions.delete(event.sessionId);
+      this._crPage._networkManager.removeSession(workerSession);
       workerSession.dispose();
       this._page.removeWorker(event.sessionId);
       return;

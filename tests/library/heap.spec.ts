@@ -50,6 +50,91 @@ async function queryObjectCount(type: Function): Promise<number> {
   }
 }
 
+// Debug helper that shows what exactly is retaining a given object type.
+// To get the constructorName, run "console.log(object.constructor.name)" in the test.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function findRetainerPaths(constructorName: string, maxPaths = 10): Promise<void> {
+  const session: import('inspector').Session = new (require('node:inspector').Session)();
+  session.connect();
+  const chunks: string[] = [];
+  session.on('HeapProfiler.addHeapSnapshotChunk', (m: any) => chunks.push(m.params.chunk));
+  try {
+    await new Promise<void>(f => session.post('HeapProfiler.takeHeapSnapshot', { reportProgress: false }, () => f()));
+  } finally {
+    session.disconnect();
+  }
+  const snapshot = JSON.parse(chunks.join(''));
+  const { nodes, edges, strings, snapshot: meta } = snapshot;
+  const nodeFields: string[] = meta.meta.node_fields;
+  const edgeFields: string[] = meta.meta.edge_fields;
+  const edgeTypes: string[] = meta.meta.edge_types[0];
+  const nf = nodeFields.length;
+  const ef = edgeFields.length;
+  const nodeTypeOff = nodeFields.indexOf('type');
+  const nodeNameOff = nodeFields.indexOf('name');
+  const nodeIdOff = nodeFields.indexOf('id');
+  const nodeEdgeCountOff = nodeFields.indexOf('edge_count');
+  const edgeTypeOff = edgeFields.indexOf('type');
+  const edgeNameOff = edgeFields.indexOf('name_or_index');
+  const edgeToOff = edgeFields.indexOf('to_node');
+  const nodeCount = nodes.length / nf;
+
+  // Compute the first-edge index for every node (edges are laid out in node order).
+  const firstEdge = new Uint32Array(nodeCount);
+  let edgeCursor = 0;
+  for (let i = 0; i < nodeCount; ++i) {
+    firstEdge[i] = edgeCursor;
+    edgeCursor += nodes[i * nf + nodeEdgeCountOff];
+  }
+
+  const nodeName = (i: number) => strings[nodes[i * nf + nodeNameOff]];
+  const nodeTypeName = (i: number) => meta.meta.node_types[0][nodes[i * nf + nodeTypeOff]];
+
+  // BFS from the synthetic root (node 0), recording how we reached each node.
+  const parent = new Int32Array(nodeCount).fill(-1);
+  const parentEdgeName = new Array<string>(nodeCount);
+  const visited = new Uint8Array(nodeCount);
+  visited[0] = 1;
+  const queue = [0];
+  for (let q = 0; q < queue.length; ++q) {
+    const from = queue[q];
+    const edgeStart = firstEdge[from];
+    const count = nodes[from * nf + nodeEdgeCountOff];
+    for (let e = 0; e < count; ++e) {
+      const base = (edgeStart + e) * ef;
+      const type = edgeTypes[edges[base + edgeTypeOff]];
+      if (type === 'weak')
+        continue; // Weak references do not retain.
+      const to = edges[base + edgeToOff] / nf;
+      if (visited[to])
+        continue;
+      visited[to] = 1;
+      parent[to] = from;
+      const rawName = edges[base + edgeNameOff];
+      parentEdgeName[to] = (type === 'element' || type === 'hidden') ? `[${rawName}]` : strings[rawName];
+      queue.push(to);
+    }
+  }
+
+  const targets: number[] = [];
+  for (let i = 0; i < nodeCount && targets.length < maxPaths; ++i) {
+    if (nodeTypeName(i) === 'object' && nodeName(i) === constructorName)
+      targets.push(i);
+  }
+  console.log(`\n===== retainer paths for ${constructorName} (showing ${targets.length}) =====`);
+  for (const target of targets) {
+    const path: string[] = [];
+    let cur = target;
+    while (cur !== -1) {
+      const label = `${nodeName(cur)} (${nodeTypeName(cur)} @${nodes[cur * nf + nodeIdOff]})`;
+      path.push(parent[cur] === -1 ? label : `${label}  <--[${parentEdgeName[cur]}]--`);
+      cur = parent[cur];
+    }
+    console.log('  ' + path.join('\n    '));
+    console.log('  ----');
+  }
+}
+
 const clientClass = {
   Page: null as Function,
   BrowserContext: null as Function,
@@ -133,6 +218,22 @@ test('should not leak dispatchers after closing page', async ({ context, server 
   expect(await queryObjectCount(coreServer.Page)).toBe(0);
   expect(await queryObjectCount(clientClass.Request)).toBe(0);
   expect(await queryObjectCount(clientClass.Response)).toBe(0);
+});
+
+test('should not leak workers', async ({ page }) => {
+  const before = await queryObjectCount(coreServer.Worker);
+  for (let i = 0; i < 5; ++i) {
+    const [workerHandle, workerObj] = await Promise.all([
+      page.evaluateHandle(index => new Worker(URL.createObjectURL(new Blob([String(index)], { type: 'application/javascript' }))), i),
+      page.waitForEvent('worker'),
+    ]);
+    await Promise.all([
+      workerObj.waitForEvent('close'),
+      workerHandle.evaluate(workerObj => workerObj.terminate()),
+    ]);
+  }
+  expect.soft(await queryObjectCount(coreServer.Worker)).toBe(before);
+  expect.soft(await queryObjectCount(coreServer.WorkerDispatcher)).toBe(0);
 });
 
 test.describe(() => {
