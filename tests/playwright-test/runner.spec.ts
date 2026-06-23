@@ -847,6 +847,25 @@ test('should run last failed tests', async ({ runInlineTest }) => {
   expect(result2.failed).toBe(1);
 });
 
+test('should run nothing with --last-failed when previous run had no failures', async ({ runInlineTest }) => {
+  const workspace = {
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('a', async () => {});
+      test('b', async () => {});
+    `
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(0);
+  expect(result1.passed).toBe(2);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed', '--pass-with-no-tests'] });
+  expect(result2.exitCode).toBe(0);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(0);
+  expect(result2.didNotRun).toBe(0);
+});
+
 test('should run last failed tests in a shard', async ({ runInlineTest }) => {
   const workspace = {
     'a.spec.js': `
