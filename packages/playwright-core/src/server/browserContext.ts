@@ -609,7 +609,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._origins.add(origin);
   }
 
-  async storageState(progress: Progress, indexedDB = false, credentials = false): Promise<channels.BrowserContextStorageStateResult> {
+  async storageState(progress: Progress, indexedDB = false, credentials = false, opfs = false): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(progress),
       origins: []
@@ -622,7 +622,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       const module = {};
       ${rawStorageSource.source}
       const script = new (module.exports.StorageScript())(${this._browser.options.name === 'firefox'});
-      return script.collect(${indexedDB});
+      return script.collect({ indexedDB: ${indexedDB}, opfs: ${opfs} });
     })()`;
 
     // First try collecting storage stage from existing pages.
@@ -632,8 +632,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         continue;
       try {
         const storage: SerializedStorage = await progress.race(page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility'));
-        if (storage.localStorage.length || storage.indexedDB?.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
+        if (storage.localStorage.length || storage.indexedDB?.length || storage.opfs?.length)
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB, opfs: storage.opfs });
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -651,8 +651,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
           const frame = page.mainFrame();
           await frame.gotoImpl(progress, origin, {});
           const storage: SerializedStorage = await frame.evaluateExpression(progress, collectScript, { world: 'utility' });
-          if (storage.localStorage.length || storage.indexedDB?.length)
-            result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
+          if (storage.localStorage.length || storage.indexedDB?.length || storage.opfs?.length)
+            result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB, opfs: storage.opfs });
         }
       } finally {
         await page.close(progress);

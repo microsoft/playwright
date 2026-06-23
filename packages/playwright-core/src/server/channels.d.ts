@@ -705,9 +705,11 @@ export type APIRequestContextFetchLogResult = {
 };
 export type APIRequestContextStorageStateParams = {
   indexedDB?: boolean,
+  opfs?: boolean,
 };
 export type APIRequestContextStorageStateOptions = {
   indexedDB?: boolean,
+  opfs?: boolean,
 };
 export type APIRequestContextStorageStateResult = {
   cookies: NetworkCookie[],
@@ -1602,10 +1604,12 @@ export type BrowserContextSetOfflineResult = void;
 export type BrowserContextStorageStateParams = {
   indexedDB?: boolean,
   credentials?: boolean,
+  opfs?: boolean
 };
 export type BrowserContextStorageStateOptions = {
   indexedDB?: boolean,
   credentials?: boolean,
+  opfs?: boolean
 };
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
@@ -5148,16 +5152,23 @@ export type IndexedDBDatabase = {
   }[],
 };
 
+export type OPFSTree = Array<
+  [name: string, contents: Extract<SerializedValue, {f: any}> | OPFSTree]
+>;
+
+
 export type SetOriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
+  opfs?: OPFSTree
 };
 
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
+  opfs?: OPFSTree
 };
 
 export type RecordHarOptions = {
@@ -5565,4 +5576,3 @@ export interface WorkerEvents {
   'console': WorkerConsoleEvent;
   'close': WorkerCloseEvent;
 }
-

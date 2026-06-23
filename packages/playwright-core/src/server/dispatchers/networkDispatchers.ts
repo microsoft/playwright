@@ -212,7 +212,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async storageState(params: channels.APIRequestContextStorageStateParams, progress: Progress): Promise<channels.APIRequestContextStorageStateResult> {
-    return await this._object.storageState(progress, params.indexedDB);
+    return await this._object.storageState(progress, params.indexedDB, params.opfs);
   }
 
   async dispose(params: channels.APIRequestContextDisposeParams, progress: Progress): Promise<void> {

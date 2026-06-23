@@ -702,9 +702,11 @@ export type APIRequestContextFetchLogResult = {
 };
 export type APIRequestContextStorageStateParams = {
   indexedDB?: boolean,
+  opfs?: boolean
 };
 export type APIRequestContextStorageStateOptions = {
   indexedDB?: boolean,
+  opfs?: boolean
 };
 export type APIRequestContextStorageStateResult = {
   cookies: NetworkCookie[],
@@ -1599,10 +1601,12 @@ export type BrowserContextSetOfflineResult = void;
 export type BrowserContextStorageStateParams = {
   indexedDB?: boolean,
   credentials?: boolean,
+  opfs?: boolean,
 };
 export type BrowserContextStorageStateOptions = {
   indexedDB?: boolean,
   credentials?: boolean,
+  opfs?: boolean,
 };
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
@@ -5562,4 +5566,3 @@ export interface WorkerEvents {
   'console': WorkerConsoleEvent;
   'close': WorkerCloseEvent;
 }
-

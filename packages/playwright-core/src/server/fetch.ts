@@ -128,7 +128,7 @@ export abstract class APIRequestContext extends SdkObject {
     APIRequestContext.allInstances.add(this);
   }
 
-  abstract storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
+  abstract storageState(progress: Progress, indexedDB?: boolean, opfs?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
 
   fetchResponseBody(progress: Progress, fetchUid: string): Buffer | undefined {
     return this.fetchResponses.get(fetchUid);
@@ -679,8 +679,8 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return await this._context.cookies(progress, url.toString());
   }
 
-  override async storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
-    return this._context.storageState(progress, indexedDB);
+  override async storageState(progress: Progress, indexedDB?: boolean, opfs?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
+    return this._context.storageState(progress, indexedDB, opfs);
   }
 }
 
@@ -736,10 +736,10 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._cookieStore.cookies(url);
   }
 
-  override async storageState(progress: Progress, indexedDB = false): Promise<channels.APIRequestContextStorageStateResult> {
+  override async storageState(progress: Progress, indexedDB = false, opfs = false): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
-      origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [] })),
+      origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [], opfs: opfs ? origin.opfs : [] })),
     };
   }
 }

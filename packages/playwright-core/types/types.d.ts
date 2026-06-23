@@ -9743,6 +9743,12 @@ export interface BrowserContext {
     indexedDB?: boolean;
 
     /**
+     * Set to `true` to include [Origin private file system](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system) in the
+     * storage state snapshot.
+     */
+    opfs?: boolean;
+
+    /**
      * The file path to save the storage state to. If
      * [`path`](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state-option-path) is a
      * relative path, then it is resolved relative to current working directory. If no path is provided, storage state is

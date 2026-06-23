@@ -29,7 +29,8 @@ export type SerializedValue =
     { ref: number } |
     { h: number } |
     { ta: { b: string, k: TypedArrayKind } } |
-    { ab: { b: string } };
+    { ab: { b: string } } |
+    { f: { b: string, n: string, t: string, m: number } };
 
 type HandleOrValue = { h: number } | { fallThrough: any };
 
@@ -82,6 +83,14 @@ function isTypedArray(obj: any, constructor: Function): boolean {
 function isArrayBuffer(obj: any): obj is ArrayBuffer {
   try {
     return obj instanceof ArrayBuffer || Object.prototype.toString.call(obj) === '[object ArrayBuffer]';
+  } catch (error) {
+    return false;
+  }
+}
+
+function isFile(obj: any): obj is File {
+  try {
+    return obj instanceof File || Object.prototype.toString.call(obj) === '[object File]';
   } catch (error) {
     return false;
   }
@@ -181,12 +190,34 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
       return base64ToTypedArray(value.ta.b, typedArrayConstructors[value.ta.k]);
     if ('ab' in value)
       return base64ToTypedArray(value.ab.b, Uint8Array).buffer;
+    if ('f' in value) {
+      return new File(
+          [base64ToTypedArray(value.f.b, Uint8Array)],
+          value.f.n,
+          {
+            lastModified: value.f.m,
+            type: value.f.t
+          }
+      );
+    }
   }
   return value;
 }
 
 export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
   return serialize(value, handleSerializer, { visited: new Map(), lastId: 0 });
+}
+
+// Getting a File object's contents requires async
+export async function serializeFile(value: File): Promise<Extract<SerializedValue, { f: any; }>> {
+  return {
+    f: {
+      b: typedArrayToBase64(await value.bytes()),
+      n: value.name,
+      m: value.lastModified,
+      t: value.type
+    }
+  };
 }
 
 function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
@@ -257,6 +288,8 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
   }
   if (isArrayBuffer(value))
     return { ab: { b: typedArrayToBase64(new Uint8Array(value)) } };
+  if (isFile(value))
+    throw new Error('File serialization is asynchronous and must be done separately from serializeAsCallArgument');
 
   const id = visitorInfo.visited.get(value);
   if (id)
