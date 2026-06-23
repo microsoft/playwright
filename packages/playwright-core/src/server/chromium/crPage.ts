@@ -762,12 +762,13 @@ class FrameSession {
       return;
     }
 
-    // ... or an oopif.
-    const childFrameSession = this._crPage._sessions.get(event.targetId!);
+    // ... or an oopif / cross-process navigation.
+    const targetId = event.targetId!;
+    const childFrameSession = this._crPage._sessions.get(targetId);
     if (!childFrameSession)
       return;
 
-    // Usually, we get frameAttached in this session first and mark child as swappedIn.
+    // FIX PART 1: Synchronous early exit if already swapped
     if (childFrameSession._swappedIn) {
       childFrameSession.dispose();
       return;
@@ -777,11 +778,25 @@ class FrameSession {
     // In this case we don't know whether this is a remote frame detach,
     // or just a remote -> local transition. In the latter case, frameAttached
     // is already inflight, so let's make a safe roundtrip to ensure it arrives.
-    this._client.send('Page.enable').catch(e => null).then(() => {
-      // Child was not swapped in - that means frameAttached did not happen and
-      // this is remote detach rather than remote -> local swap.
-      if (!childFrameSession._swappedIn)
-        this._page.frameManager.frameDetached(event.targetId!);
+    this._client.send('Page.enable').catch(() => null).then(() => {
+      // FIX PART 2: Re-check _swappedIn after the microtask delay
+      if (childFrameSession._swappedIn) {
+        childFrameSession.dispose();
+        return;
+      }
+
+      // FIX PART 3: The core race-condition guard.
+      // If the session currently mapped to this targetId is NO LONGER 
+      // the childFrameSession that triggered this detachment, it means 
+      // a new session (from a cross-process navigation) has already 
+      // taken over this targetId. We must NOT call frameDetached.
+      if (this._crPage._sessions.get(targetId) !== childFrameSession) {
+        childFrameSession.dispose();
+        return;
+      }
+
+      // Safe to proceed with normal detachment
+      this._page.frameManager.frameDetached(targetId);
       childFrameSession.dispose();
     });
   }
