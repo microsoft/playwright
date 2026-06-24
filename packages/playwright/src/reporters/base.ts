@@ -86,8 +86,12 @@ class StripAnsiStream extends Writable {
     this._target = target;
   }
 
-  override _write(chunk: any, encoding: any, callback: any) {
-    this._target.write(stripAnsiEscapes(chunk.toString()), callback);
+  // Forward synchronously to the target stream instead of going through the
+  // Writable internal buffer. Otherwise chunks queued here can be lost when the
+  // process exits via process.exit() before they are flushed to the target.
+  override write(chunk: any, encodingOrCallback?: any, callback?: any): boolean {
+    const cb = typeof encodingOrCallback === 'function' ? encodingOrCallback : callback;
+    return this._target.write(stripAnsiEscapes(chunk.toString()), cb);
   }
 }
 
