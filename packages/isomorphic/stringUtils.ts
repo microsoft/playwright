@@ -136,6 +136,17 @@ export function trimStringWithEllipsis(input: string, cap: number): string {
   return trimString(input, cap, '\u2026');
 }
 
+export function truncateDataUrl(url: string): string {
+  // Data URLs can carry megabytes of base64 payload, which is never useful in
+  // human/AI-facing output. Keep the media type prefix for context, drop the data.
+  if (!url.startsWith('data:'))
+    return url;
+  const comma = url.indexOf(',');
+  if (comma === -1)
+    return url;
+  return url.slice(0, comma + 1) + '\u2026';
+}
+
 export function escapeRegExp(s: string) {
   // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
