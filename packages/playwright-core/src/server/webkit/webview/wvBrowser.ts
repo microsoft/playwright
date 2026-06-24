@@ -25,6 +25,7 @@ import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '@utils/happyEye
 import { headersArrayToObject } from '@isomorphic/headers';
 import { Browser } from '../../browser';
 import { helper } from '../../helper';
+import * as network from '../../network';
 import { perMessageDeflate } from '../../transport';
 import { getUserAgent } from '../../userAgent';
 import { BrowserContext } from '../../browserContext';
@@ -35,6 +36,7 @@ import { WVPage } from './wvPage';
 import type { BrowserOptions, BrowserProcess } from '../../browser';
 import type { SdkObject } from '../../instrumentation';
 import type { InitScript, Page } from '../../page';
+import type { Protocol } from './protocol';
 import type { ProtocolRequest, ProtocolResponse } from '../../transport';
 import type * as types from '../../types';
 import type * as channels from '../../channels';
@@ -241,7 +243,6 @@ export class WVBrowser extends Browser {
     this._dialogBridge.registerTab(pageId, req => page.onBridgeDialog(req));
     this._tabs.set(pageId, { pageId, transport, connection, page });
     transport.open?.();
-    connection.outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
     await page.waitForInitialized();
   }
 
@@ -305,16 +306,64 @@ export class WVBrowserContext extends BrowserContext {
     throw new Error('Not supported');
   }
 
+  // The Page cookie commands only see cookies for the current page's domain, so
+  // cookie access is scoped to that page rather than the whole context.
+  private _cookiePage(): WVPage | undefined {
+    const page = this.pages()[0];
+    return page ? page.delegate as WVPage : undefined;
+  }
+
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
-    return [];
+    const page = this._cookiePage();
+    if (!page)
+      return [];
+    const cookies = await page.getCookies();
+    return network.filterCookies(cookies.map(c => {
+      const copy: channels.NetworkCookie = {
+        name: c.name,
+        value: c.value,
+        domain: c.domain,
+        path: c.path,
+        expires: c.session ? -1 : c.expires / 1000,
+        httpOnly: c.httpOnly,
+        secure: c.secure,
+        sameSite: c.sameSite,
+      };
+      return copy;
+    }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
-    throw new Error('Method not implemented.');
+    const page = this._cookiePage();
+    if (!page)
+      throw new Error('Cannot set cookies without an open page');
+    const protocolCookies = network.rewriteCookies(cookies).map(c => {
+      const session = c.expires === undefined || c.expires === -1;
+      const cookie: Protocol.Page.Cookie = {
+        name: c.name,
+        value: c.value,
+        domain: c.domain!,
+        path: c.path!,
+        expires: session ? 0 : c.expires! * 1000,
+        session,
+        httpOnly: !!c.httpOnly,
+        secure: !!c.secure,
+        sameSite: c.sameSite ?? 'Lax',
+      };
+      return cookie;
+    });
+    await page.setCookies(protocolCookies);
   }
 
   async doClearCookies() {
-    throw new Error('Method not implemented.');
+    const page = this._cookiePage();
+    if (!page)
+      return;
+    const cookies = await page.getCookies();
+    await page.deleteCookies(cookies.map(c => ({
+      cookieName: c.name,
+      url: `${c.secure ? 'https' : 'http'}://${c.domain.replace(/^\./, '')}${c.path}`,
+    })));
   }
 
   async doGrantPermissions(origin: string, permissions: string[]) {
@@ -332,6 +381,12 @@ export class WVBrowserContext extends BrowserContext {
   async doUpdateExtraHTTPHeaders(): Promise<void> {
     for (const page of this.pages())
       await (page.delegate as WVPage).updateExtraHTTPHeaders();
+  }
+
+  async setUserAgent(userAgent: string | undefined): Promise<void> {
+    this._options.userAgent = userAgent;
+    for (const page of this.pages())
+      await (page.delegate as WVPage).updateUserAgent();
   }
 
   async doAddInitScript(initScript: InitScript) {
@@ -360,7 +415,6 @@ export class WVBrowserContext extends BrowserContext {
   override async clearCache(): Promise<void> { throw new Error('Method not implemented.'); }
   override async doClose(reason: string | undefined): Promise<void | 'close-browser'> { throw new Error('Method not implemented.'); }
   override async cancelDownload(uuid: string) { throw new Error('Method not implemented.'); }
-  override async setUserAgent(userAgent: string | undefined): Promise<void> { throw new Error('Method not implemented.'); }
   protected override async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> { throw new Error('Method not implemented.'); }
   protected override async doUpdateOffline(): Promise<void> { throw new Error('Method not implemented.'); }
 }

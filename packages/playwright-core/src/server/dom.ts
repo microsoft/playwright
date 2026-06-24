@@ -404,9 +404,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     forceScrollOptions: ScrollIntoViewOptions | undefined,
     options: { waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions,
   ): Promise<PerformActionResult> {
-    const { force = false, position } = options;
+    const { force = false, position, scroll } = options;
 
-    const doScrollIntoView = async (progress: Progress) => {
+    const doScrollIntoView = async (progress: Progress): Promise<'error:notvisible' | 'error:notconnected' | 'done'> => {
+      if (scroll === 'none')
+        return 'done';
       if (forceScrollOptions) {
         return await progress.race(this.evaluateInUtility(([injected, node, options]) => {
           if (node.nodeType === 1 /* Node.ELEMENT_NODE */)

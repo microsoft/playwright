@@ -177,6 +177,11 @@ input[type=text], input[type=search] {
   outline: none;
 }
 
+input[type=text]:focus-visible, input[type=search]:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
 .codicon-loading {
   animation: spin 1s infinite linear;
 }

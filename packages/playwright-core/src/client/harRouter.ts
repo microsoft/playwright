@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { debugLogger } from '@utils/debugLogger';
 import { isRegExp, isString } from '@isomorphic/rtti';
 
 import type { BrowserContext } from './browserContext';
@@ -58,7 +59,7 @@ export class HarRouter {
     });
 
     if (response.action === 'redirect') {
-      route._platform.log('api', `HAR: ${route.request().url()} redirected to ${response.redirectURL}`);
+      debugLogger.log('api', `HAR: ${route.request().url()} redirected to ${response.redirectURL}`);
       await route._redirectNavigationRequest(response.redirectURL!);
       return;
     }
@@ -99,7 +100,7 @@ export class HarRouter {
     }
 
     if (response.action === 'error')
-      route._platform.log('api', 'HAR: ' + response.message!);
+      debugLogger.log('api', 'HAR: ' + response.message!);
     // Report the error, but fall through to the default handler.
 
     if (this._notFoundAction === 'abort') {

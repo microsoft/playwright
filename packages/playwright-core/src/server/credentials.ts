@@ -20,7 +20,7 @@ import * as rawWebAuthnSource from '../generated/webAuthnSource';
 import { nullProgress } from './progress';
 
 import type { BrowserContext } from './browserContext';
-import type { InitScript } from './page';
+import type { InitScript, PageBinding } from './page';
 import type { Progress } from './progress';
 
 const kBindingName = '__pwWebAuthnBinding';
@@ -41,8 +41,8 @@ type CredentialRecord = VirtualCredential & {
 
 export class Credentials {
   private _browserContext: BrowserContext;
-  private _initScripts: InitScript[] = [];
-  private _installed = false;
+  private _initScript: InitScript | undefined;
+  private _binding: PageBinding | undefined;
   private _registry = new Map<string, CredentialRecord>();
 
   constructor(browserContext: BrowserContext) {
@@ -90,18 +90,26 @@ export class Credentials {
     this._registry.delete(id);
   }
 
+  clear() {
+    this._registry.clear();
+  }
+
   async dispose(progress: Progress) {
-    await progress.race(Promise.all(this._initScripts.map(s => s.dispose())));
-    this._initScripts = [];
-    this._installed = false;
+    if (this._initScript) {
+      await progress.race(this._initScript.dispose());
+      this._initScript = undefined;
+    }
+    if (this._binding) {
+      await progress.race(this._binding.dispose());
+      this._binding = undefined;
+    }
     this._registry.clear();
   }
 
   async install(progress: Progress) {
-    if (this._installed)
+    if (this._binding)
       return;
-    this._installed = true;
-    await this._browserContext.exposeBinding(progress, kBindingName, async (_source, payload: any) => {
+    this._binding = await this._browserContext.exposeBinding(progress, kBindingName, async (_source, payload: any) => {
       try {
         if (payload?.type === 'create')
           return await this._handleCreate(payload);
@@ -117,8 +125,7 @@ export class Credentials {
       ${rawWebAuthnSource.source}
       module.exports.inject()(globalThis);
     })();`;
-    const initScript = await this._browserContext.addInitScript(nullProgress, script);
-    this._initScripts.push(initScript);
+    this._initScript = await this._browserContext.addInitScript(nullProgress, script);
     await progress.race(this._browserContext.safeNonStallingEvaluateInAllFrames(script, 'main', { throwOnJSErrors: false }));
   }
 

@@ -209,6 +209,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.check.force = %%-input-force-%%
 * since: v1.8
 
+### option: Frame.check.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Frame.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
@@ -261,6 +264,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.click.force = %%-input-force-%%
 * since: v1.8
+
+### option: Frame.click.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Frame.click.modifiers = %%-input-modifiers-%%
 * since: v1.8
@@ -319,6 +325,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.dblclick.force = %%-input-force-%%
 * since: v1.8
+
+### option: Frame.dblclick.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Frame.dblclick.delay = %%-input-down-up-delay-%%
 * since: v1.8
@@ -460,6 +469,9 @@ Optional event-specific initialization properties.
 
 ### option: Frame.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
+
+### option: Frame.dragAndDrop.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.13
@@ -1041,6 +1053,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: Frame.getByRole.busy = %%-locator-get-by-role-option-busy-%%
+
 ## method: Frame.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -1148,6 +1162,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.hover.force = %%-input-force-%%
 * since: v1.8
+
+### option: Frame.hover.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Frame.hover.strict = %%-input-strict-%%
 * since: v1.14
@@ -1599,6 +1616,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.setChecked.force = %%-input-force-%%
 * since: v1.15
 
+### option: Frame.setChecked.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
@@ -1689,6 +1709,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.tap.force = %%-input-force-%%
 * since: v1.8
+
+### option: Frame.tap.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Frame.tap.modifiers = %%-input-modifiers-%%
 * since: v1.8
@@ -1797,6 +1820,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.uncheck.force = %%-input-force-%%
 * since: v1.8
+
+### option: Frame.uncheck.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8

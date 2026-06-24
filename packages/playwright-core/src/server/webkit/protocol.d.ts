@@ -7483,6 +7483,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type setPageZoomFactorReturnValue = {
     }
     /**
+     * Closes the page, destroying the page proxy. Works for both live and crashed pages.
+     */
+    export type closePageParameters = {
+      /**
+       * Unique identifier of the page proxy.
+       */
+      pageProxyId: PageProxyID;
+      /**
+       * Whether to run the beforeunload page handlers.
+       */
+      runBeforeUnload?: boolean;
+    }
+    export type closePageReturnValue = {
+    }
+    /**
      * Returns all cookies in the given browser context.
      */
     export type getAllCookiesParameters = {
@@ -8758,15 +8773,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     export type activateReturnValue = {
     }
-    /**
-     * Closes the target.
-     */
-    export type closeParameters = {
-      targetId: string;
-      runBeforeUnload?: boolean;
-    }
-    export type closeReturnValue = {
-    }
   }
   
   /**
@@ -9449,6 +9455,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotParameters;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsParameters;
     "Playwright.setPageZoomFactor": Playwright.setPageZoomFactorParameters;
+    "Playwright.closePage": Playwright.closePageParameters;
     "Playwright.getAllCookies": Playwright.getAllCookiesParameters;
     "Playwright.setCookies": Playwright.setCookiesParameters;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesParameters;
@@ -9488,7 +9495,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Target.resume": Target.resumeParameters;
     "Target.sendMessageToTarget": Target.sendMessageToTargetParameters;
     "Target.activate": Target.activateParameters;
-    "Target.close": Target.closeParameters;
     "Timeline.enable": Timeline.enableParameters;
     "Timeline.disable": Timeline.disableParameters;
     "Timeline.start": Timeline.startParameters;
@@ -9754,6 +9760,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotReturnValue;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsReturnValue;
     "Playwright.setPageZoomFactor": Playwright.setPageZoomFactorReturnValue;
+    "Playwright.closePage": Playwright.closePageReturnValue;
     "Playwright.getAllCookies": Playwright.getAllCookiesReturnValue;
     "Playwright.setCookies": Playwright.setCookiesReturnValue;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesReturnValue;
@@ -9793,7 +9800,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Target.resume": Target.resumeReturnValue;
     "Target.sendMessageToTarget": Target.sendMessageToTargetReturnValue;
     "Target.activate": Target.activateReturnValue;
-    "Target.close": Target.closeReturnValue;
     "Timeline.enable": Timeline.enableReturnValue;
     "Timeline.disable": Timeline.disableReturnValue;
     "Timeline.start": Timeline.startReturnValue;

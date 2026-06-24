@@ -286,9 +286,12 @@ function createExpect(info: ExpectMetaInfo): Expect<{}> {
     }
 
     // Legacy behavior: `expect.extend({...})` without capturing the return value
-    // must make the new matchers available on the same expect instance.
-    Object.assign(info.userMatchers, matchers);
+    // must make the new matchers available on the same expect instance. However,
+    // built-in matcher names should only be overridden on the returned expect.
     for (const [name, matcher] of Object.entries(matchers)) {
+      if (name in allBuiltinMatchers)
+        continue;
+      info.userMatchers[name] = matcher;
       const { positive, inverse } = buildCustomAsymmetricMatcher(name, matcher);
       expectFn[name] = positive;
       notAsymmetric[name] = inverse;

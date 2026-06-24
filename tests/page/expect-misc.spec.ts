@@ -664,3 +664,14 @@ Error: Unexpected token "#" while parsing css selector "##". Did you mean to CSS
 Call log:
 `);
 });
+
+test('should report expect error details when page closes during expect', async ({ page }) => {
+  await page.setContent(`<div>hello</div>`);
+  const promise = expect(page.locator('div')).toHaveText('world', { timeout: 10000 }).catch((e: Error) => e);
+  await page.waitForTimeout(1000);
+  await page.close();
+  const error = await promise as Error;
+  expect(stripAnsi(error.message)).toContain('expect(locator).toHaveText(expected) failed');
+  expect(stripAnsi(error.message)).toContain('Expected: "world"');
+  expect(stripAnsi(error.message)).toContain('Received: "hello"');
+});

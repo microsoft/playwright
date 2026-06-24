@@ -151,8 +151,10 @@ it('should have sane user agent', async ({ page, browserName, isElectron, isAndr
   expect(part3.startsWith('AppleWebKit/')).toBe(true);
   expect(part4).toBe('KHTML, like Gecko');
   // 5th part encodes real browser name and engine version.
-  const [engine, browser] = part5.split(' ');
-  expect(browser.startsWith('Safari/')).toBe(true);
+  const tokens = part5.split(' ');
+  const engine = tokens[0];
+  const browser = tokens.find(t => t.startsWith('Safari/'));
+  expect(browser?.startsWith('Safari/')).toBe(true);
   if (browserName === 'chromium')
     expect(engine.includes('Chrome/')).toBe(true);
   else

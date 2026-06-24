@@ -237,7 +237,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     const otherPages = this.possiblyUninitializedPages().filter(p => p !== page);
     for (const p of otherPages)
       await p.close(progress);
-    if (page && page.hasCrashed()) {
+    if (page && page.isClosedOrClosingOrCrashed()) {
       await page.close(progress);
       page = undefined;
     }
@@ -248,7 +248,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     // Note: we only need to reset properties from the "paramsThatAllowContextReuse" list.
     // All other properties force a new context.
     await this.clock.uninstall(progress);
-    await this.credentials.dispose(progress);
     await progress.race(this.setUserAgent(this._options.userAgent));
     await progress.race(this.doUpdateDefaultEmulatedMedia());
     await progress.race(this.doUpdateDefaultViewport());
@@ -613,11 +612,13 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._origins.add(origin);
   }
 
-  async storageState(progress: Progress, indexedDB = false): Promise<channels.BrowserContextStorageStateResult> {
+  async storageState(progress: Progress, indexedDB = false, credentials = false): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(progress),
       origins: []
     };
+    if (credentials)
+      result.credentials = await progress.race(this.credentials.get());
     const originsToSave = new Set(this._origins);
 
     const collectScript = `(() => {
@@ -674,10 +675,20 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       if (mode !== 'initial') {
         await progress.race(this.clearCache());
         await progress.race(this.doClearCookies());
+        if (state?.credentials?.length)
+          this.credentials.clear();
+        else
+          await this.credentials.dispose(progress);
       }
 
       if (state?.cookies)
         await progress.race(this.addCookies(state.cookies));
+
+      if (state?.credentials?.length) {
+        for (const credential of state.credentials)
+          await progress.race(this.credentials.create(credential));
+        await this.credentials.install(progress);
+      }
 
       const newOrigins = new Map(state?.origins?.map(p => [p.origin, p]) || []);
       const allOrigins = new Set([...this._origins, ...newOrigins.keys()]);

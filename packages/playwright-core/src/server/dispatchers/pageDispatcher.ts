@@ -537,7 +537,10 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
         timestamp: message.timestamp(),
       });
     });
-    this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
+    this.addObjectListener(Worker.Events.Close, () => {
+      this._dispatchEvent('close');
+      this._dispose();
+    });
   }
 
   async disconnect(params: channels.WorkerDisconnectParams, progress: Progress): Promise<void> {

@@ -18,16 +18,10 @@
   "exports": {
     ".": {
       "types": "./index.d.ts",
-      "import": "./index.mjs",
-      "require": "./index.js",
-      "default": "./index.js"
+      "import": "./lib/index.mjs",
+      "default": "./lib/index.mjs"
     },
     "./package.json": "./package.json"
-  },
-  "scripts": {
-    "esbuild": "node build.js",
-    "build": "npm run esbuild",
-    "watch": "npm run esbuild -- --watch"
   },
   "dependencies": {
     "playwright-core": "1.62.0-next"

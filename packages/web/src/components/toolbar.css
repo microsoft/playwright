@@ -68,3 +68,8 @@
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);
 }
+
+.toolbar input:focus-visible, .toolbar select:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}

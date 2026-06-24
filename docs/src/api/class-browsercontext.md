@@ -1555,7 +1555,7 @@ Whether to emulate network being offline for the browser context.
       - `name` <[string]>
       - `value` <[string]>
 
-Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
+Returns storage state for this browser context, contains current cookies, local storage snapshot, IndexedDB snapshot and virtual WebAuthn credentials.
 
 ## async method: BrowserContext.storageState
 * since: v1.8
@@ -1572,10 +1572,21 @@ Returns storage state for this browser context, contains current cookies, local 
 Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage state snapshot.
 If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
 
+### option: BrowserContext.storageState.credentials
+* since: v1.61
+- `credentials` ?<boolean>
+
+Set to `true` to include the context's virtual WebAuthn [`property: BrowserContext.credentials`] (passkeys) in the storage
+state snapshot. The captured credentials carry their private keys, so they can be re-seeded into a later context via the
+[`option: Browser.newContext.storageState`] option or [`method: BrowserContext.setStorageState`].
+Note that restoring the storage state that contains credentials will automatically install the virtual WebAuthn authenticator (see [`method: Credentials.install`]), and prevent all real authenticators from working in this context.
+
 ## async method: BrowserContext.setStorageState
 * since: v1.59
 
-Clears the existing cookies, local storage and IndexedDB entries for all origins and sets the new storage state.
+Clears the existing cookies, local storage, IndexedDB entries and virtual WebAuthn credentials, and sets the new storage
+state. When the storage state contains credentials, the virtual WebAuthn authenticator is installed (equivalent to
+[`method: Credentials.install`]), preventing all real authenticators from working in this context.
 
 **Usage**
 

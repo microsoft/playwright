@@ -56,7 +56,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this._electron = Electron.from(initializer.electron);
     this._electron._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
-    this.selectors = new Selectors(this._connection._platform);
+    this.selectors = new Selectors();
     this.errors = { TimeoutError };
   }
 

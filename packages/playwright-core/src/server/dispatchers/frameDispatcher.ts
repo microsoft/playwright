@@ -255,7 +255,12 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async waitForFunction(params: channels.FrameWaitForFunctionParams, progress: Progress): Promise<channels.FrameWaitForFunctionResult> {
-    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, await this._frame.waitForFunctionExpression(progress, params.expression, params.isFunction, parseArgument(params.arg), params)) };
+    const handle = await this._frame.waitForFunctionExpression(progress, params.expression, params.isFunction, parseArgument(params.arg), params);
+    if (params.selector !== undefined) {
+      handle.dispose();
+      return {};
+    }
+    return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this, handle) };
   }
 
   async title(params: channels.FrameTitleParams, progress: Progress): Promise<channels.FrameTitleResult> {

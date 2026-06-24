@@ -745,6 +745,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.check.force = %%-input-force-%%
 * since: v1.8
 
+### option: Page.check.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Page.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
@@ -793,6 +796,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Page.click.force = %%-input-force-%%
 * since: v1.8
+
+### option: Page.click.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Page.click.modifiers = %%-input-modifiers-%%
 * since: v1.8
@@ -893,6 +899,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Page.dblclick.force = %%-input-force-%%
 * since: v1.8
+
+### option: Page.dblclick.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Page.dblclick.delay = %%-input-down-up-delay-%%
 * since: v1.8
@@ -1087,6 +1096,9 @@ await Page.DragAndDropAsync("#source", "#target", new()
 
 ### option: Page.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
+
+### option: Page.dragAndDrop.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.13
@@ -2282,6 +2294,8 @@ Attribute name to get the value for.
 
 ### option: Page.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: Page.getByRole.busy = %%-locator-get-by-role-option-busy-%%
+
 ## method: Page.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -2478,6 +2492,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Page.hover.force = %%-input-force-%%
 * since: v1.8
+
+### option: Page.hover.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Page.hover.modifiers = %%-input-modifiers-%%
 * since: v1.8
@@ -4066,6 +4083,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.setChecked.force = %%-input-force-%%
 * since: v1.15
 
+### option: Page.setChecked.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Page.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
@@ -4308,6 +4328,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.tap.force = %%-input-force-%%
 * since: v1.8
 
+### option: Page.tap.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Page.tap.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
@@ -4419,6 +4442,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Page.uncheck.force = %%-input-force-%%
 * since: v1.8
+
+### option: Page.uncheck.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8

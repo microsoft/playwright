@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { isRegExp, isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
@@ -30,7 +32,6 @@ import type { Page } from './page';
 import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
-import type { Platform } from '@isomorphic/platform';
 import type * as channels from './channels';
 import type { Playwright } from './playwright';
 
@@ -48,7 +49,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidInitializer) {
     super(parent, type, guid, initializer);
-    this._timeoutSettings = new TimeoutSettings(this._platform);
+    this._timeoutSettings = new TimeoutSettings();
   }
 
   setDefaultTimeout(timeout: number) {
@@ -115,7 +116,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     super(parent, type, guid, initializer);
     this._android = parent as Android;
     this.input = new AndroidInput(this);
-    this._timeoutSettings = new TimeoutSettings(this._platform, (parent as Android)._timeoutSettings);
+    this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
     this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
     this._channel.on('webViewRemoved', ({ socketName }) => this._onWebViewRemoved(socketName));
     this._channel.on('close', () => this._didClose());
@@ -216,7 +217,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   async screenshot(options: { path?: string } = {}): Promise<Buffer> {
     const { binary } = await this._channel.screenshot();
     if (options.path)
-      await this._platform.fs().promises.writeFile(options.path, binary);
+      await fs.promises.writeFile(options.path, binary);
     return binary;
   }
 
@@ -251,15 +252,15 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   async installApk(file: string | Buffer, options?: { args: string[] }): Promise<void> {
-    await this._channel.installApk({ file: await loadFile(this._platform, file), args: options && options.args });
+    await this._channel.installApk({ file: await loadFile(file), args: options && options.args });
   }
 
   async push(file: string | Buffer, path: string, options?: { mode: number }): Promise<void> {
-    await this._channel.push({ file: await loadFile(this._platform, file), path, mode: options ? options.mode : undefined });
+    await this._channel.push({ file: await loadFile(file), path, mode: options ? options.mode : undefined });
   }
 
   async launchBrowser(options: types.BrowserContextOptions & { pkg?: string } = {}): Promise<BrowserContext> {
-    const contextOptions = await prepareBrowserContextParams(this._platform, options);
+    const contextOptions = await prepareBrowserContextParams(options);
     const result = await this._channel.launchBrowser(contextOptions);
     const context = BrowserContext.from(result.context);
     const selectors = this._android._playwright.selectors;
@@ -310,9 +311,9 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
   }
 }
 
-async function loadFile(platform: Platform, file: string | Buffer): Promise<Buffer> {
+async function loadFile(file: string | Buffer): Promise<Buffer> {
   if (isString(file))
-    return await platform.fs().promises.readFile(file);
+    return await fs.promises.readFile(file);
   return file;
 }
 
@@ -400,7 +401,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
   private _pagePromise: Promise<Page> | undefined;
 
   constructor(device: AndroidDevice, data: channels.AndroidWebView) {
-    super(device._platform);
+    super();
     this._device = device;
     this._data = data;
   }

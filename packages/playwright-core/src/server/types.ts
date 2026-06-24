@@ -38,6 +38,7 @@ export type NavigateOptions = {
 export type CommonActionOptions = StrictOptions & {
   force?: boolean,
   noAutoWaiting?: boolean,
+  scroll?: 'auto' | 'none',
 };
 
 export type PointerActionWaitOptions = CommonActionOptions & {

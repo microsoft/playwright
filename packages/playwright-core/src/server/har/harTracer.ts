@@ -62,7 +62,6 @@ type HarTracerOptions = {
   omitPages?: boolean;
   omitSizes?: boolean;
   omitScripts?: boolean;
-  omitWebSocketFrames?: boolean;
 };
 
 export class HarTracer {
@@ -77,6 +76,7 @@ export class HarTracer {
   private _pageEntrySymbol: symbol;
   private _baseURL: string | undefined;
   private _page: Page | null;
+  private _omitWebSocketFrames = true;
 
   constructor(context: BrowserContext | APIRequestContext, page: Page | null, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
@@ -94,6 +94,10 @@ export class HarTracer {
     this._entrySymbol = Symbol('requestHarEntry');
     this._pageEntrySymbol = Symbol('pageHarEntry');
     this._baseURL = context instanceof APIRequestContext ? context._defaultOptions().baseURL : context._options.baseURL;
+  }
+
+  setOmitWebSocketFrames(omitWebSocketFrames: boolean) {
+    this._omitWebSocketFrames = omitWebSocketFrames;
   }
 
   start(options: { omitScripts: boolean }) {
@@ -443,7 +447,7 @@ export class HarTracer {
 
     let sha1: string | undefined = undefined;
     const recordMessage = (type: 'send' | 'receive', opcode: number, data: string, wallTimeMs: number) => {
-      if (this._options.omitWebSocketFrames)
+      if (this._omitWebSocketFrames)
         return;
       const message = { type, time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data };
       if (this._options.content === 'embed') {

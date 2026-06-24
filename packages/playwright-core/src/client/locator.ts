@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+import { inspect } from 'util';
+
 import { asLocatorDescription, locatorCustomDescription } from '@isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
 import { escapeForTextSelector } from '@isomorphic/stringUtils';
 import { isString } from '@isomorphic/rtti';
 import { monotonicTime } from '@isomorphic/time';
 import { ElementHandle } from './elementHandle';
+import { serializeArgument } from './jsHandle';
 import { DisposableStub } from './disposable';
 
 import type { ExpectResult, Frame } from './frame';
@@ -70,8 +73,8 @@ export class Locator implements api.Locator {
     if (options?.visible !== undefined)
       this._selector += ` >> visible=${options.visible ? 'true' : 'false'}`;
 
-    if (this._frame._platform.inspectCustom)
-      (this as any)[this._frame._platform.inspectCustom] = () => this._inspect();
+    if (inspect.custom)
+      (this as any)[inspect.custom] = () => this._inspect();
   }
 
   private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, options: { title: string, internal?: boolean, timeout?: number }): Promise<R> {
@@ -388,6 +391,18 @@ export class Locator implements api.Locator {
   waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void>;
   async waitFor(options?: channels.FrameWaitForSelectorOptions & TimeoutOptions): Promise<void> {
     await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options, timeout: this._frame._timeout(options) });
+  }
+
+  async waitForFunction<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<void> {
+    await this._frame._channel.waitForFunction({
+      selector: this._selector,
+      strict: true,
+      expression: String(pageFunction),
+      isFunction: typeof pageFunction === 'function',
+      arg: serializeArgument(arg),
+      timeout: this._frame._timeout(options),
+      pollingInterval: 100,
+    });
   }
 
 

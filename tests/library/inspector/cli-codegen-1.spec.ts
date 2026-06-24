@@ -402,7 +402,7 @@ await page.Locator("#input").FillAsync(\"てすと\");`);
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<textarea id="textarea"></textarea>`);
     const textarea = page.locator('textarea');
-    await textarea.evaluate<void, HTMLTextAreaElement>(e => e.addEventListener('input', () => (window as any).lastInputValue = e.value));
+    await textarea.evaluate<void, void, HTMLTextAreaElement>(e => e.addEventListener('input', () => (window as any).lastInputValue = e.value));
     const waitForOutputPromise = recorder.waitForOutput('JavaScript', 'Hello\\n');
     await textarea.type('Hello\n');
     // Issue was that the input event was not fired for the last newline, so we check for that.
