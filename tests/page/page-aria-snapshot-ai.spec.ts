@@ -142,6 +142,36 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   }
 });
 
+it('should re-number refs across navigations but not same-document navigations', async ({ page, server }) => {
+  server.setRoute('/one.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<button>One</button>');
+  });
+  server.setRoute('/two.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.end('<button>Two</button>');
+  });
+
+  // The first committed document keeps the base seq, so the main frame has no prefix.
+  await page.goto(server.PREFIX + '/one.html');
+  const oneRef = (await snapshotForAI(page)).match(/button "One" \[ref=(e\d+)\]/)![1];
+  await expect(page.locator(`aria-ref=${oneRef}`)).toHaveText('One');
+
+  // Cross-document navigation re-numbers the main frame, so its refs gain a frame prefix.
+  await page.goto(server.PREFIX + '/two.html');
+  const twoRef = (await snapshotForAI(page)).match(/button "Two" \[ref=(f\d+e\d+)\]/)![1];
+  await expect(page.locator(`aria-ref=${twoRef}`)).toHaveText('Two');
+
+  // The stale ref from the previous document must not resolve against the new one.
+  const error = await page.locator(`aria-ref=${oneRef}`).normalize().catch(e => e);
+  expect(error.message).toContain(`No element matching aria-ref=${oneRef}`);
+
+  // Same-document navigation keeps refs intact.
+  await page.evaluate(() => history.pushState({}, '', '/pushed.html'));
+  expect(await snapshotForAI(page)).toContain(`button "Two" [ref=${twoRef}]`);
+  await expect(page.locator(`aria-ref=${twoRef}`)).toHaveText('Two');
+});
+
 it('should persist iframe references', async ({ page }) => {
   await page.setContent(`
     <ul>
@@ -337,9 +367,8 @@ it('should auto-wait for navigation', async ({ page, server }) => {
     page.evaluate(() => window.location.reload()),
     snapshotForAI(page)
   ]);
-  expect(snapshot).toContainYaml(`
-    - generic [ref=e2]: Hi, I'm frame
-  `);
+  // The snapshot races the reload, which may re-number the main frame, so accept any ref.
+  expect(snapshot).toMatch(/- generic \[ref=(?:f\d+)?e\d+\]: Hi, I'm frame/);
 });
 
 it('should auto-wait for blocking CSS', async ({ page, server }) => {

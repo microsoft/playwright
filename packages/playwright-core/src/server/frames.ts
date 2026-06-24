@@ -235,6 +235,7 @@ export class FrameManager {
     const frame = this._frames.get(frameId)!;
     this.removeChildFramesRecursively(frame);
     this._clearWebSockets(frame);
+    const previousUrl = frame._url;
     frame._url = url;
     frame._name = name;
 
@@ -269,6 +270,12 @@ export class FrameManager {
     if (!initial) {
       frame.apiLog(`  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
+      // Re-number the main frame when it navigates away from a real document, so that aria
+      // refs (f<seq>e<n>) minted against the previous document do not accidentally resolve
+      // to elements in the new one. Leaving the initial empty page keeps the base seq, and
+      // same-document navigations never re-number.
+      if (frame === this._mainFrame && previousUrl && previousUrl !== 'about:blank')
+        frame.seq = this._allocateFrameSeq();
     }
     // Restore pending if any - see comments above about keepPending.
     frame._setPendingDocument(keepPending);
@@ -501,7 +508,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   static Events = FrameEvent;
 
   _id: string;
-  readonly seq: number;
+  seq: number;
   _firedLifecycleEvents = new Set<types.LifecycleEvent>();
   private _firedNetworkIdleSelf = false;
   _currentDocument: DocumentInfo;
