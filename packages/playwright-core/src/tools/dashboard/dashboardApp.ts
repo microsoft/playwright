@@ -42,7 +42,7 @@ declare const __PW_HMR__: boolean;
 
 type DashboardServer = {
   url: string;
-  reveal: (options: DashboardOptions) => Promise<void>;
+  reveal: (options: DashboardOptions) => void;
   triggerAnnotate: (signal: AbortSignal) => Promise<AnnotateResult>;
   close: () => Promise<void>;
 };
@@ -86,21 +86,22 @@ async function startDashboardServer(provider: SessionProvider, options: Dashboar
     attachDashboardStaticServer(httpServer, dashboardDir);
   await httpServer.start({ port: options.port, host: options.host });
 
-  const reveal = async (next: DashboardOptions): Promise<void> => {
-    await connectionLanded;
-    await Promise.all([...connections].map(async c => {
-      if (next.pageId)
-        await c.revealPage(next.pageId);
-      else if (next.sessionName)
-        await c.revealSession(next.sessionName, next.workspaceDir);
-    }));
+  const reveal = (next: DashboardOptions): void => {
+    void connectionLanded.then(() => {
+      for (const c of connections) {
+        if (next.pageId)
+          c.revealPage(next.pageId);
+        else if (next.sessionName)
+          c.revealSession(next.sessionName, next.workspaceDir);
+      }
+    });
   };
 
   const triggerAnnotate = async (cancellation: AbortSignal): Promise<AnnotateResult> => {
     await connectionLanded;
     if (cancellation.aborted || connections.size === 0)
       return { type: 'cancelled' };
-    // Multiple dashboard connections is theoretical today (one UI per daemon), server mode does not support annotate.
+    // Multiple dashboard connections is theoretical today (one UI per daemon).
     // If two ever land, the first to submit wins but the losers stay in
     // annotation mode until their UI reloads — revisit if that becomes a real
     // scenario.
@@ -135,13 +136,7 @@ async function attachDashboardDevServer(httpServer: HttpServer) {
 }
 // HMR end
 
-async function innerOpenDashboardApp(options: DashboardOptions): Promise<{ page: api.Page; server: DashboardServer }> {
-  const server = await startDashboardServer(new RegistrySessionProvider(), options);
-  void server.reveal(options).catch(() => {});
-  const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
-  await page.goto(server.url);
-  return { page, server };
-}
+type AppState = { page?: api.Page; server: DashboardServer };
 
 async function launchApp(appName: string, options?: { onClose?: () => void }) {
   const channel = findChromiumChannelBestEffort('javascript');
@@ -240,13 +235,15 @@ type AcquireResult =
   | { role: 'winner', server: net.Server }
   | { role: 'loser', daemonPid: number };
 
-async function acquireSingleton(options: DashboardOptions): Promise<AcquireResult> {
+async function acquireSingleton(options: DashboardOptions, onConnection: (socket: net.Socket) => void): Promise<AcquireResult> {
   const socketPath = dashboardSocketPath();
   if (process.platform !== 'win32')
     await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
-    const server = net.createServer();
+    // Attach the connection handler at creation — before listen() — so a loser
+    // that connects the instant we win the socket is never dropped.
+    const server = net.createServer(onConnection);
     server.listen(socketPath, () => resolve({ role: 'winner', server }));
     server.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code !== 'EADDRINUSE' && err.code !== 'EEXIST')
@@ -287,20 +284,13 @@ export async function openDashboardApp() {
     // eslint-disable-next-line no-console
     console.error('Unhandled promise rejection:', error);
   });
-  if (options.port !== undefined) {
-    const server = await startDashboardServer(new RegistrySessionProvider(), options);
-    void server.reveal(options).catch(() => {});
-    // eslint-disable-next-line no-console
-    console.log(`Listening on ${server.url}`);
-    // eslint-disable-next-line no-restricted-properties
-    await new Promise(f => process.stdout.write('', f));  // Make sure stdout is flushed.
-    selfDestructOnParentGone();
-    return;
-  }
+
   // Self-destruct if the parent CLI dies before we signal READY. Unregistered
   // before we signal so the daemon outlives the parent.
   const stopSelfDestruct = selfDestructOnParentGone();
-  const acquired = await acquireSingleton(options);
+
+  const statePromise = new ManualPromise<AppState>();
+  const acquired = await acquireSingleton(options, socket => handleConnection(socket, statePromise));
   if (acquired.role === 'loser') {
     // Another daemon is already running, signal success.
     stopSelfDestruct();
@@ -313,10 +303,24 @@ export async function openDashboardApp() {
   const { server } = acquired;
   process.on('exit', () => server.close());
   try {
-    await startApp(server, options);
-    stopSelfDestruct();
-    // eslint-disable-next-line no-console
-    console.log(`Dashboard is running pid=${process.pid}`);
+    const dashboard = await startDashboardServer(new RegistrySessionProvider(), options);
+    dashboard.reveal(options);
+    if (options.port !== undefined) {
+      // Server mode serves HTTP in the foreground and stays tied to the parent CLI.
+      statePromise.resolve({ server: dashboard });
+      // eslint-disable-next-line no-console
+      console.log(`Listening on ${dashboard.url}`);
+    } else {
+      // Windowed daemon launches a browser window and detaches from the parent CLI.
+      const { page } = await launchApp('dashboard', { onClose: () => gracefullyProcessExitDoNotHang(0) });
+      await page.goto(dashboard.url);
+      statePromise.resolve({ page, server: dashboard });
+      stopSelfDestruct();
+      // eslint-disable-next-line no-console
+      console.log(`Dashboard is running pid=${process.pid}`);
+    }
+    // eslint-disable-next-line no-restricted-properties
+    await new Promise(f => process.stdout.write('', f));  // Make sure stdout is flushed.
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(error);
@@ -324,55 +328,47 @@ export async function openDashboardApp() {
   }
 }
 
-async function startApp(server: net.Server, options: DashboardOptions) {
-  const statePromise = innerOpenDashboardApp(options);
-  server.on('connection', socket => {
-    let buffer = '';
-    socket.on('data', async data => {
-      buffer += data.toString();
-      const newlineIndex = buffer.indexOf('\n');
-      if (newlineIndex === -1)
-        return;
-      const line = buffer.slice(0, newlineIndex);
-      buffer = buffer.slice(newlineIndex + 1);
-      let parsed: DashboardOptions | undefined;
+function handleConnection(socket: net.Socket, statePromise: Promise<AppState>) {
+  let buffer = '';
+  socket.on('data', async data => {
+    buffer += data.toString();
+    const newlineIndex = buffer.indexOf('\n');
+    if (newlineIndex === -1)
+      return;
+    const line = buffer.slice(0, newlineIndex);
+    buffer = buffer.slice(newlineIndex + 1);
+    let parsed: DashboardOptions | undefined;
+    try {
+      parsed = JSON.parse(line);
+    } catch {
+      // no-op
+    }
+    if (!parsed) {
+      socket.end();
+      return;
+    }
+    const { page, server: dashboard } = await statePromise;
+    if (parsed.annotate) {
+      const cancellation = new AbortController();
+      socket.on('close', () => cancellation.abort());
+      socket.on('error', () => cancellation.abort());
       try {
-        parsed = JSON.parse(line);
-      } catch {
-        // no-op
+        await page?.bringToFront();
+        dashboard.reveal(parsed);
+        const result = await dashboard.triggerAnnotate(cancellation.signal);
+        socket.end(JSON.stringify(result));
+      } catch (e) {
+        socket.end(e);
       }
-      if (!parsed) {
-        socket.end();
-        return;
-      }
-      const { page, server: dashboard } = await statePromise;
-      if (parsed.annotate) {
-        const cancellation = new AbortController();
-        socket.on('close', () => cancellation.abort());
-        socket.on('error', () => cancellation.abort());
-        try {
-          await page?.bringToFront();
-          await dashboard.reveal(parsed);
-          const result = await dashboard.triggerAnnotate(cancellation.signal);
-          socket.end(JSON.stringify(result));
-        } catch (e) {
-          socket.end(e);
-        }
-      } else if (parsed.kill) {
-        await dashboard.close().catch(() => {});
-        gracefullyProcessExitDoNotHang(0, () => new Promise(r => socket.end(r)));
-      } else {
-        try {
-          await page?.bringToFront();
-          await dashboard.reveal(parsed);
-          socket.end(JSON.stringify({ pid: process.pid }) + '\n');
-        } catch (e) {
-          socket.end(e);
-        }
-      }
-    });
+    } else if (parsed.kill) {
+      await dashboard.close().catch(() => {});
+      gracefullyProcessExitDoNotHang(0, () => new Promise(r => socket.end(r)));
+    } else {
+      void page?.bringToFront().catch(() => {});
+      dashboard.reveal(parsed);
+      socket.end(JSON.stringify({ pid: process.pid }) + '\n');
+    }
   });
-  await statePromise;
 }
 
 export async function openDashboardForContext(context: api.BrowserContext): Promise<void> {

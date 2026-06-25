@@ -18,7 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { test, expect, installSaveFilePickerMock } from './cli-fixtures';
+import { test, expect, installSaveFilePickerMock, spawnDashboardServer } from './cli-fixtures';
 
 function displayPath(p: string): string {
   const home = os.homedir();
@@ -93,6 +93,8 @@ test('should show current workspace sessions first', async ({ cli, server, start
   await test.step('open dashboard in workspace A', async () => {
     await checkOrder(wsA, wsB);
   });
+
+  await cli('show', '--kill');
 
   await test.step('open dashboard in workspace B', async () => {
     await checkOrder(wsB, wsA);
@@ -184,4 +186,12 @@ test('two concurrent cli show invocations both succeed', async ({ cli }) => {
   const [first, second] = await Promise.all([cli('show', { bindTitle }), cli('show', { bindTitle })]);
   expect(first.dashboardPid).toBe(second.dashboardPid);
   await cli('show', '--kill');
+});
+
+test('port dashboard owns the singleton and receives kill', async ({ cli, childProcess }) => {
+  const serverProcess = spawnDashboardServer(childProcess);
+  await serverProcess.waitForOutput('Listening on ');
+  await cli('show', '--kill');
+  const { exitCode } = await serverProcess.exited;
+  expect(exitCode).toBe(0);
 });
