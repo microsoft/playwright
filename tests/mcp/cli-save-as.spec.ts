@@ -38,6 +38,13 @@ test('screenshot --full-page', async ({ cli, server, mcpBrowser }) => {
   expect(attachments[0].data).toEqual(expect.any(Buffer));
 });
 
+test('screenshot --hires', async ({ cli, server, mcpBrowser }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { attachments } = await cli('screenshot', '--hires');
+  expect(attachments[0].name).toEqual('Screenshot of viewport');
+  expect(attachments[0].data).toEqual(expect.any(Buffer));
+});
+
 test('screenshot --filename', async ({ cli, server, mcpBrowser }) => {
   await cli('open', server.HELLO_WORLD);
   const { output, attachments } = await cli('screenshot', '--filename=screenshot.png');
