@@ -18,7 +18,6 @@
 import * as input from '../../input';
 
 import type * as types from '../../types';
-import type { WVSession } from './wvConnection';
 import type { Progress } from '../../progress';
 
 function modifierFlags(modifiers: Set<types.KeyboardModifier>) {
@@ -51,11 +50,13 @@ function toButtonsMask(buttons: Set<types.MouseButton>): number {
   return mask;
 }
 
-export class RawKeyboardImpl implements input.RawKeyboard {
-  private _session: WVSession | undefined;
+export type DispatchWebViewInput = (progress: Progress, method: string, params: any) => Promise<void>;
 
-  setSession(session: WVSession) {
-    this._session = session;
+export class RawKeyboardImpl implements input.RawKeyboard {
+  private _dispatcher: DispatchWebViewInput;
+
+  constructor(dispatcher: DispatchWebViewInput) {
+    this._dispatcher = dispatcher;
   }
 
   async keydown(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
@@ -65,29 +66,29 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       ...modifierFlags(modifiers),
       ...(text ? { text } : {}),
     };
-    await callWebViewInput(progress, this._session, 'keydown', params);
+    await this._dispatcher(progress, 'keydown', params);
   }
 
   async keyup(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
     const { code, keyCode, key, location } = description;
     const params = { code, key, keyCode, location, ...modifierFlags(modifiers) };
-    await callWebViewInput(progress, this._session, 'keyup', params);
+    await this._dispatcher(progress, 'keyup', params);
   }
 
   async sendText(progress: Progress, text: string): Promise<void> {
-    await callWebViewInput(progress, this._session, 'insertText', text);
+    await this._dispatcher(progress, 'insertText', text);
   }
 }
 
 export class RawMouseImpl implements input.RawMouse {
-  private _session: WVSession | undefined;
+  private _dispatcher: DispatchWebViewInput;
 
-  setSession(session: WVSession) {
-    this._session = session;
+  constructor(dispatcher: DispatchWebViewInput) {
+    this._dispatcher = dispatcher;
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    await callWebViewInput(progress, this._session, 'mouseMove', {
+    await this._dispatcher(progress, 'mouseMove', {
       x, y, button: buttonToNumber(button), buttons: toButtonsMask(buttons), ...modifierFlags(modifiers),
     });
   }
@@ -114,43 +115,24 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
-    await callWebViewInput(progress, this._session, 'wheel', { x, y, deltaX, deltaY, ...modifierFlags(modifiers) });
+    await this._dispatcher(progress, 'wheel', { x, y, deltaX, deltaY, ...modifierFlags(modifiers) });
   }
 
   private async _mouseEvent(progress: Progress, type: string, x: number, y: number, button: number, buttons: number, modifiers: Set<types.KeyboardModifier>, clickCount: number) {
-    await callWebViewInput(progress, this._session, 'mouseEvent', {
+    await this._dispatcher(progress, 'mouseEvent', {
       type, x, y, button, buttons, clickCount, ...modifierFlags(modifiers),
     });
   }
 }
 
 export class RawTouchscreenImpl implements input.RawTouchscreen {
-  private _session: WVSession | undefined;
+  private _dispatcher: DispatchWebViewInput;
 
-  setSession(session: WVSession) {
-    this._session = session;
+  constructor(dispatcher: DispatchWebViewInput) {
+    this._dispatcher = dispatcher;
   }
 
   async tap(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
-    await callWebViewInput(progress, this._session, 'tap', { x, y, ...modifierFlags(modifiers) });
-  }
-}
-
-async function callWebViewInput(progress: Progress, session: WVSession | undefined, method: string, arg: any): Promise<void> {
-  if (!session)
-    throw new Error('Page is not initialized');
-  const expression = `window.__pwWebViewInput.${method}(${JSON.stringify(arg)})`;
-  // Some dispatchers are async — they spread events across event-loop tasks the
-  // way a real device does. Await the returned promise so the action only
-  // resolves once every event has been delivered. Stock WebKit's Runtime.evaluate
-  // has no awaitPromise option, so use the separate Runtime.awaitPromise command.
-  const { result } = await progress.race(session.send('Runtime.evaluate', { expression, returnByValue: false }));
-  // `result` is absent if evaluation failed (e.g. the frame navigated away).
-  // Only promises carry an objectId here — every __pwWebViewInput method returns
-  // void or a Promise — so this both awaits async dispatch and avoids leaking a
-  // handle for the synchronous (void) case.
-  if (result?.className === 'Promise' && result.objectId) {
-    await progress.race(session.send('Runtime.awaitPromise', { promiseObjectId: result.objectId, returnByValue: true }));
-    session.sendMayFail('Runtime.releaseObject', { objectId: result.objectId });
+    await this._dispatcher(progress, 'tap', { x, y, ...modifierFlags(modifiers) });
   }
 }
