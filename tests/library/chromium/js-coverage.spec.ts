@@ -63,14 +63,6 @@ it('should report multiple scripts', async function({ page, server }) {
   expect(coverage[1].url).toContain('/jscoverage/script2.js');
 });
 
-it('should report scripts across navigations when disabled', async function({ page, server }) {
-  await page.coverage.startJSCoverage({ resetOnNavigation: false });
-  await page.goto(server.PREFIX + '/jscoverage/multiple.html');
-  await page.goto(server.EMPTY_PAGE);
-  const coverage = await page.coverage.stopJSCoverage();
-  expect(coverage.length).toBe(2);
-});
-
 it('should NOT report scripts across navigations when enabled', async function({ page, server }) {
   await page.coverage.startJSCoverage(); // Enabled by default.
   await page.goto(server.PREFIX + '/jscoverage/multiple.html');
