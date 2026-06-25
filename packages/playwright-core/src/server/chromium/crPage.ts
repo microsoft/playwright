@@ -488,7 +488,8 @@ class FrameSession {
           });
         }
 
-        const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
+        // In r1651606 Chromium changed the URL it reports for the initial empty document from the ":" to "".
+        const isInitialEmptyPage = this._isMainFrame() && (this._page.mainFrame().url() === ':' || this._page.mainFrame().url() === '');
         if (isInitialEmptyPage) {
           // Ignore lifecycle events, worlds and bindings for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
