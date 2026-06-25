@@ -248,6 +248,21 @@ test.describe('merge order', () => {
     const config = await resolveCLIConfigForMCP({ config: configFile }, emptyEnv);
     expect(config.browser.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
   });
+
+  test('env browser.cdpHeaders overrides config file and preserves colons in values', async ({}, testInfo) => {
+    const configFile = testInfo.outputPath('config.json');
+    const fileConfig: Config = {
+      browser: {
+        cdpEndpoint: 'ws://example.invalid',
+        cdpHeaders: { Authorization: 'Bearer token-from-file' },
+      },
+    };
+    await fs.promises.writeFile(configFile, JSON.stringify(fileConfig));
+    const config = await resolveCLIConfigForMCP({ config: configFile }, {
+      PLAYWRIGHT_MCP_CDP_HEADERS: 'X-Forwarded-Proto: value:with:colons',
+    });
+    expect(config.browser.cdpHeaders).toEqual({ 'X-Forwarded-Proto': 'value:with:colons' });
+  });
 });
 
 // ---------------------------------------------------------------------------
