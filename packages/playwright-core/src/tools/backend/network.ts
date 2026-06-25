@@ -20,6 +20,7 @@ import * as z from 'zod';
 
 import { getExtensionForMimeType, isTextualMimeType } from '@isomorphic/mimeType';
 import { isRegexString } from '@isomorphic/rtti';
+import { truncateDataUrl } from '@isomorphic/stringUtils';
 
 import { defineTool, defineTabTool } from './tool';
 
@@ -128,7 +129,7 @@ export function isFetch(request: playwright.Request): boolean {
 
 export function renderRequestLine(request: playwright.Request): string {
   const response = request.existingResponse();
-  let line = `[${request.method().toUpperCase()}] ${request.url()}`;
+  let line = `[${request.method().toUpperCase()}] ${truncateDataUrl(request.url())}`;
   if (response)
     line += ` => [${response.status()}] ${response.statusText()}`;
   else if (request.failure())
@@ -140,7 +141,7 @@ function renderRequestDetails(index: number, request: playwright.Request, skillM
   const httpResponse = request.existingResponse();
   const responseHeaders = httpResponse?.headers();
   const lines: string[] = [];
-  lines.push(`#${index} [${request.method().toUpperCase()}] ${request.url()}`);
+  lines.push(`#${index} [${request.method().toUpperCase()}] ${truncateDataUrl(request.url())}`);
 
   lines.push('');
   lines.push('  General');

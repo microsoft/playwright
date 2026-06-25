@@ -318,6 +318,14 @@ it('should not nest cursor pointer hints', async ({ page }) => {
   `);
 });
 
+it('should truncate data url in link', async ({ page }) => {
+  const base64 = Buffer.from('<p>hello</p>').toString('base64');
+  await page.setContent(`<a href="data:text/html;base64,${base64}">a link</a>`);
+  const snapshot = await snapshotForAI(page);
+  expect(snapshot).toContain('/url: data:text/html;base64,…');
+  expect(snapshot).not.toContain(base64);
+});
+
 it('should gracefully fallback when child frame cant be captured', async ({ page, server }) => {
   await page.setContent(`
     <p>Test</p>
