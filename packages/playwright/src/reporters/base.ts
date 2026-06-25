@@ -86,8 +86,9 @@ class StripAnsiStream extends Writable {
     this._target = target;
   }
 
-  override _write(chunk: any, encoding: any, callback: any) {
-    this._target.write(stripAnsiEscapes(chunk.toString()), callback);
+  override write(chunk: any, encodingOrCallback?: any, callback?: any): boolean {
+    const cb = typeof encodingOrCallback === 'function' ? encodingOrCallback : callback;
+    return this._target.write(stripAnsiEscapes(chunk.toString()), cb);
   }
 }
 
