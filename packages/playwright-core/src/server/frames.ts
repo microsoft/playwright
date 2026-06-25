@@ -272,8 +272,7 @@ export class FrameManager {
       this._page.frameNavigatedToNewDocument(frame);
       // Re-number the main frame when it navigates away from a real document, so that aria
       // refs (f<seq>e<n>) minted against the previous document do not accidentally resolve
-      // to elements in the new one. Leaving the initial empty page keeps the base seq, and
-      // same-document navigations never re-number.
+      // to elements in the new one.
       if (frame === this._mainFrame && previousUrl && previousUrl !== 'about:blank')
         frame.seq = this._allocateFrameSeq();
     }
