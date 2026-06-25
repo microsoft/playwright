@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { parseEvaluationResultValue, serializeAsCallArgument, serializeFile  } from '@isomorphic/utilityScriptSerializers';
-import type { SerializedValue } from '@isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, parseSerializedFile, serializeAsCallArgument, serializeFile  } from '@isomorphic/utilityScriptSerializers';
 
 type NameValue = { name: string, value: string };
 
@@ -43,21 +42,34 @@ type IndexedDBDatabase = {
   }[],
 };
 
-type OPFSTree = Array<
-  [name: string, contents: Extract<SerializedValue, {f: any}> | OPFSTree]
->;
+export type FSEntry = {
+  type: 'file' | 'folder';
+  name: string;
+};
+
+export type FSFile = FSEntry & {
+  type: 'file';
+  base64: string;
+  contentType: string;
+  lastModified: number;
+};
+
+export type FSFolder = FSEntry & {
+  type: 'folder';
+  entries: (FSFile | FSFolder)[];
+};
 
 type SetOriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
-  opfs?: OPFSTree
+  opfs?: FSFolder
 };
 
 export type SerializedStorage = {
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
-  opfs?: OPFSTree
+  opfs?: FSFolder
 };
 
 export class StorageScript {
@@ -173,22 +185,32 @@ export class StorageScript {
     };
   }
 
-  private async _collectOPFS(root: FileSystemDirectoryHandle) {
-    async function walk(base: FileSystemDirectoryHandle){
-      const tree: OPFSTree = [];
+  private async _collectOPFS(root: FileSystemDirectoryHandle): Promise<FSFolder> {
+    async function walk(base: FileSystemDirectoryHandle) {
+      const tree: Array<FSFile|FSFolder> = [];
 
       for await (const [name, entry] of base) {
-        if (entry instanceof FileSystemFileHandle)
-          tree.push([name, await serializeFile(await entry.getFile())]);
-        else
-          tree.push([name, await walk(entry)]);
+        if (entry instanceof FileSystemFileHandle) {
+          tree.push(
+              await serializeFile(await entry.getFile())
+          );
+        } else {
+          tree.push({
+            type: 'folder',
+            name, entries: await walk(entry)
+          });
+        }
 
       }
 
-      return tree;
+      return walk(base);
     }
 
-    return walk(root);
+    return {
+      type: 'folder',
+      name: '',
+      entries: await walk(root)
+    };
   }
 
   async collect(record: {indexedDB: boolean, opfs: boolean}): Promise<SerializedStorage> {
@@ -246,20 +268,19 @@ export class StorageScript {
     }));
   }
 
-  private async _restoreOPFS(tree: OPFSTree) {
-    async function walk(base: FileSystemDirectoryHandle, tree: OPFSTree) {
+  private async _restoreOPFS(tree: FSFolder) {
+    async function walk(base: FileSystemDirectoryHandle, tree: FSFolder) {
 
-      for (const [name, entry] of tree) {
-        if (!Array.isArray(entry)) {
-          const handle = await base.getFileHandle(name, { create: true });
+      for (const entry of tree.entries) {
+        if (entry.type === 'file') {
+          const handle = await base.getFileHandle(entry.name, { create: true });
           const writable = await handle.createWritable();
           const writer = writable.getWriter();
-          await writer.write(parseEvaluationResultValue(entry));
+          await writer.write(parseSerializedFile(entry));
+          await writer.close()
         } else {
-          const directory = await base.getDirectoryHandle(name, { create: true });
-          for (const [filename, subentry] of tree)
-            await walk(directory, [[filename, subentry]]);
-
+          const directory = await base.getDirectoryHandle(entry.name, { create: true });
+          await walk(directory, entry);
         }
       }
     }

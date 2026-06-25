@@ -609,7 +609,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._origins.add(origin);
   }
 
-  async storageState(progress: Progress, indexedDB = false, credentials = false, opfs = false): Promise<channels.BrowserContextStorageStateResult> {
+  async storageState(progress: Progress, { indexedDB = false, credentials = false, opfs = false } = {}): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(progress),
       origins: []
@@ -632,7 +632,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         continue;
       try {
         const storage: SerializedStorage = await progress.race(page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility'));
-        if (storage.localStorage.length || storage.indexedDB?.length || storage.opfs?.length)
+        if (storage.localStorage.length || storage.indexedDB?.length || storage.opfs)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB, opfs: storage.opfs });
         originsToSave.delete(origin);
       } catch {

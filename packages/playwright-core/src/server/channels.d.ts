@@ -5152,23 +5152,36 @@ export type IndexedDBDatabase = {
   }[],
 };
 
-export type OPFSTree = Array<
-  [name: string, contents: Extract<SerializedValue, {f: any}> | OPFSTree]
->;
+export type FSEntry = {
+  type: 'file' | 'folder';
+  name: string;
+};
+
+export type FSFile = FSEntry & {
+  type: 'file';
+  base64: string;
+  contentType: string;
+  lastModified: number;
+};
+
+export type FSFolder = FSEntry & {
+  type: 'folder';
+  entries: (FSFile | FSFolder)[];
+};
 
 
 export type SetOriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
-  opfs?: OPFSTree
+  opfs?: FSFolder
 };
 
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
-  opfs?: OPFSTree
+  opfs?: FSFolder
 };
 
 export type RecordHarOptions = {

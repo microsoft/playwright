@@ -680,7 +680,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
   }
 
   override async storageState(progress: Progress, indexedDB?: boolean, opfs?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
-    return this._context.storageState(progress, indexedDB, opfs);
+    return this._context.storageState(progress, { indexedDB, opfs });
   }
 }
 
@@ -739,7 +739,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   override async storageState(progress: Progress, indexedDB = false, opfs = false): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
-      origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [], opfs: opfs ? origin.opfs : [] })),
+      origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [], opfs: opfs ? origin.opfs : undefined })),
     };
   }
 }
