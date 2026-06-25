@@ -286,6 +286,14 @@ it('getByRole escaping', async ({ page }) => {
   ]);
 });
 
+it('getByRole should accept regexp with v flag', async ({ page }) => {
+  // Regression test for https://github.com/microsoft/playwright/issues/41457
+  await page.setContent(`<button>Click me</button><button>Submit</button>`);
+  await expect(page.getByRole('button', { name: /Click me/v })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /click me/iv })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /Missing/v })).toHaveCount(0, { timeout: 1000 });
+});
+
 it('getByRole with description', async ({ page }) => {
   await page.setContent(`
     <div role="alert" aria-label="Upload successful" aria-description="File doc-2025.pdf was uploaded successfully">Alert 1</div>
