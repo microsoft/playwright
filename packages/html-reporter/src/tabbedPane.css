@@ -48,9 +48,18 @@
   align-items: center;
   justify-content: center;
   user-select: none;
+  background: none;
+  border: none;
   border-bottom: 2px solid transparent;
+  color: inherit;
+  font: inherit;
   outline: none;
   height: 100%;
+}
+
+.tabbed-pane-tab-element:focus-visible {
+  outline: 1px solid var(--color-accent-fg);
+  outline-offset: -1px;
 }
 
 .tabbed-pane-tab-label {
