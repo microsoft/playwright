@@ -705,7 +705,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     const urlString = url.toString();
     fetchLog(`→ ${method} ${urlString}`);
     const headersArray: HeadersArray = Object.entries(headers).map(([name, value]) => ({ name, value }));
-    for (const registration of registrations) {
+    for (const registration of [...registrations]) {
       if (!urlMatches(registration.baseURL, urlString, registration.urlMatch))
         continue;
       const lookupResult = await progress.race(registration.harBackend.lookup(urlString, method, headersArray, postData, false, { apiRequestOnly: true, maxRedirects }));
