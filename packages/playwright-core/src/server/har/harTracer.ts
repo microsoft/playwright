@@ -256,7 +256,7 @@ export class HarTracer {
     harEntry.response.cookies = this._options.omitCookies ? [] : event.cookies.map(c => {
       return {
         ...c,
-        expires: c.expires === -1 ? undefined : safeDateToISOString(c.expires)
+        expires: c.expires === -1 ? undefined : safeDateToISOString(c.expires * 1000)
       };
     });
 

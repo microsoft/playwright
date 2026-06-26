@@ -1103,6 +1103,25 @@ it.describe('tracing.startHar', () => {
     expect(log.entries.some(e => e.request.url === server.PREFIX + '/simple.json')).toBe(true);
   });
 
+  it('should record correct cookie expires for APIRequestContext', async ({ playwright, server }, testInfo) => {
+    server.setRoute('/set-cookie', (req, res) => {
+      res.setHeader('Set-Cookie', 'name=value; Expires=Tue, 01 Jan 2030 00:00:00 GMT');
+      res.end('hello');
+    });
+    const request = await playwright.request.newContext();
+    const harPath = testInfo.outputPath('api.har.zip');
+    await request.tracing.startHar(harPath, { content: 'attach' });
+    await request.get(server.PREFIX + '/set-cookie');
+    await request.tracing.stopHar();
+    await request.dispose();
+
+    const resources = await parseHar(harPath);
+    const log = JSON.parse(resources.get('har.har')!.toString()).log as Log;
+    const entry = log.entries.find(e => e.request.url.endsWith('/set-cookie'))!;
+    const cookie = entry.response.cookies.find(c => c.name === 'name')!;
+    expect(new Date(cookie.expires!).getUTCFullYear()).toBe(2030);
+  });
+
   it('should record mixed-case request content-type for APIRequestContext', async ({ playwright, server }, testInfo) => {
     server.setRoute('/post', (req, res) => res.end('ok'));
     const request = await playwright.request.newContext();
