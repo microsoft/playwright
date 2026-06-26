@@ -211,10 +211,16 @@ const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
     height: Math.max(snapshotContainerSize.height + windowHeaderHeight, 320),
   };
 
-  const scale = Math.min(measure.width / renderedBrowserFrameSize.width, measure.height / renderedBrowserFrameSize.height, 1);
+  // `measure` is the wrapper's border box (getBoundingClientRect), which includes the
+  // 10px padding on every side. Fit and center the frame within the content box so it
+  // keeps a padding-sized margin (with room for the box-shadow) when squeezed.
+  const padding = 10;
+  const availableWidth = measure.width - 2 * padding;
+  const availableHeight = measure.height - 2 * padding;
+  const scale = Math.min(availableWidth / renderedBrowserFrameSize.width, availableHeight / renderedBrowserFrameSize.height, 1);
   const translate = {
-    x: (measure.width - renderedBrowserFrameSize.width) / 2,
-    y: (measure.height - renderedBrowserFrameSize.height) / 2,
+    x: (measure.width - renderedBrowserFrameSize.width) / 2 - padding,
+    y: (measure.height - renderedBrowserFrameSize.height) / 2 - padding,
   };
 
   return <div ref={ref} className='snapshot-wrapper'>
