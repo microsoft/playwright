@@ -299,6 +299,7 @@ test('native controls', async ({ page }) => {
     <label for="text1">TEXT1</label><input id="text1" type=text>
     <input id="text2" type=text title="TEXT2">
     <input id="text3" type=text placeholder="TEXT3">
+    <input id="number1" type=number placeholder="NUMBER1">
 
     <label for="image1">IMAGE1</label><input id="image1" type=image>
     <input id="image2" type=image alt="IMAGE2">
@@ -316,6 +317,7 @@ test('native controls', async ({ page }) => {
   expect.soft(await getNameAndRole(page, '#text1')).toEqual({ role: 'textbox', name: 'TEXT1' });
   expect.soft(await getNameAndRole(page, '#text2')).toEqual({ role: 'textbox', name: 'TEXT2' });
   expect.soft(await getNameAndRole(page, '#text3')).toEqual({ role: 'textbox', name: 'TEXT3' });
+  expect.soft(await getNameAndRole(page, '#number1')).toEqual({ role: 'spinbutton', name: 'NUMBER1' });
   expect.soft(await getNameAndRole(page, '#image1')).toEqual({ role: 'button', name: 'IMAGE1' });
   expect.soft(await getNameAndRole(page, '#image2')).toEqual({ role: 'button', name: 'IMAGE2' });
   expect.soft(await getNameAndRole(page, '#image3')).toEqual({ role: 'button', name: 'IMAGE3' });
