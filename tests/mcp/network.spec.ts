@@ -207,6 +207,21 @@ test('browser_network_request reports failed requests', async ({ client, server 
   expect(detail!.result).toContain('status:    [404]');
 });
 
+test('browser_network_requests lists a failed request once', async ({ client, server }) => {
+  server.setContent('/', `<img src="http://does-not-exist.invalid/api/x" />`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const list = parseResponse(await client.callTool({
+    name: 'browser_network_requests',
+    arguments: { static: true },
+  }));
+  expect([...list!.result!.matchAll(/\/api\/x =>/g)]).toHaveLength(1);
+});
+
 test('browser_network_request returns individual parts', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/api', { method: 'POST', headers: { 'X-Custom-Header': 'test-value' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
