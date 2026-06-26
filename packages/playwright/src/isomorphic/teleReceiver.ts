@@ -272,7 +272,7 @@ export class TeleReporterReceiver {
   }
 
   reset() {
-    this._rootSuite._entries = [];
+    this._rootSuite._clear();
     this._tests.clear();
   }
 
@@ -519,7 +519,7 @@ export class TeleReporterReceiver {
   }
 
   private _mergeSuiteInto(jsonSuite: JsonSuite, parent: TeleSuite): void {
-    let targetSuite = parent.suites.find(s => s.title === jsonSuite.title);
+    let targetSuite = parent._findSuiteByTitle(jsonSuite.title);
     if (!targetSuite) {
       targetSuite = new TeleSuite(jsonSuite.title, parent.type === 'project' ? 'file' : 'describe');
       parent._addSuite(targetSuite);
@@ -534,7 +534,7 @@ export class TeleReporterReceiver {
   }
 
   private _mergeTestInto(jsonTest: JsonTestCase, parent: TeleSuite) {
-    let targetTest = this._options.mergeTestCases ? parent.tests.find(s => s.title === jsonTest.title && s.repeatEachIndex === jsonTest.repeatEachIndex) : undefined;
+    let targetTest = this._options.mergeTestCases ? parent._findTestByTitleAndRepeatEachIndex(jsonTest.title, jsonTest.repeatEachIndex) : undefined;
     if (!targetTest) {
       targetTest = new TeleTestCase(jsonTest.testId, jsonTest.title, this._absoluteLocation(jsonTest.location), jsonTest.repeatEachIndex);
       parent._addTest(targetTest);
@@ -590,6 +590,8 @@ export class TeleSuite implements reporterTypes.Suite {
   _retries: number | undefined;
   _project: TeleFullProject | undefined;
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
+  private _suiteByTitleMap = new Map<string, TeleSuite>();
+  private _testByTitleAndRepeatEachIndexMap = new Map<string, TeleTestCase>();
   private readonly _type: 'root' | 'project' | 'file' | 'describe';
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
@@ -639,14 +641,30 @@ export class TeleSuite implements reporterTypes.Suite {
     return this._project ?? this.parent?.project();
   }
 
+  _findSuiteByTitle(title: string): TeleSuite | undefined {
+    return this._suiteByTitleMap.get(title);
+  }
+
+  _findTestByTitleAndRepeatEachIndex(title: string, repeatEachIndex: number): TeleTestCase | undefined {
+    return this._testByTitleAndRepeatEachIndexMap.get(title + '\x1e' + repeatEachIndex);
+  }
+
+  _clear() {
+    this._entries = [];
+    this._suiteByTitleMap.clear();
+    this._testByTitleAndRepeatEachIndexMap.clear();
+  }
+
   _addTest(test: TeleTestCase) {
     test.parent = this;
     this._entries.push(test);
+    this._testByTitleAndRepeatEachIndexMap.set(test.title + '\x1e' + test.repeatEachIndex, test);
   }
 
   _addSuite(suite: TeleSuite) {
     suite.parent = this;
     this._entries.push(suite);
+    this._suiteByTitleMap.set(suite.title, suite);
   }
 }
 
