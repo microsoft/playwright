@@ -786,6 +786,26 @@ it('should support gzip compression', async function({ context, server }) {
   expect(await response.text()).toBe('Hello, world!');
 });
 
+it('should support case-insensitive content-encoding', async function({ context, server }) {
+  server.setRoute('/compressed-uppercase', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'GZIP',
+      'Content-Type': 'text/plain',
+    });
+
+    const gzip = zlib.createGzip();
+    pipeline(gzip, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    gzip.write('Hello, world!');
+    gzip.end();
+  });
+
+  const response = await context.request.get(server.PREFIX + '/compressed-uppercase');
+  expect(await response.text()).toBe('Hello, world!');
+});
+
 it('should throw informative error on corrupted gzip body', async function({ context, server }) {
   server.setRoute('/corrupted', (req, res) => {
     res.writeHead(200, {

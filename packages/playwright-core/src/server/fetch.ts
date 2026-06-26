@@ -504,7 +504,7 @@ export abstract class APIRequestContext extends SdkObject {
 
         let body: Readable = response;
         let transform: Transform | undefined;
-        const encoding = response.headers['content-encoding'];
+        const encoding = response.headers['content-encoding']?.toLowerCase();
         if (encoding === 'gzip' || encoding === 'x-gzip') {
           transform = zlib.createGunzip({
             flush: zlib.constants.Z_SYNC_FLUSH,
