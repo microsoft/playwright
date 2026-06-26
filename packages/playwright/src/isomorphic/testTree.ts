@@ -77,6 +77,17 @@ export class TestTree {
     };
     this._treeItemById.set(rootFolder, this.rootItem);
 
+    const groupItemsByTitle = new Map<GroupItem, Map<string, GroupItem>>();
+    const testCaseItemsByTitle = new Map<GroupItem, Map<string, TestCaseItem>>();
+    const lookupOrCreateMap = <T extends TreeItem>(map: Map<GroupItem, Map<string, T>>, parent: GroupItem): Map<string, T> => {
+      let result = map.get(parent);
+      if (!result) {
+        result = new Map();
+        map.set(parent, result);
+      }
+      return result;
+    };
+
     const visitSuite = (project: reporterTypes.FullProject, parentSuite: reporterTypes.Suite, parentGroup: GroupItem, mode: 'tests' | 'suites' | 'all') => {
       for (const suite of mode === 'tests' ? [] : parentSuite.suites) {
         if (!suite.title) {
@@ -85,7 +96,8 @@ export class TestTree {
           continue;
         }
 
-        let group = parentGroup.children.find(item => item.kind === 'group' && item.title === suite.title) as GroupItem | undefined;
+        const groupItems = lookupOrCreateMap(groupItemsByTitle, parentGroup);
+        let group = groupItems.get(suite.title);
         if (!group) {
           group = {
             kind: 'group',
@@ -100,13 +112,15 @@ export class TestTree {
             hasLoadErrors: false,
           };
           this._addChild(parentGroup, group);
+          groupItems.set(suite.title, group);
         }
         visitSuite(project, suite, group, 'all');
       }
 
       for (const test of mode === 'suites' ? [] : parentSuite.tests) {
         const title = test.title;
-        let testCaseItem = parentGroup.children.find(t => t.kind !== 'group' && t.title === title) as TestCaseItem;
+        const testCaseItems = lookupOrCreateMap(testCaseItemsByTitle, parentGroup);
+        let testCaseItem = testCaseItems.get(title);
         if (!testCaseItem) {
           testCaseItem = {
             kind: 'case',
@@ -123,6 +137,7 @@ export class TestTree {
             tags: test.tags,
           };
           this._addChild(parentGroup, testCaseItem);
+          testCaseItems.set(title, testCaseItem);
         }
 
         const result = test.results[0];
@@ -155,7 +170,7 @@ export class TestTree {
         };
         this._addChild(testCaseItem, testItem);
         this._treeItemByTestId.set(test.id, testItem);
-        testCaseItem.duration = (testCaseItem.children as TestItem[]).reduce((a, b) => a + b.duration, 0);
+        testCaseItem.duration += testItem.duration;
       }
     };
 
