@@ -41,16 +41,18 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
       />
 
       <div className='network-filters-resource-types' role='tablist' aria-multiselectable='true'>
-        <div
+        <button
           title='All'
           onClick={() => onFilterStateChange({ ...filterState, resourceTypes: new Set() })}
           className={`network-filters-resource-type ${filterState.resourceTypes.size === 0 ? 'selected' : ''}`}
+          role='tab'
+          aria-selected={filterState.resourceTypes.size === 0}
         >
           All
-        </div>
+        </button>
 
         {resourceTypes.map(resourceType => (
-          <div
+          <button
             key={resourceType}
             title={resourceType}
             onClick={event => {
@@ -67,7 +69,7 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
             aria-selected={filterState.resourceTypes.has(resourceType)}
           >
             {resourceType}
-          </div>
+          </button>
         ))}
       </div>
     </div>
