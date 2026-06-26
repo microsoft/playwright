@@ -18,7 +18,7 @@ import path from 'path';
 import { defineConfig } from '@playwright/test';
 import type { ReporterDescription } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
-loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
+loadEnv({ path: path.join(__dirname, '..', '..', '.env'), quiet: true });
 
 const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [

@@ -15,7 +15,7 @@ Playwright comes with `playwright-cli`, a command-line interface for browser aut
 ## Prerequisites
 
 Before you begin, make sure you have the following installed:
-- [Node.js](https://nodejs.org/) 18 or newer
+- [Node.js](https://nodejs.org/) 20 or newer
 - A coding agent: Claude Code, GitHub Copilot, or similar
 
 ## Installation

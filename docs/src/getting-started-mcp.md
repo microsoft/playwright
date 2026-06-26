@@ -10,7 +10,7 @@ The Playwright MCP server provides browser automation capabilities through the [
 ## Prerequisites
 
 Before you begin, make sure you have the following installed:
-- [Node.js](https://nodejs.org/) 18 or newer
+- [Node.js](https://nodejs.org/) 20 or newer
 - An MCP client: VS Code, Cursor, Windsurf, Claude Code, Claude Desktop, or similar
 
 ## Getting Started

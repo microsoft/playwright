@@ -99,7 +99,7 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
   };
 
   // Vite 5 refuses to support CJS.
-  const { mergeConfig } = await import('vite');
+  const { mergeConfig, transformWithOxc } = await import('vite');
 
   // Apply user config on top of the base config. This could have changed root and build.outDir.
   const userConfig = typeof use.ctViteConfig === 'function' ? await use.ctViteConfig() : (use.ctViteConfig || {});
@@ -108,20 +108,24 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
   const frameworkOverrides: UserConfig = { plugins: [] };
 
   // React heuristic. If we see a component in a file with .js extension,
-  // consider it a potential JSX-in-JS scenario and enable JSX loader for all
-  // .js files.
+  // consider it a potential JSX-in-JS scenario and parse JSX in all .js files.
+  // Vite's default transform (oxc) infers the language from the file extension
+  // and rejects JSX in .js files, so we lower it ahead of time with an explicit
+  // `lang: 'jsx'` and the automatic runtime (no `import React` required).
+  const jsxInJsPlugins: Plugin[] = [];
   if (supportJsxInJs) {
     log('jsx-in-js detected');
-    frameworkOverrides.esbuild = {
-      loader: 'jsx',
-      include: /.*\.jsx?$/,
-      exclude: [],
-    };
-    frameworkOverrides.optimizeDeps = {
-      esbuildOptions: {
-        loader: { '.js': 'jsx' },
-      }
-    };
+    jsxInJsPlugins.push({
+      name: 'playwright:jsx-in-js',
+      enforce: 'pre',
+      async transform(code: string, id: string) {
+        const file = id.split(/[?#]/)[0];
+        if (!file.endsWith('.js') || file.includes(`${path.sep}node_modules${path.sep}`))
+          return null;
+        const result = await transformWithOxc(code, file, { lang: 'jsx', jsx: { runtime: 'automatic' } } as any);
+        return { code: result.code, map: result.map as any };
+      },
+    });
   }
 
   frameworkOverrides.build = {
@@ -138,7 +142,9 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
 
   // We assume that any non-empty plugin list includes `vite-react` or similar.
   if (frameworkPluginFactory && !baseAndUserConfig.plugins?.length)
-    frameworkOverrides.plugins = [await frameworkPluginFactory()];
+    frameworkOverrides.plugins = [...jsxInJsPlugins, await frameworkPluginFactory()];
+  else
+    frameworkOverrides.plugins = [...(frameworkOverrides.plugins || []), ...jsxInJsPlugins];
 
   return mergeConfig(baseAndUserConfig, frameworkOverrides);
 }

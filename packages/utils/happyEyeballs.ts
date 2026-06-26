@@ -18,6 +18,7 @@ import dns from 'dns';
 import http from 'http';
 import https from 'https';
 import net from 'net';
+import stream from 'stream';
 import tls from 'tls';
 
 import { assert } from '@isomorphic/assert';
@@ -34,20 +35,22 @@ const kDNSLookupAt = Symbol('kDNSLookupAt');
 const kTCPConnectionAt = Symbol('kTCPConnectionAt');
 
 class HttpHappyEyeballsAgent extends http.Agent {
-  createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
+  override createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket: stream.Duplex) => void): stream.Duplex | undefined {
     // There is no ambiguity in case of IP address.
     if (net.isIP(clientRequestArgsToHostName(options)))
       return net.createConnection(options as net.NetConnectOpts);
-    createConnectionAsync(options, oncreate, /* useTLS */ false).catch(err => oncreate?.(err));
+    const cb = oncreate as unknown as ((err: Error | null, socket?: net.Socket) => void) | undefined;
+    createConnectionAsync(options, cb, /* useTLS */ false).catch(err => cb?.(err));
   }
 }
 
 class HttpsHappyEyeballsAgent extends https.Agent {
-  createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
+  override createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket: stream.Duplex) => void): stream.Duplex | undefined {
     // There is no ambiguity in case of IP address.
     if (net.isIP(clientRequestArgsToHostName(options)))
       return tls.connect(options as tls.ConnectionOptions);
-    createConnectionAsync(options, oncreate, /* useTLS */ true).catch(err => oncreate?.(err));
+    const cb = oncreate as unknown as ((err: Error | null, socket?: tls.TLSSocket) => void) | undefined;
+    createConnectionAsync(options, cb, /* useTLS */ true).catch(err => cb?.(err));
   }
 }
 

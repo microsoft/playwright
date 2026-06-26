@@ -84,7 +84,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
           await new Promise<void>(resolve => {
             readable.on('close', resolve);
             readable.on('end', resolve);
-            readable.on('error', resolve);
+            readable.on('error', () => resolve());
           });
         } catch (e) {
           reject(e);
