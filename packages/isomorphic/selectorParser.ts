@@ -132,7 +132,7 @@ export function stringifySelector(selector: string | ParsedSelector, forceEngine
     if (!forceEngineName && i !== selector.capture) {
       if (p.name === 'css')
         includeEngine = false;
-      else if (p.name === 'xpath' && p.source.startsWith('//') || p.source.startsWith('..'))
+      else if (p.name === 'xpath' && (p.source.startsWith('//') || p.source.startsWith('..')))
         includeEngine = false;
     }
     const prefix = includeEngine ? p.name + '=' : '';
