@@ -133,11 +133,17 @@ const initializeServer = async (server: ServerType, factory: ServerBackendFactor
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
   if (capabilities?.roots) {
-    const { roots } = await server.listRoots().catch(e => {
-      serverDebug(e);
-      return { roots: [] };
-    });
-    clientRoots = roots;
+    // mcp sdk opens the standalone SSE channel lazily after sending `initialized`.
+    // If the first tool call comes before, `listRoots` is dropped on the server with no stream to send it on.
+    for (let i = 0; i < 2; i++) {
+      try {
+        const { roots } = await server.listRoots(undefined, { timeout: 2_000 });
+        clientRoots = roots;
+        break;
+      } catch (e) {
+        serverDebug(e);
+      }
+    }
   }
 
   const clientInfo: ClientInfo = {
