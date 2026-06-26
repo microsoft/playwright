@@ -161,6 +161,25 @@ test('should generate separate actual results for repeating names', async ({ run
   ]);
 });
 
+test('should not attach a missing expected snapshot when update-snapshots is none', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test.afterEach(async ({}, testInfo) => {
+        console.log('## ' + JSON.stringify(testInfo.attachments.map(a => a.name)));
+      });
+      test('is a test', ({}) => {
+        expect.soft('a').toMatchSnapshot('foo.txt');
+      });
+    `
+  }, { 'update-snapshots': 'none' });
+  expect(result.exitCode).toBe(1);
+  const names = result.output.split('\n').filter(l => l.startsWith('## ')).map(l => JSON.parse(l.substring(3)))[0];
+  expect(names).toContain('foo-actual.txt');
+  expect(names).not.toContain('foo-expected.txt');
+});
+
 test('should compile with different option combinations', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
