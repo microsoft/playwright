@@ -44,6 +44,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
     testList: opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined,
     testListInvert: opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined,
     shardWeights: resolveShardWeightsOption(),
+    shardMode: resolveShardModeOption(),
   };
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
@@ -208,6 +209,15 @@ function resolveShardWeightsOption(): TestRunOptions['shardWeights'] {
       throw new Error(`PWTEST_SHARD_WEIGHTS="${shardWeights}" weights must be non-negative numbers`);
     return weight;
   });
+}
+
+function resolveShardModeOption(): TestRunOptions['shardMode'] {
+  const shardMode = process.env.PWTEST_SHARD_MODE;
+  if (!shardMode)
+    return undefined;
+  if (shardMode !== 'partition' && shardMode !== 'balanced')
+    throw new Error(`PWTEST_SHARD_MODE="${shardMode}" must be "partition" or "balanced"`);
+  return shardMode;
 }
 
 function resolveReporter(id: string) {

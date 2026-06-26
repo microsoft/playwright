@@ -39,6 +39,14 @@ When `fullyParallel: true` is enabled, Playwright Test runs individual tests in 
 
 Without the fullyParallel setting, Playwright Test defaults to file-level granularity, meaning entire test files are assigned to shards (note that the same file may be assigned to different shards across different projects). In this case, the number of tests per file can greatly influence shard distribution. If your test files are not evenly sized (i.e., some files contain many more tests than others), certain shards may end up running significantly more tests, while others may run fewer or even none.
 
+**Balanced sharding (opt-in)**
+
+When you cannot enable `fullyParallel: true` (for example, when each worker reuses shared setup), set the `PWTEST_SHARD_MODE=balanced` environment variable. Instead of splitting by test index, Playwright bin-packs whole test files across shards by their number of tests (largest file first), so every shard receives work as long as there are at least as many files as shards — avoiding empty shards on unevenly sized files. The assignment is deterministic and requires no coordination between shards. The `--shard=x/y` option is unchanged.
+
+```bash
+PWTEST_SHARD_MODE=balanced npx playwright test --shard=1/3
+```
+
 **Key Takeaways:**
 
 - **With** `fullyParallel: true`: Tests are split at the individual test level, leading to more balanced shard execution.

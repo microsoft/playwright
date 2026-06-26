@@ -357,3 +357,42 @@ test('should respect custom shard weights', async ({ runInlineTest }) => {
     ]);
   });
 });
+
+test.describe('PWTEST_SHARD_MODE=balanced', () => {
+  // Uneven, non-parallel files (sharded whole-file). Named so discovery order puts the largest
+  // file last, which makes the default index-range split leave a shard empty.
+  const mkSpec = (name: string, count: number) =>
+    `import { test } from '@playwright/test';\n` +
+    Array.from({ length: count }, (_, i) => `test('${name}${i}', async () => { console.log('\\n%%${name}${i}'); });`).join('\n');
+  const unevenFiles = {
+    'a-small.spec.ts': mkSpec('small', 1),
+    'b-mid.spec.ts': mkSpec('mid', 5),
+    'c-big.spec.ts': mkSpec('big', 8),
+  };
+
+  test('default split leaves a shard empty for uneven files', async ({ runInlineTest }) => {
+    const passed: number[] = [];
+    for (let i = 1; i <= 3; i++)
+      passed.push((await runInlineTest(unevenFiles, { shard: `${i}/3`, workers: 1 })).passed);
+    expect(passed).toContain(0);
+    expect(passed.reduce((a, b) => a + b, 0)).toBe(14);
+  });
+
+  test('balanced split fills every shard and runs each test once', async ({ runInlineTest }) => {
+    const env = { PWTEST_SHARD_MODE: 'balanced' };
+    const passed: number[] = [];
+    for (let i = 1; i <= 3; i++) {
+      const result = await runInlineTest(unevenFiles, { shard: `${i}/3`, workers: 1 }, env);
+      expect(result.exitCode).toBe(0);
+      passed.push(result.passed);
+    }
+    expect(passed).not.toContain(0);
+    expect(passed.reduce((a, b) => a + b, 0)).toBe(14);
+  });
+
+  test('rejects an invalid mode', async ({ runInlineTest }) => {
+    const result = await runInlineTest(unevenFiles, { shard: '1/3', workers: 1 }, { PWTEST_SHARD_MODE: 'nope' });
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('PWTEST_SHARD_MODE="nope" must be "partition" or "balanced"');
+  });
+});

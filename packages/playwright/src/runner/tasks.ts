@@ -74,6 +74,7 @@ export type TestRunOptions = {
   preserveOutputDir?: boolean;
   additionalReporters?: ReporterDescription[];
   shardWeights?: number[];
+  shardMode?: 'partition' | 'balanced';
 };
 
 export type TestPausedParams = {

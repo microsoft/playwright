@@ -177,7 +177,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
 
     // Shard test groups.
-    const testGroupsInThisShard = filterForShard(config.config.shard, testRun.options.shardWeights, testGroups);
+    const testGroupsInThisShard = filterForShard(config.config.shard, testRun.options.shardWeights, testGroups, testRun.options.shardMode);
     const testsInThisShard = new Set<testNs.TestCase>();
     for (const group of testGroupsInThisShard) {
       for (const test of group.tests)

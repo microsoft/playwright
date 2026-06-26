@@ -130,7 +130,30 @@ export function createTestGroups(projectSuite: test.Suite, expectedParallelism: 
   return result;
 }
 
-export function filterForShard(shard: { total: number, current: number }, weights: number[] | undefined, testGroups: TestGroup[]): Set<TestGroup> {
+// Opt-in 'balanced' sharding: bin-pack whole test groups across shards by test count
+// (Longest-Processing-Time: heaviest group → lightest shard). Unlike the default index-range
+// split, this never leaves a shard empty when there are at least as many groups as shards, and
+// keeps every shard's test count close. It is deterministic and stateless: each shard independently
+// computes the same packing (stable order, tie-broken by requireFile), so no coordination is needed.
+function balancedShardGroups(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
+  const bins = Array.from({ length: shard.total }, () => ({ weight: 0, groups: [] as TestGroup[] }));
+  const sorted = [...testGroups].sort((a, b) => b.tests.length - a.tests.length || a.requireFile.localeCompare(b.requireFile));
+  for (const group of sorted) {
+    let lightest = bins[0];
+    for (const bin of bins) {
+      if (bin.weight < lightest.weight)
+        lightest = bin;
+    }
+    lightest.groups.push(group);
+    lightest.weight += group.tests.length;
+  }
+  return new Set(bins[shard.current - 1].groups);
+}
+
+export function filterForShard(shard: { total: number, current: number }, weights: number[] | undefined, testGroups: TestGroup[], mode?: 'partition' | 'balanced'): Set<TestGroup> {
+  if (mode === 'balanced')
+    return balancedShardGroups(shard, testGroups);
+
   weights ??= Array.from({ length: shard.total }, () => 1);
   if (weights.length !== shard.total)
     throw new Error(`PWTEST_SHARD_WEIGHTS number of weights must match the shard total of ${shard.total}`);
