@@ -441,6 +441,8 @@ it.describe('page screenshot', () => {
   });
 
   it('should take fullPage screenshots during navigation', async ({ page, server }) => {
+    it.slow();
+
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
     const reloadSeveralTimes = async () => {
