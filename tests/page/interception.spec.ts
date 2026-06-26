@@ -122,6 +122,11 @@ it('should work with glob', async () => {
   expect(urlMatches('http://playwright.dev', 'http://playwright.dev/?x=y', '?x=y')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/foo/bar?x=y', './bar?x=y')).toBeTruthy();
 
+  // '$$', '$&', '$`' and "$'" are special in String.prototype.replace with a string argument.
+  expect(urlMatches(undefined, 'http://playwright.dev/foo$$bar', 'http://playwright.dev/foo$$bar')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/a$&b', 'http://playwright.dev/a$&b')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev', 'http://playwright.dev/p$$q', './p$$q')).toBeTruthy();
+
   // Case insensitive matching
   expect(urlMatches(undefined, 'https://playwright.dev/fooBAR', 'HtTpS://pLaYwRiGhT.dEv/fooBAR')).toBeTruthy();
   expect(urlMatches('http://ignored', 'https://playwright.dev/fooBAR', 'HtTpS://pLaYwRiGhT.dEv/fooBAR')).toBeTruthy();
