@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, parseSerializedFile, serializeAsCallArgument, serializeFile  } from '@isomorphic/utilityScriptSerializers';
 
 type NameValue = { name: string, value: string };
 
@@ -42,15 +42,34 @@ type IndexedDBDatabase = {
   }[],
 };
 
+export type FSEntry = {
+  type: 'file' | 'folder';
+  name: string;
+};
+
+export type FSFile = FSEntry & {
+  type: 'file';
+  base64: string;
+  contentType: string;
+  lastModified: number;
+};
+
+export type FSFolder = FSEntry & {
+  type: 'folder';
+  entries: (FSFile | FSFolder)[];
+};
+
 type SetOriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
+  opfs?: FSFolder
 };
 
 export type SerializedStorage = {
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
+  opfs?: FSFolder
 };
 
 export class StorageScript {
@@ -166,17 +185,57 @@ export class StorageScript {
     };
   }
 
-  async collect(recordIndexedDB: boolean): Promise<SerializedStorage> {
-    const localStorage = Object.keys(this._global.localStorage).map(name => ({ name, value: this._global.localStorage.getItem(name)! }));
-    if (!recordIndexedDB)
-      return { localStorage };
-    try {
-      const databases = await this._global.indexedDB.databases();
-      const indexedDB = await Promise.all(databases.map(db => this._collectDB(db)));
-      return { localStorage, indexedDB };
-    } catch (e) {
-      throw new Error('Unable to serialize IndexedDB: ' + e.message);
+  private async _collectOPFS(root: FileSystemDirectoryHandle): Promise<FSFolder> {
+    async function walk(base: FileSystemDirectoryHandle) {
+      const tree: Array<FSFile|FSFolder> = [];
+
+      for await (const [name, entry] of base) {
+        if (entry instanceof FileSystemFileHandle) {
+          tree.push(
+              await serializeFile(await entry.getFile())
+          );
+        } else {
+          tree.push({
+            type: 'folder',
+            name, entries: await walk(entry)
+          });
+        }
+
+      }
+
+      return walk(base);
     }
+
+    return {
+      type: 'folder',
+      name: '',
+      entries: await walk(root)
+    };
+  }
+
+  async collect(record: {indexedDB: boolean, opfs: boolean}): Promise<SerializedStorage> {
+    const localStorage = Object.keys(this._global.localStorage).map(name => ({ name, value: this._global.localStorage.getItem(name)! }));
+
+    const collected: SerializedStorage = { localStorage };
+
+    if (record.indexedDB) {
+      try {
+        const databases = await this._global.indexedDB.databases();
+        collected.indexedDB = await Promise.all(databases.map(db => this._collectDB(db)));
+      } catch (e) {
+        throw new Error('Unable to serialize IndexedDB: ' + e.message);
+      }
+    }
+
+    if (record.opfs) {
+      try {
+        collected.opfs = await this._collectOPFS(await this._global.navigator.storage.getDirectory());
+      } catch (e) {
+        throw new Error('Unable to serialize OPFS: '  + e.message);
+      }
+    }
+
+    return collected;
   }
 
   private async _restoreDB(dbInfo: IndexedDBDatabase) {
@@ -209,6 +268,27 @@ export class StorageScript {
     }));
   }
 
+  private async _restoreOPFS(tree: FSFolder) {
+    async function walk(base: FileSystemDirectoryHandle, tree: FSFolder) {
+
+      for (const entry of tree.entries) {
+        if (entry.type === 'file') {
+          const handle = await base.getFileHandle(entry.name, { create: true });
+          const writable = await handle.createWritable();
+          const writer = writable.getWriter();
+          await writer.write(parseSerializedFile(entry));
+          await writer.close()
+        } else {
+          const directory = await base.getDirectoryHandle(entry.name, { create: true });
+          await walk(directory, entry);
+        }
+      }
+    }
+
+    const root = await this._global.navigator.storage.getDirectory();
+    await walk(root, tree);
+  }
+
   async restore(originState: SetOriginStorage | undefined) {
     // Clean Service Workers.
     const registrations = this._global.navigator.serviceWorker ? await this._global.navigator.serviceWorker.getRegistrations() : [];
@@ -239,5 +319,18 @@ export class StorageScript {
     this._global.localStorage.clear();
     for (const { name, value } of (originState?.localStorage || []))
       this._global.localStorage.setItem(name, value);
+
+    try {
+      // Clear everything
+      const root = await this._global.navigator.storage.getDirectory();
+      for await (const name of root.keys())
+        await root.removeEntry(name, { recursive: true });
+
+
+      await this._restoreOPFS(originState?.opfs ?? []);
+
+    } catch (e) {
+      throw new Error('Unable to restore OPFS: ' + e.message);
+    }
   }
 }

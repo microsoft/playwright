@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { FSFile } from '@injected/storageScript';
+
 type TypedArrayKind = 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64';
 
 export type SerializedValue =
@@ -187,6 +189,28 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
 
 export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
   return serialize(value, handleSerializer, { visited: new Map(), lastId: 0 });
+}
+
+// Getting a File object's contents requires async
+export async function serializeFile(value: File): Promise<FSFile> {
+  return {
+    name: value.name,
+    base64: typedArrayToBase64(await value.bytes()),
+    lastModified: value.lastModified,
+    contentType: value.type,
+    type: 'file',
+  };
+}
+
+export function parseSerializedFile(value: FSFile): File {
+  return new File(
+    [base64ToTypedArray(value.base64, Uint8Array)],
+    value.name,
+    {
+      type: value.contentType,
+      lastModified: value.lastModified
+    }
+  )
 }
 
 function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {

@@ -265,8 +265,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     });
   }
 
-  async storageState(options: { path?: string, indexedDB?: boolean } = {}): Promise<StorageState> {
-    const state = await this._channel.storageState({ indexedDB: options.indexedDB });
+  async storageState(options: { path?: string, indexedDB?: boolean, opfs?: boolean } = {}): Promise<StorageState> {
+    const state = await this._channel.storageState({ indexedDB: options.indexedDB, opfs: options.opfs });
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
