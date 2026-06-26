@@ -20,7 +20,6 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { execFile } from 'child_process';
 import { Disposable } from '@isomorphic/disposable';
-import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { createClientInfo } from '../cli-client/registry';
 
@@ -46,7 +45,7 @@ export class DashboardConnection implements Transport {
   private _onconnected?: () => void;
   private _pushTabsScheduled = false;
   private _visible = true;
-  private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string; done: ManualPromise<void> } | undefined;
+  private _pendingReveal: { sessionName?: string; workspaceDir?: string; pageId?: string } | undefined;
   private _pendingAnnotate: { resolve: (result: AnnotateResult) => void; dispose: () => void } | undefined;
 
   _recordingDir: string;
@@ -83,8 +82,6 @@ export class DashboardConnection implements Transport {
     this._provider.dispose();
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
-    // Reject any in-flight reveal so callers awaiting it don't hang.
-    this._pendingReveal?.done.reject(new Error('Dashboard connection closed'));
     this._pendingReveal = undefined;
     this._resolvePendingAnnotate({ type: 'cancelled' });
     for (const stream of this._streams.values()) {
@@ -144,29 +141,14 @@ export class DashboardConnection implements Transport {
     await this._attachedPage?.setScreencastActive(params.visible);
   }
 
-  revealSession(sessionName: string, workspaceDir?: string): Promise<void> {
-    const existing = this._pendingReveal;
-    if (existing
-        && existing.pageId === undefined
-        && existing.sessionName === sessionName
-        && existing.workspaceDir === workspaceDir)
-      return existing.done;
-    existing?.done.reject(new Error('Reveal superseded'));
-    const done = new ManualPromise<void>();
-    this._pendingReveal = { sessionName, workspaceDir, done };
+  revealSession(sessionName: string, workspaceDir?: string) {
+    this._pendingReveal = { sessionName, workspaceDir };
     void this._tryRevealPending();
-    return done;
   }
 
-  revealPage(pageId: string): Promise<void> {
-    const existing = this._pendingReveal;
-    if (existing && existing.pageId === pageId)
-      return existing.done;
-    existing?.done.reject(new Error('Reveal superseded'));
-    const done = new ManualPromise<void>();
-    this._pendingReveal = { pageId, done };
+  revealPage(pageId: string) {
+    this._pendingReveal = { pageId };
     void this._tryRevealPending();
-    return done;
   }
 
   private async _tryRevealPending() {
@@ -188,10 +170,8 @@ export class DashboardConnection implements Transport {
     try {
       await this._switchAttachedTo(page);
       this._pushTabs();
-      pending.done.resolve();
-    } catch (e) {
-      pending.done.reject(e instanceof Error ? e : new Error(String(e)));
-      throw e;
+    } catch {
+      // Best-effort: a failed reveal leaves the dashboard on its current page.
     }
   }
 
