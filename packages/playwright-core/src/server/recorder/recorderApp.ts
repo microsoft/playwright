@@ -177,8 +177,6 @@ export class RecorderApp {
   }
 
   static async show(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
-    if (process.env.PW_CODEGEN_NO_INSPECTOR)
-      return;
     const recorder = await Recorder.forContext(context, params);
     if (params.recorderMode === 'api') {
       const browserName = context._browser.options.name;
@@ -193,8 +191,6 @@ export class RecorderApp {
   }
 
   static showInspectorNoReply(context: BrowserContext) {
-    if (process.env.PW_CODEGEN_NO_INSPECTOR)
-      return;
     void Recorder.forContext(context, {}).then(recorder => RecorderApp._show(recorder, context, {})).catch(() => {});
   }
 

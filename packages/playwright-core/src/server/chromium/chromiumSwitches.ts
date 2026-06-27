@@ -64,7 +64,7 @@ export const chromiumSwitches = (options?: { android?: boolean }) => [
   '--disable-edgeupdater', // Disables Edge-specific updater on mac.
   '--disable-extensions',
   '--disable-features=' + disabledFeatures.join(','),
-  process.env.PLAYWRIGHT_LEGACY_SCREENSHOT ? '' : '--enable-features=CDPScreenshotNewSurface',
+  '--enable-features=CDPScreenshotNewSurface',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',
