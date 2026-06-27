@@ -1167,6 +1167,12 @@ async function emulateTimezone(session: CRSession, timezoneId: string) {
   }
 }
 
+const ANDROID_VERSION_RE = /Android (\d+(\.\d+)?(\.\d+)?)/;
+const IPHONE_OS_VERSION_RE = /iPhone OS (\d+(_\d+)?)/;
+const IPAD_OS_VERSION_RE = /iPad; CPU OS (\d+(_\d+)?)/;
+const MAC_OS_VERSION_RE = /Mac OS X (\d+(_\d+)?(_\d+)?)/;
+const WINDOWS_VERSION_RE = /Windows\D+(\d+(\.\d+)?(\.\d+)?)/;
+
 // Chromium reference: https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc;l=434;drc=70a6711e08e9f9e0d8e4c48e9ba5cab62eb010c2
 export function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   const ua = options.userAgent;
@@ -1179,11 +1185,11 @@ export function calculateUserAgentMetadata(options: types.BrowserContextOptions)
     platform: 'Windows',
     platformVersion: '',
   };
-  const androidMatch = ua.match(/Android (\d+(\.\d+)?(\.\d+)?)/);
-  const iPhoneMatch = ua.match(/iPhone OS (\d+(_\d+)?)/);
-  const iPadMatch = ua.match(/iPad; CPU OS (\d+(_\d+)?)/);
-  const macOSMatch = ua.match(/Mac OS X (\d+(_\d+)?(_\d+)?)/);
-  const windowsMatch = ua.match(/Windows\D+(\d+(\.\d+)?(\.\d+)?)/);
+  const androidMatch = ua.match(ANDROID_VERSION_RE);
+  const iPhoneMatch = ua.match(IPHONE_OS_VERSION_RE);
+  const iPadMatch = ua.match(IPAD_OS_VERSION_RE);
+  const macOSMatch = ua.match(MAC_OS_VERSION_RE);
+  const windowsMatch = ua.match(WINDOWS_VERSION_RE);
   if (androidMatch) {
     metadata.platform = 'Android';
     metadata.platformVersion = androidMatch[1];

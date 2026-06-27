@@ -784,13 +784,15 @@ function createHarEntry(pageRef: string | undefined, method: string, url: URL, f
   return harEntry;
 }
 
+const SEMICOLON_SPLIT_RE = /; */;
+
 function parseCookie(c: string): har.Cookie {
   const cookie: har.Cookie = {
     name: '',
     value: ''
   };
   let first = true;
-  for (const pair of c.split(/; */)) {
+  for (const pair of c.split(SEMICOLON_SPLIT_RE)) {
     const indexOfEquals = pair.indexOf('=');
     const name = indexOfEquals !== -1 ? pair.substr(0, indexOfEquals).trim() : pair.trim();
     const value = indexOfEquals !== -1 ? pair.substr(indexOfEquals + 1, pair.length).trim() : '';
