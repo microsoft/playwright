@@ -22,6 +22,7 @@ import type { Route } from 'playwright-core';
 import path from 'path';
 import fs from 'fs';
 import { comparePNGs } from '../config/comparator';
+import { PNG } from 'playwright-core/lib/utilsBundle';
 
 it.describe('page screenshot', () => {
   it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
@@ -572,6 +573,28 @@ it.describe('page screenshot', () => {
         mask: [page.locator('div').nth(5)],
         maskColor: '#00FF00',
       })).toMatchSnapshot('mask-color-should-work.png');
+    });
+
+    it('should not be affected by page ::backdrop styles', async ({ page }) => {
+      // Regression test for https://github.com/microsoft/playwright/issues/41504
+      await page.setViewportSize({ width: 200, height: 200 });
+      await page.setContent(`
+        <style>
+          html, body { margin: 0; padding: 0; }
+          body { background: rgb(255, 255, 255); }
+          ::backdrop { background: rgba(0, 0, 0, 0.5); }
+          #target { position: absolute; top: 100px; left: 100px; width: 50px; height: 50px; background: rgb(0, 0, 0); }
+        </style>
+        <div id="target"></div>
+      `);
+      const screenshot = await page.screenshot({ mask: [page.locator('#target')] });
+      const decoded = PNG.sync.read(screenshot);
+      // A pixel away from the mask must stay white. Before the fix, the page ::backdrop
+      // rule leaked onto the glass pane's top-layer backdrop and tinted the whole viewport.
+      const index = (10 * decoded.width + 10) * 4;
+      expect(decoded.data[index]).toBeGreaterThan(250);
+      expect(decoded.data[index + 1]).toBeGreaterThan(250);
+      expect(decoded.data[index + 2]).toBeGreaterThan(250);
     });
 
     it('should hide elements based on attr', async ({ page, server }) => {

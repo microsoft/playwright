@@ -109,6 +109,22 @@ export class Highlight {
     this._glassPaneShadow.appendChild(this._actionCursorElement);
     this._glassPaneShadow.appendChild(this._titleElement);
     this._glassPaneShadow.appendChild(this._userOverlayContainer);
+    // The glass pane is promoted to the top layer via the popover API, which renders a
+    // ::backdrop pseudo-element. Its ::backdrop lives in the light DOM and is therefore
+    // styled by page stylesheets, so page rules targeting ::backdrop would bleed onto it
+    // and tint screenshots (including masked screenshots). Neutralize it from a
+    // document-level stylesheet, since the shadow stylesheet cannot reach the host ::backdrop.
+    // https://github.com/microsoft/playwright/issues/41504
+    const backdropCSS = 'x-pw-glass::backdrop { background: transparent !important; }';
+    if (typeof document.adoptedStyleSheets.push === 'function') {
+      const backdropSheet = new this._injectedScript.window.CSSStyleSheet();
+      backdropSheet.replaceSync(backdropCSS);
+      document.adoptedStyleSheets.push(backdropSheet);
+    } else {
+      const backdropStyleElement = document.createElement('style');
+      backdropStyleElement.textContent = backdropCSS;
+      document.documentElement?.appendChild(backdropStyleElement);
+    }
   }
 
   install() {
