@@ -15,7 +15,7 @@
  */
 
 export interface Disposable {
-  dispose: () => Promise<void>;
+  dispose: () => void;
 }
 
 export async function disposeAll(disposables: Disposable[]) {

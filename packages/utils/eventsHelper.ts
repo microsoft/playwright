@@ -24,7 +24,7 @@ export type RegisteredListener = {
   emitter: EventEmitterLike;
   eventName: (string | symbol);
   handler: (...args: any[]) => void;
-  dispose: () => Promise<void>;
+  dispose: () => void;
 };
 
 class EventsHelper {
@@ -33,7 +33,7 @@ class EventsHelper {
     eventName: (string | symbol),
     handler: (...args: any[]) => void): RegisteredListener {
     emitter.on(eventName, handler);
-    return { emitter, eventName, handler, dispose: async () => { emitter.removeListener(eventName, handler); } };
+    return { emitter, eventName, handler, dispose: () => { emitter.removeListener(eventName, handler); } };
   }
 
   static removeEventListeners(listeners: Array<{
