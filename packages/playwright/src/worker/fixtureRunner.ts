@@ -158,11 +158,8 @@ class Fixture {
   private async _teardownInternal() {
     if (typeof this.registration.fn !== 'function')
       return;
-    if (this._usages.size !== 0) {
-      // TODO: replace with assert.
-      console.error('Internal error: fixture integrity at', this._teardownDescription.title);  // eslint-disable-line no-console
-      this._usages.clear();
-    }
+    if (this._usages.size !== 0)
+      throw new Error(`Internal error: fixture integrity at ${this._teardownDescription.title}`);
     if (this._useFuncFinished) {
       this._useFuncFinished.resolve();
       this._useFuncFinished = undefined;
