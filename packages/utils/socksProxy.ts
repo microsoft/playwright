@@ -293,12 +293,17 @@ function hexToNumber(hex: string): number {
   }, 0);
 }
 
-function ipToSocksAddress(address: string): number[] {
-  // Node.js may return IPv4-mapped IPv6 addresses (e.g. "::ffff:10.0.0.1") from
-  // socket.localAddress on dual-stack systems. Unwrap them to plain IPv4.
-  const ipv4Mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
-  if (ipv4Mapped)
-    address = ipv4Mapped[1];
+function embeddedIPv4Address(address: string): string | undefined {
+  if (!net.isIPv6(address))
+    return;
+  const match = /(?:^|:)(\d{1,3}(?:\.\d{1,3}){3})$/.exec(address);
+  return match && net.isIPv4(match[1]) ? match[1] : undefined;
+}
+
+export function ipToSocksAddress(address: string): number[] {
+  const embeddedIPv4 = embeddedIPv4Address(address);
+  if (embeddedIPv4)
+    address = embeddedIPv4;
   if (net.isIPv4(address)) {
     return [
       0x01, // IPv4

@@ -16,7 +16,14 @@
 
 import { setupSocksForwardingServer } from '../config/proxy';
 import { playwrightTest as it, expect } from '../config/browserTest';
+import { ipToSocksAddress } from '../../packages/utils/socksProxy';
 import net from 'net';
+
+it('should encode IPv6 addresses with embedded IPv4 tails as IPv4 SOCKS addresses', async () => {
+  expect(ipToSocksAddress('::ffff:192.168.0.35')).toEqual([0x01, 192, 168, 0, 35]);
+  expect(ipToSocksAddress('0:0:0:0:0:ffff:192.168.0.35')).toEqual([0x01, 192, 168, 0, 35]);
+  expect(ipToSocksAddress('64:ff9b::192.168.0.35')).toEqual([0x01, 192, 168, 0, 35]);
+});
 
 it('should throw for bad server value', async ({ browserType }) => {
   const error = await browserType.launch({
