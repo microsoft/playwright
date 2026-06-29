@@ -867,6 +867,20 @@ it('should work with Array.from/map', async ({ page }) => {
   })).toBe('([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})');
 });
 
+it('should work with a using declaration', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41511' });
+  it.skip(+process.versions.node.split('.')[0] < 24, 'using is lowered to a module-scope helper that does not survive evaluate serialization on Node < 24');
+  const disposed = await page.evaluate(() => {
+    let disposed = false;
+    {
+      using r = { [Symbol.dispose]: () => { disposed = true; } };
+      void r;
+    }
+    return disposed;
+  });
+  expect(disposed).toBe(true);
+});
+
 it('should ignore dangerous object keys', async ({ page }) => {
   const input = {
     __proto__: { polluted: true },
