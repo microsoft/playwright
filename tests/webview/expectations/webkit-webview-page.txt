@@ -709,3 +709,11 @@ page/page-wait-for-url.spec.ts › should work with history.replaceState() [fail
 page/page-wait-for-url.spec.ts › should work with url match for same document navigations [fail]
 page/retarget.spec.ts › should check the box outside shadow dom label [fail]
 
+# ============================================================================
+# busy-main-thread  (1 test)
+# This test deliberately infinite loops the WebProcess, which the shared MobileSafari
+# can't recover from without a full process restart. Left to run, its teardown would
+# exhaust the page fixture timeout and expensively recycle the worker on every shard.
+# ============================================================================
+page/page-set-content.spec.ts › should handle timeout properly 2 [fail]
+
