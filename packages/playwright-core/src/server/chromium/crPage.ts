@@ -557,7 +557,10 @@ class FrameSession {
       this._parentSession._childSessions.delete(this);
     eventsHelper.removeEventListeners(this._eventListeners);
     this._crPage._networkManager.removeSession(this._client);
-    this._crPage._sessions.delete(this._targetId);
+    // FIX: Only delete from the map if we are still the session mapped to this targetId.
+    // This prevents clobbering a new session that may have taken over during a cross-process navigation.
+    if (this._crPage._sessions.get(this._targetId) === this)
+      this._crPage._sessions.delete(this._targetId);
     this._client.dispose();
   }
 
@@ -786,9 +789,9 @@ class FrameSession {
       }
 
       // FIX PART 3: The core race-condition guard.
-      // If the session currently mapped to this targetId is NO LONGER 
-      // the childFrameSession that triggered this detachment, it means 
-      // a new session (from a cross-process navigation) has already 
+      // If the session currently mapped to this targetId is NO LONGER
+      // the childFrameSession that triggered this detachment, it means
+      // a new session (from a cross-process navigation) has already
       // taken over this targetId. We must NOT call frameDetached.
       if (this._crPage._sessions.get(targetId) !== childFrameSession) {
         childFrameSession.dispose();
