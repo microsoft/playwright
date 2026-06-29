@@ -77,6 +77,36 @@ export class TestTree {
     };
     this._treeItemById.set(rootFolder, this.rootItem);
 
+    // Per-parent lookup maps to merge suites/test cases by title without repeatedly
+    // scanning a parent's children, which makes construction quadratic for large reports.
+    // https://github.com/microsoft/playwright/issues/41491
+    const groupChildrenByTitle = new Map<GroupItem, Map<string, GroupItem>>();
+    const caseChildrenByTitle = new Map<GroupItem, Map<string, TestCaseItem>>();
+    const groupChildren = (parent: GroupItem): Map<string, GroupItem> => {
+      let map = groupChildrenByTitle.get(parent);
+      if (!map) {
+        map = new Map();
+        for (const child of parent.children) {
+          if (child.kind === 'group')
+            map.set(child.title, child);
+        }
+        groupChildrenByTitle.set(parent, map);
+      }
+      return map;
+    };
+    const caseChildren = (parent: GroupItem): Map<string, TestCaseItem> => {
+      let map = caseChildrenByTitle.get(parent);
+      if (!map) {
+        map = new Map();
+        for (const child of parent.children) {
+          if (child.kind !== 'group')
+            map.set(child.title, child as TestCaseItem);
+        }
+        caseChildrenByTitle.set(parent, map);
+      }
+      return map;
+    };
+
     const visitSuite = (project: reporterTypes.FullProject, parentSuite: reporterTypes.Suite, parentGroup: GroupItem, mode: 'tests' | 'suites' | 'all') => {
       for (const suite of mode === 'tests' ? [] : parentSuite.suites) {
         if (!suite.title) {
@@ -85,7 +115,7 @@ export class TestTree {
           continue;
         }
 
-        let group = parentGroup.children.find(item => item.kind === 'group' && item.title === suite.title) as GroupItem | undefined;
+        let group = groupChildren(parentGroup).get(suite.title);
         if (!group) {
           group = {
             kind: 'group',
@@ -100,13 +130,14 @@ export class TestTree {
             hasLoadErrors: false,
           };
           this._addChild(parentGroup, group);
+          groupChildren(parentGroup).set(suite.title, group);
         }
         visitSuite(project, suite, group, 'all');
       }
 
       for (const test of mode === 'suites' ? [] : parentSuite.tests) {
         const title = test.title;
-        let testCaseItem = parentGroup.children.find(t => t.kind !== 'group' && t.title === title) as TestCaseItem;
+        let testCaseItem = caseChildren(parentGroup).get(title);
         if (!testCaseItem) {
           testCaseItem = {
             kind: 'case',
@@ -123,6 +154,7 @@ export class TestTree {
             tags: test.tags,
           };
           this._addChild(parentGroup, testCaseItem);
+          caseChildren(parentGroup).set(title, testCaseItem);
         }
 
         const result = test.results[0];
@@ -155,7 +187,7 @@ export class TestTree {
         };
         this._addChild(testCaseItem, testItem);
         this._treeItemByTestId.set(test.id, testItem);
-        testCaseItem.duration = (testCaseItem.children as TestItem[]).reduce((a, b) => a + b.duration, 0);
+        testCaseItem.duration += testItem.duration;
       }
     };
 
