@@ -160,7 +160,7 @@
     "typescript": "^6.0.3",
     "vite": "^6.4.3",
     "vite-plugin-static-copy": "^3.1.1",
-    "ws": "8.17.1",
+    "ws": "8.21.0",
     "xml2js": "^0.5.0",
     "yaml": "^2.8.3",
     "yauzl": "3.3.2",
