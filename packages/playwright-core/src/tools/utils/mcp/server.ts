@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { fileURLToPath } from 'url';
-
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import debug from 'debug';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -23,10 +21,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { startMcpHttpServer } from './http';
 import { toMcpTool } from './tool';
 
-import type { CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 export type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
+export type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Server as ServerType } from '@modelcontextprotocol/sdk/server/index.js';
 import type { ToolSchema } from './tool';
 
@@ -130,18 +128,8 @@ export function createServer(name: string, version: string, factory: ServerBacke
 }
 
 const initializeServer = async (server: ServerType, factory: ServerBackendFactory, runHeartbeat: boolean): Promise<ServerBackend> => {
-  const capabilities = server.getClientCapabilities();
-  let clientRoots: Root[] = [];
-  if (capabilities?.roots) {
-    const { roots } = await server.listRoots().catch(e => {
-      serverDebug(e);
-      return { roots: [] };
-    });
-    clientRoots = roots;
-  }
-
   const clientInfo: ClientInfo = {
-    cwd: firstRootPath(clientRoots),
+    cwd: process.cwd(),
     clientName: server.getClientVersion()?.name ?? 'Playwright MCP',
   };
 
@@ -214,31 +202,6 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
   ].join('\n');
     // eslint-disable-next-line no-console
   console.error(message);
-}
-
-export function firstRootPath(roots: Root[]): string {
-  return allRootPaths(roots)[0];
-}
-
-export function allRootPaths(roots: Root[]): string[] {
-  const paths: string[] = [];
-  for (const root of roots) {
-    const url = new URL(root.uri);
-    let rootPath;
-    try {
-      rootPath = fileURLToPath(url);
-    } catch (e) {
-      // Support WSL paths on Windows.
-      if (e.code === 'ERR_INVALID_FILE_URL_PATH' && process.platform === 'win32')
-        rootPath = decodeURIComponent(url.pathname);
-    }
-    if (!rootPath)
-      continue;
-    paths.push(rootPath);
-  }
-  if (paths.length === 0)
-    paths.push(process.cwd());
-  return paths;
 }
 
 function mergeTextParts(result: CallToolResult): CallToolResult {

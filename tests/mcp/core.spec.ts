@@ -61,19 +61,12 @@ test('browser_navigate allows about:, data: and javascript: protocols', async ({
 });
 
 test('browser_navigate can navigate to file:// URLs allowUnrestrictedFileAccess is true', async ({ startClient }, testInfo) => {
-  const rootDir = testInfo.outputPath();
   const fileOutsideRoot = testInfo.outputPath('test.txt');
   await fs.writeFile(fileOutsideRoot, 'Test file content');
   const { client } = await startClient({
     config: {
       allowUnrestrictedFileAccess: true,
     },
-    roots: [
-      {
-        name: 'workspace',
-        uri: pathToFileURL(rootDir).href,
-      }
-    ],
   });
 
   const url = pathToFileURL(fileOutsideRoot).href;

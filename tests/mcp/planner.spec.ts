@@ -18,7 +18,6 @@ import { test, expect, writeFiles } from './fixtures';
 
 import fs from 'fs';
 import path from 'path';
-import url from 'url';
 
 test.use({ mcpServerType: 'test-mcp' });
 
@@ -117,7 +116,7 @@ test('planner_setup_page seed resolution - rootPath', async ({ startClient }) =>
 
   const { client } = await startClient({
     args: ['--config=packages/my-app/configs/playwright.config.ts'],
-    roots: [{ name: 'root', uri: url.pathToFileURL(test.info().outputPath('')).toString() }],
+    cwd: test.info().outputPath(''),
   });
 
   expect(await client.callTool({

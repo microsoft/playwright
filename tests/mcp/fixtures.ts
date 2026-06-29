@@ -21,7 +21,6 @@ import { chromium } from 'playwright';
 import { test as baseTest, expect as baseExpect } from '@playwright/test';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
 import { tools } from '../../packages/playwright-core/lib/coreBundle';
@@ -57,8 +56,6 @@ export type StartClient = (options?: {
   omitArgs?: string[],
   cwd?: string,
   config?: Config | string,
-  roots?: { name: string, uri: string }[],
-  rootsResponseDelay?: number,
   env?: NodeJS.ProcessEnv,
   noTimeoutForTest?: boolean,
 }) => Promise<{ client: Client, stderr: () => string }>;
@@ -127,16 +124,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
       if (options?.omitArgs)
         args = args.filter(arg => !options.omitArgs?.includes(arg));
 
-      const client = new Client({ name: options?.clientName ?? 'test', version: '1.0.0' }, options?.roots ? { capabilities: { roots: {} } } : undefined);
-      if (options?.roots) {
-        client.setRequestHandler(ListRootsRequestSchema, async request => {
-          if (options.rootsResponseDelay)
-            await new Promise(resolve => setTimeout(resolve, options.rootsResponseDelay));
-          return {
-            roots: options.roots,
-          };
-        });
-      }
+      const client = new Client({ name: options?.clientName ?? 'test', version: '1.0.0' });
       const env = inheritAndCleanEnv({
         PW_TMPDIR_FOR_TEST: testInfo.outputPath('tmp'),
         ...options?.env
