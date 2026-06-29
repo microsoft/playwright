@@ -55,7 +55,7 @@
   ],
   "devDependencies": {
     "@actions/core": "^3.0.0",
-    "@actions/github": "^8.0.0",
+    "@actions/github": "^9.0.0",
     "@babel/code-frame": "^7.27.1",
     "@babel/core": "^7.28.0",
     "@babel/helper-plugin-utils": "^7.27.1",

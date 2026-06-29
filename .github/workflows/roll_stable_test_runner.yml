@@ -45,7 +45,7 @@ jobs:
           private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
       - name: Create Pull Request
         if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
