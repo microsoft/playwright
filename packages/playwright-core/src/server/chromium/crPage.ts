@@ -786,9 +786,9 @@ class FrameSession {
       }
 
       // FIX PART 3: The core race-condition guard.
-      // If the session currently mapped to this targetId is NO LONGER 
-      // the childFrameSession that triggered this detachment, it means 
-      // a new session (from a cross-process navigation) has already 
+      // If the session currently mapped to this targetId is NO LONGER
+      // the childFrameSession that triggered this detachment, it means
+      // a new session (from a cross-process navigation) has already
       // taken over this targetId. We must NOT call frameDetached.
       if (this._crPage._sessions.get(targetId) !== childFrameSession) {
         childFrameSession.dispose();
