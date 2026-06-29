@@ -16,7 +16,7 @@
 
 import fs from 'node:fs';
 
-import { test, expect } from './fixtures';
+import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
 test('browser_type', async ({ startClient, server }) => {
   const secretsFile = test.info().outputPath('secrets.env');
@@ -64,6 +64,43 @@ await page.getByRole('textbox').press('Enter');`,
   });
 });
 
+
+test('secrets are redacted in console log artifact', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41509' } }, async ({ startClient, server }) => {
+  const secretsFile = test.info().outputPath('secrets.env');
+  await fs.promises.writeFile(secretsFile, 'X-PASSWORD=password123');
+
+  const { client } = await startClient({
+    args: ['--secrets', secretsFile],
+  });
+
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <input type='keypress' onkeypress="console.log('Key pressed:', event.key, ', Text:', event.target.value)"></input>
+    </html>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  });
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_type',
+    arguments: {
+      element: 'textbox',
+      target: 'e2',
+      text: 'X-PASSWORD',
+      submit: true,
+    },
+  }));
+
+  const consoleLog = await consoleEntries(response);
+  expect(consoleLog).not.toContain('password123');
+  expect(consoleLog).toContain('<secret>X-PASSWORD</secret>');
+});
 
 test('browser_fill_form', async ({ startClient, server }) => {
   const secretsFile = test.info().outputPath('secrets.env');

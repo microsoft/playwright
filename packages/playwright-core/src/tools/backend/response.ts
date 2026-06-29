@@ -156,12 +156,7 @@ export class Response {
   }
 
   private _redactSecrets(text: string): string {
-    for (const [secretName, secretValue] of Object.entries(this._context.config.secrets ?? {})) {
-      if (!secretValue)
-        continue;
-      text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
-    }
-    return text;
+    return this._context.redactSecrets(text);
   }
 
 

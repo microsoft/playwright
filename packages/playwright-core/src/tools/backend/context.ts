@@ -353,6 +353,15 @@ export class Context {
       code: `process.env['${secretName}']`,
     };
   }
+
+  redactSecrets(text: string): string {
+    for (const [secretName, secretValue] of Object.entries(this.config.secrets ?? {})) {
+      if (!secretValue)
+        continue;
+      text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
+    }
+    return text;
+  }
 }
 
 function originOrHostGlob(originOrHost: string) {
