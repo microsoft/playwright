@@ -16,42 +16,9 @@
 
 import { parseEvaluationResultValue, serializeAsCallArgument } from '@isomorphic/utilityScriptSerializers';
 
-type NameValue = { name: string, value: string };
+import type { IndexedDBDatabase, OriginStorage, SetOriginStorage } from '@protocol/structs';
 
-type IndexedDBDatabase = {
-  name: string,
-  version: number,
-  stores: {
-    name: string,
-    autoIncrement: boolean,
-    keyPath?: string,
-    keyPathArray?: string[],
-    records: {
-      key?: any,
-      keyEncoded?: any,
-      value?: any,
-      valueEncoded?: any,
-    }[],
-    indexes: {
-      name: string,
-      keyPath?: string,
-      keyPathArray?: string[],
-      multiEntry: boolean,
-      unique: boolean,
-    }[],
-  }[],
-};
-
-type SetOriginStorage = {
-  origin: string,
-  localStorage: NameValue[],
-  indexedDB?: IndexedDBDatabase[],
-};
-
-export type SerializedStorage = {
-  localStorage: NameValue[],
-  indexedDB?: IndexedDBDatabase[],
-};
+export type SerializedStorage = Omit<OriginStorage, 'origin'>;
 
 export class StorageScript {
   private _isFirefox: boolean;
