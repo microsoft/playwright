@@ -132,14 +132,20 @@ export function decorateMCPCommand(command: Command) {
           },
           disposed: async backend => {
             clientCount--;
-            if (sharedBrowserPromise && clientCount > 0)
+            const browserContext = (backend as BrowserBackend).browserContext;
+            const browser = browserContext.browser();
+            // Decide before awaiting context closure, since client disposals can run concurrently.
+            const shouldKeepBrowser = !!sharedBrowserPromise && clientCount > 0;
+            if (shouldKeepBrowser) {
+              if (config.browser.isolated)
+                await browserContext.close().catch(() => { });
               return;
+            }
 
             testDebug('close browser');
             sharedBrowserPromise = undefined;
-            const browserContext = (backend as BrowserBackend).browserContext;
             await browserContext.close().catch(() => { });
-            await browserContext.browser()?.close().catch(() => { });
+            await browser?.close().catch(() => { });
           }
         };
         await mcpServer.start(factory, config.server);

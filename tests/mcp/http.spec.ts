@@ -20,7 +20,7 @@ import dns from 'dns';
 import { ChildProcess, spawn } from 'child_process';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { test as baseTest, expect, mcpServerPath, formatLog } from './fixtures';
+import { test as baseTest, expect, mcpServerPath, formatLog, parseResponse } from './fixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
@@ -181,6 +181,14 @@ test('http transport browser lifecycle (isolated, multiclient)', async ({ server
   });
   await transport1.terminateSession();
   await client1.close();
+
+  await expect.poll(async () => {
+    const response = parseResponse(await client2.callTool({
+      name: 'browser_run_code_unsafe',
+      arguments: { code: 'page => page.context().browser().contexts().length' },
+    }));
+    return response.result;
+  }).toBe('1');
 
   const transport3 = new StreamableHTTPClientTransport(new URL('/mcp', url));
   const client3 = new Client({ name: 'test', version: '1.0.0' });
