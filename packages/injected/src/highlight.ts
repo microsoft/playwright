@@ -65,6 +65,8 @@ export class Highlight {
   private _rafRequest: number | undefined;
   private _language: Language = 'javascript';
   private _elementHighlightSelectors = new Map<string, { selector: ParsedSelector, cssStyle?: string }>();
+  private _backdropResetSheet?: CSSStyleSheet;
+  private _backdropResetStyle?: HTMLStyleElement;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -117,7 +119,26 @@ export class Highlight {
       return;
     if (!this._injectedScript.document.documentElement.contains(this._glassPaneElement) || this._glassPaneElement.nextElementSibling)
       this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
+    this._installBackdropReset();
     this._bringToFront();
+  }
+
+  private _installBackdropReset() {
+    const css = 'x-pw-glass::backdrop { background: transparent !important; }';
+    if (typeof this._injectedScript.document.adoptedStyleSheets.push !== 'function') {
+      if (!this._backdropResetStyle?.isConnected) {
+        this._backdropResetStyle = this._injectedScript.document.createElement('style');
+        this._backdropResetStyle.textContent = css;
+        this._injectedScript.document.documentElement!.appendChild(this._backdropResetStyle);
+      }
+      return;
+    }
+    if (!this._backdropResetSheet) {
+      this._backdropResetSheet = new this._injectedScript.window.CSSStyleSheet();
+      this._backdropResetSheet.replaceSync(css);
+    }
+    if (!this._injectedScript.document.adoptedStyleSheets.includes(this._backdropResetSheet))
+      this._injectedScript.document.adoptedStyleSheets.push(this._backdropResetSheet);
   }
 
   private _bringToFront() {
@@ -174,6 +195,13 @@ export class Highlight {
       this._rafRequest = undefined;
     }
     this._elementHighlightSelectors.clear();
+    if (this._backdropResetSheet) {
+      const adoptedStyleSheets = this._injectedScript.document.adoptedStyleSheets;
+      const index = adoptedStyleSheets.indexOf(this._backdropResetSheet);
+      if (index !== -1)
+        adoptedStyleSheets.splice(index, 1);
+    }
+    this._backdropResetStyle?.remove();
     this._glassPaneElement.remove();
   }
 

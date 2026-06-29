@@ -574,6 +574,29 @@ it.describe('page screenshot', () => {
       })).toMatchSnapshot('mask-color-should-work.png');
     });
 
+    it('should not be affected by page backdrop styles', {
+      annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41504' },
+    }, async ({ page }) => {
+      await page.setViewportSize({ width: 200, height: 200 });
+      await page.setContent(`
+        <style>
+          html, body { margin: 0; padding: 0; }
+          body { background: #fff; }
+          #probe  { position: absolute; top: 0;    left: 0;    width: 100px; height: 100px; background: rgb(0, 128, 255); }
+          #secret { position: absolute; top: 120px; left: 120px; width: 50px;  height: 50px;  background: #000; }
+          ::backdrop, ::-webkit-backdrop { background: rgba(0, 0, 0, 0.5); }
+        </style>
+        <div id="probe"></div>
+        <div id="secret"></div>
+      `);
+      const probe = page.locator('#probe');
+      const noMask = await probe.screenshot();
+      const withMask = await probe.screenshot({ mask: [page.locator('#secret')] });
+      expect(withMask.equals(noMask)).toBe(true);
+      const masked = await probe.screenshot({ mask: [probe] });
+      expect(masked.equals(noMask)).toBe(false);
+    });
+
     it('should hide elements based on attr', async ({ page, server }) => {
       await page.setViewportSize({ width: 500, height: 500 });
       await page.goto(server.PREFIX + '/grid.html');
