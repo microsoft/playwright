@@ -403,14 +403,8 @@ export class FrameManager {
   }
 
   private _isExcludedFromNetworkIdle(request: network.Request): boolean {
-    // Favicons are aborted during interception and should never gate networkidle.
     if (request._isFavicon)
       return true;
-    // Server-sent events (EventSource) keep the response open indefinitely, so the
-    // request never "finishes" from the browser's perspective. Counting it as an
-    // inflight request would prevent networkidle from ever firing. WebSockets are
-    // already excluded since they are tracked separately and never enter the
-    // inflight set. See https://github.com/microsoft/playwright/issues/37226.
     if (request.resourceType() === 'eventsource')
       return true;
     return false;
