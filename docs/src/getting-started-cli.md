@@ -130,7 +130,7 @@ playwright-cli snapshot --filename=f    # save snapshot to specific file
 playwright-cli screenshot               # screenshot of the current page
 playwright-cli screenshot [ref]         # screenshot of a specific element
 playwright-cli screenshot --filename=f  # save with specific filename
-playwright-cli screenshot --hires        # capture using device pixels
+playwright-cli screenshot --hires       # capture using device pixels
 playwright-cli pdf                      # save page as PDF
 ```
 
