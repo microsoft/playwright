@@ -24,13 +24,13 @@ import { test as baseTest, expect, mcpServerPath, formatLog } from './fixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
-import { ListRootsRequestSchema } from 'playwright-core/lib/utilsBundle';
+import { ListRootsRequestSchema, PingRequestSchema } from 'playwright-core/lib/utilsBundle';
 
-const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string }> }>({
+const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean, env?: Record<string, string> }) => Promise<{ url: URL, stderr: () => string }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {
     let cp: ChildProcess | undefined;
     const userDataDir = testInfo.outputPath('user-data-dir');
-    await use(async (options?: { args?: string[], noPort?: boolean }) => {
+    await use(async (options?: { args?: string[], noPort?: boolean, env?: Record<string, string> }) => {
       if (cp)
         throw new Error('Process already running');
 
@@ -46,6 +46,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
           DEBUG: 'pw:mcp:test',
           DEBUG_COLORS: '0',
           DEBUG_HIDE_DATE: '1',
+          ...options?.env,
         }),
         cwd: testInfo.outputPath(),
       });
@@ -349,13 +350,9 @@ test('client should receive list roots request', async ({ serverEndpoint, server
   const { url } = await serverEndpoint();
   const transport = new StreamableHTTPClientTransport(url);
   const client = new Client({ name: 'test', version: '1.0.0' }, { capabilities: { roots: {} } });
-  let rootsListedCallback;
-  const rootsListedPromise = new Promise((resolve, reject) => {
-    rootsListedCallback = resolve;
-    setTimeout(() => reject(new Error('timeout waiting for ListRootsRequestSchema')), 5_000);
-  });
+  const requests = [];
   client.setRequestHandler(ListRootsRequestSchema, async request => {
-    rootsListedCallback('success');
+    requests.push(request);
     return {
       roots: [
         {
@@ -370,7 +367,53 @@ test('client should receive list roots request', async ({ serverEndpoint, server
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   });
-  expect(await rootsListedPromise).toBe('success');
+  await expect.poll(() => requests).toEqual([{ method: 'roots/list' }]);
+});
+
+test('should close session when heartbeat ping is not answered', async ({ serverEndpoint, server }) => {
+  const { url, stderr } = await serverEndpoint({ env: { PLAYWRIGHT_MCP_PING_TIMEOUT_MS: '500' } });
+
+  const transport = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client = new Client({ name: 'test', version: '1.0.0' });
+  // Never answer server-initiated pings, simulating an unresponsive client/proxy.
+  client.setRequestHandler(PingRequestSchema, () => new Promise(() => {}));
+  await client.connect(transport);
+
+  // The first tool call initializes the backend and starts the heartbeat. The session
+  // may be reaped mid-call, so don't depend on the call resolving.
+  void client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  }).catch(() => {});
+
+  await expect.poll(() => formatLog(stderr())['delete http session']).toBe(1);
+});
+
+test('should not run heartbeat when timeout is non-positive', async ({ serverEndpoint, server }) => {
+  const { url, stderr } = await serverEndpoint({ env: { PLAYWRIGHT_MCP_PING_TIMEOUT_MS: '0' } });
+
+  const transport = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client = new Client({ name: 'test', version: '1.0.0' });
+  // Never answer server-initiated pings; with the heartbeat disabled this must not reap the session.
+  client.setRequestHandler(PingRequestSchema, () => new Promise(() => {}));
+  await client.connect(transport);
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  // Give a disabled heartbeat ample time to (not) fire.
+  await new Promise(f => setTimeout(f, 1000));
+
+  // The session is still alive and usable.
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  expect(formatLog(stderr())['delete http session']).toBeUndefined();
+
+  await transport.terminateSession();
+  await client.close();
 });
 
 test('should not allow rebinding to localhost', async ({ serverEndpoint }) => {

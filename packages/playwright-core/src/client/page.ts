@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import * as inspector from 'inspector';
+import path from 'path';
+
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { trimStringWithEllipsis  } from '@isomorphic/stringUtils';
@@ -124,7 +128,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     super(parent, type, guid, initializer);
     this._instrumentation.onPage(this);
     this._browserContext = parent as unknown as BrowserContext;
-    this._timeoutSettings = new TimeoutSettings(this._platform, this._browserContext._timeoutSettings);
+    this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
 
     this.keyboard = new Keyboard(this);
     this.mouse = new Mouse(this);
@@ -140,7 +144,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._viewportSize = initializer.viewportSize;
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
-    this._video = new Video(this, this._connection, initializer.video ? Artifact.from(initializer.video) : undefined);
+    this._video = new Video(this._connection, initializer.video ? Artifact.from(initializer.video) : undefined);
     this.screencast = new Screencast(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
@@ -530,12 +534,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await evaluationScript(this._platform, script, arg);
+    const source = await evaluationScript(script, arg);
     return DisposableObject.from((await this._channel.addInitScript({ source }, undefined)).disposable);
   }
 
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {
-    this._routes.unshift(new RouteHandler(this._platform, this._browserContext._options.baseURL, url, handler, options.times));
+    this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns({ title: 'Route requests' });
     return new DisposableStub(() => this.unroute(url, handler));
   }
@@ -612,8 +616,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
     const result = await this._channel.screenshot(copy, options.signal);
     if (options.path) {
-      await mkdirIfNeeded(this._platform, options.path);
-      await this._platform.fs().promises.writeFile(options.path, result.binary);
+      await mkdirIfNeeded(options.path);
+      await fs.promises.writeFile(options.path, result.binary);
     }
     return result.binary;
   }
@@ -703,7 +707,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async consoleMessages(options?: { filter?: 'all' | 'since-navigation' }): Promise<ConsoleMessage[]> {
     const { messages } = await this._channel.consoleMessages({ filter: options?.filter }, undefined);
-    return messages.map(message => new ConsoleMessage(this._platform, message, this, null));
+    return messages.map(message => new ConsoleMessage(message, this, null));
   }
 
   async clearPageErrors(): Promise<void> {
@@ -849,7 +853,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pause(_options?: { __testHookKeepTestTimeout: boolean }) {
-    if (this._platform.isJSDebuggerAttached())
+    const isJSDebuggerAttached = !!inspector.url();
+    if (isJSDebuggerAttached)
       return;
     const defaultNavigationTimeout = this._browserContext._timeoutSettings.defaultNavigationTimeout();
     const defaultTimeout = this._browserContext._timeoutSettings.defaultTimeout();
@@ -876,9 +881,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
     const result = await this._channel.pdf(transportOptions, undefined);
     if (options.path) {
-      const platform = this._platform;
-      await platform.fs().promises.mkdir(platform.path().dirname(options.path), { recursive: true });
-      await platform.fs().promises.writeFile(options.path, result.pdf);
+      await fs.promises.mkdir(path.dirname(options.path), { recursive: true });
+      await fs.promises.writeFile(options.path, result.pdf);
     }
     return result.pdf;
   }

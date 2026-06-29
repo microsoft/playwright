@@ -16,6 +16,7 @@ server/
 [inprocess.ts]
 **
 @utils/**
+@isomorphic/**
 
 [outofprocess.ts]
 client/

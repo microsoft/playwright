@@ -76,6 +76,9 @@ Browser:
             origins:
               type: array?
               items: SetOriginStorage
+            credentials:
+              type: array?
+              items: VirtualCredential
       returns:
         context: BrowserContext
 
@@ -99,6 +102,9 @@ Browser:
             origins:
               type: array?
               items: SetOriginStorage
+            credentials:
+              type: array?
+              items: VirtualCredential
       returns:
         context: BrowserContext
 

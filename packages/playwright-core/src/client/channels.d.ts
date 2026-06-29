@@ -973,6 +973,7 @@ export type BrowserNewContextParams = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextOptions = {
@@ -1047,6 +1048,7 @@ export type BrowserNewContextOptions = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextResult = {
@@ -1124,6 +1126,7 @@ export type BrowserNewContextForReuseParams = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextForReuseOptions = {
@@ -1198,6 +1201,7 @@ export type BrowserNewContextForReuseOptions = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserNewContextForReuseResult = {
@@ -1594,24 +1598,29 @@ export type BrowserContextSetOfflineOptions = {
 export type BrowserContextSetOfflineResult = void;
 export type BrowserContextStorageStateParams = {
   indexedDB?: boolean,
+  credentials?: boolean,
 };
 export type BrowserContextStorageStateOptions = {
   indexedDB?: boolean,
+  credentials?: boolean,
 };
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
+  credentials?: VirtualCredential[],
 };
 export type BrowserContextSetStorageStateParams = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserContextSetStorageStateOptions = {
   storageState?: {
     cookies?: SetNetworkCookie[],
     origins?: SetOriginStorage[],
+    credentials?: VirtualCredential[],
   },
 };
 export type BrowserContextSetStorageStateResult = void;
@@ -2453,6 +2462,7 @@ export type FrameCheckParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   timeout: number,
   trial?: boolean,
@@ -2460,6 +2470,7 @@ export type FrameCheckParams = {
 export type FrameCheckOptions = {
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   trial?: boolean,
 };
@@ -2468,6 +2479,7 @@ export type FrameClickParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -2481,6 +2493,7 @@ export type FrameClickParams = {
 export type FrameClickOptions = {
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -2500,6 +2513,7 @@ export type FrameDragAndDropParams = {
   source: string,
   target: string,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   timeout: number,
   trial?: boolean,
   sourcePosition?: Point,
@@ -2509,6 +2523,7 @@ export type FrameDragAndDropParams = {
 };
 export type FrameDragAndDropOptions = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   trial?: boolean,
   sourcePosition?: Point,
   targetPosition?: Point,
@@ -2553,6 +2568,7 @@ export type FrameDblclickParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -2564,6 +2580,7 @@ export type FrameDblclickParams = {
 export type FrameDblclickOptions = {
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -2684,6 +2701,7 @@ export type FrameHoverParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout: number,
@@ -2692,6 +2710,7 @@ export type FrameHoverParams = {
 export type FrameHoverOptions = {
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   trial?: boolean,
@@ -2903,6 +2922,7 @@ export type FrameTapParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout: number,
@@ -2911,6 +2931,7 @@ export type FrameTapParams = {
 export type FrameTapOptions = {
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   trial?: boolean,
@@ -2948,6 +2969,7 @@ export type FrameUncheckParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   timeout: number,
   trial?: boolean,
@@ -2955,6 +2977,7 @@ export type FrameUncheckParams = {
 export type FrameUncheckOptions = {
   strict?: boolean,
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   trial?: boolean,
 };
@@ -2972,13 +2995,17 @@ export type FrameWaitForFunctionParams = {
   arg: SerializedArgument,
   timeout: number,
   pollingInterval?: number,
+  selector?: string,
+  strict?: boolean,
 };
 export type FrameWaitForFunctionOptions = {
   isFunction?: boolean,
   pollingInterval?: number,
+  selector?: string,
+  strict?: boolean,
 };
 export type FrameWaitForFunctionResult = {
-  handle: JSHandleChannel,
+  handle?: JSHandleChannel,
 };
 export type FrameWaitForSelectorParams = {
   selector: string,
@@ -3178,18 +3205,21 @@ export type ElementHandleBoundingBoxResult = {
 };
 export type ElementHandleCheckParams = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   timeout: number,
   trial?: boolean,
 };
 export type ElementHandleCheckOptions = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   trial?: boolean,
 };
 export type ElementHandleCheckResult = void;
 export type ElementHandleClickParams = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -3202,6 +3232,7 @@ export type ElementHandleClickParams = {
 };
 export type ElementHandleClickOptions = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
@@ -3219,6 +3250,7 @@ export type ElementHandleContentFrameResult = {
 };
 export type ElementHandleDblclickParams = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -3229,6 +3261,7 @@ export type ElementHandleDblclickParams = {
 };
 export type ElementHandleDblclickOptions = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -3268,6 +3301,7 @@ export type ElementHandleGetAttributeResult = {
 };
 export type ElementHandleHoverParams = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout: number,
@@ -3275,6 +3309,7 @@ export type ElementHandleHoverParams = {
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   trial?: boolean,
@@ -3457,6 +3492,7 @@ export type ElementHandleSetInputFilesOptions = {
 export type ElementHandleSetInputFilesResult = void;
 export type ElementHandleTapParams = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout: number,
@@ -3464,6 +3500,7 @@ export type ElementHandleTapParams = {
 };
 export type ElementHandleTapOptions = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   trial?: boolean,
@@ -3485,12 +3522,14 @@ export type ElementHandleTypeOptions = {
 export type ElementHandleTypeResult = void;
 export type ElementHandleUncheckParams = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   timeout: number,
   trial?: boolean,
 };
 export type ElementHandleUncheckOptions = {
   force?: boolean,
+  scroll?: 'auto' | 'none',
   position?: Point,
   trial?: boolean,
 };

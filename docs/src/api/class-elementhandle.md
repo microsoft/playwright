@@ -179,6 +179,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.check.force = %%-input-force-%%
 * since: v1.8
 
+### option: ElementHandle.check.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
@@ -225,6 +228,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.click.force = %%-input-force-%%
 * since: v1.8
+
+### option: ElementHandle.click.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: ElementHandle.click.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.8
@@ -283,6 +289,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.dblclick.force = %%-input-force-%%
 * since: v1.8
+
+### option: ElementHandle.dblclick.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: ElementHandle.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
@@ -600,6 +609,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.hover.force = %%-input-force-%%
 * since: v1.8
+
+### option: ElementHandle.hover.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: ElementHandle.hover.timeout = %%-input-timeout-%%
 * since: v1.8
@@ -955,6 +967,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.setChecked.force = %%-input-force-%%
 * since: v1.15
 
+### option: ElementHandle.setChecked.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
@@ -1023,6 +1038,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.tap.force = %%-input-force-%%
 * since: v1.8
+
+### option: ElementHandle.tap.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: ElementHandle.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
@@ -1100,6 +1118,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.uncheck.force = %%-input-force-%%
 * since: v1.8
+
+### option: ElementHandle.uncheck.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8

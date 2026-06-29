@@ -155,3 +155,45 @@ it('should capture a page-created credential and reuse it in another context', a
 
   expect(gotId).toBe(createdId);
 });
+
+it('should reuse a page-created credential via the storageState option', async ({ contextFactory, server }) => {
+  // Setup context: the app registers a passkey via navigator.credentials.create().
+  const setupContext = await contextFactory();
+  await setupContext.credentials.install();
+  const setupPage = await setupContext.newPage();
+  await setupPage.goto(server.EMPTY_PAGE);
+
+  const createdId = await setupPage.evaluate(async ({ rpId }) => {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const created = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { id: rpId, name: 'Test RP' },
+        user: { id: new Uint8Array([1, 2, 3, 4]), name: 'u', displayName: 'User' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+        authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
+      },
+    }) as PublicKeyCredential;
+    return created.id;
+  }, { rpId: server.HOSTNAME });
+
+  // Capture the passkey as part of the storage state.
+  const storageState = await setupContext.storageState({ credentials: true });
+
+  // A context created from the storage state has the authenticator installed and signs in with
+  // the captured passkey — without calling install() again.
+  const context = await contextFactory({ storageState });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+
+  const gotId = await page.evaluate(async ({ rpId }) => {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    // No allowCredentials — relies on the re-seeded credential being discoverable.
+    const cred = await navigator.credentials.get({
+      publicKey: { challenge, rpId, userVerification: 'preferred' },
+    }) as PublicKeyCredential;
+    return cred.id;
+  }, { rpId: server.HOSTNAME });
+
+  expect(gotId).toBe(createdId);
+});

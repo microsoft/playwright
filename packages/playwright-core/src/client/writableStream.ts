@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import { Writable } from 'stream';
+
 import { ChannelOwner } from './channelOwner';
 
 import type * as channels from './channels';
-import type { Writable } from 'stream';
 
 export class WritableStream extends ChannelOwner<channels.WritableStreamChannel> {
   static from(Stream: channels.WritableStreamChannel): WritableStream {
@@ -29,6 +30,26 @@ export class WritableStream extends ChannelOwner<channels.WritableStreamChannel>
   }
 
   stream(): Writable {
-    return this._platform.streamWritable(this._channel);
+    return new WritableStreamImpl(this._channel);
+  }
+}
+
+class WritableStreamImpl extends Writable {
+  private _channel: channels.WritableStreamChannel;
+
+  constructor(channel: channels.WritableStreamChannel) {
+    super();
+    this._channel = channel;
+  }
+
+  override async _write(chunk: Buffer | string, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
+    const error = await this._channel.write({ binary: typeof chunk === 'string' ? Buffer.from(chunk) : chunk }, undefined).catch(e => e);
+    callback(error || null);
+  }
+
+  override async _final(callback: (error?: Error | null) => void) {
+    // Stream might be destroyed after the connection was closed.
+    const error = await this._channel.close({}, undefined).catch(e => e);
+    callback(error || null);
   }
 }

@@ -1,0 +1,28 @@
+name: Playwright MCP 🤖
+description: Report a bug or request a feature for the Playwright MCP server
+title: '[MCP]: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Thanks for filing a Playwright MCP issue!
+
+        Describe what's going on in your own words — there's no strict format. Telling us which MCP client you use (Claude, VS Code, Cursor, etc.) and the tool call or config involved helps a lot.
+  - type: textarea
+    id: details
+    attributes:
+      label: What's going on?
+      description: |
+        Describe the bug or feature request. Include anything that helps us understand and reproduce it — the MCP client and config you use, the tool that misbehaved, the output you saw, and what you expected.
+      placeholder: |
+        e.g. Calling the `browser_click` tool from <client> does X, but I expected Y.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Which version of Playwright / the MCP server are you using? (optional, but helpful)
+      placeholder: ex. 1.41.1
+    validations:
+      required: false

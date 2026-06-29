@@ -166,13 +166,12 @@ export type PageError = {
 export class Page extends SdkObject<PageEventMap> {
   static Events = PageEvent;
 
-  private _closedState: 'open' | 'closing' | 'closed' = 'open';
+  private _lifecycle: 'open' | 'crashed' | 'closing' | 'closed' = 'open';
   readonly closedPromise = new ManualPromise<void>();
   private _initialized: Page | Error | undefined;
   private _initializedPromise = new ManualPromise<Page | Error>();
   private _consoleMessages: ConsoleMessage[] = [];
   private _pageErrors: PageError[] = [];
-  private _crashed = false;
   readonly openScope = new LongStandingScope();
   readonly browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
@@ -228,7 +227,7 @@ export class Page extends SdkObject<PageEventMap> {
     }
     if (opener) {
       const openerPageOrError = await opener.waitForInitializedOrError();
-      if (openerPageOrError instanceof Page && !openerPageOrError.isClosed())
+      if (openerPageOrError instanceof Page && !openerPageOrError.isClosedOrClosingOrCrashed())
         this._opener = openerPageOrError;
     }
     this._markInitialized(error);
@@ -293,27 +292,32 @@ export class Page extends SdkObject<PageEventMap> {
     await this.delegate.resetForReuse(progress);
   }
 
-  _didClose() {
-    this.frameManager.dispose();
+  private _didDisconnect(error: TargetClosedError) {
+    if (this.openScope.isClosed())
+      return;
+    this.frameManager.dispose(error);
     this.screencast.dispose();
     this.overlay.dispose();
-    assert(this._closedState !== 'closed', 'Page closed twice');
-    this._closedState = 'closed';
+    this.openScope.close(error);
+  }
+
+  _didClose() {
+    if (this._lifecycle === 'closed')
+      return;
+    this._lifecycle = 'closed';
+    this._didDisconnect(new TargetClosedError(this.closeReason()));
     this.emit(Page.Events.Close);
     this.browserContext.emit(BrowserContext.Events.PageClosed, this);
     this.closedPromise.resolve();
     this.instrumentation.onPageClose(this);
-    this.openScope.close(new TargetClosedError(this.closeReason()));
   }
 
   _didCrash() {
-    this.frameManager.dispose();
-    this.screencast.dispose();
-    this.overlay.dispose();
+    if (this._lifecycle !== 'open')
+      return;
+    this._lifecycle = 'crashed';
+    this._didDisconnect(new TargetClosedError('Page crashed'));
     this.emit(Page.Events.Crash);
-    this._crashed = true;
-    this.instrumentation.onPageClose(this);
-    this.openScope.close(new Error('Page crashed'));
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -398,7 +402,7 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   async onBindingCalled(payload: string, context: dom.FrameExecutionContext) {
-    if (this._closedState === 'closed')
+    if (this.isClosedOrClosingOrCrashed())
       return;
     await PageBinding.dispatch(this, payload, context);
   }
@@ -816,7 +820,7 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   private async _close(options: { reason?: string } = {}) {
-    if (this._closedState === 'closed')
+    if (this._lifecycle === 'closed')
       return;
 
     if (options.reason)
@@ -824,8 +828,8 @@ export class Page extends SdkObject<PageEventMap> {
 
     await this.screencast.handlePageOrContextClose();
 
-    if (this._closedState !== 'closing') {
-      this._closedState = 'closing';
+    if (this._lifecycle !== 'closing') {
+      this._lifecycle = 'closing';
       // This might throw if the browser context containing the page closes
       // while we are trying to close the page.
       await this.delegate.closePage(false).catch(e => debugLogger.log('error', e));
@@ -844,15 +848,11 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   isClosed(): boolean {
-    return this._closedState === 'closed';
-  }
-
-  hasCrashed() {
-    return this._crashed;
+    return this._lifecycle === 'closed';
   }
 
   isClosedOrClosingOrCrashed() {
-    return this._closedState !== 'open' || this._crashed;
+    return this._lifecycle !== 'open';
   }
 
   addWorker(workerId: string, worker: Worker) {

@@ -199,3 +199,33 @@ function fileURLToPath(fileUrl: string, pathSeparator: string): string {
 
   return path.replace(/\//g, pathSeparator);
 }
+
+let _coreDir: string | undefined;
+let _boxedStackPrefixes: string[] = [];
+let _showInternalStackFrames = false;
+
+export function setCoreDir(dir: string | undefined) {
+  _coreDir = dir;
+}
+
+export function coreDir(): string | undefined {
+  return _coreDir;
+}
+
+export function setBoxedStackPrefixes(prefixes: string[]) {
+  _boxedStackPrefixes = prefixes;
+}
+
+export function boxedStackPrefixes(): string[] {
+  if (_showInternalStackFrames)
+    return [];
+  return _coreDir ? [_coreDir, ..._boxedStackPrefixes] : _boxedStackPrefixes.slice();
+}
+
+export function setShowInternalStackFrames(value: boolean) {
+  _showInternalStackFrames = value;
+}
+
+export function showInternalStackFrames(): boolean {
+  return _showInternalStackFrames;
+}

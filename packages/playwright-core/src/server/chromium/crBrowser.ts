@@ -370,7 +370,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   override async doCreateNewPage(): Promise<Page> {
-    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
+    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId, background: false, focus: false });
     return this._browser._crPages.get(targetId)!._page;
   }
 

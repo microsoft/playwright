@@ -103,12 +103,12 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
     'Colors: RED GREEN',
   ]);
 
-  await expect(page.locator('.console-tab .list-view-entry .codicon')).toHaveClass([
-    'codicon codicon-browser status-none',
-    'codicon codicon-file status-none',
-    'codicon codicon-browser status-error',
-    'codicon codicon-file status-error',
-    'codicon codicon-file status-none',
+  await expect(page.locator('.console-tab .console-source')).toHaveText([
+    'page',
+    'test',
+    'page',
+    'test',
+    'test',
   ]);
 
   await expect.soft(page.getByText('RED', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');

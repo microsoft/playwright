@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import { inspect } from 'util';
+
 import { JSHandle } from './jsHandle';
 
 import type * as api from '../../types/types';
-import type { Platform } from '@isomorphic/platform';
 import type * as channels from './channels';
 import type { Page } from './page';
 import type { Worker } from './worker';
@@ -28,12 +29,12 @@ export class ConsoleMessage implements api.ConsoleMessage {
   private _worker: Worker | null;
   private _event: channels.BrowserContextConsoleEvent | channels.WorkerConsoleEvent | channels.ElectronApplicationConsoleEvent;
 
-  constructor(platform: Platform, event: channels.BrowserContextConsoleEvent | channels.WorkerConsoleEvent | channels.ElectronApplicationConsoleEvent, page: Page | null, worker: Worker | null) {
+  constructor(event: channels.BrowserContextConsoleEvent | channels.WorkerConsoleEvent | channels.ElectronApplicationConsoleEvent, page: Page | null, worker: Worker | null) {
     this._page = page;
     this._worker = worker;
     this._event = event;
-    if (platform.inspectCustom)
-      (this as any)[platform.inspectCustom] = () => this._inspect();
+    if (inspect.custom)
+      (this as any)[inspect.custom] = () => this._inspect();
   }
 
   worker() {

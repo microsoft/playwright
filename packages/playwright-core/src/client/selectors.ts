@@ -21,23 +21,17 @@ import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
 import type * as channels from './channels';
 import type { BrowserContext } from './browserContext';
-import type { Platform } from '@isomorphic/platform';
 
 export class Selectors implements api.Selectors {
-  private _platform: Platform;
   private _selectorEngines: channels.SelectorEngine[] = [];
   private _testIdAttributeName: string | undefined;
   readonly _contextsForSelectors = new Set<BrowserContext>();
-
-  constructor(platform: Platform) {
-    this._platform = platform;
-  }
 
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
     if (this._selectorEngines.some(engine => engine.name === name))
       throw new Error(`selectors.register: "${name}" selector engine has been already registered`);
 
-    const source = await evaluationScript(this._platform, script, undefined, false);
+    const source = await evaluationScript(script, undefined, false);
     const selectorEngine: channels.SelectorEngine = { ...options, name, source };
     for (const context of this._contextsForSelectors)
       await context._channel.registerSelectorEngine({ selectorEngine }, undefined);

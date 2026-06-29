@@ -188,7 +188,7 @@ export class WKPage implements PageDelegate {
 
     const contextOptions = this._browserContext._options;
     if (contextOptions.userAgent)
-      promises.push(this.updateUserAgent());
+      promises.push(session.send('Page.overrideUserAgent', { value: contextOptions.userAgent }));
     const emulatedMedia = this._page.emulatedMedia();
     if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.forcedColors || emulatedMedia.contrast)
       promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.forcedColors, emulatedMedia.contrast));
@@ -205,7 +205,6 @@ export class WKPage implements PageDelegate {
         height: emulatedSize.screen.height,
       }));
     }
-    promises.push(this.updateEmulateMedia());
     promises.push(session.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(this._calculateExtraHTTPHeaders(), false /* lowerCase */) }));
     if (contextOptions.offline)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
@@ -695,7 +694,7 @@ export class WKPage implements PageDelegate {
 
   async updateUserAgent(): Promise<void> {
     const contextOptions = this._browserContext._options;
-    this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });
+    await this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });
   }
 
   async bringToFront(): Promise<void> {
@@ -835,9 +834,9 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._pageProxySession.sendMayFail('Target.close', {
-      targetId: this._session.sessionId,
-      runBeforeUnload
+    await this._pageProxySession.connection.browserSession.sendMayFail('Playwright.closePage', {
+      pageProxyId: this._pageProxySession.sessionId,
+      runBeforeUnload,
     });
   }
 
@@ -1209,7 +1208,7 @@ export class WKPage implements PageDelegate {
 
   _onWebSocketWillSendHandshakeRequest(event: Protocol.Network.webSocketWillSendHandshakeRequestPayload) {
     const wallTimeMs = event.walltime * 1000;
-    this._timestampBaselineForWebSocket.set(event.requestId, wallTimeMs - event.timestamp);
+    this._timestampBaselineForWebSocket.set(event.requestId, wallTimeMs - event.timestamp * 1000);
     this._page.frameManager.onWebSocketRequest(event.requestId, headersObjectToArray(event.request.headers), wallTimeMs);
   }
 
@@ -1219,7 +1218,7 @@ export class WKPage implements PageDelegate {
   }
 
   _timestampToWallTimeMsForWebSocket(requestId: string, timestamp: number): number {
-    return this._timestampBaselineForWebSocket.get(requestId)! + timestamp;
+    return this._timestampBaselineForWebSocket.get(requestId)! + timestamp * 1000;
   }
 
   async _grantPermissions(origin: string, permissions: string[]) {

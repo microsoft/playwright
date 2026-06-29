@@ -508,6 +508,7 @@ scheme.BrowserNewContextParams = tObject({
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('SetOriginStorage'))),
+    credentials: tOptional(tArray(tType('VirtualCredential'))),
   })),
 });
 scheme.BrowserNewContextResult = tObject({
@@ -585,6 +586,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('SetOriginStorage'))),
+    credentials: tOptional(tArray(tType('VirtualCredential'))),
   })),
 });
 scheme.BrowserNewContextForReuseResult = tObject({
@@ -845,15 +847,18 @@ scheme.BrowserContextSetOfflineParams = tObject({
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
 scheme.BrowserContextStorageStateParams = tObject({
   indexedDB: tOptional(tBoolean),
+  credentials: tOptional(tBoolean),
 });
 scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),
+  credentials: tOptional(tArray(tType('VirtualCredential'))),
 });
 scheme.BrowserContextSetStorageStateParams = tObject({
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('SetOriginStorage'))),
+    credentials: tOptional(tArray(tType('VirtualCredential'))),
   })),
 });
 scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));
@@ -1291,6 +1296,7 @@ scheme.FrameCheckParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   position: tOptional(tType('Point')),
   timeout: tFloat,
   trial: tOptional(tBoolean),
@@ -1300,6 +1306,7 @@ scheme.FrameClickParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
@@ -1319,6 +1326,7 @@ scheme.FrameDragAndDropParams = tObject({
   source: tString,
   target: tString,
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   timeout: tFloat,
   trial: tOptional(tBoolean),
   sourcePosition: tOptional(tType('Point')),
@@ -1349,6 +1357,7 @@ scheme.FrameDblclickParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tFloat),
@@ -1437,6 +1446,7 @@ scheme.FrameHoverParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tFloat,
@@ -1582,6 +1592,7 @@ scheme.FrameTapParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tFloat,
@@ -1612,6 +1623,7 @@ scheme.FrameUncheckParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   position: tOptional(tType('Point')),
   timeout: tFloat,
   trial: tOptional(tBoolean),
@@ -1627,9 +1639,11 @@ scheme.FrameWaitForFunctionParams = tObject({
   arg: tType('SerializedArgument'),
   timeout: tFloat,
   pollingInterval: tOptional(tFloat),
+  selector: tOptional(tString),
+  strict: tOptional(tBoolean),
 });
 scheme.FrameWaitForFunctionResult = tObject({
-  handle: tChannel(['ElementHandle', 'JSHandle']),
+  handle: tOptional(tChannel(['ElementHandle', 'JSHandle'])),
 });
 scheme.FrameWaitForSelectorParams = tObject({
   selector: tString,
@@ -1744,6 +1758,7 @@ scheme.ElementHandleBoundingBoxResult = tObject({
 });
 scheme.ElementHandleCheckParams = tObject({
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   position: tOptional(tType('Point')),
   timeout: tFloat,
   trial: tOptional(tBoolean),
@@ -1751,6 +1766,7 @@ scheme.ElementHandleCheckParams = tObject({
 scheme.ElementHandleCheckResult = tOptional(tObject({}));
 scheme.ElementHandleClickParams = tObject({
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
@@ -1768,6 +1784,7 @@ scheme.ElementHandleContentFrameResult = tObject({
 });
 scheme.ElementHandleDblclickParams = tObject({
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   delay: tOptional(tFloat),
@@ -1798,6 +1815,7 @@ scheme.ElementHandleGetAttributeResult = tObject({
 });
 scheme.ElementHandleHoverParams = tObject({
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tFloat,
@@ -1920,6 +1938,7 @@ scheme.ElementHandleSetInputFilesParams = tObject({
 scheme.ElementHandleSetInputFilesResult = tOptional(tObject({}));
 scheme.ElementHandleTapParams = tObject({
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
   timeout: tFloat,
@@ -1938,6 +1957,7 @@ scheme.ElementHandleTypeParams = tObject({
 scheme.ElementHandleTypeResult = tOptional(tObject({}));
 scheme.ElementHandleUncheckParams = tObject({
   force: tOptional(tBoolean),
+  scroll: tOptional(tEnum(['auto', 'none'])),
   position: tOptional(tType('Point')),
   timeout: tFloat,
   trial: tOptional(tBoolean),

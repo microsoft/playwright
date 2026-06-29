@@ -2150,6 +2150,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -2266,6 +2274,14 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -2418,6 +2434,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -2557,6 +2581,14 @@ export interface Page {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -3049,6 +3081,13 @@ export interface Page {
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
+     * An attribute that is usually set by `aria-busy`.
+     *
+     * Learn more about [`aria-busy`](https://www.w3.org/TR/wai-aria-1.2/#aria-busy).
+     */
+    busy?: boolean;
+
+    /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
      *
      * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
@@ -3454,6 +3493,14 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -4560,6 +4607,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -4854,6 +4909,14 @@ export interface Page {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -5033,6 +5096,14 @@ export interface Page {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -6577,6 +6648,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -6684,6 +6763,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -6789,6 +6876,14 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -6916,6 +7011,14 @@ export interface Frame {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -7277,6 +7380,13 @@ export interface Frame {
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
+     * An attribute that is usually set by `aria-busy`.
+     *
+     * Learn more about [`aria-busy`](https://www.w3.org/TR/wai-aria-1.2/#aria-busy).
+     */
+    busy?: boolean;
+
+    /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
      *
      * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
@@ -7592,6 +7702,14 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -8238,6 +8356,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -8446,6 +8572,14 @@ export interface Frame {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -8625,6 +8759,14 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -10267,7 +10409,10 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
-   * Clears the existing cookies, local storage and IndexedDB entries for all origins and sets the new storage state.
+   * Clears the existing cookies, local storage, IndexedDB entries and virtual WebAuthn credentials, and sets the new
+   * storage state. When the storage state contains credentials, the virtual WebAuthn authenticator is installed
+   * (equivalent to [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install)),
+   * preventing all real authenticators from working in this context.
    *
    * **Usage**
    *
@@ -10332,11 +10477,24 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
-   * snapshot.
+   * Returns storage state for this browser context, contains current cookies, local storage snapshot, IndexedDB
+   * snapshot and virtual WebAuthn credentials.
    * @param options
    */
   storageState(options?: {
+    /**
+     * Set to `true` to include the context's virtual WebAuthn
+     * [browserContext.credentials](https://playwright.dev/docs/api/class-browsercontext#browser-context-credentials)
+     * (passkeys) in the storage state snapshot. The captured credentials carry their private keys, so they can be
+     * re-seeded into a later context via the
+     * [`storageState`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-storage-state) option or
+     * [browserContext.setStorageState(storageState)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-storage-state).
+     * Note that restoring the storage state that contains credentials will automatically install the virtual WebAuthn
+     * authenticator (see [credentials.install()](https://playwright.dev/docs/api/class-credentials#credentials-install)),
+     * and prevent all real authenticators from working in this context.
+     */
+    credentials?: boolean;
+
     /**
      * Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage
      * state snapshot. If your application uses IndexedDB to store authentication tokens, like Firebase Authentication,
@@ -12344,6 +12502,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -12437,6 +12603,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -12537,6 +12711,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -12733,6 +12915,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -13243,6 +13433,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -13393,6 +13591,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -13519,6 +13725,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -13630,167 +13844,108 @@ export interface Locator {
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
    * @param options
    */
-  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg, options?: {
-    timeout?: number;
-  }): Promise<R>;
+  evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number }): Promise<R>;
   /**
-   * Execute JavaScript code in the page, taking the matching element as an argument.
+   * Execute JavaScript code in the page, taking the matching element as an argument, and return a
+   * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
    *
    * **Details**
    *
    * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression), called with the
-   * matching element as a first argument, and
-   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-arg) as a second argument.
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) as
+   * a[JSHandle](https://playwright.dev/docs/api/class-jshandle), called with the matching element as a first argument,
+   * and [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-arg) as a second argument.
    *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression) returns a
+   * The only difference between
+   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate)
+   * and
+   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
+   * is that
+   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
+   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression)
+   * returns a [Promise], this method will wait for the promise to resolve and return its value.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) throws
+   * or rejects, this method throws.
+   *
+   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
+   * more details.
+   * @param pageFunction Function to be evaluated in the page context.
+   * @param arg Optional argument to pass to
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
+   * @param options
+   */
+  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number }): Promise<SmartHandle<R>>;
+  /**
+   * Execute JavaScript code in the page, taking all matching elements as an argument.
+   *
+   * **Details**
+   *
+   * Returns the return value of
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression), called with
+   * an array of all matching elements as a first argument, and
+   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-arg) as a second argument.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) returns a
    * [Promise], this method will wait for the promise to resolve and return its value.
    *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression) throws or
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) throws or
    * rejects, this method throws.
    *
    * **Usage**
+   *
+   * ```js
+   * const locator = page.locator('div');
+   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
+   * ```
+   *
+   * @param pageFunction Function to be evaluated in the page context.
+   * @param arg Optional argument to pass to
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression).
+   */
+  evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg?: Arg): Promise<R>;
+  /**
+   * Returns when
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression) returns
+   * a truthy value, called with the matching element as a first argument, and
+   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-arg) as a second argument.
+   *
+   * This is a generic way to wait for an element to reach a custom condition without asserting it. The locator is
+   * re-resolved on each retry, so it tolerates the element being re-rendered while waiting.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression)
+   * returns a [Promise], this method will wait for the promise to resolve before checking its value.
+   *
+   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression)
+   * throws or rejects, this method throws.
+   *
+   * **Usage**
+   *
+   * Wait for an attribute to appear:
+   *
+   * ```js
+   * const toggle = page.getByRole('button', { name: 'Menu' });
+   * await toggle.click();
+   * await toggle.waitForFunction(element => element.hasAttribute('aria-expanded'));
+   * ```
    *
    * Passing argument to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression):
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression):
    *
    * ```js
-   * const result = await page.getByTestId('myId').evaluate((element, [x, y]) => {
-   *   return element.textContent + ' ' + x * y;
-   * }, [7, 8]);
-   * console.log(result); // prints "myId text 56"
+   * await page.getByTestId('status').waitForFunction((element, value) => {
+   *   return element.textContent === value;
+   * }, 'Ready');
    * ```
    *
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
+   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression).
    * @param options
    */
-  evaluate<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, void, R>, options?: {
-    timeout?: number;
-  }): Promise<R>;
-  /**
-   * Execute JavaScript code in the page, taking the matching element as an argument, and return a
-   * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) as
-   * a[JSHandle](https://playwright.dev/docs/api/class-jshandle), called with the matching element as a first argument,
-   * and [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-arg) as a second argument.
-   *
-   * The only difference between
-   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate)
-   * and
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * is that
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression)
-   * returns a [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) throws
-   * or rejects, this method throws.
-   *
-   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
-   * more details.
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
-   * @param options
-   */
-  evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  /**
-   * Execute JavaScript code in the page, taking the matching element as an argument, and return a
-   * [JSHandle](https://playwright.dev/docs/api/class-jshandle) with the result.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) as
-   * a[JSHandle](https://playwright.dev/docs/api/class-jshandle), called with the matching element as a first argument,
-   * and [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-arg) as a second argument.
-   *
-   * The only difference between
-   * [locator.evaluate(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate)
-   * and
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * is that
-   * [locator.evaluateHandle(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle)
-   * returns [JSHandle](https://playwright.dev/docs/api/class-jshandle).
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression)
-   * returns a [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression) throws
-   * or rejects, this method throws.
-   *
-   * See [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#page-evaluate-handle) for
-   * more details.
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-handle-option-expression).
-   * @param options
-   */
-  evaluateHandle<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, void, R>): Promise<SmartHandle<R>>;
-  /**
-   * Execute JavaScript code in the page, taking all matching elements as an argument.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression), called with
-   * an array of all matching elements as a first argument, and
-   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-arg) as a second argument.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) returns a
-   * [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) throws or
-   * rejects, this method throws.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = page.locator('div');
-   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
-   * ```
-   *
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression).
-   */
-  evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
-  /**
-   * Execute JavaScript code in the page, taking all matching elements as an argument.
-   *
-   * **Details**
-   *
-   * Returns the return value of
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression), called with
-   * an array of all matching elements as a first argument, and
-   * [`arg`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-arg) as a second argument.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) returns a
-   * [Promise], this method will wait for the promise to resolve and return its value.
-   *
-   * If [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression) throws or
-   * rejects, this method throws.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = page.locator('div');
-   * const moreThanTen = await locator.evaluateAll((divs, min) => divs.length > min, 10);
-   * ```
-   *
-   * @param pageFunction Function to be evaluated in the page context.
-   * @param arg Optional argument to pass to
-   * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-all-option-expression).
-   */
-  evaluateAll<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], void, R>): Promise<R>;
+  waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<void>;
   /**
    * **NOTE** Always prefer using [Locator](https://playwright.dev/docs/api/class-locator)s and web assertions over
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle)s because latter are inherently racy.
@@ -13799,17 +13954,13 @@ export interface Locator {
    * multiple elements match the locator, throws.
    * @param options
    */
-  elementHandle(options?: {
-    timeout?: number;
-  }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+  elementHandle(options?: { timeout?: number }): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
    * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
    * [locator.highlight([options])](https://playwright.dev/docs/api/class-locator#locator-highlight).
    * @param options
    */
-  highlight(options?: {
-    style?: string | { [key: string]: string | number };
-  }): Promise<Disposable>;
+  highlight(options?: { style?: string | { [key: string]: string | number } }): Promise<Disposable>;
   /**
    * Returns a human-readable representation of the locator, using the
    * [locator.description()](https://playwright.dev/docs/api/class-locator#locator-description) if one exists;
@@ -14119,6 +14270,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -14286,6 +14445,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -14418,6 +14585,14 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -14590,6 +14765,14 @@ export interface Locator {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -15073,6 +15256,13 @@ export interface Locator {
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
     /**
+     * An attribute that is usually set by `aria-busy`.
+     *
+     * Learn more about [`aria-busy`](https://www.w3.org/TR/wai-aria-1.2/#aria-busy).
+     */
+    busy?: boolean;
+
+    /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
      *
      * Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
@@ -15330,6 +15520,14 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -16147,6 +16345,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -16325,6 +16531,14 @@ export interface Locator {
     };
 
     /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
+
+    /**
      * Allows to cancel the operation using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
@@ -16478,6 +16692,14 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`, which
+     * scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+     * `"none"`, Playwright does not scroll the element and the action fails if the element is not already in the
+     * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
+     */
+    scroll?: "auto"|"none";
 
     /**
      * Allows to cancel the operation using an
@@ -19973,7 +20195,10 @@ export interface Coverage {
     reportAnonymousScripts?: boolean;
 
     /**
-     * Whether to reset coverage on every navigation. Defaults to `true`.
+     * **NOTE** Settings this to `false` may still reset on navigations.
+     *
+     * Whether to reset coverage on every navigation. Defaults to `true`. Note that passing `false` does not guarantee
+     * that coverage persists through navigations, due to browser architecture limitations.
      */
     resetOnNavigation?: boolean;
   }): Promise<void>;
@@ -20059,7 +20284,7 @@ export interface Coverage {
  * `navigator.credentials.create()` / `navigator.credentials.get()` ceremonies in the page, without a real
  * authenticator or hardware security key.
  *
- * There are two common ways to use it:
+ * There are three common ways to use it:
  *
  * **Usage: seed a known credential**
  *
@@ -20080,10 +20305,10 @@ export interface Coverage {
  * // The page's navigator.credentials.get() is answered with the seeded passkey.
  * ```
  *
- * **Usage: capture a passkey, then reuse it**
+ * **Usage: capture a credential, then reuse it**
  *
  * ```js
- * // setup test: let the app register a passkey, then save it.
+ * // setup test: let the app register a passkey, then save the storage state with it.
  * const context = await browser.newContext();
  * await context.credentials.install();
  *
@@ -20107,6 +20332,10 @@ export interface Coverage {
  * await page.goto('https://example.com/login');
  * // navigator.credentials.get() resolves the captured passkey — already signed in.
  * ```
+ *
+ * **Usage: save credentials in the storage state, restore later**
+ *
+ * See [authentication guide](https://playwright.dev/docs/auth) for examples of using saving and resotring the storage state.
  *
  * **Defaults**
  */
@@ -20764,6 +20993,13 @@ export interface FrameLocator {
    * @param options
    */
   getByRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
+    /**
+     * An attribute that is usually set by `aria-busy`.
+     *
+     * Learn more about [`aria-busy`](https://www.w3.org/TR/wai-aria-1.2/#aria-busy).
+     */
+    busy?: boolean;
+
     /**
      * An attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls.
      *

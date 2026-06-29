@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import path from 'path';
+import { inspect } from 'util';
+
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { isString } from '@isomorphic/rtti';
@@ -30,9 +34,7 @@ import type { ClientCertificate, FilePayload, Headers, RemoteAddr, SecurityDetai
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '@isomorphic/types';
-import type { Platform } from '@isomorphic/platform';
 import type * as channels from './channels';
-import type * as fs from 'fs';
 
 export type FetchOptions = {
   params?: { [key: string]: string | number | boolean; } | URLSearchParams | string,
@@ -68,14 +70,14 @@ export class APIRequest implements api.APIRequest {
     options = { ...options };
     await this._playwright._instrumentation.runBeforeCreateRequestContext(options);
     const storageState = typeof options.storageState === 'string' ?
-      JSON.parse(await this._playwright._platform.fs().promises.readFile(options.storageState, 'utf8')) :
+      JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
     const context = APIRequestContext.from((await this._playwright._channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
       tracesDir: this._playwright._defaultLaunchOptions?.tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
-      clientCertificates: await toClientCertificatesProtocol(this._playwright._platform, options.clientCertificates),
+      clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
     }, options.signal)).request);
     this._contexts.add(context);
     context._request = this;
@@ -99,7 +101,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.APIRequestContextInitializer) {
     super(parent, type, guid, initializer);
     this.tracing = Tracing.from(initializer.tracing);
-    this._timeoutSettings = new TimeoutSettings(this._platform);
+    this._timeoutSettings = new TimeoutSettings();
   }
 
   async [Symbol.asyncDispose]() {
@@ -234,7 +236,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         } else {
           // Convert file-like values to ServerFilePayload structs.
           for (const [name, value] of Object.entries(options.multipart))
-            multipartData.push(await toFormField(this._platform, name, value));
+            multipartData.push(await toFormField(name, value));
         }
       }
       if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
@@ -266,14 +268,14 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   async storageState(options: { path?: string, indexedDB?: boolean } = {}): Promise<StorageState> {
     const state = await this._channel.storageState({ indexedDB: options.indexedDB }, undefined);
     if (options.path) {
-      await mkdirIfNeeded(this._platform, options.path);
-      await this._platform.fs().promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
+      await mkdirIfNeeded(options.path);
+      await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
     }
     return state;
   }
 }
 
-async function toFormField(platform: Platform, name: string, value: string | number | boolean | fs.ReadStream | FilePayload): Promise<channels.FormField> {
+async function toFormField(name: string, value: string | number | boolean | fs.ReadStream | FilePayload): Promise<channels.FormField> {
   const typeOfValue = typeof value;
   if (isFilePayload(value)) {
     const payload = value as FilePayload;
@@ -283,7 +285,7 @@ async function toFormField(platform: Platform, name: string, value: string | num
   } else if (typeOfValue === 'string' || typeOfValue === 'number' || typeOfValue === 'boolean') {
     return { name, value: String(value) };
   } else {
-    return { name, file: await readStreamToJson(platform, value as fs.ReadStream) };
+    return { name, file: await readStreamToJson(value as fs.ReadStream) };
   }
 }
 
@@ -312,8 +314,8 @@ export class APIResponse implements api.APIResponse {
     this._initializer = initializer;
     this._headers = new RawHeaders(this._initializer.headers);
 
-    if (context._platform.inspectCustom)
-      (this as any)[context._platform.inspectCustom] = () => this._inspect();
+    if (inspect.custom)
+      (this as any)[inspect.custom] = () => this._inspect();
   }
 
   ok(): boolean {
@@ -406,7 +408,7 @@ function filePayloadToJson(payload: FilePayload): ServerFilePayload {
   };
 }
 
-async function readStreamToJson(platform: Platform, stream: fs.ReadStream): Promise<ServerFilePayload> {
+async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayload> {
   const buffer = await new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
     stream.on('data', chunk => chunks.push(chunk as Buffer));
@@ -415,7 +417,7 @@ async function readStreamToJson(platform: Platform, stream: fs.ReadStream): Prom
   });
   const streamPath: string = Buffer.isBuffer(stream.path) ? stream.path.toString('utf8') : stream.path;
   return {
-    name: platform.path().basename(streamPath),
+    name: path.basename(streamPath),
     buffer,
   };
 }

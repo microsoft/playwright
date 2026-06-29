@@ -48,13 +48,7 @@ export const test = baseTest.extend<{
   },
   startDashboardServer: async ({ childProcess, page }, use) => {
     await use(async (options?: { cwd?: string, session?: string }) => {
-      const testInfo = test.info();
-      const showArgs = options?.session ? [`-s=${options.session}`, 'show'] : ['show'];
-      const serverProcess = childProcess({
-        command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...showArgs, '--port=0'],
-        cwd: options?.cwd ?? testInfo.outputPath(),
-        env: inheritAndCleanEnv(cliEnv()),
-      });
+      const serverProcess = spawnDashboardServer(childProcess, options);
       await serverProcess.waitForOutput('Listening on ');
       await page.goto(serverProcess.output.match(/Listening on (http:\/\/\S+)/)![1]);
       return page;
@@ -116,6 +110,15 @@ export const test = baseTest.extend<{
     await browser.close();
   },
 });
+
+export function spawnDashboardServer(childProcess: CommonFixtures['childProcess'], options?: { cwd?: string, session?: string }) {
+  const showArgs = options?.session ? [`-s=${options.session}`, 'show'] : ['show'];
+  return childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...showArgs, '--port=0'],
+    cwd: options?.cwd ?? test.info().outputPath(),
+    env: inheritAndCleanEnv(cliEnv()),
+  });
+}
 
 function cliEnv() {
   return {

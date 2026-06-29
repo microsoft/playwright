@@ -360,6 +360,9 @@ await page.GetByRole(AriaRole.Checkbox).CheckAsync();
 ### option: Locator.check.force = %%-input-force-%%
 * since: v1.14
 
+### option: Locator.check.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
@@ -522,6 +525,9 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.force = %%-input-force-%%
 * since: v1.14
 
+### option: Locator.click.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.click.noWaitAfter = %%-input-no-wait-after-%%
 * since: v1.14
 
@@ -609,6 +615,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.dblclick.force = %%-input-force-%%
 * since: v1.14
+
+### option: Locator.dblclick.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Locator.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
@@ -909,6 +918,9 @@ Locator of the element to drag to.
 
 ### option: Locator.dragTo.force = %%-input-force-%%
 * since: v1.18
+
+### option: Locator.dragTo.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Locator.dragTo.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.18
@@ -1472,6 +1484,8 @@ Attribute name to get the value for.
 
 ### option: Locator.getByRole.description = %%-locator-get-by-role-option-description-%%
 
+### option: Locator.getByRole.busy = %%-locator-get-by-role-option-busy-%%
+
 ## method: Locator.getByTestId
 * since: v1.27
 - returns: <[Locator]>
@@ -1578,6 +1592,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Locator.hover.force = %%-input-force-%%
 * since: v1.14
+
+### option: Locator.hover.scroll = %%-input-scroll-%%
+* since: v1.62
 
 ### option: Locator.hover.timeout = %%-input-timeout-%%
 * since: v1.14
@@ -2500,6 +2517,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.setChecked.force = %%-input-force-%%
 * since: v1.15
 
+### option: Locator.setChecked.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
@@ -2685,6 +2705,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.tap.force = %%-input-force-%%
 * since: v1.14
 
+### option: Locator.tap.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
@@ -2805,6 +2828,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.uncheck.force = %%-input-force-%%
 * since: v1.14
 
+### option: Locator.uncheck.scroll = %%-input-scroll-%%
+* since: v1.62
+
 ### option: Locator.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.14
 
@@ -2864,3 +2890,53 @@ orderSent.WaitForAsync();
 * since: v1.16
 
 ### option: Locator.waitFor.signal = %%-input-signal-%%
+
+## async method: Locator.waitForFunction
+* since: v1.62
+
+Returns when [`param: expression`] returns a truthy value, called with the matching element as a first argument, and [`param: arg`] as a second argument.
+
+This is a generic way to wait for an element to reach a custom condition without asserting it. The locator is re-resolved on each retry, so it tolerates the element being re-rendered while waiting.
+
+If [`param: expression`] returns a [Promise], this method will wait for the promise to resolve before checking its value.
+
+If [`param: expression`] throws or rejects, this method throws.
+
+**Usage**
+
+Wait for an attribute to appear:
+
+```js
+const toggle = page.getByRole('button', { name: 'Menu' });
+await toggle.click();
+await toggle.waitForFunction(element => element.hasAttribute('aria-expanded'));
+```
+
+Passing argument to [`param: expression`]:
+
+```js
+await page.getByTestId('status').waitForFunction((element, value) => {
+  return element.textContent === value;
+}, 'Ready');
+```
+
+### param: Locator.waitForFunction.expression = %%-evaluate-expression-%%
+* since: v1.62
+
+### param: Locator.waitForFunction.expression = %%-js-evaluate-pagefunction-%%
+* since: v1.62
+
+### param: Locator.waitForFunction.arg
+* since: v1.62
+- `arg` ?<[EvaluationArgument]>
+
+Optional argument to pass to [`param: expression`].
+
+### option: Locator.waitForFunction.timeout = %%-wait-for-function-timeout-%%
+* since: v1.62
+
+### option: Locator.waitForFunction.timeout = %%-wait-for-function-timeout-js-%%
+* since: v1.62
+
+### option: Locator.waitForFunction.signal = %%-input-signal-%%
+* since: v1.62

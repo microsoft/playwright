@@ -54,6 +54,7 @@ export class WVPage implements PageDelegate {
   readonly rawKeyboard: RawKeyboardImpl;
   readonly rawTouchscreen: RawTouchscreenImpl;
   private _session!: WVSession;
+  private _sentPauseOnStart = false;
   private readonly _outerSession: WVSession;
   private _provisionalPage: WVProvisionalPage | null = null;
   readonly _page: Page;
@@ -108,20 +109,64 @@ export class WVPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
-  updateEmulateMedia(): Promise<void> {
-    throw new Error('Method not implemented.');
+  private static async _setEmulateMedia(session: WVSession, mediaType: types.MediaType, colorScheme: types.ColorScheme, reducedMotion: types.ReducedMotion, contrast: types.Contrast): Promise<void> {
+    const promises = [];
+    promises.push(session.send('Page.setEmulatedMedia', { media: mediaType === 'no-override' ? '' : mediaType }));
+    let appearance: any = undefined;
+    switch (colorScheme) {
+      case 'light': appearance = 'Light'; break;
+      case 'dark': appearance = 'Dark'; break;
+      case 'no-override': appearance = undefined; break;
+    }
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersColorScheme', value: appearance }));
+    let reducedMotionWk: any = undefined;
+    switch (reducedMotion) {
+      case 'reduce': reducedMotionWk = 'Reduce'; break;
+      case 'no-preference': reducedMotionWk = 'NoPreference'; break;
+      case 'no-override': reducedMotionWk = undefined; break;
+    }
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersReducedMotion', value: reducedMotionWk }));
+    let contrastWk: any = undefined;
+    switch (contrast) {
+      case 'more': contrastWk = 'More'; break;
+      case 'no-preference': contrastWk = 'NoPreference'; break;
+      case 'no-override': contrastWk = undefined; break;
+    }
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersContrast', value: contrastWk }));
+    await Promise.all(promises);
+  }
+
+  async updateEmulateMedia(): Promise<void> {
+    const emulatedMedia = this._page.emulatedMedia();
+    const colorScheme = emulatedMedia.colorScheme;
+    const reducedMotion = emulatedMedia.reducedMotion;
+    const contrast = emulatedMedia.contrast;
+    await this._forAllSessions(session => WVPage._setEmulateMedia(session, emulatedMedia.media, colorScheme, reducedMotion, contrast));
   }
 
   goBack(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    return this._navigateHistory(false);
   }
 
   goForward(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    return this._navigateHistory(true);
   }
 
-  requestGC(): Promise<void> {
-    throw new Error('Method not implemented.');
+  private async _navigateHistory(forward: boolean): Promise<boolean> {
+    const response = await this._session.sendMayFail('Runtime.evaluate', {
+      expression: `(function() {
+        const canNavigate = window.navigation?.${forward ? 'canGoForward' : 'canGoBack'} ?? window.history.length > 1;
+        if (canNavigate)
+          window.history.${forward ? 'forward' : 'back'}();
+        return canNavigate;
+      })()`,
+      returnByValue: true,
+    } as any);
+    return !!response?.result?.value;
+  }
+
+  async requestGC(): Promise<void> {
+    await this._session.send('Heap.gc');
   }
 
   updateFileChooserInterception(): Promise<void> {
@@ -182,7 +227,14 @@ export class WVPage implements PageDelegate {
       this._workers.initializeSession(session),
       session.sendMayFail('Page.setBootstrapScript', { source: this._calculateBootstrapScript() }),
       session.sendMayFail('Runtime.evaluate', { expression: saveGlobalsSnapshotSource, returnByValue: true } as any),
+      session.sendMayFail('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(this._calculateExtraHTTPHeaders(), false /* lowerCase */) }),
     ]);
+    const emulatedMedia = this._page.emulatedMedia();
+    if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.contrast)
+      await WVPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.contrast);
+    const contextOptions = this._browserContext._options;
+    if (contextOptions.userAgent)
+      await session.sendMayFail('Page.overrideUserAgent', { value: contextOptions.userAgent });
     if (this._page.needsRequestInterception()) {
       await Promise.all([
         session.sendMayFail('Network.setInterceptionEnabled', { enabled: true }),
@@ -193,6 +245,7 @@ export class WVPage implements PageDelegate {
     // Inject the page-side input dispatcher and dialog bridge into the
     // currently-loaded document too — bootstrap only applies to future navigations.
     await session.sendMayFail('Runtime.evaluate', { expression: webViewInputBootstrapSource, returnByValue: true } as any);
+    await session.sendMayFail('Runtime.evaluate', { expression: sameDocumentNavigationBridgeSource, returnByValue: true } as any);
     if (this._dialogEndpoint) {
       await session.sendMayFail('Runtime.evaluate', {
         expression: dialogBridgeSource(this._dialogEndpoint),
@@ -214,6 +267,13 @@ export class WVPage implements PageDelegate {
   }
 
   private async _onTargetCreated(event: Protocol.Target.targetCreatedPayload) {
+    // The Target domain only exists for the top-level web-page target, so send it as soon as we know it exists.
+    // Commands sent before the first Target.targetCreated event may be silently dropped as targets may not exist yet.
+    if (!this._sentPauseOnStart) {
+      this._sentPauseOnStart = true;
+      await this._outerSession.sendMayFail('Target.setPauseOnStart', { pauseOnStart: true });
+    }
+
     const { targetInfo } = event;
     if (targetInfo.type !== 'page') {
       // Site-isolated WebKit (iOS 26+) reports a separate target per frame. We
@@ -464,17 +524,20 @@ export class WVPage implements PageDelegate {
     // For example, frame.setContent relies on this.
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber, source } = event.message;
 
-    if (level === 'debug'
-        && parameters
-        && parameters.length >= 2
-        && parameters[0].type === 'string'
-        && parameters[0].value === BINDING_CALL_TAG
-        && parameters[1].type === 'string') {
-      const payload = parameters[1].value as string;
-      const context = [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
-      if (context)
-        this._page.onBindingCalled(payload, context).catch(e => debugLogger.log('error', e));
-      return;
+    if (level === 'debug' && parameters && parameters.length >= 2 && parameters[0].type === 'string') {
+      const [bindingName, bindingArg] = parameters;
+
+      if (bindingName.value === BINDING_CALL_TAG && bindingArg.type === 'string') {
+        const context = [...this._contextIdToContext.values()].find(c => c.frame === this._page.mainFrame());
+        if (context)
+          this._page.onBindingCalled(bindingArg.value, context).catch(e => debugLogger.log('error', e));
+        return;
+      }
+
+      if (bindingName.value === SAME_DOCUMENT_NAVIGATION_TAG && bindingArg.type === 'string') {
+        this._onFrameNavigatedWithinDocument(this._page.mainFrame()._id, bindingArg.value);
+        return;
+      }
     }
 
     if (level === 'error' && source === 'javascript') {
@@ -566,6 +629,11 @@ export class WVPage implements PageDelegate {
     return headers;
   }
 
+  async updateUserAgent(): Promise<void> {
+    const contextOptions = this._browserContext._options;
+    await this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });
+  }
+
   async bringToFront(): Promise<void> {
   }
 
@@ -584,6 +652,21 @@ export class WVPage implements PageDelegate {
 
   async reload(): Promise<void> {
     await this._session.send('Page.reload');
+  }
+
+  async getCookies(): Promise<Protocol.Page.Cookie[]> {
+    const { cookies } = await this._session.send('Page.getCookies');
+    return cookies;
+  }
+
+  async setCookies(cookies: Protocol.Page.Cookie[]): Promise<void> {
+    for (const cookie of cookies)
+      await this._session.send('Page.setCookie', { cookie });
+  }
+
+  async deleteCookies(cookies: { cookieName: string, url: string }[]): Promise<void> {
+    for (const { cookieName, url } of cookies)
+      await this._session.send('Page.deleteCookie', { cookieName, url });
   }
 
   async addInitScript(initScript: InitScript): Promise<void> {
@@ -617,6 +700,7 @@ export class WVPage implements PageDelegate {
     scripts.push('if (!window.GestureEvent) window.GestureEvent = function GestureEvent() {};');
     scripts.push(this._publicKeyCredentialScript());
     scripts.push(bindingBridgeSource);
+    scripts.push(sameDocumentNavigationBridgeSource);
     scripts.push(webViewInputBootstrapSource);
     if (this._dialogEndpoint)
       scripts.push(dialogBridgeSource(this._dialogEndpoint));
@@ -1016,7 +1100,7 @@ export class WVPage implements PageDelegate {
 
   _onWebSocketWillSendHandshakeRequest(event: Protocol.Network.webSocketWillSendHandshakeRequestPayload) {
     const wallTimeMs = event.walltime * 1000;
-    this._timestampBaselineForWebSocket.set(event.requestId, wallTimeMs - event.timestamp);
+    this._timestampBaselineForWebSocket.set(event.requestId, wallTimeMs - event.timestamp * 1000);
     this._page.frameManager.onWebSocketRequest(event.requestId, headersObjectToArray(event.request.headers), wallTimeMs);
   }
 
@@ -1026,7 +1110,7 @@ export class WVPage implements PageDelegate {
   }
 
   _timestampToWallTimeMsForWebSocket(requestId: string, timestamp: number): number {
-    return this._timestampBaselineForWebSocket.get(requestId)! + timestamp;
+    return this._timestampBaselineForWebSocket.get(requestId)! + timestamp * 1000;
   }
 
   shouldToggleStyleSheetToSyncAnimations(): boolean {
@@ -1094,6 +1178,35 @@ const bindingBridgeSource = `
     });
   }
 `;
+
+const SAME_DOCUMENT_NAVIGATION_TAG = '__pw_same_document_navigation__';
+const sameDocumentNavigationBridgeSource = `(() => {
+  if (window.top !== window)
+    return;
+  if (window['${SAME_DOCUMENT_NAVIGATION_TAG}'])
+    return;
+  Object.defineProperty(window, '${SAME_DOCUMENT_NAVIGATION_TAG}', { value: true, configurable: true });
+  let lastReportedURL = window.location.href;
+  function report() {
+    if (window.location.href === lastReportedURL)
+      return;
+    lastReportedURL = window.location.href;
+    console.debug('${SAME_DOCUMENT_NAVIGATION_TAG}', window.location.href);
+  }
+  for (const name of ['pushState', 'replaceState']) {
+    const original = window.History.prototype[name];
+    if (typeof original !== 'function')
+      continue;
+    window.History.prototype[name] = function() {
+      const result = original.apply(this, arguments);
+      report();
+      return result;
+    };
+  }
+  window.addEventListener('popstate', report);
+  window.addEventListener('hashchange', report);
+  window.navigation?.addEventListener('currententrychange', report);
+})()`;
 
 function dialogBridgeSource(endpoint: string): string {
   return `(() => {

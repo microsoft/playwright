@@ -1,0 +1,28 @@
+name: Playwright CLI 🖥️
+description: Report a bug or request a feature for the Playwright CLI
+title: '[CLI]: '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Thanks for filing a Playwright CLI issue!
+
+        Describe what's going on in your own words — there's no strict format. The more detail (commands you ran, output you saw, what you expected), the faster we can help.
+  - type: textarea
+    id: details
+    attributes:
+      label: What's going on?
+      description: |
+        Describe the bug or feature request. Include anything that helps us understand and reproduce it — the exact command you ran, the output, what you expected, and your environment if relevant.
+      placeholder: |
+        e.g. `npx playwright ...` does X, but I expected Y.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Which version of Playwright are you using? (optional, but helpful)
+      placeholder: ex. 1.41.1
+    validations:
+      required: false

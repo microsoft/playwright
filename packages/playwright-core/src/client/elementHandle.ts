@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+import stream from 'stream';
+
 import { assert } from '@isomorphic/assert';
 import { isString } from '@isomorphic/rtti';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
@@ -28,7 +32,6 @@ import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { Platform } from '@isomorphic/platform';
 import type * as channels from './channels';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {
@@ -148,7 +151,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     const frame = await this.ownerFrame();
     if (!frame)
       throw new Error('Cannot set input files to detached element');
-    const converted = await convertInputFiles(this._platform, files, frame.page().context());
+    const converted = await convertInputFiles(files, frame.page().context());
     await this._elementChannel.setInputFiles({ ...converted, ...options, timeout: this._frame._timeout(options) }, options.signal);
   }
 
@@ -197,8 +200,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     }
     const result = await this._elementChannel.screenshot(copy, options.signal);
     if (options.path) {
-      await mkdirIfNeeded(this._platform, options.path);
-      await this._platform.fs().promises.writeFile(options.path, result.binary);
+      await mkdirIfNeeded(options.path);
+      await fs.promises.writeFile(options.path, result.binary);
     }
     return result.binary;
   }
@@ -256,18 +259,18 @@ function filePayloadExceedsSizeLimit(payloads: FilePayload[]) {
   return payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) >= fileUploadSizeLimit;
 }
 
-async function resolvePathsAndDirectoryForInputFiles(platform: Platform, items: string[]): Promise<[string[] | undefined, string | undefined]> {
+async function resolvePathsAndDirectoryForInputFiles(items: string[]): Promise<[string[] | undefined, string | undefined]> {
   let localPaths: string[] | undefined;
   let localDirectory: string | undefined;
   for (const item of items) {
-    const stat = await platform.fs().promises.stat(item as string);
+    const stat = await fs.promises.stat(item as string);
     if (stat.isDirectory()) {
       if (localDirectory)
         throw new Error('Multiple directories are not supported');
-      localDirectory = platform.path().resolve(item as string);
+      localDirectory = path.resolve(item as string);
     } else {
       localPaths ??= [];
-      localPaths.push(platform.path().resolve(item as string));
+      localPaths.push(path.resolve(item as string));
     }
   }
   if (localPaths?.length && localDirectory)
@@ -275,30 +278,30 @@ async function resolvePathsAndDirectoryForInputFiles(platform: Platform, items: 
   return [localPaths, localDirectory];
 }
 
-export async function convertInputFiles(platform: Platform, files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<SetInputFilesFiles> {
+export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<SetInputFilesFiles> {
   const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [files];
 
   if (items.some(item => typeof item === 'string')) {
     if (!items.every(item => typeof item === 'string'))
       throw new Error('File paths cannot be mixed with buffers');
 
-    const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(platform, items);
+    const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(items);
 
     if (context._connection.isRemote()) {
-      const files = localDirectory ? (await platform.fs().promises.readdir(localDirectory, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => platform.path().join(f.parentPath, f.name)) : localPaths!;
+      const files = localDirectory ? (await fs.promises.readdir(localDirectory, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => path.join(f.parentPath, f.name)) : localPaths!;
       const { writableStreams, rootDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({
-        rootDirName: localDirectory ? platform.path().basename(localDirectory) : undefined,
+        rootDirName: localDirectory ? path.basename(localDirectory) : undefined,
         items: await Promise.all(files.map(async file => {
-          const lastModifiedMs = (await platform.fs().promises.stat(file)).mtimeMs;
+          const lastModifiedMs = (await fs.promises.stat(file)).mtimeMs;
           return {
-            name: localDirectory ? platform.path().relative(localDirectory, file) : platform.path().basename(file),
+            name: localDirectory ? path.relative(localDirectory, file) : path.basename(file),
             lastModifiedMs
           };
         })),
       }, undefined), { internal: true });
       for (let i = 0; i < files.length; i++) {
         const writable = WritableStream.from(writableStreams[i]);
-        await platform.streamFile(files[i], writable.stream());
+        await stream.promises.pipeline(fs.createReadStream(files[i]), writable.stream());
       }
       return {
         directoryStream: rootDir,

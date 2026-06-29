@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { nodePlatform } from '@utils/nodePlatform';
+import { setCoreDir, setShowInternalStackFrames } from '@isomorphic/stackTrace';
 import { AndroidServerLauncherImpl } from './androidServerImpl';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
@@ -26,7 +26,9 @@ import type { Language } from '@isomorphic/locatorGenerators';
 
 export function createInProcessPlaywright(): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript', isClientCollocatedWithServer: true });
-  const clientConnection = new Connection(nodePlatform(packageRoot));
+  setCoreDir(packageRoot);
+  setShowInternalStackFrames(!!process.env.PWDEBUGIMPL);
+  const clientConnection = new Connection();
   clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* in process */);
 

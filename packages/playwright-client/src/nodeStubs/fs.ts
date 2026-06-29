@@ -14,4 +14,12 @@
  * limitations under the License.
  */
 
-module.exports = require('./lib/index');
+function notAvailable(): never {
+  throw new Error('fs is not available in the browser');
+}
+
+export const promises: any = new Proxy({}, { get: () => notAvailable });
+export const createReadStream: any = notAvailable;
+export const createWriteStream: any = notAvailable;
+
+export default { promises, createReadStream, createWriteStream };

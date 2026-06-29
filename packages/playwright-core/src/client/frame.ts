@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { assert } from '@isomorphic/assert';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
 import { urlMatches } from '@isomorphic/urlMatch';
@@ -67,7 +69,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FrameInitializer) {
     super(parent, type, guid, initializer);
-    this._eventEmitter = new EventEmitter(parent._platform);
+    this._eventEmitter = new EventEmitter();
     this._eventEmitter.setMaxListeners(0);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
@@ -105,12 +107,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   _timeout(options?: TimeoutOptions): number {
-    const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings(this._platform);
+    const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings();
     return timeoutSettings.timeout(options || {});
   }
 
   _navigationTimeout(options?: TimeoutOptions): number {
-    const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings(this._platform);
+    const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings();
     return timeoutSettings.navigationTimeout(options || {});
   }
 
@@ -286,7 +288,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async addScriptTag(options: { url?: string, path?: string, content?: string, type?: string } = {}): Promise<ElementHandle> {
     const copy = { ...options };
     if (copy.path) {
-      copy.content = (await this._platform.fs().promises.readFile(copy.path)).toString();
+      copy.content = (await fs.promises.readFile(copy.path)).toString();
       copy.content = addSourceUrlToScript(copy.content, copy.path);
     }
     return ElementHandle.from((await this._channel.addScriptTag({ ...copy }, undefined)).element);
@@ -295,7 +297,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async addStyleTag(options: { url?: string; path?: string; content?: string; } = {}): Promise<ElementHandle> {
     const copy = { ...options };
     if (copy.path) {
-      copy.content = (await this._platform.fs().promises.readFile(copy.path)).toString();
+      copy.content = (await fs.promises.readFile(copy.path)).toString();
       copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';
     }
     return ElementHandle.from((await this._channel.addStyleTag({ ...copy }, undefined)).element);
@@ -316,7 +318,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async _drop(selector: string, payload: DropPayload, options: Omit<channels.FrameDropOptions, 'payloads' | 'localPaths' | 'streams' | 'data'> & TimeoutOptions = {}) {
     let fileParams: { payloads?: channels.FrameDropParams['payloads'], localPaths?: string[], streams?: channels.FrameDropParams['streams'] } = {};
     if (payload.files !== undefined) {
-      const converted = await convertInputFiles(this._platform, payload.files, this.page().context());
+      const converted = await convertInputFiles(payload.files, this.page().context());
       if (converted.localDirectory || converted.directoryStream)
         throw new Error('Dropping a directory is not supported — pass individual files.');
       fileParams = { payloads: converted.payloads, localPaths: converted.localPaths, streams: converted.streams };
@@ -442,7 +444,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions & TimeoutOptions = {}): Promise<void> {
-    const converted = await convertInputFiles(this._platform, files, this.page().context());
+    const converted = await convertInputFiles(files, this.page().context());
     await this._channel.setInputFiles({ selector, ...converted, ...options, timeout: this._timeout(options) }, options.signal);
   }
 
@@ -484,7 +486,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       arg: serializeArgument(arg),
       timeout: this._timeout(options),
     }, options.signal);
-    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
+    return JSHandle.from(result.handle!) as any as structs.SmartHandle<R>;
   }
 
   async title(): Promise<string> {

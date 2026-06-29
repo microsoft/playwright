@@ -5,14 +5,15 @@
 register passkeys and answer `navigator.credentials.create()` / `navigator.credentials.get()`
 ceremonies in the page, without a real authenticator or hardware security key.
 
-There are two common ways to use it:
+There are three common ways to use it:
 
 - **Seed a known credential.** The passkey already exists — for example, your backend provisioned
   it for a test user. Import it with [`method: Credentials.create`] so the app under test can sign
   in right away. See the first example below.
 - **Capture a credential, then reuse it.** Let the app register a passkey once in a setup test,
-  read it back with [`method: Credentials.get`], and seed it into later tests — the same way
-  [`method: BrowserContext.storageState`] reuses signed-in state. See the second example below.
+  read it back with [`method: Credentials.get`], and seed it into later tests. See the second example below.
+- **Save credentials in the storage state, restore later.** Let the app register a passkey in a
+  setup test and save it as part of the storage state by setting [`option: BrowserContext.storageState.credentials`]. See [authentication guide](../auth.md) for examples.
 
 **Usage: seed a known credential**
 
@@ -103,10 +104,10 @@ await page.GotoAsync("https://example.com/login");
 // The page's navigator.credentials.get() is answered with the seeded passkey.
 ```
 
-**Usage: capture a passkey, then reuse it**
+**Usage: capture a credential, then reuse it**
 
 ```js
-// setup test: let the app register a passkey, then save it.
+// setup test: let the app register a passkey, then save the storage state with it.
 const context = await browser.newContext();
 await context.credentials.install();
 
@@ -263,6 +264,10 @@ var page = await context.NewPageAsync();
 await page.GotoAsync("https://example.com/login");
 // navigator.credentials.get() resolves the captured passkey — already signed in.
 ```
+
+**Usage: save credentials in the storage state, restore later**
+
+See [authentication guide](../auth.md) for examples of using saving and resotring the storage state.
 
 **Defaults**
 

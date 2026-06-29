@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import type { Platform } from '@isomorphic/platform';
+import fs from 'fs';
+import path from 'path';
 
 // Keep in sync with the server.
 export const fileUploadSizeLimit = 50 * 1024 * 1024;
 
-export async function mkdirIfNeeded(platform: Platform, filePath: string) {
+export async function mkdirIfNeeded(filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.
-  await platform.fs().promises.mkdir(platform.path().dirname(filePath), { recursive: true }).catch(() => {});
+  await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
 }

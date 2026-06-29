@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { headersObjectToArray } from '@isomorphic/headers';
 import { urlMatchesEqual } from '@isomorphic/urlMatch';
 import { isRegExp, isString } from '@isomorphic/rtti';
@@ -47,7 +50,6 @@ import type { BrowserContextOptions, Headers, SetStorageState, StorageState, Tim
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
-import type { Platform } from '@isomorphic/platform';
 import type * as channels from './channels';
 import type * as actions from '@recorder/actions';
 
@@ -93,8 +95,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
     super(parent, type, guid, initializer);
-    this._options = { ...initializer.options };
-    this._timeoutSettings = new TimeoutSettings(this._platform);
+    this._options = initializer.options;
+    this._timeoutSettings = new TimeoutSettings();
     this.debugger = Debugger.from(initializer.debugger);
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
@@ -116,7 +118,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('console', event => {
       const worker = Worker.fromNullable(event.worker);
       const page = Page.fromNullable(event.page);
-      const consoleMessage = new ConsoleMessage(this._platform, event, page, worker);
+      const consoleMessage = new ConsoleMessage(event, page, worker);
       worker?.emit(Events.Worker.Console, consoleMessage);
       page?.emit(Events.Page.Console, consoleMessage);
       if (worker && this._serviceWorkers.has(worker)) {
@@ -357,7 +359,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await evaluationScript(this._platform, script, arg);
+    const source = await evaluationScript(script, arg);
     return DisposableObject.from((await this._channel.addInitScript({ source }, undefined)).disposable);
   }
 
@@ -375,7 +377,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {
-    this._routes.unshift(new network.RouteHandler(this._platform, this._options.baseURL, url, handler, options.times));
+    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns({ title: 'Route requests' });
     return new DisposableStub(() => this.unroute(url, handler));
   }
@@ -459,17 +461,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     });
   }
 
-  async storageState(options: { path?: string, indexedDB?: boolean } = {}): Promise<StorageState> {
-    const state = await this._channel.storageState({ indexedDB: options.indexedDB }, undefined);
+  async storageState(options: { path?: string, indexedDB?: boolean, credentials?: boolean } = {}): Promise<StorageState> {
+    const state = await this._channel.storageState({ indexedDB: options.indexedDB, credentials: options.credentials }, undefined);
     if (options.path) {
-      await mkdirIfNeeded(this._platform, options.path);
-      await this._platform.fs().promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
+      await mkdirIfNeeded(options.path);
+      await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
     }
     return state;
   }
 
   async setStorageState(storageState: string | SetStorageState): Promise<void> {
-    const state = await prepareStorageState(this._platform, storageState);
+    const state = await prepareStorageState(storageState);
     await this._channel.setStorageState({ storageState: state }, undefined);
   }
 
@@ -532,18 +534,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
 }
 
-async function prepareStorageState(platform: Platform, storageState: string | SetStorageState): Promise<NonNullable<channels.BrowserNewContextParams['storageState']>> {
+async function prepareStorageState(storageState: string | SetStorageState): Promise<NonNullable<channels.BrowserNewContextParams['storageState']>> {
   if (typeof storageState !== 'string')
     return storageState as any;
   try {
-    return JSON.parse(await platform.fs().promises.readFile(storageState, 'utf8'));
+    return JSON.parse(await fs.promises.readFile(storageState, 'utf8'));
   } catch (e) {
     rewriteErrorMessage(e, `Error reading storage state from ${storageState}:\n` + e.message);
     throw e;
   }
 }
 
-export async function prepareBrowserContextParams(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
+export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.extraHTTPHeaders)
     network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {
@@ -551,17 +553,17 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-    storageState: options.storageState ? await prepareStorageState(platform, options.storageState) : undefined,
+    storageState: options.storageState ? await prepareStorageState(options.storageState) : undefined,
     serviceWorkers: options.serviceWorkers,
     colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
     reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     contrast: options.contrast === null ? 'no-override' : options.contrast,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
-    clientCertificates: await toClientCertificatesProtocol(platform, options.clientCertificates),
+    clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
   };
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
-    contextParams.recordVideo.dir = platform.path().resolve(contextParams.recordVideo.dir);
+    contextParams.recordVideo.dir = path.resolve(contextParams.recordVideo.dir);
   return contextParams;
 }
 
@@ -573,15 +575,15 @@ function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   return 'deny';
 }
 
-export async function toClientCertificatesProtocol(platform: Platform, certs?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
+export async function toClientCertificatesProtocol(certs?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
   if (!certs)
     return undefined;
 
-  const bufferizeContent = async (value?: Buffer, path?: string): Promise<Buffer | undefined> => {
+  const bufferizeContent = async (value?: Buffer, filePath?: string): Promise<Buffer | undefined> => {
     if (value)
       return value;
-    if (path)
-      return await platform.fs().promises.readFile(path);
+    if (filePath)
+      return await fs.promises.readFile(filePath);
   };
 
   return await Promise.all(certs.map(async cert => ({

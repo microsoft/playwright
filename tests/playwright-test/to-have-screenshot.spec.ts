@@ -233,7 +233,7 @@ test('should fail with proper error when unsupported argument is given', async (
     `
   }, { 'update-snapshots': true });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Expected options.clip.width not to be 0`);
+  expect(result.output).toContain(`Expected options.clip.width to be greater than 0`);
 });
 
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {

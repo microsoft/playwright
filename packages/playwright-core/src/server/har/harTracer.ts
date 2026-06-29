@@ -62,7 +62,6 @@ type HarTracerOptions = {
   omitPages?: boolean;
   omitSizes?: boolean;
   omitScripts?: boolean;
-  omitWebSocketFrames?: boolean;
 };
 
 export class HarTracer {
@@ -77,6 +76,7 @@ export class HarTracer {
   private _pageEntrySymbol: symbol;
   private _baseURL: string | undefined;
   private _page: Page | null;
+  private _omitWebSocketFrames = true;
 
   constructor(context: BrowserContext | APIRequestContext, page: Page | null, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
@@ -94,6 +94,10 @@ export class HarTracer {
     this._entrySymbol = Symbol('requestHarEntry');
     this._pageEntrySymbol = Symbol('pageHarEntry');
     this._baseURL = context instanceof APIRequestContext ? context._defaultOptions().baseURL : context._options.baseURL;
+  }
+
+  setOmitWebSocketFrames(omitWebSocketFrames: boolean) {
+    this._omitWebSocketFrames = omitWebSocketFrames;
   }
 
   start(options: { omitScripts: boolean }) {
@@ -211,7 +215,8 @@ export class HarTracer {
     if (!this._options.omitCookies)
       harEntry.request.cookies = event.cookies;
     harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));
-    harEntry.request.postData = this._postDataForBuffer(event.postData || null, event.headers['content-type'],  this._options.content);
+    const contentType = Object.entries(event.headers).find(([name]) => name.toLowerCase() === 'content-type')?.[1];
+    harEntry.request.postData = this._postDataForBuffer(event.postData || null, contentType, this._options.content);
     if (!this._options.omitSizes)
       harEntry.request.bodySize = event.postData?.length || 0;
     (event as any)[this._entrySymbol] = harEntry;
@@ -251,7 +256,7 @@ export class HarTracer {
     harEntry.response.cookies = this._options.omitCookies ? [] : event.cookies.map(c => {
       return {
         ...c,
-        expires: c.expires === -1 ? undefined : safeDateToISOString(c.expires)
+        expires: c.expires === -1 ? undefined : safeDateToISOString(c.expires * 1000)
       };
     });
 
@@ -443,7 +448,7 @@ export class HarTracer {
 
     let sha1: string | undefined = undefined;
     const recordMessage = (type: 'send' | 'receive', opcode: number, data: string, wallTimeMs: number) => {
-      if (this._options.omitWebSocketFrames)
+      if (this._omitWebSocketFrames)
         return;
       const message = { type, time: this._options.omitTiming ? -1 : wallTimeMs, opcode, data };
       if (this._options.content === 'embed') {
@@ -796,20 +801,29 @@ function parseCookie(c: string): har.Cookie {
       continue;
     }
 
-    if (name === 'Domain')
-      cookie.domain = value;
-    if (name === 'Expires')
-      cookie.expires = safeDateToISOString(value);
-    if (name === 'HttpOnly')
-      cookie.httpOnly = true;
-    if (name === 'Max-Age')
-      cookie.expires = safeDateToISOString(Date.now() + (+value) * 1000);
-    if (name === 'Path')
-      cookie.path = value;
-    if (name === 'SameSite')
-      cookie.sameSite = value;
-    if (name === 'Secure')
-      cookie.secure = true;
+    switch (name.toLowerCase()) {
+      case 'domain':
+        cookie.domain = value;
+        break;
+      case 'expires':
+        cookie.expires = safeDateToISOString(value);
+        break;
+      case 'httponly':
+        cookie.httpOnly = true;
+        break;
+      case 'max-age':
+        cookie.expires = safeDateToISOString(Date.now() + (+value) * 1000);
+        break;
+      case 'path':
+        cookie.path = value;
+        break;
+      case 'samesite':
+        cookie.sameSite = value;
+        break;
+      case 'secure':
+        cookie.secure = true;
+        break;
+    }
   }
   return cookie;
 }

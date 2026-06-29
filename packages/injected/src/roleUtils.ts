@@ -827,7 +827,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       if (labels.length)
         return getAccessibleNameFromAssociatedLabels(labels, options);
 
-      const usePlaceholder = (tagName === 'INPUT' && ['text', 'password', 'search', 'tel', 'email', 'url'].includes((element as HTMLInputElement).type)) || tagName === 'TEXTAREA';
+      const usePlaceholder = (tagName === 'INPUT' && ['text', 'password', 'number', 'search', 'tel', 'email', 'url'].includes((element as HTMLInputElement).type)) || tagName === 'TEXTAREA';
       const placeholder = element.getAttribute('placeholder') || '';
       const title = element.getAttribute('title') || '';
       if (!usePlaceholder || title)
@@ -1152,6 +1152,12 @@ function hasExplicitAriaDisabled(element: Element | undefined, isAncestor = fals
     return hasExplicitAriaDisabled(parentElementOrShadowHost(element), true);
   }
   return false;
+}
+
+export function getAriaBusy(element: Element): boolean {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-busy
+  // aria-busy is a global state with a default value of "false".
+  return getAriaBoolean(element.getAttribute('aria-busy')) === true;
 }
 
 function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions) {

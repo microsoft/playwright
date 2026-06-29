@@ -336,7 +336,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
-    return await this._context.storageState(progress, params.indexedDB);
+    return await this._context.storageState(progress, params.indexedDB, params.credentials);
   }
 
   async setStorageState(params: channels.BrowserContextSetStorageStateParams, progress: Progress): Promise<void> {

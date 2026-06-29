@@ -264,6 +264,21 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(request.headers['foo']).toBe('bar');
     });
 
+    test('should send extra headers with connect request in object form', async ({ browserType, server }) => {
+      const requestPromise = server.waitForWebSocketConnectionRequest();
+      browserType.connect({
+        wsEndpoint: `ws://localhost:${server.PORT}/ws`,
+        headers: {
+          'User-Agent': 'Playwright',
+          'foo': 'bar',
+        },
+        timeout: 3000,
+      }).catch(() => {});
+      const request = await requestPromise;
+      expect(request.headers['user-agent']).toBe('Playwright');
+      expect(request.headers['foo']).toBe('bar');
+    });
+
     test('should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ connect, browserName, server, isFrozenWebkit }) => {
       test.skip(isFrozenWebkit);
 

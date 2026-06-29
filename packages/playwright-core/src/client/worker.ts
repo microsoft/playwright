@@ -52,7 +52,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     ]));
     this._channel.on('console', event => {
       // Note: we only receive console events here for workers from "chromium._connectToWorker".
-      this.emit(Events.Worker.Console, new ConsoleMessage(this._platform, event, null, this));
+      this.emit(Events.Worker.Console, new ConsoleMessage(event, null, this));
     });
     this._channel.on('close', () => {
       if (this._page)
@@ -88,7 +88,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return await this._wrapApiCall(async () => {
-      const timeoutSettings = this._page?._timeoutSettings ?? this._context?._timeoutSettings ?? new TimeoutSettings(this._platform);
+      const timeoutSettings = this._page?._timeoutSettings ?? this._context?._timeoutSettings ?? new TimeoutSettings();
       const timeout = timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const signal = typeof optionsOrPredicate === 'function' ? undefined : (optionsOrPredicate as TimeoutOptions).signal;

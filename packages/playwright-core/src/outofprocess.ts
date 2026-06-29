@@ -18,8 +18,8 @@ import * as childProcess from 'child_process';
 import path from 'path';
 
 import { PipeTransport } from '@utils/pipeTransport';
-import { nodePlatform } from '@utils/nodePlatform';
 import { ManualPromise } from '@isomorphic/manualPromise';
+import { setCoreDir, setShowInternalStackFrames } from '@isomorphic/stackTrace';
 import { Connection } from './client/connection';
 import { packageRoot } from './package';
 
@@ -51,7 +51,9 @@ class PlaywrightClient {
     // eslint-disable-next-line no-restricted-properties
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
-    const connection = new Connection(nodePlatform(packageRoot));
+    setCoreDir(packageRoot);
+    setShowInternalStackFrames(!!process.env.PWDEBUGIMPL);
+    const connection = new Connection();
     const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));

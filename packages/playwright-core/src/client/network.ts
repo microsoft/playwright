@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { resolveGlobToRegexPattern, serializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
@@ -22,6 +24,7 @@ import { MultiMap } from '@isomorphic/multimap';
 import { isString } from '@isomorphic/rtti';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
+import { currentZone } from '@utils/zones';
 import { Worker } from './worker';
 import { Waiter } from './waiter';
 import { Frame } from './frame';
@@ -38,7 +41,7 @@ import type * as api from '../../types/types';
 import type { HeadersArray } from '@isomorphic/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
-import type { Platform, Zone } from '@isomorphic/platform';
+import type { Zone } from '@utils/zones';
 
 export type NetworkCookie = {
   name: string,
@@ -389,7 +392,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     let isBase64 = false;
     let length = 0;
     if (options.path) {
-      const buffer = await this._platform.fs().promises.readFile(options.path);
+      const buffer = await fs.promises.readFile(options.path);
       body = buffer.toString('base64');
       isBase64 = true;
       length = buffer.length;
@@ -836,12 +839,12 @@ export class RouteHandler {
   private _activeInvocations: Set<{ complete: Promise<void>, route: Route }> = new Set();
   private _savedZone: Zone;
 
-  constructor(platform: Platform, baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
+  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
-    this._savedZone = platform.zones.current().pop();
+    this._savedZone = currentZone().without('apiZone');
     // Eagerly validate string globs so that invalid patterns throw at the call site
     // (e.g. page.route()) rather than silently aborting requests later.
     if (typeof url === 'string')

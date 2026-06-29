@@ -80,6 +80,14 @@ This option has no effect.
 
 Whether to bypass the [actionability](../actionability.md) checks. Defaults to `false`.
 
+## input-scroll
+- `scroll` <[ScrollMode]<"auto"|"none">>
+
+Controls whether Playwright scrolls the element into view before performing the action. Defaults to `"auto"`,
+which scrolls the element into view when necessary, including scrolling nested scrollable containers. When set to
+`"none"`, Playwright does not scroll the element and the action fails if the element is not already in the viewport.
+This is useful to assert that an element is reachable by the user without additional scrolling.
+
 ## input-selector
 - `selector` <[string]>
 
@@ -1391,6 +1399,14 @@ Whether to find an exact match: case-sensitive and whole-string. Default to fals
 - `role` <[AriaRole]<"alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem">>
 
 Required aria role.
+
+## locator-get-by-role-option-busy
+* since: v1.61
+- `busy` <[boolean]>
+
+An attribute that is usually set by `aria-busy`.
+
+Learn more about [`aria-busy`](https://www.w3.org/TR/wai-aria-1.2/#aria-busy).
 
 ## locator-get-by-role-option-checked
 * since: v1.27

@@ -365,3 +365,58 @@ it('should support offline', async ({ page, server, browserName }) => {
   await page.context().setOffline(false);
   await expect.poll(() =>  worker.evaluate(() => navigator.onLine)).toBe(true);
 });
+
+it('should resolve worker script allHeaders in main frame', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39948' },
+}, async function({ page, server, browserName }) {
+  const [request] = await Promise.all([
+    page.waitForEvent('requestfinished', request => request.url() === server.PREFIX + '/worker/worker.js'),
+    page.goto(server.PREFIX + '/worker/worker.html'),
+  ]);
+  const response = await request.response();
+  const requestHeaders = await request.allHeaders();
+  expect(requestHeaders['host']).toBeTruthy();
+  const responseHeaders = await response.allHeaders();
+  expect(responseHeaders['content-type']).toBeTruthy();
+});
+
+it('should resolve worker script allHeaders in iframe', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39948' },
+}, async function({ page, server, browserName }) {
+  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/39948');
+
+  const [request] = await Promise.all([
+    page.waitForEvent('requestfinished', request => request.url() === server.PREFIX + '/worker/worker.js'),
+    attachFrame(page, 'frame1', server.PREFIX + '/worker/worker.html'),
+  ]);
+  const response = await request.response();
+  const requestHeaders = await request.allHeaders();
+  expect(requestHeaders['host']).toBeTruthy();
+  const responseHeaders = await response.allHeaders();
+  expect(responseHeaders['content-type']).toBeTruthy();
+});
+
+it('should resolve worker script allHeaders in nested worker inside iframe', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39948' },
+}, async function({ page, server, browserName }) {
+  it.fixme(browserName === 'webkit', 'cannot evaluate in nested worker');
+  it.fixme(browserName === 'firefox', 'nested worker script request is not reported at all');
+  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/39948');
+
+  const [worker] = await Promise.all([
+    page.waitForEvent('worker'),
+    attachFrame(page, 'frame1', server.PREFIX + '/worker/worker.html'),
+  ]);
+
+  const url = server.PREFIX + '/worker/worker.js';
+  const [request] = await Promise.all([
+    page.waitForEvent('requestfinished', request => request.url() === url),
+    worker.evaluate(url => {
+      (self as any).w = new Worker(url);
+    }, url),
+  ]);
+
+  const response = await request.response();
+  const headers = await response.allHeaders();
+  expect(headers['content-type']).toBeTruthy();
+});

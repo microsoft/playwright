@@ -126,6 +126,7 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
 
   _markAsCrashed() {
     this._crashed = true;
+    this._rejectPendingCallbacks(`Page crashed.`);
   }
 
   createChildSession(sessionId: string, eventListener?: SessionEventListener): CRSession {
@@ -187,8 +188,12 @@ export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap>
   dispose() {
     this._closed = true;
     this._connection._sessions.delete(this._sessionId);
+    this._rejectPendingCallbacks(`Internal server error, session closed.`);
+  }
+
+  private _rejectPendingCallbacks(message: string) {
     for (const callback of this._callbacks.values()) {
-      callback.error.setMessage(`Internal server error, session closed.`);
+      callback.error.setMessage(message);
       callback.error.type = this._crashed ? 'crashed' : 'closed';
       callback.error.logs = this._connection._browserDisconnectedLogs;
       callback.reject(callback.error);

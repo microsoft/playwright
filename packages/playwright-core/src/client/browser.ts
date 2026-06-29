@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { Artifact } from './artifact';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { CDPSession } from './cdpSession';
@@ -79,7 +81,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   async _innerNewContext(userOptions: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
     const options = this._browserType._playwright.selectors._withSelectorOptions(userOptions);
     await this._instrumentation.runBeforeCreateBrowserContext(options);
-    const contextOptions = await prepareBrowserContextParams(this._platform, options);
+    const contextOptions = await prepareBrowserContextParams(options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions, undefined) : await this._channel.newContext(contextOptions, undefined);
     const context = BrowserContext.from(response.context);
     if (forReuse)
@@ -166,8 +168,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     const buffer = await artifact.readIntoBuffer();
     await artifact.delete();
     if (this._path) {
-      await mkdirIfNeeded(this._platform, this._path);
-      await this._platform.fs().promises.writeFile(this._path, buffer);
+      await mkdirIfNeeded(this._path);
+      await fs.promises.writeFile(this._path, buffer);
       this._path = undefined;
     }
     return buffer;

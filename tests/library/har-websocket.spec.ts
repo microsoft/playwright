@@ -100,6 +100,7 @@ it('should include websocket handshake headers and status', async ({ contextFact
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
 
+  const beforeMs = Date.now();
   const wsUrl = `ws://${server.HOST}/ws`;
   const closed = page.evaluate(url => new Promise<void>(resolve => {
     const ws = new WebSocket(url);
@@ -108,6 +109,7 @@ it('should include websocket handshake headers and status', async ({ contextFact
   }), wsUrl);
   await closed;
   const log = await getLog();
+  const afterMs = Date.now();
 
   const wsEntry = log.entries.find(e => e.request.url === wsUrl)! as Entry;
   expect(wsEntry._resourceType).toBe('websocket');
@@ -115,6 +117,10 @@ it('should include websocket handshake headers and status', async ({ contextFact
   expect(wsEntry.response.status).toBe(101);
   expect(wsEntry.response.statusText).toBe('Switching Protocols');
   expect(wsEntry.response.headersSize).toBe(responseHeadersSize(wsEntry.response.headers));
+
+  const wallTimeMs = new Date(wsEntry.startedDateTime).getTime();
+  expect(wallTimeMs).toBeGreaterThanOrEqual(beforeMs);
+  expect(wallTimeMs).toBeLessThanOrEqual(afterMs);
 
   const requestHeaderNames = wsEntry.request.headers.map(h => h.name.toLowerCase());
   expect(requestHeaderNames).toContain('upgrade');
@@ -135,12 +141,19 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
   const incomingBinary = [(new Array(125)).fill(0x01), (new Array(126)).fill(0x01), (new Array(2 ** 16)).fill(0x01)];
   const outgoingText =   ['y'.repeat(125),             'y'.repeat(126),             'y'.repeat(2 ** 16)];
   const outgoingBinary = [(new Array(125)).fill(0x02), (new Array(126)).fill(0x02), (new Array(2 ** 16)).fill(0x02)];
+  const incomingCount = incomingText.length + incomingBinary.length;
+  const outgoingCount = outgoingText.length + outgoingBinary.length;
+  const delayMs = 100;
 
-  server.onceWebSocketConnection(ws => {
-    for (const text of incomingText)
+  server.onceWebSocketConnection(async ws => {
+    for (const text of incomingText) {
       ws.send(text);
-    for (const binary of incomingBinary)
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+    for (const binary of incomingBinary) {
+      await new Promise(resolve => setTimeout(resolve, delayMs));
       ws.send(Buffer.from(binary));
+    }
   });
 
   const outputPath = content === 'embed' ? undefined : 'test.har.zip';
@@ -149,20 +162,24 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
 
   const beforeMs = Date.now();
   const wsUrl = `ws://${server.HOST}/ws`;
-  const closed = page.evaluate(({ url, incomingCount, outgoingText, outgoingBinary }) => new Promise<void>(resolve => {
+  const closed = page.evaluate(({ url, incomingCount, outgoingText, outgoingBinary, delayMs }) => new Promise<void>(resolve => {
     let count = 0;
     const ws = new WebSocket(url);
-    ws.addEventListener('message', () => {
+    ws.addEventListener('message', async () => {
       if (++count < incomingCount)
         return;
-      for (const text of outgoingText)
+      for (const text of outgoingText) {
         ws.send(text);
-      for (const binary of outgoingBinary)
+        await new Promise(resolve => window.builtins.setTimeout(resolve, delayMs));
+      }
+      for (const binary of outgoingBinary) {
+        await new Promise(resolve => window.builtins.setTimeout(resolve, delayMs));
         ws.send(new Uint8Array(binary));
+      }
       ws.close();
     });
     ws.addEventListener('close', () => resolve());
-  }), { url: wsUrl, incomingCount: incomingText.length + incomingBinary.length, outgoingText, outgoingBinary });
+  }), { url: wsUrl, incomingCount, outgoingText, outgoingBinary, delayMs });
   await closed;
   const afterMs = Date.now();
 
@@ -208,6 +225,7 @@ async function testWebSocketMessages(contextFactory, server, testInfo, content, 
   }
   expect(messages[0].time).toBeLessThanOrEqual(messages[1].time);
   expect(wsEntry.time).toBeGreaterThanOrEqual(messages[messages.length - 1].time - messages[0].time);
+  expect(wsEntry.time).toBeGreaterThanOrEqual(delayMs * (incomingCount + outgoingCount));
 }
 
 it('should embed websocket messages', async ({ contextFactory, server, channel }, testInfo) => {
@@ -234,24 +252,24 @@ it('should attach websocket messages for a still open websocket after stopping',
 
   const beforeMs = Date.now();
   const wsUrl = `ws://${server.HOST}/ws`;
-  const [ws] = await Promise.all([
-    page.waitForEvent('websocket'),
-    page.evaluate(({ url, outgoingText, outgoingBinary }) => {
-      const ws = new WebSocket(url);
-      (window as any).ws = ws;
-      let count = 0;
-      ws.addEventListener('open', () => ws.send(outgoingText));
-      ws.addEventListener('message', () => {
-        if (++count < 2)
-          ws.send(new Uint8Array(outgoingBinary));
-      });
-    }, { url: wsUrl, outgoingText, outgoingBinary }),
-  ]);
+  const wsPromise = page.waitForEvent('websocket');
+  const evaluatePromise = page.evaluate(({ url, outgoingText, outgoingBinary }) => {
+    const ws = new WebSocket(url);
+    (window as any).ws = ws;
+    let count = 0;
+    ws.addEventListener('open', () => ws.send(outgoingText));
+    ws.addEventListener('message', () => {
+      if (++count < 2)
+        ws.send(new Uint8Array(outgoingBinary));
+    });
+  }, { url: wsUrl, outgoingText, outgoingBinary });
+  const ws = await wsPromise;
   // Wait for all frames so the HAR tracer has observed them before the context is closed.
   await ws.waitForEvent('framesent');
   await ws.waitForEvent('framereceived');
   await ws.waitForEvent('framesent');
   await ws.waitForEvent('framereceived');
+  await evaluatePromise;
   const afterMs = Date.now();
 
   // Do not close the WebSocket on the page side. Closing the context should still flush messages.

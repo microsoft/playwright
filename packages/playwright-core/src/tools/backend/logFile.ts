@@ -91,7 +91,7 @@ export class LogFile {
       return;
     this._file ??= await this._context.outputFile({ prefix: this._filePrefix, ext: 'log', date: new Date(this._startTime) }, { origin: 'code' });
     const relativeTime = Math.round(wallTime - this._startTime);
-    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${text}\n`;
+    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${this._context.redactSecrets(text)}\n`;
     await fs.promises.appendFile(this._file, logLine);
 
     const lineCount = logLine.split('\n').length - 1;

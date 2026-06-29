@@ -262,3 +262,39 @@ test('failed and skipped on retry should be marked as flaky', async ({ runInline
   expect(result.output).toContain('Failed on first run');
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'Skipped on first retry', location: expect.anything() }]);
 });
+
+test('should defer retries to the end of the run', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = { retries: 3, retryStrategy: 'deferred' };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('a', ({}, testInfo) => {
+        console.log('\\n%%a-' + testInfo.retry);
+        expect(testInfo.retry).toBe(3);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.describe.configure({ retries: 2 });
+      test('b', ({}, testInfo) => {
+        console.log('\\n%%b-' + testInfo.retry);
+        expect(testInfo.retry).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(2);
+  expect(result.results.length).toBe(7);
+  // First attempts run before any retry, and each retry round is interleaved.
+  expect(result.outputLines).toEqual([
+    'a-0',
+    'b-0',
+    'a-1',
+    'b-1',
+    'a-2',
+    'b-2',
+    'a-3',
+  ]);
+});

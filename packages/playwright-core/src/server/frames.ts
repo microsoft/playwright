@@ -28,7 +28,7 @@ import { makeWaitForNextTask } from '@utils/task';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
-import { TimeoutError } from './errors';
+import { TimeoutError, isTargetClosedError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { FrameSelectors } from './frameSelectors';
 import { helper } from './helper';
@@ -139,10 +139,10 @@ export class FrameManager {
       this.frameAttached(kDummyFrameId, null);
   }
 
-  dispose() {
+  dispose(error: Error) {
     for (const frame of this._frames.values()) {
       frame._stopNetworkIdleTimer();
-      frame.invalidateNonStallingEvaluations('Target crashed');
+      frame.invalidateNonStallingEvaluations(error);
     }
   }
 
@@ -235,6 +235,7 @@ export class FrameManager {
     const frame = this._frames.get(frameId)!;
     this.removeChildFramesRecursively(frame);
     this._clearWebSockets(frame);
+    const previousUrl = frame._url;
     frame._url = url;
     frame._name = name;
 
@@ -269,6 +270,11 @@ export class FrameManager {
     if (!initial) {
       frame.apiLog(`  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
+      // Re-number the main frame when it navigates away from a real document, so that aria
+      // refs (f<seq>e<n>) minted against the previous document do not accidentally resolve
+      // to elements in the new one.
+      if (frame === this._mainFrame && previousUrl && previousUrl !== 'about:blank')
+        frame.seq = this._allocateFrameSeq();
     }
     // Restore pending if any - see comments above about keepPending.
     frame._setPendingDocument(keepPending);
@@ -501,7 +507,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   static Events = FrameEvent;
 
   _id: string;
-  readonly seq: number;
+  seq: number;
   _firedLifecycleEvents = new Set<types.LifecycleEvent>();
   private _firedNetworkIdleSelf = false;
   _currentDocument: DocumentInfo;
@@ -572,17 +578,16 @@ export class Frame extends SdkObject<FrameEventMap> {
   _setPendingDocument(documentInfo: DocumentInfo | undefined) {
     this._pendingDocument = documentInfo;
     if (documentInfo)
-      this.invalidateNonStallingEvaluations('Navigation interrupted the evaluation');
+      this.invalidateNonStallingEvaluations(new Error('Navigation interrupted the evaluation'));
   }
 
   pendingDocument(): DocumentInfo | undefined {
     return this._pendingDocument;
   }
 
-  invalidateNonStallingEvaluations(message: string) {
+  invalidateNonStallingEvaluations(error: Error) {
     if (!this._raceAgainstEvaluationStallingEventsPromises.size)
       return;
-    const error = new Error(message);
     for (const promise of this._raceAgainstEvaluationStallingEventsPromises)
       promise.reject(error);
   }
@@ -1551,6 +1556,8 @@ export class Frame extends SdkObject<FrameEventMap> {
         details.received = lastIntermediateResult.received;
         details.customErrorMessage = lastIntermediateResult.errorMessage;
       }
+      if (isTargetClosedError(e) || isSessionClosedError(e))
+        progress.log(e.message);
       if (e instanceof TimeoutError)
         details.timedOut = true;
       throw new ExpectError(details);
@@ -1598,30 +1605,49 @@ export class Frame extends SdkObject<FrameEventMap> {
     return { matches, received };
   }
 
-  async waitForFunctionExpression<R>(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any, options: { pollingInterval?: number }, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
+  async waitForFunctionExpression<R>(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any, options: { pollingInterval?: number, selector?: string, strict?: boolean }, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
     if (typeof options.pollingInterval === 'number')
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
     expression = js.normalizeEvaluationExpression(expression, isFunction);
-    return this.retryWithProgressAndTimeouts(progress, [100], async () => {
-      const context = world === 'main' ? await progress.race(this.mainContext()) : await progress.race(this.utilityContext());
-      const injectedScript = await progress.race(context.injectedScript());
-      const handle = await progress.race(injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
+    if (options.selector !== undefined)
+      progress.log(`waiting for ${this._asLocator(options.selector)}`);
+    return this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
+      let injectedScript: js.JSHandle<InjectedScript>;
+      let info: SelectorInfo | undefined;
+      if (options.selector !== undefined) {
+        const resolved = await progress.race(this.selectors.resolveInjectedForSelector(options.selector, { strict: options.strict, mainWorld: true }));
+        if (!resolved)
+          return continuePolling;
+        injectedScript = resolved.injected;
+        info = resolved.info;
+      } else {
+        const context = world === 'main' ? await progress.race(this.mainContext()) : await progress.race(this.utilityContext());
+        injectedScript = await progress.race(context.injectedScript());
+      }
+      const handle = await progress.race(injectedScript.evaluateHandle((injected, { info, expression, isFunction, polling, arg }) => {
         let evaledExpression: any;
         const predicate = (): R => {
+          const args = [arg];
+          if (info) {
+            const element = injected.querySelector(info.parsed, document, info.strict);
+            if (!element)
+              return undefined as any;
+            args.unshift(element);
+          }
           // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
           // in firefox.
           // See https://bugzilla.mozilla.org/show_bug.cgi?id=1814898
           let result = evaledExpression ?? globalThis.eval(expression);
           if (isFunction === true) {
             evaledExpression = result;
-            result = result(arg);
+            result = result(...args);
           } else if (isFunction === false) {
             result = result;
           } else {
             // auto detect.
             if (typeof result === 'function') {
               evaledExpression = result;
-              result = result(arg);
+              result = result(...args);
             }
           }
           return result;
@@ -1652,12 +1678,14 @@ export class Frame extends SdkObject<FrameEventMap> {
 
         next();
         return { result, abort: () => aborted = true };
-      }, { expression, isFunction, polling: options.pollingInterval, arg }));
+      }, { info, expression, isFunction, polling: options.pollingInterval, arg }));
       try {
         return await progress.race(handle.evaluateHandle(h => h.result));
       } catch (error) {
         // Note: it is important to await "abort()" to prevent any side effects
-        // after this method returns.
+        // after this method returns. We intentionally do not race against progress
+        // here - it is already resolved/aborted, and the abort must run to completion.
+        // eslint-disable-next-line progress/await-must-use-progress
         await handle.evaluate(h => h.abort()).catch(() => {});
         throw error;
       } finally {

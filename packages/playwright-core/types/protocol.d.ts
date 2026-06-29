@@ -341,6 +341,54 @@ including nodes that are ignored for accessibility.
     }
   }
   
+  /**
+   * A domain for ad-related metrics and data.
+   */
+  export namespace Ads {
+    /**
+     * Ad metrics for a page.
+     */
+    export interface AdMetrics {
+      /**
+       * The viewport ad density by area, represented as a percentage (an integer
+between 0 and 100).
+       */
+      viewportAdDensityByArea: number;
+      /**
+       * The time-weighted average of the viewport ad density by area, measured
+across the duration of the page.
+       */
+      averageViewportAdDensityByArea: number;
+      /**
+       * The number of ads currently visible within the viewport.
+       */
+      viewportAdCount: number;
+      /**
+       * The time-weighted average of the viewport ad count, measured across the
+duration of the page.
+       */
+      averageViewportAdCount: number;
+      /**
+       * The total ad CPU usage, in milliseconds.
+       */
+      totalAdCpuTime: number;
+      /**
+       * The total ad network bytes.
+       */
+      totalAdNetworkBytes: number;
+    }
+    
+    
+    /**
+     * Retrieves ad metrics for the current page.
+     */
+    export type getAdMetricsParameters = {
+    }
+    export type getAdMetricsReturnValue = {
+      metrics: AdMetrics;
+    }
+  }
+  
   export namespace Animation {
     /**
      * Animation instance.
@@ -859,8 +907,8 @@ CORS RFC1918 enforcement.
       clientSecurityState?: Network.ClientSecurityState;
     }
     export type AttributionReportingIssueType = "PermissionPolicyDisabled"|"UntrustworthyReportingOrigin"|"InsecureContext"|"InvalidHeader"|"InvalidRegisterTriggerHeader"|"SourceAndTriggerHeaders"|"SourceIgnored"|"TriggerIgnored"|"OsSourceIgnored"|"OsTriggerIgnored"|"InvalidRegisterOsSourceHeader"|"InvalidRegisterOsTriggerHeader"|"WebAndOsHeaders"|"NoWebOrOsSupport"|"NavigationRegistrationWithoutTransientUserActivation"|"InvalidInfoHeader"|"NoRegisterSourceHeader"|"NoRegisterTriggerHeader"|"NoRegisterOsSourceHeader"|"NoRegisterOsTriggerHeader"|"NavigationRegistrationUniqueScopeAlreadySet";
-    export type SharedDictionaryError = "UseErrorCrossOriginNoCorsRequest"|"UseErrorDictionaryLoadFailure"|"UseErrorMatchingDictionaryNotUsed"|"UseErrorUnexpectedContentDictionaryHeader"|"WriteErrorCossOriginNoCorsRequest"|"WriteErrorDisallowedBySettings"|"WriteErrorExpiredResponse"|"WriteErrorFeatureDisabled"|"WriteErrorInsufficientResources"|"WriteErrorInvalidMatchField"|"WriteErrorInvalidStructuredHeader"|"WriteErrorInvalidTTLField"|"WriteErrorNavigationRequest"|"WriteErrorNoMatchField"|"WriteErrorNonIntegerTTLField"|"WriteErrorNonListMatchDestField"|"WriteErrorNonSecureContext"|"WriteErrorNonStringIdField"|"WriteErrorNonStringInMatchDestList"|"WriteErrorNonStringMatchField"|"WriteErrorNonTokenTypeField"|"WriteErrorRequestAborted"|"WriteErrorShuttingDown"|"WriteErrorTooLongIdField"|"WriteErrorUnsupportedType";
-    export type SRIMessageSignatureError = "MissingSignatureHeader"|"MissingSignatureInputHeader"|"InvalidSignatureHeader"|"InvalidSignatureInputHeader"|"SignatureHeaderValueIsNotByteSequence"|"SignatureHeaderValueIsParameterized"|"SignatureHeaderValueIsIncorrectLength"|"SignatureInputHeaderMissingLabel"|"SignatureInputHeaderValueNotInnerList"|"SignatureInputHeaderValueMissingComponents"|"SignatureInputHeaderInvalidComponentType"|"SignatureInputHeaderInvalidComponentName"|"SignatureInputHeaderInvalidHeaderComponentParameter"|"SignatureInputHeaderInvalidDerivedComponentParameter"|"SignatureInputHeaderKeyIdLength"|"SignatureInputHeaderInvalidParameter"|"SignatureInputHeaderMissingRequiredParameters"|"ValidationFailedSignatureExpired"|"ValidationFailedInvalidLength"|"ValidationFailedSignatureMismatch"|"ValidationFailedIntegrityMismatch";
+    export type SharedDictionaryError = "UseErrorCrossOriginNoCorsRequest"|"UseErrorDictionaryLoadFailure"|"UseErrorMatchingDictionaryNotUsed"|"UseErrorUnexpectedContentDictionaryHeader"|"WriteErrorCossOriginNoCorsRequest"|"WriteErrorDisallowedBySettings"|"WriteErrorExpiredResponse"|"WriteErrorFeatureDisabled"|"WriteErrorInsufficientResources"|"WriteErrorInvalidMatchField"|"WriteErrorInvalidStructuredHeader"|"WriteErrorInvalidTTLField"|"WriteErrorNavigationRequest"|"WriteErrorNoMatchField"|"WriteErrorNonIntegerTTLField"|"WriteErrorNonListMatchDestField"|"WriteErrorNonSecureContext"|"WriteErrorNonStringIdField"|"WriteErrorNonStringInMatchDestList"|"WriteErrorInvalidMatchDestList"|"WriteErrorNonStringMatchField"|"WriteErrorNonTokenTypeField"|"WriteErrorRequestAborted"|"WriteErrorShuttingDown"|"WriteErrorTooLongIdField"|"WriteErrorUnsupportedType";
+    export type SRIMessageSignatureError = "MissingSignatureHeader"|"MissingSignatureInputHeader"|"InvalidSignatureHeader"|"InvalidSignatureInputHeader"|"SignatureHeaderValueIsNotByteSequence"|"SignatureHeaderValueIsParameterized"|"SignatureHeaderValueIsIncorrectLength"|"SignatureInputHeaderMissingLabel"|"SignatureInputHeaderValueNotInnerList"|"SignatureInputHeaderValueMissingComponents"|"SignatureInputHeaderInvalidComponentType"|"SignatureInputHeaderInvalidComponentName"|"SignatureInputHeaderInvalidHeaderComponentParameter"|"SignatureInputHeaderInvalidDerivedComponentParameter"|"SignatureInputHeaderKeyIdLength"|"SignatureInputHeaderInvalidParameter"|"SignatureInputHeaderMissingRequiredParameters"|"ValidationFailedSignatureExpired"|"ValidationFailedInvalidLength"|"ValidationFailedSignatureMismatch"|"ValidationFailedIntegrityMismatch"|"SignatureBaseUnknownDerivedComponent"|"SignatureBaseMissingHeader"|"SignatureBaseInvalidUnencodedDigest"|"SignatureBaseUnsupportedComponent";
     export type UnencodedDigestError = "MalformedDictionary"|"UnknownAlgorithm"|"IncorrectDigestType"|"IncorrectDigestLength";
     export type ConnectionAllowlistError = "InvalidHeader"|"MoreThanOneList"|"ItemNotInnerList"|"InvalidAllowlistItemType"|"ReportingEndpointNotToken"|"InvalidUrlPattern";
     /**
@@ -910,7 +958,7 @@ instead of "limited-quirks".
       error: ConnectionAllowlistError;
       request: AffectedRequest;
     }
-    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable"|"AutofillAndManualTextPolicyControlledFeaturesInfo"|"AutofillPolicyControlledFeatureInfo"|"ManualTextPolicyControlledFeatureInfo"|"FormModelContextParameterMissingTitleAndDescription"|"FormModelContextMissingToolName"|"FormModelContextMissingToolDescription"|"FormModelContextRequiredParameterMissingName"|"FormModelContextParameterMissingName";
+    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable"|"BackUINavigationWouldSkipAd"|"AutofillAndManualTextPolicyControlledFeaturesInfo"|"AutofillPolicyControlledFeatureInfo"|"ManualTextPolicyControlledFeatureInfo"|"FormModelContextParameterMissingTitleAndDescription"|"FormModelContextMissingToolName"|"FormModelContextMissingToolDescription"|"FormModelContextRequiredParameterMissingName"|"FormModelContextParameterMissingName";
     /**
      * Depending on the concrete errorType, different properties are set.
      */
@@ -979,6 +1027,15 @@ Should be updated alongside FederatedAuthUserInfoRequestResult in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom.
      */
     export type FederatedAuthUserInfoRequestIssueReason = "NotSameOrigin"|"NotIframe"|"NotPotentiallyTrustworthy"|"NoApiPermission"|"NotSignedInWithIdp"|"NoAccountSharingPermission"|"InvalidConfigOrWellKnown"|"InvalidAccountsResponse"|"NoReturningUserFromFetchedAccounts";
+    export interface EmailVerificationRequestIssueDetails {
+      emailVerificationRequestIssueReason: EmailVerificationRequestIssueReason;
+    }
+    /**
+     * Represents the failure reason when an email verification request fails.
+Should be updated alongside EmailVerificationRequestResult in
+third_party/blink/public/mojom/devtools/inspector_issue.mojom.
+     */
+    export type EmailVerificationRequestIssueReason = "InvalidEmail"|"DnsFetchFailed"|"DnsInvalidRecord"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"WellKnownMissingIssuanceEndpoint"|"WellKnownIssuanceEndpointCrossOrigin"|"WellKnownUnsupportedSigningAlgorithm"|"TokenHttpNotFound"|"TokenNoResponse"|"TokenInvalidResponse"|"TokenInvalidContentType"|"TokenMalformedSdJwt"|"TokenInvalidSdJwt"|"KeyBindingSigningFailed"|"RpOriginIsOpaque"|"WellKnownMissingAccountsEndpoint"|"UserLoggedOut"|"WellKnownAccountsEndpointCrossOrigin"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsInvalidContentType"|"AccountsEmptyList"|"EmailVerificationWellKnownHttpNotFound"|"EmailVerificationWellKnownNoResponse"|"EmailVerificationWellKnownInvalidResponse"|"EmailVerificationWellKnownInvalidContentType"|"JwksHttpNotFound"|"JwksInvalidResponse"|"TokenVerificationSdJwtUnsupportedHeaderAlg"|"TokenVerificationSdJwtMissingIss"|"TokenVerificationSdJwtMissingIat"|"TokenVerificationSdJwtMissingCnf"|"TokenVerificationSdJwtMissingEmail"|"TokenVerificationSdJwtInvalidIssuedAt"|"TokenVerificationSdJwtInvalidIssuer"|"TokenVerificationSdJwtJwksMissingKeys"|"TokenVerificationSdJwtSignatureFailed"|"TokenVerificationSdJwtInvalidEmailVerified"|"TokenVerificationSdJwtInvalidEmail"|"TokenVerificationSdJwtInvalidHolderKey"|"TokenVerificationKbInvalidTyp"|"TokenVerificationKbMissingAud"|"TokenVerificationKbMissingNonce"|"TokenVerificationKbMissingIat"|"TokenVerificationKbMissingSdHash"|"TokenVerificationKbInvalidIssuedAt"|"TokenVerificationKbInvalidAudience"|"TokenVerificationKbInvalidNonce"|"TokenVerificationKbInvalidSdHash"|"TokenVerificationKbMissingCnf"|"TokenVerificationKbSignatureFailed";
     /**
      * This issue tracks client hints related issues. It's used to deprecate old
 features, encourage the use of new ones, and provide general guidance.
@@ -1130,7 +1187,7 @@ Selective Permissions Intervention.
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"ConnectionAllowlistIssue"|"UserReidentificationIssue"|"PermissionElementIssue"|"PerformanceIssue"|"SelectivePermissionsInterventionIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"ConnectionAllowlistIssue"|"UserReidentificationIssue"|"PermissionElementIssue"|"PerformanceIssue"|"SelectivePermissionsInterventionIssue"|"EmailVerificationRequestIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -1166,6 +1223,7 @@ add a new optional field to this type.
       permissionElementIssueDetails?: PermissionElementIssueDetails;
       performanceIssueDetails?: PerformanceIssueDetails;
       selectivePermissionsInterventionIssueDetails?: SelectivePermissionsInterventionIssueDetails;
+      emailVerificationRequestIssueDetails?: EmailVerificationRequestIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -2808,6 +2866,9 @@ available).
     export interface CSSContainerQuery {
       /**
        * Container query text.
+Contains the query part without the container name for a single query.
+Deprecated in favor of conditionText which contains the full prelude
+after @container.
        */
       text: string;
       /**
@@ -2839,6 +2900,10 @@ available).
        * true if the query contains anchored() queries.
        */
       queriesAnchored?: boolean;
+      /**
+       * CSSContainerRule.conditionText
+       */
+      conditionText: string;
     }
     /**
      * CSS Supports at-rule descriptor.
@@ -3114,7 +3179,7 @@ stylesheet rules) this rule came from.
       /**
        * Type of at-rule.
        */
-      type: "font-face"|"font-feature-values"|"font-palette-values";
+      type: "font-face"|"font-feature-values"|"font-palette-values"|"counter-style";
       /**
        * Subsection of font-feature-values, if this is a subsection.
        */
@@ -3792,6 +3857,7 @@ property
     }
     /**
      * Modifies the expression of a container query.
+Deprecated. Use setContainerQueryConditionText instead.
      */
     export type setContainerQueryTextParameters = {
       styleSheetId: DOM.StyleSheetId;
@@ -3799,6 +3865,17 @@ property
       text: string;
     }
     export type setContainerQueryTextReturnValue = {
+      /**
+       * The resulting CSS container query rule after modification.
+       */
+      containerQuery: CSSContainerQuery;
+    }
+    export type setContainerQueryConditionTextParameters = {
+      styleSheetId: DOM.StyleSheetId;
+      range: SourceRange;
+      text: string;
+    }
+    export type setContainerQueryConditionTextReturnValue = {
       /**
        * The resulting CSS container query rule after modification.
        */
@@ -7258,8 +7335,7 @@ platform-provided telemetry data.
     export type setPressureSourceOverrideEnabledReturnValue = {
     }
     /**
-     * TODO: OBSOLETE: To remove when setPressureDataOverride is merged.
-Provides a given pressure state that will be processed and eventually be
+     * Provides a given pressure state that will be processed and eventually be
 delivered to PressureObserver users. |source| must have been previously
 overridden by setPressureSourceOverrideEnabled.
      */
@@ -7268,18 +7344,6 @@ overridden by setPressureSourceOverrideEnabled.
       state: PressureState;
     }
     export type setPressureStateOverrideReturnValue = {
-    }
-    /**
-     * Provides a given pressure data set that will be processed and eventually be
-delivered to PressureObserver users. |source| must have been previously
-overridden by setPressureSourceOverrideEnabled.
-     */
-    export type setPressureDataOverrideParameters = {
-      source: PressureSource;
-      state: PressureState;
-      ownContributionEstimate?: number;
-    }
-    export type setPressureDataOverrideReturnValue = {
     }
     /**
      * Overrides the Idle state.
@@ -11578,7 +11642,7 @@ details; this boolean is true if that value is populated.
     /**
      * A fetch result for a device bound session creation or refresh.
      */
-    export type DeviceBoundSessionFetchResult = "Success"|"KeyError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh";
+    export type DeviceBoundSessionFetchResult = "Success"|"KeyError"|"SigningError"|"TransientSigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh"|"CrossOriginRegistrationSiteNotIncluded";
     /**
      * Details about a failed device bound session network request.
      */
@@ -16617,7 +16681,7 @@ status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
      * TODO(https://crbug.com/1384419): revisit the list of PrefetchStatus and
 filter out the ones that aren't necessary to the developers.
      */
-    export type PrefetchStatus = "PrefetchAllowed"|"PrefetchFailedIneligibleRedirect"|"PrefetchFailedInvalidRedirect"|"PrefetchFailedMIMENotSupported"|"PrefetchFailedNetError"|"PrefetchFailedNon2XX"|"PrefetchEvictedAfterBrowsingDataRemoved"|"PrefetchEvictedAfterCandidateRemoved"|"PrefetchEvictedForNewerPrefetch"|"PrefetchHeldback"|"PrefetchIneligibleRetryAfter"|"PrefetchIsPrivacyDecoy"|"PrefetchIsStale"|"PrefetchNotEligibleBrowserContextOffTheRecord"|"PrefetchNotEligibleDataSaverEnabled"|"PrefetchNotEligibleExistingProxy"|"PrefetchNotEligibleHostIsNonUnique"|"PrefetchNotEligibleNonDefaultStoragePartition"|"PrefetchNotEligibleSameSiteCrossOriginPrefetchRequiredProxy"|"PrefetchNotEligibleSchemeIsNotHttps"|"PrefetchNotEligibleUserHasCookies"|"PrefetchNotEligibleUserHasServiceWorker"|"PrefetchNotEligibleUserHasServiceWorkerNoFetchHandler"|"PrefetchNotEligibleRedirectFromServiceWorker"|"PrefetchNotEligibleRedirectToServiceWorker"|"PrefetchNotEligibleBatterySaverEnabled"|"PrefetchNotEligiblePreloadingDisabled"|"PrefetchNotFinishedInTime"|"PrefetchNotStarted"|"PrefetchNotUsedCookiesChanged"|"PrefetchProxyNotAvailable"|"PrefetchResponseUsed"|"PrefetchSuccessfulButNotUsed"|"PrefetchNotUsedProbeFailed";
+    export type PrefetchStatus = "PrefetchAllowed"|"PrefetchFailedIneligibleRedirect"|"PrefetchFailedInvalidRedirect"|"PrefetchFailedMIMENotSupported"|"PrefetchFailedNetError"|"PrefetchFailedNon2XX"|"PrefetchEvictedAfterBrowsingDataRemoved"|"PrefetchEvictedAfterCandidateRemoved"|"PrefetchEvictedForNewerPrefetch"|"PrefetchHeldback"|"PrefetchIneligibleRetryAfter"|"PrefetchIsPrivacyDecoy"|"PrefetchIsStale"|"PrefetchNotEligibleBrowserContextOffTheRecord"|"PrefetchNotEligibleDataSaverEnabled"|"PrefetchNotEligibleExistingProxy"|"PrefetchNotEligibleHostIsNonUnique"|"PrefetchNotEligibleNonDefaultStoragePartition"|"PrefetchNotEligibleSameSiteCrossOriginPrefetchRequiredProxy"|"PrefetchNotEligibleSchemeIsNotHttps"|"PrefetchNotEligibleUserHasCookies"|"PrefetchNotEligibleUserHasServiceWorker"|"PrefetchNotEligibleUserHasServiceWorkerNoFetchHandler"|"PrefetchNotEligibleRedirectFromServiceWorker"|"PrefetchNotEligibleRedirectToServiceWorker"|"PrefetchNotEligibleBatterySaverEnabled"|"PrefetchNotEligiblePreloadingDisabled"|"PrefetchNotFinishedInTime"|"PrefetchNotStarted"|"PrefetchNotUsedCookiesChanged"|"PrefetchProxyNotAvailable"|"PrefetchResponseUsed"|"PrefetchSuccessfulButNotUsed"|"PrefetchNotUsedProbeFailed"|"PrefetchCancelledOnUserNavigation";
     /**
      * Information of headers to be displayed when the header mismatch occurred.
      */
@@ -18637,6 +18701,11 @@ this is the "ancestor" frame that created the first worker in the nested chain.
 the type of "page", this may be set to "prerender".
        */
       subtype?: string;
+      /**
+       * Embedder-specific target metadata. This is only set for targets of
+type "tab".
+       */
+      embedderData?: { [key: string]: string };
     }
     /**
      * A filter used by target query/discovery/auto-attach operations.
@@ -19110,8 +19179,8 @@ to run paused targets.
       targetId: TargetID;
       /**
        * The id of the panel we want DevTools to open initially. Currently
-supported panels are elements, console, network, sources, resources
-and performance.
+supported panels are elements, console, network, sources, resources,
+timeline, chrome-recorder, heap-profiler, lighthouse, and security.
        */
       panelId?: string;
     }
@@ -23297,6 +23366,7 @@ Error was thrown.
     "Accessibility.getAXNodeAndAncestors": Accessibility.getAXNodeAndAncestorsParameters;
     "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesParameters;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeParameters;
+    "Ads.getAdMetrics": Ads.getAdMetricsParameters;
     "Animation.disable": Animation.disableParameters;
     "Animation.enable": Animation.enableParameters;
     "Animation.getCurrentTime": Animation.getCurrentTimeParameters;
@@ -23382,6 +23452,7 @@ Error was thrown.
     "CSS.setKeyframeKey": CSS.setKeyframeKeyParameters;
     "CSS.setMediaText": CSS.setMediaTextParameters;
     "CSS.setContainerQueryText": CSS.setContainerQueryTextParameters;
+    "CSS.setContainerQueryConditionText": CSS.setContainerQueryConditionTextParameters;
     "CSS.setSupportsText": CSS.setSupportsTextParameters;
     "CSS.setNavigationText": CSS.setNavigationTextParameters;
     "CSS.setScopeText": CSS.setScopeTextParameters;
@@ -23509,7 +23580,6 @@ Error was thrown.
     "Emulation.setSensorOverrideReadings": Emulation.setSensorOverrideReadingsParameters;
     "Emulation.setPressureSourceOverrideEnabled": Emulation.setPressureSourceOverrideEnabledParameters;
     "Emulation.setPressureStateOverride": Emulation.setPressureStateOverrideParameters;
-    "Emulation.setPressureDataOverride": Emulation.setPressureDataOverrideParameters;
     "Emulation.setIdleOverride": Emulation.setIdleOverrideParameters;
     "Emulation.clearIdleOverride": Emulation.clearIdleOverrideParameters;
     "Emulation.setNavigatorOverrides": Emulation.setNavigatorOverridesParameters;
@@ -23966,6 +24036,7 @@ Error was thrown.
     "Accessibility.getAXNodeAndAncestors": Accessibility.getAXNodeAndAncestorsReturnValue;
     "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesReturnValue;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeReturnValue;
+    "Ads.getAdMetrics": Ads.getAdMetricsReturnValue;
     "Animation.disable": Animation.disableReturnValue;
     "Animation.enable": Animation.enableReturnValue;
     "Animation.getCurrentTime": Animation.getCurrentTimeReturnValue;
@@ -24051,6 +24122,7 @@ Error was thrown.
     "CSS.setKeyframeKey": CSS.setKeyframeKeyReturnValue;
     "CSS.setMediaText": CSS.setMediaTextReturnValue;
     "CSS.setContainerQueryText": CSS.setContainerQueryTextReturnValue;
+    "CSS.setContainerQueryConditionText": CSS.setContainerQueryConditionTextReturnValue;
     "CSS.setSupportsText": CSS.setSupportsTextReturnValue;
     "CSS.setNavigationText": CSS.setNavigationTextReturnValue;
     "CSS.setScopeText": CSS.setScopeTextReturnValue;
@@ -24178,7 +24250,6 @@ Error was thrown.
     "Emulation.setSensorOverrideReadings": Emulation.setSensorOverrideReadingsReturnValue;
     "Emulation.setPressureSourceOverrideEnabled": Emulation.setPressureSourceOverrideEnabledReturnValue;
     "Emulation.setPressureStateOverride": Emulation.setPressureStateOverrideReturnValue;
-    "Emulation.setPressureDataOverride": Emulation.setPressureDataOverrideReturnValue;
     "Emulation.setIdleOverride": Emulation.setIdleOverrideReturnValue;
     "Emulation.clearIdleOverride": Emulation.clearIdleOverrideReturnValue;
     "Emulation.setNavigatorOverrides": Emulation.setNavigatorOverridesReturnValue;

@@ -344,6 +344,40 @@ test('browser_take_screenshot size cap', async ({ startClient, server, mcpBrowse
   }
 });
 
+test('browser_take_screenshot (scale: device)', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({
+    config: {
+      outputDir: testInfo.outputPath('output'),
+      browser: {
+        contextOptions: {
+          viewport: { width: 400, height: 300 },
+          deviceScaleFactor: 2,
+        },
+      },
+    },
+  });
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.HELLO_WORLD } });
+
+  const cssResult = await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { scale: 'css' },
+  });
+  const css = PNG.sync.read(Buffer.from(cssResult.content?.[1]?.data, 'base64'));
+  expect(css.width).toBe(400);
+  expect(css.height).toBe(300);
+
+  const deviceResult = await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { scale: 'device' },
+  });
+  expect(deviceResult).toHaveResponse({
+    code: expect.stringContaining(`scale: 'device'`),
+  });
+  const device = PNG.sync.read(Buffer.from(deviceResult.content?.[1]?.data, 'base64'));
+  expect(device.width).toBe(800);
+  expect(device.height).toBe(600);
+});
+
 test('browser_take_screenshot (fullPage with element should error)', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({
     config: { outputDir: testInfo.outputPath('output') },

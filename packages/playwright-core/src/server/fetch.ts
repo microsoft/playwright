@@ -504,7 +504,7 @@ export abstract class APIRequestContext extends SdkObject {
 
         let body: Readable = response;
         let transform: Transform | undefined;
-        const encoding = response.headers['content-encoding'];
+        const encoding = response.headers['content-encoding']?.toLowerCase();
         if (encoding === 'gzip' || encoding === 'x-gzip') {
           transform = zlib.createGunzip({
             flush: zlib.constants.Z_SYNC_FLUSH,
@@ -787,7 +787,7 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
     for (const field of params.multipartData) {
       if (field.file)
         formData.addFileField(field.name, field.file);
-      else if (field.value)
+      else if (field.value !== undefined)
         formData.addField(field.name, field.value);
     }
     setHeader(headers, 'content-type', formData.contentTypeHeader(), true);
