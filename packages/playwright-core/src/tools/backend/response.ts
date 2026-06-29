@@ -111,7 +111,7 @@ export class Response {
 
   private async _writeFile(resolvedFile: ResolvedFile, data: Buffer | string | null) {
     if (typeof data === 'string')
-      await fs.promises.writeFile(resolvedFile.fileName, this._redactSecrets(data), 'utf-8');
+      await fs.promises.writeFile(resolvedFile.fileName, this._context.redactSecrets(data), 'utf-8');
     else if (data)
       await fs.promises.writeFile(resolvedFile.fileName, data);
     this._writtenFiles.add(path.resolve(resolvedFile.fileName));
@@ -154,11 +154,6 @@ export class Response {
     this._includeSnapshotBoxes = boxes;
     this._includeSnapshotRoot = root;
   }
-
-  private _redactSecrets(text: string): string {
-    return this._context.redactSecrets(text);
-  }
-
 
   async serialize(): Promise<CallToolResult> {
     const allSections = await this._build();
@@ -206,7 +201,7 @@ export class Response {
     const content: (TextContent | ImageContent)[] = [
       {
         type: 'text',
-        text: sanitizeUnicode(this._redactSecrets(serializedText)),
+        text: sanitizeUnicode(this._context.redactSecrets(serializedText)),
       }
     ];
 
