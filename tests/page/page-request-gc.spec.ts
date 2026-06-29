@@ -32,3 +32,14 @@ test('should work', async ({ page }) => {
   await page.requestGC();
   expect(await page.evaluate(() => globalThis.weakRef.deref())).toBe(undefined);
 });
+
+test('should collect element retained by locator hit-target interceptor after detach', async ({ page }) => {
+  await page.setContent('<button id="btn">click me</button>');
+  await page.locator('#btn').click();
+  await page.evaluate(() => {
+    globalThis.weakRef = new WeakRef(document.getElementById('btn')!);
+    document.getElementById('btn')!.remove();
+  });
+  await page.requestGC();
+  expect(await page.evaluate(() => globalThis.weakRef.deref())).toBe(undefined);
+});
