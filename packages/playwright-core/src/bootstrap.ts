@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const minimumMajorNodeVersion = 18;
+const minimumMajorNodeVersion = 20;
 const currentNodeVersion = process.versions.node;
 const major = +currentNodeVersion.split('.')[0];
 

@@ -39,7 +39,7 @@ export const jpegjs = jpegLibrary;
 import mimeLibrary from 'mime';
 export const mime = mimeLibrary;
 
-import minimatchLibrary from 'minimatch';
+import { minimatch as minimatchLibrary } from 'minimatch';
 export const minimatch = minimatchLibrary;
 
 import openLibrary from 'open';
@@ -90,17 +90,16 @@ export const gracefulFs = gracefulFsLibrary;
 import retryLibrary from 'retry';
 export const retry = retryLibrary;
 
-// @ts-expect-error untyped vendored module
-import onExitLibrary from 'signal-exit';
+import { onExit as onExitLibrary } from 'signal-exit';
 export const onExit = onExitLibrary;
 
 import getStreamLibrary from 'get-stream';
 export const getStream = getStreamLibrary;
 
-import httpProxyAgentLibrary from 'https-proxy-agent';
+import { HttpsProxyAgent as httpProxyAgentLibrary } from 'https-proxy-agent';
 export const httpProxyAgent = httpProxyAgentLibrary;
 
-import socksProxyAgentLibrary from 'socks-proxy-agent';
+import { SocksProxyAgent as socksProxyAgentLibrary } from 'socks-proxy-agent';
 export const socksProxyAgent = socksProxyAgentLibrary;
 
 export * as z from 'zod';

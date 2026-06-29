@@ -20,7 +20,7 @@ import util from 'util';
 
 import debug from 'debug';
 import mime from 'mime';
-import minimatch from 'minimatch';
+import { minimatch } from 'minimatch';
 import { calculateSha1 } from '@utils/crypto';
 import { sanitizeForFilePath } from '@utils/fileUtils';
 import { isRegExp } from '@isomorphic/rtti';
