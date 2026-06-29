@@ -124,6 +124,6 @@ it('init script should run only once in iframe', async ({ page, server, browserN
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(messages).toEqual([
     'init script: /frames/one-frame.html',
-    'init script: ' + (browserName === 'firefox' && !isBidi ? 'no url yet' : '/frames/frame.html'),
+    'init script: /frames/frame.html',
   ]);
 });

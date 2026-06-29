@@ -16,51 +16,56 @@
 
 import { test, expect } from './fixtures';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 
 for (const context of ['isolated', 'persistent']) {
-  test(`--init-script option loads and executes script (${context})`, async ({ startClient, server, mcpBrowser }, testInfo) => {
-    // Create a temporary init script
-    const initScriptPath = testInfo.outputPath('init-script1.js');
-    const initScriptContent1 = `window.testInitScriptExecuted = true;`;
-    await fs.promises.writeFile(initScriptPath, initScriptContent1);
+  test(`--init-script option loads and executes script (${context})`, async ({ startClient, server }) => {
+    const initScriptDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'pw-mcp-init-script-'));
+    try {
+      // Create temporary init scripts outside the test output directory.
+      const initScriptPath = path.join(initScriptDir, 'init-script1.js');
+      const initScriptContent1 = `window.testInitScriptExecuted = true;`;
+      await fs.promises.writeFile(initScriptPath, initScriptContent1);
 
-    const initScriptPath2 = testInfo.outputPath('init-script2.js');
-    const initScriptContent2 = `console.log('Init script executed successfully');`;
-    await fs.promises.writeFile(initScriptPath2, initScriptContent2);
+      const initScriptPath2 = path.join(initScriptDir, 'init-script2.js');
+      const initScriptContent2 = `console.log('Init script executed successfully');`;
+      await fs.promises.writeFile(initScriptPath2, initScriptContent2);
 
-    // Start the client with the init script option
-    const { client: client } = await startClient({
-      args: [`--init-script=${initScriptPath}`, `--init-script=${initScriptPath2}`, ...(context === 'isolated' ? ['--isolated'] : [])]
-    });
+      // Start the client with the init script option
+      const { client: client } = await startClient({
+        args: [`--init-script=${initScriptPath}`, `--init-script=${initScriptPath2}`, ...(context === 'isolated' ? ['--isolated'] : [])]
+      });
 
-    // Navigate to a page and verify the init script was executed
-    await client.callTool({
-      name: 'browser_navigate',
-      arguments: { url: server.HELLO_WORLD },
-    });
+      // Navigate to a page and verify the init script was executed
+      await client.callTool({
+        name: 'browser_navigate',
+        arguments: { url: server.HELLO_WORLD },
+      });
 
-    await client.callTool({
-      name: 'browser_evaluate',
-      arguments: { function: '() => console.log("Custom log")' }
-    });
+      await client.callTool({
+        name: 'browser_evaluate',
+        arguments: { function: '() => console.log("Custom log")' }
+      });
 
-    // Check that the init script variables are available
-    expect(await client.callTool({
-      name: 'browser_evaluate',
-      arguments: { function: '() => window.testInitScriptExecuted' }
-    })).toHaveResponse({
-      result: 'true',
-    });
+      // Check that the init script variables are available
+      expect(await client.callTool({
+        name: 'browser_evaluate',
+        arguments: { function: '() => window.testInitScriptExecuted' }
+      })).toHaveResponse({
+        result: 'true',
+      });
 
-    expect(await client.callTool({
-      name: 'browser_console_messages',
-      // FIXME: in firefox commit event comes after console messages from the init script.
-      // See https://github.com/microsoft/playwright/issues/39624.
-      arguments: { all: mcpBrowser === 'firefox' }
-    })).toHaveResponse({
-      result: expect.stringMatching(/Init script executed successfully.*Custom log/ms),
-    });
+      expect(await client.callTool({
+        name: 'browser_console_messages',
+        arguments: {}
+      })).toHaveResponse({
+        result: expect.stringMatching(/Init script executed successfully.*Custom log/ms),
+      });
+    } finally {
+      await fs.promises.rm(initScriptDir, { recursive: true, force: true });
+    }
   });
 }
 
