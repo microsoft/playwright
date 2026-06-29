@@ -17,8 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
-import type { IssueCommentEdge, Repository } from '@octokit/graphql-schema';
 import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestError } from '@playwright/test/reporter';
 
 type MarkdownReporterOptions = {
@@ -26,10 +24,13 @@ type MarkdownReporterOptions = {
   outputFile?: string;
 };
 
+// Produces the markdown summary of a merged report and writes it to a file. The actual PR
+// comment is posted by a separate workflow step (see postReportComment.js) once the HTML
+// report has been uploaded as an artifact and its URL is known.
 class MarkdownReporter implements Reporter {
   private _options: MarkdownReporterOptions;
   private _fatalErrors: TestError[] = [];
-  protected _config!: FullConfig;
+  private _config!: FullConfig;
   private _suite!: Suite;
 
   constructor(options: MarkdownReporterOptions) {
@@ -82,24 +83,24 @@ class MarkdownReporter implements Reporter {
     lines.push(`**${summary.expected} passed${skipped}${didNotRun}**`);
     lines.push(``);
 
-    await this.publishReport(lines.join('\n'));
+    await this._writeReport(lines.join('\n'));
   }
 
-  protected async publishReport(report: string): Promise<void> {
+  private async _writeReport(report: string): Promise<void> {
     const maybeRelativeFile = this._options.outputFile || 'report.md';
     const reportFile = path.resolve(this._options.configDir, maybeRelativeFile);
     await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
     await fs.promises.writeFile(reportFile, report);
   }
 
-  protected _incompleteRunWarning(): string | undefined {
+  private _incompleteRunWarning(): string | undefined {
     const conclusion = process.env.WORKFLOW_RUN_CONCLUSION;
     if (!conclusion || conclusion === 'success' || conclusion === 'failure')
       return undefined;
     return `> [!WARNING]\n> The triggering workflow run ended with status \`${conclusion}\`. Results below may be incomplete — blob reports from cancelled or timed-out shards are missing, so passing/failing counts do not reflect the full test suite.`;
   }
 
-  protected _generateSummary() {
+  private _generateSummary() {
     let didNotRun = 0;
     let skipped = 0;
     let expected = 0;
@@ -158,134 +159,4 @@ function formatTestTitle(rootDir: string, test: TestCase): string {
   return `${testTitle}${extraTags.length ? ' ' + formattedTags : ''}`;
 }
 
-class GHAMarkdownReporter extends MarkdownReporter {
-  private octokit: ReturnType<typeof import('@actions/github').getOctokit>;
-  private context: typeof import('@actions/github').context;
-  private core: typeof import('@actions/core');
-
-  override async publishReport(report: string) {
-    this.core = await import('@actions/core');
-    const token = process.env.GITHUB_TOKEN || this.core.getInput('github-token');
-    if (!token) {
-      this.core.setFailed('Missing "github-token" input');
-      throw new Error('Missing "github-token" input');
-    }
-    const { context, getOctokit } = await import('@actions/github');
-    this.context = context;
-    this.octokit = getOctokit(token);
-
-    this.core.info('Publishing report to PR.');
-    const { prNumber, prHref } = this.pullRequestFromMetadata();
-    if (!prNumber) {
-      this.core.info(`No PR number found, skipping GHA comment. PR href: ${prHref}`);
-      return;
-    }
-    this.core.info(`Posting comment to PR ${prHref}`);
-
-    const prNodeId = await this.collapsePreviousComments(prNumber);
-    if (!prNodeId) {
-      this.core.warning(`No PR node ID found, skipping GHA comment. PR href: ${prHref}`);
-      return;
-    }
-    await this.addNewReportComment(prNodeId, report);
-  }
-
-  private async collapsePreviousComments(prNumber: number) {
-    const { owner, repo } = this.context.repo;
-    const data = await this.octokit.graphql<{ repository: Repository }>(`
-      query($owner: String!, $repo: String!, $prNumber: Int!) {
-        repository(owner: $owner, name: $repo) {
-          pullRequest(number: $prNumber) {
-            id
-            comments(last: 100) {
-              nodes {
-                id
-                body
-                author {
-                  __typename
-                  login
-                }
-              }
-            }
-          }
-        }
-      }
-    `, { owner, repo, prNumber });
-    const comments = data.repository.pullRequest?.comments.nodes?.filter(comment =>
-      comment?.author?.__typename === 'Bot' &&
-      comment?.author?.login === 'github-actions' &&
-      comment.body?.includes(this._magicComment()));
-    const prId = data.repository.pullRequest?.id;
-    if (!comments?.length)
-      return prId;
-    const variableDecls = comments.map((_, i) => `$id${i}: ID!`).join(', ');
-    const mutations = comments.map((_, i) =>
-      `m${i}: minimizeComment(input: { subjectId: $id${i}, classifier: OUTDATED }) { clientMutationId }`);
-    const subjectIds = Object.fromEntries(comments.map((comment, i) => [`id${i}`, comment!.id]));
-    await this.octokit.graphql(`
-      mutation(${variableDecls}) {
-        ${mutations.join('\n')}
-      }
-    `, subjectIds);
-    return prId;
-  }
-
-  private _magicComment() {
-    return `<!-- Generated by Playwright markdown reporter for ${this._workflowRunName()} in job ${process.env.GITHUB_JOB} -->`;
-  }
-
-  private _workflowRunName() {
-    // When used via 'workflow_run' event.
-    const workflowRunName = this.context.payload.workflow_run?.name;
-    if (workflowRunName)
-      return workflowRunName;
-    // When used via 'pull_request'/'push' event.
-    // This is the name of the workflow file, e.g. 'ci.yml' or name if set.
-    return process.env.GITHUB_WORKFLOW;
-  }
-
-  private async addNewReportComment(prNodeId: string, report: string) {
-    const reportUrl = process.env.HTML_REPORT_URL;
-    const mergeWorkflowUrl = `${this.context.serverUrl}/${this.context.repo.owner}/${this.context.repo.repo}/actions/runs/${this.context.runId}`;
-
-    const body = formatComment([
-      this._magicComment(),
-      `### ${reportUrl ? `[Test results](${reportUrl})` : 'Test results'} for "${this._workflowRunName()}"`,
-      report,
-      '',
-      '---',
-      '',
-      `Merge [workflow run](${mergeWorkflowUrl}).`
-    ]);
-
-    const response = await this.octokit.graphql<{ addComment: { commentEdge: IssueCommentEdge } }>(`
-      mutation($subjectId: ID!, $body: String!) {
-        addComment(input: {subjectId: $subjectId, body: $body}) {
-          commentEdge {
-            node {
-              ... on IssueComment {
-                url
-              }
-            }
-          }
-        }
-      }
-    `, { subjectId: prNodeId, body });
-    this.core.info(`Posted comment:  ${response.addComment.commentEdge.node?.url}`);
-  }
-
-  private pullRequestFromMetadata() {
-    const metadata = this._config.metadata as MetadataWithCommitInfo;
-    const prHref = metadata.ci?.prHref;
-    return { prNumber: parseInt(prHref?.split('/').pop() ?? '', 10), prHref };
-  }
-}
-
-function formatComment(lines: string[]) {
-  let body = lines.join('\n');
-  if (body.length > 65535)
-    body = body.substring(0, 65000) + `... ${body.length - 65000} more characters`;
-  return body;
-}
-
-export default GHAMarkdownReporter;
+export default MarkdownReporter;
