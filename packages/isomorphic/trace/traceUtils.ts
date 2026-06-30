@@ -15,11 +15,7 @@
  */
 
 import type { StackFrame } from '../stackTrace';
-
-type ClientSideCallMetadata = {
-  id: number,
-  stack?: StackFrame[],
-};
+import type { ClientSideCallMetadata } from '@protocol/structs';
 
 export type SerializedStackFrame = [number, number, number, string];
 export type SerializedStack = [number, SerializedStackFrame[]];
