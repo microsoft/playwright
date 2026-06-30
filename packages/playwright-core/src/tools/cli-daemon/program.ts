@@ -139,7 +139,7 @@ async function findOrInstallDefaultBrowser() {
 
 async function resolveAndInstall(nameOrChannel: string) {
   const executables = browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' });
-  await browserRegistry.install(executables);
+  await browserRegistry.install(executables, { gc: false });
 }
 
 async function createDefaultConfig(channel: string) {
