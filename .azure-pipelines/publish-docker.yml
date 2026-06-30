@@ -1,9 +1,5 @@
-# Publishes Playwright Docker images to playwright.azurecr.io on stable release tags.
-# Azure DevOps port of .github/workflows/publish_release_docker.yml.
-#
-# Trigger: any `v*` tag push (e.g. v1.40.0). Pre-release tags (v1.40.0-beta, -next,
-# -alpha) are excluded — publish_docker.sh also hard-errors on non-stable versions.
-# Can also be queued manually from the ADO UI (the workflow_dispatch equivalent).
+# Trigger: any `v*` release tag (e.g. v1.40.0).
+# Can also be queued manually from the ADO UI.
 trigger:
   tags:
     include:
@@ -12,6 +8,15 @@ trigger:
       - v*-*
 
 pr: none
+
+parameters:
+- name: releaseChannel
+  displayName: "IMPORTANT: set this to 'canary' when triggering manually"
+  type: string
+  default: stable
+  values:
+  - stable
+  - canary
 
 resources:
   repositories:
@@ -88,4 +93,4 @@ extends:
           displayName: "Build & publish Docker images"
           inputs:
             targetType: "inline"
-            script: "./utils/docker/publish_docker.sh stable"
+            script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }}"
