@@ -6,8 +6,28 @@ user_invocable: true
 
 # Playwright Issue Triage
 
-Reproduce a reported bug from the info in the issue and report a status.
-The goal is **reproduction and a status, not a fix.**
+Triage a GitHub issue by working out what it actually is, then doing the right thing for that kind.
+The goal is **a clear, verified status, not a fix.**
+
+## First, classify the issue
+
+Judge by the content, not the label — a "[Feature]" is often really a bug (something already
+*should* work), and a "[Bug]" is sometimes expected behaviour. Work out what it actually is:
+
+- **Bug** — reproduce it. The bulk of this skill.
+- **Feature request** — nothing to reproduce. Check it doesn't already exist (search docs/API,
+  maybe under another name), verify any source the reporter cites by reading it, and surface the
+  real design question. If it's small and well-scoped (like "fail loudly instead of
+  silently"), the ideal takeaway is an **acceptance test**: one self-contained spec asserting
+  *current* behaviour (passes today) with the *desired* behaviour alongside as a `fixme`/commented
+  assertion.
+- **Upstream / environment** (Docker, Node, OS, browser-engine bug) — find the real owner, don't
+  brute-force a repro. Verify any cited upstream issue and point at the real fix path.
+- **Question / usage** — answer it or point at the docs.
+
+The rest of this skill is the **bug** path.
+
+## Reproducing a bug
 
 You're not in a hurry, so **be exhaustive before giving up.**
 If the user has provided a minimal repro, try it first. If it does not repro for you, play around with things they might have forgotten to mention:
@@ -79,11 +99,13 @@ Mirror real self-contained tests, e.g.:
 
 ## Report
 
-Give a **status** (reproduced / fixed-on-latest / cannot-reproduce / not-a-bug) and the
-condensed repro. Be exhaustive about **what you ran** — the full matrix of browsers, versions,
-and variations you tried, not just the one that worked — so the reader can trust the verdict
-and skip re-checking. Call out any browser-specific divergence. Don't post to the issue unless
-asked; if asked, draft first and wait for go-ahead. Write it in the
+Give a **status** that fits the issue type — for a bug: reproduced / fixed-on-latest /
+cannot-reproduce / not-a-bug; for a feature request or upstream/env issue: a short verdict
+(already-possible, valid request, upstream — owned by X) — plus the evidence. For bugs, include
+the condensed repro and be exhaustive about **what you ran** — the full matrix of browsers,
+versions, and variations you tried, not just the one that worked — so the reader can trust the
+verdict and skip re-checking. Call out any browser-specific divergence. Don't post to the issue
+unless asked; if asked, draft first and wait for go-ahead. Write it in the
 [playwright-bot-voice](../playwright-bot-voice/SKILL.md) — maintainer voice, not AI-speak.
 
 ## Watch out
