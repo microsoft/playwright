@@ -8,6 +8,7 @@ on:
 
 permissions:
   copilot-requests: write
+  issues: write
 
 jobs:
   triage:
@@ -27,6 +28,7 @@ jobs:
       - name: Triage issue with Copilot CLI
         env:
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           mkdir -p "$HOME/tmp"
@@ -34,7 +36,7 @@ jobs:
           PROMPT=$(cat <<'EOF'
           Triage https://github.com/microsoft/playwright/issues/41513 using the playwright-triage skill.
 
-          Do not post anything to GitHub, write your response draft to output/triage.md instead.
+          When you're done, post your response as a comment on the issue using the gh CLI. Also save a copy to output/triage.md.
           The link to this agent run is in $WORKFLOW_URL.
           EOF
           )
