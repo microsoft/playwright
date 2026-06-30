@@ -21,8 +21,12 @@ Judge by the content, not the label — a "[Feature]" is often really a bug (som
   silently"), the ideal takeaway is an **acceptance test**: one self-contained spec asserting
   *current* behaviour (passes today) with the *desired* behaviour alongside as a `fixme`/commented
   assertion.
-- **Upstream / environment** (Docker, Node, OS, browser-engine bug) — find the real owner, don't
-  brute-force a repro. Verify any cited upstream issue and point at the real fix path.
+- **Upstream / environment** — a genuinely external owner (the Node project, a browser engine, a
+  website's own server/cert config), not Playwright. Find the real owner, don't brute-force a repro,
+  verify any cited upstream issue and point at the real fix path. Note: the Playwright **family** —
+  `@playwright/mcp` (source lives here under `packages/playwright-core/src/tools/mcp/`),
+  `playwright-vscode`, `-python`, `-java`, `-dotnet` — is **not** "upstream"; it's us. Never tell a
+  reporter to refile within the project (see below).
 - **Question / usage** — answer it or point at the docs.
 
 The rest of this skill is the **bug** path.
@@ -57,9 +61,12 @@ firefox. Lead with that.
 
 To step through a test interactively, use the [playwright-cli](../playwright-cli/SKILL.md) skill.
 
-Reports sometimes target a sibling repo — `playwright-vscode`, `playwright-python`,
-`playwright-java`, `playwright-dotnet`.
-Feel free to check out that repo and reproduce there in its own language/toolchain.
+Reports sometimes target another part of the Playwright project — `@playwright/mcp` (its source is
+in this repo), `playwright-vscode`, `playwright-python`, `playwright-java`, `playwright-dotnet`.
+These are all **us**, so triage them like anything else: check out that repo and reproduce there in
+its own language/toolchain when needed. **Never** tell the reporter the issue belongs in a different
+Playwright repo or should be refiled there — that's an internal routing detail, not the reporter's
+problem.
 
 ## Condense the repro into a self-contained test
 
