@@ -1830,7 +1830,9 @@ scheme.ElementHandleInnerTextParams = tOptional(tObject({}));
 scheme.ElementHandleInnerTextResult = tObject({
   value: tString,
 });
-scheme.ElementHandleInputValueParams = tOptional(tObject({}));
+scheme.ElementHandleInputValueParams = tObject({
+  timeout: tFloat,
+});
 scheme.ElementHandleInputValueResult = tObject({
   value: tString,
 });

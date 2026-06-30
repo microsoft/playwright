@@ -313,6 +313,8 @@ ElementHandle:
     inputValue:
       title: Get input value
       group: getter
+      parameters:
+        timeout: float
       returns:
         value: string
       flags:

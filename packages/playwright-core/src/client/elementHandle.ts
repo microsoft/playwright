@@ -69,8 +69,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return value === undefined ? null : value;
   }
 
-  async inputValue(): Promise<string> {
-    return (await this._elementChannel.inputValue({}, undefined)).value;
+  async inputValue(options: channels.ElementHandleInputValueOptions & TimeoutOptions = {}): Promise<string> {
+    return (await this._elementChannel.inputValue({ ...options, timeout: this._frame._timeout(options) }, options.signal)).value;
   }
 
   async textContent(): Promise<string | null> {

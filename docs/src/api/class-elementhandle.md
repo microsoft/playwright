@@ -656,6 +656,8 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 ### option: ElementHandle.inputValue.timeout = %%-input-timeout-js-%%
 * since: v1.13
 
+### option: ElementHandle.inputValue.signal = %%-input-signal-%%
+
 ## async method: ElementHandle.isChecked
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).

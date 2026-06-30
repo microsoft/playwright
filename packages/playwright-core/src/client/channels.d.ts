@@ -3238,8 +3238,12 @@ export type ElementHandleInnerTextOptions = {};
 export type ElementHandleInnerTextResult = {
   value: string,
 };
-export type ElementHandleInputValueParams = {};
-export type ElementHandleInputValueOptions = {};
+export type ElementHandleInputValueParams = {
+  timeout: number,
+};
+export type ElementHandleInputValueOptions = {
+
+};
 export type ElementHandleInputValueResult = {
   value: string,
 };
