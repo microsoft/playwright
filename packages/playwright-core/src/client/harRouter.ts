@@ -136,9 +136,9 @@ export class HarRouter {
   }
 
   dispose() {
-    this._localUtils.harClose({ harId: this._harId }).catch(() => {});
     for (const { context, registrationId } of this._apiRequestRegistrations)
       context._channel.unrouteAPIRequestsFromHar({ registrationId }).catch(() => {});
     this._apiRequestRegistrations = [];
+    this._localUtils.harClose({ harId: this._harId }).catch(() => {});
   }
 }

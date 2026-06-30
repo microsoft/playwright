@@ -867,7 +867,8 @@ it.describe('interceptAPIRequests', () => {
 
     const harPath = testInfo.outputPath('api.har');
     const context1 = await contextFactory();
-    await context1.routeFromHAR(harPath, { update: true });
+    // 'full' mode records serverIPAddress/serverPort; the default 'minimal' mode omits them.
+    await context1.routeFromHAR(harPath, { update: true, updateMode: 'full' });
     const page1 = await context1.newPage();
     await page1.goto(server.EMPTY_PAGE);
     await page1.request.get(server.PREFIX + '/api/data');
@@ -880,6 +881,9 @@ it.describe('interceptAPIRequests', () => {
     const response = await page2.request.get(server.PREFIX + '/api/data');
     expect(response.status()).toBe(201);
     expect(response.statusText()).toBe('Created');
+    const addr = await response.serverAddr();
+    expect(addr!.ipAddress).toMatch(/127\.0\.0\.1|::1/);
+    expect(addr!.port).toBe(server.PORT);
   });
 
   it('should re-record intercepted APIRequestContext requests into a new HAR', async ({ contextFactory, server }, testInfo) => {

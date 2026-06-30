@@ -342,8 +342,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     // Reuse the HarBackend that was already opened via localUtils.harOpen for the page-side
     // route, rather than opening a second backend for the same HAR file. The backend is owned
     // by LocalUtils and closed via harClose, so this registration must not dispose it.
-    const localUtils = [...this.connection._dispatcherByGuid.values()].find(d => d._type === 'LocalUtils') as LocalUtilsDispatcher | undefined;
-    const harBackend = localUtils?.harBackendForId(params.harId);
+    const harBackend = this.connection.getDispatcher<LocalUtilsDispatcher>('LocalUtils')?.harBackendForId(params.harId);
     if (!harBackend)
       throw new Error('Internal error: har was not opened');
     const urlMatch: URLMatch | undefined =
