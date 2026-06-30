@@ -20,8 +20,8 @@ import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 import type { SerializedError } from './channels';
 
 class CustomError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = this.constructor.name;
   }
 }
@@ -31,6 +31,14 @@ export class TimeoutError extends CustomError {}
 export class TargetClosedError extends CustomError {
   constructor(cause: string | undefined, logs?: string) {
     super((cause || 'Target page, context or browser has been closed') + (logs || ''));
+  }
+}
+
+// mirrors https://github.com/nodejs/node/blob/4e7c07dfe2b253393702545c0ffe2712b21fd3dd/lib/internal/errors.js#L976-L988
+export class AbortError extends CustomError {
+  constructor(message = 'The operation was aborted', options?: ErrorOptions) {
+    super(message, options);
+    this.name = 'AbortError';
   }
 }
 

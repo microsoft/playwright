@@ -64,7 +64,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       artifactsDir: options.artifactsDir,
       timeout: new TimeoutSettings().launchTimeout(options),
     };
-    const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
+    const app = ElectronApplication.from((await this._channel.launch(params, undefined)).electronApplication);
     this._playwright.selectors._contextsForSelectors.add(app._context);
     app.once(Events.ElectronApplication.Close, () => this._playwright.selectors._contextsForSelectors.delete(app._context));
     await app._context._initializeHarFromOptions(options.recordHar);
@@ -155,17 +155,17 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async browserWindow(page: Page): Promise<JSHandle<BrowserWindow>> {
-    const result = await this._channel.browserWindow({ page: page._channel });
+    const result = await this._channel.browserWindow({ page: page._channel }, undefined);
     return JSHandle.from(result.handle);
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<R> {
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
     return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }

@@ -23,7 +23,7 @@ import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
 import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '../../protocol/validator';
-import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
+import { AbortError, TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
@@ -55,7 +55,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   private _dispatchers = new Map<string, DispatcherScope>();
   protected _disposed = false;
   protected _eventListeners: RegisteredListener[] = [];
-  private _activeProgressControllers = new Set<ProgressController>();
+  readonly _activeProgressControllers = new Map<string, ProgressController>();
 
   readonly _guid: string;
   readonly _type: string;
@@ -105,11 +105,11 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
 
   async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
     const controller = ProgressController.createForSdkObject(this._object, callMetadata);
-    this._activeProgressControllers.add(controller);
+    this._activeProgressControllers.set(callMetadata.id, controller);
     try {
       return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
     } finally {
-      this._activeProgressControllers.delete(controller);
+      this._activeProgressControllers.delete(callMetadata.id);
     }
   }
 
@@ -134,7 +134,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   async stopPendingOperations(error: Error) {
     const controllers: ProgressController[] = [];
     const collect = (dispatcher: DispatcherScope) => {
-      controllers.push(...dispatcher._activeProgressControllers);
+      controllers.push(...dispatcher._activeProgressControllers.values());
       for (const child of [...dispatcher._dispatchers.values()])
         collect(child);
     };
@@ -298,6 +298,10 @@ export class DispatcherConnection {
       // Fire-and-forget: silently drop if the target is gone.
       if (dispatcher)
         await this._dispatchWaitInfo(id, dispatcher, params, metadata);
+      return;
+    }
+    if (method === '__abort__') {
+      await dispatcher?._activeProgressControllers.get(`call@${params.id}`)?.abort(new AbortError(undefined, { cause: params.reason }));
       return;
     }
     if (!dispatcher) {

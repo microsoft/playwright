@@ -76,13 +76,13 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
     return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
@@ -106,7 +106,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
   async _disconnect(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     try {
-      await this._channel.disconnect(options);
+      await this._channel.disconnect(options, undefined);
     } catch (e) {
       if (isTargetClosedError(e))
         return;
