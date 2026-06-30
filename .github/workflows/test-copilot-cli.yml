@@ -1,0 +1,46 @@
+name: "test copilot cli (bare token)"
+
+# Experiment: does `permissions: copilot-requests: write` plus the built-in
+# GITHUB_TOKEN let Copilot CLI run org-billed, with no PAT?
+# Official docs only document the PAT path (COPILOT_GITHUB_TOKEN = a secret PAT),
+# so this is the unverified "bare token" path.
+
+on:
+  push:
+    branches:
+      - skn0tt-test-copilot-cli-actions
+  workflow_dispatch:
+
+permissions:
+  copilot-requests: write
+  contents: read
+
+jobs:
+  bare-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Run Copilot CLI (built-in token, no PAT)
+        env:
+          # Hand the built-in token to Copilot's auth var. The only thing under
+          # test is whether `copilot-requests: write` makes this token usable.
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          copilot -p "Reply with exactly this single word and nothing else: COPILOT_OK" --no-ask-user | tee copilot-output.txt
+          {
+            echo "### Copilot CLI bare-token test"
+            echo ""
+            echo '```'
+            cat copilot-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
