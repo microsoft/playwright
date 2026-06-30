@@ -1,0 +1,70 @@
+name: "triage with copilot cli"
+
+on:
+  push:
+    branches:
+      - pw-triage-bot
+  workflow_dispatch:
+
+permissions:
+  copilot-requests: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Triage issue with Copilot CLI
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p "$HOME/tmp"
+          mkdir -p output
+          PROMPT=$(cat <<'EOF'
+          Triage https://github.com/microsoft/playwright/issues/41513 using the playwright-triage skill.
+
+          Do not post anything to GitHub, write your response draft to output/triage.md instead.
+          The link to this agent run is in $WORKFLOW_URL.
+          EOF
+          )
+          copilot \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-ask-user \
+            --model claude-opus-4.8 \
+            -p "$PROMPT" \
+            2>&1 | tee "output/copilot.log"
+
+      - name: Collect output
+        if: always()
+        run: cp -r "$HOME/tmp/." output/ 2>/dev/null || true
+
+      - name: Add log to job summary
+        if: always()
+        run: |
+          {
+            echo "## Triage run log"
+            echo ''
+            echo '```'
+            cat "output/copilot.log" 2>/dev/null || echo "(no log)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: output
+          path: output/**
+          if-no-files-found: warn

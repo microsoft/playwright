@@ -15,13 +15,20 @@ all three browsers, headed/headless, a few recent versions, and variations of th
 Report "cannot reproduce" only after you've genuinely explored — and say what you tried.
 If you have a hunch for what information would help, ask for it.
 
+Run across browsers to find **divergence**, not just to confirm the bug. A bug that reproduces
+on every browser is expected — note it in one line. The interesting, report-worthy signal is
+when behaviour *differs*: it only reproduces in webkit, or it reproduces everywhere *except*
+firefox. Lead with that.
+
 1. **Read the whole thread**, comments included — the missing repro or narrowed trigger is often there.
 2. **Pull the inputs**: version, browser(s), OS, repro repo/snippet, Expected-vs-Actual (your oracle).
    If something's missing, guess and try anyway; note assumptions in the report.
 3. **Reproduce at the reported version first**, in `~/tmp/issue-<number>/`: clone the linked repo, or
    scaffold `npm install @playwright/test@<version>` with a single-project config (see
    [bisect-published-versions.md](../playwright-dev/bisect-published-versions.md)). Use
-   `PLAYWRIGHT_HTML_OPEN=never`.
+   `PLAYWRIGHT_HTML_OPEN=never`. A version ending in `-next` (e.g. `1.62.0-next`) is **not** an
+   npm version — it means tip-of-tree; reproduce against `@playwright/test@next` or a build of
+   `main`, not a literal `1.62.0-next` install.
 4. **Re-run on `@latest`** — sometimes, a reported bug is "already fixed":
    - reported + latest → live bug (regression? → bisect guide)
    - reported only → already fixed; find the version/PR
@@ -37,27 +44,46 @@ Feel free to check out that repo and reproduce there in its own language/toolcha
 ## Condense the repro into a self-contained test
 
 Big or app-specific repros are much more useful boiled down to a single self-contained spec,
-matching how our tests are written: drive the page via `page.setContent(...)` or the `server`
-fixture rather than the reporter's app, keep only what's needed to trigger the bug, and tag it
-with the issue link. Include this snippet in your report.
+written **the way our tests are**: one `it(...)` using the `page` and `server` fixtures, tagged
+with the issue link. Crucially:
+
+- **No `test.beforeAll` / `afterAll`, no `http.createServer`, no manual setup/teardown.** The
+  fixtures already give you a page and a web server. Use `server.setRoute(...)`,
+  `server.setRedirect(...)`, `server.PREFIX`, `server.EMPTY_PAGE` instead of standing up your own.
+- Drive the page with `page.setContent(...)` or `page.goto(server.PREFIX + '/...')`.
+- Keep only what's needed to trigger the bug, and end on the assertion that fails.
+
+Drop it into the repo (`tests/page/`) and run it with `npm run ctest`. The SSE bug, done right
+— no custom server, no lifecycle hooks. Note the stream must live on the page you're waiting
+on: navigating *away* tears the EventSource down, so the assertion has to wait on the page that
+owns it.
 
 ```ts
-it('descriptive title', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/<number>' } }, async ({ page, server }) => {
-  await page.setContent(`<button>Foo</button>`);
-  // minimal steps + assertion that fails on the bug
+it('networkidle resolves with an open EventSource', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41513' } }, async ({ page, server }) => {
+  server.setRoute('/sse', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Connection': 'keep-alive' });
+    res.write('data: hello\n\n'); // never res.end() — keeps the connection open
+  });
+  server.setRoute('/with-sse', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<script>new EventSource('/sse')</script>`);
+  });
+  await page.goto(server.PREFIX + '/with-sse', { waitUntil: 'networkidle' }); // hangs on the bug
 });
 ```
 
 Mirror real self-contained tests, e.g.:
+- [`tests/page/page-network-request.spec.ts:346`](../../../tests/page/page-network-request.spec.ts) — `server.setRoute` SSE endpoint, no lifecycle hooks
 - [`tests/page/selectors-css.spec.ts:472`](../../../tests/page/selectors-css.spec.ts) — `page.setContent` with inline shadow DOM ([#37768](https://github.com/microsoft/playwright/issues/37768))
 - [`tests/page/workers.spec.ts:264`](../../../tests/page/workers.spec.ts) — `server` fixture with routes/redirects + `it.fixme` for a browser gap ([#35678](https://github.com/microsoft/playwright/issues/35678))
-- [`tests/page/page-request-fulfill.spec.ts:446`](../../../tests/page/page-request-fulfill.spec.ts) — request interception ([#29261](https://github.com/microsoft/playwright/issues/29261))
 
 ## Report
 
-Give a **status** (reproduced / fixed-on-latest / cannot-reproduce / not-a-bug), what you ran
-(versions, browser, OS, repro link), observed vs reported, and next step. Don't post to the
-issue unless asked; if asked, draft first and wait for go-ahead. Write it in the
+Give a **status** (reproduced / fixed-on-latest / cannot-reproduce / not-a-bug) and the
+condensed repro. Be exhaustive about **what you ran** — the full matrix of browsers, versions,
+and variations you tried, not just the one that worked — so the reader can trust the verdict
+and skip re-checking. Call out any browser-specific divergence. Don't post to the issue unless
+asked; if asked, draft first and wait for go-ahead. Write it in the
 [playwright-bot-voice](../playwright-bot-voice/SKILL.md) — maintainer voice, not AI-speak.
 
 ## Watch out
