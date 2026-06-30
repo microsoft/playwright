@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        issue: [41543, 41448, 41285, 41348, 41504, 41462, 41356]
+        issue: [41546, 41543, 41539]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
