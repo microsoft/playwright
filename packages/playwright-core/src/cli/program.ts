@@ -22,7 +22,7 @@ import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { getPackageManagerExecCommand } from '@utils/env';
 import { packageJSON } from '../package';
 import { addTraceCommands } from '../tools/trace/traceCli';
-import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
+import { runDriver, runServer, launchBrowserServer } from './driver';
 import { markDockerImage } from './installActions';
 import { open, codegen } from './browserActions';
 import { installBrowsers, uninstallBrowsers, installDeps } from './installActions';
@@ -192,12 +192,6 @@ export function decorateProgram(program: Command) {
           artifactsDir: options.artifactsDir,
           unsafe: !!options.unsafe,
         }).catch(logErrorAndExit);
-      });
-
-  program
-      .command('print-api-json', { hidden: true })
-      .action(async function(options) {
-        printApiJson();
       });
 
   program

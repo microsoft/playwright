@@ -1,4 +1,4 @@
-name: "publish release - npm, driver, trace viewer"
+name: "publish release - npm, trace viewer"
 
 on:
   workflow_dispatch:
@@ -11,14 +11,13 @@ on:
     types: [published]
 
 jobs:
-  publish-npm-and-driver:
-    name: "publish NPM and driver"
+  publish-npm:
+    name: "publish NPM"
     runs-on: ubuntu-24.04
     if: github.repository == 'microsoft/playwright'
     permissions:
-      id-token: write  # This is required for OIDC login (azure/login, NPM publish) to succeed
+      id-token: write  # This is required for OIDC login (NPM publish) to succeed
       contents: read   # This is required for actions/checkout to succeed
-    environment: allow-publish-driver-to-cdn # This is required for OIDC login (azure/login)
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
@@ -49,19 +48,6 @@ jobs:
     - name: "publish release to NPM"
       if: github.event_name == 'release' && github.event.action == 'published'
       run: utils/publish_all_packages.sh --release
-
-    - name: Azure Login
-      uses: azure/login@v3
-      with:
-        client-id: ${{ secrets.AZURE_PW_CDN_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_PW_CDN_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_PW_CDN_SUBSCRIPTION_ID }}
-    - name: build & publish driver
-      env:
-        AZ_UPLOAD_FOLDER: ${{ github.event_name == 'release' && 'driver' || 'driver/next' }}
-      run: |
-        utils/build/build-playwright-driver.sh
-        utils/build/upload-playwright-driver.sh
 
   publish-trace-viewer:
     name: "publish Trace Viewer to trace.playwright.dev"
