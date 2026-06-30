@@ -24,52 +24,25 @@ import minimatch from 'minimatch';
 import { calculateSha1 } from '@utils/crypto';
 import { sanitizeForFilePath } from '@utils/fileUtils';
 import { isRegExp } from '@isomorphic/rtti';
-import { parseStackFrame, stringifyStackFrames } from '@isomorphic/stackTrace';
+import { stringifyStackFrames, filteredStackTrace } from '@isomorphic/stackTrace';
 import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';
 
-import type { RawStack, StackFrame } from '@isomorphic/stackTrace';
 import type { Location } from './../types/testReporter';
 import type { TestInfoError } from './../types/test';
 import type { TestCase } from './common/test';
 
-const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
-const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
-
-export function filterStackTrace(e: Error): { message: string, stack: string, cause?: ReturnType<typeof filterStackTrace> } {
+export function filterStackTrace(e: Error): TestInfoError {
   const name = e.name ? e.name + ': ' : '';
   const cause = e.cause instanceof Error ? filterStackTrace(e.cause) : undefined;
   if (process.env.PWDEBUGIMPL)
     return { message: name + e.message, stack: e.stack || '', cause };
 
-  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
+  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || [], path.sep));
   return {
     message: name + e.message,
     stack: `${name}${e.message}${stackLines.map(line => '\n' + line).join('')}`,
     cause,
   };
-}
-
-export function filterStackFile(file: string) {
-  if (process.env.PWDEBUGIMPL)
-    return true;
-  if (file.startsWith(PLAYWRIGHT_TEST_PATH))
-    return false;
-  if (file.startsWith(PLAYWRIGHT_CORE_PATH))
-    return false;
-  return true;
-}
-
-export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
-  const frames: StackFrame[] = [];
-  for (const line of rawStack) {
-    const frame = parseStackFrame(line, path.sep, !!process.env.PWDEBUGIMPL);
-    if (!frame || !frame.file)
-      continue;
-    if (!filterStackFile(frame.file))
-      continue;
-    frames.push(frame);
-  }
-  return frames;
 }
 
 export function serializeError(error: Error | any): TestInfoError {

@@ -631,7 +631,7 @@ export function prepareErrorStack(stack: string): {
   stackLines: string[];
   location?: Location;
 } {
-  return parseErrorStack(stack, path.sep, !!process.env.PWDEBUGIMPL);
+  return parseErrorStack(stack, path.sep);
 }
 
 function resolveFromEnv(name: string): string | undefined {

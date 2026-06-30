@@ -15,8 +15,9 @@
  */
 
 import crypto from 'crypto';
+import { filterStackFile } from '@isomorphic/stackTrace';
 
-import { filterStackFile, formatLocation } from '../util';
+import { formatLocation } from '../util';
 
 import type { FixturesWithLocation } from './config';
 import type { Fixtures } from '../../types/test';
