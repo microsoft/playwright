@@ -8,7 +8,6 @@ on:
 
 permissions:
   copilot-requests: write
-  issues: write
 
 jobs:
   triage:
@@ -34,9 +33,9 @@ jobs:
           mkdir -p "$HOME/tmp"
           mkdir -p output
           PROMPT=$(cat <<'EOF'
-          Triage https://github.com/microsoft/playwright/issues/41512 using the playwright-triage skill.
+          Triage https://github.com/microsoft/playwright/issues/41543 using the playwright-triage skill.
 
-          When you're done, post your response as a comment on the issue using the gh CLI. Also save a copy to output/triage.md.
+          Do not post anything to GitHub, write your response draft to output/triage.md instead.
           The link to this agent run is in $WORKFLOW_URL.
           EOF
           )
