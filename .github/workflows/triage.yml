@@ -47,12 +47,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           ISSUE: ${{ github.event.issue.number || inputs.issue }}
+          EVENT: ${{ github.event_name }}
         run: |
           mkdir -p output
           PROMPT=$(cat <<EOF
           Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
 
-          When finished, post your response as a comment on the issue using the gh CLI. Also save a copy to output/triage.md.
+          This run was triggered by the "$EVENT" event.
+          If a new issue was just opened, triage it and post your findings.
+          If a new comment came in, first decide whether it meaningfully changes the picture before you say anything: new reproduction details, a version or environment, a direct question, or a request to re-triage all count. A +1, an "any update", a thank-you, or chatter that adds nothing you have not already covered does not. When in doubt, stay silent.
+
+          Only when you have decided to respond, post your reply as a comment on the issue using the gh CLI, and save a copy to output/triage.md. If you decide to stay silent, post nothing and write a one-line reason to output/triage.md instead.
           The link to this agent run is in \$WORKFLOW_URL.
           EOF
           )

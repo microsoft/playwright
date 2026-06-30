@@ -115,6 +115,12 @@ verdict and skip re-checking. Call out any browser-specific divergence. Don't po
 unless asked; if asked, draft first and wait for go-ahead. Write it in the
 [playwright-bot-voice](../playwright-bot-voice/SKILL.md) — maintainer voice, not AI-speak.
 
+**Only speak when there's something new.** A fresh bug report always deserves a first pass. A new
+comment does not — engage only if it meaningfully moves the issue: new repro details, a version or
+environment, a direct question, or a request to re-triage. A "+1", an "any update?", a thank-you,
+or chatter that adds nothing you haven't already covered is not worth a reply. When in doubt, stay
+silent — a quiet thread beats a bot that pipes up on every comment.
+
 ## Watch out
 
 - Only run code you trust — skim a linked repo/snippet first; bail and ask if it has postinstall
