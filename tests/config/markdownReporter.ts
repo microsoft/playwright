@@ -31,6 +31,7 @@ class MarkdownReporter implements Reporter {
   private _fatalErrors: TestError[] = [];
   private _config!: FullConfig;
   private _suite!: Suite;
+  private _preExistingFailureKeys = new Set<string>();
 
   constructor(options: MarkdownReporterOptions) {
     this._options = options;
@@ -43,6 +44,25 @@ class MarkdownReporter implements Reporter {
   onBegin(config: FullConfig, suite: Suite) {
     this._config = config;
     this._suite = suite;
+    this._loadPreExistingFailures();
+  }
+
+  private _loadPreExistingFailures() {
+    const file = process.env.PRE_EXISTING_FAILURES_FILE;
+    if (!file)
+      return;
+    try {
+      const keys = JSON.parse(fs.readFileSync(file, 'utf8')) as string[];
+      this._preExistingFailureKeys = new Set(keys);
+    } catch {
+    }
+  }
+
+  // Must match canonicalKey() in utils/rerun_failures_on_base.js.
+  private _canonicalTestKey(test: TestCase): string {
+    const [, projectName, , ...titles] = test.titlePath();
+    const relativeFile = path.relative(this._config.rootDir, test.location.file).split(path.sep).join('/');
+    return [projectName, relativeFile, ...titles].join('\x1e');
   }
 
   onError(error: TestError) {
@@ -59,9 +79,17 @@ class MarkdownReporter implements Reporter {
     }
     if (this._fatalErrors.length)
       lines.push(`**${this._fatalErrors.length} fatal errors, not part of any test**`);
-    if (summary.unexpected.length) {
-      lines.push(`**${summary.unexpected.length} failed**`);
+    const failedCount = summary.unexpected.length + summary.preExisting.length;
+    if (failedCount) {
+      lines.push(`**${failedCount} failed**`);
       this._printTestList(':x:', summary.unexpected, lines);
+    }
+    if (summary.preExisting.length) {
+      lines.push(`<details>`);
+      lines.push(`<summary>:x: <b>${summary.preExisting.length} preexisting</b> (also failing on base, not caused by this change)</summary>`);
+      this._printTestList(':x:', summary.preExisting, lines, ' <br/>');
+      lines.push(`</details>`);
+      lines.push(``);
     }
     if (summary.flaky.length) {
       lines.push(`<details>`);
@@ -106,6 +134,7 @@ class MarkdownReporter implements Reporter {
     const interrupted: TestCase[] = [];
     const interruptedToPrint: TestCase[] = [];
     const unexpected: TestCase[] = [];
+    const preExisting: TestCase[] = [];
     const flaky: TestCase[] = [];
 
     this._suite.allTests().forEach(test => {
@@ -123,7 +152,12 @@ class MarkdownReporter implements Reporter {
           break;
         }
         case 'expected': ++expected; break;
-        case 'unexpected': unexpected.push(test); break;
+        case 'unexpected':
+          if (this._preExistingFailureKeys.has(this._canonicalTestKey(test)))
+            preExisting.push(test);
+          else
+            unexpected.push(test);
+          break;
         case 'flaky': flaky.push(test); break;
       }
     });
@@ -134,6 +168,7 @@ class MarkdownReporter implements Reporter {
       expected,
       interrupted,
       unexpected,
+      preExisting,
       flaky,
     };
   }

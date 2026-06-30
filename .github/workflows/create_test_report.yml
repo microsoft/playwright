@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MARKDOWN_OUTPUT_FILE: ${{ github.workspace }}/report.md
+      PRE_EXISTING_FAILURES_FILE: ${{ github.workspace }}/pre-existing-failures.json
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
@@ -28,6 +29,16 @@ jobs:
       with:
         namePrefix: 'blob-report'
         path: 'all-blob-reports'
+
+    - name: Download base failures artifact
+      uses: ./.github/actions/download-artifact
+      with:
+        namePrefix: 'base-failures'
+        path: 'all-base-failures'
+
+    - name: Collect pre-existing failures
+      shell: bash
+      run: node utils/collect_pre_existing_failures.js all-base-failures "$PRE_EXISTING_FAILURES_FILE"
 
     - name: Merge reports
       run: |
