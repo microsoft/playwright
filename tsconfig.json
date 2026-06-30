@@ -16,6 +16,7 @@
       "@injected/*": ["./packages/injected/src/*"],
       "@isomorphic/*": ["./packages/isomorphic/*"],
       "@utils/*": ["./packages/utils/*"],
+      "@protocol/*": ["./packages/protocol/src/*"],
       "@recorder/*": ["./packages/recorder/src/*"],
       "@testIsomorphic/*": ["./packages/playwright/src/isomorphic/*"],
       "@trace/*": ["./packages/trace/src/*"],
