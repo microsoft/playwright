@@ -30,6 +30,10 @@ If you have a hunch for what information would help, ask for it.
 
 To step through a test interactively, use the [playwright-cli](../playwright-cli/SKILL.md) skill.
 
+Reports sometimes target a sibling repo — `playwright-vscode`, `playwright-python`,
+`playwright-java`, `playwright-dotnet`.
+Feel free to check out that repo and reproduce there in its own language/toolchain.
+
 ## Condense the repro into a self-contained test
 
 Big or app-specific repros are much more useful boiled down to a single self-contained spec,
