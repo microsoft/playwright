@@ -10,6 +10,8 @@ ENV LC_ALL=C.UTF-8
 
 # === INSTALL Node.js ===
 
+# curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+
 RUN apt-get update && \
     apt-get install -y curl wget gpg ca-certificates && \
     mkdir -p /etc/apt/keyrings && \
@@ -25,37 +27,31 @@ RUN apt-get update && \
     # Create the pwuser
     adduser pwuser
 
-# === BAKE BROWSERS INTO IMAGE ===
-# Browsers are split into separate layers to enable parallel pulls.
+# === INSTALL Python 3.13.14 FROM SOURCE ===
 
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-# 1. Add tip-of-tree Playwright package to install its browsers.
-#    The package should be built beforehand from tip-of-tree Playwright.
-COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
-
-# 2. Set up playwright-core and install all system dependencies in one layer.
-RUN install -d -m 777 /ms-playwright /ms-playwright/.links && \
-    mkdir /ms-playwright-agent && \
-    cd /ms-playwright-agent && npm init -y && \
-    npm i /tmp/playwright-core.tar.gz && \
-    npm exec --no -- playwright-core mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}" && \
-    npm exec --no -- playwright-core install-deps && \
-    rm -rf /var/lib/apt/lists/*
-
-# 3. Install each browser binary in its own layer for parallel pulling.
-# Note: installing chromium also installs chromium-headless-shell and ffmpeg.
-RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install chromium && \
-    chmod -R 777 /ms-playwright/chromium-* /ms-playwright/chromium_headless_shell-* /ms-playwright/ffmpeg-*
-
-RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install firefox && \
-    chmod -R 777 /ms-playwright/firefox-*
-
-RUN cd /ms-playwright-agent && \
-    npm exec --no -- playwright-core install webkit && \
-    rm /tmp/playwright-core.tar.gz && \
-    rm -rf /ms-playwright-agent && \
-    rm -rf ~/.npm/ && \
-    chmod -R 777 /ms-playwright/webkit-*
+RUN apt-get update && apt-get install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev \
+        libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev \
+        wget curl libbz2-dev liblzma-dev tk-dev && \
+    # Download and extract Python 3.13.14
+    wget https://www.python.org/ftp/python/3.13.14/Python-3.13.14.tgz && \
+    tar -xzf Python-3.13.14.tgz && \
+    cd Python-3.13.14 && \
+    ./configure --with-lto --enable-shared --enable-optimizations && \
+    make -j$(nproc) && \
+    make altinstall && \
+    # Update shared library cache so python3.13 can find libpython3.13.so.1.0
+    ldconfig && \
+    # Set up python3 symlink
+    ln -sf /usr/local/bin/python3.13 /usr/bin/python && \
+    ln -sf /usr/local/bin/python3.13 /usr/bin/python3 && \
+    # Install pip
+    curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    python3.13 get-pip.py && \
+    rm get-pip.py && \
+    # Cleanup build artifacts
+    cd / && \
+    rm -rf Python-3.13.14 Python-3.13.14.tgz && \
+    # Align with upstream Python image and don't be externally managed:
+    # https://github.com/docker-library/python/issues/948
+    rm -f /usr/local/lib/python3.13/EXTERNALLY-MANAGED
+    
