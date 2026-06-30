@@ -15,6 +15,7 @@
  */
 
 import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { createGuid } from '@utils/crypto';
 import { currentZone } from '@utils/zones';
 import { TimeoutError } from './errors';
 
@@ -34,7 +35,7 @@ export class Waiter {
   private _savedZone: Zone;
 
   constructor(channelOwner: ChannelOwner, event: string) {
-    this._waitId = createGuidWithWebCrypto();
+    this._waitId = createGuid();
     this._channelOwner = channelOwner;
     this._savedZone = currentZone().without('apiZone');
 
@@ -184,10 +185,4 @@ function formatLogRecording(log: string[]): string {
   const leftLength = (headerLength - header.length) / 2;
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
-}
-
-function createGuidWithWebCrypto() {
-  // This avoids stubbing "crypto" for browser build.
-  // TODO: consider replacing the main createGuid() helper with this.
-  return Array.from(globalThis.crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
 }
