@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { captureRawStack, stringifyStackFrames } from '@isomorphic/stackTrace';
+import { captureRawStack, stringifyStackFrames, filteredStackTrace } from '@isomorphic/stackTrace';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { monotonicTime } from '@isomorphic/time';
 import { createGuid } from '@utils/crypto';
@@ -26,7 +26,7 @@ import { sanitizeForFilePath, trimLongString } from '@utils/fileUtils';
 import { currentZone } from '@utils/zones';
 
 import { TimeoutManager, TimeoutManagerError } from './timeoutManager';
-import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, windowsFilesystemFriendlyLength } from '../util';
+import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { ipc, transform } from '../common';
@@ -295,7 +295,7 @@ export class TestInfoImpl implements TestInfo {
         parentStep = this._parentStep();
     }
 
-    const filteredStack = filteredStackTrace(captureRawStack());
+    const filteredStack = filteredStackTrace(captureRawStack(), path.sep);
     let boxedStack = parentStep?.boxedStack;
     let location = data.location;
     if (!boxedStack && data.box) {

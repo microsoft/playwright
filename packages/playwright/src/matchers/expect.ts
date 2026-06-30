@@ -115,7 +115,7 @@ export interface ExpectTestInfo {
 
 export type ExpectConfig = {
   testInfo: ExpectTestInfo | null;
-  filteredStackTrace: (rawStack: string[]) => StackFrame[];
+  filteredStackTrace: (rawStack: string[], pathSeparator: string) => StackFrame[];
   ignoreSnapshots: boolean;
   updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
   timeout?: number;
@@ -143,8 +143,8 @@ export type ExpectConfig = {
   toPass?: { timeout?: number; intervals?: number[] };
 };
 
-function unfilteredStackTrace(rawStack: string[]): StackFrame[] {
-  return rawStack.map(frame => parseStackFrame(frame, path.sep, !!process.env.PWDEBUGIMPL)).filter(f => !!f);
+function unfilteredStackTrace(rawStack: string[], pathSeparator: string): StackFrame[] {
+  return rawStack.map(frame => parseStackFrame(frame, pathSeparator)).filter(f => !!f);
 }
 
 let _expectConfig: ExpectConfig = { testInfo: null, filteredStackTrace: unfilteredStackTrace, ignoreSnapshots: false, updateSnapshots: 'missing' };
@@ -339,7 +339,7 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
 
   // This looks like it is unnecessary, but it isn't - we need to filter
   // out all the frames that belong to the test runner from caught runtime errors.
-  const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
+  const stackFrames = expectConfig().filteredStackTrace(captureRawStack(), path.sep);
   const stepData = {
     category: 'expect' as const,
     apiName,

@@ -20,7 +20,6 @@ import path from 'path';
 import * as playwrightLibrary from 'playwright-core';
 import { asLocatorDescription } from '@isomorphic/locatorGenerators';
 import { getActionGroup, renderTitleForCall } from '@isomorphic/protocolFormatter';
-import { setBoxedStackPrefixes } from '@isomorphic/stackTrace';
 import { escapeHTML } from '@isomorphic/stringUtils';
 import { jsonStringifyForceASCII } from '@utils/ascii';
 import { createGuid } from '@utils/crypto';
@@ -29,7 +28,6 @@ import { currentZone } from '@utils/zones';
 import { buildErrorContext } from './errorContext';
 import { config, testType } from './common';
 import * as globals from './globals';
-import { packageRoot } from './package';
 import { createCustomMessageHandler, runDaemonForContext } from './mcp/test/browserBackend';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
@@ -45,8 +43,6 @@ import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracin
 
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = testType.rootTestType.test;
-
-setBoxedStackPrefixes([packageRoot]);
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;

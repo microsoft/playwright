@@ -37,7 +37,7 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function parseStackFrame(text: string, pathSeparator: string, showInternalStackFrames: boolean): StackFrame | null {
+export function parseStackFrame(text: string, pathSeparator: string): StackFrame | null {
   const match = text && text.match(re);
   if (!match)
     return null;
@@ -46,7 +46,7 @@ export function parseStackFrame(text: string, pathSeparator: string, showInterna
   let file = match[7];
   if (!file)
     return null;
-  if (!showInternalStackFrames && (file.startsWith('internal') || file.startsWith('node:')))
+  if (!_showInternalStackFrames && (file.startsWith('internal') || file.startsWith('node:')))
     return null;
 
   const line = match[8];
@@ -134,7 +134,7 @@ export function splitErrorMessage(message: string): { name: string, message: str
   };
 }
 
-export function parseErrorStack(stack: string, pathSeparator: string, showInternalStackFrames: boolean = false): {
+export function parseErrorStack(stack: string, pathSeparator: string): {
   message: string;
   stackLines: string[];
   location?: StackFrame;
@@ -147,7 +147,7 @@ export function parseErrorStack(stack: string, pathSeparator: string, showIntern
   const stackLines = lines.slice(firstStackLine);
   let location: StackFrame | undefined;
   for (const line of stackLines) {
-    const frame = parseStackFrame(line, pathSeparator, showInternalStackFrames);
+    const frame = parseStackFrame(line, pathSeparator);
     if (!frame || !frame.file)
       continue;
     if (belongsToNodeModules(frame.file, pathSeparator))
@@ -160,6 +160,29 @@ export function parseErrorStack(stack: string, pathSeparator: string, showIntern
 
 function belongsToNodeModules(file: string, pathSeparator: string) {
   return file.includes(`${pathSeparator}node_modules${pathSeparator}`);
+}
+
+export function filterStackFile(file: string) {
+  if (_showInternalStackFrames)
+    return true;
+  if (!!_coreDir && file.startsWith(_coreDir))
+    return false;
+  if (_boxedStackPrefixes.some(prefix => file.startsWith(prefix)))
+    return false;
+  return true;
+}
+
+export function filteredStackTrace(rawStack: RawStack, pathSeparator: string): StackFrame[] {
+  const frames: StackFrame[] = [];
+  for (const line of rawStack) {
+    const frame = parseStackFrame(line, pathSeparator);
+    if (!frame || !frame.file)
+      continue;
+    if (!filterStackFile(frame.file))
+      continue;
+    frames.push(frame);
+  }
+  return frames;
 }
 
 const re = new RegExp('^' +
@@ -214,12 +237,6 @@ export function coreDir(): string | undefined {
 
 export function setBoxedStackPrefixes(prefixes: string[]) {
   _boxedStackPrefixes = prefixes;
-}
-
-export function boxedStackPrefixes(): string[] {
-  if (_showInternalStackFrames)
-    return [];
-  return _coreDir ? [_coreDir, ..._boxedStackPrefixes] : _boxedStackPrefixes.slice();
 }
 
 export function setShowInternalStackFrames(value: boolean) {

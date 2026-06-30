@@ -16,9 +16,10 @@
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { filterStackFile } from '@isomorphic/stackTrace';
 
 import { fixtures } from '../common';
-import { filterStackFile, formatLocation } from '../util';
+import { formatLocation } from '../util';
 
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, RunnableDescription } from './timeoutManager';
