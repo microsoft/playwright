@@ -252,24 +252,24 @@ it('should attach websocket messages for a still open websocket after stopping',
 
   const beforeMs = Date.now();
   const wsUrl = `ws://${server.HOST}/ws`;
-  const [ws] = await Promise.all([
-    page.waitForEvent('websocket'),
-    page.evaluate(({ url, outgoingText, outgoingBinary }) => {
-      const ws = new WebSocket(url);
-      (window as any).ws = ws;
-      let count = 0;
-      ws.addEventListener('open', () => ws.send(outgoingText));
-      ws.addEventListener('message', () => {
-        if (++count < 2)
-          ws.send(new Uint8Array(outgoingBinary));
-      });
-    }, { url: wsUrl, outgoingText, outgoingBinary }),
-  ]);
+  const wsPromise = page.waitForEvent('websocket');
+  const evaluatePromise = page.evaluate(({ url, outgoingText, outgoingBinary }) => {
+    const ws = new WebSocket(url);
+    (window as any).ws = ws;
+    let count = 0;
+    ws.addEventListener('open', () => ws.send(outgoingText));
+    ws.addEventListener('message', () => {
+      if (++count < 2)
+        ws.send(new Uint8Array(outgoingBinary));
+    });
+  }, { url: wsUrl, outgoingText, outgoingBinary });
+  const ws = await wsPromise;
   // Wait for all frames so the HAR tracer has observed them before the context is closed.
   await ws.waitForEvent('framesent');
   await ws.waitForEvent('framereceived');
   await ws.waitForEvent('framesent');
   await ws.waitForEvent('framereceived');
+  await evaluatePromise;
   const afterMs = Date.now();
 
   // Do not close the WebSocket on the page side. Closing the context should still flush messages.

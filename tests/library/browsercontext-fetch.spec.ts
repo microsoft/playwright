@@ -786,6 +786,26 @@ it('should support gzip compression', async function({ context, server }) {
   expect(await response.text()).toBe('Hello, world!');
 });
 
+it('should support case-insensitive content-encoding', async function({ context, server }) {
+  server.setRoute('/compressed-uppercase', (req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'GZIP',
+      'Content-Type': 'text/plain',
+    });
+
+    const gzip = zlib.createGzip();
+    pipeline(gzip, res, err => {
+      if (err)
+        console.log(`Server error: ${err}`);
+    });
+    gzip.write('Hello, world!');
+    gzip.end();
+  });
+
+  const response = await context.request.get(server.PREFIX + '/compressed-uppercase');
+  expect(await response.text()).toBe('Hello, world!');
+});
+
 it('should throw informative error on corrupted gzip body', async function({ context, server }) {
   server.setRoute('/corrupted', (req, res) => {
     res.writeHead(200, {
@@ -1047,6 +1067,7 @@ it('should support multipart/form-data', async function({ context, server }) {
     context.request.post(server.EMPTY_PAGE, {
       multipart: {
         firstName: 'John',
+        middleName: '',
         lastName: 'Doe',
         file
       }
@@ -1056,6 +1077,7 @@ it('should support multipart/form-data', async function({ context, server }) {
   expect(serverRequest.method).toBe('POST');
   expect(serverRequest.headers['content-type']).toContain('multipart/form-data');
   expect(fields['firstName']).toBe('John');
+  expect(fields['middleName']).toBe('');
   expect(fields['lastName']).toBe('Doe');
   expect(files['file'].originalFilename).toBe(file.name);
   expect(files['file'].mimetype).toBe(file.mimeType);

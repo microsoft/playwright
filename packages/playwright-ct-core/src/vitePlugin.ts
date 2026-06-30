@@ -28,8 +28,7 @@ import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromT
 import type http from 'http';
 import type { AddressInfo } from 'net';
 import type { FullConfig, Suite } from 'playwright/types/testReporter';
-import type { PluginContext } from 'rollup';
-import type { Plugin, ResolveFn, ResolvedConfig } from 'vite';
+import type { Plugin, ResolveFn, ResolvedConfig, Rollup } from 'vite';
 import type { TestRunnerPlugin } from '../../playwright/src/plugins';
 import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
@@ -239,7 +238,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
       moduleResolver = config.createResolver();
     },
 
-    async transform(this: PluginContext, content, id) {
+    async transform(this: Rollup.PluginContext, content, id) {
       const queryIndex = id.indexOf('?');
       const file = queryIndex !== -1 ? id.substring(0, queryIndex) : id;
       if (!buildInfo.sources[file]) {
@@ -253,7 +252,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
       return transformIndexFile(id, content, templateDir, registerSource, importInfos);
     },
 
-    async writeBundle(this: PluginContext) {
+    async writeBundle(this: Rollup.PluginContext) {
       for (const importInfo of importInfos.values()) {
         const importPath = transform.resolveHook(importInfo.filename, importInfo.importSource);
         if (!importPath)
@@ -269,11 +268,16 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
   };
 }
 
-function collectViteModuleDependencies(context: PluginContext, id: string, deps: Set<string>) {
+function collectViteModuleDependencies(context: Rollup.PluginContext, id: string, deps: Set<string>) {
   // Example: "src/Component.tsx?raw" or "src/Component.tsx?import" should resolve to the file path.
   const cleanedId = id.split(/[?#]/)[0];
   const normalizedId = path.normalize(cleanedId);
   if (!path.isAbsolute(normalizedId))
+    return;
+  // Vite 8 (rolldown) surfaces node_modules in the module graph that earlier
+  // versions hid behind dep optimization. Component dependencies should only
+  // track project sources, so stop at the node_modules boundary.
+  if (normalizedId.includes(`${path.sep}node_modules${path.sep}`))
     return;
   if (deps.has(normalizedId))
     return;

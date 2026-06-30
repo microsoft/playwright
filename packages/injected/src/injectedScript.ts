@@ -43,19 +43,8 @@ import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import type { GenerateSelectorOptions } from './selectorGenerator';
 import type { ElementText, TextMatcher } from './selectorUtils';
 import type { Builtins } from './utilityScript';
+import type { ExpectedTextValue, Point, Rect } from '@protocol/structs';
 
-
-type ExpectedTextValue = {
-  string?: string,
-  regexSource?: string,
-  regexFlags?: string,
-  matchSubstring?: boolean,
-  ignoreCase?: boolean,
-  normalizeWhiteSpace?: boolean,
-};
-
-type Point = { x: number, y: number };
-type Rect = Point & { width: number, height: number };
 
 export type FrameExpectParams = {
   selector?: string,

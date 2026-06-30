@@ -23,6 +23,7 @@ export type PlatformWorkerFixtures = {
   isMac: boolean;
   isLinux: boolean;
   macVersion: number; // major only, 11 or later, zero if not mac
+  nodeVersion: { major: number, minor: number, patch: number };
 };
 
 function platform(): 'win32' | 'darwin' | 'linux' {
@@ -51,4 +52,8 @@ export const platformTest = test.extend<{}, PlatformWorkerFixtures>({
   isMac: [platform() === 'darwin', { scope: 'worker' }],
   isLinux: [platform() === 'linux', { scope: 'worker' }],
   macVersion: [macVersion(), { scope: 'worker' }],
+  nodeVersion: [async ({}, use) => {
+    const [major, minor, patch] = process.versions.node.split('.');
+    await use({ major: +major, minor: +minor, patch: +patch });
+  }, { scope: 'worker' }],
 });

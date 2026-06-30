@@ -350,13 +350,9 @@ test('client should receive list roots request', async ({ serverEndpoint, server
   const { url } = await serverEndpoint();
   const transport = new StreamableHTTPClientTransport(url);
   const client = new Client({ name: 'test', version: '1.0.0' }, { capabilities: { roots: {} } });
-  let rootsListedCallback;
-  const rootsListedPromise = new Promise((resolve, reject) => {
-    rootsListedCallback = resolve;
-    setTimeout(() => reject(new Error('timeout waiting for ListRootsRequestSchema')), 5_000);
-  });
+  const requests = [];
   client.setRequestHandler(ListRootsRequestSchema, async request => {
-    rootsListedCallback('success');
+    requests.push(request);
     return {
       roots: [
         {
@@ -371,7 +367,7 @@ test('client should receive list roots request', async ({ serverEndpoint, server
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   });
-  expect(await rootsListedPromise).toBe('success');
+  await expect.poll(() => requests).toEqual([{ method: 'roots/list' }]);
 });
 
 test('should close session when heartbeat ping is not answered', async ({ serverEndpoint, server }) => {

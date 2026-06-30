@@ -244,7 +244,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _handleRequestFailed(request: playwright.Request) {
-    this._requests.push(request);
     const timing = request.timing();
     const wallTime = timing.responseEnd + timing.startTime;
     this._addLogEntry({ type: 'request', wallTime, request });

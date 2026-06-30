@@ -349,7 +349,7 @@ function trimClipToSize(clip: types.Rect, size: types.Size): types.Rect {
     y: Math.max(0, Math.min(clip.y + clip.height, size.height))
   };
   const result = { x: p1.x, y: p1.y, width: p2.x - p1.x, height: p2.y - p1.y };
-  assert(result.width && result.height, 'Clipped area is either empty or outside the resulting image');
+  assert(result.width > 0 && result.height > 0, 'Clipped area is either empty or outside the resulting image');
   return result;
 }
 
@@ -376,8 +376,8 @@ export function validateScreenshotOptions(options: ScreenshotOptions): 'png' | '
     assert(typeof options.clip.y === 'number', 'Expected options.clip.y to be a number but found ' + (typeof options.clip.y));
     assert(typeof options.clip.width === 'number', 'Expected options.clip.width to be a number but found ' + (typeof options.clip.width));
     assert(typeof options.clip.height === 'number', 'Expected options.clip.height to be a number but found ' + (typeof options.clip.height));
-    assert(options.clip.width !== 0, 'Expected options.clip.width not to be 0.');
-    assert(options.clip.height !== 0, 'Expected options.clip.height not to be 0.');
+    assert(options.clip.width > 0, 'Expected options.clip.width to be greater than 0.');
+    assert(options.clip.height > 0, 'Expected options.clip.height to be greater than 0.');
   }
   return format;
 }

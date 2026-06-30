@@ -119,3 +119,10 @@ it('should escape tag names', async ({ page }) => {
   expect(error.message).toContain(`getByText('special test description').first()`);
   expect(error.message).toContain(`locator('q\\\\:template').filter({ hasText: 'special test description' })`);
 });
+
+it('should keep the engine name for a "text=.." selector in strict mode', async ({ page }) => {
+  await page.setContent(`<div>..loading</div><div>..loading</div>`);
+  const error = await page.locator('text=..loading').hover().catch(e => e);
+  expect(error.message).toContain('strict mode violation');
+  expect(error.message).toContain(`locator('text=..loading')`);
+});

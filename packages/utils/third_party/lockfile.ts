@@ -29,8 +29,7 @@ import path from 'path';
 // @ts-expect-error untyped vendored module
 import gracefulFs from 'graceful-fs';
 import retry from 'retry';
-// @ts-expect-error untyped vendored module
-import onExit from 'signal-exit';
+import { onExit } from 'signal-exit';
 
 type LockRecord = {
   lockfilePath: string;

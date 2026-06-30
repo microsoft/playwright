@@ -215,7 +215,8 @@ export class HarTracer {
     if (!this._options.omitCookies)
       harEntry.request.cookies = event.cookies;
     harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));
-    harEntry.request.postData = this._postDataForBuffer(event.postData || null, event.headers['content-type'],  this._options.content);
+    const contentType = Object.entries(event.headers).find(([name]) => name.toLowerCase() === 'content-type')?.[1];
+    harEntry.request.postData = this._postDataForBuffer(event.postData || null, contentType, this._options.content);
     if (!this._options.omitSizes)
       harEntry.request.bodySize = event.postData?.length || 0;
     (event as any)[this._entrySymbol] = harEntry;
@@ -255,7 +256,7 @@ export class HarTracer {
     harEntry.response.cookies = this._options.omitCookies ? [] : event.cookies.map(c => {
       return {
         ...c,
-        expires: c.expires === -1 ? undefined : safeDateToISOString(c.expires)
+        expires: c.expires === -1 ? undefined : safeDateToISOString(c.expires * 1000)
       };
     });
 
@@ -800,20 +801,29 @@ function parseCookie(c: string): har.Cookie {
       continue;
     }
 
-    if (name === 'Domain')
-      cookie.domain = value;
-    if (name === 'Expires')
-      cookie.expires = safeDateToISOString(value);
-    if (name === 'HttpOnly')
-      cookie.httpOnly = true;
-    if (name === 'Max-Age')
-      cookie.expires = safeDateToISOString(Date.now() + (+value) * 1000);
-    if (name === 'Path')
-      cookie.path = value;
-    if (name === 'SameSite')
-      cookie.sameSite = value;
-    if (name === 'Secure')
-      cookie.secure = true;
+    switch (name.toLowerCase()) {
+      case 'domain':
+        cookie.domain = value;
+        break;
+      case 'expires':
+        cookie.expires = safeDateToISOString(value);
+        break;
+      case 'httponly':
+        cookie.httpOnly = true;
+        break;
+      case 'max-age':
+        cookie.expires = safeDateToISOString(Date.now() + (+value) * 1000);
+        break;
+      case 'path':
+        cookie.path = value;
+        break;
+      case 'samesite':
+        cookie.sameSite = value;
+        break;
+      case 'secure':
+        cookie.secure = true;
+        break;
+    }
   }
   return cookie;
 }

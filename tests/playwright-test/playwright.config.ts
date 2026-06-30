@@ -15,7 +15,7 @@
  */
 
 import { config as loadEnv } from 'dotenv';
-loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
+loadEnv({ path: path.join(__dirname, '..', '..', '.env'), quiet: true });
 process.env.PWTEST_UNDER_TEST = '1';
 
 import { defineConfig, type ReporterDescription } from './stable-test-runner';

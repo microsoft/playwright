@@ -40,34 +40,34 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
   }
 
   async zip(params: channels.LocalUtilsZipParams): Promise<void> {
-    return await this._channel.zip(params);
+    return await this._channel.zip(params, undefined);
   }
 
   async harOpen(params: channels.LocalUtilsHarOpenParams): Promise<channels.LocalUtilsHarOpenResult> {
-    return await this._channel.harOpen(params);
+    return await this._channel.harOpen(params, undefined);
   }
 
   async harLookup(params: channels.LocalUtilsHarLookupParams): Promise<channels.LocalUtilsHarLookupResult> {
-    return await this._channel.harLookup(params);
+    return await this._channel.harLookup(params, undefined);
   }
 
   async harClose(params: channels.LocalUtilsHarCloseParams): Promise<void> {
-    return await this._channel.harClose(params);
+    return await this._channel.harClose(params, undefined);
   }
 
   async harUnzip(params: channels.LocalUtilsHarUnzipParams): Promise<void> {
-    return await this._channel.harUnzip(params);
+    return await this._channel.harUnzip(params, undefined);
   }
 
   async tracingStarted(params: channels.LocalUtilsTracingStartedParams): Promise<channels.LocalUtilsTracingStartedResult> {
-    return await this._channel.tracingStarted(params);
+    return await this._channel.tracingStarted(params, undefined);
   }
 
   async traceDiscarded(params: channels.LocalUtilsTraceDiscardedParams): Promise<void> {
-    return await this._channel.traceDiscarded(params);
+    return await this._channel.traceDiscarded(params, undefined);
   }
 
   async addStackToTracingNoReply(params: channels.LocalUtilsAddStackToTracingNoReplyParams): Promise<void> {
-    return await this._channel.addStackToTracingNoReply(params);
+    return await this._channel.addStackToTracingNoReply(params, undefined);
   }
 }

@@ -122,6 +122,11 @@ it('should work with glob', async () => {
   expect(urlMatches('http://playwright.dev', 'http://playwright.dev/?x=y', '?x=y')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/foo/bar?x=y', './bar?x=y')).toBeTruthy();
 
+  // '$$', '$&', '$`' and "$'" are special in String.prototype.replace with a string argument.
+  expect(urlMatches(undefined, 'http://playwright.dev/foo$$bar', 'http://playwright.dev/foo$$bar')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/a$&b', 'http://playwright.dev/a$&b')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev', 'http://playwright.dev/p$$q', './p$$q')).toBeTruthy();
+
   // Case insensitive matching
   expect(urlMatches(undefined, 'https://playwright.dev/fooBAR', 'HtTpS://pLaYwRiGhT.dEv/fooBAR')).toBeTruthy();
   expect(urlMatches('http://ignored', 'https://playwright.dev/fooBAR', 'HtTpS://pLaYwRiGhT.dEv/fooBAR')).toBeTruthy();
@@ -292,6 +297,19 @@ it('should work with regular expression passed from a different context', async 
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok()).toBe(true);
   expect(intercepted).toBe(true);
+});
+
+it('should intercept every request matching a global regexp', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  let intercepted = 0;
+  await page.route(/\/intercept-me/g, async route => {
+    ++intercepted;
+    await route.fulfill({ body: 'intercepted' });
+  });
+  const url = server.PREFIX + '/intercept-me';
+  for (let i = 0; i < 3; ++i)
+    expect(await page.evaluate(u => fetch(u, { cache: 'no-store' }).then(r => r.text()), url)).toBe('intercepted');
+  expect(intercepted).toBe(3);
 });
 
 it('should not break remote worker importScripts', async ({ page, server }) => {

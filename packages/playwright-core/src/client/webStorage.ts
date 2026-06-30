@@ -27,24 +27,24 @@ export class WebStorage implements api.WebStorage {
   }
 
   async items(): Promise<Array<{ name: string, value: string }>> {
-    const { items } = await this._page._channel.webStorageItems({ kind: this._kind });
+    const { items } = await this._page._channel.webStorageItems({ kind: this._kind }, undefined);
     return items;
   }
 
   async getItem(name: string): Promise<string | null> {
-    const { value } = await this._page._channel.webStorageGetItem({ kind: this._kind, name });
+    const { value } = await this._page._channel.webStorageGetItem({ kind: this._kind, name }, undefined);
     return value ?? null;
   }
 
   async setItem(name: string, value: string): Promise<void> {
-    await this._page._channel.webStorageSetItem({ kind: this._kind, name, value });
+    await this._page._channel.webStorageSetItem({ kind: this._kind, name, value }, undefined);
   }
 
   async removeItem(name: string): Promise<void> {
-    await this._page._channel.webStorageRemoveItem({ kind: this._kind, name });
+    await this._page._channel.webStorageRemoveItem({ kind: this._kind, name }, undefined);
   }
 
   async clear(): Promise<void> {
-    await this._page._channel.webStorageClear({ kind: this._kind });
+    await this._page._channel.webStorageClear({ kind: this._kind }, undefined);
   }
 }

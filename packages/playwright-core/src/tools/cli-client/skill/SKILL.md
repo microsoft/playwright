@@ -93,6 +93,7 @@ playwright-cli mousewheel 0 100
 playwright-cli screenshot
 playwright-cli screenshot e5
 playwright-cli screenshot --filename=page.png
+playwright-cli screenshot --hires
 playwright-cli pdf --filename=page.pdf
 ```
 

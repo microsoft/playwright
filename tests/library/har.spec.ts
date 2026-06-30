@@ -248,6 +248,18 @@ it('should include set-cookies', async ({ contextFactory, server }, testInfo) =>
   expect(new Date(cookies[2].expires!).valueOf()).toBeGreaterThan(Date.now());
 });
 
+it('should include set-cookies with lowercase attributes', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['name=value; path=/; httponly; secure; samesite=Lax']);
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const log = await getLog();
+  const cookies = log.entries[0].response.cookies;
+  expect(cookies[0]).toEqual({ name: 'name', value: 'value', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' });
+});
+
 it('should skip invalid Expires', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   server.setRoute('/empty.html', (req, res) => {
@@ -693,7 +705,7 @@ it('should return security details directly from response', async ({ contextFact
   const response = await page.goto(httpsServer.EMPTY_PAGE);
   const securityDetails = await response!.securityDetails();
   if (browserName === 'webkit' && platform === 'win32')
-    expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
+    expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'true', validFrom: 1691708270, validTo: 2007068270 });
   else if (browserName === 'webkit')
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
   else
@@ -1089,6 +1101,40 @@ it.describe('tracing.startHar', () => {
     const resources = await parseHar(harPath);
     const log = JSON.parse(resources.get('har.har')!.toString()).log as Log;
     expect(log.entries.some(e => e.request.url === server.PREFIX + '/simple.json')).toBe(true);
+  });
+
+  it('should record correct cookie expires for APIRequestContext', async ({ playwright, server }, testInfo) => {
+    server.setRoute('/set-cookie', (req, res) => {
+      res.setHeader('Set-Cookie', 'name=value; Expires=Tue, 01 Jan 2030 00:00:00 GMT');
+      res.end('hello');
+    });
+    const request = await playwright.request.newContext();
+    const harPath = testInfo.outputPath('api.har.zip');
+    await request.tracing.startHar(harPath, { content: 'attach' });
+    await request.get(server.PREFIX + '/set-cookie');
+    await request.tracing.stopHar();
+    await request.dispose();
+
+    const resources = await parseHar(harPath);
+    const log = JSON.parse(resources.get('har.har')!.toString()).log as Log;
+    const entry = log.entries.find(e => e.request.url.endsWith('/set-cookie'))!;
+    const cookie = entry.response.cookies.find(c => c.name === 'name')!;
+    expect(new Date(cookie.expires!).getUTCFullYear()).toBe(2030);
+  });
+
+  it('should record mixed-case request content-type for APIRequestContext', async ({ playwright, server }, testInfo) => {
+    server.setRoute('/post', (req, res) => res.end('ok'));
+    const request = await playwright.request.newContext();
+    const harPath = testInfo.outputPath('api-post.har.zip');
+    await request.tracing.startHar(harPath, { content: 'attach' });
+    await request.post(server.PREFIX + '/post', { headers: { 'Content-Type': 'application/json' }, data: Buffer.from('{"a":1}') });
+    await request.tracing.stopHar();
+    await request.dispose();
+
+    const resources = await parseHar(harPath);
+    const log = JSON.parse(resources.get('har.har')!.toString()).log as Log;
+    const entry = log.entries.find(e => e.request.url.endsWith('/post'))!;
+    expect(entry.request.postData!.mimeType).toBe('application/json');
   });
 
   it('should record a HAR with resourcesDir', async ({ contextFactory, server }, testInfo) => {

@@ -132,7 +132,7 @@ export function stringifySelector(selector: string | ParsedSelector, forceEngine
     if (!forceEngineName && i !== selector.capture) {
       if (p.name === 'css')
         includeEngine = false;
-      else if (p.name === 'xpath' && p.source.startsWith('//') || p.source.startsWith('..'))
+      else if (p.name === 'xpath' && (p.source.startsWith('//') || p.source.startsWith('..')))
         includeEngine = false;
     }
     const prefix = includeEngine ? p.name + '=' : '';
@@ -324,7 +324,7 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
       syntaxError('parsing regular expression');
     let flags = '';
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
-    while (!EOL && next().match(/[dgimsuy]/))
+    while (!EOL && next().match(/[dgimsuvy]/))
       flags += eat1();
     try {
       return new RegExp(source, flags);

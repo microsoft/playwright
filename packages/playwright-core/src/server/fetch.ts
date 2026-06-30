@@ -510,7 +510,7 @@ export abstract class APIRequestContext extends SdkObject {
 
         let body: Readable = response;
         let transform: Transform | undefined;
-        const encoding = response.headers['content-encoding'];
+        const encoding = response.headers['content-encoding']?.toLowerCase();
         if (encoding === 'gzip' || encoding === 'x-gzip') {
           transform = zlib.createGunzip({
             flush: zlib.constants.Z_SYNC_FLUSH,
@@ -566,10 +566,10 @@ export abstract class APIRequestContext extends SdkObject {
         const peerCertificate = socket.getPeerCertificate();
         securityDetails = {
           protocol: socket.getProtocol() ?? undefined,
-          subjectName: peerCertificate.subject.CN,
+          subjectName: peerCertificate.subject.CN as string,
           validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
           validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
-          issuer: peerCertificate.issuer.CN
+          issuer: peerCertificate.issuer.CN as string
         };
       };
 
@@ -913,7 +913,7 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
     for (const field of params.multipartData) {
       if (field.file)
         formData.addFileField(field.name, field.file);
-      else if (field.value)
+      else if (field.value !== undefined)
         formData.addField(field.name, field.value);
     }
     setHeader(headers, 'content-type', formData.contentTypeHeader(), true);

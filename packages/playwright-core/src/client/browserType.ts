@@ -77,7 +77,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       timeout: new TimeoutSettings().launchTimeout(options),
     };
     return await this._wrapApiCall(async () => {
-      const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
+      const browser = Browser.from((await this._channel.launch(launchOptions, options.signal)).browser);
       browser._connectToBrowserType(this, options, logger);
       return browser;
     });
@@ -110,7 +110,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       timeout: new TimeoutSettings().launchTimeout(options),
     };
     const context = await this._wrapApiCall(async () => {
-      const result = await this._channel.launchPersistentContext(persistentParams);
+      const result = await this._channel.launchPersistentContext(persistentParams, options.signal);
       const browser = Browser.from(result.browser);
       browser._connectToBrowserType(this, options, logger);
       const context = BrowserContext.from(result.context);
@@ -127,7 +127,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (typeof optionsOrEndpoint === 'string')
       return await this._connect({ ...options, endpoint: optionsOrEndpoint });
     assert(optionsOrEndpoint.wsEndpoint, 'options.wsEndpoint is required');
-    return await this._connect({ ...options, endpoint: optionsOrEndpoint.wsEndpoint });
+    return await this._connect({ ...optionsOrEndpoint, endpoint: optionsOrEndpoint.wsEndpoint });
   }
 
   async _connect(params: ConnectOptions): Promise<Browser> {
@@ -172,7 +172,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       isLocal: params.isLocal,
       noDefaults: params.noDefaults,
       artifactsDir: params.artifactsDir,
-    });
+    }, undefined);
     return await this._browserFromConnectResult(result);
   }
 
@@ -190,7 +190,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const result = await this._channel.connectToWorker({
       endpoint,
       timeout: new TimeoutSettings().timeout(options),
-    });
+    }, undefined);
     return Worker.from(result.worker);
   }
 }

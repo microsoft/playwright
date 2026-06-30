@@ -54,9 +54,10 @@ will have `__playwright_evaluation_script__` as their URL.
 
 ### option: Coverage.startJSCoverage.resetOnNavigation
 * since: v1.11
+* discouraged: Settings this to `false` may still reset on navigations.
 - `resetOnNavigation` <[boolean]>
 
-Whether to reset coverage on every navigation. Defaults to `true`.
+Whether to reset coverage on every navigation. Defaults to `true`. Note that passing `false` does not guarantee that coverage persists through navigations, due to browser architecture limitations.
 
 ### option: Coverage.startJSCoverage.reportAnonymousScripts
 * since: v1.11

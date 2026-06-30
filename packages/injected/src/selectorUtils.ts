@@ -68,7 +68,7 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
     value = { full: '', normalized: '', immediate: [] };
     if (!shouldSkipForTextMatching(root)) {
       let currentImmediate = '';
-      if ((root instanceof HTMLInputElement) && (root.type === 'submit' || root.type === 'button')) {
+      if ((root instanceof HTMLInputElement) && (root.type === 'submit' || root.type === 'button' || root.type === 'reset')) {
         value = { full: root.value, normalized: normalizeWhiteSpace(root.value), immediate: [root.value] };
       } else {
         for (let child = root.firstChild; child; child = child.nextSibling) {

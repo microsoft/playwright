@@ -1349,3 +1349,51 @@ it('should not wait with noAutoWaiting 3', async ({ page }) => {
   const error = await page.locator('button').click({ __testHookNoAutoWaiting: true } as any).catch(e => e);
   expect(error.message).toContain('locator.click: Element is not enabled');
 });
+
+it('should abort via signal', async ({ page }) => {
+  await page.setContent(`<button style="display:none">click me</button>`);
+  const controller = new AbortController();
+  const promise = page.locator('button').click({ signal: controller.signal, timeout: 0 }).catch(e => e);
+  // Give the action time to start and emit call log entries before aborting.
+  await page.waitForTimeout(500);
+
+  const reason = new Error('Aborted by user');
+  controller.abort(reason);
+  const error = await promise;
+  expect(error.message).toContain('The operation was aborted');
+  expect(error.message).toContain(`Call log:`);
+  expect(error.name).toBe('AbortError');
+  expect(error.cause).toBe(reason);
+});
+
+it('should throw an Error when aborted in-flight with a string reason', async ({ page }) => {
+  await page.setContent(`<button style="display:none">click me</button>`);
+  const controller = new AbortController();
+  const promise = page.locator('button').click({ signal: controller.signal, timeout: 0 });
+  controller.abort('aborted by user');
+  const error = await promise.catch(e => e);
+  expect(error).toBeInstanceOf(Error);
+  expect(error.name).toBe('AbortError');
+  expect(error.cause).toBe('aborted by user');
+});
+
+it('should abort via already-aborted signal', async ({ page }) => {
+  await page.setContent(`<button>click me</button>`);
+  const controller = new AbortController();
+  const reason = new Error('Already aborted');
+  controller.abort(reason);
+  const error = await page.locator('button').click({ signal: controller.signal }).catch(e => e);
+  expect(error.message).toContain('The operation was aborted');
+  expect(error.name).toBe('AbortError');
+  expect(error.cause).toBe(reason);
+});
+
+it('should throw an Error when aborted via an already-aborted signal with a string reason', async ({ page }) => {
+  await page.setContent(`<button>click me</button>`);
+  const controller = new AbortController();
+  controller.abort('already aborted');
+  const error = await page.locator('button').click({ signal: controller.signal }).catch(e => e);
+  expect(error).toBeInstanceOf(Error);
+  expect(error.name).toBe('AbortError');
+  expect(error.cause).toBe('already aborted');
+});

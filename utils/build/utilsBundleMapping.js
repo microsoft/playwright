@@ -16,7 +16,7 @@ const MAPPING = {
   'https-proxy-agent': { default: 'httpProxyAgent', named: { HttpsProxyAgent: 'HttpsProxyAgent' } },
   'jpeg-js': { default: 'jpegjs' },
   'mime': { default: 'mime' },
-  'minimatch': { default: 'minimatch' },
+  'minimatch': { named: { minimatch: 'minimatch' } },
   'open': { default: 'open' },
   'pngjs': { named: { PNG: 'PNG' } },
   'commander': { named: { program: 'program', Option: 'ProgramOption' } },
@@ -59,7 +59,7 @@ const MAPPING = {
   // come from utilsBundle just like any other vendored package.
   'graceful-fs': { default: 'gracefulFs', namespace: 'gracefulFs' },
   'retry': { default: 'retry' },
-  'signal-exit': { default: 'onExit' },
+  'signal-exit': { named: { onExit: 'onExit' } },
   'get-stream': { default: 'getStream' },
 };
 

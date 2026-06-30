@@ -37,29 +37,29 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<R> {
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
     return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {
-    const result = await this._channel.getProperty({ name: propertyName });
+    const result = await this._channel.getProperty({ name: propertyName }, undefined);
     return JSHandle.from(result.handle);
   }
 
   async getProperties(): Promise<Map<string, JSHandle>> {
     const map = new Map<string, JSHandle>();
-    for (const { name, value } of (await this._channel.getPropertyList()).properties)
+    for (const { name, value } of (await this._channel.getPropertyList({}, undefined)).properties)
       map.set(name, JSHandle.from(value));
     return map;
   }
 
   async jsonValue(): Promise<T> {
-    return parseResult((await this._channel.jsonValue()).value);
+    return parseResult((await this._channel.jsonValue({}, undefined)).value);
   }
 
   asElement(): T extends Node ? api.ElementHandle<T> : null {
@@ -72,7 +72,7 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
 
   async dispose() {
     try {
-      await this._channel.dispose();
+      await this._channel.dispose({}, undefined);
     } catch (e) {
       if (isTargetClosedError(e))
         return;

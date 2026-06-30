@@ -179,18 +179,6 @@ jobs:
       env:
         PWTEST_CHANNEL: ${{ matrix.channel }}
 
-  build-playwright-driver:
-    name: "build-playwright-driver"
-    runs-on: ubuntu-24.04
-    steps:
-    - uses: actions/checkout@v6
-    - uses: actions/setup-node@v6
-      with:
-        node-version: 20
-    - run: npm ci
-    - run: npm run build
-    - run: utils/build/build-playwright-driver.sh
-
   test_android:
     name: Android
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}

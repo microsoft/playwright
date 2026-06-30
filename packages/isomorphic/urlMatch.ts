@@ -181,8 +181,8 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   if (isString(match))
     match = new RegExp(resolveGlobToRegexPattern(baseURL, match, webSocketUrl));
   if (isRegExp(match)) {
-    const r = match.test(urlString);
-    return r;
+    match.lastIndex = 0;
+    return match.test(urlString);
   }
   const url = parseURL(urlString);
   if (!url)
@@ -249,7 +249,10 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
     let resolved = result.resolved;
     for (const [token, original] of tokenMap) {
       const normalize = result.caseInsensitivePart?.includes(token);
-      resolved = resolved.replace(token, normalize ? original.toLowerCase() : original);
+      const replacement = normalize ? original.toLowerCase() : original;
+      // '$$', '$&', '$`' and "$'" are special in String.prototype.replace with a string argument.
+      // Instead, use the function argument form that treats the string argument literally.
+      resolved = resolved.replace(token, () => replacement);
     }
     match = resolved;
   }

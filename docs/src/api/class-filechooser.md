@@ -73,3 +73,5 @@ they are resolved relative to the current working directory. For empty array, cl
 
 ### option: FileChooser.setFiles.timeout = %%-input-timeout-js-%%
 * since: v1.8
+
+### option: FileChooser.setFiles.signal = %%-input-signal-%%
