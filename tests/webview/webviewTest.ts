@@ -25,6 +25,11 @@ export { expect } from '@playwright/test';
 
 const PROXY_BASE = process.env.PW_WEBVIEW_PROXY_BASE || 'http://localhost:9222';
 
+// Limit the page fixture's setup and teardown in case the test infinitely loops.
+// All tests use a single shared MobileSafari, so we cannot recover if its busy.
+// As such, kill the worker to ensure that the next test has a reachable page.
+const WEBVIEW_PAGE_TIMEOUT = 20000;
+
 type WebViewWorkerFixtures = PageWorkerFixtures & {
   webviewExpectations: Map<string, WebViewExpectation>;
   webviewEndpoint: string;
@@ -138,7 +143,7 @@ export const webviewTest = baseTest.extend<WebViewTestFixtures, WebViewWorkerFix
     await run(endpoint);
   }, { scope: 'worker', timeout: 180000 }],
 
-  page: async ({ playwright, webviewEndpoint }, run) => {
+  page: [async ({ playwright, webviewEndpoint }, run) => {
     const browser = await playwright.webkit.connectOverCDP(webviewEndpoint);
     const [context] = browser.contexts();
     const pages = context.pages();
@@ -152,7 +157,7 @@ export const webviewTest = baseTest.extend<WebViewTestFixtures, WebViewWorkerFix
     // while still on the test's domain (webview cookies are domain-scoped).
     await page.context().clearCookies().catch(() => {});
     await browser.close();
-  },
+  }, { scope: 'test', timeout: WEBVIEW_PAGE_TIMEOUT }],
 
   _autoSkipWebView: [async ({ webviewExpectations }, run, testInfo) => {
     if (process.env.PWTEST_DISABLE_WEBVIEW_EXPECTATIONS !== undefined) {
