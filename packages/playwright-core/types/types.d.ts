@@ -12984,6 +12984,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * @deprecated This option has no effect.
      */
     timeout?: number;
   }): Promise<string>;

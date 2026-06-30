@@ -652,9 +652,11 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ### option: ElementHandle.inputValue.timeout = %%-input-timeout-%%
 * since: v1.13
+* deprecated: This option has no effect.
 
 ### option: ElementHandle.inputValue.timeout = %%-input-timeout-js-%%
 * since: v1.13
+* deprecated: This option has no effect.
 
 ## async method: ElementHandle.isChecked
 * since: v1.8
