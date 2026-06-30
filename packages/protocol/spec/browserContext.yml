@@ -210,6 +210,8 @@ BrowserContext:
 
     pause:
       title: Pause
+      parameters:
+        outputFile: string?
 
     enableRecorder:
       internal: true

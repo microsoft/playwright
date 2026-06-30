@@ -192,10 +192,10 @@ export class RecorderApp {
     await this._page.close(nullProgress);
   }
 
-  static showInspectorNoReply(context: BrowserContext) {
+  static showInspectorNoReply(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams = {}) {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
-    void Recorder.forContext(context, {}).then(recorder => RecorderApp._show(recorder, context, {})).catch(() => {});
+    void Recorder.forContext(context, params).then(recorder => RecorderApp._show(recorder, context, params)).catch(() => {});
   }
 
   private static async _show(recorder: Recorder, inspectedContext: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
