@@ -3,8 +3,8 @@ name: "Issue triage"
 on:
   issues:
     types: [opened]
-  # Commented out for now: reacting to every comment is ~12 min of CI each.
-  # Re-enable once we are happy with the issue-opened path.
+  # Commented out for now: triaging every comment risks a noisy bot.
+  # Re-enable once we trust it to stay quiet unless a comment adds something.
   # issue_comment:
   #   types: [created]
   workflow_dispatch:
