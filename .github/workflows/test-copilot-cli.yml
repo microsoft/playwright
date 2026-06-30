@@ -12,6 +12,10 @@ permissions:
 jobs:
   triage:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        issue: [41543, 41448, 41285, 41348, 41504, 41462, 41356]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -29,14 +33,15 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ISSUE: ${{ matrix.issue }}
         run: |
           mkdir -p "$HOME/tmp"
           mkdir -p output
-          PROMPT=$(cat <<'EOF'
-          Triage https://github.com/microsoft/playwright/issues/41543 using the playwright-triage skill.
+          PROMPT=$(cat <<EOF
+          Triage https://github.com/microsoft/playwright/issues/$ISSUE using the playwright-triage skill.
 
           Do not post anything to GitHub, write your response draft to output/triage.md instead.
-          The link to this agent run is in $WORKFLOW_URL.
+          The link to this agent run is in \$WORKFLOW_URL.
           EOF
           )
           copilot \
@@ -55,7 +60,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Triage run log"
+            echo "## Triage run log (issue ${{ matrix.issue }})"
             echo ''
             echo '```'
             cat "output/copilot.log" 2>/dev/null || echo "(no log)"
@@ -66,6 +71,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: output
+          name: output-${{ matrix.issue }}
           path: output/**
           if-no-files-found: warn
