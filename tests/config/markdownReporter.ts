@@ -21,7 +21,6 @@ import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestError } fro
 
 type MarkdownReporterOptions = {
   configDir: string, // TODO: make it public?
-  outputFile?: string;
 };
 
 // Produces the markdown summary of a merged report and writes it to a file. The actual PR
@@ -87,7 +86,7 @@ class MarkdownReporter implements Reporter {
   }
 
   private async _writeReport(report: string): Promise<void> {
-    const maybeRelativeFile = this._options.outputFile || 'report.md';
+    const maybeRelativeFile = process.env.MARKDOWN_OUTPUT_FILE || 'report.md';
     const reportFile = path.resolve(this._options.configDir, maybeRelativeFile);
     await fs.promises.mkdir(path.dirname(reportFile), { recursive: true });
     await fs.promises.writeFile(reportFile, report);

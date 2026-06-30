@@ -13,6 +13,8 @@ jobs:
       contents: read    # This is required for actions/checkout to succeed
     if: ${{ github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
+    env:
+      MARKDOWN_OUTPUT_FILE: ${{ github.workspace }}/report.md
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
@@ -65,7 +67,14 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const { postReportComment } = require('./tests/config/postReportComment');
-          await postReportComment({ github, context, core, reportUrl: process.env.HTML_REPORT_URL });
+          await postReportComment({
+            github,
+            context,
+            core,
+            reportFile: process.env.MARKDOWN_OUTPUT_FILE,
+            prNumber: +process.env.PR_NUMBER,
+            reportUrl: process.env.HTML_REPORT_URL,
+          });
 
     - name: Publish Report URL as Commit Status
       uses: actions/github-script@v9

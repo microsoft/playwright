@@ -18,16 +18,14 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * @param {{ github: any, context: any, core: any, reportUrl?: string }} params
+ * @param {{ github: any, context: any, core: any, reportFile: string, prNumber: number, reportUrl?: string }} params
  */
-async function postReportComment({ github, context, core, reportUrl }) {
-  const report = fs.readFileSync(path.resolve(process.cwd(), 'report.md'), 'utf8');
-  const prNumber = parseInt(process.env.PR_NUMBER ?? '', 10);
-
+async function postReportComment({ github, context, core, reportFile, prNumber, reportUrl }) {
   if (!prNumber) {
     core.info('No PR number provided, skipping GHA comment.');
     return;
   }
+  const report = fs.readFileSync(path.resolve(process.cwd(), reportFile), 'utf8');
   core.info(`Posting comment to PR #${prNumber}`);
 
   const prNodeId = await collapsePreviousComments(github, context, prNumber);
