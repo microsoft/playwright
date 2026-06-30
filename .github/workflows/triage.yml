@@ -1,10 +1,20 @@
-name: "triage with copilot cli"
+name: "Issue triage"
 
 on:
-  push:
-    branches:
-      - pw-triage-bot
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
+    inputs:
+      issue:
+        description: "Issue number to triage"
+        required: true
+
+# One triage at a time per issue; let an in-flight run finish.
+concurrency:
+  group: triage-${{ github.event.issue.number || inputs.issue }}
+  cancel-in-progress: false
 
 permissions:
   copilot-requests: write
@@ -12,11 +22,13 @@ permissions:
 
 jobs:
   triage:
+    # Issues and dispatch always run. For comments, skip the bot's own comments
+    # (otherwise it would react to itself) and skip PRs (issue_comment fires on PRs too).
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.pull_request == null &&
+       github.event.comment.user.login != 'github-actions[bot]')
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        issue: [41536, 41539, 41543, 41546]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -34,12 +46,11 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          ISSUE: ${{ matrix.issue }}
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
         run: |
-          mkdir -p "$HOME/tmp"
           mkdir -p output
           PROMPT=$(cat <<EOF
-          Triage https://github.com/microsoft/playwright/issues/$ISSUE using the playwright-triage skill.
+          Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
 
           When finished, post your response as a comment on the issue using the gh CLI. Also save a copy to output/triage.md.
           The link to this agent run is in \$WORKFLOW_URL.
@@ -53,25 +64,23 @@ jobs:
             -p "$PROMPT" \
             2>&1 | tee "output/copilot.log"
 
-      - name: Collect output
-        if: always()
-        run: cp -r "$HOME/tmp/." output/ 2>/dev/null || true
-
       - name: Add log to job summary
         if: always()
         run: |
           {
-            echo "## Triage run log (issue ${{ matrix.issue }})"
+            echo "## Triage run log (issue $ISSUE)"
             echo ''
             echo '```'
             cat "output/copilot.log" 2>/dev/null || echo "(no log)"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
 
       - name: Upload output
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: output-${{ matrix.issue }}
+          name: triage-${{ github.event.issue.number || inputs.issue }}
           path: output/**
           if-no-files-found: warn
