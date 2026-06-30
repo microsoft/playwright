@@ -58,7 +58,7 @@ jobs:
         app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
         private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
     - name: Create Pull Request
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       if: ${{ steps.prepare-branch.outputs.exists == '0' }}
       with:
         github-token: ${{ steps.app-token.outputs.token }}

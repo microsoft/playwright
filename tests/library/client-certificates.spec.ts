@@ -53,7 +53,6 @@ const test = base.extend<TestOptions>({
         const tlsSocket = req.socket as import('tls').TLSSocket;
         const parts: { key: string, value: any }[] = [];
         parts.push({ key: 'alpn-protocol', value: tlsSocket.alpnProtocol });
-        // @ts-expect-error https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/62336
         parts.push({ key: 'servername', value: tlsSocket.servername });
         const cert = tlsSocket.getPeerCertificate();
         if (tlsSocket.authorized) {

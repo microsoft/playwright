@@ -59,7 +59,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     const parsedProxyURL = normalizeProxyURL(proxyURL);
     if (params.url.startsWith('http:')) {
       options.path = url.toString();
-      const headers = options.headers || {};
+      const headers = (options.headers || {}) as http.OutgoingHttpHeaders;
       if (!Object.keys(headers).some(header => header.toLowerCase() === 'host'))
         headers.host = url.host;
       options.headers = headers;

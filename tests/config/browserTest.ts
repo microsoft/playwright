@@ -40,7 +40,6 @@ export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   isElectron: boolean;
   isHeadlessShell: boolean;
   isFrozenWebkit: boolean;
-  nodeVersion: { major: number, minor: number, patch: number };
   isBidi: boolean;
   bidiTestSkipPredicate: (info: TestInfo) => boolean;
 };
@@ -92,11 +91,6 @@ const test = baseTest.extend<BrowserTestTestFixtures & { _contextFactory: Contex
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
     await run(Number(browserVersion.split('.')[0]));
-  }, { scope: 'worker' }],
-
-  nodeVersion: [async ({}, use) => {
-    const [major, minor, patch] = process.versions.node.split('.');
-    await use({ major: +major, minor: +minor, patch: +patch });
   }, { scope: 'worker' }],
 
   isBidi: [async ({ channel }, use) => {

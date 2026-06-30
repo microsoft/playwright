@@ -37,7 +37,7 @@ test(`navigate with extension`, async ({ startExtensionClient, server }) => {
   await clickAllowAndSelect(selectorPage, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
   });
 });
 
@@ -210,7 +210,7 @@ testWithOldExtensionVersion(`works with old extension version`, async ({ startEx
   await clickAllowAndSelect(selectorPage, 'Welcome');
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
   });
 });
 
@@ -342,7 +342,7 @@ test(`bypass connection dialog with token`, async ({ browserWithExtension, start
   });
 
   expect(await navigateResponse).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`- generic [active] [ref=f1e1]: Hello, world!`),
   });
 });
 
