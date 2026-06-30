@@ -1355,7 +1355,7 @@ it('should abort via signal', async ({ page }) => {
   const controller = new AbortController();
   const promise = page.locator('button').click({ signal: controller.signal, timeout: 0 }).catch(e => e);
   // Give the action time to start and emit call log entries before aborting.
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(500);
 
   const reason = new Error('Aborted by user');
   controller.abort(reason);
