@@ -432,6 +432,8 @@ export class FFPage implements PageDelegate {
   }
 
   async requestGC(): Promise<void> {
+    // An in-viewport mousemove enters the renderer via sendEvents(), moving Gecko's C++ event-target pointer off the previously-clicked element so the cycle collector can release it. An out-of-viewport move (x < 0) takes a different Juggler path that never reaches the renderer and leaves the pointer intact.
+    await this._session.send('Page.dispatchMouseEvent', { type: 'mousemove', x: 0, y: 0, button: 0, modifiers: 0, buttons: 0 });
     await this._session.send('Heap.collectGarbage');
   }
 
