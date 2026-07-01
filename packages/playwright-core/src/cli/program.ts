@@ -29,6 +29,7 @@ import { installBrowsers, uninstallBrowsers, installDeps } from './installAction
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
 import { screenshot, pdf } from './browserActions';
 import { program as cliProgram } from '../tools/cli-client/program';
+import { decorateMCPCommand } from '../tools/mcp/program';
 
 import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
 import type { Command } from 'commander';
@@ -236,7 +237,8 @@ export function decorateProgram(program: Command) {
   addTraceCommands(program, logErrorAndExit);
 
   program
-      .command('cli', { hidden: true })
+      .command('cli')
+      .description('run playwright cli commands from terminal')
       .allowExcessArguments(true)
       .allowUnknownOption(true)
       .helpOption(false)
@@ -244,6 +246,10 @@ export function decorateProgram(program: Command) {
         process.argv.splice(process.argv.indexOf('cli'), 1);
         cliProgram().catch(logErrorAndExit);
       });
+
+  decorateMCPCommand(program
+      .command('mcp')
+      .description('run the Playwright MCP server'));
 }
 
 function logErrorAndExit(e: Error) {

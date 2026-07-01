@@ -8,6 +8,7 @@
 ../remote/
 ../server/trace/viewer/
 ../tools/cli-client/program.ts
+../tools/mcp/program.ts
 ../tools/trace/traceCli.ts
 ../bootstrap.ts
 node_modules/commander
