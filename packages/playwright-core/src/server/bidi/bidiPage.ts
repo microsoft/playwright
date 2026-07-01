@@ -27,6 +27,7 @@ import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
 import { nullProgress } from '../progress';
+import { startAutomaticVideoRecording } from '../videoRecorder';
 
 import * as frames from '../frames';
 import * as network from '../network';
@@ -56,6 +57,8 @@ export class BidiPage implements PageDelegate {
   private _initScriptIds = new Map<InitScript, string>();
   private readonly _fragmentNavigations = new Set<string>();
   private readonly _failedNavigations = new Map<string, string>();
+  private _screencastTimer: NodeJS.Timeout | undefined;
+  private _waitingForScreenshot = false;
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -103,6 +106,7 @@ export class BidiPage implements PageDelegate {
       // If the page is created by the Playwright client's call, some initialization
       // may be pending. Wait for it to complete before reporting the page as new.
     ]);
+    startAutomaticVideoRecording(this._page);
   }
 
   didClose() {
@@ -576,9 +580,45 @@ export class BidiPage implements PageDelegate {
   }
 
   startScreencast(options: { width: number, height: number, quality: number }) {
+    if (this._screencastTimer)
+      return;
+
+    this._waitingForScreenshot = false;
+    this._screencastTimer = setInterval(async () => {
+      if (this._waitingForScreenshot)
+        return;
+      if (this._session.isDisposed()) {
+        this.stopScreencast();
+        return;
+      }
+
+      this._waitingForScreenshot = true;
+      const payload = await this._session.sendMayFail('browsingContext.captureScreenshot', {
+        context: this._session.sessionId,
+        format: {
+          type: 'image/jpeg',
+          quality: options.quality / 100
+        }
+      });
+      if (payload) {
+        const buffer = Buffer.from(payload.data, 'base64');
+        const { width, height } = jpegDimensions(buffer);
+        this._page.screencast.onScreencastFrame({
+          buffer,
+          frameSwapWallTime: Date.now(),
+          viewportWidth: width,
+          viewportHeight: height,
+        });
+      }
+      this._waitingForScreenshot = false;
+    }, 40);
   }
 
   stopScreencast() {
+    if (this._screencastTimer) {
+      clearInterval(this._screencastTimer);
+      this._screencastTimer = undefined;
+    }
   }
 
   rafCountForStablePosition(): number {
@@ -678,4 +718,23 @@ export class BidiPage implements PageDelegate {
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
   return executionContext.delegate as BidiExecutionContext;
+}
+
+function jpegDimensions(buffer: Buffer): { width: number, height: number } {
+  let i = 2; // skip SOI marker (FF D8)
+  while (i < buffer.length - 8) {
+    if (buffer[i] !== 0xFF)
+      break;
+    const marker = buffer[i + 1];
+    const segmentLength = buffer.readUInt16BE(i + 2);
+    // SOF markers: C0 (baseline), C2 (progressive), C1, C3, C5-C7, C9-CB, CD-CF
+    if ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xC7) ||
+        (marker >= 0xC9 && marker <= 0xCB) || (marker >= 0xCD && marker <= 0xCF)) {
+      const height = buffer.readUInt16BE(i + 5);
+      const width = buffer.readUInt16BE(i + 7);
+      return { width, height };
+    }
+    i += 2 + segmentLength;
+  }
+  throw new Error('Could not parse JPEG dimensions');
 }
