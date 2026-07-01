@@ -393,6 +393,8 @@ export interface Suite {
   exclude(): void;
 
   /**
+   * Must be called from inside
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite).
    * Mark every [TestCase](https://playwright.dev/docs/api/class-testcase) of this suite as expected-to-fail, see
    * [testCase.fail([reason])](https://playwright.dev/docs/api/class-testcase#test-case-fail).
    * @param reason Optional explanation surfaced as the annotation description.
@@ -400,6 +402,8 @@ export interface Suite {
   fail(reason?: string): void;
 
   /**
+   * Must be called from inside
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite).
    * Mark every [TestCase](https://playwright.dev/docs/api/class-testcase) of this suite as fixme, see
    * [testCase.fixme([reason])](https://playwright.dev/docs/api/class-testcase#test-case-fixme).
    * @param reason Optional explanation surfaced as the annotation description.
@@ -412,6 +416,8 @@ export interface Suite {
   project(): FullProject|undefined;
 
   /**
+   * Must be called from inside
+   * [reporter.preprocessSuite(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-preprocess-suite).
    * Mark every [TestCase](https://playwright.dev/docs/api/class-testcase) of this suite as skipped, see
    * [testCase.skip([reason])](https://playwright.dev/docs/api/class-testcase#test-case-skip).
    * @param reason Optional explanation surfaced as the annotation description.

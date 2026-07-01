@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import { captureRawStack } from '@isomorphic/stackTrace';
 import { rootTestType } from './testType';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
-import { filteredStackTrace } from '../util';
-
+import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation, FullProjectInternal } from './config';
 import type { FixturePool } from './fixtures';
 import type { TestTypeImpl } from './testType';
@@ -60,14 +58,19 @@ export class Suite extends Base {
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
-  // Set on the root suite for the duration of Reporter.preprocessSuite(), gating
-  // the disposition methods (skip/fixme/fail/exclude) to that phase only.
   _preprocessing = false;
   readonly _type: 'root' | 'project' | 'file' | 'describe';
+
+  skip: (reason?: string) => void;
+  fixme: (reason?: string) => void;
+  fail: (reason?: string) => void;
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
     super(title);
     this._type = type;
+    this.skip = wrapFunctionWithLocation((location, reason?: string) => this._modifier('skip', location, reason));
+    this.fixme = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fixme', location, reason));
+    this.fail = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fail', location, reason));
   }
 
   get type(): 'root' | 'project' | 'file' | 'describe' {
@@ -266,28 +269,19 @@ export class Suite extends Base {
     return this._fullProject?.project || this.parent?.project();
   }
 
-  skip(reason?: string): void {
-    for (const entry of this.entries())
-      entry.skip(reason);
-  }
-
-  fixme(reason?: string): void {
-    for (const entry of this.entries())
-      entry.fixme(reason);
-  }
-
-  fail(reason?: string): void {
-    for (const entry of this.entries())
-      entry.fail(reason);
+  private _modifier(type: 'skip' | 'fixme' | 'fail', location: Location, reason: string | undefined): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`Suite.${type}() can only be called from Reporter.preprocessSuite().`);
+    for (const test of this.allTests())
+      test._applyPlanAnnotation({ type, description: reason, location });
   }
 
   exclude(): void {
     if (!this._rootSuite()._preprocessing)
       throw new Error(`Suite.exclude() can only be called from Reporter.preprocessSuite().`);
-    if (this.parent)
-      this.parent._detach(this);
-    else
-      this._entries = [];
+    if (!this.parent)
+      throw new Error(`Suite.exclude() cannot be called on the root suite.`);
+    this.parent._detach(this);
   }
 
   _rootSuite(): Suite {
@@ -318,11 +312,18 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _tags: string[] = [];
   _planAnnotations: TestAnnotation[] = [];
 
+  skip: (reason?: string) => void;
+  fixme: (reason?: string) => void;
+  fail: (reason?: string) => void;
+
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);
     this.fn = fn;
     this._testType = testType;
     this.location = location;
+    this.skip = wrapFunctionWithLocation((location, reason?: string) => this._modifier('skip', location, reason));
+    this.fixme = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fixme', location, reason));
+    this.fail = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fail', location, reason));
   }
 
   titlePath(): string[] {
@@ -351,31 +352,18 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     ];
   }
 
-  skip(reason?: string): void {
+  private _modifier(type: 'skip' | 'fixme' | 'fail', location: Location, reason: string | undefined): void {
     if (!this._rootSuite()._preprocessing)
-      throw new Error(`TestCase.skip() can only be called from Reporter.preprocessSuite().`);
-    const annotation: TestAnnotation = { type: 'skip', description: reason, location: captureCallerLocation() };
-    this.annotations.push(annotation);
-    this._planAnnotations.push(annotation);
-    this.expectedStatus = 'skipped';
+      throw new Error(`TestCase.${type}() can only be called from Reporter.preprocessSuite().`);
+    this._applyPlanAnnotation({ type, description: reason, location });
   }
 
-  fixme(reason?: string): void {
-    if (!this._rootSuite()._preprocessing)
-      throw new Error(`TestCase.fixme() can only be called from Reporter.preprocessSuite().`);
-    const annotation: TestAnnotation = { type: 'fixme', description: reason, location: captureCallerLocation() };
+  _applyPlanAnnotation(annotation: TestAnnotation): void {
     this.annotations.push(annotation);
     this._planAnnotations.push(annotation);
-    this.expectedStatus = 'skipped';
-  }
-
-  fail(reason?: string): void {
-    if (!this._rootSuite()._preprocessing)
-      throw new Error(`TestCase.fail() can only be called from Reporter.preprocessSuite().`);
-    const annotation: TestAnnotation = { type: 'fail', description: reason, location: captureCallerLocation() };
-    this.annotations.push(annotation);
-    this._planAnnotations.push(annotation);
-    if (this.expectedStatus !== 'skipped')
+    if (annotation.type === 'skip' || annotation.type === 'fixme')
+      this.expectedStatus = 'skipped';
+    else if (annotation.type === 'fail' && this.expectedStatus !== 'skipped')
       this.expectedStatus = 'failed';
   }
 
@@ -463,11 +451,4 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     path.push(...this._tags);
     return path.join(' ');
   }
-}
-
-function captureCallerLocation(): Location | undefined {
-  const frame = filteredStackTrace(captureRawStack())[0];
-  if (!frame?.file)
-    return undefined;
-  return { file: frame.file, line: frame.line ?? 0, column: frame.column ?? 0 };
 }
