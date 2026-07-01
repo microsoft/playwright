@@ -49,7 +49,7 @@ extends:
 
         - task: UseNode@1
           inputs:
-            version: '22.x'
+            version: '26.x'
           displayName: "Install Node.js"
 
         - task: Bash@3
