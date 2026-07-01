@@ -26,6 +26,10 @@ inputs:
     description: 'Shell to use'
     required: false
     default: 'bash'
+  rerun-failures-on-base:
+    description: 'On a failing pull request, re-run the failures against the base commit to identify pre-existing failures'
+    required: false
+    default: 'true'
   flakiness-client-id:
     description: 'Azure Flakiness Dashboard Client ID'
     required: false
@@ -99,3 +103,23 @@ runs:
       with:
         report_dir: blob-report
         job_name: ${{ inputs.bot-name }}-${{ inputs.shard-index }}
+    - name: Re-run failures against base
+      if: ${{ failure() && github.event_name == 'pull_request' && inputs.rerun-failures-on-base == 'true' }}
+      shell: bash
+      continue-on-error: true
+      env:
+        COMMAND: ${{ inputs.command }}
+        SETUP_COMMAND: ${{ inputs.setup-command }}
+        BROWSERS_TO_INSTALL: ${{ inputs.browsers-to-install }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        BOT_NAME: ${{ inputs.bot-name }}
+        SHARD_INDEX: ${{ inputs.shard-index }}
+      run: node utils/rerun_failures_on_base.js
+    - name: Upload base failures
+      if: ${{ failure() && github.event_name == 'pull_request' && inputs.rerun-failures-on-base == 'true' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: base-failures-${{ inputs.bot-name }}-${{ inputs.shard-index }}
+        path: ${{ runner.temp }}/base-failures-*.json
+        if-no-files-found: ignore
+        retention-days: 7
