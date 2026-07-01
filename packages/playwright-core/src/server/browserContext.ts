@@ -109,6 +109,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _routesInFlight = new Set<network.Route>();
   private _debugger!: Debugger;
   _closeReason: string | undefined;
+  _recorderApp: RecorderApp | undefined;
   readonly clock: Clock;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
   private _playwrightBindingExposed?: Promise<void>;

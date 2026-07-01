@@ -574,6 +574,23 @@ it.describe('pause', () => {
     await recorderPage.getByRole('button', { name: 'Resume' }).click();
     await scriptPromise;
   });
+
+  it('should return the recorded code on resume', async ({ page, recorderPageGetter }) => {
+    await page.setContent('<body style="width: 100%; height: 100%"></body>');
+    // @ts-ignore
+    const resultPromise = page.pause({ __testHookKeepTestTimeout: true });
+    const recorderPage = await recorderPageGetter();
+    await recorderPage.getByRole('button', { name: 'Record' }).click();
+
+    const recorder = new Recorder(page, recorderPage);
+    await recorder.hoverOverElement('body', { omitTooltip: true });
+    await recorder.trustedClick();
+
+    await expect(recorderPage.locator('.cm-wrapper')).toContainText(`await page.locator('body').click();`);
+    await recorderPage.getByRole('button', { name: 'Resume' }).click();
+    const result = await resultPromise;
+    expect(result.output).toContain(`await page.locator('body').click();`);
+  });
 });
 
 async function sanitizeLog(recorderPage: Page): Promise<string[]> {

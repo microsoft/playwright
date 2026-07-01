@@ -1605,7 +1605,9 @@ export type BrowserContextSetStorageStateOptions = {
 export type BrowserContextSetStorageStateResult = void;
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
-export type BrowserContextPauseResult = void;
+export type BrowserContextPauseResult = {
+  output?: string,
+};
 export type BrowserContextEnableRecorderParams = {
   language?: string,
   mode?: 'inspecting' | 'recording',

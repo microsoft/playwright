@@ -2812,6 +2812,9 @@ Returns the opener for popup pages and `null` for others. If the opener has been
 
 ## async method: Page.pause
 * since: v1.9
+- returns: <[Object]>
+  - alias-csharp: PagePauseResult
+  - `output` ?<[string]> The code recorded during the pause.
 
 Pauses script execution. Playwright will stop executing the script and wait for the user to either press the 'Resume'
 button in the page overlay or to call `playwright.resume()` in the DevTools console.

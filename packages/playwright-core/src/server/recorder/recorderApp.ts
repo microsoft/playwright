@@ -192,6 +192,10 @@ export class RecorderApp {
     await this._page.close(nullProgress);
   }
 
+  generatedCode(): string | undefined {
+    return this._recorderSources.find(s => s.id === this._primaryGeneratorId)?.text;
+  }
+
   static showInspectorNoReply(context: BrowserContext) {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return;
@@ -238,7 +242,7 @@ export class RecorderApp {
 
     const recorderApp = new RecorderApp(recorder, appParams, page, appContext._browser.options.wsEndpoint);
     await recorderApp._init(inspectedContext);
-    (inspectedContext as any).recorderAppForTest = recorderApp;
+    inspectedContext._recorderApp = recorderApp;
   }
 
   private _wireListeners(recorder: Recorder) {

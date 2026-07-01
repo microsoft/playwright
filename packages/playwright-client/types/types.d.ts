@@ -3665,7 +3665,12 @@ export interface Page {
    * [`headless`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-headless) option.
    *
    */
-  pause(): Promise<void>;
+  pause(): Promise<{
+    /**
+     * The code recorded during the pause.
+     */
+    output?: string;
+  }>;
 
   /**
    * Returns the PDF buffer.

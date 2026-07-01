@@ -57,9 +57,9 @@ export const test = contextTest.extend<CLITestArgs>({
     testInfo.skip(mode !== 'default');
     testInfo.skip(!headless, 'real mouse moves mess up with recording');
     await run(async () => {
-      while (!toImpl(context).recorderAppForTest)
+      while (!toImpl(context)._recorderApp)
         await new Promise(f => setTimeout(f, 100));
-      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpointForTest;
+      const wsEndpoint = toImpl(context)._recorderApp!.wsEndpointForTest;
       const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
@@ -68,7 +68,7 @@ export const test = contextTest.extend<CLITestArgs>({
 
   closeRecorder: async ({ context, toImpl }, run) => {
     await run(async () => {
-      await toImpl(context).recorderAppForTest.close();
+      await toImpl(context)._recorderApp!.close();
     });
   },
 
