@@ -195,6 +195,8 @@ When running a headed browser on a system without a display or from IDE worker p
 npx @playwright/mcp@latest --port 8931
 ```
 
+HTTP sessions use a five-second heartbeat timeout. If your MCP client or proxy does not answer server-initiated pings, set `PLAYWRIGHT_MCP_PING_TIMEOUT_MS` to a longer timeout in milliseconds. Set it to `0` to disable the heartbeat.
+
 Then point your MCP client to the HTTP endpoint:
 
 ```json
