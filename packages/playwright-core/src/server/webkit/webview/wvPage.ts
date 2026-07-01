@@ -79,9 +79,10 @@ export class WVPage implements PageDelegate {
   constructor(browserContext: WVBrowserContext, outerSession: WVSession, dialogEndpoint?: string) {
     this._outerSession = outerSession;
     this._dialogEndpoint = dialogEndpoint;
-    this.rawKeyboard = new RawKeyboardImpl();
-    this.rawMouse = new RawMouseImpl();
-    this.rawTouchscreen = new RawTouchscreenImpl();
+    const dispatchInput = this._dispatchWebViewInput.bind(this);
+    this.rawKeyboard = new RawKeyboardImpl(dispatchInput);
+    this.rawMouse = new RawMouseImpl(dispatchInput);
+    this.rawTouchscreen = new RawTouchscreenImpl(dispatchInput);
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
     this._workers = new WVWorkers(this._page, outerSession);
@@ -192,9 +193,6 @@ export class WVPage implements PageDelegate {
   private _setSession(session: WVSession) {
     eventsHelper.removeEventListeners(this._sessionListeners);
     this._session = session;
-    this.rawKeyboard.setSession(session);
-    this.rawMouse.setSession(session);
-    this.rawTouchscreen.setSession(session);
     this._workers.setSession(session);
     this._addSessionListeners();
   }
@@ -915,6 +913,38 @@ export class WVPage implements PageDelegate {
   }
 
   async inputActionEpilogue(): Promise<void> {
+  }
+
+  private async _dispatchWebViewInput(progress: Progress, method: string, params: any): Promise<void> {
+    const positional = typeof params === 'object' && params !== null && 'x' in params;
+    let frame: frames.Frame = this._page.mainFrame();
+    let x = positional ? params.x as number : 0;
+    let y = positional ? params.y as number : 0;
+    for (;;) {
+      const context = await progress.race(frame.mainContext());
+      const positionInOrActiveIFrame = positional
+        ? await progress.race(context.evaluateHandle(([px, py]) => (globalThis as any).__pwWebViewInput.positionInIFrame(px, py), [x, y]))
+        : await progress.race(context.evaluateHandle(() => (globalThis as any).__pwWebViewInput.activeIFrame()));
+      try {
+        const iframe = await positionInOrActiveIFrame.getProperty(progress, 'iframe') as dom.ElementHandle;
+        let childFrame: frames.Frame | null;
+        try {
+          childFrame = await progress.race(this.getContentFrame(iframe));
+        } finally {
+          iframe.dispose();
+        }
+        if (!childFrame)
+          break;
+        if (positional)
+          ({ x, y } = await progress.race(positionInOrActiveIFrame.evaluate(result => ({ x: result.x, y: result.y }))));
+        frame = childFrame;
+      } finally {
+        positionInOrActiveIFrame.dispose();
+      }
+    }
+    const context = await progress.race(frame.mainContext());
+    // This will automatically await if the result is a promise, so async dispatchers deliver every event before this resolves.
+    await progress.race(context.evaluate(({ method, params }) => (globalThis as any).__pwWebViewInput[method](params), { method, params: positional ? { ...params, x, y } : params }));
   }
 
   async resetForReuse(progress: Progress): Promise<void> {
