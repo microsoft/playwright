@@ -1,36 +1,49 @@
 name: "Issue triage"
 
 on:
+  # Opt in by applying the "needs-triage" label. Once an issue is opted in, new
+  # comments on it re-trigger triage too (see the issue_comment guard below).
   issues:
-    types: [opened]
-  # Commented out for now: triaging every comment risks a noisy bot.
-  # Re-enable once we trust it to stay quiet unless a comment adds something.
-  # issue_comment:
-  #   types: [created]
+    types: [labeled]
+  issue_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       issue:
         description: "Issue number to triage"
         required: true
 
-# One triage at a time per issue; let an in-flight run finish.
+# One triage at a time across the whole repo; let an in-flight run finish.
 concurrency:
-  group: triage-${{ github.event.issue.number || inputs.issue }}
+  group: triage
   cancel-in-progress: false
 
-permissions:
-  copilot-requests: write
-  issues: write
+# No permissions by default; each job requests only what it needs.
+permissions: {}
 
 jobs:
   triage:
-    # Issues and dispatch always run. For comments, skip the bot's own comments
-    # (otherwise it would react to itself) and skip PRs (issue_comment fires on PRs too).
+    # workflow_dispatch always runs. The "labeled" event runs only for our label.
+    # Comments run only on opted-in (needs-triage) issues, never on PRs, and never
+    # in reaction to the bot's own comments.
     if: >-
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.pull_request == null &&
-       github.event.comment.user.login != 'github-actions[bot]')
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'needs-triage') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request == null &&
+       github.event.comment.user.login != 'github-actions[bot]' &&
+       contains(github.event.issue.labels.*.name, 'needs-triage'))
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The agent reads untrusted issue text with --allow-all-tools, so it gets no
+    # write access to issues. Posting happens in the separate "post" job below.
+    permissions:
+      contents: read
+      copilot-requests: write
+    outputs:
+      has_draft: ${{ steps.triage.outputs.has_draft }}
+    env:
+      ISSUE: ${{ github.event.issue.number || inputs.issue }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -44,11 +57,10 @@ jobs:
         run: npm install -g @github/copilot
 
       - name: Triage issue with Copilot CLI
+        id: triage
         env:
-          COPILOT_GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          ISSUE: ${{ github.event.issue.number || inputs.issue }}
           EVENT: ${{ github.event_name }}
         run: |
           mkdir -p output
@@ -56,10 +68,10 @@ jobs:
           Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
 
           This run was triggered by the "$EVENT" event.
-          If a new issue was just opened, triage it and post your findings.
+          If a new issue was just labelled for triage, triage it and write your findings.
           If a new comment came in, first decide whether it meaningfully changes the picture before you say anything: new reproduction details, a version or environment, a direct question, or a request to re-triage all count. A +1, an "any update", a thank-you, or chatter that adds nothing you have not already covered does not. When in doubt, stay silent.
 
-          Only when you have decided to respond, post your reply as a comment on the issue using the gh CLI, and save a copy to output/triage.md. If you decide to stay silent, post nothing and write a one-line reason to output/triage.md instead.
+          Do not post anything yourself. If you have something worth saying, write the comment to output/triage.md and a later step posts it. If you decide to stay silent, do not create output/triage.md at all.
           The link to this agent run is in \$WORKFLOW_URL.
           EOF
           )
@@ -68,8 +80,15 @@ jobs:
             --allow-all-paths \
             --no-ask-user \
             --model claude-opus-4.8 \
+            --max-ai-credits 5 \
             -p "$PROMPT" \
             2>&1 | tee "output/copilot.log"
+
+          if [ -s output/triage.md ]; then
+            echo "has_draft=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_draft=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Add log to job summary
         if: always()
@@ -81,8 +100,6 @@ jobs:
             cat "output/copilot.log" 2>/dev/null || echo "(no log)"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-        env:
-          ISSUE: ${{ github.event.issue.number || inputs.issue }}
 
       - name: Upload output
         if: always()
@@ -91,3 +108,22 @@ jobs:
           name: triage-${{ github.event.issue.number || inputs.issue }}
           path: output/**
           if-no-files-found: warn
+
+  post:
+    needs: triage
+    if: needs.triage.outputs.has_draft == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      ISSUE: ${{ github.event.issue.number || inputs.issue }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download triage output
+        uses: actions/download-artifact@v4
+        with:
+          name: triage-${{ github.event.issue.number || inputs.issue }}
+          path: output
+
+      - name: Post triage comment
+        run: gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body-file output/triage.md
