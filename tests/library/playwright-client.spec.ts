@@ -23,9 +23,11 @@ it.skip(({ mode }) => mode !== 'default');
 
 const kBundlePath = path.join(__dirname, '..', '..', 'packages', 'playwright-client', 'lib', 'index.mjs');
 
-it('should connect from a page and drive the same browser', async ({ browser, browserName, server }) => {
-  // Expose this very browser over a WebSocket endpoint.
-  const { endpoint } = await browser.bind('playwright-client-test', { port: 0 });
+it('should connect from a page and drive the same browser', async ({ browser, browserName, channel, server }) => {
+  // Expose this very browser over a WebSocket endpoint. In WSL the browser runs in the
+  // guest and reaches the host over mirrored networking, which mirrors the IPv4 loopback
+  // but not the host's IPv6 `::1`; bind to 127.0.0.1 so the in-page client can connect back.
+  const { endpoint } = await browser.bind('playwright-client-test', { port: 0, host: channel === 'webkit-wsl' ? '127.0.0.1' : undefined });
 
   // Serve the built browser client bundle.
   server.setRoute('/playwright-client.mjs', (req, res) => {
