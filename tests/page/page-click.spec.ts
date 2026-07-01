@@ -1223,6 +1223,22 @@ it('should fire contextmenu event on right click in correct order', async ({ pag
     await expect.poll(() => entries).toEqual(['mousedown', 'contextmenu', 'mouseup']);
 });
 
+it('should click after a right click', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39246' } }, async ({ page, browserName }) => {
+  // On webkit the native context menu opened by the right click swallows the
+  // following left click, so the button never receives it.
+  it.fixme(browserName === 'webkit');
+  await page.setContent(`
+    <button>Click me</button>
+    <script>
+      const button = document.querySelector('button');
+      button.addEventListener('click', () => button.textContent = 'Clicked!');
+    </script>
+  `);
+  await page.getByRole('button').click({ button: 'right' });
+  await page.getByRole('button').click();
+  await expect(page.getByRole('button')).toHaveText('Clicked!');
+});
+
 it('should set PointerEvent.pressure on pointerdown', async ({ page, isLinux, headless }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35844' });
   await page.setContent(`
