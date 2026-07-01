@@ -709,9 +709,16 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
       if (!urlMatches(registration.baseURL, urlString, registration.urlMatch))
         continue;
       const lookupResult = await progress.race(registration.harBackend.lookup(urlString, method, headersArray, postData, false, { apiRequestOnly: true, maxRedirects }));
-      if (lookupResult.action === 'error' || lookupResult.action === 'noentry') {
-        if (lookupResult.action === 'error')
-          fetchLog(`HAR: ${lookupResult.message ?? 'lookup failed'}`);
+      if (lookupResult.action === 'error') {
+        const message = lookupResult.message ? ` :${lookupResult.message}` : '';
+        fetchLog(`HAR: lookup failed${message}`);
+        if (registration.notFound === 'abort')
+          throw new Error(`Request "${method} ${urlString}" failed to lookup in the HAR file${message}`);
+        continue;
+      }
+
+      if (lookupResult.action === 'noentry') {
+        fetchLog(`HAR: no entry found`);
         if (registration.notFound === 'abort')
           throw new Error(`Request "${method} ${urlString}" was not found in the HAR file`);
         continue;
