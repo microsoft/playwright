@@ -183,6 +183,9 @@ assertThat(page).matchesAriaSnapshot("""
 ### option: PageAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
 * since: v1.60
 
+### option: PageAssertions.toMatchAriaSnapshot.signal = %%-js-assertions-signal-%%
+* since: v1.62
+
 ### option: PageAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.60
 
@@ -224,6 +227,9 @@ Generates sequential names if not specified.
 
 ### option: PageAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.60
+
+### option: PageAssertions.toMatchAriaSnapshot#2.signal = %%-js-assertions-signal-%%
+* since: v1.62
 
 ## async method: PageAssertions.toHaveScreenshot#1
 * since: v1.23
@@ -385,6 +391,9 @@ Expected title or RegExp.
 ### option: PageAssertions.toHaveTitle.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 
+### option: PageAssertions.toHaveTitle.signal = %%-js-assertions-signal-%%
+* since: v1.62
+
 ### option: PageAssertions.toHaveTitle.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
@@ -462,6 +471,9 @@ Whether to perform case-insensitive match. [`option: ignoreCase`] option takes p
 
 ### option: PageAssertions.toHaveURL.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
+
+### option: PageAssertions.toHaveURL.signal = %%-js-assertions-signal-%%
+* since: v1.62
 
 ### option: PageAssertions.toHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18

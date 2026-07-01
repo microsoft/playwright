@@ -28,14 +28,14 @@ export async function toBeTruthy(
   receiverType: 'Locator',
   expected: string,
   arg: string,
-  query: (isNot: boolean, timeout: number) => Promise<ExpectResult>,
-  options: { timeout?: number } = {},
+  query: (isNot: boolean, timeout: number, signal?: AbortSignal) => Promise<ExpectResult>,
+  options: { timeout?: number, signal?: AbortSignal } = {},
 ): Promise<MatcherResult<any, any>> {
   expectTypes(locator, [receiverType], matcherName);
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, log, timedOut, received, errorMessage } = await query(!!this.isNot, timeout);
+  const { matches: pass, log, timedOut, received, errorMessage } = await query(!!this.isNot, timeout, options.signal);
   const receivedValue = received?.value;
 
   if (pass === !this.isNot) {
