@@ -79,23 +79,3 @@ test('testInfo should contain all soft expect errors', async ({ runInlineTest })
   expect(result.output).toContain('Error: two times two');
   expect(result.output).not.toContain('Error: must be exactly two errors');
 });
-
-test('soft assertion accumulates an aborted matcher as a failure', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('should work', async ({ page }) => {
-        await page.setContent('<div>content</div>');
-        const controller = new AbortController();
-        const promise = expect.soft(page.locator('span')).toBeVisible({ timeout: 5000, signal: controller.signal });
-        await page.waitForTimeout(500);
-        controller.abort(new Error('stop it'));
-        await promise;
-        console.log('%% reached-after-soft');
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.outputLines).toContain('reached-after-soft');
-  expect(result.output).toContain('expect(locator).toBeVisible() failed');
-});

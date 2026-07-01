@@ -133,7 +133,7 @@ test('should fail like a timeout when the signal is aborted mid-assertion', asyn
 
 Locator: locator('span')
 Expected: visible
-Error: The assertion was aborted
+Error: The assertion was aborted: stop it
 
 Call log:
   - Expect "toBeVisible" with timeout 5000ms
@@ -191,20 +191,22 @@ test('should fail the assertion when the signal is already aborted', async ({ pa
     controller.abort(new Error('already aborted'));
     const error = await expect(page.locator('div')).toBeVisible({ timeout: 5000, signal: controller.signal }).catch(e => e);
     expect(error.name).not.toBe('AbortError');
-    expect(stripAnsi(error.message)).toContain(`expect(locator).toBeVisible() failed
+    expect(stripAnsi(error.message)).toBe(`expect(locator).toBeVisible() failed
 
 Locator: locator('div')
 Expected: visible
-Error: The assertion was aborted`);
+Error: The assertion was aborted: already aborted
+`);
   }
   {
     const controller = new AbortController();
     controller.abort('stop it');
     const error = await expect(page).toHaveURL(server.EMPTY_PAGE, { timeout: 5000, signal: controller.signal }).catch(e => e);
     expect(error.name).not.toBe('AbortError');
-    expect(stripAnsi(error.message)).toContain(`expect(page).toHaveURL(expected) failed
+    expect(stripAnsi(error.message)).toBe(`expect(page).toHaveURL(expected) failed
 
 Expected: ${JSON.stringify(server.EMPTY_PAGE)}
-Error: The assertion was aborted`);
+Error: The assertion was aborted: stop it
+`);
   }
 });

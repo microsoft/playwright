@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { assertionAbortedMessage } from '@isomorphic/abortSignal';
 import { urlMatches } from '@isomorphic/urlMatch';
 
 import { formatMatcherMessage, printReceivedStringContainExpectedResult } from './matcherHint';
@@ -21,9 +22,6 @@ import { formatMatcherMessage, printReceivedStringContainExpectedResult } from '
 import type { MatcherResult } from './matcherHint';
 import type { Page } from 'playwright-core';
 import type { ExpectMatcherStateInternal } from './matchers';
-
-// Mirrors kAbortErrorMessage in playwright-core's client/frame.ts (separate package, so duplicated).
-const kAbortErrorMessage = 'Error: The assertion was aborted';
 
 export async function toHaveURLWithPredicate(
   this: ExpectMatcherStateInternal,
@@ -34,76 +32,67 @@ export async function toHaveURLWithPredicate(
   const matcherName = 'toHaveURL';
   const timeout = options?.timeout ?? this.timeout;
   const baseURL: string | undefined = (page.context() as any)._options.baseURL;
-  let conditionSucceeded = false;
   let lastCheckedURLString: string | undefined = undefined;
-  // An already-aborted signal fails the assertion (like a timeout) without attempting a check.
-  if (!options?.signal?.aborted) {
-    try {
-      await page.mainFrame().waitForURL(
-          url => {
-            lastCheckedURLString = url.toString();
+  try {
+    await page.mainFrame().waitForURL(
+        url => {
+          lastCheckedURLString = url.toString();
 
-            if (options?.ignoreCase) {
-              return (
-                !this.isNot ===
-                urlMatches(
-                    baseURL?.toLocaleLowerCase(),
-                    lastCheckedURLString.toLocaleLowerCase(),
-                    expected,
-                )
-              );
-            }
-
+          if (options?.ignoreCase) {
             return (
-              !this.isNot === urlMatches(baseURL, lastCheckedURLString, expected)
+              !this.isNot ===
+              urlMatches(
+                  baseURL?.toLocaleLowerCase(),
+                  lastCheckedURLString.toLocaleLowerCase(),
+                  expected,
+              )
             );
-          },
-          { timeout, signal: options?.signal },
-      );
+          }
 
-      conditionSucceeded = true;
-    } catch (e) {
-      conditionSucceeded = false;
-    }
-  }
+          return (
+            !this.isNot === urlMatches(baseURL, lastCheckedURLString, expected)
+          );
+        },
+        { timeout, signal: options?.signal },
+    );
 
-  if (conditionSucceeded)
     return { name: matcherName, pass: !this.isNot, message: () => '' };
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      return {
+        name: matcherName,
+        pass: this.isNot,
+        message: () => formatMatcherMessage(this.utils, {
+          isNot: this.isNot,
+          promise: this.promise,
+          matcherName,
+          expectation: 'expected',
+          timeout,
+          printedExpected: `Expected: predicate to ${!this.isNot ? 'succeed' : 'fail'}`,
+          errorMessage: 'Error: ' + assertionAbortedMessage(e.cause),
+        }),
+        actual: lastCheckedURLString,
+        timeout,
+      };
+    }
 
-  if (options?.signal?.aborted) {
     return {
       name: matcherName,
       pass: this.isNot,
-      message: () => formatMatcherMessage(this.utils, {
-        isNot: this.isNot,
-        promise: this.promise,
-        matcherName,
-        expectation: 'expected',
-        timeout,
-        printedExpected: `Expected: predicate to ${!this.isNot ? 'succeed' : 'fail'}`,
-        errorMessage: kAbortErrorMessage,
-      }),
+      message: () =>
+        toHaveURLMessage(
+            this,
+            matcherName,
+            expected,
+            lastCheckedURLString,
+            this.isNot,
+            true,
+            timeout,
+        ),
       actual: lastCheckedURLString,
       timeout,
     };
   }
-
-  return {
-    name: matcherName,
-    pass: this.isNot,
-    message: () =>
-      toHaveURLMessage(
-          this,
-          matcherName,
-          expected,
-          lastCheckedURLString,
-          this.isNot,
-          true,
-          timeout,
-      ),
-    actual: lastCheckedURLString,
-    timeout,
-  };
 }
 
 function toHaveURLMessage(

@@ -17,6 +17,7 @@
 
 import fs from 'fs';
 
+import { assertionAbortedMessage } from '@isomorphic/abortSignal';
 import { assert } from '@isomorphic/assert';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '@isomorphic/locatorUtils';
 import { urlMatches } from '@isomorphic/urlMatch';
@@ -41,8 +42,6 @@ import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
-
-const kAbortErrorMessage = 'Error: The assertion was aborted';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -175,15 +174,19 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     state = verifyLoadState('state', state);
     return await this._page!._wrapApiCall(async () => {
       const waiter = this._setupNavigationWaiter(options ?? {});
-      if (this._loadStates.has(state)) {
-        waiter.log(`  not waiting, "${state}" event already fired`);
-      } else {
-        await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
-          waiter.log(`  "${s}" event fired`);
-          return s === state;
-        });
+      try {
+        if (this._loadStates.has(state)) {
+          waiter.log(`  not waiting, "${state}" event already fired`);
+          waiter.throwIfImmediatelyRejected();
+        } else {
+          await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+            waiter.log(`  "${s}" event fired`);
+            return s === state;
+          });
+        }
+      } finally {
+        waiter.dispose();
       }
-      waiter.dispose();
     }, { title: `Wait for load state "${state}"` });
   }
 
@@ -503,7 +506,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       return { matches: !params.isNot };
     } catch (e) {
       if (e instanceof AbortError)
-        return { matches: !!params.isNot, errorMessage: kAbortErrorMessage };
+        return { matches: !!params.isNot, errorMessage: 'Error: ' + assertionAbortedMessage(e.cause) };
       if (!(e instanceof PlaywrightError))
         throw e;
       const details = e.details as channels.FrameExpectErrorDetails;

@@ -16,6 +16,7 @@
  */
 
 import yaml from 'yaml';
+import { assertionAbortedMessage } from '@isomorphic/abortSignal';
 import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
 import { isInvalidSelectorError } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
@@ -1561,7 +1562,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       if (e instanceof TimeoutError)
         details.timedOut = true;
       if (e instanceof AbortError)
-        details.customErrorMessage = 'The assertion was aborted';
+        details.customErrorMessage = assertionAbortedMessage(e.cause);
       throw new ExpectError(details);
     }
   }
