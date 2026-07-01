@@ -221,6 +221,8 @@ export class CRPage implements PageDelegate {
   }
 
   async requestGC(): Promise<void> {
+    // Chromium keeps the last hit-tested node reachable for hover/mouseout tracking even after it's removed from the DOM, and collectGarbage alone won't release it; a synthetic mouse move forces a fresh hit-test that does, so send one (off-viewport, to avoid touching real page content) first.
+    await this._mainFrameSession._client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: -1, y: -1 });
     await this._mainFrameSession._client.send('HeapProfiler.collectGarbage');
   }
 
