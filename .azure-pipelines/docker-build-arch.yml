@@ -1,0 +1,52 @@
+parameters:
+- name: arch
+  type: string
+  values:
+  - amd64
+  - arm64
+- name: releaseChannel
+  type: string
+
+steps:
+- checkout: self
+  fetchDepth: 0
+  displayName: "Checkout code"
+
+- task: UseNode@1
+  inputs:
+    version: '22.x'
+  displayName: "Install Node.js"
+
+# Relocate the Docker data-root to the large /mnt volume: this job builds 3
+# images (jammy/noble/resolute) and `docker system prune`s between them, so the
+# default disk fills up.
+- task: Bash@3
+  displayName: "Setup docker"
+  inputs:
+    targetType: "inline"
+    script: |
+      set -x
+      sudo service docker stop
+      sudo mkdir -p /etc/docker
+      echo '{ "data-root": "/mnt/docker" }' | sudo tee /etc/docker/daemon.json
+      sudo service docker start
+
+- script: npm ci
+  displayName: "npm ci"
+
+- script: npm run build
+  displayName: "npm run build"
+
+- task: AzureCLI@2
+  displayName: "Login to ACR via OIDC"
+  inputs:
+    azureSubscription: "Playwright-CDN"
+    scriptType: "bash"
+    scriptLocation: "inlineScript"
+    inlineScript: "az acr login --name playwright"
+
+- task: Bash@3
+  displayName: "Build & publish ${{ parameters.arch }} Docker images"
+  inputs:
+    targetType: "inline"
+    script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }} ${{ parameters.arch }}"
