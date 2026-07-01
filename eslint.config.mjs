@@ -48,6 +48,7 @@ const ignores = [
   "examples",
   "packages/*/lib/",
   "packages/playwright-core/bundles/utils/src/third_party/",
+  "packages/utils/webp/webp_codec.js",
   "packages/playwright-core/src/generated/*",
   "packages/playwright-core/src/third_party/",
   "packages/playwright-core/types/*",

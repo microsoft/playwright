@@ -19,6 +19,7 @@ export * from './chromiumChannels';
 export * from './comparators';
 export * from './crypto';
 export * from './debug';
+export * from './webp/webp';
 export * from './debugLogger';
 export * from './env';
 export * from './eventsHelper';
