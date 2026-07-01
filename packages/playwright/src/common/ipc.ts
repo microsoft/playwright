@@ -142,6 +142,7 @@ export type StepEndPayload = {
 export type TestEntry = {
   testId: string;
   retry: number;
+  planAnnotations: { type: string, description?: string, location?: { file: string, line: number, column: number } }[];
 };
 
 export type RunPayload = {

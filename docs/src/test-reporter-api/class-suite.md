@@ -85,3 +85,41 @@ Returns a list of titles from the root down to this suite.
 
 Returns the type of the suite. The Suites form the following hierarchy:
 `root` -> `project` -> `file` -> `describe` -> ...`describe` -> `test`.
+
+## method: Suite.skip
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`]. Mark every [TestCase] of this suite as skipped, see [`method: TestCase.skip`].
+
+### param: Suite.skip.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: Suite.fixme
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`]. Mark every [TestCase] of this suite as fixme, see [`method: TestCase.fixme`].
+
+### param: Suite.fixme.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: Suite.fail
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`]. Mark every [TestCase] of this suite as expected-to-fail, see [`method: TestCase.fail`].
+
+### param: Suite.fail.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: Suite.exclude
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`], exclude this suite from the run. Excluded tests do not appear in the report and their body is not executed.

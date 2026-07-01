@@ -1101,7 +1101,7 @@ export class Registry {
       return await installDependenciesLinux(targets, dryRun);
   }
 
-  async install(executablesToInstall: Executable[], options?: { force?: boolean }) {
+  async install(executablesToInstall: Executable[], options?: { force?: boolean, gc?: boolean }) {
     const executables = this._dedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
@@ -1127,7 +1127,7 @@ export class Registry {
       await fs.promises.writeFile(path.join(linksDir, calculateSha1(PACKAGE_PATH)), PACKAGE_PATH);
 
       // Remove stale browsers.
-      if (!getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC'))
+      if (options?.gc !== false && !getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC'))
         await this._validateInstallationCache(linksDir);
 
       // Install browsers for this package.

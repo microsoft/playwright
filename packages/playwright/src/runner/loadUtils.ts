@@ -165,8 +165,9 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
   }
 
+  const preprocessResult = await testRun.reporter.preprocessSuite(config.config, rootSuite);
   // Shard only the top-level projects.
-  if (config.config.shard) {
+  if (config.config.shard && !preprocessResult?.implementsSharding) {
     // Create test groups for top-level projects.
     const testGroups: TestGroup[] = [];
     for (const projectSuite of rootSuite.suites) {

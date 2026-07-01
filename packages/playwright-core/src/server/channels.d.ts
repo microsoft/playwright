@@ -1285,6 +1285,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   setGeolocation(params: BrowserContextSetGeolocationParams, progress: Progress): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, progress: Progress): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, progress: Progress): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  routeAPIRequestsFromHar(params: BrowserContextRouteAPIRequestsFromHarParams, progress: Progress): Promise<BrowserContextRouteAPIRequestsFromHarResult>;
+  unrouteAPIRequestsFromHar(params: BrowserContextUnrouteAPIRequestsFromHarParams, progress: Progress): Promise<BrowserContextUnrouteAPIRequestsFromHarResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, progress: Progress): Promise<BrowserContextSetOfflineResult>;
   storageState(params: BrowserContextStorageStateParams, progress: Progress): Promise<BrowserContextStorageStateResult>;
@@ -1518,6 +1520,28 @@ export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
 export type BrowserContextSetNetworkInterceptionPatternsResult = void;
+export type BrowserContextRouteAPIRequestsFromHarParams = {
+  harId: string,
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+  notFound: 'abort' | 'fallback',
+};
+export type BrowserContextRouteAPIRequestsFromHarOptions = {
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+};
+export type BrowserContextRouteAPIRequestsFromHarResult = {
+  registrationId: string,
+};
+export type BrowserContextUnrouteAPIRequestsFromHarParams = {
+  registrationId: string,
+};
+export type BrowserContextUnrouteAPIRequestsFromHarOptions = {
+
+};
+export type BrowserContextUnrouteAPIRequestsFromHarResult = void;
 export type BrowserContextSetWebSocketInterceptionPatternsParams = {
   patterns: {
     glob?: string,

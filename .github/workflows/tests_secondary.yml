@@ -22,6 +22,7 @@ permissions:
 jobs:
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
+    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -47,6 +48,7 @@ jobs:
 
   test_win:
     name: "Windows"
+    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -66,6 +68,7 @@ jobs:
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
+    if: ${{ github.event_name == 'push' || github.event.label.name == 'CQ1' }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:

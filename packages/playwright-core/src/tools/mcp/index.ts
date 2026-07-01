@@ -43,7 +43,7 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
     },
     disposed: async () => { }
   };
-  return createServer('api', packageJSON.version, backendFactory, false);
+  return createServer('api', packageJSON.version, backendFactory, Promise.resolve(), false);
 }
 
 class SimpleBrowser {

@@ -207,3 +207,45 @@ it('should work after repeated navigations in the same page', async ({ page, ser
   await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });
   expect(requestCount).toBe(2);
 });
+
+it('should not wait for an open EventSource connection', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37226' });
+
+  server.setRoute('/sse', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache',
+    });
+    res.write('data: hello\n\n');
+  });
+  server.setRoute('/sse-page.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<script>new EventSource('/sse');</script>`);
+  });
+
+  const response = await page.goto(server.PREFIX + '/sse-page.html', { waitUntil: 'networkidle' });
+  expect(response.status()).toBe(200);
+});
+
+it('should not wait for an open EventSource connection in setContent', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37226' });
+
+  server.setRoute('/sse', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache',
+    });
+    res.write('data: hello\n\n');
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<script>
+    window.__sseOpened = new Promise(resolve => {
+      const es = new EventSource('/sse');
+      es.onmessage = () => resolve();
+    });
+  </script>`, { waitUntil: 'networkidle' });
+  await page.evaluate(() => window['__sseOpened']);
+});

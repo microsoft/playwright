@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { assertionAbortedMessage } from '@isomorphic/abortSignal';
 import { urlMatches } from '@isomorphic/urlMatch';
 
 import { formatMatcherMessage, printReceivedStringContainExpectedResult } from './matcherHint';
@@ -26,12 +27,11 @@ export async function toHaveURLWithPredicate(
   this: ExpectMatcherStateInternal,
   page: Page,
   expected: (url: URL) => boolean,
-  options?: { ignoreCase?: boolean; timeout?: number },
+  options?: { ignoreCase?: boolean; timeout?: number, signal?: AbortSignal },
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toHaveURL';
   const timeout = options?.timeout ?? this.timeout;
   const baseURL: string | undefined = (page.context() as any)._options.baseURL;
-  let conditionSucceeded = false;
   let lastCheckedURLString: string | undefined = undefined;
   try {
     await page.mainFrame().waitForURL(
@@ -53,33 +53,46 @@ export async function toHaveURLWithPredicate(
             !this.isNot === urlMatches(baseURL, lastCheckedURLString, expected)
           );
         },
-        { timeout },
+        { timeout, signal: options?.signal },
     );
 
-    conditionSucceeded = true;
-  } catch (e) {
-    conditionSucceeded = false;
-  }
-
-  if (conditionSucceeded)
     return { name: matcherName, pass: !this.isNot, message: () => '' };
-
-  return {
-    name: matcherName,
-    pass: this.isNot,
-    message: () =>
-      toHaveURLMessage(
-          this,
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      return {
+        name: matcherName,
+        pass: this.isNot,
+        message: () => formatMatcherMessage(this.utils, {
+          isNot: this.isNot,
+          promise: this.promise,
           matcherName,
-          expected,
-          lastCheckedURLString,
-          this.isNot,
-          true,
+          expectation: 'expected',
           timeout,
-      ),
-    actual: lastCheckedURLString,
-    timeout,
-  };
+          printedExpected: `Expected: predicate to ${!this.isNot ? 'succeed' : 'fail'}`,
+          errorMessage: 'Error: ' + assertionAbortedMessage(e.cause),
+        }),
+        actual: lastCheckedURLString,
+        timeout,
+      };
+    }
+
+    return {
+      name: matcherName,
+      pass: this.isNot,
+      message: () =>
+        toHaveURLMessage(
+            this,
+            matcherName,
+            expected,
+            lastCheckedURLString,
+            this.isNot,
+            true,
+            timeout,
+        ),
+      actual: lastCheckedURLString,
+      timeout,
+    };
+  }
 }
 
 function toHaveURLMessage(

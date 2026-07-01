@@ -80,20 +80,20 @@ interface APIResponseEx extends APIResponse {
 export function toBeAttached(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { attached?: boolean, timeout?: number },
+  options?: { attached?: boolean, timeout?: number, signal?: AbortSignal },
 ) {
   const attached = !options || options.attached === undefined || options.attached;
   const expected = attached ? 'attached' : 'detached';
   const arg = attached ? '' : '{ attached: false }';
-  return toBeTruthy.call(this, 'toBeAttached', locator, 'Locator', expected, arg, async (isNot, timeout) => {
-    return await locator._expect(attached ? 'to.be.attached' : 'to.be.detached', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeAttached', locator, 'Locator', expected, arg, async (isNot, timeout, signal) => {
+    return await locator._expect(attached ? 'to.be.attached' : 'to.be.detached', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeChecked(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { checked?: boolean, indeterminate?: boolean, timeout?: number },
+  options?: { checked?: boolean, indeterminate?: boolean, timeout?: number, signal?: AbortSignal },
 ) {
   const checked = options?.checked;
   const indeterminate = options?.indeterminate;
@@ -110,97 +110,97 @@ export function toBeChecked(
     expected = options?.checked === false ? 'unchecked' : 'checked';
     arg = options?.checked === false ? `{ checked: false }` : '';
   }
-  return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', expected, arg, async (isNot, timeout) => {
-    return await locator._expect('to.be.checked', { isNot, timeout, expectedValue }, undefined);
+  return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', expected, arg, async (isNot, timeout, signal) => {
+    return await locator._expect('to.be.checked', { isNot, timeout, expectedValue }, signal);
   }, options);
 }
 
 export function toBeDisabled(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toBeTruthy.call(this, 'toBeDisabled', locator, 'Locator', 'disabled', '', async (isNot, timeout) => {
-    return await locator._expect('to.be.disabled', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeDisabled', locator, 'Locator', 'disabled', '', async (isNot, timeout, signal) => {
+    return await locator._expect('to.be.disabled', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeEditable(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { editable?: boolean, timeout?: number },
+  options?: { editable?: boolean, timeout?: number, signal?: AbortSignal },
 ) {
   const editable = !options || options.editable === undefined || options.editable;
   const expected = editable ? 'editable' : 'readOnly';
   const arg = editable ? '' : '{ editable: false }';
-  return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', expected, arg, async (isNot, timeout) => {
-    return await locator._expect(editable ? 'to.be.editable' : 'to.be.readonly', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', expected, arg, async (isNot, timeout, signal) => {
+    return await locator._expect(editable ? 'to.be.editable' : 'to.be.readonly', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeEmpty(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toBeTruthy.call(this, 'toBeEmpty', locator, 'Locator', 'empty', '', async (isNot, timeout) => {
-    return await locator._expect('to.be.empty', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeEmpty', locator, 'Locator', 'empty', '', async (isNot, timeout, signal) => {
+    return await locator._expect('to.be.empty', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeEnabled(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { enabled?: boolean, timeout?: number },
+  options?: { enabled?: boolean, timeout?: number, signal?: AbortSignal },
 ) {
   const enabled = !options || options.enabled === undefined || options.enabled;
   const expected = enabled ? 'enabled' : 'disabled';
   const arg = enabled ? '' : '{ enabled: false }';
-  return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', expected, arg, async (isNot, timeout) => {
-    return await locator._expect(enabled ? 'to.be.enabled' : 'to.be.disabled', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', expected, arg, async (isNot, timeout, signal) => {
+    return await locator._expect(enabled ? 'to.be.enabled' : 'to.be.disabled', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeFocused(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toBeTruthy.call(this, 'toBeFocused', locator, 'Locator', 'focused', '', async (isNot, timeout) => {
-    return await locator._expect('to.be.focused', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeFocused', locator, 'Locator', 'focused', '', async (isNot, timeout, signal) => {
+    return await locator._expect('to.be.focused', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeHidden(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toBeTruthy.call(this, 'toBeHidden', locator, 'Locator', 'hidden', '', async (isNot, timeout) => {
-    return await locator._expect('to.be.hidden', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeHidden', locator, 'Locator', 'hidden', '', async (isNot, timeout, signal) => {
+    return await locator._expect('to.be.hidden', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeVisible(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { visible?: boolean, timeout?: number },
+  options?: { visible?: boolean, timeout?: number, signal?: AbortSignal },
 ) {
   const visible = !options || options.visible === undefined || options.visible;
   const expected = visible ? 'visible' : 'hidden';
   const arg = visible ? '' : '{ visible: false }';
-  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', expected, arg, async (isNot, timeout) => {
-    return await locator._expect(visible ? 'to.be.visible' : 'to.be.hidden', { isNot, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', expected, arg, async (isNot, timeout, signal) => {
+    return await locator._expect(visible ? 'to.be.visible' : 'to.be.hidden', { isNot, timeout }, signal);
   }, options);
 }
 
 export function toBeInViewport(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
-  options?: { timeout?: number, ratio?: number },
+  options?: { timeout?: number, ratio?: number, signal?: AbortSignal },
 ) {
-  return toBeTruthy.call(this, 'toBeInViewport', locator, 'Locator', 'in viewport', '', async (isNot, timeout) => {
-    return await locator._expect('to.be.in.viewport', { isNot, expectedNumber: options?.ratio, timeout }, undefined);
+  return toBeTruthy.call(this, 'toBeInViewport', locator, 'Locator', 'in viewport', '', async (isNot, timeout, signal) => {
+    return await locator._expect('to.be.in.viewport', { isNot, expectedNumber: options?.ratio, timeout }, signal);
   }, options);
 }
 
@@ -208,17 +208,17 @@ export function toContainText(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
+  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean, signal?: AbortSignal } = {},
 ) {
   if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
+    return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, timeout }, undefined);
+      return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, timeout }, signal);
     }, expected, { ...options, contains: true });
   } else {
-    return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
+    return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, timeout }, undefined);
+      return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, timeout }, signal);
     }, expected, { ...options, matchSubstring: true });
   }
 }
@@ -227,11 +227,11 @@ export function toHaveAccessibleDescription(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp,
-  options?: { timeout?: number, ignoreCase?: boolean },
+  options?: { timeout?: number, ignoreCase?: boolean, signal?: AbortSignal },
 ) {
-  return toMatchText.call(this, 'toHaveAccessibleDescription', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveAccessibleDescription', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
-    return await locator._expect('to.have.accessible.description', { expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.accessible.description', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -239,11 +239,11 @@ export function toHaveAccessibleName(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp,
-  options?: { timeout?: number, ignoreCase?: boolean },
+  options?: { timeout?: number, ignoreCase?: boolean, signal?: AbortSignal },
 ) {
-  return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
-    return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -251,11 +251,11 @@ export function toHaveAccessibleErrorMessage(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp,
-  options?: { timeout?: number; ignoreCase?: boolean },
+  options?: { timeout?: number; ignoreCase?: boolean, signal?: AbortSignal },
 ) {
-  return toMatchText.call(this, 'toHaveAccessibleErrorMessage', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveAccessibleErrorMessage', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
-    return await locator._expect('to.have.accessible.error.message', { expectedText: expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.accessible.error.message', { expectedText: expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -264,7 +264,7 @@ export function toHaveAttribute(
   locator: LocatorEx,
   name: string,
   expected: string | RegExp | undefined | { timeout?: number },
-  options?: { timeout?: number, ignoreCase?: boolean },
+  options?: { timeout?: number, ignoreCase?: boolean, signal?: AbortSignal },
 ) {
   if (!options) {
     // Update params for the case toHaveAttribute(name, options);
@@ -274,13 +274,13 @@ export function toHaveAttribute(
     }
   }
   if (expected === undefined) {
-    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', 'have attribute', '', async (isNot, timeout) => {
-      return await locator._expect('to.have.attribute', { expressionArg: name, isNot, timeout }, undefined);
+    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', 'have attribute', '', async (isNot, timeout, signal) => {
+      return await locator._expect('to.have.attribute', { expressionArg: name, isNot, timeout }, signal);
     }, options);
   }
-  return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected as (string | RegExp)], { ignoreCase: options?.ignoreCase });
-    return await locator._expect('to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.attribute.value', { expressionArg: name, expectedText, isNot, timeout }, signal);
   }, expected as (string | RegExp), options);
 }
 
@@ -288,17 +288,17 @@ export function toHaveClass(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
   if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
+    return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues(expected);
-      return await locator._expect('to.have.class.array', { expectedText, isNot, timeout }, undefined);
+      return await locator._expect('to.have.class.array', { expectedText, isNot, timeout }, signal);
     }, expected, options);
   } else {
-    return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
+    return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues([expected]);
-      return await locator._expect('to.have.class', { expectedText, isNot, timeout }, undefined);
+      return await locator._expect('to.have.class', { expectedText, isNot, timeout }, signal);
     }, expected, options);
   }
 }
@@ -307,21 +307,21 @@ export function toContainClass(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | string[],
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
   if (Array.isArray(expected)) {
     if (expected.some(e => isRegExp(e)))
       throw new Error(`"expected" argument in toContainClass cannot contain RegExp values`);
-    return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout) => {
+    return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues(expected);
-      return await locator._expect('to.contain.class.array', { expectedText, isNot, timeout }, undefined);
+      return await locator._expect('to.contain.class.array', { expectedText, isNot, timeout }, signal);
     }, expected, options);
   } else {
     if (isRegExp(expected))
       throw new Error(`"expected" argument in toContainClass cannot be a RegExp value`);
-    return toMatchText.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout) => {
+    return toMatchText.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues([expected]);
-      return await locator._expect('to.contain.class', { expectedText, isNot, timeout }, undefined);
+      return await locator._expect('to.contain.class', { expectedText, isNot, timeout }, signal);
     }, expected, options);
   }
 }
@@ -330,24 +330,24 @@ export function toHaveCount(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: number,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toEqual.call(this, 'toHaveCount', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.have.count', { expectedNumber: expected, isNot, timeout }, undefined);
+  return toEqual.call(this, 'toHaveCount', locator, 'Locator', async (isNot, timeout, signal) => {
+    return await locator._expect('to.have.count', { expectedNumber: expected, isNot, timeout }, signal);
   }, expected, options);
 }
 
-export function toHaveCSS(this: ExpectMatcherStateInternal, locator: LocatorEx, name: string, expected: string | RegExp, options?: { timeout?: number, pseudo?: 'before' | 'after' }): Promise<MatcherResult<any, any>>;
+export function toHaveCSS(this: ExpectMatcherStateInternal, locator: LocatorEx, name: string, expected: string | RegExp, options?: { timeout?: number, pseudo?: 'before' | 'after', signal?: AbortSignal }): Promise<MatcherResult<any, any>>;
 export function toHaveCSS(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   name: string,
   expected: string | RegExp,
-  options?: { timeout?: number, pseudo?: 'before' | 'after' },
+  options?: { timeout?: number, pseudo?: 'before' | 'after', signal?: AbortSignal },
 ) {
-  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected]);
-    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, pseudo: options?.pseudo, timeout }, undefined);
+    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, pseudo: options?.pseudo, timeout }, signal);
   }, expected, options);
 }
 
@@ -355,11 +355,11 @@ export function toHaveId(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toMatchText.call(this, 'toHaveId', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveId', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected]);
-    return await locator._expect('to.have.id', { expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.id', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -368,10 +368,10 @@ export function toHaveJSProperty(
   locator: LocatorEx,
   name: string,
   expected: any,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toEqual.call(this, 'toHaveJSProperty', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.have.property', { expressionArg: name, expectedValue: expected, isNot, timeout }, undefined);
+  return toEqual.call(this, 'toHaveJSProperty', locator, 'Locator', async (isNot, timeout, signal) => {
+    return await locator._expect('to.have.property', { expressionArg: name, expectedValue: expected, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -379,13 +379,13 @@ export function toHaveRole(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string,
-  options?: { timeout?: number, ignoreCase?: boolean },
+  options?: { timeout?: number, ignoreCase?: boolean, signal?: AbortSignal },
 ) {
   if (!isString(expected))
     throw new Error(`"role" argument in toHaveRole must be a string`);
-  return toMatchText.call(this, 'toHaveRole', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveRole', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected]);
-    return await locator._expect('to.have.role', { expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.role', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -393,17 +393,17 @@ export function toHaveText(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
+  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean, signal?: AbortSignal } = {},
 ) {
   if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
+    return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout }, undefined);
+      return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout }, signal);
     }, expected, options);
   } else {
-    return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
+    return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, signal) => {
       const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout }, undefined);
+      return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout }, signal);
     }, expected, options);
   }
 }
@@ -412,11 +412,11 @@ export function toHaveValue(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: string | RegExp,
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected]);
-    return await locator._expect('to.have.value', { expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.value', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -424,11 +424,11 @@ export function toHaveValues(
   this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expected: (string | RegExp)[],
-  options?: { timeout?: number },
+  options?: { timeout?: number, signal?: AbortSignal },
 ) {
-  return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout) => {
+  return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues(expected);
-    return await locator._expect('to.have.values', { expectedText, isNot, timeout }, undefined);
+    return await locator._expect('to.have.values', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -436,11 +436,11 @@ export function toHaveTitle(
   this: ExpectMatcherStateInternal,
   page: Page,
   expected: string | RegExp,
-  options: { timeout?: number } = {},
+  options: { timeout?: number, signal?: AbortSignal } = {},
 ) {
-  return toMatchText.call(this, 'toHaveTitle', page, 'Page', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveTitle', page, 'Page', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
-    return await (page.mainFrame() as FrameEx)._expect('to.have.title', { expectedText, isNot, timeout }, undefined);
+    return await (page.mainFrame() as FrameEx)._expect('to.have.title', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 
@@ -448,7 +448,7 @@ export function toHaveURL(
   this: ExpectMatcherStateInternal,
   page: Page,
   expected: string | RegExp | URLPattern | ((url: URL) => boolean),
-  options?: { ignoreCase?: boolean; timeout?: number },
+  options?: { ignoreCase?: boolean; timeout?: number, signal?: AbortSignal },
 ) {
   if (isURLPattern(expected))
     return toHaveURLWithPredicate.call(this, page, url => (expected as URLPattern).test(url.href), options);
@@ -459,9 +459,9 @@ export function toHaveURL(
 
   const baseURL = (page.context() as any)._options.baseURL;
   expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
-  return toMatchText.call(this, 'toHaveURL', page, 'Page', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveURL', page, 'Page', async (isNot, timeout, signal) => {
     const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
-    return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout }, undefined);
+    return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout }, signal);
   }, expected, options);
 }
 

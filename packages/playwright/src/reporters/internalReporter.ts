@@ -54,6 +54,15 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onConfigure?.(config);
   }
 
+  async preprocessSuite(config: FullConfig, suite: testNs.Suite) {
+    suite._preprocessing = true;
+    try {
+      return await this._reporter.preprocessSuite?.(config, suite);
+    } finally {
+      suite._preprocessing = false;
+    }
+  }
+
   onBegin(suite: testNs.Suite) {
     this._didBegin = true;
     this._reporter.onBegin?.(suite);
@@ -112,7 +121,7 @@ export class InternalReporter implements ReporterV2 {
   }
 
   printsToStdio() {
-    return this._reporter.printsToStdio ? this._reporter.printsToStdio() : true;
+    return this._reporter.printsToStdio?.() ?? true;
   }
 
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {

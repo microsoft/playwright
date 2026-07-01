@@ -221,7 +221,9 @@ test('should abort with signal', async ({ page }) => {
   const controller = new AbortController();
   const promise = page.waitForEvent('filechooser', { signal: controller.signal });
   controller.abort('Aborted by user');
-  await expect(promise).rejects.toThrow('Aborted by user');
+  const error = await promise.catch(e => e);
+  expect(error.name).toBe('AbortError');
+  expect(error.cause).toBe('Aborted by user');
 });
 
 test('should return the same file chooser when there are many watchdogs simultaneously', async ({ page, server }) => {
