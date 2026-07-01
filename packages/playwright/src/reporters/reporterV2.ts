@@ -28,6 +28,7 @@ export interface ReportEndParams {
 
 export interface ReporterV2 {
   onConfigure?(config: FullConfig): void;
+  preprocessSuite?(config: FullConfig, suite: Suite): { implementsSharding?: boolean } | Promise<{ implementsSharding?: boolean } | undefined | void> | void;
   onBegin?(suite: Suite): void;
   onTestBegin?(test: TestCase, result: TestResult): void;
   onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
@@ -77,6 +78,10 @@ class ReporterV2Wrapper implements ReporterV2 {
 
   onConfigure(config: FullConfig) {
     this._config = config;
+  }
+
+  async preprocessSuite(config: FullConfig, suite: Suite) {
+    return await this._reporter.preprocessSuite?.(config, suite);
   }
 
   onBegin(suite: Suite) {

@@ -42,6 +42,7 @@ export interface FullResult {
 }
 
 export interface Reporter {
+  preprocessSuite?(config: FullConfig, suite: Suite): Promise<{ implementsSharding?: boolean } | undefined | void> | { implementsSharding?: boolean } | void;
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
 }
 

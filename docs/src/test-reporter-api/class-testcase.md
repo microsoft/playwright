@@ -107,3 +107,41 @@ Returns a list of titles from the root down to this test.
 - returns: <[TestCaseType]<"test">>
 
 Returns "test". Useful for detecting test cases in [`method: Suite.entries`].
+
+## method: TestCase.skip
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`], skip this test. The test body is not executed and the test is reported as skipped.
+
+### param: TestCase.skip.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: TestCase.fixme
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`], mark this test as fixme. The test body is not executed and the test is reported as skipped, with the intention to fix it.
+
+### param: TestCase.fixme.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: TestCase.fail
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`], mark this test as "should fail". Playwright runs the test and ensures it is actually failing, useful for documenting broken functionality until it is fixed.
+
+### param: TestCase.fail.reason
+* since: v1.61
+- `reason` ?<[string]>
+
+Optional explanation surfaced as the annotation description.
+
+## method: TestCase.exclude
+* since: v1.61
+
+Must be called from inside [`method: Reporter.preprocessSuite`], exclude this test from the run. Excluded tests do not appear in the report and their body is not executed.

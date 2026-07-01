@@ -566,7 +566,7 @@ class JobDispatcher {
     const runPayload: ipc.RunPayload = {
       file: this.job.requireFile,
       entries: this.job.tests.map(test => {
-        return { testId: test.id, retry: test.results.length };
+        return { testId: test.id, retry: test.results.length, planAnnotations: test._planAnnotations };
       }),
     };
     worker.runTestGroup(runPayload);

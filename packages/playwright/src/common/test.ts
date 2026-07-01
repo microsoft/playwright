@@ -16,7 +16,7 @@
 
 import { rootTestType } from './testType';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
-
+import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation, FullProjectInternal } from './config';
 import type { FixturePool } from './fixtures';
 import type { TestTypeImpl } from './testType';
@@ -58,11 +58,19 @@ export class Suite extends Base {
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
   _fileId: string | undefined;
+  _preprocessing = false;
   readonly _type: 'root' | 'project' | 'file' | 'describe';
+
+  skip: (reason?: string) => void;
+  fixme: (reason?: string) => void;
+  fail: (reason?: string) => void;
 
   constructor(title: string, type: 'root' | 'project' | 'file' | 'describe') {
     super(title);
     this._type = type;
+    this.skip = wrapFunctionWithLocation((location, reason?: string) => this._modifier('skip', location, reason));
+    this.fixme = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fixme', location, reason));
+    this.fail = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fail', location, reason));
   }
 
   get type(): 'root' | 'project' | 'file' | 'describe' {
@@ -94,6 +102,14 @@ export class Suite extends Base {
   _prependSuite(suite: Suite) {
     suite.parent = this;
     this._entries.unshift(suite);
+  }
+
+  _detach(child: Suite | TestCase) {
+    const idx = this._entries.indexOf(child);
+    if (idx !== -1)
+      this._entries.splice(idx, 1);
+    if (this._entries.length === 0)
+      this.parent?._detach(this);
   }
 
   allTests(): TestCase[] {
@@ -252,6 +268,25 @@ export class Suite extends Base {
   project(): FullProject | undefined {
     return this._fullProject?.project || this.parent?.project();
   }
+
+  private _modifier(type: 'skip' | 'fixme' | 'fail', location: Location, reason: string | undefined): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`Suite.${type}() can only be called from Reporter.preprocessSuite().`);
+    for (const test of this.allTests())
+      test._applyPlanAnnotation({ type, description: reason, location });
+  }
+
+  exclude(): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`Suite.exclude() can only be called from Reporter.preprocessSuite().`);
+    if (!this.parent)
+      throw new Error(`Suite.exclude() cannot be called on the root suite.`);
+    this.parent._detach(this);
+  }
+
+  _rootSuite(): Suite {
+    return this.parent?._rootSuite() ?? this;
+  }
 }
 
 export class TestCase extends Base implements reporterTypes.TestCase {
@@ -275,12 +310,20 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _projectId = '';
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
+  _planAnnotations: TestAnnotation[] = [];
+
+  skip: (reason?: string) => void;
+  fixme: (reason?: string) => void;
+  fail: (reason?: string) => void;
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);
     this.fn = fn;
     this._testType = testType;
     this.location = location;
+    this.skip = wrapFunctionWithLocation((location, reason?: string) => this._modifier('skip', location, reason));
+    this.fixme = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fixme', location, reason));
+    this.fail = wrapFunctionWithLocation((location, reason?: string) => this._modifier('fail', location, reason));
   }
 
   titlePath(): string[] {
@@ -307,6 +350,31 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       ...titleTags,
       ...this._tags,
     ];
+  }
+
+  private _modifier(type: 'skip' | 'fixme' | 'fail', location: Location, reason: string | undefined): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`TestCase.${type}() can only be called from Reporter.preprocessSuite().`);
+    this._applyPlanAnnotation({ type, description: reason, location });
+  }
+
+  _applyPlanAnnotation(annotation: TestAnnotation): void {
+    this.annotations.push(annotation);
+    this._planAnnotations.push(annotation);
+    if (annotation.type === 'skip' || annotation.type === 'fixme')
+      this.expectedStatus = 'skipped';
+    else if (annotation.type === 'fail' && this.expectedStatus !== 'skipped')
+      this.expectedStatus = 'failed';
+  }
+
+  exclude(): void {
+    if (!this._rootSuite()._preprocessing)
+      throw new Error(`TestCase.exclude() can only be called from Reporter.preprocessSuite().`);
+    this.parent._detach(this);
+  }
+
+  _rootSuite(): Suite {
+    return this.parent._rootSuite();
   }
 
   _serialize(): any {
