@@ -10241,6 +10241,15 @@ export interface BrowserContext {
    */
   routeFromHAR(har: string, options?: {
     /**
+     * If set to `true`, requests made via [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext)
+     * (such as [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
+     * [page.request](https://playwright.dev/docs/api/class-page#page-request)) are also served from the HAR file. By
+     * default these requests are sent to the network, matching the behavior prior to v1.62. Defaults to `false` for
+     * backward compatibility.
+     */
+    interceptAPIRequests?: boolean;
+
+    /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' falls through to the next route handler in the handler chain.
      *

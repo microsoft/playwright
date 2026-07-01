@@ -89,6 +89,8 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['BrowserContext.setGeolocation', { title: 'Set geolocation', group: 'configuration', }],
   ['BrowserContext.setHTTPCredentials', { title: 'Set HTTP credentials', group: 'configuration', }],
   ['BrowserContext.setNetworkInterceptionPatterns', { title: 'Route requests', group: 'route', }],
+  ['BrowserContext.routeAPIRequestsFromHar', { internal: true, }],
+  ['BrowserContext.unrouteAPIRequestsFromHar', { internal: true, }],
   ['BrowserContext.setWebSocketInterceptionPatterns', { title: 'Route WebSockets', group: 'route', }],
   ['BrowserContext.setOffline', { title: 'Set offline mode', }],
   ['BrowserContext.storageState', { title: 'Get storage state', group: 'configuration', }],

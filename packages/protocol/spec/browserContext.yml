@@ -155,6 +155,26 @@ BrowserContext:
               regexFlags: string?
               urlPattern: URLPattern?
 
+    routeAPIRequestsFromHar:
+      internal: true
+      parameters:
+        harId: string
+        urlGlob: string?
+        urlRegexSource: string?
+        urlRegexFlags: string?
+        notFound:
+          type: enum
+          literals:
+          - abort
+          - fallback
+      returns:
+        registrationId: string
+
+    unrouteAPIRequestsFromHar:
+      internal: true
+      parameters:
+        registrationId: string
+
     setWebSocketInterceptionPatterns:
       title: Route WebSockets
       group: route

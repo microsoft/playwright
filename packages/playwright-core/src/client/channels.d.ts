@@ -1282,6 +1282,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   setGeolocation(params: BrowserContextSetGeolocationParams, signal: AbortSignal | undefined): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  routeAPIRequestsFromHar(params: BrowserContextRouteAPIRequestsFromHarParams, signal: AbortSignal | undefined): Promise<BrowserContextRouteAPIRequestsFromHarResult>;
+  unrouteAPIRequestsFromHar(params: BrowserContextUnrouteAPIRequestsFromHarParams, signal: AbortSignal | undefined): Promise<BrowserContextUnrouteAPIRequestsFromHarResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, signal: AbortSignal | undefined): Promise<BrowserContextSetOfflineResult>;
   storageState(params: BrowserContextStorageStateParams, signal: AbortSignal | undefined): Promise<BrowserContextStorageStateResult>;
@@ -1515,6 +1517,28 @@ export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
 export type BrowserContextSetNetworkInterceptionPatternsResult = void;
+export type BrowserContextRouteAPIRequestsFromHarParams = {
+  harId: string,
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+  notFound: 'abort' | 'fallback',
+};
+export type BrowserContextRouteAPIRequestsFromHarOptions = {
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+};
+export type BrowserContextRouteAPIRequestsFromHarResult = {
+  registrationId: string,
+};
+export type BrowserContextUnrouteAPIRequestsFromHarParams = {
+  registrationId: string,
+};
+export type BrowserContextUnrouteAPIRequestsFromHarOptions = {
+
+};
+export type BrowserContextUnrouteAPIRequestsFromHarResult = void;
 export type BrowserContextSetWebSocketInterceptionPatternsParams = {
   patterns: {
     glob?: string,

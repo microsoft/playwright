@@ -263,6 +263,14 @@ export class DispatcherConnection {
     return this._dispatcherByObject.get(object) as DispatcherType | undefined;
   }
 
+  getDispatcher<DispatcherType>(type: string): DispatcherType | undefined {
+    for (const dispatcher of this._dispatcherByGuid.values()) {
+      if (dispatcher._type === type)
+        return dispatcher as DispatcherType;
+    }
+    return undefined;
+  }
+
   registerDispatcher(dispatcher: DispatcherScope) {
     assert(!this._dispatcherByGuid.has(dispatcher._guid));
     this._dispatcherByGuid.set(dispatcher._guid, dispatcher);
