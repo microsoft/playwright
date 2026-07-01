@@ -126,4 +126,6 @@ jobs:
           path: output
 
       - name: Post triage comment
-        run: gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body-file output/triage.md
+        run: |
+          printf '\n\n<!-- playwright-ai-triage -->\n' >> output/triage.md
+          gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body-file output/triage.md
