@@ -587,6 +587,43 @@ test('should resolve paths relative to the originating config when extending and
   expect(result.exitCode).toBe(0);
 });
 
+test('should fail loudly when extends path cannot be resolved', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41543' });
+
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "extends": "./tsconfig.bas.json",
+    }`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Failed to resolve "extends" path "./tsconfig.bas.json"');
+});
+
+test('should fail loudly when references path cannot be resolved', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41543' });
+
+  const result = await runInlineTest({
+    'tsconfig.json': `{
+      "files": [],
+      "references": [
+        { "path": "./tsconfig.doesnotexist.json" }
+      ]
+    }`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', () => {});
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Failed to resolve "references" path "./tsconfig.doesnotexist.json"');
+});
+
 test('should respect tsconfig project references', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29256' });
 
@@ -598,6 +635,9 @@ test('should respect tsconfig project references', async ({ runInlineTest }) => 
         { "path": "./tsconfig.app.json" },
         { "path": "./tsconfig.test.json" }
       ]
+    }`,
+    'tsconfig.app.json': `{
+      "compilerOptions": {},
     }`,
     'tsconfig.test.json': `{
       "compilerOptions": {
