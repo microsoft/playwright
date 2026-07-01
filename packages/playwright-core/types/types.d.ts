@@ -2071,6 +2071,17 @@ export interface Page {
     mode?: "ai"|"default";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -2145,6 +2156,17 @@ export interface Page {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -2260,6 +2282,17 @@ export interface Page {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -2409,6 +2442,17 @@ export interface Page {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -2480,6 +2524,17 @@ export interface Page {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -2534,6 +2589,17 @@ export interface Page {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
@@ -2735,6 +2801,17 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -2762,6 +2839,17 @@ export interface Page {
    * @param options
    */
   focus(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -2839,6 +2927,17 @@ export interface Page {
    * @param options
    */
   getAttribute(selector: string, name: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -3195,6 +3294,17 @@ export interface Page {
    */
   goBack(options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
      * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
@@ -3224,6 +3334,17 @@ export interface Page {
    * @param options
    */
   goForward(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
@@ -3280,6 +3401,17 @@ export interface Page {
      * [page.setExtraHTTPHeaders(headers)](https://playwright.dev/docs/api/class-page#page-set-extra-http-headers).
      */
     referer?: string;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
@@ -3371,6 +3503,17 @@ export interface Page {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -3404,6 +3547,17 @@ export interface Page {
    */
   innerHTML(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -3428,6 +3582,17 @@ export interface Page {
    * @param options
    */
   innerText(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -3459,6 +3624,17 @@ export interface Page {
    */
   inputValue(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -3483,6 +3659,17 @@ export interface Page {
    * @param options
    */
   isChecked(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -3515,6 +3702,17 @@ export interface Page {
    */
   isDisabled(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -3541,6 +3739,17 @@ export interface Page {
    */
   isEditable(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -3565,6 +3774,17 @@ export interface Page {
    * @param options
    */
   isEnabled(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -3960,6 +4180,17 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -3981,6 +4212,17 @@ export interface Page {
    * @param options
    */
   reload(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
@@ -4288,6 +4530,17 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -4362,6 +4615,17 @@ export interface Page {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -4389,6 +4653,17 @@ export interface Page {
    * @param options
    */
   setContent(html: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
@@ -4513,6 +4788,17 @@ export interface Page {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -4631,6 +4917,17 @@ export interface Page {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -4664,6 +4961,17 @@ export interface Page {
    * @param options
    */
   textContent(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -4713,6 +5021,17 @@ export interface Page {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -4785,6 +5104,17 @@ export interface Page {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -5101,7 +5431,9 @@ export interface Page {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -5146,7 +5478,9 @@ export interface Page {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -5207,7 +5541,9 @@ export interface Page {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -5251,7 +5587,9 @@ export interface Page {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -5305,7 +5643,9 @@ export interface Page {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -6316,6 +6656,17 @@ export interface Frame {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6418,6 +6769,17 @@ export interface Frame {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -6524,6 +6886,17 @@ export interface Frame {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6595,6 +6968,17 @@ export interface Frame {
    */
   dispatchEvent(selector: string, type: string, eventInit?: EvaluationArgument, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6635,6 +7019,17 @@ export interface Frame {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
@@ -6717,6 +7112,17 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6744,6 +7150,17 @@ export interface Frame {
    * @param options
    */
   focus(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -6809,6 +7226,17 @@ export interface Frame {
    * @param options
    */
   getAttribute(selector: string, name: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -7189,6 +7617,17 @@ export interface Frame {
     referer?: string;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
      * [browserContext.setDefaultNavigationTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-navigation-timeout),
@@ -7273,6 +7712,17 @@ export interface Frame {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7306,6 +7756,17 @@ export interface Frame {
    */
   innerHTML(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7330,6 +7791,17 @@ export interface Frame {
    * @param options
    */
   innerText(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -7361,6 +7833,17 @@ export interface Frame {
    */
   inputValue(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7385,6 +7868,17 @@ export interface Frame {
    * @param options
    */
   isChecked(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -7417,6 +7911,17 @@ export interface Frame {
    */
   isDisabled(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7443,6 +7948,17 @@ export interface Frame {
    */
   isEditable(selector: string, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7464,6 +7980,17 @@ export interface Frame {
    * @param options
    */
   isEnabled(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -7646,6 +8173,17 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7741,6 +8279,17 @@ export interface Frame {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7815,6 +8364,17 @@ export interface Frame {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -7842,6 +8402,17 @@ export interface Frame {
    * @param options
    */
   setContent(html: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
@@ -7917,6 +8488,17 @@ export interface Frame {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -7998,6 +8580,17 @@ export interface Frame {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -8031,6 +8624,17 @@ export interface Frame {
    * @param options
    */
   textContent(selector: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
@@ -8080,6 +8684,17 @@ export interface Frame {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -8154,6 +8769,17 @@ export interface Frame {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -8209,7 +8835,9 @@ export interface Frame {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -8253,7 +8881,9 @@ export interface Frame {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -8319,7 +8949,9 @@ export interface Frame {
      * Allows to cancel the waiting using an
      * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
      * waiting will be aborted and the operation will throw an error. Note that providing a signal does not disable the
-     * default timeout; pass `timeout: 0` to disable the timeout entirely.
+     * default timeout, which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout);
+     * pass `timeout: 0` to disable the timeout entirely.
      */
     signal?: AbortSignal;
 
@@ -9608,6 +10240,15 @@ export interface BrowserContext {
    * @param options
    */
   routeFromHAR(har: string, options?: {
+    /**
+     * If set to `true`, requests made via [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext)
+     * (such as [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
+     * [page.request](https://playwright.dev/docs/api/class-page#page-request)) are also served from the HAR file. By
+     * default these requests are sent to the network, matching the behavior prior to v1.62. Defaults to `false` for
+     * backward compatibility.
+     */
+    interceptAPIRequests?: boolean;
+
     /**
      * - If set to 'abort' any request not found in the HAR file will be aborted.
      * - If set to 'fallback' falls through to the next route handler in the handler chain.
@@ -11878,6 +12519,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -11968,6 +12620,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
@@ -12065,6 +12728,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
@@ -12165,6 +12839,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12247,6 +12932,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -12403,6 +13099,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12486,6 +13193,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     scale?: "css"|"device";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
      * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
      * the Shadow DOM and applies to the inner frames.
@@ -12522,6 +13240,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param options
    */
   scrollIntoViewIfNeeded(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -12609,6 +13338,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12635,6 +13375,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
      */
     force?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -12697,6 +13448,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -12767,6 +13529,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12835,6 +13608,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12884,6 +13668,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -12947,6 +13742,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12985,6 +13791,17 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * @param options
    */
   waitForElementState(state: "visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable", options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -13137,7 +13954,7 @@ export interface Locator {
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-wait-for-function-option-expression).
    * @param options
    */
-  waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number }): Promise<void>;
+  waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<void>;
   /**
    * **NOTE** Always prefer using [Locator](https://playwright.dev/docs/api/class-locator)s and web assertions over
    * [ElementHandle](https://playwright.dev/docs/api/class-elementhandle)s because latter are inherently racy.
@@ -13299,6 +14116,17 @@ export interface Locator {
     mode?: "ai"|"default";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -13312,6 +14140,17 @@ export interface Locator {
    * @param options
    */
   blur(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -13348,6 +14187,17 @@ export interface Locator {
    * @param options
    */
   boundingBox(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -13437,6 +14287,17 @@ export interface Locator {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -13483,6 +14344,17 @@ export interface Locator {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -13588,6 +14460,17 @@ export interface Locator {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
@@ -13721,6 +14604,17 @@ export interface Locator {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor
      * position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
      */
@@ -13825,6 +14719,17 @@ export interface Locator {
    */
   dispatchEvent(type: string, eventInit?: EvaluationArgument, options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -13877,6 +14782,17 @@ export interface Locator {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Clicks on the source element at this point relative to the top-left corner of the element's padding box. If not
@@ -14002,6 +14918,17 @@ export interface Locator {
     };
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14053,6 +14980,17 @@ export interface Locator {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -14134,6 +15072,17 @@ export interface Locator {
    */
   focus(options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14168,6 +15117,17 @@ export interface Locator {
    * @param options
    */
   getAttribute(name: string, options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -14579,6 +15539,17 @@ export interface Locator {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14601,6 +15572,17 @@ export interface Locator {
    */
   innerHTML(options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14621,6 +15603,17 @@ export interface Locator {
    * @param options
    */
   innerText(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -14653,6 +15646,17 @@ export interface Locator {
    */
   inputValue(options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14678,6 +15682,17 @@ export interface Locator {
    */
   isChecked(options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14702,6 +15717,17 @@ export interface Locator {
    * @param options
    */
   isDisabled(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -14730,6 +15756,17 @@ export interface Locator {
    */
   isEditable(options?: {
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14754,6 +15791,17 @@ export interface Locator {
    * @param options
    */
   isEnabled(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -14977,6 +16025,17 @@ export interface Locator {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15027,6 +16086,17 @@ export interface Locator {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15073,6 +16143,17 @@ export interface Locator {
    * @param options
    */
   scrollIntoViewIfNeeded(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -15168,6 +16249,17 @@ export interface Locator {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15190,6 +16282,17 @@ export interface Locator {
      * Whether to bypass the [actionability](https://playwright.dev/docs/actionability) checks. Defaults to `false`.
      */
     force?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -15257,6 +16360,17 @@ export interface Locator {
      * viewport. This is useful to assert that an element is reachable by the user without additional scrolling.
      */
     scroll?: "auto"|"none";
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -15353,6 +16467,17 @@ export interface Locator {
     noWaitAfter?: boolean;
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15423,6 +16548,17 @@ export interface Locator {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15449,6 +16585,17 @@ export interface Locator {
    * @param options
    */
   textContent(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
@@ -15484,6 +16631,17 @@ export interface Locator {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -15553,6 +16711,17 @@ export interface Locator {
     scroll?: "auto"|"none";
 
     /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -15585,6 +16754,17 @@ export interface Locator {
    * @param options
    */
   waitFor(options?: {
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
+
     /**
      * Defaults to `'visible'`. Can be either:
      * - `'attached'` - wait for element to be present in DOM.
@@ -19621,6 +20801,17 @@ export interface FileChooser {
      * @deprecated This option has no effect.
      */
     noWaitAfter?: boolean;
+
+    /**
+     * Allows to cancel the operation using an
+     * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+     * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+     * which can be changed using
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+     * `timeout: 0` to disable the timeout entirely.
+     */
+    signal?: AbortSignal;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -23846,6 +25037,17 @@ export interface LocatorScreenshotOptions {
   scale?: "css"|"device";
 
   /**
+   * Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   */
+  signal?: AbortSignal;
+
+  /**
    * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make
    * elements invisible or change their properties to help you creating repeatable screenshots. This stylesheet pierces
    * the Shadow DOM and applies to the inner frames.
@@ -23867,6 +25069,17 @@ export interface LocatorScreenshotOptions {
 }
 
 interface ElementHandleWaitForSelectorOptions {
+  /**
+   * Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   */
+  signal?: AbortSignal;
+
   /**
    * Defaults to `'visible'`. Can be either:
    * - `'attached'` - wait for element to be present in DOM.
@@ -24384,6 +25597,17 @@ export interface Cookie {
 
 interface PageWaitForSelectorOptions {
   /**
+   * Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   */
+  signal?: AbortSignal;
+
+  /**
    * Defaults to `'visible'`. Can be either:
    * - `'attached'` - wait for element to be present in DOM.
    * - `'detached'` - wait for element to not be present in DOM.
@@ -24418,6 +25642,17 @@ interface PageWaitForFunctionOptions {
    * is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
    */
   polling?: number|"raf";
+
+  /**
+   * Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   */
+  signal?: AbortSignal;
 
   /**
    * Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
@@ -24517,6 +25752,17 @@ export interface PageScreenshotOptions {
    * Defaults to `"device"`.
    */
   scale?: "css"|"device";
+
+  /**
+   * Allows to cancel the operation using an
+   * [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the
+   * operation will be aborted and throw an error. Note that providing a signal does not disable the default timeout,
+   * which can be changed using
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout); pass
+   * `timeout: 0` to disable the timeout entirely.
+   */
+  signal?: AbortSignal;
 
   /**
    * Text of the stylesheet to apply while making the screenshot. This is where you can hide dynamic elements, make

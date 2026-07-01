@@ -149,9 +149,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         // a) removing "dialog" listener subscription (client->server)
         // b) actual "dialog" event (server->client)
         if (dialogObject.type() === 'beforeunload')
-          dialog.accept({}).catch(() => {});
+          dialog.accept({}, undefined).catch(() => {});
         else
-          dialog.dismiss().catch(() => {});
+          dialog.dismiss({}, undefined).catch(() => {});
       }
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
@@ -304,7 +304,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async newPage(): Promise<Page> {
     if (this._ownerPage)
       throw new Error('Please use browser.newContext()');
-    return Page.from((await this._channel.newPage()).page);
+    return Page.from((await this._channel.newPage({}, undefined)).page);
   }
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
@@ -312,11 +312,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       urls = [];
     if (urls && typeof urls === 'string')
       urls = [urls];
-    return (await this._channel.cookies({ urls: urls as string[] })).cookies;
+    return (await this._channel.cookies({ urls: urls as string[] }, undefined)).cookies;
   }
 
   async addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void> {
-    await this._channel.addCookies({ cookies });
+    await this._channel.addCookies({ cookies }, undefined);
   }
 
   async clearCookies(options: network.ClearNetworkCookieOptions = {}): Promise<void> {
@@ -330,47 +330,47 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       path: isString(options.path) ? options.path : undefined,
       pathRegexSource: isRegExp(options.path) ? options.path.source : undefined,
       pathRegexFlags: isRegExp(options.path) ? options.path.flags : undefined,
-    });
+    }, undefined);
   }
 
   async grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void> {
-    await this._channel.grantPermissions({ permissions, ...options });
+    await this._channel.grantPermissions({ permissions, ...options }, undefined);
   }
 
   async clearPermissions(): Promise<void> {
-    await this._channel.clearPermissions();
+    await this._channel.clearPermissions({}, undefined);
   }
 
   async setGeolocation(geolocation: { longitude: number, latitude: number, accuracy?: number } | null): Promise<void> {
-    await this._channel.setGeolocation({ geolocation: geolocation || undefined });
+    await this._channel.setGeolocation({ geolocation: geolocation || undefined }, undefined);
   }
 
   async setExtraHTTPHeaders(headers: Headers): Promise<void> {
     network.validateHeaders(headers);
-    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
+    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) }, undefined);
   }
 
   async setOffline(offline: boolean): Promise<void> {
-    await this._channel.setOffline({ offline });
+    await this._channel.setOffline({ offline }, undefined);
   }
 
   async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
-    await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });
+    await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined }, undefined);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await evaluationScript(script, arg);
-    return DisposableObject.from((await this._channel.addInitScript({ source })).disposable);
+    return DisposableObject.from((await this._channel.addInitScript({ source }, undefined)).disposable);
   }
 
   async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any): Promise<DisposableObject> {
-    const result = await this._channel.exposeBinding({ name });
+    const result = await this._channel.exposeBinding({ name }, undefined);
     this._bindings.set(name, callback);
     return DisposableObject.from(result.disposable);
   }
 
   async exposeFunction(name: string, callback: Function): Promise<DisposableObject> {
-    const result = await this._channel.exposeBinding({ name });
+    const result = await this._channel.exposeBinding({ name }, undefined);
     const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
     this._bindings.set(name, binding);
     return DisposableObject.from(result.disposable);
@@ -387,7 +387,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
   }
 
-  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full', interceptAPIRequests?: boolean } = {}): Promise<void> {
     const localUtils = this._connection.localUtils();
     if (!localUtils)
       throw new Error('Route from har is not supported in thin clients');
@@ -398,6 +398,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });
     this._harRouters.push(harRouter);
     await harRouter.addContextRoute(this);
+    if (options.interceptAPIRequests)
+      await harRouter.addAPIRequestRoute(this);
   }
 
   private _disposeHarRouters() {
@@ -433,12 +435,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   private async _updateInterceptionPatterns(options: { internal: true } | { title: string }) {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
-    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }), options);
+    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }, undefined), options);
   }
 
   private async _updateWebSocketInterceptionPatterns(options: { internal: true } | { title: string }) {
     const patterns = network.WebSocketRouteHandler.prepareInterceptionPatterns(this._webSocketRoutes);
-    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }), options);
+    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }, undefined), options);
   }
 
   _effectiveCloseReason(): string | undefined {
@@ -462,7 +464,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async storageState(options: { path?: string, indexedDB?: boolean, credentials?: boolean } = {}): Promise<StorageState> {
-    const state = await this._channel.storageState({ indexedDB: options.indexedDB, credentials: options.credentials });
+    const state = await this._channel.storageState({ indexedDB: options.indexedDB, credentials: options.credentials }, undefined);
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
@@ -472,7 +474,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async setStorageState(storageState: string | SetStorageState): Promise<void> {
     const state = await prepareStorageState(storageState);
-    await this._channel.setStorageState({ storageState: state });
+    await this._channel.setStorageState({ storageState: state }, undefined);
   }
 
   backgroundPages(): Page[] {
@@ -487,7 +489,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     // channelOwner.ts's validation messages don't handle the pseudo-union type, so we're explicit here
     if (!(page instanceof Page) && !(page instanceof Frame))
       throw new Error('page: expected Page or Frame');
-    const result = await this._channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel });
+    const result = await this._channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel }, undefined);
     return CDPSession.from(result.session);
   }
 
@@ -513,23 +515,23 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this.request.dispose(options);
     await this._instrumentation.runBeforeCloseBrowserContext(this);
     await this.tracing._exportAllHars();
-    await this._channel.close(options);
+    await this._channel.close(options, undefined);
     await this._closedPromise;
   }
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {
     if (eventSink)
       this._onRecorderEventSink = eventSink;
-    await this._channel.enableRecorder(params);
+    await this._channel.enableRecorder(params, undefined);
   }
 
   async _disableRecorder() {
     this._onRecorderEventSink = undefined;
-    await this._channel.disableRecorder();
+    await this._channel.disableRecorder({}, undefined);
   }
 
   async _exposeConsoleApi() {
-    await this._channel.exposeConsoleApi();
+    await this._channel.exposeConsoleApi({}, undefined);
   }
 
 }

@@ -19,7 +19,9 @@ import 'playwright-core/lib/bootstrap';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { setTimeOrigin } from '@isomorphic/time';
 import { startProfiling, stopProfiling } from '@utils/profiler';
+import { setBoxedStackPrefixes } from '@isomorphic/stackTrace';
 
+import { packageRoot } from '../package';
 import { serializeError } from '../util';
 
 import type { EnvProducedPayload, ProcessInitParams, TestInfoErrorPayload } from './ipc';
@@ -61,6 +63,7 @@ let forceExitInitiated = false;
 let processRunner: ProcessRunner | undefined;
 let processName: string | undefined;
 const startingEnv = { ...process.env };
+setBoxedStackPrefixes([packageRoot]);
 
 export function startProcessRunner(create: (params: any) => ProcessRunner) {
   sendMessageToParent({ method: 'ready' });

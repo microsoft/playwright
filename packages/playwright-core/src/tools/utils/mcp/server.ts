@@ -75,12 +75,12 @@ export type ServerBackendFactory = {
   disposed: (backend: ServerBackend) => Promise<void>;
 };
 
-export async function connect(factory: ServerBackendFactory, transport: Transport, runHeartbeat: boolean) {
-  const server = createServer(factory.name, factory.version, factory, runHeartbeat);
+export async function connect(factory: ServerBackendFactory, transport: Transport, transportInitialized: Promise<void>, runHeartbeat: boolean) {
+  const server = createServer(factory.name, factory.version, factory, transportInitialized, runHeartbeat);
   await server.connect(transport);
 }
 
-export function createServer(name: string, version: string, factory: ServerBackendFactory, runHeartbeat: boolean): ServerType {
+export function createServer(name: string, version: string, factory: ServerBackendFactory, transportInitialized: Promise<void>, runHeartbeat: boolean): ServerType {
   const server = new Server({ name, version }, {
     capabilities: {
       tools: {},
@@ -102,7 +102,7 @@ export function createServer(name: string, version: string, factory: ServerBacke
 
     try {
       if (!backendPromise) {
-        backendPromise = initializeServer(server, factory, runHeartbeat).catch(e => {
+        backendPromise = initializeServer(server, factory, transportInitialized, runHeartbeat).catch(e => {
           backendPromise = undefined;
           throw e;
         });
@@ -129,10 +129,11 @@ export function createServer(name: string, version: string, factory: ServerBacke
   return server;
 }
 
-const initializeServer = async (server: ServerType, factory: ServerBackendFactory, runHeartbeat: boolean): Promise<ServerBackend> => {
+const initializeServer = async (server: ServerType, factory: ServerBackendFactory, transportInitialized: Promise<void>, runHeartbeat: boolean): Promise<ServerBackend> => {
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
   if (capabilities?.roots) {
+    await transportInitialized;
     const { roots } = await server.listRoots().catch(e => {
       serverDebug(e);
       return { roots: [] };
@@ -196,7 +197,7 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
     // The SDK's StdioServerTransport doesn't detect peer disconnect — it never listens for stdin
     // end-of-stream. Wire it up so callTool requests can be cancelled when the client goes away.
     process.stdin.on('end', () => void transport.close());
-    await connect(serverBackendFactory, transport, false);
+    await connect(serverBackendFactory, transport, Promise.resolve(), false);
     return;
   }
 

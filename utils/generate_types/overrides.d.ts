@@ -193,7 +193,7 @@ export interface Locator {
   evaluate<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number }): Promise<R>;
   evaluateHandle<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, R>, arg?: Arg, options?: { timeout?: number }): Promise<SmartHandle<R>>;
   evaluateAll<R, Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E[], Arg, R>, arg?: Arg): Promise<R>;
-  waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number }): Promise<void>;
+  waitForFunction<Arg, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(pageFunction: PageFunctionOn<E, Arg, any>, arg?: Arg, options?: { timeout?: number, signal?: AbortSignal }): Promise<void>;
   elementHandle(options?: { timeout?: number }): Promise<ElementHandle<SVGElement | HTMLElement>>;
   highlight(options?: { style?: string | { [key: string]: string | number } }): Promise<Disposable>;
   toString(): string;

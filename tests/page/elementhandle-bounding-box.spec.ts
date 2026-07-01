@@ -84,6 +84,21 @@ it('should return null for invisible elements', async ({ page, server }) => {
   expect(await element.boundingBox()).toBe(null);
 });
 
+it('should get bounding box of element inside a cross-origin iframe', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div style="height:120px"></div>
+    <iframe style="border:0;margin-left:30px;width:300px;height:200px" src="${server.CROSS_PROCESS_PREFIX}/input/button.html"></iframe>
+  `);
+  const frame = page.frames()[1];
+  const button = await frame.waitForSelector('button');
+  const iframeBox = (await (await page.$('iframe')).boundingBox())!;
+  const inner = await button.evaluate(b => { const r = b.getBoundingClientRect(); return { x: r.left, y: r.top }; });
+  const box = (await button.boundingBox())!;
+  expect(Math.round(box.x)).toBe(Math.round(iframeBox.x + inner.x));
+  expect(Math.round(box.y)).toBe(Math.round(iframeBox.y + inner.y));
+});
+
 it('should force a layout', async ({ page, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.setContent('<div style="width: 100px; height: 100px">hello</div>');

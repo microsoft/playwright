@@ -384,7 +384,7 @@ export class FrameManager {
 
   private _inflightRequestFinished(request: network.Request) {
     const frame = request.frame();
-    if (request._isFavicon || !frame)
+    if (this._isExcludedFromNetworkIdle(request) || !frame)
       return;
     if (!frame._inflightRequests.has(request))
       return;
@@ -395,11 +395,19 @@ export class FrameManager {
 
   private _inflightRequestStarted(request: network.Request) {
     const frame = request.frame();
-    if (request._isFavicon || !frame)
+    if (this._isExcludedFromNetworkIdle(request) || !frame)
       return;
     frame._inflightRequests.add(request);
     if (frame._inflightRequests.size === 1)
       frame._stopNetworkIdleTimer();
+  }
+
+  private _isExcludedFromNetworkIdle(request: network.Request): boolean {
+    if (request._isFavicon)
+      return true;
+    if (request.resourceType() === 'eventsource')
+      return true;
+    return false;
   }
 
   interceptConsoleMessage(message: ConsoleMessage): boolean {

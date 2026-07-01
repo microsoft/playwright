@@ -1,6 +1,7 @@
 [*]
 ../protocol/
 @isomorphic/**
+@utils/crypto.ts
 @utils/debug.ts
 @utils/debugLogger.ts
 @utils/zones.ts

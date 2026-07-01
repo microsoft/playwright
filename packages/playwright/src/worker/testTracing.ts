@@ -24,8 +24,7 @@ import { monotonicTime } from '@isomorphic/time';
 import { calculateSha1, createGuid } from '@utils/crypto';
 import { SerializedFS } from '@utils/serializedFS';
 import { getPlaywrightVersion } from 'playwright-core/lib/coreBundle';
-
-import { filteredStackTrace } from '../util';
+import { filteredStackTrace } from '@isomorphic/stackTrace';
 
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TestInfoError, TraceMode } from '../../types/test';
@@ -251,7 +250,7 @@ export class TestTracing {
 
   appendForError(error: TestInfoError) {
     const rawStack = error.stack?.split('\n') || [];
-    const stack = rawStack ? filteredStackTrace(rawStack) : [];
+    const stack = rawStack ? filteredStackTrace(rawStack, path.sep) : [];
     this._appendTraceEvent({
       type: 'error',
       message: this._formatError(error),

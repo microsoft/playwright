@@ -610,3 +610,345 @@ it('should ignore aborted requests', async ({ contextFactory, server }) => {
     expect(result).toBe('timeout');
   }
 });
+
+it.describe('interceptAPIRequests', () => {
+  it('should fulfill APIRequestContext requests from HAR', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22869' }
+  }, async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/api/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ hello: 'live' }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    const recorded = await page1.request.get(server.PREFIX + '/api/data');
+    expect(await recorded.json()).toEqual({ hello: 'live' });
+    await context1.close();
+
+    // Now stop serving on the network side - the request must come from the HAR.
+    server.setRoute('/api/data', (req, res) => res.end('NOT_FROM_HAR'));
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true });
+    const page2 = await context2.newPage();
+    const replayed = await page2.request.get(server.PREFIX + '/api/data');
+    expect(await replayed.json()).toEqual({ hello: 'live' });
+    await context2.close();
+  });
+
+  it('should not intercept APIRequestContext requests by default (backward compat)', async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/api/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ hello: 'live' }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.get(server.PREFIX + '/api/data');
+    await context1.close();
+
+    // Without the option, the live network is hit.
+    server.setRoute('/api/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ hello: 'fresh' }));
+    });
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { notFound: 'fallback' });
+    const page2 = await context2.newPage();
+    const replayed = await page2.request.get(server.PREFIX + '/api/data');
+    expect(await replayed.json()).toEqual({ hello: 'fresh' });
+  });
+
+  it('should fall back to the network when interceptAPIRequests + notFound:fallback', async ({ contextFactory, server }, testInfo) => {
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await context1.close();
+
+    server.setRoute('/api/missing', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ source: 'network' }));
+    });
+
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true, notFound: 'fallback' });
+    const page2 = await context2.newPage();
+    const response = await page2.request.get(server.PREFIX + '/api/missing');
+    expect(await response.json()).toEqual({ source: 'network' });
+  });
+
+  it('should abort unmatched APIRequestContext requests when interceptAPIRequests + notFound:abort', async ({ contextFactory, server }, testInfo) => {
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await context1.close();
+
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true /* default notFound: abort */ });
+    const page2 = await context2.newPage();
+    const error = await page2.request.get(server.PREFIX + '/api/missing').catch(e => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toContain('was not found in the HAR file');
+  });
+
+  it('should respect url filter for APIRequestContext requests', async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/api/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ source: 'hario' }));
+    });
+    server.setRoute('/other', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ source: 'live' }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.get(server.PREFIX + '/api/data');
+    await page1.request.get(server.PREFIX + '/other');
+    await context1.close();
+
+    // Re-route /api/data so that only the HAR can produce 'hario'.
+    server.setRoute('/api/data', (req, res) => res.end('NOT_FROM_HAR'));
+
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true, url: '**/api/**', notFound: 'fallback' });
+    const page2 = await context2.newPage();
+    const fromHar = await page2.request.get(server.PREFIX + '/api/data');
+    expect(await fromHar.json()).toEqual({ source: 'hario' });
+    // /other does not match the url filter, so it hits the network.
+    const fromNetwork = await page2.request.get(server.PREFIX + '/other');
+    expect(await fromNetwork.json()).toEqual({ source: 'live' });
+  });
+
+  it('should match APIRequestContext POST requests by body', async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/echo', (req, res) => {
+      const chunks: Buffer[] = [];
+      req.on('data', c => chunks.push(c));
+      req.on('end', () => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ echoed: Buffer.concat(chunks).toString() }));
+      });
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.post(server.PREFIX + '/echo', { data: 'one' });
+    await page1.request.post(server.PREFIX + '/echo', { data: 'two' });
+    await context1.close();
+
+    server.setRoute('/echo', (req, res) => res.end('NOT_FROM_HAR'));
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true });
+    const page2 = await context2.newPage();
+    const r1 = await page2.request.post(server.PREFIX + '/echo', { data: 'one' });
+    const r2 = await page2.request.post(server.PREFIX + '/echo', { data: 'two' });
+    expect(await r1.json()).toEqual({ echoed: 'one' });
+    expect(await r2.json()).toEqual({ echoed: 'two' });
+  });
+
+  it('should stop intercepting APIRequestContext requests after unrouteAll', async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/api/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ source: 'hario' }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.get(server.PREFIX + '/api/data');
+    await context1.close();
+
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true });
+    const page2 = await context2.newPage();
+    // First call: served from HAR.
+    const first = await page2.request.get(server.PREFIX + '/api/data');
+    expect(await first.json()).toEqual({ source: 'hario' });
+
+    await context2.unrouteAll();
+    server.setRoute('/api/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ source: 'live' }));
+    });
+
+    // After unrouteAll: the registration is gone, the live network is hit.
+    const second = await page2.request.get(server.PREFIX + '/api/data');
+    expect(await second.json()).toEqual({ source: 'live' });
+  });
+
+  it('should only match _apiRequest entries when intercepting APIRequestContext', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22869' }
+  }, async ({ contextFactory, server }, testInfo) => {
+    // The HAR will contain TWO entries for the same URL: one from a browser fetch and one from
+    // page.request. interceptAPIRequests must serve only the API-request entry.
+    server.setRoute('/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      const fromApi = req.headers['x-from'] === 'api';
+      res.end(JSON.stringify({ source: fromApi ? 'recorded-api' : 'recorded-browser' }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    // Browser-side fetch — recorded WITHOUT _apiRequest.
+    await page1.evaluate(url => fetch(url, { headers: { 'x-from': 'browser' } }).then(r => r.json()), server.PREFIX + '/data');
+    // API-request — recorded WITH _apiRequest:true.
+    await page1.request.get(server.PREFIX + '/data', { headers: { 'x-from': 'api' } });
+    await context1.close();
+
+    // Sanity: the HAR must contain at least one _apiRequest entry.
+    const harText = fs.readFileSync(harPath, 'utf-8');
+    expect(harText).toContain('"_apiRequest":true');
+
+    // Make the live network unreachable for this URL — if interception works correctly
+    // we never hit the network anyway.
+    server.setRoute('/data', (req, res) => res.end('NOT_FROM_HAR'));
+
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true });
+    const page2 = await context2.newPage();
+    const apiResponse = await page2.request.get(server.PREFIX + '/data', { headers: { 'x-from': 'api' } });
+    // Must be the recorded API entry, not the recorded browser entry.
+    expect(await apiResponse.json()).toEqual({ source: 'recorded-api' });
+  });
+
+  it('should apply set-cookie side-effects from intercepted APIRequestContext requests', async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/api/login', (req, res) => {
+      res.setHeader('Set-Cookie', 'session=har-token; Path=/');
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ok: true }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.get(server.PREFIX + '/api/login');
+    await context1.close();
+
+    server.setRoute('/api/login', (req, res) => res.end('NOT_FROM_HAR'));
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true });
+    const page2 = await context2.newPage();
+    await page2.request.get(server.PREFIX + '/api/login');
+    // The set-cookie from the HAR response must be applied to the browser context.
+    const cookies = await context2.cookies(server.PREFIX);
+    expect(cookies.find(c => c.name === 'session')?.value).toBe('har-token');
+  });
+
+  it('should populate statusText and serverAddr for intercepted APIRequestContext requests', async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/api/data', (req, res) => {
+      res.statusCode = 201;
+      res.statusMessage = 'Created';
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ok: true }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    // 'full' mode records serverIPAddress/serverPort; the default 'minimal' mode omits them.
+    await context1.routeFromHAR(harPath, { update: true, updateMode: 'full' });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.get(server.PREFIX + '/api/data');
+    await context1.close();
+
+    server.setRoute('/api/data', (req, res) => res.end('NOT_FROM_HAR'));
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true });
+    const page2 = await context2.newPage();
+    const response = await page2.request.get(server.PREFIX + '/api/data');
+    expect(response.status()).toBe(201);
+    expect(response.statusText()).toBe('Created');
+    const addr = await response.serverAddr();
+    expect(addr!.ipAddress).toMatch(/127\.0\.0\.1|::1/);
+    expect(addr!.port).toBe(server.PORT);
+  });
+
+  it('should re-record intercepted APIRequestContext requests into a new HAR', async ({ contextFactory, server }, testInfo) => {
+    server.setRoute('/api/data', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ hello: 'live' }));
+    });
+
+    // Record the first HAR with the API request.
+    const harPath1 = testInfo.outputPath('api1.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath1, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.get(server.PREFIX + '/api/data');
+    await context1.close();
+
+    // Replay from the first HAR while recording into a second HAR. The Request/RequestFinished
+    // events emitted from the HAR-replay path must cause the API request to be captured again.
+    server.setRoute('/api/data', (req, res) => res.end('NOT_FROM_HAR'));
+    const harPath2 = testInfo.outputPath('api2.har');
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath1, { interceptAPIRequests: true });
+    await context2.routeFromHAR(harPath2, { update: true });
+    const page2 = await context2.newPage();
+    await page2.goto(server.EMPTY_PAGE);
+    const replayed = await page2.request.get(server.PREFIX + '/api/data');
+    expect(await replayed.json()).toEqual({ hello: 'live' });
+    await context2.close();
+
+    const harText = fs.readFileSync(harPath2, 'utf-8');
+    expect(harText).toContain('"_apiRequest":true');
+    expect(harText).toContain('/api/data');
+  });
+
+  it('should throw when intercepted APIRequestContext request exceeds maxRedirects', async ({ contextFactory, server }, testInfo) => {
+    const redirect = '/api/step1';
+    server.setRoute('/api/start', (req, res) => {
+      res.statusCode = 302;
+      res.setHeader('Location', server.PREFIX + redirect);
+      res.end();
+    });
+    server.setRoute('/api/step1', (req, res) => {
+      res.statusCode = 302;
+      res.setHeader('Location', server.PREFIX + '/api/step2');
+      res.end();
+    });
+    server.setRoute('/api/step2', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ done: true }));
+    });
+
+    const harPath = testInfo.outputPath('api.har');
+    const context1 = await contextFactory();
+    await context1.routeFromHAR(harPath, { update: true });
+    const page1 = await context1.newPage();
+    await page1.goto(server.EMPTY_PAGE);
+    await page1.request.get(server.PREFIX + '/api/start');
+    await context1.close();
+
+    const context2 = await contextFactory();
+    await context2.routeFromHAR(harPath, { interceptAPIRequests: true });
+    const page2 = await context2.newPage();
+    const error = await page2.request.get(server.PREFIX + '/api/start', { maxRedirects: 1 }).catch(e => e);
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toContain('Max redirect count exceeded');
+  });
+});

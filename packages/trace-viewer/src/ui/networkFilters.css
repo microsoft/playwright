@@ -39,6 +39,16 @@
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.network-filters-resource-type:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
 }
 
 .network-filters-resource-type.selected {

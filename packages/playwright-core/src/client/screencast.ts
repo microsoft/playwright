@@ -45,7 +45,7 @@ export class Screencast implements api.Screencast {
       quality: options.quality,
       sendFrames: !!options.onFrame,
       record: !!options.path,
-    });
+    }, undefined);
     if (result.artifact) {
       this._artifact = Artifact.from(result.artifact);
       this._savePath = options.path;
@@ -57,7 +57,7 @@ export class Screencast implements api.Screencast {
     await this._page._wrapApiCall(async () => {
       this._started = false;
       this._onFrame = null;
-      await this._page._channel.screencastStop();
+      await this._page._channel.screencastStop({}, undefined);
       if (this._savePath)
         await this._artifact?.saveAs(this._savePath);
       this._artifact = undefined;
@@ -66,28 +66,28 @@ export class Screencast implements api.Screencast {
   }
 
   async showActions(options?: { duration?: number, position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right', fontSize?: number, cursor?: 'none' | 'pointer' }): Promise<DisposableStub> {
-    await this._page._channel.screencastShowActions({ duration: options?.duration, position: options?.position, fontSize: options?.fontSize, cursor: options?.cursor });
-    return new DisposableStub(() => this._page._channel.screencastHideActions());
+    await this._page._channel.screencastShowActions({ duration: options?.duration, position: options?.position, fontSize: options?.fontSize, cursor: options?.cursor }, undefined);
+    return new DisposableStub(() => this._page._channel.screencastHideActions({}, undefined));
   }
 
   async hideActions(): Promise<void> {
-    await this._page._channel.screencastHideActions();
+    await this._page._channel.screencastHideActions({}, undefined);
   }
 
   async showOverlay(html: string, options?: { duration?: number }): Promise<DisposableStub> {
-    const { id } = await this._page._channel.screencastShowOverlay({ html, duration: options?.duration });
-    return new DisposableStub(() => this._page._channel.screencastRemoveOverlay({ id }));
+    const { id } = await this._page._channel.screencastShowOverlay({ html, duration: options?.duration }, undefined);
+    return new DisposableStub(() => this._page._channel.screencastRemoveOverlay({ id }, undefined));
   }
 
   async showChapter(title: string, options?: { description?: string, duration?: number }): Promise<void> {
-    await this._page._channel.screencastChapter({ title, ...options });
+    await this._page._channel.screencastChapter({ title, ...options }, undefined);
   }
 
   async showOverlays(): Promise<void> {
-    await this._page._channel.screencastSetOverlayVisible({ visible: true });
+    await this._page._channel.screencastSetOverlayVisible({ visible: true }, undefined);
   }
 
   async hideOverlays(): Promise<void> {
-    await this._page._channel.screencastSetOverlayVisible({ visible: false });
+    await this._page._channel.screencastSetOverlayVisible({ visible: false }, undefined);
   }
 }

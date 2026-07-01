@@ -37,6 +37,14 @@ export class TargetClosedError extends PlaywrightError {
   }
 }
 
+// mirrors https://github.com/nodejs/node/blob/4e7c07dfe2b253393702545c0ffe2712b21fd3dd/lib/internal/errors.js#L976-L988
+export class AbortError extends PlaywrightError {
+  constructor(message = 'The operation was aborted', options?: ErrorOptions) {
+    super(message, options);
+    this.name = 'AbortError';
+  }
+}
+
 export function isTargetClosedError(error: Error) {
   return error instanceof TargetClosedError;
 }
@@ -58,6 +66,8 @@ export function parseError(error: SerializedError): PlaywrightError {
     e = new TimeoutError(error.error.message);
   else if (error.error.name === 'TargetClosedError')
     e = new TargetClosedError(error.error.message);
+  else if (error.error.name === 'AbortError')
+    e = new AbortError(error.error.message);
   else
     e = Object.assign(new PlaywrightError(error.error.message), { name: error.error.name });
   e.stack = error.error.stack || '';

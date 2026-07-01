@@ -579,6 +579,7 @@ for (const pkg of workspace.packages()) {
       'inspector': clientNodeStub('inspector'),
       'async_hooks': clientNodeStub('async_hooks'),
       'events': clientNodeStub('events'),
+      'crypto': clientNodeStub('crypto'),
       // Vendored npm dep used for terminal colors; no-op in the browser.
       'colors/safe': clientNodeStub('colors'),
     },

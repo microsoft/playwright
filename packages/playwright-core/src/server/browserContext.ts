@@ -39,11 +39,13 @@ import type { Browser, BrowserOptions } from './browser';
 import type { ConsoleMessage } from './console';
 import type { Download } from './download';
 import type * as frames from './frames';
+import type { HarBackend } from './harBackend';
 import type { PageError } from './page';
 import type { Progress } from './progress';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
+import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
 
 const BrowserContextEvent = {
@@ -120,6 +122,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
   private _consoleApiExposed = false;
+  private _harForAPIRequests: HarForAPIRequestsRegistration[] = [];
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -752,7 +755,36 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   async notifyRoutesInFlightAboutRemovedHandler(handler: network.RouteHandler): Promise<void> {
     await Promise.all([...this._routesInFlight].map(route => route.removeHandler(handler)));
   }
+
+  routeAPIRequestsFromHar(options: { harBackend: HarBackend, urlMatch: URLMatch | undefined, notFound: 'abort' | 'fallback', baseURL: string | undefined }): { dispose: () => void } {
+    const registration: HarForAPIRequestsRegistration = {
+      harBackend: options.harBackend,
+      urlMatch: options.urlMatch,
+      notFound: options.notFound,
+      baseURL: options.baseURL,
+    };
+    // Give priority to the newest registration, mirroring BrowserContext.route/Page.route.
+    this._harForAPIRequests.unshift(registration);
+    return {
+      dispose: () => {
+        const index = this._harForAPIRequests.indexOf(registration);
+        if (index !== -1)
+          this._harForAPIRequests.splice(index, 1);
+      },
+    };
+  }
+
+  harForAPIRequests(): readonly HarForAPIRequestsRegistration[] {
+    return this._harForAPIRequests;
+  }
 }
+
+export type HarForAPIRequestsRegistration = {
+  harBackend: HarBackend;
+  urlMatch: URLMatch | undefined;
+  notFound: 'abort' | 'fallback';
+  baseURL: string | undefined;
+};
 
 export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)

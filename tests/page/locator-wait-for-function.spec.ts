@@ -78,3 +78,24 @@ it('should throw on strict mode violation', async ({ page }) => {
   const error = await page.locator('div.x').waitForFunction(() => true).catch(e => e);
   expect(error.message).toContain('strict mode violation');
 });
+
+it('should abort via signal', async ({ page }) => {
+  await page.setContent('<div id=target>no</div>');
+  const controller = new AbortController();
+  const promise = page.locator('#target').waitForFunction(element => element.textContent === 'yes', undefined, { timeout: 0, signal: controller.signal }).catch(e => e);
+  await page.waitForTimeout(100);
+  const reason = new Error('Aborted by user');
+  controller.abort(reason);
+  const error = await promise;
+  expect(error.name).toBe('AbortError');
+  expect(error.cause).toBe(reason);
+});
+
+it('should abort via already-aborted signal', async ({ page }) => {
+  await page.setContent('<div id=target>no</div>');
+  const controller = new AbortController();
+  controller.abort('already aborted');
+  const error = await page.locator('#target').waitForFunction(() => true, undefined, { signal: controller.signal }).catch(e => e);
+  expect(error.name).toBe('AbortError');
+  expect(error.cause).toBe('already aborted');
+});
