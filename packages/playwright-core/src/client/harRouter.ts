@@ -127,7 +127,7 @@ export class HarRouter {
       urlRegexSource: isRegExp(urlMatch) ? urlMatch.source : undefined,
       urlRegexFlags: isRegExp(urlMatch) ? urlMatch.flags : undefined,
       notFound: this._notFoundAction,
-    });
+    }, undefined);
     this._apiRequestRegistrations.push({ context, registrationId });
   }
 
@@ -137,7 +137,7 @@ export class HarRouter {
 
   dispose() {
     for (const { context, registrationId } of this._apiRequestRegistrations)
-      context._channel.unrouteAPIRequestsFromHar({ registrationId }).catch(() => {});
+      context._channel.unrouteAPIRequestsFromHar({ registrationId }, undefined).catch(() => {});
     this._apiRequestRegistrations = [];
     this._localUtils.harClose({ harId: this._harId }).catch(() => {});
   }
