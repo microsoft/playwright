@@ -24,6 +24,7 @@ import { escapeHTML } from '@isomorphic/stringUtils';
 import { jsonStringifyForceASCII } from '@utils/ascii';
 import { createGuid } from '@utils/crypto';
 import { debugMode } from '@utils/debug';
+import { debugLogger } from '@utils/debugLogger';
 import { currentZone } from '@utils/zones';
 import { buildErrorContext } from './errorContext';
 import { config, testType } from './common';
@@ -740,7 +741,9 @@ class ArtifactsRecorder {
       await page._wrapApiCall(async () => {
         this._pageSnapshot = await page.ariaSnapshot({ mode: 'ai', timeout: 5000 });
       }, { internal: true });
-    } catch {}
+    } catch {
+      debugLogger.log('api', 'ariaSnapshot: failed to capture snapshot during error (may be expected)');
+    }
   }
 
   async didCreateRequestContext(context: APIRequestContextImpl) {
