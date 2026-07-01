@@ -202,9 +202,10 @@ export function resolveGlobToRegexPattern(baseURL: string | undefined, glob: str
 }
 
 function toWebSocketBaseUrl(baseURL: string | undefined) {
-  // Allow http(s) baseURL to match ws(s) urls.
-  if (baseURL && /^https?:\/\//.test(baseURL))
-    baseURL = baseURL.replace(/^http/, 'ws');
+  // Allow http(s) baseURL to match ws(s) urls. Schemes are case-insensitive,
+  // same as elsewhere in this file, so 'HTTP://...' should be rewritten too.
+  if (baseURL && /^https?:\/\//i.test(baseURL))
+    baseURL = baseURL.replace(/^https?/i, scheme => scheme.toLowerCase() === 'https' ? 'wss' : 'ws');
   return baseURL;
 }
 

@@ -646,6 +646,30 @@ test('should work with baseURL', async ({ contextFactory, server }) => {
   ]);
 });
 
+test('should work with baseURL regardless of scheme casing', async ({ contextFactory, server }) => {
+  // baseURL schemes are case-insensitive, same as everywhere else in URL matching.
+  const context = await contextFactory({ baseURL: 'HTTP://' + server.HOST });
+  const page = await context.newPage();
+
+  await page.routeWebSocket('/ws', ws => {
+    ws.onMessage(message => {
+      ws.send(message);
+    });
+  });
+
+  await setupWS(page, server, 'blob');
+
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('echo');
+  });
+
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=echo origin=ws://${server.HOST} lastEventId=`,
+  ]);
+});
+
 test('should expose protocols to the route handler', async ({ page, server }) => {
   const routes: WebSocketRoute[] = [];
   await page.routeWebSocket(/.*/, ws => {
