@@ -161,6 +161,7 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
     'delete SSE session': 3,
     'create context': 3,
     'create browser (isolated)': 1,
+    'close context': 2,
     'close browser': 1,
   });
 });
