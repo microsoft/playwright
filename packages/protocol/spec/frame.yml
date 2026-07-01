@@ -84,8 +84,6 @@ Frame:
           literals:
             - ai
             - default
-        # When track is present, an incremental snapshot is returned when possible.
-        track: string?
         selector: string?
         depth: int?
         boxes: boolean?

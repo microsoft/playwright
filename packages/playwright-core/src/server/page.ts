@@ -1107,7 +1107,7 @@ export class InitScript extends DisposableObject {
   }
 }
 
-export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number, boxes?: boolean } = {}): Promise<{ full: string[], incremental?: string[] }> {
+export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number, boxes?: boolean } = {}): Promise<string[]> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
@@ -1118,16 +1118,15 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
           const element = injected.querySelector(options.info.parsed, injected.document, options.info.strict);
           if (!element)
             return false;
-          return injected.incrementalAriaSnapshot(element, options);
+          return injected.ariaSnapshotWithRefs(element, options);
         }
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.incrementalAriaSnapshot(node, options);
+        return injected.ariaSnapshotWithRefs(node, options);
       }, {
         mode: options.mode ?? 'default',
         refPrefix: frame.seq ? 'f' + frame.seq : '',
-        track: options.track,
         doNotRenderActive: options.doNotRenderActive,
         info: options.info,
         depth: options.depth,
@@ -1156,47 +1155,35 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
   const childSnapshots = await Promise.all(childSnapshotPromises);
   progress.setAllowConcurrentOrNestedRaces(false);
 
-  const full = [];
-  let incremental: string[] | undefined;
+  const lines = [];
 
-  if (snapshot.incremental !== undefined) {
-    incremental = snapshot.incremental.split('\n');
-    for (let i = 0; i < renderedIframeRefs.length; i++) {
-      const childSnapshot = childSnapshots[i];
-      if (childSnapshot.incremental)
-        incremental.push(...childSnapshot.incremental);
-      else if (childSnapshot.full.length)
-        incremental.push('- <changed> iframe [ref=' + renderedIframeRefs[i] + ']:', ...childSnapshot.full.map(l => '  ' + l));
-    }
-  }
-
-  for (const line of snapshot.full.split('\n')) {
+  for (const line of snapshot.text.split('\n')) {
     const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
     if (!match) {
-      full.push(line);
+      lines.push(line);
       continue;
     }
 
     const leadingSpace = match[1];
     const ref = match[2];
-    const childSnapshot = childSnapshots[renderedIframeRefs.indexOf(ref)] ?? { full: [] };
-    full.push(childSnapshot.full.length ? line + ':' : line);
-    full.push(...childSnapshot.full.map(l => leadingSpace + '  ' + l));
+    const childSnapshot = childSnapshots[renderedIframeRefs.indexOf(ref)] ?? [];
+    lines.push(childSnapshot.length ? line + ':' : line);
+    lines.push(...childSnapshot.map(l => leadingSpace + '  ' + l));
   }
 
-  return { full, incremental };
+  return lines;
 }
 
-async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, depth?: number }): Promise<{ full: string[], incremental?: string[] }> {
+async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number }): Promise<string[]> {
   const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
   const frameBodySelector = `${frameSelector} >> body`;
   const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
   if (!child)
-    return { full: [] };
+    return [];
   try {
     return await ariaSnapshotForFrame(progress, child.frame, { ...options, info: undefined });
   } catch {
-    return { full: [] };
+    return [];
   }
 }
 
