@@ -2370,7 +2370,6 @@ export type FrameAddStyleTagResult = {
 };
 export type FrameAriaSnapshotParams = {
   mode?: 'ai' | 'default',
-  track?: string,
   selector?: string,
   depth?: number,
   boxes?: boolean,
@@ -2378,7 +2377,6 @@ export type FrameAriaSnapshotParams = {
 };
 export type FrameAriaSnapshotOptions = {
   mode?: 'ai' | 'default',
-  track?: string,
   selector?: string,
   depth?: number,
   boxes?: boolean,

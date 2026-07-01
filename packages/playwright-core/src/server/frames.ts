@@ -1851,10 +1851,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     }, { source, arg });
   }
 
-  async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean } = {}): Promise<{ snapshot: string }> {
-    if (options.selector && options.track)
-      throw new Error('Cannot specify both selector and track options');
-
+  async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, selector?: string, depth?: number, boxes?: boolean } = {}): Promise<{ snapshot: string }> {
     if (options.selector && options.mode !== 'ai') {
       // Non-ai locator snapshot is auto-waiting and does not include iframes.
       const snapshot = await this._retryWithProgressIfNotConnected(progress, options.selector, { strict: true, performActionPreChecks: true }, async (progress, handle) => {
@@ -1875,9 +1872,8 @@ export class Frame extends SdkObject<FrameEventMap> {
       targetFrame = this;
     }
 
-    const result = await ariaSnapshotForFrame(progress, targetFrame, { ...options, info });
-    const snapshot = options.track && result.incremental ? result.incremental.join('\n') : result.full.join('\n');
-    return { snapshot };
+    const lines = await ariaSnapshotForFrame(progress, targetFrame, { ...options, info });
+    return { snapshot: lines.join('\n') };
   }
 
   private _asLocator(selector: string) {

@@ -1291,7 +1291,6 @@ scheme.FrameAddStyleTagResult = tObject({
 });
 scheme.FrameAriaSnapshotParams = tObject({
   mode: tOptional(tEnum(['ai', 'default'])),
-  track: tOptional(tString),
   selector: tOptional(tString),
   depth: tOptional(tInt),
   boxes: tOptional(tBoolean),
