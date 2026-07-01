@@ -221,7 +221,7 @@ export class CRPage implements PageDelegate {
   }
 
   async requestGC(): Promise<void> {
-    // A no-op mouse move off-viewport clears Blink's native hit-target state, which retains the last-targeted element as a GC root invisible to V8.
+    // Blink's EventHandler caches the last hit-tested node (node_under_mouse_) for hover/mouseout tracking and only refreshes it on the next pointer event, so a removed element stays pinned by that native reference, invisible to collectGarbage, until we force a fresh hit-test.
     await this._mainFrameSession._client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: -1, y: -1 });
     await this._mainFrameSession._client.send('HeapProfiler.collectGarbage');
   }
