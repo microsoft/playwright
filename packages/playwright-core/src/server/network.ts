@@ -16,6 +16,8 @@
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { assert } from '@isomorphic/assert';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { isProtocolError } from './protocolError';
 import { BrowserContext } from './browserContext';
 import { APIRequestContext } from './fetch';
 import { SdkObject } from './instrumentation';
@@ -651,7 +653,13 @@ export class Response extends SdkObject {
           const { body, isBase64 } = this._request._responseBodyOverride;
           return Buffer.from(body, isBase64 ? 'base64' : 'utf-8');
         }
-        return this._getResponseBodyCallback();
+        try {
+          return await this._getResponseBodyCallback();
+        } catch (e) {
+          if (isProtocolError(e) && e.type === 'error')
+            rewriteErrorMessage(e, e.message + '\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation.');
+          throw e;
+        }
       });
     }
     return this._contentPromise;

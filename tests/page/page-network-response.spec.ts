@@ -450,3 +450,17 @@ it('Response.formData() should parse multipart/form-data in page context', async
   expect(result.filename).toBe('test.txt');
   expect(result.fileContent).toBe('hello');
 });
+
+it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName }) => {
+  it.skip(browserName === 'firefox', 'Firefox has a separate eviction error path');
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41512' });
+  const [response] = await Promise.all([
+    page.waitForResponse(server.EMPTY_PAGE),
+    page.goto(server.EMPTY_PAGE),
+  ]);
+  // Navigate away — the browser frees the network resource from the first page load
+  await page.goto(server.PREFIX + '/title.html');
+  const error = await response.body().catch(e => e);
+  expect(error).toBeInstanceOf(Error);
+  expect(error.message).toContain('navigated away');
+});
