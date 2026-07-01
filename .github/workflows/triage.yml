@@ -1,12 +1,9 @@
 name: "Issue triage"
 
 on:
-  # Opt in by applying the "needs-triage" label. Once an issue is opted in, new
-  # comments on it re-trigger triage too (see the issue_comment guard below).
+  # Opt in by applying the "needs-triage" label; re-apply it to trigger another pass.
   issues:
     types: [labeled]
-  issue_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       issue:
@@ -18,26 +15,15 @@ concurrency:
   group: triage
   cancel-in-progress: false
 
-# No permissions by default; each job requests only what it needs.
 permissions: {}
 
 jobs:
   triage:
-    # workflow_dispatch always runs. The "labeled" event runs only for our label.
-    # Comments run only on opted-in (needs-triage) issues, never on PRs, and never
-    # in reaction to the bot's own comments.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issues' && github.event.label.name == 'needs-triage') ||
-      (github.event_name == 'issue_comment' &&
-       github.event.issue.pull_request == null &&
-       github.event.comment.user.login != 'github-actions[bot]' &&
-       contains(github.event.issue.labels.*.name, 'needs-triage'))
+      (github.event_name == 'issues' && github.event.label.name == 'needs-triage')
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # The agent reads untrusted issue text with --allow-all-tools, so it gets no
-    # write access to issues. Posting happens in the separate "post" job below.
-    # No contents scope needed: checkout clones this public repo over anonymous git.
     permissions:
       copilot-requests: write
     outputs:
@@ -61,17 +47,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          EVENT: ${{ github.event_name }}
         run: |
           mkdir -p output
           PROMPT=$(cat <<EOF
           Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
 
-          This run was triggered by the "$EVENT" event.
-          If a new issue was just labelled for triage, triage it and write your findings.
-          If a new comment came in, first decide whether it meaningfully changes the picture before you say anything: new reproduction details, a version or environment, a direct question, or a request to re-triage all count. A +1, an "any update", a thank-you, or chatter that adds nothing you have not already covered does not. When in doubt, stay silent.
-
-          Do not post anything yourself. If you have something worth saying, write the comment to output/triage.md and a later step posts it. If you decide to stay silent, do not create output/triage.md at all.
+          Do not post anything yourself. Write the comment to output/triage.md and a later step posts it.
           The link to this agent run is in \$WORKFLOW_URL.
           EOF
           )
