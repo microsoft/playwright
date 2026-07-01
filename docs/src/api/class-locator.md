@@ -1137,6 +1137,8 @@ Maximum time in milliseconds to wait for the locator before evaluating. Note tha
 
 Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
 
+### option: Locator.evaluate.signal = %%-input-signal-%%
+
 ## async method: Locator.evaluateAll
 * since: v1.14
 - returns: <[Serializable]>
@@ -1233,6 +1235,8 @@ Maximum time in milliseconds to wait for the locator before evaluating. Note tha
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the locator before evaluating. Note that after locator is resolved, evaluation itself is not limited by the timeout. Defaults to `0` - no timeout.
+
+### option: Locator.evaluateHandle.signal = %%-input-signal-%%
 
 ## async method: Locator.fill
 * since: v1.14

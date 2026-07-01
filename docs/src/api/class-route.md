@@ -528,6 +528,8 @@ Maximum number of times network errors should be retried. Currently only `ECONNR
 
 Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
+### option: Route.fetch.signal = %%-input-signal-%%
+
 ### option: Route.fetch.method
 * since: v1.29
 - `method` <[string]>
