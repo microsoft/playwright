@@ -1,0 +1,112 @@
+name: "Issue triage"
+
+on:
+  # Opt in by applying the "needs-triage" label; re-apply it to trigger another pass.
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Issue number to triage"
+        required: true
+
+# One triage at a time across the whole repo; let an in-flight run finish.
+concurrency:
+  group: triage
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  triage:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'needs-triage')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      copilot-requests: write
+    outputs:
+      has_draft: ${{ steps.triage.outputs.has_draft }}
+    env:
+      ISSUE: ${{ github.event.issue.number || inputs.issue }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Triage issue with Copilot CLI
+        id: triage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p output
+          PROMPT=$(cat <<EOF
+          Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
+
+          Do not post anything yourself. Write the comment to output/triage.md and a later step posts it.
+          The link to this agent run is in \$WORKFLOW_URL.
+          EOF
+          )
+          copilot \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-ask-user \
+            --model claude-opus-4.8 \
+            --max-ai-credits 500 \
+            -p "$PROMPT" \
+            2>&1 | tee "output/copilot.log"
+
+          if [ -s output/triage.md ]; then
+            echo "has_draft=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_draft=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add log to job summary
+        if: always()
+        run: |
+          {
+            echo "## Triage run log (issue $ISSUE)"
+            echo ''
+            echo '```'
+            cat "output/copilot.log" 2>/dev/null || echo "(no log)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: triage-${{ github.event.issue.number || inputs.issue }}
+          path: output/**
+          if-no-files-found: warn
+
+  post:
+    needs: triage
+    if: needs.triage.outputs.has_draft == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      ISSUE: ${{ github.event.issue.number || inputs.issue }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download triage output
+        uses: actions/download-artifact@v4
+        with:
+          name: triage-${{ github.event.issue.number || inputs.issue }}
+          path: output
+
+      - name: Post triage comment
+        run: |
+          printf '\n\n<!-- playwright-ai-triage -->\n' >> output/triage.md
+          gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body-file output/triage.md
