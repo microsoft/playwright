@@ -432,8 +432,10 @@ export class FFPage implements PageDelegate {
   }
 
   async requestGC(): Promise<void> {
-    // An in-viewport mousemove enters the renderer via sendEvents(), moving Gecko's C++ event-target pointer off the previously-clicked element so the cycle collector can release it. An out-of-viewport move (x < 0) takes a different Juggler path that never reaches the renderer and leaves the pointer intact.
+    // A synthetic mousemove flushes Gecko's EventStateManager event-target pointer off the previously-clicked element. The 30 ms sleep is a heuristic that creates a no-IPC idle window so pending 0 ms C++ timers in the content process (e.g. AccHide accessibility cleanup) can fire before the first GC. Two collectGarbage IPC calls are needed: Gecko dispatches cleanup callbacks in the content process event loop between the two round-trips, and those callbacks unroot the element so the second call can collect it.
     await this._session.send('Page.dispatchMouseEvent', { type: 'mousemove', x: 0, y: 0, button: 0, modifiers: 0, buttons: 0 });
+    await new Promise<void>(r => setTimeout(r, 30));
+    await this._session.send('Heap.collectGarbage');
     await this._session.send('Heap.collectGarbage');
   }
 

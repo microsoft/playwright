@@ -158,6 +158,8 @@ export class PageAgent {
         callFunction: this._runtime.callFunction.bind(this._runtime),
         getObjectProperties: this._runtime.getObjectProperties.bind(this._runtime),
         disposeObject: this._runtime.disposeObject.bind(this._runtime),
+        // Alternating GC+CC passes needed: each round may unroot objects or cycle members that the next round then collects.
+        collectGarbage: () => { Cu.forceGC(); Cu.forceCC(); Cu.forceGC(); Cu.forceCC(); Cu.forceGC(); },
       }),
     ];
   }

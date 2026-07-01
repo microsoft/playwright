@@ -252,10 +252,7 @@ export class PageHandler {
   }
 
   async ['Heap.collectGarbage']() {
-    Services.obs.notifyObservers(null, "child-gc-request");
-    Cu.forceGC();
-    Services.obs.notifyObservers(null, "child-cc-request");
-    Cu.forceCC();
+    await this._contentPage.send('collectGarbage');
   }
 
   async ['Network.getResponseBody']({requestId}) {
