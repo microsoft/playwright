@@ -452,7 +452,7 @@ it('Response.formData() should parse multipart/form-data in page context', async
 });
 
 it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName }) => {
-  it.skip(browserName === 'firefox', 'Firefox has a separate eviction error path');
+  it.skip(browserName !== 'chromium', 'Only Chromium evicts the response body on navigation and throws; Firefox and WebKit keep it available');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41512' });
   const [response] = await Promise.all([
     page.waitForResponse(server.EMPTY_PAGE),
