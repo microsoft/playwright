@@ -39,10 +39,9 @@ extends:
     stages:
     - stage: Publish
       jobs:
-      - job: PublishDocker
-        displayName: "Publish Docker images to ACR"
-        # arm64 images are cross-built under QEMU emulation, which is slow.
-        timeoutInMinutes: 360
+      # For canary builds the tag embeds a timestamp, so it must be only computed once.
+      - job: Prepare
+        displayName: "Compute version tag"
         steps:
         - checkout: self
           fetchDepth: 0
@@ -53,33 +52,63 @@ extends:
             version: '22.x'
           displayName: "Install Node.js"
 
-        # Relocate the Docker data-root to the large /mnt volume: this job builds
-        # 6 images (jammy/noble/resolute x amd64/arm64) and `docker system prune`s
-        # between them, so the default disk fills up.
         - task: Bash@3
-          displayName: "Setup docker"
+          name: version
+          displayName: "Compute version tag"
           inputs:
             targetType: "inline"
             script: |
-              set -x
-              sudo service docker stop
-              sudo mkdir -p /etc/docker
-              echo '{ "data-root": "/mnt/docker" }' | sudo tee /etc/docker/daemon.json
-              sudo service docker start
+              set -e
+              VERSION_TAG=$(./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }} version-tag)
+              echo "Publishing Docker images under tag: ${VERSION_TAG}"
+              echo "##vso[task.setvariable variable=tag;isOutput=true]${VERSION_TAG}"
 
-        # Register QEMU/binfmt handlers so `docker build --platform linux/arm64`
-        # works on the amd64 host. Equivalent to docker/setup-qemu-action@v4.
-        - task: Bash@3
-          displayName: "Set up QEMU for arm64 builds"
-          inputs:
-            targetType: "inline"
-            script: docker run --privileged --rm tonistiigi/binfmt --install arm64
+      - job: PublishAmd64
+        displayName: "Build & publish amd64 images"
+        dependsOn: Prepare
+        timeoutInMinutes: 120
+        pool:
+          name: DevDivPlaywrightAzurePipelinesUbuntu2204
+          os: linux
+        variables:
+          PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
+        steps:
+        - template: /.azure-pipelines/docker-build-arch.yml@self
+          parameters:
+            arch: amd64
+            releaseChannel: ${{ parameters.releaseChannel }}
 
-        - script: npm ci
-          displayName: "npm ci"
+      - job: PublishArm64
+        displayName: "Build & publish arm64 images"
+        dependsOn: Prepare
+        timeoutInMinutes: 120
+        pool:
+          name: DevDivPlaywrightUbuntu2204Arm64
+          os: linux
+        variables:
+          PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
+        steps:
+        - template: /.azure-pipelines/docker-build-arch.yml@self
+          parameters:
+            arch: arm64
+            releaseChannel: ${{ parameters.releaseChannel }}
 
-        - script: npm run build
-          displayName: "npm run build"
+      - job: PublishManifests
+        displayName: "Publish multi-arch manifests"
+        dependsOn:
+        - Prepare
+        - PublishAmd64
+        - PublishArm64
+        timeoutInMinutes: 60
+        pool:
+          name: DevDivPlaywrightAzurePipelinesUbuntu2204
+          os: linux
+        variables:
+          PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
+        steps:
+        - checkout: self
+          fetchDepth: 0
+          displayName: "Checkout code"
 
         - task: AzureCLI@2
           displayName: "Login to ACR via OIDC"
@@ -90,7 +119,7 @@ extends:
             inlineScript: "az acr login --name playwright"
 
         - task: Bash@3
-          displayName: "Build & publish Docker images"
+          displayName: "Create & push multi-arch manifests"
           inputs:
             targetType: "inline"
-            script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }}"
+            script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }} manifests"
