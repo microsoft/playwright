@@ -8749,6 +8749,13 @@ interface LocatorAssertions {
     attached?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -8783,6 +8790,13 @@ interface LocatorAssertions {
     indeterminate?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -8806,6 +8820,13 @@ interface LocatorAssertions {
    */
   toBeDisabled(options?: {
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -8825,6 +8846,13 @@ interface LocatorAssertions {
    */
   toBeEditable(options?: {
     editable?: boolean;
+
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
@@ -8847,6 +8875,13 @@ interface LocatorAssertions {
    */
   toBeEmpty(options?: {
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -8868,6 +8903,13 @@ interface LocatorAssertions {
     enabled?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -8886,6 +8928,13 @@ interface LocatorAssertions {
    * @param options
    */
   toBeFocused(options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -8906,6 +8955,13 @@ interface LocatorAssertions {
    * @param options
    */
   toBeHidden(options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -8937,6 +8993,13 @@ interface LocatorAssertions {
      * any positive ratio. Defaults to `0`.
      */
     ratio?: number;
+
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
@@ -8971,6 +9034,13 @@ interface LocatorAssertions {
    * @param options
    */
   toBeVisible(options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9018,6 +9088,13 @@ interface LocatorAssertions {
    * @param options
    */
   toContainClass(expected: string|ReadonlyArray<string>, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9086,6 +9163,13 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9119,6 +9203,13 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9145,6 +9236,13 @@ interface LocatorAssertions {
      * option takes precedence over the corresponding regular expression flag if specified.
      */
     ignoreCase?: boolean;
+
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
@@ -9175,6 +9273,13 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9203,6 +9308,13 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9223,6 +9335,13 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveAttribute(name: string, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9260,6 +9379,13 @@ interface LocatorAssertions {
    */
   toHaveClass(expected: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9279,6 +9405,13 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveCount(count: number, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9307,6 +9440,13 @@ interface LocatorAssertions {
     pseudo?: "before"|"after";
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9327,6 +9467,13 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveId(id: string|RegExp, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9349,6 +9496,13 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveJSProperty(name: string, value: any, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9373,6 +9527,13 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveRole(role: "alert"|"alertdialog"|"application"|"article"|"banner"|"blockquote"|"button"|"caption"|"cell"|"checkbox"|"code"|"columnheader"|"combobox"|"complementary"|"contentinfo"|"definition"|"deletion"|"dialog"|"directory"|"document"|"emphasis"|"feed"|"figure"|"form"|"generic"|"grid"|"gridcell"|"group"|"heading"|"img"|"insertion"|"link"|"list"|"listbox"|"listitem"|"log"|"main"|"marquee"|"math"|"meter"|"menu"|"menubar"|"menuitem"|"menuitemcheckbox"|"menuitemradio"|"navigation"|"none"|"note"|"option"|"paragraph"|"presentation"|"progressbar"|"radio"|"radiogroup"|"region"|"row"|"rowgroup"|"rowheader"|"scrollbar"|"search"|"searchbox"|"separator"|"slider"|"spinbutton"|"status"|"strong"|"subscript"|"superscript"|"switch"|"tab"|"table"|"tablist"|"tabpanel"|"term"|"textbox"|"time"|"timer"|"toolbar"|"tooltip"|"tree"|"treegrid"|"treeitem", options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9627,6 +9788,13 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9652,6 +9820,13 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveValue(value: string|RegExp, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9685,6 +9860,13 @@ interface LocatorAssertions {
    */
   toHaveValues(values: ReadonlyArray<string|RegExp>, options?: {
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9707,6 +9889,13 @@ interface LocatorAssertions {
    * @param options
    */
   toMatchAriaSnapshot(expected: string, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9734,6 +9923,13 @@ interface LocatorAssertions {
      * specified.
      */
     name?: string;
+
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
@@ -9817,6 +10013,13 @@ interface PageAssertions {
    */
   toHaveTitle(titleOrRegExp: string|RegExp, options?: {
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9862,6 +10065,13 @@ interface PageAssertions {
     ignoreCase?: boolean;
 
     /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
+    /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -9884,6 +10094,13 @@ interface PageAssertions {
    * @param options
    */
   toMatchAriaSnapshot(expected: string, options?: {
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -9911,6 +10128,13 @@ interface PageAssertions {
      * specified.
      */
     name?: string;
+
+    /**
+     * An optional [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) that can cancel the
+     * assertion. Aborting the signal fails the assertion like a timeout: if the signal is aborted while the assertion is
+     * retrying, or is already aborted before the assertion starts, the assertion fails without retrying further.
+     */
+    signal?: AbortSignal;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.

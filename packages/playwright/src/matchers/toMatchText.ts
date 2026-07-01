@@ -26,9 +26,9 @@ export async function toMatchText(
   matcherName: string,
   receiver: Locator | Page,
   receiverType: 'Locator' | 'Page',
-  query: (isNot: boolean, timeout: number) => Promise<ExpectResult>,
+  query: (isNot: boolean, timeout: number, signal?: AbortSignal) => Promise<ExpectResult>,
   expected: string | RegExp,
-  options: { timeout?: number, matchSubstring?: boolean } = {},
+  options: { timeout?: number, matchSubstring?: boolean, signal?: AbortSignal } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   expectTypes(receiver, [receiverType], matcherName);
   const locator = receiverType === 'Locator' ? receiver as Locator : undefined;
@@ -43,7 +43,7 @@ export async function toMatchText(
 
   const timeout = options.timeout ?? this.timeout;
 
-  const { matches: pass, received, log, timedOut, errorMessage } = await query(!!this.isNot, timeout);
+  const { matches: pass, received, log, timedOut, errorMessage } = await query(!!this.isNot, timeout, options.signal);
 
   if (pass === !this.isNot) {
     return {

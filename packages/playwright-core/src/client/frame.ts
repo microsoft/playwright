@@ -24,7 +24,7 @@ import { EventEmitter } from './eventEmitter';
 import { ChannelOwner } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
-import { PlaywrightError } from './errors';
+import { AbortError, PlaywrightError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { FrameLocator, Locator, testIdAttributeName } from './locator';
@@ -41,6 +41,8 @@ import type * as api from '../../types/types';
 import type { ByRoleOptions } from '@isomorphic/locatorUtils';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
+
+const kAbortErrorMessage = 'Error: The assertion was aborted';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -500,6 +502,8 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       await this._channel.expect(params, signal);
       return { matches: !params.isNot };
     } catch (e) {
+      if (e instanceof AbortError)
+        return { matches: !!params.isNot, errorMessage: kAbortErrorMessage };
       if (!(e instanceof PlaywrightError))
         throw e;
       const details = e.details as channels.FrameExpectErrorDetails;

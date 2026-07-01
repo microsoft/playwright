@@ -28,7 +28,7 @@ import { makeWaitForNextTask } from '@utils/task';
 import { createGuid } from '@utils/crypto';
 import { BrowserContext } from './browserContext';
 import * as dom from './dom';
-import { TimeoutError, isTargetClosedError } from './errors';
+import { TimeoutError, AbortError, isTargetClosedError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import { FrameSelectors } from './frameSelectors';
 import { helper } from './helper';
@@ -1560,6 +1560,8 @@ export class Frame extends SdkObject<FrameEventMap> {
         progress.log(e.message);
       if (e instanceof TimeoutError)
         details.timedOut = true;
+      if (e instanceof AbortError)
+        details.customErrorMessage = 'The assertion was aborted';
       throw new ExpectError(details);
     }
   }
