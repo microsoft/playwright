@@ -83,7 +83,7 @@ extends:
         dependsOn: Prepare
         timeoutInMinutes: 120
         pool:
-          name: DevDivPlaywrightUbuntu2204Arm64
+          name: DevDivPlaywrightAzurePipelinesUbuntu2204Arm
           os: linux
         variables:
           PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
