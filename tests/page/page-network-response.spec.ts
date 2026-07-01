@@ -452,14 +452,15 @@ it('Response.formData() should parse multipart/form-data in page context', async
 });
 
 it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName }) => {
-  it.skip(browserName === 'firefox', 'Firefox has a separate eviction error path');
+  it.skip(browserName === 'firefox', 'Firefox keeps the response body available after navigating away, so it never throws');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41512' });
   const [response] = await Promise.all([
-    page.waitForResponse(server.EMPTY_PAGE),
-    page.goto(server.EMPTY_PAGE),
+    page.waitForResponse(server.PREFIX + '/title.html'),
+    page.goto(server.PREFIX + '/title.html'),
   ]);
-  // Navigate away — the browser frees the network resource from the first page load
-  await page.goto(server.PREFIX + '/title.html');
+  // Navigate away — the browser frees the network resource from the first page load.
+  // The first page must have a non-empty body, otherwise WebKit returns an empty buffer instead of throwing.
+  await page.goto(server.PREFIX + '/grid.html');
   const error = await response.body().catch(e => e);
   expect(error).toBeInstanceOf(Error);
   expect(error.message).toContain('navigated away');
