@@ -83,7 +83,7 @@ function globalConfigFile(): string {
   return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 }
 
-async function initWorkspace(initSkills: string | undefined) {
+export async function initWorkspace(initSkills: string | undefined) {
   const cwd = process.cwd();
   const playwrightDir = path.join(cwd, '.playwright');
   await fs.promises.mkdir(playwrightDir, { recursive: true });
