@@ -388,6 +388,34 @@ it('should allow to re-connect to OOPIFs with CDP when iframes were there alread
   await hostBrowser.close();
 });
 
+// @see https://github.com/microsoft/playwright/issues/41348
+it('should not throw TargetClosedException on cross-origin redirect after click', async ({ page, server }) => {
+  // 1. Set up a same-origin endpoint that 302 redirects to a cross-origin URL
+  server.setRedirect('/redirect', server.CROSS_PROCESS_PREFIX + '/target.html');
+
+  // 2. Start on a same-origin page with a form
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.setContent(`
+    <form action="${server.PREFIX}/redirect" method="POST">
+      <button type="submit">Submit</button>
+    </form>
+  `);
+
+  // 3. Click the button. This triggers a POST -> 302 -> Cross-Origin Navigation.
+  // In Playwright 1.60, this specific sequence caused a race condition in
+  // crPage.ts _onDetachedFromTarget, throwing TargetClosedException.
+  await Promise.all([
+    page.waitForNavigation(),
+    page.click('button'),
+  ]);
+
+  // 4. Verify we successfully landed on the cross-origin page without crashing
+  expect(page.url()).toBe(server.CROSS_PROCESS_PREFIX + '/target.html');
+
+  // 5. Ensure the page is still alive and functional
+  await page.evaluate(() => document.title);
+});
+
 async function assertOOPIFCount(browser: Browser, count: number) {
   if (browser.browserType().name() !== 'chromium')
     return;
