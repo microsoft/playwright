@@ -37,8 +37,8 @@ jobs:
     timeout-minutes: 20
     # The agent reads untrusted issue text with --allow-all-tools, so it gets no
     # write access to issues. Posting happens in the separate "post" job below.
+    # No contents scope needed: checkout clones this public repo over anonymous git.
     permissions:
-      contents: read
       copilot-requests: write
     outputs:
       has_draft: ${{ steps.triage.outputs.has_draft }}
