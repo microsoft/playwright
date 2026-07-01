@@ -141,10 +141,10 @@ class FfmpegVideoRecorder {
     //     Suggested here: https://trac.ffmpeg.org/wiki/Encode/VP8
     //   Note that we can switch to "-qmin 20 -qmax 50 -crf 30" for smaller video size but worse quality.
     //
-    // We use "pad" and "crop" video filters (-vf option) to resize incoming frames
-    // that might be of the different size to the desired video size.
+    // We use "scale" and "pad" video filters (-vf option) to resize incoming frames
+    // that might be of a different size to the desired video size.
+    //   https://ffmpeg.org/ffmpeg-filters.html#scale
     //   https://ffmpeg.org/ffmpeg-filters.html#pad-1
-    //   https://ffmpeg.org/ffmpeg-filters.html#crop
     //
     // We wrap each incoming MJPEG frame into a minimal Matroska stream (see ./ebml.ts) with an
     // explicit timestamp, and let ffmpeg read frame timing from that stream.
@@ -163,7 +163,7 @@ class FfmpegVideoRecorder {
 
     const w = this._size.width;
     const h = this._size.height;
-    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf scale=w='min(iw,${w})':h='min(ih,${h})':force_original_aspect_ratio=decrease:eval=frame,pad=${w}:${h}:0:0:gray`.split(' ');
     args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
