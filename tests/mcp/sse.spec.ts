@@ -161,6 +161,9 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
     'delete SSE session': 3,
     'create context': 3,
     'create browser (isolated)': 1,
+    // A disconnecting client's isolated context is closed immediately, not leaked
+    // until the last client leaves.
+    'close context': 2,
     'close browser': 1,
   });
 });

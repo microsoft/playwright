@@ -132,12 +132,18 @@ export function decorateMCPCommand(command: Command) {
           },
           disposed: async backend => {
             clientCount--;
-            if (sharedBrowserPromise && clientCount > 0)
+            const browserContext = (backend as BrowserBackend).browserContext;
+
+            if (sharedBrowserPromise && clientCount > 0) {
+              if (config.browser.isolated) {
+                testDebug('close context');
+                await browserContext.close().catch(() => { });
+              }
               return;
+            }
 
             testDebug('close browser');
             sharedBrowserPromise = undefined;
-            const browserContext = (backend as BrowserBackend).browserContext;
             await browserContext.close().catch(() => { });
             await browserContext.browser()?.close().catch(() => { });
           }
