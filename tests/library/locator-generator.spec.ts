@@ -330,6 +330,17 @@ it('reverse engineer locators with regex', async ({ page }) => {
   });
 });
 
+it('reverse engineer regexes with all flags', async () => {
+  // Only javascript is checked here. python, java and csharp locators do not
+  // encode the s, u, v, y and d flags, so a regex carrying one of them cannot
+  // round-trip through those languages the way generate() asserts. The value of
+  // the change is the javascript rendering in error messages and the trace
+  // viewer, where these selectors were shown as string literals.
+  expect.soft(asLocator('javascript', 'internal:text=/abc/s')).toBe('getByText(/abc/s)');
+  expect.soft(asLocator('javascript', 'internal:text=/abc/u')).toBe('getByText(/abc/u)');
+  expect.soft(asLocator('javascript', 'internal:text=/abc/y')).toBe('getByText(/abc/y)');
+});
+
 it('reverse engineer hasText', async ({ page }) => {
   expect.soft(generate(page.getByText('Hello').filter({ hasText: 'wo"rld\n' }))).toEqual({
     csharp: `GetByText("Hello").Filter(new() { HasText = "wo\\"rld\\n" })`,
