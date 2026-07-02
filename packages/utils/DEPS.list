@@ -16,6 +16,7 @@ node_modules/yazl
 [comparators.ts]
 ./image_tools
 ./third_party/pixelmatch
+./webp/webp
 
 [env.ts]
 "strict"

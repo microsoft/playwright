@@ -343,8 +343,9 @@ export async function toHaveScreenshot(
   const [page, locator] = (pageOrLocator as any)._apiName === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
   const configOptions = expectConfig().toHaveScreenshot || {};
   const helper = new SnapshotHelper(this, testInfo, 'toHaveScreenshot', locator, undefined, configOptions, nameOrOptions, optOptions);
-  if (!helper.expectedPath.toLowerCase().endsWith('.png'))
-    throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have '.png' extension`);
+  const screenshotType = ({ 'image/png': 'png', 'image/webp': 'webp' } as const)[helper.mimeType];
+  if (!screenshotType)
+    throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have a '.png' or '.webp' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const style = await loadScreenshotStyles(helper.options.stylePath);
   const timeout = helper.options.timeout ?? this.timeout;
@@ -361,6 +362,7 @@ export async function toHaveScreenshot(
     style,
     isNot: !!this.isNot,
     timeout,
+    type: screenshotType,
     comparator: helper.options.comparator,
     maxDiffPixels: helper.options.maxDiffPixels,
     maxDiffPixelRatio: helper.options.maxDiffPixelRatio,

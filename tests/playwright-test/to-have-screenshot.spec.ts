@@ -554,7 +554,7 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
   expect(result.output).toContain('Expected an image 22px by 33px, received 1280px by 720px.');
 });
 
-test('should fail when given non-png snapshot name', async ({ runInlineTest }) => {
+test('should fail when given unsupported snapshot name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
@@ -567,7 +567,7 @@ test('should fail when given non-png snapshot name', async ({ runInlineTest }) =
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Screenshot name "snapshot.jpeg" must have '.png' extension`);
+  expect(result.output).toContain(`Screenshot name "snapshot.jpeg" must have a '.png' or '.webp' extension`);
 });
 
 test('should fail when given buffer', async ({ runInlineTest }) => {

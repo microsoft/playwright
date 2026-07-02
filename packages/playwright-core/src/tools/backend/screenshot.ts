@@ -22,6 +22,7 @@ import * as z from 'zod';
 import { formatObject } from '@isomorphic/stringUtils';
 
 import { scaleImageToSize } from '@isomorphic/imageUtils';
+import { decodeWebp, encodeWebp, isLosslessWebp } from '@utils/webp/webp';
 import { defineTabTool } from './tool';
 import { optionalElementSchema } from './snapshot';
 
@@ -93,11 +94,14 @@ export function scaleImageToFitMessage(buffer: Buffer, imageType: 'png' | 'jpeg'
   // https://docs.claude.com/en/docs/build-with-claude/vision#evaluate-image-size
   // Not more than 1.15 megapixel, linear size not more than 1568.
 
-  // No Node-side webp decoder is bundled, so we can't scale webp screenshots.
-  if (imageType === 'webp')
-    return buffer;
-
-  const image = imageType === 'png' ? PNG.sync.read(buffer) : jpegjs.decode(buffer, { maxMemoryUsageInMB: 512 });
+  const decode = () => {
+    if (imageType === 'png')
+      return PNG.sync.read(buffer);
+    if (imageType === 'webp')
+      return decodeWebp(buffer);
+    return jpegjs.decode(buffer, { maxMemoryUsageInMB: 512 });
+  };
+  const image = decode();
   const pixels = image.width * image.height;
 
   const shrink = Math.min(1568 / image.width, 1568 / image.height, Math.sqrt(1.15 * 1024 * 1024 / pixels));
@@ -107,6 +111,8 @@ export function scaleImageToFitMessage(buffer: Buffer, imageType: 'png' | 'jpeg'
   const width = image.width * shrink | 0;
   const height = image.height * shrink | 0;
   const scaledImage = scaleImageToSize(image, { width, height });
+  if (imageType === 'webp')
+    return encodeWebp(scaledImage, isLosslessWebp(buffer) ? { lossless: true } : { quality: 80 });
   // eslint-disable-next-line no-restricted-syntax
   return imageType === 'png' ? PNG.sync.write(scaledImage as any) : jpegjs.encode(scaledImage, 80).data;
 }

@@ -23,6 +23,7 @@ import { ManualPromise } from '@isomorphic/manualPromise';
 import { splitErrorMessage } from '@utils/stackTrace';
 import { debugLogger } from '@utils/debugLogger';
 import { eventsHelper } from '@utils/eventsHelper';
+import { encodeWebp } from '@utils/webp/webp';
 import * as dialog from '../../dialog';
 import * as dom from '../../dom';
 import { TargetClosedError } from '../../errors';
@@ -769,6 +770,8 @@ export class WVPage implements PageDelegate {
     let buffer: Buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
       buffer = jpegjs.encode(PNG.sync.read(buffer), quality).data;
+    else if (format === 'webp')
+      buffer = encodeWebp(PNG.sync.read(buffer), { quality: quality ?? 80 });
     return buffer;
   }
 

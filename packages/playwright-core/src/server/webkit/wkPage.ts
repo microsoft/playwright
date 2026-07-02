@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
+import { PNG } from 'pngjs';
+
 import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import { splitErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import { hostPlatform } from '@utils/hostPlatform';
+import { encodeWebp } from '@utils/webp/webp';
 import { assert } from '@isomorphic/assert';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -864,15 +867,20 @@ export class WKPage implements PageDelegate {
   }
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
-    if (format === 'webp' && process.platform === 'darwin')
-      throw new Error('webp screenshots are not supported in WebKit on macOS');
     const rect = (documentRect || viewportRect)!;
     const omitDeviceScaleFactor = scale === 'css';
     this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
     this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
-    const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor, format: format as 'png' | 'jpeg' | 'webp', quality }));
+    // WebKit on macOS has no built-in WebP encoder, so capture a PNG and re-encode it.
+    const recodePngToWebp = format === 'webp' && process.platform === 'darwin';
+    const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor, format: (recodePngToWebp ? 'png' : format) as 'png' | 'jpeg' | 'webp', quality: recodePngToWebp ? undefined : quality }));
     // Strip the 'data:image/<format>;base64,' prefix.
-    return Buffer.from(result.dataURL.substring(result.dataURL.indexOf(',') + 1), 'base64');
+    const buffer = Buffer.from(result.dataURL.substring(result.dataURL.indexOf(',') + 1), 'base64');
+    if (recodePngToWebp) {
+      const png = PNG.sync.read(buffer);
+      return encodeWebp({ width: png.width, height: png.height, data: png.data }, { quality: quality ?? 80 });
+    }
+    return buffer;
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

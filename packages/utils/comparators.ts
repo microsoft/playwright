@@ -23,6 +23,7 @@ import { padImageToSize } from '@isomorphic/imageUtils';
 // @ts-ignore
 import pixelmatch from './third_party/pixelmatch';
 import { compare } from './image_tools/compare';
+import { decodeWebp } from './webp/webp';
 
 import type { ImageData } from '@isomorphic/imageUtils';
 
@@ -35,6 +36,8 @@ export function getComparator(mimeType: string): Comparator {
     return compareImages.bind(null, 'image/png');
   if (mimeType === 'image/jpeg')
     return compareImages.bind(null, 'image/jpeg');
+  if (mimeType === 'image/webp')
+    return compareImages.bind(null, 'image/webp');
   if (mimeType === 'text/plain')
     return compareText;
   return compareBuffersOrStrings;
@@ -57,8 +60,15 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     return { errorMessage: 'Actual result should be a Buffer.' };
   validateBuffer(expectedBuffer, mimeType);
 
-  let actual: ImageData = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
-  let expected: ImageData = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
+  const decode = (buffer: Buffer): ImageData => {
+    if (mimeType === 'image/png')
+      return PNG.sync.read(buffer);
+    if (mimeType === 'image/webp')
+      return decodeWebp(buffer);
+    return jpegjs.decode(buffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
+  };
+  let actual: ImageData = decode(actualBuffer);
+  let expected: ImageData = decode(expectedBuffer);
   const size = { width: Math.max(expected.width, actual.width), height: Math.max(expected.height, actual.height) };
   let sizesMismatchError = '';
   if (expected.width !== actual.width || expected.height !== actual.height) {
@@ -105,6 +115,10 @@ function validateBuffer(buffer: Buffer, mimeType: string): void {
     const jpegMagicNumber = [255, 216];
     if (buffer.length < jpegMagicNumber.length || !jpegMagicNumber.every((byte, index) => buffer[index] === byte))
       throw new Error('Could not decode expected image as JPEG.');
+  } else if (mimeType === 'image/webp') {
+    // A WebP bitstream is a RIFF container tagged 'WEBP': "RIFF????WEBP".
+    if (buffer.length < 12 || buffer.toString('ascii', 0, 4) !== 'RIFF' || buffer.toString('ascii', 8, 12) !== 'WEBP')
+      throw new Error('Could not decode expected image as WEBP.');
   }
 }
 
