@@ -1037,8 +1037,8 @@ copyFiles.push({
   to: 'packages/playwright-core/lib',
 });
 copyFiles.push({
-  files: 'utils/libwebp-wasm/webp_codec.LICENSE',
-  from: 'utils/libwebp-wasm',
+  files: 'packages/utils/webp/webp_codec.LICENSE',
+  from: 'packages/utils/webp',
   to: 'packages/playwright-core/lib',
 });
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 #
 # Build libwebp to a self-contained WASM module exposing a minimal RGBA
-# encode/decode API (see webp_wasm.c). Emits the synchronous Emscripten CommonJS
-# glue (webp_codec.js) and the binary (webp_codec.wasm) into packages/utils/webp/,
-# where the typed wrapper webp.ts imports them (@utils/webp/webp), and
-# regenerates the third-party license (webp_codec.LICENSE) here.
+# encode/decode API (see webp_wasm.c). Emits everything the shipped codec needs
+# into packages/utils/webp/ (where the typed wrapper webp.ts imports them,
+# @utils/webp/webp): the synchronous Emscripten CommonJS glue (webp_codec.js),
+# the binary (webp_codec.wasm) and the regenerated third-party license
+# (webp_codec.LICENSE).
 #
 # Usage:
 #   ./build.sh              # SIMD build (default; SSE2 -> wasm SIMD)
@@ -117,6 +118,6 @@ Emscripten (webp_codec.js glue + runtime linked into webp_codec.wasm)
 EOF
   # Copy the license verbatim from the Emscripten compiler rather than hardcoding.
   cat "$(dirname "$(command -v emcc)")/LICENSE"
-} > "$HERE/webp_codec.LICENSE"
+} > "$OUT/webp_codec.LICENSE"
 
-echo "Built: $OUT/webp_codec.wasm ($(stat -c%s "$OUT/webp_codec.wasm") bytes), webp_codec.js, and $HERE/webp_codec.LICENSE"
+echo "Built into $OUT: webp_codec.wasm ($(stat -c%s "$OUT/webp_codec.wasm") bytes), webp_codec.js, webp_codec.LICENSE"
