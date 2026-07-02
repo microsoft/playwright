@@ -273,10 +273,19 @@ it('alias methods coverage', async ({ page }) => {
   await expect(page.mainFrame().locator('button')).toHaveCount(1);
 });
 
-it('count() should not throw during navigation', async ({ page, mode }) => {
-  it.skip(mode !== 'default', 'No test hooks');
-  await page.setContent(`<div>A</div>`);
-  const __testHookBeforeQuery = () => page.goto('data:text/html,<div>A</div><div>B</div>');
-  // @ts-expect-error
-  expect(await page.locator('div').count({ __testHookBeforeQuery })).toBe(0);
+it('count() should not throw during navigation', async ({ playwright, page, server }) => {
+  const createDummySelector = () => ({
+    query(root, selector) {
+      window.location.href = './frames/one-frame.html';
+      return document.querySelector(selector);
+    },
+    queryAll(root: HTMLElement, selector: string) {
+      window.location.href = './frames/one-frame.html';
+      return Array.from(document.querySelectorAll(selector));
+    }
+  });
+  await playwright.selectors.register('locatorCountHelper', createDummySelector);
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  await page.frames()[1].setContent(`<div>A</div>`);
+  expect(await page.frameLocator('locatorCountHelper=iframe').locator('locatorCountHelper=div').count()).toBe(0);
 });

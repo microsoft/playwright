@@ -940,9 +940,9 @@ export class Frame extends SdkObject<FrameEventMap> {
     return progress.race(this.selectors.queryAll(selector));
   }
 
-  async queryCount(progress: Progress, selector: string, options: any): Promise<number> {
+  async queryCount(progress: Progress, selector: string): Promise<number> {
     try {
-      return await progress.race(this.selectors.queryCount(selector, options));
+      return await progress.race(this.selectors.queryCount(selector));
     } catch (e) {
       if (this.isNonRetriableError(e))
         throw e;

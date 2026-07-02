@@ -264,9 +264,8 @@ export class Locator implements api.Locator {
     await this._frame._channel.blur({ selector: this._selector, strict: true, ...options, timeout: this._frame._timeout(options) }, options?.signal);
   }
 
-  // options are only here for testing
-  async count(_options?: {}): Promise<number> {
-    return await this._frame._queryCount(this._selector, _options);
+  async count(): Promise<number> {
+    return await this._frame._queryCount(this._selector);
   }
 
   async normalize(): Promise<Locator> {
