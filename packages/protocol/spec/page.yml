@@ -211,6 +211,7 @@ Page:
           literals:
           - png
           - jpeg
+          - webp
         quality: int?
         fullPage: boolean?
         clip: Rect?

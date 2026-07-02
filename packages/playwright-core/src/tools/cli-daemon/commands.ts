@@ -789,12 +789,13 @@ const screenshot = declareCommand({
     target: z.string().optional().describe(elementTargetDescription),
   }),
   options: z.object({
-    filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified.'),
+    filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg|webp}` if not specified.'),
+    type: z.enum(['png', 'jpeg', 'webp']).optional().describe('Image format. If unset, inferred from the filename extension, otherwise png.'),
     ['full-page']: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport.'),
     hires: z.boolean().optional().describe('When true, captures a high-resolution screenshot using device pixels (accounts for the device pixel ratio), instead of CSS pixels.'),
   }),
   toolName: 'browser_take_screenshot',
-  toolParams: ({ target, filename, ['full-page']: fullPage, hires }) => ({ filename, target, fullPage, scale: hires ? 'device' : undefined }),
+  toolParams: ({ target, filename, type, ['full-page']: fullPage, hires }) => ({ filename, target, type, fullPage, scale: hires ? 'device' : undefined }),
 });
 
 const pdfSave = declareCommand({

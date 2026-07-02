@@ -867,11 +867,13 @@ export class WKPage implements PageDelegate {
   }
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+    if (format === 'webp' && process.platform === 'darwin')
+      throw new Error('webp screenshots are not supported in WebKit on macOS');
     const rect = (documentRect || viewportRect)!;
     const omitDeviceScaleFactor = scale === 'css';
     this.validateScreenshotDimension(rect.width, omitDeviceScaleFactor);
     this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
-    const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor, format: format as 'png' | 'jpeg', quality }));
+    const result = await progress.race(this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor, format: format as 'png' | 'jpeg' | 'webp', quality }));
     // Strip the 'data:image/<format>;base64,' prefix.
     return Buffer.from(result.dataURL.substring(result.dataURL.indexOf(',') + 1), 'base64');
   }

@@ -56,7 +56,10 @@ function generateCommandHelp(command: AnyCommandSchema) {
     const optionsShape = (command.options as zodType.ZodObject<any>).shape;
     for (const [name, schema] of Object.entries(optionsShape)) {
       const zodSchema = schema as zodType.ZodTypeAny;
-      const description = (zodSchema.description ?? '').toLowerCase();
+      let description = (zodSchema.description ?? '').toLowerCase();
+      const unwrapped = unwrapZodType(zodSchema);
+      if (unwrapped instanceof z.ZodEnum)
+        description = `${description} (one of: ${unwrapped.options.join(', ')})`.trim();
       lines.push(formatWithGap(`  --${name}`, description));
     }
   }

@@ -278,6 +278,36 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('white.jpg');
   });
 
+  it('should produce a valid webp screenshot', async ({ page, server, isBidi, browserName, platform }) => {
+    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
+    it.skip(browserName === 'webkit' && platform === 'darwin', 'CG on macOS does not include a webp encoder UTI');
+
+    await page.setViewportSize({ width: 300, height: 300 });
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => (document.body.style.background = 'rgb(255, 0, 0)'));
+    const screenshot = await page.screenshot({ type: 'webp' });
+    // Valid WebP container: "RIFF" <size> "WEBP".
+    expect(screenshot.subarray(0, 4).toString('latin1')).toBe('RIFF');
+    expect(screenshot.subarray(8, 12).toString('latin1')).toBe('WEBP');
+    // Decode it back in the page to confirm it carries the rendered content.
+    const pixel = await page.evaluate(async base64 => {
+      const img = new Image();
+      img.src = 'data:image/webp;base64,' + base64;
+      await img.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const context = canvas.getContext('2d')!;
+      context.drawImage(img, 0, 0);
+      const data = context.getImageData(canvas.width >> 1, canvas.height >> 1, 1, 1).data;
+      return { width: img.naturalWidth, r: data[0], g: data[1], b: data[2] };
+    }, screenshot.toString('base64'));
+    expect(pixel.width).toBeGreaterThan(0);
+    expect(pixel.r).toBeGreaterThan(200);
+    expect(pixel.g).toBeLessThan(60);
+    expect(pixel.b).toBeLessThan(60);
+  });
+
   it('should work with odd clip size on Retina displays', async ({ page, isElectron }) => {
     it.skip(isElectron, 'electron does not set device scale factor to 1');
 
