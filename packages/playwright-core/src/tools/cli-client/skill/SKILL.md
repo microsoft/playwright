@@ -47,6 +47,9 @@ playwright-cli upload ./document.pdf
 playwright-cli check e12
 playwright-cli uncheck e12
 playwright-cli snapshot
+# search the snapshot for text or a regexp, returns matching nodes with surrounding context
+playwright-cli find "Sign in"
+playwright-cli find --regex "Sign (in|up)"
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
 # get element id, class, or any attribute not visible in the snapshot
@@ -279,6 +282,11 @@ playwright-cli snapshot e34
 
 # include each element's bounding box as [box=x,y,width,height]
 playwright-cli snapshot --boxes
+
+# search a large snapshot instead of capturing it all — returns matching nodes
+# with 3 lines of context around each match (like grep -C)
+playwright-cli find "Add to cart"
+playwright-cli find --regex "\\$[0-9]+\\.[0-9]{2}"
 ```
 
 ## Targeting elements

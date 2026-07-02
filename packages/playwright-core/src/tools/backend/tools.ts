@@ -23,6 +23,7 @@ import devtools from './devtools';
 import dialogs from './dialogs';
 import evaluate from './evaluate';
 import files from './files';
+import find from './find';
 import form from './form';
 import keyboard from './keyboard';
 import mouse from './mouse';
@@ -53,6 +54,7 @@ export const browserTools: Tool<any>[] = [
   ...dialogs,
   ...evaluate,
   ...files,
+  ...find,
   ...form,
   ...keyboard,
   ...mouse,

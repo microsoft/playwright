@@ -26,6 +26,7 @@ test('test snapshot tool list', async ({ client }) => {
     'browser_evaluate',
     'browser_file_upload',
     'browser_fill_form',
+    'browser_find',
     'browser_handle_dialog',
     'browser_hover',
     'browser_select_option',
