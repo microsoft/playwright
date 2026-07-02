@@ -7165,6 +7165,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Cookie Same-Site policy.
        */
       sameSite: CookieSameSitePolicy;
+      /**
+       * Cookie partition key for partitioned (CHIPS) cookies.
+       */
+      partitionKey?: string;
     }
     /**
      * Cookie object
@@ -7206,6 +7210,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Cookie Same-Site policy.
        */
       sameSite?: CookieSameSitePolicy;
+      /**
+       * Cookie partition key for partitioned (CHIPS) cookies.
+       */
+      partitionKey?: string;
     }
     /**
      * Name-value pair
