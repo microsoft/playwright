@@ -1001,7 +1001,7 @@ The default value can be changed by using the [`method: BrowserContext.setDefaul
 
 ## wait-for-event-signal
 * langs: js
-* since: v1.61
+* since: v1.62
 - `signal` <[AbortSignal]>
 
 Allows to cancel the waiting using an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the waiting will be aborted and the operation will throw an error.
@@ -1009,7 +1009,7 @@ Note that providing a signal does not disable the default timeout, which can be 
 
 ## input-signal
 * langs: js
-* since: v1.61
+* since: v1.62
 - `signal` <[AbortSignal]>
 
 Allows to cancel the operation using an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal). If the signal is aborted, the operation will be aborted and throw an error.
