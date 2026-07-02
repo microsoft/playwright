@@ -16,7 +16,7 @@
  */
 
 import { assert } from '@isomorphic/assert';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { parseEvaluationResultValue } from '@isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import * as dom from '../dom';

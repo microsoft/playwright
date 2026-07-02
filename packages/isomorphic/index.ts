@@ -29,7 +29,6 @@ export * from './protocolFormatter';
 export * from './protocolMetainfo';
 export * from './rtti';
 export * from './semaphore';
-export * from './stackTrace';
 export * from './stringUtils';
 export * from './formatUtils';
 export * from './time';

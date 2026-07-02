@@ -16,7 +16,7 @@
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { assert } from '@isomorphic/assert';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { isProtocolError } from './protocolError';
 import { BrowserContext } from './browserContext';
 import { APIRequestContext } from './fetch';

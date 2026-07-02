@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
-import { parseStackFrame, captureRawStack } from '@isomorphic/stackTrace';
+import { parseStackFrame, captureRawStack } from '@utils/stackTrace';
 import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
 import { currentZone } from '@utils/zones';
@@ -88,7 +86,7 @@ import type { MatcherContext, MatchersObject, RawMatcherFn } from './expectLibra
 import type { MatcherAttachment, MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
-import type { StackFrame } from '@isomorphic/stackTrace';
+import type { StackFrame } from '@utils/stackTrace';
 
 interface ExpectStep {
   complete(result: {
@@ -115,7 +113,7 @@ export interface ExpectTestInfo {
 
 export type ExpectConfig = {
   testInfo: ExpectTestInfo | null;
-  filteredStackTrace: (rawStack: string[], pathSeparator: string) => StackFrame[];
+  filteredStackTrace: (rawStack: string[]) => StackFrame[];
   ignoreSnapshots: boolean;
   updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
   timeout?: number;
@@ -143,8 +141,8 @@ export type ExpectConfig = {
   toPass?: { timeout?: number; intervals?: number[] };
 };
 
-function unfilteredStackTrace(rawStack: string[], pathSeparator: string): StackFrame[] {
-  return rawStack.map(frame => parseStackFrame(frame, pathSeparator)).filter(f => !!f);
+function unfilteredStackTrace(rawStack: string[]): StackFrame[] {
+  return rawStack.map(frame => parseStackFrame(frame)).filter(f => !!f);
 }
 
 let _expectConfig: ExpectConfig = { testInfo: null, filteredStackTrace: unfilteredStackTrace, ignoreSnapshots: false, updateSnapshots: 'missing' };
@@ -339,7 +337,7 @@ function callMatcherAsStep(matcherName: string, info: ExpectMetaInfo, actual: un
 
   // This looks like it is unnecessary, but it isn't - we need to filter
   // out all the frames that belong to the test runner from caught runtime errors.
-  const stackFrames = expectConfig().filteredStackTrace(captureRawStack(), path.sep);
+  const stackFrames = expectConfig().filteredStackTrace(captureRawStack());
   const stepData = {
     category: 'expect' as const,
     apiName,

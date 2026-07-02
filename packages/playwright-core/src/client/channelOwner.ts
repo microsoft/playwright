@@ -15,7 +15,7 @@
  */
 
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
-import { showInternalStackFrames, stringifyStackFrames } from '@isomorphic/stackTrace';
+import { showInternalStackFrames, stringifyStackFrames } from '@utils/stackTrace';
 import { isUnderTest } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
 import { currentZone } from '@utils/zones';

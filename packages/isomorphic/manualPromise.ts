@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { captureRawStack } from './stackTrace';
-
 export class ManualPromise<T = void> extends Promise<T> {
   private _resolve!: (t: T) => void;
   private _reject!: (e: Error) => void;
@@ -96,7 +94,7 @@ export class LongStandingScope {
 
   private async _race(promises: Promise<any>[], safe: boolean, defaultValue?: any): Promise<any> {
     const terminatePromise = new ManualPromise<Error>();
-    const frames = captureRawStack();
+    const frames = (new Error().stack || '').split('\n');
     if (this._terminateError)
       terminatePromise.resolve(this._terminateError);
     if (this._closeError)

@@ -26,7 +26,7 @@ import { debugLogger } from '@utils/debugLogger';
 import { createSocket } from '@utils/happyEyeballs';
 import { escapeHTML } from '@isomorphic/stringUtils';
 import { generateSelfSignedCertificate } from '@utils/crypto';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { createProxyAgent } from '@utils/network';
 import { verifyClientCertificates } from './browserContext';
 import type * as types from './types';

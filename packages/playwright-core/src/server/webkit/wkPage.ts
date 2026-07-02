@@ -16,7 +16,7 @@
  */
 
 import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
-import { splitErrorMessage } from '@isomorphic/stackTrace';
+import { splitErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import { hostPlatform } from '@utils/hostPlatform';
 import { assert } from '@isomorphic/assert';

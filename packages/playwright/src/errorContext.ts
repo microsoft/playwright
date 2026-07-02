@@ -15,9 +15,8 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 
-import { parseErrorStack } from '@isomorphic/stackTrace';
+import { parseErrorStack } from '@utils/stackTrace';
 import { stripAnsiEscapes } from '@isomorphic/stringUtils';
 
 import { relativeFilePath } from './util';
@@ -105,7 +104,7 @@ function buildCodeFrame(error: TestInfoError, testLocation: { file: string; line
   if (!stack)
     return undefined;
 
-  const parsed = parseErrorStack(stack, path.sep);
+  const parsed = parseErrorStack(stack);
   const errorLocation = parsed.location;
   if (!errorLocation)
     return undefined;

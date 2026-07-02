@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import path from 'path';
+import { captureRawStack, coreDir, filterStackFile, parseStackFrame } from '@utils/stackTrace';
 
-import { captureRawStack, coreDir, filterStackFile, parseStackFrame } from '@isomorphic/stackTrace';
-
-import type { StackFrame } from '@isomorphic/stackTrace';
+import type { StackFrame } from '@utils/stackTrace';
 
 export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: string } {
   const stack = captureRawStack();
@@ -30,7 +28,7 @@ export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: str
     isPlaywrightLibrary: boolean;
   };
   let parsedFrames = stack.map(line => {
-    const frame = parseStackFrame(line, path.sep);
+    const frame = parseStackFrame(line);
     if (!frame || !frame.file)
       return null;
     const isPlaywrightLibrary = !!playwrightCoreDir && frame.file.startsWith(playwrightCoreDir);

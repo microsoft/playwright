@@ -21,7 +21,7 @@ import path from 'path';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { urlMatchesEqual } from '@isomorphic/urlMatch';
 import { isRegExp, isString } from '@isomorphic/rtti';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';

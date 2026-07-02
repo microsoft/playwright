@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { createGuid } from '@utils/crypto';
 import { currentZone } from '@utils/zones';
 import { AbortError, TimeoutError } from './errors';

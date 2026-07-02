@@ -22,7 +22,7 @@ import { resolveGlobToRegexPattern, serializeURLMatch, urlMatches } from '@isomo
 import { LongStandingScope, ManualPromise } from '@isomorphic/manualPromise';
 import { MultiMap } from '@isomorphic/multimap';
 import { isString } from '@isomorphic/rtti';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { currentZone } from '@utils/zones';
 import { Worker } from './worker';

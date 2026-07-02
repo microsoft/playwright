@@ -20,7 +20,7 @@ import jpegjs from 'jpeg-js';
 import { assert } from '@isomorphic/assert';
 import { headersArrayToObject, headersObjectToArray } from '@isomorphic/headers';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { splitErrorMessage } from '@isomorphic/stackTrace';
+import { splitErrorMessage } from '@utils/stackTrace';
 import { debugLogger } from '@utils/debugLogger';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../../dialog';

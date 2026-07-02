@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { isUnderTest } from '@utils/debug';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { wrapInASCIIBox } from '@utils/ascii';
 import { libPath } from '../package';
 import { buildPlaywrightCLICommand, findChromiumChannelBestEffort } from './registry';

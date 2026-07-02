@@ -16,10 +16,16 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { StackFrame } from '@isomorphic/stackTrace';
 import type { Point } from '@isomorphic/types';
 
 export type Size = { width: number, height: number };
+
+export type StackFrame = {
+  file: string,
+  line: number,
+  column: number,
+  function?: string,
+};
 
 export type SerializedValue = {
   n?: number,

@@ -18,7 +18,7 @@ import colors from 'colors/safe';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { removeFolders } from '@utils/fileUtils';
 import { gracefullyCloseAll } from '@utils/processLauncher';
-import { filteredStackTrace } from '@isomorphic/stackTrace';
+import { filteredStackTrace } from '@utils/stackTrace';
 
 import { configLoader, fixtures, ipc, poolBuilder, ProcessRunner, suiteUtils, testLoader } from '../common';
 import * as globals from '../globals';

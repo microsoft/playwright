@@ -19,7 +19,7 @@ import 'playwright-core/lib/bootstrap';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { setTimeOrigin } from '@isomorphic/time';
 import { startProfiling, stopProfiling } from '@utils/profiler';
-import { setBoxedStackPrefixes } from '@isomorphic/stackTrace';
+import { setBoxedStackPrefixes } from '@utils/stackTrace';
 
 import { packageRoot } from '../package';
 import { serializeError } from '../util';

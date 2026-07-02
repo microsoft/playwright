@@ -16,9 +16,9 @@
 
 import util from 'util';
 
-import { stringifyStackFrames } from '@isomorphic/stackTrace';
+import { stringifyStackFrames } from '@utils/stackTrace';
 
-import type { StackFrame } from '@isomorphic/stackTrace';
+import type { StackFrame } from '@utils/stackTrace';
 
 export type MatcherAttachment = { name: string; contentType: string; path?: string; body?: string | Buffer };
 

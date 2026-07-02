@@ -21,7 +21,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { isUnderTest } from '@utils/debug';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '../../protocol/validator';
 import { AbortError, TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';

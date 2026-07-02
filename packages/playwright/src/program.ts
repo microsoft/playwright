@@ -20,7 +20,7 @@ import 'playwright-core/lib/bootstrap';
 
 import { libCli, tools } from 'playwright-core/lib/coreBundle';
 import { program } from 'commander';
-import { setBoxedStackPrefixes } from '@isomorphic/stackTrace';
+import { setBoxedStackPrefixes } from '@utils/stackTrace';
 import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, config, configLoader } from './common';
 import { runTests, clearCache, runTestServerAction } from './cli/testActions';

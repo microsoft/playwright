@@ -16,7 +16,6 @@
 
 import { getActionGroup, renderTitleForCall } from '../protocolFormatter';
 
-import type { StackFrame } from '../stackTrace';
 import type { Language } from '../locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
@@ -57,7 +56,7 @@ export type ActionTreeItem = {
 
 export type ErrorDescription = {
   action?: ActionTraceEventInContext;
-  stack?: StackFrame[];
+  stack?: trace.StackFrame[];
   message: string;
 };
 

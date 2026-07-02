@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './stackTrace.css';
 import { ListView } from '@web/components/listView';
-import type { StackFrame } from '@isomorphic/stackTrace';
+import type { StackFrame } from '@trace/trace';
 
 const StackFrameListView = ListView<StackFrame>;
 

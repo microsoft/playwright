@@ -22,7 +22,7 @@ import { StackTraceView } from './stackTrace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
 import type { SourceLocation, SourceModel } from '@isomorphic/trace/traceModel';
-import type { StackFrame } from '@isomorphic/stackTrace';
+import type { StackFrame } from '@trace/trace';
 import { CopyToClipboard } from './copyToClipboard';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';

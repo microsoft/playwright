@@ -24,7 +24,7 @@ import { minimatch } from 'minimatch';
 import { calculateSha1 } from '@utils/crypto';
 import { sanitizeForFilePath } from '@utils/fileUtils';
 import { isRegExp } from '@isomorphic/rtti';
-import { stringifyStackFrames, filteredStackTrace } from '@isomorphic/stackTrace';
+import { stringifyStackFrames, filteredStackTrace } from '@utils/stackTrace';
 import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';
 
 import type { Location } from './../types/testReporter';
@@ -37,7 +37,7 @@ export function filterStackTrace(e: Error): TestInfoError {
   if (process.env.PWDEBUGIMPL)
     return { message: name + e.message, stack: e.stack || '', cause };
 
-  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || [], path.sep));
+  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   return {
     message: name + e.message,
     stack: `${name}${e.message}${stackLines.map(line => '\n' + line).join('')}`,

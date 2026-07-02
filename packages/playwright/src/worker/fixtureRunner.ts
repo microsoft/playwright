@@ -16,7 +16,7 @@
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
-import { filterStackFile } from '@isomorphic/stackTrace';
+import { filterStackFile } from '@utils/stackTrace';
 
 import { fixtures } from '../common';
 import { formatLocation } from '../util';

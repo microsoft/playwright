@@ -15,7 +15,7 @@
  */
 
 import crypto from 'crypto';
-import { filterStackFile } from '@isomorphic/stackTrace';
+import { filterStackFile } from '@utils/stackTrace';
 
 import { formatLocation } from '../util';
 

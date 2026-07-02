@@ -16,7 +16,7 @@
  */
 
 import { assert } from '@isomorphic/assert';
-import { splitErrorMessage } from '@isomorphic/stackTrace';
+import { splitErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';

@@ -19,6 +19,10 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import path from 'path';
+
+import { getAsBooleanFromENV } from './env';
+
 export type RawStack = string[];
 
 export type StackFrame = {
@@ -37,7 +41,7 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function parseStackFrame(text: string, pathSeparator: string): StackFrame | null {
+export function parseStackFrame(text: string): StackFrame | null {
   const match = text && text.match(re);
   if (!match)
     return null;
@@ -46,7 +50,7 @@ export function parseStackFrame(text: string, pathSeparator: string): StackFrame
   let file = match[7];
   if (!file)
     return null;
-  if (!_showInternalStackFrames && (file.startsWith('internal') || file.startsWith('node:')))
+  if (!showInternalStackFrames() && (file.startsWith('internal') || file.startsWith('node:')))
     return null;
 
   const line = match[8];
@@ -96,7 +100,7 @@ export function parseStackFrame(text: string, pathSeparator: string): StackFrame
 
   if (file) {
     if (file.startsWith('file://'))
-      file = fileURLToPath(file, pathSeparator);
+      file = fileURLToPath(file);
     frame.file = file;
   }
 
@@ -134,7 +138,7 @@ export function splitErrorMessage(message: string): { name: string, message: str
   };
 }
 
-export function parseErrorStack(stack: string, pathSeparator: string): {
+export function parseErrorStack(stack: string): {
   message: string;
   stackLines: string[];
   location?: StackFrame;
@@ -147,10 +151,10 @@ export function parseErrorStack(stack: string, pathSeparator: string): {
   const stackLines = lines.slice(firstStackLine);
   let location: StackFrame | undefined;
   for (const line of stackLines) {
-    const frame = parseStackFrame(line, pathSeparator);
+    const frame = parseStackFrame(line);
     if (!frame || !frame.file)
       continue;
-    if (belongsToNodeModules(frame.file, pathSeparator))
+    if (belongsToNodeModules(frame.file))
       continue;
     location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
     break;
@@ -158,8 +162,8 @@ export function parseErrorStack(stack: string, pathSeparator: string): {
   return { message, stackLines, location };
 }
 
-function belongsToNodeModules(file: string, pathSeparator: string) {
-  return file.includes(`${pathSeparator}node_modules${pathSeparator}`);
+function belongsToNodeModules(file: string) {
+  return file.includes(`${path.sep}node_modules${path.sep}`);
 }
 
 export function filterStackFile(file: string) {
@@ -172,10 +176,10 @@ export function filterStackFile(file: string) {
   return true;
 }
 
-export function filteredStackTrace(rawStack: RawStack, pathSeparator: string): StackFrame[] {
+export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
-    const frame = parseStackFrame(line, pathSeparator);
+    const frame = parseStackFrame(line);
     if (!frame || !frame.file)
       continue;
     if (!filterStackFile(frame.file))
@@ -212,20 +216,19 @@ const re = new RegExp('^' +
 
 const methodRe = /^(.*?) \[as (.*?)\]$/;
 
-function fileURLToPath(fileUrl: string, pathSeparator: string): string {
+function fileURLToPath(fileUrl: string): string {
   if (!fileUrl.startsWith('file://'))
     return fileUrl;
 
-  let path = decodeURIComponent(fileUrl.slice(7));
-  if (path.startsWith('/') && /^[a-zA-Z]:/.test(path.slice(1)))
-    path = path.slice(1);
+  let filePath = decodeURIComponent(fileUrl.slice(7));
+  if (filePath.startsWith('/') && /^[a-zA-Z]:/.test(filePath.slice(1)))
+    filePath = filePath.slice(1);
 
-  return path.replace(/\//g, pathSeparator);
+  return filePath.replace(/\//g, path.sep);
 }
 
 let _coreDir: string | undefined;
 let _boxedStackPrefixes: string[] = [];
-let _showInternalStackFrames = false;
 
 export function setCoreDir(dir: string | undefined) {
   _coreDir = dir;
@@ -239,10 +242,7 @@ export function setBoxedStackPrefixes(prefixes: string[]) {
   _boxedStackPrefixes = prefixes;
 }
 
-export function setShowInternalStackFrames(value: boolean) {
-  _showInternalStackFrames = value;
-}
-
+const _showInternalStackFrames = getAsBooleanFromENV('PWDEBUGIMPL');
 export function showInternalStackFrames(): boolean {
   return _showInternalStackFrames;
 }

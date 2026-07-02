@@ -19,7 +19,7 @@ import path from 'path';
 
 import { PipeTransport } from '@utils/pipeTransport';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { setCoreDir, setShowInternalStackFrames } from '@isomorphic/stackTrace';
+import { setCoreDir } from '@utils/stackTrace';
 import { Connection } from './client/connection';
 import { packageRoot } from './package';
 
@@ -52,7 +52,6 @@ class PlaywrightClient {
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
     setCoreDir(packageRoot);
-    setShowInternalStackFrames(!!process.env.PWDEBUGIMPL);
     const connection = new Connection();
     const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));

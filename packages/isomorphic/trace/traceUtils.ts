@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { StackFrame } from '../stackTrace';
+import type { StackFrame } from '@trace/trace';
 import type { ClientSideCallMetadata } from '@protocol/structs';
 
 export type SerializedStackFrame = [number, number, number, string];

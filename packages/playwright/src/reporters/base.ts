@@ -20,7 +20,7 @@ import { Writable } from 'stream';
 import realColors from 'colors/safe';
 import { noColors } from '@isomorphic/colors';
 import { msToString } from '@isomorphic/formatUtils';
-import { parseErrorStack } from '@isomorphic/stackTrace';
+import { parseErrorStack } from '@utils/stackTrace';
 import { getPackageManagerExecCommand } from '@utils/env';
 import { fitToWidth } from '@utils/stringWidth';
 
@@ -631,7 +631,7 @@ export function prepareErrorStack(stack: string): {
   stackLines: string[];
   location?: Location;
 } {
-  return parseErrorStack(stack, path.sep);
+  return parseErrorStack(stack);
 }
 
 function resolveFromEnv(name: string): string | undefined {

@@ -16,7 +16,7 @@
  */
 
 import { assert } from '@isomorphic/assert';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { eventsHelper } from '@utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';

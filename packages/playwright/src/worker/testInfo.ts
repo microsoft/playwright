@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { captureRawStack, stringifyStackFrames, filteredStackTrace } from '@isomorphic/stackTrace';
+import { captureRawStack, stringifyStackFrames, filteredStackTrace } from '@utils/stackTrace';
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { monotonicTime } from '@isomorphic/time';
 import { createGuid } from '@utils/crypto';
@@ -35,7 +35,7 @@ import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestInfoError, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { config as commonConfig, FullConfigInternal, test as testNs } from '../common';
-import type { StackFrame } from '@isomorphic/stackTrace';
+import type { StackFrame } from '@utils/stackTrace';
 
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
 
@@ -295,7 +295,7 @@ export class TestInfoImpl implements TestInfo {
         parentStep = this._parentStep();
     }
 
-    const filteredStack = filteredStackTrace(captureRawStack(), path.sep);
+    const filteredStack = filteredStackTrace(captureRawStack());
     let boxedStack = parentStep?.boxedStack;
     let location = data.location;
     if (!boxedStack && data.box) {

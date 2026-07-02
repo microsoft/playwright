@@ -15,7 +15,7 @@
  */
 
 import colors from 'colors/safe';
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { isUnderTest } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
 import { emptyZone } from '@utils/zones';

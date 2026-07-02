@@ -17,7 +17,7 @@
 
 import fs from 'fs';
 
-import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { rewriteErrorMessage } from '@utils/stackTrace';
 import { debugMode, isUnderTest } from '@utils/debug';
 import { Clock } from './clock';
 import { Credentials } from './credentials';
