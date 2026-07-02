@@ -44,6 +44,7 @@ export type FetchOptions = {
   form?: { [key: string]: string|number|boolean; } | FormData;
   multipart?: { [key: string]: string|number|boolean|fs.ReadStream|FilePayload; } | FormData;
   timeout?: number,
+  signal?: AbortSignal,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
   maxRedirects?: number,
@@ -260,7 +261,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         maxRedirects: options.maxRedirects,
         maxRetries: options.maxRetries,
         ...fixtures
-      }, undefined);
+      }, options.signal);
       return new APIResponse(this, result.response);
     });
   }

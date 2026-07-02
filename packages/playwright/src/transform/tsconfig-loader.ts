@@ -61,7 +61,8 @@ export function loadTsConfig(configPath: string): LoadedTsConfig[] {
   }
 }
 
-function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string) {
+function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string, kind: 'extends' | 'references') {
+  const originalReferencedConfigFile = referencedConfigFile;
   if (!referencedConfigFile.endsWith('.json'))
     referencedConfigFile += '.json';
   const currentDir = path.dirname(baseConfigFile);
@@ -69,6 +70,8 @@ function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string)
   // TODO: I don't see how this makes sense, delete in the next minor release.
   if (referencedConfigFile.includes('/') && referencedConfigFile.includes('.') && !fs.existsSync(resolvedConfigFile))
     resolvedConfigFile = path.join(currentDir, 'node_modules', referencedConfigFile);
+  if (!fs.existsSync(resolvedConfigFile))
+    throw new Error(`Failed to resolve "${kind}" path "${originalReferencedConfigFile}" referenced from ${baseConfigFile}`);
   return resolvedConfigFile;
 }
 
@@ -95,7 +98,7 @@ function innerLoadTsConfig(
 
   const extendsArray = Array.isArray(parsedConfig.extends) ? parsedConfig.extends : (parsedConfig.extends ? [parsedConfig.extends] : []);
   for (const extendedConfig of extendsArray) {
-    const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig);
+    const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig, 'extends');
     const base = innerLoadTsConfig(extendedConfigPath, references, visited);
     // Retain result instance, so that caching works.
     Object.assign(result, base, { tsConfigPath: configFilePath });
@@ -120,7 +123,7 @@ function innerLoadTsConfig(
   }
 
   for (const ref of parsedConfig.references || [])
-    references.push(innerLoadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));
+    references.push(innerLoadTsConfig(resolveConfigFile(configFilePath, ref.path, 'references'), references, visited));
 
   if (path.basename(configFilePath) === 'jsconfig.json' && result.allowJs === undefined)
     result.allowJs = true;

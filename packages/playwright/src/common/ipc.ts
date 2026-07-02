@@ -19,7 +19,7 @@ import util from 'util';
 import { serializeCompilationCache } from '../transform/compilationCache';
 
 import type { ConfigLocation, FullConfigInternal } from './config';
-import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
+import type { ReporterDescription, TestInfoError, TestStatus, TestAnnotation } from '../../types/test';
 import type { SerializedCompilationCache  } from '../transform/compilationCache';
 
 export type ConfigCLIOverrides = {
@@ -116,7 +116,7 @@ export type TestEndPayload = {
   errors: TestInfoErrorPayload[];
   hasNonRetriableError: boolean;
   expectedStatus: TestStatus;
-  annotations: { type: string, description?: string }[];
+  annotations: TestAnnotation[];
   timeout: number;
 };
 
@@ -136,13 +136,13 @@ export type StepEndPayload = {
   wallTime: number;  // milliseconds since unix epoch
   error?: TestInfoErrorPayload;
   suggestedRebaseline?: string;
-  annotations: { type: string, description?: string }[];
+  annotations: TestAnnotation[];
 };
 
 export type TestEntry = {
   testId: string;
   retry: number;
-  planAnnotations: { type: string, description?: string, location?: { file: string, line: number, column: number } }[];
+  planAnnotations: TestAnnotation[];
 };
 
 export type RunPayload = {

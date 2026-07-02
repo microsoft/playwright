@@ -184,6 +184,8 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.delete.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
 
+### option: APIRequestContext.delete.signal = %%-input-signal-%%
+
 ### option: APIRequestContext.delete.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
 
@@ -361,6 +363,8 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 ### option: APIRequestContext.fetch.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
 
+### option: APIRequestContext.fetch.signal = %%-input-signal-%%
+
 ### option: APIRequestContext.fetch.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
 
@@ -474,6 +478,8 @@ await request.GetAsync("https://example.com/api/getText", new() { Params = query
 ### option: APIRequestContext.get.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
 
+### option: APIRequestContext.get.signal = %%-input-signal-%%
+
 ### option: APIRequestContext.get.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
 
@@ -539,6 +545,8 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.head.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
 
+### option: APIRequestContext.head.signal = %%-input-signal-%%
+
 ### option: APIRequestContext.head.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
 
@@ -603,6 +611,8 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.patch.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
+
+### option: APIRequestContext.patch.signal = %%-input-signal-%%
 
 ### option: APIRequestContext.patch.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
@@ -790,6 +800,8 @@ await request.PostAsync("https://example.com/api/uploadScript", new() { Multipar
 ### option: APIRequestContext.post.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
 
+### option: APIRequestContext.post.signal = %%-input-signal-%%
+
 ### option: APIRequestContext.post.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
 
@@ -854,6 +866,8 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.put.timeout = %%-js-python-csharp-fetch-option-timeout-%%
 * since: v1.16
+
+### option: APIRequestContext.put.signal = %%-input-signal-%%
 
 ### option: APIRequestContext.put.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
 * since: v1.16
