@@ -1303,7 +1303,8 @@ Defaults to `false`.
 ## screenshot-option-quality
 - `quality` <[int]>
 
-The quality of the image, between 0-100. Not applicable to `png` images.
+The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`.
+For `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
 
 ## screenshot-option-path
 - `path` <[path]>

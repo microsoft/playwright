@@ -720,8 +720,10 @@ export class Page extends SdkObject<PageEventMap> {
       return await this.screenshotter.screenshotPage(progress, options || {});
     };
 
-    const format = validateScreenshotOptions(options || {});
-    const comparator = getComparator(`image/${format}`);
+    // Reset to the actual format once options are validated inside the try below;
+    // validation (clip, quality, ...) must stay inside the try so its errors are
+    // surfaced as a friendly diff rather than thrown.
+    let comparator = getComparator('image/png');
     let intermediateResult: {
       actual?: Buffer,
       previous?: Buffer,
@@ -740,6 +742,8 @@ export class Page extends SdkObject<PageEventMap> {
     try {
       if (!options.expected && options.isNot)
         throw new Error('"not" matcher requires expected result');
+      const format = validateScreenshotOptions(options || {});
+      comparator = getComparator(`image/${format}`);
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];

@@ -13176,7 +13176,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     path?: string;
 
     /**
-     * The quality of the image, between 0-100. Not applicable to `png` images.
+     * The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+     * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
      */
     quality?: number;
 
@@ -25108,7 +25109,8 @@ export interface LocatorScreenshotOptions {
   path?: string;
 
   /**
-   * The quality of the image, between 0-100. Not applicable to `png` images.
+   * The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+   * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
    */
   quality?: number;
 
@@ -25825,7 +25827,8 @@ export interface PageScreenshotOptions {
   path?: string;
 
   /**
-   * The quality of the image, between 0-100. Not applicable to `png` images.
+   * The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+   * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
    */
   quality?: number;
 
