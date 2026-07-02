@@ -174,6 +174,8 @@ Looking at the list of steps in `jobs.test.steps`, you can see that the workflow
 1. Install Playwright Browsers
 1. Run tests
 
+To skip installing browsers and system dependencies at runtime, use Playwright's pre-built [Docker image](./docker.md) with GitHub Actions [container jobs](./ci.md#via-containers).
+
 ## Create a Repo and Push to GitHub
 
 Once you have your [GitHub Actions workflow](#setting-up-github-actions) setup, then all you need to do is [Create a repo on GitHub](https://docs.github.com/en/get-started/quickstart/create-a-repo) or push your code to an existing repository. Follow the instructions on GitHub and don't forget to [initialize a git repository](https://github.com/git-guides/git-init) using the `git init` command so you can [add](https://github.com/git-guides/git-add), [commit](https://github.com/git-guides/git-commit), and [push](https://github.com/git-guides/git-push) your code.
