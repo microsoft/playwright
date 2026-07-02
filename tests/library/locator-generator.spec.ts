@@ -322,6 +322,13 @@ it('reverse engineer locators with regex', async ({ page }) => {
     python: `get_by_text(re.compile(r"hel\\"lo"))`,
   });
 
+  expect.soft(generate(page.getByText(/hello/s))).toEqual({
+    csharp: `GetByText(new Regex("hello"))`,
+    java: `getByText(Pattern.compile("hello"))`,
+    javascript: `getByText(/hello/s)`,
+    python: `get_by_text(re.compile(r"hello"))`,
+  });
+
   expect.soft(generate(page.getByPlaceholder(/hel"lo/))).toEqual({
     csharp: `GetByPlaceholder(new Regex("hel\\"lo"))`,
     java: `getByPlaceholder(Pattern.compile("hel\\"lo"))`,

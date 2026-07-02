@@ -284,7 +284,7 @@ function combineTokens(factory: LocatorFactory, tokens: string[][], maxOutputSiz
 
 function detectExact(text: string): { exact?: boolean, text: string | RegExp } {
   let exact = false;
-  const match = text.match(/^\/(.*)\/([igm]*)$/);
+  const match = text.match(/^\/(.*)\/([dgimsuvy]*)$/);
   if (match)
     return { text: new RegExp(match[1], match[2]) };
   if (text.endsWith('"')) {
