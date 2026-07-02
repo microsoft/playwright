@@ -26,7 +26,7 @@ test('stitched aria frames', async ({ client }) => {
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]:
   - heading "Hello" [level=1] [ref=e2]
   - iframe [ref=e3]:
-    - generic [active] [ref=f1e1]:
+    - generic [ref=f1e1]:
       - button "World" [ref=f1e2]
       - main [ref=f1e3]:
         - iframe [ref=f1e4]:

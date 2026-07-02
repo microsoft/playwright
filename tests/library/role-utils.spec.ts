@@ -22,7 +22,7 @@ test.skip(({ mode }) => mode !== 'default');
 
 async function getNameAndRole(page: Page, selector: string) {
   return await page.$eval(selector, e => {
-    const name = (window as any).__injectedScript.utils.getElementAccessibleName(e);
+    const name = (window as any).__injectedScript.utils.getElementAccessibleNameText(e);
     const role = (window as any).__injectedScript.utils.getAriaRole(e);
     return { name, role };
   });
@@ -85,7 +85,7 @@ for (let range = 0; range <= ranges.length; range++) {
             if (!element)
               throw new Error(`Unable to resolve "${step.selector}"`);
             const injected = (window as any).__injectedScript;
-            const received = step.property === 'name' ? injected.utils.getElementAccessibleName(element) : injected.utils.getElementAccessibleDescription(element);
+            const received = step.property === 'name' ? injected.utils.getElementAccessibleNameText(element) : injected.utils.getElementAccessibleDescription(element);
             result.push({ selector: step.selector, expected: step.value, received });
           }
           return result;
@@ -140,7 +140,7 @@ test('wpt accname non-manual', async ({ page, asset, server, browserName }) => {
           const injected = (window as any).__injectedScript;
           const title = element.getAttribute('data-testname');
           const expected = element.getAttribute('data-expectedlabel');
-          const received = injected.utils.getElementAccessibleName(element);
+          const received = injected.utils.getElementAccessibleNameText(element);
           result.push({ title, expected, received });
         }
         return result;
@@ -201,7 +201,7 @@ test('axe-core accessible-text', async ({ page, asset, server }) => {
           const element = injected.querySelector(injected.parseSelector('css=' + selector), document, false);
           if (!element)
             throw new Error(`Unable to resolve "${selector}"`);
-          return injected.utils.getElementAccessibleName(element);
+          return injected.utils.getElementAccessibleNameText(element);
         });
       }, targets);
       expect.soft(received, `checking ${JSON.stringify(testCase)}`).toEqual(expected);

@@ -18,7 +18,7 @@ import { splitTestIdAttributeNames } from '@isomorphic/locatorUtils';
 import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { beginDOMCaches, closestCrossShadow, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
-import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleDescription, getElementAccessibleName } from './roleUtils';
+import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleDescription, getElementAccessibleNameText } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
 
 import type { InjectedScript } from './injectedScript';
@@ -348,7 +348,7 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
 
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
-    const ariaName = getElementAccessibleName(element, false);
+    const ariaName = getElementAccessibleNameText(element, false);
     // \p{Co} means "Private Use" characters - these are often used for icon fonts and make for bad locators.
     if (ariaName && !ariaName.match(/^\p{Co}+$/u)) {
       const roleToken = { engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact };

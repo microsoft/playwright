@@ -501,30 +501,47 @@ function allowsNameFromContent(role: string, targetDescendant: boolean) {
   return alwaysAllowsNameFromContent || descendantAllowsNameFromContent;
 }
 
-export function getElementAccessibleName(element: Element, includeHidden: boolean): string {
+function computeAccessibleNameComposite(element: Element, includeHidden: boolean, collectElements: boolean): CompositeString {
+  // https://w3c.github.io/accname/#computation-steps
+
+  // step 1.
+  // https://w3c.github.io/aria/#namefromprohibited
+  const elementProhibitsNaming = ['caption', 'code', 'definition', 'deletion', 'emphasis', 'generic', 'insertion', 'mark', 'paragraph', 'presentation', 'strong', 'subscript', 'suggestion', 'superscript', 'term', 'time'].includes(getAriaRole(element) || '');
+  if (elementProhibitsNaming)
+    return emptyCompositeString();
+
+  // step 2.
+  const result = getTextAlternativeInternal(element, {
+    includeHidden,
+    collectElements,
+    visitedElements: new Set(),
+    embeddedInTargetElement: 'self',
+  });
+  return { text: asFlatString(result.text), elements: result.elements };
+}
+
+export function getElementAccessibleName(element: Element, includeHidden: boolean): CompositeString {
   const cache = (includeHidden ? cacheAccessibleNameHidden : cacheAccessibleName);
   let accessibleName = cache?.get(element);
-
   if (accessibleName === undefined) {
-    // https://w3c.github.io/accname/#computation-steps
-    accessibleName = '';
-
-    // step 1.
-    // https://w3c.github.io/aria/#namefromprohibited
-    const elementProhibitsNaming = ['caption', 'code', 'definition', 'deletion', 'emphasis', 'generic', 'insertion', 'mark', 'paragraph', 'presentation', 'strong', 'subscript', 'suggestion', 'superscript', 'term', 'time'].includes(getAriaRole(element) || '');
-
-    if (!elementProhibitsNaming) {
-      // step 2.
-      accessibleName = asFlatString(getTextAlternativeInternal(element, {
-        includeHidden,
-        visitedElements: new Set(),
-        embeddedInTargetElement: 'self',
-      }));
-    }
-
+    accessibleName = computeAccessibleNameComposite(element, includeHidden, true /* collectElements */);
     cache?.set(element, accessibleName);
   }
   return accessibleName;
+}
+
+export function getElementAccessibleNameText(element: Element, includeHidden: boolean): string {
+  // Reuse the element-collecting composite if it happens to be cached, otherwise compute text only.
+  const composite = (includeHidden ? cacheAccessibleNameHidden : cacheAccessibleName)?.get(element);
+  if (composite !== undefined)
+    return composite.text;
+  const cache = (includeHidden ? cacheAccessibleNameTextHidden : cacheAccessibleNameText);
+  let text = cache?.get(element);
+  if (text === undefined) {
+    text = computeAccessibleNameComposite(element, includeHidden, false /* collectElements */).text;
+    cache?.set(element, text);
+  }
+  return text;
 }
 
 export function getElementAccessibleDescription(element: Element, includeHidden: boolean): string {
@@ -543,7 +560,7 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
         includeHidden,
         visitedElements: new Set(),
         embeddedInDescribedBy: { element: ref, hidden: isElementHiddenForAria(ref) },
-      })).join(' '));
+      }).text).join(' '));
     } else if (element.hasAttribute('aria-description')) {
       // precedence 2
       accessibleDescription = asFlatString(element.getAttribute('aria-description') || '');
@@ -619,7 +636,7 @@ export function getElementAccessibleErrorMessage(element: Element): string {
           getTextAlternativeInternal(errorMessage, {
             visitedElements: new Set(),
             embeddedInDescribedBy: { element: errorMessage, hidden: isElementHiddenForAria(errorMessage) },
-          })
+          }).text
       ));
       accessibleErrorMessage = parts.join(' ').trim();
     }
@@ -630,6 +647,7 @@ export function getElementAccessibleErrorMessage(element: Element): string {
 
 type AccessibleNameOptions = {
   visitedElements: Set<Element>,
+  collectElements?: boolean,
   includeHidden?: boolean,
   embeddedInDescribedBy?: { element: Element, hidden: boolean },
   embeddedInLabelledBy?: { element: Element, hidden: boolean },
@@ -638,9 +656,9 @@ type AccessibleNameOptions = {
   embeddedInTargetElement?: 'self' | 'descendant',
 };
 
-function getTextAlternativeInternal(element: Element, options: AccessibleNameOptions): string {
+function getTextAlternativeInternal(element: Element, options: AccessibleNameOptions): CompositeString {
   if (options.visitedElements.has(element))
-    return '';
+    return emptyCompositeString();
 
   const childOptions: AccessibleNameOptions = {
     ...options,
@@ -659,7 +677,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     if (isElementIgnoredForAria(element) ||
       (!isEmbeddedInHiddenReferenceTraversal && isElementHiddenForAria(element))) {
       options.visitedElements.add(element);
-      return '';
+      return emptyCompositeString();
     }
   }
 
@@ -670,15 +688,15 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   // at least one valid IDREF, and the current node is not already part of an ongoing
   // aria-labelledby or aria-describedby traversal, process its IDREFs in the order they occur...
   if (!options.embeddedInLabelledBy) {
-    const accessibleName = (labelledBy || []).map(ref => getTextAlternativeInternal(ref, {
+    const accessibleName = joinCompositeString((labelledBy || []).map(ref => getTextAlternativeInternal(ref, {
       ...options,
       embeddedInLabelledBy: { element: ref, hidden: isElementHiddenForAria(ref) },
       embeddedInDescribedBy: undefined,
       embeddedInTargetElement: undefined,
       embeddedInLabel: undefined,
       embeddedInNativeTextAlternative: undefined,
-    })).join(' ');
-    if (accessibleName)
+    })), ' ', options.collectElements);
+    if (accessibleName.text)
       return accessibleName;
   }
 
@@ -700,8 +718,8 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       if (role === 'textbox') {
         options.visitedElements.add(element);
         if (tagName === 'INPUT' || tagName === 'TEXTAREA')
-          return (element as HTMLInputElement | HTMLTextAreaElement).value;
-        return element.textContent || '';
+          return compositeString((element as HTMLInputElement | HTMLTextAreaElement).value, element, options.collectElements);
+        return compositeString(element.textContent, element, options.collectElements);
       }
       if (['combobox', 'listbox'].includes(role)) {
         options.visitedElements.add(element);
@@ -718,22 +736,22 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
           // SPEC DIFFERENCE:
           // This fallback is not explicitly mentioned in the spec, but all browsers and
           // wpt test name_heading-combobox-focusable-alternative-manual.html do this.
-          return (element as HTMLInputElement).value;
+          return compositeString((element as HTMLInputElement).value, element, options.collectElements);
         }
-        return selectedOptions.map(option => getTextAlternativeInternal(option, childOptions)).join(' ');
+        return joinCompositeString(selectedOptions.map(option => getTextAlternativeInternal(option, childOptions)), ' ', options.collectElements);
       }
       if (['progressbar', 'scrollbar', 'slider', 'spinbutton', 'meter'].includes(role)) {
         options.visitedElements.add(element);
         if (element.hasAttribute('aria-valuetext'))
-          return element.getAttribute('aria-valuetext') || '';
+          return compositeString(element.getAttribute('aria-valuetext'), element, options.collectElements);
         if (element.hasAttribute('aria-valuenow'))
-          return element.getAttribute('aria-valuenow') || '';
-        return element.getAttribute('value') || '';
+          return compositeString(element.getAttribute('aria-valuenow'), element, options.collectElements);
+        return compositeString(element.getAttribute('value'), element, options.collectElements);
       }
       if (['menu'].includes(role)) {
         // https://github.com/w3c/accname/issues/67#issuecomment-553196887
         options.visitedElements.add(element);
-        return '';
+        return emptyCompositeString();
       }
     }
   }
@@ -742,7 +760,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   const ariaLabel = element.getAttribute('aria-label') || '';
   if (trimFlatString(ariaLabel)) {
     options.visitedElements.add(element);
-    return ariaLabel;
+    return compositeString(ariaLabel, element, options.collectElements);
   }
 
   // step 2e.
@@ -757,13 +775,13 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       options.visitedElements.add(element);
       const value = (element as HTMLInputElement).value || '';
       if (trimFlatString(value))
-        return value;
+        return compositeString(value, element, options.collectElements);
       if ((element as HTMLInputElement).type === 'submit')
-        return 'Submit';
+        return compositeString('Submit', element, options.collectElements);
       if ((element as HTMLInputElement).type === 'reset')
-        return 'Reset';
+        return compositeString('Reset', element, options.collectElements);
       const title = element.getAttribute('title') || '';
-      return title;
+      return compositeString(title, element, options.collectElements);
     }
 
     // SPEC DIFFERENCE.
@@ -775,7 +793,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       const labels = (element as HTMLInputElement).labels || [];
       if (labels.length && !options.embeddedInLabelledBy)
         return getAccessibleNameFromAssociatedLabels(labels, options);
-      return 'Choose File';
+      return compositeString('Choose File', element, options.collectElements);
     }
 
     // https://w3c.github.io/html-aam/#input-type-image-accessible-name-computation
@@ -789,13 +807,13 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
         return getAccessibleNameFromAssociatedLabels(labels, options);
       const alt = element.getAttribute('alt') || '';
       if (trimFlatString(alt))
-        return alt;
+        return compositeString(alt, element, options.collectElements);
       const title = element.getAttribute('title') || '';
       if (trimFlatString(title))
-        return title;
+        return compositeString(title, element, options.collectElements);
       // SPEC DIFFERENCE.
       // Spec says return localized "Submit Query", but browsers and axe-core insist on "Submit".
-      return 'Submit';
+      return compositeString('Submit', element, options.collectElements);
     }
 
     // https://w3c.github.io/html-aam/#button-element-accessible-name-computation
@@ -813,7 +831,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       const labels = (element as HTMLOutputElement).labels || [];
       if (labels.length)
         return getAccessibleNameFromAssociatedLabels(labels, options);
-      return element.getAttribute('title') || '';
+      return compositeString(element.getAttribute('title') || '', element, options.collectElements);
     }
 
     // https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-number-input-type-search-input-type-tel-input-type-email-input-type-url-and-textarea-element-accessible-name-computation
@@ -831,8 +849,8 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       const placeholder = element.getAttribute('placeholder') || '';
       const title = element.getAttribute('title') || '';
       if (!usePlaceholder || title)
-        return title;
-      return placeholder;
+        return compositeString(title, element, options.collectElements);
+      return compositeString(placeholder, element, options.collectElements);
     }
 
     // https://w3c.github.io/html-aam/#fieldset-and-legend-elements
@@ -847,7 +865,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
         }
       }
       const title = element.getAttribute('title') || '';
-      return title;
+      return compositeString(title, element, options.collectElements);
     }
 
     // https://w3c.github.io/html-aam/#figure-and-figcaption-elements
@@ -862,7 +880,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
         }
       }
       const title = element.getAttribute('title') || '';
-      return title;
+      return compositeString(title, element, options.collectElements);
     }
 
     // https://w3c.github.io/html-aam/#img-element
@@ -873,9 +891,9 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
       if (trimFlatString(alt))
-        return alt;
+        return compositeString(alt, element, options.collectElements);
       const title = element.getAttribute('title') || '';
-      return title;
+      return compositeString(title, element, options.collectElements);
     }
 
     // https://w3c.github.io/html-aam/#table-element
@@ -893,7 +911,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       // Spec does not say a word about <table summary="...">, but all browsers actually support it.
       const summary = element.getAttribute('summary') || '';
       if (summary)
-        return summary;
+        return compositeString(summary, element, options.collectElements);
       // SPEC DIFFERENCE.
       // Spec says "if the table element has a title attribute, then use that attribute".
       // We ignore title to pass "name_from_content-manual.html".
@@ -904,9 +922,9 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       options.visitedElements.add(element);
       const alt = element.getAttribute('alt') || '';
       if (trimFlatString(alt))
-        return alt;
+        return compositeString(alt, element, options.collectElements);
       const title = element.getAttribute('title') || '';
-      return title;
+      return compositeString(title, element, options.collectElements);
     }
 
     // https://www.w3.org/TR/svg-aam-1.0/#mapping_additional_nd
@@ -925,7 +943,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       const title = element.getAttribute('xlink:title') || '';
       if (trimFlatString(title)) {
         options.visitedElements.add(element);
-        return title;
+        return compositeString(title, element, options.collectElements);
       }
     }
   }
@@ -943,9 +961,12 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // Spec says "Return the accumulated text if it is not the empty string". However, that is not really
     // compatible with the real browser behavior and wpt tests, where an element with empty contents will fallback to the title.
     // So we follow the spec everywhere except for the target element itself. This can probably be improved.
-    const maybeTrimmedAccessibleName = options.embeddedInTargetElement === 'self' ? trimFlatString(accessibleName) : accessibleName;
-    if (maybeTrimmedAccessibleName)
+    const maybeTrimmedAccessibleName = options.embeddedInTargetElement === 'self' ? trimFlatString(accessibleName.text) : accessibleName.text;
+    if (maybeTrimmedAccessibleName) {
+      // This element owns the accumulated content - record it alongside the descendants it was computed from.
+      accessibleName.elements?.add(element);
       return accessibleName;
+    }
   }
 
   // step 2i.
@@ -953,21 +974,25 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     options.visitedElements.add(element);
     const title = element.getAttribute('title') || '';
     if (trimFlatString(title))
-      return title;
+      return compositeString(title, element, options.collectElements);
   }
 
   options.visitedElements.add(element);
-  return '';
+  return emptyCompositeString();
 }
 
-function innerAccumulatedElementText(element: Element, options: AccessibleNameOptions): string {
+function innerAccumulatedElementText(element: Element, options: AccessibleNameOptions): CompositeString {
   const tokens: string[] = [];
+  const elements = options.collectElements ? new Set<Element>() : undefined;
   const visit = (node: Node, skipSlotted: boolean) => {
     if (skipSlotted && (node as Element | Text).assignedSlot)
       return;
     if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
       const display = getElementComputedStyle(node as Element)?.display || 'inline';
-      let token = getTextAlternativeInternal(node as Element, options);
+      const childComposite = getTextAlternativeInternal(node as Element, options);
+      let token = childComposite.text;
+      for (const contributor of childComposite.elements || [])
+        elements?.add(contributor);
       // SPEC DIFFERENCE.
       // Spec says "append the result to the accumulated text", assuming "with space".
       // However, multiple tests insist that inline elements do not add a space.
@@ -1005,7 +1030,7 @@ function innerAccumulatedElementText(element: Element, options: AccessibleNameOp
     }
   }
   tokens.push(getCSSContent(element, '::after') || '');
-  return tokens.join('');
+  return { text: tokens.join(''), elements };
 }
 
 export const kAriaSelectedRoles = ['gridcell', 'option', 'row', 'tab', 'rowheader', 'columnheader', 'treeitem'];
@@ -1160,15 +1185,15 @@ export function getAriaBusy(element: Element): boolean {
   return getAriaBoolean(element.getAttribute('aria-busy')) === true;
 }
 
-function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions) {
-  return [...labels].map(label => getTextAlternativeInternal(label, {
+function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement>, options: AccessibleNameOptions): CompositeString {
+  return joinCompositeString([...labels].map(label => getTextAlternativeInternal(label, {
     ...options,
     embeddedInLabel: { element: label, hidden: isElementHiddenForAria(label) },
     embeddedInNativeTextAlternative: undefined,
     embeddedInLabelledBy: undefined,
     embeddedInDescribedBy: undefined,
     embeddedInTargetElement: undefined,
-  })).filter(accessibleName => !!accessibleName).join(' ');
+  })).filter(accessibleName => !!accessibleName.text), ' ', options.collectElements);
 }
 
 export function receivesPointerEvents(element: Element): boolean {
@@ -1205,8 +1230,10 @@ export function receivesPointerEvents(element: Element): boolean {
   return result;
 }
 
-let cacheAccessibleName: Map<Element, string> | undefined;
-let cacheAccessibleNameHidden: Map<Element, string> | undefined;
+let cacheAccessibleName: Map<Element, CompositeString> | undefined;
+let cacheAccessibleNameHidden: Map<Element, CompositeString> | undefined;
+let cacheAccessibleNameText: Map<Element, string> | undefined;
+let cacheAccessibleNameTextHidden: Map<Element, string> | undefined;
 let cacheAccessibleDescription: Map<Element, string> | undefined;
 let cacheAccessibleDescriptionHidden: Map<Element, string> | undefined;
 let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
@@ -1222,6 +1249,8 @@ export function beginAriaCaches() {
   ++cachesCounter;
   cacheAccessibleName ??= new Map();
   cacheAccessibleNameHidden ??= new Map();
+  cacheAccessibleNameText ??= new Map();
+  cacheAccessibleNameTextHidden ??= new Map();
   cacheAccessibleDescription ??= new Map();
   cacheAccessibleDescriptionHidden ??= new Map();
   cacheAccessibleErrorMessage ??= new Map();
@@ -1236,6 +1265,8 @@ export function endAriaCaches() {
   if (!--cachesCounter) {
     cacheAccessibleName = undefined;
     cacheAccessibleNameHidden = undefined;
+    cacheAccessibleNameText = undefined;
+    cacheAccessibleNameTextHidden = undefined;
     cacheAccessibleDescription = undefined;
     cacheAccessibleDescriptionHidden = undefined;
     cacheAccessibleErrorMessage = undefined;
@@ -1258,3 +1289,29 @@ const inputTypeToRole: Record<string, AriaRole> = {
   'reset': 'button',
   'submit': 'button',
 };
+
+type CompositeString = {
+  text: string,
+  elements?: Set<Element>,
+};
+
+function emptyCompositeString(): CompositeString {
+  return { text: '' };
+}
+
+function compositeString(text: string | null, element: Element, collectElements: boolean | undefined): CompositeString {
+  const elements = text && collectElements ? new Set([element]) : undefined;
+  return { text: text || '', elements };
+}
+
+function joinCompositeString(parts: CompositeString[], separator: string, collectElements: boolean | undefined): CompositeString {
+  let elements: Set<Element> | undefined;
+  if (collectElements) {
+    elements = new Set();
+    for (const part of parts) {
+      for (const element of part.elements || [])
+        elements.add(element);
+    }
+  }
+  return { text: parts.map(part => part.text).join(separator), elements };
+}

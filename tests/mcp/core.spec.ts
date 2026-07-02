@@ -109,7 +109,7 @@ test('browser_navigate can navigate to file:// URLs allowUnrestrictedFileAccess 
     arguments: { url },
   })).toHaveResponse({
     page: expect.stringContaining(`- Page URL: ${url}`),
-    snapshot: `- generic [ref=e2]: Test file content`,
+    snapshot: `- generic [active] [ref=e1]: Test file content`,
   });
 });
 
