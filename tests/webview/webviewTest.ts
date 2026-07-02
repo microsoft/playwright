@@ -105,7 +105,11 @@ function clearMobileSafariState(udid: string): void {
 }
 
 async function resetMobileSafari(udid: string): Promise<void> {
-  runSimctl(['terminate', udid, 'com.apple.mobilesafari']);
+  try {
+    runSimctl(['terminate', udid, 'com.apple.mobilesafari']);
+  } catch (error) {
+    console.error(`[webview] failed to \`simctl terminate\`: ${(error as Error).message}`);
+  }
   // Let the proxy drop the dead tabs before wiping state and relaunching.
   const drained = Date.now() + 30000;
   while (Date.now() < drained && (await listTabs()).length > 0)
