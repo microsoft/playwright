@@ -20,3 +20,13 @@ export type Rect = Size & Point;
 export type Quad = [ Point, Point, Point, Point ];
 export type NameValue = { name: string, value: string };
 export type HeadersArray = NameValue[];
+
+export type DeviceDescriptor = {
+  userAgent: string,
+  viewport: Size,
+  deviceScaleFactor: number,
+  isMobile: boolean,
+  hasTouch: boolean,
+  defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
+};
+export type Devices = { [name: string]: DeviceDescriptor };

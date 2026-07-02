@@ -51,7 +51,7 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from './channels';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@isomorphic/codegen/actions';
 
 interface RecorderEventSink {
   actionAdded?(page: Page, actionInContext: actions.ActionInContext, code: string): void;

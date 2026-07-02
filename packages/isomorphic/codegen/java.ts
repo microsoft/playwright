@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { asLocator } from '@isomorphic/locatorGenerators';
-import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { asLocator } from '../locatorGenerators';
+import { escapeWithQuotes } from '../stringUtils';
 import { toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 
-import type { BrowserContextOptions } from '../../..';
-import type * as types from '../types';
+import type { BrowserContextOptions } from 'playwright-core';
+import type * as types from './types';
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type * as actions from '@recorder/actions';
+import type * as actions from './actions';
 
 type JavaLanguageMode = 'library' | 'junit';
 

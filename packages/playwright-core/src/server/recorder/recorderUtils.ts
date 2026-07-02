@@ -22,7 +22,7 @@ import { Frame } from '../frames';
 
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@isomorphic/codegen/actions';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Progress } from '../progress';
 

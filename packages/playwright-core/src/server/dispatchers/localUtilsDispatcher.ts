@@ -16,12 +16,12 @@
 
 import net from 'net';
 import { resolveGlobToRegexPattern } from '@isomorphic/urlMatch';
+import { deviceDescriptors as descriptors }  from '@isomorphic/deviceDescriptors';
 import { fetchData } from '../utils';
 import { getUserAgent } from '../userAgent';
 import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../instrumentation';
 import * as localUtils from '../localUtils';
-import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { PipeTransport } from '../pipeTransport';
 import { Progress } from '../progress';

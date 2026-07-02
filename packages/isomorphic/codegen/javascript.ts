@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { asLocator } from '@isomorphic/locatorGenerators';
-import { escapeWithQuotes, formatObject, formatObjectOrVoid } from '@isomorphic/stringUtils';
+import { asLocator } from '../locatorGenerators';
+import { escapeWithQuotes, formatObject, formatObjectOrVoid } from '../stringUtils';
 import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type { BrowserContextOptions } from '../../..';
-import type * as actions from '@recorder/actions';
+import type { BrowserContextOptions } from 'playwright-core';
+import type * as actions from './actions';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;

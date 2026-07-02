@@ -17,7 +17,7 @@
 import { test, expect } from './inspectorTest';
 
 import type { Page } from '@playwright/test';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@isomorphic/codegen/actions';
 
 class RecorderLog {
   actions: (actions.ActionInContext & { code: string })[] = [];

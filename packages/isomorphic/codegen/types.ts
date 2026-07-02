@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions, LaunchOptions } from '../../..';
-import type * as actions from '@recorder/actions';
-import type { Language } from '@isomorphic/locatorGenerators';
+import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
+import type * as actions from './actions';
+import type { Language } from '../locatorGenerators';
+import type { Point } from '../types';
 export type { Language };
+
+export type SmartKeyboardModifier = 'Alt' | 'Control' | 'Meta' | 'Shift' | 'ControlOrMeta';
+
+export type MouseClickOptions = {
+  modifiers?: SmartKeyboardModifier[];
+  position?: Point;
+  delay?: number;
+  button?: 'left' | 'right' | 'middle';
+  clickCount?: number;
+};
 
 export type LanguageGeneratorOptions = {
   browserName: string;

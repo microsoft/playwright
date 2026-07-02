@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { asLocator } from '@isomorphic/locatorGenerators';
+import { asLocator } from '../locatorGenerators';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type * as actions from '@recorder/actions';
+import type * as actions from './actions';
 
 export class JsonlLanguageGenerator implements LanguageGenerator {
   id = 'jsonl';

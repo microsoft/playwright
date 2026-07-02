@@ -19,21 +19,21 @@ import path from 'path';
 
 import mime from 'mime';
 import { isUnderTest } from '@utils/debug';
+import { languageSet } from '@isomorphic/codegen/languages';
+import { generateCode } from '@isomorphic/codegen/language';
 import { libPath } from '../../package';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
 import { nullProgress, ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
-import { languageSet } from '../codegen/languages';
 import { collapseActions, shouldMergeAction } from './recorderUtils';
-import { generateCode } from '../codegen/language';
 import { Recorder, RecorderEvent } from '../recorder';
 import { BrowserContext } from '../browserContext';
 
 import type { Page } from '../page';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@isomorphic/codegen/actions';
 import type { CallLog, ElementInfo, Mode, RecorderBackend, RecorderFrontend, Source } from '@recorder/recorderTypes';
-import type { Language, LanguageGeneratorOptions } from '../codegen/types';
+import type { Language, LanguageGeneratorOptions } from '@isomorphic/codegen/types';
 import type * as channels from '../channels';
 import type { Progress } from '../progress';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
