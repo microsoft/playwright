@@ -70,6 +70,30 @@ test('browser_find by regex', async ({ client, server }) => {
   });
 });
 
+test('browser_find regex is case-sensitive by default', async ({ client, server }) => {
+  server.setContent('/', listPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  expect(await client.callTool({
+    name: 'browser_find',
+    arguments: { regex: 'apples' },
+  })).toHaveResponse({
+    result: `No matches found for /apples/.`,
+  });
+});
+
+test('browser_find regex honors /i flag', async ({ client, server }) => {
+  server.setContent('/', listPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  expect(await client.callTool({
+    name: 'browser_find',
+    arguments: { regex: '/apples/i' },
+  })).toHaveResponse({
+    result: expect.stringContaining(`Found 1 match for /apples/i:`),
+  });
+});
+
 test('browser_find reports no matches', async ({ client, server }) => {
   server.setContent('/', listPage, 'text/html');
   await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });

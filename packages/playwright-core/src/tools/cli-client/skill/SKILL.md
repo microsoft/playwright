@@ -50,6 +50,8 @@ playwright-cli snapshot
 # search the snapshot for text or a regexp, returns matching nodes with surrounding context
 playwright-cli find "Sign in"
 playwright-cli find --regex "Sign (in|up)"
+# wrap the regexp in slashes to add flags, e.g. /i for case-insensitive
+playwright-cli find --regex "/sign (in|up)/i"
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
 # get element id, class, or any attribute not visible in the snapshot

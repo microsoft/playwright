@@ -16,8 +16,6 @@
 
 import * as z from 'zod';
 
-import { isRegexString } from '@isomorphic/rtti';
-
 import { defineTabTool } from './tool';
 
 // Number of context lines to show around each match, like `grep -C`.
@@ -31,7 +29,7 @@ const find = defineTabTool({
     description: 'Search the accessibility snapshot of the current page for text or a regular expression. Returns matching snapshot nodes with a few lines of surrounding context (like search snippets), which is cheaper than capturing the whole snapshot when you only need to locate an element and its ref.',
     inputSchema: z.object({
       text: z.string().optional().describe('Plain text to search for in the page snapshot (case-insensitive substring match). Provide either text or regex, not both.'),
-      regex: z.string().optional().refine(v => !v || isRegexString(v), { message: 'Invalid regular expression' }).describe('Regular expression to search for in the page snapshot. Provide either text or regex, not both.'),
+      regex: z.string().optional().refine(v => !v || isValidRegex(v), { message: 'Invalid regular expression' }).describe('Regular expression to search for in the page snapshot. Matching is case-sensitive by default; wrap the pattern in slashes to add flags, e.g. "/error/i" for case-insensitive. Provide either text or regex, not both.'),
     }),
     type: 'readOnly',
   },
@@ -46,8 +44,20 @@ const find = defineTabTool({
       return;
     }
 
-    const query = params.regex ? `/${params.regex}/` : `"${params.text}"`;
-    const matches = params.regex ? regexMatcher(params.regex) : textMatcher(params.text!);
+    let query: string;
+    let matches: (line: string) => boolean;
+    if (params.regex) {
+      const re = compileRegex(params.regex);
+      query = String(re);
+      matches = line => {
+        re.lastIndex = 0;
+        return re.test(line);
+      };
+    } else {
+      query = `"${params.text}"`;
+      const needle = params.text!.toLowerCase();
+      matches = line => line.toLowerCase().includes(needle);
+    }
 
     const snapshot = await tab.page.ariaSnapshot({ mode: 'ai' });
     const lines = snapshot.split('\n');
@@ -80,17 +90,23 @@ const find = defineTabTool({
   },
 });
 
-function textMatcher(text: string): (line: string) => boolean {
-  const needle = text.toLowerCase();
-  return line => line.toLowerCase().includes(needle);
+// Accept either a bare pattern or a `/pattern/flags` literal, mirroring the
+// test runner's forceRegExp. Matching is line-oriented, so the global flag is
+// dropped: it only makes `.test()` stateful without changing which lines match.
+function compileRegex(source: string): RegExp {
+  const literal = /^\/(.*)\/([a-z]*)$/.exec(source);
+  const pattern = literal ? literal[1] : source;
+  const flags = literal ? literal[2].replace(/g/g, '') : '';
+  return new RegExp(pattern, flags);
 }
 
-function regexMatcher(source: string): (line: string) => boolean {
-  const re = new RegExp(source);
-  return line => {
-    re.lastIndex = 0;
-    return re.test(line);
-  };
+function isValidRegex(source: string): boolean {
+  try {
+    compileRegex(source);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export default [

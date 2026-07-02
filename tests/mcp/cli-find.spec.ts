@@ -43,6 +43,14 @@ test('find by regex', async ({ cli, server }) => {
   expect(output).toContain('Found 2 matches for /Bananas|Cherries/:');
 });
 
+test('find by regex with /i flag', async ({ cli, server }) => {
+  server.setContent('/', listPage, 'text/html');
+  await cli('open', server.PREFIX);
+
+  const { output } = await cli('find', '--regex=/apples/i');
+  expect(output).toContain('Found 1 match for /apples/i:');
+});
+
 test('find reports no matches', async ({ cli, server }) => {
   server.setContent('/', listPage, 'text/html');
   await cli('open', server.PREFIX);
