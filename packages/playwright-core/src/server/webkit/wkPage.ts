@@ -878,7 +878,9 @@ export class WKPage implements PageDelegate {
     const buffer = Buffer.from(result.dataURL.substring(result.dataURL.indexOf(',') + 1), 'base64');
     if (recodePngToWebp) {
       const png = PNG.sync.read(buffer);
-      return encodeWebp({ width: png.width, height: png.height, data: png.data }, { quality: quality ?? 80 });
+      const image = { width: png.width, height: png.height, data: png.data };
+      // Match the native WebKit encoder: webp quality 100 (or omitted) is lossless.
+      return (quality === undefined || quality >= 100) ? encodeWebp(image, { lossless: true }) : encodeWebp(image, { quality });
     }
     return buffer;
   }
