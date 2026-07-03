@@ -48,8 +48,8 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
-    - uses: actions/setup-node@v5
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: lts/*
     - name: Install dependencies
@@ -94,7 +94,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
@@ -126,7 +126,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
@@ -151,7 +151,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Setup dotnet
       uses: actions/setup-dotnet@v5
       with:

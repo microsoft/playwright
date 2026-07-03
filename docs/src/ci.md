@@ -82,7 +82,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: lts/*
@@ -117,7 +117,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
@@ -149,7 +149,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
@@ -174,7 +174,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Setup dotnet
       uses: actions/setup-dotnet@v5
       with:
@@ -211,7 +211,7 @@ jobs:
       image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
@@ -236,7 +236,7 @@ jobs:
       image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -265,7 +265,7 @@ jobs:
       image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
@@ -291,7 +291,7 @@ jobs:
       image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
       options: --user 1001
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Setup dotnet
         uses: actions/setup-dotnet@v5
         with:
@@ -316,7 +316,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: lts/*
@@ -340,7 +340,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       uses: actions/setup-python@v6
       with:
         python-version: '3.13'
@@ -367,7 +367,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-java@v5
       with:
         distribution: 'temurin'
@@ -393,7 +393,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Setup dotnet
       uses: actions/setup-dotnet@v5
       with:
@@ -427,7 +427,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         # Force a non-shallow checkout, so that we can reference $GITHUB_BASE_REF.
         # See https://github.com/actions/checkout for more details.
@@ -971,7 +971,7 @@ To run Playwright tests on Google Cloud Build, use our public Docker image ([see
 ```yml
 steps:
 - name: mcr.microsoft.com/playwright:v%%VERSION%%-noble
-  script: 
+  script:
   ...
   env:
   - 'CI=true'
