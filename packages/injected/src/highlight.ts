@@ -318,8 +318,10 @@ export class Highlight {
     this._renderedEntries = [];
   }
 
-  maskElements(elements: Element[], color: string) {
-    this.updateHighlight(elements.map(element => ({ element, color })));
+  addMaskedElements(elements: Element[], color: string) {
+    const existingEntries = this._renderedEntries.map(e => ({ element: e.targetElement, color: e.color }));
+    const newEntries = elements.map(element => ({ element, color }));
+    this.updateHighlight([...existingEntries, ...newEntries]);
   }
 
   updateHighlight(entries: HighlightEntry[]) {

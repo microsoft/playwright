@@ -47,7 +47,6 @@ import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } fro
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type { RegisteredListener } from '@utils/eventsHelper';
-import type { ParsedSelector } from '@isomorphic/selectorParser';
 import type * as channels from './channels';
 
 type ContextData = {
@@ -928,14 +927,6 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result;
   }
 
-  async maskSelectors(selectors: ParsedSelector[], color: string): Promise<void> {
-    const context = await this.utilityContext();
-    const injectedScript = await context.injectedScript();
-    await injectedScript.evaluate((injected, { parsed, color }) => {
-      injected.maskSelectors(parsed, color);
-    }, { parsed: selectors, color: color });
-  }
-
   async querySelectorAll(progress: Progress, selector: string): Promise<dom.ElementHandle<Element>[]> {
     return progress.race(this.selectors.queryAll(selector));
   }
@@ -1402,11 +1393,9 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async hideHighlight() {
     return this.raceAgainstEvaluationStallingEvents(async () => {
-      const context = await this.utilityContext();
-      const injectedScript = await context.injectedScript();
-      return await injectedScript.evaluate(injected => {
-        return injected.hideHighlight();
-      });
+      const context = this._contextData.get('utility')?.context;
+      const injectedScript = await context?.injectedScript();
+      await injectedScript?.evaluate(injected => injected.hideHighlight());
     });
   }
 

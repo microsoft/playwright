@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { MultiMap } from '@isomorphic/multimap';
 import { assert } from '@isomorphic/assert';
 import { helper } from './helper';
 
@@ -25,7 +24,6 @@ import type { Page } from './page';
 import type { Progress } from './progress';
 import type * as types from './types';
 import type { Rect } from '@isomorphic/types';
-import type { ParsedSelector } from '@isomorphic/selectorParser';
 
 
 declare global {
@@ -275,21 +273,19 @@ export class Screenshotter {
     if (!options.mask || !options.mask.length)
       return () => Promise.resolve();
 
-    const framesToParsedSelectors: MultiMap<Frame, ParsedSelector> = new MultiMap();
-    await progress.race(Promise.all((options.mask || []).map(async ({ frame, selector }) => {
-      const pair = await frame.selectors.resolveFrameForSelector(selector);
-      if (pair)
-        framesToParsedSelectors.set(pair.frame, pair.info.parsed);
-    })));
-
-    const frames = [...framesToParsedSelectors.keys()];
-    const cleanup = async () => {
-      await Promise.all(frames.map(frame => frame.hideHighlight()));
-    };
-
+    const cleanup = () => this._page.hideHighlight();
     try {
-      const promises = frames.map(frame => frame.maskSelectors(framesToParsedSelectors.get(frame), options.maskColor || '#F0F'));
-      await progress.race(Promise.all(promises));
+      await progress.race(this._page.hideHighlight());
+      await progress.race(Promise.all((options.mask || []).map(async ({ frame, selector }) => {
+        const resolved = await frame.selectors.resolveInjectedForSelector(selector, { strict: false });
+        if (!resolved)
+          return;
+        await resolved.injected.evaluate((injected, { info, color }) => {
+          const elements = injected.querySelectorAll(info.parsed, injected.document.documentElement);
+          if (elements.length)
+            injected.addMaskedElements(elements, color);
+        }, { info: resolved.info, color: options.maskColor || '#F0F' });
+      })));
       return cleanup;
     } catch (error) {
       cleanup().catch(() => {});

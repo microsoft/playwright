@@ -1303,20 +1303,9 @@ export class InjectedScript {
     return new Highlight(this);
   }
 
-  maskSelectors(selectors: ParsedSelector[], color: string) {
-    const highlight = this._createHighlight();
-    const elements = [];
-    for (const selector of selectors)
-      elements.push(this.querySelectorAll(selector, this.document.documentElement));
-    highlight.maskElements(elements.flat(), color);
-  }
-
-  private _createHighlight() {
-    if (this._highlight)
-      this.hideHighlight();
-    this._highlight = new Highlight(this);
-    this._highlight.install();
-    return this._highlight;
+  addMaskedElements(elements: Element[], color: string) {
+    const highlight = this._ensureHighlight();
+    highlight.addMaskedElements(elements, color);
   }
 
   private _ensureHighlight() {
