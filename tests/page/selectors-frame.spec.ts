@@ -122,17 +122,11 @@ it('$eval should throw for missing frame', async ({ page, server }) => {
   }
 });
 
-it('$$eval should throw for missing frame', async ({ page, server }) => {
+it('$$eval should not throw for missing frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  {
-    const error = await page.$$eval('iframe >> internal:control=enter-frame >> canvas', e => 1).catch(e => e);
-    expect(error.message).toContain('page.$$eval: Failed to find frame for selector');
-  }
-  {
-    const body = await page.$('body');
-    const error = await body.$$eval('iframe >> internal:control=enter-frame >> canvas', e => 1).catch(e => e);
-    expect(error.message).toContain('Failed to find frame for selector');
-  }
+  expect(await page.$$eval('iframe >> internal:control=enter-frame >> canvas', e => e.length)).toBe(0);
+  const body = await page.$('body');
+  expect(await body.$$eval('iframe >> internal:control=enter-frame >> canvas', e => e.length)).toBe(0);
 });
 
 it('should work for $ and $$ (handle)', async ({ page, server }) => {
