@@ -1,9 +1,9 @@
 [*]
 @isomorphic/**
+@protocol/**
 @utils/**
 ../generated/
 ../package.ts
-../protocol/
 ./
 ./har/
 ./recorder/

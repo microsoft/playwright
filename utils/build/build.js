@@ -590,6 +590,8 @@ for (const pkg of workspace.packages()) {
     filePath('packages/playwright-client/src'),
     filePath('packages/playwright-core/src/client'),
     filePath('packages/isomorphic'),
+    filePath('packages/utils'),
+    filePath('packages/protocol/src'),
   ]));
 }
 
@@ -663,7 +665,7 @@ steps.push(new EsbuildStep({
     setup: build => build.onResolve({ filter: /utilsBundle/ },
         () => ({ path: './utilsBundle', external: true })),
   }, dynamicImportToRequirePlugin],
-}, [playwrightCoreSrc]));
+}, [playwrightCoreSrc, filePath('packages/protocol/src')]));
 
 function assertCoreBundleHasNoNodeModules() {
   const bundlePath = filePath('packages/playwright-core/lib/coreBundle.js');

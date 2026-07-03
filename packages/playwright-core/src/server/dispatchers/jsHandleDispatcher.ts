@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+import { parseSerializedValue, serializeValue } from '@protocol/serializers';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
 
 import type * as js from '../javascript';
 import type { ElectronApplicationDispatcher } from './electronDispatcher';

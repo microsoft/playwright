@@ -19,6 +19,7 @@ import { rewriteErrorMessage } from '@utils/stackTrace';
 import { isUnderTest } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
 import { emptyZone } from '@utils/zones';
+import { ValidationError, findValidator, maybeFindValidator } from '@protocol/validator';
 import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
@@ -46,10 +47,9 @@ import { Stream } from './stream';
 import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
-import { ValidationError, findValidator, maybeFindValidator } from '../protocol/validator';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
-import type { ValidatorContext } from '../protocol/validator';
+import type { ValidatorContext } from '@protocol/validator';
 import type * as channels from './channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {

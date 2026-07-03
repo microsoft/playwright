@@ -460,7 +460,7 @@ export default [
   {
     files: [
       "packages/playwright-core/src/client/**/*.ts",
-      "packages/playwright-core/src/protocol/**/*.ts",
+      "packages/protocol/src/**/*.ts",
     ],
     languageOptions: languageOptionsWithTsConfig,
     rules: {

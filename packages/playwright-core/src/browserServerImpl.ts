@@ -20,10 +20,10 @@ import { createGuid } from '@utils/crypto';
 import { isUnderTest } from '@utils/debug';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT } from '@isomorphic/time';
+import * as validatorPrimitives from '@protocol/validatorPrimitives';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { createPlaywright } from './server/playwright';
-import * as validatorPrimitives from './protocol/validatorPrimitives';
 import { ProgressController } from './server/progress';
 
 import type { BrowserServer, BrowserServerLauncher } from './client/browserType';

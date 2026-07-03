@@ -15,7 +15,7 @@
  */
 
 import { isError } from '@isomorphic/rtti';
-import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+import { parseSerializedValue, serializeValue } from '@protocol/serializers';
 
 import type { SerializedError } from './channels';
 

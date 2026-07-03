@@ -22,7 +22,7 @@ import { isUnderTest } from '@utils/debug';
 import { assert } from '@isomorphic/assert';
 import { monotonicTime } from '@isomorphic/time';
 import { rewriteErrorMessage } from '@utils/stackTrace';
-import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '../../protocol/validator';
+import { ValidationError, createMetadataValidator, createWaitInfoValidator, findValidator, maybeFindValidator } from '@protocol/validator';
 import { AbortError, TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
@@ -32,7 +32,7 @@ import { Progress, ProgressController } from '../progress';
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 import type { RegisteredListener } from '@utils/eventsHelper';
-import type { ValidatorContext } from '../../protocol/validator';
+import type { ValidatorContext } from '@protocol/validator';
 import type * as channels from '../channels';
 
 const metadataValidator = createMetadataValidator();

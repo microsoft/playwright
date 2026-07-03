@@ -18,10 +18,10 @@ import EventEmitter from 'events';
 
 import * as socks from '@utils/socksProxy';
 import { isUnderTest } from '@utils/debug';
-import { ValidationError, findValidator } from '../protocol/validator';
+import { ValidationError, findValidator } from '@protocol/validator';
 
 import type { WebSocketTransport } from './transport';
-import type { ValidatorContext } from '../protocol/validator';
+import type { ValidatorContext } from '@protocol/validator';
 import type * as channels from '../client/channels'; // this file lives in server/, but since it runs via localUtils, client channels is still correct.
 
 export class SocksInterceptor {

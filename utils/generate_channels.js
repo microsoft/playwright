@@ -464,5 +464,5 @@ writeFile(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'structs.d.t
 writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'client', 'channels.d.ts'), client_channels_ts.join('\n') + '\n');
 writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'server', 'channels.d.ts'), server_channels_ts.join('\n') + '\n');
 writeFile(path.join(__dirname, '..', 'packages', 'isomorphic', 'protocolMetainfo.ts'), metainfoContent);
-writeFile(path.join(__dirname, '..', 'packages', 'playwright-core', 'src', 'protocol', 'validator.ts'), validatorContent);
+writeFile(path.join(__dirname, '..', 'packages', 'protocol', 'src', 'validator.ts'), validatorContent);
 process.exit(hasChanges ? 1 : 0);

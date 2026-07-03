@@ -29,6 +29,7 @@ const packages = new Map();
 packages.set('web', packagesDir + '/web/src/');
 packages.set('injected', packagesDir + '/injected/src/');
 packages.set('isomorphic', packagesDir + '/isomorphic/');
+packages.set('protocol', packagesDir + '/protocol/src/');
 packages.set('utils', packagesDir + '/utils/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
 

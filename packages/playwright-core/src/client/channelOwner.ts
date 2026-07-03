@@ -19,14 +19,14 @@ import { showInternalStackFrames, stringifyStackFrames } from '@utils/stackTrace
 import { isUnderTest } from '@utils/debug';
 import { debugLogger } from '@utils/debugLogger';
 import { currentZone } from '@utils/zones';
+import { ValidationError, maybeFindValidator } from '@protocol/validator';
 import { EventEmitter } from './eventEmitter';
-import { ValidationError, maybeFindValidator  } from '../protocol/validator';
 import { captureLibraryStackTrace } from './clientStackTrace';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
-import type { ValidatorContext } from '../protocol/validator';
+import type { ValidatorContext } from '@protocol/validator';
 import type * as channels from './channels';
 
 type Listener = (...args: any[]) => void;
