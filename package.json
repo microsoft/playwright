@@ -140,7 +140,6 @@
     "jest-message-util": "30.4.1",
     "jpeg-js": "0.4.4",
     "json5": "2.2.3",
-    "license-checker": "25.0.1",
     "mime": "4.1.0",
     "minimatch": "10.2.5",
     "open": "11.0.0",

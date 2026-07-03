@@ -18,27 +18,78 @@
 
 const fs = require('fs');
 const path = require('path');
-const checker = require('license-checker');
 
 const ROOT = path.join(__dirname, '..', '..');
 const BUILTIN_SET = new Set(require('module').builtinModules);
 
-/** @type {Record<string, { licenseText?: string, repository?: string, licenses?: string }> | null} */
-let _licenseMap = null;
+/** @type {Map<string, { license: string, repository?: string }>} */
+const _licenseCache = new Map();
 
-/** Memoized license map keyed by "name@version". Lazily populated on
- *  first call; shared across all bundles in a single build run. */
-async function getLicenseMap() {
-  if (_licenseMap)
-    return _licenseMap;
-  _licenseMap = await new Promise((resolve, reject) => {
-    checker.init({
-      start: ROOT,
-      production: false,
-      customPath: { licenseText: '' },
-    }, (err, packages) => err ? reject(err) : resolve(packages));
-  });
-  return _licenseMap;
+/**
+ * @param {*} pkg
+ * @returns {string}
+ */
+function normalizeRepositoryUrlToGitHub(pkg) {
+  let url = typeof pkg.repository === 'object' ? pkg.repository.url : pkg.repository;
+  if (typeof url !== 'string')
+    throw new Error(`Malformed repository for ${pkg.name}@${pkg.version}: ${JSON.stringify(pkg.repository)}`);
+  url = url.replace(/^git@github\.com:/, 'https://github.com/');
+  url = url.replace(/^git:\/\/git@github\.com/, 'https://github.com');
+  url = url.replace(/^git\+ssh:\/\/git@github\.com/, 'https://github.com');
+  url = url.replace(/^git\+https:\/\//, 'https://');
+  url = url.replace(/^http:\/\//, 'https://');
+  url = url.replace(/^git:\/\//, 'https://');
+  url = url.replace(/^github:/, 'https://github.com/');
+  url = url.replace(/\.git$/, '');
+  if (url.match(/^[\w-.]+\/[\w-.]+$/))
+    url = 'https://github.com/' + url;
+  if (!url.match(/^https:\/\/github\.com\/([\w-.]+\/)+[\w-.]+$/))
+    throw new Error(`Malformed repository for ${pkg.name}@${pkg.version}: ${JSON.stringify(pkg.repository)}`);
+  return url;
+}
+
+/**
+ * @param {string} dir
+ * @returns {string | undefined}
+ */
+function readLicenseText(dir) {
+  const files = fs.readdirSync(dir, { withFileTypes: true });
+  const patterns = [/^LICENSE$/i, /^LICENSE-\w+$/i];
+  for (const pattern of patterns) {
+    for (const file of files) {
+      if (!file.isFile())
+        continue;
+      if (pattern.test(path.basename(file.name, path.extname(file.name))))
+        return fs.readFileSync(path.join(dir, file.name), 'utf8').trim();
+    }
+  }
+  // Note: this list ensures we do not accidentally miss a license for some package.
+  const knownPackagesWithoutLicense = ['proxy-agent-negotiate'];
+  if (!knownPackagesWithoutLicense.some(pkg => dir.endsWith(path.sep + pkg)))
+    throw new Error(`Cannot locate license file for ${dir}`);
+}
+
+/**
+ * @param {string} dir
+ * @returns {{ license: string, repository?: string }}
+ */
+function licenseInfoForDir(dir) {
+  let info = _licenseCache.get(dir);
+  if (!info) {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
+    let license = readLicenseText(dir);
+    if (!license) {
+      if (!pkg.license)
+        throw new Error(`Cannot determine license for ${pkg.name}@${pkg.version} at ${dir}`);
+      license = `(no license text found; declared licenses: ${pkg.license})`;
+    }
+    info = {
+      repository: normalizeRepositoryUrlToGitHub(pkg),
+      license,
+    };
+    _licenseCache.set(dir, info);
+  }
+  return info;
 }
 
 /** Extract the owning npm package directory from an input path like
@@ -72,10 +123,10 @@ function packageKeyForDir(pkgDir) {
   }
 }
 
-/** Given one bundle's metafile output, return the deduped sorted list of
- *  "name@version" strings for every inlined npm package. */
+/** Given one bundle's metafile output, return the deduped sorted list of inlined
+ *  npm packages as { key: "name@version", dir } entries. */
 function inlinedPackages(outInfo) {
-  const keys = new Set();
+  const byKey = new Map();
   for (const inputPath of Object.keys(outInfo.inputs)) {
     if (inputPath.startsWith('(disabled):'))
       continue;
@@ -83,10 +134,10 @@ function inlinedPackages(outInfo) {
     if (!dir)
       continue;
     const key = packageKeyForDir(dir);
-    if (key)
-      keys.add(key);
+    if (key && !byKey.has(key))
+      byKey.set(key, dir);
   }
-  return [...keys].sort();
+  return [...byKey.keys()].sort().map(key => ({ key, dir: byKey.get(key) }));
 }
 
 function fmtKB(bytes) {
@@ -138,12 +189,11 @@ function writeBundleReport(result, outFile, outInfo) {
 
 /** Write the .js.LICENSE sidecar. No-op for bundles with no inlined
  *  third-party packages. */
-async function writeBundleLicenses(outFile, outInfo) {
-  const keys = inlinedPackages(outInfo);
-  if (keys.length === 0)
+function writeBundleLicenses(outFile, outInfo) {
+  const packages = inlinedPackages(outInfo);
+  if (packages.length === 0)
     return 0;
 
-  const licenseMap = await getLicenseMap();
   const lines = [];
   lines.push(`${path.relative(ROOT, outFile)}`);
   lines.push('');
@@ -151,39 +201,39 @@ async function writeBundleLicenses(outFile, outInfo) {
   lines.push('');
   lines.push('The following npm packages are inlined into this bundle.');
   lines.push('');
-  for (const key of keys) {
-    const info = licenseMap[key];
-    const repo = info && info.repository ? info.repository : '';
+  for (const { key, dir } of packages) {
+    const info = licenseInfoForDir(dir);
+    const repo = info.repository ? info.repository : '';
     lines.push(`- ${key}${repo ? ` (${repo})` : ''}`);
   }
-  for (const key of keys) {
-    const info = licenseMap[key];
+  for (const { key, dir } of packages) {
+    const info = licenseInfoForDir(dir);
     lines.push('');
     lines.push(`%% ${key} NOTICES AND INFORMATION BEGIN HERE`);
     lines.push('=========================================');
-    lines.push((info && info.licenseText) || `(no license text found; declared licenses: ${(info && info.licenses) || 'unknown'})`);
+    lines.push(info.license);
     lines.push('=========================================');
     lines.push(`END OF ${key} NOTICES AND INFORMATION`);
   }
   lines.push('');
   lines.push('SUMMARY');
   lines.push('=========================================');
-  lines.push(`Total Packages: ${keys.length}`);
+  lines.push(`Total Packages: ${packages.length}`);
   lines.push('=========================================');
 
   fs.writeFileSync(outFile + '.LICENSE', lines.join('\n'));
-  return keys.length;
+  return packages.length;
 }
 
 /** Top-level entry called by EsbuildStep after each bundled build. */
-async function writeReports(result) {
+function writeReports(result) {
   if (!result.metafile)
     return;
   for (const [outFile, outInfo] of Object.entries(result.metafile.outputs)) {
     if (outFile.endsWith('.map'))
       continue;
     const { inputCount, externalCount } = writeBundleReport(result, outFile, outInfo);
-    const licCount = await writeBundleLicenses(outFile, outInfo);
+    const licCount = writeBundleLicenses(outFile, outInfo);
     const rel = path.relative(ROOT, outFile);
     const licFragment = licCount ? `, ${licCount} licenses` : '';
     console.log(`     bundle: ${rel}  (${inputCount} files, ${externalCount} external${licFragment}, ${fmtKB(outInfo.bytes)})`);
