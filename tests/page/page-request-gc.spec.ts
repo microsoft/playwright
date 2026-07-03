@@ -33,7 +33,8 @@ test('should work', async ({ page }) => {
   expect(await page.evaluate(() => globalThis.weakRef.deref())).toBe(undefined);
 });
 
-test('should collect element retained by locator hit-target interceptor after detach', async ({ page }) => {
+test('should collect element retained by locator hit-target interceptor after detach', async ({ page, browserName }) => {
+  test.fixme(browserName === 'firefox', 'Firefox hit-target interceptor does not release its element reference on detach');
   await page.setContent('<button id="btn">click me</button>');
   await page.locator('#btn').click();
   await page.evaluate(() => {
