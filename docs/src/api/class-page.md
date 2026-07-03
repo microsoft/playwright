@@ -4648,6 +4648,24 @@ Will throw an error if the page is closed before the download event is fired.
 * langs: python
 - returns: <[EventContextManager]<[Download]>>
 
+**Usage**
+
+```python async
+async with page.expect_download() as download_info:
+    await page.get_by_text("Download").click()
+
+download = await download_info.value
+print(download.url)
+```
+
+```python sync
+with page.expect_download() as download_info:
+    page.get_by_text("Download").click()
+
+download = download_info.value
+print(download.url)
+```
+
 ### param: Page.waitForDownload.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
