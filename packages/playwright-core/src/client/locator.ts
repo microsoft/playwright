@@ -400,7 +400,6 @@ export class Locator implements api.Locator {
       isFunction: typeof pageFunction === 'function',
       arg: serializeArgument(arg),
       timeout: this._frame._timeout(options),
-      pollingInterval: 100,
     }, options?.signal);
   }
 
