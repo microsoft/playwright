@@ -13,6 +13,10 @@ jobs:
       contents: read    # This is required for actions/checkout to succeed
     if: ${{ github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.pr.outputs.number }}
+      has_failures: ${{ steps.failures.outputs.has_failures }}
+      triage_allowed: ${{ steps.pr.outputs.triage_allowed }}
     env:
       MARKDOWN_OUTPUT_FILE: ${{ github.workspace }}/report.md
     steps:
@@ -36,6 +40,15 @@ jobs:
         NODE_OPTIONS: --max-old-space-size=8192
         WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
 
+    - name: Detect failures
+      id: failures
+      run: |
+        if [ -f "$MARKDOWN_OUTPUT_FILE" ] && grep -qE '\*\*[0-9]+ failed\*\*' "$MARKDOWN_OUTPUT_FILE"; then
+          echo "has_failures=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_failures=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Upload HTML report
       id: upload-report
       uses: actions/upload-artifact@v7
@@ -47,15 +60,24 @@ jobs:
     # The triggering workflow ran on a pull_request event, but workflow_run.pull_requests is
     # empty for PRs from forks, so resolve the number from the head ref instead. gh's head
     # filter wants "owner:branch" for forks but a bare branch for same-repo PRs.
-    - name: Resolve PR number
+    - name: Resolve PR number and triage allow-list
       if: ${{ github.event.workflow_run.event == 'pull_request' }}
       id: pr
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         HEAD_REF: ${{ github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch || format('{0}:{1}', github.event.workflow_run.head_repository.owner.login, github.event.workflow_run.head_branch) }}
       run: |
+        set -f
         NUMBER=$(gh pr view --repo "${{ github.repository }}" "$HEAD_REF" --json number --jq '.number' 2>/dev/null || true)
         echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+
+        AUTHOR=$(gh pr view --repo "${{ github.repository }}" "$HEAD_REF" --json author --jq '.author.login' 2>/dev/null || true)
+        ALLOWED="github-actions[bot] pavelfeldman yury-s dgozman Skn0tt dcrousso"
+        TRIAGE_ALLOWED=false
+        for a in $ALLOWED; do
+          if [ "$a" = "$AUTHOR" ]; then TRIAGE_ALLOWED=true; break; fi
+        done
+        echo "triage_allowed=$TRIAGE_ALLOWED" >> "$GITHUB_OUTPUT"
 
     - name: Post report comment to PR
       if: ${{ steps.pr.outputs.number }}
@@ -88,3 +110,98 @@ jobs:
             target_url: '${{ steps.upload-report.outputs.artifact-url }}',
             context: 'HTML Report (${{ github.event.workflow_run.name }})',
           });
+
+  triage:
+    needs: merge-reports
+    if: ${{ needs.merge-reports.outputs.has_failures == 'true' && needs.merge-reports.outputs.pr_number && needs.merge-reports.outputs.triage_allowed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      copilot-requests: write
+    outputs:
+      has_draft: ${{ steps.triage.outputs.has_draft }}
+      pr_number: ${{ needs.merge-reports.outputs.pr_number }}
+    env:
+      PR_NUMBER: ${{ needs.merge-reports.outputs.pr_number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Triage failures with Copilot CLI
+        id: triage
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p output
+          PROMPT=$(cat <<EOF
+          Come up with a verdict on the CI test failures on pull request #$PR_NUMBER of ${{ github.repository }}: are they likely caused by this PR? Follow the playwright-devops pr-ci-triage guide (.claude/skills/playwright-devops/pr-ci-triage.md) for the analysis.
+
+          Write your verdict to output/triage.md as a PR comment in the playwright-bot-voice (.claude/skills/playwright-bot-voice/SKILL.md): open with a short line introducing yourself as the Playwright bot, give the one-line verdict, and tuck the per-test breakdown into a collapsed <details>. Include a link to this agent run: \$WORKFLOW_URL.
+
+          Do not post anything yourself — a later workflow step posts output/triage.md.
+          EOF
+          )
+          copilot \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-ask-user \
+            --enable-all-github-mcp-tools \
+            --share=output/copilot-session.md \
+            --model claude-opus-4.8 \
+            --max-ai-credits 500 \
+            -p "$PROMPT"
+
+          if [ -s output/triage.md ]; then
+            echo "has_draft=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_draft=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add session transcript to job summary
+        if: ${{ always() }}
+        run: |
+          {
+            echo "## CI triage session transcript (PR #$PR_NUMBER)"
+            echo ''
+            cat "output/copilot-session.md" 2>/dev/null || echo "(no transcript)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload output
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-triage-${{ needs.merge-reports.outputs.pr_number }}
+          path: output/triage.md
+          if-no-files-found: warn
+
+  post:
+    needs: triage
+    if: needs.triage.outputs.has_draft == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download triage output
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-triage-${{ needs.triage.outputs.pr_number }}
+          path: output
+
+      - name: Post triage comment
+        run: |
+          printf '\n\n<!-- playwright-ci-triage -->\n' >> output/triage.md
+          gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file output/triage.md
+
