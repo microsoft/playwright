@@ -41,6 +41,26 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (isTypeScript) {
     plugins.push(
+        // Babel merges plugins and presets into a single traversal, running plain
+        // plugins before presets regardless of list order. Since TypeScript
+        // stripping is applied via `@babel/preset-typescript` (a preset), the
+        // class-features plugins below (decorators/class-properties/private-methods)
+        // otherwise see not-yet-stripped TS-only syntax, such as `declare` class
+        // fields, and throw. Strip those fields ourselves, before those plugins run.
+        // See https://github.com/microsoft/playwright/issues/38586
+        [
+          (): PluginObj => ({
+            name: 'strip-declare-class-fields',
+            visitor: {
+              Class(path) {
+                for (const member of path.get('body.body')) {
+                  if (member.isClassProperty() && member.node.declare)
+                    member.remove();
+                }
+              }
+            }
+          })
+        ],
         [require('@babel/plugin-proposal-decorators'), { version: '2023-05' }],
         [require('@babel/plugin-transform-class-properties')],
         [require('@babel/plugin-transform-class-static-block')],
