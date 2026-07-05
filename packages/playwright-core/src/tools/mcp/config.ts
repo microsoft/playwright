@@ -212,7 +212,7 @@ async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<
       browser.launchOptions.channel = 'chrome';
   }
 
-  if (browser.browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {
+  if (browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {
     if (process.platform === 'linux')
       browser.launchOptions.chromiumSandbox = browser.launchOptions.channel !== 'chromium' && browser.launchOptions.channel !== 'chrome-for-testing';
     else

@@ -107,6 +107,11 @@ test.describe('browserName and channel', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('sandbox', () => {
+  test('chromium sandbox enabled by default', async () => {
+    const config = await resolveCLIConfigForMCP({}, emptyEnv);
+    expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
+  });
+
   test('chromium sandbox enabled for chrome channel', async () => {
     const config = await resolveCLIConfigForMCP({ browser: 'chrome' }, emptyEnv);
     expect(config.browser.launchOptions.chromiumSandbox).toBe(true);
