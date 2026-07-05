@@ -59,9 +59,27 @@ export class BindingsController {
         });
       }
       const payload: BindingPayload = { name: bindingName, seq, serializedArgs };
-      (this._global as any)[this._globalBindingName](JSON.stringify(payload));
+      (this._global as any)[this._globalBindingName](this._stringifyPayload(payload));
       return promise;
     };
+  }
+
+  private _stringifyPayload(payload: BindingPayload): string {
+    // The page may define Array.prototype.toJSON/Object.prototype.toJSON (e.g. Prototype.js),
+    // which would corrupt JSON.stringify(payload) into something other than an object with
+    // a serializedArgs array. Temporarily remove them so our own payload serializes correctly.
+    const arrayToJSON = (Array.prototype as any).toJSON;
+    const objectToJSON = (Object.prototype as any).toJSON;
+    try {
+      delete (Array.prototype as any).toJSON;
+      delete (Object.prototype as any).toJSON;
+      return JSON.stringify(payload);
+    } finally {
+      if (arrayToJSON !== undefined)
+        (Array.prototype as any).toJSON = arrayToJSON;
+      if (objectToJSON !== undefined)
+        (Object.prototype as any).toJSON = objectToJSON;
+    }
   }
 
   removeBinding(bindingName: string) {

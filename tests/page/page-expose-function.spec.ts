@@ -235,12 +235,13 @@ it('should work with busted Array.prototype.map/push', async ({ page, server }) 
   expect(await page.evaluate('add(5, 6)')).toBe(11);
 });
 
-it('should fail with busted Array.prototype.toJSON', async ({ page }) => {
+it('should work with busted Array.prototype.toJSON', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41359' } }, async ({ page }) => {
   await page.evaluateHandle(() => (Array.prototype as any).toJSON = () => '"[]"');
 
   await page.exposeFunction('add', (a, b) => a + b);
-  await expect(() => page.evaluate(`add(5, 6)`)).rejects.toThrowError('serializedArgs is not an array. This can happen when Array.prototype.toJSON is defined incorrectly');
+  expect(await page.evaluate(`add(5, 6)`)).toBe(11);
 
+  // The page's own override must still be intact after the binding call.
   expect.soft(await page.evaluate(() => ([] as any).toJSON())).toBe('"[]"');
 });
 
