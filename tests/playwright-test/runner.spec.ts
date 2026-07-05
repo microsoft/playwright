@@ -847,6 +847,41 @@ test('should run last failed tests', async ({ runInlineTest }) => {
   expect(result2.failed).toBe(1);
 });
 
+test('should run last failed tests when the failing project is a dependency of another project', async ({ runInlineTest }) => {
+  const workspace = {
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        projects: [
+          { name: 'default', testIgnore: /setup/ },
+          { name: 'sequential', testMatch: /setup/, dependencies: ['default'] },
+        ],
+      });
+    `,
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async () => {});
+      test('fail', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+    'setup.spec.js': `
+      import { test } from '@playwright/test';
+      test('setup', async () => {});
+    `,
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(1);
+  expect(result1.failed).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  expect(result2.passed).toBe(0);
+  expect(result2.failed).toBe(1);
+  expect(result2.output).toContain('a.spec.js:4:11 › fail');
+});
+
 test('should run nothing with --last-failed when previous run had no failures', async ({ runInlineTest }) => {
   const workspace = {
     'a.spec.js': `
