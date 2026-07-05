@@ -530,8 +530,10 @@ class FrameSession {
         promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
       if (options.javaScriptEnabled === false)
         promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
-      if (options.userAgent || options.locale)
-        promises.push(this._updateUserAgent());
+      // Always sync userAgentMetadata (navigator.userAgentData), even without a custom
+      // userAgent/locale, so Client Hints correctly reflect the host platform instead of
+      // whatever Chromium's own internal computation reports (see #39568).
+      promises.push(this._updateUserAgent());
       if (options.locale)
         promises.push(emulateLocale(this._client, options.locale));
       if (options.timezoneId)
@@ -996,10 +998,14 @@ class FrameSession {
 
   async _updateUserAgent(): Promise<void> {
     const options = this._crPage._browserContext._options;
+    const browser = this._crPage._browserContext._browser;
+    // CDP rejects an empty userAgent when userAgentMetadata is provided, so fall back to the
+    // browser's own default UA when there is no custom one (still keeps Client Hints in sync).
+    const userAgent = options.userAgent || browser.userAgent();
     await this._client.send('Emulation.setUserAgentOverride', {
-      userAgent: options.userAgent || '',
+      userAgent,
       acceptLanguage: options.locale,
-      userAgentMetadata: calculateUserAgentMetadata(options),
+      userAgentMetadata: calculateUserAgentMetadata(options, browser._platform()),
     });
   }
 
@@ -1168,10 +1174,17 @@ async function emulateTimezone(session: CRSession, timezoneId: string) {
 }
 
 // Chromium reference: https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc;l=434;drc=70a6711e08e9f9e0d8e4c48e9ba5cab62eb010c2
-export function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
+export function calculateUserAgentMetadata(options: types.BrowserContextOptions, hostPlatform: 'mac' | 'linux' | 'win'): Protocol.Emulation.UserAgentMetadata {
   const ua = options.userAgent;
-  if (!ua)
-    return undefined;
+  if (!ua) {
+    // No custom user agent: still sync navigator.userAgentData.platform with the actual
+    // host platform, so it does not disagree with navigator.platform (see #39568).
+    switch (hostPlatform) {
+      case 'mac': return { mobile: false, model: '', architecture: 'x86', platform: 'macOS', platformVersion: '' };
+      case 'linux': return { mobile: false, model: '', architecture: 'x86', platform: 'Linux', platformVersion: '' };
+      default: return { mobile: false, model: '', architecture: 'x86', platform: 'Windows', platformVersion: '' };
+    }
+  }
   const metadata: Protocol.Emulation.UserAgentMetadata = {
     mobile: !!options.isMobile,
     model: '',

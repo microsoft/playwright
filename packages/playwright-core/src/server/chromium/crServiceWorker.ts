@@ -100,10 +100,11 @@ export class CRServiceWorker extends Worker {
 
   async updateUserAgent(): Promise<void> {
     const options = this.browserContext._options;
+    const userAgent = options.userAgent || this.browserContext._browser.userAgent();
     await this._session.send('Emulation.setUserAgentOverride', {
-      userAgent: options.userAgent || '',
+      userAgent,
       acceptLanguage: options.locale,
-      userAgentMetadata: calculateUserAgentMetadata(options),
+      userAgentMetadata: calculateUserAgentMetadata(options, this.browserContext._browser._platform()),
     }).catch(() => {});
   }
 

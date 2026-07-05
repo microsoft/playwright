@@ -141,4 +141,33 @@ it('should work for navigator.userAgentData and sec-ch-ua headers', async ({ pla
     );
     await context.close();
   }
+
+  {
+    // https://github.com/microsoft/playwright/issues/39568
+    const context = await browser.newContext({ userAgent: playwright.devices['Desktop Safari'].userAgent });
+    const page = await context.newPage();
+    const [request] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.goto(server.EMPTY_PAGE),
+    ]);
+    expect.soft(request.headers['sec-ch-ua-platform']).toBe(`"macOS"`);
+    expect.soft(await page.evaluate(() => (window.navigator as any).userAgentData.toJSON())).toEqual(
+        expect.objectContaining({ platform: 'macOS' })
+    );
+    await context.close();
+  }
+
+  {
+    const context = await browser.newContext(playwright.devices['iPhone 14']);
+    const page = await context.newPage();
+    const [request] = await Promise.all([
+      server.waitForRequest('/empty.html'),
+      page.goto(server.EMPTY_PAGE),
+    ]);
+    expect.soft(request.headers['sec-ch-ua-platform']).toBe(`"iOS"`);
+    expect.soft(await page.evaluate(() => (window.navigator as any).userAgentData.toJSON())).toEqual(
+        expect.objectContaining({ mobile: true, platform: 'iOS' })
+    );
+    await context.close();
+  }
 });
