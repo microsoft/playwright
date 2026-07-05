@@ -355,3 +355,31 @@ test('should report parallelIndex', async ({ runInlineTest }, testInfo) => {
   expect(result.report.suites[0].specs[1].tests[0].results[0].parallelIndex).toBe(1);
   expect(result.report.suites[0].specs[2].tests[0].results[0].parallelIndex).toBe(1);
 });
+
+test('should fail the run when JSON.stringify fails to serialize the report', async ({ runInlineTest }) => {
+  // Regression test for https://github.com/microsoft/playwright/issues/40983:
+  // a report that is too large for JSON.stringify() (RangeError: Invalid string
+  // length) used to be silently swallowed, exiting 0 with a missing/empty file.
+  const result = await runInlineTest({
+    'patch-reporter.js': `
+      class PatchReporter {
+        onEnd() {
+          const original = JSON.stringify;
+          JSON.stringify = (...args) => {
+            JSON.stringify = original;
+            throw new RangeError('Invalid string length');
+          };
+        }
+      }
+      module.exports = PatchReporter;
+    `,
+    'playwright.config.ts': `module.exports = { reporter: [['dot'], ['./patch-reporter.js'], ['json', { outputFile: 'report.json' }]] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passing', async () => {});
+    `,
+  }, { reporter: '' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Failed to generate JSON report');
+});

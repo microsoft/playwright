@@ -239,7 +239,16 @@ class JSONReporter implements ReporterV2 {
 }
 
 async function outputReport(report: JSONReport, resolvedOutputFile: string | undefined) {
-  const reportString = JSON.stringify(report, undefined, 2);
+  let reportString: string;
+  try {
+    reportString = JSON.stringify(report, undefined, 2);
+  } catch (e) {
+    // JSON.stringify() throws RangeError('Invalid string length') when the resulting
+    // string would exceed the JS engine's max string length (e.g. for very large merged
+    // reports). Surface this as a real, actionable error instead of silently producing
+    // a missing/empty report file - the caller (reporter/merge command) will fail the run.
+    throw new Error(`Failed to generate JSON report: the report is too large to serialize (${e instanceof Error ? e.message : String(e)}). Consider splitting the run into smaller shards or using a different reporter.`);
+  }
   if (resolvedOutputFile) {
     await fs.promises.mkdir(path.dirname(resolvedOutputFile), { recursive: true });
     await fs.promises.writeFile(resolvedOutputFile, reportString);
