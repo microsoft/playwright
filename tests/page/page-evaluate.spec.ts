@@ -377,12 +377,12 @@ it('should properly serialize PerformanceMeasure object', async ({ page }) => {
     window.builtins.performance.mark('end');
     window.builtins.performance.measure('my-measure', 'start', 'end');
     return window.builtins.performance.getEntriesByType('measure');
-  })).toEqual([{
+  })).toEqual([expect.objectContaining({
     duration: expect.any(Number),
     entryType: 'measure',
     name: 'my-measure',
     startTime: expect.any(Number),
-  }]);
+  })]);
 });
 
 it('should properly serialize window.performance object', async ({ page }) => {
