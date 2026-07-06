@@ -27,6 +27,7 @@ export type LaunchProcessOptions = {
   args?: string[],
   env?: NodeJS.ProcessEnv,
   shell?: boolean,
+  windowsHide?: boolean,
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -140,6 +141,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     cwd: options.cwd,
     shell: options.shell,
     stdio,
+    windowsHide: options.windowsHide,
   };
   const spawnedProcess = childProcess.spawn(options.command, options.args || [], spawnOptions);
 
@@ -233,7 +235,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       // Force kill the browser.
       try {
         if (process.platform === 'win32') {
-          const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F`, { shell: true });
+          const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F`, { shell: true, windowsHide: true });
           const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
           if (stdout)
             options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);

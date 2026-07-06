@@ -224,6 +224,7 @@ export abstract class BrowserType extends SdkObject {
       },
       stdio: 'pipe',
       tempDirectories: prepared.tempDirectories,
+      windowsHide: options.headless,
       attemptToGracefullyClose: async () => {
         if ((options as any).__testHookGracefullyClose)
           await (options as any).__testHookGracefullyClose();

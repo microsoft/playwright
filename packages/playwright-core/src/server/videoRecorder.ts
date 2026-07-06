@@ -172,6 +172,7 @@ class FfmpegVideoRecorder {
       stdio: 'stdin',
       log: (message: string) => debugLogger.log('browser', message),
       tempDirectories: [],
+      windowsHide: true,
       attemptToGracefullyClose: async () => {
         debugLogger.log('browser', 'Closing stdin...');
         launchedProcess.stdin!.end();
