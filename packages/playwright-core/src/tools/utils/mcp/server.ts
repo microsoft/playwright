@@ -196,7 +196,15 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
     const transport = new StdioServerTransport();
     // The SDK's StdioServerTransport doesn't detect peer disconnect — it never listens for stdin
     // end-of-stream. Wire it up so callTool requests can be cancelled when the client goes away.
-    process.stdin.on('end', () => void transport.close());
+    let transportClosed = false;
+    const closeTransport = () => {
+      if (transportClosed)
+        return;
+      transportClosed = true;
+      void transport.close();
+    };
+    process.stdin.on('end', closeTransport);
+    process.stdin.on('close', closeTransport);
     await connect(serverBackendFactory, transport, Promise.resolve(), false);
     return;
   }

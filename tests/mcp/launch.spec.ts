@@ -49,6 +49,27 @@ test('test reopen browser', async ({ startClient, server }) => {
   });
 });
 
+test('stdio client disconnect closes browser', async ({ startClient, server }) => {
+  const { client, stderr } = await startClient({
+    args: ['--isolated'],
+    env: {
+      DEBUG: 'pw:mcp:test',
+    },
+  });
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+  await client.close();
+
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create browser (isolated)': 1,
+    'create context': 1,
+    'close browser': 1,
+    'gracefully closing 1': 1,
+  });
+});
+
 test('executable path', async ({ startClient, server }) => {
   const { client } = await startClient({ args: [`--executable-path=bogus`] });
   const response = await client.callTool({
