@@ -451,8 +451,9 @@ it('Response.formData() should parse multipart/form-data in page context', async
   expect(result.fileContent).toBe('hello');
 });
 
-it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName }) => {
+it('should give a readable error when response.body() races with navigation', async ({ page, server, browserName, trace }) => {
   it.skip(browserName === 'firefox', 'Firefox keeps the response body available after navigating away, so it never throws');
+  it.skip(trace === 'on', 'Tracing fetches response bodies eagerly, so the body is already cached before navigation');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41512' });
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/title.html'),
