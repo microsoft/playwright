@@ -31,7 +31,7 @@ type TestUrls = {
   set_origin1_origin2_origin1: string;
 };
 
-const test = contextTest.extend<{ urls: TestUrls }>({
+const test = contextTest.extend<{ urls: TestUrls, webkitPartitions: boolean }>({
   urls: async ({ httpsServer }, run) => {
     const origin1 = httpsServer.PREFIX;
     const origin2 = httpsServer.CROSS_PROCESS_PREFIX;
@@ -46,6 +46,10 @@ const test = contextTest.extend<{ urls: TestUrls }>({
       set_origin2_origin1: origin2 + '/frame-set-cookie.html',
       set_origin1_origin2_origin1: origin1 + '/nested-frame-set-cookie.html',
     });
+  },
+
+  webkitPartitions: async ({ browserName, isMac, macVersion }, run) => {
+    await run(browserName === 'webkit' && isMac && macVersion >= 26);
   },
 });
 
@@ -196,7 +200,7 @@ test(`save/load third party non-partitioned cookies`, async ({ page, browserName
   });
 });
 
-async function runPartitionedTest(page: Page, httpsServer: TestServer, browserName: string, isMac: boolean, isBidi: boolean, urls: TestUrls) {
+async function runPartitionedTest(page: Page, httpsServer: TestServer, browserName: string, isMac: boolean, webkitPartitions: boolean, isBidi: boolean, urls: TestUrls) {
   addCommonCookieHandlers(httpsServer, urls);
   httpsServer.setRoute('/set-cookie.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -243,22 +247,22 @@ async function runPartitionedTest(page: Page, httpsServer: TestServer, browserNa
   await page.goto(urls.set_origin2_origin1);
   await page.goto(urls.read_origin2_origin1);
   if (browserName === 'webkit')
-    await expect(frameBody).toHaveText('Received cookie: undefined');
+    await expect(frameBody).toHaveText(webkitPartitions ? 'Received cookie: frame-partitioned=value' : 'Received cookie: undefined');
   else if (browserName === 'firefox' && isBidi)
     await expect(frameBody).toHaveText('Received cookie: frame-non-partitioned=value; frame-partitioned=value');
   else
     await expect(frameBody).toHaveText('Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value');
 }
 
-test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, isBidi, urls }) => {
-  await runPartitionedTest(page, httpsServer, browserName, isMac, isBidi, urls);
+test(`third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, webkitPartitions, isBidi, urls }) => {
+  await runPartitionedTest(page, httpsServer, browserName, isMac, webkitPartitions, isBidi, urls);
 });
 
-test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, isBidi, browser, urls }) => {
+test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName, httpsServer, isMac, webkitPartitions, isBidi, browser, urls }) => {
   test.fixme(browserName === 'firefox' && !isBidi, 'Firefox cookie partitioning is disabled in Firefox(Juggler).');
   test.fixme(browserName === 'webkit' && !isMac, 'Linux and Windows WebKit builds do not partition third-party cookies at all.');
 
-  await runPartitionedTest(page, httpsServer, browserName, isMac, isBidi, urls);
+  await runPartitionedTest(page, httpsServer, browserName, isMac, webkitPartitions, isBidi, urls);
 
   async function checkCookies(page: Page) {
     {
@@ -274,7 +278,7 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
       await page.goto(urls.read_origin2_origin1);
       const frameBody = page.locator('iframe').contentFrame().locator('body');
       const expectedThirdParty = browserName === 'webkit' ?
-        'Received cookie: undefined' :
+        (webkitPartitions ? 'Received cookie: frame-partitioned=value' : 'Received cookie: undefined') :
         'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value';
       await expect.soft(frameBody).toHaveText(expectedThirdParty, { timeout: 1000 });
     }
@@ -291,17 +295,18 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
   await checkCookies(page);
 
   function checkStorageCookies(cookies: Cookie[]) {
-    const expectedTopLevelPartitioned = browserName === 'webkit' && isMac ?
-      undefined :
-      'https://localhost';
-    expectPartitionKey(cookies, 'top-level-partitioned', expectedTopLevelPartitioned);
+    const webkitNoPartition = browserName === 'webkit' && !webkitPartitions;
+    expectPartitionKey(cookies, 'top-level-partitioned', webkitNoPartition ? undefined : 'https://localhost');
     expectPartitionKey(cookies, 'top-level-non-partitioned', undefined);
-    if (browserName === 'webkit' && isMac) {
+    if (webkitNoPartition) {
       expect(cookies.find(cookie => cookie.name === 'frame-partitioned')).toBeUndefined();
       expect(cookies.find(cookie => cookie.name === 'frame-non-partitioned')).toBeUndefined();
     } else {
       expectPartitionKey(cookies, 'frame-partitioned', 'https://127.0.0.1');
-      expectPartitionKey(cookies, 'frame-non-partitioned', undefined);
+      if (browserName === 'webkit')
+        expect(cookies.find(cookie => cookie.name === 'frame-non-partitioned')).toBeUndefined();
+      else
+        expectPartitionKey(cookies, 'frame-non-partitioned', undefined);
     }
   }
   checkStorageCookies(await page.context().cookies());
@@ -323,7 +328,7 @@ test(`save/load third party 'Partitioned;' cookies`, async ({ page, browserName,
   });
 });
 
-test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, httpsServer, isMac, isBidi, urls }) => {
+test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, httpsServer, isMac, webkitPartitions, isBidi, urls }) => {
   addCommonCookieHandlers(httpsServer, urls);
 
   await context.addCookies([
@@ -377,7 +382,7 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
     {
       // Check top-level cookie first.
       await page.goto(urls.read_origin1);
-      const expectedTopLevel = browserName === 'webkit' || (browserName === 'firefox' && !isBidi) ?
+      const expectedTopLevel = (browserName === 'webkit' && !webkitPartitions) || (browserName === 'firefox' && !isBidi) ?
         'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value' :
         'Received cookie: frame-non-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
       expect.soft(await page.locator('body').textContent()).toBe(expectedTopLevel);
@@ -387,10 +392,10 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       await page.goto(urls.read_origin2_origin1);
       const frameBody = page.locator('iframe').contentFrame().locator('body');
       let expectedThirdParty = 'Received cookie: ';
-      if (browserName === 'webkit' && isMac)
-        expectedThirdParty += 'undefined';
-      else if (browserName === 'firefox' && isBidi)
+      if (webkitPartitions || (browserName === 'firefox' && isBidi))
         expectedThirdParty += 'frame-partitioned=value';
+      else if (browserName === 'webkit' && isMac)
+        expectedThirdParty += 'undefined';
       else if (browserName === 'chromium')
         expectedThirdParty += 'frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value';
       else
@@ -402,7 +407,9 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       await page.goto(urls.read_origin1_origin2_origin1); // read-origin1-origin2-origin1.html
       const frameBody = page.locator('iframe').contentFrame().locator('iframe').contentFrame().locator('body');
       let expectedThirdParty = 'Received cookie: ';
-      if (browserName === 'webkit' || (browserName === 'firefox' && !isBidi))
+      if (webkitPartitions)
+        expectedThirdParty += 'frame-non-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
+      else if (browserName === 'webkit' || (browserName === 'firefox' && !isBidi))
         expectedThirdParty += 'frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
       else if (browserName === 'firefox' && isBidi)
         expectedThirdParty += 'undefined';

@@ -251,7 +251,7 @@ export class WKBrowserContext extends BrowserContext {
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map((c: channels.NetworkCookie) => {
-      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite, partitionKey } = c;
       const copy: channels.NetworkCookie = {
         name,
         value,
@@ -262,13 +262,15 @@ export class WKBrowserContext extends BrowserContext {
         secure,
         sameSite,
       };
+      if (partitionKey)
+        copy.partitionKey = partitionKey;
       return copy;
     }), urls);
   }
 
   async addCookies(cookies: channels.SetNetworkCookie[]) {
     const cc = network.rewriteCookies(cookies).map(c => {
-      const { name, value, domain, path, expires, httpOnly, secure, sameSite } = c;
+      const { name, value, domain, path, expires, httpOnly, secure, sameSite, partitionKey } = c;
       const copy: Protocol.Playwright.SetCookieParam = {
         name,
         value,
@@ -280,6 +282,8 @@ export class WKBrowserContext extends BrowserContext {
         sameSite,
         session: expires === -1 || expires === undefined,
       };
+      if (partitionKey)
+        copy.partitionKey = partitionKey;
       return copy;
     });
     await this._browser._browserSession.send('Playwright.setCookies', { cookies: cc, browserContextId: this._browserContextId });

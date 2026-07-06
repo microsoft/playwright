@@ -384,8 +384,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'mac14-arm64': 'builds/webkit/%s/webkit-mac-14-arm64.zip',
     'mac15': 'builds/webkit/%s/webkit-mac-15.zip',
     'mac15-arm64': 'builds/webkit/%s/webkit-mac-15-arm64.zip',
-    'mac26': 'builds/webkit/%s/webkit-mac-15.zip',
-    'mac26-arm64': 'builds/webkit/%s/webkit-mac-15-arm64.zip',
+    'mac26': 'builds/webkit/%s/webkit-mac-26.zip',
+    'mac26-arm64': 'builds/webkit/%s/webkit-mac-26-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
