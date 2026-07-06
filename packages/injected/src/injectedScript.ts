@@ -78,6 +78,7 @@ interface WebKitLegacyDeviceMotionEvent extends DeviceMotionEvent {
 export type InjectedScriptOptions = {
   isUnderTest: boolean;
   sdkLanguage: Language;
+  frameSeq: number;
   // For strict error and codegen
   testIdAttributeName: string;
   stableRafCount: number;
@@ -99,6 +100,7 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
+  private _frameSeq: number;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
   readonly window: Window & typeof globalThis;
   readonly document: Document;
@@ -141,6 +143,7 @@ export class InjectedScript {
     // inside a trace viewer snapshot, where "window" differs from "globalThis".
     this.utils.builtins = new UtilityScript(window, options.isUnderTest).builtins;
     this._sdkLanguage = options.sdkLanguage;
+    this._frameSeq = options.frameSeq;
     this._testIdAttributeNameForStrictErrorAndConsoleCodegen = options.testIdAttributeName;
     this._evaluator = new SelectorEvaluatorImpl();
     this.consoleApi = new ConsoleAPI(this);
@@ -318,6 +321,7 @@ export class InjectedScript {
   ariaSnapshotWithRefs(node: Node, options: AriaTreeOptions & { depth?: number }): { text: string, iframeRefs: string[], iframeDepths: Record<string, number> } {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
+    options = { ...options, refPrefix: this._frameSeq && options.mode === 'ai' ? 'f' + this._frameSeq : '' };
     const ariaSnapshot = generateAriaTree(node as Element, options);
     const rendered = renderAriaTree(ariaSnapshot, options);
     this._lastAriaSnapshotForQuery = ariaSnapshot;

@@ -1121,7 +1121,6 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
         return injected.ariaSnapshotWithRefs(element, options);
       }, {
         mode: options.mode ?? 'default',
-        refPrefix: resolvedFrame.seq ? 'f' + resolvedFrame.seq : '',
         doNotRenderActive: options.doNotRenderActive,
         info: resolved.info,
         depth: options.depth,
