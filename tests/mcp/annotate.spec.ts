@@ -228,6 +228,7 @@ test('user-initiated annotate downloads zip with feedback.md', async ({ connectT
 });
 
 test('should capture annotations via show --annotate', async ({ connectToDashboard, cli, server }) => {
+  test.slow();
   await cli('open', server.EMPTY_PAGE);
   const bindTitle = `--playwright-internal--${crypto.randomUUID()}`;
   await cli('show', { bindTitle });

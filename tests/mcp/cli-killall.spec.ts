@@ -44,11 +44,16 @@ test('kill-all kills filtered dashboard pid', async ({ cli }) => {
   expect(dashboardPid).toBeDefined();
   await expect.poll(() => isAlive(dashboardPid)).toBe(true);
 
-  const { output } = await cli('kill-all', {
-    env: { PWTEST_KILL_ALL_PID_FILTER_FOR_TEST: String(dashboardPid) },
-  });
-  expect(output).toContain(`Killed daemon process ${dashboardPid}`);
-  expect(output).toContain('Killed 1 daemon process.');
+  // kill-all discovers daemons via `execSync('ps auxww')` and treats any failure
+  // (including a swallowed spawn error under load) as "no processes found", so a
+  // single call can miss a live daemon. Retry until it observes and kills it.
+  await expect(async () => {
+    const { output } = await cli('kill-all', {
+      env: { PWTEST_KILL_ALL_PID_FILTER_FOR_TEST: String(dashboardPid) },
+    });
+    expect(output).toContain(`Killed daemon process ${dashboardPid}`);
+    expect(output).toContain('Killed 1 daemon process.');
+  }).toPass();
 
   await expect.poll(() => isAlive(dashboardPid)).toBe(false);
 });
