@@ -42,7 +42,6 @@ import * as types from './types';
 import { isSessionClosedError } from './protocolError';
 
 import type { ConsoleMessage } from './console';
-import type { SelectorInfo } from './frameSelectors';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
@@ -1856,20 +1855,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       });
       return { snapshot };
     }
-
-    let targetFrame: Frame;
-    let info: SelectorInfo | undefined;
-    if (options.selector) {
-      const resolved = await progress.race(this.selectors.resolveInjectedForSelector(options.selector, { strict: true }));
-      if (!resolved)
-        throw new Error(`Selector "${options.selector}" did not resolve to any element`);
-      targetFrame = resolved.frame;
-      info = resolved.info;
-    } else {
-      targetFrame = this;
-    }
-
-    const lines = await ariaSnapshotForFrame(progress, targetFrame, { ...options, info });
+    const lines = await ariaSnapshotForFrame(progress, this, options.selector || 'body', options);
     return { snapshot: lines.join('\n') };
   }
 

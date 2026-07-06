@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { isInvalidSelectorError, stringifySelector } from '@isomorphic/selectorParser';
+import { isInvalidSelectorError } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '@isomorphic/utilityScriptSerializers';
 import { getComparator } from '@utils/comparators';
@@ -53,7 +53,6 @@ import type * as types from './types';
 import type { ImageComparatorOptions } from '@utils/comparators';
 import type * as channels from './channels';
 import type { BindingPayload } from '@injected/bindingsController';
-import type { SelectorInfo } from './frameSelectors';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -1107,36 +1106,33 @@ export class InitScript extends DisposableObject {
   }
 }
 
-export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number, boxes?: boolean } = {}): Promise<string[]> {
-  // Only await the topmost navigations, inner frames will be empty when racing.
+export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, selector: string, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean } = {}): Promise<string[]> {
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
-      const context = await progress.race(frame.utilityContext());
-      const injectedScript = await progress.race(context.injectedScript());
-      const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, options) => {
-        if (options.info) {
-          const element = injected.querySelector(options.info.parsed, injected.document, options.info.strict);
-          if (!element)
-            return false;
-          return injected.ariaSnapshotWithRefs(element, options);
-        }
-        const node = injected.document.body;
-        if (!node)
+      const resolved = await progress.race(frame.selectors.resolveInjectedForSelector(selector, { strict: true }));
+      if (!resolved)
+        throw new Error(`Selector "${selector}" did not resolve to any element`);
+      // Note: resolvedFrame might differ from the original |frame|.
+      const resolvedFrame = resolved.frame;
+      const snapshotOrRetry = await progress.race(resolved.injected.evaluate((injected, options) => {
+        const element = injected.querySelector(options.info.parsed, injected.document, options.info.strict);
+        if (!element)
           return true;
-        return injected.ariaSnapshotWithRefs(node, options);
+        return injected.ariaSnapshotWithRefs(element, options);
       }, {
         mode: options.mode ?? 'default',
-        refPrefix: frame.seq ? 'f' + frame.seq : '',
+        refPrefix: resolvedFrame.seq ? 'f' + resolvedFrame.seq : '',
         doNotRenderActive: options.doNotRenderActive,
-        info: options.info,
+        info: resolved.info,
         depth: options.depth,
         boxes: options.boxes,
       }));
-      if (snapshotOrRetry === true)
+      if (snapshotOrRetry === true) {
+        if (selector !== 'body')
+          throw new NonRecoverableDOMError(`Selector "${selector}" does not match any element`);
         return continuePolling;
-      if (snapshotOrRetry === false)
-        throw new NonRecoverableDOMError(`Selector "${stringifySelector(options.info!.parsed)}" does not match any element`);
-      return snapshotOrRetry;
+      }
+      return { ...snapshotOrRetry, resolvedFrame };
     } catch (e) {
       if (frame.isNonRetriableError(e))
         throw e;
@@ -1147,44 +1143,32 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
   // Only fetch child snapshots for iframes that were actually rendered (not filtered by depth).
   const renderedIframeRefs = snapshot.iframeRefs.filter(ref => ref in snapshot.iframeDepths);
   progress.setAllowConcurrentOrNestedRaces(true);
-  const childSnapshotPromises = renderedIframeRefs.map(ref => {
-    const iframeDepth = snapshot.iframeDepths[ref];
-    const childDepth = options.depth ? options.depth - iframeDepth - 1 : undefined;
-    return ariaSnapshotFrameRef(progress, frame, ref, { ...options, depth: childDepth });
+  const childSnapshotPromises = renderedIframeRefs.map(async ref => {
+    const childDepth = options.depth ? options.depth - snapshot.iframeDepths[ref] - 1 : undefined;
+    const frameBodySelector = `aria-ref=${ref} >> internal:control=enter-frame >> body`;
+    try {
+      return await ariaSnapshotForFrame(progress, snapshot.resolvedFrame, frameBodySelector, { ...options, depth: childDepth });
+    } catch {
+      return [];
+    }
   });
   const childSnapshots = await Promise.all(childSnapshotPromises);
   progress.setAllowConcurrentOrNestedRaces(false);
 
   const lines = [];
-
   for (const line of snapshot.text.split('\n')) {
     const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
     if (!match) {
       lines.push(line);
       continue;
     }
-
     const leadingSpace = match[1];
     const ref = match[2];
     const childSnapshot = childSnapshots[renderedIframeRefs.indexOf(ref)] ?? [];
     lines.push(childSnapshot.length ? line + ':' : line);
     lines.push(...childSnapshot.map(l => leadingSpace + '  ' + l));
   }
-
   return lines;
-}
-
-async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number }): Promise<string[]> {
-  const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
-  const frameBodySelector = `${frameSelector} >> body`;
-  const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
-  if (!child)
-    return [];
-  try {
-    return await ariaSnapshotForFrame(progress, child.frame, { ...options, info: undefined });
-  } catch {
-    return [];
-  }
 }
 
 function ensureArrayLimit<T>(array: T[], limit: number): T[] {
