@@ -79,9 +79,9 @@ export class WVPage implements PageDelegate {
   constructor(browserContext: WVBrowserContext, outerSession: WVSession, dialogEndpoint?: string) {
     this._outerSession = outerSession;
     this._dialogEndpoint = dialogEndpoint;
-    this.rawKeyboard = new RawKeyboardImpl();
-    this.rawMouse = new RawMouseImpl();
-    this.rawTouchscreen = new RawTouchscreenImpl();
+    this.rawKeyboard = new RawKeyboardImpl(this);
+    this.rawMouse = new RawMouseImpl(this);
+    this.rawTouchscreen = new RawTouchscreenImpl(this);
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
     this._workers = new WVWorkers(this._page, outerSession);
@@ -192,9 +192,6 @@ export class WVPage implements PageDelegate {
   private _setSession(session: WVSession) {
     eventsHelper.removeEventListeners(this._sessionListeners);
     this._session = session;
-    this.rawKeyboard.setSession(session);
-    this.rawMouse.setSession(session);
-    this.rawTouchscreen.setSession(session);
     this._workers.setSession(session);
     this._addSessionListeners();
   }
@@ -915,6 +912,56 @@ export class WVPage implements PageDelegate {
   }
 
   async inputActionEpilogue(): Promise<void> {
+  }
+
+  async deepestFrameForPoint(progress: Progress, x: number, y: number): Promise<{ frame: frames.Frame, point: types.Point }> {
+    const path = await this.framePointerPath(progress, x, y);
+    return path[path.length - 1];
+  }
+
+  async deepestFocusedFrame(progress: Progress): Promise<frames.Frame> {
+    let frame: frames.Frame = this._page.mainFrame();
+    for (;;) {
+      const context = await progress.race(frame.mainContext());
+      const iframe = await progress.race(context.evaluateHandle(() => (globalThis as any).__pwWebViewInput.activeIFrame())) as dom.ElementHandle;
+      const childFrame = await this._childFrameAndDispose(progress, iframe);
+      if (!childFrame)
+        break;
+      frame = childFrame;
+    }
+    return frame;
+  }
+
+  // Walk from the main frame into the deepest <iframe> that contains the point,
+  // recording each frame and the point translated into that frame's coordinates.
+  async framePointerPath(progress: Progress, x: number, y: number): Promise<{ frame: frames.Frame, point: types.Point }[]> {
+    const path: { frame: frames.Frame, point: types.Point }[] = [];
+    let frame: frames.Frame = this._page.mainFrame();
+    let point: types.Point = { x, y };
+    for (;;) {
+      path.push({ frame, point });
+      const context = await progress.race(frame.mainContext());
+      const position = await progress.race(context.evaluateHandle(p => (globalThis as any).__pwWebViewInput.positionInIFrame(p.x, p.y), point));
+      try {
+        const iframe = await position.getProperty(progress, 'iframe') as dom.ElementHandle;
+        const childFrame = await this._childFrameAndDispose(progress, iframe);
+        if (!childFrame)
+          break;
+        frame = childFrame;
+        point = await progress.race(position.evaluate(result => ({ x: result.x, y: result.y })));
+      } finally {
+        position.dispose();
+      }
+    }
+    return path;
+  }
+
+  private async _childFrameAndDispose(progress: Progress, iframe: dom.ElementHandle): Promise<frames.Frame | null> {
+    try {
+      return await progress.race(this.getContentFrame(iframe));
+    } finally {
+      iframe.dispose();
+    }
   }
 
   async resetForReuse(progress: Progress): Promise<void> {

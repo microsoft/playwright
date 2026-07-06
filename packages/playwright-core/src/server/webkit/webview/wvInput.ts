@@ -18,8 +18,10 @@
 import * as input from '../../input';
 
 import type * as types from '../../types';
-import type { WVSession } from './wvConnection';
+import type * as frames from '../../frames';
+import type { Func1 } from '../../javascript';
 import type { Progress } from '../../progress';
+import type { WVPage } from './wvPage';
 
 function modifierFlags(modifiers: Set<types.KeyboardModifier>) {
   return {
@@ -51,11 +53,16 @@ function toButtonsMask(buttons: Set<types.MouseButton>): number {
   return mask;
 }
 
-export class RawKeyboardImpl implements input.RawKeyboard {
-  private _session: WVSession | undefined;
+async function evaluateInFrame<Arg>(progress: Progress, frame: frames.Frame, pageFunction: Func1<Arg, void>, arg: Arg): Promise<void> {
+  const context = await progress.race(frame.mainContext());
+  await progress.race(context.evaluate(pageFunction, arg));
+}
 
-  setSession(session: WVSession) {
-    this._session = session;
+export class RawKeyboardImpl implements input.RawKeyboard {
+  private _page: WVPage;
+
+  constructor(page: WVPage) {
+    this._page = page;
   }
 
   async keydown(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
@@ -65,31 +72,33 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       ...modifierFlags(modifiers),
       ...(text ? { text } : {}),
     };
-    await callWebViewInput(progress, this._session, 'keydown', params);
+    const frame = await this._page.deepestFocusedFrame(progress);
+    await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.keydown(p), params);
   }
 
   async keyup(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
     const { code, keyCode, key, location } = description;
     const params = { code, key, keyCode, location, ...modifierFlags(modifiers) };
-    await callWebViewInput(progress, this._session, 'keyup', params);
+    const frame = await this._page.deepestFocusedFrame(progress);
+    await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.keyup(p), params);
   }
 
   async sendText(progress: Progress, text: string): Promise<void> {
-    await callWebViewInput(progress, this._session, 'insertText', text);
+    const frame = await this._page.deepestFocusedFrame(progress);
+    await evaluateInFrame(progress, frame, t => (globalThis as any).__pwWebViewInput.insertText(t), text);
   }
 }
 
 export class RawMouseImpl implements input.RawMouse {
-  private _session: WVSession | undefined;
+  private _page: WVPage;
 
-  setSession(session: WVSession) {
-    this._session = session;
+  constructor(page: WVPage) {
+    this._page = page;
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    await callWebViewInput(progress, this._session, 'mouseMove', {
-      x, y, button: buttonToNumber(button), buttons: toButtonsMask(buttons), ...modifierFlags(modifiers),
-    });
+    const { frame, point } = await this._page.deepestFrameForPoint(progress, x, y);
+    await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.mouseMove(p), { ...point, button: buttonToNumber(button), buttons: toButtonsMask(buttons), ...modifierFlags(modifiers) });
   }
 
   async down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
@@ -114,43 +123,27 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async wheel(progress: Progress, x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
-    await callWebViewInput(progress, this._session, 'wheel', { x, y, deltaX, deltaY, ...modifierFlags(modifiers) });
+    const { frame, point } = await this._page.deepestFrameForPoint(progress, x, y);
+    await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.wheel(p), { ...point, deltaX, deltaY, ...modifierFlags(modifiers) });
   }
 
   private async _mouseEvent(progress: Progress, type: string, x: number, y: number, button: number, buttons: number, modifiers: Set<types.KeyboardModifier>, clickCount: number) {
-    await callWebViewInput(progress, this._session, 'mouseEvent', {
-      type, x, y, button, buttons, clickCount, ...modifierFlags(modifiers),
+    const { frame, point } = await this._page.deepestFrameForPoint(progress, x, y);
+    await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.mouseEvent(p), {
+      type, ...point, button, buttons, clickCount, ...modifierFlags(modifiers),
     });
   }
 }
 
 export class RawTouchscreenImpl implements input.RawTouchscreen {
-  private _session: WVSession | undefined;
+  private _page: WVPage;
 
-  setSession(session: WVSession) {
-    this._session = session;
+  constructor(page: WVPage) {
+    this._page = page;
   }
 
   async tap(progress: Progress, x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
-    await callWebViewInput(progress, this._session, 'tap', { x, y, ...modifierFlags(modifiers) });
-  }
-}
-
-async function callWebViewInput(progress: Progress, session: WVSession | undefined, method: string, arg: any): Promise<void> {
-  if (!session)
-    throw new Error('Page is not initialized');
-  const expression = `window.__pwWebViewInput.${method}(${JSON.stringify(arg)})`;
-  // Some dispatchers are async — they spread events across event-loop tasks the
-  // way a real device does. Await the returned promise so the action only
-  // resolves once every event has been delivered. Stock WebKit's Runtime.evaluate
-  // has no awaitPromise option, so use the separate Runtime.awaitPromise command.
-  const { result } = await progress.race(session.send('Runtime.evaluate', { expression, returnByValue: false }));
-  // `result` is absent if evaluation failed (e.g. the frame navigated away).
-  // Only promises carry an objectId here — every __pwWebViewInput method returns
-  // void or a Promise — so this both awaits async dispatch and avoids leaking a
-  // handle for the synchronous (void) case.
-  if (result?.className === 'Promise' && result.objectId) {
-    await progress.race(session.send('Runtime.awaitPromise', { promiseObjectId: result.objectId, returnByValue: true }));
-    session.sendMayFail('Runtime.releaseObject', { objectId: result.objectId });
+    const { frame, point } = await this._page.deepestFrameForPoint(progress, x, y);
+    await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.tap(p), { ...point, ...modifierFlags(modifiers) });
   }
 }

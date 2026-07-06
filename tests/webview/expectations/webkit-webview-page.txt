@@ -71,6 +71,21 @@ page/page-screenshot.spec.ts › page screenshot › should work while navigatin
 page/page-screenshot.spec.ts › page screenshot › should work with Array deleted [fail]
 
 # ============================================================================
+# mouse-offset-border-box  (3 tests)
+# The iOS 18 simulator WebView reports MouseEvent.offsetX/offsetY relative to
+# the border box, while Playwright — like Chromium, Firefox and recent desktop
+# WebKit — measures from the padding box (the long-standing WebKit "border box"
+# behavior, https://bugs.webkit.org/show_bug.cgi?id=135399). The click lands at
+# the correct coordinate; only the reported offset is larger by the element's
+# border width, so the offsetX/offsetY assertions fail. Platform reporting
+# difference, not an input-translation bug — drop once the simulator ships a
+# WebKit that measures from the padding box.
+# ============================================================================
+page/page-click.spec.ts › should click a button in scrolling container with offset [fail]
+page/page-click.spec.ts › should click the button with em border with offset [fail]
+page/page-click.spec.ts › should click the button with px border with offset [fail]
+
+# ============================================================================
 # frame-element-and-ownership  (remaining)
 # elementHandle.contentFrame / elementHandle.ownerFrame / frame.frameElement
 # are implemented in wvPage for same-origin and in-process cross-origin frames
@@ -89,11 +104,8 @@ page/frame-evaluate.spec.ts › should not allow cross-frame element handles whe
 page/frame-frame-element.spec.ts › should work inside closed shadow root [fail]
 page/frame-frame-element.spec.ts › should work inside declarative shadow root [fail]
 page/frame-goto.spec.ts › should return matching responses [fail]
-page/page-click.spec.ts › should click button inside frameset [fail]
-page/page-click.spec.ts › should click the button inside an iframe [fail]
 page/page-click.spec.ts › should not hang when frame is detached [fail]
 page/page-drag.spec.ts › Drag and drop › should work inside iframe [fail]
-page/page-keyboard.spec.ts › should type emoji into an iframe [fail]
 page/page-wait-for-selector-1.spec.ts › page.waitForSelector is shortcut for main frame [fail]
 
 # ============================================================================
@@ -181,13 +193,10 @@ page/page-request-fulfill.spec.ts › should fulfill with gzip and readback [fai
 # shielding, so DOM mutations between checks can detach the handle. Needs the
 # same retry-with-fresh-handle pattern that wkPage uses.
 # ============================================================================
-page/elementhandle-click.spec.ts › should double click the button [fail]
-page/elementhandle-click.spec.ts › should work with Node removed [fail]
 page/elementhandle-misc.spec.ts › should fill input [fail]
 page/elementhandle-misc.spec.ts › should hover [fail]
 page/elementhandle-misc.spec.ts › should hover when Node is removed [fail]
 page/elementhandle-scroll-into-view.spec.ts › should work @smoke [fail]
-page/elementhandle-select-text.spec.ts › should wait for visible [fail]
 page/locator-misc-2.spec.ts › should scroll into view [fail]
 page/page-keyboard.spec.ts › should handle selectAll [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should not capture infinite css animation [fail]
@@ -231,23 +240,12 @@ page/page-autowaiting-basic.spec.ts › should work with waitForLoadState(load) 
 page/page-basic.spec.ts › async stacks should work [fail]
 page/page-basic.spec.ts › has navigator.webdriver set to true [fail]
 page/page-basic.spec.ts › page.url should include hashes [fail]
-page/page-click-react.spec.ts › should not retarget when element is recycled on hover [fail]
 page/page-click-scroll.spec.ts › should scroll into view span element [fail]
-page/page-click-timeout-2.spec.ts › should timeout waiting for display:none to be gone [fail]
-page/page-click-timeout-2.spec.ts › should timeout waiting for visibility:hidden to be gone [fail]
-page/page-click-timeout-3.spec.ts › should report wrong hit target subtree [fail]
-page/page-click-timeout-3.spec.ts › should timeout waiting for hit target [fail]
-page/page-click-timeout-4.spec.ts › should timeout waiting for stable position [fail]
 page/page-click.spec.ts › ensure events are dispatched in the individual tasks [fail]
-page/page-click.spec.ts › should click a button in scrolling container with offset [fail]
-page/page-click.spec.ts › should click on checkbox input and toggle [fail]
-page/page-click.spec.ts › should click the button with em border with offset [fail]
-page/page-click.spec.ts › should click the button with px border with offset [fail]
 page/page-click.spec.ts › should fire contextmenu event on right click in correct order [fail]
 page/page-click.spec.ts › should set PointerEvent.pressure on pointerdown [fail]
 page/page-click.spec.ts › should set PointerEvent.pressure on pointermove [fail]
 page/page-dispatchevent.spec.ts › should dispatch absolute device orientation event [fail]
-page/page-drag.spec.ts › Drag and drop › should be able to drag the mouse in a frame [fail]
 page/page-drag.spec.ts › Drag and drop › should cancel on escape [fail]
 page/page-drag.spec.ts › Drag and drop › should work @smoke [fail]
 page/page-drag.spec.ts › Drag and drop › should work if the drag event is captured but not canceled [fail]
@@ -356,7 +354,6 @@ page/elementhandle-scroll-into-view.spec.ts › should wait for display:none to 
 page/frame-evaluate.spec.ts › should work in iframes that interrupted initial javascript url navigation [fail]
 page/frame-goto.spec.ts › should reject when frame detaches [fail]
 page/page-aria-snapshot-ai.spec.ts › should snapshot a locator inside an iframe [fail]
-page/page-click-react.spec.ts › should not retarget when element changes on hover [fail]
 page/page-click.spec.ts › should not wait with noAutoWaiting 2 [fail]
 page/page-emulate-media.spec.ts › should report hover and fine pointer for desktop [fail]
 page/page-evaluate.spec.ts › should await promise from popup [fail]
@@ -427,7 +424,6 @@ page/page-request-fallback.spec.ts › should work [fail]
 page/page-route.spec.ts › should not support ? in glob pattern [fail]
 page/page-screenshot.spec.ts › page screenshot › should capture canvas changes [fail]
 page/page-screenshot.spec.ts › page screenshot › should work with odd clip size on Retina displays [fail]
-page/page-select-option.spec.ts › should select only first option [fail]
 page/page-set-input-files.spec.ts › should upload large file [fail]
 page/page-set-input-files.spec.ts › should upload large file with relative path [fail]
 page/page-wait-for-load-state.spec.ts › should wait for load state of newPage [fail]
@@ -506,7 +502,6 @@ page/page-autowaiting-no-hang.spec.ts › calling window.stop sync [fail]
 # Pre-existing (fails on main too): a same-document navigation via the Navigation
 # API does not update the frame URL on the stock WebView backend.
 page/page-autowaiting-no-hang.spec.ts › clicking a link intercepted by the Navigation API same-document [fail]
-page/page-click.spec.ts › should wait for becoming hit target [fail]
 page/page-drag.spec.ts › Drag and drop › should respect the drop effect [fail]
 page/page-drag.spec.ts › Drag and drop › should work if a frame is stalled [fail]
 page/page-evaluate.spec.ts › should return -Infinity [fail]
@@ -540,7 +535,6 @@ page/to-match-aria-snapshot.spec.ts › should not match what is not matched [fa
 page/frame-evaluate.spec.ts › should work in iframes that interrupted initial javascript url navigation [fail]
 page/locator-frame.spec.ts › should work for iframe @smoke [fail]
 page/locator-frame.spec.ts › should work for nested iframe [fail]
-page/locator-frame.spec.ts › should work with COEP/COOP/CORP isolated iframe [fail]
 page/page-add-init-script.spec.ts › init script should run only once in iframe [fail]
 page/page-aria-snapshot-ai.spec.ts › return empty snapshot when iframe is not loaded [fail]
 page/page-aria-snapshot-ai.spec.ts › should limit depth across iframe boundary [fail]
@@ -558,9 +552,6 @@ page/page-click.spec.ts › should click a button that is overlaid by a permissi
 page/page-click.spec.ts › should click in a nested transformed iframe [fail]
 page/page-click.spec.ts › should click in a transformed iframe [fail]
 page/page-click.spec.ts › should click in a transformed iframe with force [fail]
-page/page-click.spec.ts › should click in an iframe with border [fail]
-page/page-click.spec.ts › should click in an iframe with border 2 [fail]
-page/page-click.spec.ts › should click the button inside an iframe [fail]
 page/page-click.spec.ts › should click the button with fixed position inside an iframe [fail]
 page/page-click.spec.ts › should issue clicks in parallel in page and popup [fail]
 page/page-drag.spec.ts › Drag and drop › iframe › should drag into an iframe [fail]
@@ -672,7 +663,6 @@ page/network-post-data.spec.ts › should get post data for navigator.sendBeacon
 page/page-add-init-script.spec.ts › should work after a cross origin navigation [fail]
 page/page-autowaiting-basic.spec.ts › should await cross-process navigation when clicking anchor [fail]
 page/page-autowaiting-basic.spec.ts › should await form-get on click [fail]
-page/page-basic.spec.ts › frame.press should work [fail]
 page/page-basic.spec.ts › page.close should work with window.close [fail]
 page/page-basic.spec.ts › should provide access to the opener page [fail]
 page/page-click-scroll.spec.ts › should scroll into view display:contents [fail]
