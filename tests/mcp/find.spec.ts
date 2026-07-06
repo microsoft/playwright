@@ -46,6 +46,92 @@ test('browser_find by text', async ({ client, server }) => {
   });
 });
 
+const nestedPage = `
+  <main>
+    <section aria-label="Sidebar">
+      <nav aria-label="Primary">
+        <ul>
+          <li><a href="/home">Home</a></li>
+          <li><a href="/products">Products</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/careers">Careers</a></li>
+          <li><a href="/target">Deep Target Link</a></li>
+        </ul>
+      </nav>
+    </section>
+  </main>
+`;
+
+test('browser_find shows the path from the root to the match', async ({ client, server }) => {
+  server.setContent('/', nestedPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  const response = await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Deep Target Link' },
+  });
+
+  // The ancestor path is prepended even though it is far above the 3-line
+  // context window, so the matched node is shown in its place in the tree. The
+  // jump from the path down to the context window is implied, so it is not
+  // marked with an ellipsis.
+  expect(response).toHaveResponse({
+    result: expect.stringContaining(`Found 1 match for "Deep Target Link":
+
+- main [ref=e2]:
+  - region "Sidebar" [ref=e3]:
+    - navigation "Primary" [ref=e4]:
+      - list [ref=e5]:
+        - listitem [ref=e14]:`),
+  });
+  expect(response).toHaveResponse({
+    result: expect.stringContaining(`        - listitem [ref=e16]:
+          - link "Deep Target Link" [ref=e17]`),
+  });
+  // The preceding sibling still appears as surrounding context.
+  expect(response).toHaveResponse({
+    result: expect.stringContaining('Careers'),
+  });
+});
+
+const toolbarPage = `
+  <main>
+    <div role="group" aria-label="Toolbar">
+      <button>One</button>
+      <button>Two</button>
+      <button>Three</button>
+      <button>Four</button>
+    </div>
+    <div role="group" aria-label="Content">
+      <button>Target Button</button>
+    </div>
+  </main>
+`;
+
+test('browser_find marks gaps within off-path context with an ellipsis', async ({ client, server }) => {
+  server.setContent('/', toolbarPage, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  // The match sits under "Content"; the "Toolbar" group is off-path context
+  // whose truncated buttons are marked with an ellipsis, while the path down to
+  // the match stays unmarked.
+  expect(await client.callTool({
+    name: 'browser_find',
+    arguments: { text: 'Target Button' },
+  })).toHaveResponse({
+    result: expect.stringContaining(`Found 1 match for "Target Button":
+
+- main [ref=e2]:
+  - group "Toolbar" [ref=e3]:
+    ...
+    - button "Three" [ref=e6]
+    - button "Four" [ref=e7]
+  - group "Content" [ref=e8]:
+    - button "Target Button" [ref=e9]`),
+  });
+});
+
 test('browser_find is case-insensitive for text', async ({ client, server }) => {
   server.setContent('/', listPage, 'text/html');
   await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
