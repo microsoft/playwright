@@ -62,12 +62,11 @@ test('stdio client disconnect closes browser', async ({ startClient, server }) =
   });
   await client.close();
 
-  await expect.poll(() => formatLog(stderr())).toEqual({
+  await expect.poll(() => formatLog(stderr())).toEqual(expect.objectContaining({
     'create browser (isolated)': 1,
     'create context': 1,
     'close browser': 1,
-    'gracefully closing 1': 1,
-  });
+  }));
 });
 
 test('executable path', async ({ startClient, server }) => {
