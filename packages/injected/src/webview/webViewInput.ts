@@ -291,6 +291,7 @@ export class WebViewInput {
       metaKey: params.metaKey,
     };
     const pointer: PointerEventInit = { ...base, pointerId: 1, pointerType: 'mouse', isPrimary: true };
+    let lastTask = Promise.resolve();
     const prev = this._hoverTarget;
     if (prev !== target) {
       if (prev && prev.isConnected) {
@@ -302,11 +303,27 @@ export class WebViewInput {
       void this._postTask(() => markAndDispatch(target, new PointerEvent('pointerover', { ...pointer, relatedTarget: prev })));
       void this._postTask(() => markAndDispatch(target, new MouseEvent('mouseover', { ...base, relatedTarget: prev })));
       void this._postTask(() => markAndDispatch(target, new PointerEvent('pointerenter', { ...pointer, bubbles: false, cancelable: false, relatedTarget: prev })));
-      void this._postTask(() => markAndDispatch(target, new MouseEvent('mouseenter', { ...base, bubbles: false, cancelable: false, relatedTarget: prev })));
+      lastTask = this._postTask(() => markAndDispatch(target, new MouseEvent('mouseenter', { ...base, bubbles: false, cancelable: false, relatedTarget: prev })));
       this._hoverTarget = target;
     }
+    // Movements within an <iframe> are not dispatched in the owner context.
+    if (isFrameOwner(target))
+      return lastTask;
     void this._postTask(() => markAndDispatch(target, new PointerEvent('pointermove', pointer)));
     return this._postTask(() => markAndDispatch(target, new MouseEvent('mousemove', base)));
+  }
+
+  clearHover(): Promise<void> {
+    const prev = this._hoverTarget;
+    this._hoverTarget = null;
+    if (!prev?.isConnected)
+      return Promise.resolve();
+    const base: MouseEventInit = { bubbles: true, cancelable: true, view: this._window, relatedTarget: null };
+    const pointer: PointerEventInit = { ...base, pointerId: 1, pointerType: 'mouse', isPrimary: true };
+    void this._postTask(() => markAndDispatch(prev, new PointerEvent('pointerout', pointer)));
+    void this._postTask(() => markAndDispatch(prev, new MouseEvent('mouseout', base)));
+    void this._postTask(() => markAndDispatch(prev, new PointerEvent('pointerleave', { ...pointer, bubbles: false, cancelable: false })));
+    return this._postTask(() => markAndDispatch(prev, new MouseEvent('mouseleave', { ...base, bubbles: false, cancelable: false })));
   }
 
   mouseEvent(params: MouseEventParams): Promise<void> {

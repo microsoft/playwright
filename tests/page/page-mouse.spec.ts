@@ -337,3 +337,49 @@ it('should dispatch mouse move after context menu was opened', async ({ page, br
     }
   }
 });
+
+it('should track hover across iframe boundaries', async ({ page, headless }) => {
+  it.skip(!headless, 'headed messes up with hover');
+
+  await page.setContent(`
+    <style>
+      body, html { margin: 0; padding: 0; }
+      #parentBox { position: absolute; left: 10px; top: 10px; width: 100px; height: 100px; }
+      iframe { position: absolute; left: 200px; top: 10px; width: 200px; height: 200px; border: none; }
+    </style>
+    <div id="parentBox"></div>
+    <iframe srcdoc="
+      <style>body, html { margin: 0; padding: 0; } #childBox { width: 180px; height: 180px; }</style>
+      <div id='childBox'></div>
+      <script>
+        const box = document.querySelector('#childBox');
+        box.addEventListener('mouseenter', () => window.top.__log.push('child:enter'));
+        box.addEventListener('mouseleave', () => window.top.__log.push('child:leave'));
+      </script>
+    "></iframe>
+    <script>
+      window.__log = [];
+      const box = document.querySelector('#parentBox');
+      box.addEventListener('mouseenter', () => window.__log.push('parent:enter'));
+      box.addEventListener('mouseleave', () => window.__log.push('parent:leave'));
+    </script>
+  `);
+  await page.waitForSelector('iframe');
+  await page.frames()[1].waitForSelector('#childBox');
+  const log = () => page.evaluate(() => window['__log']);
+  const parentBox = (await page.locator('#parentBox').boundingBox())!;
+  const iframeBox = (await page.locator('iframe').boundingBox())!;
+  const parentCenter = { x: parentBox.x + parentBox.width / 2, y: parentBox.y + parentBox.height / 2 };
+  const childCenter = { x: iframeBox.x + 90, y: iframeBox.y + 90 };
+
+  await page.mouse.move(parentCenter.x, parentCenter.y);
+  await expect.poll(log).toEqual(['parent:enter']);
+
+  // Crossing into the iframe leaves the parent element and enters the child.
+  await page.mouse.move(childCenter.x, childCenter.y);
+  await expect.poll(log).toEqual(['parent:enter', 'parent:leave', 'child:enter']);
+
+  // Crossing back out leaves the child element and re-enters the parent.
+  await page.mouse.move(parentCenter.x, parentCenter.y);
+  await expect.poll(log).toEqual(['parent:enter', 'parent:leave', 'child:enter', 'child:leave', 'parent:enter']);
+});

@@ -91,14 +91,29 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
 export class RawMouseImpl implements input.RawMouse {
   private _page: WVPage;
+  private _lastHoveredFrames: frames.Frame[] = [];
 
   constructor(page: WVPage) {
     this._page = page;
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    const { frame, point } = await this._page.deepestFrameForPoint(progress, x, y);
-    await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.mouseMove(p), { ...point, button: buttonToNumber(button), buttons: toButtonsMask(buttons), ...modifierFlags(modifiers) });
+    const path = await this._page.framePointerPath(progress, x, y);
+    const params = { button: buttonToNumber(button), buttons: toButtonsMask(buttons), ...modifierFlags(modifiers) };
+    // Each frame tracks its own hover target, so as the pointer crosses an <iframe>
+    // boundary it must leave the frames it is no longer within (deepest first) before
+    // entering the frames along the new path. A move that stays within the same frames
+    // leaves none of them, so no cross-frame mouseout/mouseleave is dispatched.
+    const hoveredFrames = path.map(entry => entry.frame);
+    const attachedFrames = this._page._page.frameManager.frames();
+    for (const frame of this._lastHoveredFrames.reverse()) {
+      if (hoveredFrames.includes(frame) || !attachedFrames.includes(frame))
+        continue;
+      await evaluateInFrame(progress, frame, () => (globalThis as any).__pwWebViewInput.clearHover(), undefined);
+    }
+    this._lastHoveredFrames = hoveredFrames;
+    for (const { frame, point } of path)
+      await evaluateInFrame(progress, frame, p => (globalThis as any).__pwWebViewInput.mouseMove(p), { ...params, ...point });
   }
 
   async down(progress: Progress, x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
