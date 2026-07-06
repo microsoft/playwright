@@ -105,6 +105,8 @@ export interface PageDelegate {
   // WebKit hack.
   shouldToggleStyleSheetToSyncAnimations(): boolean;
   setDockTile(image: Buffer): Promise<void>;
+  // Allow Bidi to set different ffmpeg video filter args.
+  getFFmpegVideoFilterArgs?: (options: { width: number, height: number }) => string;
 }
 
 type EmulatedSize = { screen: types.Size, viewport: types.Size };

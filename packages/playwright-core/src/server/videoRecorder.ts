@@ -30,7 +30,7 @@ import { registry } from './registry';
 import type * as types from './types';
 import type { ChildProcess } from 'child_process';
 import type { Screencast, ScreencastClient } from './screencast';
-import type { Page } from './page';
+import type { Page, PageDelegate } from './page';
 
 const fps = 25;
 
@@ -60,7 +60,7 @@ export class VideoRecorder {
     const { size } = this._screencast.addClient(this._client);
     // For video files only, prioritize encoding into the given size, regardless of the actual pixel data.
     const videoSize = options.size ?? size;
-    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, outputFile);
+    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, outputFile, this._screencast.page.delegate);
     this._artifact = new Artifact(this._screencast.page.browserContext, outputFile);
     return this._artifact;
   }
@@ -108,16 +108,16 @@ class FfmpegVideoRecorder {
   private _launchPromise: Promise<Error | null>;
   private _outputFile: string;
 
-  constructor(ffmpegPath: string, size: types.Size, outputFile: string) {
+  constructor(ffmpegPath: string, size: types.Size, outputFile: string, page: PageDelegate) {
     if (!outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
     this._outputFile = outputFile;
     this._ffmpegPath = ffmpegPath;
     this._size = size;
-    this._launchPromise = this._launch().catch(e => e);
+    this._launchPromise = this._launch(page).catch(e => e);
   }
 
-  private async _launch() {
+  private async _launch(page: PageDelegate) {
     await mkdirIfNeeded(this._outputFile);
     // How to tune the codec:
     // 1. Read vp8 documentation to figure out the options.
@@ -163,7 +163,8 @@ class FfmpegVideoRecorder {
 
     const w = this._size.width;
     const h = this._size.height;
-    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    const videoFilterArgs = page.getFFmpegVideoFilterArgs?.({ width: w, height: h }) ?? `pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`;
+    const args = `-loglevel error -f matroska -fpsprobesize 0 -probesize 32 -analyzeduration 0 -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf ${videoFilterArgs}`.split(' ');
     args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({

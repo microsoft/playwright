@@ -334,8 +334,8 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should work for popups', async ({ browser, server, browserName, trace }, testInfo) => {
-    it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/14557');
+  it('should work for popups', async ({ browser, server, browserName, isBidi }, testInfo) => {
+    it.fixme(browserName === 'firefox' && !isBidi, 'https://github.com/microsoft/playwright/issues/14557');
     const videosPath = testInfo.outputPath('');
     const size = { width: 600, height: 400 };
     const context = await browser.newContext({
@@ -453,8 +453,8 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(450);
   });
 
-  it('should be 800x600 with null viewport', async ({ browser, headless, browserName }, testInfo) => {
-    it.fixme(browserName === 'firefox' && headless, 'Fails in headless on bots');
+  it('should be 800x600 with null viewport', async ({ browser, headless, browserName, isBidi }, testInfo) => {
+    it.fixme(browserName === 'firefox' && headless && !isBidi, 'Fails in headless on bots');
 
     const context = await browser.newContext({
       recordVideo: {
