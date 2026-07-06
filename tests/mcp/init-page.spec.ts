@@ -94,6 +94,27 @@ test('init-page surfaces load errors instead of silently dropping them', async (
   expect(JSON.stringify(response.content)).toContain('boom from initPage');
 });
 
+test('init-page is applied before the first page screenshot', async ({ startClient }) => {
+  const initPagePath = test.info().outputPath('screenshotInitPage.ts');
+  await fs.promises.writeFile(initPagePath, `
+    export default async ({ page }) => {
+      page.screenshot = async () => {
+        throw new Error('initPage screenshot hook applied');
+      };
+    };
+  `);
+
+  const { client } = await startClient({
+    args: [`--init-page=${initPagePath}`],
+  });
+  const response: any = await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: {},
+  });
+  expect(response.isError).toBe(true);
+  expect(JSON.stringify(response.content)).toContain('initPage screenshot hook applied');
+});
+
 test('--init-page w/ --init-script', async ({ startClient, server }) => {
   server.setContent('/', `
     <div>Hello world</div>

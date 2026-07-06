@@ -148,6 +148,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._consoleLog.stop();
   }
 
+  async waitForInitialized() {
+    await this._initializedPromise;
+  }
+
   static forPage(page: playwright.Page): Tab | undefined {
     // eslint-disable-next-line no-restricted-syntax
     return (page as any)[tabSymbol];

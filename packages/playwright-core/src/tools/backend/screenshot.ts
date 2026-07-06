@@ -57,6 +57,8 @@ const screenshot = defineTabTool({
 
     const screenshotTargetLabel = params.target ? params.element || 'element' : (params.fullPage ? 'full page' : 'viewport');
     const target = params.target ? await tab.targetLocator({ element: params.element, target: params.target }) : null;
+    if (!target)
+      await tab.waitForInitialized();
     const data = target ? await target.locator.screenshot(options) : await tab.page.screenshot(options);
 
     const resolvedFile = await response.resolveClientFile({ prefix: target ? 'element' : 'page', ext: fileType, suggestedFilename: params.filename }, `Screenshot of ${screenshotTargetLabel}`);
