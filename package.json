@@ -84,7 +84,6 @@
     "@eslint/js": "9.39.4",
     "@jest/expect-utils": "30.4.1",
     "@modelcontextprotocol/sdk": "1.29.0",
-    "@octokit/graphql-schema": "15.26.1",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/babel__code-frame": "7.27.0",
     "@types/babel__core": "7.20.5",
