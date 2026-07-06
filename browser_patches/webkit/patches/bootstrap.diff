@@ -6681,6 +6681,21 @@ index f7edb09dfd0bcee4b60f4bf8ce16f8cbeea937f8..1c10fb6ea21b897015a5c0092fc8f6cd
      dispatchDidReceiveResponse();
  }
  
+diff --git a/Source/WebKit/NetworkProcess/storage/CacheStorageManager.cpp b/Source/WebKit/NetworkProcess/storage/CacheStorageManager.cpp
+index 209a2eb909e9c762f240fb4a10345937e14b444e..b26f56704e408116c25cceac4ec29e9a085360a9 100644
+--- a/Source/WebKit/NetworkProcess/storage/CacheStorageManager.cpp
++++ b/Source/WebKit/NetworkProcess/storage/CacheStorageManager.cpp
+@@ -497,6 +497,10 @@ void CacheStorageManager::removeUnusedCache(WebCore::DOMCacheIdentifier cacheId
+         m_registry->unregisterCache(cacheIdentifier);
+         return;
+     }
++
++    // Playwright: in-memory caches cannot restore their records after close(), so closing them would lose the data.
++    if (m_path.isEmpty())
++        return;
+ 
+     for (Ref cache : borrow(m_caches).get()) {
+         if (cache->identifier() == cacheIdentifier) {
 diff --git a/Source/WebKit/PlatformWPE.cmake b/Source/WebKit/PlatformWPE.cmake
 index f98ae19e9c5fa4b0601572de46b1e0a1c62e92d8..747157cb6b47441ed2c1ca89465c81a89acc7f2a 100644
 --- a/Source/WebKit/PlatformWPE.cmake
