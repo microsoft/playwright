@@ -39,6 +39,7 @@ export class ProgressController {
   private _donePromise = new ManualPromise<void>();
   private _state: 'before' | 'running' | { error: Error } | 'finished' = 'before';
   private _onCallLog?: (message: string) => void;
+  private _pendingAbortError?: Error;
 
   readonly metadata: CallMetadata;
   private _controller: AbortController;
@@ -68,6 +69,8 @@ export class ProgressController {
       this._state = { error };
       this._forceAbortPromise.reject(error);
       this._controller.abort(error);
+    } else if (this._state === 'before') {
+      this._pendingAbortError = error;
     }
     await this._donePromise;
   }
@@ -76,6 +79,9 @@ export class ProgressController {
     const deadline = timeout ? monotonicTime() + timeout : 0;
     assert(this._state === 'before');
     this._state = 'running';
+    if (this._pendingAbortError)
+      this.abort(this._pendingAbortError);
+
     let timer: NodeJS.Timeout | undefined;
 
     let outerProgress: string | undefined;
