@@ -216,7 +216,7 @@ test('tracing-start-stop', async ({ cli, server }, testInfo) => {
 
 test('video-start-stop', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
-  const { output: videoStartOutput } = await cli('video-start', 'video.webm', '--size=400x300');
+  const { output: videoStartOutput } = await cli('video-start', 'recordings/video.webm', '--size=400x300');
   expect(videoStartOutput).toContain('Video recording started.');
   const { output: tabNewOutput } = await cli('tab-new');
   expect(tabNewOutput).toContain('1: (current) [](about:blank)');
@@ -225,7 +225,7 @@ test('video-start-stop', async ({ cli, server }) => {
   const { output: tabCloseOutput } = await cli('tab-close');
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);
   const { output: videoStopOutput } = await cli('video-stop');
-  expect(videoStopOutput).toContain(`### Result\n- [Video](./video.webm)\n- [Video](./video-1.webm)`);
+  expect(videoStopOutput).toContain(`### Result\n- [Video](recordings/video.webm)\n- [Video](recordings/video-1.webm)`);
 });
 
 test('video-chapter', async ({ cli, server }) => {
