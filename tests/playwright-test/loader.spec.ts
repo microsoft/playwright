@@ -952,6 +952,66 @@ test('should resolve extensionless .ts subpath import across a workspace symlink
   expect(result.exitCode).toBe(0);
 });
 
+test('should keep ESM and CJS loader compilation cache separate for workspace modules', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41662' },
+}, async ({ runInlineTest }, testInfo) => {
+  const baseDir = testInfo.outputPath();
+  const symlinkType = process.platform === 'win32' ? 'junction' : 'dir';
+  const link = async (target: string, linkPath: string) => {
+    await fs.promises.mkdir(path.dirname(linkPath), { recursive: true });
+    await fs.promises.symlink(path.join(baseDir, target), linkPath, symlinkType);
+  };
+
+  // Keep these packages out of a node_modules segment so the loader transform cache path is shared.
+  await link('packages/shared', path.join(baseDir, 'packages/core/node_modules/@repro/shared'));
+  await link('packages/core', path.join(baseDir, 'apps/e2e/node_modules/@repro/core'));
+
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ name: 'repro-root', private: true }),
+    'packages/shared/package.json': JSON.stringify({ name: '@repro/shared', private: true, type: 'module' }),
+    'packages/shared/lib/text.utils.ts': `
+      export function greet(name: string) {
+        return 'Hello, ' + name;
+      }
+    `,
+    'packages/core/package.json': JSON.stringify({
+      name: '@repro/core',
+      private: true,
+      type: 'module',
+      dependencies: { '@repro/shared': 'workspace:*' },
+    }),
+    'packages/core/lib/conversations.ts': `
+      export { greet } from '@repro/shared/lib/text.utils';
+    `,
+    'apps/e2e/global-setup.js': `
+      const { greet } = require('@repro/core/lib/conversations');
+      console.log('setup:' + greet('setup'));
+    `,
+    'apps/e2e/playwright.config.mts': `
+      import { defineConfig } from '@playwright/test';
+      import { greet } from '@repro/core/lib/conversations';
+
+      if (greet('config') !== 'Hello, config')
+        throw new Error('invalid shared module');
+
+      export default defineConfig({
+        testDir: './tests',
+        globalSetup: './global-setup.js',
+      });
+    `,
+    'apps/e2e/tests/basic.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import { greet } from '@repro/core/lib/conversations';
+      test('greet returns expected string', () => {
+        expect(greet('world')).toBe('Hello, world');
+      });
+    `,
+  }, { config: 'apps/e2e/playwright.config.mts' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('setup:Hello, setup');
+});
+
 test('should support node imports', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': 'export default {}',

@@ -71,6 +71,10 @@ const externalDependencies = new Map<string, Set<string>>();
 
 const devSourceInfix = path.sep + 'playwright' + path.sep + 'packages' + path.sep;
 
+function getCompilationCacheKey(filename: string, moduleUrl?: string) {
+  return `${moduleUrl ? 'esm' : 'cjs'}\0${filename}`;
+}
+
 export function installSourceMapSupport() {
   Error.stackTraceLimit = 200;
 
@@ -106,10 +110,11 @@ function identitySourceMap(source: string) {
 
 function _innerAddToCompilationCacheAndSerialize(filename: string, entry: MemoryCache) {
   sourceMaps.set(entry.moduleUrl || filename, entry.sourceMapPath);
-  memoryCache.set(filename, entry);
+  const cacheKey = getCompilationCacheKey(filename, entry.moduleUrl);
+  memoryCache.set(cacheKey, entry);
   return {
     sourceMaps: [[entry.moduleUrl || filename, entry.sourceMapPath]],
-    memoryCache: [[filename, entry]],
+    memoryCache: [[cacheKey, entry]],
     fileDependencies: [],
     externalDependencies: [],
   };
@@ -122,9 +127,9 @@ type CompilationCacheLookupResult = {
 };
 
 export function getFromCompilationCache(filename: string, contentHash: string, moduleUrl?: string): CompilationCacheLookupResult {
-  // First check the memory cache by filename, this cache will always work in the worker,
+  // First check the memory cache by filename+mode, this cache will always work in the worker,
   // because we just compiled this file in the loader.
-  const cache = memoryCache.get(filename);
+  const cache = memoryCache.get(getCompilationCacheKey(filename, moduleUrl));
   if (cache?.codePath) {
     try {
       return { cachedCode: fs.readFileSync(cache.codePath, 'utf-8') };
@@ -308,13 +313,14 @@ export function belongsToNodeModules(file: string) {
 export async function getUserData(pluginName: string): Promise<Map<string, any>> {
   const result = new Map<string, any>();
   for (const [fileName, cache] of memoryCache) {
+    const normalizedFileName = fileName.split('\0', 2)[1] || fileName;
     if (!cache.dataPath)
       continue;
     if (!fs.existsSync(cache.dataPath))
       continue;
     const data = JSON.parse(await fs.promises.readFile(cache.dataPath, 'utf8'));
     if (data[pluginName])
-      result.set(fileName, data[pluginName]);
+      result.set(normalizedFileName, data[pluginName]);
   }
   return result;
 }
