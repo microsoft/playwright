@@ -221,8 +221,13 @@ function resolveReporters(reporters: Config['reporter'], rootDir: string): Repor
 function resolveWorkers(workers: string | number): number {
   if (typeof workers === 'string') {
     if (workers.endsWith('%')) {
+      const percent = parseInt(workers, 10);
+      if (isNaN(percent))
+        throw new Error(`Workers ${workers} must be a number or percentage.`);
+      if (percent < 1)
+        throw new Error(`Workers must be a positive number, received ${percent}.`);
       const cpus = os.cpus().length;
-      return Math.max(1, Math.floor(cpus * (parseInt(workers, 10) / 100)));
+      return Math.max(1, Math.floor(cpus * (percent / 100)));
     }
     const parsedWorkers = parseInt(workers, 10);
     if (isNaN(parsedWorkers))

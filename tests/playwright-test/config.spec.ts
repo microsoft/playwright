@@ -573,6 +573,30 @@ test('should throw when workers is negative via CLI (regression for #39938)', as
   expect(result.output).toContain('Workers must be a positive number');
 });
 
+test('should throw when workers is an invalid percentage via CLI (regression for #41679)', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `module.exports = {};`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+  }, { workers: 'abc%' });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Workers abc% must be a number or percentage.');
+});
+
+test('should throw when workers is a non-positive percentage via CLI', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `module.exports = {};`,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('pass', () => {});
+    `,
+  }, { workers: '0%' });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Workers must be a positive number');
+});
+
 test('should work with undefined values and base', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
