@@ -37,4 +37,4 @@ else
   exit 1
 fi
 
-docker build --platform "${PLATFORM}" -t "$3" -f "Dockerfile.$2" .
+docker build --platform "${PLATFORM}" --build-arg ACR_CACHE_PREFIX="${ACR_CACHE_PREFIX}" -t "$3" -f "Dockerfile.$2" .

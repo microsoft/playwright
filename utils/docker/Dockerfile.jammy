@@ -1,4 +1,5 @@
-FROM ubuntu:jammy
+ARG ACR_CACHE_PREFIX
+FROM ${ACR_CACHE_PREFIX}ubuntu:jammy
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=America/Los_Angeles

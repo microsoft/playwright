@@ -68,3 +68,5 @@ steps:
   inputs:
     targetType: "inline"
     script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }} ${{ parameters.arch }}"
+  env:
+    ACR_CACHE_PREFIX: "playwright.azurecr.io/cached/"

@@ -1,4 +1,5 @@
-FROM ubuntu:resolute
+ARG ACR_CACHE_PREFIX
+FROM ${ACR_CACHE_PREFIX}ubuntu:resolute
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=America/Los_Angeles
