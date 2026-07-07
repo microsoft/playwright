@@ -38,6 +38,7 @@ export class ProgressController {
   private _forceAbortPromise = new ManualPromise<any>();
   private _donePromise = new ManualPromise<void>();
   private _state: 'before' | 'running' | { error: Error } | 'finished' = 'before';
+  private _abortedBeforeRun: Error | undefined;
   private _onCallLog?: (message: string) => void;
 
   readonly metadata: CallMetadata;
@@ -63,6 +64,13 @@ export class ProgressController {
 
 
   async abort(error: Error) {
+    if (this._state === 'before') {
+      // The command has not started running yet (e.g. we are still recording a
+      // "before" trace snapshot). Remember the abort and apply it once run() starts.
+      (error as any)[kAbortErrorSymbol] = true;
+      this._abortedBeforeRun = error;
+      return;
+    }
     if (this._state === 'running') {
       (error as any)[kAbortErrorSymbol] = true;
       this._state = { error };
@@ -139,6 +147,9 @@ export class ProgressController {
     }
 
     try {
+      // An abort may have arrived before we started running (see abort()).
+      if (this._abortedBeforeRun)
+        throw this._abortedBeforeRun;
       const result = await task(progress);
       this._state = 'finished';
       return result;

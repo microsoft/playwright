@@ -103,14 +103,8 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
     this.connection.sendAdopt(this, child);
   }
 
-  async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    const controller = ProgressController.createForSdkObject(this._object, callMetadata);
-    this._activeProgressControllers.set(callMetadata.id, controller);
-    try {
-      return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
-    } finally {
-      this._activeProgressControllers.delete(callMetadata.id);
-    }
+  async _runCommand(controller: ProgressController, callMetadata: CallMetadata, method: string, validParams: any) {
+    return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);
   }
 
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
@@ -356,43 +350,51 @@ export class DispatcherConnection {
       log: [],
     };
 
-    await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
-    const response: any = { id };
+    // Register the progress controller before running any instrumentation, so that an
+    // __abort__ arriving while we record the "before" trace snapshot is not lost.
+    const controller = ProgressController.createForSdkObject(sdkObject, callMetadata);
+    dispatcher._activeProgressControllers.set(callMetadata.id, controller);
     try {
-      // If the dispatcher has been disposed while running the instrumentation call, error out.
-      if (this._dispatcherByGuid.get(guid) !== dispatcher)
-        throw new TargetClosedError(sdkObject.closeReason());
-      const result = await dispatcher._runCommand(callMetadata, method, validParams);
-      const validator = findValidator(dispatcher._type, method, 'Result');
-      response.result = validator(result, '', this._validatorToWireContext());
-      callMetadata.result = result;
-    } catch (e) {
-      if (isTargetClosedError(e)) {
-        const reason = sdkObject.closeReason();
-        if (reason)
-          rewriteErrorMessage(e, reason);
-      } else if (isProtocolError(e)) {
-        if (e.type === 'closed')
-          e = new TargetClosedError(sdkObject.closeReason(), e.browserLogMessage());
-        else if (e.type === 'crashed')
-          rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
+      await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
+      const response: any = { id };
+      try {
+        // If the dispatcher has been disposed while running the instrumentation call, error out.
+        if (this._dispatcherByGuid.get(guid) !== dispatcher)
+          throw new TargetClosedError(sdkObject.closeReason());
+        const result = await dispatcher._runCommand(controller, callMetadata, method, validParams);
+        const validator = findValidator(dispatcher._type, method, 'Result');
+        response.result = validator(result, '', this._validatorToWireContext());
+        callMetadata.result = result;
+      } catch (e) {
+        if (isTargetClosedError(e)) {
+          const reason = sdkObject.closeReason();
+          if (reason)
+            rewriteErrorMessage(e, reason);
+        } else if (isProtocolError(e)) {
+          if (e.type === 'closed')
+            e = new TargetClosedError(sdkObject.closeReason(), e.browserLogMessage());
+          else if (e.type === 'crashed')
+            rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
+        }
+        response.error = serializeError(e);
+        const detailsValidator = maybeFindValidator(dispatcher._type, method, 'ErrorDetails');
+        if (detailsValidator)
+          response.errorDetails = detailsValidator((e as any)?.details ?? {}, '', this._validatorToWireContext());
+        // The command handler could have set error in the metadata, do not reset it if there was no exception.
+        callMetadata.error = response.error;
+      } finally {
+        callMetadata.endTime = monotonicTime();
+        await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
+        if (metainfo?.slowMo)
+          await this._doSlowMo(sdkObject);
       }
-      response.error = serializeError(e);
-      const detailsValidator = maybeFindValidator(dispatcher._type, method, 'ErrorDetails');
-      if (detailsValidator)
-        response.errorDetails = detailsValidator((e as any)?.details ?? {}, '', this._validatorToWireContext());
-      // The command handler could have set error in the metadata, do not reset it if there was no exception.
-      callMetadata.error = response.error;
-    } finally {
-      callMetadata.endTime = monotonicTime();
-      await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
-      if (metainfo?.slowMo)
-        await this._doSlowMo(sdkObject);
-    }
 
-    if (response.error)
-      response.log = compressCallLog(callMetadata.log);
-    this.onmessage(response);
+      if (response.error)
+        response.log = compressCallLog(callMetadata.log);
+      this.onmessage(response);
+    } finally {
+      dispatcher._activeProgressControllers.delete(callMetadata.id);
+    }
   }
 
   private async _doSlowMo(sdkObject: SdkObject): Promise<void> {
