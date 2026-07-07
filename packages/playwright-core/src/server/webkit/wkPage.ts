@@ -215,13 +215,13 @@ export class WKPage implements PageDelegate {
     }
     if (this._page.fileChooserIntercepted())
       promises.push(session.send('Page.setInterceptFileChooserDialog', { enabled: true }));
-    promises.push(session.send('Page.overrideSetting', { setting: 'DeviceOrientationEventEnabled', value: contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'FullScreenEnabled', value: !contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'NotificationsEnabled', value: !contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'PointerLockEnabled', value: !contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeMonthEnabled', value: contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'InputTypeWeekEnabled', value: contextOptions.isMobile }));
     promises.push(session.send('Page.overrideSetting', { setting: 'FixedBackgroundsPaintRelativeToDocument', value: contextOptions.isMobile }));
+    promises.push(session.send('Page.overrideSetting', { setting: 'PushAPIEnabled', value: !contextOptions.isMobile }));
     await Promise.all(promises);
   }
 
@@ -795,11 +795,8 @@ export class WKPage implements PageDelegate {
 
   private _calculateBootstrapScript(): string {
     const scripts: string[] = [];
-    if (!this._page.browserContext._options.isMobile) {
+    if (!this._page.browserContext._options.isMobile)
       scripts.push('delete window.orientation');
-      scripts.push('delete window.ondevicemotion');
-      scripts.push('delete window.ondeviceorientation');
-    }
     scripts.push('if (!window.safari) window.safari = { pushNotification: { toString() { return "[object SafariRemoteNotification]"; } } };');
     scripts.push('if (!window.GestureEvent) window.GestureEvent = function GestureEvent() {};');
     scripts.push(this._publicKeyCredentialScript());

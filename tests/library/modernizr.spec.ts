@@ -42,10 +42,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, chann
   });
   const { actual, expected } = await checkFeatures('safari-18', context, httpsServer);
 
-  expected.pushmanager = false;
-  expected.devicemotion2 = false;
-  expected.deviceorientation3 = false;
-
   delete expected.webglextensions;
   delete actual.webglextensions;
   expected.audio = !!expected.audio;

@@ -17,7 +17,7 @@
   "ambientlight": false,
   "applicationcache": false,
   "audio": {
-    "ogg": "",
+    "ogg": "probably",
     "mp3": "probably",
     "opus": "probably",
     "wav": "probably",
@@ -103,7 +103,7 @@
   "flexwrap": true,
   "focusvisible": true,
   "focuswithin": true,
-  "fontdisplay": false,
+  "fontdisplay": true,
   "fontface": true,
   "generatedcontent": true,
   "cssgradients": true,
