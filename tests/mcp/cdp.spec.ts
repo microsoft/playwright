@@ -59,6 +59,19 @@ test('cdp server reuse tab', async ({ cdpServer, startClient, server }) => {
   });
 });
 
+test('cdp connection uses noDefaults', async ({ cdpServer, startClient }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41661' });
+  const browserContext = await cdpServer.start();
+  const [page] = browserContext.pages();
+  await page.emulateMedia({ media: 'print' });
+  expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  await client.callTool({ name: 'browser_snapshot' });
+
+  expect(await page.evaluate(() => matchMedia('print').matches)).toBe(true);
+});
+
 test('should throw connection error and allow re-connecting', async ({ cdpServer, startClient, server }) => {
   const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
 

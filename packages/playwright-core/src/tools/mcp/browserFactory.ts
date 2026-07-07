@@ -108,6 +108,7 @@ async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Pro
   const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
     headers: config.browser.cdpHeaders,
     timeout: config.browser.cdpTimeout,
+    noDefaults: true,
     artifactsDir,
   });
   return browser;
