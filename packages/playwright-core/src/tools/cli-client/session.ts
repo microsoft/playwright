@@ -125,6 +125,10 @@ export class Session {
     ];
     if (cliArgs.headed)
       args.push('--headed');
+    if (cliArgs.mobile)
+      args.push('--mobile');
+    if (cliArgs.device)
+      args.push(`--device=${cliArgs.device}`);
     if (cliArgs.browser)
       args.push(`--browser=${cliArgs.browser}`);
     if (cliArgs.persistent)

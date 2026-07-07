@@ -52,7 +52,9 @@ type AttachOptions = {
 type OpenOptions = {
   browser?: string;
   config?: string;
+  device?: string;
   headed?: boolean;
+  mobile?: boolean;
   persistent?: boolean;
   profile?: string;
 };

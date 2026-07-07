@@ -48,7 +48,9 @@ const open = declareCommand({
   options: z.object({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
+    device: z.string().optional().describe('Emulate a specific device, for example "iPhone 15".'),
     headed: z.boolean().optional().describe('Run browser in headed mode'),
+    mobile: z.boolean().optional().describe('Emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit). Mobile pages are usually lighter, which saves tokens.'),
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
     profile: z.string().optional().describe('Path to a persistent user data directory.'),
   }),

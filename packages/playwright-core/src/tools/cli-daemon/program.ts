@@ -34,6 +34,8 @@ import type { Command } from 'commander';
 export function decorateProgram(program: Command) {
   program.argument('[session-name]', 'name of the session to create or connect to', 'default')
       .option('--headed', 'run in headed mode (non-headless)')
+      .option('--device <device>', 'emulate a specific device, for example "iPhone 15"')
+      .option('--mobile', 'emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit)')
       .option('--extension', 'run with the extension')
       .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
       .option('--persistent', 'use a persistent browser context')

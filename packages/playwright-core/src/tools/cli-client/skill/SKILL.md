@@ -215,6 +215,12 @@ playwright-cli open --browser=firefox
 playwright-cli open --browser=webkit
 playwright-cli open --browser=msedge
 
+# Emulate a generic mobile device (Pixel 10 for Chromium, iPhone 17 for WebKit).
+# Prefer this when a mobile layout is acceptable: mobile pages are usually
+# lighter, so snapshots are smaller and cheaper.
+playwright-cli open --mobile
+playwright-cli open --device="iPhone 15"
+
 # Use persistent profile (by default profile is in-memory)
 playwright-cli open --persistent
 # Use persistent profile with custom directory

@@ -43,6 +43,30 @@ test('context options', async ({ cli, server }, testInfo) => {
   expect(output).toContain('800x600');
 });
 
+test('--mobile emulates a mobile viewport', async ({ cli, server, mcpBrowser }) => {
+  test.skip(mcpBrowser !== 'chrome', 'Default --mobile device (Pixel 10) is Chromium; family mapping is covered by config-resolve tests.');
+  server.setContent('/', `
+    <head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+    <body></body>
+  `, 'text/html');
+  await cli('open', '--mobile', server.PREFIX);
+  const { output } = await cli('eval', 'window.innerWidth');
+  // Pixel 10 device width.
+  expect(output).toContain('360');
+});
+
+test('--device emulates the given device', async ({ cli, server, mcpBrowser }) => {
+  test.skip(mcpBrowser !== 'chrome', 'Device viewport is engine-independent; asserting one browser is enough.');
+  server.setContent('/', `
+    <head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+    <body></body>
+  `, 'text/html');
+  await cli('open', '--device=iPhone 15', server.PREFIX);
+  const { output } = await cli('eval', 'window.innerWidth');
+  // iPhone 15 device width.
+  expect(output).toContain('393');
+});
+
 test('config-print prints merged config', async ({ cli }) => {
   await cli('open');
   const { output } = await cli('config-print');

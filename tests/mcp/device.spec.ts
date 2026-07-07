@@ -16,6 +16,16 @@
 
 import { test, expect } from './fixtures';
 
+const viewportProbe = `
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body></body>
+  <script>
+    document.body.textContent = window.innerWidth + "x" + window.innerHeight;
+  </script>
+`;
+
 test('--device should work', async ({ startClient, server }) => {
   const { client } = await startClient({
     args: ['--device', 'iPhone 15'],
@@ -23,15 +33,7 @@ test('--device should work', async ({ startClient, server }) => {
 
   server.setRoute('/', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html' });
-    res.end(`
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-      </head>
-      <body></body>
-      <script>
-        document.body.textContent = window.innerWidth + "x" + window.innerHeight;
-      </script>
-    `);
+    res.end(viewportProbe);
   });
 
   expect(await client.callTool({
@@ -41,5 +43,30 @@ test('--device should work', async ({ startClient, server }) => {
     },
   })).toHaveResponse({
     snapshot: expect.stringContaining(`393x659`),
+  });
+});
+
+test('--mobile emulates a mobile viewport', async ({ startClient, server, mcpBrowser }) => {
+  test.skip(mcpBrowser === 'firefox', '--mobile is not supported with Firefox.');
+
+  const { client } = await startClient({
+    args: ['--mobile'],
+  });
+
+  server.setRoute('/', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(viewportProbe);
+  });
+
+  // Pixel 10 for Chromium, iPhone 17 for WebKit — both are narrow mobile
+  // viewports, so assert the width rather than an exact model dimension.
+  const width = mcpBrowser === 'webkit' ? '402x' : '360x';
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(width),
   });
 });

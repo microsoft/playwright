@@ -58,6 +58,7 @@ export type CLIOptions = {
   initPage?: string[];
   isolated?: boolean;
   imageResponses?: 'allow' | 'omit';
+  mobile?: boolean;
   sandbox?: boolean;
   outputDir?: string;
   outputMaxSize?: number;
@@ -155,7 +156,9 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     cdpEndpoint: options.cdp,
     config: options.config,
     browser: options.browser,
+    device: options.device,
     headless: options.headed ? false : undefined,
+    mobile: options.mobile,
     extension: options.extension,
     userDataDir: options.profile,
     snapshotMode: 'full',
@@ -291,11 +294,20 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   if (cliOptions.sandbox !== undefined)
     launchOptions.chromiumSandbox = cliOptions.sandbox;
 
-  if (cliOptions.device && cliOptions.cdpEndpoint)
+  let device = cliOptions.device;
+  if (cliOptions.mobile) {
+    if (device)
+      throw new Error('Cannot use --mobile together with --device, pick one.');
+    if (browserName === 'firefox')
+      throw new Error('--mobile is not supported with the Firefox browser.');
+    device = browserName === 'webkit' ? 'iPhone 17' : 'Pixel 10';
+  }
+
+  if (device && cliOptions.cdpEndpoint)
     throw new Error('Device emulation is not supported with cdpEndpoint.');
 
   // Context options
-  const contextOptions: playwrightTypes.BrowserContextOptions = cliOptions.device ? playwright.devices[cliOptions.device] : {};
+  const contextOptions: playwrightTypes.BrowserContextOptions = device ? playwright.devices[device] : {};
 
   if (cliOptions.proxyServer) {
     const proxy: playwrightTypes.LaunchOptions['proxy'] = { server: cliOptions.proxyServer };
@@ -409,6 +421,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.isolated = envToBoolean(e.PLAYWRIGHT_MCP_ISOLATED);
   if (e.PLAYWRIGHT_MCP_IMAGE_RESPONSES)
     options.imageResponses = enumParser<'allow' | 'omit'>('--image-responses', ['allow', 'omit'], e.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
+  options.mobile = envToBoolean(e.PLAYWRIGHT_MCP_MOBILE);
   options.sandbox = envToBoolean(e.PLAYWRIGHT_MCP_SANDBOX);
   options.outputDir = envToString(e.PLAYWRIGHT_MCP_OUTPUT_DIR);
   options.outputMaxSize = numberParser(e.PLAYWRIGHT_MCP_OUTPUT_MAX_SIZE);
