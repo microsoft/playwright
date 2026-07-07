@@ -20,7 +20,6 @@ import path from 'path';
 
 import sourceMapSupport from 'source-map-support';
 import { calculateSha1 } from '@utils/crypto';
-import { isUnderTest } from '@utils/debug';
 
 import { isWorkerProcess } from '../globals';
 import { packageRoot } from '../package';
@@ -69,8 +68,6 @@ const fileDependencies = new Map<string, Set<string>>();
 // Dependencies resolved by the external bundler.
 const externalDependencies = new Map<string, Set<string>>();
 
-const devSourceInfix = path.sep + 'playwright' + path.sep + 'packages' + path.sep;
-
 export function installSourceMapSupport() {
   Error.stackTraceLimit = 200;
 
@@ -78,8 +75,6 @@ export function installSourceMapSupport() {
     environment: 'node',
     handleUncaughtExceptions: false,
     retrieveSourceMap(source) {
-      if (!process.env.PWDEBUGIMPL && isUnderTest() && source.includes(devSourceInfix))
-        return { map: identitySourceMap(source), url: source };
       if (!sourceMaps.has(source))
         return null;
       const sourceMapPath = sourceMaps.get(source)!;
@@ -93,15 +88,6 @@ export function installSourceMapSupport() {
       }
     }
   });
-}
-
-function identitySourceMap(source: string) {
-  const lineCount = fs.readFileSync(source, 'utf8').split('\n').length;
-  return {
-    version: 3,
-    sources: [source],
-    mappings: lineCount ? 'AAAA' + ';AACA'.repeat(lineCount - 1) : '',
-  };
 }
 
 function _innerAddToCompilationCacheAndSerialize(filename: string, entry: MemoryCache) {

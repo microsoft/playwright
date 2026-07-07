@@ -22,6 +22,7 @@
 import path from 'path';
 
 import { getAsBooleanFromENV } from './env';
+import { isUnderTest } from './debug';
 
 export type RawStack = string[];
 
@@ -172,6 +173,10 @@ export function filterStackFile(file: string) {
   if (!!_coreDir && file.startsWith(_coreDir))
     return false;
   if (_boxedStackPrefixes.some(prefix => file.startsWith(prefix)))
+    return false;
+  if (isUnderTest() && file.match(/[/\\]packages[/\\](playwright|playwright-core|utils|isomorphic|injected)[/\\]/))
+    return false;
+  if (isUnderTest() && file.match(/[/\\]playwright[^/\\]*[/\\]node_modules[/\\]/))
     return false;
   return true;
 }

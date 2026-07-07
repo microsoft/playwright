@@ -626,6 +626,7 @@ steps.push(new EsbuildStep({
 }, [filePath('packages/playwright-core/src/*')]));
 
 const playwrightCoreSrc = filePath('packages/playwright-core/src');
+const commonUtilsSrc = [filePath('packages/protocol/src'), filePath('packages/utils'), filePath('packages/isomorphic')];
 
 // playwright-core/lib/utilsBundle.js — bundled npm utilities barrel.
 steps.push(new EsbuildStep({
@@ -665,7 +666,7 @@ steps.push(new EsbuildStep({
     setup: build => build.onResolve({ filter: /utilsBundle/ },
         () => ({ path: './utilsBundle', external: true })),
   }, dynamicImportToRequirePlugin],
-}, [playwrightCoreSrc, filePath('packages/protocol/src')]));
+}, [playwrightCoreSrc, ...commonUtilsSrc, filePath('packages/injected')]));
 
 function assertCoreBundleHasNoNodeModules() {
   const bundlePath = filePath('packages/playwright-core/lib/coreBundle.js');
@@ -710,7 +711,7 @@ steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
       '../transform/esmLoader.js',
     ],
     plugins: [],
-  }, [playwrightSrc]));
+  }, [playwrightSrc, ...commonUtilsSrc]));
 }
 
 // Build playwright entry points (per-file), excluding matchers/* and
@@ -737,7 +738,7 @@ steps.push(new EsbuildStep({
     '../package',
   ],
   plugins: [dynamicImportToRequirePlugin],
-}, [filePath('packages/playwright/src')]));
+}, [filePath('packages/playwright/src'), ...commonUtilsSrc]));
 
 // playwright/lib/matchers/expect.js — bundled jest expect facade.
 steps.push(new EsbuildStep({
@@ -752,7 +753,7 @@ steps.push(new EsbuildStep({
     '../babelBundle',
   ],
   plugins: [dynamicImportToRequirePlugin],
-}, [filePath('packages/playwright/src')]));
+}, [filePath('packages/playwright/src'), ...commonUtilsSrc]));
 
 // playwright/lib/common/index.js — bundled common barrel.
 steps.push(new EsbuildStep({
@@ -770,7 +771,7 @@ steps.push(new EsbuildStep({
     '../transform/esmLoader.js',
   ],
   plugins: [dynamicImportToRequirePlugin],
-}, [filePath('packages/playwright/src')]));
+}, [filePath('packages/playwright/src'), ...commonUtilsSrc]));
 
 // playwright/lib/runner/index.js — bundled runner barrel.
 steps.push(new EsbuildStep({
@@ -796,7 +797,7 @@ steps.push(new EsbuildStep({
     __PW_HMR__: String(!!watchMode),
   },
   plugins: [dynamicImportToRequirePlugin],
-}, [filePath('packages/playwright/src')]));
+}, [filePath('packages/playwright/src'), ...commonUtilsSrc]));
 
 // playwright/lib/isomorphic/index.js — bundled isomorphic barrel.
 steps.push(new EsbuildStep({
@@ -825,7 +826,7 @@ steps.push(new EsbuildStep({
     '../transform/esmLoader',
   ],
   plugins: [dynamicImportToRequirePlugin],
-}, [filePath('packages/playwright/src')]));
+}, [filePath('packages/playwright/src'), ...commonUtilsSrc]));
 
 // playwright/lib/worker/workerProcessEntry.js — bundled worker process
 // entry. Output sits at the same depth as the source so '../X' externals
@@ -845,7 +846,7 @@ steps.push(new EsbuildStep({
     '../transform/esmLoader',
   ],
   plugins: [dynamicImportToRequirePlugin],
-}, [filePath('packages/playwright/src')]));
+}, [filePath('packages/playwright/src'), ...commonUtilsSrc]));
 
 // Build the Electron preload loader as a standalone CJS file. It runs inside
 // the Electron process (via `electron -r loader.js`) and must not depend on
