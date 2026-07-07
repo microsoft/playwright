@@ -239,6 +239,11 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
         // Preserve explicit schema as is as it may affect trailing slashes after domain.
         return token;
       }
+      // Components without glob metacharacters are literal, so let them round-trip
+      // through new URL() to preserve normalization (default ports such as :80/:443,
+      // percent-encoding, IDN hosts). Only opaque tokens defeat that normalization.
+      if (!/[*?{}\\]/.test(token))
+        return token;
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);

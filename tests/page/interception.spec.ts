@@ -134,6 +134,15 @@ it('should work with glob', async () => {
   expect(urlMatches(undefined, 'https://playwright.dev/foobar', 'https://playwright.dev/fooBAR')).toBeFalsy();
   expect(urlMatches(undefined, 'https://playwright.dev/foobar?a=b', 'https://playwright.dev/foobar?A=B')).toBeFalsy();
 
+  // Literal globs are normalized through new URL(), so explicit default ports,
+  // percent-encoding and IDN hosts match request.url() which is already normalized.
+  expect(urlMatches(undefined, 'http://example.com/path', 'http://example.com:80/path')).toBeTruthy();
+  expect(urlMatches(undefined, 'https://example.com/path', 'https://example.com:443/path')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://example.com:8080/path', 'http://example.com:8080/path')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://localhost/', 'http://localhost:80/**')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://example.com/foo%20bar', 'http://example.com/foo bar')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://xn--mnchen-3ya.de/', 'http://münchen.de/')).toBeTruthy();
+
   expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**/?a=b')).toBeTruthy();
   expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**?a=b')).toBeTruthy();
   expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**=b')).toBeTruthy();
