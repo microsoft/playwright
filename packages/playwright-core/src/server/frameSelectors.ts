@@ -20,7 +20,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import type { ElementHandle, FrameExecutionContext } from './dom';
 import type { Frame } from './frames';
 import type { InjectedScript } from '@injected/injectedScript';
-import type { JSHandle } from './javascript';
+import type { JSHandle, SmartHandle } from './javascript';
 import type * as types from './types';
 import type { ParsedSelector } from '@isomorphic/selectorParser';
 
@@ -37,6 +37,8 @@ export type SelectorInFrame = {
   scope?: ElementHandle;
 };
 
+type MatchedElementsCallback<Arg, R> = (data: { injected: InjectedScript, elements: Element[], info: SelectorInfo }, arg: Arg) => R | Promise<R>;
+
 export class FrameSelectors {
   readonly frame: Frame;
 
@@ -50,72 +52,55 @@ export class FrameSelectors {
   }
 
   async query(selector: string, options?: types.StrictOptions & { mainWorld?: boolean }, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
-    const resolved = await this.resolveInjectedForSelector(selector, options, scope);
-    // Be careful, |this.frame| can be different from |resolved.frame|.
+    const resolved = await this.callOnSelectorHandle(selector, { ...options, scope }, ({ elements }) => elements[0], {});
     if (!resolved)
       return null;
-    const handle = await resolved.injected.evaluateHandle((injected, { info, scope }) => {
-      return injected.querySelector(info.parsed, scope || document, info.strict);
-    }, { info: resolved.info, scope: resolved.scope });
+    const handle = resolved.result;
     const elementHandle = handle.asElement() as ElementHandle<Element> | null;
     if (!elementHandle) {
       handle.dispose();
       return null;
     }
-    return adoptIfNeeded(elementHandle, await resolved.frame.mainContext());
+    return adoptIfNeeded(elementHandle, await elementHandle._frame.mainContext());
   }
 
   async queryArrayInMainWorld(selector: string, scope?: ElementHandle): Promise<JSHandle<Element[]>> {
-    const resolved = await this.resolveInjectedForSelector(selector, { mainWorld: true }, scope);
-    // Be careful, |this.frame| can be different from |resolved.frame|.
+    const resolved = await this.callOnSelectorHandle(selector, { mainWorld: true, strict: false, scope }, ({ elements }) => elements, {});
     if (!resolved) {
       const context = await this.frame.context('main');
-      return await context.evaluateHandle(() => { return []; });
+      return await context.evaluateHandle(() => []);
     }
-    return await resolved.injected.evaluateHandle((injected, { info, scope }) => {
-      const elements = injected.querySelectorAll(info.parsed, scope || document);
-      injected.checkDeprecatedSelectorUsage(info.parsed, elements);
-      return elements;
-    }, { info: resolved.info, scope: resolved.scope });
+    return resolved.result;
   }
 
   async queryCount(selector: string): Promise<number> {
-    const resolved = await this.resolveInjectedForSelector(selector);
-    if (!resolved)
-      return 0;
-    return await resolved.injected.evaluate((injected, { info }) => {
-      const elements = injected.querySelectorAll(info.parsed, document);
-      injected.checkDeprecatedSelectorUsage(info.parsed, elements);
-      return elements.length;
-    }, { info: resolved.info });
+    const resolved = await this.callOnSelector(selector, { strict: false }, ({ elements }) => elements.length, {});
+    return resolved ? resolved.result : 0;
   }
 
   async queryAll(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element>[]> {
-    const resolved = await this.resolveInjectedForSelector(selector, {}, scope);
-    // Be careful, |this.frame| can be different from |resolved.frame|.
+    const resolved = await this.callOnSelectorHandle(selector, { strict: false, scope }, ({ elements }) => elements, {});
     if (!resolved)
       return [];
-    const arrayHandle = await resolved.injected.evaluateHandle((injected, { info, scope }) => {
-      const elements = injected.querySelectorAll(info.parsed, scope || document);
-      injected.checkDeprecatedSelectorUsage(info.parsed, elements);
-      return elements;
-    }, { info: resolved.info, scope: resolved.scope });
 
+    const arrayHandle = resolved.result;
     const properties = await arrayHandle.internalGetProperties();
-    arrayHandle.dispose();
-
-    // Note: adopting elements one by one may be slow. If we encounter the issue here,
-    // we might introduce 'useMainContext' option or similar to speed things up.
-    const targetContext = await resolved.frame.mainContext();
-    const result: Promise<ElementHandle<Element>>[] = [];
+    const elementHandles: ElementHandle<Element>[] = [];
     for (const property of properties.values()) {
-      const elementHandle = property.asElement() as ElementHandle<Element>;
+      const elementHandle = property.asElement() as ElementHandle<Element> | null;
       if (elementHandle)
-        result.push(adoptIfNeeded(elementHandle, targetContext));
+        elementHandles.push(elementHandle);
       else
         property.dispose();
     }
-    return Promise.all(result);
+    arrayHandle.dispose();
+    if (!elementHandles.length)
+      return [];
+
+    // Note: adopting elements one by one may be slow. If we encounter the issue here,
+    // we might introduce 'useMainContext' option or similar to speed things up.
+    const targetContext = await elementHandles[0]._frame.mainContext();
+    return Promise.all(elementHandles.map(handle => adoptIfNeeded(handle, targetContext)));
   }
 
   private _jumpToAriaRefFrameIfNeeded(selector: string, info: SelectorInfo, frame: Frame): Frame {
@@ -132,7 +117,7 @@ export class FrameSelectors {
     return jumptToFrame;
   }
 
-  async resolveFrameForSelector(selector: string, options: types.StrictOptions = {}, scope?: ElementHandle): Promise<SelectorInFrame | null> {
+  private async _resolveFrameForSelector(selector: string, options: types.StrictOptions = {}, scope?: ElementHandle): Promise<SelectorInFrame | null> {
     let frame: Frame = this.frame;
     const frameChunks = splitSelectorByFrame(selector);
 
@@ -173,15 +158,65 @@ export class FrameSelectors {
     return { frame, info: lastChunk, scope };
   }
 
-  async resolveInjectedForSelector(selector: string, options?: { strict?: boolean, mainWorld?: boolean }, scope?: ElementHandle): Promise<{ injected: JSHandle<InjectedScript>, info: SelectorInfo, frame: Frame, scope?: ElementHandle } | undefined> {
-    const resolved = await this.resolveFrameForSelector(selector, options, scope);
-    // Be careful, |this.frame| can be different from |resolved.frame|.
+  private async _resolveInjectedForSelector(selector: string, options: types.StrictOptions & { mainWorld?: boolean }, scope?: ElementHandle): Promise<{ frame: Frame, info: SelectorInfo, injected: JSHandle<InjectedScript>, scope?: ElementHandle } | null> {
+    const resolved = await this._resolveFrameForSelector(selector, options, scope);
     if (!resolved)
-      return;
-    const context = await resolved.frame.context(options?.mainWorld ? 'main' : resolved.info.world);
+      return null;
+    const context = await resolved.frame.context(options.mainWorld ? 'main' : resolved.info.world);
     const injected = await context.injectedScript();
-    return { injected, info: resolved.info, frame: resolved.frame, scope: resolved.scope };
+    return { frame: resolved.frame, info: resolved.info, injected, scope: resolved.scope };
   }
+
+  async callOnSelector<Arg, R>(
+    selector: string,
+    options: types.StrictOptions & { mainWorld?: boolean, callWithoutMatches?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
+    pageFunction: MatchedElementsCallback<Arg, R>,
+    arg: Arg,
+  ): Promise<{ frame: Frame, info: SelectorInfo, result: R } | null> {
+    const resolved = await this._resolveInjectedForSelector(selector, options, options.scope);
+    if (!resolved)
+      return null;
+    const result = await resolved.injected.evaluate(callMatchedElements, { info: resolved.info, scope: resolved.scope, functionText: String(pageFunction), arg, callWithoutMatches: !!options.callWithoutMatches, markTargets: options.markTargets }) as R;
+    // callMatchedElements returns undefined when there were no matches and it skipped the page function.
+    if (!options.callWithoutMatches && result === undefined)
+      return null;
+    return { frame: resolved.frame, info: resolved.info, result };
+  }
+
+  async callOnSelectorHandle<Arg, R>(
+    selector: string,
+    options: types.StrictOptions & { mainWorld?: boolean, scope?: ElementHandle, markTargets?: 'all' | 'first' | 'none' },
+    pageFunction: MatchedElementsCallback<Arg, R>,
+    arg: Arg,
+  ): Promise<{ result: SmartHandle<R> } | null> {
+    const resolved = await this._resolveInjectedForSelector(selector, options, options.scope);
+    if (!resolved)
+      return null;
+    const result = await resolved.injected.evaluateHandle(callMatchedElements, { info: resolved.info, scope: resolved.scope, functionText: String(pageFunction), arg, callWithoutMatches: false, markTargets: options.markTargets }) as SmartHandle<R>;
+    // A skipped page function returns undefined, which has no object id (unlike a matched element/object).
+    if (!result._objectId) {
+      result.dispose();
+      return null;
+    }
+    return { result };
+  }
+}
+
+function callMatchedElements(injected: InjectedScript, { info, scope, functionText, arg, callWithoutMatches, markTargets }: { info: SelectorInfo, scope: Node | undefined, functionText: string, arg: any, callWithoutMatches: boolean, markTargets?: 'all' | 'first' | 'none' }): any {
+  const elements = injected.querySelectorAll(info.parsed, scope || document);
+  if (markTargets === 'all')
+    injected.markTargetElements(new Set(elements));
+  else if (markTargets === 'first' && elements.length)
+    injected.markTargetElements(new Set([elements[0]]));
+  else if (markTargets === 'first')
+    injected.markTargetElements(new Set());
+  injected.checkDeprecatedSelectorUsage(info.parsed, elements);
+  if (info.strict && elements.length > 1)
+    throw injected.strictModeViolationError(info.parsed, elements);
+  if (!elements.length && !callWithoutMatches)
+    return undefined;
+  const pageFunction = injected.eval('(' + functionText + ')');
+  return pageFunction({ injected, elements, info }, arg);
 }
 
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {

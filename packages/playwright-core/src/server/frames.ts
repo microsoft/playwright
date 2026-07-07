@@ -845,29 +845,25 @@ export class Frame extends SdkObject<FrameEventMap> {
       if (performActionPreChecksAndLog)
         await this._page.performActionPreChecks(progress);
 
-      const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, options, scope));
+      if (scope && await progress.race(scope.evaluateInUtility(([injected, node]) => node.isConnected, {})) !== true)
+        throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
+
+      const resolved = await progress.race(this.selectors.callOnSelectorHandle(selector, { ...options, scope }, ({ injected, elements }) => {
+        const element: Element | undefined  = elements[0];
+        const visible = element ? injected.utils.isElementVisible(element) : false;
+        let log = '';
+        if (elements.length > 1)
+          log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
+        else if (element)
+          log = `  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`;
+        return { log, element, visible, attached: !!element };
+      }, {}));
       if (!resolved) {
         if (state === 'hidden' || state === 'detached')
           return null;
         return continuePolling;
       }
-      const result = await progress.race(resolved.injected.evaluateHandle((injected, { info, root }) => {
-        if (root && !root.isConnected)
-          throw injected.createStacklessError('Element is not attached to the DOM');
-        const elements = injected.querySelectorAll(info.parsed, root || document);
-        const element: Element | undefined  = elements[0];
-        const visible = element ? injected.utils.isElementVisible(element) : false;
-        let log = '';
-        if (elements.length > 1) {
-          if (info.strict)
-            throw injected.strictModeViolationError(info.parsed, elements);
-          log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
-        } else if (element) {
-          log = `  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`;
-        }
-        injected.checkDeprecatedSelectorUsage(info.parsed, elements);
-        return { log, element, visible, attached: !!element };
-      }, { info: resolved.info, root: resolved.frame === this ? scope : undefined }));
+      const result = resolved.result;
       const { log, visible, attached } = await progress.race(result.evaluate(r => ({ log: r.log, visible: r.visible, attached: r.attached })));
       if (log)
         progress.log(log);
@@ -887,7 +883,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       if ((options as any).__testHookBeforeAdoptNode)
         await progress.race((options as any).__testHookBeforeAdoptNode());
       try {
-        const mainContext = await progress.race(resolved.frame.mainContext());
+        const mainContext = await progress.race(element._frame.mainContext());
         return await progress.race(element._adoptTo(mainContext));
       } catch (e) {
         return continuePolling;
@@ -1210,27 +1206,21 @@ export class Frame extends SdkObject<FrameEventMap> {
       if (performActionPreChecks)
         await this._page.performActionPreChecks(progress);
 
-      const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, { strict: options.strict }));
+      const resolved = await progress.race(this.selectors.callOnSelectorHandle(selector, { strict: options.strict, markTargets: 'all' }, ({ injected, elements }) => {
+        const element = elements[0] as Element | undefined;
+        let log = '';
+        if (elements.length > 1)
+          log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
+        else if (element)
+          log = `  locator resolved to ${injected.previewNode(element)}`;
+        return { log, success: !!element, element };
+      }, {}));
       if (!resolved) {
         if (noAutoWaiting)
           throw new dom.NonRecoverableDOMError('Element(s) not found');
         return continuePolling;
       }
-      const result = await progress.race(resolved.injected.evaluateHandle((injected, { info }) => {
-        const elements = injected.querySelectorAll(info.parsed, document);
-        injected.markTargetElements(new Set(elements));
-        const element = elements[0] as Element | undefined;
-        let log = '';
-        if (elements.length > 1) {
-          if (info.strict)
-            throw injected.strictModeViolationError(info.parsed, elements);
-          log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
-        } else if (element) {
-          log = `  locator resolved to ${injected.previewNode(element)}`;
-        }
-        injected.checkDeprecatedSelectorUsage(info.parsed, elements);
-        return { log, success: !!element, element };
-      }, { info: resolved.info }));
+      const result = resolved.result;
       const { log, success } = await progress.race(result.evaluate(r => ({ log: r.log, success: r.success })));
       if (log)
         progress.log(log);
@@ -1379,21 +1369,15 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async addHighlight(progress: Progress, selector: string, style?: string) {
-    const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector));
-    if (!resolved)
-      return;
-    return await progress.race(resolved.injected.evaluate((injected, { info, style }) => {
+    await progress.race(this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }, style) => {
       return injected.addHighlight(info.parsed, style);
-    }, { info: resolved.info, style }));
+    }, style));
   }
 
   async removeHighlight(progress: Progress, selector: string) {
-    const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector));
-    if (!resolved)
-      return;
-    return await progress.race(resolved.injected.evaluate((injected, { info }) => {
+    await progress.race(this.selectors.callOnSelector(selector, { strict: false, callWithoutMatches: true }, ({ injected, info }) => {
       return injected.removeHighlight(info.parsed);
-    }, { info: resolved.info }));
+    }, {}));
   }
 
   async hideHighlight() {
@@ -1420,14 +1404,12 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async isVisibleInternal(progress: Progress, selector: string, options: types.StrictOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
     try {
-      const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, options, scope));
+      const resolved = await progress.race(this.selectors.callOnSelector(selector, { ...options, scope }, ({ injected, elements }) => {
+        return injected.elementState(elements[0], 'visible').matches;
+      }, {}));
       if (!resolved)
         return false;
-      return await progress.race(resolved.injected.evaluate((injected, { info, root }) => {
-        const element = injected.querySelector(info.parsed, root || document, info.strict);
-        const state = element ? injected.elementState(element, 'visible') : { matches: false, received: 'error:notconnected' };
-        return state.matches;
-      }, { info: resolved.info, root: resolved.frame === this ? scope : undefined }));
+      return resolved.result;
     } catch (e) {
       if (this.isNonRetriableError(e))
         throw e;
@@ -1574,31 +1556,64 @@ export class Frame extends SdkObject<FrameEventMap> {
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
     if (noAbort)
       progress = nullProgress;
-    const selectorInFrame = selector ? await progress.race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
+    const mainWorld = options.expression === 'to.have.property';
+    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    const effectiveSelector = selector ?? (options.expression === 'to.match.aria' ? 'body' : ':root');
 
-    const { frame, info } = selectorInFrame || { frame: this, info: undefined };
-    const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
-    const context = await progress.race(frame.context(world));
-    const injected = await progress.race(context.injectedScript());
+    let received: ExpectReceived | undefined;
+    let matches = options.isNot;
+    let missingReceived = false;
 
-    const { log, matches, received, missingReceived } = await progress.race(injected.evaluate(async (injected, { info, options }) => {
-      const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
-      injected.markTargetElements(new Set(elements));
+    // Non-array expectations are strict (callOnSelector throws on multiple); array ones are not.
+    const resolved = await progress.race(this.selectors.callOnSelector(effectiveSelector, { strict: !isArray, mainWorld, markTargets: 'all' }, async ({ injected, elements }, options) => {
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
-      let log = '';
-      if (isArray)
-        log = `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`;
-      else if (elements.length > 1)
-        throw injected.strictModeViolationError(info!.parsed, elements);
-      else if (elements.length)
-        log = `  locator resolved to ${injected.previewNode(elements[0])}`;
-      if (info)
-        injected.checkDeprecatedSelectorUsage(info.parsed, elements);
+      const log = isArray
+        ? `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`
+        : `  locator resolved to ${injected.previewNode(elements[0])}`;
       return { log, ...await injected.expect(elements[0], options, elements) };
-    }, { info, options }));
+    }, options));
 
-    if (log)
-      progressLog(log);
+    if (resolved) {
+      received = resolved.result.received;
+      matches = resolved.result.matches;
+      if (resolved.result.log)
+        progressLog(resolved.result.log);
+    } else {
+      // When no elements matched the selector, some assertions can still pass.
+      if (options.expression === 'to.have.count') {
+        progressLog(`  locator resolved to 0 elements`);
+        received = { value: 0 };
+        matches = 0 === options.expectedNumber;
+      } else if (options.expression.endsWith('.array')) {
+        progressLog(`  locator resolved to 0 elements`);
+        received = { value: [] };
+        matches = (options.expectedText?.length ?? 0) === 0;
+      } else if (!options.isNot && options.expression === 'to.be.hidden') {
+        matches = true;
+      } else if (options.isNot && options.expression === 'to.be.visible') {
+        matches = false;
+      } else if (!options.isNot && options.expression === 'to.be.detached') {
+        matches = true;
+      } else if (options.isNot && options.expression === 'to.be.attached') {
+        matches = false;
+      } else if (options.isNot && options.expression === 'to.be.in.viewport') {
+        matches = false;
+      } else {
+        matches = options.isNot;
+        missingReceived = true;
+      }
+      if (matches === options.isNot && !isArray) {
+        const context = await progress.race(this.context(mainWorld ? 'main' : 'utility'));
+        const injected = await progress.race(context.injectedScript());
+        const ariaSnapshot = await progress.race(injected.evaluate(injected => {
+          if (injected.document.body)
+            return injected.ariaSnapshotForExpectFailure(injected.document.body, { mode: 'default' });
+        }));
+        if (ariaSnapshot)
+          received = { ...received, ariaSnapshot };
+      }
+    }
+
     // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
     if (matches === options.isNot) {
       lastIntermediateResult.errorMessage = missingReceived ? 'element(s) not found' : undefined;
@@ -1762,21 +1777,18 @@ export class Frame extends SdkObject<FrameEventMap> {
     const callbackText = body.toString();
     progress.log(`waiting for ${this._asLocator(selector)}`);
     const promise = this.retryWithProgressAndBackoff(progress, async (progress, continuePolling) => {
-      const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, options, scope));
-      if (!resolved)
-        return continuePolling;
-      const { log, success, value } = await progress.race(resolved.injected.evaluate((injected, { info, callbackText, taskData, root }) => {
+      const resolved = await progress.race(this.selectors.callOnSelector(selector, { ...options, scope, markTargets: 'first' }, ({ injected, elements }, { callbackText, taskData }) => {
         const callback = injected.eval(callbackText) as ElementCallback<T, R>;
-        const element = injected.querySelector(info.parsed, root || document, info.strict);
-        if (!element)
-          return { success: false };
-        injected.markTargetElements(new Set([element]));
-        const value = callback(injected, element, taskData as T);
+        const element = elements[0];
+        const value = callback(injected, element, taskData);
         if (!value)
           return { success: false };
         const log = `  locator resolved to ${injected.previewNode(element)}`;
         return { log, success: true, value };
-      }, { info: resolved.info, callbackText, taskData, root: resolved.frame === this ? scope : undefined }));
+      }, { callbackText, taskData }));
+      if (!resolved)
+        return continuePolling;
+      const { log, success, value } = resolved.result;
       if (log)
         progress.log(log);
       if (!success)
@@ -1855,7 +1867,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       });
       return { snapshot };
     }
-    const lines = await ariaSnapshotForFrame(progress, this, options.selector || 'body', options);
+    const lines = await ariaSnapshotForFrame(progress, this, options.selector, options);
     return { snapshot: lines.join('\n') };
   }
 

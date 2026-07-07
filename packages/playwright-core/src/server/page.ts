@@ -1106,32 +1106,25 @@ export class InitScript extends DisposableObject {
   }
 }
 
-export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, selector: string, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean } = {}): Promise<string[]> {
+export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, selector: string | undefined, options: { mode?: 'ai' | 'default', doNotRenderActive?: boolean, depth?: number, boxes?: boolean } = {}): Promise<string[]> {
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async (progress, continuePolling) => {
     try {
-      const resolved = await progress.race(frame.selectors.resolveInjectedForSelector(selector, { strict: true }));
-      if (!resolved)
-        throw new Error(`Selector "${selector}" did not resolve to any element`);
-      // Note: resolvedFrame might differ from the original |frame|.
-      const resolvedFrame = resolved.frame;
-      const snapshotOrRetry = await progress.race(resolved.injected.evaluate((injected, options) => {
-        const element = injected.querySelector(options.info.parsed, injected.document, options.info.strict);
-        if (!element)
-          return true;
-        return injected.ariaSnapshotWithRefs(element, options);
+      // Note: the resolved frame might differ from the original |frame|.
+      const resolved = await progress.race(frame.selectors.callOnSelector(selector || 'body', { strict: true }, ({ injected, elements }, ariaOptions) => {
+        return injected.ariaSnapshotWithRefs(elements[0], ariaOptions);
       }, {
         mode: options.mode ?? 'default',
         doNotRenderActive: options.doNotRenderActive,
-        info: resolved.info,
         depth: options.depth,
         boxes: options.boxes,
       }));
-      if (snapshotOrRetry === true) {
-        if (selector !== 'body')
+      if (!resolved) {
+        if (selector)
           throw new NonRecoverableDOMError(`Selector "${selector}" does not match any element`);
+        // Retry only for the main frame "body" being absent, so that `page.ariaSnapshot()` does not fail.
         return continuePolling;
       }
-      return { ...snapshotOrRetry, resolvedFrame };
+      return { ...resolved.result, resolvedFrame: resolved.frame };
     } catch (e) {
       if (frame.isNonRetriableError(e))
         throw e;

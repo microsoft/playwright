@@ -334,6 +334,12 @@ export class InjectedScript {
     return { ariaSnapshot, refs: tree.refs };
   }
 
+  ariaSnapshotForExpectFailure(element: Element, options: AriaTreeOptions): string {
+    // Bypass _lastAriaSnapshotForQuery — that cache is reserved for explicit
+    // ariaSnapshot() calls used by the aria-ref selector engine.
+    return renderAriaTree(generateAriaTree(element, options), options).text;
+  }
+
   getAllElementsMatchingExpectAriaTemplate(document: Document, template: AriaTemplateNode): Element[] {
     return getAllElementsMatchingExpectAriaTemplate(document.documentElement, template);
   }
@@ -1437,85 +1443,44 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  async expect(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: ExpectReceived, missingReceived?: boolean }> {
-    const core = await this._expectCore(element, options, elements);
+  async expect(element: Element, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: ExpectReceived }> {
+    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
+    const core = isArray ? this.expectArray(elements, options) : await this.expectSingleElement(element, options);
     const ariaSnapshot = core.matches !== options.isNot ? undefined : this._ariaSnapshotForExpect(element, options);
     if (core.received === undefined && ariaSnapshot === undefined)
-      return { matches: core.matches, missingReceived: core.missingReceived };
-    return { matches: core.matches, received: { value: core.received, ariaSnapshot }, missingReceived: core.missingReceived };
+      return { matches: core.matches };
+    return { matches: core.matches, received: { value: core.received, ariaSnapshot } };
   }
 
-  private _ariaSnapshotForExpect(element: Element | undefined, options: FrameExpectParams): string | undefined {
+  private _ariaSnapshotForExpect(element: Element, options: FrameExpectParams): string | undefined {
     const expression = options.expression;
-    if (expression === 'to.have.count' || expression.endsWith('.array'))
+    if (expression === 'to.have.count' || expression.endsWith('.array') || expression === 'to.match.aria')
       return undefined;
-    if (expression === 'to.match.aria')
-      return undefined;
-    if (element && isElementVisible(element)) {
+    if (isElementVisible(element) && expression !== 'to.have.title' && expression !== 'to.have.url') {
       // Element-scoped snapshot. Containment matchers want the full subtree;
       // property matchers only need the element's own line.
       const isContainment = expression === 'to.have.text';
-      return this._renderAriaSnapshot(element, { mode: 'default', depth: isContainment ? undefined : 1 });
+      return this.ariaSnapshotForExpectFailure(element, { mode: 'default', depth: isContainment ? undefined : 1 });
     }
-    // Element missing or hidden — fall back to a full-page snapshot for context.
     if (!this.document.body)
       return undefined;
-    return this._renderAriaSnapshot(this.document.body, { mode: 'default' });
-  }
-
-  private _renderAriaSnapshot(element: Element, options: AriaTreeOptions): string {
-    // Bypass _lastAriaSnapshotForQuery — that cache is reserved for explicit
-    // ariaSnapshot() calls used by the aria-ref selector engine.
-    return renderAriaTree(generateAriaTree(element, options), options).text;
-  }
-
-  private async _expectCore(element: Element | undefined, options: FrameExpectParams, elements: Element[]): Promise<{ matches: boolean, received?: any, missingReceived?: boolean }> {
-    const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
-    if (isArray)
-      return this.expectArray(elements, options);
-    if (!element) {
-      // expect(locator).toBeHidden() passes when there is no element.
-      if (!options.isNot && options.expression === 'to.be.hidden')
-        return { matches: true };
-      // expect(locator).not.toBeVisible() passes when there is no element.
-      if (options.isNot && options.expression === 'to.be.visible')
-        return { matches: false };
-      // expect(locator).toBeAttached({ attached: false }) passes when there is no element.
-      if (!options.isNot && options.expression === 'to.be.detached')
-        return { matches: true };
-      // expect(locator).not.toBeAttached() passes when there is no element.
-      if (options.isNot && options.expression === 'to.be.attached')
-        return { matches: false };
-      // expect(locator).not.toBeInViewport() passes when there is no element.
-      if (options.isNot && options.expression === 'to.be.in.viewport')
-        return { matches: false };
-      if (options.expression === 'to.have.title' && options?.expectedText?.[0]) {
-        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
-        const received = this.document.title;
-        return { received, matches: matcher.matches(received) };
-      }
-      if (options.expression === 'to.have.url' && options?.expectedText?.[0]) {
-        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
-        const received = this.document.location.href;
-        return { received, matches: matcher.matches(received) };
-      }
-      if (options.expression === 'to.match.aria' && !options.selector) {
-        if (!this.document.body)
-          return { matches: options.isNot, missingReceived: true };
-        const result = matchesExpectAriaTemplate(this.document.body, options.expectedValue);
-        return {
-          received: result.received,
-          matches: !!result.matches.length,
-        };
-      }
-      // When none of the above applies, expect does not match.
-      return { matches: options.isNot, missingReceived: true };
-    }
-    return await this.expectSingleElement(element, options);
+    return this.ariaSnapshotForExpectFailure(this.document.body, { mode: 'default' });
   }
 
   private async expectSingleElement(element: Element, options: FrameExpectParams): Promise<{ matches: boolean, received?: any }> {
     const expression = options.expression;
+
+    {
+      // Page-level values. The element (:root) is only used to reach the document.
+      if (expression === 'to.have.title') {
+        const received = this.document.title;
+        return { received, matches: new ExpectedTextMatcher(options.expectedText![0]).matches(received) };
+      }
+      if (expression === 'to.have.url') {
+        const received = this.document.location.href;
+        return { received, matches: new ExpectedTextMatcher(options.expectedText![0]).matches(received) };
+      }
+    }
 
     {
       // Element state / boolean values.

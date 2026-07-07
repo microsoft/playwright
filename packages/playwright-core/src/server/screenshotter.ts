@@ -277,14 +277,9 @@ export class Screenshotter {
     try {
       await progress.race(this._page.hideHighlight());
       await progress.race(Promise.all((options.mask || []).map(async ({ frame, selector }) => {
-        const resolved = await frame.selectors.resolveInjectedForSelector(selector, { strict: false });
-        if (!resolved)
-          return;
-        await resolved.injected.evaluate((injected, { info, color }) => {
-          const elements = injected.querySelectorAll(info.parsed, injected.document.documentElement);
-          if (elements.length)
-            injected.addMaskedElements(elements, color);
-        }, { info: resolved.info, color: options.maskColor || '#F0F' });
+        await frame.selectors.callOnSelector(selector, { strict: false }, ({ injected, elements }, color) => {
+          injected.addMaskedElements(elements, color);
+        }, options.maskColor || '#F0F');
       })));
       return cleanup;
     } catch (error) {

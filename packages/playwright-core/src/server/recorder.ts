@@ -378,17 +378,17 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       return;
     try {
       const mainFrame = frame._page.mainFrame();
-      const resolved = await mainFrame.selectors.resolveFrameForSelector(this._highlightedElement.selector);
+      const resolved = await mainFrame.selectors.callOnSelector(this._highlightedElement.selector, { callWithoutMatches: true }, () => {}, {});
       // selector couldn't be found, don't highlight anything
       if (!resolved)
         return '';
 
       // selector points to no specific frame, highlight in all frames
-      if (resolved?.frame === mainFrame)
+      if (resolved.frame === mainFrame)
         return stringifySelector(resolved.info.parsed);
 
       // selector points to this frame, highlight it
-      if (resolved?.frame === frame)
+      if (resolved.frame === frame)
         return stringifySelector(resolved.info.parsed);
 
       // selector points to a different frame, highlight nothing
