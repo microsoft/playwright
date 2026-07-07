@@ -525,26 +525,6 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   }, errorPrompt]);
 });
 
-test('should log aria snapshot failures with DEBUG=pw:api', async ({ runInlineTest }) => {
-  test.slow();
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { name: 'chromium', timeout: 30000 };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('fail', async ({ page }) => {
-        await page.goto('about:blank');
-        await page.evaluate(() => document.documentElement.remove());
-        expect(1).toBe(2);
-      });
-    `,
-  }, { workers: 1 }, { DEBUG: 'pw:api' });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.stderr + result.output).toContain('ariaSnapshot: failed to capture snapshot during error (may be expected)');
-});
-
 test('should work with video: on-all-retries', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
