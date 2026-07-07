@@ -44,8 +44,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, chann
 
   expected.pushmanager = false;
   expected.devicemotion2 = false;
-  expected.devicemotion = false;
-  expected.deviceorientation = false;
   expected.deviceorientation3 = false;
 
   delete expected.webglextensions;

@@ -382,9 +382,13 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
     {
       // Check top-level cookie first.
       await page.goto(urls.read_origin1);
-      const expectedTopLevel = (browserName === 'webkit' && !webkitPartitions) || (browserName === 'firefox' && !isBidi) ?
-        'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value' :
-        'Received cookie: frame-non-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
+      let expectedTopLevel: string;
+      if (browserName === 'webkit' && isMac && !webkitPartitions)
+        expectedTopLevel = 'Received cookie: frame-non-partitioned=value; top-level-non-partitioned=value';
+      else if ((browserName === 'webkit' && !webkitPartitions) || (browserName === 'firefox' && !isBidi))
+        expectedTopLevel = 'Received cookie: frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
+      else
+        expectedTopLevel = 'Received cookie: frame-non-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
       expect.soft(await page.locator('body').textContent()).toBe(expectedTopLevel);
     }
     {
@@ -409,6 +413,8 @@ test(`add 'Partitioned;' cookie via API`, async ({ page, context, browserName, h
       let expectedThirdParty = 'Received cookie: ';
       if (webkitPartitions)
         expectedThirdParty += 'frame-non-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
+      else if (browserName === 'webkit' && isMac)
+        expectedThirdParty += 'frame-non-partitioned=value; top-level-non-partitioned=value';
       else if (browserName === 'webkit' || (browserName === 'firefox' && !isBidi))
         expectedThirdParty += 'frame-non-partitioned=value; frame-partitioned=value; top-level-non-partitioned=value; top-level-partitioned=value';
       else if (browserName === 'firefox' && isBidi)
