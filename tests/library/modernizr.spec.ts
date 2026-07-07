@@ -42,6 +42,11 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, chann
   });
   const { actual, expected } = await checkFeatures('safari-18', context, httpsServer);
 
+  // Shipping Safari exposes `font-display` as a settable CSS property (element.style.fontDisplay === ''),
+  // but open-source WebKit keeps it a @font-face descriptor only, so it is undefined here. No runtime
+  // flag bridges the gap, hence the override.
+  expected.fontdisplay = false;
+
   delete expected.webglextensions;
   delete actual.webglextensions;
   expected.audio = !!expected.audio;
@@ -103,6 +108,11 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.overflowscrolling = false;
     expected.mediasource = true;
     expected.scrolltooptions = false;
+
+    // Shipping Safari exposes `font-display` as a settable CSS property (element.style.fontDisplay === ''),
+    // but open-source WebKit keeps it a @font-face descriptor only, so it is undefined here. No runtime
+    // flag bridges the gap, hence the override.
+    expected.fontdisplay = false;
 
     delete expected.webglextensions;
     delete actual.webglextensions;
