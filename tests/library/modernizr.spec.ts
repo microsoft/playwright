@@ -40,7 +40,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, chann
     deviceScaleFactor: 2,
     ignoreHTTPSErrors: true,
   });
-  const { actual, expected } = await checkFeatures('safari-18', context, httpsServer);
+  const { actual, expected } = await checkFeatures('safari-26', context, httpsServer);
 
   // Shipping Safari exposes `font-display` as a settable CSS property (element.style.fontDisplay === ''),
   // but open-source WebKit keeps it a @font-face descriptor only, so it is undefined here. No runtime
@@ -97,7 +97,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     ...iPhone,
     ignoreHTTPSErrors: true,
   });
-  const { actual, expected } = await checkFeatures('mobile-safari-18', context, httpsServer);
+  const { actual, expected } = await checkFeatures('mobile-safari-26', context, httpsServer);
 
   {
     // All platforms.
