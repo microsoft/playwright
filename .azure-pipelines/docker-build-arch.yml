@@ -31,6 +31,24 @@ steps:
       echo '{ "data-root": "/mnt/docker" }' | sudo tee /etc/docker/daemon.json
       sudo service docker start
 
+- task: Bash@3
+  displayName: "setup .npmrc"
+  inputs:
+    targetType: "inline"
+    script: |
+      echo "registry=https://devdiv.pkgs.visualstudio.com/DevDiv/_packaging/DevDiv_PublicPackages/npm/registry/" >> .npmrc
+      echo "registry=https://devdiv.pkgs.visualstudio.com/DevDiv/_packaging/DevDiv_PublicPackages/npm/registry/" >> tests/playwright-test/stable-test-runner/.npmrc
+
+- task: npmAuthenticate@0
+  displayName: "authenticate the private npm registry"
+  inputs:
+    workingFile: .npmrc
+
+- task: npmAuthenticate@0
+  displayName: "authenticate the private npm registry for stable-test-runner"
+  inputs:
+    workingFile: tests/playwright-test/stable-test-runner/.npmrc
+
 - script: npm ci
   displayName: "npm ci"
 
