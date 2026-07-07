@@ -742,7 +742,7 @@ class ArtifactsRecorder {
         this._pageSnapshot = await page.ariaSnapshot({ mode: 'ai', timeout: 5000 });
       }, { internal: true });
     } catch (error) {
-      debugLogger.log('api', `ariaSnapshot: failed to capture snapshot during error (may be expected): ${error}`);
+      debugLogger.log('error', `failed to capture aria snapshot: ${error}`);
     }
   }
 
