@@ -443,3 +443,30 @@ it('should create two pages in parallel in various contexts', {
   ]);
   await context3.close();
 });
+
+it('should not share disk cache between contexts', async ({ browser, server }) => {
+  let requestCount = 0;
+  server.setRoute('/cached-style.css', (req, res) => {
+    ++requestCount;
+    res.setHeader('Content-Type', 'text/css');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.end('body { color: red; }');
+  });
+  server.setRoute('/with-style.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store');
+    res.end(`<link rel="stylesheet" href="/cached-style.css">`);
+  });
+
+  const context1 = await browser.newContext();
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/with-style.html');
+  expect(requestCount).toBe(1);
+  await context1.close();
+
+  const context2 = await browser.newContext();
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/with-style.html');
+  expect(requestCount).toBe(2);
+  await context2.close();
+});

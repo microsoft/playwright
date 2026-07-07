@@ -155,6 +155,27 @@ BrowserContext:
               regexFlags: string?
               urlPattern: URLPattern?
 
+    routeFromCache:
+      title: Route from cache
+      group: route
+      parameters:
+        dir: string
+        url:
+          type: object?
+          properties:
+            glob: string?
+            regexSource: string?
+            regexFlags: string?
+            urlPattern: URLPattern?
+      returns:
+        registrationId: string
+
+    unrouteFromCache:
+      title: Stop routing from cache
+      group: route
+      parameters:
+        registrationId: string
+
     routeAPIRequestsFromHar:
       internal: true
       parameters:

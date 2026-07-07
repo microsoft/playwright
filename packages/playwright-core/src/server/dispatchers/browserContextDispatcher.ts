@@ -21,6 +21,7 @@ import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
 import { createGuid } from '@utils/crypto';
 import { throwingResolveWithinRoot } from '@utils/fileUtils';
 import { BrowserContext } from '../browserContext';
+import { NetworkCache } from '../networkCache';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DebuggerDispatcher } from './debuggerDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
@@ -63,6 +64,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
+  private _networkCacheHandlers = new Map<string, RouteHandler>();
   private _routeWebSocketInitScript: InitScript | undefined;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
@@ -330,6 +332,24 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       if (!hadMatchers)
         await this._context.addRequestInterceptor(progress, this._requestInterceptor);
     }
+  }
+
+  async routeFromCache(params: channels.BrowserContextRouteFromCacheParams, progress: Progress): Promise<channels.BrowserContextRouteFromCacheResult> {
+    const urlMatch = params.url ? deserializeURLMatch(params.url) : undefined;
+    const cache = new NetworkCache(params.dir, urlMatch, this._context._options.baseURL);
+    const handler = cache.handler();
+    const registrationId = createGuid();
+    this._networkCacheHandlers.set(registrationId, handler);
+    await this._context.addRequestInterceptor(progress, handler);
+    return { registrationId };
+  }
+
+  async unrouteFromCache(params: channels.BrowserContextUnrouteFromCacheParams, progress: Progress): Promise<void> {
+    const handler = this._networkCacheHandlers.get(params.registrationId);
+    if (!handler)
+      return;
+    this._networkCacheHandlers.delete(params.registrationId);
+    await progress.race(this._context.removeRequestInterceptor(handler));
   }
 
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, progress: Progress): Promise<void> {

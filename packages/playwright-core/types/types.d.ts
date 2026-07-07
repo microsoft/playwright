@@ -4366,6 +4366,45 @@ export interface Page {
   }): Promise<Disposable>;
 
   /**
+   * Caches responses for matching network requests on disk and replays them on subsequent runs.
+   *
+   * On the first run every matching request goes to the network and its response (status, headers and body) is stored
+   * under [`dir`](https://playwright.dev/docs/api/class-page#page-route-from-cache-option-dir). On later runs matching
+   * requests are served from disk without hitting the network. Non-matching requests are left untouched.
+   *
+   * Responses are stored compactly: small bodies are inlined into a single append-only index, while large bodies are
+   * content-addressed and de-duplicated in a `blobs/` sub-directory. Only successful (`2xx`) responses are cached;
+   * other responses always go to the network.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Record on the first run, replay from disk afterwards.
+   * await page.routeFromCache({ dir: '.cache' });
+   * await page.goto('https://github.com/microsoft/playwright/issues');
+   * ```
+   *
+   * ```js
+   * // Cache only requests under a specific path.
+   * await page.routeFromCache({ dir: '.cache', match: '**\/api/**' });
+   * ```
+   *
+   * @param options
+   */
+  routeFromCache(options: {
+    /**
+     * Directory used to store and read cached responses.
+     */
+    dir: string;
+
+    /**
+     * A glob pattern, regex or [URLPattern] that selects which request URLs are cached. When omitted, all `GET` requests
+     * are cached. Only `GET` requests are ever cached.
+     */
+    match?: string|RegExp|URLPattern;
+  }): Promise<Disposable>;
+
+  /**
    * If specified the network requests that are made in the page will be served from the HAR file. Read more about
    * [Replaying from HAR](https://playwright.dev/docs/mock#replaying-from-har).
    *
@@ -10224,6 +10263,42 @@ export interface BrowserContext {
      * How often a route should be used. By default it will be used every time.
      */
     times?: number;
+  }): Promise<Disposable>;
+
+  /**
+   * Caches responses for matching network requests on disk and replays them on subsequent runs.
+   *
+   * On the first run every matching request goes to the network and its response (status, headers and body) is stored
+   * under [`dir`](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-cache-option-dir). On
+   * later runs matching requests are served from disk without hitting the network. Non-matching requests are left
+   * untouched.
+   *
+   * Responses are stored compactly: small bodies are inlined into a single append-only index, while large bodies are
+   * content-addressed and de-duplicated in a `blobs/` sub-directory. Only successful (`2xx`) responses are cached;
+   * other responses always go to the network.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Record on the first run, replay from disk afterwards.
+   * await context.routeFromCache({ dir: '.cache' });
+   * const page = await context.newPage();
+   * await page.goto('https://github.com/microsoft/playwright/issues');
+   * ```
+   *
+   * @param options
+   */
+  routeFromCache(options: {
+    /**
+     * Directory used to store and read cached responses.
+     */
+    dir: string;
+
+    /**
+     * A glob pattern, regex or [URLPattern] that selects which request URLs are cached. When omitted, all `GET` requests
+     * are cached. Only `GET` requests are ever cached.
+     */
+    match?: string|RegExp|URLPattern;
   }): Promise<Disposable>;
 
   /**

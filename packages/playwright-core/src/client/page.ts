@@ -22,7 +22,7 @@ import path from 'path';
 import { assert } from '@isomorphic/assert';
 import { headersObjectToArray } from '@isomorphic/headers';
 import { trimStringWithEllipsis  } from '@isomorphic/stringUtils';
-import { urlMatches, urlMatchesEqual } from '@isomorphic/urlMatch';
+import { serializeURLMatch, urlMatches, urlMatchesEqual } from '@isomorphic/urlMatch';
 import { LongStandingScope } from '@isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '@isomorphic/rtti';
 import { Artifact } from './artifact';
@@ -542,6 +542,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns({ title: 'Route requests' });
     return new DisposableStub(() => this.unroute(url, handler));
+  }
+
+  async routeFromCache(options: { dir: string, match?: URLMatch }): Promise<DisposableStub> {
+    const { registrationId } = await this._channel.routeFromCache({ dir: options.dir, url: options.match ? serializeURLMatch(options.match) : undefined }, undefined);
+    return new DisposableStub(() => this._channel.unrouteFromCache({ registrationId }, undefined).then(() => {}));
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {

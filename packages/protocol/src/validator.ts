@@ -832,6 +832,22 @@ scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
   })),
 });
 scheme.BrowserContextSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
+scheme.BrowserContextRouteFromCacheParams = tObject({
+  dir: tString,
+  url: tOptional(tObject({
+    glob: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
+  })),
+});
+scheme.BrowserContextRouteFromCacheResult = tObject({
+  registrationId: tString,
+});
+scheme.BrowserContextUnrouteFromCacheParams = tObject({
+  registrationId: tString,
+});
+scheme.BrowserContextUnrouteFromCacheResult = tOptional(tObject({}));
 scheme.BrowserContextRouteAPIRequestsFromHarParams = tObject({
   harId: tString,
   urlGlob: tOptional(tString),
@@ -2492,6 +2508,22 @@ scheme.PageSetNetworkInterceptionPatternsParams = tObject({
   })),
 });
 scheme.PageSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
+scheme.PageRouteFromCacheParams = tObject({
+  dir: tString,
+  url: tOptional(tObject({
+    glob: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
+  })),
+});
+scheme.PageRouteFromCacheResult = tObject({
+  registrationId: tString,
+});
+scheme.PageUnrouteFromCacheParams = tObject({
+  registrationId: tString,
+});
+scheme.PageUnrouteFromCacheResult = tOptional(tObject({}));
 scheme.PageSetWebSocketInterceptionPatternsParams = tObject({
   patterns: tArray(tObject({
     glob: tOptional(tString),

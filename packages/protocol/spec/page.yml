@@ -243,6 +243,27 @@ Page:
               regexFlags: string?
               urlPattern: URLPattern?
 
+    routeFromCache:
+      title: Route from cache
+      group: route
+      parameters:
+        dir: string
+        url:
+          type: object?
+          properties:
+            glob: string?
+            regexSource: string?
+            regexFlags: string?
+            urlPattern: URLPattern?
+      returns:
+        registrationId: string
+
+    unrouteFromCache:
+      title: Stop routing from cache
+      group: route
+      parameters:
+        registrationId: string
+
     setWebSocketInterceptionPatterns:
       title: Route WebSockets
       group: route

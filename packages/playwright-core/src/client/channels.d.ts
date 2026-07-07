@@ -1282,6 +1282,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, Channe
   setGeolocation(params: BrowserContextSetGeolocationParams, signal: AbortSignal | undefined): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  routeFromCache(params: BrowserContextRouteFromCacheParams, signal: AbortSignal | undefined): Promise<BrowserContextRouteFromCacheResult>;
+  unrouteFromCache(params: BrowserContextUnrouteFromCacheParams, signal: AbortSignal | undefined): Promise<BrowserContextUnrouteFromCacheResult>;
   routeAPIRequestsFromHar(params: BrowserContextRouteAPIRequestsFromHarParams, signal: AbortSignal | undefined): Promise<BrowserContextRouteAPIRequestsFromHarResult>;
   unrouteAPIRequestsFromHar(params: BrowserContextUnrouteAPIRequestsFromHarParams, signal: AbortSignal | undefined): Promise<BrowserContextUnrouteAPIRequestsFromHarResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
@@ -1517,6 +1519,33 @@ export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
 export type BrowserContextSetNetworkInterceptionPatternsResult = void;
+export type BrowserContextRouteFromCacheParams = {
+  dir: string,
+  url?: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+    urlPattern?: URLPattern,
+  },
+};
+export type BrowserContextRouteFromCacheOptions = {
+  url?: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+    urlPattern?: URLPattern,
+  },
+};
+export type BrowserContextRouteFromCacheResult = {
+  registrationId: string,
+};
+export type BrowserContextUnrouteFromCacheParams = {
+  registrationId: string,
+};
+export type BrowserContextUnrouteFromCacheOptions = {
+
+};
+export type BrowserContextUnrouteFromCacheResult = void;
 export type BrowserContextRouteAPIRequestsFromHarParams = {
   harId: string,
   urlGlob?: string,
@@ -3967,6 +3996,8 @@ export interface PageChannel extends PageEventTarget, Channel {
   screenshot(params: PageScreenshotParams, signal: AbortSignal | undefined): Promise<PageScreenshotResult>;
   setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, signal: AbortSignal | undefined): Promise<PageSetExtraHTTPHeadersResult>;
   setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<PageSetNetworkInterceptionPatternsResult>;
+  routeFromCache(params: PageRouteFromCacheParams, signal: AbortSignal | undefined): Promise<PageRouteFromCacheResult>;
+  unrouteFromCache(params: PageUnrouteFromCacheParams, signal: AbortSignal | undefined): Promise<PageUnrouteFromCacheResult>;
   setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, signal: AbortSignal | undefined): Promise<PageSetWebSocketInterceptionPatternsResult>;
   setViewportSize(params: PageSetViewportSizeParams, signal: AbortSignal | undefined): Promise<PageSetViewportSizeResult>;
   keyboardDown(params: PageKeyboardDownParams, signal: AbortSignal | undefined): Promise<PageKeyboardDownResult>;
@@ -4292,6 +4323,33 @@ export type PageSetNetworkInterceptionPatternsOptions = {
 
 };
 export type PageSetNetworkInterceptionPatternsResult = void;
+export type PageRouteFromCacheParams = {
+  dir: string,
+  url?: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+    urlPattern?: URLPattern,
+  },
+};
+export type PageRouteFromCacheOptions = {
+  url?: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+    urlPattern?: URLPattern,
+  },
+};
+export type PageRouteFromCacheResult = {
+  registrationId: string,
+};
+export type PageUnrouteFromCacheParams = {
+  registrationId: string,
+};
+export type PageUnrouteFromCacheOptions = {
+
+};
+export type PageUnrouteFromCacheResult = void;
 export type PageSetWebSocketInterceptionPatternsParams = {
   patterns: {
     glob?: string,

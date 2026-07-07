@@ -173,7 +173,7 @@ export abstract class APIRequestContext extends SdkObject {
     return uid;
   }
 
-  async fetch(progress: Progress, params: channels.APIRequestContextFetchParams): Promise<channels.APIResponse> {
+  async fetch(progress: Progress, params: channels.APIRequestContextFetchParams & { discardResponseBody?: boolean }): Promise<channels.APIResponse & { body?: Buffer }> {
     const defaults = this._defaultOptions();
     const headers: HeadersObject = {
       'user-agent': defaults.userAgent,
@@ -243,6 +243,9 @@ export abstract class APIRequestContext extends SdkObject {
       }
       throw new Error(`${response.status} ${response.statusText}${responseText}`);
     }
+
+    if (params?.discardResponseBody)
+      return { ...response, fetchUid: '', body };
     const fetchUid = this._storeResponseBody(body);
     this.fetchLog.set(fetchUid, log);
     return { ...response, fetchUid };

@@ -15,7 +15,9 @@
  */
 
 import { renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { createGuid } from '@utils/crypto';
 import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
+import { NetworkCache } from '../networkCache';
 import { Page, Worker } from '../page';
 import { Dispatcher } from './dispatcher';
 import { parseError, serializeError } from '../errors';
@@ -60,6 +62,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _disposables: Disposable[] = [];
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
+  private _networkCacheHandlers = new Map<string, RouteHandler>();
   private _routeWebSocketInitScript: InitScript | undefined;
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
@@ -201,6 +204,24 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     const initScript = await this._page.addInitScript(progress, params.source);
     this._disposables.push(initScript);
     return { disposable: new DisposableDispatcher(this, initScript) };
+  }
+
+  async routeFromCache(params: channels.PageRouteFromCacheParams, progress: Progress): Promise<channels.PageRouteFromCacheResult> {
+    const urlMatch = params.url ? deserializeURLMatch(params.url) : undefined;
+    const cache = new NetworkCache(params.dir, urlMatch, this._page.browserContext._options.baseURL);
+    const handler = cache.handler();
+    const registrationId = createGuid();
+    this._networkCacheHandlers.set(registrationId, handler);
+    await this._page.addRequestInterceptor(progress, handler);
+    return { registrationId };
+  }
+
+  async unrouteFromCache(params: channels.PageUnrouteFromCacheParams, progress: Progress): Promise<void> {
+    const handler = this._networkCacheHandlers.get(params.registrationId);
+    if (!handler)
+      return;
+    this._networkCacheHandlers.delete(params.registrationId);
+    await progress.race(this._page.removeRequestInterceptor(handler));
   }
 
   async setNetworkInterceptionPatterns(params: channels.PageSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {

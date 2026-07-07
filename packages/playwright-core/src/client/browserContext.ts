@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { headersObjectToArray } from '@isomorphic/headers';
-import { urlMatchesEqual } from '@isomorphic/urlMatch';
+import { serializeURLMatch, urlMatchesEqual } from '@isomorphic/urlMatch';
 import { isRegExp, isString } from '@isomorphic/rtti';
 import { rewriteErrorMessage } from '@utils/stackTrace';
 import { Browser } from './browser';
@@ -385,6 +385,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async routeWebSocket(url: URLMatch, handler: network.WebSocketRouteHandlerCallback): Promise<void> {
     this._webSocketRoutes.unshift(new network.WebSocketRouteHandler(this._options.baseURL, url, handler));
     await this._updateWebSocketInterceptionPatterns({ title: 'Route WebSockets' });
+  }
+
+  async routeFromCache(options: { dir: string, match?: URLMatch }): Promise<DisposableStub> {
+    const { registrationId } = await this._channel.routeFromCache({ dir: options.dir, url: options.match ? serializeURLMatch(options.match) : undefined }, undefined);
+    return new DisposableStub(() => this._channel.unrouteFromCache({ registrationId }, undefined).then(() => {}));
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full', interceptAPIRequests?: boolean } = {}): Promise<void> {
