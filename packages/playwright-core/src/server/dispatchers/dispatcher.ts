@@ -389,11 +389,11 @@ export class DispatcherConnection {
       // The command handler could have set error in the metadata, do not reset it if there was no exception.
       callMetadata.error = response.error;
     } finally {
-      this._activeProgressControllers.delete(callMetadata.id);
       callMetadata.endTime = monotonicTime();
       await sdkObject.instrumentation.onAfterCall(sdkObject, callMetadata);
       if (metainfo?.slowMo)
         await this._doSlowMo(sdkObject);
+      this._activeProgressControllers.delete(callMetadata.id);
     }
 
     if (response.error)

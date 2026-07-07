@@ -70,6 +70,7 @@ export class ProgressController {
       this._forceAbortPromise.reject(error);
       this._controller.abort(error);
     } else if (this._state === 'before') {
+      (error as any)[kAbortErrorSymbol] = true;
       this._pendingAbortError = error;
     }
     await this._donePromise;
@@ -79,8 +80,6 @@ export class ProgressController {
     const deadline = timeout ? monotonicTime() + timeout : 0;
     assert(this._state === 'before');
     this._state = 'running';
-    if (this._pendingAbortError)
-      this.abort(this._pendingAbortError);
 
     let timer: NodeJS.Timeout | undefined;
 
@@ -145,6 +144,8 @@ export class ProgressController {
     }
 
     try {
+      if (this._pendingAbortError)
+        throw this._pendingAbortError;
       const result = await task(progress);
       this._state = 'finished';
       return result;
