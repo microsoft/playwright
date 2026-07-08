@@ -6,41 +6,29 @@ user_invocable: true
 
 # Playwright Test Results (DuckDB)
 
-Every CI test job uploads its results as a small **parquet** artifact
-(`parquet-report-<job_name>`). Those per-run parquets are compacted into a single
-DuckDB file, refreshed every few hours by the `Update test results DB` workflow.
-Use it to answer the easy questions fast, without downloading blob reports.
+A single DuckDB file holds recent Playwright CI test results, so you can answer
+questions about failures, flakiness, and slow tests with plain SQL. It is
+refreshed every few hours.
 
 ## Get the database
 
-Download the latest `test-results-db` artifact — it lands at the fixed,
-gitignored path `utils/test-results-db/test-results.duckdb`:
+Download the latest snapshot:
 
 ```bash
 npm ci                       # first time only, from the repo root
 GITHUB_TOKEN=$(gh auth token) node utils/test-results-db/cli.ts download
 ```
 
-The downloaded file can be **trailing** — the maintaining workflow only runs
-every few hours, so the newest runs may not be in it yet. To bring it fully up
-to date locally, run `update` after downloading (needs a token; it ingests only
-the artifacts missing from the file):
+The snapshot may be missing the newest runs. To top it up locally, run `update`:
 
 ```bash
 GITHUB_TOKEN=$(gh auth token) node utils/test-results-db/cli.ts update --lookback-days 3
 ```
 
-`update` only ever adds rows — it never deletes. The size-cap eviction is a
-separate `truncate` command that the maintaining workflow runs before uploading,
-so a local `update` never loses data.
-
-Then query it with the `duckdb` CLI (or any DuckDB client) — this CLI does
-**not** query, it only maintains the file:
+Query it with the `duckdb` CLI (or any DuckDB client):
 
 ```bash
 duckdb utils/test-results-db/test-results.duckdb "SELECT count(*) FROM test_results"
-# interactive:
-duckdb utils/test-results-db/test-results.duckdb
 ```
 
 ## Schema
