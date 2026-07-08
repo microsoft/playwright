@@ -295,6 +295,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true, box: true }],
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true, box: true }],
+  clipboard: [false, { option: true, box: true }],
   contextOptions: [{}, { option: true, box: true }],
   _combinedContextOptions: [async ({
     acceptDownloads,
@@ -460,14 +461,17 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
 
-  context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
+  context: async ({ browser, video, _reuseContext, _contextFactory, clipboard }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
     const show = typeof video === 'string' ? undefined : video.show;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
+    const installClipboard = typeof clipboard === 'boolean' ? clipboard : clipboard.install;
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
       await installScreencastTitleUpdater(testInfo, context, show?.test);
+      if (installClipboard)
+        await context.clipboard.install();
       await use(context);
       await close();
       return;
@@ -475,6 +479,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures, UtilityTestFixt
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
     await installScreencastTitleUpdater(testInfo, context, show?.test);
+    if (installClipboard)
+      await context.clipboard.install();
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });

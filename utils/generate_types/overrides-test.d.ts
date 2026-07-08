@@ -294,6 +294,7 @@ export interface PlaywrightTestOptions {
   actionTimeout: number;
   navigationTimeout: number;
   serviceWorkers: ServiceWorkerPolicy;
+  clipboard: boolean | { install: boolean };
   testIdAttribute: string;
 }
 

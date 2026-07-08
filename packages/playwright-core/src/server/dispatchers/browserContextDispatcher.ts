@@ -439,6 +439,26 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await progress.race(this._context.clock.setSystemTime(params.timeString ?? params.timeNumber ?? 0));
   }
 
+  async clipboardInstall(params: channels.BrowserContextClipboardInstallParams, progress: Progress): Promise<channels.BrowserContextClipboardInstallResult> {
+    await this._context.clipboard.install(progress);
+  }
+
+  async clipboardReadText(params: channels.BrowserContextClipboardReadTextParams, progress: Progress): Promise<channels.BrowserContextClipboardReadTextResult> {
+    return { text: await this._context.clipboard.readText(progress) };
+  }
+
+  async clipboardWriteText(params: channels.BrowserContextClipboardWriteTextParams, progress: Progress): Promise<channels.BrowserContextClipboardWriteTextResult> {
+    await this._context.clipboard.writeText(progress, params.text);
+  }
+
+  async clipboardRead(params: channels.BrowserContextClipboardReadParams, progress: Progress): Promise<channels.BrowserContextClipboardReadResult> {
+    return { items: await this._context.clipboard.read(progress) };
+  }
+
+  async clipboardWrite(params: channels.BrowserContextClipboardWriteParams, progress: Progress): Promise<channels.BrowserContextClipboardWriteResult> {
+    await this._context.clipboard.write(progress, params.items);
+  }
+
   async credentialsInstall(params: channels.BrowserContextCredentialsInstallParams, progress: Progress): Promise<channels.BrowserContextCredentialsInstallResult> {
     await this._context.credentials.install(progress);
   }

@@ -68,6 +68,13 @@ await context.CloseAsync();
 
 This event is not emitted.
 
+## property: BrowserContext.clipboard
+* since: v1.62
+- type: <[Clipboard]>
+
+Provides a virtual clipboard that replaces `navigator.clipboard` and `document.execCommand` in every
+page of the context.
+
 ## property: BrowserContext.clock
 * since: v1.45
 - type: <[Clock]>

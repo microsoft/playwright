@@ -336,6 +336,15 @@ for (const scenario of ['launch', 'connect'] as const) {
       expect(await page.evaluate('new Date().toISOString()')).toBe('2020-01-01T00:00:00.000Z');
     });
 
+    test('should reset the clipboard', async ({ reusedContext }) => {
+      let context = await reusedContext();
+      await context.clipboard.writeText('from first run');
+      expect(await context.clipboard.readText()).toBe('from first run');
+
+      context = await reusedContext();
+      expect(await context.clipboard.readText()).toBe('');
+    });
+
     test('should continue issuing events after closing the reused page', async ({ reusedContext, server }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24574' });
 

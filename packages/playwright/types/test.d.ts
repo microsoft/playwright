@@ -7633,6 +7633,29 @@ export interface PlaywrightTestOptions {
    */
   serviceWorkers: ServiceWorkerPolicy;
   /**
+   * Whether to install the virtual clipboard into the
+   * [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) created for each test, so that tests can use
+   * [browserContext.clipboard](https://playwright.dev/docs/api/class-browsercontext#browser-context-clipboard) and
+   * native clipboard shortcuts without calling
+   * [clipboard.install()](https://playwright.dev/docs/api/class-clipboard#clipboard-install) themselves. Pass `true` as
+   * a shorthand for `{ install: true }`. Defaults to `false`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     clipboard: true,
+   *   },
+   * });
+   * ```
+   *
+   */
+  clipboard: boolean | { install: boolean };
+  /**
    * Custom attribute to be used in
    * [page.getByTestId(testId)](https://playwright.dev/docs/api/class-page#page-get-by-test-id). `data-testid` is used
    * by default. To match elements with any of several attributes, pass them as a comma-separated list.
