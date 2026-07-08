@@ -39,9 +39,10 @@ extends:
     stages:
     - stage: Publish
       jobs:
-      # For canary builds the tag embeds a timestamp, so it must be only computed once.
-      - job: Prepare
-        displayName: "Compute version tag"
+      - job: PublishDocker
+        displayName: "Publish Docker images to ACR"
+        # arm64 images are cross-built under QEMU emulation, which is slow.
+        timeoutInMinutes: 360
         steps:
         - checkout: self
           fetchDepth: 0
@@ -52,66 +53,43 @@ extends:
             version: '26.x'
           displayName: "Install Node.js"
 
+        # Relocate the Docker data-root to the large /mnt volume: this job builds
+        # 6 images (jammy/noble/resolute x amd64/arm64) and `docker system prune`s
+        # between them, so the default disk fills up.
         - task: Bash@3
-          name: version
-          displayName: "Compute version tag"
+          displayName: "Setup docker"
           inputs:
             targetType: "inline"
             script: |
-              set -e
-              VERSION_TAG=$(./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }} version-tag)
-              echo "Publishing Docker images under tag: ${VERSION_TAG}"
-              echo "##vso[task.setvariable variable=tag;isOutput=true]${VERSION_TAG}"
+              set -x
+              sudo service docker stop
+              sudo mkdir -p /etc/docker
+              echo '{ "data-root": "/mnt/docker" }' | sudo tee /etc/docker/daemon.json
+              sudo service docker start
 
-      - job: PublishAmd64
-        displayName: "Build & publish amd64 images"
-        dependsOn: Prepare
-        timeoutInMinutes: 120
-        pool:
-          name: DevDivPlaywrightAzurePipelinesUbuntu2204
-          os: linux
-        variables:
-          PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
-        steps:
-        - template: /.azure-pipelines/docker-build-arch.yml@self
-          parameters:
-            arch: amd64
-            releaseChannel: ${{ parameters.releaseChannel }}
+        - task: Bash@3
+          displayName: "setup .npmrc"
+          inputs:
+            targetType: "inline"
+            script: |
+              echo "registry=https://devdiv.pkgs.visualstudio.com/DevDiv/_packaging/DevDiv_PublicPackages/npm/registry/" >> .npmrc
+              echo "registry=https://devdiv.pkgs.visualstudio.com/DevDiv/_packaging/DevDiv_PublicPackages/npm/registry/" >> tests/playwright-test/stable-test-runner/.npmrc
 
-      - job: PublishArm64
-        displayName: "Build & publish arm64 images"
-        dependsOn: Prepare
-        timeoutInMinutes: 120
-        pool:
-          # TEMPORARY: build arm64 on the amd64 host via QEMU emulation (see the
-          # binfmt step in docker-build-arch.yml) to validate the cross-build.
-          # Revert to DevDivPlaywrightAzurePipelinesUbuntu2204Arm for native builds.
-          name: DevDivPlaywrightAzurePipelinesUbuntu2204
-          os: linux
-        variables:
-          PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
-        steps:
-        - template: /.azure-pipelines/docker-build-arch.yml@self
-          parameters:
-            arch: arm64
-            releaseChannel: ${{ parameters.releaseChannel }}
+        - task: npmAuthenticate@0
+          displayName: "authenticate the private npm registry"
+          inputs:
+            workingFile: .npmrc
 
-      - job: PublishManifests
-        displayName: "Publish multi-arch manifests"
-        dependsOn:
-        - Prepare
-        - PublishAmd64
-        - PublishArm64
-        timeoutInMinutes: 60
-        pool:
-          name: DevDivPlaywrightAzurePipelinesUbuntu2204
-          os: linux
-        variables:
-          PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
-        steps:
-        - checkout: self
-          fetchDepth: 0
-          displayName: "Checkout code"
+        - task: npmAuthenticate@0
+          displayName: "authenticate the private npm registry for stable-test-runner"
+          inputs:
+            workingFile: tests/playwright-test/stable-test-runner/.npmrc
+
+        - script: npm ci
+          displayName: "npm ci"
+
+        - script: npm run build
+          displayName: "npm run build"
 
         - task: AzureCLI@2
           displayName: "Login to ACR via OIDC"
@@ -122,7 +100,17 @@ extends:
             inlineScript: "az acr login --name playwright"
 
         - task: Bash@3
-          displayName: "Create & push multi-arch manifests"
+          displayName: "Register QEMU (binfmt) for arm64 cross-build"
           inputs:
             targetType: "inline"
-            script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }} manifests"
+            script: "docker run --rm --privileged ${ACR_CACHE_PREFIX}tonistiigi/binfmt --install arm64"
+          env:
+            ACR_CACHE_PREFIX: "playwright.azurecr.io/cached/"
+
+        - task: Bash@3
+          displayName: "Build & publish Docker images"
+          inputs:
+            targetType: "inline"
+            script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }}"
+          env:
+            ACR_CACHE_PREFIX: "playwright.azurecr.io/cached/"
