@@ -140,13 +140,12 @@ jobs:
         id: triage
         env:
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
-          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           mkdir -p output
           PROMPT=$(cat <<EOF
           Come up with a verdict on the CI test failures on pull request #$PR_NUMBER of ${{ github.repository }}: are they likely caused by this PR? Follow the playwright-devops pr-ci-triage guide (.claude/skills/playwright-devops/pr-ci-triage.md) for the analysis.
 
-          Write your verdict to output/triage.md as a PR comment in the playwright-bot-voice (.claude/skills/playwright-bot-voice/SKILL.md): open with a short line introducing yourself as the Playwright bot, give the one-line verdict, and tuck the per-test breakdown into a collapsed <details>. Include a link to this agent run: \$WORKFLOW_URL.
+          Write your verdict to output/triage.md as a PR comment, in the format the guide specifies and the playwright-bot-voice register (.claude/skills/playwright-bot-voice/SKILL.md).
 
           Do not post anything yourself — a later workflow step posts output/triage.md.
           EOF
@@ -193,6 +192,7 @@ jobs:
     env:
       PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
       GH_TOKEN: ${{ github.token }}
+      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Download triage output
         uses: actions/download-artifact@v4
@@ -202,6 +202,6 @@ jobs:
 
       - name: Post triage comment
         run: |
-          printf '\n\n<!-- playwright-ci-triage -->\n' >> output/triage.md
+          printf '\n\n<sub>Triaged by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ci-triage -->\n' "$WORKFLOW_URL" >> output/triage.md
           gh issue comment "$PR_NUMBER" --repo "${{ github.repository }}" --body-file output/triage.md
 
