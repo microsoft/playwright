@@ -15,7 +15,7 @@
  */
 
 import { spawnSync } from 'child_process';
-import { test, expect, mcpServerPath } from './fixtures';
+import { test, expect, mcpServerPath, parseResponse } from './fixtures';
 
 test.describe.configure({
   retries: 1,
@@ -167,4 +167,40 @@ test('cdp server with empty and complex headers', async ({ startClient, server }
   });
   expect(customHeader).toBe('value:with:colons');
   expect(emptyHeader).toBe('');
+});
+
+test('cdp server with --cdp-no-defaults skips download override', async ({ cdpServer, startClient, server }, testInfo) => {
+  await cdpServer.start();
+  const { client } = await startClient({
+    args: [`--cdp-endpoint=${cdpServer.endpoint}`, '--cdp-no-defaults'],
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+
+  server.setContent('/', `<a href="/download" download="test.txt">Download</a>`, 'text/html');
+  server.setContent('/download', 'Data', 'text/plain');
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`- link "Download" [ref=e2]`),
+  });
+
+  const response = await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Download link',
+      target: 'e2',
+    },
+  });
+  const parsed = parseResponse(response);
+
+  // With --cdp-no-defaults, Playwright never calls Browser.setDownloadBehavior on the
+  // default context on connect, so downloads are not routed through the page's
+  // 'download' event and the MCP server has nothing to report.
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const snapshotAfter = parseResponse(await client.callTool({ name: 'browser_snapshot' }));
+  const events = [parsed.events, snapshotAfter.events].filter(Boolean).join('\n');
+  expect(events).not.toContain('Downloading file test.txt');
+  expect(events).not.toContain('Downloaded file test.txt');
 });

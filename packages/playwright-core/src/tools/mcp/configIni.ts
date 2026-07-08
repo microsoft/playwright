@@ -106,6 +106,7 @@ const longhandTypes: Record<string, LonghandType> = {
   'browser.isolated': 'boolean',
   'browser.userDataDir': 'string',
   'browser.cdpEndpoint': 'string',
+  'browser.cdpNoDefaults': 'boolean',
   'browser.cdpTimeout': 'number',
   'browser.remoteEndpoint': 'string',
   'browser.initPage': 'string[]',

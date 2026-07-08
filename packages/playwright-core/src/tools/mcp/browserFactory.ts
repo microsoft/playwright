@@ -109,6 +109,7 @@ async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfo): Pro
     headers: config.browser.cdpHeaders,
     timeout: config.browser.cdpTimeout,
     artifactsDir,
+    noDefaults: config.browser.cdpNoDefaults,
   });
   return browser;
 }

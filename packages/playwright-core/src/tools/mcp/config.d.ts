@@ -82,6 +82,18 @@ export type Config = {
     cdpTimeout?: number;
 
     /**
+     * When true, forwarded as `noDefaults` to
+     * @see https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp
+     * Skips Playwright's default overrides (download behavior, focus emulation, media emulation)
+     * on the pre-existing default browser context. Useful when connecting to CDP endpoints that
+     * don't implement Chromium's full browser-context-management surface (e.g. some non-Chromium
+     * remote debugging targets). Note this only affects the default context; it has no effect
+     * when combined with `isolated`, since that creates a new context via `browser.newContext()`.
+     * Defaults to false.
+     */
+    cdpNoDefaults?: boolean;
+
+    /**
      * Remote endpoint to connect to an existing Playwright server. May be a
      * WebSocket URL string, or a [ConnectOptions] object that mirrors the
      * `connectOptions` shape used by the test runner. When passed as an object,

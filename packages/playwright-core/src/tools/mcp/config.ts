@@ -42,6 +42,7 @@ export type CLIOptions = {
   caps?: string[];
   cdpEndpoint?: string;
   cdpHeader?: Record<string, string>;
+  cdpNoDefaults?: boolean;
   cdpTimeout?: number;
   codegen?: 'typescript' | 'none';
   config?: string;
@@ -346,6 +347,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
+      cdpNoDefaults: cliOptions.cdpNoDefaults,
       cdpTimeout: cliOptions.cdpTimeout,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
@@ -401,6 +403,7 @@ export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: 
   options.caps = commaSeparatedList(e.PLAYWRIGHT_MCP_CAPS);
   options.cdpEndpoint = envToString(e.PLAYWRIGHT_MCP_CDP_ENDPOINT);
   options.cdpHeader = headerParser(envToString(e.PLAYWRIGHT_MCP_CDP_HEADERS));
+  options.cdpNoDefaults = envToBoolean(e.PLAYWRIGHT_MCP_CDP_NO_DEFAULTS);
   options.cdpTimeout = numberParser(e.PLAYWRIGHT_MCP_CDP_TIMEOUT);
   options.config = envToString(e.PLAYWRIGHT_MCP_CONFIG);
   if (e.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
