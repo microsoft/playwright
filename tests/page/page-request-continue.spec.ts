@@ -872,6 +872,35 @@ it('propagate headers cross origin redirect after interception', {
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
+it('continue should pass on 307 cross-origin redirect', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41690' }
+}, async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'No cross-process on Android');
+
+  server.setRoute('/final', (request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html' });
+    response.end('<!doctype html><title>final</title><p>ok</p>');
+  });
+  // Cross-origin 307 redirect that preserves the POST method.
+  server.setRoute('/redirect307', (request, response) => {
+    response.writeHead(307, { location: `${server.PREFIX}/final` });
+    response.end();
+  });
+
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.setContent(`
+    <form id="f" method="POST" action="${server.CROSS_PROCESS_PREFIX}/redirect307">
+      <input type="submit">
+    </form>`);
+
+  await page.route('**/*', route => route.continue());
+  await Promise.all([
+    page.waitForURL(`${server.PREFIX}/final`),
+    page.locator('input').click(),
+  ]);
+  await expect(page.locator('p')).toHaveText('ok');
+});
+
 it('should intercept css variable with background url', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/19158' });
 
