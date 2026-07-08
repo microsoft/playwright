@@ -283,6 +283,27 @@ it('dialog.accept should work', {
   await context.close();
 });
 
+it('CacheStorage entry should survive page.reload()', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41618' }
+}, async ({ launchPersistent, server }) => {
+  const { context, page } = await launchPersistent();
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(async () => {
+    const cache = await caches.open('repro-cache');
+    await cache.put('/meta', new Response('payload'));
+  });
+
+  await page.reload();
+
+  const after = await page.evaluate(async () => {
+    const cache = await caches.open('repro-cache');
+    const resp = await cache.match('/meta');
+    return resp ? await resp.text() : null;
+  });
+  expect(after).toBe('payload');
+  await context.close();
+});
+
 it('exposes browser', async ({ launchPersistent }) => {
   const { context } = await launchPersistent();
   const browser = context.browser();
