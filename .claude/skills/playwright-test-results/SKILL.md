@@ -25,11 +25,19 @@ The snapshot may be missing the newest runs. To top it up locally, run `update`:
 GITHUB_TOKEN=$(gh auth token) node utils/test-results-db/cli.ts update --lookback-days 3
 ```
 
-Query it with the `duckdb` CLI (or any DuckDB client):
+Query it through the bundled `@duckdb/node-api` binding — no separate DuckDB
+install needed, it ships in `node_modules` after `npm ci`:
 
 ```bash
-duckdb utils/test-results-db/test-results.duckdb "SELECT count(*) FROM test_results"
+node --input-type=module -e '
+import { DuckDBInstance } from "@duckdb/node-api";
+const conn = await (await DuckDBInstance.create("utils/test-results-db/test-results.duckdb")).connect();
+console.table((await conn.runAndReadAll(process.argv[1])).getRowObjectsJson());
+' "SELECT count(*) FROM test_results"
 ```
+
+Integer columns come back as strings (JSON-safe), so do ranking and filtering
+in SQL, not in JS.
 
 ## Schema
 

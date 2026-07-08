@@ -1,0 +1,289 @@
+name: "Fix flaky tests"
+
+on:
+  workflow_dispatch:
+    inputs:
+      hint:
+        description: "Optional focus hint passed to the triage and fix agents (e.g. 'webkit flakes')"
+        type: string
+  schedule:
+    - cron: "17 6 * * 1-5"
+
+permissions: {}
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    if: github.repository == 'microsoft/playwright'
+    outputs:
+      runner: ${{ steps.validate.outputs.runner }}
+      has_target: ${{ steps.validate.outputs.has_target }}
+    permissions:
+      actions: read
+      copilot-requests: write
+    concurrency:
+      group: fix-flakes-triage
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download test-results DB
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node utils/test-results-db/cli.ts download
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Pick an eligible OS with Copilot CLI
+        shell: bash
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          HINT: ${{ inputs.hint }}
+        run: |
+          mkdir -p output
+          cat > output/triage-prompt.md <<EOF
+          You are triage for the fix-flakes workflow. Pick the ONE operating system where booting
+          an expensive runner to fix a flaky or red test is most worthwhile right now, and hand
+          off only that runner label. Do NOT fix anything.
+
+          Optimise for the OS with the highest-impact actionable flakiness/reds that isn't
+          already being worked on (its top candidates aren't covered by an open fix PR — check
+          with the GitHub MCP tools). All else equal, favour variety so Linux, Windows and macOS
+          each get attention over time.
+
+          The DB is already downloaded at utils/test-results-db/test-results.duckdb — query it
+          via the playwright-test-results skill. \`bot_name\` encodes the OS.
+
+          Write your answer to output/runner.txt, and nothing else there: exactly one of these
+          six runner labels, or the single word \`none\` if no OS is worth a run.
+            ubuntu-22.04   ubuntu-22.04-arm   ubuntu-24.04
+            macos-14-xlarge   macos-15-xlarge   windows-latest
+          Map a candidate's \`bot_name\` to the closest of those (e.g. \`*-macos-15-*\` ->
+          macos-15-xlarge). Explain your reasoning briefly in your final message.
+
+          ${HINT:+Focus hint from the operator: $HINT}
+          EOF
+          copilot \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-ask-user \
+            --enable-all-github-mcp-tools \
+            --share=output/copilot-session.md \
+            --model claude-opus-4.8 \
+            --max-ai-credits 200 \
+            -p "$(cat output/triage-prompt.md)"
+
+      - name: Validate chosen runner
+        id: validate
+        shell: bash
+        run: |
+          runner="$(tr -d '[:space:]' < output/runner.txt 2>/dev/null || true)"
+          if [ -z "$runner" ] || [ "$runner" = "none" ]; then
+            echo "No eligible platform this run — skipping the fix job."
+            echo "has_target=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "$runner" in
+            ubuntu-22.04|ubuntu-22.04-arm|ubuntu-24.04|macos-14-xlarge|macos-15-xlarge|windows-latest) ;;
+            *) echo "::error::Triage chose a non-allowlisted runner: '$runner'." >&2; exit 1 ;;
+          esac
+          echo "Triage chose runner: $runner"
+          echo "runner=$runner" >> "$GITHUB_OUTPUT"
+          echo "has_target=true" >> "$GITHUB_OUTPUT"
+
+      - name: Add triage transcript to job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Fix-flakes triage transcript"
+            echo ''
+            cat "output/copilot-session.md" 2>/dev/null || echo "(no transcript)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  fix:
+    needs: triage
+    if: needs.triage.outputs.has_target == 'true'
+    runs-on: ${{ needs.triage.outputs.runner }}
+    timeout-minutes: 60
+    outputs:
+      has_fix: ${{ steps.export.outputs.has_fix }}
+    permissions:
+      actions: read
+      copilot-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install browsers
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            npx playwright install --with-deps
+          else
+            npx playwright install
+          fi
+
+      - name: Download test-results DB
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node utils/test-results-db/cli.ts download
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Configure git identity
+        shell: bash
+        run: |
+          git config user.name "Copilot"
+          git config user.email "223556219+Copilot@users.noreply.github.com"
+
+      - name: Record base commit
+        id: base
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Fix a flaky/red test with Copilot CLI
+        shell: bash
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          RUNNER: ${{ needs.triage.outputs.runner }}
+          HINT: ${{ inputs.hint }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p output
+          cat > output/fix-prompt.md <<EOF
+          Use the playwright-fix-flakes skill.
+
+          You are running on $RUNNER.
+          Include the link to this run in your commit message: $WORKFLOW_URL.
+
+          ${HINT:+Operator focus hint: $HINT}
+          EOF
+          copilot \
+            --allow-all-tools \
+            --allow-all-paths \
+            --no-ask-user \
+            --enable-all-github-mcp-tools \
+            --share=output/copilot-session.md \
+            --model claude-opus-4.8 \
+            --max-ai-credits 1000 \
+            -p "$(cat output/fix-prompt.md)"
+
+      - name: Export the fix commit
+        id: export
+        shell: bash
+        run: |
+          base="${{ steps.base.outputs.sha }}"
+          count=$(git rev-list --count "$base"..HEAD)
+          if [ "$count" -eq 0 ]; then
+            echo "Agent produced no commit — nothing to open."
+            echo "has_fix=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$count" -ne 1 ]; then
+            echo "::error::Expected exactly one commit, got $count. Refusing to hand off." >&2
+            exit 1
+          fi
+          mkdir -p handoff
+          git format-patch -1 HEAD --stdout > handoff/fix.patch
+          echo "has_fix=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload handoff (fix patch)
+        if: steps.export.outputs.has_fix == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fix-flakes-handoff-${{ needs.triage.outputs.runner }}
+          path: handoff/
+          if-no-files-found: error
+
+      - name: Add session transcript to job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Fix-flakes session transcript (${{ needs.triage.outputs.runner }})"
+            echo ''
+            cat "output/copilot-session.md" 2>/dev/null || echo "(no transcript)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload session transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fix-flakes-session-${{ needs.triage.outputs.runner }}
+          path: output/copilot-session.md
+          if-no-files-found: warn
+
+  open_pr:
+    needs: [triage, fix]
+    if: needs.fix.outputs.has_fix == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout base commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Download handoff
+        uses: actions/download-artifact@v4
+        with:
+          name: fix-flakes-handoff-${{ needs.triage.outputs.runner }}
+          path: handoff
+
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.PLAYWRIGHT_APP_ID }}
+          private-key: ${{ secrets.PLAYWRIGHT_PRIVATE_KEY }}
+
+      - name: Apply commit and open PR
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          RUNNER: ${{ needs.triage.outputs.runner }}
+          REVIEW_OVERRIDE: skn0tt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          branch="fix-flakes/${RUNNER}-${{ github.run_id }}"
+          git checkout -b "$branch"
+          git am handoff/fix.patch
+          git push origin "$branch"
+          suggested=$(git log -1 --format='%(trailers:key=Suggested-reviewer,valueonly)' | head -n1 | tr -d '[:space:]@')
+          reviewer="${REVIEW_OVERRIDE:-$suggested}"
+          args=(--repo "${{ github.repository }}" --base main --head "$branch" --fill)
+          if [ -n "$reviewer" ]; then
+            args+=(--reviewer "$reviewer")
+          else
+            echo "::warning::No reviewer (empty override and no Suggested-reviewer trailer)."
+          fi
+          gh pr create "${args[@]}"
