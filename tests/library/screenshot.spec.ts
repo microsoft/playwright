@@ -218,6 +218,7 @@ browserTest.describe('page screenshot', () => {
         while (true) {}
       }, 10);
     });
+    await new Promise(f => setTimeout(f, 500));
     await expect(page.screenshot({ fullPage: true, timeout: 200 })).rejects.toThrow(/page.screenshot: Timeout 200ms exceeded/);
   });
 });
