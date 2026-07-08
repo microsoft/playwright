@@ -64,7 +64,7 @@ export class TestResultsDb {
     if (!await this._tableExists())
       return ids;
     const reader = await this._conn.runAndReadAll(
-        `SELECT DISTINCT artifact_id FROM ${TABLE_NAME} WHERE artifact_id IS NOT NULL`);
+        `SELECT DISTINCT artifact_id FROM ${TABLE_NAME}`);
     for (const row of reader.getRows())
       ids.add(String(row[0]));
     return ids;

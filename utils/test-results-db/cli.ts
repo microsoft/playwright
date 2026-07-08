@@ -16,6 +16,7 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parseArgs } from 'util';
 
 import { cmdDownload } from './download.ts';
 import { cmdTruncate } from './truncate.ts';
@@ -46,24 +47,20 @@ function defaultDbPath(): string {
   return path.join(here, 'test-results.duckdb');
 }
 
-// Parse `--flag value` pairs into a map. Positional args are not expected after
-// the command, so anything not starting with `--` is an error.
-function parseFlags(args: string[]): Map<string, string> {
-  const flags = new Map<string, string>();
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (!arg.startsWith('--'))
-      throw new Error(`Unexpected argument: ${arg}`);
-    const value = args[++i];
-    if (value === undefined)
-      throw new Error(`Missing value for ${arg}`);
-    flags.set(arg.slice(2), value);
-  }
-  return flags;
-}
+const UPDATE_OPTIONS = {
+  'lookback-days': { type: 'string' },
+  'concurrency': { type: 'string' },
+  'stop-after-seen': { type: 'string' },
+} as const;
 
-function intFlag(flags: Map<string, string>, name: string, fallback: number): number {
-  const raw = flags.get(name);
+const TRUNCATE_OPTIONS = {
+  'max-runs': { type: 'string' },
+} as const;
+
+type Flags = Record<string, string | boolean | undefined>;
+
+function intFlag(flags: Flags, name: string, fallback: number): number {
+  const raw = flags[name];
   if (raw === undefined)
     return fallback;
   const value = Number(raw);
@@ -89,19 +86,19 @@ async function main(): Promise<void> {
       break;
     }
     case 'update': {
-      const flags = parseFlags(rest);
+      const { values } = parseArgs({ args: rest, options: UPDATE_OPTIONS, allowPositionals: false });
       await cmdUpdate(dbPath, requireToken(), {
-        lookbackDays: intFlag(flags, 'lookback-days', 7),
-        concurrency: intFlag(flags, 'concurrency', 16),
-        stopAfterSeen: intFlag(flags, 'stop-after-seen', 100),
+        lookbackDays: intFlag(values, 'lookback-days', 7),
+        concurrency: intFlag(values, 'concurrency', 16),
+        stopAfterSeen: intFlag(values, 'stop-after-seen', 100),
       });
       break;
     }
     case 'truncate': {
-      const flags = parseFlags(rest);
-      if (!flags.has('max-runs'))
+      const { values } = parseArgs({ args: rest, options: TRUNCATE_OPTIONS, allowPositionals: false });
+      if (values['max-runs'] === undefined)
         throw new Error('truncate requires --max-runs <n>');
-      await cmdTruncate(dbPath, intFlag(flags, 'max-runs', 0));
+      await cmdTruncate(dbPath, intFlag(values, 'max-runs', 0));
       break;
     }
     case undefined:
