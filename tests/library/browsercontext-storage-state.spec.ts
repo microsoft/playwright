@@ -200,6 +200,111 @@ it('should round-trip through the file', async ({ contextFactory, channel }, tes
   await context3.close();
 });
 
+it('should round-trip top-level falsy IndexedDB primitives', async ({ contextFactory }) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' }).catch(() => {});
+  });
+  await page.goto('https://www.example.com');
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve, reject) => {
+      const openRequest = indexedDB.open('db', 1);
+      openRequest.onupgradeneeded = () => {
+        const db = openRequest.result;
+        db.createObjectStore('values');
+        db.createObjectStore('keys');
+      };
+      openRequest.onsuccess = () => {
+        const transaction = openRequest.result.transaction(['values', 'keys'], 'readwrite');
+        const valuesStore = transaction.objectStore('values');
+        valuesStore.put(0, 'zero');
+        valuesStore.put(false, 'false');
+        valuesStore.put('', 'empty-string');
+        valuesStore.put(null, 'null');
+
+        const keysStore = transaction.objectStore('keys');
+        keysStore.put('zero-key', 0);
+        keysStore.put('empty-key', '');
+
+        transaction.addEventListener('complete', resolve);
+        transaction.addEventListener('error', reject);
+      };
+      openRequest.onerror = () => reject(openRequest.error);
+    });
+  });
+
+  const storageState = await context.storageState({ indexedDB: true });
+  expect(storageState.origins).toEqual([{
+    origin: 'https://www.example.com',
+    localStorage: [],
+    indexedDB: [{
+      name: 'db',
+      version: 1,
+      stores: expect.arrayContaining([
+        expect.objectContaining({
+          name: 'values',
+          records: expect.arrayContaining([
+            { key: 'zero', value: 0 },
+            { key: 'false', value: false },
+            { key: 'empty-string', value: '' },
+            { key: 'null', value: null },
+          ]),
+        }),
+        expect.objectContaining({
+          name: 'keys',
+          records: expect.arrayContaining([
+            { key: 0, value: 'zero-key' },
+            { key: '', value: 'empty-key' },
+          ]),
+        }),
+      ]),
+    }],
+  }]);
+
+  const restoredContext = await contextFactory({ storageState });
+  const restoredPage = await restoredContext.newPage();
+  await restoredPage.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' }).catch(() => {});
+  });
+  await restoredPage.goto('https://www.example.com');
+  const idbValues = await restoredPage.evaluate(() => new Promise((resolve, reject) => {
+    const openRequest = indexedDB.open('db', 1);
+    openRequest.addEventListener('success', async () => {
+      const db = openRequest.result;
+      const transaction = db.transaction(['values', 'keys'], 'readonly');
+      const valuesStore = transaction.objectStore('values');
+      const keysStore = transaction.objectStore('keys');
+      const read = (store: IDBObjectStore, key: IDBValidKey) => new Promise((resolve, reject) => {
+        const request = store.get(key);
+        request.addEventListener('success', () => resolve(request.result));
+        request.addEventListener('error', () => reject(request.error));
+      });
+
+      resolve({
+        values: await Promise.all([
+          read(valuesStore, 'zero'),
+          read(valuesStore, 'false'),
+          read(valuesStore, 'empty-string'),
+          read(valuesStore, 'null'),
+        ]),
+        keys: await Promise.all([
+          read(keysStore, 0),
+          read(keysStore, ''),
+        ]),
+      });
+    });
+    openRequest.addEventListener('error', () => reject(openRequest.error));
+  }));
+  expect(idbValues).toEqual({
+    values: [0, false, '', null],
+    keys: ['zero-key', 'empty-key'],
+  });
+
+  await restoredContext.close();
+  await context.close();
+});
+
 it('should capture cookies', async ({ server, context, page, contextFactory }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'empty=']);

@@ -88,19 +88,19 @@ export class StorageScript {
         const record: IndexedDBDatabase['stores'][0]['records'][0] = {};
 
         if (objectStore.keyPath === null) {
-          const { encoded, trivial } = this._trySerialize(key);
-          if (trivial)
-            record.key = trivial;
+          const serializedKey = this._trySerialize(key);
+          if ('trivial' in serializedKey)
+            record.key = serializedKey.trivial;
           else
-            record.keyEncoded = encoded;
+            record.keyEncoded = serializedKey.encoded;
         }
 
         const value = await this._idbRequestToPromise(objectStore.get(key));
-        const { encoded, trivial } = this._trySerialize(value);
-        if (trivial)
-          record.value = trivial;
+        const serializedValue = this._trySerialize(value);
+        if ('trivial' in serializedValue)
+          record.value = serializedValue.trivial;
         else
-          record.valueEncoded = encoded;
+          record.valueEncoded = serializedValue.encoded;
 
         return record;
       }));
@@ -166,10 +166,12 @@ export class StorageScript {
     await Promise.all(dbInfo.stores.map(async store => {
       const objectStore = transaction.objectStore(store.name);
       await Promise.all(store.records.map(async record => {
+        const value = Object.prototype.hasOwnProperty.call(record, 'value') ? record.value : parseEvaluationResultValue(record.valueEncoded);
+        const key = Object.prototype.hasOwnProperty.call(record, 'key') ? record.key : parseEvaluationResultValue(record.keyEncoded);
         await this._idbRequestToPromise(
             objectStore.add(
-                record.value ?? parseEvaluationResultValue(record.valueEncoded),
-                record.key ?? parseEvaluationResultValue(record.keyEncoded),
+                value,
+                key,
             )
         );
       }));
