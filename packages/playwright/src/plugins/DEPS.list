@@ -1,5 +1,7 @@
 [*]
 @isomorphic/**
 @utils/**
+cacheProxy/**
+../common/
 node_modules/colors/safe
 node_modules/debug

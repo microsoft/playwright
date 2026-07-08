@@ -68,6 +68,115 @@ The structure of the git commit metadata is subject to change.
 :::
 
 
+## property: TestConfig.httpCache
+* since: v1.62
+- type: ?<[Object]>
+  - `dir` <[string]> Directory where the cache is stored, resolved relative to the configuration file.
+  - `match` ?<[string]|[RegExp]|[HttpCachePolicy]> Limits or customizes what is cached. A glob pattern or regular expression restricts caching to requests whose URL matches; a callback returns a per-request decision (see [HttpCachePolicy]). When omitted, every request is considered with the default behavior.
+  - `proxy` ?<[Object]> Upstream proxy for cache misses.
+    - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+    - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy.
+    - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
+    - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
+
+Records network responses to disk and replays them on later runs, so large static
+dependencies are downloaded from a remote server once instead of on every run. This is
+most useful against a slow or remote environment such as staging.
+
+When `httpCache` is set, Playwright starts a caching proxy for the run and routes all
+browser traffic through it. On the first run, eligible responses are recorded under `dir`;
+on subsequent runs they are served from disk without reaching the network. A single proxy
+is shared by all workers, so a resource fetched by one worker is a cache hit for the rest,
+and the cache persists across runs until you delete `dir`.
+
+Loopback traffic (`localhost`, `127.0.0.1`) is never cached — a local dev server already
+serves from disk, so there is nothing to optimize. The cache targets remote origins.
+
+**What is cached by default**
+
+With no `match`, the cache stores only **shared static assets**: successful `GET` requests
+the browser makes for a static subresource — a script, stylesheet, image, font, or media
+element — as reported by the request's `Sec-Fetch-Dest` metadata. These bytes do not depend
+on who is signed in, so replaying them into a fresh browser context is always safe, which
+keeps tests that each create their own context isolated by construction.
+
+The following are therefore **not** cached by default:
+
+* `fetch`/`XMLHttpRequest` (API) requests and top-level documents — their request
+  destination is not a static subresource. This is the dynamic, per-user surface.
+* Any response marked `Cache-Control: no-store`.
+* Any response carrying a personalization signal: `Cache-Control: private`, a `Set-Cookie`
+  header, or `Vary: Cookie`/`Vary: Authorization`.
+
+The `Authorization` and `Cookie` request headers are deliberately ignored when deciding
+what to cache. On a gated staging environment these are a shared environment credential
+attached to every request, not a per-user identity, so caching on their presence would be
+wrong.
+
+Freshness directives (`max-age`, `no-cache`, `Expires`) are ignored: once a response is
+recorded it is replayed until `dir` is deleted, keeping runs deterministic. `Vary` is
+honored — responses are keyed by the request-header values they vary on, and `Vary: *` is
+never stored.
+
+**Customizing with `match`**
+
+A string or [RegExp] restricts caching to requests whose URL matches; other requests pass
+straight through to the network. For full control, pass a callback that returns a decision
+object per request:
+
+* `disposition` — `'cache'` force-stores the response and serves it back, `'no-cache'`
+  bypasses the cache entirely, and `'default'` (or an empty object) applies the rules above.
+* `identity` — a stable principal id (such as a session token) that partitions the cache.
+  Entries recorded under one identity are never served to a request with a different one,
+  so per-user content can be cached without leaking across contexts. The value is hashed
+  into the cache key and never written to disk.
+
+Set `proxy` to fetch cache misses through an upstream proxy — for example, to reach a
+staging environment that is only accessible behind one. Browsers connect to the caching
+proxy, which chains to `proxy` for anything not served from disk.
+
+**Usage**
+
+Cache shared static assets from a staging server with zero configuration:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  httpCache: { dir: './.network-cache' },
+});
+```
+
+Fetch cache misses through an upstream proxy:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  httpCache: { dir: './.network-cache', proxy: { server: 'http://myproxy.com:3128' } },
+});
+```
+
+Take control per request — force-cache a per-user API response with session isolation, and
+bypass the cache for others:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  httpCache: {
+    dir: './.network-cache',
+    match: request => {
+      if (request.url.includes('/api/config'))
+        return { disposition: 'cache', identity: request.headers.get('authorization') };
+      if (request.url.includes('/telemetry'))
+        return { disposition: 'no-cache' };
+      return {};
+    },
+  },
+});
+```
+
 ## property: TestConfig.expect
 * since: v1.10
 - type: ?<[Object]>

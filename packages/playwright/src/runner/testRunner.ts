@@ -29,6 +29,7 @@ import { FSWatcher } from './fsWatcher';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
+import { cacheProxyPluginForConfig } from '../plugins/cacheProxyPlugin';
 import { internalScreen } from '../reporters/base';
 import { InternalReporter } from '../reporters/internalReporter';
 import { serializeError } from '../util';
@@ -394,6 +395,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
         webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+        cacheProxyPluginForConfig(config).forEach(p => config.plugins.push({ factory: p }));
         addGitCommitInfoPlugin(config);
         this._plugins = config.plugins || [];
       } else {
@@ -449,6 +451,7 @@ export async function runAllTestsWithConfig(config: FullConfigInternal, options:
 
   // Legacy webServer support.
   webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+  cacheProxyPluginForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
   const filteredProjects = filterProjects(config.projects, options.projectFilter);
   const reporters = await createReporters(config, options.listMode ? 'list' : 'test', undefined, options);
