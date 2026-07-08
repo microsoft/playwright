@@ -83,7 +83,10 @@ extends:
         dependsOn: Prepare
         timeoutInMinutes: 120
         pool:
-          name: DevDivPlaywrightAzurePipelinesUbuntu2204Arm
+          # TEMPORARY: build arm64 on the amd64 host via QEMU emulation (see the
+          # binfmt step in docker-build-arch.yml) to validate the cross-build.
+          # Revert to DevDivPlaywrightAzurePipelinesUbuntu2204Arm for native builds.
+          name: DevDivPlaywrightAzurePipelinesUbuntu2204
           os: linux
         variables:
           PW_DOCKER_VERSION_TAG: $[ dependencies.Prepare.outputs['version.tag'] ]
