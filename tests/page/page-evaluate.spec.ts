@@ -742,6 +742,23 @@ it('should not use Array.prototype.toJSON when evaluating', async ({ page }) => 
   expect(result).toEqual([1, 2, 3]);
 });
 
+it('should restore toJSON after failed serialization', async ({ page, browserName, isBidi }) => {
+  it.skip(browserName !== 'firefox' || isBidi, 'Firefox Juggler specific');
+
+  await page.evaluate(() => {
+    (Array.prototype as any).toJSON = () => 'busted';
+  });
+  expect(await page.evaluate(() => JSON.stringify([1, 2, 3]))).toBe('"busted"');
+  expect(await page.evaluate(() => typeof Date.prototype.toJSON)).toBe('function');
+
+  await page.evaluate(() => {
+    throw 42n;
+  }).catch(() => {});
+
+  expect(await page.evaluate(() => JSON.stringify([1, 2, 3]))).toBe('"busted"');
+  expect(await page.evaluate(() => typeof Date.prototype.toJSON)).toBe('function');
+});
+
 it('should not add a toJSON property to newly created Arrays after evaluation', async ({ page, browserName }) => {
   await page.evaluate(() => []);
   const hasToJSONProperty = await page.evaluate(() => 'toJSON' in []);

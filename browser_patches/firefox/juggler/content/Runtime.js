@@ -335,18 +335,19 @@ class ExecutionContext {
         Array.prototype.toJSON = undefined;
 
       let hasSymbol = false;
-      const result = stringify(object, (key, value) => {
-        if (typeof value === 'symbol')
-          hasSymbol = true;
-        return value;
-      });
-
-      if (oldToJSON)
-        Date.prototype.toJSON = oldToJSON;
-      if (oldArrayHadToJSON)
-        Array.prototype.toJSON = oldArrayToJSON;
-
-      return hasSymbol ? undefined : result;
+      try {
+        const result = stringify(object, (key, value) => {
+          if (typeof value === 'symbol')
+            hasSymbol = true;
+          return value;
+        });
+        return hasSymbol ? undefined : result;
+      } finally {
+        if (oldToJSON)
+          Date.prototype.toJSON = oldToJSON;
+        if (oldArrayHadToJSON)
+          Array.prototype.toJSON = oldArrayToJSON;
+      }
     }).bind(null, JSON.stringify.bind(JSON))`).return;
   }
 
