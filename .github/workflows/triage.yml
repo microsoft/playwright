@@ -41,14 +41,12 @@ jobs:
         id: triage
         env:
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
-          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           mkdir -p output
           PROMPT=$(cat <<EOF
           Triage https://github.com/${{ github.repository }}/issues/$ISSUE using the playwright-triage skill.
 
           Do not post anything yourself. Write the comment to output/triage.md and a later step posts it.
-          The link to this agent run is in \$WORKFLOW_URL.
           EOF
           )
           copilot \
@@ -93,6 +91,7 @@ jobs:
     env:
       ISSUE: ${{ github.event.issue.number || inputs.issue }}
       GH_TOKEN: ${{ github.token }}
+      WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - name: Download triage output
         uses: actions/download-artifact@v4
@@ -102,5 +101,5 @@ jobs:
 
       - name: Post triage comment
         run: |
-          printf '\n\n<!-- playwright-ai-triage -->\n' >> output/triage.md
+          printf '\n\n<sub>Triaged by the Playwright bot - [agent run](%s)</sub>\n<!-- playwright-ai-triage -->\n' "$WORKFLOW_URL" >> output/triage.md
           gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body-file output/triage.md
