@@ -125,6 +125,35 @@ it('should work when header manipulation headers with redirect', async ({ page, 
   await page.goto(server.PREFIX + '/rrredirect');
 });
 
+it('should continue a request across a cross-origin redirect that changes the Origin', async ({ page, server, browserName }) => {
+  it.skip(browserName !== 'chromium', 'The Origin-modification-on-redirect restriction is Chromium-specific.');
+  // Regression test for https://github.com/microsoft/playwright/issues/41690
+  // Chromium 149+ rejects a request whose Origin header is modified across a redirect.
+  // When re-applying header overrides after a cross-origin redirect, Playwright must not
+  // touch the Origin computed by the browser, otherwise the request fails with
+  // net::ERR_INVALID_ARGUMENT.
+  server.setRoute('/cross-origin-redirect', (req, res) => {
+    res.writeHead(307, { location: server.PREFIX + '/redirect-target.html' });
+    res.end();
+  });
+  server.setRoute('/redirect-target.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end('<!doctype html><title>final</title><p>ok</p>');
+  });
+  server.setRoute('/origin-page.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`<!doctype html><form id="f" method="POST" action="${server.CROSS_PROCESS_PREFIX}/cross-origin-redirect"><input type="submit"></form>`);
+  });
+
+  await page.route('**/*', route => route.continue());
+  await page.goto(server.PREFIX + '/origin-page.html');
+  await Promise.all([
+    page.waitForURL(server.PREFIX + '/redirect-target.html'),
+    page.locator('input').click(),
+  ]);
+  await expect(page.locator('p')).toHaveText('ok');
+});
+
 // @see https://github.com/GoogleChrome/puppeteer/issues/4743
 it('should be able to remove headers', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);

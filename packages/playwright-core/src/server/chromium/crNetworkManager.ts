@@ -348,6 +348,16 @@ export class CRNetworkManager {
           const originalHeaders = Object.entries(requestPausedEvent.request.headers).map(([name, value]) => ({ name, value }));
           headersOverride = removeCookieHeader(network.applyHeadersOverrides(originalHeaders, headersOverride));
         }
+        if (redirectedFrom) {
+          // Chromium 149+ rejects a request whose Origin header is modified across a redirect
+          // (BlockOriginHeaderModificationOnRedirect). Continuing the redirected request resends
+          // the pre-redirect Origin, which the browser treats as a modification and fails with
+          // net::ERR_INVALID_ARGUMENT. Drop the Origin from the continued request so the browser
+          // keeps the Origin it computed for the redirected request.
+          // https://github.com/microsoft/playwright/issues/41690
+          const originalHeaders = headersOverride ?? Object.entries(requestPausedEvent.request.headers).map(([name, value]) => ({ name, value }));
+          headersOverride = removeOriginHeader(originalHeaders);
+        }
         requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers: headersOverride });
       } else {
         route = new RouteImpl(requestPausedSessionInfo!.session, requestPausedEvent.requestId);
@@ -719,6 +729,10 @@ async function catchDisallowedErrors(callback: () => Promise<void>) {
 // network stack source the cookie from the store. https://github.com/microsoft/playwright/issues/41428
 function removeCookieHeader(headers: types.HeadersArray): types.HeadersArray {
   return headers.filter(header => header.name.toLowerCase() !== 'cookie');
+}
+
+function removeOriginHeader(headers: types.HeadersArray): types.HeadersArray {
+  return headers.filter(header => header.name.toLowerCase() !== 'origin');
 }
 
 function splitSetCookieHeader(headers: types.HeadersArray): types.HeadersArray {
