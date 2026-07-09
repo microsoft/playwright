@@ -37,7 +37,13 @@ else
   exit 1
 fi
 
+SECRET_ARGS=()
+if [[ -n "${NPMRC_SECRET:-}" ]]; then
+  SECRET_ARGS+=(--secret "id=npmrc,src=${NPMRC_SECRET}")
+fi
+
 docker build --platform "${PLATFORM}" \
   --build-arg ACR_CACHE_PREFIX="${ACR_CACHE_PREFIX}" \
   --build-arg UBUNTU_MIRROR_PREFIX="${UBUNTU_MIRROR_PREFIX}" \
+  "${SECRET_ARGS[@]}" \
   -t "$3" -f "Dockerfile.$2" .

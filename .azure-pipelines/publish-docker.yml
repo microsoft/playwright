@@ -115,3 +115,4 @@ extends:
           env:
             ACR_CACHE_PREFIX: "playwright.azurecr.io/cached/"
             UBUNTU_MIRROR_PREFIX: "azure."
+            NPMRC_SECRET: "$(Build.SourcesDirectory)/.npmrc"

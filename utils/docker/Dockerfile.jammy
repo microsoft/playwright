@@ -12,7 +12,8 @@ ENV LC_ALL=C.UTF-8
 
 # === INSTALL Node.js ===
 
-RUN find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
       -exec sed -i "s|http://archive.ubuntu.com|http://${UBUNTU_MIRROR_PREFIX}archive.ubuntu.com|g; s|http://ports.ubuntu.com|http://${UBUNTU_MIRROR_PREFIX}ports.ubuntu.com|g" {} + && \
     apt-get update && \
     apt-get install -y curl wget gpg ca-certificates && \
