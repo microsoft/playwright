@@ -15,24 +15,15 @@ if [[ "${RELEASE_CHANNEL}" != "stable" && "${RELEASE_CHANNEL}" != "canary" ]]; t
   exit 1
 fi
 
-MODE="$2"
-
-# The version tag must be identical across the amd64, arm64 and manifest jobs so
-# that the multi-arch manifest can find both arch-suffixed images. The CI computes
-# it once (see the "Prepare" job) and passes it down via PW_DOCKER_VERSION_TAG.
-if [[ -n "${PW_DOCKER_VERSION_TAG:-}" ]]; then
-  VERSION_TAG="${PW_DOCKER_VERSION_TAG}"
-else
-  PW_VERSION=$(node ../../utils/workspace.js --get-version)
-  if [[ "${RELEASE_CHANNEL}" == "stable" && "${PW_VERSION}" == *-* ]]; then
-    echo "ERROR: cannot publish stable docker with Playwright version '${PW_VERSION}'"
-    exit 1
-  fi
-  VERSION_TAG="v${PW_VERSION}"
-  if [[ "${RELEASE_CHANNEL}" == "canary" ]]; then
-    VERSION_TAG="v${PW_VERSION}-canary-$(date -u +'%Y%m%d%H%M%S')"
-    echo "== CANARY build: publishing to ${VERSION_TAG}-* tags ==" >&2
-  fi
+PW_VERSION=$(node ../../utils/workspace.js --get-version)
+if [[ "${RELEASE_CHANNEL}" == "stable" && "${PW_VERSION}" == *-* ]]; then
+  echo "ERROR: cannot publish stable docker with Playwright version '${PW_VERSION}'"
+  exit 1
+fi
+VERSION_TAG="v${PW_VERSION}"
+if [[ "${RELEASE_CHANNEL}" == "canary" ]]; then
+  VERSION_TAG="v${PW_VERSION}-canary-$(date -u +'%Y%m%d%H%M%S')"
+  echo "== CANARY build: publishing to ${VERSION_TAG}-* tags =="
 fi
 
 # Ubuntu 22.04
@@ -150,28 +141,10 @@ publish_manifests() {
   publish_docker_manifest resolute amd64 arm64  # Ubuntu 26.04
 }
 
-case "${MODE}" in
-  amd64|arm64)
-    build_and_push_arch "${MODE}"
-    ;;
-  manifests)
-    publish_manifests
-    ;;
-  version-tag)
-    echo "${VERSION_TAG}"
-    ;;
-  ""|all)
-    # Backwards-compatible end-to-end path for a single host.
-    # arm64 first: its QEMU-emulated builds must run while the agent is fresh.
-    # Running them after the amd64 builds have churned the agent triggers a qemu
-    # segfault in aarch64 ldconfig during libc-bin setup. The native amd64 builds
-    # are unaffected by preceding work, so they go second.
-    build_and_push_arch arm64
-    build_and_push_arch amd64
-    publish_manifests
-    ;;
-  *)
-    echo "ERROR: unknown mode - '${MODE}'. Must be 'amd64', 'arm64', 'manifests', 'version-tag', or 'all'"
-    exit 1
-    ;;
-esac
+# arm64 first: its QEMU-emulated builds must run while the host is fresh. Running
+# them after the native amd64 builds have churned the host triggers a qemu
+# segfault in aarch64 ldconfig during libc-bin setup. amd64 is a native build and
+# is unaffected by preceding work, so it goes second.
+build_and_push_arch arm64
+build_and_push_arch amd64
+publish_manifests
