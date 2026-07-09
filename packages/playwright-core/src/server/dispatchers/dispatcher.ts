@@ -304,11 +304,14 @@ export class DispatcherConnection {
 
   async dispatch(message: object) {
     const { id, guid, method, params, metadata } = message as any;
+    const metadataWithDefaults = metadata ?
+      (typeof metadata === 'object' ? { ...metadata, timeout: metadata.timeout ?? params?.timeout ?? 0 } : metadata) :
+      { timeout: params?.timeout ?? 0 };
     const dispatcher = this._dispatcherByGuid.get(guid);
     if (method === '__waitInfo__') {
       // Fire-and-forget: silently drop if the target is gone.
       if (dispatcher)
-        await this._dispatchWaitInfo(id, dispatcher, params, metadata);
+        await this._dispatchWaitInfo(id, dispatcher, params, metadataWithDefaults);
       return;
     }
     if (method === '__abort__') {
@@ -326,7 +329,7 @@ export class DispatcherConnection {
       const validator = findValidator(dispatcher._type, method, 'Params');
       const validatorContext = this._validatorFromWireContext();
       validParams = validator(params, '', validatorContext);
-      validMetadata = metadataValidator(metadata, '', validatorContext);
+      validMetadata = metadataValidator(metadataWithDefaults, '', validatorContext);
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
     } catch (e) {
@@ -342,6 +345,7 @@ export class DispatcherConnection {
     }
 
     const sdkObject = dispatcher._object;
+    const paramsForMetadata = validMetadata.timeout ? { ...(params || {}), timeout: validMetadata.timeout } : params || {};
     const callMetadata: CallMetadata = {
       id: `call@${id}`,
       location: validMetadata.location,
@@ -355,7 +359,7 @@ export class DispatcherConnection {
       endTime: 0,
       type: dispatcher._type,
       method,
-      params: params || {},
+      params: paramsForMetadata,
       log: [],
     };
     const controller = dispatcher.createProgressController(callMetadata);

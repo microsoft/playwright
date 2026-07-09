@@ -155,7 +155,7 @@ export class Backend extends EventEmitter {
   private _send(method: string, params: any = {}): Promise<any> {
     return new Promise((fulfill, reject) => {
       const id = ++Backend._lastId;
-      const command = { id, guid: 'DebugController', method, params, metadata: {} };
+      const command = { id, guid: 'DebugController', method, params, metadata: { timeout: 0 } };
       this._transport.send(command as any);
       this._callbacks.set(id, { fulfill, reject });
     });

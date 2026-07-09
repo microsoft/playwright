@@ -624,6 +624,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean}> {
+    const { timeout, ...optionsWithoutTimeout } = options;
     const mask = options?.mask ? options?.mask.map(locator => ({
       frame: (locator as Locator)._frame._channel,
       selector: (locator as Locator)._selector,
@@ -634,11 +635,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     } : undefined;
     try {
       const result = await this._channel.expectScreenshot({
-        ...options,
+        ...optionsWithoutTimeout,
         isNot: !!options.isNot,
         locator,
         mask,
-      }, undefined);
+      }, { timeout });
       return { actual: result.actual };
     } catch (e) {
       if (!(e instanceof PlaywrightError))
