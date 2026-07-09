@@ -25,7 +25,7 @@ import { eventsHelper } from '@utils/eventsHelper';
 import { envArrayToObject, launchProcess } from '@utils/processLauncher';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { libPath } from '../../package';
-import { validateBrowserContextOptions } from '../browserContext';
+import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import { CRBrowser } from '../chromium/crBrowser';
 import { CRConnection } from '../chromium/crConnection';
 import { createHandle, CRExecutionContext } from '../chromium/crExecutionContext';
@@ -38,7 +38,6 @@ import { WebSocketTransport } from '../transport';
 import { nullProgress } from '../progress';
 
 import type { BrowserOptions, BrowserProcess } from '../browser';
-import type { BrowserContext } from '../browserContext';
 import type { CRBrowserContext } from '../chromium/crBrowser';
 import type { CRSession } from '../chromium/crConnection';
 import type { CRPage } from '../chromium/crPage';
@@ -86,6 +85,7 @@ export class ElectronApplication extends SdkObject {
       this._nodeElectronHandlePromise.resolve(new js.JSHandle(this._nodeExecutionContext!, 'object', 'ElectronModule', remoteObject.objectId!));
     });
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
+    this._browserContext.on(BrowserContext.Events.Page, page => this._onPage(page));
     const appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._browserContext.setCustomCloseHandler(async () => {
       const electronHandle = await this._nodeElectronHandlePromise;
@@ -136,6 +136,20 @@ export class ElectronApplication extends SdkObject {
   async close(progress: Progress) {
     // This will call BrowserContext.setCustomCloseHandler.
     await this._browserContext.close(progress, { reason: 'Application exited' });
+  }
+
+  private _onPage(page: Page) {
+    // Target.closeTarget can hang on Electron when the close races a committing
+    // navigation. Close from the main process instead; webContents.close() does
+    // not run beforeunload, matching page.close() semantics.
+    page.setCustomCloseHandler(async () => {
+      const electronHandle = await this._nodeElectronHandlePromise;
+      await electronHandle.evaluate(({ webContents }, targetId) => {
+        const wc = webContents.fromDevToolsTargetId(targetId);
+        if (wc && !wc.isDestroyed())
+          wc.close();
+      }, (page.delegate as CRPage)._targetId).catch(() => {});
+    });
   }
 
   async browserWindow(progress: Progress, page: Page): Promise<js.JSHandle<BrowserWindow>> {

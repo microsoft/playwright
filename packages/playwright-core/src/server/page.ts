@@ -202,6 +202,7 @@ export class Page extends SdkObject<PageEventMap> {
   readonly overlay: Overlay;
   readonly screencast: Screencast;
   _closeReason: string | undefined;
+  private _customCloseHandler?: () => Promise<void>;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -833,9 +834,14 @@ export class Page extends SdkObject<PageEventMap> {
       this._lifecycle = 'closing';
       // This might throw if the browser context containing the page closes
       // while we are trying to close the page.
-      await this.delegate.closePage(false).catch(e => debugLogger.log('error', e));
+      const closePage = this._customCloseHandler ?? (() => this.delegate.closePage(false));
+      await closePage().catch(e => debugLogger.log('error', e));
     }
     await this.closedPromise;
+  }
+
+  setCustomCloseHandler(handler: (() => Promise<void>) | undefined) {
+    this._customCloseHandler = handler;
   }
 
   async runBeforeUnload(progress: Progress) {
