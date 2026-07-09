@@ -190,7 +190,6 @@ Page:
           type: enum?
           literals:
           - png
-          - jpeg
           - webp
         $mixin: CommonScreenshotOptions
       returns:

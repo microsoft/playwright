@@ -298,7 +298,6 @@ export class Screenshotter {
     const cleanupHighlight = await this._maskElements(progress, options);
 
     try {
-      // webp treats quality 100 (or omitted) as lossless, so default it to that.
       const quality = format === 'jpeg' ? options.quality ?? 80 : format === 'webp' ? options.quality ?? 100 : undefined;
       const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
       await progress.race(cleanupHighlight());

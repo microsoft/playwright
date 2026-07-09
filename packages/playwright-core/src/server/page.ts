@@ -720,30 +720,26 @@ export class Page extends SdkObject<PageEventMap> {
       return await this.screenshotter.screenshotPage(progress, options || {});
     };
 
-    // Reset to the actual format once options are validated inside the try below;
-    // validation (clip, quality, ...) must stay inside the try so its errors are
-    // surfaced as a friendly diff rather than thrown.
-    let comparator = getComparator('image/png');
     let intermediateResult: {
       actual?: Buffer,
       previous?: Buffer,
       errorMessage: string,
       diff?: Buffer,
     } | undefined;
-    const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
-      const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
-      if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
-        return true;
-      if (comparatorResult)
-        intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
-      return false;
-    };
 
     try {
       if (!options.expected && options.isNot)
         throw new Error('"not" matcher requires expected result');
       const format = validateScreenshotOptions(options || {});
-      comparator = getComparator(`image/${format}`);
+      const comparator = getComparator(`image/${format}`);
+      const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
+        const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
+        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
+          return true;
+        if (comparatorResult)
+          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
+        return false;
+      };
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
