@@ -109,7 +109,6 @@ test('should still emit download events with --snapshot-mode=none', async ({ sta
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   });
-  // ARIA snapshot is skipped, but other state (page header) is still present.
   expect(navigate).toHaveResponse({ page: `- Page URL: ${server.PREFIX}/` });
   expect(navigate).not.toHaveResponse({ snapshot: expect.anything() });
 
@@ -119,7 +118,6 @@ test('should still emit download events with --snapshot-mode=none', async ({ sta
     arguments: { element: 'Download link', target: 'a' },
   });
 
-  // The download finishes asynchronously; accumulate events across polls.
   let events = parseResponse(click).events ?? '';
   await expect.poll(async () => {
     const r = await client.callTool({ name: 'browser_evaluate', arguments: { function: '() => 1' } });

@@ -410,9 +410,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      // Serializing the ARIA snapshot is expensive, so skip it when the caller
-      // does not need it (e.g. snapshot mode 'none'). All other response state
-      // (modal states, console link, events) is still collected below.
       const ariaSnapshot = !includeAria
         ? ''
         : root
