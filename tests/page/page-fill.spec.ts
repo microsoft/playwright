@@ -224,8 +224,8 @@ it('should not double-fill in contenteditable with beforeinput handler in Firefo
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/36715'
   }
-}, async ({ page, browserName }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/36715');
+}, async ({ page, browserName, isBidi }) => {
+  it.fixme(browserName === 'firefox' && !isBidi, 'https://github.com/microsoft/playwright/issues/36715');
 
   await page.setContent(`
     <div id="editor" contenteditable="true"></div>

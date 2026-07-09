@@ -18,20 +18,19 @@ import { resolveSmartModifierString } from '../input';
 import { getBidiKeyValue } from './third_party/bidiKeyboard';
 import * as bidi from './third_party/bidiProtocol';
 
+import type { Frame } from '../frames';
 import type * as input from '../input';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
+import type { BidiPage } from './bidiPage';
 import type { Progress } from '../progress';
+import type { FrameExecutionContext } from '../dom';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
-  private _session: BidiSession;
+  private _page: BidiPage;
 
-  constructor(session: BidiSession) {
-    this._session = session;
-  }
-
-  setSession(session: BidiSession) {
-    this._session = session;
+  constructor(page: BidiPage) {
+    this._page = page;
   }
 
   async keydown(progress: Progress, modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
@@ -49,18 +48,28 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async sendText(progress: Progress, text: string): Promise<void> {
-    const actions: bidi.Input.KeySourceAction[] = [];
-    for (const char of text) {
-      const value = getBidiKeyValue(char);
-      actions.push({ type: 'keyDown', value });
-      actions.push({ type: 'keyUp', value });
+    let frame: Frame | null = this._page._page.mainFrame();
+    while (frame) {
+      const context: FrameExecutionContext = await progress.race(frame.mainContext());
+      const handle = await progress.race(context.evaluateHandle((text: string) => (window as any).__pw_bidiInsertText(text), text));
+      // insertText returns the focused frame element when the focus lives inside a nested frame,
+      // otherwise the text was inserted (if possible) and we are done.
+      const element = handle.asElement();
+      if (!element) {
+        handle.dispose();
+        return;
+      }
+      try {
+        frame = await progress.race(element.contentFrame(progress));
+      } finally {
+        element.dispose();
+      }
     }
-    await this._performActions(progress, actions);
   }
 
   private async _performActions(progress: Progress, actions: bidi.Input.KeySourceAction[]) {
-    await progress.race(this._session.send('input.performActions', {
-      context: this._session.sessionId,
+    await progress.race(this._page._session.send('input.performActions', {
+      context: this._page._session.sessionId,
       actions: [
         {
           type: 'key',

@@ -23,6 +23,7 @@ import { bidiBytesValueToString } from './bidiNetworkManager';
 import { BidiPage, kPlaywrightBindingChannel } from './bidiPage';
 import { PageBinding } from '../page';
 import * as bidi from './third_party/bidiProtocol';
+import * as rawBidiInsertTextSource from '../../generated/bidiInsertTextSource';
 
 import type { RegisteredListener } from '@utils/eventsHelper';
 import type { BrowserOptions } from '../browser';
@@ -226,6 +227,7 @@ export class BidiBrowserContext extends BrowserContext {
     const promises: Promise<any>[] = [
       super.initialize(),
     ];
+    promises.push(this.extendInjectedScript(rawBidiInsertTextSource.source));
     const downloadBehavior: bidi.Browser.DownloadBehavior = this._options.acceptDownloads === 'accept' ?
       { type: 'allowed', destinationFolder: this._browser.options.downloadsPath } :
       { type: 'denied' };

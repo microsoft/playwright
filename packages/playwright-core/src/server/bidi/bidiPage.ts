@@ -63,7 +63,7 @@ export class BidiPage implements PageDelegate {
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
     this._opener = opener;
-    this.rawKeyboard = new RawKeyboardImpl(bidiSession);
+    this.rawKeyboard = new RawKeyboardImpl(this);
     this.rawMouse = new RawMouseImpl(bidiSession);
     this.rawTouchscreen = new RawTouchscreenImpl(bidiSession);
     this._contextIdToContext = new Map();

@@ -2,6 +2,7 @@
 @utils/**
 @isomorphic/**
 ../
+../../generated/
 ./third_party/
 
 [bidiOverCdp.ts]
