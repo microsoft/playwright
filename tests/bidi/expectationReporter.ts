@@ -18,8 +18,9 @@ import type {
   FullConfig, FullResult, Reporter, Suite, TestCase
 } from '@playwright/test/reporter';
 import fs from 'fs';
-import { parseBidiExpectations as parseExpectations, projectExpectationPath } from './expectationUtil';
-import type { TestExpectation } from './expectationUtil';
+import path from 'path';
+
+type TestExpectation = 'unknown' | 'flaky' | 'pass' | 'fail' | 'timeout';
 
 type ReporterOptions = {
   rebase?: boolean;
@@ -32,6 +33,21 @@ class ExpectationReporter implements Reporter {
 
   constructor(options: ReporterOptions) {
     this._options = options;
+  }
+
+  async preprocessSuite(config: FullConfig, suite: Suite) {
+    if (!process.env.PWTEST_USE_BIDI_EXPECTATIONS)
+      return;
+    if (this._options.rebase)
+      return;
+    for (const project of suite.suites) {
+      const expectations = await parseExpectations(project.title);
+      for (const test of project.allTests()) {
+        const expectation = expectations.get(expectationKey(test));
+        if (expectation && ['flaky', 'fail', 'timeout'].includes(expectation))
+          test.fixme(`marked as ${expectation} in bidi expectations`);
+      }
+    }
   }
 
   onBegin(config: FullConfig, suite: Suite) {
@@ -54,8 +70,7 @@ class ExpectationReporter implements Reporter {
     const expectations = await parseExpectations(project.title);
     for (const test of project.allTests()) {
       const outcome = getOutcome(test);
-      // Strip root and project names.
-      const key = test.titlePath().slice(2).join(' › ');
+      const key = expectationKey(test);
       if (outcome === 'timeout')
         expectations.set(key, outcome);
       else if (expectations.has(key) && test.outcome() !== 'skipped')
@@ -85,6 +100,33 @@ function getOutcome(test: TestCase): TestExpectation {
   if (test.outcome() === 'flaky')
     return 'flaky';
   return 'unknown';
+}
+
+function expectationKey(test: TestCase): string {
+  return test.titlePath().slice(2).join(' › ');
+}
+
+async function parseExpectations(projectName: string): Promise<Map<string, TestExpectation>> {
+  const filePath = projectExpectationPath(projectName);
+  try {
+    await fs.promises.access(filePath);
+  } catch (e) {
+    return new Map();
+  }
+  const content = await fs.promises.readFile(filePath);
+  const pairs = content.toString().split('\n').map(line => {
+    const match = /(?<titlePath>.+) \[(?<expectation>[^\]]+)\]$/.exec(line);
+    if (!match) {
+      console.error('Bad expectation line: ' + line);
+      return undefined;
+    }
+    return [match.groups!.titlePath, match.groups!.expectation];
+  }).filter(Boolean) as [string, TestExpectation][];
+  return new Map(pairs);
+}
+
+function projectExpectationPath(project: string): string {
+  return path.join(__dirname, 'expectations', project + '.txt');
 }
 
 export default ExpectationReporter;

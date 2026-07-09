@@ -48,6 +48,7 @@ const reporters = () => {
     ['blob'],
     ['../config/parquetReporter.ts'],
     ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
+    ['./expectationReporter', { rebase: false }],
   ] : [
     ['html', { open: 'on-failure' }],
     ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
