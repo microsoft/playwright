@@ -114,3 +114,4 @@ extends:
             script: "./utils/docker/publish_docker.sh ${{ parameters.releaseChannel }}"
           env:
             ACR_CACHE_PREFIX: "playwright.azurecr.io/cached/"
+            UBUNTU_MIRROR_PREFIX: "azure."
