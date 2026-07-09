@@ -162,8 +162,12 @@ case "${MODE}" in
     ;;
   ""|all)
     # Backwards-compatible end-to-end path for a single host.
-    build_and_push_arch amd64
+    # arm64 first: its QEMU-emulated builds must run while the agent is fresh.
+    # Running them after the amd64 builds have churned the agent triggers a qemu
+    # segfault in aarch64 ldconfig during libc-bin setup. The native amd64 builds
+    # are unaffected by preceding work, so they go second.
     build_and_push_arch arm64
+    build_and_push_arch amd64
     publish_manifests
     ;;
   *)
