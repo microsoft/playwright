@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
-        node-version: 26
+        node-version: lts/*
         registry-url: 'https://registry.npmjs.org'
     - run: npm ci
     - run: npm run build
@@ -54,7 +54,7 @@ jobs:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
-        node-version: 26
+        node-version: lts/*
     - uses: actions/create-github-app-token@v3
       id: app-token
       with:
