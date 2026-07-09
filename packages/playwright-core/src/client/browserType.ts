@@ -74,10 +74,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
-      timeout: new TimeoutSettings().launchTimeout(options),
     };
     return await this._wrapApiCall(async () => {
-      const browser = Browser.from((await this._channel.launch(launchOptions, options.signal)).browser);
+      const browser = Browser.from((await this._channel.launch(launchOptions, { signal: options.signal, timeout: new TimeoutSettings().launchTimeout(options) })).browser);
       browser._connectToBrowserType(this, options, logger);
       return browser;
     });
@@ -107,10 +106,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
       userDataDir: (path.isAbsolute(userDataDir) || !userDataDir) ? userDataDir : path.resolve(userDataDir),
-      timeout: new TimeoutSettings().launchTimeout(options),
     };
     const context = await this._wrapApiCall(async () => {
-      const result = await this._channel.launchPersistentContext(persistentParams, options.signal);
+      const result = await this._channel.launchPersistentContext(persistentParams, { signal: options.signal, timeout: new TimeoutSettings().launchTimeout(options) });
       const browser = Browser.from(result.browser);
       browser._connectToBrowserType(this, options, logger);
       const context = BrowserContext.from(result.context);
@@ -168,11 +166,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       transport: transport as any,
       headers: params.headers ? headersObjectToArray(params.headers) : undefined,
       slowMo: params.slowMo,
-      timeout: new TimeoutSettings().timeout(params),
       isLocal: params.isLocal,
       noDefaults: params.noDefaults,
       artifactsDir: params.artifactsDir,
-    }, undefined);
+    }, { timeout: new TimeoutSettings().timeout(params) });
     return await this._browserFromConnectResult(result);
   }
 
@@ -189,8 +186,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       throw new Error('Connecting to workers is only supported in Chromium.');
     const result = await this._channel.connectToWorker({
       endpoint,
-      timeout: new TimeoutSettings().timeout(options),
-    }, undefined);
+    }, { timeout: new TimeoutSettings().timeout(options) });
     return Worker.from(result.worker);
   }
 }

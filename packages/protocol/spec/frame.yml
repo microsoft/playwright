@@ -87,7 +87,6 @@ Frame:
         selector: string?
         depth: int?
         boxes: boolean?
-        timeout: float
       returns:
         snapshot: string
 
@@ -96,7 +95,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -114,7 +112,6 @@ Frame:
           - auto
           - none
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -154,7 +151,6 @@ Frame:
           - right
           - middle
         clickCount: int?
-        timeout: float
         trial: boolean?
         steps: int?
       flags:
@@ -183,7 +179,6 @@ Frame:
           literals:
           - auto
           - none
-        timeout: float
         trial: boolean?
         sourcePosition: Point?
         targetPosition: Point?
@@ -224,7 +219,6 @@ Frame:
             properties:
               mimeType: string
               value: string
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -261,7 +255,6 @@ Frame:
           - left
           - right
           - middle
-        timeout: float
         trial: boolean?
         steps: int?
       flags:
@@ -278,7 +271,6 @@ Frame:
         strict: boolean?
         type: string
         eventInit: SerializedArgument
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -315,7 +307,6 @@ Frame:
         strict: boolean?
         value: string
         force: boolean?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -328,7 +319,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -365,7 +355,6 @@ Frame:
         selector: string
         strict: boolean?
         name: string
-        timeout: float
       returns:
         value: string?
       flags:
@@ -376,7 +365,6 @@ Frame:
       title: Navigate to "{url}"
       parameters:
         url: string
-        timeout: float
         waitUntil: LifecycleEvent?
         referer: string?
       returns:
@@ -408,7 +396,6 @@ Frame:
             - Meta
             - Shift
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -423,7 +410,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: string
       flags:
@@ -436,7 +422,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: string
       flags:
@@ -449,7 +434,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: string
       flags:
@@ -462,7 +446,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: boolean
       flags:
@@ -475,7 +458,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: boolean
       flags:
@@ -488,7 +470,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: boolean
       flags:
@@ -527,7 +508,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: boolean
       flags:
@@ -542,7 +522,6 @@ Frame:
         key: string
         delay: float?
         noWaitAfter: boolean?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -599,7 +578,6 @@ Frame:
               label: string?
               index: int?
         force: boolean?
-        timeout: float
       returns:
         values:
           type: array
@@ -615,7 +593,6 @@ Frame:
       title: Set content
       parameters:
         html: string
-        timeout: float
         waitUntil: LifecycleEvent?
       flags:
         snapshot: true
@@ -643,7 +620,6 @@ Frame:
         streams:
           type: array?
           items: WritableStream
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -673,7 +649,6 @@ Frame:
             - Meta
             - Shift
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -688,7 +663,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
       returns:
         value: string?
       flags:
@@ -708,7 +682,6 @@ Frame:
         strict: boolean?
         text: string
         delay: float?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -728,7 +701,6 @@ Frame:
           - auto
           - none
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -750,7 +722,6 @@ Frame:
         expression: string
         isFunction: boolean?
         arg: SerializedArgument
-        timeout: float
         # When present, polls on interval. Otherwise, polls on raf.
         pollingInterval: float?
         # When present, first argument is the matched element.
@@ -768,7 +739,6 @@ Frame:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
         state:
           type: enum?
           literals:
@@ -800,7 +770,6 @@ Frame:
         expectedValue: SerializedArgument?
         useInnerText: boolean?
         isNot: boolean
-        timeout: float
       errorDetails:
         received:
           type: object?

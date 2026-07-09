@@ -40,7 +40,6 @@ APIRequestContext:
         multipartData:
           type: array?
           items: FormField
-        timeout: float
         failOnStatusCode: boolean?
         ignoreHTTPSErrors: boolean?
         maxRedirects: int?

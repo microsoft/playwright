@@ -131,7 +131,6 @@ ElementHandle:
           - auto
           - none
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -169,7 +168,6 @@ ElementHandle:
           - right
           - middle
         clickCount: int?
-        timeout: float
         trial: boolean?
         steps: int?
       flags:
@@ -212,7 +210,6 @@ ElementHandle:
           - left
           - right
           - middle
-        timeout: float
         trial: boolean?
         steps: int?
       flags:
@@ -237,7 +234,6 @@ ElementHandle:
       parameters:
         value: string
         force: boolean?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -283,7 +279,6 @@ ElementHandle:
             - Meta
             - Shift
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -384,7 +379,6 @@ ElementHandle:
       parameters:
         key: string
         delay: float?
-        timeout: float
         noWaitAfter: boolean?
       flags:
         slowMo: true
@@ -417,7 +411,6 @@ ElementHandle:
     screenshot:
       title: Screenshot
       parameters:
-        timeout: float
         type:
           type: enum?
           literals:
@@ -433,8 +426,6 @@ ElementHandle:
 
     scrollIntoViewIfNeeded:
       title: Scroll into view
-      parameters:
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -456,7 +447,6 @@ ElementHandle:
               label: string?
               index: int?
         force: boolean?
-        timeout: float
       returns:
         values:
           type: array
@@ -472,7 +462,6 @@ ElementHandle:
       title: Select text
       parameters:
         force: boolean?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -498,7 +487,6 @@ ElementHandle:
         streams:
           type: array?
           items: WritableStream
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -526,7 +514,6 @@ ElementHandle:
             - Meta
             - Shift
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -549,7 +536,6 @@ ElementHandle:
       parameters:
         text: string
         delay: float?
-        timeout: float
       flags:
         slowMo: true
         snapshot: true
@@ -567,7 +553,6 @@ ElementHandle:
           - auto
           - none
         position: Point?
-        timeout: float
         trial: boolean?
       flags:
         slowMo: true
@@ -588,7 +573,6 @@ ElementHandle:
           - enabled
           - disabled
           - editable
-        timeout: float
       flags:
         snapshot: true
         pause: true
@@ -598,7 +582,6 @@ ElementHandle:
       parameters:
         selector: string
         strict: boolean?
-        timeout: float
         state:
           type: enum?
           literals:

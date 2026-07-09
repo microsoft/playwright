@@ -395,7 +395,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async reload(options: channels.PageReloadOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.reload({ ...options, waitUntil, timeout: this._timeoutSettings.navigationTimeout(options) }, options.signal)).response);
+    return Response.fromNullable((await this._channel.reload({ ...options, waitUntil }, { signal: options.signal, timeout: this._timeoutSettings.navigationTimeout(options) })).response);
   }
 
   async addLocatorHandler(locator: Locator, handler: (locator: Locator) => any, options: { times?: number, noWaitAfter?: boolean } = {}): Promise<void> {
@@ -497,12 +497,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async goBack(options: channels.PageGoBackOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.goBack({ ...options, waitUntil, timeout: this._timeoutSettings.navigationTimeout(options) }, options.signal)).response);
+    return Response.fromNullable((await this._channel.goBack({ ...options, waitUntil }, { signal: options.signal, timeout: this._timeoutSettings.navigationTimeout(options) })).response);
   }
 
   async goForward(options: channels.PageGoForwardOptions & TimeoutOptions = {}): Promise<Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil, timeout: this._timeoutSettings.navigationTimeout(options) }, options.signal)).response);
+    return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil }, { signal: options.signal, timeout: this._timeoutSettings.navigationTimeout(options) })).response);
   }
 
   async requestGC() {
@@ -605,7 +605,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
     const mask = options.mask as Locator[] | undefined;
-    const copy: channels.PageScreenshotParams = { ...options, mask: undefined, timeout: this._timeoutSettings.timeout(options) };
+    const timeout = this._timeoutSettings.timeout(options);
+    const copy: channels.PageScreenshotParams = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
     if (mask) {
@@ -614,7 +615,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         selector: locator._selector,
       }));
     }
-    const result = await this._channel.screenshot(copy, options.signal);
+    const result = await this._channel.screenshot(copy, { signal: options.signal, timeout });
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, result.binary);
@@ -888,7 +889,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, boxes?: boolean } = {}): Promise<string> {
-    const result = await this.mainFrame()._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), mode: options.mode, depth: options.depth, boxes: options.boxes }, options.signal);
+    const result = await this.mainFrame()._channel.ariaSnapshot({ mode: options.mode, depth: options.depth, boxes: options.boxes }, { signal: options.signal, timeout: this._timeoutSettings.timeout(options) });
     return result.snapshot;
   }
 

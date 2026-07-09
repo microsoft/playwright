@@ -62,9 +62,8 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       env: options.env ? envObjectToArray(options.env) : undefined,
       tracesDir: options.tracesDir,
       artifactsDir: options.artifactsDir,
-      timeout: new TimeoutSettings().launchTimeout(options),
     };
-    const app = ElectronApplication.from((await this._channel.launch(params, undefined)).electronApplication);
+    const app = ElectronApplication.from((await this._channel.launch(params, { timeout: new TimeoutSettings().launchTimeout(options) })).electronApplication);
     this._playwright.selectors._contextsForSelectors.add(app._context);
     app.once(Events.ElectronApplication.Close, () => this._playwright.selectors._contextsForSelectors.delete(app._context));
     await app._context._initializeHarFromOptions(options.recordHar);

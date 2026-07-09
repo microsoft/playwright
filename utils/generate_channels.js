@@ -133,7 +133,9 @@ import type { Progress } from './progress';
 ` : '') + `
 import type { Binary, Channel, ${structNames.join(', ')} } from '@protocol/structs';
 export type { Binary, Channel, ${structNames.join(', ')} } from '@protocol/structs';
-`];
+` + (target === 'Dispatcher' ? '' : `
+export type CommandOptions = { signal?: AbortSignal, timeout?: number };
+`)];
 }
 
 const validator_ts = [
@@ -360,7 +362,7 @@ function generateChannels(target) {
           for (const derived of derivedClasses.get(channelName) || [])
             addScheme(`${derived}${titleCase(methodName)}ErrorDetails`, `tType('${errorDetailsName}')`);
         }
-        channels_ts.push(`  ${methodName}(params: ${paramsName}, ${isDispatcher ? `progress: Progress` : `signal: AbortSignal | undefined`}): Promise<${resultName}>;`);
+        channels_ts.push(`  ${methodName}(params: ${paramsName}, ${isDispatcher ? `progress: Progress` : `options?: CommandOptions`}): Promise<${resultName}>;`);
       }
 
       channels_ts.push(`}`);

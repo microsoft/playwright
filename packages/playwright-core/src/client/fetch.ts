@@ -79,7 +79,7 @@ export class APIRequest implements api.APIRequest {
       storageState,
       tracesDir: this._playwright._defaultLaunchOptions?.tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
-    }, options.signal)).request);
+    }, { signal: options.signal })).request);
     this._contexts.add(context);
     context._request = this;
     context._timeoutSettings.setDefaultTimeout(options.timeout ?? this._playwright._defaultContextTimeout);
@@ -255,13 +255,12 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         jsonData,
         formData,
         multipartData,
-        timeout: this._timeoutSettings.timeout(options),
         failOnStatusCode: options.failOnStatusCode,
         ignoreHTTPSErrors: options.ignoreHTTPSErrors,
         maxRedirects: options.maxRedirects,
         maxRetries: options.maxRetries,
         ...fixtures
-      }, options.signal);
+      }, { signal: options.signal, timeout: this._timeoutSettings.timeout(options) });
       return new APIResponse(this, result.response);
     });
   }

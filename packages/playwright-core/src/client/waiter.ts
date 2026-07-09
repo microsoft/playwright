@@ -55,7 +55,7 @@ export class Waiter {
     const owner = this._channelOwner;
     owner._wrapApiCall(async apiZone => {
       if (apiZone.internal || apiZone.reported) {
-        void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, { internal: true });
+        void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, { internal: true, timeout: 0 });
         return;
       }
       apiZone.reported = true;
@@ -66,7 +66,7 @@ export class Waiter {
       if (!apiZone.title)
         apiZone.title = options.title;
       owner._instrumentation.onApiCallBegin(apiZone, { type: owner._type, method: '__waitInfo__', params: info });
-      void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, apiZone);
+      void owner._connection.sendMessageToServer(owner, '__waitInfo__', info, { ...apiZone, timeout: 0 });
     }, options).catch(() => {});
   }
 

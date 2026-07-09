@@ -28,7 +28,6 @@ Electron:
         env:
           type: array?
           items: NameValue
-        timeout: float
         acceptDownloads:
           type: enum?
           literals:

@@ -367,7 +367,7 @@ export class DispatcherConnection {
       // If the dispatcher has been disposed while running the instrumentation call, error out.
       if (this._dispatcherByGuid.get(guid) !== dispatcher)
         throw new TargetClosedError(sdkObject.closeReason());
-      const result = await controller.run(progress => (dispatcher as any)[method](validParams, progress), validParams?.timeout);
+      const result = await controller.run(progress => (dispatcher as any)[method](validParams, progress), validMetadata.timeout);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;

@@ -48,7 +48,6 @@ BrowserType:
           type: array?
           items: NameValue
         slowMo: float?
-        timeout: float
         isLocal: boolean?
         noDefaults: boolean?
         artifactsDir: string?
@@ -61,6 +60,5 @@ BrowserType:
       title: Connect to worker
       parameters:
         endpoint: string
-        timeout: float
       returns:
         worker: Worker

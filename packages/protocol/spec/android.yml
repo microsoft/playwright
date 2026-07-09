@@ -62,21 +62,18 @@ AndroidDevice:
           type: enum?
           literals:
           - gone
-        timeout: float
 
     fill:
       title: Fill "{text}"
       parameters:
         androidSelector: AndroidSelector
         text: string
-        timeout: float
 
     tap:
       title: Tap
       parameters:
         androidSelector: AndroidSelector
         duration: float?
-        timeout: float
 
     drag:
       title: Drag
@@ -84,7 +81,6 @@ AndroidDevice:
         androidSelector: AndroidSelector
         dest: Point
         speed: float?
-        timeout: float
 
     fling:
       title: Fling
@@ -98,13 +94,11 @@ AndroidDevice:
           - left
           - right
         speed: float?
-        timeout: float
 
     longTap:
       title: Long tap
       parameters:
         androidSelector: AndroidSelector
-        timeout: float
 
     pinchClose:
       title: Pinch close
@@ -112,7 +106,6 @@ AndroidDevice:
         androidSelector: AndroidSelector
         percent: float
         speed: float?
-        timeout: float
 
     pinchOpen:
       title: Pinch open
@@ -120,7 +113,6 @@ AndroidDevice:
         androidSelector: AndroidSelector
         percent: float
         speed: float?
-        timeout: float
 
     scroll:
       title: Scroll
@@ -135,7 +127,6 @@ AndroidDevice:
           - right
         percent: float
         speed: float?
-        timeout: float
 
     swipe:
       title: Swipe
@@ -150,7 +141,6 @@ AndroidDevice:
           - right
         percent: float
         speed: float?
-        timeout: float
 
     info:
       internal: true

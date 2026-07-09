@@ -113,7 +113,6 @@ Page:
     goBack:
       title: Go back
       parameters:
-        timeout: float
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
@@ -125,7 +124,6 @@ Page:
     goForward:
       title: Go forward
       parameters:
-        timeout: float
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
@@ -160,7 +158,6 @@ Page:
     reload:
       title: Reload
       parameters:
-        timeout: float
         waitUntil: LifecycleEvent?
       returns:
         response: Response?
@@ -173,7 +170,6 @@ Page:
       title: Expect screenshot
       parameters:
         expected: binary?
-        timeout: float
         isNot: boolean
         locator:
           type: object?
@@ -205,7 +201,6 @@ Page:
     screenshot:
       title: Screenshot
       parameters:
-        timeout: float
         type:
           type: enum?
           literals:

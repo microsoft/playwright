@@ -120,7 +120,6 @@ type EmulatedMedia = {
 };
 
 type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
-  timeout: number,
   expected?: Buffer,
   isNot?: boolean,
   locator?: {

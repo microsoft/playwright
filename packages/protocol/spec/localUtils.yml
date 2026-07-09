@@ -120,7 +120,6 @@ LocalUtils:
         headers: json?
         exposeNetwork: string?
         slowMo: float?
-        timeout: float
         socksProxyRedirectPortForTest: int?
       returns:
         pipe: JsonPipe

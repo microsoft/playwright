@@ -238,7 +238,6 @@ export type AndroidDeviceWebViewRemovedEvent = {
 export type AndroidDeviceWaitParams = {
   androidSelector: AndroidSelector,
   state?: 'gone',
-  timeout: number,
 };
 export type AndroidDeviceWaitOptions = {
   state?: 'gone',
@@ -247,7 +246,6 @@ export type AndroidDeviceWaitResult = void;
 export type AndroidDeviceFillParams = {
   androidSelector: AndroidSelector,
   text: string,
-  timeout: number,
 };
 export type AndroidDeviceFillOptions = {
 
@@ -256,7 +254,6 @@ export type AndroidDeviceFillResult = void;
 export type AndroidDeviceTapParams = {
   androidSelector: AndroidSelector,
   duration?: number,
-  timeout: number,
 };
 export type AndroidDeviceTapOptions = {
   duration?: number,
@@ -266,7 +263,6 @@ export type AndroidDeviceDragParams = {
   androidSelector: AndroidSelector,
   dest: Point,
   speed?: number,
-  timeout: number,
 };
 export type AndroidDeviceDragOptions = {
   speed?: number,
@@ -276,7 +272,6 @@ export type AndroidDeviceFlingParams = {
   androidSelector: AndroidSelector,
   direction: 'up' | 'down' | 'left' | 'right',
   speed?: number,
-  timeout: number,
 };
 export type AndroidDeviceFlingOptions = {
   speed?: number,
@@ -284,7 +279,6 @@ export type AndroidDeviceFlingOptions = {
 export type AndroidDeviceFlingResult = void;
 export type AndroidDeviceLongTapParams = {
   androidSelector: AndroidSelector,
-  timeout: number,
 };
 export type AndroidDeviceLongTapOptions = {
 
@@ -294,7 +288,6 @@ export type AndroidDevicePinchCloseParams = {
   androidSelector: AndroidSelector,
   percent: number,
   speed?: number,
-  timeout: number,
 };
 export type AndroidDevicePinchCloseOptions = {
   speed?: number,
@@ -304,7 +297,6 @@ export type AndroidDevicePinchOpenParams = {
   androidSelector: AndroidSelector,
   percent: number,
   speed?: number,
-  timeout: number,
 };
 export type AndroidDevicePinchOpenOptions = {
   speed?: number,
@@ -315,7 +307,6 @@ export type AndroidDeviceScrollParams = {
   direction: 'up' | 'down' | 'left' | 'right',
   percent: number,
   speed?: number,
-  timeout: number,
 };
 export type AndroidDeviceScrollOptions = {
   speed?: number,
@@ -326,7 +317,6 @@ export type AndroidDeviceSwipeParams = {
   direction: 'up' | 'down' | 'left' | 'right',
   percent: number,
   speed?: number,
-  timeout: number,
 };
 export type AndroidDeviceSwipeOptions = {
   speed?: number,
@@ -610,7 +600,6 @@ export type APIRequestContextFetchParams = {
   jsonData?: string,
   formData?: NameValue[],
   multipartData?: FormField[],
-  timeout: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
   maxRedirects?: number,
@@ -1795,7 +1784,6 @@ export type BrowserTypeLaunchParams = {
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout: number,
   env?: NameValue[],
   headless?: boolean,
   proxy?: {
@@ -1849,7 +1837,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout: number,
   env?: NameValue[],
   headless?: boolean,
   proxy?: {
@@ -2024,7 +2011,6 @@ export type BrowserTypeConnectOverCDPParams = {
   endpointURL?: string,
   headers?: NameValue[],
   slowMo?: number,
-  timeout: number,
   isLocal?: boolean,
   noDefaults?: boolean,
   artifactsDir?: string,
@@ -2045,7 +2031,6 @@ export type BrowserTypeConnectOverCDPResult = {
 };
 export type BrowserTypeConnectToWorkerParams = {
   endpoint: string,
-  timeout: number,
 };
 export type BrowserTypeConnectToWorkerOptions = {
 
@@ -2086,7 +2071,6 @@ export type ElectronLaunchParams = {
   chromiumSandbox?: boolean,
   cwd?: string,
   env?: NameValue[],
-  timeout: number,
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
   bypassCSP?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
@@ -2376,7 +2360,6 @@ export type FrameAriaSnapshotParams = {
   selector?: string,
   depth?: number,
   boxes?: boolean,
-  timeout: number,
 };
 export type FrameAriaSnapshotOptions = {
   mode?: 'ai' | 'default',
@@ -2390,7 +2373,6 @@ export type FrameAriaSnapshotResult = {
 export type FrameBlurParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameBlurOptions = {
   strict?: boolean,
@@ -2402,7 +2384,6 @@ export type FrameCheckParams = {
   force?: boolean,
   scroll?: 'auto' | 'none',
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type FrameCheckOptions = {
@@ -2424,7 +2405,6 @@ export type FrameClickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
-  timeout: number,
   trial?: boolean,
   steps?: number,
 };
@@ -2452,7 +2432,6 @@ export type FrameDragAndDropParams = {
   target: string,
   force?: boolean,
   scroll?: 'auto' | 'none',
-  timeout: number,
   trial?: boolean,
   sourcePosition?: Point,
   targetPosition?: Point,
@@ -2484,7 +2463,6 @@ export type FrameDropParams = {
     mimeType: string,
     value: string,
   }[],
-  timeout: number,
 };
 export type FrameDropOptions = {
   strict?: boolean,
@@ -2511,7 +2489,6 @@ export type FrameDblclickParams = {
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
-  timeout: number,
   trial?: boolean,
   steps?: number,
 };
@@ -2532,7 +2509,6 @@ export type FrameDispatchEventParams = {
   strict?: boolean,
   type: string,
   eventInit: SerializedArgument,
-  timeout: number,
 };
 export type FrameDispatchEventOptions = {
   strict?: boolean,
@@ -2565,7 +2541,6 @@ export type FrameFillParams = {
   strict?: boolean,
   value: string,
   force?: boolean,
-  timeout: number,
 };
 export type FrameFillOptions = {
   strict?: boolean,
@@ -2575,7 +2550,6 @@ export type FrameFillResult = void;
 export type FrameFocusParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameFocusOptions = {
   strict?: boolean,
@@ -2614,7 +2588,6 @@ export type FrameGetAttributeParams = {
   selector: string,
   strict?: boolean,
   name: string,
-  timeout: number,
 };
 export type FrameGetAttributeOptions = {
   strict?: boolean,
@@ -2624,7 +2597,6 @@ export type FrameGetAttributeResult = {
 };
 export type FrameGotoParams = {
   url: string,
-  timeout: number,
   waitUntil?: LifecycleEvent,
   referer?: string,
 };
@@ -2642,7 +2614,6 @@ export type FrameHoverParams = {
   scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type FrameHoverOptions = {
@@ -2657,7 +2628,6 @@ export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameInnerHTMLOptions = {
   strict?: boolean,
@@ -2668,7 +2638,6 @@ export type FrameInnerHTMLResult = {
 export type FrameInnerTextParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameInnerTextOptions = {
   strict?: boolean,
@@ -2679,7 +2648,6 @@ export type FrameInnerTextResult = {
 export type FrameInputValueParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameInputValueOptions = {
   strict?: boolean,
@@ -2690,7 +2658,6 @@ export type FrameInputValueResult = {
 export type FrameIsCheckedParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameIsCheckedOptions = {
   strict?: boolean,
@@ -2701,7 +2668,6 @@ export type FrameIsCheckedResult = {
 export type FrameIsDisabledParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameIsDisabledOptions = {
   strict?: boolean,
@@ -2712,7 +2678,6 @@ export type FrameIsDisabledResult = {
 export type FrameIsEnabledParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameIsEnabledOptions = {
   strict?: boolean,
@@ -2743,7 +2708,6 @@ export type FrameIsVisibleResult = {
 export type FrameIsEditableParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameIsEditableOptions = {
   strict?: boolean,
@@ -2757,7 +2721,6 @@ export type FramePressParams = {
   key: string,
   delay?: number,
   noWaitAfter?: boolean,
-  timeout: number,
 };
 export type FramePressOptions = {
   strict?: boolean,
@@ -2804,7 +2767,6 @@ export type FrameSelectOptionParams = {
     index?: number,
   }[],
   force?: boolean,
-  timeout: number,
 };
 export type FrameSelectOptionOptions = {
   strict?: boolean,
@@ -2822,7 +2784,6 @@ export type FrameSelectOptionResult = {
 };
 export type FrameSetContentParams = {
   html: string,
-  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type FrameSetContentOptions = {
@@ -2841,7 +2802,6 @@ export type FrameSetInputFilesParams = {
   directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
-  timeout: number,
 };
 export type FrameSetInputFilesOptions = {
   strict?: boolean,
@@ -2863,7 +2823,6 @@ export type FrameTapParams = {
   scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type FrameTapOptions = {
@@ -2878,7 +2837,6 @@ export type FrameTapResult = void;
 export type FrameTextContentParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
 };
 export type FrameTextContentOptions = {
   strict?: boolean,
@@ -2896,7 +2854,6 @@ export type FrameTypeParams = {
   strict?: boolean,
   text: string,
   delay?: number,
-  timeout: number,
 };
 export type FrameTypeOptions = {
   strict?: boolean,
@@ -2909,7 +2866,6 @@ export type FrameUncheckParams = {
   force?: boolean,
   scroll?: 'auto' | 'none',
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type FrameUncheckOptions = {
@@ -2931,7 +2887,6 @@ export type FrameWaitForFunctionParams = {
   expression: string,
   isFunction?: boolean,
   arg: SerializedArgument,
-  timeout: number,
   pollingInterval?: number,
   selector?: string,
   strict?: boolean,
@@ -2948,7 +2903,6 @@ export type FrameWaitForFunctionResult = {
 export type FrameWaitForSelectorParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
   omitReturnValue?: boolean,
 };
@@ -2970,7 +2924,6 @@ export type FrameExpectParams = {
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
   isNot: boolean,
-  timeout: number,
 };
 export type FrameExpectOptions = {
   selector?: string,
@@ -3145,7 +3098,6 @@ export type ElementHandleCheckParams = {
   force?: boolean,
   scroll?: 'auto' | 'none',
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleCheckOptions = {
@@ -3164,7 +3116,6 @@ export type ElementHandleClickParams = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
-  timeout: number,
   trial?: boolean,
   steps?: number,
 };
@@ -3193,7 +3144,6 @@ export type ElementHandleDblclickParams = {
   position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
-  timeout: number,
   trial?: boolean,
   steps?: number,
 };
@@ -3219,7 +3169,6 @@ export type ElementHandleDispatchEventResult = void;
 export type ElementHandleFillParams = {
   value: string,
   force?: boolean,
-  timeout: number,
 };
 export type ElementHandleFillOptions = {
   force?: boolean,
@@ -3242,7 +3191,6 @@ export type ElementHandleHoverParams = {
   scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleHoverOptions = {
@@ -3306,7 +3254,6 @@ export type ElementHandleOwnerFrameResult = {
 export type ElementHandlePressParams = {
   key: string,
   delay?: number,
-  timeout: number,
   noWaitAfter?: boolean,
 };
 export type ElementHandlePressOptions = {
@@ -3334,7 +3281,6 @@ export type ElementHandleQuerySelectorAllResult = {
   elements: ElementHandleChannel[],
 };
 export type ElementHandleScreenshotParams = {
-  timeout: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
@@ -3365,12 +3311,8 @@ export type ElementHandleScreenshotOptions = {
 export type ElementHandleScreenshotResult = {
   binary: Binary,
 };
-export type ElementHandleScrollIntoViewIfNeededParams = {
-  timeout: number,
-};
-export type ElementHandleScrollIntoViewIfNeededOptions = {
-
-};
+export type ElementHandleScrollIntoViewIfNeededParams = {};
+export type ElementHandleScrollIntoViewIfNeededOptions = {};
 export type ElementHandleScrollIntoViewIfNeededResult = void;
 export type ElementHandleSelectOptionParams = {
   elements?: ElementHandleChannel[],
@@ -3381,7 +3323,6 @@ export type ElementHandleSelectOptionParams = {
     index?: number,
   }[],
   force?: boolean,
-  timeout: number,
 };
 export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
@@ -3398,7 +3339,6 @@ export type ElementHandleSelectOptionResult = {
 };
 export type ElementHandleSelectTextParams = {
   force?: boolean,
-  timeout: number,
 };
 export type ElementHandleSelectTextOptions = {
   force?: boolean,
@@ -3414,7 +3354,6 @@ export type ElementHandleSetInputFilesParams = {
   directoryStream?: WritableStreamChannel,
   localPaths?: string[],
   streams?: WritableStreamChannel[],
-  timeout: number,
 };
 export type ElementHandleSetInputFilesOptions = {
   payloads?: {
@@ -3433,7 +3372,6 @@ export type ElementHandleTapParams = {
   scroll?: 'auto' | 'none',
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleTapOptions = {
@@ -3452,7 +3390,6 @@ export type ElementHandleTextContentResult = {
 export type ElementHandleTypeParams = {
   text: string,
   delay?: number,
-  timeout: number,
 };
 export type ElementHandleTypeOptions = {
   delay?: number,
@@ -3462,7 +3399,6 @@ export type ElementHandleUncheckParams = {
   force?: boolean,
   scroll?: 'auto' | 'none',
   position?: Point,
-  timeout: number,
   trial?: boolean,
 };
 export type ElementHandleUncheckOptions = {
@@ -3474,7 +3410,6 @@ export type ElementHandleUncheckOptions = {
 export type ElementHandleUncheckResult = void;
 export type ElementHandleWaitForElementStateParams = {
   state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable',
-  timeout: number,
 };
 export type ElementHandleWaitForElementStateOptions = {
 
@@ -3483,7 +3418,6 @@ export type ElementHandleWaitForElementStateResult = void;
 export type ElementHandleWaitForSelectorParams = {
   selector: string,
   strict?: boolean,
-  timeout: number,
   state?: 'attached' | 'detached' | 'visible' | 'hidden',
 };
 export type ElementHandleWaitForSelectorOptions = {
@@ -3596,7 +3530,6 @@ export type LocalUtilsConnectParams = {
   headers?: any,
   exposeNetwork?: string,
   slowMo?: number,
-  timeout: number,
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectOptions = {
@@ -4124,7 +4057,6 @@ export type PageExposeBindingResult = {
   disposable: DisposableChannel,
 };
 export type PageGoBackParams = {
-  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageGoBackOptions = {
@@ -4134,7 +4066,6 @@ export type PageGoBackResult = {
   response?: ResponseChannel,
 };
 export type PageGoForwardParams = {
-  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageGoForwardOptions = {
@@ -4172,7 +4103,6 @@ export type PageUnregisterLocatorHandlerOptions = {
 };
 export type PageUnregisterLocatorHandlerResult = void;
 export type PageReloadParams = {
-  timeout: number,
   waitUntil?: LifecycleEvent,
 };
 export type PageReloadOptions = {
@@ -4183,7 +4113,6 @@ export type PageReloadResult = {
 };
 export type PageExpectScreenshotParams = {
   expected?: Binary,
-  timeout: number,
   isNot: boolean,
   locator?: {
     frame: FrameChannel,
@@ -4241,7 +4170,6 @@ export type PageExpectScreenshotErrorDetails = {
   log?: string[],
 };
 export type PageScreenshotParams = {
-  timeout: number,
   type?: 'png' | 'jpeg',
   quality?: number,
   fullPage?: boolean,

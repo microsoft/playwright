@@ -276,7 +276,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   async expect(params: channels.FrameExpectParams, progress: Progress): Promise<channels.FrameExpectResult> {
-    progress.log(`${renderTitleForCall(progress.metadata)}${params.timeout ? ` with timeout ${params.timeout}ms` : ''}`);
+    progress.log(`${renderTitleForCall(progress.metadata)}${progress.timeout ? ` with timeout ${progress.timeout}ms` : ''}`);
     const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     try {
       await this._frame.expect(progress, params.selector, { ...params, expectedValue });
