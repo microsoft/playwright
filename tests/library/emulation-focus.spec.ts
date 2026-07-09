@@ -198,10 +198,9 @@ browserTest('should not fire blur events when interacting with more than one pag
   expect(await page2.evaluate(() => !!window['gotBlur'])).toBe(false);
 });
 
-browserTest('should trigger hover state concurrently', async ({ browserType, browserName, headless, isBidi }) => {
+browserTest('should trigger hover state concurrently', async ({ browserType, headless }) => {
   browserTest.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27969' });
   browserTest.skip(!headless, 'headed messes up with hover');
-  browserTest.fixme(browserName === 'firefox' && !isBidi);
 
   const browser1 = await browserType.launch();
   const context1 = await browser1.newContext();
