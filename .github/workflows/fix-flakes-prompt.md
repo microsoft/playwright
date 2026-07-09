@@ -17,13 +17,20 @@ bots/PRs it disrupts — **not** by "has a tidy error message".
 Pick a candidate whose failing `bot_name` OS matches yours so you can reproduce it.
 Keep the ranked list — you fall back down it in step 2. Say why you picked the top one.
 
-## 2. Check nobody's already on it
+## 2. Check nobody's on it — and that it isn't already fixed
 
-Search open PRs/issues for the test title words and file path before touching anything.
-Also check any issue linked in the
-test's `annotation`.
-If an open PR already touches the test, **it's taken — drop it and go down your step-1 ranking**, re-checking each.
-Only stop and report if the whole shortlist is covered.
+Two dead ends to rule out before touching a candidate. If either fires, drop it and go
+down your step-1 ranking, re-checking each; only stop once the whole shortlist is covered.
+
+- **Already being worked on** — search PRs/issues (open *and* recently merged/closed) for
+  the test title words and file path, plus any issue linked in the test's `annotation`.
+- **Already fixed** — the DB is a rolling window that still holds the failing runs from
+  before a fix landed, so a test fixed mid-window looks maximally bimodal (old fails + new
+  passes), which is exactly what floats it up step 1. Check whether a fix has landed since it
+  last flaked: find the commit its most recent failing run ran on, and look at what's changed
+  in that test's file since. A commit that plausibly targets the test or its feature — a
+  browser roll, or a fix to the test or the code it exercises — means the remaining DB fails
+  are from before the fix, so move on.
 
 ## 3. Reproduce on this OS
 

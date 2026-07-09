@@ -36,10 +36,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Download test-results DB
+      - name: Download and refresh test-results DB
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node utils/test-results-db/cli.ts download
+        run: |
+          node utils/test-results-db/cli.ts download
+          node utils/test-results-db/cli.ts update --lookback-days 3
 
       - name: Install Copilot CLI
         run: npm install -g @github/copilot
@@ -57,9 +59,12 @@ jobs:
           off only that runner label. Do NOT fix anything.
 
           Optimise for the OS with the highest-impact actionable flakiness/reds that isn't
-          already being worked on (its top candidates aren't covered by an open fix PR — check
-          with the GitHub MCP tools). All else equal, favour variety so Linux, Windows and macOS
-          each get attention over time.
+          already being worked on OR already fixed. A candidate is dead if a fix PR touches it
+          (open, or recently merged/closed) — the DB window still holds the failing runs from
+          before a fix landed, so a just-fixed test keeps showing old fails and looks bimodal.
+          For a top candidate, check open and merged/closed PRs plus any linked annotation
+          issue (GitHub MCP tools) for a plausible fix before betting an OS on it. All else
+          equal, favour variety so Linux, Windows and macOS each get attention over time.
 
           The DB is already downloaded at utils/test-results-db/test-results.duckdb — query it
           via the playwright-test-results skill. \`bot_name\` encodes the OS.
@@ -148,10 +153,12 @@ jobs:
             npx playwright install
           fi
 
-      - name: Download test-results DB
+      - name: Download and refresh test-results DB
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node utils/test-results-db/cli.ts download
+        run: |
+          node utils/test-results-db/cli.ts download
+          node utils/test-results-db/cli.ts update --lookback-days 3
 
       - name: Install Copilot CLI
         run: npm install -g @github/copilot
