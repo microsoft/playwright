@@ -1,9 +1,3 @@
----
-name: playwright-fix-flakes
-description: Fight CI flakiness and red tests. Survey the test-results DB, pick one high-impact flaky or consistently-failing test, fix the root cause or scope a skip, and open a PR requesting review. Use when asked to reduce flakiness, clear reds, or "fix a flaky test".
-user_invocable: true
----
-
 # Playwright: Fix a Flaky or Red Test
 
 Turn CI test-results data into **one** concrete fix: pick a high-impact flaky-or-red test that is reproducible on your OS,
@@ -12,7 +6,7 @@ single commit that becomes the PR. Fully autonomous — no approval stops.
 
 ## 1. Pick one target
 
-Query the DB via the [playwright-test-results](../playwright-test-results/SKILL.md) skill.
+Query the DB following the patterns in `.claude/skills/playwright-test-results/SKILL.md`.
 Two families:
 
 - **Cross-run flake** — the *final* verdict (after retries) flips between runs.
@@ -36,7 +30,7 @@ Only stop and report if the whole shortlist is covered.
 Read the test and its `error_message`.
 
 Build first (`npm run build`; watch is **not** running — if you touch generated-code files see
-[CLAUDE.md](../../../CLAUDE.md)). Then reproduce, scoped to the failing target.
+`CLAUDE.md`). Then reproduce, scoped to the failing target.
 
 The DB `project_name` **is** the Playwright `--project`; `bot_name` encodes the OS. **Always
 pass a `<file>:<line>` filter** — a bare run launches the whole suite. The browser test scripts
@@ -99,11 +93,11 @@ Suggested-reviewer: dgozman
 
 You **never push or open a PR** in CI or locally. The harness does that for you, after you commit.
 
-- **Exactly one commit** on the current branch ([CLAUDE.md](../../../CLAUDE.md) conventions; no
+- **Exactly one commit** on the current branch (`CLAUDE.md` conventions; no
   co-author / "generated with" trailers; never amend).
 - **The commit message _is_ the PR** — the harness runs `gh pr create --fill`, mapping
-  subject→title and body→description. Write both in the
-  [playwright-bot-voice](../playwright-bot-voice/SKILL.md) (verdict first, short, no slop). The
+  subject→title and body→description. Write both in the Playwright bot voice
+  (`.github/workflows/bot-voice.md`) — verdict first, short, no slop. The
   body must carry: the **DB evidence** (fail %, runs, bots) + any related issue; **what you
   verified locally** and on which OS.
 - **Nothing actionable?** Make no commit — the harness then skips the PR.

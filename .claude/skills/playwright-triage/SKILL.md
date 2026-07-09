@@ -94,7 +94,7 @@ cannot-reproduce / not-a-bug; for a feature request or upstream/env issue: a sho
 the condensed repro and be exhaustive about **what you ran** — the full matrix of browsers,
 versions, and variations you tried, not just the one that worked — so the reader can trust the
 verdict and skip re-checking. Call out any browser-specific divergence. Write it in the
-[playwright-bot-voice](../playwright-bot-voice/SKILL.md) — maintainer voice, not AI-speak.
+Playwright bot voice (`.github/workflows/bot-voice.md`, relative to the repo root) — maintainer voice, not AI-speak.
 
 ## Watch out
 

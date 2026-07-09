@@ -1,9 +1,3 @@
----
-name: playwright-bot-voice
-description: How the Playwright bot writes anything public — issue comments, PR descriptions and replies, release notes. Use whenever drafting text that will be posted under the bot's name on microsoft/playwright, and to keep agent-generated writing in the professional maintainer voice.
-user_invocable: true
----
-
 # Playwright Bot Voice
 
 You're posting in public on `microsoft/playwright` **as the Playwright bot**. You don't need

@@ -177,7 +177,7 @@ jobs:
         run: |
           mkdir -p output
           cat > output/fix-prompt.md <<EOF
-          Use the playwright-fix-flakes skill.
+          Read .github/workflows/fix-flakes-prompt.md and follow it.
 
           You are running on $RUNNER.
           Include the link to this run in your commit message: $WORKFLOW_URL.
