@@ -5000,6 +5000,7 @@ export interface BindingCallEvents {
 export type DebuggerInitializer = {};
 export interface DebuggerEventTarget {
   on(event: 'pausedStateChanged', callback: (params: DebuggerPausedStateChangedEvent) => void): this;
+  on(event: 'apiCallsUpdated', callback: (params: DebuggerApiCallsUpdatedEvent) => void): this;
 }
 export interface DebuggerChannel extends DebuggerEventTarget, Channel {
   _type_Debugger: boolean;
@@ -5007,6 +5008,7 @@ export interface DebuggerChannel extends DebuggerEventTarget, Channel {
   resume(params: DebuggerResumeParams, options: TimeoutOptions): Promise<DebuggerResumeResult>;
   next(params: DebuggerNextParams, options: TimeoutOptions): Promise<DebuggerNextResult>;
   runTo(params: DebuggerRunToParams, options: TimeoutOptions): Promise<DebuggerRunToResult>;
+  enable(params: DebuggerEnableParams, options: TimeoutOptions): Promise<DebuggerEnableResult>;
 }
 export type DebuggerPausedStateChangedEvent = {
   pausedDetails?: {
@@ -5018,6 +5020,21 @@ export type DebuggerPausedStateChangedEvent = {
     title: string,
     stack?: string,
   },
+};
+export type DebuggerApiCallsUpdatedEvent = {
+  apiCalls: {
+    id: string,
+    title: string,
+    location?: {
+      file: string,
+      line?: number,
+      column?: number,
+    },
+    newLogEntries: string[],
+    actionPoint?: Point,
+    status: 'running' | 'success' | 'error',
+    error?: string,
+  }[],
 };
 export type DebuggerRequestPauseParams = {};
 export type DebuggerRequestPauseOptions = {};
@@ -5039,9 +5056,13 @@ export type DebuggerRunToOptions = {
 
 };
 export type DebuggerRunToResult = void;
+export type DebuggerEnableParams = {};
+export type DebuggerEnableOptions = {};
+export type DebuggerEnableResult = void;
 
 export interface DebuggerEvents {
   'pausedStateChanged': DebuggerPausedStateChangedEvent;
+  'apiCallsUpdated': DebuggerApiCallsUpdatedEvent;
 }
 
 // ----------- Dialog -----------

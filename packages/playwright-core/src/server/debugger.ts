@@ -15,27 +15,59 @@
  */
 
 import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { monotonicTime } from '@isomorphic/time';
 import { SdkObject } from './instrumentation';
 import { BrowserContext } from './browserContext';
 
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
 import type { Progress } from './progress';
+import type { Point } from './types';
 
 const symbol = Symbol('Debugger');
+const kApiCallsFlushDelay = 500;
+
+const DebuggerEvent = {
+  PausedStateChanged: 'pausedstatechanged',
+  ApiCallsUpdated: 'apicallsupdated',
+} as const;
 
 type PauseAt = { next?: boolean, location?: { file: string, line?: number, column?: number } };
 
-export class Debugger extends SdkObject implements InstrumentationListener {
+export type ApiCallUpdate = {
+  id: string;
+  title: string;
+  location?: { file: string, line?: number, column?: number };
+  newLogEntries: string[];
+  actionPoint?: Point;
+  status: 'running' | 'success' | 'error';
+  error?: string;
+};
+
+type OngoingCall = {
+  metadata: CallMetadata;
+  actionPoint?: Point;
+  sentLogCount: number;
+  status: 'running' | 'success' | 'error';
+};
+
+type DebuggerEventMap = {
+  [DebuggerEvent.PausedStateChanged]: [];
+  [DebuggerEvent.ApiCallsUpdated]: [apiCalls: ApiCallUpdate[]];
+};
+
+export class Debugger extends SdkObject<DebuggerEventMap> implements InstrumentationListener {
+  static Events = DebuggerEvent;
+
   private _pauseAt: PauseAt = {};
   private _pausedCall: { metadata: CallMetadata, sdkObject: SdkObject, resolve: () => void } | undefined;
   private _enabled = false;
   private _pauseBeforeWaitingActions = false;  // instead of inside input actions
   private _context: BrowserContext;
-
-  static Events = {
-    PausedStateChanged: 'pausedstatechanged'
-  };
+  private _apiCallsEnabled = false;
+  private _ongoingCalls = new Map<string, OngoingCall>();
+  private _apiCallsWithPendingUpdates = new Set<string>();
+  private _apiCallsFlushTimer: NodeJS.Timeout | undefined;
   private _muted = false;
 
   constructor(context: BrowserContext) {
@@ -47,6 +79,8 @@ export class Debugger extends SdkObject implements InstrumentationListener {
     context.instrumentation.addListener(this, context, { order: 'last' });
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
+      if (this._apiCallsFlushTimer)
+        clearTimeout(this._apiCallsFlushTimer);
     });
   }
 
@@ -84,6 +118,12 @@ export class Debugger extends SdkObject implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (!metadata.internal && metadata.method)
+      this._ongoingCalls.set(metadata.id, { metadata, sentLogCount: 0, status: 'running' });
+    if (this._apiCallsEnabled) {
+      this._apiCallsWithPendingUpdates.add(metadata.id);
+      this._flushApiCalls();
+    }
     if (this._muted || metadata.internal)
       return;
     const metainfo = getMetainfo(metadata);
@@ -94,13 +134,82 @@ export class Debugger extends SdkObject implements InstrumentationListener {
       await this._pause(sdkObject, metadata);
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, point?: Point): Promise<void> {
+    const call = this._ongoingCalls.get(metadata.id);
+    if (call) {
+      call.actionPoint = point;
+      if (this._apiCallsEnabled) {
+        this._apiCallsWithPendingUpdates.add(metadata.id);
+        this._flushApiCalls();
+      }
+    }
     if (this._muted || metadata.internal)
       return;
     const metainfo = getMetainfo(metadata);
     const pauseBeforeInput = !!this._pauseAt.next && !!metainfo?.pause && !!metainfo?.isAutoWaiting && !this._pauseBeforeWaitingActions;
     if (pauseBeforeInput)
       await this._pause(sdkObject, metadata);
+  }
+
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    const call = this._ongoingCalls.get(metadata.id);
+    if (!call)
+      return;
+    call.status = metadata.error ? 'error' : 'success';
+    if (this._apiCallsEnabled) {
+      this._apiCallsWithPendingUpdates.add(metadata.id);
+      this._flushApiCalls();
+    }
+    this._ongoingCalls.delete(metadata.id);
+  }
+
+  onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void {
+    if (this._apiCallsEnabled && this._ongoingCalls.has(metadata.id)) {
+      this._apiCallsWithPendingUpdates.add(metadata.id);
+      this._scheduleApiCallsFlush();
+    }
+  }
+
+  enableApiCalls() {
+    if (this._apiCallsEnabled)
+      return;
+    this._apiCallsEnabled = true;
+    this._pauseBeforeWaitingActions = false;
+    for (const id of this._ongoingCalls.keys())
+      this._apiCallsWithPendingUpdates.add(id);
+    this._flushApiCalls();
+  }
+
+  private _scheduleApiCallsFlush() {
+    if (this._apiCallsFlushTimer || !this._apiCallsWithPendingUpdates.size)
+      return;
+    this._apiCallsFlushTimer = setTimeout(() => this._flushApiCalls(), kApiCallsFlushDelay);
+  }
+
+  private _flushApiCalls() {
+    if (this._apiCallsFlushTimer) {
+      clearTimeout(this._apiCallsFlushTimer);
+      this._apiCallsFlushTimer = undefined;
+    }
+    const updates: ApiCallUpdate[] = [];
+    for (const id of this._apiCallsWithPendingUpdates) {
+      const call = this._ongoingCalls.get(id);
+      if (!call)
+        continue;
+      updates.push({
+        id: call.metadata.id,
+        title: renderTitleForCall(call.metadata) ?? '',
+        location: call.metadata.location,
+        newLogEntries: call.metadata.log.slice(call.sentLogCount),
+        actionPoint: call.actionPoint,
+        status: call.metadata.error ? 'error' : call.status,
+        error: call.metadata.error?.error?.message,
+      });
+      call.sentLogCount = call.metadata.log.length;
+    }
+    this._apiCallsWithPendingUpdates.clear();
+    if (updates.length)
+      this.emit(Debugger.Events.ApiCallsUpdated, updates);
   }
 
   private async _pause(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -128,6 +237,8 @@ export class Debugger extends SdkObject implements InstrumentationListener {
   }
 
   setPauseBeforeWaitingActions() {
+    if (this._apiCallsEnabled)
+      return;
     this._pauseBeforeWaitingActions = true;
   }
 

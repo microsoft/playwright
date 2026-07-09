@@ -331,6 +331,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Debugger.resume', { title: 'Resume', group: 'configuration', }],
   ['Debugger.next', { title: 'Step to next call', group: 'configuration', }],
   ['Debugger.runTo', { title: 'Run to location', group: 'configuration', }],
+  ['Debugger.enable', { internal: true, }],
   ['Dialog.accept', { title: 'Accept dialog', }],
   ['Dialog.dismiss', { title: 'Dismiss dialog', }],
   ['Tracing.tracingStart', { title: 'Start tracing', group: 'configuration', }],

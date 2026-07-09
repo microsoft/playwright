@@ -19,6 +19,7 @@ import { Dispatcher } from './dispatcher';
 import { Debugger } from '../debugger';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { ApiCallUpdate } from '../debugger';
 import type * as channels from '../channels';
 import type { Progress } from '../progress';
 
@@ -34,6 +35,9 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
     super(scope, debugger_, 'Debugger', {});
     this.addObjectListener(Debugger.Events.PausedStateChanged, () => {
       this._dispatchEvent('pausedStateChanged', { pausedDetails: this._serializePausedDetails() });
+    });
+    this.addObjectListener(Debugger.Events.ApiCallsUpdated, (apiCalls: ApiCallUpdate[]) => {
+      this._dispatchEvent('apiCallsUpdated', { apiCalls });
     });
     this._dispatchEvent('pausedStateChanged', { pausedDetails: this._serializePausedDetails() });
   }
@@ -67,5 +71,9 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
 
   async runTo(params: channels.DebuggerRunToParams, progress: Progress): Promise<void> {
     this._object.runTo(progress, params.location);
+  }
+
+  async enable(params: channels.DebuggerEnableParams, progress: Progress): Promise<void> {
+    this._object.enableApiCalls();
   }
 }

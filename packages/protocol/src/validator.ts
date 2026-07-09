@@ -2939,6 +2939,21 @@ scheme.DebuggerPausedStateChangedEvent = tObject({
     stack: tOptional(tString),
   })),
 });
+scheme.DebuggerApiCallsUpdatedEvent = tObject({
+  apiCalls: tArray(tObject({
+    id: tString,
+    title: tString,
+    location: tOptional(tObject({
+      file: tString,
+      line: tOptional(tInt),
+      column: tOptional(tInt),
+    })),
+    newLogEntries: tArray(tString),
+    actionPoint: tOptional(tType('Point')),
+    status: tEnum(['running', 'success', 'error']),
+    error: tOptional(tString),
+  })),
+});
 scheme.DebuggerRequestPauseParams = tOptional(tObject({}));
 scheme.DebuggerRequestPauseResult = tOptional(tObject({}));
 scheme.DebuggerResumeParams = tOptional(tObject({}));
@@ -2953,6 +2968,8 @@ scheme.DebuggerRunToParams = tObject({
   }),
 });
 scheme.DebuggerRunToResult = tOptional(tObject({}));
+scheme.DebuggerEnableParams = tOptional(tObject({}));
+scheme.DebuggerEnableResult = tOptional(tObject({}));
 scheme.DialogInitializer = tObject({
   page: tOptional(tChannel(['Page'])),
   type: tString,

@@ -17,11 +17,13 @@
 import React from 'react';
 import './dashboard.css';
 import { ChevronLeftIcon, ChevronRightIcon, LockIcon, LockOpenIcon, ReloadIcon, ScreenshotRegionIcon } from './icons';
-import { clientToViewport, getImageLayout } from './imageLayout';
+import { clientToViewport, getImageLayout, viewportToImageOffset } from './imageLayout';
 import { Recording } from './recording';
 import { AnnotateSidebar, AnnotateOverlay } from './annotateView';
+import { DebuggerPanel } from './debuggerPanel';
 
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { SplitView } from '@web/components/splitView';
 import { useMeasureForRef } from '@web/uiUtils';
 
 import type { DashboardModel } from './dashboardModel';
@@ -66,7 +68,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   const [, setRevision] = React.useState(0);
   React.useEffect(() => model.subscribe(() => setRevision(r => r + 1)), [model]);
 
-  const { tabs, mode, recording, liveFrame, annotateSession, pendingCapture } = model.state;
+  const { tabs, mode, recording, liveFrame, annotateSession, pendingCapture, debuggerPanelOpen, debuggerPaused, apiCalls } = model.state;
   const interactive = mode === 'interactive';
   const annotateActive = !!annotateSession;
   const selectedFrame = annotateSession?.frames.find(f => f.id === annotateSession.selectedFrameId) ?? null;
@@ -234,145 +236,176 @@ export const Dashboard: React.FC<DashboardProps> = ({ model }) => {
   const modeLabel = annotateActive ? 'Dashboard: annotate' : isRecording ? 'Dashboard: record' : 'Dashboard';
 
   const overlayOpen = !!selectedFrame;
+
+  // Marker for the currently-running action's point on the live screencast. Only the
+  // in-flight action is shown, so the point clears once its action completes (e.g. when
+  // stepping to the next action).
+  let actionPointStyle: React.CSSProperties | undefined;
+  if (debuggerPanelOpen && liveFrame?.viewportWidth && liveFrame?.viewportHeight) {
+    const call = [...apiCalls].reverse().find(c => c.actionPoint && c.status === 'running');
+    const layout = call?.actionPoint ? getImageLayout(displayRef.current) : null;
+    if (layout && call?.actionPoint) {
+      const { left, top } = viewportToImageOffset(layout, liveFrame.viewportWidth, liveFrame.viewportHeight, call.actionPoint.x, call.actionPoint.y);
+      actionPointStyle = { left, top };
+    }
+  }
+
   return (
     <main className={'dashboard-view' + (interactive ? ' interactive' : '') + (annotateActive ? ' has-annotate-sidebar' : '')} aria-label={modeLabel}>
-      <div className='dashboard-main'>
-        {/* Toolbar */}
-        <div ref={toolbarRef} className='toolbar' hidden={overlayOpen}>
-          <ToolbarButton
-            ref={interactiveBtnRef}
-            className='mode-toggle mode-interactive'
-            title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
-            toggled={interactive}
-            disabled={!ready}
-            onClick={() => {
-              if (interactive)
-                model.toggleInteractive();
-              else
-                model.enterInteractive();
-            }}
-          >
-            {interactive ? <LockOpenIcon /> : <LockIcon />}
-          </ToolbarButton>
-          <ToolbarButton
-            className='mode-annotate'
-            title={annotateActive ? 'Add screenshot' : 'Take screenshot'}
-            disabled={!ready || pendingCapture}
-            onClick={() => {
-              if (annotateActive)
-                model.addAnnotateFrame();
-              else
-                model.enterAnnotate('user');
-            }}
-          >
-            <ScreenshotRegionIcon />
-          </ToolbarButton>
-          <ToolbarButton
-            className='mode-toggle mode-record'
-            title={isRecording ? 'Stop recording' : 'Record video'}
-            icon='record'
-            toggled={isRecording}
-            disabled={!ready || showRecording}
-            onClick={() => {
-              if (isRecording)
-                model.stopRecording();
-              else
-                model.startRecording();
-            }}
-          >
-            {isRecording && <span className='mode-record-label'>Recording...</span>}
-          </ToolbarButton>
-        </div>
+      <SplitView
+        orientation='horizontal'
+        sidebarSize={340}
+        minSidebarSize={240}
+        settingName='dashboardActionsPanel'
+        sidebarHidden={!debuggerPanelOpen}
+        sidebar={<DebuggerPanel model={model} />}
+        main={<div className='dashboard-main'>
+          {/* Toolbar */}
+          <div ref={toolbarRef} className='toolbar' hidden={overlayOpen}>
+            <ToolbarButton
+              ref={interactiveBtnRef}
+              className='mode-toggle mode-interactive'
+              title={interactive ? 'Disable interactive mode' : 'Enable interactive mode'}
+              toggled={interactive}
+              disabled={!ready}
+              onClick={() => {
+                if (interactive)
+                  model.toggleInteractive();
+                else
+                  model.enterInteractive();
+              }}
+            >
+              {interactive ? <LockOpenIcon /> : <LockIcon />}
+            </ToolbarButton>
+            <ToolbarButton
+              className='mode-annotate'
+              title={annotateActive ? 'Add screenshot' : 'Take screenshot'}
+              disabled={!ready || pendingCapture}
+              onClick={() => {
+                if (annotateActive)
+                  model.addAnnotateFrame();
+                else
+                  model.enterAnnotate('user');
+              }}
+            >
+              <ScreenshotRegionIcon />
+            </ToolbarButton>
+            <ToolbarButton
+              className='mode-toggle mode-record'
+              title={isRecording ? 'Stop recording' : 'Record video'}
+              icon='record'
+              toggled={isRecording}
+              disabled={!ready || showRecording}
+              onClick={() => {
+                if (isRecording)
+                  model.stopRecording();
+                else
+                  model.startRecording();
+              }}
+            >
+              {isRecording && <span className='mode-record-label'>Recording...</span>}
+            </ToolbarButton>
+            <div style={{ flex: 'auto' }}></div>
+            <ToolbarButton
+              className={'mode-toggle mode-debugger' + (!debuggerPanelOpen && debuggerPaused ? ' paused' : '')}
+              title={debuggerPanelOpen ? 'Hide actions panel' : (debuggerPaused ? 'Paused — show actions panel' : 'Show actions panel')}
+              icon='debug-alt'
+              toggled={debuggerPanelOpen}
+              onClick={() => model.toggleDebuggerPanel()}
+            />
+          </div>
 
-        {/* Viewport */}
-        <div className='viewport-wrapper'>
-          <div ref={viewportMainRef} className='viewport-main'>
-            <div className='browser-window' style={windowStyle}>
-              {showBrowserChrome && (
-                <div ref={browserChromeRef} className='browser-chrome'>
-                  <button className='nav-btn' title='Back' aria-disabled={!interactive || undefined} onClick={() => {
-                    if (!interactive) {
-                      flashInteractiveHint();
-                      return;
-                    }
-                    model.back();
-                  }}>
-                    <ChevronLeftIcon />
-                  </button>
-                  <button className='nav-btn' title='Forward' aria-disabled={!interactive || undefined} onClick={() => {
-                    if (!interactive) {
-                      flashInteractiveHint();
-                      return;
-                    }
-                    model.forward();
-                  }}>
-                    <ChevronRightIcon />
-                  </button>
-                  <button className='nav-btn' title='Reload' aria-disabled={!interactive || undefined} onClick={() => {
-                    if (!interactive) {
-                      flashInteractiveHint();
-                      return;
-                    }
-                    model.reload();
-                  }}>
-                    <ReloadIcon />
-                  </button>
-                  <div className='omnibox-wrap'>
-                    <input
-                      id='omnibox'
-                      className='omnibox'
-                      type='text'
-                      placeholder='Search or enter URL'
-                      spellCheck={false}
-                      autoComplete='off'
-                      value={omniboxValue}
-                      onChange={e => setOmniboxValue(e.target.value)}
-                      onKeyDown={e => {
-                        if (!interactive)
-                          return;
-                        onOmniboxKeyDown(e);
-                      }}
-                      onFocus={e => {
-                        if (!interactive) {
-                          flashInteractiveHint();
-                          e.target.blur();
-                          return;
-                        }
-                        e.target.select();
-                      }}
-                      aria-disabled={!interactive || undefined}
-                      aria-label={interactive ? 'Search or enter URL' : 'URL input - enable interactive mode to use this field'}
-                      readOnly={!interactive}
-                    />
+          {/* Viewport */}
+          <div className='viewport-wrapper'>
+            <div ref={viewportMainRef} className='viewport-main'>
+              <div className='browser-window' style={windowStyle}>
+                {showBrowserChrome && (
+                  <div ref={browserChromeRef} className='browser-chrome'>
+                    <button className='nav-btn' title='Back' aria-disabled={!interactive || undefined} onClick={() => {
+                      if (!interactive) {
+                        flashInteractiveHint();
+                        return;
+                      }
+                      model.back();
+                    }}>
+                      <ChevronLeftIcon />
+                    </button>
+                    <button className='nav-btn' title='Forward' aria-disabled={!interactive || undefined} onClick={() => {
+                      if (!interactive) {
+                        flashInteractiveHint();
+                        return;
+                      }
+                      model.forward();
+                    }}>
+                      <ChevronRightIcon />
+                    </button>
+                    <button className='nav-btn' title='Reload' aria-disabled={!interactive || undefined} onClick={() => {
+                      if (!interactive) {
+                        flashInteractiveHint();
+                        return;
+                      }
+                      model.reload();
+                    }}>
+                      <ReloadIcon />
+                    </button>
+                    <div className='omnibox-wrap'>
+                      <input
+                        id='omnibox'
+                        className='omnibox'
+                        type='text'
+                        placeholder='Search or enter URL'
+                        spellCheck={false}
+                        autoComplete='off'
+                        value={omniboxValue}
+                        onChange={e => setOmniboxValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (!interactive)
+                            return;
+                          onOmniboxKeyDown(e);
+                        }}
+                        onFocus={e => {
+                          if (!interactive) {
+                            flashInteractiveHint();
+                            e.target.blur();
+                            return;
+                          }
+                          e.target.select();
+                        }}
+                        aria-disabled={!interactive || undefined}
+                        aria-label={interactive ? 'Search or enter URL' : 'URL input - enable interactive mode to use this field'}
+                        readOnly={!interactive}
+                      />
+                    </div>
                   </div>
+                )}
+                <div
+                  ref={screenRef}
+                  className='screen'
+                  tabIndex={0}
+                  style={{ display: liveFrame ? '' : 'none' }}
+                  onMouseDown={onScreenMouseDown}
+                  onMouseUp={onScreenMouseUp}
+                  onMouseMove={onScreenMouseMove}
+                  onWheel={onScreenWheel}
+                  onKeyDown={onScreenKeyDown}
+                  onKeyUp={onScreenKeyUp}
+                  onContextMenu={e => e.preventDefault()}
+                >
+                  <img
+                    ref={displayRef}
+                    id='display'
+                    className='display'
+                    alt='screencast'
+                    src={liveFrame ? 'data:image/jpeg;base64,' + liveFrame.data : undefined}
+                  />
+                  {actionPointStyle && <div className='debugger-action-point' style={actionPointStyle}></div>}
                 </div>
-              )}
-              <div
-                ref={screenRef}
-                className='screen'
-                tabIndex={0}
-                style={{ display: liveFrame ? '' : 'none' }}
-                onMouseDown={onScreenMouseDown}
-                onMouseUp={onScreenMouseUp}
-                onMouseMove={onScreenMouseMove}
-                onWheel={onScreenWheel}
-                onKeyDown={onScreenKeyDown}
-                onKeyUp={onScreenKeyUp}
-                onContextMenu={e => e.preventDefault()}
-              >
-                <img
-                  ref={displayRef}
-                  id='display'
-                  className='display'
-                  alt='screencast'
-                  src={liveFrame ? 'data:image/jpeg;base64,' + liveFrame.data : undefined}
-                />
+                {overlayText && <div className={'screen-overlay' + (liveFrame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
               </div>
-              {overlayText && <div className={'screen-overlay' + (liveFrame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
             </div>
           </div>
-        </div>
-      </div>
+        </div>}
+      />
       {selectedFrame && (
         <AnnotateOverlay
           key={selectedFrame.id + (annotateSession?.focusAnnotationId ?? '')}

@@ -18,7 +18,7 @@ import { buildAnnotatedImage, saveAnnotationAsDownload } from './annotationImage
 import { buildAnnotationZip } from './annotationZip';
 
 import type { Annotation } from './annotations';
-import type { DashboardChannel, DashboardChannelEvents, MouseButton, SessionStatus, SubmittedAnnotationFrame, Tab } from './dashboardChannel';
+import type { ApiCall, DashboardChannel, DashboardChannelEvents, DebuggerSource, MouseButton, SessionStatus, SubmittedAnnotationFrame, Tab } from './dashboardChannel';
 import type { ClientInfo } from '../../playwright-core/src/tools/cli-client/registry';
 import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
 
@@ -62,6 +62,11 @@ export type DashboardState = {
   pendingCapture: boolean;
   mode: Mode;
   recording: RecordingState | null;
+  // Debugger / actions panel.
+  debuggerPanelOpen: boolean;
+  apiCalls: ApiCall[];
+  debuggerPaused: boolean;
+  debuggerSource: DebuggerSource | null;
 };
 
 type Listener = () => void;
@@ -76,6 +81,10 @@ const initialState: DashboardState = {
   pendingCapture: false,
   mode: 'readonly',
   recording: null,
+  debuggerPanelOpen: false,
+  apiCalls: [],
+  debuggerPaused: false,
+  debuggerSource: null,
 };
 
 export class DashboardModel {
@@ -94,6 +103,9 @@ export class DashboardModel {
     client.on('frame', params => this._emit({ liveFrame: params }));
     client.on('annotate', () => this.enterAnnotate('cli'));
     client.on('cancelAnnotate', () => this.cancelAnnotate(false));
+    client.on('apiCalls', params => this._emit({ apiCalls: params.apiCalls }));
+    client.on('debuggerPaused', params => this._emit({ debuggerPaused: params.paused }));
+    client.on('debuggerSource', params => this._emit({ debuggerSource: params.source }));
   }
 
   subscribe(listener: Listener): () => void {
@@ -266,6 +278,24 @@ export class DashboardModel {
 
   discardRecording() {
     void this._discardRecording();
+  }
+
+  // Debugger / actions panel.
+
+  toggleDebuggerPanel() {
+    this._emit({ debuggerPanelOpen: !this.state.debuggerPanelOpen });
+  }
+
+  debuggerResume() {
+    void this._client.debuggerResume();
+  }
+
+  debuggerPause() {
+    void this._client.debuggerPause();
+  }
+
+  debuggerStep() {
+    void this._client.debuggerStep();
   }
 
   cancelAnnotate(notifyServer = true) {

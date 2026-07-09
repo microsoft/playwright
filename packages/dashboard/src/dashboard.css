@@ -53,6 +53,36 @@
   box-shadow: 0 0 0 2px rgb(var(--recording-red) / 0.35);
 }
 
+.mode-toggle.toolbar-button.toggled.mode-debugger,
+.mode-toggle.toolbar-button.toggled.mode-debugger > .codicon {
+  color: var(--color-accent-fg);
+}
+
+.mode-toggle.toolbar-button.toggled.mode-debugger {
+  background: var(--color-accent-subtle);
+  box-shadow: none;
+}
+
+/* Panel closed while the debugger is paused: draw attention in red. */
+.mode-toggle.mode-debugger.paused,
+.mode-toggle.mode-debugger.paused > .codicon {
+  color: var(--color-fg-on-emphasis);
+}
+
+.mode-toggle.mode-debugger.paused {
+  background: rgb(var(--recording-red));
+  animation: debugger-paused-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes debugger-paused-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgb(var(--recording-red) / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(var(--recording-red) / 0.15);
+  }
+}
+
 .mode-toggle.flash {
   animation: mode-toggle-flash 0.45s ease-in-out 4;
 }
@@ -75,7 +105,7 @@
   height: 40px;
   min-height: 40px;
   background: var(--color-canvas-overlay);
-  padding: 0 8px;
+  padding: 0 12px;
   position: relative;
   z-index: 100;
   border-bottom: 1px solid var(--color-border-muted);

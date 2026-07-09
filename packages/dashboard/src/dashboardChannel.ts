@@ -49,6 +49,27 @@ export type DashboardChannelEvents = {
   frame: { data: string; viewportWidth: number; viewportHeight: number };
   annotate: {};
   cancelAnnotate: {};
+  apiCalls: { apiCalls: ApiCall[] };
+  debuggerPaused: { paused: boolean };
+  debuggerSource: { source: DebuggerSource | null };
+};
+
+export type ApiCall = {
+  id: string;
+  title: string;
+  location?: { file: string; line?: number; column?: number };
+  logs: string[];
+  actionPoint?: { x: number; y: number };
+  status: 'running' | 'success' | 'error';
+  error?: string;
+};
+
+export type DebuggerSource = {
+  file: string;
+  language: 'javascript' | 'python' | 'java' | 'csharp';
+  text: string;
+  highlight: { line: number; type: 'running' | 'paused' | 'error' }[];
+  revealLine?: number;
 };
 
 export type MouseButton = 'left' | 'middle' | 'right';
@@ -76,6 +97,9 @@ export interface DashboardChannel {
   screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string }>;
   submitAnnotation(params: { frames: SubmittedAnnotationFrame[]; feedback: string }): Promise<void>;
   cancelAnnotation(): Promise<void>;
+  debuggerResume(): Promise<void>;
+  debuggerPause(): Promise<void>;
+  debuggerStep(): Promise<void>;
 
   on<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;
   off<K extends keyof DashboardChannelEvents>(event: K, listener: (params: DashboardChannelEvents[K]) => void): void;

@@ -27,9 +27,35 @@ import { SessionProviderEvent } from './sessionProvider';
 
 import type * as api from '../../..';
 import type { Transport } from '@utils/httpServer';
-import type { SubmittedAnnotationFrame, Tab } from '@dashboard/dashboardChannel';
+import type { ApiCall, DebuggerSource, SubmittedAnnotationFrame, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor } from '../../serverRegistry';
 import type { SessionProvider } from './sessionProvider';
+
+// Incremental API-call payload emitted by the (private) Debugger.apiCallsUpdated event.
+type ApiCallDelta = {
+  id: string;
+  title: string;
+  location?: { file: string; line?: number; column?: number };
+  newLogEntries: string[];
+  actionPoint?: { x: number; y: number };
+  status: 'running' | 'success' | 'error';
+  error?: string;
+};
+
+function languageForFile(file: string): DebuggerSource['language'] {
+  if (file.endsWith('.py'))
+    return 'python';
+  if (file.endsWith('.java'))
+    return 'java';
+  if (file.endsWith('.cs'))
+    return 'csharp';
+  return 'javascript';
+}
+
+function wrapInternal<R>(target: api.BrowserContext | api.Page, func: () => Promise<R>): Promise<R> {
+  // eslint-disable-next-line no-restricted-syntax
+  return (target as any)._wrapApiCall(func, { internal: true });
+}
 
 export type AnnotateResult =
   | { type: 'submitted', frames: SubmittedAnnotationFrame[], feedback: string }
@@ -41,6 +67,8 @@ export class DashboardConnection implements Transport {
 
   private _provider: SessionProvider;
   private _attachedPage: AttachedPage | undefined;
+  private _contextDebuggers = new Map<api.BrowserContext, ContextDebugger>();
+  private _activeContextDebugger: ContextDebugger | undefined;
   private _onclose: () => void;
   private _onconnected?: () => void;
   private _pushTabsScheduled = false;
@@ -68,6 +96,13 @@ export class DashboardConnection implements Transport {
       void this._tryRevealPending();
     });
     this._provider.on(SessionProviderEvent.ContextClosed, context => {
+      const contextDebugger = this._contextDebuggers.get(context);
+      if (contextDebugger) {
+        contextDebugger.dispose();
+        this._contextDebuggers.delete(context);
+        if (this._activeContextDebugger === contextDebugger)
+          this._activeContextDebugger = undefined;
+      }
       if (this._attachedPage?.page.context() === context) {
         this._attachedPage.dispose();
         this._attachedPage = undefined;
@@ -82,6 +117,10 @@ export class DashboardConnection implements Transport {
     this._provider.dispose();
     this._attachedPage?.dispose();
     this._attachedPage = undefined;
+    for (const contextDebugger of this._contextDebuggers.values())
+      contextDebugger.dispose();
+    this._contextDebuggers.clear();
+    this._activeContextDebugger = undefined;
     this._pendingReveal = undefined;
     this._resolvePendingAnnotate({ type: 'cancelled' });
     for (const stream of this._streams.values()) {
@@ -120,14 +159,15 @@ export class DashboardConnection implements Transport {
     const context = this._provider.findContext(params);
     if (!context)
       return;
-    const page = await context.newPage();
+    const page = await wrapInternal(context, () => context.newPage());
     await this._switchAttachedTo(page);
     this._pushTabs();
   }
 
   async closeTab(params: { browser: string; context: string; page: string }) {
     const page = this._provider.findPage(params);
-    await page?.close({ reason: 'Closed in Dashboard' });
+    if (page)
+      await wrapInternal(page, () => page.close({ reason: 'Closed in Dashboard' }));
   }
 
   async closeSession(params: { browser: string }) {
@@ -139,6 +179,22 @@ export class DashboardConnection implements Transport {
       return;
     this._visible = params.visible;
     await this._attachedPage?.setScreencastActive(params.visible);
+  }
+
+  async debuggerResume() {
+    await this._activeContextDebugger?.resume();
+  }
+
+  async debuggerPause() {
+    await this._activeContextDebugger?.pause();
+  }
+
+  async debuggerStep() {
+    await this._activeContextDebugger?.step();
+  }
+
+  activeContextDebugger(): ContextDebugger | undefined {
+    return this._activeContextDebugger;
   }
 
   revealSession(sessionName: string, workspaceDir?: string) {
@@ -228,6 +284,18 @@ export class DashboardConnection implements Transport {
     this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
   }
 
+  emitApiCalls(apiCalls: ApiCall[]) {
+    this.sendEvent?.('apiCalls', { apiCalls });
+  }
+
+  emitDebuggerPaused(paused: boolean) {
+    this.sendEvent?.('debuggerPaused', { paused });
+  }
+
+  emitDebuggerSource(source: DebuggerSource | null) {
+    this.sendEvent?.('debuggerSource', { source });
+  }
+
   emitAnnotate({ signal }: { signal: AbortSignal }): Promise<AnnotateResult> {
     return new Promise<AnnotateResult>(resolve => {
       if (signal.aborted) {
@@ -282,8 +350,7 @@ export class DashboardConnection implements Transport {
     queueMicrotask(async () => {
       this._pushTabsScheduled = false;
       try {
-        const tabs = await this._aggregateTabs();
-        this.emitTabs(tabs);
+        this.emitTabs(await this._aggregateTabs());
       } catch {
         // best-effort
       }
@@ -310,7 +377,7 @@ export class DashboardConnection implements Transport {
           browser: browserId(browser),
           context: contextId(context),
           page: pageId(page),
-          title: await page.title().catch(() => ''),
+          title: await wrapInternal(page, () => page.title()).catch(() => ''),
           url: page.url(),
           selected: page === attachedPage,
           faviconUrl: await faviconUrl(page),
@@ -334,8 +401,24 @@ export class DashboardConnection implements Transport {
       attached.dispose();
       throw e;
     }
-    if (this._attachedPage === attached)
+    if (this._attachedPage === attached) {
+      this._setActiveContextDebugger(this._contextDebuggerFor(page.context()));
       this._tryFireAnnotate();
+    }
+  }
+
+  private _contextDebuggerFor(context: api.BrowserContext): ContextDebugger {
+    let contextDebugger = this._contextDebuggers.get(context);
+    if (!contextDebugger) {
+      contextDebugger = new ContextDebugger(this, context);
+      this._contextDebuggers.set(context, contextDebugger);
+    }
+    return contextDebugger;
+  }
+
+  private _setActiveContextDebugger(contextDebugger: ContextDebugger) {
+    this._activeContextDebugger = contextDebugger;
+    contextDebugger.activate();
   }
 
   _handleAttachedPageClose(context: api.BrowserContext) {
@@ -345,6 +428,147 @@ export class DashboardConnection implements Transport {
     if (next)
       void this._switchAttachedTo(next);
     this._pushTabs();
+  }
+}
+
+class ContextDebugger {
+  private _owner: DashboardConnection;
+  private _context: api.BrowserContext;
+  private _listeners: Disposable[] = [];
+  private _apiCalls = new Map<string, ApiCall>();
+  private _source: DebuggerSource | null = null;
+  private _sourceCache = new Map<string, string>();
+  private _lastSourceKey: string | undefined;
+
+  constructor(owner: DashboardConnection, context: api.BrowserContext) {
+    this._owner = owner;
+    this._context = context;
+    this._listeners.push(
+        eventsHelper.addEventListener(this._context.debugger, 'apicallsupdated', (apiCalls: ApiCallDelta[]) => this._onApiCallsUpdated(apiCalls)),
+        eventsHelper.addEventListener(this._context.debugger, 'pausedstatechanged', () => this._onPausedStateChanged()),
+    );
+    // eslint-disable-next-line no-restricted-syntax
+    const dbg = this._context.debugger as any;
+    if (typeof dbg._enable === 'function')
+      void dbg._enable().catch(() => {});
+  }
+
+  dispose() {
+    this._listeners.forEach(d => d.dispose());
+    this._listeners = [];
+  }
+
+  apiCalls(): ApiCall[] {
+    return [...this._apiCalls.values()];
+  }
+
+  paused(): boolean {
+    return this._context.debugger.pausedDetails() !== null;
+  }
+
+  activate() {
+    this._owner.emitApiCalls(this.apiCalls());
+    this._owner.emitDebuggerPaused(this.paused());
+    this._updateSource(true);
+  }
+
+  async resume() {
+    await wrapInternal(this._context, () => this._context.debugger.resume()).catch(() => {});
+  }
+
+  async pause() {
+    await wrapInternal(this._context, () => this._context.debugger.requestPause()).catch(() => {});
+  }
+
+  async step() {
+    await wrapInternal(this._context, () => this._context.debugger.next()).catch(() => {});
+  }
+
+  private _isActive(): boolean {
+    return this._owner.activeContextDebugger() === this;
+  }
+
+  private _onApiCallsUpdated(deltas: ApiCallDelta[]) {
+    for (const delta of deltas) {
+      const existing = this._apiCalls.get(delta.id);
+      this._apiCalls.set(delta.id, {
+        id: delta.id,
+        title: delta.title,
+        location: delta.location,
+        logs: [...(existing?.logs ?? []), ...delta.newLogEntries],
+        actionPoint: delta.actionPoint ?? existing?.actionPoint,
+        status: delta.status,
+        error: delta.error,
+      });
+    }
+    if (!this._isActive())
+      return;
+    this._owner.emitApiCalls(this.apiCalls());
+    this._updateSource();
+  }
+
+  private _onPausedStateChanged() {
+    if (!this._isActive())
+      return;
+    this._owner.emitDebuggerPaused(this.paused());
+    this._updateSource();
+  }
+
+  private _updateSource(force = false) {
+    const paused = this._context.debugger.pausedDetails();
+    let location: { file: string; line?: number } | undefined;
+    let type: DebuggerSource['highlight'][number]['type'] = 'running';
+    let active = false;
+    if (paused?.location) {
+      location = paused.location;
+      type = 'paused';
+      active = true;
+    } else {
+      const calls = [...this._apiCalls.values()].reverse();
+      const running = calls.find(c => c.status === 'running' && c.location?.file);
+      if (running) {
+        location = running.location;
+        type = 'running';
+        active = true;
+      } else {
+        const last = calls.find(c => c.location?.file);
+        location = last?.location;
+        type = last?.status === 'error' ? 'error' : 'running';
+      }
+    }
+
+    const text = location?.file && location.file !== '<unknown>' ? this._readSource(location.file) : undefined;
+    if (location?.file && text !== undefined) {
+      const key = `${location.file}:${location.line}:${type}:${active}`;
+      if (key !== this._lastSourceKey) {
+        this._lastSourceKey = key;
+        const highlight = active && location.line ? [{ line: location.line, type }] : [];
+        this._source = {
+          file: location.file,
+          language: languageForFile(location.file),
+          text,
+          highlight,
+          revealLine: location.line,
+        };
+        this._owner.emitDebuggerSource(this._source);
+        return;
+      }
+    }
+    if (force)
+      this._owner.emitDebuggerSource(this._source);
+  }
+
+  private _readSource(file: string): string | undefined {
+    let text = this._sourceCache.get(file);
+    if (text === undefined) {
+      try {
+        text = fs.readFileSync(file, 'utf-8');
+      } catch {
+        return undefined;
+      }
+      this._sourceCache.set(file, text);
+    }
+    return text;
   }
 }
 
@@ -385,7 +609,7 @@ class AttachedPage {
     this._listeners.forEach(d => d.dispose());
     this._listeners = [];
     if (this._screencastRunning)
-      this._page.screencast.stop().catch(() => {});
+      wrapInternal(this._page, () => this._page.screencast.stop()).catch(() => {});
     this._screencastRunning = false;
     this._recordingPath = null;
   }
@@ -396,52 +620,52 @@ class AttachedPage {
       await this._startScreencast(this._page);
     } else if (!active && this._screencastRunning) {
       this._screencastRunning = false;
-      await this._page.screencast.stop().catch(() => {});
+      await wrapInternal(this._page, () => this._page.screencast.stop()).catch(() => {});
     }
   }
 
   async navigate(params: { url: string }) {
     if (!params.url)
       return;
-    await this._page.goto(params.url);
+    await wrapInternal(this._page, () => this._page.goto(params.url));
   }
 
   async back() {
-    await this._page.goBack();
+    await wrapInternal(this._page, () => this._page.goBack());
   }
 
   async forward() {
-    await this._page.goForward();
+    await wrapInternal(this._page, () => this._page.goForward());
   }
 
   async reload() {
-    await this._page.reload();
+    await wrapInternal(this._page, () => this._page.reload());
   }
 
   async mousemove(params: { x: number; y: number }) {
-    await this._page.mouse.move(params.x, params.y);
+    await wrapInternal(this._page, () => this._page.mouse.move(params.x, params.y));
   }
 
   async mousedown(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
-    await this._page.mouse.move(params.x, params.y);
-    await this._page.mouse.down({ button: params.button || 'left' });
+    await wrapInternal(this._page, () => this._page.mouse.move(params.x, params.y));
+    await wrapInternal(this._page, () => this._page.mouse.down({ button: params.button || 'left' }));
   }
 
   async mouseup(params: { x: number; y: number; button?: 'left' | 'middle' | 'right' }) {
-    await this._page.mouse.move(params.x, params.y);
-    await this._page.mouse.up({ button: params.button || 'left' });
+    await wrapInternal(this._page, () => this._page.mouse.move(params.x, params.y));
+    await wrapInternal(this._page, () => this._page.mouse.up({ button: params.button || 'left' }));
   }
 
   async wheel(params: { deltaX: number; deltaY: number }) {
-    await this._page.mouse.wheel(params.deltaX, params.deltaY);
+    await wrapInternal(this._page, () => this._page.mouse.wheel(params.deltaX, params.deltaY));
   }
 
   async keydown(params: { key: string }) {
-    await this._page.keyboard.down(params.key);
+    await wrapInternal(this._page, () => this._page.keyboard.down(params.key));
   }
 
   async keyup(params: { key: string }) {
-    await this._page.keyboard.up(params.key);
+    await wrapInternal(this._page, () => this._page.keyboard.up(params.key));
   }
 
   async startRecording() {
@@ -465,8 +689,8 @@ class AttachedPage {
   }
 
   async screenshot(): Promise<{ data: string; viewportWidth: number; viewportHeight: number; ariaSnapshot: string }> {
-    const buffer = await this._page.screenshot({ type: 'png' });
-    const ariaSnapshot = await this._page.ariaSnapshot({ boxes: true, mode: 'ai' });
+    const buffer = await wrapInternal(this._page, () => this._page.screenshot({ type: 'png' }));
+    const ariaSnapshot = await wrapInternal(this._page, () => this._page.ariaSnapshot({ boxes: true, mode: 'ai' }));
     const vp = await this._viewportSize();
     return {
       data: buffer.toString('base64'),
@@ -482,11 +706,11 @@ class AttachedPage {
     const vp = this._page.viewportSize();
     if (vp)
       return vp;
-    return await this._page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+    return await wrapInternal(this._page, () => this._page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight })));
   }
 
   private async _startScreencast(page: api.Page) {
-    await page.screencast.start({
+    await wrapInternal(page, () => page.screencast.start({
       onFrame: ({ data, viewportWidth, viewportHeight }) => {
         if (this._disposed)
           return;
@@ -494,11 +718,11 @@ class AttachedPage {
       },
       size: { width: 1280, height: 800 },
       ...(this._recordingPath ? { path: this._recordingPath } : {}),
-    });
+    }));
   }
 
   private async _restartScreencast(page: api.Page) {
-    await page.screencast.stop().catch(() => {});
+    await wrapInternal(page, () => page.screencast.stop()).catch(() => {});
     await this._startScreencast(page);
   }
 }
@@ -519,7 +743,7 @@ function contextId(c: api.BrowserContext): string {
 }
 
 async function faviconUrl(page: api.Page): Promise<string | undefined> {
-  const url = page.evaluate(async () => {
+  const url = wrapInternal(page, () => page.evaluate(async () => {
     const response = await fetch(document.querySelector<HTMLLinkElement>('link[rel~="icon"]')?.href ?? '/favicon.ico');
     if (!response.ok)
       return undefined;
@@ -532,7 +756,7 @@ async function faviconUrl(page: api.Page): Promise<string | undefined> {
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-  }).catch(() => undefined);
+  })).catch(() => undefined);
   const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 3000));
   return await Promise.race([url, timeout]);
 }

@@ -36,6 +36,13 @@ export class Debugger extends ChannelOwner<channels.DebuggerChannel> implements 
       this._pausedDetails = pausedDetails ?? null;
       this.emit(Events.Debugger.PausedStateChanged);
     });
+    this._channel.on('apiCallsUpdated', ({ apiCalls }) => {
+      this.emit(Events.Debugger.ApiCallsUpdated, apiCalls);
+    });
+  }
+
+  async _enable(): Promise<void> {
+    await this._channel.enable({}, undefined);
   }
 
   async requestPause(): Promise<void> {

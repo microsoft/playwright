@@ -456,6 +456,9 @@ Debugger:
             line: int?
             column: int?
 
+    enable:
+      internal: true
+
   events:
 
     pausedStateChanged:
@@ -471,6 +474,33 @@ Debugger:
                 column: int?
             title: string
             stack: string?
+
+    apiCallsUpdated:
+      parameters:
+        apiCalls:
+          type: array
+          items:
+            type: object
+            properties:
+              id: string
+              title: string
+              location:
+                type: object?
+                properties:
+                  file: string
+                  line: int?
+                  column: int?
+              newLogEntries:
+                type: array
+                items: string
+              actionPoint: Point?
+              status:
+                type: enum
+                literals:
+                - running
+                - success
+                - error
+              error: string?
 
 Dialog:
   type: interface

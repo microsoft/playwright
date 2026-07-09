@@ -36,7 +36,8 @@ export const Events = {
   },
 
   Debugger: {
-    PausedStateChanged: 'pausedstatechanged'
+    PausedStateChanged: 'pausedstatechanged',
+    ApiCallsUpdated: 'apicallsupdated',
   },
 
   BrowserContext: {
