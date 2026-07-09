@@ -76,6 +76,7 @@ export class GitHubClient {
     const { ingested, lookbackDays, stopAfterSeen } = options;
     const cutoff = Date.now() - lookbackDays * 24 * 60 * 60 * 1000;
     const out: Artifact[] = [];
+    const queued = new Set<string>();
     let seen = 0;
     for await (const artifact of this._paginateArtifacts('/actions/artifacts?per_page=100')) {
       const createdAt = artifact.created_at ? Date.parse(artifact.created_at) : 0;
@@ -84,12 +85,15 @@ export class GitHubClient {
       if (artifact.expired || !artifact.name.startsWith(prefix))
         continue;
       const id = String(artifact.id);
+      if (queued.has(id))
+        continue;
       if (ingested.has(id)) {
         if (++seen >= stopAfterSeen)
           return out;
         continue;
       }
       seen = 0;
+      queued.add(id);
       out.push({ id, name: artifact.name });
     }
     return out;
