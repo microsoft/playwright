@@ -24,9 +24,7 @@ jobs:
       with:
         node-version: 26
         registry-url: 'https://registry.npmjs.org'
-    # Ensure npm 11.5.1 or later is installed (for OIDC npm publishing)
-    - name: Update npm
-      run: npm install -g npm@latest
+    # node 26 bundles npm >= 11.5.1, which is required for OIDC npm publishing.
     - run: npm ci
     - run: npm run build
 
