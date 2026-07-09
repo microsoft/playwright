@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: lts/*
       - run: node utils/build/update-playwright-node.mjs
       - name: Prepare branch
         id: prepare-branch
