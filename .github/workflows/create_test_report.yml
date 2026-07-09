@@ -4,6 +4,9 @@ on:
     workflows: ["tests 1", "tests 2", "tests others", "MCP"]
     types:
       - completed
+
+permissions: {}
+
 jobs:
   merge-reports:
     permissions:
@@ -67,7 +70,6 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         HEAD_REF: ${{ github.event.workflow_run.head_repository.full_name == github.repository && github.event.workflow_run.head_branch || format('{0}:{1}', github.event.workflow_run.head_repository.owner.login, github.event.workflow_run.head_branch) }}
       run: |
-        set -f
         NUMBER=$(gh pr view --repo "${{ github.repository }}" "$HEAD_REF" --json number --jq '.number' 2>/dev/null || true)
         echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
 
@@ -143,7 +145,7 @@ jobs:
         run: |
           mkdir -p output
           PROMPT=$(cat <<EOF
-          Come up with a verdict on the CI test failures on pull request #$PR_NUMBER of ${{ github.repository }}: are they likely caused by this PR? Follow the playwright-devops pr-ci-triage guide (.claude/skills/playwright-devops/pr-ci-triage.md) for the analysis.
+          Come up with a verdict on the CI test failures on pull request #$PR_NUMBER of ${{ github.repository }}: are they likely caused by this PR? Follow the pr-ci-triage guide (.github/workflows/pr-ci-triage.md) for the analysis.
 
           Write your verdict to output/triage.md as a PR comment, in the format the guide specifies and the playwright-bot-voice register (.claude/skills/playwright-bot-voice/SKILL.md).
 

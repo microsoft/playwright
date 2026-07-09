@@ -33,7 +33,7 @@ Example (a red verdict — one real failure plus flakes):
 ```markdown
 ## 🔴 One failure looks caused by this PR
 
-`page-request-gc.spec.ts:36` fails on Firefox because the fix here is Chromium-only. The other three failures are pre-existing flakes this PR doesn't touch.
+`page-request-gc.spec.ts:36` fails on Firefox because the fix here is Chromium-only.
 
 <details>
 <summary>Details</summary>
