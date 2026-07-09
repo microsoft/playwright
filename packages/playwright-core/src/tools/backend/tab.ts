@@ -406,13 +406,18 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
+  async captureSnapshot(root: playwright.Locator | undefined, depth: number | undefined, boxes: boolean | undefined, relativeTo: string | undefined, includeAria: boolean): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const ariaSnapshot = root
-        ? await root.ariaSnapshot({ mode: 'ai', depth, boxes })
-        : await this.page.ariaSnapshot({ mode: 'ai', depth, boxes });
+      // Serializing the ARIA snapshot is expensive, so skip it when the caller
+      // does not need it (e.g. snapshot mode 'none'). All other response state
+      // (modal states, console link, events) is still collected below.
+      const ariaSnapshot = !includeAria
+        ? ''
+        : root
+          ? await root.ariaSnapshot({ mode: 'ai', depth, boxes })
+          : await this.page.ariaSnapshot({ mode: 'ai', depth, boxes });
       tabSnapshot = {
         ariaSnapshot,
         modalStates: [],

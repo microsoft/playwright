@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { test, expect } from './fixtures';
+import { test, expect, parseResponse } from './fixtures';
 
 test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
   server.setContent('/', `<button>Button 1</button>`, 'text/html');
@@ -94,6 +94,40 @@ test('should not inline console messages with --snapshot-mode=none', async ({ st
   expect(response).not.toHaveResponse({
     events: expect.stringContaining('error message'),
   });
+});
+
+test('should still emit download events with --snapshot-mode=none', async ({ startClient, server }, testInfo) => {
+  server.setContent('/', `<a href="/download" download="test.txt">Download</a>`, 'text/html');
+  server.setContent('/download', 'Data', 'text/plain');
+
+  const { client } = await startClient({
+    args: ['--snapshot-mode=none'],
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+
+  const navigate = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+  // ARIA snapshot is skipped, but other state (page header) is still present.
+  expect(navigate).toHaveResponse({ page: `- Page URL: ${server.PREFIX}/` });
+  expect(navigate).not.toHaveResponse({ snapshot: expect.anything() });
+
+  // No ARIA refs exist in 'none' mode, so target by selector instead.
+  const click = await client.callTool({
+    name: 'browser_click',
+    arguments: { element: 'Download link', target: 'a' },
+  });
+
+  // The download finishes asynchronously; accumulate events across polls.
+  let events = parseResponse(click).events ?? '';
+  await expect.poll(async () => {
+    const r = await client.callTool({ name: 'browser_evaluate', arguments: { function: '() => 1' } });
+    const p = parseResponse(r);
+    if (p.events)
+      events += '\n' + p.events;
+    return events;
+  }).toContain(`- Downloaded file test.txt to`);
 });
 
 test('should respect snapshot[filename]', async ({ client, server }, testInfo) => {
