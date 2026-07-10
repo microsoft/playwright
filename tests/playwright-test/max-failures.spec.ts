@@ -250,6 +250,7 @@ test('max-failures should still run project teardown', async ({ runInlineTest })
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
+  expect(result.interrupted).toBe(0);
   expect(result.outputLines).toContain('SETUP-RAN');
   expect(result.outputLines).toContain('TEARDOWN-RAN');
 });

@@ -322,7 +322,7 @@ class JobDispatcher {
   }
 
   private _onTestEnd(params: ipc.TestEndPayload) {
-    if (this._testRun.hasReachedMaxFailures()) {
+    if (!this._ignoreMaxFailures && this._testRun.hasReachedMaxFailures()) {
       // Do not show more than one error to avoid confusion, but report
       // as interrupted to indicate that we did actually start the test.
       params.status = 'interrupted';
