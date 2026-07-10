@@ -139,16 +139,24 @@ export class ElectronApplication extends SdkObject {
   }
 
   private _onPage(page: Page) {
+    if (process.env.PLAYWRIGHT_ELECTRON_LEGACY_PAGE_CLOSE)
+      return;
     // Target.closeTarget can hang on Electron when the close races a committing
-    // navigation. Close from the main process instead; webContents.close() does
-    // not run beforeunload, matching page.close() semantics.
+    // navigation. Close from the main process instead. We close the webContents
+    // rather than the BrowserWindow because BrowserWindow.close() runs the
+    // beforeunload handler (and can hang on it), while page.close() should not.
     page.setCustomCloseHandler(async () => {
       const electronHandle = await this._nodeElectronHandlePromise;
-      await electronHandle.evaluate(({ webContents }, targetId) => {
+      const closed = await electronHandle.evaluate(({ webContents }, targetId) => {
         const wc = webContents.fromDevToolsTargetId(targetId);
-        if (wc && !wc.isDestroyed())
-          wc.close();
-      }, (page.delegate as CRPage)._targetId).catch(() => {});
+        if (!wc || wc.isDestroyed())
+          return false;
+        wc.close();
+        return true;
+      }, (page.delegate as CRPage)._targetId).catch(() => false);
+      // Fall back to the default close if the webContents could not be found.
+      if (!closed)
+        await page.delegate.closePage(false);
     });
   }
 
