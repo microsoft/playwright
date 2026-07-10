@@ -52,8 +52,7 @@ test('should click', async ({ context, browserName, platform, channel }) => {
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).click();
 
-  const clickActions = log.action('click');
-  expect(clickActions).toEqual([
+  await expect.poll(() => log.action('click')).toEqual([
     expect.objectContaining({
       action: expect.objectContaining({
         name: 'click',
@@ -62,11 +61,10 @@ test('should click', async ({ context, browserName, platform, channel }) => {
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
         ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || (platform === 'win32' && channel !== 'webkit-wsl'))) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
-  expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click();`);
+  expect(normalizeCode(log.action('click')[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click();`);
 });
 
 test('should double click', async ({ context, browserName, platform, channel }) => {
@@ -75,8 +73,7 @@ test('should double click', async ({ context, browserName, platform, channel }) 
   await page.setContent(`<button onclick="console.log('click')" ondblclick="console.log('dblclick')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).dblclick();
 
-  const clickActions = log.action('click');
-  expect(clickActions).toEqual([
+  await expect.poll(() => log.action('click')).toEqual([
     expect.objectContaining({
       action: expect.objectContaining({
         name: 'click',
@@ -86,11 +83,10 @@ test('should double click', async ({ context, browserName, platform, channel }) 
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
         ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || (platform === 'win32' && channel !== 'webkit-wsl'))) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
-  expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).dblclick();`);
+  expect(normalizeCode(log.action('click')[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).dblclick();`);
 });
 
 test('should right click', async ({ context, browserName, platform, channel }) => {
@@ -99,8 +95,7 @@ test('should right click', async ({ context, browserName, platform, channel }) =
   await page.setContent(`<button oncontextmenu="console.log('contextmenu')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).click({ button: 'right' });
 
-  const clickActions = log.action('click');
-  expect(clickActions).toEqual([
+  await expect.poll(() => log.action('click')).toEqual([
     expect.objectContaining({
       action: expect.objectContaining({
         name: 'click',
@@ -110,11 +105,10 @@ test('should right click', async ({ context, browserName, platform, channel }) =
         // Safari does not focus after a click: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/button#clicking_and_focus
         ariaSnapshot: (browserName === 'webkit' && (platform === 'darwin' || (platform === 'win32' && channel !== 'webkit-wsl'))) ? '- button "Submit" [ref=e2]' : '- button "Submit" [active] [ref=e2]',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
-  expect(normalizeCode(clickActions[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click({ button: 'right' });`);
+  expect(normalizeCode(log.action('click')[0].code)).toEqual(`await page.getByRole('button', { name: 'Submit' }).click({ button: 'right' });`);
 });
 
 test('should type', async ({ context }) => {
@@ -124,8 +118,7 @@ test('should type', async ({ context }) => {
 
   await page.getByRole('textbox').pressSequentially('Hello');
 
-  const fillActions = log.action('fill');
-  expect(fillActions).toEqual([
+  await expect.poll(() => log.action('fill')).toEqual([
     expect.objectContaining({
       action: expect.objectContaining({
         name: 'fill',
@@ -133,11 +126,10 @@ test('should type', async ({ context }) => {
         ref: 'e2',
         ariaSnapshot: '- textbox [active] [ref=e2]: Hello',
       }),
-      startTime: expect.any(Number),
     })
   ]);
 
-  expect(normalizeCode(fillActions[0].code)).toEqual(`await page.getByRole('textbox').fill('Hello');`);
+  expect(normalizeCode(log.action('fill')[0].code)).toEqual(`await page.getByRole('textbox').fill('Hello');`);
 });
 
 test('should disable recorder', async ({ context }) => {
@@ -146,9 +138,11 @@ test('should disable recorder', async ({ context }) => {
   await page.setContent(`<button onclick="console.log('click')">Submit</button>`);
   await page.getByRole('button', { name: 'Submit' }).click();
   await page.getByRole('button', { name: 'Submit' }).click();
-  expect(log.action('click')).toHaveLength(2);
+  await expect.poll(() => log.action('click').length).toBe(2);
   await (context as any)._disableRecorder();
   await page.getByRole('button', { name: 'Submit' }).click();
+  // Make sure no extra action is recorded.
+  await page.waitForTimeout(2000);
   expect(log.action('click')).toHaveLength(2);
 });
 

@@ -22,7 +22,6 @@ import { stringifySelector } from '@isomorphic/selectorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { isUnderTest } from '@utils/debug';
 import { eventsHelper } from '@utils/eventsHelper';
-import { monotonicTime } from '@isomorphic/time';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
 import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
@@ -501,7 +500,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
           name: 'closePage',
           signals: [],
         },
-        startTime: monotonicTime()
       });
       this._filePrimaryURLChanged();
     });
@@ -523,7 +521,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
           url: page.mainFrame().url(),
           signals: [],
         },
-        startTime: monotonicTime()
       });
     }
     this._filePrimaryURLChanged();
@@ -551,7 +548,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     const actionInContext: actions.ActionInContext = {
       pageGuid: frame._page.guid,
       action,
-      startTime: monotonicTime(),
     };
     return actionInContext;
   }
@@ -562,12 +558,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this._signalProcessor.signal(frame, { name: 'expect', selector: buildFullSelector(framePath, preconditionSelector) });
     const actionInContext = this._appendContextToAction(frame, action, framePath);
     this._signalProcessor.addAction(actionInContext);
-    try {
-      if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
-        await performAction(progress, frame._page.mainFrame(), actionInContext);
-    } finally {
-      actionInContext.endTime = monotonicTime();
-    }
+    if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
+      await performAction(progress, frame._page.mainFrame(), actionInContext);
   }
 
   private async _recordAction(progress: Progress, frame: Frame, action: actions.Action) {

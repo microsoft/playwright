@@ -225,8 +225,7 @@ test('should record expect signal', async ({ backend, connectedBrowser }) => {
   `);
 
   await page.getByRole('button', { name: 'Show' }).click();
-  // A click stalls for 200ms to detect a double click, and the next click cancels a pending one.
-  await expect.poll(() => events[events.length - 1]?.actions.length).toBe(2);
+  await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();
   await page.getByRole('button', { name: 'Other' }).click();
 
   // The signal is attached to the "Show" click, so the assertion renders right after it.

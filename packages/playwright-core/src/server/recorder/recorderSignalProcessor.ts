@@ -29,6 +29,7 @@ export interface ProcessorDelegate {
 export class RecorderSignalProcessor {
   private _delegate: ProcessorDelegate;
   private _lastAction: actions.ActionInContext | null = null;
+  private _lastActionTimestamp = 0;
 
   constructor(actionSink: ProcessorDelegate) {
     this._delegate = actionSink;
@@ -36,11 +37,11 @@ export class RecorderSignalProcessor {
 
   addAction(actionInContext: actions.ActionInContext) {
     this._lastAction = actionInContext;
+    this._lastActionTimestamp = monotonicTime();
     this._delegate.addAction(actionInContext);
   }
 
   signal(frame: Frame, signal: Signal) {
-    const timestamp = monotonicTime();
     if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
       const lastAction = this._lastAction;
       const signalThreshold = isUnderTest() ? 500 : 5000;
@@ -50,7 +51,7 @@ export class RecorderSignalProcessor {
         generateGoto = true;
       else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press' && lastAction.action.name !== 'fill')
         generateGoto = true;
-      else if (timestamp - lastAction.startTime > signalThreshold)
+      else if (monotonicTime() - this._lastActionTimestamp > signalThreshold)
         generateGoto = true;
 
       if (generateGoto) {
@@ -61,8 +62,6 @@ export class RecorderSignalProcessor {
             url: frame.url(),
             signals: [],
           },
-          startTime: timestamp,
-          endTime: timestamp,
         });
       }
       return;
@@ -71,7 +70,6 @@ export class RecorderSignalProcessor {
     this._delegate.addSignal({
       pageGuid: frame._page.guid,
       signal,
-      timestamp,
     });
   }
 }

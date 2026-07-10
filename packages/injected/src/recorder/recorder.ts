@@ -262,6 +262,14 @@ class RecordActionTool implements RecorderTool {
       return;
     }
 
+    if (event.detail === 1) {
+      // A new click starts here, so the stalled one is not a double click after all.
+      this._commitPendingClickAction();
+    } else {
+      // This click continues a multi-click, which is reported by 'dblclick' instead.
+      this._cancelPendingClickAction();
+    }
+
     const checkbox = asCheckbox(this._recorder.deepEventTarget(event));
     if (checkbox && event.detail === 1) {
       // Interestingly, inputElement.checked is reversed inside this event handler.
@@ -272,8 +280,6 @@ class RecordActionTool implements RecorderTool {
       });
       return;
     }
-
-    this._cancelPendingClickAction();
 
     // Stall click in case we are observing double-click.
     if (event.detail === 1) {
@@ -741,6 +747,7 @@ class RecordActionTool implements RecorderTool {
 
 class JsonRecordActionTool implements RecorderTool {
   private _recorder: Recorder;
+  private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
@@ -752,6 +759,7 @@ class JsonRecordActionTool implements RecorderTool {
   }
 
   uninstall() {
+    this._cancelPendingClickAction();
     this._recorder.highlight.install();
   }
 
@@ -767,6 +775,14 @@ class JsonRecordActionTool implements RecorderTool {
     if (this._shouldIgnoreMouseEvent(event))
       return;
 
+    if (event.detail === 1) {
+      // A new click starts here, so the stalled one is not a double click after all.
+      this._commitPendingClickAction();
+    } else {
+      // This click continues a multi-click, which is reported by 'dblclick' instead.
+      this._cancelPendingClickAction();
+    }
+
     const checkbox = asCheckbox(element);
     const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     if (checkbox && event.detail === 1) {
@@ -781,6 +797,35 @@ class JsonRecordActionTool implements RecorderTool {
       return;
     }
 
+    // Stall click in case we are observing double-click.
+    if (event.detail === 1) {
+      this._pendingClickAction = {
+        action: {
+          name: 'click',
+          selector,
+          ref,
+          ariaSnapshot,
+          position: positionForEvent(event),
+          signals: [],
+          button: buttonForEvent(event),
+          modifiers: modifiersForEvent(event),
+          clickCount: event.detail,
+        },
+        timeout: this._recorder.injectedScript.utils.builtins.setTimeout(() => this._commitPendingClickAction(), 200)
+      };
+    }
+  }
+
+  onDblClick(event: MouseEvent) {
+    const element = this._recorder.deepEventTarget(event);
+    if (isRangeInput(element))
+      return;
+    if (this._shouldIgnoreMouseEvent(event))
+      return;
+
+    this._cancelPendingClickAction();
+
+    const { ariaSnapshot, selector, ref } = this._ariaSnapshot(element);
     void this._recorder.recordAction({
       name: 'click',
       selector,
@@ -792,6 +837,18 @@ class JsonRecordActionTool implements RecorderTool {
       modifiers: modifiersForEvent(event),
       clickCount: event.detail,
     });
+  }
+
+  private _commitPendingClickAction() {
+    if (this._pendingClickAction)
+      void this._recorder.recordAction(this._pendingClickAction.action);
+    this._cancelPendingClickAction();
+  }
+
+  private _cancelPendingClickAction() {
+    if (this._pendingClickAction)
+      this._recorder.injectedScript.utils.builtins.clearTimeout(this._pendingClickAction.timeout);
+    this._pendingClickAction = undefined;
   }
 
   onContextMenu(event: MouseEvent): void {

@@ -166,12 +166,9 @@ export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSig
 export type ActionInContext = {
   pageGuid: string;
   action: Action;
-  startTime: number;
-  endTime?: number;
 };
 
 export type SignalInContext = {
   pageGuid: string;
   signal: Signal;
-  timestamp: number;
 };

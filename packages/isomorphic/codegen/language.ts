@@ -31,8 +31,6 @@ export function generateCode(actions: actions.ActionInContext[], languageGenerat
 export function expectSignalAction(actionInContext: actions.ActionInContext, signal: actions.ExpectSignal): actions.ActionInContext {
   return {
     pageGuid: actionInContext.pageGuid,
-    startTime: actionInContext.startTime,
-    endTime: actionInContext.startTime,
     action: {
       name: 'assertVisible',
       selector: signal.selector,

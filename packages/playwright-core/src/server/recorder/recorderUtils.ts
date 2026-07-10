@@ -62,10 +62,6 @@ function isSameSelector(action: actions.ActionInContext, lastAction: actions.Act
   return 'selector' in action.action && 'selector' in lastAction.action && action.action.selector === lastAction.action.selector;
 }
 
-function isShortlyAfter(action: actions.ActionInContext, lastAction: actions.ActionInContext): boolean {
-  return action.startTime - lastAction.startTime < 500;
-}
-
 export function shouldMergeAction(action: actions.ActionInContext, lastAction: actions.ActionInContext | undefined): boolean {
   if (!lastAction)
     return false;
@@ -74,8 +70,6 @@ export function shouldMergeAction(action: actions.ActionInContext, lastAction: a
       return isSameAction(action, lastAction) && isSameSelector(action, lastAction);
     case 'navigate':
       return isSameAction(action, lastAction);
-    case 'click':
-      return isSameAction(action, lastAction) && isSameSelector(action, lastAction) && isShortlyAfter(action, lastAction) && action.action.clickCount > (lastAction.action as actions.ClickAction).clickCount;
   }
   return false;
 }
@@ -84,14 +78,10 @@ export function collapseActions(actions: actions.ActionInContext[]): actions.Act
   const result: actions.ActionInContext[] = [];
   for (const action of actions) {
     const lastAction = result[result.length - 1];
-    const shouldMerge = shouldMergeAction(action, lastAction);
-    if (!shouldMerge) {
+    if (shouldMergeAction(action, lastAction))
+      result[result.length - 1] = action;
+    else
       result.push(action);
-      continue;
-    }
-    const startTime = result[result.length - 1].startTime;
-    result[result.length - 1] = action;
-    result[result.length - 1].startTime = startTime;
   }
   return result;
 }
