@@ -107,19 +107,19 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return this._page!;
   }
 
-  _timeout(options?: TimeoutOptions): number {
+  _timeout(options?: TimeoutOptions): channels.CommandOptions {
     const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings();
-    return timeoutSettings.timeout(options || {});
+    return { signal: options?.signal, timeout: timeoutSettings.timeout(options || {}) };
   }
 
-  _navigationTimeout(options?: TimeoutOptions): number {
+  _navigationTimeout(options?: TimeoutOptions): channels.CommandOptions {
     const timeoutSettings = this._page?._timeoutSettings || new TimeoutSettings();
-    return timeoutSettings.navigationTimeout(options || {});
+    return { signal: options?.signal, timeout: timeoutSettings.navigationTimeout(options || {}) };
   }
 
   async goto(url: string, options: channels.FrameGotoOptions & TimeoutOptions = {}): Promise<network.Response | null> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil }, { signal: options.signal, timeout: this._navigationTimeout(options) })).response);
+    return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil }, this._navigationTimeout(options))).response);
   }
 
   private _setupNavigationWaiter(options: TimeoutOptions): Waiter {
@@ -199,29 +199,29 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async frameElement(): Promise<ElementHandle> {
-    return ElementHandle.from((await this._channel.frameElement({}, undefined)).element);
+    return ElementHandle.from((await this._channel.frameElement({}, { signal: undefined, timeout: 0 })).element);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
     return parseResult(result.value);
   }
 
   async _evaluateExposeUtilityScript<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
     return parseResult(result.value);
   }
 
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    const result = await this._channel.querySelector({ selector, ...options }, undefined);
+    const result = await this._channel.querySelector({ selector, ...options }, { signal: undefined, timeout: 0 });
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 
@@ -232,42 +232,42 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       throw new Error('options.visibility is not supported, did you mean options.state?');
     if ((options as any).waitFor && (options as any).waitFor !== 'visible')
       throw new Error('options.waitFor is not supported, did you mean options.state?');
-    const result = await this._channel.waitForSelector({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    const result = await this._channel.waitForSelector({ selector, ...options }, this._timeout(options));
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: any, options: channels.FrameDispatchEventOptions & TimeoutOptions = {}): Promise<void> {
-    await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options }, this._timeout(options));
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
+    const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
     return parseResult(result.value);
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, undefined);
+    const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }, { signal: undefined, timeout: 0 });
     return parseResult(result.value);
   }
 
   async $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> {
-    const result = await this._channel.querySelectorAll({ selector }, undefined);
+    const result = await this._channel.querySelectorAll({ selector }, { signal: undefined, timeout: 0 });
     return result.elements.map(e => ElementHandle.from(e) as ElementHandle<SVGElement | HTMLElement>);
   }
 
   async _queryCount(selector: string): Promise<number> {
-    return (await this._channel.queryCount({ selector }, undefined)).value;
+    return (await this._channel.queryCount({ selector }, { signal: undefined, timeout: 0 })).value;
   }
 
   async content(): Promise<string> {
-    return (await this._channel.content({}, undefined)).value;
+    return (await this._channel.content({}, { signal: undefined, timeout: 0 })).value;
   }
 
   async setContent(html: string, options: channels.FrameSetContentOptions & TimeoutOptions = {}): Promise<void> {
     const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-    await this._channel.setContent({ html, ...options, waitUntil }, { signal: options.signal, timeout: this._navigationTimeout(options) });
+    await this._channel.setContent({ html, ...options, waitUntil }, this._navigationTimeout(options));
   }
 
   name(): string {
@@ -296,7 +296,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       copy.content = (await fs.promises.readFile(copy.path)).toString();
       copy.content = addSourceUrlToScript(copy.content, copy.path);
     }
-    return ElementHandle.from((await this._channel.addScriptTag({ ...copy }, undefined)).element);
+    return ElementHandle.from((await this._channel.addScriptTag({ ...copy }, { signal: undefined, timeout: 0 })).element);
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; } = {}): Promise<ElementHandle> {
@@ -305,19 +305,19 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       copy.content = (await fs.promises.readFile(copy.path)).toString();
       copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';
     }
-    return ElementHandle.from((await this._channel.addStyleTag({ ...copy }, undefined)).element);
+    return ElementHandle.from((await this._channel.addStyleTag({ ...copy }, { signal: undefined, timeout: 0 })).element);
   }
 
   async click(selector: string, options: channels.FrameClickOptions & TimeoutOptions = {}) {
-    return await this._channel.click({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    return await this._channel.click({ selector, ...options }, this._timeout(options));
   }
 
   async dblclick(selector: string, options: channels.FrameDblclickOptions & TimeoutOptions = {}) {
-    return await this._channel.dblclick({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    return await this._channel.dblclick({ selector, ...options }, this._timeout(options));
   }
 
   async dragAndDrop(source: string, target: string, options: channels.FrameDragAndDropOptions & TimeoutOptions = {}) {
-    return await this._channel.dragAndDrop({ source, target, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    return await this._channel.dragAndDrop({ source, target, ...options }, this._timeout(options));
   }
 
   async _drop(selector: string, payload: DropPayload, options: Omit<channels.FrameDropOptions, 'payloads' | 'localPaths' | 'streams' | 'data'> & TimeoutOptions = {}) {
@@ -334,23 +334,23 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       ...fileParams,
       data: dataArray,
       ...options,
-    }, { signal: options.signal, timeout: this._timeout(options) });
+    }, this._timeout(options));
   }
 
   async tap(selector: string, options: channels.FrameTapOptions & TimeoutOptions = {}) {
-    return await this._channel.tap({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    return await this._channel.tap({ selector, ...options }, this._timeout(options));
   }
 
   async fill(selector: string, value: string, options: channels.FrameFillOptions & TimeoutOptions = {}) {
-    return await this._channel.fill({ selector, value, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    return await this._channel.fill({ selector, value, ...options }, this._timeout(options));
   }
 
   async _highlight(selector: string, style?: string) {
-    return await this._channel.highlight({ selector, style }, undefined);
+    return await this._channel.highlight({ selector, style }, { signal: undefined, timeout: 0 });
   }
 
   async _hideHighlight(selector: string) {
-    return await this._channel.hideHighlight({ selector }, undefined);
+    return await this._channel.hideHighlight({ selector }, { signal: undefined, timeout: 0 });
   }
 
   locator(selector: string, options?: LocatorOptions): Locator {
@@ -390,82 +390,82 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async focus(selector: string, options: channels.FrameFocusOptions & TimeoutOptions = {}) {
-    await this._channel.focus({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.focus({ selector, ...options }, this._timeout(options));
   }
 
   async textContent(selector: string, options: channels.FrameTextContentOptions & TimeoutOptions = {}): Promise<null|string> {
-    const value = (await this._channel.textContent({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    const value = (await this._channel.textContent({ selector, ...options }, this._timeout(options))).value;
     return value === undefined ? null : value;
   }
 
   async innerText(selector: string, options: channels.FrameInnerTextOptions & TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.innerText({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    return (await this._channel.innerText({ selector, ...options }, this._timeout(options))).value;
   }
 
   async innerHTML(selector: string, options: channels.FrameInnerHTMLOptions & TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.innerHTML({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    return (await this._channel.innerHTML({ selector, ...options }, this._timeout(options))).value;
   }
 
   async getAttribute(selector: string, name: string, options: channels.FrameGetAttributeOptions & TimeoutOptions = {}): Promise<string | null> {
-    const value = (await this._channel.getAttribute({ selector, name, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    const value = (await this._channel.getAttribute({ selector, name, ...options }, this._timeout(options))).value;
     return value === undefined ? null : value;
   }
 
   async inputValue(selector: string, options: channels.FrameInputValueOptions & TimeoutOptions = {}): Promise<string> {
-    return (await this._channel.inputValue({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    return (await this._channel.inputValue({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isChecked(selector: string, options: channels.FrameIsCheckedOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isChecked({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    return (await this._channel.isChecked({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isDisabled(selector: string, options: channels.FrameIsDisabledOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isDisabled({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    return (await this._channel.isDisabled({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isEditable(selector: string, options: channels.FrameIsEditableOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isEditable({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    return (await this._channel.isEditable({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isEnabled(selector: string, options: channels.FrameIsEnabledOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isEnabled({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) })).value;
+    return (await this._channel.isEnabled({ selector, ...options }, this._timeout(options))).value;
   }
 
   async isHidden(selector: string, options: channels.FrameIsHiddenOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isHidden({ selector, ...options }, { signal: options.signal })).value;
+    return (await this._channel.isHidden({ selector, ...options }, { signal: options.signal, timeout: 0 })).value;
   }
 
   async isVisible(selector: string, options: channels.FrameIsVisibleOptions & TimeoutOptions = {}): Promise<boolean> {
-    return (await this._channel.isVisible({ selector, ...options }, { signal: options.signal })).value;
+    return (await this._channel.isVisible({ selector, ...options }, { signal: options.signal, timeout: 0 })).value;
   }
 
   async hover(selector: string, options: channels.FrameHoverOptions & TimeoutOptions = {}) {
-    await this._channel.hover({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.hover({ selector, ...options }, this._timeout(options));
   }
 
   async selectOption(selector: string, values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions & StrictOptions = {}): Promise<string[]> {
-    return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options }, { signal: options.signal, timeout: this._timeout(options) })).values;
+    return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options }, this._timeout(options))).values;
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions & TimeoutOptions = {}): Promise<void> {
     const converted = await convertInputFiles(files, this.page().context());
-    await this._channel.setInputFiles({ selector, ...converted, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.setInputFiles({ selector, ...converted, ...options }, this._timeout(options));
   }
 
   async type(selector: string, text: string, options: channels.FrameTypeOptions & TimeoutOptions = {}) {
-    await this._channel.type({ selector, text, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.type({ selector, text, ...options }, this._timeout(options));
   }
 
   async press(selector: string, key: string, options: channels.FramePressOptions & TimeoutOptions = {}) {
-    await this._channel.press({ selector, key, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.press({ selector, key, ...options }, this._timeout(options));
   }
 
   async check(selector: string, options: channels.FrameCheckOptions & TimeoutOptions = {}) {
-    await this._channel.check({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.check({ selector, ...options }, this._timeout(options));
   }
 
   async uncheck(selector: string, options: channels.FrameUncheckOptions & TimeoutOptions = {}) {
-    await this._channel.uncheck({ selector, ...options }, { signal: options.signal, timeout: this._timeout(options) });
+    await this._channel.uncheck({ selector, ...options }, this._timeout(options));
   }
 
   async setChecked(selector: string, checked: boolean, options?: channels.FrameCheckOptions) {
@@ -476,7 +476,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async waitForTimeout(timeout: number) {
-    await this._channel.waitForTimeout({ waitTimeout: timeout }, undefined);
+    await this._channel.waitForTimeout({ waitTimeout: timeout }, { signal: undefined, timeout: 0 });
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options: WaitForFunctionOptions = {}): Promise<structs.SmartHandle<R>> {
@@ -488,12 +488,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       expression: String(pageFunction),
       isFunction: typeof pageFunction === 'function',
       arg: serializeArgument(arg),
-    }, { signal: options.signal, timeout: this._timeout(options) });
+    }, this._timeout(options));
     return JSHandle.from(result.handle!) as any as structs.SmartHandle<R>;
   }
 
   async title(): Promise<string> {
-    return (await this._channel.title({}, undefined)).value;
+    return (await this._channel.title({}, { signal: undefined, timeout: 0 })).value;
   }
 
   async _expect(expression: string, options: Omit<channels.FrameExpectParams, 'expression'> & { timeout: number }, signal: AbortSignal | undefined): Promise<ExpectResult> {

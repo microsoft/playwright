@@ -179,7 +179,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
-        return new RawHeaders((await this._channel.rawRequestHeaders({}, undefined)).headers);
+        return new RawHeaders((await this._channel.rawRequestHeaders({}, { signal: undefined, timeout: 0 })).headers);
       }, { internal: true });
     }
     return await this._actualHeadersPromise;
@@ -198,11 +198,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   async response(): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.response({}, undefined)).response);
+    return Response.fromNullable((await this._channel.response({}, { signal: undefined, timeout: 0 })).response);
   }
 
   async _internalResponse(): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.response({}, undefined)).response);
+    return Response.fromNullable((await this._channel.response({}, { signal: undefined, timeout: 0 })).response);
   }
 
   existingResponse(): Response | null {
@@ -261,7 +261,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     const response = await this.response();
     if (!response)
       throw new Error('Unable to fetch sizes for failed request');
-    return (await response._channel.sizes({}, undefined)).sizes;
+    return (await response._channel.sizes({}, { signal: undefined, timeout: 0 })).sizes;
   }
 
   _setResponseEndTiming(responseEndTiming: number) {
@@ -336,13 +336,13 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async abort(errorCode?: string) {
     await this._handleRoute(async () => {
-      await this._raceWithTargetClose(this._channel.abort({ errorCode }, undefined));
+      await this._raceWithTargetClose(this._channel.abort({ errorCode }, { signal: undefined, timeout: 0 }));
     });
   }
 
   async _redirectNavigationRequest(url: string) {
     await this._handleRoute(async () => {
-      await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }, undefined));
+      await this._raceWithTargetClose(this._channel.redirectNavigationRequest({ url }, { signal: undefined, timeout: 0 }));
     });
   }
 
@@ -423,7 +423,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       body,
       isBase64,
       fetchResponseUid
-    }, undefined));
+    }, { signal: undefined, timeout: 0 }));
   }
 
   async continue(options: FallbackOverrides = {}) {
@@ -452,7 +452,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers: options.headers ? headersObjectToArray(options.headers) : undefined,
       postData: options.postDataBuffer,
       isFallback,
-    }, undefined));
+    }, { signal: undefined, timeout: 0 }));
   }
 }
 
@@ -493,14 +493,14 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
       },
 
       close: async (options: { code?: number, reason?: string } = {}) => {
-        await this._channel.closeServer({ ...options, wasClean: true }, undefined).catch(() => {});
+        await this._channel.closeServer({ ...options, wasClean: true }, { signal: undefined, timeout: 0 }).catch(() => {});
       },
 
       send: (message: string | Buffer) => {
         if (isString(message))
-          this._channel.sendToServer({ message, isBase64: false }, undefined).catch(() => {});
+          this._channel.sendToServer({ message, isBase64: false }, { signal: undefined, timeout: 0 }).catch(() => {});
         else
-          this._channel.sendToServer({ message: message.toString('base64'), isBase64: true }, undefined).catch(() => {});
+          this._channel.sendToServer({ message: message.toString('base64'), isBase64: true }, { signal: undefined, timeout: 0 }).catch(() => {});
       },
 
       async [Symbol.asyncDispose]() {
@@ -512,28 +512,28 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
       if (this._onPageMessage)
         this._onPageMessage(isBase64 ? Buffer.from(message, 'base64') : message);
       else if (this._connected)
-        this._channel.sendToServer({ message, isBase64 }, undefined).catch(() => {});
+        this._channel.sendToServer({ message, isBase64 }, { signal: undefined, timeout: 0 }).catch(() => {});
     });
 
     this._channel.on('messageFromServer', ({ message, isBase64 }) => {
       if (this._onServerMessage)
         this._onServerMessage(isBase64 ? Buffer.from(message, 'base64') : message);
       else
-        this._channel.sendToPage({ message, isBase64 }, undefined).catch(() => {});
+        this._channel.sendToPage({ message, isBase64 }, { signal: undefined, timeout: 0 }).catch(() => {});
     });
 
     this._channel.on('closePage', ({ code, reason, wasClean }) => {
       if (this._onPageClose)
         this._onPageClose(code, reason);
       else
-        this._channel.closeServer({ code, reason, wasClean }, undefined).catch(() => {});
+        this._channel.closeServer({ code, reason, wasClean }, { signal: undefined, timeout: 0 }).catch(() => {});
     });
 
     this._channel.on('closeServer', ({ code, reason, wasClean }) => {
       if (this._onServerClose)
         this._onServerClose(code, reason);
       else
-        this._channel.closePage({ code, reason, wasClean }, undefined).catch(() => {});
+        this._channel.closePage({ code, reason, wasClean }, { signal: undefined, timeout: 0 }).catch(() => {});
     });
   }
 
@@ -546,22 +546,22 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
   }
 
   async close(options: { code?: number, reason?: string } = {}) {
-    await this._channel.closePage({ ...options, wasClean: true }, undefined).catch(() => {});
+    await this._channel.closePage({ ...options, wasClean: true }, { signal: undefined, timeout: 0 }).catch(() => {});
   }
 
   connectToServer() {
     if (this._connected)
       throw new Error('Already connected to the server');
     this._connected = true;
-    this._channel.connect({}, undefined).catch(() => {});
+    this._channel.connect({}, { signal: undefined, timeout: 0 }).catch(() => {});
     return this._server;
   }
 
   send(message: string | Buffer) {
     if (isString(message))
-      this._channel.sendToPage({ message, isBase64: false }, undefined).catch(() => {});
+      this._channel.sendToPage({ message, isBase64: false }, { signal: undefined, timeout: 0 }).catch(() => {});
     else
-      this._channel.sendToPage({ message: message.toString('base64'), isBase64: true }, undefined).catch(() => {});
+      this._channel.sendToPage({ message: message.toString('base64'), isBase64: true }, { signal: undefined, timeout: 0 }).catch(() => {});
   }
 
   onMessage(handler: (message: string | Buffer) => any) {
@@ -581,7 +581,7 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
       return;
     // Ensure that websocket is "open" and can send messages without an actual server connection.
     // If this happens after the page has been closed, ignore the error.
-    await this._channel.ensureOpened({}, undefined).catch(() => {});
+    await this._channel.ensureOpened({}, { signal: undefined, timeout: 0 }).catch(() => {});
   }
 }
 
@@ -701,7 +701,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   async _actualHeaders(): Promise<RawHeaders> {
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = (async () => {
-        return new RawHeaders((await this._channel.rawResponseHeaders({}, undefined)).headers);
+        return new RawHeaders((await this._channel.rawResponseHeaders({}, { signal: undefined, timeout: 0 })).headers);
       })();
     }
     return await this._actualHeadersPromise;
@@ -728,7 +728,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async body(): Promise<Buffer> {
-    return (await this._channel.body({}, undefined)).binary;
+    return (await this._channel.body({}, { signal: undefined, timeout: 0 })).binary;
   }
 
   async text(): Promise<string> {
@@ -750,15 +750,15 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async serverAddr(): Promise<RemoteAddr|null> {
-    return (await this._channel.serverAddr({}, undefined)).value || null;
+    return (await this._channel.serverAddr({}, { signal: undefined, timeout: 0 })).value || null;
   }
 
   async securityDetails(): Promise<SecurityDetails|null> {
-    return (await this._channel.securityDetails({}, undefined)).value || null;
+    return (await this._channel.securityDetails({}, { signal: undefined, timeout: 0 })).value || null;
   }
 
   async httpVersion(): Promise<string> {
-    return (await this._channel.httpVersion({}, undefined)).value;
+    return (await this._channel.httpVersion({}, { signal: undefined, timeout: 0 })).value;
   }
 }
 

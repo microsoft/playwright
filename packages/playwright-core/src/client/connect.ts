@@ -115,13 +115,13 @@ class JsonPipeTransport implements Transport {
   }
 
   async connect(params: channels.LocalUtilsConnectParams, timeout: number) {
-    const { pipe, headers: connectHeaders } = await this._owner._channel.connect(params, { timeout });
+    const { pipe, headers: connectHeaders } = await this._owner._channel.connect(params, { signal: undefined, timeout });
     this._pipe = pipe;
     return connectHeaders;
   }
 
   async send(message: object) {
-    await this._pipe!.send({ message }, undefined);
+    await this._pipe!.send({ message }, { signal: undefined, timeout: 0 });
   }
 
   onMessage(callback: (message: object) => void) {
@@ -133,7 +133,7 @@ class JsonPipeTransport implements Transport {
   }
 
   async close() {
-    await this._pipe!.close({}, undefined).catch(() => {});
+    await this._pipe!.close({}, { signal: undefined, timeout: 0 }).catch(() => {});
   }
 }
 

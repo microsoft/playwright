@@ -38,19 +38,19 @@ export class Debugger extends ChannelOwner<channels.DebuggerChannel> implements 
   }
 
   async requestPause(): Promise<void> {
-    await this._channel.requestPause({}, undefined);
+    await this._channel.requestPause({}, { signal: undefined, timeout: 0 });
   }
 
   async resume(): Promise<void> {
-    await this._channel.resume({}, undefined);
+    await this._channel.resume({}, { signal: undefined, timeout: 0 });
   }
 
   async next(): Promise<void> {
-    await this._channel.next({}, undefined);
+    await this._channel.next({}, { signal: undefined, timeout: 0 });
   }
 
   async runTo(location: { file: string, line?: number, column?: number }): Promise<void> {
-    await this._channel.runTo({ location }, undefined);
+    await this._channel.runTo({ location }, { signal: undefined, timeout: 0 });
   }
 
   pausedDetails(): PausedDetails | null {

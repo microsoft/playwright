@@ -60,7 +60,7 @@ class Root extends ChannelOwner<channels.RootChannel> {
   async initialize(): Promise<Playwright> {
     return Playwright.from((await this._channel.initialize({
       sdkLanguage: 'javascript',
-    }, undefined)).playwright);
+    }, { signal: undefined, timeout: 0 })).playwright);
   }
 }
 

@@ -27,24 +27,24 @@ export class WebStorage implements api.WebStorage {
   }
 
   async items(): Promise<Array<{ name: string, value: string }>> {
-    const { items } = await this._page._channel.webStorageItems({ kind: this._kind }, undefined);
+    const { items } = await this._page._channel.webStorageItems({ kind: this._kind }, { signal: undefined, timeout: 0 });
     return items;
   }
 
   async getItem(name: string): Promise<string | null> {
-    const { value } = await this._page._channel.webStorageGetItem({ kind: this._kind, name }, undefined);
+    const { value } = await this._page._channel.webStorageGetItem({ kind: this._kind, name }, { signal: undefined, timeout: 0 });
     return value ?? null;
   }
 
   async setItem(name: string, value: string): Promise<void> {
-    await this._page._channel.webStorageSetItem({ kind: this._kind, name, value }, undefined);
+    await this._page._channel.webStorageSetItem({ kind: this._kind, name, value }, { signal: undefined, timeout: 0 });
   }
 
   async removeItem(name: string): Promise<void> {
-    await this._page._channel.webStorageRemoveItem({ kind: this._kind, name }, undefined);
+    await this._page._channel.webStorageRemoveItem({ kind: this._kind, name }, { signal: undefined, timeout: 0 });
   }
 
   async clear(): Promise<void> {
-    await this._page._channel.webStorageClear({ kind: this._kind }, undefined);
+    await this._page._channel.webStorageClear({ kind: this._kind }, { signal: undefined, timeout: 0 });
   }
 }

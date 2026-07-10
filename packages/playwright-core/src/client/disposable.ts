@@ -34,7 +34,7 @@ export class DisposableObject<T extends channels.DisposableChannel = channels.Di
 
   async dispose() {
     try {
-      await this._channel.dispose({}, undefined);
+      await this._channel.dispose({}, { signal: undefined, timeout: 0 });
     } catch (e) {
       if (isTargetClosedError(e))
         return;

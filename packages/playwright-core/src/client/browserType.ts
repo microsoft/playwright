@@ -169,7 +169,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       isLocal: params.isLocal,
       noDefaults: params.noDefaults,
       artifactsDir: params.artifactsDir,
-    }, { timeout: new TimeoutSettings().timeout(params) });
+    }, { signal: undefined, timeout: new TimeoutSettings().timeout(params) });
     return await this._browserFromConnectResult(result);
   }
 
@@ -186,7 +186,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       throw new Error('Connecting to workers is only supported in Chromium.');
     const result = await this._channel.connectToWorker({
       endpoint,
-    }, { timeout: new TimeoutSettings().timeout(options) });
+    }, { signal: undefined, timeout: new TimeoutSettings().timeout(options) });
     return Worker.from(result.worker);
   }
 }

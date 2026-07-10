@@ -53,12 +53,12 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
   }
 
   async accept(promptText: string | undefined) {
-    await this._channel.accept({ promptText }, undefined);
+    await this._channel.accept({ promptText }, { signal: undefined, timeout: 0 });
   }
 
   async dismiss() {
     try {
-      await this._channel.dismiss({}, undefined);
+      await this._channel.dismiss({}, { signal: undefined, timeout: 0 });
     } catch (e) {
       if (isTargetClosedError(e))
         return;

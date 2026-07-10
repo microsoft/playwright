@@ -26,20 +26,20 @@ export class Credentials implements api.Credentials {
   }
 
   async install(): Promise<void> {
-    await this._browserContext._channel.credentialsInstall({}, undefined);
+    await this._browserContext._channel.credentialsInstall({}, { signal: undefined, timeout: 0 });
   }
 
   async create(rpId: string, options: Omit<channels.BrowserContextCredentialsCreateParams, 'rpId'> = {}): Promise<channels.VirtualCredential> {
-    const { credential } = await this._browserContext._channel.credentialsCreate({ ...options, rpId }, undefined);
+    const { credential } = await this._browserContext._channel.credentialsCreate({ ...options, rpId }, { signal: undefined, timeout: 0 });
     return credential;
   }
 
   async get(options: channels.BrowserContextCredentialsGetParams = {}): Promise<channels.VirtualCredential[]> {
-    const { credentials } = await this._browserContext._channel.credentialsGet(options, undefined);
+    const { credentials } = await this._browserContext._channel.credentialsGet(options, { signal: undefined, timeout: 0 });
     return credentials;
   }
 
   async delete(id: string): Promise<void> {
-    await this._browserContext._channel.credentialsDelete({ id }, undefined);
+    await this._browserContext._channel.credentialsDelete({ id }, { signal: undefined, timeout: 0 });
   }
 }

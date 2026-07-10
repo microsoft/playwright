@@ -149,9 +149,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         // a) removing "dialog" listener subscription (client->server)
         // b) actual "dialog" event (server->client)
         if (dialogObject.type() === 'beforeunload')
-          dialog.accept({}, undefined).catch(() => {});
+          dialog.accept({}, { signal: undefined, timeout: 0 }).catch(() => {});
         else
-          dialog.dismiss({}, undefined).catch(() => {});
+          dialog.dismiss({}, { signal: undefined, timeout: 0 }).catch(() => {});
       }
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
@@ -304,7 +304,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async newPage(): Promise<Page> {
     if (this._ownerPage)
       throw new Error('Please use browser.newContext()');
-    return Page.from((await this._channel.newPage({}, undefined)).page);
+    return Page.from((await this._channel.newPage({}, { signal: undefined, timeout: 0 })).page);
   }
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
@@ -312,11 +312,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       urls = [];
     if (urls && typeof urls === 'string')
       urls = [urls];
-    return (await this._channel.cookies({ urls: urls as string[] }, undefined)).cookies;
+    return (await this._channel.cookies({ urls: urls as string[] }, { signal: undefined, timeout: 0 })).cookies;
   }
 
   async addCookies(cookies: network.SetNetworkCookieParam[]): Promise<void> {
-    await this._channel.addCookies({ cookies }, undefined);
+    await this._channel.addCookies({ cookies }, { signal: undefined, timeout: 0 });
   }
 
   async clearCookies(options: network.ClearNetworkCookieOptions = {}): Promise<void> {
@@ -330,47 +330,47 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       path: isString(options.path) ? options.path : undefined,
       pathRegexSource: isRegExp(options.path) ? options.path.source : undefined,
       pathRegexFlags: isRegExp(options.path) ? options.path.flags : undefined,
-    }, undefined);
+    }, { signal: undefined, timeout: 0 });
   }
 
   async grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void> {
-    await this._channel.grantPermissions({ permissions, ...options }, undefined);
+    await this._channel.grantPermissions({ permissions, ...options }, { signal: undefined, timeout: 0 });
   }
 
   async clearPermissions(): Promise<void> {
-    await this._channel.clearPermissions({}, undefined);
+    await this._channel.clearPermissions({}, { signal: undefined, timeout: 0 });
   }
 
   async setGeolocation(geolocation: { longitude: number, latitude: number, accuracy?: number } | null): Promise<void> {
-    await this._channel.setGeolocation({ geolocation: geolocation || undefined }, undefined);
+    await this._channel.setGeolocation({ geolocation: geolocation || undefined }, { signal: undefined, timeout: 0 });
   }
 
   async setExtraHTTPHeaders(headers: Headers): Promise<void> {
     network.validateHeaders(headers);
-    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) }, undefined);
+    await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) }, { signal: undefined, timeout: 0 });
   }
 
   async setOffline(offline: boolean): Promise<void> {
-    await this._channel.setOffline({ offline }, undefined);
+    await this._channel.setOffline({ offline }, { signal: undefined, timeout: 0 });
   }
 
   async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
-    await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined }, undefined);
+    await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined }, { signal: undefined, timeout: 0 });
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await evaluationScript(script, arg);
-    return DisposableObject.from((await this._channel.addInitScript({ source }, undefined)).disposable);
+    return DisposableObject.from((await this._channel.addInitScript({ source }, { signal: undefined, timeout: 0 })).disposable);
   }
 
   async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any): Promise<DisposableObject> {
-    const result = await this._channel.exposeBinding({ name }, undefined);
+    const result = await this._channel.exposeBinding({ name }, { signal: undefined, timeout: 0 });
     this._bindings.set(name, callback);
     return DisposableObject.from(result.disposable);
   }
 
   async exposeFunction(name: string, callback: Function): Promise<DisposableObject> {
-    const result = await this._channel.exposeBinding({ name }, undefined);
+    const result = await this._channel.exposeBinding({ name }, { signal: undefined, timeout: 0 });
     const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
     this._bindings.set(name, binding);
     return DisposableObject.from(result.disposable);
@@ -435,12 +435,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   private async _updateInterceptionPatterns(options: { internal: true } | { title: string }) {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
-    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }, undefined), options);
+    await this._wrapApiCall(() => this._channel.setNetworkInterceptionPatterns({ patterns }, { signal: undefined, timeout: 0 }), options);
   }
 
   private async _updateWebSocketInterceptionPatterns(options: { internal: true } | { title: string }) {
     const patterns = network.WebSocketRouteHandler.prepareInterceptionPatterns(this._webSocketRoutes);
-    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }, undefined), options);
+    await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }, { signal: undefined, timeout: 0 }), options);
   }
 
   _effectiveCloseReason(): string | undefined {
@@ -464,7 +464,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async storageState(options: { path?: string, indexedDB?: boolean, credentials?: boolean } = {}): Promise<StorageState> {
-    const state = await this._channel.storageState({ indexedDB: options.indexedDB, credentials: options.credentials }, undefined);
+    const state = await this._channel.storageState({ indexedDB: options.indexedDB, credentials: options.credentials }, { signal: undefined, timeout: 0 });
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
@@ -474,7 +474,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async setStorageState(storageState: string | SetStorageState): Promise<void> {
     const state = await prepareStorageState(storageState);
-    await this._channel.setStorageState({ storageState: state }, undefined);
+    await this._channel.setStorageState({ storageState: state }, { signal: undefined, timeout: 0 });
   }
 
   backgroundPages(): Page[] {
@@ -489,7 +489,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     // channelOwner.ts's validation messages don't handle the pseudo-union type, so we're explicit here
     if (!(page instanceof Page) && !(page instanceof Frame))
       throw new Error('page: expected Page or Frame');
-    const result = await this._channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel }, undefined);
+    const result = await this._channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel }, { signal: undefined, timeout: 0 });
     return CDPSession.from(result.session);
   }
 
@@ -515,23 +515,23 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this.request.dispose(options);
     await this._instrumentation.runBeforeCloseBrowserContext(this);
     await this.tracing._exportAllHars();
-    await this._channel.close(options, undefined);
+    await this._channel.close(options, { signal: undefined, timeout: 0 });
     await this._closedPromise;
   }
 
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams, eventSink?: RecorderEventSink) {
     if (eventSink)
       this._onRecorderEventSink = eventSink;
-    await this._channel.enableRecorder(params, undefined);
+    await this._channel.enableRecorder(params, { signal: undefined, timeout: 0 });
   }
 
   async _disableRecorder() {
     this._onRecorderEventSink = undefined;
-    await this._channel.disableRecorder({}, undefined);
+    await this._channel.disableRecorder({}, { signal: undefined, timeout: 0 });
   }
 
   async _exposeConsoleApi() {
-    await this._channel.exposeConsoleApi({}, undefined);
+    await this._channel.exposeConsoleApi({}, { signal: undefined, timeout: 0 });
   }
 
 }

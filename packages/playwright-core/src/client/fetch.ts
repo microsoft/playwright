@@ -79,7 +79,7 @@ export class APIRequest implements api.APIRequest {
       storageState,
       tracesDir: this._playwright._defaultLaunchOptions?.tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
-    }, { signal: options.signal })).request);
+    }, { signal: options.signal, timeout: 0 })).request);
     this._contexts.add(context);
     context._request = this;
     context._timeoutSettings.setDefaultTimeout(options.timeout ?? this._playwright._defaultContextTimeout);
@@ -109,12 +109,16 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     await this.dispose();
   }
 
+  _timeout(options?: TimeoutOptions): channels.CommandOptions {
+    return { signal: options?.signal, timeout: this._timeoutSettings.timeout(options || {}) };
+  }
+
   async dispose(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     await this._instrumentation.runBeforeCloseRequestContext(this);
     await this.tracing._exportAllHars();
     try {
-      await this._channel.dispose(options, undefined);
+      await this._channel.dispose(options, { signal: undefined, timeout: 0 });
     } catch (e) {
       if (isTargetClosedError(e))
         return;
@@ -260,13 +264,13 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         maxRedirects: options.maxRedirects,
         maxRetries: options.maxRetries,
         ...fixtures
-      }, { signal: options.signal, timeout: this._timeoutSettings.timeout(options) });
+      }, this._timeout(options));
       return new APIResponse(this, result.response);
     });
   }
 
   async storageState(options: { path?: string, indexedDB?: boolean } = {}): Promise<StorageState> {
-    const state = await this._channel.storageState({ indexedDB: options.indexedDB }, undefined);
+    const state = await this._channel.storageState({ indexedDB: options.indexedDB }, { signal: undefined, timeout: 0 });
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
@@ -353,7 +357,7 @@ export class APIResponse implements api.APIResponse {
   async body(): Promise<Buffer> {
     return await this._request._wrapApiCall(async () => {
       try {
-        const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() }, undefined);
+        const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() }, { signal: undefined, timeout: 0 });
         if (result.binary === undefined)
           throw new Error('Response has been disposed');
         return result.binary;
@@ -380,7 +384,7 @@ export class APIResponse implements api.APIResponse {
   }
 
   async dispose(): Promise<void> {
-    await this._request._channel.disposeAPIResponse({ fetchUid: this._fetchUid() }, undefined);
+    await this._request._channel.disposeAPIResponse({ fetchUid: this._fetchUid() }, { signal: undefined, timeout: 0 });
   }
 
   private _inspect() {
@@ -393,7 +397,7 @@ export class APIResponse implements api.APIResponse {
   }
 
   async _fetchLog(): Promise<string[]> {
-    const { log } = await this._request._channel.fetchLog({ fetchUid: this._fetchUid() }, undefined);
+    const { log } = await this._request._channel.fetchLog({ fetchUid: this._fetchUid() }, { signal: undefined, timeout: 0 });
     return log;
   }
 }

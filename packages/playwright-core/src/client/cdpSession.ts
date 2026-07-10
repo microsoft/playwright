@@ -48,11 +48,11 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    const result = await this._channel.send({ method, params }, undefined);
+    const result = await this._channel.send({ method, params }, { signal: undefined, timeout: 0 });
     return result.result as Protocol.CommandReturnValues[T];
   }
 
   async detach() {
-    return await this._channel.detach({}, undefined);
+    return await this._channel.detach({}, { signal: undefined, timeout: 0 });
   }
 }

@@ -25,18 +25,18 @@ export class Coverage implements api.Coverage {
   }
 
   async startJSCoverage(options: channels.PageStartJSCoverageOptions = {}) {
-    await this._channel.startJSCoverage(options, undefined);
+    await this._channel.startJSCoverage(options, { signal: undefined, timeout: 0 });
   }
 
   async stopJSCoverage(): Promise<channels.PageStopJSCoverageResult['entries']> {
-    return (await this._channel.stopJSCoverage({}, undefined)).entries;
+    return (await this._channel.stopJSCoverage({}, { signal: undefined, timeout: 0 })).entries;
   }
 
   async startCSSCoverage(options: channels.PageStartCSSCoverageOptions = {}) {
-    await this._channel.startCSSCoverage(options, undefined);
+    await this._channel.startCSSCoverage(options, { signal: undefined, timeout: 0 });
   }
 
   async stopCSSCoverage(): Promise<channels.PageStopCSSCoverageResult['entries']> {
-    return (await this._channel.stopCSSCoverage({}, undefined)).entries;
+    return (await this._channel.stopCSSCoverage({}, { signal: undefined, timeout: 0 })).entries;
   }
 }
