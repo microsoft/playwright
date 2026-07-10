@@ -151,7 +151,7 @@ export class ElectronApplication extends SdkObject {
         const wc = webContents.fromDevToolsTargetId(targetId);
         if (!wc || wc.isDestroyed())
           return false;
-        wc.close();
+        wc.close({ waitForBeforeUnload: false });
         return true;
       }, (page.delegate as CRPage)._targetId).catch(() => false);
       // Fall back to the default close if the webContents could not be found.
