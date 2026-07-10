@@ -35,6 +35,7 @@ test('should work', async ({ page }) => {
 
 test('should collect element retained by locator hit-target interceptor after detach', async ({ page, browserName }) => {
   test.fixme(browserName === 'firefox', 'Firefox hit-target interceptor does not release its element reference on detach');
+  test.fixme(browserName === 'chromium', 'Chromium retains a native reference to the last hit-tested element; fix pending upstream discussion, see #41575');
   await page.setContent('<button id="btn">click me</button>');
   await page.locator('#btn').click();
   await page.evaluate(() => {
