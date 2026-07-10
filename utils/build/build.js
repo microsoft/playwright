@@ -1027,6 +1027,21 @@ copyFiles.push({
   to: 'packages/playwright-core/lib',
 });
 
+// WebP codec: ship the WASM binary and its third-party license into lib/ next
+// to coreBundle.js, where @utils/webp/webp reads them at runtime. The .js glue
+// is inlined into coreBundle; the .wasm and .LICENSE ship as assets. The
+// license is generated from the pinned libwebp source by utils/libwebp-wasm/build.sh.
+copyFiles.push({
+  files: 'packages/utils/webp/webp_codec.wasm',
+  from: 'packages/utils/webp',
+  to: 'packages/playwright-core/lib',
+});
+copyFiles.push({
+  files: 'packages/utils/webp/webp_codec.LICENSE',
+  from: 'packages/utils/webp',
+  to: 'packages/playwright-core/lib',
+});
+
 
 copyFiles.push({
   files: 'packages/playwright/src/agents/*.md',

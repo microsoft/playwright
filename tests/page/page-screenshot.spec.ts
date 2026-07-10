@@ -278,6 +278,16 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('white.jpg');
   });
 
+  it('should produce a valid webp screenshot', async ({ page, server, isBidi }) => {
+    it.skip(isBidi, 'webp screenshots are not supported via WebDriver BiDi');
+
+    await page.setViewportSize({ width: 300, height: 300 });
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => (document.body.style.background = 'rgb(255, 0, 0)'));
+    const screenshot = await page.screenshot({ type: 'webp' });
+    expect(screenshot).toMatchSnapshot('red.webp');
+  });
+
   it('should work with odd clip size on Retina displays', async ({ page, isElectron }) => {
     it.skip(isElectron, 'electron does not set device scale factor to 1');
 

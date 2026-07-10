@@ -96,7 +96,7 @@ test('--output-dir should work', async ({ startClient, server }, testInfo) => {
   expect(files[0]).toMatch(/^page-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.png$/);
 });
 
-for (const type of ['png', 'jpeg']) {
+for (const type of ['png', 'jpeg', 'webp']) {
   test(`browser_take_screenshot (type: ${type})`, async ({ startClient, server }, testInfo) => {
     const outputDir = testInfo.outputPath('output');
     const { client } = await startClient({

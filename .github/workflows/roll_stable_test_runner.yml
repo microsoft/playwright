@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: lts/*
       - run: |
           npm install @playwright/test@next
           VERSION=$(node -e "console.log(require('./package.json').dependencies['@playwright/test'].replace('^', ''))")

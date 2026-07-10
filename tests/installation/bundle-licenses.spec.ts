@@ -19,10 +19,15 @@ import { test, expect } from './npmTest';
 
 // Lower bounds on the number of inlined npm packages per LICENSE. If a bundle drops below
 // these, something is broken with bundle generation or dependencies were silently removed.
+// Package count per bundle .LICENSE sidecar; `0` marks a non-bundle license
+// (e.g. a vendored binary's third-party license) that has no "Total Packages"
+// summary and is only checked for presence.
 const EXPECTED: Record<string, Record<string, number>> = {
   'playwright-core': {
     'lib/serverRegistry.js.LICENSE': 10,
     'lib/utilsBundle.js.LICENSE': 80,
+    // Vendored WebP codec (libwebp compiled to WASM), not a bundle sidecar.
+    'lib/webp_codec.LICENSE': 0,
   },
   'playwright': {
     'lib/matchers/expect.js.LICENSE': 20,
@@ -65,6 +70,11 @@ for (const [pkg, licenses] of Object.entries(EXPECTED)) {
     for (const [relPath, minPackages] of Object.entries(licenses)) {
       const absPath = path.join(extractDir, 'package', relPath);
       const contents = await fs.promises.readFile(absPath, 'utf8');
+      if (!minPackages) {
+        // Non-bundle license (no "Total Packages" summary) — just verify it ships.
+        expect(contents.trim().length, `${pkg}/${relPath} is empty`).toBeGreaterThan(0);
+        continue;
+      }
       const match = contents.match(/^Total Packages: (\d+)$/m);
       expect(match, `${pkg}/${relPath} is missing the "Total Packages" summary line`).toBeTruthy();
       const count = Number(match![1]);

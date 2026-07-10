@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
-        node-version: 20
+        node-version: lts/*
         registry-url: 'https://registry.npmjs.org'
     - name: Set up Docker QEMU for arm64 docker builds
       uses: docker/setup-qemu-action@v4

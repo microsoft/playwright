@@ -1844,7 +1844,7 @@ scheme.ElementHandleQuerySelectorAllResult = tObject({
   elements: tArray(tChannel(['ElementHandle'])),
 });
 scheme.ElementHandleScreenshotParams = tObject({
-  type: tOptional(tEnum(['png', 'jpeg'])),
+  type: tOptional(tEnum(['png', 'jpeg', 'webp'])),
   quality: tOptional(tInt),
   omitBackground: tOptional(tBoolean),
   caret: tOptional(tEnum(['hide', 'initial'])),
@@ -2369,6 +2369,7 @@ scheme.PageExpectScreenshotParams = tObject({
   threshold: tOptional(tFloat),
   fullPage: tOptional(tBoolean),
   clip: tOptional(tType('Rect')),
+  type: tOptional(tEnum(['png', 'webp'])),
   omitBackground: tOptional(tBoolean),
   caret: tOptional(tEnum(['hide', 'initial'])),
   animations: tOptional(tEnum(['disabled', 'allow'])),
@@ -2392,7 +2393,7 @@ scheme.PageExpectScreenshotErrorDetails = tObject({
   log: tOptional(tArray(tString)),
 });
 scheme.PageScreenshotParams = tObject({
-  type: tOptional(tEnum(['png', 'jpeg'])),
+  type: tOptional(tEnum(['png', 'jpeg', 'webp'])),
   quality: tOptional(tInt),
   fullPage: tOptional(tBoolean),
   clip: tOptional(tType('Rect')),

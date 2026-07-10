@@ -416,6 +416,7 @@ ElementHandle:
           literals:
           - png
           - jpeg
+          - webp
         quality: int?
         $mixin: CommonScreenshotOptions
       returns:

@@ -13176,7 +13176,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     path?: string;
 
     /**
-     * The quality of the image, between 0-100. Not applicable to `png` images.
+     * The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+     * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
      */
     quality?: number;
 
@@ -13218,7 +13219,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Specify screenshot type, defaults to `png`.
      */
-    type?: "png"|"jpeg";
+    type?: "png"|"jpeg"|"webp";
   }): Promise<Buffer>;
 
   /**
@@ -25108,7 +25109,8 @@ export interface LocatorScreenshotOptions {
   path?: string;
 
   /**
-   * The quality of the image, between 0-100. Not applicable to `png` images.
+   * The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+   * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
    */
   quality?: number;
 
@@ -25150,7 +25152,7 @@ export interface LocatorScreenshotOptions {
   /**
    * Specify screenshot type, defaults to `png`.
    */
-  type?: "png"|"jpeg";
+  type?: "png"|"jpeg"|"webp";
 }
 
 interface ElementHandleWaitForSelectorOptions {
@@ -25825,7 +25827,8 @@ export interface PageScreenshotOptions {
   path?: string;
 
   /**
-   * The quality of the image, between 0-100. Not applicable to `png` images.
+   * The quality of the image, between 0-100. Not applicable to `png` images. For `jpeg` the default is `80`. For
+   * `webp`, a quality of `100` (the default) produces a lossless image, while lower values use lossy compression.
    */
   quality?: number;
 
@@ -25867,7 +25870,7 @@ export interface PageScreenshotOptions {
   /**
    * Specify screenshot type, defaults to `png`.
    */
-  type?: "png"|"jpeg";
+  type?: "png"|"jpeg"|"webp";
 }
 
 type Devices = {

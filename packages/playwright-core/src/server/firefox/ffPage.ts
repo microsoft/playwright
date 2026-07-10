@@ -459,7 +459,7 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg' | 'webp', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     if (!documentRect) {
       const scrollOffset = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ x: window.scrollX, y: window.scrollY }));
       documentRect = {
@@ -470,7 +470,7 @@ export class FFPage implements PageDelegate {
       };
     }
     const { data } = await progress.race(this._session.send('Page.screenshot', {
-      mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
+      mimeType: ('image/' + format) as ('image/png' | 'image/jpeg' | 'image/webp'),
       clip: documentRect,
       quality,
       omitDeviceScaleFactor: scale === 'css',

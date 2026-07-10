@@ -182,6 +182,11 @@ Page:
         threshold: float?
         fullPage: boolean?
         clip: Rect?
+        type:
+          type: enum?
+          literals:
+          - png
+          - webp
         $mixin: CommonScreenshotOptions
       returns:
         actual: binary?
@@ -206,6 +211,7 @@ Page:
           literals:
           - png
           - jpeg
+          - webp
         quality: int?
         fullPage: boolean?
         clip: Rect?

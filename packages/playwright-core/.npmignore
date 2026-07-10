@@ -14,6 +14,8 @@
 !lib/**/*.ttf
 !lib/**/*.json
 !lib/**/*.md
+# Include the WebP codec WASM binary (see @utils/webp/webp).
+!lib/**/*.wasm
 !lib/xdg-open
 !lib/**/manifest.webmanifest
 # Exclude injected files. A preprocessed version of these is included via lib/generated.
