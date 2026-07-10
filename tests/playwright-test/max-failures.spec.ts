@@ -209,3 +209,47 @@ test('max-failures should not consider retries as failures', async ({ runInlineT
   expect(result.flaky).toBe(2);
   expect(result.passed).toBe(0);
 });
+
+test('max-failures should still run project teardown', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/41713' });
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        maxFailures: 1,
+        projects: [
+          { name: 'setup', testMatch: /global.setup.ts/, teardown: 'teardown' },
+          { name: 'teardown', testMatch: /global.teardown.ts/ },
+          { name: 'main', testMatch: /example.spec.ts/, dependencies: ['setup'] },
+        ],
+      });
+    `,
+    'global.setup.ts': `
+      import { test as setup } from '@playwright/test';
+      setup('setup', async () => {
+        console.log('\\n%%SETUP-RAN');
+      });
+    `,
+    'global.teardown.ts': `
+      import { test as teardown } from '@playwright/test';
+      teardown('teardown', async () => {
+        console.log('\\n%%TEARDOWN-RAN');
+      });
+    `,
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('failing', async () => {
+        expect(1).toBe(2);
+      });
+      test('passing', async () => {
+        expect(1).toBe(1);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.outputLines).toContain('SETUP-RAN');
+  expect(result.outputLines).toContain('TEARDOWN-RAN');
+});

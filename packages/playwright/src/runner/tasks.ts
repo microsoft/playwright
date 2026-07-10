@@ -443,13 +443,17 @@ function createRunTestsTask(): Task<TestRun> {
     setup: async testRun => {
       const successfulProjects = new Set<commonConfig.FullProjectInternal>();
       const extraEnvByProjectId: EnvByProjectId = new Map();
-      const teardownToSetups = buildTeardownToSetupsMap(testRun.phases.map(phase => phase.projects.map(p => p.project)).flat());
+      const allProjects = testRun.phases.map(phase => phase.projects.map(p => p.project)).flat();
+      const teardownToSetups = buildTeardownToSetupsMap(allProjects);
+      const teardownProjects = new Set(teardownToSetups.keys());
 
       for (const { dispatcher, projects } of testRun.phases) {
         // Each phase contains dispatcher and a set of test groups.
         // We don't want to run the test groups belonging to the projects
         // that depend on the projects that failed previously.
+        // When --max-failures stops the suite, still run teardown projects for cleanup.
         const phaseTestGroups: TestGroup[] = [];
+        const maxFailuresReached = testRun.hasReachedMaxFailures();
         for (const { project, testGroups } of projects) {
           // Inherit extra environment variables from dependencies.
           let extraEnv: Record<string, string | undefined> = {};
@@ -460,12 +464,19 @@ function createRunTestsTask(): Task<TestRun> {
           extraEnvByProjectId.set(project.id, extraEnv);
 
           const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
-          if (!hasFailedDeps)
-            phaseTestGroups.push(...testGroups);
+          if (hasFailedDeps)
+            continue;
+          if (maxFailuresReached && !teardownProjects.has(project))
+            continue;
+          phaseTestGroups.push(...testGroups);
         }
 
         if (phaseTestGroups.length) {
-          await dispatcher!.run(phaseTestGroups, extraEnvByProjectId);
+          const onlyTeardowns = phaseTestGroups.every(group => {
+            const project = projects.find(p => p.project.id === group.projectId)?.project;
+            return !!project && teardownProjects.has(project);
+          });
+          await dispatcher!.run(phaseTestGroups, extraEnvByProjectId, { ignoreMaxFailures: onlyTeardowns });
           await dispatcher.stop();
           for (const [projectId, envProduced] of dispatcher.producedEnvByProjectId()) {
             const extraEnv = extraEnvByProjectId.get(projectId) || {};
