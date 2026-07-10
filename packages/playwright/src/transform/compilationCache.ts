@@ -101,6 +101,27 @@ function _innerAddToCompilationCacheAndSerialize(filename: string, entry: Memory
   };
 }
 
+// Cached code files are prefixed with a `// <sha1>` line so that a partially
+// written cache entry is detected and ignored when reading.
+function writeCodeCache(codePath: string, code: string) {
+  fs.writeFileSync(codePath, `// ${calculateSha1(code)}\n${code}`, 'utf8');
+}
+
+function readCodeCache(codePath: string): string {
+  const content = fs.readFileSync(codePath, 'utf8');
+  const newLineIndex = content.indexOf('\n');
+  if (newLineIndex === -1)
+    throw new Error(`Cache file is missing the hash header`);
+  const firstLine = content.substring(0, newLineIndex);
+  const sha1Length = 40;
+  if (firstLine.length !== '// '.length + sha1Length || !firstLine.startsWith('// '))
+    throw new Error(`Cache file has a malformed hash header`);
+  const code = content.substring(newLineIndex + 1);
+  if (calculateSha1(code) !== firstLine.substring('// '.length))
+    throw new Error(`Cache file content does not match the hash header`);
+  return code;
+}
+
 type CompilationCacheLookupResult = {
   serializedCache?: any;
   cachedCode?: string;
@@ -113,7 +134,7 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
   const cache = memoryCache.get(filename);
   if (cache?.codePath) {
     try {
-      return { cachedCode: fs.readFileSync(cache.codePath, 'utf-8') };
+      return { cachedCode: readCodeCache(cache.codePath) };
     } catch {
       // Not able to read the file - fall through.
     }
@@ -128,7 +149,7 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
   const sourceMapPath = cachePath + '.map';
   const dataPath = cachePath + '.data';
   try {
-    const cachedCode = fs.readFileSync(codePath, 'utf8');
+    const cachedCode = readCodeCache(codePath);
     const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
     return { cachedCode, serializedCache };
   } catch {
@@ -145,7 +166,7 @@ export function getFromCompilationCache(filename: string, contentHash: string, m
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
       if (data.size)
         fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), 'utf8');
-      fs.writeFileSync(codePath, code, 'utf8');
+      writeCodeCache(codePath, code);
       const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
       return { serializedCache };
     }
