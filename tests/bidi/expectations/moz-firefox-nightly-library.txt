@@ -63,7 +63,6 @@ library/browsertype-connect.spec.ts › run-server › should save download [fai
 library/browsertype-connect.spec.ts › run-server › should upload a folder [fail]
 library/browsertype-launch.spec.ts › should reject if launched browser fails immediately [fail]
 library/capabilities.spec.ts › SharedArrayBuffer should work @smoke [timeout]
-library/capabilities.spec.ts › should play video @smoke [timeout]
 library/channels.spec.ts › should work with the domain module [timeout]
 library/chromium/chromium.spec.ts › PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 › serviceWorker(), and fromServiceWorker() work [timeout]
 library/chromium/chromium.spec.ts › PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 › setExtraHTTPHeaders [timeout]
