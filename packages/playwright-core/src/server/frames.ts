@@ -37,7 +37,7 @@ import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import * as network from './network';
 import { Page, ariaSnapshotForFrame } from './page';
-import { isAbortError, nullProgress, ProgressController } from './progress';
+import { isAbortError, nullProgress, ProgressController, raceUncancellableOperationWithCleanup } from './progress';
 import * as types from './types';
 import { isSessionClosedError } from './protocolError';
 
@@ -1632,7 +1632,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return this.retryWithProgressAndTimeouts(progress, [100], async () => {
       const context = world === 'main' ? await progress.race(this.mainContext()) : await progress.race(this.utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
-      const handle = await progress.race(injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
+      const handle = await raceUncancellableOperationWithCleanup(progress, () => injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
         let evaledExpression: any;
         const predicate = (): R => {
           // NOTE: make sure to use `globalThis.eval` instead of `self.eval` due to a bug with sandbox isolation
@@ -1679,7 +1679,10 @@ export class Frame extends SdkObject<FrameEventMap> {
 
         next();
         return { result, abort: () => aborted = true };
-      }, { expression, isFunction, polling: options.pollingInterval, arg }));
+      }, { expression, isFunction, polling: options.pollingInterval, arg }), async handle => {
+        await handle.evaluate(h => h.abort()).catch(() => {});
+        handle.dispose();
+      });
       try {
         return await progress.race(handle.evaluateHandle(h => h.result));
       } catch (error) {
