@@ -579,28 +579,28 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     ]);
 
     expect.soft(sources.get('Playwright Test')!.text).toContain(`
+  await page.getByRole('button', { name: 'one' }).click();
   await expect(page.getByRole('heading', { name: 'new header' })).toBeVisible();
-
   await page.getByRole('button', { name: 'two' }).click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
+    page.get_by_role("button", name="one").click()
     expect(page.get_by_role("heading", name="new header")).to_be_visible()
-
     page.get_by_role("button", name="two").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.get_by_role("button", name="one").click()
     await expect(page.get_by_role("heading", name="new header")).to_be_visible()
-
     await page.get_by_role("button", name="two").click()`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("one")).click();
       assertThat(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions().setName("new header"))).isVisible();
-
       page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("two")).click();`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
+await page.GetByRole(AriaRole.Button, new() { Name = "one" }).ClickAsync();
 await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "new header" })).ToBeVisibleAsync();
-
 await page.GetByRole(AriaRole.Button, new() { Name = "two" }).ClickAsync();`);
   });
 });

@@ -208,6 +208,35 @@ test('test', async ({ page }) => {
   expect(events).toHaveLength(length);
 });
 
+test('should record expect signal', async ({ backend, connectedBrowser }) => {
+  const events = [];
+  backend.on('sourceChanged', event => events.push(event));
+
+  await backend.setRecorderMode({ mode: 'recording', generateAutoExpect: true }, undefined);
+
+  const context = await connectedBrowser.newContextForReuse();
+  const [page] = context.pages();
+
+  // Clicking "Show" reveals "Saved", which becomes the precondition of the next action.
+  await page.setContent(`
+    <button onclick="document.getElementById('msg').style.display = 'block'">Show</button>
+    <button>Other</button>
+    <button id=msg style="display: none">Saved</button>
+  `);
+
+  await page.getByRole('button', { name: 'Show' }).click();
+  // A click stalls for 200ms to detect a double click, and the next click cancels a pending one.
+  await expect.poll(() => events[events.length - 1]?.actions.length).toBe(2);
+  await page.getByRole('button', { name: 'Other' }).click();
+
+  // The signal is attached to the "Show" click, so the assertion renders right after it.
+  await expect.poll(() => events[events.length - 1]?.actions).toEqual([
+    `  await page.goto('about:blank');`,
+    `  await page.getByRole('button', { name: 'Show' }).click();\n  await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();`,
+    `  await page.getByRole('button', { name: 'Other' }).click();`,
+  ]);
+});
+
 test('should record custom data-testid', async ({ backend, connectedBrowser }) => {
   // This test emulates "record at cursor" functionality
   // with custom test id attribute in the config.

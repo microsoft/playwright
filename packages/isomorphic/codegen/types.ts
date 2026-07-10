@@ -36,7 +36,7 @@ export type LanguageGeneratorOptions = {
   contextOptions: BrowserContextOptions;
   deviceName?: string;
   saveStorage?: string;
-  generateAutoExpect?: boolean;
+  generateExpectSignal?: boolean;
 };
 
 export interface LanguageGenerator {
@@ -45,6 +45,6 @@ export interface LanguageGenerator {
   name: string;
   highlighter: Language;
   generateHeader(options: LanguageGeneratorOptions): string;
-  generateAction(actionInContext: actions.ActionInContext): string;
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string;
   generateFooter(saveStorage: string | undefined): string;
 }

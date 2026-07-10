@@ -16,7 +16,7 @@
 
 import { asLocator } from '../locatorGenerators';
 import { escapeWithQuotes, toSnakeCase } from '../stringUtils';
-import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { expectSignalAction, sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
@@ -43,7 +43,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     this._asyncPrefix = isAsync ? 'async ' : '';
   }
 
-  generateAction(actionInContext: actions.ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
     if (this._isPyTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
@@ -81,6 +81,9 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     }
 
     formatter.add(code);
+
+    if (options.generateExpectSignal && signals.expect)
+      formatter.add(this.generateAction(expectSignalAction(actionInContext, signals.expect), options));
 
     return formatter.format();
   }

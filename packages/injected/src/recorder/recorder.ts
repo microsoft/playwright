@@ -35,7 +35,7 @@ const HighlightColors = {
 };
 
 export interface RecorderDelegate {
-  performAction?(action: actions.PerformOnRecordAction): Promise<void>;
+  performAction?(action: actions.PerformOnRecordAction, preconditionSelector?: string): Promise<void>;
   recordAction?(action: actions.Action): Promise<void>;
   elementPicked?(elementInfo: ElementInfo): Promise<void>;
   setMode?(mode: Mode): Promise<void>;
@@ -1698,13 +1698,14 @@ export class Recorder {
   async performAction(action: actions.PerformOnRecordAction) {
     const previousSnapshot = this._lastActionAutoexpectSnapshot;
     this._lastActionAutoexpectSnapshot = this._captureAutoExpectSnapshot();
+    let preconditionSelector: string | undefined;
     if (!isAssertAction(action) && this._lastActionAutoexpectSnapshot) {
       const element = this.injectedScript.utils.findNewElement(previousSnapshot?.root, this._lastActionAutoexpectSnapshot?.root);
-      action.preconditionSelector = element ? this.injectedScript.generateSelector(element, { testIdAttributeName: this.state.testIdAttributeName }).selector : undefined;
-      if (action.preconditionSelector === action.selector)
-        action.preconditionSelector = undefined;
+      preconditionSelector = element ? this.injectedScript.generateSelector(element, { testIdAttributeName: this.state.testIdAttributeName }).selector : undefined;
+      if (preconditionSelector === action.selector)
+        preconditionSelector = undefined;
     }
-    await this._delegate.performAction?.(action).catch(() => {});
+    await this._delegate.performAction?.(action, preconditionSelector).catch(() => {});
   }
 
   async recordAction(action: actions.Action) {

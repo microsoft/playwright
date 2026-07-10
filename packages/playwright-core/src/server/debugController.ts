@@ -193,7 +193,7 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
       browserName: 'chromium',
       launchOptions: {},
       contextOptions: {},
-      generateAutoExpect: debugController._generateAutoExpect,
+      generateExpectSignal: debugController._generateAutoExpect,
     });
     debugController.emit(DebugController.Events.SourceChanged, { text, header, footer, actions: actionTexts });
   };

@@ -16,7 +16,7 @@
 
 import { asLocator } from '../locatorGenerators';
 import { escapeWithQuotes, formatObject, formatObjectOrVoid } from '../stringUtils';
-import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { expectSignalAction, sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
@@ -36,7 +36,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     this._isTest = isTest;
   }
 
-  generateAction(actionInContext: actions.ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
     if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
@@ -72,6 +72,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       formatter.add(`const ${signals.popup.popupAlias} = await ${signals.popup.popupAlias}Promise;`);
     if (signals.download)
       formatter.add(`const download${signals.download.downloadAlias} = await download${signals.download.downloadAlias}Promise;`);
+    if (options.generateExpectSignal && signals.expect)
+      formatter.add(this.generateAction(expectSignalAction(actionInContext, signals.expect), options));
 
     return formatter.format();
   }

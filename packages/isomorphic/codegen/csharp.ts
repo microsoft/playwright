@@ -16,7 +16,7 @@
 
 import { asLocator } from '../locatorGenerators';
 import { escapeWithQuotes } from '../stringUtils';
-import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { expectSignalAction, sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
@@ -51,14 +51,14 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     this._mode = mode;
   }
 
-  generateAction(actionInContext: actions.ActionInContext): string {
-    const action = this._generateActionInner(actionInContext);
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
+    const action = this._generateActionInner(actionInContext, options);
     if (action)
       return action;
     return '';
   }
 
-  _generateActionInner(actionInContext: actions.ActionInContext): string {
+  _generateActionInner(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
     if (this._mode !== 'library' && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
@@ -100,6 +100,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
     for (const line of lines)
       formatter.add(line);
+
+    if (options.generateExpectSignal && signals.expect)
+      formatter.add(this.generateAction(expectSignalAction(actionInContext, signals.expect), options));
 
     return formatter.format();
   }

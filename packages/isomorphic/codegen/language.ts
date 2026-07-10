@@ -22,31 +22,22 @@ import type * as actions from './actions';
 export function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
   const header = languageGenerator.generateHeader(options);
   const footer = languageGenerator.generateFooter(options.saveStorage);
-  const actionTexts = actions.map(a => generateActionText(languageGenerator, a, !!options.generateAutoExpect)).filter(Boolean) as string[];
+  const actionTexts = actions.map(a => languageGenerator.generateAction(a, options)).filter(Boolean);
   const text = [header, ...actionTexts, footer].join('\n');
   return { header, footer, actionTexts, text };
 }
 
-function generateActionText(generator: LanguageGenerator, action: actions.ActionInContext, generateAutoExpect: boolean): string | undefined {
-  let text = generator.generateAction(action);
-  if (!text)
-    return;
-  if (generateAutoExpect && action.action.preconditionSelector) {
-    const expectAction: actions.ActionInContext = {
-      frame: action.frame,
-      startTime: action.startTime,
-      endTime: action.startTime,
-      action: {
-        name: 'assertVisible',
-        selector: action.action.preconditionSelector,
-        signals: [],
-      },
-    };
-    const expectText = generator.generateAction(expectAction);
-    if (expectText)
-      text = expectText + '\n\n' + text;
-  }
-  return text;
+export function expectSignalAction(actionInContext: actions.ActionInContext, signal: actions.ExpectSignal): actions.ActionInContext {
+  return {
+    frame: actionInContext.frame,
+    startTime: actionInContext.startTime,
+    endTime: actionInContext.startTime,
+    action: {
+      name: 'assertVisible',
+      selector: signal.selector,
+      signals: [],
+    },
+  };
 }
 
 export function sanitizeDeviceOptions(device: any, options: BrowserContextOptions): BrowserContextOptions {
@@ -63,6 +54,7 @@ export function toSignalMap(action: actions.Action) {
   let popup: actions.PopupSignal | undefined;
   let download: actions.DownloadSignal | undefined;
   let dialog: actions.DialogSignal | undefined;
+  let expect: actions.ExpectSignal | undefined;
   for (const signal of action.signals) {
     if (signal.name === 'popup')
       popup = signal;
@@ -70,11 +62,14 @@ export function toSignalMap(action: actions.Action) {
       download = signal;
     else if (signal.name === 'dialog')
       dialog = signal;
+    else if (signal.name === 'expect')
+      expect = signal;
   }
   return {
     popup,
     download,
     dialog,
+    expect,
   };
 }
 

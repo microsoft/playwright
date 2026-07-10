@@ -22,7 +22,7 @@ import type * as actions from '@isomorphic/codegen/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 
 interface Embedder {
-  __pw_recorderPerformAction(action: actions.PerformOnRecordAction): Promise<void>;
+  __pw_recorderPerformAction(action: actions.PerformOnRecordAction, preconditionSelector?: string): Promise<void>;
   __pw_recorderRecordAction(action: actions.Action): Promise<void>;
   __pw_recorderState(): Promise<UIState>;
   __pw_recorderElementPicked(element: { selector: string, ariaSnapshot?: string }): Promise<void>;
@@ -76,8 +76,8 @@ export class PollingRecorder implements RecorderDelegate {
     this._pollRecorderModeTimer = this._recorder.injectedScript.utils.builtins.setTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
 
-  async performAction(action: actions.PerformOnRecordAction) {
-    await this._embedder.__pw_recorderPerformAction(action);
+  async performAction(action: actions.PerformOnRecordAction, preconditionSelector?: string) {
+    await this._embedder.__pw_recorderPerformAction(action, preconditionSelector);
   }
 
   async recordAction(action: actions.Action): Promise<void> {

@@ -16,7 +16,7 @@
 
 import { asLocator } from '../locatorGenerators';
 import { escapeWithQuotes } from '../stringUtils';
-import { toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { expectSignalAction, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 
@@ -47,7 +47,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     this._mode = mode;
   }
 
-  generateAction(actionInContext: actions.ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
     const pageAlias = actionInContext.frame.pageAlias;
     const offset = this._mode === 'junit' ? 4 : 6;
@@ -88,6 +88,9 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     }
 
     formatter.add(code);
+
+    if (options.generateExpectSignal && signals.expect)
+      formatter.add(this.generateAction(expectSignalAction(actionInContext, signals.expect), options));
 
     return formatter.format();
   }

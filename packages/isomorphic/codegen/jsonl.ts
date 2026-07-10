@@ -15,6 +15,7 @@
  */
 
 import { asLocator } from '../locatorGenerators';
+import { expectSignalAction, toSignalMap } from './language';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
 import type * as actions from './actions';
@@ -25,7 +26,7 @@ export class JsonlLanguageGenerator implements LanguageGenerator {
   name = 'JSONL';
   highlighter = 'javascript' as Language;
 
-  generateAction(actionInContext: actions.ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const locator = (actionInContext.action as any).selector ? JSON.parse(asLocator('jsonl', (actionInContext.action as any).selector)) : undefined;
     const entry = {
       ...actionInContext.action,
@@ -33,7 +34,11 @@ export class JsonlLanguageGenerator implements LanguageGenerator {
       locator,
       ariaSnapshot: undefined,
     };
-    return JSON.stringify(entry);
+    const lines = [JSON.stringify(entry)];
+    const expect = toSignalMap(actionInContext.action).expect;
+    if (options.generateExpectSignal && expect)
+      lines.push(this.generateAction(expectSignalAction(actionInContext, expect), options));
+    return lines.join('\n');
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {

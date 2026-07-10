@@ -147,7 +147,7 @@ export class RecorderApp {
         }
       },
       setAutoExpect: async (params: { autoExpect: boolean }) => {
-        this._languageGeneratorOptions.generateAutoExpect = params.autoExpect;
+        this._languageGeneratorOptions.generateExpectSignal = params.autoExpect;
         this._updateActions();
       },
       setMode: async (params: { mode: Mode }) => {
