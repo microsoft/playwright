@@ -143,20 +143,20 @@ export class ElectronApplication extends SdkObject {
       return;
     // Target.closeTarget can hang on Electron when the close races a committing
     // navigation. Close from the main process instead. We close the webContents
-    // rather than the BrowserWindow because BrowserWindow.close() runs the
-    // beforeunload handler (and can hang on it), while page.close() should not.
-    page.setCustomCloseHandler(async () => {
+    // rather than the BrowserWindow because BrowserWindow.close() always runs the
+    // beforeunload handler, while webContents.close() lets us opt in or out of it.
+    page.setCustomCloseHandler(async runBeforeUnload => {
       const electronHandle = await this._nodeElectronHandlePromise;
-      const closed = await electronHandle.evaluate(({ webContents }, targetId) => {
+      const closed = await electronHandle.evaluate(({ webContents }, { targetId, runBeforeUnload }) => {
         const wc = webContents.fromDevToolsTargetId(targetId);
         if (!wc || wc.isDestroyed())
           return false;
-        wc.close({ waitForBeforeUnload: false });
+        wc.close({ waitForBeforeUnload: runBeforeUnload });
         return true;
-      }, (page.delegate as CRPage)._targetId).catch(() => false);
+      }, { targetId: (page.delegate as CRPage)._targetId, runBeforeUnload }).catch(() => false);
       // Fall back to the default close if the webContents could not be found.
       if (!closed)
-        await page.delegate.closePage(false);
+        await page.delegate.closePage(runBeforeUnload);
     });
   }
 
