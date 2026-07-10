@@ -39,7 +39,7 @@ export class RecorderSignalProcessor {
     this._delegate.addAction(actionInContext);
   }
 
-  signal(pageAlias: string, frame: Frame, signal: Signal) {
+  signal(frame: Frame, signal: Signal) {
     const timestamp = monotonicTime();
     if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
       const lastAction = this._lastAction;
@@ -55,10 +55,7 @@ export class RecorderSignalProcessor {
 
       if (generateGoto) {
         this.addAction({
-          frame: {
-            pageGuid: frame._page.guid,
-            pageAlias,
-          },
+          pageGuid: frame._page.guid,
           action: {
             name: 'navigate',
             url: frame.url(),
@@ -72,10 +69,7 @@ export class RecorderSignalProcessor {
     }
 
     this._delegate.addSignal({
-      frame: {
-        pageGuid: frame._page.guid,
-        pageAlias,
-      },
+      pageGuid: frame._page.guid,
       signal,
       timestamp,
     });

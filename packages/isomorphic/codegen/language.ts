@@ -20,6 +20,7 @@ import type { LanguageGenerator, LanguageGeneratorOptions } from './types';
 import type * as actions from './actions';
 
 export function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
+  languageGenerator.reset();
   const header = languageGenerator.generateHeader(options);
   const footer = languageGenerator.generateFooter(options.saveStorage);
   const actionTexts = actions.map(a => languageGenerator.generateAction(a, options)).filter(Boolean);
@@ -29,7 +30,7 @@ export function generateCode(actions: actions.ActionInContext[], languageGenerat
 
 export function expectSignalAction(actionInContext: actions.ActionInContext, signal: actions.ExpectSignal): actions.ActionInContext {
   return {
-    frame: actionInContext.frame,
+    pageGuid: actionInContext.pageGuid,
     startTime: actionInContext.startTime,
     endTime: actionInContext.startTime,
     action: {

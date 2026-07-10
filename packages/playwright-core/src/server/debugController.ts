@@ -213,7 +213,7 @@ function wireListeners(recorder: Recorder, debugController: DebugController) {
     actionsChanged();
   });
   recorder.on(RecorderEvent.SignalAdded, (signal: actions.SignalInContext) => {
-    const lastAction = actions.findLast(a => a.frame.pageGuid === signal.frame.pageGuid);
+    const lastAction = actions.findLast(a => a.pageGuid === signal.pageGuid);
     if (lastAction)
       lastAction.action.signals.push(signal.signal);
     actionsChanged();

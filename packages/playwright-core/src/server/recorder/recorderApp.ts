@@ -288,7 +288,7 @@ export class RecorderApp {
   }
 
   private _onSignalAdded(signal: actions.SignalInContext) {
-    const lastAction = this._actions.findLast(a => a.frame.pageGuid === signal.frame.pageGuid);
+    const lastAction = this._actions.findLast(a => a.pageGuid === signal.pageGuid);
     if (lastAction)
       lastAction.action.signals.push(signal.signal);
     this._updateActions();
@@ -370,18 +370,18 @@ export class ProgrammaticRecorderApp {
     const languageGenerator = languages.find(l => l.id === params.language) ?? languages.find(l => l.id === 'playwright-test')!;
 
     recorder.on(RecorderEvent.ActionAdded, action => {
-      const page = findPageByGuid(inspectedContext, action.frame.pageGuid);
+      const page = findPageByGuid(inspectedContext, action.pageGuid);
       if (!page)
         return;
-      const { actionTexts } = generateCode([action], languageGenerator, languageGeneratorOptions);
+      const code = languageGenerator.generateAction(action, languageGeneratorOptions);
       if (!lastAction || !shouldMergeAction(action, lastAction))
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code: actionTexts.join('\n') });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionAdded', data: action, page, code });
       else
-        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code: actionTexts.join('\n') });
+        inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'actionUpdated', data: action, page, code });
       lastAction = action;
     });
     recorder.on(RecorderEvent.SignalAdded, signal => {
-      const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);
+      const page = findPageByGuid(inspectedContext, signal.pageGuid);
       if (!page)
         return;
       inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });

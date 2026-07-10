@@ -44,6 +44,7 @@ export interface LanguageGenerator {
   groupName: string;
   name: string;
   highlighter: Language;
+  reset(): void;
   generateHeader(options: LanguageGeneratorOptions): string;
   generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string;
   generateFooter(saveStorage: string | undefined): string;

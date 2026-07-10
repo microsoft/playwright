@@ -33,6 +33,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   private _asyncPrefix: '' | 'async ';
   private _isAsync: boolean;
   private _isPyTest: boolean;
+  private _pageAliases = new Map<string, string>();
 
   constructor(isAsync: boolean, isPyTest: boolean) {
     this.id = isPyTest ? 'python-pytest' : (isAsync ? 'python-async' : 'python');
@@ -43,12 +44,26 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     this._asyncPrefix = isAsync ? 'async ' : '';
   }
 
+  reset() {
+    this._pageAliases.clear();
+  }
+
+  private _pageAlias(pageGuid: string): string {
+    let alias = this._pageAliases.get(pageGuid);
+    if (!alias) {
+      alias = 'page' + (this._pageAliases.size || '');
+      this._pageAliases.set(pageGuid, alias);
+    }
+    return alias;
+  }
+
   generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
+    // Resolve before the early return, so that pages are named in the order they are opened.
+    const pageAlias = this._pageAlias(actionInContext.pageGuid);
     if (this._isPyTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
 
-    const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
 
     if (action.name === 'openPage') {
@@ -67,10 +82,11 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     let code = `${this._awaitPrefix}${this._generateActionCall(subject, actionInContext)}`;
 
     if (signals.popup) {
-      code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as ${signals.popup.popupAlias}_info {
+      const popupAlias = this._pageAlias(signals.popup.popupPageGuid);
+      code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as ${popupAlias}_info {
         ${code}
       }
-      ${signals.popup.popupAlias} = ${this._awaitPrefix}${signals.popup.popupAlias}_info.value`;
+      ${popupAlias} = ${this._awaitPrefix}${popupAlias}_info.value`;
     }
 
     if (signals.download) {

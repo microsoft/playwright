@@ -33,6 +33,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   name: string;
   highlighter = 'java' as Language;
   _mode: JavaLanguageMode;
+  private _pageAliases = new Map<string, string>();
 
   constructor(mode: JavaLanguageMode) {
     if (mode === 'library') {
@@ -47,9 +48,23 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     this._mode = mode;
   }
 
+  reset() {
+    this._pageAliases.clear();
+  }
+
+  private _pageAlias(pageGuid: string): string {
+    let alias = this._pageAliases.get(pageGuid);
+    if (!alias) {
+      alias = 'page' + (this._pageAliases.size || '');
+      this._pageAliases.set(pageGuid, alias);
+    }
+    return alias;
+  }
+
   generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
-    const pageAlias = actionInContext.frame.pageAlias;
+    // Resolve before the early return, so that pages are named in the order they are opened.
+    const pageAlias = this._pageAlias(actionInContext.pageGuid);
     const offset = this._mode === 'junit' ? 4 : 6;
     const formatter = new JavaScriptFormatter(offset);
 
@@ -76,7 +91,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     let code = this._generateActionCall(subject, actionInContext);
 
     if (signals.popup) {
-      code = `Page ${signals.popup.popupAlias} = ${pageAlias}.waitForPopup(() -> {
+      const popupAlias = this._pageAlias(signals.popup.popupPageGuid);
+      code = `Page ${popupAlias} = ${pageAlias}.waitForPopup(() -> {
         ${code}
       });`;
     }

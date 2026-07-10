@@ -31,6 +31,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   name: string;
   highlighter = 'csharp' as Language;
   _mode: CSharpLanguageMode;
+  private _pageAliases = new Map<string, string>();
 
   constructor(mode: CSharpLanguageMode) {
     if (mode === 'library') {
@@ -51,6 +52,22 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     this._mode = mode;
   }
 
+  reset() {
+    this._pageAliases.clear();
+  }
+
+  private _pageAlias(pageGuid: string): string {
+    let alias = this._pageAliases.get(pageGuid);
+    if (!alias) {
+      alias = 'page' + (this._pageAliases.size || '');
+      // Outside of the library mode, the first page is a class member, the rest are local variables.
+      if (this._mode !== 'library' && alias === 'page')
+        alias = 'Page';
+      this._pageAliases.set(pageGuid, alias);
+    }
+    return alias;
+  }
+
   generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = this._generateActionInner(actionInContext, options);
     if (action)
@@ -60,9 +77,10 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
   _generateActionInner(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
+    // Resolve before the early return, so that pages are named in the order they are opened.
+    const  pageAlias = this._pageAlias(actionInContext.pageGuid);
     if (this._mode !== 'library' && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
-    const  pageAlias = this._formatPageAlias(actionInContext.frame.pageAlias);
     const formatter = new CSharpFormatter(this._mode === 'library' ? 0 : 8);
 
     if (action.name === 'openPage') {
@@ -94,7 +112,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
 
     if (signals.popup) {
-      lines.unshift(`var ${this._formatPageAlias(signals.popup.popupAlias)} = await ${pageAlias}.RunAndWaitForPopupAsync(async () =>\n{`);
+      const popupAlias = this._pageAlias(signals.popup.popupPageGuid);
+      lines.unshift(`var ${popupAlias} = await ${pageAlias}.RunAndWaitForPopupAsync(async () =>\n{`);
       lines.push(`});`);
     }
 
@@ -105,17 +124,6 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       formatter.add(this.generateAction(expectSignalAction(actionInContext, signals.expect), options));
 
     return formatter.format();
-  }
-
-  private _formatPageAlias(pageAlias: string): string {
-    if (this._mode === 'library')
-      return pageAlias;
-
-    if (pageAlias === 'page')
-      return 'Page'; // first page is class member
-
-    // other pages are local variables
-    return pageAlias;
   }
 
   private _generateActionCall(subject: string, actionInContext: actions.ActionInContext): string {

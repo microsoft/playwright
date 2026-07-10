@@ -21,7 +21,6 @@ import { quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 import { Frame } from '../frames';
 
 import type { CallMetadata } from '../instrumentation';
-import type { Page } from '../page';
 import type * as actions from '@isomorphic/codegen/actions';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Progress } from '../progress';
@@ -55,16 +54,8 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
   return callLog;
 }
 
-export function mainFrameForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): Frame {
-  const pageAlias = actionInContext.frame.pageAlias;
-  const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
-  if (!page)
-    throw new Error(`Internal error: page ${pageAlias} not found in [${[...pageAliases.values()]}]`);
-  return page.mainFrame();
-}
-
 function isSameAction(a: actions.ActionInContext, b: actions.ActionInContext): boolean {
-  return a.action.name === b.action.name && a.frame.pageAlias === b.frame.pageAlias;
+  return a.action.name === b.action.name && a.pageGuid === b.pageGuid;
 }
 
 function isSameSelector(action: actions.ActionInContext, lastAction: actions.ActionInContext): boolean {

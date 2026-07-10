@@ -142,7 +142,7 @@ export type NavigationSignal = BaseSignal & {
 
 export type PopupSignal = BaseSignal & {
   name: 'popup',
-  popupAlias: string,
+  popupPageGuid: string,
 };
 
 export type DownloadSignal = BaseSignal & {
@@ -163,20 +163,15 @@ export type ExpectSignal = BaseSignal & {
 
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal | ExpectSignal;
 
-export type FrameDescription = {
-  pageGuid: string;
-  pageAlias: string;
-};
-
 export type ActionInContext = {
-  frame: FrameDescription;
+  pageGuid: string;
   action: Action;
   startTime: number;
   endTime?: number;
 };
 
 export type SignalInContext = {
-  frame: FrameDescription;
+  pageGuid: string;
   signal: Signal;
   timestamp: number;
 };
