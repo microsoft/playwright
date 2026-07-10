@@ -58,8 +58,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector)}.content_frame`);
-    const subject = `${pageAlias}${locators.join('')}`;
+    const subject = pageAlias;
     const signals = toSignalMap(action);
 
     if (signals.dialog)

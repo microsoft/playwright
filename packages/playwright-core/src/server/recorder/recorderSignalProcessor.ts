@@ -16,8 +16,6 @@
 
 import { monotonicTime } from '@isomorphic/time';
 import { isUnderTest } from '@utils/debug';
-import { generateFrameSelector } from './recorderUtils';
-import { nullProgress } from '../progress';
 
 import type { Signal } from '@isomorphic/codegen/actions';
 import type { Frame } from '../frames';
@@ -60,7 +58,6 @@ export class RecorderSignalProcessor {
           frame: {
             pageGuid: frame._page.guid,
             pageAlias,
-            framePath: [],
           },
           action: {
             name: 'navigate',
@@ -74,17 +71,13 @@ export class RecorderSignalProcessor {
       return;
     }
 
-    generateFrameSelector(nullProgress, frame).then(framePath => {
-      const signalInContext: actions.SignalInContext = {
-        frame: {
-          pageGuid: frame._page.guid,
-          pageAlias,
-          framePath,
-        },
-        signal,
-        timestamp,
-      };
-      this._delegate.addSignal(signalInContext);
+    this._delegate.addSignal({
+      frame: {
+        pageGuid: frame._page.guid,
+        pageAlias,
+      },
+      signal,
+      timestamp,
     });
   }
 }

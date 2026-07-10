@@ -552,15 +552,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return {
       pageGuid: page.guid,
       pageAlias: this._pageAliases.get(page)!,
-      framePath: [],
-    };
-  }
-
-  private async _describeFrame(progress: Progress, frame: Frame): Promise<actions.FrameDescription> {
-    return {
-      pageGuid: frame._page.guid,
-      pageAlias: this._pageAliases.get(frame._page)!,
-      framePath: await generateFrameSelector(progress, frame),
     };
   }
 
@@ -568,19 +559,24 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
-  private async _createActionInContext(progress: Progress, frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {
-    const frameDescription = await this._describeFrame(progress, frame);
+  private async _appendContextToAction(progress: Progress, frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {
+    const framePath = await generateFrameSelector(progress, frame);
+    if (framePath.length) {
+      if ('selector' in action)
+        action.selector = buildFullSelector(framePath, action.selector);
+      if (action.preconditionSelector)
+        action.preconditionSelector = buildFullSelector(framePath, action.preconditionSelector);
+    }
     const actionInContext: actions.ActionInContext = {
-      frame: frameDescription,
+      frame: this._describeMainFrame(frame._page),
       action,
-      description: undefined,
       startTime: monotonicTime(),
     };
     return actionInContext;
   }
 
   private async _performAction(progress: Progress, frame: Frame, action: actions.PerformOnRecordAction) {
-    const actionInContext = await this._createActionInContext(progress, frame, action);
+    const actionInContext = await this._appendContextToAction(progress, frame, action);
     this._signalProcessor.addAction(actionInContext);
     try {
       if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
@@ -591,7 +587,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private async _recordAction(progress: Progress, frame: Frame, action: actions.Action) {
-    const actionInContext = await this._createActionInContext(progress, frame, action);
+    const actionInContext = await this._appendContextToAction(progress, frame, action);
     this._signalProcessor.addAction(actionInContext);
   }
 

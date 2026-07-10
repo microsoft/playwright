@@ -161,12 +161,10 @@ export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSig
 export type FrameDescription = {
   pageGuid: string;
   pageAlias: string;
-  framePath: string[];
 };
 
 export type ActionInContext = {
   frame: FrameDescription;
-  description?: string;
   action: Action;
   startTime: number;
   endTime?: number;

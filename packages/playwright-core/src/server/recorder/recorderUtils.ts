@@ -64,7 +64,7 @@ export function mainFrameForAction(pageAliases: Map<Page, string>, actionInConte
 }
 
 function isSameAction(a: actions.ActionInContext, b: actions.ActionInContext): boolean {
-  return a.action.name === b.action.name && a.frame.pageAlias === b.frame.pageAlias && a.frame.framePath.join('|') === b.frame.framePath.join('|');
+  return a.action.name === b.action.name && a.frame.pageAlias === b.frame.pageAlias;
 }
 
 function isSameSelector(action: actions.ActionInContext, lastAction: actions.ActionInContext): boolean {

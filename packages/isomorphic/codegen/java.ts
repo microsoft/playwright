@@ -63,8 +63,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector, false)}.contentFrame()`);
-    const subject = `${pageAlias}${locators.join('')}`;
+    const subject = pageAlias;
     const signals = toSignalMap(action);
 
     if (signals.dialog) {
@@ -74,7 +73,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    let code = this._generateActionCall(subject, actionInContext, !!actionInContext.frame.framePath.length);
+    let code = this._generateActionCall(subject, actionInContext);
 
     if (signals.popup) {
       code = `Page ${signals.popup.popupAlias} = ${pageAlias}.waitForPopup(() -> {
@@ -93,7 +92,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(subject: string, actionInContext: actions.ActionInContext, inFrameLocator: boolean): string {
+  private _generateActionCall(subject: string, actionInContext: actions.ActionInContext): string {
     const action = actionInContext.action;
     switch (action.name) {
       case 'openPage':
@@ -106,46 +105,46 @@ export class JavaLanguageGenerator implements LanguageGenerator {
           method = 'dblclick';
         const options = toClickOptionsForSourceCode(action);
         const optionsText = formatClickOptions(options);
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.${method}(${optionsText});`;
+        return `${subject}.${this._asLocator(action.selector)}.${method}(${optionsText});`;
       }
       case 'hover': {
         const optionsText = action.position ? `new Locator.HoverOptions().setPosition(${action.position.x}, ${action.position.y})` : '';
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.hover(${optionsText});`;
+        return `${subject}.${this._asLocator(action.selector)}.hover(${optionsText});`;
       }
       case 'check':
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.check();`;
+        return `${subject}.${this._asLocator(action.selector)}.check();`;
       case 'uncheck':
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.uncheck();`;
+        return `${subject}.${this._asLocator(action.selector)}.uncheck();`;
       case 'fill':
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.fill(${quote(action.text)});`;
+        return `${subject}.${this._asLocator(action.selector)}.fill(${quote(action.text)});`;
       case 'setInputFiles':
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)});`;
+        return `${subject}.${this._asLocator(action.selector)}.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)});`;
       case 'press': {
         const modifiers = toKeyboardModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.press(${quote(shortcut)});`;
+        return `${subject}.${this._asLocator(action.selector)}.press(${quote(shortcut)});`;
       }
       case 'navigate':
         return `${subject}.navigate(${quote(action.url)});`;
       case 'select':
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.selectOption(${formatSelectOption(action.options.length === 1 ? action.options[0] : action.options)});`;
+        return `${subject}.${this._asLocator(action.selector)}.selectOption(${formatSelectOption(action.options.length === 1 ? action.options[0] : action.options)});`;
       case 'assertText':
-        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${action.substring ? 'containsText' : 'hasText'}(${quote(action.text)});`;
+        return `assertThat(${subject}.${this._asLocator(action.selector)}).${action.substring ? 'containsText' : 'hasText'}(${quote(action.text)});`;
       case 'assertChecked':
-        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)})${action.checked ? '' : '.not()'}.isChecked();`;
+        return `assertThat(${subject}.${this._asLocator(action.selector)})${action.checked ? '' : '.not()'}.isChecked();`;
       case 'assertVisible':
-        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).isVisible();`;
+        return `assertThat(${subject}.${this._asLocator(action.selector)}).isVisible();`;
       case 'assertValue': {
         const assertion = action.value ? `hasValue(${quote(action.value)})` : `isEmpty()`;
-        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${assertion};`;
+        return `assertThat(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
       case 'assertSnapshot':
-        return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).matchesAriaSnapshot(${quote(action.ariaSnapshot)});`;
+        return `assertThat(${subject}.${this._asLocator(action.selector)}).matchesAriaSnapshot(${quote(action.ariaSnapshot)});`;
     }
   }
 
-  private _asLocator(selector: string, inFrameLocator: boolean) {
-    return asLocator('java', selector, inFrameLocator);
+  private _asLocator(selector: string) {
+    return asLocator('java', selector);
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {

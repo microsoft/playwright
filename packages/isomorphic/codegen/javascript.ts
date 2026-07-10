@@ -51,8 +51,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector)}.contentFrame()`);
-    const subject = `${pageAlias}${locators.join('')}`;
+    const subject = pageAlias;
     const signals = toSignalMap(action);
 
     if (signals.dialog) {
@@ -67,7 +66,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (signals.download)
       formatter.add(`const download${signals.download.downloadAlias}Promise = ${pageAlias}.waitForEvent('download');`);
 
-    formatter.add(wrapWithStep(actionInContext.description, this._generateActionCall(subject, actionInContext)));
+    formatter.add(this._generateActionCall(subject, actionInContext));
 
     if (signals.popup)
       formatter.add(`const ${signals.popup.popupAlias} = await ${signals.popup.popupAlias}Promise;`);
@@ -254,12 +253,6 @@ export class JavaScriptFormatter {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\'');
-}
-
-function wrapWithStep(description: string | undefined, body: string) {
-  return description ? `await test.step(\`${description}\`, async () => {
-${body}
-});` : body;
 }
 
 export function quoteMultiline(text: string, indent = '  ') {

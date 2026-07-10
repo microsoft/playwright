@@ -61,7 +61,6 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).First.ClickAsyn
       locator: { body: 'button', kind: 'role', options: { exact: false, attrs: [], name: 'Submit' }, next: { body: '', kind: 'first', options: {} } },
       modifiers: 0,
       signals: [],
-      framePath: [],
       pageAlias: 'page',
       pageGuid: expect.any(String),
     });
@@ -131,13 +130,18 @@ await page.Locator("#frame1").ContentFrame.GetByText("Hello1").ClickAsync();`);
     const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
     expect.soft(clickAction).toEqual({
       name: 'click',
-      selector: 'internal:text="Hello1"i',
+      selector: '#frame1 >> internal:control=enter-frame >> internal:text="Hello1"i',
       button: 'left',
       clickCount: 1,
-      locator: { body: 'Hello1', kind: 'text', options: { exact: false } },
+      locator: {
+        body: '#frame1', kind: 'default', options: {},
+        next: {
+          body: '', kind: 'frame', options: {},
+          next: { body: 'Hello1', kind: 'text', options: { exact: false } },
+        },
+      },
       modifiers: 0,
       signals: [],
-      framePath: ['#frame1'],
       pageAlias: 'page',
       pageGuid: expect.any(String),
     });
@@ -170,13 +174,24 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.GetByT
     const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
     expect.soft(clickAction).toEqual({
       name: 'click',
-      selector: 'internal:text="Hello2"i',
+      selector: '#frame1 >> internal:control=enter-frame >> iframe >> internal:control=enter-frame >> internal:text="Hello2"i',
       button: 'left',
       clickCount: 1,
-      locator: { body: 'Hello2', kind: 'text', options: { exact: false } },
+      locator: {
+        body: '#frame1', kind: 'default', options: {},
+        next: {
+          body: '', kind: 'frame', options: {},
+          next: {
+            body: 'iframe', kind: 'default', options: {},
+            next: {
+              body: '', kind: 'frame', options: {},
+              next: { body: 'Hello2', kind: 'text', options: { exact: false } },
+            },
+          },
+        },
+      },
       modifiers: 0,
       signals: [],
-      framePath: ['#frame1', 'iframe'],
       pageAlias: 'page',
       pageGuid: expect.any(String),
     });
@@ -209,13 +224,33 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locato
     const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
     expect.soft(clickAction).toEqual({
       name: 'click',
-      selector: 'internal:text="HelloNameAnonymous"i',
+      selector: '#frame1 >> internal:control=enter-frame >> iframe >> internal:control=enter-frame >> iframe >> nth=2 >> internal:control=enter-frame >> internal:text="HelloNameAnonymous"i',
       button: 'left',
       clickCount: 1,
-      locator: { body: 'HelloNameAnonymous', kind: 'text', options: { exact: false } },
+      locator: {
+        body: '#frame1', kind: 'default', options: {},
+        next: {
+          body: '', kind: 'frame', options: {},
+          next: {
+            body: 'iframe', kind: 'default', options: {},
+            next: {
+              body: '', kind: 'frame', options: {},
+              next: {
+                body: 'iframe', kind: 'default', options: {},
+                next: {
+                  body: '2', kind: 'nth', options: {},
+                  next: {
+                    body: '', kind: 'frame', options: {},
+                    next: { body: 'HelloNameAnonymous', kind: 'text', options: { exact: false } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
       modifiers: 0,
       signals: [],
-      framePath: ['#frame1', 'iframe', 'iframe >> nth=2'],
       pageAlias: 'page',
       pageGuid: expect.any(String),
     });
