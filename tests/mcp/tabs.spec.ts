@@ -149,3 +149,28 @@ test('reuse first tab when navigating', async ({ startClient, cdpServer, server 
   expect(pages.length).toBe(1);
   expect(await pages[0].title()).toBe('Title');
 });
+
+test('unresponsive tab does not block tab listing', async ({ startClient, cdpServer, server }) => {
+  const browserContext = await cdpServer.start();
+  const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  // Second tab whose main thread is blocked, so that title lookup never resolves.
+  const page = await browserContext.newPage();
+  await page.goto(server.HELLO_WORLD);
+  page.evaluate(() => { while (true) {} }).catch(() => {});
+  await new Promise(f => setTimeout(f, 1000));
+
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'list',
+    },
+  })).toHaveResponse({
+    result: `- 0: (current) [Title](${server.HELLO_WORLD})
+- 1: [](${server.HELLO_WORLD})`,
+  });
+});

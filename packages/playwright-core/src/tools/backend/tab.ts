@@ -283,9 +283,19 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     let title: string | undefined;
     let consoleCounts = { total: 0, errors: 0, warnings: 0 };
     if (!this.crashed) {
-      await this._raceAgainstModalStates(async () => {
-        title = await this.page.title();
-      });
+      // A discarded or unresponsive page (e.g. when attached over CDP) may never
+      // resolve the title lookup. Cap it so that one bad tab does not block
+      // rendering of the whole response.
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const titleTimeout = new Promise<void>(resolve => timeoutId = setTimeout(resolve, 5000));
+      await Promise.race([
+        this._raceAgainstModalStates(async () => {
+          title = await this.page.title();
+        }).catch(() => {}),
+        titleTimeout,
+      ]);
+      if (timeoutId)
+        clearTimeout(timeoutId);
       consoleCounts = await this.consoleMessageCount();
     }
     const newHeader: TabHeader = {
