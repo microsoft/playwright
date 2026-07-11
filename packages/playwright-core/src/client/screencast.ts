@@ -16,6 +16,7 @@
 
 import { Artifact } from './artifact';
 import { DisposableStub } from './disposable';
+import { Events } from './events';
 
 import type * as api from '../../types/types';
 import type { Page } from './page';
@@ -31,6 +32,19 @@ export class Screencast implements api.Screencast {
     this._page = page;
     this._page._channel.on('screencastFrame', ({ data, timestamp, viewportWidth, viewportHeight }) => {
       void this._onFrame?.({ data, timestamp, viewportWidth, viewportHeight });
+    });
+    this._page.once(Events.Page.Close, () => {
+      // Auto-save the video when the page closes, so recordings are not lost
+      // if the user forgets to call stop().
+      if (this._started && this._savePath && this._artifact) {
+        const artifact = this._artifact;
+        const savePath = this._savePath;
+        this._started = false;
+        this._onFrame = null;
+        this._artifact = undefined;
+        this._savePath = undefined;
+        artifact.saveAs(savePath).catch(() => {});
+      }
     });
   }
 
@@ -54,9 +68,9 @@ export class Screencast implements api.Screencast {
   }
 
   async stop(): Promise<void> {
+    this._started = false;
+    this._onFrame = null;
     await this._page._wrapApiCall(async () => {
-      this._started = false;
-      this._onFrame = null;
       await this._page._channel.screencastStop({}, undefined);
       if (this._savePath)
         await this._artifact?.saveAs(this._savePath);

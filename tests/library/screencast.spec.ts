@@ -204,6 +204,24 @@ test('start should finish when page is closed', async ({ browser }, testInfo) =>
   await context.close();
 });
 
+test('should auto-save video when page closes without stop', async ({ browser, server }, testInfo) => {
+  test.slow();
+  const size = { width: 800, height: 800 };
+  const context = await browser.newContext({ viewport: size });
+  const page = await context.newPage();
+  const videoPath = testInfo.outputPath('auto-save-video.webm');
+  await page.screencast.start({ path: videoPath, size });
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await ensureSomeFrames(page);
+  // Close the page without calling stop()
+  await page.close();
+  // The video file should be saved automatically
+  expect(fs.existsSync(videoPath)).toBeTruthy();
+  expectFrames(videoPath, size, isAlmostRed);
+  await context.close();
+});
+
 test('empty video', async ({ browser }, testInfo) => {
   test.slow();
   const size = { width: 800, height: 800 };
