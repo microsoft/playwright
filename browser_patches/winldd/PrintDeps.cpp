@@ -47,36 +47,60 @@ SOFTWARE.
 
 using DepsMap = std::map<std::string, std::string>;
 
-std::string getLastErrorString()
+std::string getErrorString(DWORD dw)
 {
-    LPTSTR lpMsgBuf;
-    DWORD dw = GetLastError();
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,
+    LPSTR lpMsgBuf = nullptr;
+    DWORD chars = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr,
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&lpMsgBuf,
-        0, NULL);
-    std::string result(lpMsgBuf);
+        reinterpret_cast<LPSTR>(&lpMsgBuf),
+        0,
+        nullptr);
+    if (!chars || !lpMsgBuf)
+        return "error " + std::to_string(dw);
+
+    std::string result(lpMsgBuf, chars);
     LocalFree(lpMsgBuf);
     return result;
+}
+
+std::string getLastErrorString()
+{
+    return getErrorString(GetLastError());
+}
+
+HMODULE loadLibraryForDependencyScan(LPCSTR library, DWORD* error)
+{
+    DWORD oldErrorMode = 0;
+    BOOL changedErrorMode = SetThreadErrorMode(SEM_FAILCRITICALERRORS, &oldErrorMode);
+    HMODULE hMod = LoadLibraryEx(library, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (hMod == NULL && error)
+        *error = GetLastError();
+    if (changedErrorMode)
+        SetThreadErrorMode(oldErrorMode, nullptr);
+    return hMod;
 }
 
 const DepsMap getDependencies(const HMODULE hMod)
 {
     // See https://docs.microsoft.com/en-us/archive/msdn-magazine/2002/february/inside-windows-win32-portable-executable-file-format-in-detail
     // for PE format description.
-    ULONG size;
+    ULONG size = 0;
     PIMAGE_IMPORT_DESCRIPTOR pImportDesc =  (PIMAGE_IMPORT_DESCRIPTOR)ImageDirectoryEntryToData(hMod, true, IMAGE_DIRECTORY_ENTRY_IMPORT, &size);
     DepsMap deps;
+    if (!pImportDesc || size < sizeof(IMAGE_IMPORT_DESCRIPTOR))
+        return deps;
+
     // According to https://docs.microsoft.com/en-us/archive/msdn-magazine/2002/march/inside-windows-an-in-depth-look-into-the-win32-portable-executable-file-format-part-2
     // "The end of the IMAGE_IMPORT_DESCRIPTOR array is indicated by an entry with fields all set to 0."
-    while (pImportDesc->Name)
+    ULONG descriptorCount = size / sizeof(IMAGE_IMPORT_DESCRIPTOR);
+    for (ULONG i = 0; i < descriptorCount && pImportDesc[i].Name; ++i)
     {
-        LPCSTR dllName = (LPCSTR)((BYTE*)hMod + pImportDesc->Name);
+        LPCSTR dllName = (LPCSTR)((BYTE*)hMod + pImportDesc[i].Name);
         std::string dllPath = "not found";
-        HMODULE hModDep = LoadLibraryEx(dllName, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32);
+        HMODULE hModDep = loadLibraryForDependencyScan(dllName, nullptr);
         if (hModDep != NULL)
         {
             TCHAR pathBuffer[_MAX_PATH];
@@ -88,7 +112,6 @@ const DepsMap getDependencies(const HMODULE hMod)
             FreeLibrary(hModDep);
         }
         deps[std::string(dllName)] = dllPath;
-        pImportDesc++;
     }
 
     return deps;
@@ -97,10 +120,11 @@ const DepsMap getDependencies(const HMODULE hMod)
 int printDependencies(const char* library)
 {
     SetDllDirectoryA(".");
-    HMODULE hMod = LoadLibraryEx(library, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32);
+    DWORD loadError = ERROR_SUCCESS;
+    HMODULE hMod = loadLibraryForDependencyScan(library, &loadError);
     if (hMod == NULL)
     {
-        std::cerr << "Failed to load " << library << "  Error: " << getLastErrorString() << std::endl;
+        std::cerr << "Failed to load " << library << "  Error: " << getErrorString(loadError) << std::endl;
         return -1;
     }
     const DepsMap& deps = getDependencies(hMod);
