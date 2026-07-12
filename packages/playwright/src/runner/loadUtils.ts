@@ -148,20 +148,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   }
 
   // Add post-filtered top-level projects to the root suite for sharding and 'only' processing.
-  // A project only counts as having tests (and therefore as a candidate root-level project) if it
-  // has tests that also survive the post-shard filters (e.g. --last-failed). Otherwise a project
-  // that is only reachable through another project's "dependencies" (and therefore classified as
-  // a "dependency" project below) could end up entirely excluded from consideration, even though
-  // it is the project that actually contains the tests we are looking for.
-  const projectHasMatchingTests = (project: commonConfig.FullProjectInternal) => {
-    const filteredProjectSuite = filteredProjectSuites.get(project)!;
-    if (!filteredProjectSuite._hasTests())
-      return false;
-    if (!testRun.postShardTestFilters.length)
-      return true;
-    return filteredProjectSuite.allTests().some(test => testRun.postShardTestFilters.every(filter => filter(test)));
-  };
-  const projectClosure = buildProjectsClosure([...filteredProjectSuites.keys()], projectHasMatchingTests);
+  const projectClosure = buildProjectsClosure([...filteredProjectSuites.keys()], project => filteredProjectSuites.get(project)!._hasTests());
   for (const [project, type] of projectClosure) {
     if (type === 'top-level') {
       project.project.repeatEach = project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach;
@@ -218,6 +205,36 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
         rootSuite._prependSuite(buildProjectSuite(project, projectSuites.get(project)!));
       else
         topLevelProjects.push(project);
+    }
+  }
+
+  // A project that is structurally a "dependency" of another project is excluded from the
+  // top-level closure above, and is normally only pulled in (unfiltered, in full) when a
+  // surviving top-level project needs it as a prerequisite. If post-shard filters (e.g.
+  // --last-failed) eliminated every project that would have pulled it in, but the dependency
+  // project has matching tests of its own, treat it as an independent entry point instead of
+  // silently dropping it - see https://github.com/microsoft/playwright/issues/39811.
+  // Note: this does not participate in --shard, matching the pre-existing dependency-prepend
+  // behavior above, which is also unaffected by sharding.
+  if (testRun.postShardTestFilters.length) {
+    const includedProjects = new Set(rootSuite.suites.map(suite => suite._fullProject!));
+    for (const project of filteredProjectSuites.keys()) {
+      if (includedProjects.has(project))
+        continue;
+      const filteredProjectSuite = filterProjectSuite(filteredProjectSuites.get(project)!, testRun.postShardTestFilters);
+      if (!filteredProjectSuite._hasTests())
+        continue;
+      project.project.repeatEach = project.fullConfig.configCLIOverrides.repeatEach ?? project.project.repeatEach;
+      rootSuite._addSuite(buildProjectSuite(project, filteredProjectSuite));
+      topLevelProjects.push(project);
+      includedProjects.add(project);
+      // Pull in this project's own prerequisites, in full, same as any other top-level project.
+      for (const [depProject, level] of buildProjectsClosure([project])) {
+        if (level === 'dependency' && !includedProjects.has(depProject)) {
+          rootSuite._prependSuite(buildProjectSuite(depProject, projectSuites.get(depProject)!));
+          includedProjects.add(depProject);
+        }
+      }
     }
   }
 

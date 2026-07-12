@@ -882,6 +882,46 @@ test('should run last failed tests when the failing project is a dependency of a
   expect(result2.output).toContain('a.spec.js:4:11 › fail');
 });
 
+test('should run a dependency project in full when it is needed by a surviving top-level project under --last-failed', async ({ runInlineTest }) => {
+  // Regression guard: a dependency project pulled in because a surviving top-level project
+  // needs it as a prerequisite must still run ALL of its tests, not just whichever ones happen
+  // to match --last-failed (it may have had no failures of its own at all).
+  const workspace = {
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        projects: [
+          { name: 'setup', testMatch: /setup/ },
+          { name: 'main', testIgnore: /setup/, dependencies: ['setup'] },
+        ],
+      });
+    `,
+    'a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async () => {
+        expect(1).toBe(2);
+      });
+    `,
+    'setup.spec.js': `
+      import { test } from '@playwright/test';
+      test('setup one', async () => {});
+      test('setup two', async () => {});
+    `,
+  };
+  const result1 = await runInlineTest(workspace);
+  expect(result1.exitCode).toBe(1);
+  expect(result1.passed).toBe(2);
+  expect(result1.failed).toBe(1);
+
+  const result2 = await runInlineTest(workspace, {}, {}, { additionalArgs: ['--last-failed'] });
+  expect(result2.exitCode).toBe(1);
+  // The setup project has no failed tests of its own, but must still run in full as main's
+  // prerequisite: both setup tests pass, plus main's single failing test reruns.
+  expect(result2.passed).toBe(2);
+  expect(result2.failed).toBe(1);
+  expect(result2.output).toContain('a.spec.js:3:11 › fail');
+});
+
 test('should run nothing with --last-failed when previous run had no failures', async ({ runInlineTest }) => {
   const workspace = {
     'a.spec.js': `
