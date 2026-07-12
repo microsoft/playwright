@@ -21,7 +21,7 @@ import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { eventsHelper } from '@utils/eventsHelper';
 import { disposeAll } from '@isomorphic/disposable';
-import { waitForCompletion, eventWaiter } from './utils';
+import { waitForCompletion, eventWaiter, raceAgainstTimeout } from './utils';
 import { LogFile } from './logFile';
 import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
@@ -77,6 +77,7 @@ export type TabHeader = {
   url: string;
   current: boolean;
   crashed: boolean;
+  unresponsive: boolean;
   mainDocumentStatus?: { status: number, statusText: string };
   console: { total: number, warnings: number, errors: number };
 };
@@ -91,7 +92,7 @@ type TabSnapshot = {
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
   readonly page: playwright.Page;
-  private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, crashed: false, console: { total: 0, warnings: 0, errors: 0 } };
+  private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, crashed: false, unresponsive: false, console: { total: 0, warnings: 0, errors: 0 } };
   private _downloads: Download[] = [];
   private _requests: playwright.Request[] = [];
   private _mainDocumentStatus: { status: number, statusText: string } | undefined;
@@ -282,9 +283,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   async headerSnapshot(): Promise<TabHeader & { changed: boolean }> {
     let title: string | undefined;
     let consoleCounts = { total: 0, errors: 0, warnings: 0 };
+    let unresponsive = false;
     if (!this.crashed) {
       await this._raceAgainstModalStates(async () => {
-        title = await this.page.title();
+        const race = await raceAgainstTimeout(this.page.title(), 3000);
+        if (race.timedOut) {
+          unresponsive = true;
+          title = this._lastHeader.title;
+        } else {
+          unresponsive = false;
+          title = race.result;
+        }
       });
       consoleCounts = await this.consoleMessageCount();
     }
@@ -293,6 +302,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       url: this.page.url(),
       current: this.isCurrentTab(),
       crashed: this.crashed,
+      unresponsive,
       mainDocumentStatus: this._mainDocumentStatus,
       console: consoleCounts,
     };
@@ -593,6 +603,7 @@ function tabHeaderEquals(a: TabHeader, b: TabHeader): boolean {
       a.url === b.url &&
       a.current === b.current &&
       a.crashed === b.crashed &&
+      a.unresponsive === b.unresponsive &&
       a.mainDocumentStatus?.status === b.mainDocumentStatus?.status &&
       a.mainDocumentStatus?.statusText === b.mainDocumentStatus?.statusText &&
       a.console.errors === b.console.errors &&

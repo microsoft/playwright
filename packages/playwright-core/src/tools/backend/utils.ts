@@ -55,6 +55,17 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   return result;
 }
 
+export async function raceAgainstTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<{ timedOut: false, result: T } | { timedOut: true }> {
+  const timedOut = Symbol('timedOut');
+  const result = await Promise.race([
+    promise,
+    new Promise<typeof timedOut>(resolve => setTimeout(() => resolve(timedOut), timeoutMs)),
+  ]);
+  if (result === timedOut)
+    return { timedOut: true };
+  return { timedOut: false, result: result as T };
+}
+
 export function eventWaiter<T>(page: playwright.Page, event: string, timeout: number): { promise: Promise<T | undefined>, abort: () => void } {
   const disposables: (() => void)[] = [];
 

@@ -327,6 +327,8 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
     lines.push(`- Page Title: ${tab.title}`);
   if (tab.crashed)
     lines.push(`- Page status: crashed`);
+  if (tab.unresponsive)
+    lines.push(`- Page status: unresponsive`);
   const status = tab.mainDocumentStatus;
   if (status && (status.status < 200 || status.status >= 300))
     lines.push(`- HTTP status: ${status.status}${status.statusText ? ' ' + status.statusText : ''}`);
@@ -344,7 +346,8 @@ export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
     const tab = tabs[i];
     const current = tab.current ? ' (current)' : '';
     const crashed = tab.crashed ? ' [crashed]' : '';
-    lines.push(`- ${i}:${current} [${tab.title}](${tab.url})${crashed}`);
+    const unresponsive = tab.unresponsive ? ' [unresponsive]' : '';
+    lines.push(`- ${i}:${current} [${tab.title}](${tab.url})${crashed}${unresponsive}`);
   }
   return lines;
 }
