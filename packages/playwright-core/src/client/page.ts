@@ -674,6 +674,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (isTargetClosedError(e) && !options.runBeforeUnload)
         return;
       throw e;
+    } finally {
+      await this.screencast._waitForPendingAutoSave();
     }
   }
 
