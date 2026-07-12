@@ -27,6 +27,7 @@ export class Screencast implements api.Screencast {
   private _savePath: string | undefined;
   private _onFrame: ((frame: { data: Buffer, timestamp: number, viewportWidth: number, viewportHeight: number }) => Promise<any>) | null = null;
   private _artifact: Artifact | undefined;
+  private _pendingAutoSave: Promise<void> | undefined;
 
   constructor(page: Page) {
     this._page = page;
@@ -35,7 +36,8 @@ export class Screencast implements api.Screencast {
     });
     this._page.once(Events.Page.Close, () => {
       // Auto-save the video when the page closes, so recordings are not lost
-      // if the user forgets to call stop().
+      // if the user forgets to call stop(). page.close() awaits this via
+      // _waitForPendingAutoSave() before it resolves.
       if (this._started && this._savePath && this._artifact) {
         const artifact = this._artifact;
         const savePath = this._savePath;
@@ -43,9 +45,13 @@ export class Screencast implements api.Screencast {
         this._onFrame = null;
         this._artifact = undefined;
         this._savePath = undefined;
-        artifact.saveAs(savePath).catch(() => {});
+        this._pendingAutoSave = artifact.saveAs(savePath).catch(() => {});
       }
     });
+  }
+
+  async _waitForPendingAutoSave(): Promise<void> {
+    await this._pendingAutoSave;
   }
 
   async start(options: { onFrame?: (frame: { data: Buffer, timestamp: number, viewportWidth: number, viewportHeight: number }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, quality?: number } = {}): Promise<DisposableStub> {

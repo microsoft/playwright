@@ -674,6 +674,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       if (isTargetClosedError(e) && !options.runBeforeUnload)
         return;
       throw e;
+    } finally {
+      // If the page actually closed, the 'close' event (and with it, screencast's
+      // auto-save) is dispatched by the server before the close response is sent,
+      // so this is guaranteed to observe an in-flight save, if any, at this point.
+      await this.screencast._waitForPendingAutoSave();
     }
   }
 
