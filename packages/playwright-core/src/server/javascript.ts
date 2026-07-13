@@ -69,8 +69,8 @@ export class ExecutionContext extends SdkObject {
     this.delegate = delegate;
   }
 
-  contextDestroyed(reason: string) {
-    this._contextDestroyedScope.close(new Error(reason));
+  contextDestroyed(reason: Error | string) {
+    this._contextDestroyedScope.close(reason instanceof Error ? reason : new Error(reason));
   }
 
   async raceAgainstContextDestroyed<T>(promise: Promise<T>): Promise<T> {

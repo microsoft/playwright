@@ -300,6 +300,7 @@ export class Page extends SdkObject<PageEventMap> {
     this.frameManager.dispose(error);
     this.screencast.dispose();
     this.overlay.dispose();
+    this.clearWorkers(error);
     this.openScope.close(error);
   }
 
@@ -874,9 +875,9 @@ export class Page extends SdkObject<PageEventMap> {
     this._workers.delete(workerId);
   }
 
-  clearWorkers() {
+  clearWorkers(error?: Error) {
     for (const [workerId, worker] of this._workers) {
-      worker.didClose();
+      worker.didClose(error);
       this._workers.delete(workerId);
     }
   }
@@ -1014,6 +1015,7 @@ export class Worker extends SdkObject<WorkerEventMap> {
       this.existingExecutionContext.contextDestroyed(errorMessage);
     this.existingExecutionContext = null;
     this._workerScriptLoaded = false;
+    this._executionContextPromise.reject(new Error(errorMessage));
     this._executionContextPromise = new ManualPromise<js.ExecutionContext>();
   }
 
@@ -1023,11 +1025,13 @@ export class Worker extends SdkObject<WorkerEventMap> {
       this._executionContextPromise.resolve(this.existingExecutionContext);
   }
 
-  didClose() {
+  didClose(error?: Error) {
+    const e = error || new Error('Worker closed');
     if (this.existingExecutionContext)
-      this.existingExecutionContext.contextDestroyed('Worker was closed');
+      this.existingExecutionContext.contextDestroyed(e);
+    this._executionContextPromise.reject(e);
     this.emit(Worker.Events.Close, this);
-    this.openScope.close(new Error('Worker closed'));
+    this.openScope.close(e);
   }
 
   async evaluateExpression(progress: Progress, expression: string, isFunction: boolean | undefined, arg: any): Promise<any> {

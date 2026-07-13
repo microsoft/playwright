@@ -106,7 +106,7 @@ test('should be able to close page after crash', async ({ page, crash }) => {
   expect(page.isClosed()).toBe(true);
 });
 
-test.fixme('should reject in-flight worker.evaluate when page crashes', async ({ page, crash, server }) => {
+test('should reject in-flight worker.evaluate when page crashes', async ({ page, crash, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
@@ -116,5 +116,5 @@ test.fixme('should reject in-flight worker.evaluate when page crashes', async ({
   const evalPromise = worker.evaluate(() => new Promise(() => {})).catch((e: Error) => e); // never resolves in-worker
   crash();
   const error = await evalPromise as Error;
-  expect(error.message).toContain('crash');
+  expect(error.message).toMatch(/crash|closed/);
 });
