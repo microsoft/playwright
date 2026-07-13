@@ -20,7 +20,7 @@ import { debugMode } from '@utils/debug';
 
 import type * as channels from './channels';
 
-type TimeoutOptions = { timeout?: number, signal?: AbortSignal };
+type TimeoutInput = { timeout?: number, signal?: AbortSignal };
 
 // Sentinel for internal calls that intentionally opt out of a deadline.
 export const kNoTimeout: channels.TimeoutOptions = { signal: undefined, timeout: 0 };
@@ -50,22 +50,16 @@ export class TimeoutSettings {
     return this._defaultTimeout;
   }
 
-  signal(options: { signal?: AbortSignal }): AbortSignal | undefined {
-    // Passed through verbatim today, but this indirection leaves room for a
-    // settings/parent hierarchy in the future, mirroring the timeout resolution.
-    return options.signal;
+  navigationTimeout(options: TimeoutInput): channels.TimeoutOptions {
+    return { signal: options.signal, timeout: this._navigationTimeout(options) };
   }
 
-  navigationTimeout(options: TimeoutOptions): channels.TimeoutOptions {
-    return { signal: this.signal(options), timeout: this._navigationTimeout(options) };
+  timeout(options: TimeoutInput): channels.TimeoutOptions {
+    return { signal: options.signal, timeout: this._timeout(options) };
   }
 
-  timeout(options: TimeoutOptions): channels.TimeoutOptions {
-    return { signal: this.signal(options), timeout: this._timeout(options) };
-  }
-
-  launchTimeout(options: TimeoutOptions): channels.TimeoutOptions {
-    return { signal: this.signal(options), timeout: this._launchTimeout(options) };
+  launchTimeout(options: TimeoutInput): channels.TimeoutOptions {
+    return { signal: options.signal, timeout: this._launchTimeout(options) };
   }
 
   private _navigationTimeout(options: { timeout?: number }): number {
